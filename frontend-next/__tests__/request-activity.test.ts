@@ -15,7 +15,7 @@ describe("request activity feedback", () => {
   })
 
   it("gera mensagem inteligente para materiais em processamento", () => {
-    const event = beginRequestActivity("/pharmacy/requisicaomaterial/", "POST")
+    const event = beginRequestActivity("/pharmacy/material_requisition/", "POST")
     expect(event.title).toBe("A processar requisições de materiais")
     expect(event.detail).toContain("disponibilidade")
     finishRequestActivity(event)

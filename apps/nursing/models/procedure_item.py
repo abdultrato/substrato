@@ -247,7 +247,7 @@ class ProcedureItem(ScopedPositionMixin, NoNameCoreModel):
             quantity_material_int = int(quantity_material)
 
             lot = (
-                Lot.disponiveis(material_padrao.product)
+                Lot.available(material_padrao.product)
                 .filter(tenant_id=self.tenant_id)
                 .filter(saldo__gte=quantity_material_int)
                 .first()

@@ -80,11 +80,13 @@ const MODULES_BASE: ModuleGroup[] = [
     key: "pharmacy",
     label: "Farmácia",
     resources: [
-      { key: "produto", label: "Produtos", endpoint: "/pharmacy/produto/", adminListHref: "/admin/pharmacy/produto/" },
-      { key: "lote", label: "Lotes", endpoint: "/pharmacy/lote/", adminListHref: "/admin/pharmacy/lote/" },
-      { key: "movimentoestoque", label: "Movimentos de Estoque", endpoint: "/pharmacy/movimentoestoque/", adminListHref: "/admin/pharmacy/movimentoestoque/" },
-      { key: "venda", label: "Vendas", endpoint: "/pharmacy/venda/", adminListHref: "/admin/pharmacy/venda/" },
-      { key: "itemvenda", label: "Itens de Venda", endpoint: "/pharmacy/itemvenda/", adminListHref: "/admin/pharmacy/itemvenda/" },
+      { key: "product", label: "Produtos", endpoint: "/pharmacy/product/", adminListHref: "/admin/pharmacy/product/" },
+      { key: "lot", label: "Lotes", endpoint: "/pharmacy/lot/", adminListHref: "/admin/pharmacy/lot/" },
+      { key: "inventory_movement", label: "Movimentos de Estoque", endpoint: "/pharmacy/inventory_movement/", adminListHref: "/admin/pharmacy/inventorymovement/" },
+      { key: "sale", label: "Vendas", endpoint: "/pharmacy/sale/", adminListHref: "/admin/pharmacy/sale/" },
+      { key: "sale_item", label: "Itens de Venda", endpoint: "/pharmacy/sale_item/", adminListHref: "/admin/pharmacy/saleitem/" },
+      { key: "material_requisition", label: "Requisições de Material", endpoint: "/pharmacy/material_requisition/", adminListHref: "/admin/pharmacy/materialrequisition/" },
+      { key: "material_requisition_item", label: "Itens de Requisição", endpoint: "/pharmacy/material_requisition_item/", adminListHref: "/admin/pharmacy/materialrequisitionitem/" },
     ],
   },
   {
@@ -311,14 +313,13 @@ const ADMIN_LIST_BY_ENDPOINT: Record<string, string> = {
   // Billing
   "/billing/invoice/": "/admin/billing/invoice/",
   // Pharmacy
-  "/pharmacy/produto/": "/admin/pharmacy/product/",
-  "/pharmacy/lote/": "/admin/pharmacy/lot/",
-  "/pharmacy/movimentoestoque/": "/admin/pharmacy/inventorymovement/",
-  "/pharmacy/venda/": "/admin/pharmacy/sale/",
-  "/pharmacy/itemvenda/": "/admin/pharmacy/saleitem/",
   "/pharmacy/product/": "/admin/pharmacy/product/",
   "/pharmacy/lot/": "/admin/pharmacy/lot/",
+  "/pharmacy/inventory_movement/": "/admin/pharmacy/inventorymovement/",
   "/pharmacy/sale/": "/admin/pharmacy/sale/",
+  "/pharmacy/sale_item/": "/admin/pharmacy/saleitem/",
+  "/pharmacy/material_requisition/": "/admin/pharmacy/materialrequisition/",
+  "/pharmacy/material_requisition_item/": "/admin/pharmacy/materialrequisitionitem/",
   // ERP/WMS
   "/warehouse/warehouse/": "/admin/warehouse/warehouse/",
   "/warehouse/storage_location/": "/admin/warehouse/storagelocation/",

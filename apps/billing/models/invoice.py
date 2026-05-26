@@ -645,7 +645,7 @@ class Invoice(NoNameCoreModel):
             faltas = []
             for material in pendentes:
                 # Regra atual: cada consumo precisa caber em um lot válido.
-                lotes = Lot.disponiveis(material.product)
+                lotes = Lot.available(material.product)
                 if self.tenant_id:
                     lotes = lotes.filter(tenant_id=self.tenant_id)
 

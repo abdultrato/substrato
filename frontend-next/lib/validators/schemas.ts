@@ -362,18 +362,18 @@ export type AuthorizationProcedure = z.infer<typeof AuthorizationProcedureSchema
 /**
  * Farmácia
  */
-export const ProdutoSchema = z.object({
+export const PharmacyProductSchema = z.object({
   id: z.number().int().readonly(),
   nome: z.string().optional().nullable(),
   codigo: z.string().optional().nullable(),
   estoque_atual: z.number().optional().nullable(),
 })
-export type Produto = z.infer<typeof ProdutoSchema>
+export type PharmacyProduct = z.infer<typeof PharmacyProductSchema>
 
-const MovimentoEstoqueTipoEnum = z.enum(['ENT', 'SAI', 'AJU'])
-const MovimentoEstoqueOrigemEnum = z.enum(['VEND', 'PROC', 'AJUS'])
+const PharmacyInventoryMovementTypeEnum = z.enum(['ENT', 'SAI', 'AJU'])
+const PharmacyInventoryMovementOriginEnum = z.enum(['VEND', 'PROC', 'AJUS'])
 
-export const LoteSchema = z.object({
+export const PharmacyLotSchema = z.object({
   id: z.number().int().readonly().optional(),
   criado_em: z.string().datetime().readonly().optional(),
   atualizado_em: z.string().datetime().readonly().optional(),
@@ -391,9 +391,9 @@ export const LoteSchema = z.object({
   deletado_por: z.number().int().optional().nullable(),
   produto: z.number().int(),
 }).strict()
-export type Lote = z.infer<typeof LoteSchema>
+export type PharmacyLot = z.infer<typeof PharmacyLotSchema>
 
-export const MovimentoEstoqueSchema = z.object({
+export const PharmacyInventoryMovementSchema = z.object({
   id: z.number().int().readonly().optional(),
   criado_em: z.string().datetime().readonly().optional(),
   atualizado_em: z.string().datetime().readonly().optional(),
@@ -402,8 +402,8 @@ export const MovimentoEstoqueSchema = z.object({
   deletado_em: z.string().datetime().optional().nullable(),
   versao: z.number().optional(),
   nome: z.string().min(1, 'Nome é obrigatório'),
-  tipo: MovimentoEstoqueTipoEnum,
-  origem: MovimentoEstoqueOrigemEnum.optional(),
+  tipo: PharmacyInventoryMovementTypeEnum,
+  origem: PharmacyInventoryMovementOriginEnum.optional(),
   quantidade: z.number(),
   criado_por: z.number().int().optional().nullable(),
   atualizado_por: z.number().int().optional().nullable(),
@@ -412,9 +412,9 @@ export const MovimentoEstoqueSchema = z.object({
   lote: z.number().int(),
   item_venda: z.number().int().optional().nullable(),
 }).strict()
-export type MovimentoEstoque = z.infer<typeof MovimentoEstoqueSchema>
+export type PharmacyInventoryMovement = z.infer<typeof PharmacyInventoryMovementSchema>
 
-export const VendaSchema = z.object({
+export const PharmacySaleSchema = z.object({
   id: z.number().int().readonly().optional(),
   criado_em: z.string().datetime().readonly().optional(),
   atualizado_em: z.string().datetime().readonly().optional(),
@@ -430,9 +430,9 @@ export const VendaSchema = z.object({
   deletado_por: z.number().int().optional().nullable(),
   paciente: z.number().int().optional().nullable(),
 }).strict()
-export type Venda = z.infer<typeof VendaSchema>
+export type PharmacySale = z.infer<typeof PharmacySaleSchema>
 
-export const ItemVendaSchema = z.object({
+export const PharmacySaleItemSchema = z.object({
   id: z.number().int().readonly().optional(),
   criado_em: z.string().datetime().readonly().optional(),
   atualizado_em: z.string().datetime().readonly().optional(),
@@ -450,7 +450,7 @@ export const ItemVendaSchema = z.object({
   venda: z.number().int(),
   produto: z.number().int(),
 }).strict()
-export type ItemVenda = z.infer<typeof ItemVendaSchema>
+export type PharmacySaleItem = z.infer<typeof PharmacySaleItemSchema>
 
 /**
  * Enfermagem

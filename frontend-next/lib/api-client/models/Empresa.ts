@@ -4,28 +4,27 @@
 /* eslint-disable */
 export type Empresa = {
     readonly id?: number;
-    readonly criado_em?: string;
-    readonly atualizado_em?: string;
-    readonly id_custom?: string | null;
-    readonly deletado?: boolean;
-    readonly deletado_em?: string | null;
-    readonly versao?: number;
-    nome: string;
+    readonly created_at?: string;
+    readonly updated_at?: string;
+    readonly custom_id?: string | null;
+    readonly deleted?: boolean;
+    readonly deleted_at?: string | null;
+    readonly version?: number;
+    name: string;
     nuit?: string | null;
-    endereco_sede?: string | null;
+    headquarters_address?: string | null;
     /**
      * Pessoa, departamento ou referência de contacto.
      */
-    contactos?: string | null;
+    contacts?: string | null;
     email?: string | null;
-    telefone1?: string | null;
-    telefone2?: string | null;
+    phone1?: string | null;
+    phone2?: string | null;
     nib?: string | null;
-    ativo?: boolean;
-    observacoes?: string | null;
-    readonly criado_por?: number | null;
-    readonly atualizado_por?: number | null;
-    readonly inquilino?: number;
-    readonly deletado_por?: number | null;
+    active?: boolean;
+    notes?: string | null;
+    readonly created_by?: string | null;
+    readonly updated_by?: string | null;
+    readonly deleted_by?: string | null;
+    readonly tenant?: string;
 };
-

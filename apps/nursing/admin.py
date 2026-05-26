@@ -30,17 +30,17 @@ from .models import (
 )
 
 
-def _queryset_produtos_disponiveis():
+def _available_products_queryset():
     """Retorna produtos com lotes não vencidos e saldo positivo (uso em autocomplete)."""
-    hoje = timezone.localdate()
+    today = timezone.localdate()
 
-    lotes_disponiveis = (
+    available_lots = (
         Lot.objects.filter(
             product_id=OuterRef("pk"),
-            expiration_date__gte=hoje,
+            expiration_date__gte=today,
         )
         .annotate(
-            saldo_calc=F("initial_quantity")
+            calculated_balance=F("initial_quantity")
             + Coalesce(
                 Sum(
                     Case(
@@ -60,10 +60,10 @@ def _queryset_produtos_disponiveis():
                 0,
             )
         )
-        .filter(saldo_calc__gt=0)
+        .filter(calculated_balance__gt=0)
     )
 
-    return Product.objects.filter(Exists(lotes_disponiveis)).order_by("name")
+    return Product.objects.filter(Exists(available_lots)).order_by("name")
 
 
 class ProcedimentoItemInline(admin.TabularInline):
@@ -98,24 +98,24 @@ class ProcedimentoMaterialInline(admin.TabularInline):
         "quantity",
         "lot",
         "unit_cost",
-        "status_estorno",
+        "stock_reversal_status",
         "observation",
     )
     ordering = ("position", "id")
-    readonly_fields = ("procedure_item", "unit_cost", "status_estorno")
+    readonly_fields = ("procedure_item", "unit_cost", "stock_reversal_status")
     autocomplete_fields = ("product",)
 
-    def status_estorno(self, obj):
+    def stock_reversal_status(self, obj):
         """Exibe status do movimento de estoque associado."""
         if not obj.inventory_movement:
             return "Pendente (não lançado)"
         return f"✓ Lançado: {obj.inventory_movement.custom_id}"
 
-    status_estorno.short_description = "Status Estoque"
+    stock_reversal_status.short_description = "Status Estoque"
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == "product":
-            kwargs["queryset"] = _queryset_produtos_disponiveis()
+            kwargs["queryset"] = _available_products_queryset()
 
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
@@ -673,7 +673,7 @@ class ProcedimentoMaterialAdmin(admin.ModelAdmin):
         "lot",
         "quantity",
         "unit_cost",
-        "linha_total",
+        "line_total",
         "inventory_movement",
         "created_at",
     )
@@ -703,7 +703,7 @@ class ProcedimentoMaterialAdmin(admin.ModelAdmin):
         "custom_id",
         "lot",
         "unit_cost",
-        "linha_total",
+        "line_total",
         "inventory_movement",
         "created_at",
         "updated_at",
@@ -724,7 +724,7 @@ class ProcedimentoMaterialAdmin(admin.ModelAdmin):
                     "lot",
                     "quantity",
                     "unit_cost",
-                    "linha_total",
+                    "line_total",
                     "inventory_movement",
                     "observation",
                 )
@@ -747,32 +747,32 @@ class ProcedimentoMaterialAdmin(admin.ModelAdmin):
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == "product":
-            kwargs["queryset"] = _queryset_produtos_disponiveis()
+            kwargs["queryset"] = _available_products_queryset()
 
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
-    def linha_total(self, obj):
+    def line_total(self, obj):
         return f"{obj.total_linha:.2f}"
 
-    linha_total.short_description = "Total"
+    line_total.short_description = "Total"
 
-    def fazer_estorno(self, request, queryset):
+    def reverse_stock_movements(self, request, queryset):
         """Ação para fazer estorno completo de materiais lançados no estoque."""
         from django.contrib import messages
-        contador = 0
+        reversed_count = 0
         for material in queryset:
             if material.inventory_movement_id:
                 try:
                     material.delete()
-                    contador += 1
+                    reversed_count += 1
                 except Exception as e:
                     messages.error(request, f"Erro ao estornar {material.custom_id}: {e!s}")
 
-        messages.success(request, f"{contador} material(ais) estimado(s) com sucesso.")
+        messages.success(request, f"{reversed_count} material(ais) estornado(s) com sucesso.")
 
-    fazer_estorno.short_description = "Fazer estorno completo dos materiais selecionados"
+    reverse_stock_movements.short_description = "Fazer estorno completo dos materiais selecionados"
 
-    actions = ["fazer_estorno"]
+    actions = ["reverse_stock_movements"]
 
 
 @admin.register(ProcedureItemValue)

@@ -278,7 +278,7 @@ export default function FaturaRascunhoPage() {
       const [exs, exsMed, prods] = await Promise.all([
         apiFetch<any>("/exams/"),
         apiFetch<any>("/clinical/medicalexam/"),
-        apiFetch<any>("/pharmacy/produto/"),
+        apiFetch<any>("/pharmacy/product/"),
       ])
       setExames(listFrom(exs))
       setExamesMedicos(listFrom(exsMed))
@@ -307,7 +307,7 @@ export default function FaturaRascunhoPage() {
       const [reqRes, procRes, vendaRes, cirRes, consRes] = await Promise.all([
         apiFetch<any>(`/requests/?paciente=${pacienteId}`),
         apiFetch<any>(`/nursing/procedimento/?paciente=${pacienteId}`),
-        apiFetch<any>(`/pharmacy/venda/?paciente=${pacienteId}`),
+        apiFetch<any>(`/pharmacy/sale/?paciente=${pacienteId}`),
         apiFetch<any>(`/surgery/surgery/?paciente=${pacienteId}`),
         apiFetch<any>(`/consultations/consultation/?paciente=${pacienteId}`),
       ])
@@ -349,7 +349,7 @@ export default function FaturaRascunhoPage() {
       setProcedimentoMateriais(procMatMap)
 
       const vendaItemPairs = await Promise.all(
-        vendasList.map((v) => apiFetch<any>(`/pharmacy/itemvenda/?venda=${v.id}`))
+        vendasList.map((v) => apiFetch<any>(`/pharmacy/sale_item/?venda=${v.id}`))
       )
       const vendaMap: Record<number, Row[]> = {}
       vendasList.forEach((v, idx) => {
@@ -727,7 +727,7 @@ export default function FaturaRascunhoPage() {
       return
     }
     try {
-      const res = await apiFetch<any>(`/pharmacy/produto/?search=${encodeURIComponent(q)}`)
+      const res = await apiFetch<any>(`/pharmacy/product/?search=${encodeURIComponent(q)}`)
       setSearchProduto(listFrom(res))
     } catch {
       setSearchProduto([])
@@ -1026,7 +1026,7 @@ export default function FaturaRascunhoPage() {
               ) : (
                 <div className="space-y-2">
                   {requisicoes.map((r) => {
-                    const disponiveis = (requisicaoItens[r.id] || []).filter((it) => {
+                    const availableItems = (requisicaoItens[r.id] || []).filter((it) => {
                       const exameId = toNumberId(it.exame)
                       if (exameId && referenciaIds.exames.has(exameId)) return false
                       const exameMedId = toNumberId(it.exame_medico)
@@ -1038,10 +1038,10 @@ export default function FaturaRascunhoPage() {
                         <div className="font-semibold text-gray-800">{r.id_custom || `REQ ${r.id}`}</div>
                         <div className="text-xs text-gray-500">Tipo: {r.tipo || "-"}</div>
                         <div className="mt-2 space-y-1">
-                          {disponiveis.length === 0 ? (
+                          {availableItems.length === 0 ? (
                             <div className="text-xs text-gray-500">Todos os exames já foram adicionados.</div>
                           ) : (
-                            disponiveis.map((it) => {
+                            availableItems.map((it) => {
                               const exame = it.exame ? exameById.get(it.exame) : null
                               const exameMed = it.exame_medico ? exameMedById.get(it.exame_medico) : null
                               const label =

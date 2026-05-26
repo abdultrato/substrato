@@ -5,8 +5,7 @@
 export type PasswordResetToken = {
     readonly id?: number;
     token?: string;
-    usado?: boolean;
-    readonly criado_em?: string;
+    used?: boolean;
+    readonly created_at?: string;
     user: number;
 };
-

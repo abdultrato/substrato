@@ -4,17 +4,16 @@
 /* eslint-disable */
 export type FeatureFlagTenant = {
     readonly id?: number;
-    readonly criado_em?: string;
-    readonly atualizado_em?: string;
-    readonly id_custom?: string | null;
-    deletado?: boolean;
-    deletado_em?: string | null;
-    versao?: number;
-    chave: string;
-    ativo?: boolean;
-    criado_por?: number | null;
-    atualizado_por?: number | null;
-    inquilino: number;
-    deletado_por?: number | null;
+    readonly created_at?: string;
+    readonly updated_at?: string;
+    readonly custom_id?: string | null;
+    readonly deleted?: boolean;
+    readonly deleted_at?: string | null;
+    readonly version?: number;
+    key: string;
+    active?: boolean;
+    readonly created_by?: string | null;
+    readonly updated_by?: string | null;
+    readonly deleted_by?: string | null;
+    readonly tenant?: string;
 };
-

@@ -119,7 +119,7 @@ class InventoryMovement(CoreModel):
             raise ValidationError("Lote é obrigatório.")
 
         # Só bloqueia saídas para lotes vencidos; entradas/ajustes podem registrar histórico.
-        if self.type == MovementType.SAIDA and self.lot.vencido:
+        if self.type == MovementType.SAIDA and self.lot.is_expired:
             raise ValidationError("Não é permitido movimentar lot vencido.")
 
         # valida tenant

@@ -77,7 +77,7 @@ function sectorLabel(s?: string) {
   }
 }
 
-export default function RequisicaoMaterialDetailPage() {
+export default function MaterialRequisitionDetailPage() {
   useAuthGuard()
   const params = useParams()
   const router = useRouter()
@@ -112,7 +112,7 @@ export default function RequisicaoMaterialDetailPage() {
     setError(null)
     try {
       setLoading(true)
-      const res = await apiFetch<Requisition>(`/pharmacy/requisicaomaterial/${id}/`)
+      const res = await apiFetch<Requisition>(`/pharmacy/material_requisition/${id}/`)
       setData(res)
       const defaults: Record<number, number> = {}
       for (const it of res?.items || []) {
@@ -149,7 +149,7 @@ export default function RequisicaoMaterialDetailPage() {
 
     try {
       setSubmitting(true)
-      await apiFetch(`/pharmacy/requisicaomaterial/${id}/aviar/`, {
+      await apiFetch(`/pharmacy/material_requisition/${id}/fulfill/`, {
         method: "POST",
         body: JSON.stringify({ items: itemsPayload }),
       })
@@ -165,7 +165,7 @@ export default function RequisicaoMaterialDetailPage() {
     setError(null)
     try {
       setSubmitting(true)
-      await apiFetch(`/pharmacy/requisicaomaterial/${id}/arquivar/`, {
+      await apiFetch(`/pharmacy/material_requisition/${id}/archive/`, {
         method: "POST",
         body: JSON.stringify({ reason: holdReason || null }),
       })

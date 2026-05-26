@@ -198,12 +198,12 @@ class MaterialRequisitionItemFilter(SafeFilterSet):
 # =====================================================
 
 FILTER_MAP = {
-    "itemvenda": SaleItemFilter,
+    "sale_item": SaleItemFilter,
     "lot": LotFilter,
-    "movimentoestoque": InventoryMovementFilter,
+    "inventory_movement": InventoryMovementFilter,
     "product": ProductFilter,
-    "requisicaomaterial": MaterialRequisitionFilter,
-    "requisicaomaterialitem": MaterialRequisitionItemFilter,
+    "material_requisition": MaterialRequisitionFilter,
+    "material_requisition_item": MaterialRequisitionItemFilter,
     "sale": SaleFilter,
 }
 

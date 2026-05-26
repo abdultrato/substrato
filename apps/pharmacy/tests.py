@@ -115,7 +115,7 @@ def test_lot_balance_on_creation_matches_initial_quantity():
     ).exists()
     assert lot.balance() == 7
 
-    lot_qs = Lot.disponiveis(prod)
+    lot_qs = Lot.available(prod)
     assert lot_qs.count() == 1
     assert lot_qs.first().saldo == 7
 
@@ -137,7 +137,7 @@ def test_product_inventory_total_uses_effective_lot_balance():
     lot.refresh_from_db()
     assert lot.balance() == 3
     assert prod.inventory_total == 3
-    assert Lot.disponiveis(prod).first().saldo == 3
+    assert Lot.available(prod).first().saldo == 3
 
 
 @pytest.mark.django_db
@@ -163,7 +163,7 @@ def test_inventory_movement_queryset_delete_is_soft_delete():
 
 
 @pytest.mark.django_db
-def test_lot_disponiveis_ignores_soft_deleted_movements():
+def test_lot_available_ignores_soft_deleted_movements():
     tenant = _tenant()
     prod = _product(tenant)
     lot = _lot(prod, quantity=5)
@@ -179,7 +179,7 @@ def test_lot_disponiveis_ignores_soft_deleted_movements():
 
     lot.refresh_from_db()
     assert lot.balance() == 5
-    assert Lot.disponiveis(prod).get(pk=lot.pk).saldo == 5
+    assert Lot.available(prod).get(pk=lot.pk).saldo == 5
 
 
 @pytest.mark.django_db
@@ -241,6 +241,26 @@ def _api_user(tenant, *, username="pharmacy_api_user"):
 
 
 @pytest.mark.django_db
+def test_pharmacy_api_uses_english_resource_routes(api_client):
+    tenant = Tenant.objects.create(
+        identifier="tn-pharmacy-contracts",
+        name="Tenant Pharmacy Contracts",
+        domain="tenant-pharmacy-contracts.local",
+        active=True,
+    )
+    user = _api_user(tenant, username="pharmacy_contract_user")
+
+    api_client.defaults["HTTP_HOST"] = tenant.domain
+    api_client.force_authenticate(user=user)
+
+    assert api_client.get("/api/v1/pharmacy/product/").status_code == 200
+    assert api_client.get("/api/v1/pharmacy/lot/available/").status_code == 200
+    assert api_client.get("/api/v1/pharmacy/material_requisition/").status_code == 200
+    assert api_client.get("/api/v1/pharmacy/movimentoestoque/").status_code == 404
+    assert api_client.get("/api/v1/pharmacy/requisicaomaterial/").status_code == 404
+
+
+@pytest.mark.django_db
 def test_stock_pdf_returns_pdf_synchronously(api_client):
     tenant = Tenant.objects.create(
         identifier="tn-stock-pdf",
@@ -255,7 +275,7 @@ def test_stock_pdf_returns_pdf_synchronously(api_client):
     api_client.defaults["HTTP_HOST"] = tenant.domain
     api_client.force_authenticate(user=user)
 
-    response = api_client.get("/api/v1/pharmacy/lot/estoque/pdf/")
+    response = api_client.get("/api/v1/pharmacy/lot/stock/pdf/")
 
     assert response.status_code == 200
     assert response["Content-Type"] == "application/pdf"
@@ -278,7 +298,7 @@ def test_stock_pdf_can_be_queued_as_async_export(api_client, monkeypatch):
     api_client.defaults["HTTP_HOST"] = tenant.domain
     api_client.force_authenticate(user=user)
 
-    response = api_client.get("/api/v1/pharmacy/lot/estoque/pdf/?async=1")
+    response = api_client.get("/api/v1/pharmacy/lot/stock/pdf/?async=1")
 
     assert response.status_code == 202
     data = response.data
@@ -341,7 +361,7 @@ def test_material_requisition_api_flow_create_and_fulfill(api_client):
     api_client.defaults["HTTP_HOST"] = tenant.domain
     api_client.force_authenticate(user=requester)
     create_resp = api_client.post(
-        "/api/v1/pharmacy/requisicaomaterial/",
+        "/api/v1/pharmacy/material_requisition/",
         {"items_input": [{"lot": lot.id, "requested_quantity": 5}]},
         format="json",
     )
@@ -352,7 +372,7 @@ def test_material_requisition_api_flow_create_and_fulfill(api_client):
     # Aviar parcialmente (farmácia)
     api_client.force_authenticate(user=pharmacist)
     fulfill_resp = api_client.post(
-        f"/api/v1/pharmacy/requisicaomaterial/{req_id}/aviar/",
+        f"/api/v1/pharmacy/material_requisition/{req_id}/fulfill/",
         {"items": [{"id": create_resp.data["items"][0]["id"], "quantity": 3}]},
         format="json",
     )
@@ -420,7 +440,7 @@ def test_material_requisition_visibility_is_sector_based(api_client):
     api_client.defaults["HTTP_HOST"] = tenant.domain
     api_client.force_authenticate(user=lab_a)
     create_resp = api_client.post(
-        "/api/v1/pharmacy/requisicaomaterial/",
+        "/api/v1/pharmacy/material_requisition/",
         {"items_input": [{"lot": lot.id, "requested_quantity": 4}]},
         format="json",
     )
@@ -429,13 +449,13 @@ def test_material_requisition_visibility_is_sector_based(api_client):
     assert create_resp.data["sector"] == RequestingSector.LABORATORIO
 
     api_client.force_authenticate(user=lab_b)
-    list_lab_b = api_client.get("/api/v1/pharmacy/requisicaomaterial/")
+    list_lab_b = api_client.get("/api/v1/pharmacy/material_requisition/")
     assert list_lab_b.status_code == 200
     payload_lab = list_lab_b.data if isinstance(list_lab_b.data, list) else list_lab_b.data.get("results", [])
     assert any(int(row["id"]) == int(req_id) for row in payload_lab)
 
     api_client.force_authenticate(user=recep)
-    list_recep = api_client.get("/api/v1/pharmacy/requisicaomaterial/")
+    list_recep = api_client.get("/api/v1/pharmacy/material_requisition/")
     assert list_recep.status_code == 200
     payload_recep = list_recep.data if isinstance(list_recep.data, list) else list_recep.data.get("results", [])
     assert all(int(row["id"]) != int(req_id) for row in payload_recep)
@@ -475,7 +495,7 @@ def test_material_requisition_medicine_user_can_create(api_client):
     api_client.defaults["HTTP_HOST"] = tenant.domain
     api_client.force_authenticate(user=medic)
     create_resp = api_client.post(
-        "/api/v1/pharmacy/requisicaomaterial/",
+        "/api/v1/pharmacy/material_requisition/",
         {"items_input": [{"lot": lot.id, "requested_quantity": 3}]},
         format="json",
     )
@@ -507,7 +527,7 @@ def test_material_requisition_requester_context_prefills_non_admin_sector(api_cl
 
     api_client.defaults["HTTP_HOST"] = tenant.domain
     api_client.force_authenticate(user=requester)
-    context_resp = api_client.get("/api/v1/pharmacy/requisicaomaterial/requester_context/")
+    context_resp = api_client.get("/api/v1/pharmacy/material_requisition/requester-context/")
     assert context_resp.status_code == 200, context_resp.data
     assert context_resp.data["is_admin"] is False
     assert context_resp.data["sector_locked"] is True
@@ -553,7 +573,7 @@ def test_material_requisition_non_admin_cannot_override_sector_payload(api_clien
     api_client.defaults["HTTP_HOST"] = tenant.domain
     api_client.force_authenticate(user=requester)
     create_resp = api_client.post(
-        "/api/v1/pharmacy/requisicaomaterial/",
+        "/api/v1/pharmacy/material_requisition/",
         {
             "sector": RequestingSector.LABORATORIO,
             "items_input": [{"lot": lot.id, "requested_quantity": 2}],
@@ -598,7 +618,7 @@ def test_material_requisition_admin_can_select_requester_sector(api_client):
     api_client.defaults["HTTP_HOST"] = tenant.domain
     api_client.force_authenticate(user=admin_user)
     create_resp = api_client.post(
-        "/api/v1/pharmacy/requisicaomaterial/",
+        "/api/v1/pharmacy/material_requisition/",
         {
             "sector": RequestingSector.ENFERMAGEM,
             "items_input": [{"lot": lot.id, "requested_quantity": 2}],
@@ -643,7 +663,7 @@ def test_material_requisition_pharmacy_profile_cannot_create(api_client):
     api_client.defaults["HTTP_HOST"] = tenant.domain
     api_client.force_authenticate(user=pharmacist)
     create_resp = api_client.post(
-        "/api/v1/pharmacy/requisicaomaterial/",
+        "/api/v1/pharmacy/material_requisition/",
         {"items_input": [{"lot": lot.id, "requested_quantity": 2}]},
         format="json",
     )
@@ -696,7 +716,7 @@ def test_material_requisition_fulfill_returns_clear_insufficient_stock_error(api
     api_client.defaults["HTTP_HOST"] = tenant.domain
     api_client.force_authenticate(user=requester)
     create_resp = api_client.post(
-        "/api/v1/pharmacy/requisicaomaterial/",
+        "/api/v1/pharmacy/material_requisition/",
         {"items_input": [{"lot": lot.id, "requested_quantity": 5}]},
         format="json",
     )
@@ -706,7 +726,7 @@ def test_material_requisition_fulfill_returns_clear_insufficient_stock_error(api
 
     api_client.force_authenticate(user=pharmacist)
     fulfill_resp = api_client.post(
-        f"/api/v1/pharmacy/requisicaomaterial/{req_id}/aviar/",
+        f"/api/v1/pharmacy/material_requisition/{req_id}/fulfill/",
         {"items": [{"id": req_item_id, "quantity": 3}]},
         format="json",
     )
@@ -788,7 +808,7 @@ def test_pharmacy_product_report_pdf_endpoints(api_client):
 
     api_client.force_authenticate(user=recep)
     create_recep = api_client.post(
-        "/api/v1/pharmacy/requisicaomaterial/",
+        "/api/v1/pharmacy/material_requisition/",
         {"items_input": [{"lot": lot_a.id, "requested_quantity": 5}]},
         format="json",
     )
@@ -796,7 +816,7 @@ def test_pharmacy_product_report_pdf_endpoints(api_client):
 
     api_client.force_authenticate(user=lab)
     create_lab = api_client.post(
-        "/api/v1/pharmacy/requisicaomaterial/",
+        "/api/v1/pharmacy/material_requisition/",
         {
             "items_input": [
                 {"lot": lot_a.id, "requested_quantity": 2},
@@ -809,22 +829,22 @@ def test_pharmacy_product_report_pdf_endpoints(api_client):
 
     api_client.force_authenticate(user=pharmacist)
 
-    consumo_resp = api_client.get("/api/v1/pharmacy/product/consumo/pdf/")
+    consumo_resp = api_client.get("/api/v1/pharmacy/product/consumption/pdf/")
     assert consumo_resp.status_code == 200
     assert "application/pdf" in consumo_resp["Content-Type"]
     assert len(consumo_resp.content) > 0
 
-    top_resp = api_client.get("/api/v1/pharmacy/product/mais_requisitados/pdf/?limit=10")
+    top_resp = api_client.get("/api/v1/pharmacy/product/most-requested/pdf/?limit=10")
     assert top_resp.status_code == 200
     assert "application/pdf" in top_resp["Content-Type"]
     assert len(top_resp.content) > 0
 
-    least_resp = api_client.get("/api/v1/pharmacy/product/menos_requisitados/pdf/?limit=10")
+    least_resp = api_client.get("/api/v1/pharmacy/product/least-requested/pdf/?limit=10")
     assert least_resp.status_code == 200
     assert "application/pdf" in least_resp["Content-Type"]
     assert len(least_resp.content) > 0
 
-    sectors_resp = api_client.get(f"/api/v1/pharmacy/product/setores_requisicao/pdf/?product_id={prod_a.id}")
+    sectors_resp = api_client.get(f"/api/v1/pharmacy/product/request-sectors/pdf/?product_id={prod_a.id}")
     assert sectors_resp.status_code == 200
     assert "application/pdf" in sectors_resp["Content-Type"]
     assert len(sectors_resp.content) > 0

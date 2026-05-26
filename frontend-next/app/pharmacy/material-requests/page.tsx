@@ -113,7 +113,7 @@ export default function RequisicoesMateriaisPage() {
         setError(null)
         const params = new URLSearchParams()
         if (debouncedSearch.trim()) params.set("search", debouncedSearch.trim())
-        const url = `/pharmacy/requisicaomaterial/${params.toString() ? `?${params.toString()}` : ""}`
+        const url = `/pharmacy/material_requisition/${params.toString() ? `?${params.toString()}` : ""}`
         const res = await apiFetchList<MaterialRequisition>(url, {
           page,
           pageSize,

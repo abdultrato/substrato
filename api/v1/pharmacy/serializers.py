@@ -441,11 +441,11 @@ class MaterialRequisitionSerializer(LegacyAliasSerializerMixin, serializers.Mode
 
 
 SERIALIZER_MAP = {
-    "itemvenda": SaleItemSerializer,
+    "sale_item": SaleItemSerializer,
     "lot": LotSerializer,
-    "movimentoestoque": InventoryMovementSerializer,
+    "inventory_movement": InventoryMovementSerializer,
     "product": ProductSerializer,
-    "requisicaomaterial": MaterialRequisitionSerializer,
-    "requisicaomaterialitem": MaterialRequisitionItemSerializer,
+    "material_requisition": MaterialRequisitionSerializer,
+    "material_requisition_item": MaterialRequisitionItemSerializer,
     "sale": SaleSerializer,
 }

@@ -93,11 +93,11 @@ RESOURCE_LABELS: dict[str, tuple[str, str]] = {
     "reception-checkin": ("Check-ins de recepção", "Reception check-ins"),
     "pharmacy-product": ("Produtos de farmácia", "Pharmacy products"),
     "pharmacy-lot": ("Lotes de farmácia", "Pharmacy lots"),
-    "pharmacy-movimentoestoque": ("Movimentos de stock da farmácia", "Pharmacy inventory movements"),
+    "pharmacy-inventory_movement": ("Movimentos de stock da farmácia", "Pharmacy inventory movements"),
     "pharmacy-sale": ("Vendas de farmácia", "Pharmacy sales"),
-    "pharmacy-itemvenda": ("Itens de venda da farmácia", "Pharmacy sale items"),
-    "pharmacy-requisicaomaterial": ("Requisições de material", "Material requests"),
-    "pharmacy-requisicaomaterialitem": ("Itens de requisição de material", "Material request items"),
+    "pharmacy-sale_item": ("Itens de venda da farmácia", "Pharmacy sale items"),
+    "pharmacy-material_requisition": ("Requisições de material", "Material requests"),
+    "pharmacy-material_requisition_item": ("Itens de requisição de material", "Material request items"),
     "warehouse-warehouse": ("Armazéns", "Warehouses"),
     "warehouse-storage_location": ("Localizações de armazém", "Storage locations"),
     "warehouse-item_category": ("Categorias de itens", "Item categories"),
@@ -644,7 +644,7 @@ RESOURCE_ALIASES: dict[str, tuple[str, ...]] = {
         "lots",
         "expiry",
     ),
-    "pharmacy-movimentoestoque": (
+    "pharmacy-inventory_movement": (
         "movimento de stock",
         "movimentos de stock",
         "movimento de estoque",
@@ -682,7 +682,7 @@ RESOURCE_ALIASES: dict[str, tuple[str, ...]] = {
         "sale",
         "sales",
     ),
-    "pharmacy-itemvenda": (
+    "pharmacy-sale_item": (
         "item de venda",
         "itens de venda",
         "linha de venda",
@@ -695,7 +695,7 @@ RESOURCE_ALIASES: dict[str, tuple[str, ...]] = {
         "sale line",
         "sale lines",
     ),
-    "pharmacy-requisicaomaterial": (
+    "pharmacy-material_requisition": (
         "requisicao de material",
         "requisição de material",
         "requisicoes de material",
@@ -709,7 +709,7 @@ RESOURCE_ALIASES: dict[str, tuple[str, ...]] = {
         "material requests",
         "stock request",
     ),
-    "pharmacy-requisicaomaterialitem": (
+    "pharmacy-material_requisition_item": (
         "item de requisicao de material",
         "item de requisição de material",
         "itens de requisicao de material",

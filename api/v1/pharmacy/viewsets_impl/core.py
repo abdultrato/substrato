@@ -106,8 +106,8 @@ class LotViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelV
     ]
     ordering = ["-created_at"]
 
-    @action(detail=False, methods=["get"], url_path="disponiveis", url_name="disponiveis")
-    def disponiveis(self, request):
+    @action(detail=False, methods=["get"], url_path="available", url_name="available")
+    def available(self, request):
         """
         Lista lotes FEFO com saldo > 0 e não vencidos.
         Útil para criação de requisições internas (logística).
@@ -120,15 +120,15 @@ class LotViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelV
             lot_obj = base_qs.first()
             if not lot_obj:
                 return Response([])
-            # Lot.disponiveis() retorna FEFO com saldo, já filtra vencidos/saldo>0.
-            lots = list(Lot.disponiveis(lot_obj.product).filter(tenant_id=lot_obj.tenant_id))
+            # Lot.available() retorna FEFO com saldo, já filtra vencidos/saldo>0.
+            lots = list(Lot.available(lot_obj.product).filter(tenant_id=lot_obj.tenant_id))
             return Response(LotSerializer(lots, many=True).data)
 
         # Sem filtro por produto: devolve lotes com saldo>0 (filtragem leve em runtime).
-        lots = [lot for lot in base_qs if (not lot.vencido and lot.balance() > 0)]
+        lots = [lot for lot in base_qs if (not lot.is_expired and lot.balance() > 0)]
         return Response(LotSerializer(lots, many=True).data)
 
-    @action(detail=False, methods=["get"], url_path="estoque/pdf", url_name="estoque-pdf")
+    @action(detail=False, methods=["get"], url_path="stock/pdf", url_name="stock-pdf")
     def stock_pdf(self, request):
         """Gera PDF do estoque existente (assíncrono)."""
         include_expired = _truthy(request.query_params.get("include_expired"))
@@ -152,7 +152,7 @@ class LotViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelV
             balance = int(lot.balance() or 0)
             if balance <= 0:
                 continue
-            if lot.vencido and not include_expired:
+            if lot.is_expired and not include_expired:
                 continue
 
             total_balance += balance
@@ -163,7 +163,7 @@ class LotViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelV
                     "expiration_date": lot.expiration_date.isoformat() if lot.expiration_date else None,
                     "balance": balance,
                     "sale_price": str(getattr(lot, "sale_price", "0.00") or "0.00"),
-                    "is_expired": bool(lot.vencido),
+                    "is_expired": bool(lot.is_expired),
                 }
             )
 
@@ -226,7 +226,7 @@ class InventoryMovementViewSet(ValidatedSearchOrderingMixin, TenantScopedQueryse
     ]
     ordering = ["-created_at"]
 
-    @action(detail=False, methods=["get"], url_path="historico/pdf", url_name="historico-pdf")
+    @action(detail=False, methods=["get"], url_path="history/pdf", url_name="history-pdf")
     def history_pdf(self, request):
         """
         Gera PDF de histórico de entradas/saídas/ajustes.
@@ -384,7 +384,7 @@ class ProductViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
     def _product_type_label(product_type: str | None) -> str:
         return dict(Product.ProductType.choices).get(product_type, product_type or "—")
 
-    @action(detail=False, methods=["get"], url_path="consumo/pdf", url_name="consumo-pdf")
+    @action(detail=False, methods=["get"], url_path="consumption/pdf", url_name="consumption-pdf")
     def product_consumption_pdf(self, request):
         """PDF de consumo farmacêutico consolidado por produto."""
         user = getattr(request, "user", None)
@@ -468,7 +468,7 @@ class ProductViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
         response["Content-Disposition"] = f'inline; filename="{filename}"'
         return response
 
-    @action(detail=False, methods=["get"], url_path="mais_requisitados/pdf", url_name="mais-requisitados-pdf")
+    @action(detail=False, methods=["get"], url_path="most-requested/pdf", url_name="most-requested-pdf")
     def most_requested_products_pdf(self, request):
         """PDF com os produtos mais requisitados (baseado em requisições de material)."""
         user = getattr(request, "user", None)
@@ -546,7 +546,7 @@ class ProductViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
         response["Content-Disposition"] = f'inline; filename="{filename}"'
         return response
 
-    @action(detail=False, methods=["get"], url_path="menos_requisitados/pdf", url_name="menos-requisitados-pdf")
+    @action(detail=False, methods=["get"], url_path="least-requested/pdf", url_name="least-requested-pdf")
     def least_requested_products_pdf(self, request):
         """PDF com os produtos menos requisitados (baseado em requisições de material)."""
         user = getattr(request, "user", None)
@@ -624,7 +624,7 @@ class ProductViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
         response["Content-Disposition"] = f'inline; filename="{filename}"'
         return response
 
-    @action(detail=False, methods=["get"], url_path="setores_requisicao/pdf", url_name="setores-requisicao-pdf")
+    @action(detail=False, methods=["get"], url_path="request-sectors/pdf", url_name="request-sectors-pdf")
     def product_sector_demand_pdf(self, request):
         """PDF com os setores que mais requisitaram um produto específico."""
         user = getattr(request, "user", None)
@@ -732,12 +732,12 @@ class SaleViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Model
 
 
 VIEWSET_MAP = {
-    "itemvenda": SaleItemViewSet,
+    "sale_item": SaleItemViewSet,
     "lot": LotViewSet,
-    "movimentoestoque": InventoryMovementViewSet,
+    "inventory_movement": InventoryMovementViewSet,
     "product": ProductViewSet,
-    "requisicaomaterial": None,
-    "requisicaomaterialitem": None,
+    "material_requisition": None,
+    "material_requisition_item": None,
     "sale": SaleViewSet,
 }
 
@@ -868,7 +868,7 @@ class MaterialRequisitionViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
             return qs.filter(sector__in=list(requester_sectors))
         return qs.filter(created_by=user)
 
-    @action(detail=False, methods=["get"], url_path="requester_context", url_name="requester_context")
+    @action(detail=False, methods=["get"], url_path="requester-context", url_name="requester-context")
     def requester_context(self, request):
         user = getattr(request, "user", None)
         is_admin = _is_admin_user(user)
@@ -929,7 +929,7 @@ class MaterialRequisitionViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
             status=MaterialRequisitionStatus.PENDING,
         )
 
-    @action(detail=True, methods=["post"], url_path="aviar", url_name="aviar")
+    @action(detail=True, methods=["post"], url_path="fulfill", url_name="fulfill")
     def fulfill(self, request, pk=None):
         user = getattr(request, "user", None)
         if not _is_pharmacy_user(user):
@@ -1018,8 +1018,8 @@ class MaterialRequisitionViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
 
         return Response(self.get_serializer(requisition).data)
 
-    @action(detail=True, methods=["post"], url_path="arquivar", url_name="arquivar")
-    def on_hold(self, request, pk=None):
+    @action(detail=True, methods=["post"], url_path="archive", url_name="archive")
+    def archive(self, request, pk=None):
         user = getattr(request, "user", None)
         if not _is_pharmacy_user(user):
             raise ValidationError("Apenas Farmácia pode arquivar requisições.")
@@ -1037,8 +1037,8 @@ class MaterialRequisitionViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
 
         return Response(self.get_serializer(requisition).data)
 
-    @action(detail=False, methods=["get"], url_path="historico_movimentos/pdf", url_name="historico-movimentos-pdf")
-    def sector_movements_pdf(self, request):
+    @action(detail=False, methods=["get"], url_path="movement-history/pdf", url_name="movement-history-pdf")
+    def movement_history_pdf(self, request):
         """
         PDF de movimentos de insumos por setor solicitante.
         Uso principal: equipe da farmácia.
@@ -1157,8 +1157,8 @@ class MaterialRequisitionItemViewSet(ValidatedSearchOrderingMixin, TenantScopedQ
         return qs.filter(requisition__created_by=user)
 
 
-VIEWSET_MAP["requisicaomaterial"] = MaterialRequisitionViewSet
-VIEWSET_MAP["requisicaomaterialitem"] = MaterialRequisitionItemViewSet
+VIEWSET_MAP["material_requisition"] = MaterialRequisitionViewSet
+VIEWSET_MAP["material_requisition_item"] = MaterialRequisitionItemViewSet
 
 __all__ = [
     "VIEWSET_MAP",

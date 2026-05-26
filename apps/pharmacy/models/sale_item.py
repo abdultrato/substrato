@@ -138,7 +138,7 @@ class SaleItem(ScopedPositionMixin, CoreModel):
 
         restante = self.quantity  # Quantidade que ainda falta dar baixa
 
-        locked_lots = Lot.disponiveis(self.product).select_for_update()
+        locked_lots = Lot.available(self.product).select_for_update()
         for lot in locked_lots:  # Percorre lotes FEFO com lock transacional
             if restante <= 0:
                 break  # Sai se já baixou tudo

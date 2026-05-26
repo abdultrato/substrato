@@ -6,7 +6,7 @@ import { GeneratedResourceCreatePage } from "@/components/resources/GeneratedRes
 export default function CreateSaleItemPage() {
   return (
     <Suspense fallback={<div className="p-4 text-sm text-[var(--gray-500)]">Carregando...</div>}>
-      <GeneratedResourceCreatePage endpoint="/pharmacy/sale-items/" />
+      <GeneratedResourceCreatePage endpoint="/pharmacy/sale_item/" />
     </Suspense>
   );
 }

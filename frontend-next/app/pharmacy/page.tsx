@@ -49,9 +49,9 @@ export default function FarmaciaPage() {
         }
 
         const [produtosCount, lotesCount, movimentosCount] = await Promise.all([
-          countWithFallback("/pharmacy/produto/"),
-          countWithFallback("/pharmacy/lote/"),
-          countWithFallback("/pharmacy/movimentoestoque/"),
+          countWithFallback("/pharmacy/product/"),
+          countWithFallback("/pharmacy/lot/"),
+          countWithFallback("/pharmacy/inventory_movement/"),
         ])
 
         if (!mounted) return

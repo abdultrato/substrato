@@ -49,16 +49,16 @@ import {
   type Insurer,
   type CoveragePlan,
   type AuthorizationProcedure,
-  ProdutoSchema,
-  LoteSchema,
-  MovimentoEstoqueSchema,
-  VendaSchema,
-  ItemVendaSchema,
-  type Produto,
-  type Lote,
-  type MovimentoEstoque,
-  type Venda,
-  type ItemVenda,
+  PharmacyProductSchema,
+  PharmacyLotSchema,
+  PharmacyInventoryMovementSchema,
+  PharmacySaleSchema,
+  PharmacySaleItemSchema,
+  type PharmacyProduct,
+  type PharmacyLot,
+  type PharmacyInventoryMovement,
+  type PharmacySale,
+  type PharmacySaleItem,
   EvolucaoEnfermagemSchema,
   ProcedimentoSchema,
   ProcedimentoCatalogoSchema,
@@ -89,8 +89,8 @@ import {
 import { PacientesQueryBuilder, ExamesQueryBuilder } from '@/lib/api/query-builder'
 
 // Payload helpers alinhados ao OpenAPI (campos obrigatórios)
-type LoteCreate = Omit<
-  Lote,
+type LotCreate = Omit<
+  PharmacyLot,
   | 'id'
   | 'criado_em'
   | 'atualizado_em'
@@ -102,8 +102,8 @@ type LoteCreate = Omit<
   | 'atualizado_por'
   | 'deletado_por'
 >
-type MovimentoCreate = Omit<
-  MovimentoEstoque,
+type InventoryMovementCreate = Omit<
+  PharmacyInventoryMovement,
   | 'id'
   | 'criado_em'
   | 'atualizado_em'
@@ -115,8 +115,8 @@ type MovimentoCreate = Omit<
   | 'atualizado_por'
   | 'deletado_por'
 >
-type VendaCreate = Omit<
-  Venda,
+type SaleCreate = Omit<
+  PharmacySale,
   | 'id'
   | 'criado_em'
   | 'atualizado_em'
@@ -128,8 +128,8 @@ type VendaCreate = Omit<
   | 'atualizado_por'
   | 'deletado_por'
 >
-type ItemVendaCreate = Omit<
-  ItemVenda,
+type SaleItemCreate = Omit<
+  PharmacySaleItem,
   | 'id'
   | 'criado_em'
   | 'atualizado_em'
@@ -585,98 +585,98 @@ export class PharmacyService {
     this.client = createPacientesApiClient(baseURL)
   }
 
-  async listProdutos(retryOptions?: RetryOptions) {
-    return this.client.get('/api/v1/farmacia/produto/', ProdutoSchema.array(), { retryOptions })
+  async listProducts(retryOptions?: RetryOptions) {
+    return this.client.get('/api/v1/pharmacy/product/', PharmacyProductSchema.array(), { retryOptions })
   }
 
-  async createProduto(data: Partial<Produto>, retryOptions?: RetryOptions) {
-    return this.client.post('/api/v1/farmacia/produto/', ProdutoSchema, data, {
+  async createProduct(data: Partial<PharmacyProduct>, retryOptions?: RetryOptions) {
+    return this.client.post('/api/v1/pharmacy/product/', PharmacyProductSchema, data, {
       retryOptions: { maxRetries: 0, ...retryOptions },
     })
   }
 
-  async updateProduto(id: number, data: Partial<Produto>, retryOptions?: RetryOptions) {
-    return this.client.patch(`/api/v1/farmacia/produto/${id}/`, ProdutoSchema, data, {
+  async updateProduct(id: number, data: Partial<PharmacyProduct>, retryOptions?: RetryOptions) {
+    return this.client.patch(`/api/v1/pharmacy/product/${id}/`, PharmacyProductSchema, data, {
       retryOptions: { maxRetries: 0, ...retryOptions },
     })
   }
 
-  async deleteProduto(id: number, retryOptions?: RetryOptions) {
-    return this.client.delete(`/api/v1/farmacia/produto/${id}/`, { retryOptions: { maxRetries: 0, ...retryOptions } })
+  async deleteProduct(id: number, retryOptions?: RetryOptions) {
+    return this.client.delete(`/api/v1/pharmacy/product/${id}/`, { retryOptions: { maxRetries: 0, ...retryOptions } })
   }
 
-  async retrieveProduto(id: number, retryOptions?: RetryOptions) {
-    return this.client.get(`/api/v1/farmacia/produto/${id}/`, ProdutoSchema, { retryOptions })
+  async retrieveProduct(id: number, retryOptions?: RetryOptions) {
+    return this.client.get(`/api/v1/pharmacy/product/${id}/`, PharmacyProductSchema, { retryOptions })
   }
 
-  async listLotes(retryOptions?: RetryOptions) {
-    return this.client.get('/api/v1/farmacia/lote/', LoteSchema.array(), { retryOptions })
+  async listLots(retryOptions?: RetryOptions) {
+    return this.client.get('/api/v1/pharmacy/lot/', PharmacyLotSchema.array(), { retryOptions })
   }
 
-  async createLote(data: Partial<Lote>, retryOptions?: RetryOptions) {
-    return this.client.post('/api/v1/farmacia/lote/', LoteSchema, data as LoteCreate, {
+  async createLot(data: Partial<PharmacyLot>, retryOptions?: RetryOptions) {
+    return this.client.post('/api/v1/pharmacy/lot/', PharmacyLotSchema, data as LotCreate, {
       retryOptions: { maxRetries: 0, ...retryOptions },
     })
   }
 
-  async updateLote(id: number, data: Partial<Lote>, retryOptions?: RetryOptions) {
-    return this.client.patch(`/api/v1/farmacia/lote/${id}/`, LoteSchema, data, {
+  async updateLot(id: number, data: Partial<PharmacyLot>, retryOptions?: RetryOptions) {
+    return this.client.patch(`/api/v1/pharmacy/lot/${id}/`, PharmacyLotSchema, data, {
       retryOptions: { maxRetries: 0, ...retryOptions },
     })
   }
 
-  async deleteLote(id: number, retryOptions?: RetryOptions) {
-    return this.client.delete(`/api/v1/farmacia/lote/${id}/`, { retryOptions: { maxRetries: 0, ...retryOptions } })
+  async deleteLot(id: number, retryOptions?: RetryOptions) {
+    return this.client.delete(`/api/v1/pharmacy/lot/${id}/`, { retryOptions: { maxRetries: 0, ...retryOptions } })
   }
 
-  async listMovimentos(retryOptions?: RetryOptions) {
-    return this.client.get('/api/v1/farmacia/movimentoestoque/', MovimentoEstoqueSchema.array(), { retryOptions })
+  async listInventoryMovements(retryOptions?: RetryOptions) {
+    return this.client.get('/api/v1/pharmacy/inventory_movement/', PharmacyInventoryMovementSchema.array(), { retryOptions })
   }
 
-  async createMovimento(data: Partial<MovimentoEstoque>, retryOptions?: RetryOptions) {
-    return this.client.post('/api/v1/farmacia/movimentoestoque/', MovimentoEstoqueSchema, data as MovimentoCreate, {
+  async createInventoryMovement(data: Partial<PharmacyInventoryMovement>, retryOptions?: RetryOptions) {
+    return this.client.post('/api/v1/pharmacy/inventory_movement/', PharmacyInventoryMovementSchema, data as InventoryMovementCreate, {
       retryOptions: { maxRetries: 0, ...retryOptions },
     })
   }
 
-  async listVendas(retryOptions?: RetryOptions) {
-    return this.client.get('/api/v1/farmacia/venda/', VendaSchema.array(), { retryOptions })
+  async listSales(retryOptions?: RetryOptions) {
+    return this.client.get('/api/v1/pharmacy/sale/', PharmacySaleSchema.array(), { retryOptions })
   }
 
-  async createVenda(data: Partial<Venda>, retryOptions?: RetryOptions) {
-    return this.client.post('/api/v1/farmacia/venda/', VendaSchema, data as VendaCreate, {
+  async createSale(data: Partial<PharmacySale>, retryOptions?: RetryOptions) {
+    return this.client.post('/api/v1/pharmacy/sale/', PharmacySaleSchema, data as SaleCreate, {
       retryOptions: { maxRetries: 0, ...retryOptions },
     })
   }
 
-  async updateVenda(id: number, data: Partial<Venda>, retryOptions?: RetryOptions) {
-    return this.client.patch(`/api/v1/farmacia/venda/${id}/`, VendaSchema, data, {
+  async updateSale(id: number, data: Partial<PharmacySale>, retryOptions?: RetryOptions) {
+    return this.client.patch(`/api/v1/pharmacy/sale/${id}/`, PharmacySaleSchema, data, {
       retryOptions: { maxRetries: 0, ...retryOptions },
     })
   }
 
-  async deleteVenda(id: number, retryOptions?: RetryOptions) {
-    return this.client.delete(`/api/v1/farmacia/venda/${id}/`, { retryOptions: { maxRetries: 0, ...retryOptions } })
+  async deleteSale(id: number, retryOptions?: RetryOptions) {
+    return this.client.delete(`/api/v1/pharmacy/sale/${id}/`, { retryOptions: { maxRetries: 0, ...retryOptions } })
   }
 
-  async listItensVenda(retryOptions?: RetryOptions) {
-    return this.client.get('/api/v1/farmacia/itemvenda/', ItemVendaSchema.array(), { retryOptions })
+  async listSaleItems(retryOptions?: RetryOptions) {
+    return this.client.get('/api/v1/pharmacy/sale_item/', PharmacySaleItemSchema.array(), { retryOptions })
   }
 
-  async createItemVenda(data: Partial<ItemVenda>, retryOptions?: RetryOptions) {
-    return this.client.post('/api/v1/farmacia/itemvenda/', ItemVendaSchema, data as ItemVendaCreate, {
+  async createSaleItem(data: Partial<PharmacySaleItem>, retryOptions?: RetryOptions) {
+    return this.client.post('/api/v1/pharmacy/sale_item/', PharmacySaleItemSchema, data as SaleItemCreate, {
       retryOptions: { maxRetries: 0, ...retryOptions },
     })
   }
 
-  async updateItemVenda(id: number, data: Partial<ItemVenda>, retryOptions?: RetryOptions) {
-    return this.client.patch(`/api/v1/farmacia/itemvenda/${id}/`, ItemVendaSchema, data, {
+  async updateSaleItem(id: number, data: Partial<PharmacySaleItem>, retryOptions?: RetryOptions) {
+    return this.client.patch(`/api/v1/pharmacy/sale_item/${id}/`, PharmacySaleItemSchema, data, {
       retryOptions: { maxRetries: 0, ...retryOptions },
     })
   }
 
-  async deleteItemVenda(id: number, retryOptions?: RetryOptions) {
-    return this.client.delete(`/api/v1/farmacia/itemvenda/${id}/`, { retryOptions: { maxRetries: 0, ...retryOptions } })
+  async deleteSaleItem(id: number, retryOptions?: RetryOptions) {
+    return this.client.delete(`/api/v1/pharmacy/sale_item/${id}/`, { retryOptions: { maxRetries: 0, ...retryOptions } })
   }
 }
 

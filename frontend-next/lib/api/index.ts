@@ -103,11 +103,6 @@ function rewriteUrl(url: string): string {
     ["/monitoring", "/monitoramento"],
     ["/reception/checkin", "/recepcao/checkin"],
     ["/reception/atendimento", "/recepcao/atendimento"],
-    ["/pharmacy/produto", "/farmacia/produto"],
-    ["/pharmacy/lote", "/farmacia/lote"],
-    ["/pharmacy/movimentoestoque", "/farmacia/movimentoestoque"],
-    ["/pharmacy/venda", "/farmacia/venda"],
-    ["/pharmacy/itemvenda", "/farmacia/itemvenda"],
   ]
 
   for (const [from, to] of mappings) {

@@ -119,7 +119,7 @@ class ProcedureMaterial(ScopedPositionMixin, NoNameCoreModel):
 
         # Permitimos manter históricos de consumo mesmo após a expiration_date ter passado,
         # mas não permitimos "baixar" estoque de lot já vencido.
-        if self.lot_id and self.lot.vencido and not self.inventory_movement_id:
+        if self.lot_id and self.lot.is_expired and not self.inventory_movement_id:
             raise ValidationError({"lot": "Não é permitido consumir lot vencido."})
 
         if self.pk:
@@ -168,11 +168,11 @@ class ProcedureMaterial(ScopedPositionMixin, NoNameCoreModel):
 
         quantity = self.quantity or 0
 
-        lotes_disponiveis = Lot.disponiveis(self.product)
+        available_lots = Lot.available(self.product)
         if self.tenant_id:
-            lotes_disponiveis = lotes_disponiveis.filter(tenant_id=self.tenant_id)
+            available_lots = available_lots.filter(tenant_id=self.tenant_id)
 
-        lot = lotes_disponiveis.filter(saldo__gte=quantity).first()
+        lot = available_lots.filter(saldo__gte=quantity).first()
         if lot is None:
             raise ValidationError({"product": ("Sem lot válido com saldo suficiente para este material.")})
 
@@ -251,7 +251,7 @@ class ProcedureMaterial(ScopedPositionMixin, NoNameCoreModel):
                 raise ValidationError({"lot": "Lote é obrigatório para baixar estoque do material."})
 
             lot = Lot.objects.select_for_update().get(pk=self.lot_id)
-            if self.quantity > lot.saldo():
+            if self.quantity > lot.balance():
                 raise ValidationError({"quantity": "Estoque insuficiente no lot selecionado."})
 
             movimento = InventoryMovement.objects.create(

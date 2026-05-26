@@ -60,11 +60,24 @@ describe("modules catalog discovery", () => {
   })
 
   it("uses real django admin paths for mapped resources", () => {
-    const move = findModuleResource("pharmacy", "movimentoestoque", MODULES)
-    const lot = findModuleResource("pharmacy", "lote", MODULES)
+    const move = findModuleResource("pharmacy", "inventory_movement", MODULES)
+    const lot = findModuleResource("pharmacy", "lot", MODULES)
 
     expect(move?.resource.adminListHref).toBe("/admin/pharmacy/inventorymovement/")
     expect(lot?.resource.adminListHref).toBe("/admin/pharmacy/lot/")
+  })
+
+  it("exposes pharmacy resources with English technical keys and endpoints", () => {
+    const product = findModuleResource("pharmacy", "product", MODULES)
+    const requisition = findModuleResource("pharmacy", "material_requisition", MODULES)
+    const saleItem = findModuleResource("pharmacy", "sale_item", MODULES)
+
+    expect(product?.resource.label).toBe("Produtos")
+    expect(product?.resource.endpoint).toBe("/pharmacy/product/")
+    expect(requisition?.resource.label).toBe("Requisições de Material")
+    expect(requisition?.resource.endpoint).toBe("/pharmacy/material_requisition/")
+    expect(saleItem?.resource.label).toBe("Itens de Venda")
+    expect(saleItem?.resource.endpoint).toBe("/pharmacy/sale_item/")
   })
 
   it("keeps bloodbank admin shortcuts available in static catalog", () => {

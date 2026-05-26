@@ -19,9 +19,9 @@ describe('typed-client pharmacy & nursing services', () => {
     const payload = [{ id: 1, nome: 'Dipirona', codigo: 'DIP', estoque_atual: 20 }]
     ;(global.fetch as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce(jsonResponse(payload))
 
-    const response = await pharmacyService.listProdutos()
+    const response = await pharmacyService.listProducts()
 
-    expect(String((global.fetch as any).mock.calls[0][0])).toMatch(/\/api\/v1\/farmacia\/produto\/$/)
+    expect(String((global.fetch as any).mock.calls[0][0])).toMatch(/\/api\/v1\/pharmacy\/product\/$/)
     expect(global.fetch).toHaveBeenCalledWith(
       expect.anything(),
       expect.objectContaining({ method: 'GET' })
@@ -33,9 +33,9 @@ describe('typed-client pharmacy & nursing services', () => {
     const created = { id: 10, nome: 'Ibuprofeno', codigo: 'IBU', estoque_atual: 5 }
     ;(global.fetch as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce(jsonResponse(created, 201))
 
-    const response = await pharmacyService.createProduto({ nome: 'Ibuprofeno' })
+    const response = await pharmacyService.createProduct({ nome: 'Ibuprofeno' })
 
-    expect(String((global.fetch as any).mock.calls[0][0])).toMatch(/\/api\/v1\/farmacia\/produto\/$/)
+    expect(String((global.fetch as any).mock.calls[0][0])).toMatch(/\/api\/v1\/pharmacy\/product\/$/)
     expect(global.fetch).toHaveBeenCalledWith(
       expect.anything(),
       expect.objectContaining({

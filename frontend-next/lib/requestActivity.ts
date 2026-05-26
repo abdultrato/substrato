@@ -150,7 +150,7 @@ function resolveTask(path: string): TaskDescriptor {
       },
     },
     {
-      match: /\/pharmacy\/requisicaomaterial\//,
+      match: /\/pharmacy\/material_requisition\//,
       task: {
         label: "requisições de materiais",
         detail: "Estamos a validar disponibilidade e estado de avio de materiais.",
@@ -164,14 +164,14 @@ function resolveTask(path: string): TaskDescriptor {
       },
     },
     {
-      match: /\/pharmacy\/produto\//,
+      match: /\/pharmacy\/product\//,
       task: {
         label: "produtos da farmácia",
         detail: "Estamos a carregar catálogo, preços e estado de stock.",
       },
     },
     {
-      match: /\/pharmacy\/movimentoestoque\//,
+      match: /\/pharmacy\/inventory_movement\//,
       task: {
         label: "movimentos de stock",
         detail: "Estamos a atualizar entradas, saídas e saldo de stock.",

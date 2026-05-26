@@ -6,4 +6,3 @@ export type SessionTokenRefresh = {
     refresh: string;
     readonly access?: string;
 };
-

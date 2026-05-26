@@ -1,9 +1,9 @@
 import { describe, it, expect } from 'vitest'
 import {
-  LoteSchema,
-  MovimentoEstoqueSchema,
-  VendaSchema,
-  ItemVendaSchema,
+  PharmacyLotSchema,
+  PharmacyInventoryMovementSchema,
+  PharmacySaleSchema,
+  PharmacySaleItemSchema,
   InternamentoEnfermariaSchema,
 } from '@/lib/validators/schemas'
 
@@ -12,15 +12,15 @@ const baseMeta = {
 }
 
 describe('Schemas Farmácia', () => {
-  it('LoteSchema deve exigir campos obrigatórios', () => {
-    const result = LoteSchema.safeParse({})
+  it('PharmacyLotSchema deve exigir campos obrigatórios', () => {
+    const result = PharmacyLotSchema.safeParse({})
     expect(result.success).toBe(false)
     const paths = (result.error?.issues || []).map(i => i.path.join('.'))
     expect(paths).toEqual(expect.arrayContaining(['nome', 'numero_lote', 'quantidade_inicial', 'inquilino', 'produto']))
   })
 
-  it('LoteSchema aceita payload mínimo válido', () => {
-    const result = LoteSchema.safeParse({
+  it('PharmacyLotSchema aceita payload mínimo válido', () => {
+    const result = PharmacyLotSchema.safeParse({
       ...baseMeta,
       nome: 'Lote X',
       numero_lote: 'ABC123',
@@ -31,8 +31,8 @@ describe('Schemas Farmácia', () => {
     expect(result.success).toBe(true)
   })
 
-  it('MovimentoEstoqueSchema exige tipo, quantidade, lote', () => {
-    const res = MovimentoEstoqueSchema.safeParse({
+  it('PharmacyInventoryMovementSchema exige tipo, quantidade, lote', () => {
+    const res = PharmacyInventoryMovementSchema.safeParse({
       ...baseMeta,
       nome: 'Saída venda 1',
       tipo: 'SAI',
@@ -41,23 +41,23 @@ describe('Schemas Farmácia', () => {
     })
     expect(res.success).toBe(true)
 
-    const invalid = MovimentoEstoqueSchema.safeParse({})
+    const invalid = PharmacyInventoryMovementSchema.safeParse({})
     expect(invalid.success).toBe(false)
   })
 
-  it('VendaSchema exige numero e inquilino', () => {
-    const ok = VendaSchema.safeParse({
+  it('PharmacySaleSchema exige numero e inquilino', () => {
+    const ok = PharmacySaleSchema.safeParse({
       ...baseMeta,
       numero: 'V-001',
     })
     expect(ok.success).toBe(true)
 
-    const fail = VendaSchema.safeParse({})
+    const fail = PharmacySaleSchema.safeParse({})
     expect(fail.success).toBe(false)
   })
 
-  it('ItemVendaSchema exige nome, quantidade, venda e produto', () => {
-    const ok = ItemVendaSchema.safeParse({
+  it('PharmacySaleItemSchema exige nome, quantidade, venda e produto', () => {
+    const ok = PharmacySaleItemSchema.safeParse({
       ...baseMeta,
       nome: 'Paracetamol',
       quantidade: 1,
@@ -66,7 +66,7 @@ describe('Schemas Farmácia', () => {
     })
     expect(ok.success).toBe(true)
 
-    const fail = ItemVendaSchema.safeParse({})
+    const fail = PharmacySaleItemSchema.safeParse({})
     expect(fail.success).toBe(false)
   })
 

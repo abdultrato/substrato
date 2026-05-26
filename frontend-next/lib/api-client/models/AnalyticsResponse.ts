@@ -2,17 +2,31 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-import type { AnalyticsRange } from './AnalyticsRange';
-import type { AnalyticsTopConsulta } from './AnalyticsTopConsulta';
-import type { AnalyticsTopExame } from './AnalyticsTopExame';
-import type { AnalyticsTopMedicamento } from './AnalyticsTopMedicamento';
-import type { AnalyticsTopProcedimento } from './AnalyticsTopProcedimento';
 export type AnalyticsResponse = {
-    range: AnalyticsRange;
+    range: {
+        inicio?: string | null;
+        fim?: string | null;
+    };
     kpis: Record<string, any>;
-    top_exames: Array<AnalyticsTopExame>;
-    top_procedimentos: Array<AnalyticsTopProcedimento>;
-    top_medicamentos: Array<AnalyticsTopMedicamento>;
-    top_consultas: Array<AnalyticsTopConsulta>;
+    top_exams: Array<{
+        type: string;
+        id?: number | null;
+        name: string;
+        total: number;
+    }>;
+    top_procedures: Array<{
+        catalog_id?: number | null;
+        catalog__name?: string;
+        total: number;
+    }>;
+    top_medicamentos: Array<{
+        product_id?: number | null;
+        product__name?: string;
+        total_quantity: string;
+        total_pedidos: number;
+    }>;
+    top_consultations: Array<{
+        type?: string;
+        total: number;
+    }>;
 };
-

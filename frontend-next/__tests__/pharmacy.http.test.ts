@@ -13,7 +13,7 @@ describe('PharmacyService HTTP', () => {
     fetchMock.mockReset()
   })
 
-  it('createLote retorna dado validado em 201', async () => {
+  it('createLot retorna dado validado em 201', async () => {
     const body = {
       id: 1,
       nome: 'Lote X',
@@ -28,7 +28,7 @@ describe('PharmacyService HTTP', () => {
       new Response(JSON.stringify(body), { status: 201, headers: { 'Content-Type': 'application/json' } })
     )
 
-    const res = await service.createLote(
+    const res = await service.createLot(
       {
         nome: body.nome,
         numero_lote: body.numero_lote,
@@ -45,7 +45,7 @@ describe('PharmacyService HTTP', () => {
     expect(res.data.nome).toBe(body.nome)
   })
 
-  it('createLote propaga ApiError em 404', async () => {
+  it('createLot propaga ApiError em 404', async () => {
     fetchMock.mockResolvedValueOnce(
       new Response(
         JSON.stringify({
@@ -60,7 +60,7 @@ describe('PharmacyService HTTP', () => {
     )
 
     await expect(
-      service.createLote(
+      service.createLot(
         {
           nome: 'Lote X',
           numero_lote: 'ABC123',
@@ -74,7 +74,7 @@ describe('PharmacyService HTTP', () => {
     ).rejects.toBeInstanceOf(ApiError)
   })
 
-  it('createItemVenda retorna ApiError em 400 validation', async () => {
+  it('createSaleItem retorna ApiError em 400 validation', async () => {
     fetchMock.mockResolvedValueOnce(
       new Response(
         JSON.stringify({
@@ -90,7 +90,7 @@ describe('PharmacyService HTTP', () => {
     )
 
     await expect(
-      service.createItemVenda(
+      service.createSaleItem(
         {
           nome: 'Item',
           // falta quantidade para provocar 400

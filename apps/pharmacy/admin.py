@@ -371,7 +371,7 @@ class LotAdmin(admin.ModelAdmin):
 
     def vencido_status(self, obj):
 
-        if obj.vencido:
+        if obj.is_expired:
             return format_html(
                 "<span style='color:{};font-weight:bold'>{}</span>",
                 "red",
@@ -538,7 +538,7 @@ class SaleItemInlineFormSet(BaseInlineFormSet):
 
             # Disponível por produto somando lotes não vencidos (FEFO helper)
             available = 0
-            for lot in Lot.disponiveis(product):
+            for lot in Lot.available(product):
                 saldo = getattr(lot, "saldo", None)
                 if callable(saldo):
                     saldo = saldo()

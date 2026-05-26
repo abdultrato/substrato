@@ -88,9 +88,9 @@ export default function NovaRequisicaoMateriaisPage() {
         setLoadingLots(true)
         setError(null)
         const [availableRes, allLotsRes, requesterContextRes] = await Promise.all([
-          apiFetch<any>("/pharmacy/lot/disponiveis/"),
+          apiFetch<any>("/pharmacy/lot/available/"),
           apiFetchAll<LotDisponivel>("/pharmacy/lot/", { pageSize: 200, maxPages: 25 }),
-          apiFetch<RequesterContextResponse>("/pharmacy/requisicaomaterial/requester_context/"),
+          apiFetch<RequesterContextResponse>("/pharmacy/material_requisition/requester-context/"),
         ])
         if (!mounted) return
         setLots(extractResults<LotDisponivel>(availableRes))
@@ -178,7 +178,7 @@ export default function NovaRequisicaoMateriaisPage() {
 
     try {
       setSubmitting(true)
-      const res = await apiFetch<any>("/pharmacy/requisicaomaterial/", {
+      const res = await apiFetch<any>("/pharmacy/material_requisition/", {
         method: "POST",
         body: JSON.stringify({ sector: requesterSector, items_input: payloadItems }),
       })

@@ -6,7 +6,7 @@ import { GeneratedResourceEditPage } from "@/components/resources/GeneratedResou
 export default function InventoryMovementsEditPage() {
   return (
     <Suspense fallback={<div className="p-4 text-sm text-[var(--gray-500)]">Carregando...</div>}>
-      <GeneratedResourceEditPage endpoint="/pharmacy/inventory-movements/" />
+      <GeneratedResourceEditPage endpoint="/pharmacy/inventory_movement/" />
     </Suspense>
   );
 }

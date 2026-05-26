@@ -3878,7 +3878,7 @@ def test_ai_pharmacy_crud_creates_updates_and_deletes_stock_resources(api_client
         'Crie movimento de estoque da farmácia {"lote":"LOT-CRUD-001","tipo":"entrada","origem":"ajuste","quantidade":3}',
     )
 
-    assert movement_action.payload["basename"] == "pharmacy-movimentoestoque"
+    assert movement_action.payload["basename"] == "pharmacy-inventory_movement"
     assert movement_action.payload["data"]["lot"] == lot.id
     assert movement_action.payload["data"]["type"] == MovementType.ENTRADA
     assert movement_action.payload["data"]["origin"] == MovementOrigin.AJUSTE
@@ -3892,7 +3892,7 @@ def test_ai_pharmacy_crud_creates_updates_and_deletes_stock_resources(api_client
         action_type="ai_crud_update",
     )
 
-    assert movement_update_action.payload["basename"] == "pharmacy-movimentoestoque"
+    assert movement_update_action.payload["basename"] == "pharmacy-inventory_movement"
     assert movement_update_action.payload["data"]["quantity"] == 4
     _confirm_ai_action(api_client, movement_update_action)
     movement.refresh_from_db()
@@ -3938,7 +3938,7 @@ def test_ai_pharmacy_crud_creates_sale_and_sale_item_with_fefo_stock(api_client)
         'Crie item de venda {"venda":"SALE-AI-001","produto":"Paracetamol IA","quantidade":2}',
     )
 
-    assert item_action.payload["basename"] == "pharmacy-itemvenda"
+    assert item_action.payload["basename"] == "pharmacy-sale_item"
     assert item_action.payload["data"]["sale"] == sale.id
     assert item_action.payload["data"]["product"] == product.id
     _confirm_ai_action(api_client, item_action)
@@ -3955,7 +3955,7 @@ def test_ai_pharmacy_crud_creates_sale_and_sale_item_with_fefo_stock(api_client)
         action_type="ai_crud_update",
     )
 
-    assert update_action.payload["basename"] == "pharmacy-itemvenda"
+    assert update_action.payload["basename"] == "pharmacy-sale_item"
     assert update_action.payload["data"]["quantity"] == 3
     _confirm_ai_action(api_client, update_action)
     item.refresh_from_db()
@@ -3991,7 +3991,7 @@ def test_ai_pharmacy_crud_creates_material_requisition_with_nested_items(api_cli
         'Crie requisição de material {"itens":[{"lote":"REQLOT-AI-001","quantidade_solicitada":4,"observacoes":"Uso em enfermaria"}]}',
     )
 
-    assert requisition_action.payload["basename"] == "pharmacy-requisicaomaterial"
+    assert requisition_action.payload["basename"] == "pharmacy-material_requisition"
     assert requisition_action.payload["data"]["items_input"][0]["lote"] == "REQLOT-AI-001"
     _confirm_ai_action(api_client, requisition_action)
     requisition = MaterialRequisition.objects.get(tenant=tenant, sector=RequestingSector.ENFERMAGEM)
@@ -4009,7 +4009,7 @@ def test_ai_pharmacy_crud_creates_material_requisition_with_nested_items(api_cli
         ),
     )
 
-    assert item_action.payload["basename"] == "pharmacy-requisicaomaterialitem"
+    assert item_action.payload["basename"] == "pharmacy-material_requisition_item"
     assert item_action.payload["data"]["requisition"] == requisition.id
     assert item_action.payload["data"]["lot"] == other_lot.id
     _confirm_ai_action(api_client, item_action)
@@ -4022,7 +4022,7 @@ def test_ai_pharmacy_crud_creates_material_requisition_with_nested_items(api_cli
         action_type="ai_crud_update",
     )
 
-    assert item_update_action.payload["basename"] == "pharmacy-requisicaomaterialitem"
+    assert item_update_action.payload["basename"] == "pharmacy-material_requisition_item"
     assert item_update_action.payload["data"]["notes"] == "Complemento actualizado"
     _confirm_ai_action(api_client, item_update_action)
     direct_item.refresh_from_db()
@@ -4034,7 +4034,7 @@ def test_ai_pharmacy_crud_creates_material_requisition_with_nested_items(api_cli
         action_type="ai_crud_delete",
     )
 
-    assert item_delete_action.payload["basename"] == "pharmacy-requisicaomaterialitem"
+    assert item_delete_action.payload["basename"] == "pharmacy-material_requisition_item"
     _confirm_ai_action(api_client, item_delete_action)
     assert MaterialRequisitionItem.all_objects.get(id=direct_item.id).deleted is True
 

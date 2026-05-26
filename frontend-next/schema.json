@@ -14844,9 +14844,9 @@
         ]
       }
     },
-    "/api/v1/pharmacy/itemvenda/": {
+    "/api/v1/pharmacy/inventory_movement/": {
       "get": {
-        "operationId": "listSaleItems",
+        "operationId": "listInventoryMovements",
         "description": "",
         "parameters": [
           {
@@ -14875,7 +14875,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/SaleItem"
+                    "$ref": "#/components/schemas/InventoryMovement"
                   }
                 }
               }
@@ -14888,24 +14888,24 @@
         ]
       },
       "post": {
-        "operationId": "createSaleItem",
+        "operationId": "createInventoryMovement",
         "description": "",
         "parameters": [],
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/SaleItem"
+                "$ref": "#/components/schemas/InventoryMovement"
               }
             },
             "application/x-www-form-urlencoded": {
               "schema": {
-                "$ref": "#/components/schemas/SaleItem"
+                "$ref": "#/components/schemas/InventoryMovement"
               }
             },
             "multipart/form-data": {
               "schema": {
-                "$ref": "#/components/schemas/SaleItem"
+                "$ref": "#/components/schemas/InventoryMovement"
               }
             }
           }
@@ -14915,7 +14915,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SaleItem"
+                  "$ref": "#/components/schemas/InventoryMovement"
                 }
               }
             },
@@ -14927,16 +14927,38 @@
         ]
       }
     },
-    "/api/v1/pharmacy/itemvenda/{id}/": {
+    "/api/v1/pharmacy/inventory_movement/history/pdf/": {
       "get": {
-        "operationId": "retrieveSaleItem",
+        "operationId": "historyPdfInventoryMovement",
+        "description": "Gera PDF de hist\u00f3rico de entradas/sa\u00eddas/ajustes.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventoryMovement"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      }
+    },
+    "/api/v1/pharmacy/inventory_movement/{id}/": {
+      "get": {
+        "operationId": "retrieveInventoryMovement",
         "description": "",
         "parameters": [
           {
             "name": "id",
             "in": "path",
             "required": true,
-            "description": "A unique integer value identifying this Item de Venda.",
+            "description": "A unique integer value identifying this Movimento de estoque.",
             "schema": {
               "type": "string"
             }
@@ -14965,7 +14987,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SaleItem"
+                  "$ref": "#/components/schemas/InventoryMovement"
                 }
               }
             },
@@ -14977,14 +14999,14 @@
         ]
       },
       "put": {
-        "operationId": "updateSaleItem",
+        "operationId": "updateInventoryMovement",
         "description": "",
         "parameters": [
           {
             "name": "id",
             "in": "path",
             "required": true,
-            "description": "A unique integer value identifying this Item de Venda.",
+            "description": "A unique integer value identifying this Movimento de estoque.",
             "schema": {
               "type": "string"
             }
@@ -15012,17 +15034,17 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/SaleItem"
+                "$ref": "#/components/schemas/InventoryMovement"
               }
             },
             "application/x-www-form-urlencoded": {
               "schema": {
-                "$ref": "#/components/schemas/SaleItem"
+                "$ref": "#/components/schemas/InventoryMovement"
               }
             },
             "multipart/form-data": {
               "schema": {
-                "$ref": "#/components/schemas/SaleItem"
+                "$ref": "#/components/schemas/InventoryMovement"
               }
             }
           }
@@ -15032,7 +15054,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SaleItem"
+                  "$ref": "#/components/schemas/InventoryMovement"
                 }
               }
             },
@@ -15044,14 +15066,14 @@
         ]
       },
       "patch": {
-        "operationId": "partialUpdateSaleItem",
+        "operationId": "partialUpdateInventoryMovement",
         "description": "",
         "parameters": [
           {
             "name": "id",
             "in": "path",
             "required": true,
-            "description": "A unique integer value identifying this Item de Venda.",
+            "description": "A unique integer value identifying this Movimento de estoque.",
             "schema": {
               "type": "string"
             }
@@ -15079,17 +15101,17 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/SaleItem"
+                "$ref": "#/components/schemas/InventoryMovement"
               }
             },
             "application/x-www-form-urlencoded": {
               "schema": {
-                "$ref": "#/components/schemas/SaleItem"
+                "$ref": "#/components/schemas/InventoryMovement"
               }
             },
             "multipart/form-data": {
               "schema": {
-                "$ref": "#/components/schemas/SaleItem"
+                "$ref": "#/components/schemas/InventoryMovement"
               }
             }
           }
@@ -15099,7 +15121,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SaleItem"
+                  "$ref": "#/components/schemas/InventoryMovement"
                 }
               }
             },
@@ -15111,14 +15133,14 @@
         ]
       },
       "delete": {
-        "operationId": "destroySaleItem",
+        "operationId": "destroyInventoryMovement",
         "description": "",
         "parameters": [
           {
             "name": "id",
             "in": "path",
             "required": true,
-            "description": "A unique integer value identifying this Item de Venda.",
+            "description": "A unique integer value identifying this Movimento de estoque.",
             "schema": {
               "type": "string"
             }
@@ -15235,9 +15257,9 @@
         ]
       }
     },
-    "/api/v1/pharmacy/lot/disponiveis/": {
+    "/api/v1/pharmacy/lot/available/": {
       "get": {
-        "operationId": "disponiveisLot",
+        "operationId": "availableLot",
         "description": "Lista lotes FEFO com saldo > 0 e n\u00e3o vencidos.\n\u00datil para cria\u00e7\u00e3o de requisi\u00e7\u00f5es internas (log\u00edstica).",
         "parameters": [],
         "responses": {
@@ -15257,7 +15279,7 @@
         ]
       }
     },
-    "/api/v1/pharmacy/lot/estoque/pdf/": {
+    "/api/v1/pharmacy/lot/stock/pdf/": {
       "get": {
         "operationId": "stockPdfLot",
         "description": "Gera PDF do estoque existente (ass\u00edncrono).",
@@ -15504,733 +15526,7 @@
         ]
       }
     },
-    "/api/v1/pharmacy/movimentoestoque/": {
-      "get": {
-        "operationId": "listInventoryMovements",
-        "description": "",
-        "parameters": [
-          {
-            "name": "search",
-            "required": false,
-            "in": "query",
-            "description": "A search term.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "ordering",
-            "required": false,
-            "in": "query",
-            "description": "Which field to use when ordering the results.",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/InventoryMovement"
-                  }
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "tags": [
-          "api"
-        ]
-      },
-      "post": {
-        "operationId": "createInventoryMovement",
-        "description": "",
-        "parameters": [],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/InventoryMovement"
-              }
-            },
-            "application/x-www-form-urlencoded": {
-              "schema": {
-                "$ref": "#/components/schemas/InventoryMovement"
-              }
-            },
-            "multipart/form-data": {
-              "schema": {
-                "$ref": "#/components/schemas/InventoryMovement"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/InventoryMovement"
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "tags": [
-          "api"
-        ]
-      }
-    },
-    "/api/v1/pharmacy/movimentoestoque/historico/pdf/": {
-      "get": {
-        "operationId": "historyPdfInventoryMovement",
-        "description": "Gera PDF de hist\u00f3rico de entradas/sa\u00eddas/ajustes.",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/InventoryMovement"
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "tags": [
-          "api"
-        ]
-      }
-    },
-    "/api/v1/pharmacy/movimentoestoque/{id}/": {
-      "get": {
-        "operationId": "retrieveInventoryMovement",
-        "description": "",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "description": "A unique integer value identifying this Movimento de estoque.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "search",
-            "required": false,
-            "in": "query",
-            "description": "A search term.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "ordering",
-            "required": false,
-            "in": "query",
-            "description": "Which field to use when ordering the results.",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/InventoryMovement"
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "tags": [
-          "api"
-        ]
-      },
-      "put": {
-        "operationId": "updateInventoryMovement",
-        "description": "",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "description": "A unique integer value identifying this Movimento de estoque.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "search",
-            "required": false,
-            "in": "query",
-            "description": "A search term.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "ordering",
-            "required": false,
-            "in": "query",
-            "description": "Which field to use when ordering the results.",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/InventoryMovement"
-              }
-            },
-            "application/x-www-form-urlencoded": {
-              "schema": {
-                "$ref": "#/components/schemas/InventoryMovement"
-              }
-            },
-            "multipart/form-data": {
-              "schema": {
-                "$ref": "#/components/schemas/InventoryMovement"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/InventoryMovement"
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "tags": [
-          "api"
-        ]
-      },
-      "patch": {
-        "operationId": "partialUpdateInventoryMovement",
-        "description": "",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "description": "A unique integer value identifying this Movimento de estoque.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "search",
-            "required": false,
-            "in": "query",
-            "description": "A search term.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "ordering",
-            "required": false,
-            "in": "query",
-            "description": "Which field to use when ordering the results.",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/InventoryMovement"
-              }
-            },
-            "application/x-www-form-urlencoded": {
-              "schema": {
-                "$ref": "#/components/schemas/InventoryMovement"
-              }
-            },
-            "multipart/form-data": {
-              "schema": {
-                "$ref": "#/components/schemas/InventoryMovement"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/InventoryMovement"
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "tags": [
-          "api"
-        ]
-      },
-      "delete": {
-        "operationId": "destroyInventoryMovement",
-        "description": "",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "description": "A unique integer value identifying this Movimento de estoque.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "search",
-            "required": false,
-            "in": "query",
-            "description": "A search term.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "ordering",
-            "required": false,
-            "in": "query",
-            "description": "Which field to use when ordering the results.",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": ""
-          }
-        },
-        "tags": [
-          "api"
-        ]
-      }
-    },
-    "/api/v1/pharmacy/product/": {
-      "get": {
-        "operationId": "listProducts",
-        "description": "",
-        "parameters": [
-          {
-            "name": "search",
-            "required": false,
-            "in": "query",
-            "description": "A search term.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "ordering",
-            "required": false,
-            "in": "query",
-            "description": "Which field to use when ordering the results.",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/Product"
-                  }
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "tags": [
-          "api"
-        ]
-      },
-      "post": {
-        "operationId": "createProduct",
-        "description": "",
-        "parameters": [],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/Product"
-              }
-            },
-            "application/x-www-form-urlencoded": {
-              "schema": {
-                "$ref": "#/components/schemas/Product"
-              }
-            },
-            "multipart/form-data": {
-              "schema": {
-                "$ref": "#/components/schemas/Product"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Product"
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "tags": [
-          "api"
-        ]
-      }
-    },
-    "/api/v1/pharmacy/product/menos_requisitados/pdf/": {
-      "get": {
-        "operationId": "leastRequestedProductsPdfProduct",
-        "description": "PDF com os produtos menos requisitados (baseado em requisi\u00e7\u00f5es de material).",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Product"
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "tags": [
-          "api"
-        ]
-      }
-    },
-    "/api/v1/pharmacy/product/mais_requisitados/pdf/": {
-      "get": {
-        "operationId": "mostRequestedProductsPdfProduct",
-        "description": "PDF com os produtos mais requisitados (baseado em requisi\u00e7\u00f5es de material).",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Product"
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "tags": [
-          "api"
-        ]
-      }
-    },
-    "/api/v1/pharmacy/product/consumo/pdf/": {
-      "get": {
-        "operationId": "productConsumptionPdfProduct",
-        "description": "PDF de consumo farmac\u00eautico consolidado por produto.",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Product"
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "tags": [
-          "api"
-        ]
-      }
-    },
-    "/api/v1/pharmacy/product/setores_requisicao/pdf/": {
-      "get": {
-        "operationId": "productSectorDemandPdfProduct",
-        "description": "PDF com os setores que mais requisitaram um produto espec\u00edfico.",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Product"
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "tags": [
-          "api"
-        ]
-      }
-    },
-    "/api/v1/pharmacy/product/{id}/": {
-      "get": {
-        "operationId": "retrieveProduct",
-        "description": "",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "description": "A unique integer value identifying this Produto.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "search",
-            "required": false,
-            "in": "query",
-            "description": "A search term.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "ordering",
-            "required": false,
-            "in": "query",
-            "description": "Which field to use when ordering the results.",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Product"
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "tags": [
-          "api"
-        ]
-      },
-      "put": {
-        "operationId": "updateProduct",
-        "description": "",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "description": "A unique integer value identifying this Produto.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "search",
-            "required": false,
-            "in": "query",
-            "description": "A search term.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "ordering",
-            "required": false,
-            "in": "query",
-            "description": "Which field to use when ordering the results.",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/Product"
-              }
-            },
-            "application/x-www-form-urlencoded": {
-              "schema": {
-                "$ref": "#/components/schemas/Product"
-              }
-            },
-            "multipart/form-data": {
-              "schema": {
-                "$ref": "#/components/schemas/Product"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Product"
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "tags": [
-          "api"
-        ]
-      },
-      "patch": {
-        "operationId": "partialUpdateProduct",
-        "description": "",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "description": "A unique integer value identifying this Produto.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "search",
-            "required": false,
-            "in": "query",
-            "description": "A search term.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "ordering",
-            "required": false,
-            "in": "query",
-            "description": "Which field to use when ordering the results.",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/Product"
-              }
-            },
-            "application/x-www-form-urlencoded": {
-              "schema": {
-                "$ref": "#/components/schemas/Product"
-              }
-            },
-            "multipart/form-data": {
-              "schema": {
-                "$ref": "#/components/schemas/Product"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Product"
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "tags": [
-          "api"
-        ]
-      },
-      "delete": {
-        "operationId": "destroyProduct",
-        "description": "",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "description": "A unique integer value identifying this Produto.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "search",
-            "required": false,
-            "in": "query",
-            "description": "A search term.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "ordering",
-            "required": false,
-            "in": "query",
-            "description": "Which field to use when ordering the results.",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": ""
-          }
-        },
-        "tags": [
-          "api"
-        ]
-      }
-    },
-    "/api/v1/pharmacy/requisicaomaterial/": {
+    "/api/v1/pharmacy/material_requisition/": {
       "get": {
         "operationId": "listMaterialRequisitions",
         "description": "",
@@ -16313,7 +15609,29 @@
         ]
       }
     },
-    "/api/v1/pharmacy/requisicaomaterial/requester_context/": {
+    "/api/v1/pharmacy/material_requisition/movement-history/pdf/": {
+      "get": {
+        "operationId": "movementHistoryPdfMaterialRequisition",
+        "description": "PDF de movimentos de insumos por setor solicitante.\nUso principal: equipe da farm\u00e1cia.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaterialRequisition"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      }
+    },
+    "/api/v1/pharmacy/material_requisition/requester-context/": {
       "get": {
         "operationId": "requesterContextMaterialRequisition",
         "description": "",
@@ -16335,29 +15653,7 @@
         ]
       }
     },
-    "/api/v1/pharmacy/requisicaomaterial/historico_movimentos/pdf/": {
-      "get": {
-        "operationId": "sectorMovementsPdfMaterialRequisition",
-        "description": "PDF de movimentos de insumos por setor solicitante.\nUso principal: equipe da farm\u00e1cia.",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/MaterialRequisition"
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "tags": [
-          "api"
-        ]
-      }
-    },
-    "/api/v1/pharmacy/requisicaomaterial/{id}/": {
+    "/api/v1/pharmacy/material_requisition/{id}/": {
       "get": {
         "operationId": "retrieveMaterialRequisition",
         "description": "",
@@ -16582,7 +15878,7 @@
         ]
       }
     },
-    "/api/v1/pharmacy/requisicaomaterialitem/": {
+    "/api/v1/pharmacy/material_requisition_item/": {
       "get": {
         "operationId": "listMaterialRequisitionItems",
         "description": "",
@@ -16665,7 +15961,7 @@
         ]
       }
     },
-    "/api/v1/pharmacy/requisicaomaterialitem/{id}/": {
+    "/api/v1/pharmacy/material_requisition_item/{id}/": {
       "get": {
         "operationId": "retrieveMaterialRequisitionItem",
         "description": "",
@@ -16857,6 +16153,402 @@
             "in": "path",
             "required": true,
             "description": "A unique integer value identifying this Item da requisi\u00e7\u00e3o de material.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "A search term.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Which field to use when ordering the results.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      }
+    },
+    "/api/v1/pharmacy/product/": {
+      "get": {
+        "operationId": "listProducts",
+        "description": "",
+        "parameters": [
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "A search term.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Which field to use when ordering the results.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Product"
+                  }
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      },
+      "post": {
+        "operationId": "createProduct",
+        "description": "",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Product"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/Product"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Product"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Product"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      }
+    },
+    "/api/v1/pharmacy/product/least-requested/pdf/": {
+      "get": {
+        "operationId": "leastRequestedProductsPdfProduct",
+        "description": "PDF com os produtos menos requisitados (baseado em requisi\u00e7\u00f5es de material).",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Product"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      }
+    },
+    "/api/v1/pharmacy/product/most-requested/pdf/": {
+      "get": {
+        "operationId": "mostRequestedProductsPdfProduct",
+        "description": "PDF com os produtos mais requisitados (baseado em requisi\u00e7\u00f5es de material).",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Product"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      }
+    },
+    "/api/v1/pharmacy/product/consumption/pdf/": {
+      "get": {
+        "operationId": "productConsumptionPdfProduct",
+        "description": "PDF de consumo farmac\u00eautico consolidado por produto.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Product"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      }
+    },
+    "/api/v1/pharmacy/product/request-sectors/pdf/": {
+      "get": {
+        "operationId": "productSectorDemandPdfProduct",
+        "description": "PDF com os setores que mais requisitaram um produto espec\u00edfico.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Product"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      }
+    },
+    "/api/v1/pharmacy/product/{id}/": {
+      "get": {
+        "operationId": "retrieveProduct",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "A unique integer value identifying this Produto.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "A search term.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Which field to use when ordering the results.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Product"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      },
+      "put": {
+        "operationId": "updateProduct",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "A unique integer value identifying this Produto.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "A search term.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Which field to use when ordering the results.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Product"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/Product"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Product"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Product"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      },
+      "patch": {
+        "operationId": "partialUpdateProduct",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "A unique integer value identifying this Produto.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "A search term.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Which field to use when ordering the results.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Product"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/Product"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Product"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Product"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      },
+      "delete": {
+        "operationId": "destroyProduct",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "A unique integer value identifying this Produto.",
             "schema": {
               "type": "string"
             }
@@ -17165,6 +16857,314 @@
             "in": "path",
             "required": true,
             "description": "A unique integer value identifying this Venda.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "A search term.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Which field to use when ordering the results.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      }
+    },
+    "/api/v1/pharmacy/sale_item/": {
+      "get": {
+        "operationId": "listSaleItems",
+        "description": "",
+        "parameters": [
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "A search term.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Which field to use when ordering the results.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SaleItem"
+                  }
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      },
+      "post": {
+        "operationId": "createSaleItem",
+        "description": "",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaleItem"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/SaleItem"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/SaleItem"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SaleItem"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      }
+    },
+    "/api/v1/pharmacy/sale_item/{id}/": {
+      "get": {
+        "operationId": "retrieveSaleItem",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "A unique integer value identifying this Item de Venda.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "A search term.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Which field to use when ordering the results.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SaleItem"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      },
+      "put": {
+        "operationId": "updateSaleItem",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "A unique integer value identifying this Item de Venda.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "A search term.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Which field to use when ordering the results.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaleItem"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/SaleItem"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/SaleItem"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SaleItem"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      },
+      "patch": {
+        "operationId": "partialUpdateSaleItem",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "A unique integer value identifying this Item de Venda.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "A search term.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Which field to use when ordering the results.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaleItem"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/SaleItem"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/SaleItem"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SaleItem"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      },
+      "delete": {
+        "operationId": "destroySaleItem",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "A unique integer value identifying this Item de Venda.",
             "schema": {
               "type": "string"
             }
@@ -47498,9 +47498,9 @@
         ]
       }
     },
-    "/api/v1/pharmacy/requisicaomaterial/{id}/aviar/": {
+    "/api/v1/pharmacy/material_requisition/{id}/archive/": {
       "post": {
-        "operationId": "fulfillMaterialRequisition",
+        "operationId": "archiveMaterialRequisition",
         "description": "",
         "parameters": [
           {
@@ -47549,9 +47549,9 @@
         ]
       }
     },
-    "/api/v1/pharmacy/requisicaomaterial/{id}/arquivar/": {
+    "/api/v1/pharmacy/material_requisition/{id}/fulfill/": {
       "post": {
-        "operationId": "onHoldMaterialRequisition",
+        "operationId": "fulfillMaterialRequisition",
         "description": "",
         "parameters": [
           {
@@ -55835,7 +55835,7 @@
           "name"
         ]
       },
-      "SaleItem": {
+      "InventoryMovement": {
         "type": "object",
         "properties": {
           "id": {
@@ -55875,20 +55875,26 @@
             "type": "string",
             "maxLength": 120
           },
-          "position": {
-            "type": "integer"
+          "type": {
+            "enum": [
+              "ENT",
+              "SAI",
+              "AJU"
+            ],
+            "type": "string"
+          },
+          "origin": {
+            "enum": [
+              "VEND",
+              "PROC",
+              "AJUS",
+              "REQ"
+            ],
+            "type": "string"
           },
           "quantity": {
             "type": "integer",
             "minimum": 1
-          },
-          "unit_price": {
-            "type": "string",
-            "format": "decimal",
-            "multipleOf": 0.01,
-            "maximum": 1000000000000,
-            "minimum": -1000000000000,
-            "readOnly": true
           },
           "created_by": {
             "type": "string",
@@ -55909,17 +55915,22 @@
             "type": "string",
             "readOnly": true
           },
-          "sale": {
+          "lot": {
             "type": "integer"
           },
-          "product": {
-            "type": "integer"
+          "sale_item": {
+            "type": "integer",
+            "nullable": true
+          },
+          "material_request_item": {
+            "type": "integer",
+            "nullable": true
           }
         },
         "required": [
+          "type",
           "quantity",
-          "sale",
-          "product"
+          "lot"
         ]
       },
       "Lot": {
@@ -56020,199 +56031,6 @@
           "expiration_date",
           "initial_quantity",
           "product"
-        ]
-      },
-      "InventoryMovement": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "integer",
-            "readOnly": true
-          },
-          "created_at": {
-            "type": "string",
-            "format": "date-time",
-            "readOnly": true
-          },
-          "updated_at": {
-            "type": "string",
-            "format": "date-time",
-            "readOnly": true
-          },
-          "custom_id": {
-            "type": "string",
-            "readOnly": true,
-            "nullable": true
-          },
-          "deleted": {
-            "type": "boolean",
-            "readOnly": true
-          },
-          "deleted_at": {
-            "type": "string",
-            "format": "date-time",
-            "readOnly": true,
-            "nullable": true
-          },
-          "version": {
-            "type": "integer",
-            "readOnly": true
-          },
-          "name": {
-            "type": "string",
-            "maxLength": 120
-          },
-          "type": {
-            "enum": [
-              "ENT",
-              "SAI",
-              "AJU"
-            ],
-            "type": "string"
-          },
-          "origin": {
-            "enum": [
-              "VEND",
-              "PROC",
-              "AJUS",
-              "REQ"
-            ],
-            "type": "string"
-          },
-          "quantity": {
-            "type": "integer",
-            "minimum": 1
-          },
-          "created_by": {
-            "type": "string",
-            "readOnly": true,
-            "nullable": true
-          },
-          "updated_by": {
-            "type": "string",
-            "readOnly": true,
-            "nullable": true
-          },
-          "deleted_by": {
-            "type": "string",
-            "readOnly": true,
-            "nullable": true
-          },
-          "tenant": {
-            "type": "string",
-            "readOnly": true
-          },
-          "lot": {
-            "type": "integer"
-          },
-          "sale_item": {
-            "type": "integer",
-            "nullable": true
-          },
-          "material_request_item": {
-            "type": "integer",
-            "nullable": true
-          }
-        },
-        "required": [
-          "type",
-          "quantity",
-          "lot"
-        ]
-      },
-      "Product": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "integer",
-            "readOnly": true
-          },
-          "created_at": {
-            "type": "string",
-            "format": "date-time",
-            "readOnly": true
-          },
-          "updated_at": {
-            "type": "string",
-            "format": "date-time",
-            "readOnly": true
-          },
-          "custom_id": {
-            "type": "string",
-            "readOnly": true,
-            "nullable": true
-          },
-          "deleted": {
-            "type": "boolean",
-            "readOnly": true
-          },
-          "deleted_at": {
-            "type": "string",
-            "format": "date-time",
-            "readOnly": true,
-            "nullable": true
-          },
-          "version": {
-            "type": "integer",
-            "readOnly": true
-          },
-          "name": {
-            "type": "string",
-            "maxLength": 120
-          },
-          "type": {
-            "enum": [
-              "MED",
-              "MAT",
-              "OUT"
-            ],
-            "type": "string"
-          },
-          "sale_price": {
-            "type": "string",
-            "format": "decimal",
-            "multipleOf": 0.01,
-            "maximum": 1000000000000,
-            "minimum": "0.00"
-          },
-          "vat_percentage": {
-            "type": "string",
-            "format": "decimal",
-            "multipleOf": 0.01,
-            "maximum": "100.00",
-            "minimum": "0.00",
-            "description": "Taxa de IVA aplicada ao produto (0 a 100)."
-          },
-          "applies_vat_by_default": {
-            "type": "boolean",
-            "description": "Desmarque se este produto normalmente n\u00e3o deve ter IVA."
-          },
-          "created_by": {
-            "type": "string",
-            "readOnly": true,
-            "nullable": true
-          },
-          "updated_by": {
-            "type": "string",
-            "readOnly": true,
-            "nullable": true
-          },
-          "deleted_by": {
-            "type": "string",
-            "readOnly": true,
-            "nullable": true
-          },
-          "tenant": {
-            "type": "string",
-            "readOnly": true
-          },
-          "category": {
-            "type": "integer",
-            "nullable": true
-          }
-        },
-        "required": [
-          "name"
         ]
       },
       "MaterialRequisition": {
@@ -56571,6 +56389,101 @@
           "lot"
         ]
       },
+      "Product": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "custom_id": {
+            "type": "string",
+            "readOnly": true,
+            "nullable": true
+          },
+          "deleted": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "deleted_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true,
+            "nullable": true
+          },
+          "version": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 120
+          },
+          "type": {
+            "enum": [
+              "MED",
+              "MAT",
+              "OUT"
+            ],
+            "type": "string"
+          },
+          "sale_price": {
+            "type": "string",
+            "format": "decimal",
+            "multipleOf": 0.01,
+            "maximum": 1000000000000,
+            "minimum": "0.00"
+          },
+          "vat_percentage": {
+            "type": "string",
+            "format": "decimal",
+            "multipleOf": 0.01,
+            "maximum": "100.00",
+            "minimum": "0.00",
+            "description": "Taxa de IVA aplicada ao produto (0 a 100)."
+          },
+          "applies_vat_by_default": {
+            "type": "boolean",
+            "description": "Desmarque se este produto normalmente n\u00e3o deve ter IVA."
+          },
+          "created_by": {
+            "type": "string",
+            "readOnly": true,
+            "nullable": true
+          },
+          "updated_by": {
+            "type": "string",
+            "readOnly": true,
+            "nullable": true
+          },
+          "deleted_by": {
+            "type": "string",
+            "readOnly": true,
+            "nullable": true
+          },
+          "tenant": {
+            "type": "string",
+            "readOnly": true
+          },
+          "category": {
+            "type": "integer",
+            "nullable": true
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
       "Sale": {
         "type": "object",
         "properties": {
@@ -56645,6 +56558,93 @@
         },
         "required": [
           "number"
+        ]
+      },
+      "SaleItem": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "custom_id": {
+            "type": "string",
+            "readOnly": true,
+            "nullable": true
+          },
+          "deleted": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "deleted_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true,
+            "nullable": true
+          },
+          "version": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 120
+          },
+          "position": {
+            "type": "integer"
+          },
+          "quantity": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "unit_price": {
+            "type": "string",
+            "format": "decimal",
+            "multipleOf": 0.01,
+            "maximum": 1000000000000,
+            "minimum": -1000000000000,
+            "readOnly": true
+          },
+          "created_by": {
+            "type": "string",
+            "readOnly": true,
+            "nullable": true
+          },
+          "updated_by": {
+            "type": "string",
+            "readOnly": true,
+            "nullable": true
+          },
+          "deleted_by": {
+            "type": "string",
+            "readOnly": true,
+            "nullable": true
+          },
+          "tenant": {
+            "type": "string",
+            "readOnly": true
+          },
+          "sale": {
+            "type": "integer"
+          },
+          "product": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "quantity",
+          "sale",
+          "product"
         ]
       },
       "CycleCount": {

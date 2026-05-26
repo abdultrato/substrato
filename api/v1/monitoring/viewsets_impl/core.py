@@ -166,7 +166,7 @@ COMMAND_CENTER_MODULES = (
         "key": "pharmacy",
         "label_pt": "Farmácia",
         "label_en": "Pharmacy",
-        "prefixes": ("/api/v1/pharmacy/", "/pharmacy/", "/api/v1/farmacia/", "/farmacia/"),
+        "prefixes": ("/api/v1/pharmacy/", "/pharmacy/"),
     },
     {
         "key": "bloodbank",

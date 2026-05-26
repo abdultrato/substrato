@@ -115,7 +115,7 @@ class Lot(CoreModel):
     # =====================================================
 
     @property
-    def vencido(self):
+    def is_expired(self):
         """Indica se o lote está vencido comparando com a data atual."""
 
         return self.expiration_date < timezone.localdate()
@@ -165,7 +165,7 @@ class Lot(CoreModel):
     # =====================================================
 
     @classmethod
-    def disponiveis(cls, product):
+    def available(cls, product):
         """Retorna queryset FEFO (primeiro que vence, primeiro a sair) com saldo."""
 
         from apps.pharmacy.models.inventory_movement import (
@@ -230,7 +230,7 @@ class Lot(CoreModel):
         Retorna o preço unitário com base no primeiro lote disponível (FEFO).
         Se nenhum lote tiver preço, usa o preço do produto.
         """
-        lot = cls.disponiveis(product).first()  # Primeiro lote disponível
+        lot = cls.available(product).first()  # Primeiro lote disponível
         if lot and lot.sale_price is not None:
             return lot.sale_price  # Preço vindo do lote
         return getattr(product, "sale_price", Decimal("0.00"))  # Fallback para produto
@@ -241,4 +241,4 @@ class Lot(CoreModel):
         return f"{self.product} - Lote {self.lot_number}"
 
 
-Lot.saldo = Lot.balance
+Lot.current_stock = Lot.balance

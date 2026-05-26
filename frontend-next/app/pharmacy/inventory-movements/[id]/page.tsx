@@ -6,7 +6,7 @@ import { GeneratedResourceDetailPage } from "@/components/resources/GeneratedRes
 export default function InventoryMovementsDetailPage() {
   return (
     <Suspense fallback={<div className="p-4 text-sm text-[var(--gray-500)]">Carregando...</div>}>
-      <GeneratedResourceDetailPage endpoint="/pharmacy/inventory-movements/" />
+      <GeneratedResourceDetailPage endpoint="/pharmacy/inventory_movement/" />
     </Suspense>
   );
 }
