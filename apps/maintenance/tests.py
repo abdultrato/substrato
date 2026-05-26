@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError
 from django.test import TestCase
 from rest_framework.test import APIClient
 
@@ -35,6 +36,33 @@ class MaintenanceIncidentWorkflowTests(TestCase):
         self.assertIsNotNone(incident.maintenance_requested_at)
         self.assertTrue(self.equipment.requires_maintenance)
         self.assertEqual(self.equipment.maintenance_required_since, incident.maintenance_requested_at)
+
+    def test_generic_incident_without_equipment_does_not_generate_maintenance_request(self):
+        incident = Incident.objects.create(
+            tenant=self.tenant,
+            equipment=None,
+            description="Ocorrência administrativa sem equipamento associado.",
+        )
+
+        incident.refresh_from_db()
+        self.equipment.refresh_from_db()
+
+        self.assertFalse(incident.requires_maintenance)
+        self.assertIsNone(incident.maintenance_requested_at)
+        self.assertFalse(self.equipment.requires_maintenance)
+
+    def test_incident_requires_equipment_when_marked_for_maintenance(self):
+        incident = Incident(
+            tenant=self.tenant,
+            equipment=None,
+            description="Pedido técnico sem equipamento identificado.",
+            requires_maintenance=True,
+        )
+
+        with self.assertRaises(ValidationError) as context:
+            incident.full_clean()
+
+        self.assertIn("equipment", context.exception.message_dict)
 
     def test_perform_maintenance_from_incident_resolves_request(self):
         user = get_user_model().objects.create_superuser(
@@ -78,3 +106,80 @@ class MaintenanceIncidentWorkflowTests(TestCase):
         self.assertIsNotNone(incident.maintenance_completed_at)
         self.assertIn("Triagem feita", incident.post_incident_actions)
         self.assertFalse(self.equipment.requires_maintenance)
+
+        self.assertEqual(response.data["incident_context"]["custom_id"], incident.custom_id)
+        self.assertEqual(response.data["incident_context"]["equipment_id"], self.equipment.id)
+        self.assertEqual(
+            response.data["incident_context"]["equipment_serial_number"],
+            self.equipment.serial_number,
+        )
+        self.assertIn("Triagem feita", response.data["incident_context"]["post_incident_actions"])
+
+    def test_perform_maintenance_requires_explicit_maintenance_type(self):
+        user = get_user_model().objects.create_superuser(
+            username="manutencao-sem-tipo",
+            email="manutencao-sem-tipo@example.com",
+            password="test-pass",
+            tenant=self.tenant,
+        )
+        incident = Incident.objects.create(
+            tenant=self.tenant,
+            equipment=self.equipment,
+            description="Falha sem tipo informado.",
+        )
+
+        client = APIClient()
+        client.defaults["HTTP_HOST"] = self.tenant.domain
+        client.force_authenticate(user=user)
+        response = client.post(
+            f"/api/v1/equipment/incident/{incident.id}/realizar-manutencao/",
+            {
+                "type": Maintenance.Type.MONTHLY,
+                "scheduled_date": "2026-05-25",
+                "performed_date": "2026-05-25",
+                "technician": "Tecnico B",
+                "description": "Tentativa sem tipo de manutenção.",
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 400, response.content)
+        validation_errors = response.data.get("validationErrors", response.data)
+        self.assertIn("maintenance_type", validation_errors)
+        self.assertFalse(Maintenance.objects.filter(incident=incident).exists())
+
+        incident.refresh_from_db()
+        self.equipment.refresh_from_db()
+        self.assertFalse(incident.resolved)
+        self.assertTrue(incident.requires_maintenance)
+        self.assertTrue(self.equipment.requires_maintenance)
+
+    def test_maintenance_pending_requests_endpoint_returns_incident_context(self):
+        user = get_user_model().objects.create_superuser(
+            username="manutencao-pedidos",
+            email="manutencao-pedidos@example.com",
+            password="test-pass",
+            tenant=self.tenant,
+        )
+        incident = Incident.objects.create(
+            tenant=self.tenant,
+            equipment=self.equipment,
+            description="Alarmes intermitentes no monitor.",
+            support_contact="Suporte biomédico",
+            post_incident_actions="Equipamento isolado e sinalizado.",
+        )
+
+        client = APIClient()
+        client.defaults["HTTP_HOST"] = self.tenant.domain
+        client.force_authenticate(user=user)
+        response = client.get("/api/v1/equipment/maintenance/pending-requests/")
+
+        self.assertEqual(response.status_code, 200, response.content)
+        payload = response.data.get("results", response.data) if isinstance(response.data, dict) else response.data
+        self.assertEqual(len(payload), 1)
+        self.assertEqual(payload[0]["id"], incident.id)
+        self.assertEqual(payload[0]["equipment"], self.equipment.id)
+        self.assertEqual(payload[0]["equipment_name"], self.equipment.name)
+        self.assertEqual(payload[0]["equipment_serial_number"], self.equipment.serial_number)
+        self.assertEqual(payload[0]["post_incident_actions"], "Equipamento isolado e sinalizado.")
+        self.assertEqual(payload[0]["maintenance_status"], "Manutenção pendente")

@@ -2138,6 +2138,7 @@ class Command(BaseCommand):
                 tenant=tenant,
                 equipment=eq,
                 type=types[(idx - 1) % len(types)] if types else Maintenance.Type.MONTHLY,
+                maintenance_type=Maintenance.MaintenanceType.PREVENTIVE,
                 scheduled_date=_today() + timedelta(days=idx % 50),
                 performed_date=_today() - timedelta(days=idx % 30) if idx % 3 == 0 else None,
                 description="Plano de manutenção preventiva.",

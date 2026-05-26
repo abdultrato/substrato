@@ -94,6 +94,26 @@ class MaintenanceViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin
     ]
     ordering = ["-scheduled_date", "-created_at"]
 
+    @action(detail=False, methods=["get"], url_path="pending-requests")
+    def pending_requests(self, request):
+        queryset = (
+            Incident.objects.select_related("equipment")
+            .filter(requires_maintenance=True, resolved=False)
+            .order_by("maintenance_requested_at", "date", "created_at")
+        )
+        tenant = self._get_request_tenant()
+        if tenant is not None:
+            queryset = queryset.filter(tenant=tenant)
+
+        page = self.paginate_queryset(queryset)
+        serializer_context = self.get_serializer_context()
+        if page is not None:
+            serializer = IncidentSerializer(page, many=True, context=serializer_context)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = IncidentSerializer(queryset, many=True, context=serializer_context)
+        return Response(serializer.data)
+
 
 class IncidentViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
     queryset = Incident.objects.select_related("equipment")
@@ -121,19 +141,23 @@ class IncidentViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, M
     ordering = ["-date", "-created_at"]
 
     @action(detail=True, methods=["post"], url_path="realizar-manutencao")
-    def realizar_manutencao(self, request, pk=None):
+    def perform_maintenance(self, request, pk=None):
         incident = self.get_object()
         if not incident.equipment_id:
             return Response(
                 {"detail": "Esta ocorrência não está vinculada a um equipamento."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+        if incident.resolved and not incident.requires_maintenance:
+            return Response(
+                {"detail": "Esta ocorrência já não possui manutenção pendente."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
-        payload = {key: value for key, value in request.data.items()}
+        payload = dict(request.data)
         post_incident_actions = str(payload.pop("post_incident_actions", "") or "").strip()
         payload["incident"] = incident.pk
         payload["equipment"] = incident.equipment_id
-        payload.setdefault("maintenance_type", Maintenance.MaintenanceType.CORRECTIVE)
         payload.setdefault("type", Maintenance.Type.MONTHLY)
         payload.setdefault("scheduled_date", timezone.localdate().isoformat())
         payload.setdefault("performed_date", timezone.localdate().isoformat())
@@ -153,6 +177,8 @@ class IncidentViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, M
             if incident.tenant_id:
                 save_kwargs["tenant"] = incident.tenant
             maintenance = serializer.save(**save_kwargs)
+            incident.refresh_from_db()
+            maintenance.incident = incident
 
         return Response(
             MaintenanceSerializer(maintenance, context=self.get_serializer_context()).data,

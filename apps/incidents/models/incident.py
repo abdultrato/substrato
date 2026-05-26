@@ -26,6 +26,8 @@ class Incident(TenantPropagationMixin, NoNameCoreModel):
         db_column="equipment_id",
         on_delete=models.PROTECT,
         related_name="ocorrencias",
+        null=True,
+        blank=True,
         db_index=True,
     )
     date = models.DateTimeField(  # Data/hora do incidente
@@ -102,6 +104,10 @@ class Incident(TenantPropagationMixin, NoNameCoreModel):
 
         if self.equipment_id and self.tenant_id and self.equipment.tenant_id != self.tenant_id:
             raise ValidationError({"equipment": "Equipamento e ocorrência devem pertencer ao mesmo tenant."})
+        if self.requires_maintenance and not self.equipment_id:
+            raise ValidationError(
+                {"equipment": "Informe o equipamento quando a ocorrência requer manutenção."}
+            )
 
     @property
     def maintenance_status(self) -> str:
@@ -127,7 +133,11 @@ class Incident(TenantPropagationMixin, NoNameCoreModel):
         if update_fields is not None:
             update_fields = set(update_fields)
 
-        if self.equipment_id and not self.resolved:
+        if not self.equipment_id and not self.requires_maintenance:
+            self.requires_maintenance = False
+            if update_fields is not None:
+                update_fields.add("requires_maintenance")
+        elif self.equipment_id and not self.resolved:
             self.requires_maintenance = True
             if update_fields is not None:
                 update_fields.add("requires_maintenance")

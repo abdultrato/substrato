@@ -7,6 +7,7 @@ from typing import Any
 
 from django.apps import apps as django_apps
 from django.core.exceptions import FieldDoesNotExist
+from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone
 from rest_framework import status
@@ -311,6 +312,14 @@ CHOICE_VALUE_ALIASES = {
     "a decorrer": ("EM_ANDAMENTO", "IN_PROGRESS"),
     "in progress": ("EM_ANDAMENTO", "IN_PROGRESS"),
     "manual": ("MANUAL",),
+    "preventiva": ("PREVENTIVA", "PRV"),
+    "preventivo": ("PREVENTIVA", "PRV"),
+    "preventive": ("PREVENTIVA", "PRV"),
+    "correctiva": ("CORRECTIVA", "COR"),
+    "correctivo": ("CORRECTIVA", "COR"),
+    "corretiva": ("CORRECTIVA", "COR"),
+    "corretivo": ("CORRECTIVA", "COR"),
+    "corrective": ("CORRECTIVA", "COR"),
     "gratuito": ("FREE",),
     "gratis": ("FREE",),
     "grátis": ("FREE",),
@@ -829,6 +838,14 @@ class AiCrudConversationManager:
                 payload[gender_field.name] = self._coerce_value(gender_field, "F")
             elif re.search(r"\b(masculino|male|homem|m)\b", normalized):
                 payload[gender_field.name] = self._coerce_value(gender_field, "M")
+
+        maintenance_type_field = by_name.get("maintenance_type")
+        if maintenance_type_field and maintenance_type_field.name not in payload:
+            normalized = self._normalize(message)
+            if re.search(r"\b(preventiva|preventivo|preventive)\b", normalized):
+                payload[maintenance_type_field.name] = self._coerce_value(maintenance_type_field, "preventiva")
+            elif re.search(r"\b(correctiva|correctivo|corretiva|corretivo|corrective)\b", normalized):
+                payload[maintenance_type_field.name] = self._coerce_value(maintenance_type_field, "correctiva")
 
     def _extract_residual_name(
         self,
@@ -1484,6 +1501,14 @@ class AiCrudActionRunner:
         object_pk: Any,
         data: dict[str, Any],
     ) -> tuple[Any, int]:
+        if descriptor.basename == "nursing-procedimentoitem" and "execution_status" in data:
+            return self._dispatch_nursing_procedure_item_update(
+                descriptor=descriptor,
+                tenant=tenant,
+                user=user,
+                object_pk=object_pk,
+                data=data,
+            )
         return self._dispatch(
             descriptor=descriptor,
             tenant=tenant,
@@ -1495,6 +1520,110 @@ class AiCrudActionRunner:
             data=data,
             pk=object_pk,
         )
+
+    def _dispatch_nursing_procedure_item_update(
+        self,
+        *,
+        descriptor: ResourceDescriptor,
+        tenant,
+        user,
+        object_pk: Any,
+        data: dict[str, Any],
+    ) -> tuple[Any, int]:
+        payload = dict(data or {})
+        requested_status = str(payload.pop("execution_status") or "").strip()
+        response_data: Any = {"id": object_pk, "execution_status": requested_status}
+        status_code = status.HTTP_200_OK
+
+        current_status = self._current_nursing_procedure_item_status(
+            descriptor=descriptor,
+            tenant=tenant,
+            user=user,
+            object_pk=object_pk,
+        )
+        transitions = self._nursing_procedure_item_transitions(
+            current_status=current_status,
+            requested_status=requested_status,
+        )
+        if transitions is None:
+            return (
+                {
+                    "execution_status": (
+                        "Transição de estado não suportada pelo fluxo de enfermagem. "
+                        "Use executar, concluir ou nao_concluir a partir de um estado válido."
+                    )
+                },
+                status.HTTP_400_BAD_REQUEST,
+            )
+
+        with transaction.atomic():
+            if payload:
+                response_data, status_code = self._dispatch(
+                    descriptor=descriptor,
+                    tenant=tenant,
+                    user=user,
+                    method="patch",
+                    path=f"{descriptor.href}{object_pk}/",
+                    action_map={"patch": "partial_update"},
+                    detail=True,
+                    data=payload,
+                    pk=object_pk,
+                )
+                if status_code >= 400:
+                    transaction.set_rollback(True)
+                    return response_data, status_code
+
+            for action_name, url_path in transitions:
+                response_data, status_code = self._dispatch(
+                    descriptor=descriptor,
+                    tenant=tenant,
+                    user=user,
+                    method="post",
+                    path=f"{descriptor.href}{object_pk}/{url_path}/",
+                    action_map={"post": action_name},
+                    detail=True,
+                    data={},
+                    pk=object_pk,
+                )
+                if status_code >= 400:
+                    transaction.set_rollback(True)
+                    return response_data, status_code
+
+        return response_data, status_code
+
+    def _current_nursing_procedure_item_status(self, *, descriptor: ResourceDescriptor, tenant, user, object_pk: Any) -> str:
+        queryset = scoped_queryset_for_resource(descriptor=descriptor, tenant=tenant, user=user)
+        item = queryset.filter(pk=object_pk).only("execution_status").first()
+        return str(getattr(item, "execution_status", "") or "")
+
+    @staticmethod
+    def _nursing_procedure_item_transitions(
+        *,
+        current_status: str,
+        requested_status: str,
+    ) -> list[tuple[str, str]] | None:
+        pending = "PEN"
+        executed = "EXE"
+        completed = "CON"
+        not_completed = "NCO"
+
+        if requested_status == current_status:
+            return []
+        if requested_status == executed:
+            return [("execute", "executar")] if current_status == pending else None
+        if requested_status == completed:
+            if current_status == pending:
+                return [("execute", "executar"), ("complete", "concluir")]
+            if current_status == executed:
+                return [("complete", "concluir")]
+            return None
+        if requested_status == not_completed:
+            if current_status == pending:
+                return [("execute", "executar"), ("mark_not_completed", "nao_concluir")]
+            if current_status == executed:
+                return [("mark_not_completed", "nao_concluir")]
+            return None
+        return None
 
     def _dispatch_delete(self, *, descriptor: ResourceDescriptor, tenant, user, object_pk: Any) -> tuple[Any, int]:
         return self._dispatch(

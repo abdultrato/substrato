@@ -2111,12 +2111,14 @@ def test_ai_equipment_crud_creates_inspection_maintenance_and_incident(api_clien
         api_client,
         (
             f"Crie manutenção equipamento {equipment.serial_number} tipo mensal "
-            "agendada para 2026-05-03 realizada em 2026-05-04 descrição Substituição preventiva técnico João"
+            "natureza preventiva agendada para 2026-05-03 realizada em 2026-05-04 "
+            "descrição Substituição preventiva técnico João"
         ),
     )
     assert maintenance_action.payload["basename"] == "maintenance-maintenance"
     assert maintenance_action.payload["data"]["equipment"] == equipment.id
     assert maintenance_action.payload["data"]["type"] == Maintenance.Type.MONTHLY
+    assert maintenance_action.payload["data"]["maintenance_type"] == Maintenance.MaintenanceType.PREVENTIVE
     _confirm_ai_action(api_client, maintenance_action)
     maintenance = Maintenance.objects.get(tenant=tenant, equipment=equipment, scheduled_date="2026-05-03")
     assert maintenance.performed_date.isoformat() == "2026-05-04"
@@ -2154,12 +2156,14 @@ def test_ai_maintenance_crud_creates_updates_and_deletes_for_maintenance_group(a
         api_client,
         (
             f"Crie manutenção equipamento {equipment.serial_number} tipo semanal "
-            "agendada para 2026-05-10 realizada em 2026-05-11 descrição Verificação de segurança técnico Marta"
+            "natureza preventiva agendada para 2026-05-10 realizada em 2026-05-11 "
+            "descrição Verificação de segurança técnico Marta"
         ),
     )
     assert create_action.payload["basename"] == "maintenance-maintenance"
     assert create_action.payload["data"]["equipment"] == equipment.id
     assert create_action.payload["data"]["type"] == Maintenance.Type.WEEKLY
+    assert create_action.payload["data"]["maintenance_type"] == Maintenance.MaintenanceType.PREVENTIVE
     assert create_action.payload["data"]["technician"] == "Marta"
     _confirm_ai_action(api_client, create_action)
     maintenance = Maintenance.objects.get(tenant=tenant, equipment=equipment, scheduled_date="2026-05-10")

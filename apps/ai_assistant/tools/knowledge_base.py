@@ -7,7 +7,7 @@ import re
 from typing import Any
 
 from apps.ai_assistant.services.vector_store import get_vector_store_service
-from apps.ai_assistant.tools.resource_catalog import normalize_text
+from apps.ai_assistant.tools.resource_catalog import match_resource_descriptors, normalize_text
 
 from .base import AiTool, AiToolContext
 
@@ -78,6 +78,7 @@ def should_select_knowledge_base(*, message: str, active_module: str = "", tenan
     normalized = normalize_text(f"{message or ''} {active_module or ''}")
     if not normalized:
         return False
+    command_text = _strip_request_intro(normalized)
 
     personal_terms = ("quem sou", "meu login", "meus grupos", "minha conta", "meu perfil", "who am i", "my account")
     if any(term in normalized for term in personal_terms):
@@ -90,15 +91,44 @@ def should_select_knowledge_base(*, message: str, active_module: str = "", tenan
         "inserir ",
         "adicione ",
         "adicionar ",
+        "altere ",
+        "alterar ",
+        "actualizar ",
         "actualize ",
+        "atualizar ",
         "atualize ",
+        "edite ",
+        "editar ",
+        "corrija ",
+        "corrigir ",
         "remova ",
+        "remover ",
         "apague ",
+        "apagar ",
+        "elimine ",
+        "eliminar ",
+        "exclua ",
+        "excluir ",
         "delete ",
         "create ",
+        "insert ",
         "update ",
+        "remove ",
     )
-    if normalized.startswith(direct_action_terms) and not any(term in normalized for term in ("como", "help", "ajuda", "explica", "exemplo")):
+    if command_text.startswith(direct_action_terms) and not any(term in command_text for term in ("como", "help", "ajuda", "explica", "exemplo")):
+        return False
+
+    report_action_terms = (
+        "gere ",
+        "gerar ",
+        "preparar ",
+        "prepare ",
+        "exporte ",
+        "exportar ",
+        "generate ",
+        "export ",
+    )
+    if command_text.startswith(report_action_terms) and any(term in command_text for term in ("relatorio", "relatório", "report", "export")):
         return False
 
     operational_query_prefixes = (
@@ -121,11 +151,30 @@ def should_select_knowledge_base(*, message: str, active_module: str = "", tenan
         "relatorio ",
         "relatório ",
     )
+    if command_text.startswith(operational_query_prefixes) and _has_resource_descriptor_match(command_text):
+        return False
+
     operational_query_terms = (
         "paciente",
         "pacientes",
         "estudante",
         "estudantes",
+        "equipamento",
+        "equipamentos",
+        "dispositivo",
+        "dispositivos",
+        "manutencao",
+        "manutenção",
+        "manutencoes",
+        "manutenções",
+        "ocorrencia",
+        "ocorrência",
+        "ocorrencias",
+        "ocorrências",
+        "inspecao",
+        "inspeção",
+        "inspecoes",
+        "inspeções",
         "fatura",
         "faturas",
         "pagamento",
@@ -145,7 +194,10 @@ def should_select_knowledge_base(*, message: str, active_module: str = "", tenan
         "matriculas",
         "matrículas",
     )
-    if normalized.startswith(operational_query_prefixes) and any(term in normalized for term in operational_query_terms):
+    if command_text.startswith(operational_query_prefixes) and any(term in command_text for term in operational_query_terms):
+        return False
+
+    if _has_operational_crud_intent(command_text):
         return False
 
     support_terms = (
@@ -183,6 +235,84 @@ def should_select_knowledge_base(*, message: str, active_module: str = "", tenan
 
     ranked = rank_knowledge_entries(message, limit=1, tenant=tenant, active_module=active_module)
     return bool(ranked and ranked[0].score >= 0.40)
+
+
+def _strip_request_intro(normalized: str) -> str:
+    cleaned = normalized.strip()
+    intro_patterns = (
+        r"^(?:por favor|please)\s+",
+        r"^(?:diga[- ]me|diz[- ]me|fale[- ]me|mostre[- ]me|mostra[- ]me)\s+(?:de\s+)?",
+        r"^(?:gostaria de saber|quero saber|preciso saber|pretendo saber)\s+",
+    )
+    for pattern in intro_patterns:
+        cleaned = re.sub(pattern, "", cleaned).strip()
+    return cleaned
+
+
+def _has_resource_descriptor_match(normalized: str) -> bool:
+    return bool(match_resource_descriptors(normalized, limit=1))
+
+
+def _has_operational_crud_intent(normalized: str) -> bool:
+    support_prefixes = (
+        "como ",
+        "de que forma ",
+        "o que ",
+        "oque ",
+        "quais ",
+        "que campos ",
+        "posso ",
+        "pode ",
+        "ajuda ",
+        "ajude ",
+        "help ",
+        "how ",
+        "what ",
+    )
+    if normalized.startswith(support_prefixes):
+        return False
+
+    crud_terms = (
+        "criar",
+        "crie",
+        "inserir",
+        "insira",
+        "cadastrar",
+        "cadastre",
+        "registar",
+        "registe",
+        "registrar",
+        "adicione",
+        "adicionar",
+        "novo",
+        "nova",
+        "actualizar",
+        "atualizar",
+        "actualize",
+        "atualize",
+        "alterar",
+        "altere",
+        "editar",
+        "edite",
+        "corrigir",
+        "corrija",
+        "apagar",
+        "apague",
+        "remover",
+        "remova",
+        "eliminar",
+        "elimine",
+        "excluir",
+        "exclua",
+        "create",
+        "insert",
+        "update",
+        "delete",
+        "remove",
+    )
+    if not any(re.search(rf"(?<!\w){re.escape(term)}(?!\w)", normalized) for term in crud_terms):
+        return False
+    return _has_resource_descriptor_match(normalized)
 
 
 def entry_by_id(entry_id: str, *, tenant=None) -> KnowledgeEntry | None:

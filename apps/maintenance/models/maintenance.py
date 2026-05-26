@@ -59,7 +59,6 @@ class Maintenance(TenantPropagationMixin, NoNameCoreModel):
         db_column="maintenance_type",
         max_length=20,
         choices=MaintenanceType.choices,
-        default=MaintenanceType.PREVENTIVE,
         db_index=True,
         help_text="Indica se a manutenção é preventiva ou correctiva.",
     )
@@ -110,6 +109,9 @@ class Maintenance(TenantPropagationMixin, NoNameCoreModel):
 
     def clean(self):
         super().clean()
+
+        if not self.maintenance_type:
+            raise ValidationError({"maintenance_type": "Indique se a manutenção é preventiva ou correctiva."})
 
         if self.equipment_id and self.tenant_id and self.equipment.tenant_id != self.tenant_id:
             raise ValidationError({"equipment": "Equipamento e manutenção devem pertencer ao mesmo tenant."})

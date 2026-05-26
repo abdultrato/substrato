@@ -41,7 +41,7 @@ class LocalLlmGateway:
         }
 
         # JSON serialize with sort_keys=True for deterministic output
-        cache_string = json.dumps(cache_data, sort_keys=True)
+        cache_string = json.dumps(cache_data, sort_keys=True, default=str)
 
         # Return MD5 hash as the cache key
         return hashlib.md5(cache_string.encode()).hexdigest()
@@ -81,33 +81,8 @@ class LocalLlmGateway:
             result = self._knowledge_base_answer(knowledge_result.get("result") or {}, language=language)
             return self._remember(cache_key, result)
 
-        sql_analytics_result = next((item for item in tool_results if item.get("tool_name") == "run_sql_analytics"), None)
-        if sql_analytics_result:
-            result = self._sql_analytics_answer(sql_analytics_result.get("result") or {}, language=language)
-            return self._remember(cache_key, result)
-
-        crud_result = next((item for item in tool_results if item.get("tool_name") == "prepare_crud_operation"), None)
-        if crud_result:
-            result = self._crud_answer(crud_result.get("result") or {}, language=language)
-            return self._remember(cache_key, result)
-
         user_context_result = next((item for item in tool_results if item.get("tool_name") == "get_user_context"), None)
         data_explorer_result = next((item for item in tool_results if item.get("tool_name") == "explore_database"), None)
-        if user_context_result and len(tool_results) == 1:
-            result = self._user_context_answer(user_context_result.get("result") or {}, language=language)
-            return self._remember(cache_key, result)
-        if data_explorer_result and len(tool_results) == 1:
-            result = self._data_explorer_answer(data_explorer_result.get("result") or {}, language=language)
-            return self._remember(cache_key, result)
-        if user_context_result and data_explorer_result and len(tool_results) == 2:
-            result = "\n\n".join(
-                [
-                    self._user_context_answer(user_context_result.get("result") or {}, language=language, compact=True),
-                    self._data_explorer_answer(data_explorer_result.get("result") or {}, language=language),
-                ]
-            )
-            return self._remember(cache_key, result)
-
         command_result = next((item for item in tool_results if item.get("tool_name") == "get_command_center_alerts"), None)
         if command_result and len(tool_results) == 1:
             result = self._command_center_answer(command_result.get("result") or {}, language=language)
@@ -119,6 +94,31 @@ class LocalLlmGateway:
                 [
                     self._command_center_answer(command_result.get("result") or {}, language=language),
                     self._generic_tool_answer(other_results, language=language),
+                ]
+            )
+            return self._remember(cache_key, result)
+
+        sql_analytics_result = next((item for item in tool_results if item.get("tool_name") == "run_sql_analytics"), None)
+        if sql_analytics_result:
+            result = self._sql_analytics_answer(sql_analytics_result.get("result") or {}, language=language)
+            return self._remember(cache_key, result)
+
+        crud_result = next((item for item in tool_results if item.get("tool_name") == "prepare_crud_operation"), None)
+        if crud_result:
+            result = self._crud_answer(crud_result.get("result") or {}, language=language)
+            return self._remember(cache_key, result)
+
+        if user_context_result and len(tool_results) == 1:
+            result = self._user_context_answer(user_context_result.get("result") or {}, language=language)
+            return self._remember(cache_key, result)
+        if data_explorer_result and len(tool_results) == 1:
+            result = self._data_explorer_answer(data_explorer_result.get("result") or {}, language=language)
+            return self._remember(cache_key, result)
+        if user_context_result and data_explorer_result and len(tool_results) == 2:
+            result = "\n\n".join(
+                [
+                    self._user_context_answer(user_context_result.get("result") or {}, language=language, compact=True),
+                    self._data_explorer_answer(data_explorer_result.get("result") or {}, language=language),
                 ]
             )
             return self._remember(cache_key, result)
@@ -356,7 +356,7 @@ class LocalLlmGateway:
             )
         return "\n\n".join(
             [
-                "Não posso fazê-lo porque o utilizador autenticado não tem acesso aos dados solicitados.",
+                "Não posso fazê-lo porque o utilizador autenticado não tem acesso aos dados solicitados nem permissão para este recurso.",
                 f"Recurso(s) bloqueado(s): {resources}.",
                 "Evidência interna usada: RBAC e catálogo de recursos da API.",
                 "Limitação: nenhum dado operacional do recurso bloqueado foi consultado.",

@@ -63,11 +63,11 @@ class ProjectIdentityTool(AiTool):
 
 def should_select_project_identity(*, message: str, active_module: str = "") -> bool:
     normalized = normalize_text(f"{message or ''} {active_module or ''}")
-    if not any(term in normalized for term in ("sistema", "projecto", "projeto", "substrato", "software", "app", "plataforma", "system", "project")):
+    if not _contains_term(normalized, ("sistema", "projecto", "projeto", "substrato", "software", "app", "plataforma", "system", "project")):
         return False
-    return any(
-        term in normalized
-        for term in (
+    return _contains_term(
+        normalized,
+        (
             "quem criou",
             "quem desenvolveu",
             "criador",
@@ -90,8 +90,12 @@ def should_select_project_identity(*, message: str, active_module: str = "") -> 
             "owner",
             "creator",
             "started development",
-        )
+        ),
     )
+
+
+def _contains_term(normalized: str, terms: tuple[str, ...]) -> bool:
+    return any(re.search(rf"(?<!\w){re.escape(normalize_text(term))}(?!\w)", normalized) for term in terms)
 
 
 def load_project_identity_metadata() -> dict[str, Any]:

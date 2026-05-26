@@ -694,6 +694,7 @@ class Command(BaseCommand):
         return Maintenance.objects.create(
             equipment=state.keep["equipment"],
             type=Maintenance.Type.MONTHLY,
+            maintenance_type=Maintenance.MaintenanceType.PREVENTIVE,
             scheduled_date=self._date_offset(Maintenance),
             performed_date=None,
             description=f"Manutencao smoke {suffix}",

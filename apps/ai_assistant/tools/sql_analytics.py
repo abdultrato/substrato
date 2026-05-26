@@ -786,6 +786,8 @@ class SqlAnalyticsTool(AiTool):
 def should_select_sql_analytics(message: str, active_module: str = "") -> bool:
     normalized = normalize_text(f"{message or ''} {active_module or ''}")
     has_date = _has_date_signal(message)
+    if _has_command_center_alert_intent(normalized):
+        return False
     patient_entry = "paciente" in normalized and any(
         term in normalized for term in ("entrada", "entraram", "deram entrada", "checkin", "check in", "check-in", "admitidos")
     )
@@ -796,8 +798,39 @@ def should_select_sql_analytics(message: str, active_module: str = "") -> bool:
         return True
     if _has_crud_intent(normalized):
         return False
+    if not has_date and _is_plain_database_count(normalized):
+        return False
     descriptor = _best_specific_descriptor(message)
     return bool(descriptor and _has_generic_analytic_intent(normalized=normalized, dates=[] if not has_date else [timezone.localdate()]))
+
+
+def _has_command_center_alert_intent(normalized: str) -> bool:
+    alert_terms = ("alerta", "alertas", "alert", "alerts")
+    return any(re.search(rf"(?<!\w){re.escape(term)}(?!\w)", normalized) for term in alert_terms)
+
+
+def _is_plain_database_count(normalized: str) -> bool:
+    if not any(term in normalized for term in ("base de dados", "banco de dados", "database")):
+        return False
+    if not any(term in normalized for term in ("quantos", "quantas", "quanto", "total", "contar", "count")):
+        return False
+    analytic_terms = (
+        "entre",
+        "desde",
+        "a partir",
+        "ultimos",
+        "últimos",
+        "criado",
+        "criada",
+        "criados",
+        "criadas",
+        "actualizado",
+        "atualizado",
+        "por estado",
+        "por tipo",
+        "por prioridade",
+    )
+    return not any(term in normalized for term in analytic_terms)
 
 
 def _has_date_signal(message: str) -> bool:

@@ -135,12 +135,12 @@ class AiInvestigationBuilder:
             return "project_identity"
         if "answer_predicted_question" in names:
             return "knowledge_base"
+        if "get_command_center_alerts" in names:
+            return "operational_health"
         if "run_sql_analytics" in names:
             return "sql_analytics"
         if "explore_database" in names:
             return "data_exploration"
-        if "get_command_center_alerts" in names:
-            return "operational_health"
         if "get_lab_request_collection_guidance" in names:
             return "sample_collection"
         if "get_nursing_pending_work" in names:
