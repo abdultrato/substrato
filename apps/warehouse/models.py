@@ -643,6 +643,9 @@ class StockMovement(CoreModel):
                 )
             movement.posted_at = timezone.now()
             movement.save(update_fields=["posted_at", "updated_at"])
+            from observability.metrics import register_warehouse_stock_movement
+
+            register_warehouse_stock_movement(movement.movement_type, tenant_id=movement.tenant_id)
             movement.evaluate_replenishment_after_stock_change()
 
     def evaluate_replenishment_after_stock_change(self):

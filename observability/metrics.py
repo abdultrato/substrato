@@ -83,6 +83,18 @@ CLOUD_FAILOVER_TOTAL = Counter(
     ["source_cluster_id", "target_cluster_id", "status"],
 )
 
+WAREHOUSE_STOCK_MOVEMENTS_TOTAL = Counter(
+    "substrato_warehouse_stock_movements_total",
+    "Total warehouse stock movements posted.",
+    ["movement_type", "tenant_id"],
+)
+
+WAREHOUSE_REPLENISHMENT_AUTOMATION_TOTAL = Counter(
+    "substrato_warehouse_replenishment_automation_total",
+    "Total warehouse automatic replenishment evaluations.",
+    ["status", "tenant_id"],
+)
+
 
 def _status_group(status_code: int | None) -> str:
     try:
@@ -148,6 +160,20 @@ def register_cloud_failover(source_cluster_id: str, target_cluster_id: str, stat
     ).inc()
 
 
+def register_warehouse_stock_movement(movement_type: str, tenant_id=None) -> None:
+    WAREHOUSE_STOCK_MOVEMENTS_TOTAL.labels(
+        str(movement_type or "unknown").lower(),
+        str(tenant_id or "unknown"),
+    ).inc()
+
+
+def register_warehouse_replenishment_automation(status: str, tenant_id=None) -> None:
+    WAREHOUSE_REPLENISHMENT_AUTOMATION_TOTAL.labels(
+        str(status or "unknown").lower(),
+        str(tenant_id or "unknown"),
+    ).inc()
+
+
 def get_runtime_metrics():
     average = 0
     if _metrics["requests"]:
@@ -203,6 +229,8 @@ __all__ = [
     "CLOUD_ROLLOUT_TASKS_TOTAL",
     "INVOICE_RECALCULATION_DURATION",
     "START_TIME",
+    "WAREHOUSE_REPLENISHMENT_AUTOMATION_TOTAL",
+    "WAREHOUSE_STOCK_MOVEMENTS_TOTAL",
     "get_metrics",
     "get_runtime_metrics",
     "log_slow_request",
@@ -214,4 +242,6 @@ __all__ = [
     "register_error",
     "register_request",
     "register_slow_request",
+    "register_warehouse_replenishment_automation",
+    "register_warehouse_stock_movement",
 ]

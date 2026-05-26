@@ -34,6 +34,8 @@ def trigger_replenishment_for_stock_change(
     warehouse_ids: Iterable[int | str | None],
     event_publisher: Any | None = None,
 ) -> list[AutomaticRequisitionResult]:
+    from observability.metrics import register_warehouse_replenishment_automation
+
     use_case = build_replenishment_use_case(event_publisher)
     results: list[AutomaticRequisitionResult] = []
     seen_warehouses: set[int | str | None] = set()
@@ -53,5 +55,8 @@ def trigger_replenishment_for_stock_change(
         )
         if result is not None:
             results.append(result)
+            register_warehouse_replenishment_automation("created_or_reused", tenant_id=tenant_id)
+        else:
+            register_warehouse_replenishment_automation("not_required", tenant_id=tenant_id)
 
     return results
