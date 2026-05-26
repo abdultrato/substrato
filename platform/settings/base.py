@@ -181,11 +181,11 @@ THIRD_PARTY_APPS = [
     *(["django_prometheus"] if _module_available("django_prometheus") else []),
     *(["django_celery_beat"] if _module_available("django_celery_beat") else []),
     # CountryField + traducoes de paises.
-    "django_countries",
-    "rest_framework",
-    "rest_framework_simplejwt",
-    "django_filters",
-    "corsheaders",
+    *(["django_countries"] if _module_available("django_countries") else []),
+    *(["rest_framework"] if _module_available("rest_framework") else []),
+    *(["rest_framework_simplejwt"] if _module_available("rest_framework_simplejwt") else []),
+    *(["django_filters"] if _module_available("django_filters") else []),
+    *(["corsheaders"] if _module_available("corsheaders") else []),
     *(["drf_spectacular"] if _module_available("drf_spectacular") else []),
 ]
 
@@ -227,7 +227,8 @@ INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 # =========================================================
 #
 # Precisa vir ANTES de `django.contrib.admin` para sobrescrever templates/static.
-INSTALLED_APPS = ["jazzmin", *INSTALLED_APPS]
+# TEMPORARIAMENTE DESATIVADO - módulo não instalado
+# INSTALLED_APPS = ["jazzmin", *INSTALLED_APPS]
 
 JAZZMIN_SETTINGS = {
     "site_title": "Substrato Admin",

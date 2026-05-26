@@ -122,11 +122,11 @@ class LabExam(TenantPropagationMixin, CoreModel):
                 name="unique_name_exam_por_sector_nao_deleted",
             ),
             models.CheckConstraint(
-                check=Q(turnaround_hours__gt=0),
+                condition=Q(turnaround_hours__gt=0),
                 name="turnaround_hours_positivo",
             ),
             models.CheckConstraint(
-                check=Q(price__gte=0),
+                condition=Q(price__gte=0),
                 name="price_nao_negativo",
             ),
         ]
