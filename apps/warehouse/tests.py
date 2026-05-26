@@ -4,12 +4,18 @@ from django.core.exceptions import ValidationError
 from django.test import TestCase
 
 from apps.tenants.models import Tenant
+from apps.warehouse.application.queries.stock import MinimumStockQuery
+from apps.warehouse.application.use_cases.generate_automatic_requisition import GenerateAutomaticRequisition
+from apps.warehouse.events.audit.event_audit import WarehouseEventAudit
+from apps.warehouse.infrastructure.django.repositories import DjangoRequisitionRepository, DjangoStockRepository
 from apps.warehouse.models import (
     GoodsReceipt,
     GoodsReceiptLine,
     PurchaseOrder,
     PurchaseOrderLine,
     ReplenishmentPlan,
+    ReplenishmentStatus,
+    ReplenishmentSuggestion,
     ReservationStatus,
     SalesOrder,
     SalesOrderLine,
@@ -230,3 +236,45 @@ class WarehouseStockTests(TestCase):
 
         with self.assertRaises(ValidationError):
             oversized_order.allocate()
+
+    def test_automatic_replenishment_records_real_balance_and_reuses_open_plan(self):
+        self.item.reorder_point = Decimal("5")
+        self.item.reorder_quantity = Decimal("10")
+        self.item.save(update_fields=["reorder_point", "reorder_quantity", "updated_at"])
+        StockMovement.objects.create(
+            tenant=self.tenant,
+            item=self.item,
+            destination_location=self.location,
+            movement_type=StockMovement.MovementType.RECEIPT,
+            quantity=Decimal("2"),
+            name="Entrada abaixo do mínimo",
+        )
+        publisher = WarehouseEventAudit()
+        use_case = GenerateAutomaticRequisition(
+            DjangoStockRepository(),
+            DjangoRequisitionRepository(),
+            publisher,
+        )
+        query = MinimumStockQuery(
+            sku=self.item.sku,
+            warehouse_id=self.warehouse.pk,
+            tenant_id=self.tenant.pk,
+        )
+
+        result = use_case.execute(query)
+        repeated_result = use_case.execute(query)
+
+        self.assertIsNotNone(result)
+        self.assertIsNotNone(repeated_result)
+        self.assertEqual(repeated_result.requisition_id, result.requisition_id)
+        self.assertEqual(ReplenishmentPlan.objects.count(), 1)
+        self.assertEqual(ReplenishmentSuggestion.objects.count(), 1)
+        suggestion = ReplenishmentSuggestion.objects.select_related("plan").get()
+        self.assertEqual(suggestion.plan.status, ReplenishmentStatus.GENERATED)
+        self.assertIsNotNone(suggestion.plan.generated_at)
+        self.assertEqual(suggestion.current_quantity, Decimal("2.0000"))
+        self.assertEqual(suggestion.reserved_quantity, Decimal("0.0000"))
+        self.assertEqual(suggestion.available_quantity, Decimal("2.0000"))
+        self.assertEqual(suggestion.reorder_point, Decimal("5.0000"))
+        self.assertEqual(suggestion.recommended_quantity, Decimal("10.0000"))
+        self.assertEqual(len(publisher.events), 2)

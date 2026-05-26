@@ -15,7 +15,7 @@ class MinimumStockReached:
     requested_quantity: Decimal
     tenant_id: str | None = None
     name: str = "warehouse.inventory.minimum_stock_reached"
-    display_name_pt: str = "Estoque abaixo do minimo"
+    display_name_pt: str = "Estoque abaixo do mínimo"
     identifier: str = field(default_factory=lambda: str(uuid4()))
     occurred_at: datetime = field(default_factory=lambda: datetime.now(tz=UTC))
 
@@ -40,7 +40,7 @@ class PerishableLotPrioritized:
     ordered_lots: list[str]
     tenant_id: str | None = None
     name: str = "warehouse.inventory.perishable_lot_prioritized"
-    display_name_pt: str = "Lote perecivel priorizado"
+    display_name_pt: str = "Lote perecível priorizado"
     identifier: str = field(default_factory=lambda: str(uuid4()))
     occurred_at: datetime = field(default_factory=lambda: datetime.now(tz=UTC))
 

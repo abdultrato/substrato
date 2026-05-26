@@ -60,7 +60,7 @@ def test_stock_aggregate_generates_event_when_below_minimum():
     assert event is not None
     assert event.payload()["sku"] == "SKU-001"
     assert event.requested_quantity == Decimal("10")
-    assert event.display_name_pt == "Estoque abaixo do minimo"
+    assert event.display_name_pt == "Estoque abaixo do mínimo"
 
 
 def test_prioritize_fefo_lots_puts_nearest_expiration_first():
@@ -98,7 +98,7 @@ def test_workflow_engine_decides_replenishment_and_fefo():
     )
 
     assert [decision.action for decision in decisions] == ["GENERATE_REQUISITION", "PRIORITIZE_FEFO"]
-    assert [decision.label_pt for decision in decisions] == ["Gerar requisicao", "Priorizar FEFO"]
+    assert [decision.label_pt for decision in decisions] == ["Gerar requisição", "Priorizar FEFO"]
 
 
 def test_warehouse_reuses_substrato_os_boundaries_instead_of_duplicating_platform_modules():

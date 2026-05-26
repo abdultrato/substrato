@@ -22,7 +22,7 @@ class WarehouseWorkflowEngine:
             decisions.append(
                 WorkflowDecision(
                     action="GENERATE_REQUISITION",
-                    label_pt="Gerar requisicao",
+                    label_pt="Gerar requisição",
                     transition=StockTransition(
                         from_state=StockState.NORMAL,
                         to_state=StockState.BELOW_MINIMUM,

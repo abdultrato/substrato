@@ -9,4 +9,7 @@ class WarehouseEventAudit:
     events: list[Any] = field(default_factory=list)
 
     def record(self, event: Any) -> None:
+        self.publish(event)
+
+    def publish(self, event: Any) -> None:
         self.events.append(event)
