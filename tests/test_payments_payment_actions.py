@@ -74,7 +74,7 @@ def _issued_invoice(tenant):
 
 
 @pytest.mark.django_db
-def test_payment_confirm_action_is_idempotent_and_alias_works(api_client):
+def test_payment_confirm_action_is_idempotent_and_legacy_alias_is_removed(api_client):
     tenant = _tenant()
     _authenticate_admin(tenant, api_client)
     invoice = _issued_invoice(tenant)
@@ -93,14 +93,12 @@ def test_payment_confirm_action_is_idempotent_and_alias_works(api_client):
     assert payload["estado"] == Payment.Status.CONFIRMED
 
     legacy_response = api_client.post(f"/api/v1/payments/payment/{payment.id}/confirmar/", {}, format="json")
-    assert legacy_response.status_code == 200
-    legacy_payload = _response_data(legacy_response)
-    assert legacy_payload["estado"] == Payment.Status.CONFIRMED
+    assert legacy_response.status_code == 404
     assert Receipt.objects.filter(invoice=invoice).count() == 1
 
 
 @pytest.mark.django_db
-def test_payment_refund_action_is_idempotent_and_alias_works(api_client):
+def test_payment_refund_action_is_idempotent_and_legacy_alias_is_removed(api_client):
     tenant = _tenant()
     _authenticate_admin(tenant, api_client)
     invoice = _issued_invoice(tenant)
@@ -120,9 +118,7 @@ def test_payment_refund_action_is_idempotent_and_alias_works(api_client):
     assert payload["estado"] == Payment.Status.REFUNDED
 
     legacy_response = api_client.post(f"/api/v1/payments/payment/{payment.id}/estornar/", {}, format="json")
-    assert legacy_response.status_code == 200
-    legacy_payload = _response_data(legacy_response)
-    assert legacy_payload["estado"] == Payment.Status.REFUNDED
+    assert legacy_response.status_code == 404
 
 
 @pytest.mark.django_db
@@ -143,4 +139,3 @@ def test_payment_refund_action_rejects_pending_payment(api_client):
     assert response.status_code == 400
     payload = _response_data(response)
     assert "confirmados" in json.dumps(payload, ensure_ascii=False).lower()
-

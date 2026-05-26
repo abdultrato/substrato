@@ -22234,26 +22234,6 @@ export class ApiService {
          * @returns Payment
          * @throws ApiError
          */
-        public static confirmLegacyPayment(
-            id: string,
-            requestBody?: Payment,
-        ): CancelablePromise<Payment> {
-            return __request(OpenAPI, {
-                method: 'POST',
-                url: '/api/v1/payments/payment/{id}/confirmar/',
-                path: {
-                    'id': id,
-                },
-                body: requestBody,
-                mediaType: 'application/json',
-            });
-        }
-        /**
-         * @param id A unique integer value identifying this Pagamento.
-         * @param requestBody
-         * @returns Payment
-         * @throws ApiError
-         */
         public static refundPayment(
             id: string,
             requestBody?: Payment,
@@ -22261,26 +22241,6 @@ export class ApiService {
             return __request(OpenAPI, {
                 method: 'POST',
                 url: '/api/v1/payments/payment/{id}/refund/',
-                path: {
-                    'id': id,
-                },
-                body: requestBody,
-                mediaType: 'application/json',
-            });
-        }
-        /**
-         * @param id A unique integer value identifying this Pagamento.
-         * @param requestBody
-         * @returns Payment
-         * @throws ApiError
-         */
-        public static refundLegacyPayment(
-            id: string,
-            requestBody?: Payment,
-        ): CancelablePromise<Payment> {
-            return __request(OpenAPI, {
-                method: 'POST',
-                url: '/api/v1/payments/payment/{id}/estornar/',
                 path: {
                     'id': id,
                 },
@@ -22301,26 +22261,6 @@ export class ApiService {
             return __request(OpenAPI, {
                 method: 'POST',
                 url: '/api/v1/payments/reconciliation/{id}/confirm/',
-                path: {
-                    'id': id,
-                },
-                body: requestBody,
-                mediaType: 'application/json',
-            });
-        }
-        /**
-         * @param id A unique integer value identifying this Reconciliação.
-         * @param requestBody
-         * @returns Reconciliation
-         * @throws ApiError
-         */
-        public static confirmLegacyReconciliation(
-            id: string,
-            requestBody?: Reconciliation,
-        ): CancelablePromise<Reconciliation> {
-            return __request(OpenAPI, {
-                method: 'POST',
-                url: '/api/v1/payments/reconciliation/{id}/confirmar/',
                 path: {
                     'id': id,
                 },
@@ -22354,26 +22294,6 @@ export class ApiService {
          * @returns Transaction
          * @throws ApiError
          */
-        public static reconcileLegacyTransaction(
-            id: string,
-            requestBody?: Transaction,
-        ): CancelablePromise<Transaction> {
-            return __request(OpenAPI, {
-                method: 'POST',
-                url: '/api/v1/payments/transaction/{id}/reconciliar/',
-                path: {
-                    'id': id,
-                },
-                body: requestBody,
-                mediaType: 'application/json',
-            });
-        }
-        /**
-         * @param id A unique integer value identifying this Transação.
-         * @param requestBody
-         * @returns Transaction
-         * @throws ApiError
-         */
         public static verifyTransaction(
             id: string,
             requestBody?: Transaction,
@@ -22381,26 +22301,6 @@ export class ApiService {
             return __request(OpenAPI, {
                 method: 'POST',
                 url: '/api/v1/payments/transaction/{id}/verify/',
-                path: {
-                    'id': id,
-                },
-                body: requestBody,
-                mediaType: 'application/json',
-            });
-        }
-        /**
-         * @param id A unique integer value identifying this Transação.
-         * @param requestBody
-         * @returns Transaction
-         * @throws ApiError
-         */
-        public static verifyLegacyTransaction(
-            id: string,
-            requestBody?: Transaction,
-        ): CancelablePromise<Transaction> {
-            return __request(OpenAPI, {
-                method: 'POST',
-                url: '/api/v1/payments/transaction/{id}/verificar/',
                 path: {
                     'id': id,
                 },

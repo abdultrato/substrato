@@ -36,7 +36,7 @@ def _authenticate_admin(tenant, api_client):
 
 
 @pytest.mark.django_db
-def test_reconciliation_confirm_action_is_idempotent_and_alias_works(api_client):
+def test_reconciliation_confirm_action_is_idempotent_and_legacy_alias_is_removed(api_client):
     tenant = _tenant()
     _authenticate_admin(tenant, api_client)
 
@@ -67,9 +67,8 @@ def test_reconciliation_confirm_action_is_idempotent_and_alias_works(api_client)
         {},
         format="json",
     )
-    assert legacy_response.status_code == 200
+    assert legacy_response.status_code == 404
 
     reconciliation.refresh_from_db()
     assert reconciliation.confirmation_date == first_confirmation_date
     assert Reconciliation.objects.filter(transaction=transaction).count() == 1
-
