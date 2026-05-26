@@ -16,13 +16,13 @@ function ensureTrailingSlash(url: string) {
   return url.endsWith("/") ? url : `${url}/`
 }
 
-export default function EditarProcedimentoPage() {
+export default function EditProcedurePage() {
   const params = useParams()
   const router = useRouter()
   const id = routeParamToString((params as any)?.id)
 
   const [initial, setInitial] = useState<Record<string, any> | null>(null)
-  const [erro, setErro] = useState<string | null>(null)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -30,14 +30,14 @@ export default function EditarProcedimentoPage() {
     async function load() {
       try {
         setLoading(true)
-        setErro(null)
-        const endpoint = ensureTrailingSlash("/nursing/procedimento/") + `${id}/`
+        setErrorMessage(null)
+        const endpoint = ensureTrailingSlash("/nursing/procedure/") + `${id}/`
         const res = await apiFetch<any>(endpoint)
         if (!mounted) return
         setInitial(res ?? {})
       } catch (e: any) {
         if (!mounted) return
-        setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao carregar procedimento."))
+        setErrorMessage(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao carregar procedimento."))
       } finally {
         if (mounted) setLoading(false)
       }
@@ -64,9 +64,9 @@ export default function EditarProcedimentoPage() {
           }
         />
 
-        {erro ? (
+        {errorMessage ? (
           <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-            {erro}
+            {errorMessage}
           </div>
         ) : null}
 
@@ -74,7 +74,7 @@ export default function EditarProcedimentoPage() {
           <div className="text-sm text-gray-500">Carregando...</div>
         ) : (
           <AutoForm
-            endpoint={ensureTrailingSlash("/nursing/procedimento/") + `${id}/`}
+            endpoint={ensureTrailingSlash("/nursing/procedure/") + `${id}/`}
             method="put"
             initialValues={initial || {}}
             submitLabel="Salvar"

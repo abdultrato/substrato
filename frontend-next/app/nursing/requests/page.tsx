@@ -11,9 +11,9 @@ import useDebounce from "@/hooks/useDebounce"
 import { apiFetchList } from "@/lib/api"
 import { GROUPS } from "@/lib/rbac"
 
-type RequisicaoRow = Record<string, any>
+type RequestRow = Record<string, any>
 
-const ESTADOS = [
+const STATUS_OPTIONS = [
   { value: "", label: "Todos" },
   { value: "pendente", label: "Pendente" },
   { value: "em_analise", label: "Em análise" },
@@ -22,34 +22,34 @@ const ESTADOS = [
   { value: "rejeitado", label: "Rejeitado" },
 ]
 
-export default function EnfermagemRequisicoesPage() {
-  const [estado, setEstado] = useState<string>("")
+export default function NursingRequestsPage() {
+  const [status, setStatus] = useState<string>("")
   const [search, setSearch] = useState("")
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(50)
   const [totalItems, setTotalItems] = useState(0)
   const [totalPages, setTotalPages] = useState(1)
-  const [erro, setErro] = useState<string | null>(null)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
-  const [data, setData] = useState<RequisicaoRow[]>([])
+  const [data, setData] = useState<RequestRow[]>([])
   const debouncedSearch = useDebounce(search, 300)
 
   useEffect(() => {
     setPage(1)
-  }, [debouncedSearch, estado, pageSize])
+  }, [debouncedSearch, status, pageSize])
 
   useEffect(() => {
     let mounted = true
     async function load() {
       try {
         setLoading(true)
-        setErro(null)
+        setErrorMessage(null)
         const params = new URLSearchParams()
         params.set("tipo", "LAB")
-        if (estado) params.set("estado", estado)
+        if (status) params.set("estado", status)
         if (debouncedSearch.trim()) params.set("search", debouncedSearch.trim())
         const url = `/requests/?${params.toString()}`
-        const res = await apiFetchList<RequisicaoRow>(url, { page, pageSize })
+        const res = await apiFetchList<RequestRow>(url, { page, pageSize })
         const items = res?.items ?? []
         if (!mounted) return
         const total = res?.meta?.total ?? items.length
@@ -62,7 +62,7 @@ export default function EnfermagemRequisicoesPage() {
         if (page > computedTotalPages) setPage(computedTotalPages)
       } catch (e: any) {
         if (!mounted) return
-        setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao carregar requisições."))
+        setErrorMessage(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao carregar requisições."))
       } finally {
         if (mounted) setLoading(false)
       }
@@ -71,17 +71,17 @@ export default function EnfermagemRequisicoesPage() {
     return () => {
       mounted = false
     }
-  }, [debouncedSearch, estado, page, pageSize])
+  }, [debouncedSearch, status, page, pageSize])
 
   const columns = useMemo(
     () => [
-      { header: "Código", render: (r: RequisicaoRow) => r.id_custom || r.id || "-" },
-      { header: "Paciente", render: (r: RequisicaoRow) => r.paciente_nome || r.paciente || "-" },
-      { header: "Prioridade", render: (r: RequisicaoRow) => r.status_clinico || "-" },
-      { header: "Crítico", render: (r: RequisicaoRow) => (r.possui_resultado_critico ? "SIM" : "—") },
+      { header: "Código", render: (r: RequestRow) => r.id_custom || r.id || "-" },
+      { header: "Paciente", render: (r: RequestRow) => r.paciente_nome || r.paciente || "-" },
+      { header: "Prioridade", render: (r: RequestRow) => r.status_clinico || "-" },
+      { header: "Crítico", render: (r: RequestRow) => (r.possui_resultado_critico ? "SIM" : "—") },
       {
         header: "Guia de coleta",
-        render: (r: RequisicaoRow) => {
+        render: (r: RequestRow) => {
           const guidance = (r.guia_colheita || r.guia_coleta || r.collection_guidance || []) as Array<any>
           if (!Array.isArray(guidance) || guidance.length === 0) {
             return <span className="text-xs text-slate-500">Sem orientação disponível.</span>
@@ -136,11 +136,11 @@ export default function EnfermagemRequisicoesPage() {
               />
               <label className="text-sm text-slate-700">Estado</label>
               <select
-                value={estado}
-                onChange={(e) => setEstado(e.target.value)}
+                value={status}
+                onChange={(e) => setStatus(e.target.value)}
                 className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm"
               >
-                {ESTADOS.map((e) => (
+                {STATUS_OPTIONS.map((e) => (
                   <option key={e.value} value={e.value}>
                     {e.label}
                   </option>
@@ -160,9 +160,9 @@ export default function EnfermagemRequisicoesPage() {
           }
         />
 
-        {erro ? (
+        {errorMessage ? (
           <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-            {erro}
+            {errorMessage}
           </div>
         ) : null}
 
@@ -170,7 +170,7 @@ export default function EnfermagemRequisicoesPage() {
           <div className="text-sm text-gray-500">Carregando...</div>
         ) : (
           <>
-            <DataTable<RequisicaoRow>
+            <DataTable<RequestRow>
               columns={columns as any}
               data={data}
               emptyMessage="Nenhuma requisição encontrada."

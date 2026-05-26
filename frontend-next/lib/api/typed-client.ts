@@ -59,32 +59,32 @@ import {
   type PharmacyInventoryMovement,
   type PharmacySale,
   type PharmacySaleItem,
-  EvolucaoEnfermagemSchema,
-  ProcedimentoSchema,
-  ProcedimentoCatalogoSchema,
-  ProcedimentoItemSchema,
-  ProcedimentoItemValorSchema,
-  ProcedimentoMaterialSchema,
-  ProcedimentoMaterialValorSchema,
-  PrescricaoEnfermagemSchema,
-  RegistroEnfermagemSchema,
-  SinalVitalEnfermagemSchema,
-  EnfermariaSchema,
-  CamaEnfermariaSchema,
-  InternamentoEnfermariaSchema,
-  type EvolucaoEnfermagem,
-  type Procedimento,
-  type ProcedimentoCatalogo,
-  type ProcedimentoItem,
-  type ProcedimentoItemValor,
-  type ProcedimentoMaterial,
-  type ProcedimentoMaterialValor,
-  type PrescricaoEnfermagem,
-  type RegistroEnfermagem,
-  type SinalVitalEnfermagem,
-  type Enfermaria,
-  type CamaEnfermaria,
-  type InternamentoEnfermaria,
+  NursingEvolutionSchema,
+  NursingProcedureSchema,
+  NursingProcedureCatalogSchema,
+  NursingProcedureItemSchema,
+  NursingProcedureItemValueSchema,
+  NursingProcedureMaterialSchema,
+  NursingProcedureMaterialValueSchema,
+  NursingPrescriptionSchema,
+  NursingRecordSchema,
+  NursingVitalSignSchema,
+  WardSchema,
+  WardBedSchema,
+  WardAdmissionSchema,
+  type NursingEvolution,
+  type NursingProcedure,
+  type NursingProcedureCatalog,
+  type NursingProcedureItem,
+  type NursingProcedureItemValue,
+  type NursingProcedureMaterial,
+  type NursingProcedureMaterialValue,
+  type NursingPrescription,
+  type NursingRecord,
+  type NursingVitalSign,
+  type Ward,
+  type WardBed,
+  type WardAdmission,
 } from '@/lib/validators/schemas'
 import { PacientesQueryBuilder, ExamesQueryBuilder } from '@/lib/api/query-builder'
 
@@ -141,8 +141,8 @@ type SaleItemCreate = Omit<
   | 'atualizado_por'
   | 'deletado_por'
 >
-type InternamentoCreate = Omit<
-  InternamentoEnfermaria,
+type WardAdmissionCreate = Omit<
+  WardAdmission,
   | 'id'
   | 'criado_em'
   | 'atualizado_em'
@@ -681,7 +681,7 @@ export class PharmacyService {
 }
 
 /**
- * Enfermagem
+ * Nursing
  */
 export class NursingService {
   private client: ApiClient
@@ -689,146 +689,146 @@ export class NursingService {
     this.client = createPacientesApiClient(baseURL)
   }
 
-  async listEvolucoes(retryOptions?: RetryOptions) {
-    return this.client.get('/api/v1/enfermagem/evolucaoenfermagem/', EvolucaoEnfermagemSchema.array(), { retryOptions })
+  async listNursingEvolutions(retryOptions?: RetryOptions) {
+    return this.client.get('/api/v1/nursing/nursing_evolution/', NursingEvolutionSchema.array(), { retryOptions })
   }
 
-  async createEvolucao(data: Partial<EvolucaoEnfermagem>, retryOptions?: RetryOptions) {
-    return this.client.post('/api/v1/enfermagem/evolucaoenfermagem/', EvolucaoEnfermagemSchema, data, {
+  async createNursingEvolution(data: Partial<NursingEvolution>, retryOptions?: RetryOptions) {
+    return this.client.post('/api/v1/nursing/nursing_evolution/', NursingEvolutionSchema, data, {
       retryOptions: { maxRetries: 0, ...retryOptions },
     })
   }
 
-  async listProcedimentos(retryOptions?: RetryOptions) {
-    return this.client.get('/api/v1/enfermagem/procedimento/', ProcedimentoSchema.array(), { retryOptions })
+  async listProcedures(retryOptions?: RetryOptions) {
+    return this.client.get('/api/v1/nursing/procedure/', NursingProcedureSchema.array(), { retryOptions })
   }
 
-  async createProcedimento(data: Partial<Procedimento>, retryOptions?: RetryOptions) {
-    return this.client.post('/api/v1/enfermagem/procedimento/', ProcedimentoSchema, data, {
+  async createProcedure(data: Partial<NursingProcedure>, retryOptions?: RetryOptions) {
+    return this.client.post('/api/v1/nursing/procedure/', NursingProcedureSchema, data, {
       retryOptions: { maxRetries: 0, ...retryOptions },
     })
   }
 
-  async listCatalogo(retryOptions?: RetryOptions) {
-    return this.client.get('/api/v1/enfermagem/procedimentocatalogo/', ProcedimentoCatalogoSchema.array(), {
+  async listProcedureCatalog(retryOptions?: RetryOptions) {
+    return this.client.get('/api/v1/nursing/procedure_catalog/', NursingProcedureCatalogSchema.array(), {
       retryOptions,
     })
   }
 
-  async createCatalogo(data: Partial<ProcedimentoCatalogo>, retryOptions?: RetryOptions) {
-    return this.client.post('/api/v1/enfermagem/procedimentocatalogo/', ProcedimentoCatalogoSchema, data, {
+  async createProcedureCatalog(data: Partial<NursingProcedureCatalog>, retryOptions?: RetryOptions) {
+    return this.client.post('/api/v1/nursing/procedure_catalog/', NursingProcedureCatalogSchema, data, {
       retryOptions: { maxRetries: 0, ...retryOptions },
     })
   }
 
-  async listItensProcedimento(retryOptions?: RetryOptions) {
-    return this.client.get('/api/v1/enfermagem/procedimentoitem/', ProcedimentoItemSchema.array(), { retryOptions })
+  async listProcedureItems(retryOptions?: RetryOptions) {
+    return this.client.get('/api/v1/nursing/procedure_item/', NursingProcedureItemSchema.array(), { retryOptions })
   }
 
-  async createItemProcedimento(data: Partial<ProcedimentoItem>, retryOptions?: RetryOptions) {
-    return this.client.post('/api/v1/enfermagem/procedimentoitem/', ProcedimentoItemSchema, data, {
+  async createProcedureItem(data: Partial<NursingProcedureItem>, retryOptions?: RetryOptions) {
+    return this.client.post('/api/v1/nursing/procedure_item/', NursingProcedureItemSchema, data, {
       retryOptions: { maxRetries: 0, ...retryOptions },
     })
   }
 
-  async listValoresProcedimento(retryOptions?: RetryOptions) {
-    return this.client.get('/api/v1/enfermagem/procedimentoitemvalor/', ProcedimentoItemValorSchema.array(), {
+  async listProcedureItemValues(retryOptions?: RetryOptions) {
+    return this.client.get('/api/v1/nursing/procedure_item_value/', NursingProcedureItemValueSchema.array(), {
       retryOptions,
     })
   }
 
-  async createValorProcedimento(data: Partial<ProcedimentoItemValor>, retryOptions?: RetryOptions) {
-    return this.client.post('/api/v1/enfermagem/procedimentoitemvalor/', ProcedimentoItemValorSchema, data, {
+  async createProcedureItemValue(data: Partial<NursingProcedureItemValue>, retryOptions?: RetryOptions) {
+    return this.client.post('/api/v1/nursing/procedure_item_value/', NursingProcedureItemValueSchema, data, {
       retryOptions: { maxRetries: 0, ...retryOptions },
     })
   }
 
-  async listMateriaisProcedimento(retryOptions?: RetryOptions) {
-    return this.client.get('/api/v1/enfermagem/procedimentomaterial/', ProcedimentoMaterialSchema.array(), {
+  async listProcedureMaterials(retryOptions?: RetryOptions) {
+    return this.client.get('/api/v1/nursing/procedure_material/', NursingProcedureMaterialSchema.array(), {
       retryOptions,
     })
   }
 
-  async createMaterialProcedimento(data: Partial<ProcedimentoMaterial>, retryOptions?: RetryOptions) {
-    return this.client.post('/api/v1/enfermagem/procedimentomaterial/', ProcedimentoMaterialSchema, data, {
+  async createProcedureMaterial(data: Partial<NursingProcedureMaterial>, retryOptions?: RetryOptions) {
+    return this.client.post('/api/v1/nursing/procedure_material/', NursingProcedureMaterialSchema, data, {
       retryOptions: { maxRetries: 0, ...retryOptions },
     })
   }
 
-  async listValoresMateriais(retryOptions?: RetryOptions) {
-    return this.client.get('/api/v1/enfermagem/procedimentomaterialvalor/', ProcedimentoMaterialValorSchema.array(), {
+  async listProcedureMaterialValues(retryOptions?: RetryOptions) {
+    return this.client.get('/api/v1/nursing/procedure_material_value/', NursingProcedureMaterialValueSchema.array(), {
       retryOptions,
     })
   }
 
-  async createValorMaterial(data: Partial<ProcedimentoMaterialValor>, retryOptions?: RetryOptions) {
-    return this.client.post('/api/v1/enfermagem/procedimentomaterialvalor/', ProcedimentoMaterialValorSchema, data, {
+  async createProcedureMaterialValue(data: Partial<NursingProcedureMaterialValue>, retryOptions?: RetryOptions) {
+    return this.client.post('/api/v1/nursing/procedure_material_value/', NursingProcedureMaterialValueSchema, data, {
       retryOptions: { maxRetries: 0, ...retryOptions },
     })
   }
 
-  async listPrescricoes(retryOptions?: RetryOptions) {
-    return this.client.get('/api/v1/enfermagem/prescricaoenfermagem/', PrescricaoEnfermagemSchema.array(), {
+  async listNursingPrescriptions(retryOptions?: RetryOptions) {
+    return this.client.get('/api/v1/nursing/nursing_prescription/', NursingPrescriptionSchema.array(), {
       retryOptions,
     })
   }
 
-  async createPrescricao(data: Partial<PrescricaoEnfermagem>, retryOptions?: RetryOptions) {
-    return this.client.post('/api/v1/enfermagem/prescricaoenfermagem/', PrescricaoEnfermagemSchema, data, {
+  async createNursingPrescription(data: Partial<NursingPrescription>, retryOptions?: RetryOptions) {
+    return this.client.post('/api/v1/nursing/nursing_prescription/', NursingPrescriptionSchema, data, {
       retryOptions: { maxRetries: 0, ...retryOptions },
     })
   }
 
-  async listRegistros(retryOptions?: RetryOptions) {
-    return this.client.get('/api/v1/enfermagem/registroenfermagem/', RegistroEnfermagemSchema.array(), { retryOptions })
+  async listNursingRecords(retryOptions?: RetryOptions) {
+    return this.client.get('/api/v1/nursing/nursing_record/', NursingRecordSchema.array(), { retryOptions })
   }
 
-  async createRegistro(data: Partial<RegistroEnfermagem>, retryOptions?: RetryOptions) {
-    return this.client.post('/api/v1/enfermagem/registroenfermagem/', RegistroEnfermagemSchema, data, {
+  async createNursingRecord(data: Partial<NursingRecord>, retryOptions?: RetryOptions) {
+    return this.client.post('/api/v1/nursing/nursing_record/', NursingRecordSchema, data, {
       retryOptions: { maxRetries: 0, ...retryOptions },
     })
   }
 
-  async listSinaisVitais(retryOptions?: RetryOptions) {
-    return this.client.get('/api/v1/enfermagem/sinalvitalenfermagem/', SinalVitalEnfermagemSchema.array(), {
+  async listNursingVitalSigns(retryOptions?: RetryOptions) {
+    return this.client.get('/api/v1/nursing/nursing_vital_sign/', NursingVitalSignSchema.array(), {
       retryOptions,
     })
   }
 
-  async createSinalVital(data: Partial<SinalVitalEnfermagem>, retryOptions?: RetryOptions) {
-    return this.client.post('/api/v1/enfermagem/sinalvitalenfermagem/', SinalVitalEnfermagemSchema, data, {
+  async createNursingVitalSign(data: Partial<NursingVitalSign>, retryOptions?: RetryOptions) {
+    return this.client.post('/api/v1/nursing/nursing_vital_sign/', NursingVitalSignSchema, data, {
       retryOptions: { maxRetries: 0, ...retryOptions },
     })
   }
 
-  async listEnfermarias(retryOptions?: RetryOptions) {
-    return this.client.get('/api/v1/enfermagem/enfermaria/', EnfermariaSchema.array(), { retryOptions })
+  async listWards(retryOptions?: RetryOptions) {
+    return this.client.get('/api/v1/nursing/ward/', WardSchema.array(), { retryOptions })
   }
 
-  async createEnfermaria(data: Partial<Enfermaria>, retryOptions?: RetryOptions) {
-    return this.client.post('/api/v1/enfermagem/enfermaria/', EnfermariaSchema, data, {
+  async createWard(data: Partial<Ward>, retryOptions?: RetryOptions) {
+    return this.client.post('/api/v1/nursing/ward/', WardSchema, data, {
       retryOptions: { maxRetries: 0, ...retryOptions },
     })
   }
 
-  async listCamas(retryOptions?: RetryOptions) {
-    return this.client.get('/api/v1/enfermagem/camaenfermaria/', CamaEnfermariaSchema.array(), { retryOptions })
+  async listWardBeds(retryOptions?: RetryOptions) {
+    return this.client.get('/api/v1/nursing/ward_bed/', WardBedSchema.array(), { retryOptions })
   }
 
-  async createCama(data: Partial<CamaEnfermaria>, retryOptions?: RetryOptions) {
-    return this.client.post('/api/v1/enfermagem/camaenfermaria/', CamaEnfermariaSchema, data, {
+  async createWardBed(data: Partial<WardBed>, retryOptions?: RetryOptions) {
+    return this.client.post('/api/v1/nursing/ward_bed/', WardBedSchema, data, {
       retryOptions: { maxRetries: 0, ...retryOptions },
     })
   }
 
-  async listInternamentos(retryOptions?: RetryOptions) {
-    return this.client.get('/api/v1/enfermagem/internamentoenfermaria/', InternamentoEnfermariaSchema.array(), {
+  async listWardAdmissions(retryOptions?: RetryOptions) {
+    return this.client.get('/api/v1/nursing/ward_admission/', WardAdmissionSchema.array(), {
       retryOptions,
     })
   }
 
-  async createInternamento(data: Partial<InternamentoEnfermaria>, retryOptions?: RetryOptions) {
-    return this.client.post('/api/v1/enfermagem/internamentoenfermaria/', InternamentoEnfermariaSchema, data as InternamentoCreate, {
+  async createWardAdmission(data: Partial<WardAdmission>, retryOptions?: RetryOptions) {
+    return this.client.post('/api/v1/nursing/ward_admission/', WardAdmissionSchema, data as WardAdmissionCreate, {
       retryOptions: { maxRetries: 0, ...retryOptions },
     })
   }

@@ -6,7 +6,7 @@ import { GeneratedResourceCreatePage } from "@/components/resources/GeneratedRes
 export default function CreateNursingEvolutionPage() {
   return (
     <Suspense fallback={<div className="p-4 text-sm text-[var(--gray-500)]">Carregando...</div>}>
-      <GeneratedResourceCreatePage endpoint="/nursing/nursing-evolutions/" />
+      <GeneratedResourceCreatePage endpoint="/nursing/nursing_evolution/" />
     </Suspense>
   );
 }

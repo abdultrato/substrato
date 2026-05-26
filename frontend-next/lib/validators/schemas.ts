@@ -453,99 +453,99 @@ export const PharmacySaleItemSchema = z.object({
 export type PharmacySaleItem = z.infer<typeof PharmacySaleItemSchema>
 
 /**
- * Enfermagem
+ * Nursing
  */
-export const EvolucaoEnfermagemSchema = z.object({
+export const NursingEvolutionSchema = z.object({
   id: z.number().int().readonly(),
   paciente: z.number().int().optional().nullable(),
   anotacao: z.string().optional().nullable(),
   status: z.string().optional().nullable(),
 })
-export type EvolucaoEnfermagem = z.infer<typeof EvolucaoEnfermagemSchema>
+export type NursingEvolution = z.infer<typeof NursingEvolutionSchema>
 
-export const ProcedimentoSchema = z.object({
+export const NursingProcedureSchema = z.object({
   id: z.number().int().readonly(),
   paciente: z.number().int().optional().nullable(),
   catalogo: z.number().int().optional().nullable(),
   status: z.string().optional().nullable(),
 })
-export type Procedimento = z.infer<typeof ProcedimentoSchema>
+export type NursingProcedure = z.infer<typeof NursingProcedureSchema>
 
-export const ProcedimentoCatalogoSchema = z.object({
+export const NursingProcedureCatalogSchema = z.object({
   id: z.number().int().readonly(),
   nome: z.string().optional().nullable(),
   descricao: z.string().optional().nullable(),
 })
-export type ProcedimentoCatalogo = z.infer<typeof ProcedimentoCatalogoSchema>
+export type NursingProcedureCatalog = z.infer<typeof NursingProcedureCatalogSchema>
 
-export const ProcedimentoItemSchema = z.object({
+export const NursingProcedureItemSchema = z.object({
   id: z.number().int().readonly(),
   procedimento: z.number().int().optional().nullable(),
   nome: z.string().optional().nullable(),
   quantidade: z.number().optional().nullable(),
 })
-export type ProcedimentoItem = z.infer<typeof ProcedimentoItemSchema>
+export type NursingProcedureItem = z.infer<typeof NursingProcedureItemSchema>
 
-export const ProcedimentoItemValorSchema = z.object({
+export const NursingProcedureItemValueSchema = z.object({
   id: z.number().int().readonly(),
   procedimento_item: z.number().int().optional().nullable(),
   valor: z.string().optional().nullable(),
 })
-export type ProcedimentoItemValor = z.infer<typeof ProcedimentoItemValorSchema>
+export type NursingProcedureItemValue = z.infer<typeof NursingProcedureItemValueSchema>
 
-export const ProcedimentoMaterialSchema = z.object({
+export const NursingProcedureMaterialSchema = z.object({
   id: z.number().int().readonly(),
   procedimento: z.number().int().optional().nullable(),
   material: z.number().int().optional().nullable(),
   quantidade: z.number().optional().nullable(),
 })
-export type ProcedimentoMaterial = z.infer<typeof ProcedimentoMaterialSchema>
+export type NursingProcedureMaterial = z.infer<typeof NursingProcedureMaterialSchema>
 
-export const ProcedimentoMaterialValorSchema = z.object({
+export const NursingProcedureMaterialValueSchema = z.object({
   id: z.number().int().readonly(),
   procedimento_material: z.number().int().optional().nullable(),
   valor: z.string().optional().nullable(),
 })
-export type ProcedimentoMaterialValor = z.infer<typeof ProcedimentoMaterialValorSchema>
+export type NursingProcedureMaterialValue = z.infer<typeof NursingProcedureMaterialValueSchema>
 
-export const PrescricaoEnfermagemSchema = z.object({
+export const NursingPrescriptionSchema = z.object({
   id: z.number().int().readonly(),
   paciente: z.number().int().optional().nullable(),
   observacao: z.string().optional().nullable(),
 })
-export type PrescricaoEnfermagem = z.infer<typeof PrescricaoEnfermagemSchema>
+export type NursingPrescription = z.infer<typeof NursingPrescriptionSchema>
 
-export const RegistroEnfermagemSchema = z.object({
+export const NursingRecordSchema = z.object({
   id: z.number().int().readonly(),
   paciente: z.number().int().optional().nullable(),
   descricao: z.string().optional().nullable(),
 })
-export type RegistroEnfermagem = z.infer<typeof RegistroEnfermagemSchema>
+export type NursingRecord = z.infer<typeof NursingRecordSchema>
 
-export const SinalVitalEnfermagemSchema = z.object({
+export const NursingVitalSignSchema = z.object({
   id: z.number().int().readonly(),
   paciente: z.number().int().optional().nullable(),
   tipo: z.string().optional().nullable(),
   valor: z.string().optional().nullable(),
 })
-export type SinalVitalEnfermagem = z.infer<typeof SinalVitalEnfermagemSchema>
+export type NursingVitalSign = z.infer<typeof NursingVitalSignSchema>
 
-export const EnfermariaSchema = z.object({
+export const WardSchema = z.object({
   id: z.number().int().readonly(),
   nome: z.string().optional().nullable(),
   capacidade: z.number().optional().nullable(),
 })
-export type Enfermaria = z.infer<typeof EnfermariaSchema>
+export type Ward = z.infer<typeof WardSchema>
 
-export const CamaEnfermariaSchema = z.object({
+export const WardBedSchema = z.object({
   id: z.number().int().readonly(),
   enfermaria: z.number().int().optional().nullable(),
   codigo: z.string().optional().nullable(),
   status: z.string().optional().nullable(),
 })
-export type CamaEnfermaria = z.infer<typeof CamaEnfermariaSchema>
+export type WardBed = z.infer<typeof WardBedSchema>
 
-export const InternamentoEnfermariaSchema = z.object({
+export const WardAdmissionSchema = z.object({
   id: z.number().int().readonly().optional(),
   paciente_nome: z.string().optional(),
   cama_numero: z.string().optional(),
@@ -571,7 +571,7 @@ export const InternamentoEnfermariaSchema = z.object({
   cama: z.number().int(),
   paciente: z.number().int(),
 }).strict()
-export type InternamentoEnfermaria = z.infer<typeof InternamentoEnfermariaSchema>
+export type WardAdmission = z.infer<typeof WardAdmissionSchema>
 
 /**
  * Validador helper - valida dados contra schema e retorna resultado

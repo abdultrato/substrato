@@ -6,7 +6,7 @@ import { GeneratedResourceDetailPage } from "@/components/resources/GeneratedRes
 export default function ProcedureItemsDetailPage() {
   return (
     <Suspense fallback={<div className="p-4 text-sm text-[var(--gray-500)]">Carregando...</div>}>
-      <GeneratedResourceDetailPage endpoint="/nursing/procedure-items/" />
+      <GeneratedResourceDetailPage endpoint="/nursing/procedure_item/" />
     </Suspense>
   );
 }

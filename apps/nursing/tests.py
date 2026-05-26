@@ -414,6 +414,58 @@ def test_procedure_item_not_completed_blocks_new_billing():
 
 
 @pytest.mark.django_db
+def test_nursing_api_uses_english_resource_routes(api_client):
+    tenant = _tenant()
+    _authenticate_admin(tenant, api_client)
+
+    from api.v1.nursing.filters import FILTER_MAP
+    from api.v1.nursing.serializers import SERIALIZER_MAP
+    from api.v1.nursing.viewsets import VIEWSET_MAP
+
+    expected = {
+        "nursing_evolution",
+        "procedure_catalog",
+        "procedure_catalog_material",
+        "procedure",
+        "procedure_item",
+        "procedure_item_value",
+        "procedure_material",
+        "procedure_material_value",
+        "nursing_prescription",
+        "nursing_record",
+        "nursing_vital_sign",
+        "ward",
+        "ward_bed",
+        "ward_admission",
+        "ward_dashboard",
+    }
+    legacy = {
+        "evolucaoenfermagem",
+        "procedimentocatalogo",
+        "procedimentocatalogomaterial",
+        "procedimentoitem",
+        "procedimentoitemvalor",
+        "procedimentomaterial",
+        "procedimentomaterialvalor",
+        "prescricaoenfermagem",
+        "registroenfermagem",
+        "sinalvitalenfermagem",
+        "camaenfermaria",
+        "internamentoenfermaria",
+        "enfermariadashboard",
+    }
+    serializer_expected = expected - {"ward_dashboard"}
+
+    assert set(VIEWSET_MAP) == expected
+    assert set(SERIALIZER_MAP) == serializer_expected
+    assert set(FILTER_MAP) == serializer_expected
+    assert not (set(VIEWSET_MAP) & legacy)
+
+    assert api_client.get("/api/v1/nursing/procedure_item/").status_code == 200
+    assert api_client.get("/api/v1/nursing/procedimentoitem/").status_code == 404
+
+
+@pytest.mark.django_db
 def test_procedure_item_actions_exposed_in_api(api_client):
     tenant = _tenant()
     patient = _patient(tenant)
@@ -427,17 +479,17 @@ def test_procedure_item_actions_exposed_in_api(api_client):
         unit_price=Decimal("8.00"),
     )
 
-    base_url = f"/api/v1/nursing/procedimentoitem/{item.id}/"
+    base_url = f"/api/v1/nursing/procedure_item/{item.id}/"
 
-    resp_execute = api_client.post(f"{base_url}executar/")
+    resp_execute = api_client.post(f"{base_url}execute/")
     assert resp_execute.status_code == 200
     assert resp_execute.data["execution_status"] == ProcedureItem.ExecutionStatus.EXECUTED
 
-    resp_complete = api_client.post(f"{base_url}concluir/")
+    resp_complete = api_client.post(f"{base_url}complete/")
     assert resp_complete.status_code == 200
     assert resp_complete.data["execution_status"] == ProcedureItem.ExecutionStatus.COMPLETED
 
-    resp_billed = api_client.post(f"{base_url}marcar_faturado/")
+    resp_billed = api_client.post(f"{base_url}mark-billed/")
     assert resp_billed.status_code == 200
     assert resp_billed.data["billed"] is True
 
@@ -460,9 +512,9 @@ def test_procedure_item_api_rejects_invalid_transition(api_client):
         unit_price=Decimal("8.00"),
     )
 
-    base_url = f"/api/v1/nursing/procedimentoitem/{item.id}/"
+    base_url = f"/api/v1/nursing/procedure_item/{item.id}/"
 
-    response = api_client.post(f"{base_url}concluir/")
+    response = api_client.post(f"{base_url}complete/")
     assert response.status_code == 400
     detail = str(response.data.get("detail", ""))
     assert "execution_status" in detail
@@ -544,9 +596,3 @@ def test_procedure_pdf_endpoint_returns_pdf(api_client):
     assert response.status_code == 200
     assert "application/pdf" in response["Content-Type"]
     assert len(response.content) > 0
-
-
-_patient = _patient
-test_procedure_item_catalog_cria_material_pendente_quando_sem_estoque = (
-    test_procedure_item_catalog_creates_pending_material_without_inventory
-)

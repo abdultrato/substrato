@@ -306,7 +306,7 @@ export default function FaturaRascunhoPage() {
     try {
       const [reqRes, procRes, vendaRes, cirRes, consRes] = await Promise.all([
         apiFetch<any>(`/requests/?paciente=${pacienteId}`),
-        apiFetch<any>(`/nursing/procedimento/?paciente=${pacienteId}`),
+        apiFetch<any>(`/nursing/procedure/?paciente=${pacienteId}`),
         apiFetch<any>(`/pharmacy/sale/?paciente=${pacienteId}`),
         apiFetch<any>(`/surgery/surgery/?paciente=${pacienteId}`),
         apiFetch<any>(`/consultations/consultation/?paciente=${pacienteId}`),
@@ -334,10 +334,10 @@ export default function FaturaRascunhoPage() {
       setRequisicaoItens(reqMap)
 
       const procItemPairs = await Promise.all(
-        procs.map((p) => apiFetch<any>(`/nursing/procedimentoitem/?procedimento=${p.id}`))
+        procs.map((p) => apiFetch<any>(`/nursing/procedure_item/?procedimento=${p.id}`))
       )
       const procMatPairs = await Promise.all(
-        procs.map((p) => apiFetch<any>(`/nursing/procedimentomaterial/?procedimento=${p.id}`))
+        procs.map((p) => apiFetch<any>(`/nursing/procedure_material/?procedimento=${p.id}`))
       )
       const procItemMap: Record<number, Row[]> = {}
       const procMatMap: Record<number, Row[]> = {}
@@ -701,7 +701,7 @@ export default function FaturaRascunhoPage() {
       return
     }
     try {
-      const res = await apiFetch<any>(`/nursing/procedimentocatalogo/?search=${encodeURIComponent(q)}`)
+      const res = await apiFetch<any>(`/nursing/procedure_catalog/?search=${encodeURIComponent(q)}`)
       setSearchProcedimentoCatalogo(listFrom(res))
     } catch {
       setSearchProcedimentoCatalogo([])

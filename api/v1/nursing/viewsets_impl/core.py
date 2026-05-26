@@ -319,14 +319,12 @@ class ProcedureItemViewSet(TenantScopedModelViewSet):
     def update(self, request, *args, **kwargs):
         """
         P1.3: CRÍTICO - Prevenir modificações diretas via PATCH/PUT em campos críticos.
-        Use endpoints específicos para transições de estado (executar, concluir, etc).
+        Use state transition endpoints (execute, complete, etc.).
         """
-        instance = self.get_object()
-
         # Campos que NÃO podem ser modificados via PATCH/PUT direto
         protected_fields = {
-            'execution_status': 'Use /executar, /concluir, ou /nao_concluir',
-            'billed': 'Use /marcar_faturado',
+            'execution_status': 'Use /execute, /complete, or /mark-not-completed',
+            'billed': 'Use /mark-billed',
             'billed_at': 'Campo read-only, definido automaticamente',
             'executed_at': 'Campo read-only, definido automaticamente',
             'completed_at': 'Campo read-only, definido automaticamente',
@@ -342,7 +340,7 @@ class ProcedureItemViewSet(TenantScopedModelViewSet):
         # Aplicar update normal para campos permitidos
         return super().update(request, *args, **kwargs)
 
-    @action(detail=True, methods=["post"], url_path="executar", url_name="executar")
+    @action(detail=True, methods=["post"], url_path="execute", url_name="execute")
     def execute(self, request, pk=None):
         item = self.get_object()
         professional = request.user if getattr(request.user, "is_authenticated", False) else None
@@ -353,7 +351,7 @@ class ProcedureItemViewSet(TenantScopedModelViewSet):
         item.refresh_from_db()
         return Response(self.get_serializer(item).data)
 
-    @action(detail=True, methods=["post"], url_path="concluir", url_name="concluir")
+    @action(detail=True, methods=["post"], url_path="complete", url_name="complete")
     def complete(self, request, pk=None):
         item = self.get_object()
         try:
@@ -363,7 +361,7 @@ class ProcedureItemViewSet(TenantScopedModelViewSet):
         item.refresh_from_db()
         return Response(self.get_serializer(item).data)
 
-    @action(detail=True, methods=["post"], url_path="nao_concluir", url_name="nao-concluir")
+    @action(detail=True, methods=["post"], url_path="mark-not-completed", url_name="mark-not-completed")
     def mark_not_completed(self, request, pk=None):
         item = self.get_object()
         try:
@@ -373,7 +371,7 @@ class ProcedureItemViewSet(TenantScopedModelViewSet):
         item.refresh_from_db()
         return Response(self.get_serializer(item).data)
 
-    @action(detail=True, methods=["post"], url_path="marcar_faturado", url_name="marcar-faturado")
+    @action(detail=True, methods=["post"], url_path="mark-billed", url_name="mark-billed")
     def mark_billed(self, request, pk=None):
         item = self.get_object()
         try:
@@ -642,21 +640,21 @@ class WardDashboardViewSet(ValidatedSearchOrderingMixin, ViewSet):
 
 
 VIEWSET_MAP = {
-    "evolucaoenfermagem": NursingEvolutionViewSet,
-    "procedimentocatalogo": ProcedureCatalogViewSet,
-    "procedimentocatalogomaterial": ProcedureCatalogMaterialViewSet,
+    "nursing_evolution": NursingEvolutionViewSet,
+    "procedure_catalog": ProcedureCatalogViewSet,
+    "procedure_catalog_material": ProcedureCatalogMaterialViewSet,
     "procedure": ProcedureViewSet,
-    "procedimentoitem": ProcedureItemViewSet,
-    "procedimentoitemvalor": ProcedureItemValueViewSet,
-    "procedimentomaterial": ProcedureMaterialViewSet,
-    "procedimentomaterialvalor": ProcedureMaterialValueViewSet,
-    "prescricaoenfermagem": NursingPrescriptionViewSet,
-    "registroenfermagem": NursingRecordViewSet,
-    "sinalvitalenfermagem": NursingVitalSignViewSet,
+    "procedure_item": ProcedureItemViewSet,
+    "procedure_item_value": ProcedureItemValueViewSet,
+    "procedure_material": ProcedureMaterialViewSet,
+    "procedure_material_value": ProcedureMaterialValueViewSet,
+    "nursing_prescription": NursingPrescriptionViewSet,
+    "nursing_record": NursingRecordViewSet,
+    "nursing_vital_sign": NursingVitalSignViewSet,
     "ward": WardViewSet,
-    "camaenfermaria": WardBedViewSet,
-    "internamentoenfermaria": WardAdmissionViewSet,
-    "enfermariadashboard": WardDashboardViewSet,
+    "ward_bed": WardBedViewSet,
+    "ward_admission": WardAdmissionViewSet,
+    "ward_dashboard": WardDashboardViewSet,
 }
 
 

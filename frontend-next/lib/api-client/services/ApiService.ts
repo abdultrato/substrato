@@ -3412,155 +3412,6 @@ export class ApiService {
     /**
      * @param search A search term.
      * @param ordering Which field to use when ordering the results.
-     * @returns WardBed
-     * @throws ApiError
-     */
-    public static listWardBeds(
-        search?: string,
-        ordering?: string,
-    ): CancelablePromise<Array<WardBed>> {
-        return __request(OpenAPI, {
-            method: 'GET',
-            url: '/api/v1/nursing/camaenfermaria/',
-            query: {
-                'search': search,
-                'ordering': ordering,
-            },
-        });
-    }
-    /**
-     * @param requestBody
-     * @returns WardBed
-     * @throws ApiError
-     */
-    public static createWardBed(
-        requestBody?: WardBed,
-    ): CancelablePromise<WardBed> {
-        return __request(OpenAPI, {
-            method: 'POST',
-            url: '/api/v1/nursing/camaenfermaria/',
-            body: requestBody,
-            mediaType: 'application/json',
-        });
-    }
-    /**
-     * @param id A unique integer value identifying this Cama.
-     * @param search A search term.
-     * @param ordering Which field to use when ordering the results.
-     * @returns WardBed
-     * @throws ApiError
-     */
-    public static retrieveWardBed(
-        id: string,
-        search?: string,
-        ordering?: string,
-    ): CancelablePromise<WardBed> {
-        return __request(OpenAPI, {
-            method: 'GET',
-            url: '/api/v1/nursing/camaenfermaria/{id}/',
-            path: {
-                'id': id,
-            },
-            query: {
-                'search': search,
-                'ordering': ordering,
-            },
-        });
-    }
-    /**
-     * @param id A unique integer value identifying this Cama.
-     * @param search A search term.
-     * @param ordering Which field to use when ordering the results.
-     * @param requestBody
-     * @returns WardBed
-     * @throws ApiError
-     */
-    public static updateWardBed(
-        id: string,
-        search?: string,
-        ordering?: string,
-        requestBody?: WardBed,
-    ): CancelablePromise<WardBed> {
-        return __request(OpenAPI, {
-            method: 'PUT',
-            url: '/api/v1/nursing/camaenfermaria/{id}/',
-            path: {
-                'id': id,
-            },
-            query: {
-                'search': search,
-                'ordering': ordering,
-            },
-            body: requestBody,
-            mediaType: 'application/json',
-        });
-    }
-    /**
-     * @param id A unique integer value identifying this Cama.
-     * @param search A search term.
-     * @param ordering Which field to use when ordering the results.
-     * @param requestBody
-     * @returns WardBed
-     * @throws ApiError
-     */
-    public static partialUpdateWardBed(
-        id: string,
-        search?: string,
-        ordering?: string,
-        requestBody?: WardBed,
-    ): CancelablePromise<WardBed> {
-        return __request(OpenAPI, {
-            method: 'PATCH',
-            url: '/api/v1/nursing/camaenfermaria/{id}/',
-            path: {
-                'id': id,
-            },
-            query: {
-                'search': search,
-                'ordering': ordering,
-            },
-            body: requestBody,
-            mediaType: 'application/json',
-        });
-    }
-    /**
-     * @param id A unique integer value identifying this Cama.
-     * @param search A search term.
-     * @param ordering Which field to use when ordering the results.
-     * @returns void
-     * @throws ApiError
-     */
-    public static destroyWardBed(
-        id: string,
-        search?: string,
-        ordering?: string,
-    ): CancelablePromise<void> {
-        return __request(OpenAPI, {
-            method: 'DELETE',
-            url: '/api/v1/nursing/camaenfermaria/{id}/',
-            path: {
-                'id': id,
-            },
-            query: {
-                'search': search,
-                'ordering': ordering,
-            },
-        });
-    }
-    /**
-     * Operational ward dashboard (occupancy + upcoming medications).
-     * @returns any
-     * @throws ApiError
-     */
-    public static listWardDashboardViewSets(): CancelablePromise<Array<any>> {
-        return __request(OpenAPI, {
-            method: 'GET',
-            url: '/api/v1/nursing/enfermariadashboard/',
-        });
-    }
-    /**
-     * @param search A search term.
-     * @param ordering Which field to use when ordering the results.
      * @returns NursingEvolution
      * @throws ApiError
      */
@@ -3570,7 +3421,7 @@ export class ApiService {
     ): CancelablePromise<Array<NursingEvolution>> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/api/v1/nursing/evolucaoenfermagem/',
+            url: '/api/v1/nursing/nursing_evolution/',
             query: {
                 'search': search,
                 'ordering': ordering,
@@ -3587,7 +3438,7 @@ export class ApiService {
     ): CancelablePromise<NursingEvolution> {
         return __request(OpenAPI, {
             method: 'POST',
-            url: '/api/v1/nursing/evolucaoenfermagem/',
+            url: '/api/v1/nursing/nursing_evolution/',
             body: requestBody,
             mediaType: 'application/json',
         });
@@ -3606,7 +3457,7 @@ export class ApiService {
     ): CancelablePromise<NursingEvolution> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/api/v1/nursing/evolucaoenfermagem/{id}/',
+            url: '/api/v1/nursing/nursing_evolution/{id}/',
             path: {
                 'id': id,
             },
@@ -3632,7 +3483,7 @@ export class ApiService {
     ): CancelablePromise<NursingEvolution> {
         return __request(OpenAPI, {
             method: 'PUT',
-            url: '/api/v1/nursing/evolucaoenfermagem/{id}/',
+            url: '/api/v1/nursing/nursing_evolution/{id}/',
             path: {
                 'id': id,
             },
@@ -3660,7 +3511,7 @@ export class ApiService {
     ): CancelablePromise<NursingEvolution> {
         return __request(OpenAPI, {
             method: 'PATCH',
-            url: '/api/v1/nursing/evolucaoenfermagem/{id}/',
+            url: '/api/v1/nursing/nursing_evolution/{id}/',
             path: {
                 'id': id,
             },
@@ -3686,145 +3537,7 @@ export class ApiService {
     ): CancelablePromise<void> {
         return __request(OpenAPI, {
             method: 'DELETE',
-            url: '/api/v1/nursing/evolucaoenfermagem/{id}/',
-            path: {
-                'id': id,
-            },
-            query: {
-                'search': search,
-                'ordering': ordering,
-            },
-        });
-    }
-    /**
-     * @param search A search term.
-     * @param ordering Which field to use when ordering the results.
-     * @returns WardAdmission
-     * @throws ApiError
-     */
-    public static listWardAdmissions(
-        search?: string,
-        ordering?: string,
-    ): CancelablePromise<Array<WardAdmission>> {
-        return __request(OpenAPI, {
-            method: 'GET',
-            url: '/api/v1/nursing/internamentoenfermaria/',
-            query: {
-                'search': search,
-                'ordering': ordering,
-            },
-        });
-    }
-    /**
-     * @param requestBody
-     * @returns WardAdmission
-     * @throws ApiError
-     */
-    public static createWardAdmission(
-        requestBody?: WardAdmission,
-    ): CancelablePromise<WardAdmission> {
-        return __request(OpenAPI, {
-            method: 'POST',
-            url: '/api/v1/nursing/internamentoenfermaria/',
-            body: requestBody,
-            mediaType: 'application/json',
-        });
-    }
-    /**
-     * @param id A unique integer value identifying this Internamento (Enfermaria).
-     * @param search A search term.
-     * @param ordering Which field to use when ordering the results.
-     * @returns WardAdmission
-     * @throws ApiError
-     */
-    public static retrieveWardAdmission(
-        id: string,
-        search?: string,
-        ordering?: string,
-    ): CancelablePromise<WardAdmission> {
-        return __request(OpenAPI, {
-            method: 'GET',
-            url: '/api/v1/nursing/internamentoenfermaria/{id}/',
-            path: {
-                'id': id,
-            },
-            query: {
-                'search': search,
-                'ordering': ordering,
-            },
-        });
-    }
-    /**
-     * @param id A unique integer value identifying this Internamento (Enfermaria).
-     * @param search A search term.
-     * @param ordering Which field to use when ordering the results.
-     * @param requestBody
-     * @returns WardAdmission
-     * @throws ApiError
-     */
-    public static updateWardAdmission(
-        id: string,
-        search?: string,
-        ordering?: string,
-        requestBody?: WardAdmission,
-    ): CancelablePromise<WardAdmission> {
-        return __request(OpenAPI, {
-            method: 'PUT',
-            url: '/api/v1/nursing/internamentoenfermaria/{id}/',
-            path: {
-                'id': id,
-            },
-            query: {
-                'search': search,
-                'ordering': ordering,
-            },
-            body: requestBody,
-            mediaType: 'application/json',
-        });
-    }
-    /**
-     * @param id A unique integer value identifying this Internamento (Enfermaria).
-     * @param search A search term.
-     * @param ordering Which field to use when ordering the results.
-     * @param requestBody
-     * @returns WardAdmission
-     * @throws ApiError
-     */
-    public static partialUpdateWardAdmission(
-        id: string,
-        search?: string,
-        ordering?: string,
-        requestBody?: WardAdmission,
-    ): CancelablePromise<WardAdmission> {
-        return __request(OpenAPI, {
-            method: 'PATCH',
-            url: '/api/v1/nursing/internamentoenfermaria/{id}/',
-            path: {
-                'id': id,
-            },
-            query: {
-                'search': search,
-                'ordering': ordering,
-            },
-            body: requestBody,
-            mediaType: 'application/json',
-        });
-    }
-    /**
-     * @param id A unique integer value identifying this Internamento (Enfermaria).
-     * @param search A search term.
-     * @param ordering Which field to use when ordering the results.
-     * @returns void
-     * @throws ApiError
-     */
-    public static destroyWardAdmission(
-        id: string,
-        search?: string,
-        ordering?: string,
-    ): CancelablePromise<void> {
-        return __request(OpenAPI, {
-            method: 'DELETE',
-            url: '/api/v1/nursing/internamentoenfermaria/{id}/',
+            url: '/api/v1/nursing/nursing_evolution/{id}/',
             path: {
                 'id': id,
             },
@@ -3846,7 +3559,7 @@ export class ApiService {
     ): CancelablePromise<Array<NursingPrescription>> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/api/v1/nursing/prescricaoenfermagem/',
+            url: '/api/v1/nursing/nursing_prescription/',
             query: {
                 'search': search,
                 'ordering': ordering,
@@ -3863,7 +3576,7 @@ export class ApiService {
     ): CancelablePromise<NursingPrescription> {
         return __request(OpenAPI, {
             method: 'POST',
-            url: '/api/v1/nursing/prescricaoenfermagem/',
+            url: '/api/v1/nursing/nursing_prescription/',
             body: requestBody,
             mediaType: 'application/json',
         });
@@ -3882,7 +3595,7 @@ export class ApiService {
     ): CancelablePromise<NursingPrescription> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/api/v1/nursing/prescricaoenfermagem/{id}/',
+            url: '/api/v1/nursing/nursing_prescription/{id}/',
             path: {
                 'id': id,
             },
@@ -3908,7 +3621,7 @@ export class ApiService {
     ): CancelablePromise<NursingPrescription> {
         return __request(OpenAPI, {
             method: 'PUT',
-            url: '/api/v1/nursing/prescricaoenfermagem/{id}/',
+            url: '/api/v1/nursing/nursing_prescription/{id}/',
             path: {
                 'id': id,
             },
@@ -3936,7 +3649,7 @@ export class ApiService {
     ): CancelablePromise<NursingPrescription> {
         return __request(OpenAPI, {
             method: 'PATCH',
-            url: '/api/v1/nursing/prescricaoenfermagem/{id}/',
+            url: '/api/v1/nursing/nursing_prescription/{id}/',
             path: {
                 'id': id,
             },
@@ -3962,7 +3675,7 @@ export class ApiService {
     ): CancelablePromise<void> {
         return __request(OpenAPI, {
             method: 'DELETE',
-            url: '/api/v1/nursing/prescricaoenfermagem/{id}/',
+            url: '/api/v1/nursing/nursing_prescription/{id}/',
             path: {
                 'id': id,
             },
@@ -3975,16 +3688,16 @@ export class ApiService {
     /**
      * @param search A search term.
      * @param ordering Which field to use when ordering the results.
-     * @returns ProcedureCatalog
+     * @returns NursingRecord
      * @throws ApiError
      */
-    public static listProcedureCatalogs(
+    public static listNursingRecords(
         search?: string,
         ordering?: string,
-    ): CancelablePromise<Array<ProcedureCatalog>> {
+    ): CancelablePromise<Array<NursingRecord>> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/api/v1/nursing/procedimentocatalogo/',
+            url: '/api/v1/nursing/nursing_record/',
             query: {
                 'search': search,
                 'ordering': ordering,
@@ -3993,34 +3706,34 @@ export class ApiService {
     }
     /**
      * @param requestBody
-     * @returns ProcedureCatalog
+     * @returns NursingRecord
      * @throws ApiError
      */
-    public static createProcedureCatalog(
-        requestBody?: ProcedureCatalog,
-    ): CancelablePromise<ProcedureCatalog> {
+    public static createNursingRecord(
+        requestBody?: NursingRecord,
+    ): CancelablePromise<NursingRecord> {
         return __request(OpenAPI, {
             method: 'POST',
-            url: '/api/v1/nursing/procedimentocatalogo/',
+            url: '/api/v1/nursing/nursing_record/',
             body: requestBody,
             mediaType: 'application/json',
         });
     }
     /**
-     * @param id A unique integer value identifying this Catálogo de Procedimento.
+     * @param id A unique integer value identifying this Registro de Enfermagem.
      * @param search A search term.
      * @param ordering Which field to use when ordering the results.
-     * @returns ProcedureCatalog
+     * @returns NursingRecord
      * @throws ApiError
      */
-    public static retrieveProcedureCatalog(
+    public static retrieveNursingRecord(
         id: string,
         search?: string,
         ordering?: string,
-    ): CancelablePromise<ProcedureCatalog> {
+    ): CancelablePromise<NursingRecord> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/api/v1/nursing/procedimentocatalogo/{id}/',
+            url: '/api/v1/nursing/nursing_record/{id}/',
             path: {
                 'id': id,
             },
@@ -4031,22 +3744,22 @@ export class ApiService {
         });
     }
     /**
-     * @param id A unique integer value identifying this Catálogo de Procedimento.
+     * @param id A unique integer value identifying this Registro de Enfermagem.
      * @param search A search term.
      * @param ordering Which field to use when ordering the results.
      * @param requestBody
-     * @returns ProcedureCatalog
+     * @returns NursingRecord
      * @throws ApiError
      */
-    public static updateProcedureCatalog(
+    public static updateNursingRecord(
         id: string,
         search?: string,
         ordering?: string,
-        requestBody?: ProcedureCatalog,
-    ): CancelablePromise<ProcedureCatalog> {
+        requestBody?: NursingRecord,
+    ): CancelablePromise<NursingRecord> {
         return __request(OpenAPI, {
             method: 'PUT',
-            url: '/api/v1/nursing/procedimentocatalogo/{id}/',
+            url: '/api/v1/nursing/nursing_record/{id}/',
             path: {
                 'id': id,
             },
@@ -4059,22 +3772,22 @@ export class ApiService {
         });
     }
     /**
-     * @param id A unique integer value identifying this Catálogo de Procedimento.
+     * @param id A unique integer value identifying this Registro de Enfermagem.
      * @param search A search term.
      * @param ordering Which field to use when ordering the results.
      * @param requestBody
-     * @returns ProcedureCatalog
+     * @returns NursingRecord
      * @throws ApiError
      */
-    public static partialUpdateProcedureCatalog(
+    public static partialUpdateNursingRecord(
         id: string,
         search?: string,
         ordering?: string,
-        requestBody?: ProcedureCatalog,
-    ): CancelablePromise<ProcedureCatalog> {
+        requestBody?: NursingRecord,
+    ): CancelablePromise<NursingRecord> {
         return __request(OpenAPI, {
             method: 'PATCH',
-            url: '/api/v1/nursing/procedimentocatalogo/{id}/',
+            url: '/api/v1/nursing/nursing_record/{id}/',
             path: {
                 'id': id,
             },
@@ -4087,20 +3800,20 @@ export class ApiService {
         });
     }
     /**
-     * @param id A unique integer value identifying this Catálogo de Procedimento.
+     * @param id A unique integer value identifying this Registro de Enfermagem.
      * @param search A search term.
      * @param ordering Which field to use when ordering the results.
      * @returns void
      * @throws ApiError
      */
-    public static destroyProcedureCatalog(
+    public static destroyNursingRecord(
         id: string,
         search?: string,
         ordering?: string,
     ): CancelablePromise<void> {
         return __request(OpenAPI, {
             method: 'DELETE',
-            url: '/api/v1/nursing/procedimentocatalogo/{id}/',
+            url: '/api/v1/nursing/nursing_record/{id}/',
             path: {
                 'id': id,
             },
@@ -4113,16 +3826,16 @@ export class ApiService {
     /**
      * @param search A search term.
      * @param ordering Which field to use when ordering the results.
-     * @returns ProcedureCatalogMaterial
+     * @returns NursingVitalSign
      * @throws ApiError
      */
-    public static listProcedureCatalogMaterials(
+    public static listNursingVitalSigns(
         search?: string,
         ordering?: string,
-    ): CancelablePromise<Array<ProcedureCatalogMaterial>> {
+    ): CancelablePromise<Array<NursingVitalSign>> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/api/v1/nursing/procedimentocatalogomaterial/',
+            url: '/api/v1/nursing/nursing_vital_sign/',
             query: {
                 'search': search,
                 'ordering': ordering,
@@ -4131,34 +3844,34 @@ export class ApiService {
     }
     /**
      * @param requestBody
-     * @returns ProcedureCatalogMaterial
+     * @returns NursingVitalSign
      * @throws ApiError
      */
-    public static createProcedureCatalogMaterial(
-        requestBody?: ProcedureCatalogMaterial,
-    ): CancelablePromise<ProcedureCatalogMaterial> {
+    public static createNursingVitalSign(
+        requestBody?: NursingVitalSign,
+    ): CancelablePromise<NursingVitalSign> {
         return __request(OpenAPI, {
             method: 'POST',
-            url: '/api/v1/nursing/procedimentocatalogomaterial/',
+            url: '/api/v1/nursing/nursing_vital_sign/',
             body: requestBody,
             mediaType: 'application/json',
         });
     }
     /**
-     * @param id A unique integer value identifying this Material de Procedimento.
+     * @param id A unique integer value identifying this Sinal Vital.
      * @param search A search term.
      * @param ordering Which field to use when ordering the results.
-     * @returns ProcedureCatalogMaterial
+     * @returns NursingVitalSign
      * @throws ApiError
      */
-    public static retrieveProcedureCatalogMaterial(
+    public static retrieveNursingVitalSign(
         id: string,
         search?: string,
         ordering?: string,
-    ): CancelablePromise<ProcedureCatalogMaterial> {
+    ): CancelablePromise<NursingVitalSign> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/api/v1/nursing/procedimentocatalogomaterial/{id}/',
+            url: '/api/v1/nursing/nursing_vital_sign/{id}/',
             path: {
                 'id': id,
             },
@@ -4169,22 +3882,22 @@ export class ApiService {
         });
     }
     /**
-     * @param id A unique integer value identifying this Material de Procedimento.
+     * @param id A unique integer value identifying this Sinal Vital.
      * @param search A search term.
      * @param ordering Which field to use when ordering the results.
      * @param requestBody
-     * @returns ProcedureCatalogMaterial
+     * @returns NursingVitalSign
      * @throws ApiError
      */
-    public static updateProcedureCatalogMaterial(
+    public static updateNursingVitalSign(
         id: string,
         search?: string,
         ordering?: string,
-        requestBody?: ProcedureCatalogMaterial,
-    ): CancelablePromise<ProcedureCatalogMaterial> {
+        requestBody?: NursingVitalSign,
+    ): CancelablePromise<NursingVitalSign> {
         return __request(OpenAPI, {
             method: 'PUT',
-            url: '/api/v1/nursing/procedimentocatalogomaterial/{id}/',
+            url: '/api/v1/nursing/nursing_vital_sign/{id}/',
             path: {
                 'id': id,
             },
@@ -4197,22 +3910,22 @@ export class ApiService {
         });
     }
     /**
-     * @param id A unique integer value identifying this Material de Procedimento.
+     * @param id A unique integer value identifying this Sinal Vital.
      * @param search A search term.
      * @param ordering Which field to use when ordering the results.
      * @param requestBody
-     * @returns ProcedureCatalogMaterial
+     * @returns NursingVitalSign
      * @throws ApiError
      */
-    public static partialUpdateProcedureCatalogMaterial(
+    public static partialUpdateNursingVitalSign(
         id: string,
         search?: string,
         ordering?: string,
-        requestBody?: ProcedureCatalogMaterial,
-    ): CancelablePromise<ProcedureCatalogMaterial> {
+        requestBody?: NursingVitalSign,
+    ): CancelablePromise<NursingVitalSign> {
         return __request(OpenAPI, {
             method: 'PATCH',
-            url: '/api/v1/nursing/procedimentocatalogomaterial/{id}/',
+            url: '/api/v1/nursing/nursing_vital_sign/{id}/',
             path: {
                 'id': id,
             },
@@ -4225,574 +3938,20 @@ export class ApiService {
         });
     }
     /**
-     * @param id A unique integer value identifying this Material de Procedimento.
+     * @param id A unique integer value identifying this Sinal Vital.
      * @param search A search term.
      * @param ordering Which field to use when ordering the results.
      * @returns void
      * @throws ApiError
      */
-    public static destroyProcedureCatalogMaterial(
+    public static destroyNursingVitalSign(
         id: string,
         search?: string,
         ordering?: string,
     ): CancelablePromise<void> {
         return __request(OpenAPI, {
             method: 'DELETE',
-            url: '/api/v1/nursing/procedimentocatalogomaterial/{id}/',
-            path: {
-                'id': id,
-            },
-            query: {
-                'search': search,
-                'ordering': ordering,
-            },
-        });
-    }
-    /**
-     * @param search A search term.
-     * @param ordering Which field to use when ordering the results.
-     * @returns ProcedureItem
-     * @throws ApiError
-     */
-    public static listProcedureItems(
-        search?: string,
-        ordering?: string,
-    ): CancelablePromise<Array<ProcedureItem>> {
-        return __request(OpenAPI, {
-            method: 'GET',
-            url: '/api/v1/nursing/procedimentoitem/',
-            query: {
-                'search': search,
-                'ordering': ordering,
-            },
-        });
-    }
-    /**
-     * @param requestBody
-     * @returns ProcedureItem
-     * @throws ApiError
-     */
-    public static createProcedureItem(
-        requestBody?: ProcedureItem,
-    ): CancelablePromise<ProcedureItem> {
-        return __request(OpenAPI, {
-            method: 'POST',
-            url: '/api/v1/nursing/procedimentoitem/',
-            body: requestBody,
-            mediaType: 'application/json',
-        });
-    }
-    /**
-     * @param id A unique integer value identifying this Procedimento de Enfermagem - Item.
-     * @param search A search term.
-     * @param ordering Which field to use when ordering the results.
-     * @returns ProcedureItem
-     * @throws ApiError
-     */
-    public static retrieveProcedureItem(
-        id: string,
-        search?: string,
-        ordering?: string,
-    ): CancelablePromise<ProcedureItem> {
-        return __request(OpenAPI, {
-            method: 'GET',
-            url: '/api/v1/nursing/procedimentoitem/{id}/',
-            path: {
-                'id': id,
-            },
-            query: {
-                'search': search,
-                'ordering': ordering,
-            },
-        });
-    }
-    /**
-     * P1.3: CRÍTICO - Prevenir modificações diretas via PATCH/PUT em campos críticos.
-     * Use endpoints específicos para transições de estado (executar, concluir, etc).
-     * @param id A unique integer value identifying this Procedimento de Enfermagem - Item.
-     * @param search A search term.
-     * @param ordering Which field to use when ordering the results.
-     * @param requestBody
-     * @returns ProcedureItem
-     * @throws ApiError
-     */
-    public static updateProcedureItem(
-        id: string,
-        search?: string,
-        ordering?: string,
-        requestBody?: ProcedureItem,
-    ): CancelablePromise<ProcedureItem> {
-        return __request(OpenAPI, {
-            method: 'PUT',
-            url: '/api/v1/nursing/procedimentoitem/{id}/',
-            path: {
-                'id': id,
-            },
-            query: {
-                'search': search,
-                'ordering': ordering,
-            },
-            body: requestBody,
-            mediaType: 'application/json',
-        });
-    }
-    /**
-     * @param id A unique integer value identifying this Procedimento de Enfermagem - Item.
-     * @param search A search term.
-     * @param ordering Which field to use when ordering the results.
-     * @param requestBody
-     * @returns ProcedureItem
-     * @throws ApiError
-     */
-    public static partialUpdateProcedureItem(
-        id: string,
-        search?: string,
-        ordering?: string,
-        requestBody?: ProcedureItem,
-    ): CancelablePromise<ProcedureItem> {
-        return __request(OpenAPI, {
-            method: 'PATCH',
-            url: '/api/v1/nursing/procedimentoitem/{id}/',
-            path: {
-                'id': id,
-            },
-            query: {
-                'search': search,
-                'ordering': ordering,
-            },
-            body: requestBody,
-            mediaType: 'application/json',
-        });
-    }
-    /**
-     * @param id A unique integer value identifying this Procedimento de Enfermagem - Item.
-     * @param search A search term.
-     * @param ordering Which field to use when ordering the results.
-     * @returns void
-     * @throws ApiError
-     */
-    public static destroyProcedureItem(
-        id: string,
-        search?: string,
-        ordering?: string,
-    ): CancelablePromise<void> {
-        return __request(OpenAPI, {
-            method: 'DELETE',
-            url: '/api/v1/nursing/procedimentoitem/{id}/',
-            path: {
-                'id': id,
-            },
-            query: {
-                'search': search,
-                'ordering': ordering,
-            },
-        });
-    }
-    /**
-     * @param search A search term.
-     * @param ordering Which field to use when ordering the results.
-     * @returns ProcedureItemValue
-     * @throws ApiError
-     */
-    public static listProcedureItemValues(
-        search?: string,
-        ordering?: string,
-    ): CancelablePromise<Array<ProcedureItemValue>> {
-        return __request(OpenAPI, {
-            method: 'GET',
-            url: '/api/v1/nursing/procedimentoitemvalor/',
-            query: {
-                'search': search,
-                'ordering': ordering,
-            },
-        });
-    }
-    /**
-     * @param requestBody
-     * @returns ProcedureItemValue
-     * @throws ApiError
-     */
-    public static createProcedureItemValue(
-        requestBody?: ProcedureItemValue,
-    ): CancelablePromise<ProcedureItemValue> {
-        return __request(OpenAPI, {
-            method: 'POST',
-            url: '/api/v1/nursing/procedimentoitemvalor/',
-            body: requestBody,
-            mediaType: 'application/json',
-        });
-    }
-    /**
-     * @param id A unique integer value identifying this Valor do Item de Procedimento.
-     * @param search A search term.
-     * @param ordering Which field to use when ordering the results.
-     * @returns ProcedureItemValue
-     * @throws ApiError
-     */
-    public static retrieveProcedureItemValue(
-        id: string,
-        search?: string,
-        ordering?: string,
-    ): CancelablePromise<ProcedureItemValue> {
-        return __request(OpenAPI, {
-            method: 'GET',
-            url: '/api/v1/nursing/procedimentoitemvalor/{id}/',
-            path: {
-                'id': id,
-            },
-            query: {
-                'search': search,
-                'ordering': ordering,
-            },
-        });
-    }
-    /**
-     * @param id A unique integer value identifying this Valor do Item de Procedimento.
-     * @param search A search term.
-     * @param ordering Which field to use when ordering the results.
-     * @param requestBody
-     * @returns ProcedureItemValue
-     * @throws ApiError
-     */
-    public static updateProcedureItemValue(
-        id: string,
-        search?: string,
-        ordering?: string,
-        requestBody?: ProcedureItemValue,
-    ): CancelablePromise<ProcedureItemValue> {
-        return __request(OpenAPI, {
-            method: 'PUT',
-            url: '/api/v1/nursing/procedimentoitemvalor/{id}/',
-            path: {
-                'id': id,
-            },
-            query: {
-                'search': search,
-                'ordering': ordering,
-            },
-            body: requestBody,
-            mediaType: 'application/json',
-        });
-    }
-    /**
-     * @param id A unique integer value identifying this Valor do Item de Procedimento.
-     * @param search A search term.
-     * @param ordering Which field to use when ordering the results.
-     * @param requestBody
-     * @returns ProcedureItemValue
-     * @throws ApiError
-     */
-    public static partialUpdateProcedureItemValue(
-        id: string,
-        search?: string,
-        ordering?: string,
-        requestBody?: ProcedureItemValue,
-    ): CancelablePromise<ProcedureItemValue> {
-        return __request(OpenAPI, {
-            method: 'PATCH',
-            url: '/api/v1/nursing/procedimentoitemvalor/{id}/',
-            path: {
-                'id': id,
-            },
-            query: {
-                'search': search,
-                'ordering': ordering,
-            },
-            body: requestBody,
-            mediaType: 'application/json',
-        });
-    }
-    /**
-     * @param id A unique integer value identifying this Valor do Item de Procedimento.
-     * @param search A search term.
-     * @param ordering Which field to use when ordering the results.
-     * @returns void
-     * @throws ApiError
-     */
-    public static destroyProcedureItemValue(
-        id: string,
-        search?: string,
-        ordering?: string,
-    ): CancelablePromise<void> {
-        return __request(OpenAPI, {
-            method: 'DELETE',
-            url: '/api/v1/nursing/procedimentoitemvalor/{id}/',
-            path: {
-                'id': id,
-            },
-            query: {
-                'search': search,
-                'ordering': ordering,
-            },
-        });
-    }
-    /**
-     * @param search A search term.
-     * @param ordering Which field to use when ordering the results.
-     * @returns ProcedureMaterial
-     * @throws ApiError
-     */
-    public static listProcedureMaterials(
-        search?: string,
-        ordering?: string,
-    ): CancelablePromise<Array<ProcedureMaterial>> {
-        return __request(OpenAPI, {
-            method: 'GET',
-            url: '/api/v1/nursing/procedimentomaterial/',
-            query: {
-                'search': search,
-                'ordering': ordering,
-            },
-        });
-    }
-    /**
-     * @param requestBody
-     * @returns ProcedureMaterial
-     * @throws ApiError
-     */
-    public static createProcedureMaterial(
-        requestBody?: ProcedureMaterial,
-    ): CancelablePromise<ProcedureMaterial> {
-        return __request(OpenAPI, {
-            method: 'POST',
-            url: '/api/v1/nursing/procedimentomaterial/',
-            body: requestBody,
-            mediaType: 'application/json',
-        });
-    }
-    /**
-     * @param id A unique integer value identifying this Material do Procedimento.
-     * @param search A search term.
-     * @param ordering Which field to use when ordering the results.
-     * @returns ProcedureMaterial
-     * @throws ApiError
-     */
-    public static retrieveProcedureMaterial(
-        id: string,
-        search?: string,
-        ordering?: string,
-    ): CancelablePromise<ProcedureMaterial> {
-        return __request(OpenAPI, {
-            method: 'GET',
-            url: '/api/v1/nursing/procedimentomaterial/{id}/',
-            path: {
-                'id': id,
-            },
-            query: {
-                'search': search,
-                'ordering': ordering,
-            },
-        });
-    }
-    /**
-     * @param id A unique integer value identifying this Material do Procedimento.
-     * @param search A search term.
-     * @param ordering Which field to use when ordering the results.
-     * @param requestBody
-     * @returns ProcedureMaterial
-     * @throws ApiError
-     */
-    public static updateProcedureMaterial(
-        id: string,
-        search?: string,
-        ordering?: string,
-        requestBody?: ProcedureMaterial,
-    ): CancelablePromise<ProcedureMaterial> {
-        return __request(OpenAPI, {
-            method: 'PUT',
-            url: '/api/v1/nursing/procedimentomaterial/{id}/',
-            path: {
-                'id': id,
-            },
-            query: {
-                'search': search,
-                'ordering': ordering,
-            },
-            body: requestBody,
-            mediaType: 'application/json',
-        });
-    }
-    /**
-     * @param id A unique integer value identifying this Material do Procedimento.
-     * @param search A search term.
-     * @param ordering Which field to use when ordering the results.
-     * @param requestBody
-     * @returns ProcedureMaterial
-     * @throws ApiError
-     */
-    public static partialUpdateProcedureMaterial(
-        id: string,
-        search?: string,
-        ordering?: string,
-        requestBody?: ProcedureMaterial,
-    ): CancelablePromise<ProcedureMaterial> {
-        return __request(OpenAPI, {
-            method: 'PATCH',
-            url: '/api/v1/nursing/procedimentomaterial/{id}/',
-            path: {
-                'id': id,
-            },
-            query: {
-                'search': search,
-                'ordering': ordering,
-            },
-            body: requestBody,
-            mediaType: 'application/json',
-        });
-    }
-    /**
-     * @param id A unique integer value identifying this Material do Procedimento.
-     * @param search A search term.
-     * @param ordering Which field to use when ordering the results.
-     * @returns void
-     * @throws ApiError
-     */
-    public static destroyProcedureMaterial(
-        id: string,
-        search?: string,
-        ordering?: string,
-    ): CancelablePromise<void> {
-        return __request(OpenAPI, {
-            method: 'DELETE',
-            url: '/api/v1/nursing/procedimentomaterial/{id}/',
-            path: {
-                'id': id,
-            },
-            query: {
-                'search': search,
-                'ordering': ordering,
-            },
-        });
-    }
-    /**
-     * @param search A search term.
-     * @param ordering Which field to use when ordering the results.
-     * @returns ProcedureMaterialValue
-     * @throws ApiError
-     */
-    public static listProcedureMaterialValues(
-        search?: string,
-        ordering?: string,
-    ): CancelablePromise<Array<ProcedureMaterialValue>> {
-        return __request(OpenAPI, {
-            method: 'GET',
-            url: '/api/v1/nursing/procedimentomaterialvalor/',
-            query: {
-                'search': search,
-                'ordering': ordering,
-            },
-        });
-    }
-    /**
-     * @param requestBody
-     * @returns ProcedureMaterialValue
-     * @throws ApiError
-     */
-    public static createProcedureMaterialValue(
-        requestBody?: ProcedureMaterialValue,
-    ): CancelablePromise<ProcedureMaterialValue> {
-        return __request(OpenAPI, {
-            method: 'POST',
-            url: '/api/v1/nursing/procedimentomaterialvalor/',
-            body: requestBody,
-            mediaType: 'application/json',
-        });
-    }
-    /**
-     * @param id A unique integer value identifying this Valor do Material do Procedimento.
-     * @param search A search term.
-     * @param ordering Which field to use when ordering the results.
-     * @returns ProcedureMaterialValue
-     * @throws ApiError
-     */
-    public static retrieveProcedureMaterialValue(
-        id: string,
-        search?: string,
-        ordering?: string,
-    ): CancelablePromise<ProcedureMaterialValue> {
-        return __request(OpenAPI, {
-            method: 'GET',
-            url: '/api/v1/nursing/procedimentomaterialvalor/{id}/',
-            path: {
-                'id': id,
-            },
-            query: {
-                'search': search,
-                'ordering': ordering,
-            },
-        });
-    }
-    /**
-     * @param id A unique integer value identifying this Valor do Material do Procedimento.
-     * @param search A search term.
-     * @param ordering Which field to use when ordering the results.
-     * @param requestBody
-     * @returns ProcedureMaterialValue
-     * @throws ApiError
-     */
-    public static updateProcedureMaterialValue(
-        id: string,
-        search?: string,
-        ordering?: string,
-        requestBody?: ProcedureMaterialValue,
-    ): CancelablePromise<ProcedureMaterialValue> {
-        return __request(OpenAPI, {
-            method: 'PUT',
-            url: '/api/v1/nursing/procedimentomaterialvalor/{id}/',
-            path: {
-                'id': id,
-            },
-            query: {
-                'search': search,
-                'ordering': ordering,
-            },
-            body: requestBody,
-            mediaType: 'application/json',
-        });
-    }
-    /**
-     * @param id A unique integer value identifying this Valor do Material do Procedimento.
-     * @param search A search term.
-     * @param ordering Which field to use when ordering the results.
-     * @param requestBody
-     * @returns ProcedureMaterialValue
-     * @throws ApiError
-     */
-    public static partialUpdateProcedureMaterialValue(
-        id: string,
-        search?: string,
-        ordering?: string,
-        requestBody?: ProcedureMaterialValue,
-    ): CancelablePromise<ProcedureMaterialValue> {
-        return __request(OpenAPI, {
-            method: 'PATCH',
-            url: '/api/v1/nursing/procedimentomaterialvalor/{id}/',
-            path: {
-                'id': id,
-            },
-            query: {
-                'search': search,
-                'ordering': ordering,
-            },
-            body: requestBody,
-            mediaType: 'application/json',
-        });
-    }
-    /**
-     * @param id A unique integer value identifying this Valor do Material do Procedimento.
-     * @param search A search term.
-     * @param ordering Which field to use when ordering the results.
-     * @returns void
-     * @throws ApiError
-     */
-    public static destroyProcedureMaterialValue(
-        id: string,
-        search?: string,
-        ordering?: string,
-    ): CancelablePromise<void> {
-        return __request(OpenAPI, {
-            method: 'DELETE',
-            url: '/api/v1/nursing/procedimentomaterialvalor/{id}/',
+            url: '/api/v1/nursing/nursing_vital_sign/{id}/',
             path: {
                 'id': id,
             },
@@ -4960,16 +4119,16 @@ export class ApiService {
     /**
      * @param search A search term.
      * @param ordering Which field to use when ordering the results.
-     * @returns NursingRecord
+     * @returns ProcedureCatalog
      * @throws ApiError
      */
-    public static listNursingRecords(
+    public static listProcedureCatalogs(
         search?: string,
         ordering?: string,
-    ): CancelablePromise<Array<NursingRecord>> {
+    ): CancelablePromise<Array<ProcedureCatalog>> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/api/v1/nursing/registroenfermagem/',
+            url: '/api/v1/nursing/procedure_catalog/',
             query: {
                 'search': search,
                 'ordering': ordering,
@@ -4978,34 +4137,34 @@ export class ApiService {
     }
     /**
      * @param requestBody
-     * @returns NursingRecord
+     * @returns ProcedureCatalog
      * @throws ApiError
      */
-    public static createNursingRecord(
-        requestBody?: NursingRecord,
-    ): CancelablePromise<NursingRecord> {
+    public static createProcedureCatalog(
+        requestBody?: ProcedureCatalog,
+    ): CancelablePromise<ProcedureCatalog> {
         return __request(OpenAPI, {
             method: 'POST',
-            url: '/api/v1/nursing/registroenfermagem/',
+            url: '/api/v1/nursing/procedure_catalog/',
             body: requestBody,
             mediaType: 'application/json',
         });
     }
     /**
-     * @param id A unique integer value identifying this Registro de Enfermagem.
+     * @param id A unique integer value identifying this Catálogo de Procedimento.
      * @param search A search term.
      * @param ordering Which field to use when ordering the results.
-     * @returns NursingRecord
+     * @returns ProcedureCatalog
      * @throws ApiError
      */
-    public static retrieveNursingRecord(
+    public static retrieveProcedureCatalog(
         id: string,
         search?: string,
         ordering?: string,
-    ): CancelablePromise<NursingRecord> {
+    ): CancelablePromise<ProcedureCatalog> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/api/v1/nursing/registroenfermagem/{id}/',
+            url: '/api/v1/nursing/procedure_catalog/{id}/',
             path: {
                 'id': id,
             },
@@ -5016,22 +4175,22 @@ export class ApiService {
         });
     }
     /**
-     * @param id A unique integer value identifying this Registro de Enfermagem.
+     * @param id A unique integer value identifying this Catálogo de Procedimento.
      * @param search A search term.
      * @param ordering Which field to use when ordering the results.
      * @param requestBody
-     * @returns NursingRecord
+     * @returns ProcedureCatalog
      * @throws ApiError
      */
-    public static updateNursingRecord(
+    public static updateProcedureCatalog(
         id: string,
         search?: string,
         ordering?: string,
-        requestBody?: NursingRecord,
-    ): CancelablePromise<NursingRecord> {
+        requestBody?: ProcedureCatalog,
+    ): CancelablePromise<ProcedureCatalog> {
         return __request(OpenAPI, {
             method: 'PUT',
-            url: '/api/v1/nursing/registroenfermagem/{id}/',
+            url: '/api/v1/nursing/procedure_catalog/{id}/',
             path: {
                 'id': id,
             },
@@ -5044,22 +4203,22 @@ export class ApiService {
         });
     }
     /**
-     * @param id A unique integer value identifying this Registro de Enfermagem.
+     * @param id A unique integer value identifying this Catálogo de Procedimento.
      * @param search A search term.
      * @param ordering Which field to use when ordering the results.
      * @param requestBody
-     * @returns NursingRecord
+     * @returns ProcedureCatalog
      * @throws ApiError
      */
-    public static partialUpdateNursingRecord(
+    public static partialUpdateProcedureCatalog(
         id: string,
         search?: string,
         ordering?: string,
-        requestBody?: NursingRecord,
-    ): CancelablePromise<NursingRecord> {
+        requestBody?: ProcedureCatalog,
+    ): CancelablePromise<ProcedureCatalog> {
         return __request(OpenAPI, {
             method: 'PATCH',
-            url: '/api/v1/nursing/registroenfermagem/{id}/',
+            url: '/api/v1/nursing/procedure_catalog/{id}/',
             path: {
                 'id': id,
             },
@@ -5072,20 +4231,20 @@ export class ApiService {
         });
     }
     /**
-     * @param id A unique integer value identifying this Registro de Enfermagem.
+     * @param id A unique integer value identifying this Catálogo de Procedimento.
      * @param search A search term.
      * @param ordering Which field to use when ordering the results.
      * @returns void
      * @throws ApiError
      */
-    public static destroyNursingRecord(
+    public static destroyProcedureCatalog(
         id: string,
         search?: string,
         ordering?: string,
     ): CancelablePromise<void> {
         return __request(OpenAPI, {
             method: 'DELETE',
-            url: '/api/v1/nursing/registroenfermagem/{id}/',
+            url: '/api/v1/nursing/procedure_catalog/{id}/',
             path: {
                 'id': id,
             },
@@ -5098,16 +4257,16 @@ export class ApiService {
     /**
      * @param search A search term.
      * @param ordering Which field to use when ordering the results.
-     * @returns NursingVitalSign
+     * @returns ProcedureCatalogMaterial
      * @throws ApiError
      */
-    public static listNursingVitalSigns(
+    public static listProcedureCatalogMaterials(
         search?: string,
         ordering?: string,
-    ): CancelablePromise<Array<NursingVitalSign>> {
+    ): CancelablePromise<Array<ProcedureCatalogMaterial>> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/api/v1/nursing/sinalvitalenfermagem/',
+            url: '/api/v1/nursing/procedure_catalog_material/',
             query: {
                 'search': search,
                 'ordering': ordering,
@@ -5116,34 +4275,34 @@ export class ApiService {
     }
     /**
      * @param requestBody
-     * @returns NursingVitalSign
+     * @returns ProcedureCatalogMaterial
      * @throws ApiError
      */
-    public static createNursingVitalSign(
-        requestBody?: NursingVitalSign,
-    ): CancelablePromise<NursingVitalSign> {
+    public static createProcedureCatalogMaterial(
+        requestBody?: ProcedureCatalogMaterial,
+    ): CancelablePromise<ProcedureCatalogMaterial> {
         return __request(OpenAPI, {
             method: 'POST',
-            url: '/api/v1/nursing/sinalvitalenfermagem/',
+            url: '/api/v1/nursing/procedure_catalog_material/',
             body: requestBody,
             mediaType: 'application/json',
         });
     }
     /**
-     * @param id A unique integer value identifying this Sinal Vital.
+     * @param id A unique integer value identifying this Material de Procedimento.
      * @param search A search term.
      * @param ordering Which field to use when ordering the results.
-     * @returns NursingVitalSign
+     * @returns ProcedureCatalogMaterial
      * @throws ApiError
      */
-    public static retrieveNursingVitalSign(
+    public static retrieveProcedureCatalogMaterial(
         id: string,
         search?: string,
         ordering?: string,
-    ): CancelablePromise<NursingVitalSign> {
+    ): CancelablePromise<ProcedureCatalogMaterial> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/api/v1/nursing/sinalvitalenfermagem/{id}/',
+            url: '/api/v1/nursing/procedure_catalog_material/{id}/',
             path: {
                 'id': id,
             },
@@ -5154,22 +4313,22 @@ export class ApiService {
         });
     }
     /**
-     * @param id A unique integer value identifying this Sinal Vital.
+     * @param id A unique integer value identifying this Material de Procedimento.
      * @param search A search term.
      * @param ordering Which field to use when ordering the results.
      * @param requestBody
-     * @returns NursingVitalSign
+     * @returns ProcedureCatalogMaterial
      * @throws ApiError
      */
-    public static updateNursingVitalSign(
+    public static updateProcedureCatalogMaterial(
         id: string,
         search?: string,
         ordering?: string,
-        requestBody?: NursingVitalSign,
-    ): CancelablePromise<NursingVitalSign> {
+        requestBody?: ProcedureCatalogMaterial,
+    ): CancelablePromise<ProcedureCatalogMaterial> {
         return __request(OpenAPI, {
             method: 'PUT',
-            url: '/api/v1/nursing/sinalvitalenfermagem/{id}/',
+            url: '/api/v1/nursing/procedure_catalog_material/{id}/',
             path: {
                 'id': id,
             },
@@ -5182,22 +4341,22 @@ export class ApiService {
         });
     }
     /**
-     * @param id A unique integer value identifying this Sinal Vital.
+     * @param id A unique integer value identifying this Material de Procedimento.
      * @param search A search term.
      * @param ordering Which field to use when ordering the results.
      * @param requestBody
-     * @returns NursingVitalSign
+     * @returns ProcedureCatalogMaterial
      * @throws ApiError
      */
-    public static partialUpdateNursingVitalSign(
+    public static partialUpdateProcedureCatalogMaterial(
         id: string,
         search?: string,
         ordering?: string,
-        requestBody?: NursingVitalSign,
-    ): CancelablePromise<NursingVitalSign> {
+        requestBody?: ProcedureCatalogMaterial,
+    ): CancelablePromise<ProcedureCatalogMaterial> {
         return __request(OpenAPI, {
             method: 'PATCH',
-            url: '/api/v1/nursing/sinalvitalenfermagem/{id}/',
+            url: '/api/v1/nursing/procedure_catalog_material/{id}/',
             path: {
                 'id': id,
             },
@@ -5210,20 +4369,574 @@ export class ApiService {
         });
     }
     /**
-     * @param id A unique integer value identifying this Sinal Vital.
+     * @param id A unique integer value identifying this Material de Procedimento.
      * @param search A search term.
      * @param ordering Which field to use when ordering the results.
      * @returns void
      * @throws ApiError
      */
-    public static destroyNursingVitalSign(
+    public static destroyProcedureCatalogMaterial(
         id: string,
         search?: string,
         ordering?: string,
     ): CancelablePromise<void> {
         return __request(OpenAPI, {
             method: 'DELETE',
-            url: '/api/v1/nursing/sinalvitalenfermagem/{id}/',
+            url: '/api/v1/nursing/procedure_catalog_material/{id}/',
+            path: {
+                'id': id,
+            },
+            query: {
+                'search': search,
+                'ordering': ordering,
+            },
+        });
+    }
+    /**
+     * @param search A search term.
+     * @param ordering Which field to use when ordering the results.
+     * @returns ProcedureItem
+     * @throws ApiError
+     */
+    public static listProcedureItems(
+        search?: string,
+        ordering?: string,
+    ): CancelablePromise<Array<ProcedureItem>> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/nursing/procedure_item/',
+            query: {
+                'search': search,
+                'ordering': ordering,
+            },
+        });
+    }
+    /**
+     * @param requestBody
+     * @returns ProcedureItem
+     * @throws ApiError
+     */
+    public static createProcedureItem(
+        requestBody?: ProcedureItem,
+    ): CancelablePromise<ProcedureItem> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/nursing/procedure_item/',
+            body: requestBody,
+            mediaType: 'application/json',
+        });
+    }
+    /**
+     * @param id A unique integer value identifying this Procedimento de Enfermagem - Item.
+     * @param search A search term.
+     * @param ordering Which field to use when ordering the results.
+     * @returns ProcedureItem
+     * @throws ApiError
+     */
+    public static retrieveProcedureItem(
+        id: string,
+        search?: string,
+        ordering?: string,
+    ): CancelablePromise<ProcedureItem> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/nursing/procedure_item/{id}/',
+            path: {
+                'id': id,
+            },
+            query: {
+                'search': search,
+                'ordering': ordering,
+            },
+        });
+    }
+    /**
+     * P1.3: CRÍTICO - Prevenir modificações diretas via PATCH/PUT em campos críticos.
+     * Use state transition endpoints (execute, complete, etc.).
+     * @param id A unique integer value identifying this Procedimento de Enfermagem - Item.
+     * @param search A search term.
+     * @param ordering Which field to use when ordering the results.
+     * @param requestBody
+     * @returns ProcedureItem
+     * @throws ApiError
+     */
+    public static updateProcedureItem(
+        id: string,
+        search?: string,
+        ordering?: string,
+        requestBody?: ProcedureItem,
+    ): CancelablePromise<ProcedureItem> {
+        return __request(OpenAPI, {
+            method: 'PUT',
+            url: '/api/v1/nursing/procedure_item/{id}/',
+            path: {
+                'id': id,
+            },
+            query: {
+                'search': search,
+                'ordering': ordering,
+            },
+            body: requestBody,
+            mediaType: 'application/json',
+        });
+    }
+    /**
+     * @param id A unique integer value identifying this Procedimento de Enfermagem - Item.
+     * @param search A search term.
+     * @param ordering Which field to use when ordering the results.
+     * @param requestBody
+     * @returns ProcedureItem
+     * @throws ApiError
+     */
+    public static partialUpdateProcedureItem(
+        id: string,
+        search?: string,
+        ordering?: string,
+        requestBody?: ProcedureItem,
+    ): CancelablePromise<ProcedureItem> {
+        return __request(OpenAPI, {
+            method: 'PATCH',
+            url: '/api/v1/nursing/procedure_item/{id}/',
+            path: {
+                'id': id,
+            },
+            query: {
+                'search': search,
+                'ordering': ordering,
+            },
+            body: requestBody,
+            mediaType: 'application/json',
+        });
+    }
+    /**
+     * @param id A unique integer value identifying this Procedimento de Enfermagem - Item.
+     * @param search A search term.
+     * @param ordering Which field to use when ordering the results.
+     * @returns void
+     * @throws ApiError
+     */
+    public static destroyProcedureItem(
+        id: string,
+        search?: string,
+        ordering?: string,
+    ): CancelablePromise<void> {
+        return __request(OpenAPI, {
+            method: 'DELETE',
+            url: '/api/v1/nursing/procedure_item/{id}/',
+            path: {
+                'id': id,
+            },
+            query: {
+                'search': search,
+                'ordering': ordering,
+            },
+        });
+    }
+    /**
+     * @param search A search term.
+     * @param ordering Which field to use when ordering the results.
+     * @returns ProcedureItemValue
+     * @throws ApiError
+     */
+    public static listProcedureItemValues(
+        search?: string,
+        ordering?: string,
+    ): CancelablePromise<Array<ProcedureItemValue>> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/nursing/procedure_item_value/',
+            query: {
+                'search': search,
+                'ordering': ordering,
+            },
+        });
+    }
+    /**
+     * @param requestBody
+     * @returns ProcedureItemValue
+     * @throws ApiError
+     */
+    public static createProcedureItemValue(
+        requestBody?: ProcedureItemValue,
+    ): CancelablePromise<ProcedureItemValue> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/nursing/procedure_item_value/',
+            body: requestBody,
+            mediaType: 'application/json',
+        });
+    }
+    /**
+     * @param id A unique integer value identifying this Valor do Item de Procedimento.
+     * @param search A search term.
+     * @param ordering Which field to use when ordering the results.
+     * @returns ProcedureItemValue
+     * @throws ApiError
+     */
+    public static retrieveProcedureItemValue(
+        id: string,
+        search?: string,
+        ordering?: string,
+    ): CancelablePromise<ProcedureItemValue> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/nursing/procedure_item_value/{id}/',
+            path: {
+                'id': id,
+            },
+            query: {
+                'search': search,
+                'ordering': ordering,
+            },
+        });
+    }
+    /**
+     * @param id A unique integer value identifying this Valor do Item de Procedimento.
+     * @param search A search term.
+     * @param ordering Which field to use when ordering the results.
+     * @param requestBody
+     * @returns ProcedureItemValue
+     * @throws ApiError
+     */
+    public static updateProcedureItemValue(
+        id: string,
+        search?: string,
+        ordering?: string,
+        requestBody?: ProcedureItemValue,
+    ): CancelablePromise<ProcedureItemValue> {
+        return __request(OpenAPI, {
+            method: 'PUT',
+            url: '/api/v1/nursing/procedure_item_value/{id}/',
+            path: {
+                'id': id,
+            },
+            query: {
+                'search': search,
+                'ordering': ordering,
+            },
+            body: requestBody,
+            mediaType: 'application/json',
+        });
+    }
+    /**
+     * @param id A unique integer value identifying this Valor do Item de Procedimento.
+     * @param search A search term.
+     * @param ordering Which field to use when ordering the results.
+     * @param requestBody
+     * @returns ProcedureItemValue
+     * @throws ApiError
+     */
+    public static partialUpdateProcedureItemValue(
+        id: string,
+        search?: string,
+        ordering?: string,
+        requestBody?: ProcedureItemValue,
+    ): CancelablePromise<ProcedureItemValue> {
+        return __request(OpenAPI, {
+            method: 'PATCH',
+            url: '/api/v1/nursing/procedure_item_value/{id}/',
+            path: {
+                'id': id,
+            },
+            query: {
+                'search': search,
+                'ordering': ordering,
+            },
+            body: requestBody,
+            mediaType: 'application/json',
+        });
+    }
+    /**
+     * @param id A unique integer value identifying this Valor do Item de Procedimento.
+     * @param search A search term.
+     * @param ordering Which field to use when ordering the results.
+     * @returns void
+     * @throws ApiError
+     */
+    public static destroyProcedureItemValue(
+        id: string,
+        search?: string,
+        ordering?: string,
+    ): CancelablePromise<void> {
+        return __request(OpenAPI, {
+            method: 'DELETE',
+            url: '/api/v1/nursing/procedure_item_value/{id}/',
+            path: {
+                'id': id,
+            },
+            query: {
+                'search': search,
+                'ordering': ordering,
+            },
+        });
+    }
+    /**
+     * @param search A search term.
+     * @param ordering Which field to use when ordering the results.
+     * @returns ProcedureMaterial
+     * @throws ApiError
+     */
+    public static listProcedureMaterials(
+        search?: string,
+        ordering?: string,
+    ): CancelablePromise<Array<ProcedureMaterial>> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/nursing/procedure_material/',
+            query: {
+                'search': search,
+                'ordering': ordering,
+            },
+        });
+    }
+    /**
+     * @param requestBody
+     * @returns ProcedureMaterial
+     * @throws ApiError
+     */
+    public static createProcedureMaterial(
+        requestBody?: ProcedureMaterial,
+    ): CancelablePromise<ProcedureMaterial> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/nursing/procedure_material/',
+            body: requestBody,
+            mediaType: 'application/json',
+        });
+    }
+    /**
+     * @param id A unique integer value identifying this Material do Procedimento.
+     * @param search A search term.
+     * @param ordering Which field to use when ordering the results.
+     * @returns ProcedureMaterial
+     * @throws ApiError
+     */
+    public static retrieveProcedureMaterial(
+        id: string,
+        search?: string,
+        ordering?: string,
+    ): CancelablePromise<ProcedureMaterial> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/nursing/procedure_material/{id}/',
+            path: {
+                'id': id,
+            },
+            query: {
+                'search': search,
+                'ordering': ordering,
+            },
+        });
+    }
+    /**
+     * @param id A unique integer value identifying this Material do Procedimento.
+     * @param search A search term.
+     * @param ordering Which field to use when ordering the results.
+     * @param requestBody
+     * @returns ProcedureMaterial
+     * @throws ApiError
+     */
+    public static updateProcedureMaterial(
+        id: string,
+        search?: string,
+        ordering?: string,
+        requestBody?: ProcedureMaterial,
+    ): CancelablePromise<ProcedureMaterial> {
+        return __request(OpenAPI, {
+            method: 'PUT',
+            url: '/api/v1/nursing/procedure_material/{id}/',
+            path: {
+                'id': id,
+            },
+            query: {
+                'search': search,
+                'ordering': ordering,
+            },
+            body: requestBody,
+            mediaType: 'application/json',
+        });
+    }
+    /**
+     * @param id A unique integer value identifying this Material do Procedimento.
+     * @param search A search term.
+     * @param ordering Which field to use when ordering the results.
+     * @param requestBody
+     * @returns ProcedureMaterial
+     * @throws ApiError
+     */
+    public static partialUpdateProcedureMaterial(
+        id: string,
+        search?: string,
+        ordering?: string,
+        requestBody?: ProcedureMaterial,
+    ): CancelablePromise<ProcedureMaterial> {
+        return __request(OpenAPI, {
+            method: 'PATCH',
+            url: '/api/v1/nursing/procedure_material/{id}/',
+            path: {
+                'id': id,
+            },
+            query: {
+                'search': search,
+                'ordering': ordering,
+            },
+            body: requestBody,
+            mediaType: 'application/json',
+        });
+    }
+    /**
+     * @param id A unique integer value identifying this Material do Procedimento.
+     * @param search A search term.
+     * @param ordering Which field to use when ordering the results.
+     * @returns void
+     * @throws ApiError
+     */
+    public static destroyProcedureMaterial(
+        id: string,
+        search?: string,
+        ordering?: string,
+    ): CancelablePromise<void> {
+        return __request(OpenAPI, {
+            method: 'DELETE',
+            url: '/api/v1/nursing/procedure_material/{id}/',
+            path: {
+                'id': id,
+            },
+            query: {
+                'search': search,
+                'ordering': ordering,
+            },
+        });
+    }
+    /**
+     * @param search A search term.
+     * @param ordering Which field to use when ordering the results.
+     * @returns ProcedureMaterialValue
+     * @throws ApiError
+     */
+    public static listProcedureMaterialValues(
+        search?: string,
+        ordering?: string,
+    ): CancelablePromise<Array<ProcedureMaterialValue>> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/nursing/procedure_material_value/',
+            query: {
+                'search': search,
+                'ordering': ordering,
+            },
+        });
+    }
+    /**
+     * @param requestBody
+     * @returns ProcedureMaterialValue
+     * @throws ApiError
+     */
+    public static createProcedureMaterialValue(
+        requestBody?: ProcedureMaterialValue,
+    ): CancelablePromise<ProcedureMaterialValue> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/nursing/procedure_material_value/',
+            body: requestBody,
+            mediaType: 'application/json',
+        });
+    }
+    /**
+     * @param id A unique integer value identifying this Valor do Material do Procedimento.
+     * @param search A search term.
+     * @param ordering Which field to use when ordering the results.
+     * @returns ProcedureMaterialValue
+     * @throws ApiError
+     */
+    public static retrieveProcedureMaterialValue(
+        id: string,
+        search?: string,
+        ordering?: string,
+    ): CancelablePromise<ProcedureMaterialValue> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/nursing/procedure_material_value/{id}/',
+            path: {
+                'id': id,
+            },
+            query: {
+                'search': search,
+                'ordering': ordering,
+            },
+        });
+    }
+    /**
+     * @param id A unique integer value identifying this Valor do Material do Procedimento.
+     * @param search A search term.
+     * @param ordering Which field to use when ordering the results.
+     * @param requestBody
+     * @returns ProcedureMaterialValue
+     * @throws ApiError
+     */
+    public static updateProcedureMaterialValue(
+        id: string,
+        search?: string,
+        ordering?: string,
+        requestBody?: ProcedureMaterialValue,
+    ): CancelablePromise<ProcedureMaterialValue> {
+        return __request(OpenAPI, {
+            method: 'PUT',
+            url: '/api/v1/nursing/procedure_material_value/{id}/',
+            path: {
+                'id': id,
+            },
+            query: {
+                'search': search,
+                'ordering': ordering,
+            },
+            body: requestBody,
+            mediaType: 'application/json',
+        });
+    }
+    /**
+     * @param id A unique integer value identifying this Valor do Material do Procedimento.
+     * @param search A search term.
+     * @param ordering Which field to use when ordering the results.
+     * @param requestBody
+     * @returns ProcedureMaterialValue
+     * @throws ApiError
+     */
+    public static partialUpdateProcedureMaterialValue(
+        id: string,
+        search?: string,
+        ordering?: string,
+        requestBody?: ProcedureMaterialValue,
+    ): CancelablePromise<ProcedureMaterialValue> {
+        return __request(OpenAPI, {
+            method: 'PATCH',
+            url: '/api/v1/nursing/procedure_material_value/{id}/',
+            path: {
+                'id': id,
+            },
+            query: {
+                'search': search,
+                'ordering': ordering,
+            },
+            body: requestBody,
+            mediaType: 'application/json',
+        });
+    }
+    /**
+     * @param id A unique integer value identifying this Valor do Material do Procedimento.
+     * @param search A search term.
+     * @param ordering Which field to use when ordering the results.
+     * @returns void
+     * @throws ApiError
+     */
+    public static destroyProcedureMaterialValue(
+        id: string,
+        search?: string,
+        ordering?: string,
+    ): CancelablePromise<void> {
+        return __request(OpenAPI, {
+            method: 'DELETE',
+            url: '/api/v1/nursing/procedure_material_value/{id}/',
             path: {
                 'id': id,
             },
@@ -5369,6 +5082,293 @@ export class ApiService {
                 'search': search,
                 'ordering': ordering,
             },
+        });
+    }
+    /**
+     * @param search A search term.
+     * @param ordering Which field to use when ordering the results.
+     * @returns WardAdmission
+     * @throws ApiError
+     */
+    public static listWardAdmissions(
+        search?: string,
+        ordering?: string,
+    ): CancelablePromise<Array<WardAdmission>> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/nursing/ward_admission/',
+            query: {
+                'search': search,
+                'ordering': ordering,
+            },
+        });
+    }
+    /**
+     * @param requestBody
+     * @returns WardAdmission
+     * @throws ApiError
+     */
+    public static createWardAdmission(
+        requestBody?: WardAdmission,
+    ): CancelablePromise<WardAdmission> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/nursing/ward_admission/',
+            body: requestBody,
+            mediaType: 'application/json',
+        });
+    }
+    /**
+     * @param id A unique integer value identifying this Internamento (Enfermaria).
+     * @param search A search term.
+     * @param ordering Which field to use when ordering the results.
+     * @returns WardAdmission
+     * @throws ApiError
+     */
+    public static retrieveWardAdmission(
+        id: string,
+        search?: string,
+        ordering?: string,
+    ): CancelablePromise<WardAdmission> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/nursing/ward_admission/{id}/',
+            path: {
+                'id': id,
+            },
+            query: {
+                'search': search,
+                'ordering': ordering,
+            },
+        });
+    }
+    /**
+     * @param id A unique integer value identifying this Internamento (Enfermaria).
+     * @param search A search term.
+     * @param ordering Which field to use when ordering the results.
+     * @param requestBody
+     * @returns WardAdmission
+     * @throws ApiError
+     */
+    public static updateWardAdmission(
+        id: string,
+        search?: string,
+        ordering?: string,
+        requestBody?: WardAdmission,
+    ): CancelablePromise<WardAdmission> {
+        return __request(OpenAPI, {
+            method: 'PUT',
+            url: '/api/v1/nursing/ward_admission/{id}/',
+            path: {
+                'id': id,
+            },
+            query: {
+                'search': search,
+                'ordering': ordering,
+            },
+            body: requestBody,
+            mediaType: 'application/json',
+        });
+    }
+    /**
+     * @param id A unique integer value identifying this Internamento (Enfermaria).
+     * @param search A search term.
+     * @param ordering Which field to use when ordering the results.
+     * @param requestBody
+     * @returns WardAdmission
+     * @throws ApiError
+     */
+    public static partialUpdateWardAdmission(
+        id: string,
+        search?: string,
+        ordering?: string,
+        requestBody?: WardAdmission,
+    ): CancelablePromise<WardAdmission> {
+        return __request(OpenAPI, {
+            method: 'PATCH',
+            url: '/api/v1/nursing/ward_admission/{id}/',
+            path: {
+                'id': id,
+            },
+            query: {
+                'search': search,
+                'ordering': ordering,
+            },
+            body: requestBody,
+            mediaType: 'application/json',
+        });
+    }
+    /**
+     * @param id A unique integer value identifying this Internamento (Enfermaria).
+     * @param search A search term.
+     * @param ordering Which field to use when ordering the results.
+     * @returns void
+     * @throws ApiError
+     */
+    public static destroyWardAdmission(
+        id: string,
+        search?: string,
+        ordering?: string,
+    ): CancelablePromise<void> {
+        return __request(OpenAPI, {
+            method: 'DELETE',
+            url: '/api/v1/nursing/ward_admission/{id}/',
+            path: {
+                'id': id,
+            },
+            query: {
+                'search': search,
+                'ordering': ordering,
+            },
+        });
+    }
+    /**
+     * @param search A search term.
+     * @param ordering Which field to use when ordering the results.
+     * @returns WardBed
+     * @throws ApiError
+     */
+    public static listWardBeds(
+        search?: string,
+        ordering?: string,
+    ): CancelablePromise<Array<WardBed>> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/nursing/ward_bed/',
+            query: {
+                'search': search,
+                'ordering': ordering,
+            },
+        });
+    }
+    /**
+     * @param requestBody
+     * @returns WardBed
+     * @throws ApiError
+     */
+    public static createWardBed(
+        requestBody?: WardBed,
+    ): CancelablePromise<WardBed> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/nursing/ward_bed/',
+            body: requestBody,
+            mediaType: 'application/json',
+        });
+    }
+    /**
+     * @param id A unique integer value identifying this Cama.
+     * @param search A search term.
+     * @param ordering Which field to use when ordering the results.
+     * @returns WardBed
+     * @throws ApiError
+     */
+    public static retrieveWardBed(
+        id: string,
+        search?: string,
+        ordering?: string,
+    ): CancelablePromise<WardBed> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/nursing/ward_bed/{id}/',
+            path: {
+                'id': id,
+            },
+            query: {
+                'search': search,
+                'ordering': ordering,
+            },
+        });
+    }
+    /**
+     * @param id A unique integer value identifying this Cama.
+     * @param search A search term.
+     * @param ordering Which field to use when ordering the results.
+     * @param requestBody
+     * @returns WardBed
+     * @throws ApiError
+     */
+    public static updateWardBed(
+        id: string,
+        search?: string,
+        ordering?: string,
+        requestBody?: WardBed,
+    ): CancelablePromise<WardBed> {
+        return __request(OpenAPI, {
+            method: 'PUT',
+            url: '/api/v1/nursing/ward_bed/{id}/',
+            path: {
+                'id': id,
+            },
+            query: {
+                'search': search,
+                'ordering': ordering,
+            },
+            body: requestBody,
+            mediaType: 'application/json',
+        });
+    }
+    /**
+     * @param id A unique integer value identifying this Cama.
+     * @param search A search term.
+     * @param ordering Which field to use when ordering the results.
+     * @param requestBody
+     * @returns WardBed
+     * @throws ApiError
+     */
+    public static partialUpdateWardBed(
+        id: string,
+        search?: string,
+        ordering?: string,
+        requestBody?: WardBed,
+    ): CancelablePromise<WardBed> {
+        return __request(OpenAPI, {
+            method: 'PATCH',
+            url: '/api/v1/nursing/ward_bed/{id}/',
+            path: {
+                'id': id,
+            },
+            query: {
+                'search': search,
+                'ordering': ordering,
+            },
+            body: requestBody,
+            mediaType: 'application/json',
+        });
+    }
+    /**
+     * @param id A unique integer value identifying this Cama.
+     * @param search A search term.
+     * @param ordering Which field to use when ordering the results.
+     * @returns void
+     * @throws ApiError
+     */
+    public static destroyWardBed(
+        id: string,
+        search?: string,
+        ordering?: string,
+    ): CancelablePromise<void> {
+        return __request(OpenAPI, {
+            method: 'DELETE',
+            url: '/api/v1/nursing/ward_bed/{id}/',
+            path: {
+                'id': id,
+            },
+            query: {
+                'search': search,
+                'ordering': ordering,
+            },
+        });
+    }
+    /**
+     * Operational ward dashboard (occupancy + upcoming medications).
+     * @returns any
+     * @throws ApiError
+     */
+    public static listWardDashboardViewSets(): CancelablePromise<Array<any>> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/nursing/ward_dashboard/',
         });
     }
     /**
@@ -21579,7 +21579,7 @@ export class ApiService {
         ): CancelablePromise<ProcedureItem> {
             return __request(OpenAPI, {
                 method: 'POST',
-                url: '/api/v1/nursing/procedimentoitem/{id}/concluir/',
+                url: '/api/v1/nursing/procedure_item/{id}/complete/',
                 path: {
                     'id': id,
                 },
@@ -21599,7 +21599,7 @@ export class ApiService {
         ): CancelablePromise<ProcedureItem> {
             return __request(OpenAPI, {
                 method: 'POST',
-                url: '/api/v1/nursing/procedimentoitem/{id}/executar/',
+                url: '/api/v1/nursing/procedure_item/{id}/execute/',
                 path: {
                     'id': id,
                 },
@@ -21619,7 +21619,7 @@ export class ApiService {
         ): CancelablePromise<ProcedureItem> {
             return __request(OpenAPI, {
                 method: 'POST',
-                url: '/api/v1/nursing/procedimentoitem/{id}/marcar_faturado/',
+                url: '/api/v1/nursing/procedure_item/{id}/mark-billed/',
                 path: {
                     'id': id,
                 },
@@ -21639,7 +21639,7 @@ export class ApiService {
         ): CancelablePromise<ProcedureItem> {
             return __request(OpenAPI, {
                 method: 'POST',
-                url: '/api/v1/nursing/procedimentoitem/{id}/nao_concluir/',
+                url: '/api/v1/nursing/procedure_item/{id}/mark-not-completed/',
                 path: {
                     'id': id,
                 },

@@ -21,34 +21,34 @@ import { useAuth } from "@/hooks/useAuth"
 import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
 import { useLanguage } from "@/hooks/useLanguage"
 
-export default function EnfermagemPage() {
+export default function NursingPage() {
   const { user } = useAuth()
   const { t } = useLanguage()
-  const podeVerAdmin = userHasAnyGroup(user, [GROUPS.ADMIN])
+  const canViewAdmin = userHasAnyGroup(user, [GROUPS.ADMIN])
 
   const [loading, setLoading] = useState(true)
-  const [erro, setErro] = useState<string | null>(null)
-  const [requisicoesPendentes, setRequisicoesPendentes] = useState<number>(0)
-  const [procedimentos, setProcedimentos] = useState<number>(0)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [pendingRequests, setPendingRequests] = useState<number>(0)
+  const [procedures, setProcedures] = useState<number>(0)
 
   useEffect(() => {
     let mounted = true
     async function load() {
       try {
         setLoading(true)
-        setErro(null)
+        setErrorMessage(null)
 
-        const [reqs, procs] = await Promise.all([
+        const [requests, procedureResponse] = await Promise.all([
           apiFetch<any>("/requests/?tipo=LAB&estado=pendente"),
-          apiFetch<any>("/nursing/procedimento/"),
+          apiFetch<any>("/nursing/procedure/"),
         ])
 
         if (!mounted) return
-        setRequisicoesPendentes(extractTotalCount(reqs))
-        setProcedimentos(extractTotalCount(procs))
+        setPendingRequests(extractTotalCount(requests))
+        setProcedures(extractTotalCount(procedureResponse))
       } catch (e: any) {
         if (!mounted) return
-        setErro(
+        setErrorMessage(
           isNotFoundLikeError(e)
             ? null
             : (e?.message || t("Falha ao carregar o workspace de enfermagem.", "Failed to load the nursing workspace.")),
@@ -70,7 +70,7 @@ export default function EnfermagemPage() {
           title={t("Enfermagem", "Nursing")}
           subtitle={t("Execução: colheitas, procedimentos e registos.", "Execution: sample collection, procedures, and records.")}
           actions={
-            podeVerAdmin ? (
+            canViewAdmin ? (
               <Link
                 href="/admin/nursing/"
                 className="inline-flex items-center rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50"
@@ -81,15 +81,15 @@ export default function EnfermagemPage() {
           }
         />
 
-        {erro ? (
+        {errorMessage ? (
           <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-            {erro}
+            {errorMessage}
           </div>
         ) : null}
 
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <MetricCard label={t("Requisições pendentes", "Pending requests")} value={loading ? "..." : requisicoesPendentes} />
-          <MetricCard label={t("Procedimentos", "Procedures")} value={loading ? "..." : procedimentos} />
+          <MetricCard label={t("Requisições pendentes", "Pending requests")} value={loading ? "..." : pendingRequests} />
+          <MetricCard label={t("Procedimentos", "Procedures")} value={loading ? "..." : procedures} />
           <MetricCard label={t("Colheitas", "Sample collections")} value={loading ? "..." : "—"} />
           <MetricCard
             label={t("Sinais vitais", "Vital signs")}

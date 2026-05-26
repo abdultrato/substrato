@@ -6781,338 +6781,7 @@
         ]
       }
     },
-    "/api/v1/nursing/camaenfermaria/": {
-      "get": {
-        "operationId": "listWardBeds",
-        "description": "",
-        "parameters": [
-          {
-            "name": "search",
-            "required": false,
-            "in": "query",
-            "description": "A search term.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "ordering",
-            "required": false,
-            "in": "query",
-            "description": "Which field to use when ordering the results.",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/WardBed"
-                  }
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "tags": [
-          "api"
-        ]
-      },
-      "post": {
-        "operationId": "createWardBed",
-        "description": "",
-        "parameters": [],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/WardBed"
-              }
-            },
-            "application/x-www-form-urlencoded": {
-              "schema": {
-                "$ref": "#/components/schemas/WardBed"
-              }
-            },
-            "multipart/form-data": {
-              "schema": {
-                "$ref": "#/components/schemas/WardBed"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/WardBed"
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "tags": [
-          "api"
-        ]
-      }
-    },
-    "/api/v1/nursing/camaenfermaria/{id}/": {
-      "get": {
-        "operationId": "retrieveWardBed",
-        "description": "",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "description": "A unique integer value identifying this Cama.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "search",
-            "required": false,
-            "in": "query",
-            "description": "A search term.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "ordering",
-            "required": false,
-            "in": "query",
-            "description": "Which field to use when ordering the results.",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/WardBed"
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "tags": [
-          "api"
-        ]
-      },
-      "put": {
-        "operationId": "updateWardBed",
-        "description": "",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "description": "A unique integer value identifying this Cama.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "search",
-            "required": false,
-            "in": "query",
-            "description": "A search term.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "ordering",
-            "required": false,
-            "in": "query",
-            "description": "Which field to use when ordering the results.",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/WardBed"
-              }
-            },
-            "application/x-www-form-urlencoded": {
-              "schema": {
-                "$ref": "#/components/schemas/WardBed"
-              }
-            },
-            "multipart/form-data": {
-              "schema": {
-                "$ref": "#/components/schemas/WardBed"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/WardBed"
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "tags": [
-          "api"
-        ]
-      },
-      "patch": {
-        "operationId": "partialUpdateWardBed",
-        "description": "",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "description": "A unique integer value identifying this Cama.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "search",
-            "required": false,
-            "in": "query",
-            "description": "A search term.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "ordering",
-            "required": false,
-            "in": "query",
-            "description": "Which field to use when ordering the results.",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/WardBed"
-              }
-            },
-            "application/x-www-form-urlencoded": {
-              "schema": {
-                "$ref": "#/components/schemas/WardBed"
-              }
-            },
-            "multipart/form-data": {
-              "schema": {
-                "$ref": "#/components/schemas/WardBed"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/WardBed"
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "tags": [
-          "api"
-        ]
-      },
-      "delete": {
-        "operationId": "destroyWardBed",
-        "description": "",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "description": "A unique integer value identifying this Cama.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "search",
-            "required": false,
-            "in": "query",
-            "description": "A search term.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "ordering",
-            "required": false,
-            "in": "query",
-            "description": "Which field to use when ordering the results.",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": ""
-          }
-        },
-        "tags": [
-          "api"
-        ]
-      }
-    },
-    "/api/v1/nursing/enfermariadashboard/": {
-      "get": {
-        "operationId": "listWardDashboardViewSets",
-        "description": "Operational ward dashboard (occupancy + upcoming medications).",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {}
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "tags": [
-          "api"
-        ]
-      }
-    },
-    "/api/v1/nursing/evolucaoenfermagem/": {
+    "/api/v1/nursing/nursing_evolution/": {
       "get": {
         "operationId": "listNursingEvolutions",
         "description": "",
@@ -7195,7 +6864,7 @@
         ]
       }
     },
-    "/api/v1/nursing/evolucaoenfermagem/{id}/": {
+    "/api/v1/nursing/nursing_evolution/{id}/": {
       "get": {
         "operationId": "retrieveNursingEvolution",
         "description": "",
@@ -7420,315 +7089,7 @@
         ]
       }
     },
-    "/api/v1/nursing/internamentoenfermaria/": {
-      "get": {
-        "operationId": "listWardAdmissions",
-        "description": "",
-        "parameters": [
-          {
-            "name": "search",
-            "required": false,
-            "in": "query",
-            "description": "A search term.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "ordering",
-            "required": false,
-            "in": "query",
-            "description": "Which field to use when ordering the results.",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/WardAdmission"
-                  }
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "tags": [
-          "api"
-        ]
-      },
-      "post": {
-        "operationId": "createWardAdmission",
-        "description": "",
-        "parameters": [],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/WardAdmission"
-              }
-            },
-            "application/x-www-form-urlencoded": {
-              "schema": {
-                "$ref": "#/components/schemas/WardAdmission"
-              }
-            },
-            "multipart/form-data": {
-              "schema": {
-                "$ref": "#/components/schemas/WardAdmission"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/WardAdmission"
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "tags": [
-          "api"
-        ]
-      }
-    },
-    "/api/v1/nursing/internamentoenfermaria/{id}/": {
-      "get": {
-        "operationId": "retrieveWardAdmission",
-        "description": "",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "description": "A unique integer value identifying this Internamento (Enfermaria).",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "search",
-            "required": false,
-            "in": "query",
-            "description": "A search term.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "ordering",
-            "required": false,
-            "in": "query",
-            "description": "Which field to use when ordering the results.",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/WardAdmission"
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "tags": [
-          "api"
-        ]
-      },
-      "put": {
-        "operationId": "updateWardAdmission",
-        "description": "",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "description": "A unique integer value identifying this Internamento (Enfermaria).",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "search",
-            "required": false,
-            "in": "query",
-            "description": "A search term.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "ordering",
-            "required": false,
-            "in": "query",
-            "description": "Which field to use when ordering the results.",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/WardAdmission"
-              }
-            },
-            "application/x-www-form-urlencoded": {
-              "schema": {
-                "$ref": "#/components/schemas/WardAdmission"
-              }
-            },
-            "multipart/form-data": {
-              "schema": {
-                "$ref": "#/components/schemas/WardAdmission"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/WardAdmission"
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "tags": [
-          "api"
-        ]
-      },
-      "patch": {
-        "operationId": "partialUpdateWardAdmission",
-        "description": "",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "description": "A unique integer value identifying this Internamento (Enfermaria).",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "search",
-            "required": false,
-            "in": "query",
-            "description": "A search term.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "ordering",
-            "required": false,
-            "in": "query",
-            "description": "Which field to use when ordering the results.",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/WardAdmission"
-              }
-            },
-            "application/x-www-form-urlencoded": {
-              "schema": {
-                "$ref": "#/components/schemas/WardAdmission"
-              }
-            },
-            "multipart/form-data": {
-              "schema": {
-                "$ref": "#/components/schemas/WardAdmission"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/WardAdmission"
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "tags": [
-          "api"
-        ]
-      },
-      "delete": {
-        "operationId": "destroyWardAdmission",
-        "description": "",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "description": "A unique integer value identifying this Internamento (Enfermaria).",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "search",
-            "required": false,
-            "in": "query",
-            "description": "A search term.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "ordering",
-            "required": false,
-            "in": "query",
-            "description": "Which field to use when ordering the results.",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": ""
-          }
-        },
-        "tags": [
-          "api"
-        ]
-      }
-    },
-    "/api/v1/nursing/prescricaoenfermagem/": {
+    "/api/v1/nursing/nursing_prescription/": {
       "get": {
         "operationId": "listNursingPrescriptions",
         "description": "",
@@ -7811,7 +7172,7 @@
         ]
       }
     },
-    "/api/v1/nursing/prescricaoenfermagem/{id}/": {
+    "/api/v1/nursing/nursing_prescription/{id}/": {
       "get": {
         "operationId": "retrieveNursingPrescription",
         "description": "",
@@ -8036,9 +7397,9 @@
         ]
       }
     },
-    "/api/v1/nursing/procedimentocatalogo/": {
+    "/api/v1/nursing/nursing_record/": {
       "get": {
-        "operationId": "listProcedureCatalogs",
+        "operationId": "listNursingRecords",
         "description": "",
         "parameters": [
           {
@@ -8067,7 +7428,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/ProcedureCatalog"
+                    "$ref": "#/components/schemas/NursingRecord"
                   }
                 }
               }
@@ -8080,24 +7441,24 @@
         ]
       },
       "post": {
-        "operationId": "createProcedureCatalog",
+        "operationId": "createNursingRecord",
         "description": "",
         "parameters": [],
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ProcedureCatalog"
+                "$ref": "#/components/schemas/NursingRecord"
               }
             },
             "application/x-www-form-urlencoded": {
               "schema": {
-                "$ref": "#/components/schemas/ProcedureCatalog"
+                "$ref": "#/components/schemas/NursingRecord"
               }
             },
             "multipart/form-data": {
               "schema": {
-                "$ref": "#/components/schemas/ProcedureCatalog"
+                "$ref": "#/components/schemas/NursingRecord"
               }
             }
           }
@@ -8107,7 +7468,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ProcedureCatalog"
+                  "$ref": "#/components/schemas/NursingRecord"
                 }
               }
             },
@@ -8119,16 +7480,16 @@
         ]
       }
     },
-    "/api/v1/nursing/procedimentocatalogo/{id}/": {
+    "/api/v1/nursing/nursing_record/{id}/": {
       "get": {
-        "operationId": "retrieveProcedureCatalog",
+        "operationId": "retrieveNursingRecord",
         "description": "",
         "parameters": [
           {
             "name": "id",
             "in": "path",
             "required": true,
-            "description": "A unique integer value identifying this Cat\u00e1logo de Procedimento.",
+            "description": "A unique integer value identifying this Registro de Enfermagem.",
             "schema": {
               "type": "string"
             }
@@ -8157,7 +7518,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ProcedureCatalog"
+                  "$ref": "#/components/schemas/NursingRecord"
                 }
               }
             },
@@ -8169,14 +7530,14 @@
         ]
       },
       "put": {
-        "operationId": "updateProcedureCatalog",
+        "operationId": "updateNursingRecord",
         "description": "",
         "parameters": [
           {
             "name": "id",
             "in": "path",
             "required": true,
-            "description": "A unique integer value identifying this Cat\u00e1logo de Procedimento.",
+            "description": "A unique integer value identifying this Registro de Enfermagem.",
             "schema": {
               "type": "string"
             }
@@ -8204,17 +7565,17 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ProcedureCatalog"
+                "$ref": "#/components/schemas/NursingRecord"
               }
             },
             "application/x-www-form-urlencoded": {
               "schema": {
-                "$ref": "#/components/schemas/ProcedureCatalog"
+                "$ref": "#/components/schemas/NursingRecord"
               }
             },
             "multipart/form-data": {
               "schema": {
-                "$ref": "#/components/schemas/ProcedureCatalog"
+                "$ref": "#/components/schemas/NursingRecord"
               }
             }
           }
@@ -8224,7 +7585,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ProcedureCatalog"
+                  "$ref": "#/components/schemas/NursingRecord"
                 }
               }
             },
@@ -8236,14 +7597,14 @@
         ]
       },
       "patch": {
-        "operationId": "partialUpdateProcedureCatalog",
+        "operationId": "partialUpdateNursingRecord",
         "description": "",
         "parameters": [
           {
             "name": "id",
             "in": "path",
             "required": true,
-            "description": "A unique integer value identifying this Cat\u00e1logo de Procedimento.",
+            "description": "A unique integer value identifying this Registro de Enfermagem.",
             "schema": {
               "type": "string"
             }
@@ -8271,17 +7632,17 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ProcedureCatalog"
+                "$ref": "#/components/schemas/NursingRecord"
               }
             },
             "application/x-www-form-urlencoded": {
               "schema": {
-                "$ref": "#/components/schemas/ProcedureCatalog"
+                "$ref": "#/components/schemas/NursingRecord"
               }
             },
             "multipart/form-data": {
               "schema": {
-                "$ref": "#/components/schemas/ProcedureCatalog"
+                "$ref": "#/components/schemas/NursingRecord"
               }
             }
           }
@@ -8291,7 +7652,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ProcedureCatalog"
+                  "$ref": "#/components/schemas/NursingRecord"
                 }
               }
             },
@@ -8303,14 +7664,14 @@
         ]
       },
       "delete": {
-        "operationId": "destroyProcedureCatalog",
+        "operationId": "destroyNursingRecord",
         "description": "",
         "parameters": [
           {
             "name": "id",
             "in": "path",
             "required": true,
-            "description": "A unique integer value identifying this Cat\u00e1logo de Procedimento.",
+            "description": "A unique integer value identifying this Registro de Enfermagem.",
             "schema": {
               "type": "string"
             }
@@ -8344,9 +7705,9 @@
         ]
       }
     },
-    "/api/v1/nursing/procedimentocatalogomaterial/": {
+    "/api/v1/nursing/nursing_vital_sign/": {
       "get": {
-        "operationId": "listProcedureCatalogMaterials",
+        "operationId": "listNursingVitalSigns",
         "description": "",
         "parameters": [
           {
@@ -8375,7 +7736,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/ProcedureCatalogMaterial"
+                    "$ref": "#/components/schemas/NursingVitalSign"
                   }
                 }
               }
@@ -8388,24 +7749,24 @@
         ]
       },
       "post": {
-        "operationId": "createProcedureCatalogMaterial",
+        "operationId": "createNursingVitalSign",
         "description": "",
         "parameters": [],
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ProcedureCatalogMaterial"
+                "$ref": "#/components/schemas/NursingVitalSign"
               }
             },
             "application/x-www-form-urlencoded": {
               "schema": {
-                "$ref": "#/components/schemas/ProcedureCatalogMaterial"
+                "$ref": "#/components/schemas/NursingVitalSign"
               }
             },
             "multipart/form-data": {
               "schema": {
-                "$ref": "#/components/schemas/ProcedureCatalogMaterial"
+                "$ref": "#/components/schemas/NursingVitalSign"
               }
             }
           }
@@ -8415,7 +7776,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ProcedureCatalogMaterial"
+                  "$ref": "#/components/schemas/NursingVitalSign"
                 }
               }
             },
@@ -8427,16 +7788,16 @@
         ]
       }
     },
-    "/api/v1/nursing/procedimentocatalogomaterial/{id}/": {
+    "/api/v1/nursing/nursing_vital_sign/{id}/": {
       "get": {
-        "operationId": "retrieveProcedureCatalogMaterial",
+        "operationId": "retrieveNursingVitalSign",
         "description": "",
         "parameters": [
           {
             "name": "id",
             "in": "path",
             "required": true,
-            "description": "A unique integer value identifying this Material de Procedimento.",
+            "description": "A unique integer value identifying this Sinal Vital.",
             "schema": {
               "type": "string"
             }
@@ -8465,7 +7826,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ProcedureCatalogMaterial"
+                  "$ref": "#/components/schemas/NursingVitalSign"
                 }
               }
             },
@@ -8477,14 +7838,14 @@
         ]
       },
       "put": {
-        "operationId": "updateProcedureCatalogMaterial",
+        "operationId": "updateNursingVitalSign",
         "description": "",
         "parameters": [
           {
             "name": "id",
             "in": "path",
             "required": true,
-            "description": "A unique integer value identifying this Material de Procedimento.",
+            "description": "A unique integer value identifying this Sinal Vital.",
             "schema": {
               "type": "string"
             }
@@ -8512,17 +7873,17 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ProcedureCatalogMaterial"
+                "$ref": "#/components/schemas/NursingVitalSign"
               }
             },
             "application/x-www-form-urlencoded": {
               "schema": {
-                "$ref": "#/components/schemas/ProcedureCatalogMaterial"
+                "$ref": "#/components/schemas/NursingVitalSign"
               }
             },
             "multipart/form-data": {
               "schema": {
-                "$ref": "#/components/schemas/ProcedureCatalogMaterial"
+                "$ref": "#/components/schemas/NursingVitalSign"
               }
             }
           }
@@ -8532,7 +7893,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ProcedureCatalogMaterial"
+                  "$ref": "#/components/schemas/NursingVitalSign"
                 }
               }
             },
@@ -8544,14 +7905,14 @@
         ]
       },
       "patch": {
-        "operationId": "partialUpdateProcedureCatalogMaterial",
+        "operationId": "partialUpdateNursingVitalSign",
         "description": "",
         "parameters": [
           {
             "name": "id",
             "in": "path",
             "required": true,
-            "description": "A unique integer value identifying this Material de Procedimento.",
+            "description": "A unique integer value identifying this Sinal Vital.",
             "schema": {
               "type": "string"
             }
@@ -8579,17 +7940,17 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ProcedureCatalogMaterial"
+                "$ref": "#/components/schemas/NursingVitalSign"
               }
             },
             "application/x-www-form-urlencoded": {
               "schema": {
-                "$ref": "#/components/schemas/ProcedureCatalogMaterial"
+                "$ref": "#/components/schemas/NursingVitalSign"
               }
             },
             "multipart/form-data": {
               "schema": {
-                "$ref": "#/components/schemas/ProcedureCatalogMaterial"
+                "$ref": "#/components/schemas/NursingVitalSign"
               }
             }
           }
@@ -8599,7 +7960,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ProcedureCatalogMaterial"
+                  "$ref": "#/components/schemas/NursingVitalSign"
                 }
               }
             },
@@ -8611,1246 +7972,14 @@
         ]
       },
       "delete": {
-        "operationId": "destroyProcedureCatalogMaterial",
+        "operationId": "destroyNursingVitalSign",
         "description": "",
         "parameters": [
           {
             "name": "id",
             "in": "path",
             "required": true,
-            "description": "A unique integer value identifying this Material de Procedimento.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "search",
-            "required": false,
-            "in": "query",
-            "description": "A search term.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "ordering",
-            "required": false,
-            "in": "query",
-            "description": "Which field to use when ordering the results.",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": ""
-          }
-        },
-        "tags": [
-          "api"
-        ]
-      }
-    },
-    "/api/v1/nursing/procedimentoitem/": {
-      "get": {
-        "operationId": "listProcedureItems",
-        "description": "",
-        "parameters": [
-          {
-            "name": "search",
-            "required": false,
-            "in": "query",
-            "description": "A search term.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "ordering",
-            "required": false,
-            "in": "query",
-            "description": "Which field to use when ordering the results.",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ProcedureItem"
-                  }
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "tags": [
-          "api"
-        ]
-      },
-      "post": {
-        "operationId": "createProcedureItem",
-        "description": "",
-        "parameters": [],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ProcedureItem"
-              }
-            },
-            "application/x-www-form-urlencoded": {
-              "schema": {
-                "$ref": "#/components/schemas/ProcedureItem"
-              }
-            },
-            "multipart/form-data": {
-              "schema": {
-                "$ref": "#/components/schemas/ProcedureItem"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProcedureItem"
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "tags": [
-          "api"
-        ]
-      }
-    },
-    "/api/v1/nursing/procedimentoitem/{id}/": {
-      "get": {
-        "operationId": "retrieveProcedureItem",
-        "description": "",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "description": "A unique integer value identifying this Procedimento de Enfermagem - Item.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "search",
-            "required": false,
-            "in": "query",
-            "description": "A search term.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "ordering",
-            "required": false,
-            "in": "query",
-            "description": "Which field to use when ordering the results.",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProcedureItem"
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "tags": [
-          "api"
-        ]
-      },
-      "put": {
-        "operationId": "updateProcedureItem",
-        "description": "P1.3: CR\u00cdTICO - Prevenir modifica\u00e7\u00f5es diretas via PATCH/PUT em campos cr\u00edticos.\nUse endpoints espec\u00edficos para transi\u00e7\u00f5es de estado (executar, concluir, etc).",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "description": "A unique integer value identifying this Procedimento de Enfermagem - Item.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "search",
-            "required": false,
-            "in": "query",
-            "description": "A search term.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "ordering",
-            "required": false,
-            "in": "query",
-            "description": "Which field to use when ordering the results.",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ProcedureItem"
-              }
-            },
-            "application/x-www-form-urlencoded": {
-              "schema": {
-                "$ref": "#/components/schemas/ProcedureItem"
-              }
-            },
-            "multipart/form-data": {
-              "schema": {
-                "$ref": "#/components/schemas/ProcedureItem"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProcedureItem"
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "tags": [
-          "api"
-        ]
-      },
-      "patch": {
-        "operationId": "partialUpdateProcedureItem",
-        "description": "",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "description": "A unique integer value identifying this Procedimento de Enfermagem - Item.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "search",
-            "required": false,
-            "in": "query",
-            "description": "A search term.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "ordering",
-            "required": false,
-            "in": "query",
-            "description": "Which field to use when ordering the results.",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ProcedureItem"
-              }
-            },
-            "application/x-www-form-urlencoded": {
-              "schema": {
-                "$ref": "#/components/schemas/ProcedureItem"
-              }
-            },
-            "multipart/form-data": {
-              "schema": {
-                "$ref": "#/components/schemas/ProcedureItem"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProcedureItem"
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "tags": [
-          "api"
-        ]
-      },
-      "delete": {
-        "operationId": "destroyProcedureItem",
-        "description": "",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "description": "A unique integer value identifying this Procedimento de Enfermagem - Item.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "search",
-            "required": false,
-            "in": "query",
-            "description": "A search term.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "ordering",
-            "required": false,
-            "in": "query",
-            "description": "Which field to use when ordering the results.",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": ""
-          }
-        },
-        "tags": [
-          "api"
-        ]
-      }
-    },
-    "/api/v1/nursing/procedimentoitemvalor/": {
-      "get": {
-        "operationId": "listProcedureItemValues",
-        "description": "",
-        "parameters": [
-          {
-            "name": "search",
-            "required": false,
-            "in": "query",
-            "description": "A search term.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "ordering",
-            "required": false,
-            "in": "query",
-            "description": "Which field to use when ordering the results.",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ProcedureItemValue"
-                  }
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "tags": [
-          "api"
-        ]
-      },
-      "post": {
-        "operationId": "createProcedureItemValue",
-        "description": "",
-        "parameters": [],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ProcedureItemValue"
-              }
-            },
-            "application/x-www-form-urlencoded": {
-              "schema": {
-                "$ref": "#/components/schemas/ProcedureItemValue"
-              }
-            },
-            "multipart/form-data": {
-              "schema": {
-                "$ref": "#/components/schemas/ProcedureItemValue"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProcedureItemValue"
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "tags": [
-          "api"
-        ]
-      }
-    },
-    "/api/v1/nursing/procedimentoitemvalor/{id}/": {
-      "get": {
-        "operationId": "retrieveProcedureItemValue",
-        "description": "",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "description": "A unique integer value identifying this Valor do Item de Procedimento.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "search",
-            "required": false,
-            "in": "query",
-            "description": "A search term.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "ordering",
-            "required": false,
-            "in": "query",
-            "description": "Which field to use when ordering the results.",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProcedureItemValue"
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "tags": [
-          "api"
-        ]
-      },
-      "put": {
-        "operationId": "updateProcedureItemValue",
-        "description": "",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "description": "A unique integer value identifying this Valor do Item de Procedimento.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "search",
-            "required": false,
-            "in": "query",
-            "description": "A search term.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "ordering",
-            "required": false,
-            "in": "query",
-            "description": "Which field to use when ordering the results.",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ProcedureItemValue"
-              }
-            },
-            "application/x-www-form-urlencoded": {
-              "schema": {
-                "$ref": "#/components/schemas/ProcedureItemValue"
-              }
-            },
-            "multipart/form-data": {
-              "schema": {
-                "$ref": "#/components/schemas/ProcedureItemValue"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProcedureItemValue"
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "tags": [
-          "api"
-        ]
-      },
-      "patch": {
-        "operationId": "partialUpdateProcedureItemValue",
-        "description": "",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "description": "A unique integer value identifying this Valor do Item de Procedimento.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "search",
-            "required": false,
-            "in": "query",
-            "description": "A search term.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "ordering",
-            "required": false,
-            "in": "query",
-            "description": "Which field to use when ordering the results.",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ProcedureItemValue"
-              }
-            },
-            "application/x-www-form-urlencoded": {
-              "schema": {
-                "$ref": "#/components/schemas/ProcedureItemValue"
-              }
-            },
-            "multipart/form-data": {
-              "schema": {
-                "$ref": "#/components/schemas/ProcedureItemValue"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProcedureItemValue"
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "tags": [
-          "api"
-        ]
-      },
-      "delete": {
-        "operationId": "destroyProcedureItemValue",
-        "description": "",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "description": "A unique integer value identifying this Valor do Item de Procedimento.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "search",
-            "required": false,
-            "in": "query",
-            "description": "A search term.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "ordering",
-            "required": false,
-            "in": "query",
-            "description": "Which field to use when ordering the results.",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": ""
-          }
-        },
-        "tags": [
-          "api"
-        ]
-      }
-    },
-    "/api/v1/nursing/procedimentomaterial/": {
-      "get": {
-        "operationId": "listProcedureMaterials",
-        "description": "",
-        "parameters": [
-          {
-            "name": "search",
-            "required": false,
-            "in": "query",
-            "description": "A search term.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "ordering",
-            "required": false,
-            "in": "query",
-            "description": "Which field to use when ordering the results.",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ProcedureMaterial"
-                  }
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "tags": [
-          "api"
-        ]
-      },
-      "post": {
-        "operationId": "createProcedureMaterial",
-        "description": "",
-        "parameters": [],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ProcedureMaterial"
-              }
-            },
-            "application/x-www-form-urlencoded": {
-              "schema": {
-                "$ref": "#/components/schemas/ProcedureMaterial"
-              }
-            },
-            "multipart/form-data": {
-              "schema": {
-                "$ref": "#/components/schemas/ProcedureMaterial"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProcedureMaterial"
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "tags": [
-          "api"
-        ]
-      }
-    },
-    "/api/v1/nursing/procedimentomaterial/{id}/": {
-      "get": {
-        "operationId": "retrieveProcedureMaterial",
-        "description": "",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "description": "A unique integer value identifying this Material do Procedimento.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "search",
-            "required": false,
-            "in": "query",
-            "description": "A search term.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "ordering",
-            "required": false,
-            "in": "query",
-            "description": "Which field to use when ordering the results.",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProcedureMaterial"
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "tags": [
-          "api"
-        ]
-      },
-      "put": {
-        "operationId": "updateProcedureMaterial",
-        "description": "",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "description": "A unique integer value identifying this Material do Procedimento.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "search",
-            "required": false,
-            "in": "query",
-            "description": "A search term.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "ordering",
-            "required": false,
-            "in": "query",
-            "description": "Which field to use when ordering the results.",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ProcedureMaterial"
-              }
-            },
-            "application/x-www-form-urlencoded": {
-              "schema": {
-                "$ref": "#/components/schemas/ProcedureMaterial"
-              }
-            },
-            "multipart/form-data": {
-              "schema": {
-                "$ref": "#/components/schemas/ProcedureMaterial"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProcedureMaterial"
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "tags": [
-          "api"
-        ]
-      },
-      "patch": {
-        "operationId": "partialUpdateProcedureMaterial",
-        "description": "",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "description": "A unique integer value identifying this Material do Procedimento.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "search",
-            "required": false,
-            "in": "query",
-            "description": "A search term.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "ordering",
-            "required": false,
-            "in": "query",
-            "description": "Which field to use when ordering the results.",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ProcedureMaterial"
-              }
-            },
-            "application/x-www-form-urlencoded": {
-              "schema": {
-                "$ref": "#/components/schemas/ProcedureMaterial"
-              }
-            },
-            "multipart/form-data": {
-              "schema": {
-                "$ref": "#/components/schemas/ProcedureMaterial"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProcedureMaterial"
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "tags": [
-          "api"
-        ]
-      },
-      "delete": {
-        "operationId": "destroyProcedureMaterial",
-        "description": "",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "description": "A unique integer value identifying this Material do Procedimento.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "search",
-            "required": false,
-            "in": "query",
-            "description": "A search term.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "ordering",
-            "required": false,
-            "in": "query",
-            "description": "Which field to use when ordering the results.",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": ""
-          }
-        },
-        "tags": [
-          "api"
-        ]
-      }
-    },
-    "/api/v1/nursing/procedimentomaterialvalor/": {
-      "get": {
-        "operationId": "listProcedureMaterialValues",
-        "description": "",
-        "parameters": [
-          {
-            "name": "search",
-            "required": false,
-            "in": "query",
-            "description": "A search term.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "ordering",
-            "required": false,
-            "in": "query",
-            "description": "Which field to use when ordering the results.",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ProcedureMaterialValue"
-                  }
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "tags": [
-          "api"
-        ]
-      },
-      "post": {
-        "operationId": "createProcedureMaterialValue",
-        "description": "",
-        "parameters": [],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ProcedureMaterialValue"
-              }
-            },
-            "application/x-www-form-urlencoded": {
-              "schema": {
-                "$ref": "#/components/schemas/ProcedureMaterialValue"
-              }
-            },
-            "multipart/form-data": {
-              "schema": {
-                "$ref": "#/components/schemas/ProcedureMaterialValue"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProcedureMaterialValue"
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "tags": [
-          "api"
-        ]
-      }
-    },
-    "/api/v1/nursing/procedimentomaterialvalor/{id}/": {
-      "get": {
-        "operationId": "retrieveProcedureMaterialValue",
-        "description": "",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "description": "A unique integer value identifying this Valor do Material do Procedimento.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "search",
-            "required": false,
-            "in": "query",
-            "description": "A search term.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "ordering",
-            "required": false,
-            "in": "query",
-            "description": "Which field to use when ordering the results.",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProcedureMaterialValue"
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "tags": [
-          "api"
-        ]
-      },
-      "put": {
-        "operationId": "updateProcedureMaterialValue",
-        "description": "",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "description": "A unique integer value identifying this Valor do Material do Procedimento.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "search",
-            "required": false,
-            "in": "query",
-            "description": "A search term.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "ordering",
-            "required": false,
-            "in": "query",
-            "description": "Which field to use when ordering the results.",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ProcedureMaterialValue"
-              }
-            },
-            "application/x-www-form-urlencoded": {
-              "schema": {
-                "$ref": "#/components/schemas/ProcedureMaterialValue"
-              }
-            },
-            "multipart/form-data": {
-              "schema": {
-                "$ref": "#/components/schemas/ProcedureMaterialValue"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProcedureMaterialValue"
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "tags": [
-          "api"
-        ]
-      },
-      "patch": {
-        "operationId": "partialUpdateProcedureMaterialValue",
-        "description": "",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "description": "A unique integer value identifying this Valor do Material do Procedimento.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "search",
-            "required": false,
-            "in": "query",
-            "description": "A search term.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "ordering",
-            "required": false,
-            "in": "query",
-            "description": "Which field to use when ordering the results.",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ProcedureMaterialValue"
-              }
-            },
-            "application/x-www-form-urlencoded": {
-              "schema": {
-                "$ref": "#/components/schemas/ProcedureMaterialValue"
-              }
-            },
-            "multipart/form-data": {
-              "schema": {
-                "$ref": "#/components/schemas/ProcedureMaterialValue"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProcedureMaterialValue"
-                }
-              }
-            },
-            "description": ""
-          }
-        },
-        "tags": [
-          "api"
-        ]
-      },
-      "delete": {
-        "operationId": "destroyProcedureMaterialValue",
-        "description": "",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "description": "A unique integer value identifying this Valor do Material do Procedimento.",
+            "description": "A unique integer value identifying this Sinal Vital.",
             "schema": {
               "type": "string"
             }
@@ -10224,9 +8353,9 @@
         ]
       }
     },
-    "/api/v1/nursing/registroenfermagem/": {
+    "/api/v1/nursing/procedure_catalog/": {
       "get": {
-        "operationId": "listNursingRecords",
+        "operationId": "listProcedureCatalogs",
         "description": "",
         "parameters": [
           {
@@ -10255,7 +8384,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/NursingRecord"
+                    "$ref": "#/components/schemas/ProcedureCatalog"
                   }
                 }
               }
@@ -10268,24 +8397,24 @@
         ]
       },
       "post": {
-        "operationId": "createNursingRecord",
+        "operationId": "createProcedureCatalog",
         "description": "",
         "parameters": [],
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/NursingRecord"
+                "$ref": "#/components/schemas/ProcedureCatalog"
               }
             },
             "application/x-www-form-urlencoded": {
               "schema": {
-                "$ref": "#/components/schemas/NursingRecord"
+                "$ref": "#/components/schemas/ProcedureCatalog"
               }
             },
             "multipart/form-data": {
               "schema": {
-                "$ref": "#/components/schemas/NursingRecord"
+                "$ref": "#/components/schemas/ProcedureCatalog"
               }
             }
           }
@@ -10295,7 +8424,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/NursingRecord"
+                  "$ref": "#/components/schemas/ProcedureCatalog"
                 }
               }
             },
@@ -10307,16 +8436,16 @@
         ]
       }
     },
-    "/api/v1/nursing/registroenfermagem/{id}/": {
+    "/api/v1/nursing/procedure_catalog/{id}/": {
       "get": {
-        "operationId": "retrieveNursingRecord",
+        "operationId": "retrieveProcedureCatalog",
         "description": "",
         "parameters": [
           {
             "name": "id",
             "in": "path",
             "required": true,
-            "description": "A unique integer value identifying this Registro de Enfermagem.",
+            "description": "A unique integer value identifying this Cat\u00e1logo de Procedimento.",
             "schema": {
               "type": "string"
             }
@@ -10345,7 +8474,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/NursingRecord"
+                  "$ref": "#/components/schemas/ProcedureCatalog"
                 }
               }
             },
@@ -10357,14 +8486,14 @@
         ]
       },
       "put": {
-        "operationId": "updateNursingRecord",
+        "operationId": "updateProcedureCatalog",
         "description": "",
         "parameters": [
           {
             "name": "id",
             "in": "path",
             "required": true,
-            "description": "A unique integer value identifying this Registro de Enfermagem.",
+            "description": "A unique integer value identifying this Cat\u00e1logo de Procedimento.",
             "schema": {
               "type": "string"
             }
@@ -10392,17 +8521,17 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/NursingRecord"
+                "$ref": "#/components/schemas/ProcedureCatalog"
               }
             },
             "application/x-www-form-urlencoded": {
               "schema": {
-                "$ref": "#/components/schemas/NursingRecord"
+                "$ref": "#/components/schemas/ProcedureCatalog"
               }
             },
             "multipart/form-data": {
               "schema": {
-                "$ref": "#/components/schemas/NursingRecord"
+                "$ref": "#/components/schemas/ProcedureCatalog"
               }
             }
           }
@@ -10412,7 +8541,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/NursingRecord"
+                  "$ref": "#/components/schemas/ProcedureCatalog"
                 }
               }
             },
@@ -10424,14 +8553,14 @@
         ]
       },
       "patch": {
-        "operationId": "partialUpdateNursingRecord",
+        "operationId": "partialUpdateProcedureCatalog",
         "description": "",
         "parameters": [
           {
             "name": "id",
             "in": "path",
             "required": true,
-            "description": "A unique integer value identifying this Registro de Enfermagem.",
+            "description": "A unique integer value identifying this Cat\u00e1logo de Procedimento.",
             "schema": {
               "type": "string"
             }
@@ -10459,17 +8588,17 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/NursingRecord"
+                "$ref": "#/components/schemas/ProcedureCatalog"
               }
             },
             "application/x-www-form-urlencoded": {
               "schema": {
-                "$ref": "#/components/schemas/NursingRecord"
+                "$ref": "#/components/schemas/ProcedureCatalog"
               }
             },
             "multipart/form-data": {
               "schema": {
-                "$ref": "#/components/schemas/NursingRecord"
+                "$ref": "#/components/schemas/ProcedureCatalog"
               }
             }
           }
@@ -10479,7 +8608,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/NursingRecord"
+                  "$ref": "#/components/schemas/ProcedureCatalog"
                 }
               }
             },
@@ -10491,14 +8620,14 @@
         ]
       },
       "delete": {
-        "operationId": "destroyNursingRecord",
+        "operationId": "destroyProcedureCatalog",
         "description": "",
         "parameters": [
           {
             "name": "id",
             "in": "path",
             "required": true,
-            "description": "A unique integer value identifying this Registro de Enfermagem.",
+            "description": "A unique integer value identifying this Cat\u00e1logo de Procedimento.",
             "schema": {
               "type": "string"
             }
@@ -10532,9 +8661,9 @@
         ]
       }
     },
-    "/api/v1/nursing/sinalvitalenfermagem/": {
+    "/api/v1/nursing/procedure_catalog_material/": {
       "get": {
-        "operationId": "listNursingVitalSigns",
+        "operationId": "listProcedureCatalogMaterials",
         "description": "",
         "parameters": [
           {
@@ -10563,7 +8692,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/NursingVitalSign"
+                    "$ref": "#/components/schemas/ProcedureCatalogMaterial"
                   }
                 }
               }
@@ -10576,24 +8705,24 @@
         ]
       },
       "post": {
-        "operationId": "createNursingVitalSign",
+        "operationId": "createProcedureCatalogMaterial",
         "description": "",
         "parameters": [],
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/NursingVitalSign"
+                "$ref": "#/components/schemas/ProcedureCatalogMaterial"
               }
             },
             "application/x-www-form-urlencoded": {
               "schema": {
-                "$ref": "#/components/schemas/NursingVitalSign"
+                "$ref": "#/components/schemas/ProcedureCatalogMaterial"
               }
             },
             "multipart/form-data": {
               "schema": {
-                "$ref": "#/components/schemas/NursingVitalSign"
+                "$ref": "#/components/schemas/ProcedureCatalogMaterial"
               }
             }
           }
@@ -10603,7 +8732,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/NursingVitalSign"
+                  "$ref": "#/components/schemas/ProcedureCatalogMaterial"
                 }
               }
             },
@@ -10615,16 +8744,16 @@
         ]
       }
     },
-    "/api/v1/nursing/sinalvitalenfermagem/{id}/": {
+    "/api/v1/nursing/procedure_catalog_material/{id}/": {
       "get": {
-        "operationId": "retrieveNursingVitalSign",
+        "operationId": "retrieveProcedureCatalogMaterial",
         "description": "",
         "parameters": [
           {
             "name": "id",
             "in": "path",
             "required": true,
-            "description": "A unique integer value identifying this Sinal Vital.",
+            "description": "A unique integer value identifying this Material de Procedimento.",
             "schema": {
               "type": "string"
             }
@@ -10653,7 +8782,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/NursingVitalSign"
+                  "$ref": "#/components/schemas/ProcedureCatalogMaterial"
                 }
               }
             },
@@ -10665,14 +8794,14 @@
         ]
       },
       "put": {
-        "operationId": "updateNursingVitalSign",
+        "operationId": "updateProcedureCatalogMaterial",
         "description": "",
         "parameters": [
           {
             "name": "id",
             "in": "path",
             "required": true,
-            "description": "A unique integer value identifying this Sinal Vital.",
+            "description": "A unique integer value identifying this Material de Procedimento.",
             "schema": {
               "type": "string"
             }
@@ -10700,17 +8829,17 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/NursingVitalSign"
+                "$ref": "#/components/schemas/ProcedureCatalogMaterial"
               }
             },
             "application/x-www-form-urlencoded": {
               "schema": {
-                "$ref": "#/components/schemas/NursingVitalSign"
+                "$ref": "#/components/schemas/ProcedureCatalogMaterial"
               }
             },
             "multipart/form-data": {
               "schema": {
-                "$ref": "#/components/schemas/NursingVitalSign"
+                "$ref": "#/components/schemas/ProcedureCatalogMaterial"
               }
             }
           }
@@ -10720,7 +8849,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/NursingVitalSign"
+                  "$ref": "#/components/schemas/ProcedureCatalogMaterial"
                 }
               }
             },
@@ -10732,14 +8861,14 @@
         ]
       },
       "patch": {
-        "operationId": "partialUpdateNursingVitalSign",
+        "operationId": "partialUpdateProcedureCatalogMaterial",
         "description": "",
         "parameters": [
           {
             "name": "id",
             "in": "path",
             "required": true,
-            "description": "A unique integer value identifying this Sinal Vital.",
+            "description": "A unique integer value identifying this Material de Procedimento.",
             "schema": {
               "type": "string"
             }
@@ -10767,17 +8896,17 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/NursingVitalSign"
+                "$ref": "#/components/schemas/ProcedureCatalogMaterial"
               }
             },
             "application/x-www-form-urlencoded": {
               "schema": {
-                "$ref": "#/components/schemas/NursingVitalSign"
+                "$ref": "#/components/schemas/ProcedureCatalogMaterial"
               }
             },
             "multipart/form-data": {
               "schema": {
-                "$ref": "#/components/schemas/NursingVitalSign"
+                "$ref": "#/components/schemas/ProcedureCatalogMaterial"
               }
             }
           }
@@ -10787,7 +8916,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/NursingVitalSign"
+                  "$ref": "#/components/schemas/ProcedureCatalogMaterial"
                 }
               }
             },
@@ -10799,14 +8928,1246 @@
         ]
       },
       "delete": {
-        "operationId": "destroyNursingVitalSign",
+        "operationId": "destroyProcedureCatalogMaterial",
         "description": "",
         "parameters": [
           {
             "name": "id",
             "in": "path",
             "required": true,
-            "description": "A unique integer value identifying this Sinal Vital.",
+            "description": "A unique integer value identifying this Material de Procedimento.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "A search term.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Which field to use when ordering the results.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      }
+    },
+    "/api/v1/nursing/procedure_item/": {
+      "get": {
+        "operationId": "listProcedureItems",
+        "description": "",
+        "parameters": [
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "A search term.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Which field to use when ordering the results.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ProcedureItem"
+                  }
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      },
+      "post": {
+        "operationId": "createProcedureItem",
+        "description": "",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProcedureItem"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/ProcedureItem"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/ProcedureItem"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProcedureItem"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      }
+    },
+    "/api/v1/nursing/procedure_item/{id}/": {
+      "get": {
+        "operationId": "retrieveProcedureItem",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "A unique integer value identifying this Procedimento de Enfermagem - Item.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "A search term.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Which field to use when ordering the results.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProcedureItem"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      },
+      "put": {
+        "operationId": "updateProcedureItem",
+        "description": "P1.3: CR\u00cdTICO - Prevenir modifica\u00e7\u00f5es diretas via PATCH/PUT em campos cr\u00edticos.\nUse state transition endpoints (execute, complete, etc.).",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "A unique integer value identifying this Procedimento de Enfermagem - Item.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "A search term.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Which field to use when ordering the results.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProcedureItem"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/ProcedureItem"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/ProcedureItem"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProcedureItem"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      },
+      "patch": {
+        "operationId": "partialUpdateProcedureItem",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "A unique integer value identifying this Procedimento de Enfermagem - Item.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "A search term.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Which field to use when ordering the results.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProcedureItem"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/ProcedureItem"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/ProcedureItem"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProcedureItem"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      },
+      "delete": {
+        "operationId": "destroyProcedureItem",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "A unique integer value identifying this Procedimento de Enfermagem - Item.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "A search term.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Which field to use when ordering the results.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      }
+    },
+    "/api/v1/nursing/procedure_item_value/": {
+      "get": {
+        "operationId": "listProcedureItemValues",
+        "description": "",
+        "parameters": [
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "A search term.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Which field to use when ordering the results.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ProcedureItemValue"
+                  }
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      },
+      "post": {
+        "operationId": "createProcedureItemValue",
+        "description": "",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProcedureItemValue"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/ProcedureItemValue"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/ProcedureItemValue"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProcedureItemValue"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      }
+    },
+    "/api/v1/nursing/procedure_item_value/{id}/": {
+      "get": {
+        "operationId": "retrieveProcedureItemValue",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "A unique integer value identifying this Valor do Item de Procedimento.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "A search term.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Which field to use when ordering the results.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProcedureItemValue"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      },
+      "put": {
+        "operationId": "updateProcedureItemValue",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "A unique integer value identifying this Valor do Item de Procedimento.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "A search term.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Which field to use when ordering the results.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProcedureItemValue"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/ProcedureItemValue"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/ProcedureItemValue"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProcedureItemValue"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      },
+      "patch": {
+        "operationId": "partialUpdateProcedureItemValue",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "A unique integer value identifying this Valor do Item de Procedimento.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "A search term.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Which field to use when ordering the results.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProcedureItemValue"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/ProcedureItemValue"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/ProcedureItemValue"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProcedureItemValue"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      },
+      "delete": {
+        "operationId": "destroyProcedureItemValue",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "A unique integer value identifying this Valor do Item de Procedimento.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "A search term.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Which field to use when ordering the results.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      }
+    },
+    "/api/v1/nursing/procedure_material/": {
+      "get": {
+        "operationId": "listProcedureMaterials",
+        "description": "",
+        "parameters": [
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "A search term.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Which field to use when ordering the results.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ProcedureMaterial"
+                  }
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      },
+      "post": {
+        "operationId": "createProcedureMaterial",
+        "description": "",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProcedureMaterial"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/ProcedureMaterial"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/ProcedureMaterial"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProcedureMaterial"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      }
+    },
+    "/api/v1/nursing/procedure_material/{id}/": {
+      "get": {
+        "operationId": "retrieveProcedureMaterial",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "A unique integer value identifying this Material do Procedimento.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "A search term.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Which field to use when ordering the results.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProcedureMaterial"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      },
+      "put": {
+        "operationId": "updateProcedureMaterial",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "A unique integer value identifying this Material do Procedimento.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "A search term.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Which field to use when ordering the results.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProcedureMaterial"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/ProcedureMaterial"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/ProcedureMaterial"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProcedureMaterial"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      },
+      "patch": {
+        "operationId": "partialUpdateProcedureMaterial",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "A unique integer value identifying this Material do Procedimento.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "A search term.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Which field to use when ordering the results.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProcedureMaterial"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/ProcedureMaterial"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/ProcedureMaterial"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProcedureMaterial"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      },
+      "delete": {
+        "operationId": "destroyProcedureMaterial",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "A unique integer value identifying this Material do Procedimento.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "A search term.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Which field to use when ordering the results.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      }
+    },
+    "/api/v1/nursing/procedure_material_value/": {
+      "get": {
+        "operationId": "listProcedureMaterialValues",
+        "description": "",
+        "parameters": [
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "A search term.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Which field to use when ordering the results.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ProcedureMaterialValue"
+                  }
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      },
+      "post": {
+        "operationId": "createProcedureMaterialValue",
+        "description": "",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProcedureMaterialValue"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/ProcedureMaterialValue"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/ProcedureMaterialValue"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProcedureMaterialValue"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      }
+    },
+    "/api/v1/nursing/procedure_material_value/{id}/": {
+      "get": {
+        "operationId": "retrieveProcedureMaterialValue",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "A unique integer value identifying this Valor do Material do Procedimento.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "A search term.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Which field to use when ordering the results.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProcedureMaterialValue"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      },
+      "put": {
+        "operationId": "updateProcedureMaterialValue",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "A unique integer value identifying this Valor do Material do Procedimento.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "A search term.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Which field to use when ordering the results.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProcedureMaterialValue"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/ProcedureMaterialValue"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/ProcedureMaterialValue"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProcedureMaterialValue"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      },
+      "patch": {
+        "operationId": "partialUpdateProcedureMaterialValue",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "A unique integer value identifying this Valor do Material do Procedimento.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "A search term.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Which field to use when ordering the results.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProcedureMaterialValue"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/ProcedureMaterialValue"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/ProcedureMaterialValue"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProcedureMaterialValue"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      },
+      "delete": {
+        "operationId": "destroyProcedureMaterialValue",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "A unique integer value identifying this Valor do Material do Procedimento.",
             "schema": {
               "type": "string"
             }
@@ -11140,6 +10501,645 @@
         ],
         "responses": {
           "204": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      }
+    },
+    "/api/v1/nursing/ward_admission/": {
+      "get": {
+        "operationId": "listWardAdmissions",
+        "description": "",
+        "parameters": [
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "A search term.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Which field to use when ordering the results.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/WardAdmission"
+                  }
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      },
+      "post": {
+        "operationId": "createWardAdmission",
+        "description": "",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WardAdmission"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/WardAdmission"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/WardAdmission"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WardAdmission"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      }
+    },
+    "/api/v1/nursing/ward_admission/{id}/": {
+      "get": {
+        "operationId": "retrieveWardAdmission",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "A unique integer value identifying this Internamento (Enfermaria).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "A search term.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Which field to use when ordering the results.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WardAdmission"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      },
+      "put": {
+        "operationId": "updateWardAdmission",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "A unique integer value identifying this Internamento (Enfermaria).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "A search term.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Which field to use when ordering the results.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WardAdmission"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/WardAdmission"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/WardAdmission"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WardAdmission"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      },
+      "patch": {
+        "operationId": "partialUpdateWardAdmission",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "A unique integer value identifying this Internamento (Enfermaria).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "A search term.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Which field to use when ordering the results.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WardAdmission"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/WardAdmission"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/WardAdmission"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WardAdmission"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      },
+      "delete": {
+        "operationId": "destroyWardAdmission",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "A unique integer value identifying this Internamento (Enfermaria).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "A search term.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Which field to use when ordering the results.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      }
+    },
+    "/api/v1/nursing/ward_bed/": {
+      "get": {
+        "operationId": "listWardBeds",
+        "description": "",
+        "parameters": [
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "A search term.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Which field to use when ordering the results.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/WardBed"
+                  }
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      },
+      "post": {
+        "operationId": "createWardBed",
+        "description": "",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WardBed"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/WardBed"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/WardBed"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WardBed"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      }
+    },
+    "/api/v1/nursing/ward_bed/{id}/": {
+      "get": {
+        "operationId": "retrieveWardBed",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "A unique integer value identifying this Cama.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "A search term.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Which field to use when ordering the results.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WardBed"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      },
+      "put": {
+        "operationId": "updateWardBed",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "A unique integer value identifying this Cama.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "A search term.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Which field to use when ordering the results.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WardBed"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/WardBed"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/WardBed"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WardBed"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      },
+      "patch": {
+        "operationId": "partialUpdateWardBed",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "A unique integer value identifying this Cama.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "A search term.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Which field to use when ordering the results.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WardBed"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/WardBed"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/WardBed"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WardBed"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      },
+      "delete": {
+        "operationId": "destroyWardBed",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "A unique integer value identifying this Cama.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "A search term.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Which field to use when ordering the results.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      }
+    },
+    "/api/v1/nursing/ward_dashboard/": {
+      "get": {
+        "operationId": "listWardDashboardViewSets",
+        "description": "Operational ward dashboard (occupancy + upcoming medications).",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {}
+                }
+              }
+            },
             "description": ""
           }
         },
@@ -47243,7 +47243,7 @@
         ]
       }
     },
-    "/api/v1/nursing/procedimentoitem/{id}/concluir/": {
+    "/api/v1/nursing/procedure_item/{id}/complete/": {
       "post": {
         "operationId": "completeProcedureItem",
         "description": "",
@@ -47294,7 +47294,7 @@
         ]
       }
     },
-    "/api/v1/nursing/procedimentoitem/{id}/executar/": {
+    "/api/v1/nursing/procedure_item/{id}/execute/": {
       "post": {
         "operationId": "executeProcedureItem",
         "description": "",
@@ -47345,7 +47345,7 @@
         ]
       }
     },
-    "/api/v1/nursing/procedimentoitem/{id}/marcar_faturado/": {
+    "/api/v1/nursing/procedure_item/{id}/mark-billed/": {
       "post": {
         "operationId": "markBilledProcedureItem",
         "description": "",
@@ -47396,7 +47396,7 @@
         ]
       }
     },
-    "/api/v1/nursing/procedimentoitem/{id}/nao_concluir/": {
+    "/api/v1/nursing/procedure_item/{id}/mark-not-completed/": {
       "post": {
         "operationId": "markNotCompletedProcedureItem",
         "description": "",
@@ -53260,81 +53260,6 @@
           "account"
         ]
       },
-      "WardBed": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "integer",
-            "readOnly": true
-          },
-          "ward_name": {
-            "type": "string",
-            "readOnly": true
-          },
-          "created_at": {
-            "type": "string",
-            "format": "date-time",
-            "readOnly": true
-          },
-          "updated_at": {
-            "type": "string",
-            "format": "date-time",
-            "readOnly": true
-          },
-          "custom_id": {
-            "type": "string",
-            "readOnly": true,
-            "nullable": true
-          },
-          "deleted": {
-            "type": "boolean",
-            "readOnly": true
-          },
-          "deleted_at": {
-            "type": "string",
-            "format": "date-time",
-            "readOnly": true,
-            "nullable": true
-          },
-          "version": {
-            "type": "integer",
-            "readOnly": true
-          },
-          "number": {
-            "type": "string",
-            "maxLength": 20
-          },
-          "active": {
-            "type": "boolean"
-          },
-          "created_by": {
-            "type": "string",
-            "readOnly": true,
-            "nullable": true
-          },
-          "updated_by": {
-            "type": "string",
-            "readOnly": true,
-            "nullable": true
-          },
-          "deleted_by": {
-            "type": "string",
-            "readOnly": true,
-            "nullable": true
-          },
-          "tenant": {
-            "type": "string",
-            "readOnly": true
-          },
-          "ward": {
-            "type": "integer"
-          }
-        },
-        "required": [
-          "number",
-          "ward"
-        ]
-      },
       "NursingEvolution": {
         "type": "object",
         "properties": {
@@ -53409,119 +53334,6 @@
         "required": [
           "name",
           "observation",
-          "patient"
-        ]
-      },
-      "WardAdmission": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "integer",
-            "readOnly": true
-          },
-          "patient_name": {
-            "type": "string",
-            "readOnly": true
-          },
-          "bed_number": {
-            "type": "string",
-            "readOnly": true
-          },
-          "ward_name": {
-            "type": "string",
-            "readOnly": true
-          },
-          "created_at": {
-            "type": "string",
-            "format": "date-time",
-            "readOnly": true
-          },
-          "updated_at": {
-            "type": "string",
-            "format": "date-time",
-            "readOnly": true
-          },
-          "custom_id": {
-            "type": "string",
-            "readOnly": true,
-            "nullable": true
-          },
-          "deleted": {
-            "type": "boolean",
-            "readOnly": true
-          },
-          "deleted_at": {
-            "type": "string",
-            "format": "date-time",
-            "readOnly": true,
-            "nullable": true
-          },
-          "version": {
-            "type": "integer",
-            "readOnly": true
-          },
-          "estimated_observation_hours": {
-            "type": "integer",
-            "nullable": true,
-            "description": "Tempo estimado de observa\u00e7\u00e3o em hours (quando aplic\u00e1vel)."
-          },
-          "admission_date": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "expected_discharge_date": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "discharged_at": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "next_medication_at": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "next_medication_description": {
-            "type": "string",
-            "maxLength": 160
-          },
-          "active": {
-            "type": "boolean"
-          },
-          "notes": {
-            "type": "string"
-          },
-          "created_by": {
-            "type": "string",
-            "readOnly": true,
-            "nullable": true
-          },
-          "updated_by": {
-            "type": "string",
-            "readOnly": true,
-            "nullable": true
-          },
-          "deleted_by": {
-            "type": "string",
-            "readOnly": true,
-            "nullable": true
-          },
-          "tenant": {
-            "type": "string",
-            "readOnly": true
-          },
-          "bed": {
-            "type": "integer"
-          },
-          "patient": {
-            "type": "integer"
-          }
-        },
-        "required": [
-          "bed",
           "patient"
         ]
       },
@@ -53602,6 +53414,394 @@
         "required": [
           "name",
           "description",
+          "patient"
+        ]
+      },
+      "NursingRecord": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "patient_name": {
+            "type": "string",
+            "readOnly": true
+          },
+          "lab_request_code": {
+            "type": "string",
+            "readOnly": true
+          },
+          "lab_request_status": {
+            "type": "string",
+            "readOnly": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "custom_id": {
+            "type": "string",
+            "readOnly": true,
+            "nullable": true
+          },
+          "deleted": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "deleted_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true,
+            "nullable": true
+          },
+          "version": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 120
+          },
+          "record_kind": {
+            "enum": [
+              "MANUAL",
+              "LAB_COLLECTION_REQUEST"
+            ],
+            "type": "string"
+          },
+          "origin_role": {
+            "type": "string",
+            "maxLength": 60
+          },
+          "priority": {
+            "enum": [
+              "URG",
+              "NOR",
+              "BAI"
+            ],
+            "type": "string"
+          },
+          "observation": {
+            "type": "string"
+          },
+          "collection_guidance": {
+            "type": "object",
+            "description": "Estrutura operacional da coleta por exame, com op\u00e7\u00f5es de amostra, tipo de frasco/tubo e volume m\u00ednimo."
+          },
+          "record_date": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "created_by": {
+            "type": "string",
+            "readOnly": true,
+            "nullable": true
+          },
+          "updated_by": {
+            "type": "string",
+            "readOnly": true,
+            "nullable": true
+          },
+          "deleted_by": {
+            "type": "string",
+            "readOnly": true,
+            "nullable": true
+          },
+          "tenant": {
+            "type": "string",
+            "readOnly": true
+          },
+          "patient": {
+            "type": "integer"
+          },
+          "lab_request": {
+            "type": "integer",
+            "nullable": true
+          }
+        },
+        "required": [
+          "name",
+          "patient"
+        ]
+      },
+      "NursingVitalSign": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "custom_id": {
+            "type": "string",
+            "readOnly": true,
+            "nullable": true
+          },
+          "deleted": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "deleted_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true,
+            "nullable": true
+          },
+          "version": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 120
+          },
+          "temperature_c": {
+            "type": "string",
+            "format": "decimal",
+            "multipleOf": 0.1,
+            "maximum": 1000,
+            "minimum": -1000,
+            "nullable": true
+          },
+          "blood_pressure": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "heart_rate": {
+            "type": "integer",
+            "nullable": true
+          },
+          "respiratory_rate": {
+            "type": "integer",
+            "nullable": true
+          },
+          "oxygen_saturation": {
+            "type": "integer",
+            "nullable": true
+          },
+          "collected_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "created_by": {
+            "type": "string",
+            "readOnly": true,
+            "nullable": true
+          },
+          "updated_by": {
+            "type": "string",
+            "readOnly": true,
+            "nullable": true
+          },
+          "deleted_by": {
+            "type": "string",
+            "readOnly": true,
+            "nullable": true
+          },
+          "tenant": {
+            "type": "string",
+            "readOnly": true
+          },
+          "patient": {
+            "type": "integer"
+          },
+          "record": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "name",
+          "patient",
+          "record"
+        ]
+      },
+      "Procedure": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "patient_name": {
+            "type": "string",
+            "readOnly": true
+          },
+          "professional_name": {
+            "type": "string",
+            "readOnly": true
+          },
+          "professional_names": {
+            "type": "string",
+            "readOnly": true
+          },
+          "workflow_status_display": {
+            "type": "string",
+            "readOnly": true
+          },
+          "billing_status_display": {
+            "type": "string",
+            "readOnly": true
+          },
+          "items_count": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "custom_id": {
+            "type": "string",
+            "readOnly": true,
+            "nullable": true
+          },
+          "deleted": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "deleted_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true,
+            "nullable": true
+          },
+          "version": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "performed_date": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "notes": {
+            "type": "string"
+          },
+          "workflow_status": {
+            "enum": [
+              "REQ",
+              "BIL",
+              "EXE",
+              "CON",
+              "NCO",
+              "PAR"
+            ],
+            "type": "string"
+          },
+          "billing_status": {
+            "enum": [
+              "PEN",
+              "PAR",
+              "BIL"
+            ],
+            "type": "string"
+          },
+          "billed_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true,
+            "nullable": true
+          },
+          "executed_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true,
+            "nullable": true
+          },
+          "completed_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true,
+            "nullable": true
+          },
+          "services_subtotal": {
+            "type": "string",
+            "format": "decimal",
+            "multipleOf": 0.01,
+            "maximum": 1000000000000,
+            "minimum": -1000000000000,
+            "readOnly": true
+          },
+          "materials_subtotal": {
+            "type": "string",
+            "format": "decimal",
+            "multipleOf": 0.01,
+            "maximum": 1000000000000,
+            "minimum": -1000000000000,
+            "readOnly": true
+          },
+          "total": {
+            "type": "string",
+            "format": "decimal",
+            "multipleOf": 0.01,
+            "maximum": 1000000000000,
+            "minimum": -1000000000000,
+            "readOnly": true
+          },
+          "created_by": {
+            "type": "string",
+            "readOnly": true,
+            "nullable": true
+          },
+          "updated_by": {
+            "type": "string",
+            "readOnly": true,
+            "nullable": true
+          },
+          "deleted_by": {
+            "type": "string",
+            "readOnly": true,
+            "nullable": true
+          },
+          "tenant": {
+            "type": "string",
+            "readOnly": true
+          },
+          "patient": {
+            "type": "integer"
+          },
+          "professional": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            }
+          },
+          "selected_materials": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            }
+          },
+          "selected_catalogs": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            }
+          }
+        },
+        "required": [
           "patient"
         ]
       },
@@ -54167,394 +54367,6 @@
           "material"
         ]
       },
-      "Procedure": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "integer",
-            "readOnly": true
-          },
-          "patient_name": {
-            "type": "string",
-            "readOnly": true
-          },
-          "professional_name": {
-            "type": "string",
-            "readOnly": true
-          },
-          "professional_names": {
-            "type": "string",
-            "readOnly": true
-          },
-          "workflow_status_display": {
-            "type": "string",
-            "readOnly": true
-          },
-          "billing_status_display": {
-            "type": "string",
-            "readOnly": true
-          },
-          "items_count": {
-            "type": "integer",
-            "readOnly": true
-          },
-          "created_at": {
-            "type": "string",
-            "format": "date-time",
-            "readOnly": true
-          },
-          "updated_at": {
-            "type": "string",
-            "format": "date-time",
-            "readOnly": true
-          },
-          "custom_id": {
-            "type": "string",
-            "readOnly": true,
-            "nullable": true
-          },
-          "deleted": {
-            "type": "boolean",
-            "readOnly": true
-          },
-          "deleted_at": {
-            "type": "string",
-            "format": "date-time",
-            "readOnly": true,
-            "nullable": true
-          },
-          "version": {
-            "type": "integer",
-            "readOnly": true
-          },
-          "performed_date": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "notes": {
-            "type": "string"
-          },
-          "workflow_status": {
-            "enum": [
-              "REQ",
-              "BIL",
-              "EXE",
-              "CON",
-              "NCO",
-              "PAR"
-            ],
-            "type": "string"
-          },
-          "billing_status": {
-            "enum": [
-              "PEN",
-              "PAR",
-              "BIL"
-            ],
-            "type": "string"
-          },
-          "billed_at": {
-            "type": "string",
-            "format": "date-time",
-            "readOnly": true,
-            "nullable": true
-          },
-          "executed_at": {
-            "type": "string",
-            "format": "date-time",
-            "readOnly": true,
-            "nullable": true
-          },
-          "completed_at": {
-            "type": "string",
-            "format": "date-time",
-            "readOnly": true,
-            "nullable": true
-          },
-          "services_subtotal": {
-            "type": "string",
-            "format": "decimal",
-            "multipleOf": 0.01,
-            "maximum": 1000000000000,
-            "minimum": -1000000000000,
-            "readOnly": true
-          },
-          "materials_subtotal": {
-            "type": "string",
-            "format": "decimal",
-            "multipleOf": 0.01,
-            "maximum": 1000000000000,
-            "minimum": -1000000000000,
-            "readOnly": true
-          },
-          "total": {
-            "type": "string",
-            "format": "decimal",
-            "multipleOf": 0.01,
-            "maximum": 1000000000000,
-            "minimum": -1000000000000,
-            "readOnly": true
-          },
-          "created_by": {
-            "type": "string",
-            "readOnly": true,
-            "nullable": true
-          },
-          "updated_by": {
-            "type": "string",
-            "readOnly": true,
-            "nullable": true
-          },
-          "deleted_by": {
-            "type": "string",
-            "readOnly": true,
-            "nullable": true
-          },
-          "tenant": {
-            "type": "string",
-            "readOnly": true
-          },
-          "patient": {
-            "type": "integer"
-          },
-          "professional": {
-            "type": "array",
-            "items": {
-              "type": "integer"
-            }
-          },
-          "selected_materials": {
-            "type": "array",
-            "items": {
-              "type": "integer"
-            }
-          },
-          "selected_catalogs": {
-            "type": "array",
-            "items": {
-              "type": "integer"
-            }
-          }
-        },
-        "required": [
-          "patient"
-        ]
-      },
-      "NursingRecord": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "integer",
-            "readOnly": true
-          },
-          "patient_name": {
-            "type": "string",
-            "readOnly": true
-          },
-          "lab_request_code": {
-            "type": "string",
-            "readOnly": true
-          },
-          "lab_request_status": {
-            "type": "string",
-            "readOnly": true
-          },
-          "created_at": {
-            "type": "string",
-            "format": "date-time",
-            "readOnly": true
-          },
-          "updated_at": {
-            "type": "string",
-            "format": "date-time",
-            "readOnly": true
-          },
-          "custom_id": {
-            "type": "string",
-            "readOnly": true,
-            "nullable": true
-          },
-          "deleted": {
-            "type": "boolean",
-            "readOnly": true
-          },
-          "deleted_at": {
-            "type": "string",
-            "format": "date-time",
-            "readOnly": true,
-            "nullable": true
-          },
-          "version": {
-            "type": "integer",
-            "readOnly": true
-          },
-          "name": {
-            "type": "string",
-            "maxLength": 120
-          },
-          "record_kind": {
-            "enum": [
-              "MANUAL",
-              "LAB_COLLECTION_REQUEST"
-            ],
-            "type": "string"
-          },
-          "origin_role": {
-            "type": "string",
-            "maxLength": 60
-          },
-          "priority": {
-            "enum": [
-              "URG",
-              "NOR",
-              "BAI"
-            ],
-            "type": "string"
-          },
-          "observation": {
-            "type": "string"
-          },
-          "collection_guidance": {
-            "type": "object",
-            "description": "Estrutura operacional da coleta por exame, com op\u00e7\u00f5es de amostra, tipo de frasco/tubo e volume m\u00ednimo."
-          },
-          "record_date": {
-            "type": "string",
-            "format": "date-time",
-            "readOnly": true
-          },
-          "created_by": {
-            "type": "string",
-            "readOnly": true,
-            "nullable": true
-          },
-          "updated_by": {
-            "type": "string",
-            "readOnly": true,
-            "nullable": true
-          },
-          "deleted_by": {
-            "type": "string",
-            "readOnly": true,
-            "nullable": true
-          },
-          "tenant": {
-            "type": "string",
-            "readOnly": true
-          },
-          "patient": {
-            "type": "integer"
-          },
-          "lab_request": {
-            "type": "integer",
-            "nullable": true
-          }
-        },
-        "required": [
-          "name",
-          "patient"
-        ]
-      },
-      "NursingVitalSign": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "integer",
-            "readOnly": true
-          },
-          "created_at": {
-            "type": "string",
-            "format": "date-time",
-            "readOnly": true
-          },
-          "updated_at": {
-            "type": "string",
-            "format": "date-time",
-            "readOnly": true
-          },
-          "custom_id": {
-            "type": "string",
-            "readOnly": true,
-            "nullable": true
-          },
-          "deleted": {
-            "type": "boolean",
-            "readOnly": true
-          },
-          "deleted_at": {
-            "type": "string",
-            "format": "date-time",
-            "readOnly": true,
-            "nullable": true
-          },
-          "version": {
-            "type": "integer",
-            "readOnly": true
-          },
-          "name": {
-            "type": "string",
-            "maxLength": 120
-          },
-          "temperature_c": {
-            "type": "string",
-            "format": "decimal",
-            "multipleOf": 0.1,
-            "maximum": 1000,
-            "minimum": -1000,
-            "nullable": true
-          },
-          "blood_pressure": {
-            "type": "string",
-            "maxLength": 20
-          },
-          "heart_rate": {
-            "type": "integer",
-            "nullable": true
-          },
-          "respiratory_rate": {
-            "type": "integer",
-            "nullable": true
-          },
-          "oxygen_saturation": {
-            "type": "integer",
-            "nullable": true
-          },
-          "collected_at": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "created_by": {
-            "type": "string",
-            "readOnly": true,
-            "nullable": true
-          },
-          "updated_by": {
-            "type": "string",
-            "readOnly": true,
-            "nullable": true
-          },
-          "deleted_by": {
-            "type": "string",
-            "readOnly": true,
-            "nullable": true
-          },
-          "tenant": {
-            "type": "string",
-            "readOnly": true
-          },
-          "patient": {
-            "type": "integer"
-          },
-          "record": {
-            "type": "integer"
-          }
-        },
-        "required": [
-          "name",
-          "patient",
-          "record"
-        ]
-      },
       "Ward": {
         "type": "object",
         "properties": {
@@ -54623,6 +54435,194 @@
         },
         "required": [
           "name"
+        ]
+      },
+      "WardAdmission": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "patient_name": {
+            "type": "string",
+            "readOnly": true
+          },
+          "bed_number": {
+            "type": "string",
+            "readOnly": true
+          },
+          "ward_name": {
+            "type": "string",
+            "readOnly": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "custom_id": {
+            "type": "string",
+            "readOnly": true,
+            "nullable": true
+          },
+          "deleted": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "deleted_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true,
+            "nullable": true
+          },
+          "version": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "estimated_observation_hours": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Tempo estimado de observa\u00e7\u00e3o em hours (quando aplic\u00e1vel)."
+          },
+          "admission_date": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "expected_discharge_date": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "discharged_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "next_medication_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "next_medication_description": {
+            "type": "string",
+            "maxLength": 160
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "notes": {
+            "type": "string"
+          },
+          "created_by": {
+            "type": "string",
+            "readOnly": true,
+            "nullable": true
+          },
+          "updated_by": {
+            "type": "string",
+            "readOnly": true,
+            "nullable": true
+          },
+          "deleted_by": {
+            "type": "string",
+            "readOnly": true,
+            "nullable": true
+          },
+          "tenant": {
+            "type": "string",
+            "readOnly": true
+          },
+          "bed": {
+            "type": "integer"
+          },
+          "patient": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "bed",
+          "patient"
+        ]
+      },
+      "WardBed": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "ward_name": {
+            "type": "string",
+            "readOnly": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "custom_id": {
+            "type": "string",
+            "readOnly": true,
+            "nullable": true
+          },
+          "deleted": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "deleted_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true,
+            "nullable": true
+          },
+          "version": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "number": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "created_by": {
+            "type": "string",
+            "readOnly": true,
+            "nullable": true
+          },
+          "updated_by": {
+            "type": "string",
+            "readOnly": true,
+            "nullable": true
+          },
+          "deleted_by": {
+            "type": "string",
+            "readOnly": true,
+            "nullable": true
+          },
+          "tenant": {
+            "type": "string",
+            "readOnly": true
+          },
+          "ward": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "number",
+          "ward"
         ]
       },
       "DailyInspection": {

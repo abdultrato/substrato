@@ -13,7 +13,6 @@ const STATIC_COLLECTION_ALIASES: Record<string, string> = {
   "/accounting/legacy-entries/": "/accounting/entry/",
   "/accounting/legacy-movements/": "/accounting/movement/",
   "/clinical/results/": "/clinical/resultitem/",
-  "/nursing/procedimento/": "/nursing/procedure/",
   "/ai_assistant/ai-investigations/": "/ai/assistant/investigations/",
   "/ai_assistant/ai-operational-tasks/": "/ai/assistant/tasks/",
   "/ai_assistant/ai-sessions/": "/ai/assistant/sessions/",

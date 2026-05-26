@@ -5067,7 +5067,7 @@ def test_ai_nursing_crud_creates_updates_and_deletes_clinical_records_for_nurse(
         'Crie registo de enfermagem {"nome":"Entrada IA","paciente":"Paciente Enfermagem IA","prioridade":"urgente","tipo":"manual","observacao":"Paciente em observação"}',
     )
 
-    assert record_action.payload["basename"] == "nursing-registroenfermagem"
+    assert record_action.payload["basename"] == "nursing-nursing_record"
     assert record_action.payload["data"]["patient"] == patient.id
     assert record_action.payload["data"]["priority"] == NursingRecord.Prioridade.URGENTE
     assert record_action.payload["data"]["record_kind"] == NursingRecord.RecordKind.MANUAL
@@ -5081,7 +5081,7 @@ def test_ai_nursing_crud_creates_updates_and_deletes_clinical_records_for_nurse(
         f'Crie sinal vital {{"nome":"Sinais IA","registo":{record.id},"paciente":"Paciente Enfermagem IA","temperatura":"37.5","pressao_arterial":"120/80","fc":88,"fr":18,"spo2":98}}',
     )
 
-    assert vital_action.payload["basename"] == "nursing-sinalvitalenfermagem"
+    assert vital_action.payload["basename"] == "nursing-nursing_vital_sign"
     assert vital_action.payload["data"]["record"] == record.id
     assert vital_action.payload["data"]["patient"] == patient.id
     assert vital_action.payload["data"]["heart_rate"] == 88
@@ -5097,7 +5097,7 @@ def test_ai_nursing_crud_creates_updates_and_deletes_clinical_records_for_nurse(
         action_type="ai_crud_update",
     )
 
-    assert update_vital_action.payload["basename"] == "nursing-sinalvitalenfermagem"
+    assert update_vital_action.payload["basename"] == "nursing-nursing_vital_sign"
     assert update_vital_action.payload["object_ref"] == str(vital.id)
     assert update_vital_action.payload["data"]["oxygen_saturation"] == 99
 
@@ -5115,10 +5115,10 @@ def test_ai_nursing_crud_creates_updates_and_deletes_clinical_records_for_nurse(
         'Crie evolução de enfermagem {"nome":"Evolução IA","paciente":"Paciente Enfermagem IA","evolucao":"Paciente estável"}',
     )
 
-    assert prescription_action.payload["basename"] == "nursing-prescricaoenfermagem"
+    assert prescription_action.payload["basename"] == "nursing-nursing_prescription"
     assert prescription_action.payload["data"]["patient"] == patient.id
     assert prescription_action.payload["data"]["description"] == "Hidratação oral"
-    assert evolution_action.payload["basename"] == "nursing-evolucaoenfermagem"
+    assert evolution_action.payload["basename"] == "nursing-nursing_evolution"
     assert evolution_action.payload["data"]["observation"] == "Paciente estável"
 
     _confirm_ai_action(api_client, prescription_action)
@@ -5167,7 +5167,7 @@ def test_ai_nursing_crud_creates_ward_bed_and_admission_for_nurse(api_client):
         'Crie cama de enfermaria {"enfermaria":"Ala IA","numero":"A-01","ativo":true}',
     )
 
-    assert bed_action.payload["basename"] == "nursing-camaenfermaria"
+    assert bed_action.payload["basename"] == "nursing-ward_bed"
     assert bed_action.payload["data"]["ward"] == ward.id
     assert bed_action.payload["data"]["number"] == "A-01"
     _confirm_ai_action(api_client, bed_action)
@@ -5178,7 +5178,7 @@ def test_ai_nursing_crud_creates_ward_bed_and_admission_for_nurse(api_client):
         'Crie internamento {"cama":"A-01","paciente":"Paciente Enfermaria IA","horas_observacao":24,"proxima_medicacao":"Soro às 18h","ativo":true,"observacoes":"Observação inicial"}',
     )
 
-    assert admission_action.payload["basename"] == "nursing-internamentoenfermaria"
+    assert admission_action.payload["basename"] == "nursing-ward_admission"
     assert admission_action.payload["data"]["bed"] == bed.id
     assert admission_action.payload["data"]["patient"] == patient.id
     assert admission_action.payload["data"]["estimated_observation_hours"] == 24
@@ -5193,7 +5193,7 @@ def test_ai_nursing_crud_creates_ward_bed_and_admission_for_nurse(api_client):
         action_type="ai_crud_update",
     )
 
-    assert update_action.payload["basename"] == "nursing-internamentoenfermaria"
+    assert update_action.payload["basename"] == "nursing-ward_admission"
     assert update_action.payload["data"]["active"] is False
     assert update_action.payload["data"]["notes"] == "Alta administrativa pela IA"
     _confirm_ai_action(api_client, update_action)
@@ -5230,7 +5230,7 @@ def test_ai_nursing_crud_prepares_catalog_procedure_and_items_for_nurse(api_clie
         'Crie catálogo de procedimento {"nome":"Curativo IA","codigo_procedimento":"CUR-IA","descricao":"Curativo simples","preco_padrao":"150.00","duracao_estimada":20,"ativo":true}',
     )
 
-    assert catalog_action.payload["basename"] == "nursing-procedimentocatalogo"
+    assert catalog_action.payload["basename"] == "nursing-procedure_catalog"
     assert catalog_action.payload["data"]["procedure_code"] == "CUR-IA"
     assert catalog_action.payload["data"]["default_price"] == "150.00"
     _confirm_ai_action(api_client, catalog_action)
@@ -5255,7 +5255,7 @@ def test_ai_nursing_crud_prepares_catalog_procedure_and_items_for_nurse(api_clie
         f'Crie item de procedimento {{"procedimento":{procedure.id},"catalogo":"CUR-IA","quantidade":2,"realizado":true,"estado_execucao":"pendente","observacao":"Aplicar técnica asséptica"}}',
     )
 
-    assert item_action.payload["basename"] == "nursing-procedimentoitem"
+    assert item_action.payload["basename"] == "nursing-procedure_item"
     assert item_action.payload["data"]["procedure"] == procedure.id
     assert item_action.payload["data"]["catalog"] == catalog.id
     assert item_action.payload["data"]["execution_status"] == ProcedureItem.ExecutionStatus.PENDING
@@ -5270,7 +5270,7 @@ def test_ai_nursing_crud_prepares_catalog_procedure_and_items_for_nurse(api_clie
         action_type="ai_crud_update",
     )
 
-    assert update_item_action.payload["basename"] == "nursing-procedimentoitem"
+    assert update_item_action.payload["basename"] == "nursing-procedure_item"
     assert update_item_action.payload["data"]["execution_status"] == ProcedureItem.ExecutionStatus.EXECUTED
     _confirm_ai_action(api_client, update_item_action)
     item.refresh_from_db()

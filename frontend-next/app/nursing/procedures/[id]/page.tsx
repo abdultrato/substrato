@@ -16,7 +16,7 @@ function ensureTrailingSlash(url: string) {
   return url.endsWith("/") ? url : `${url}/`
 }
 
-export default function ProcedimentoDetailPage() {
+export default function ProcedureDetailPage() {
   const params = useParams()
   const router = useRouter()
   const id = routeParamToString((params as any)?.id)
@@ -31,7 +31,7 @@ export default function ProcedimentoDetailPage() {
     setLoading(true)
     setErrorMessage(null)
     try {
-      const endpoint = ensureTrailingSlash("/nursing/procedimento/") + `${id}/`
+      const endpoint = ensureTrailingSlash("/nursing/procedure/") + `${id}/`
       const res = await apiFetch<any>(endpoint)
       setData(res)
     } catch (e: any) {
@@ -50,7 +50,7 @@ export default function ProcedimentoDetailPage() {
     setDeleting(true)
     setErrorMessage(null)
     try {
-      const endpoint = ensureTrailingSlash("/nursing/procedimento/") + `${id}/`
+      const endpoint = ensureTrailingSlash("/nursing/procedure/") + `${id}/`
       await apiFetch(endpoint, { method: "DELETE" })
       router.push("/nursing/procedures")
     } catch (e: any) {
@@ -64,7 +64,7 @@ export default function ProcedimentoDetailPage() {
     setDownloadingPdf(true)
     setErrorMessage(null)
     try {
-      const endpoint = ensureTrailingSlash("/nursing/procedimento/") + `${id}/pdf/`
+      const endpoint = ensureTrailingSlash("/nursing/procedure/") + `${id}/pdf/`
       const blob = await apiFetch<Blob>(endpoint, { responseType: "blob" })
       const url = window.URL.createObjectURL(blob)
       window.open(url, "_blank", "noopener,noreferrer")

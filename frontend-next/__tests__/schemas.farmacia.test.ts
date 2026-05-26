@@ -4,7 +4,7 @@ import {
   PharmacyInventoryMovementSchema,
   PharmacySaleSchema,
   PharmacySaleItemSchema,
-  InternamentoEnfermariaSchema,
+  WardAdmissionSchema,
 } from '@/lib/validators/schemas'
 
 const baseMeta = {
@@ -70,15 +70,15 @@ describe('Schemas Farmácia', () => {
     expect(fail.success).toBe(false)
   })
 
-  it('InternamentoEnfermariaSchema exige paciente, cama e inquilino', () => {
-    const ok = InternamentoEnfermariaSchema.safeParse({
+  it('WardAdmissionSchema exige paciente, cama e inquilino', () => {
+    const ok = WardAdmissionSchema.safeParse({
       ...baseMeta,
       paciente: 10,
       cama: 2,
     })
     expect(ok.success).toBe(true)
 
-    const fail = InternamentoEnfermariaSchema.safeParse({})
+    const fail = WardAdmissionSchema.safeParse({})
     expect(fail.success).toBe(false)
   })
 })

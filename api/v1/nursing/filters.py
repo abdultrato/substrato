@@ -260,19 +260,19 @@ class WardAdmissionFilter(SafeFilterSet):
 
 
 FILTER_MAP = {
-    "evolucaoenfermagem": NursingEvolutionFilter,
-    "procedimentocatalogo": ProcedureCatalogFilter,
-    "procedimentocatalogomaterial": ProcedureCatalogMaterialFilter,
+    "nursing_evolution": NursingEvolutionFilter,
+    "procedure_catalog": ProcedureCatalogFilter,
+    "procedure_catalog_material": ProcedureCatalogMaterialFilter,
     "procedure": ProcedureFilter,
-    "procedimentoitem": ProcedureItemFilter,
-    "procedimentoitemvalor": ProcedureItemValueFilter,
-    "procedimentomaterial": ProcedureMaterialFilter,
-    "procedimentomaterialvalor": ProcedureMaterialValueFilter,
-    "prescricaoenfermagem": NursingPrescriptionFilter,
-    "registroenfermagem": NursingRecordFilter,
-    "sinalvitalenfermagem": NursingVitalSignFilter,
+    "procedure_item": ProcedureItemFilter,
+    "procedure_item_value": ProcedureItemValueFilter,
+    "procedure_material": ProcedureMaterialFilter,
+    "procedure_material_value": ProcedureMaterialValueFilter,
+    "nursing_prescription": NursingPrescriptionFilter,
+    "nursing_record": NursingRecordFilter,
+    "nursing_vital_sign": NursingVitalSignFilter,
     "ward": WardFilter,
-    "camaenfermaria": WardBedFilter,
-    "internamentoenfermaria": WardAdmissionFilter,
+    "ward_bed": WardBedFilter,
+    "ward_admission": WardAdmissionFilter,
 }
 

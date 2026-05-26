@@ -43,9 +43,9 @@ function fmtDateTime(v: any) {
   return d.toLocaleString()
 }
 
-export default function EnfermariaDashboardPage() {
+export default function WardDashboardPage() {
   const [data, setData] = useState<DashboardData | null>(null)
-  const [erro, setErro] = useState<string | null>(null)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -53,13 +53,13 @@ export default function EnfermariaDashboardPage() {
     async function load() {
       try {
         setLoading(true)
-        setErro(null)
-        const res = await apiFetch<any>("/nursing/warddashboard/")
+        setErrorMessage(null)
+        const res = await apiFetch<any>("/nursing/ward_dashboard/")
         if (!mounted) return
         setData(normalizeDashboardData(res))
       } catch (e: any) {
         if (!mounted) return
-        setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao carregar dashboard da enfermaria."))
+        setErrorMessage(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao carregar dashboard da enfermaria."))
       } finally {
         if (mounted) setLoading(false)
       }
@@ -129,13 +129,13 @@ export default function EnfermariaDashboardPage() {
                 Gerenciamento (Enfermarias)
               </Link>
               <Link
-                href="/resources/nursing/camaenfermaria"
+                href="/resources/nursing/ward_bed"
                 className="inline-flex items-center rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-sm font-medium text-[var(--gray-700)] shadow-sm transition hover:bg-[var(--gray-100)]"
               >
                 Gerenciamento (Camas)
               </Link>
               <Link
-                href="/resources/nursing/internamentoenfermaria"
+                href="/resources/nursing/ward_admission"
                 className="inline-flex items-center rounded-xl bg-[var(--primary-600)] px-3 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[var(--primary-700)]"
               >
                 Internamentos
@@ -144,9 +144,9 @@ export default function EnfermariaDashboardPage() {
           }
         />
 
-        {erro ? (
+        {errorMessage ? (
           <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-            {erro}
+            {errorMessage}
           </div>
         ) : null}
 

@@ -6,7 +6,7 @@ import { GeneratedResourceCreatePage } from "@/components/resources/GeneratedRes
 export default function CreateNursingVitalSignPage() {
   return (
     <Suspense fallback={<div className="p-4 text-sm text-[var(--gray-500)]">Carregando...</div>}>
-      <GeneratedResourceCreatePage endpoint="/nursing/nursing-vital-signs/" />
+      <GeneratedResourceCreatePage endpoint="/nursing/nursing_vital_sign/" />
     </Suspense>
   );
 }

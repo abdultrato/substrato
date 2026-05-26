@@ -50,9 +50,9 @@ describe('typed-client pharmacy & nursing services', () => {
     const created = { id: 3, paciente: 1, observacao: 'Curativo diário' }
     ;(global.fetch as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce(jsonResponse(created, 201))
 
-    const response = await nursingService.createPrescricao({ paciente: 1, observacao: 'Curativo diário' })
+    const response = await nursingService.createNursingPrescription({ paciente: 1, observacao: 'Curativo diário' })
 
-    expect(String((global.fetch as any).mock.calls[0][0])).toMatch(/\/api\/v1\/enfermagem\/prescricaoenfermagem\/$/)
+    expect(String((global.fetch as any).mock.calls[0][0])).toMatch(/\/api\/v1\/nursing\/nursing_prescription\/$/)
     expect(global.fetch).toHaveBeenCalledWith(
       expect.anything(),
       expect.objectContaining({

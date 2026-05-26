@@ -95,7 +95,6 @@ function rewriteUrl(url: string): string {
     ["/medical-records", "/medical_records"],
 
     // Legacy backend modules still exposed with Portuguese slugs.
-    ["/nursing", "/enfermagem"],
     ["/surgery", "/cirurgia"],
     ["/maternity", "/maternidade"],
     ["/audit", "/auditoria"],

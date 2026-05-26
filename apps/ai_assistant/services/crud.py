@@ -1501,7 +1501,7 @@ class AiCrudActionRunner:
         object_pk: Any,
         data: dict[str, Any],
     ) -> tuple[Any, int]:
-        if descriptor.basename == "nursing-procedimentoitem" and "execution_status" in data:
+        if descriptor.basename == "nursing-procedure_item" and "execution_status" in data:
             return self._dispatch_nursing_procedure_item_update(
                 descriptor=descriptor,
                 tenant=tenant,
@@ -1550,7 +1550,7 @@ class AiCrudActionRunner:
                 {
                     "execution_status": (
                         "Transição de estado não suportada pelo fluxo de enfermagem. "
-                        "Use executar, concluir ou nao_concluir a partir de um estado válido."
+                        "Use execute, complete ou mark-not-completed a partir de um estado válido."
                     )
                 },
                 status.HTTP_400_BAD_REQUEST,
@@ -1610,18 +1610,18 @@ class AiCrudActionRunner:
         if requested_status == current_status:
             return []
         if requested_status == executed:
-            return [("execute", "executar")] if current_status == pending else None
+            return [("execute", "execute")] if current_status == pending else None
         if requested_status == completed:
             if current_status == pending:
-                return [("execute", "executar"), ("complete", "concluir")]
+                return [("execute", "execute"), ("complete", "complete")]
             if current_status == executed:
-                return [("complete", "concluir")]
+                return [("complete", "complete")]
             return None
         if requested_status == not_completed:
             if current_status == pending:
-                return [("execute", "executar"), ("mark_not_completed", "nao_concluir")]
+                return [("execute", "execute"), ("mark_not_completed", "mark-not-completed")]
             if current_status == executed:
-                return [("mark_not_completed", "nao_concluir")]
+                return [("mark_not_completed", "mark-not-completed")]
             return None
         return None
 

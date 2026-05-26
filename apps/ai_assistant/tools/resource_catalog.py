@@ -126,20 +126,20 @@ RESOURCE_LABELS: dict[str, tuple[str, str]] = {
     "accounting-entry": ("Lançamentos contabilísticos", "Accounting entries"),
     "accounting-movement": ("Movimentos contabilísticos", "Accounting movements"),
     "accounting-financialreconciliation": ("Conciliações financeiras", "Financial reconciliations"),
-    "nursing-evolucaoenfermagem": ("Evoluções de enfermagem", "Nursing evolutions"),
-    "nursing-procedimentocatalogo": ("Catálogo de procedimentos de enfermagem", "Nursing procedure catalog"),
-    "nursing-procedimentocatalogomaterial": ("Materiais padrão de procedimento", "Procedure catalog materials"),
+    "nursing-nursing_evolution": ("Evoluções de enfermagem", "Nursing evolutions"),
+    "nursing-procedure_catalog": ("Catálogo de procedimentos de enfermagem", "Nursing procedure catalog"),
+    "nursing-procedure_catalogmaterial": ("Materiais padrão de procedimento", "Procedure catalog materials"),
     "nursing-procedure": ("Procedimentos de enfermagem", "Nursing procedures"),
-    "nursing-procedimentoitem": ("Itens de procedimento de enfermagem", "Nursing procedure items"),
-    "nursing-procedimentoitemvalor": ("Valores de itens de procedimento", "Procedure item prices"),
-    "nursing-procedimentomaterial": ("Materiais de procedimento de enfermagem", "Nursing procedure materials"),
-    "nursing-procedimentomaterialvalor": ("Valores de materiais de procedimento", "Procedure material costs"),
-    "nursing-prescricaoenfermagem": ("Prescrições de enfermagem", "Nursing prescriptions"),
-    "nursing-registroenfermagem": ("Registos de enfermagem", "Nursing records"),
-    "nursing-sinalvitalenfermagem": ("Sinais vitais de enfermagem", "Nursing vital signs"),
+    "nursing-procedure_item": ("Itens de procedimento de enfermagem", "Nursing procedure items"),
+    "nursing-procedure_item_value": ("Valores de itens de procedimento", "Procedure item prices"),
+    "nursing-procedure_material": ("Materiais de procedimento de enfermagem", "Nursing procedure materials"),
+    "nursing-procedure_material_value": ("Valores de materiais de procedimento", "Procedure material costs"),
+    "nursing-nursing_prescription": ("Prescrições de enfermagem", "Nursing prescriptions"),
+    "nursing-nursing_record": ("Registos de enfermagem", "Nursing records"),
+    "nursing-nursing_vital_sign": ("Sinais vitais de enfermagem", "Nursing vital signs"),
     "nursing-ward": ("Enfermarias", "Wards"),
-    "nursing-camaenfermaria": ("Camas de enfermaria", "Ward beds"),
-    "nursing-internamentoenfermaria": ("Internamentos de enfermaria", "Ward admissions"),
+    "nursing-ward_bed": ("Camas de enfermaria", "Ward beds"),
+    "nursing-ward_admission": ("Internamentos de enfermaria", "Ward admissions"),
     "equipment-equipment": ("Equipamentos", "Equipment"),
     "equipment-daily_inspection": ("Inspeções diárias", "Daily inspections"),
     "maintenance-maintenance": ("Ordens de manutenção", "Maintenance orders"),
@@ -747,7 +747,7 @@ RESOURCE_ALIASES: dict[str, tuple[str, ...]] = {
     "accounting-entry": ("lancamento", "lançamento", "lancamentos", "lançamentos", "lancamento contabil", "lançamento contábil", "entrada contabil", "entry", "entries"),
     "accounting-movement": ("movimento", "movimentos", "movimento contabil", "movimento contábil", "debito", "débito", "credito", "crédito", "movement", "movements"),
     "accounting-financialreconciliation": ("conciliacao", "conciliação", "conciliacao financeira", "conciliação financeira", "reconciliacao", "reconciliation", "financial reconciliation"),
-    "nursing-evolucaoenfermagem": (
+    "nursing-nursing_evolution": (
         "evolucao de enfermagem",
         "evolução de enfermagem",
         "evolucao enfermagem",
@@ -757,7 +757,7 @@ RESOURCE_ALIASES: dict[str, tuple[str, ...]] = {
         "nursing evolution",
         "nursing evolutions",
     ),
-    "nursing-procedimentocatalogo": (
+    "nursing-procedure_catalog": (
         "catalogo de procedimento",
         "catálogo de procedimento",
         "catalogo de procedimentos",
@@ -769,7 +769,7 @@ RESOURCE_ALIASES: dict[str, tuple[str, ...]] = {
         "procedure catalog",
         "nursing procedure catalog",
     ),
-    "nursing-procedimentocatalogomaterial": (
+    "nursing-procedure_catalogmaterial": (
         "material padrao de procedimento",
         "material padrão de procedimento",
         "materiais padrao de procedimento",
@@ -791,7 +791,7 @@ RESOURCE_ALIASES: dict[str, tuple[str, ...]] = {
         "procedure",
         "procedures",
     ),
-    "nursing-procedimentoitem": (
+    "nursing-procedure_item": (
         "item de procedimento",
         "itens de procedimento",
         "item de procedimento de enfermagem",
@@ -800,7 +800,7 @@ RESOURCE_ALIASES: dict[str, tuple[str, ...]] = {
         "procedure item",
         "nursing procedure item",
     ),
-    "nursing-procedimentoitemvalor": (
+    "nursing-procedure_item_value": (
         "valor do item",
         "preco do item",
         "preço do item",
@@ -810,21 +810,21 @@ RESOURCE_ALIASES: dict[str, tuple[str, ...]] = {
         "procedure item value",
         "procedure item price",
     ),
-    "nursing-procedimentomaterial": (
+    "nursing-procedure_material": (
         "material de procedimento",
         "materiais de procedimento",
         "material de procedimento de enfermagem",
         "procedure material",
         "nursing procedure material",
     ),
-    "nursing-procedimentomaterialvalor": (
+    "nursing-procedure_material_value": (
         "valor do material",
         "custo do material",
         "custo de material",
         "procedure material value",
         "procedure material cost",
     ),
-    "nursing-prescricaoenfermagem": (
+    "nursing-nursing_prescription": (
         "prescricao de enfermagem",
         "prescrição de enfermagem",
         "prescricao enfermagem",
@@ -834,7 +834,7 @@ RESOURCE_ALIASES: dict[str, tuple[str, ...]] = {
         "nursing prescription",
         "nursing prescriptions",
     ),
-    "nursing-registroenfermagem": (
+    "nursing-nursing_record": (
         "registo de enfermagem",
         "registro de enfermagem",
         "registo enfermagem",
@@ -844,7 +844,7 @@ RESOURCE_ALIASES: dict[str, tuple[str, ...]] = {
         "nursing record",
         "nursing records",
     ),
-    "nursing-sinalvitalenfermagem": (
+    "nursing-nursing_vital_sign": (
         "sinal vital",
         "sinais vitais",
         "sinal vital de enfermagem",
@@ -861,7 +861,7 @@ RESOURCE_ALIASES: dict[str, tuple[str, ...]] = {
         "ward",
         "wards",
     ),
-    "nursing-camaenfermaria": (
+    "nursing-ward_bed": (
         "cama",
         "camas",
         "cama de enfermaria",
@@ -870,7 +870,7 @@ RESOURCE_ALIASES: dict[str, tuple[str, ...]] = {
         "beds",
         "ward bed",
     ),
-    "nursing-internamentoenfermaria": (
+    "nursing-ward_admission": (
         "internamento",
         "internamentos",
         "internamento de enfermaria",
