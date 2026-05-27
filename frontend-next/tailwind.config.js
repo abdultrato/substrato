@@ -29,8 +29,6 @@ module.exports = {
       },
       colors: {
         substrato: substratoPalette,
-        slate: substratoPalette,
-        gray: substratoPalette,
         background: "hsl(var(--background-hsl) / <alpha-value>)",
         foreground: "hsl(var(--foreground-hsl) / <alpha-value>)",
         "foreground-2": "hsl(var(--foreground-2-hsl) / <alpha-value>)",

@@ -13,11 +13,11 @@ export default function MetricCard({
   const { tr } = useLanguage()
 
   return (
-    <div className="rounded-2xl border border-border bg-card px-3 py-2 shadow-sm">
+    <div className="rounded-lg border border-border bg-card px-4 py-3 shadow-sm">
       <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
         {tr(label)}
       </div>
-      <div className="mt-1 font-display text-2xl font-semibold text-foreground">
+      <div className="mt-1 font-display text-2xl font-semibold text-foreground tabular-nums">
         {value}
       </div>
       {hint ? (

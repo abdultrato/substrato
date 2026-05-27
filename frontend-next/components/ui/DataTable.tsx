@@ -57,14 +57,14 @@ export default function DataTable<T> ( {
     return (
         <div className="space-y-2">
             {showSearch ? (
-                <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-border bg-card px-3 py-2">
+                <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border bg-card px-3 py-2 shadow-sm">
                     <div className="relative min-w-[220px] flex-1">
                         <Search className="pointer-events-none absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                         <input
                             value={query}
                             onChange={(e) => setQuery(e.target.value)}
                             placeholder={searchPlaceholder || t("Pesquisar na listagem...", "Search in listing...")}
-                            className="w-full rounded-lg border border-border bg-background py-2 pl-8 pr-3 text-sm text-foreground shadow-sm"
+                            className="h-9 w-full rounded-md border border-border bg-background py-2 pl-8 pr-3 text-sm text-foreground shadow-sm outline-none focus-visible:border-ring"
                         />
                     </div>
                     <div className="flex items-center gap-2">
@@ -75,7 +75,7 @@ export default function DataTable<T> ( {
                             <button
                                 type="button"
                                 onClick={() => setQuery("")}
-                                className="inline-flex items-center gap-1 rounded-lg border border-border bg-card px-2 py-1 text-xs font-semibold text-foreground-2 transition hover:bg-muted"
+                                className="inline-flex h-8 items-center gap-1 rounded-md border border-border bg-card px-2 text-xs font-semibold text-foreground-2 transition hover:bg-muted"
                             >
                                 <RotateCcw size={12} />
                                 {t("Limpar", "Clear")}
@@ -85,14 +85,14 @@ export default function DataTable<T> ( {
                 </div>
             ) : null}
 
-            <div className="overflow-x-auto rounded-2xl border border-border bg-card shadow-sm">
+            <div className="overflow-x-auto rounded-lg border border-border bg-card shadow-sm">
                 <table className="min-w-full text-sm">
-                    <thead className="bg-muted text-muted-foreground">
+                    <thead className="sticky top-0 z-10 bg-muted text-muted-foreground">
                         <tr>
                             {columns.map( ( col, idx ) => (
                                 <th
                                     key={idx}
-                                    className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide"
+                                    className="whitespace-nowrap px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide"
                                 >
                                     {tr(col.header)}
                                 </th>
@@ -103,11 +103,11 @@ export default function DataTable<T> ( {
                     <tbody className="divide-y divide-border">
                         {filteredData.length ? (
                             filteredData.map( ( row, i ) => (
-                                <tr key={i} className="transition-colors hover:bg-muted/60">
+                                <tr key={i} className="transition-colors hover:bg-muted/55">
                                     {columns.map( ( col, idx ) => (
                                         <td
                                             key={idx}
-                                            className={`px-3 py-2 align-top ${col.className ?? ""}`}
+                                            className={`px-3 py-2.5 align-top ${col.className ?? ""}`}
                                         >
                                             {(() => {
                                                 const value = col.render

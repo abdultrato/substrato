@@ -27,7 +27,7 @@ export default function StatusBadge ( { status, label }: Props ) {
   const style = styles[key] ?? "border-border bg-muted text-foreground-2"
 
   return (
-    <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-semibold ${style}`}>
+    <span className={`inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-semibold ${style}`}>
       {label ?? status}
     </span>
   )

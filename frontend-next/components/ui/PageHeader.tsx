@@ -17,9 +17,9 @@ export default function PageHeader ( {
     const { tr } = useLanguage()
 
     return (
-        <div className="mb-3 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+        <div className="mb-4 flex flex-col gap-3 border-b border-border pb-3 md:flex-row md:items-end md:justify-between">
             <div>
-                <h1 className="font-display text-xl font-semibold tracking-tight text-foreground">
+                <h1 className="font-display text-2xl font-semibold text-foreground">
                     {tr(title)}
                 </h1>
 
@@ -31,7 +31,7 @@ export default function PageHeader ( {
             </div>
 
             {actions && (
-                <div className="flex items-center gap-1.5">
+                <div className="flex flex-wrap items-center gap-2">
                     {actions}
                 </div>
             )}

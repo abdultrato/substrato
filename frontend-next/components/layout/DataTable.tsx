@@ -25,14 +25,14 @@ export default function DataTable<T> ( {
     }
 
     return (
-        <div className="overflow-x-auto rounded-2xl border border-border bg-card shadow-sm">
+        <div className="overflow-x-auto rounded-lg border border-border bg-card shadow-sm">
             <table className="w-full border-collapse text-sm">
-                <thead>
+                <thead className="sticky top-0 z-10">
                     <tr className="bg-muted text-left text-muted-foreground">
                         {columns.map( ( col, idx ) => (
                             <th
                                 key={idx}
-                                className={`px-3 py-2 text-xs font-semibold uppercase tracking-wide ${col.className || ""}`}
+                                className={`whitespace-nowrap px-3 py-2.5 text-xs font-semibold uppercase tracking-wide ${col.className || ""}`}
                             >
                                 {col.header}
                             </th>
@@ -54,10 +54,10 @@ export default function DataTable<T> ( {
                         data.map( ( row, i ) => (
                             <tr
                                 key={i}
-                                className="border-t border-border transition-colors hover:bg-muted/60"
+                                className="border-t border-border transition-colors hover:bg-muted/55"
                             >
                                 {columns.map( ( col, j ) => (
-                                    <td key={j} className="px-3 py-2">
+                                    <td key={j} className="px-3 py-2.5">
                                         {renderCell( row, col )}
                                     </td>
                                 ) )}

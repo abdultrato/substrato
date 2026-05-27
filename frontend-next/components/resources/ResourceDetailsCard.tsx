@@ -46,10 +46,10 @@ export default function ResourceDetailsCard({
     .filter(([k]) => k !== "tenant" && k !== "created_by" && k !== "updated_by" && k !== "deleted_by")
 
   return (
-    <div className="rounded-2xl border border-border bg-card shadow-sm">
+    <div className="rounded-lg border border-border bg-card shadow-sm">
       <div className="grid gap-0 divide-y divide-border">
         {entries.map(([k, v]) => (
-          <div key={k} className="grid grid-cols-1 gap-1 px-4 py-3 md:grid-cols-3 md:gap-3">
+          <div key={k} className="grid grid-cols-1 gap-1 px-4 py-3 transition-colors duration-150 hover:bg-[var(--gray-50)] md:grid-cols-3 md:gap-3">
             <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               {fieldLabel({ endpoint, name: k })}
             </div>

@@ -4,7 +4,8 @@ import { ButtonHTMLAttributes } from "react"
 import { Loader2 } from "lucide-react"
 
 interface Props extends ButtonHTMLAttributes<HTMLButtonElement> {
-    variant?: "primary" | "secondary" | "danger" | "ghost"
+    variant?: "primary" | "secondary" | "danger" | "ghost" | "outline"
+    size?: "sm" | "md" | "lg"
     loading?: boolean
     fullWidth?: boolean
 }
@@ -12,29 +13,43 @@ interface Props extends ButtonHTMLAttributes<HTMLButtonElement> {
 export default function Button ( {
     children,
     variant = "primary",
+    size = "md",
     loading,
     fullWidth,
     className = "",
     disabled,
+    type = "button",
     ...props
-}: Props ) {
+}: Props) {
     const base =
-        "inline-flex items-center justify-center gap-2 rounded-lg px-3 py-1.5 text-sm font-semibold leading-tight shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/25 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+        "inline-flex shrink-0 items-center justify-center gap-2 rounded-md font-semibold leading-tight transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/25 focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none"
 
     const variants = {
-        primary: "bg-primary text-primary-foreground hover:bg-primary-hover",
+        primary:
+            "bg-primary text-primary-foreground shadow-sm hover:bg-primary-hover",
         secondary:
-            "bg-card text-foreground border border-border hover:bg-muted",
-        danger: "bg-red-600 text-white hover:bg-red-700",
+            "border border-border bg-card text-foreground shadow-sm hover:bg-muted",
+        outline:
+            "border border-border bg-transparent text-foreground-2 shadow-none hover:bg-muted hover:text-foreground",
+        danger: "bg-red-600 text-white shadow-sm hover:bg-red-700",
         ghost:
             "bg-transparent text-foreground-2 shadow-none hover:bg-muted hover:text-foreground",
     }
 
+    const sizes = {
+        sm: "h-8 px-2.5 text-xs",
+        md: "h-9 px-3 text-sm",
+        lg: "h-10 px-4 text-sm",
+    }
+
     return (
         <button
+            type={type}
+            aria-busy={loading ? "true" : undefined}
             className={`
         ${base}
         ${variants[variant]}
+        ${sizes[size]}
         ${fullWidth ? "w-full" : ""}
         ${( disabled || loading ) && "opacity-60 cursor-not-allowed"}
         ${className}

@@ -59,6 +59,12 @@ interface NavItem {
     descEn?: string
 }
 
+interface NavSection {
+    label: string
+    labelEn: string
+    hrefs: string[]
+}
+
 const ALL_GROUPS = Object.values(GROUPS)
 const SESSION_PREFETCHED_ROUTES = new Set<string>()
 const PRIORITY_PREFETCH_DELAY_MS = 120
@@ -108,6 +114,54 @@ const NAV_ITEMS: NavItem[] = [
     { href: "/admin", label: "Administração", labelEn: "Administration", icon: Shield, desc: "Painel administrativo", descEn: "Administrative panel", groups: [GROUPS.ADMIN] },
 ]
 
+const NAV_SECTIONS: NavSection[] = [
+    {
+        label: "Início",
+        labelEn: "Home",
+        hrefs: ["/workspaces", "/"],
+    },
+    {
+        label: "Saúde",
+        labelEn: "Healthcare",
+        hrefs: [
+            "/healthcare",
+            "/reception",
+            "/patients",
+            "/consultations",
+            "/requests",
+            "/medical-records",
+            "/medicine",
+            "/nursing",
+            "/laboratory",
+            "/exams",
+            "/bloodbank",
+            "/maternity",
+            "/surgery",
+            "/occupational-medicine",
+        ],
+    },
+    {
+        label: "Educação",
+        labelEn: "Education",
+        hrefs: ["/education", "/education/teacher", "/education/directoria", "/education/student"],
+    },
+    {
+        label: "Operações",
+        labelEn: "Operations",
+        hrefs: ["/pharmacy", "/warehouse", "/pharmacy/material-requests", "/modules/equipment", "/modules", "/ai"],
+    },
+    {
+        label: "Financeiro",
+        labelEn: "Finance",
+        hrefs: ["/payments", "/invoices", "/receipts", "/accounting", "/entities", "/resources/human-resources", "/statistics"],
+    },
+    {
+        label: "Administração",
+        labelEn: "Administration",
+        hrefs: ["/notifications", "/audit", "/monitoring", "/resources", "/admin"],
+    },
+]
+
 export default function Sidebar({ user, open = false, onClose, className }: Props) {
     const pathname = usePathname()
     const router = useRouter()
@@ -133,6 +187,36 @@ export default function Sidebar({ user, open = false, onClose, className }: Prop
         () => NAV_ITEMS.filter((item) => hasAccess(item) && itemMatchesWorkspaceScope(item)),
         [hasAccess, itemMatchesWorkspaceScope]
     )
+
+    const sectionedItems = useMemo(() => {
+        const remaining = new Set(visibleItems.map((item) => item.href))
+        const sections = NAV_SECTIONS.map((section) => {
+            const items = section.hrefs
+                .map((href) => visibleItems.find((item) => item.href === href))
+                .filter((item): item is NavItem => Boolean(item))
+            items.forEach((item) => remaining.delete(item.href))
+            return { ...section, items }
+        }).filter((section) => section.items.length > 0)
+
+        const otherItems = visibleItems.filter((item) => remaining.has(item.href))
+        if (otherItems.length) {
+            sections.push({
+                label: "Outros",
+                labelEn: "Other",
+                hrefs: otherItems.map((item) => item.href),
+                items: otherItems,
+            })
+        }
+
+        return sections
+    }, [visibleItems])
+
+    const platformSubtitle =
+        activeScope === "education"
+            ? t("Plataforma académica", "Academic platform")
+            : activeScope === "healthcare"
+                ? t("Plataforma clínica", "Clinical platform")
+                : t("Plataforma operacional", "Operational platform")
 
     const prefetchRoute = useCallback((href: string) => {
         if (!href || SESSION_PREFETCHED_ROUTES.has(href)) return
@@ -196,11 +280,11 @@ export default function Sidebar({ user, open = false, onClose, className }: Prop
 
     const menu = (
         <div className="chrome-surface flex h-full w-64 flex-col border-r pb-12 backdrop-blur">
-            <div className="sticky top-0 z-10 flex items-center justify-between border-b border-white/20 bg-white/5 px-3 py-3 backdrop-blur">
+            <div className="sticky top-0 z-10 flex items-center justify-between border-b border-white/15 bg-white/[0.06] px-3 py-3 backdrop-blur">
                 <Link
                     href={homeHref}
                     onClick={onClose}
-                    className="group flex items-center gap-3 rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-white/30"
+                    className="group flex items-center gap-3 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-white/30"
                     title={t("Ir para o dashboard", "Go to dashboard")}
                 >
                     <Image
@@ -208,15 +292,15 @@ export default function Sidebar({ user, open = false, onClose, className }: Prop
                         alt="Substrato"
                         width={36}
                         height={36}
-                        className="h-9 w-9 rounded-xl object-contain p-1 shadow-sm transition-transform group-hover:scale-105"
+                        className="h-9 w-9 rounded-md object-contain p-1 shadow-sm transition-transform group-hover:scale-105"
                         style={{ backgroundColor: "#fff" }}
                     />
                     <div className="min-w-0">
                         <div className="font-display text-sm font-bold tracking-tight text-white">
                             Substrato
                         </div>
-                        <div className="text-[10px] uppercase tracking-[0.18em] text-white/60">
-                            {t("Plataforma clínica", "Clinical platform")}
+                        <div className="text-[10px] uppercase tracking-[0.16em] text-white/60">
+                            {platformSubtitle}
                         </div>
                     </div>
                 </Link>
@@ -230,40 +314,50 @@ export default function Sidebar({ user, open = false, onClose, className }: Prop
                 </button>
             </div>
 
-            <nav className="flex flex-1 flex-col gap-0.5 px-2 pt-4 pb-6 overflow-y-auto">
-                {visibleItems.map((item) => {
-                    const Icon = item.icon
-                    const active = pathname === item.href || (item.href !== "/" && pathname?.startsWith(item.href + "/"))
+            <nav className="flex flex-1 flex-col gap-4 overflow-y-auto px-2 pb-6 pt-3">
+                {sectionedItems.map((section) => (
+                    <div key={section.label} className="space-y-1">
+                        <div className="px-2.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-white/45">
+                            {t(section.label, section.labelEn)}
+                        </div>
 
-                    return (
-                        <Link
-                            key={item.href}
-                            href={item.href}
-                            prefetch={false}
-                            onClick={onClose}
-                            onMouseEnter={() => prefetchRoute(item.href)}
-                            onFocus={() => prefetchRoute(item.href)}
-                            onTouchStart={() => prefetchRoute(item.href)}
-                            title={t(item.desc || "", item.descEn || item.desc || "")}
-                            aria-current={active ? "page" : undefined}
-                            className={`group relative flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-[13px] font-medium transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 ${
-                                active
-                                    ? "bg-white/20 text-white shadow-sm before:absolute before:left-0 before:top-1/2 before:h-5 before:w-[3px] before:-translate-x-2 before:-translate-y-1/2 before:rounded-r-full before:bg-white"
-                                    : "text-white/85 hover:bg-white/10 hover:text-white hover:translate-x-[1px]"
-                            }`}
-                        >
-                            <Icon size={16} className={active ? "text-white" : "text-white/75 group-hover:text-white"} />
-                            <span className="truncate">{t(item.label, item.labelEn || item.label)}</span>
-                        </Link>
-                    )
-                })}
+                        <div className="space-y-0.5">
+                            {section.items.map((item) => {
+                                const Icon = item.icon
+                                const active = pathname === item.href || (item.href !== "/" && pathname?.startsWith(item.href + "/"))
+
+                                return (
+                                    <Link
+                                        key={item.href}
+                                        href={item.href}
+                                        prefetch={false}
+                                        onClick={onClose}
+                                        onMouseEnter={() => prefetchRoute(item.href)}
+                                        onFocus={() => prefetchRoute(item.href)}
+                                        onTouchStart={() => prefetchRoute(item.href)}
+                                        title={t(item.desc || "", item.descEn || item.desc || "")}
+                                        aria-current={active ? "page" : undefined}
+                                        className={`group relative flex items-center gap-2.5 rounded-md px-2.5 py-2 text-[13px] font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 ${
+                                            active
+                                                ? "bg-white/15 text-white shadow-sm before:absolute before:left-0 before:top-1/2 before:h-5 before:w-[3px] before:-translate-x-2 before:-translate-y-1/2 before:rounded-r-full before:bg-cyan-200"
+                                                : "text-white/78 hover:bg-white/10 hover:text-white"
+                                        }`}
+                                    >
+                                        <Icon size={16} className={active ? "text-cyan-100" : "text-white/65 group-hover:text-white"} />
+                                        <span className="truncate">{t(item.label, item.labelEn || item.label)}</span>
+                                    </Link>
+                                )
+                            })}
+                        </div>
+                    </div>
+                ))}
             </nav>
 
             <div className="border-t border-white/15 p-2">
                 <button
                     type="button"
                     onClick={toggleTheme}
-                    className="flex w-full items-center justify-between rounded-xl border border-white/20 bg-white/5 px-2.5 py-2 text-xs font-semibold text-white/90 transition-all hover:bg-white/15 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30"
+                    className="flex w-full items-center justify-between rounded-md border border-white/20 bg-white/5 px-2.5 py-2 text-xs font-semibold text-white/90 transition-colors hover:bg-white/15 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30"
                     title={isDark ? t("Modo claro", "Light mode") : t("Modo escuro", "Dark mode")}
                 >
                     <span className="flex items-center gap-2">

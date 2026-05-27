@@ -240,7 +240,7 @@ export default function AppLayout ( {
                 <div className="flex min-w-0 flex-1 flex-col">
                     <Header user={user} onMenuClick={handleMenuClick} />
 
-                    <main className="flex-1 overflow-x-auto px-2 py-3 pb-[calc(5rem+env(safe-area-inset-bottom))] sm:px-3 md:px-4 md:py-3 md:pb-14">
+                <main className="flex-1 overflow-x-auto bg-background px-3 py-3 pb-[calc(5rem+env(safe-area-inset-bottom))] sm:px-4 md:px-5 md:py-4 md:pb-14">
                         <div className="page-transition">
                             <AutoTranslateTree>
                                 <AccessDenied
@@ -297,7 +297,7 @@ export default function AppLayout ( {
             <div className="flex min-w-0 flex-1 flex-col h-screen overflow-hidden">
                 <Header user={user} onMenuClick={handleMenuClick} />
 
-                <main className="flex-1 overflow-x-auto overflow-y-auto px-2 py-3 pb-[calc(5rem+env(safe-area-inset-bottom))] sm:px-3 md:px-4 md:py-3 md:pb-14">
+                <main className="flex-1 overflow-x-auto overflow-y-auto bg-background px-3 py-3 pb-[calc(5rem+env(safe-area-inset-bottom))] sm:px-4 md:px-5 md:py-4 md:pb-14">
                     <div className="page-transition">
                         <AutoTranslateTree>{children}</AutoTranslateTree>
                     </div>

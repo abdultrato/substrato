@@ -6,9 +6,9 @@ interface Props {
 
 export default function PageHeader ( { title, subtitle, actions }: Props ) {
     return (
-        <div className="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+        <div className="mb-4 flex flex-col gap-3 border-b border-border pb-3 md:flex-row md:items-end md:justify-between">
             <div>
-                <h1 className="font-display text-2xl font-semibold tracking-tight text-foreground">
+                <h1 className="font-display text-2xl font-semibold text-foreground">
                     {title}
                 </h1>
                 {subtitle && (
@@ -16,7 +16,7 @@ export default function PageHeader ( { title, subtitle, actions }: Props ) {
                 )}
             </div>
 
-            {actions && <div className="flex gap-2">{actions}</div>}
+            {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
         </div>
     )
 }

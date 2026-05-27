@@ -99,10 +99,10 @@ export default function DashboardPage() {
     return (
         <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.CONTABILIDADE]}>
             <div className="space-y-4 md:space-y-5">
-                <div>
-                    <h2 className="font-display text-2xl font-bold tracking-tight text-foreground">
+                <div className="border-b border-border pb-3">
+                    <h1 className="font-display text-2xl font-semibold text-foreground">
                         Painel
-                    </h2>
+                    </h1>
                     <p className="text-sm text-muted-foreground">Visão geral dos últimos 7 dias.</p>
                 </div>
 
@@ -154,7 +154,7 @@ export default function DashboardPage() {
                     <CardSection title="Funil de receita" subtitle="7 dias">
                         <div className="grid gap-3 md:grid-cols-3">
                             {funnel.map((item) => (
-                                <div key={item.label} className="rounded-2xl border border-border bg-card p-3 shadow-sm transition-colors hover:bg-muted/40">
+                                <div key={item.label} className="rounded-lg border border-border bg-card p-3 shadow-sm transition-colors hover:bg-muted/40">
                                     <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                                         {item.label}
                                     </div>
@@ -174,7 +174,7 @@ export default function DashboardPage() {
                                 {alerts.map((a) => (
                                     <li
                                         key={a.label}
-                                        className="flex items-center justify-between rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200"
+                                        className="flex items-center justify-between rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200"
                                     >
                                         <span>{a.label}</span>
                                         <span className="font-semibold">{a.value}</span>
@@ -194,7 +194,7 @@ export default function DashboardPage() {
                                 {events.map((ev) => (
                                     <li
                                         key={ev.id}
-                                        className="rounded-xl border border-border bg-card/70 px-3 py-2 shadow-sm transition-colors hover:bg-muted/40"
+                                        className="rounded-md border border-border bg-card/70 px-3 py-2 shadow-sm transition-colors hover:bg-muted/40"
                                     >
                                         <div className="font-semibold text-foreground">{ev.title}</div>
                                         {ev.detail ? (
@@ -216,7 +216,7 @@ export default function DashboardPage() {
                                     key={link.href}
                                     href={link.href}
                                     title={link.desc}
-                                    className="group flex items-center justify-between gap-3 rounded-xl border border-border bg-card px-3 py-2 shadow-sm transition-all hover:border-primary/40 hover:bg-muted hover:translate-x-[1px]"
+                                    className="group flex items-center justify-between gap-3 rounded-md border border-border bg-card px-3 py-2 shadow-sm transition-colors hover:border-primary/40 hover:bg-muted"
                                 >
                                     <div className="flex items-center gap-2">
                                         <link.icon size={16} className="text-muted-foreground group-hover:text-primary transition-colors" />
@@ -256,13 +256,13 @@ function StatCard({
     href?: string
 }) {
     const content = (
-        <div className="flex items-center justify-between rounded-2xl border border-border bg-card p-5 shadow-sm transition-colors hover:bg-muted/40">
+        <div className="flex items-center justify-between rounded-lg border border-border bg-card p-4 shadow-sm transition-colors hover:bg-muted/40">
             <div>
                 <p className="text-sm text-muted-foreground">{title}</p>
                 <p className="mt-1 font-display text-2xl font-semibold text-foreground">{value}</p>
             </div>
 
-            <div className="rounded-xl border border-border bg-muted p-3 text-foreground-2 shadow-sm">
+            <div className="rounded-md border border-border bg-primary-soft p-3 text-primary shadow-sm">
                 <Icon size={22} />
             </div>
         </div>
@@ -281,9 +281,9 @@ function CardSection({
     children: React.ReactNode
 }) {
     return (
-        <div className="rounded-2xl border border-border bg-card p-4 shadow-sm transition-shadow hover:shadow-md">
+        <section className="rounded-lg border border-border bg-card p-4 shadow-sm transition-shadow hover:shadow-md">
             <div className="flex items-baseline justify-between gap-3">
-                <div className="font-display text-base font-semibold tracking-tight text-foreground">
+                <div className="font-display text-base font-semibold text-foreground">
                     {title}
                 </div>
                 {subtitle ? (
@@ -293,7 +293,7 @@ function CardSection({
                 ) : null}
             </div>
             <div className="mt-3">{children}</div>
-        </div>
+        </section>
     )
 }
 

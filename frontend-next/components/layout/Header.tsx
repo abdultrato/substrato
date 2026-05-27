@@ -41,11 +41,11 @@ export default function Header({ user, onMenuClick }: Props) {
     }, [open])
 
     return (
-        <header className="chrome-surface sticky top-0 z-40 flex h-auto flex-nowrap items-center justify-between gap-3 border-b px-3 py-2 shadow-sm backdrop-blur">
+        <header className="chrome-surface sticky top-0 z-40 flex h-12 flex-nowrap items-center justify-between gap-3 border-b px-3 shadow-sm backdrop-blur">
             <div className="flex min-w-0 flex-1 items-start gap-2">
                 <button
                     type="button"
-                    className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-white/25 bg-white/10 text-white shadow-sm transition hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30"
+                    className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-white/25 bg-white/10 text-white shadow-sm transition hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30"
                     onClick={onMenuClick}
                     aria-label={t("Mostrar ou ocultar menu lateral", "Show or hide sidebar")}
                     title={t("Mostrar ou ocultar menu lateral", "Show or hide sidebar")}
@@ -54,11 +54,11 @@ export default function Header({ user, onMenuClick }: Props) {
                 </button>
                 <Link
                     href="/"
-                    className="group flex items-center gap-2 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-white/30"
+                    className="group flex items-center gap-2 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-white/30"
                     title={t("Ir para o dashboard", "Go to dashboard")}
                 >
                     <div
-                        className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-lg shadow-sm transition-transform group-hover:scale-105"
+                        className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-md shadow-sm transition-transform group-hover:scale-105"
                         aria-hidden
                         style={{ backgroundColor: "#fff" }}
                     >
@@ -79,7 +79,7 @@ export default function Header({ user, onMenuClick }: Props) {
                 <button
                     type="button"
                     onClick={toggleTheme}
-                    className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/25 bg-white/15 text-white shadow-sm transition-colors hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-white/25 bg-white/15 text-white shadow-sm transition-colors hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
                     aria-label={isDark ? t("Mudar para modo claro", "Switch to light mode") : t("Mudar para modo escuro", "Switch to dark mode")}
                     title={isDark ? t("Modo claro", "Light mode") : t("Modo escuro", "Dark mode")}
                 >
@@ -112,11 +112,11 @@ export default function Header({ user, onMenuClick }: Props) {
                     </button>
 
                     {open && (
-                        <div className="absolute right-0 z-50 mt-1.5 w-56 rounded-2xl border border-white/20 bg-black/70 p-1 text-white shadow-lg backdrop-blur">
+                        <div className="absolute right-0 z-50 mt-1.5 w-56 rounded-lg border border-white/20 bg-black/70 p-1 text-white shadow-lg backdrop-blur">
                             <Link
                                 href="/profile"
                                 onClick={() => setOpen(false)}
-                                className="flex w-full items-center gap-2 rounded-xl px-2.5 py-2 text-sm text-white/90 transition-colors hover:bg-white/10 hover:text-white"
+                                className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-sm text-white/90 transition-colors hover:bg-white/10 hover:text-white"
                             >
                                 <User size={16} />
                                 {t("Perfil", "Profile")}
@@ -125,7 +125,7 @@ export default function Header({ user, onMenuClick }: Props) {
                             <Link
                                 href="/settings"
                                 onClick={() => setOpen(false)}
-                                className="flex w-full items-center gap-2 rounded-xl px-2.5 py-2 text-sm text-white/90 transition-colors hover:bg-white/10 hover:text-white"
+                                className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-sm text-white/90 transition-colors hover:bg-white/10 hover:text-white"
                             >
                                 <Settings size={16} />
                                 {t("Configurações", "Settings")}
@@ -135,7 +135,7 @@ export default function Header({ user, onMenuClick }: Props) {
 
                             <button
                                 onClick={signOut}
-                                className="flex w-full items-center gap-2 rounded-xl px-2.5 py-2 text-sm font-semibold text-rose-100 transition-colors hover:bg-rose-500/15"
+                                className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-sm font-semibold text-rose-100 transition-colors hover:bg-rose-500/15"
                             >
                                 <LogOut size={16} />
                                 {t("Terminar sessão", "Sign out")}

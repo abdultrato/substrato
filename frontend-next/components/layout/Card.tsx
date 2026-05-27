@@ -11,7 +11,7 @@ export default function Card ( {
 }: Props ) {
     return (
         <div
-            className={`rounded-2xl border border-border bg-card shadow-sm ${padding ? "p-4 md:p-6" : ""
+            className={`rounded-lg border border-border bg-card shadow-sm ${padding ? "p-4 md:p-5" : ""
                 } ${className}`}
         >
             {children}

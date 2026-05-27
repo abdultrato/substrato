@@ -463,7 +463,7 @@ JAZZMIN_SETTINGS = {
         "ai_assistant.aipolicyevent": "fas fa-shield-alt",
     },
     # Ordena apps e models no menu lateral do Admin (Jazzmin).
-    # Prioriza fluxo operacional: Recepção -> Laboratório -> Enfermagem -> Farmácia.
+    # Priorização operacional: Recepção → Clínica (Laboratório) → Enfermagem → Farmácia → Logística → Financeiro → Consultas/Prontuário → Operação/Config → RH → Infra/Tech
     "order_with_respect_to": [
         # Fluxo principal
         "recepcao",

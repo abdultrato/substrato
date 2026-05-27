@@ -20,7 +20,7 @@ export default function EmptyState ( {
                 {icon ?? <Inbox size={42} />}
             </div>
 
-            <h3 className="font-display text-base font-semibold tracking-tight text-foreground">
+            <h3 className="font-display text-base font-semibold text-foreground">
                 {title}
             </h3>
 

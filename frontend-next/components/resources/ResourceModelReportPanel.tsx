@@ -190,10 +190,10 @@ export default function ResourceModelReportPanel({
   }
 
   return (
-    <section className="rounded-2xl border border-[var(--border)] bg-[linear-gradient(135deg,rgba(255,255,255,0.96),rgba(248,250,252,0.96))] p-3 shadow-sm">
+    <section className="rounded-lg border border-[var(--border)] bg-[var(--card)] p-3 shadow-sm">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <div className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-[var(--primary-100)] text-[var(--primary-700)]">
+          <div className="inline-flex h-8 w-8 items-center justify-center rounded-md bg-[var(--primary-100)] text-[var(--primary-700)]">
             <FileText size={16} />
           </div>
           <div>
@@ -208,21 +208,21 @@ export default function ResourceModelReportPanel({
           <button
             type="button"
             onClick={() => applyQuickWindow(7)}
-            className="rounded-lg border border-[var(--border)] bg-white px-2 py-1 text-xs font-medium text-[var(--gray-700)] hover:bg-[var(--gray-100)]"
+            className="rounded-md border border-[var(--border)] bg-white px-2 py-1 text-xs font-medium text-[var(--gray-700)] shadow-sm transition-all duration-150 hover:border-[var(--primary-300)] hover:bg-[var(--gray-100)]"
           >
             7d
           </button>
           <button
             type="button"
             onClick={() => applyQuickWindow(30)}
-            className="rounded-lg border border-[var(--border)] bg-white px-2 py-1 text-xs font-medium text-[var(--gray-700)] hover:bg-[var(--gray-100)]"
+            className="rounded-md border border-[var(--border)] bg-white px-2 py-1 text-xs font-medium text-[var(--gray-700)] shadow-sm transition-all duration-150 hover:border-[var(--primary-300)] hover:bg-[var(--gray-100)]"
           >
             30d
           </button>
           <button
             type="button"
             onClick={() => applyQuickWindow(90)}
-            className="rounded-lg border border-[var(--border)] bg-white px-2 py-1 text-xs font-medium text-[var(--gray-700)] hover:bg-[var(--gray-100)]"
+            className="rounded-md border border-[var(--border)] bg-white px-2 py-1 text-xs font-medium text-[var(--gray-700)] shadow-sm transition-all duration-150 hover:border-[var(--primary-300)] hover:bg-[var(--gray-100)]"
           >
             90d
           </button>
@@ -238,7 +238,7 @@ export default function ResourceModelReportPanel({
               type="date"
               value={dateFrom}
               onChange={(e) => setDateFrom(e.target.value)}
-              className="w-full rounded-lg border border-[var(--border)] bg-white py-1.5 pl-8 pr-2 text-sm text-[var(--text)]"
+              className="w-full rounded-md border border-[var(--border)] bg-white py-1.5 pl-8 pr-2 text-sm text-[var(--text)] shadow-sm transition-colors duration-150 hover:border-[var(--primary-400)] focus:border-[var(--primary-500)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-100)]"
             />
           </div>
         </label>
@@ -251,7 +251,7 @@ export default function ResourceModelReportPanel({
               type="date"
               value={dateTo}
               onChange={(e) => setDateTo(e.target.value)}
-              className="w-full rounded-lg border border-[var(--border)] bg-white py-1.5 pl-8 pr-2 text-sm text-[var(--text)]"
+              className="w-full rounded-md border border-[var(--border)] bg-white py-1.5 pl-8 pr-2 text-sm text-[var(--text)] shadow-sm transition-colors duration-150 hover:border-[var(--primary-400)] focus:border-[var(--primary-500)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-100)]"
             />
           </div>
         </label>
@@ -261,7 +261,7 @@ export default function ResourceModelReportPanel({
           <select
             value={mode}
             onChange={(e) => setMode(e.target.value as ReportMode)}
-            className="w-full rounded-lg border border-[var(--border)] bg-white px-2 py-1.5 text-sm text-[var(--text)]"
+            className="w-full rounded-md border border-[var(--border)] bg-white px-2 py-1.5 text-sm text-[var(--text)] shadow-sm transition-colors duration-150 hover:border-[var(--primary-400)] focus:border-[var(--primary-500)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-100)]"
           >
             {modeOptions.map((option) => (
               <option key={option.value} value={option.value}>
@@ -280,7 +280,7 @@ export default function ResourceModelReportPanel({
             step={10}
             value={limit}
             onChange={(e) => setLimit(Number(e.target.value || 200))}
-            className="w-full rounded-lg border border-[var(--border)] bg-white px-2 py-1.5 text-sm text-[var(--text)]"
+            className="w-full rounded-md border border-[var(--border)] bg-white px-2 py-1.5 text-sm text-[var(--text)] shadow-sm transition-colors duration-150 hover:border-[var(--primary-400)] focus:border-[var(--primary-500)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-100)]"
           />
         </label>
 
@@ -289,7 +289,7 @@ export default function ResourceModelReportPanel({
             type="button"
             onClick={() => void handleGenerate()}
             disabled={running}
-            className="inline-flex h-9 w-full items-center justify-center gap-2 rounded-lg bg-[var(--primary-600)] px-3 text-sm font-semibold text-white transition hover:bg-[var(--primary-700)] disabled:opacity-70"
+            className="inline-flex h-9 w-full items-center justify-center gap-2 rounded-md bg-[var(--primary-600)] px-3 text-sm font-semibold text-white shadow-sm transition-all duration-150 hover:bg-[var(--primary-700)] hover:shadow-md disabled:opacity-70"
           >
             {running ? <Loader2 size={15} className="animate-spin" /> : <FileDown size={15} />}
             {running ? t("Gerando...", "Generating...") : t("Gerar PDF", "Generate PDF")}
@@ -299,35 +299,35 @@ export default function ResourceModelReportPanel({
 
       <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
         {(searchTerm || "").trim() ? (
-          <span className="rounded-full border border-[var(--border)] bg-white px-2 py-0.5 text-[var(--gray-700)]">
+          <span className="rounded-md border border-[var(--border)] bg-white px-2 py-0.5 text-[var(--gray-700)]">
             {t("Pesquisa:", "Search:")} {(searchTerm || "").trim()}
           </span>
         ) : null}
         {(statusFilter || "").trim() ? (
-          <span className="rounded-full border border-[var(--border)] bg-white px-2 py-0.5 text-[var(--gray-700)]">
+          <span className="rounded-md border border-[var(--border)] bg-white px-2 py-0.5 text-[var(--gray-700)]">
             {t("Estado:", "Status:")} {(statusFilter || "").trim()}
           </span>
         ) : null}
-        <span className="rounded-full border border-[var(--border)] bg-white px-2 py-0.5 text-[var(--gray-700)]">
-          endpoint {canonicalEndpoint}
+        <span className="rounded-md border border-[var(--border)] bg-white px-2 py-0.5 text-[var(--gray-700)]">
+          {t("Recurso técnico:", "Technical resource:")} {canonicalEndpoint}
         </span>
       </div>
 
       {jobStatus ? (
-        <div className="mt-2 inline-flex items-center gap-1 rounded-lg bg-[var(--gray-100)] px-2 py-1 text-xs font-medium text-[var(--gray-700)]">
+        <div className="mt-2 inline-flex items-center gap-1 rounded-md bg-[var(--gray-100)] px-2 py-1 text-xs font-medium text-[var(--gray-700)]">
           <Sparkles size={12} />
           {t("Estado do job:", "Job status:")} {jobStatus}
         </div>
       ) : null}
 
       {feedback ? (
-        <div className="mt-2 rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 py-1.5 text-xs text-emerald-800">
+        <div className="mt-2 rounded-md border border-emerald-200 bg-emerald-50 px-2.5 py-1.5 text-xs text-emerald-800">
           {feedback}
         </div>
       ) : null}
 
       {error ? (
-        <div className="mt-2 rounded-lg border border-rose-200 bg-rose-50 px-2.5 py-1.5 text-xs text-rose-800">
+        <div className="mt-2 rounded-md border border-rose-200 bg-rose-50 px-2.5 py-1.5 text-xs text-rose-800">
           {error}
         </div>
       ) : null}

@@ -19,12 +19,12 @@ export default function Card ( {
     const { tr } = useLanguage()
 
     return (
-        <div className="rounded-2xl border border-border bg-card shadow-sm">
+        <div className="rounded-lg border border-border bg-card shadow-sm">
             {( title || actions ) && (
-                <div className="flex items-start justify-between px-3 pt-2.5 pb-1.5">
+                <div className="flex items-start justify-between gap-3 border-b border-border px-4 py-3">
                     <div>
                         {title && (
-                            <h3 className="text-sm font-semibold text-foreground">
+                            <h3 className="font-display text-sm font-semibold text-foreground">
                                 {tr(title)}
                             </h3>
                         )}
@@ -39,7 +39,7 @@ export default function Card ( {
                 </div>
             )}
 
-            <div className="px-3 pb-3 pt-2">{children}</div>
+            <div className="p-4">{children}</div>
         </div>
     )
 }

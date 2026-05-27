@@ -23,9 +23,14 @@ type RowHref = (row: Row) => string
 
 function pickLabel(row: Row): string {
   const candidates = [
+    "name",
     "nome",
+    "title",
     "descricao",
+    "description",
     "identificador",
+    "student_code",
+    "teacher_code",
     "bag_identifier",
     "unit_number",
     "dominio",
@@ -267,7 +272,7 @@ export default function ResourceListPage({
           return (
             <Link
               href={rowHref(row)}
-              className="font-medium text-[var(--text)] hover:text-[var(--hover-accent)]"
+              className="font-medium text-[var(--text)] transition-colors duration-150 hover:text-[var(--hover-accent)]"
             >
               {label}
             </Link>
@@ -305,7 +310,7 @@ export default function ResourceListPage({
                 !isIdentityUserResource || canCreateIdentityUsers ? (
                   <Link
                     href={createHref}
-                    className="inline-flex items-center rounded-lg bg-[var(--primary-600)] px-2.5 py-1 text-sm font-semibold leading-tight text-white transition hover:bg-[var(--primary-700)]"
+                    className="inline-flex h-9 items-center rounded-md bg-[var(--primary-600)] px-3 text-sm font-semibold leading-tight text-white shadow-sm transition-all duration-150 hover:bg-[var(--primary-700)] hover:shadow-md"
                   >
                     {t("Novo", "New")}
                   </Link>
@@ -315,7 +320,7 @@ export default function ResourceListPage({
               {adminListHref && canViewAdmin ? (
                 <Link
                   href={adminListHref}
-                  className="inline-flex items-center rounded-lg border border-[var(--border)] bg-[var(--card)] px-2.5 py-1 text-sm font-medium leading-tight text-[var(--gray-700)] transition hover:bg-[var(--gray-100)]"
+                  className="inline-flex h-9 items-center rounded-md border border-[var(--border)] bg-[var(--card)] px-3 text-sm font-medium leading-tight text-[var(--gray-700)] shadow-sm transition-all duration-150 hover:border-[var(--primary-300)] hover:bg-[var(--gray-100)] hover:text-[var(--text)]"
                 >
                   {t("Abrir na administração", "Open in administration")}
                 </Link>
@@ -325,7 +330,7 @@ export default function ResourceListPage({
         />
 
         {error && (
-          <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+          <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
             {error}
           </div>
         )}
@@ -338,7 +343,7 @@ export default function ResourceListPage({
           statusFilter={statusFilter}
         />
 
-        <div className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-3 shadow-sm">
+        <div className="rounded-lg border border-[var(--border)] bg-[var(--card)] p-3 shadow-sm">
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
             <label className="space-y-1 xl:col-span-2">
               <span className="text-xs font-semibold uppercase tracking-wide text-[var(--gray-600)]">
@@ -349,8 +354,11 @@ export default function ResourceListPage({
                 <input
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  placeholder={t("Código, nome, estado ou descrição", "Code, name, status or description")}
-                  className="w-full rounded-lg border border-[var(--border)] bg-white py-2 pl-8 pr-3 text-sm text-[var(--text)] shadow-sm"
+                  placeholder={t(
+                    `Pesquise em ${resolvedResourceLabel.toLocaleLowerCase("pt")} por código, nome, estado ou descrição`,
+                    `Search ${resolvedResourceLabel.toLowerCase()} by code, name, status or description`
+                  )}
+                  className="w-full rounded-md border border-[var(--border)] bg-white py-2 pl-8 pr-3 text-sm text-[var(--text)] shadow-sm transition-colors duration-150 placeholder:text-[var(--gray-400)] hover:border-[var(--primary-400)] focus:border-[var(--primary-500)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-100)]"
                 />
               </div>
             </label>
@@ -362,7 +370,7 @@ export default function ResourceListPage({
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="rounded-lg border border-[var(--border)] bg-white px-3 py-2 text-sm text-[var(--text)] shadow-sm"
+                className="w-full rounded-md border border-[var(--border)] bg-white px-3 py-2 text-sm text-[var(--text)] shadow-sm transition-colors duration-150 hover:border-[var(--primary-400)] focus:border-[var(--primary-500)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-100)]"
               >
                 <option value="">{t("Todos", "All")}</option>
                 {statusOptions.map((statusValue) => (
@@ -380,7 +388,7 @@ export default function ResourceListPage({
               <select
                 value={pageSize}
                 onChange={(e) => setPageSize(Number(e.target.value))}
-                className="rounded-lg border border-[var(--border)] bg-white px-3 py-2 text-sm text-[var(--text)] shadow-sm"
+                className="w-full rounded-md border border-[var(--border)] bg-white px-3 py-2 text-sm text-[var(--text)] shadow-sm transition-colors duration-150 hover:border-[var(--primary-400)] focus:border-[var(--primary-500)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-100)]"
               >
                 <option value={20}>20</option>
                 <option value={50}>50</option>
@@ -402,7 +410,7 @@ export default function ResourceListPage({
                 setPageSize(50)
                 setPage(1)
               }}
-              className="inline-flex items-center gap-1 rounded-lg border border-[var(--border)] bg-[var(--card)] px-2 py-1 font-semibold text-[var(--gray-700)] transition hover:bg-[var(--gray-100)]"
+              className="inline-flex h-8 items-center gap-1 rounded-md border border-[var(--border)] bg-[var(--card)] px-2.5 font-semibold text-[var(--gray-700)] shadow-sm transition-all duration-150 hover:border-[var(--primary-300)] hover:bg-[var(--gray-100)] hover:text-[var(--text)]"
             >
               <RotateCcw size={12} />
               {t("Limpar filtros", "Clear filters")}
