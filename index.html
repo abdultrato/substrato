@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="pt">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#180054" />
+    <meta
+      name="description"
+      content="Substrato: plataforma modular multi-tenant para saúde, educação, ERP e WMS, com Django REST Framework, Next.js, OpenAPI, Celery e Redis."
+    />
+    <meta property="og:title" content="Substrato" />
+    <meta
+      property="og:description"
+      content="Operações clínicas, académicas e empresariais num produto modular com API documentada, workspaces e automação operacional."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="./frontend-next/app/login-side.png" />
+    <title>Substrato | Plataforma operacional multi-domínio</title>
+    <link rel="icon" href="./static/img/logo.png" />
+    <link rel="stylesheet" href="./styles.css" />
+    <script src="./script.js" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#conteudo">Saltar para o conteúdo</a>
+
+    <header class="hero" id="topo">
+      <div class="hero__image" aria-hidden="true"></div>
+      <nav class="site-nav" aria-label="Navegação principal">
+        <a class="brand" href="#topo" aria-label="Substrato">
+          <img src="./static/img/logo.png" alt="" width="40" height="40" />
+          <span>Substrato</span>
+        </a>
+        <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="nav-links">
+          <span></span>
+          <span></span>
+          <span></span>
+          <span class="sr-only">Abrir navegação</span>
+        </button>
+        <div class="nav-links" id="nav-links">
+          <a href="#configuracao">Configuração</a>
+          <a href="#workspaces">Workspaces</a>
+          <a href="#arquitetura">Arquitetura</a>
+          <a href="#contacto">Contacto</a>
+          <button class="icon-button" type="button" data-theme-toggle aria-label="Alternar tema">
+            <span aria-hidden="true">◐</span>
+          </button>
+        </div>
+      </nav>
+
+      <div class="hero__content">
+        <p class="eyebrow">Plataforma operacional multi-tenant</p>
+        <h1>Substrato</h1>
+        <p class="hero__copy">
+          Um sistema modular para operações de saúde, educação, faturação, farmácia,
+          banco de sangue, recursos humanos, ERP e WMS, sustentado por Django REST
+          Framework, Next.js 15, OpenAPI, Celery e Redis.
+        </p>
+        <div class="hero__actions" aria-label="Acções principais">
+          <a class="button button--primary" href="#workspaces">Explorar capacidades</a>
+          <a class="button button--secondary" href="https://github.com/abdulltrato/substrato" rel="noreferrer">Ver repositório</a>
+        </div>
+        <dl class="hero__facts" aria-label="Resumo técnico">
+          <div>
+            <dt data-count="136">136</dt>
+            <dd>modelos Django</dd>
+          </div>
+          <div>
+            <dt data-count="290">290+</dt>
+            <dd>endpoints REST</dd>
+          </div>
+          <div>
+            <dt data-count="27">27</dt>
+            <dd>apps de domínio</dd>
+          </div>
+          <div>
+            <dt>Node 24</dt>
+            <dd>Actions preparado</dd>
+          </div>
+        </dl>
+      </div>
+    </header>
+
+    <main id="conteudo">
+      <section class="section section--intro" aria-labelledby="estado-title">
+        <div class="section__inner intro-grid">
+          <div>
+            <p class="eyebrow">GitHub Pages</p>
+            <h2 id="estado-title">Página estática alinhada com o repositório atual</h2>
+            <p>
+              Esta página é publicada pelo workflow <code>.github/workflows/pages.yml</code>,
+              que empacota estes ficheiros na pasta <code>.pages-dist</code> juntamente com
+              o logótipo e a imagem institucional do frontend.
+            </p>
+          </div>
+          <div class="status-panel" aria-label="Estado de publicação">
+            <div>
+              <span>URL pública</span>
+              <strong>abdulltrato.github.io/substrato</strong>
+            </div>
+            <div>
+              <span>Fonte</span>
+              <strong>branch main</strong>
+            </div>
+            <div>
+              <span>Atualizado</span>
+              <strong data-current-date>27 de maio de 2026</strong>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="configuracao" aria-labelledby="config-title">
+        <div class="section__inner">
+          <div class="section-heading">
+            <p class="eyebrow">Configuração atual</p>
+            <h2 id="config-title">O que está realmente configurado</h2>
+            <p>
+              A informação abaixo vem dos ficheiros atuais de frontend, backend,
+              documentação, Docker e GitHub Actions.
+            </p>
+          </div>
+          <div class="config-grid" id="config-grid"></div>
+        </div>
+      </section>
+
+      <section class="section section--workspaces" id="workspaces" aria-labelledby="workspaces-title">
+        <div class="section__inner">
+          <div class="section-heading section-heading--with-tools">
+            <div>
+              <p class="eyebrow">Workspaces do produto</p>
+              <h2 id="workspaces-title">Capacidades por domínio</h2>
+              <p>
+                Use a pesquisa para localizar módulos, fluxos ou tecnologias. O filtro
+                guarda a última preferência no navegador.
+              </p>
+            </div>
+            <label class="search-box">
+              <span class="sr-only">Pesquisar módulos</span>
+              <input id="module-search" type="search" placeholder="Pesquisar por módulo, fluxo ou endpoint" autocomplete="off" />
+            </label>
+          </div>
+
+          <div class="filters" id="workspace-filters" aria-label="Filtrar workspaces"></div>
+          <div class="workspace-summary" id="workspace-summary" aria-live="polite"></div>
+          <div class="module-grid" id="module-grid"></div>
+
+          <noscript>
+            <div class="noscript">
+              Active JavaScript para ver filtros, recomendações e pesquisa inteligente. Os principais
+              domínios são Saúde, Educação, ERP/WMS e Plataforma.
+            </div>
+          </noscript>
+        </div>
+      </section>
+
+      <section class="section" id="fluxos" aria-labelledby="fluxos-title">
+        <div class="section__inner">
+          <div class="section-heading">
+            <p class="eyebrow">Fluxos implementados</p>
+            <h2 id="fluxos-title">Percursos que já têm contrato técnico</h2>
+            <p>
+              Estes fluxos têm modelos, endpoints, páginas ou workspaces explícitos no
+              código atual e rastreabilidade técnica no repositório.
+            </p>
+          </div>
+          <div class="flow-list" id="flow-list"></div>
+        </div>
+      </section>
+
+      <section class="section section--architecture" id="arquitetura" aria-labelledby="arquitetura-title">
+        <div class="section__inner architecture-layout">
+          <div>
+            <p class="eyebrow">Arquitetura</p>
+            <h2 id="arquitetura-title">Runtime modular com contratos gerados</h2>
+            <p>
+              O backend concentra regras de domínio em apps Django e expõe API versionada.
+              O frontend Next.js consome o contrato OpenAPI, aplica RBAC e usa páginas
+              geradas para acelerar CRUDs sem perder formulários específicos quando o
+              fluxo exige comportamento próprio.
+            </p>
+            <div class="architecture-actions">
+              <a class="button button--primary" href="https://github.com/abdulltrato/substrato/blob/main/SUBSTRATO.md" rel="noreferrer">Ler SUBSTRATO.md</a>
+              <button class="button button--secondary" type="button" data-copy-public-url>Copiar URL pública</button>
+            </div>
+          </div>
+          <div class="pipeline" aria-label="Pipeline técnico">
+            <div><span>Frontend</span><strong>Next.js 15, React 18, TypeScript, Tailwind</strong></div>
+            <div><span>API</span><strong>Django 4.2, DRF, drf-spectacular, OpenAPI</strong></div>
+            <div><span>Operação</span><strong>PostgreSQL, Redis, Celery, Nginx, Traefik</strong></div>
+            <div><span>Entrega</span><strong>GitHub Actions, GHCR, Pages, deploy manual</strong></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="prioridade" aria-labelledby="prioridade-title">
+        <div class="section__inner advisor">
+          <div class="section-heading">
+            <p class="eyebrow">Assistente de escopo</p>
+            <h2 id="prioridade-title">Escolha uma prioridade para ver o caminho recomendado</h2>
+          </div>
+          <div class="advisor__controls" id="advisor-controls"></div>
+          <div class="advisor__result" id="advisor-result" aria-live="polite"></div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer" id="contacto">
+      <div class="footer__inner">
+        <div>
+          <img src="./static/img/logo.png" alt="" width="48" height="48" />
+          <h2>Abdul Daniel Trato</h2>
+          <p>
+            Perfil público do projecto Substrato, preparado para apresentação,
+            triagem técnica e conversa comercial com base no estado real do produto.
+          </p>
+        </div>
+        <div class="contact-grid">
+          <a href="https://abdulltrato.github.io/substrato/" rel="noreferrer">Perfil profissional</a>
+          <a href="https://www.linkedin.com/abdul-daniel-trato" rel="noreferrer">LinkedIn</a>
+          <a href="https://github.com/abdulltrato/substrato" rel="noreferrer">GitHub</a>
+          <a href="./cv-lab-abdultrato.pdf">Currículo em PDF</a>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>
