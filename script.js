@@ -1,4 +1,6 @@
 (function () {
+  document.documentElement.classList.add("js")
+
   const state = {
     scope: localStorage.getItem("substrato.scope") || "todos",
     query: "",
@@ -504,6 +506,31 @@
     })
   }
 
+  function setupScrollReveal() {
+    const elements = qsa(".reveal-on-scroll")
+    if (!elements.length) return
+    if (!("IntersectionObserver" in window)) {
+      elements.forEach((item) => item.classList.add("is-visible"))
+      return
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return
+          entry.target.classList.add("is-visible")
+          observer.unobserve(entry.target)
+        })
+      },
+      { threshold: 0.18, rootMargin: "0px 0px -8% 0px" }
+    )
+
+    elements.forEach((item, index) => {
+      item.style.transitionDelay = `${Math.min(index * 80, 240)}ms`
+      observer.observe(item)
+    })
+  }
+
   document.addEventListener("DOMContentLoaded", () => {
     renderConfig()
     renderFilters()
@@ -516,6 +543,7 @@
     setupNavigation()
     setupCopy()
     setupDate()
+    setupScrollReveal()
     animateCounters()
   })
 })()
