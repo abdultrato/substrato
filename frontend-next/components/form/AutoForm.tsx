@@ -7,6 +7,7 @@ import { apiFetch, apiFetchList } from "@/lib/api"
 import { buildFormSpec, FormField } from "@/lib/openapi/formBuilder"
 import Etapas from "@/components/form/Etapas"
 import type { ResourceFormConfig } from "@/lib/resources/resourceFormConfig"
+import { normalizeFormApiErrors } from "@/lib/resources/formErrors"
 import {
   relationOptionsFromRows,
   relationTargetForField,
@@ -412,6 +413,10 @@ function visibleFormFields(formSpec: RuntimeFormSpec | null, config?: ResourceFo
   return fields
 }
 
+function safeFieldSelector(fieldName: string): string {
+  return fieldName.replace(/\\/g, "\\\\").replace(/"/g, '\\"')
+}
+
 type WizardStep = { key: string; title: string; description?: string }
 
 function Stepper({
@@ -656,6 +661,26 @@ export default function AutoForm({
     return idx >= 0 ? idx : etapas.length - 1
   }
 
+  function focusField(fieldName?: string) {
+    if (!fieldName || typeof document === "undefined") return
+    window.setTimeout(() => {
+      const container = document.querySelector<HTMLElement>(
+        `[data-form-field="${safeFieldSelector(fieldName)}"]`
+      )
+      container?.scrollIntoView({ block: "center", behavior: "smooth" })
+      const focusable = container?.querySelector<HTMLElement>("input, select, textarea, button")
+      focusable?.focus()
+    }, 50)
+  }
+
+  function showFieldErrors(errs: Record<string, string>, fallbackMessage: string) {
+    setErrors(errs)
+    setMessage(fallbackMessage)
+    const firstField = Object.keys(errs)[0]
+    if (firstField && etapas?.length) setEtapaAtual(firstStepIndexForField(firstField))
+    focusField(firstField)
+  }
+
   function stepFieldNames(): string[] | null {
     if (!etapas?.length) return null
     const etapa = etapas[Math.max(0, Math.min(etapas.length - 1, etapaAtual))]
@@ -683,6 +708,7 @@ export default function AutoForm({
       const stepSchema = buildStepSchema(names)
       if (!stepSchema) return
       setErrors({})
+      setMessage(null)
       try {
         stepSchema.parse(values)
         setEtapaAtual((prev) => Math.min(etapas.length - 1, prev + 1))
@@ -693,7 +719,7 @@ export default function AutoForm({
             const path = issue.path.join(".")
             errs[path] = issue.message
           })
-          setErrors(errs)
+          showFieldErrors(errs, "Revise os campos desta etapa.")
         } else {
           setMessage(e?.message || "Revise os campos desta etapa.")
         }
@@ -711,9 +737,10 @@ export default function AutoForm({
         missing.forEach((field) => {
           errs[field.name] = "Campo obrigatório"
         })
-        setErrors(errs)
-        setMessage(`Preencha os campos obrigatórios: ${missing.map((field) => field.label).join(", ")}.`)
-        if (etapas?.length) setEtapaAtual(firstStepIndexForField(missing[0].name))
+        showFieldErrors(
+          errs,
+          `Preencha os campos obrigatórios: ${missing.map((field) => field.label).join(", ")}.`
+        )
         return
       }
       const parsed = schema.parse(values)
@@ -747,9 +774,24 @@ export default function AutoForm({
           const path = issue.path.join(".")
           errs[path] = issue.message
         })
-        setErrors(errs)
+        showFieldErrors(errs, "Revise os campos destacados antes de salvar.")
       } else {
-        setMessage(e?.message || "Falha ao salvar.")
+        const normalized = normalizeFormApiErrors(
+          e,
+          formSpec.submitFields.map((field) => field.name)
+        )
+        const hasFieldErrors = Object.keys(normalized.fieldErrors).length > 0
+        if (hasFieldErrors) {
+          setErrors(normalized.fieldErrors)
+          if (normalized.firstField && etapas?.length) {
+            setEtapaAtual(firstStepIndexForField(normalized.firstField))
+          }
+          focusField(normalized.firstField)
+        }
+        const fallbackMessage = hasFieldErrors
+          ? "Revise os campos destacados e tente novamente."
+          : e?.message || "Falha ao salvar."
+        setMessage(normalized.message || fallbackMessage)
       }
     } finally {
       setSubmitting(false)
@@ -791,8 +833,7 @@ export default function AutoForm({
   const somenteLeitura = new Set(config?.somenteLeituraCampos || [])
   const requiredFields = formSpec.submitFields.filter((field) => field.required)
   const missingRequiredFields = requiredFields.filter((field) => !hasRequiredValue(values[field.name]))
-  const isFinalStep = !etapas?.length || etapaAtual >= etapas.length - 1
-  const submitDisabled = submitting || (isFinalStep && missingRequiredFields.length > 0)
+  const submitDisabled = submitting
 
   return (
     <div className="mx-auto w-full max-w-3xl space-y-3">
@@ -832,7 +873,11 @@ export default function AutoForm({
             const widget = config?.widgets?.[field.name] || (LONG_TEXT_FIELDS.has(field.name) ? "textarea" : undefined)
             const isReadOnly = somenteLeitura.has(field.name)
             return (
-              <label key={field.name} className="space-y-1 text-sm text-[var(--gray-700)]">
+              <label
+                key={field.name}
+                data-form-field={field.name}
+                className="space-y-1 text-sm text-[var(--gray-700)]"
+              >
                 <div className="flex items-center justify-between">
                   <span className="font-medium text-[var(--gray-700)]">
                     {label}
