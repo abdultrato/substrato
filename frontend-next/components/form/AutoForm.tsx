@@ -3,10 +3,16 @@
 import { useEffect, useMemo, useState } from "react"
 import { z } from "zod"
 
-import { apiFetch } from "@/lib/api"
+import { apiFetch, apiFetchList } from "@/lib/api"
 import { buildFormSpec, FormField } from "@/lib/openapi/formBuilder"
 import Etapas from "@/components/form/Etapas"
 import type { ResourceFormConfig } from "@/lib/resources/resourceFormConfig"
+import {
+  relationOptionsFromRows,
+  relationTargetForField,
+  type RelationOption,
+  type RelationTarget,
+} from "@/lib/resources/relationOptions"
 import { fieldLabel } from "@/lib/ui/fieldLabels"
 import { useLanguage } from "@/hooks/useLanguage"
 
@@ -102,7 +108,14 @@ function renderInput(
   value: any,
   onChange: (v: any) => void,
   error?: string,
-  opts?: { readOnly?: boolean; placeholder?: string; translate?: (value: string) => string; widget?: "textarea" }
+  opts?: {
+    readOnly?: boolean
+    placeholder?: string
+    translate?: (value: string) => string
+    widget?: "textarea"
+    relationOptions?: RelationOption[]
+    relationLoading?: boolean
+  }
 ) {
   const common =
     "w-full rounded-md border bg-[var(--card)] px-3 py-2 text-sm leading-tight text-[var(--text)] shadow-sm transition-colors duration-150 placeholder:text-[var(--gray-400)] hover:border-[var(--primary-400)] focus:border-[var(--primary-500)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-100)] disabled:cursor-not-allowed disabled:bg-[var(--gray-100)] disabled:text-[var(--gray-500)]"
@@ -125,6 +138,42 @@ function renderInput(
         />
       )
     case "integer":
+      if (opts?.relationOptions?.length || opts?.relationLoading) {
+        const options = opts.relationOptions || []
+        const currentValue = value === undefined || value === null || value === "" ? "" : String(value)
+        const hasCurrent = !currentValue || options.some((option) => option.value === currentValue)
+        const renderedOptions = hasCurrent
+          ? options
+          : [{ value: currentValue, label: `Registo #${currentValue}` }, ...options]
+
+        return (
+          <select
+            value={currentValue}
+            onChange={(e) => onChange(e.target.value === "" ? null : Number(e.target.value))}
+            className={`${common} ${stateClass}`}
+            disabled={disabled || !!opts.relationLoading}
+          >
+            <option value="">
+              {opts.relationLoading ? "Carregando opções..." : "Selecione uma opção..."}
+            </option>
+            {renderedOptions.map((option) => (
+              <option key={`${field.name}-${option.value}`} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        )
+      }
+      return (
+        <input
+          type="number"
+          value={value ?? ""}
+          onChange={(e) => onChange(e.target.value === "" ? null : Number(e.target.value))}
+          className={`${common} ${stateClass}`}
+          placeholder={placeholder}
+          disabled={disabled}
+        />
+      )
     case "number":
       return (
         <input
@@ -343,6 +392,26 @@ function hasRequiredValue(value: any): boolean {
   return String(value).trim() !== ""
 }
 
+function visibleFormFields(formSpec: RuntimeFormSpec | null, config?: ResourceFormConfig | null): FormField[] {
+  if (!formSpec) return []
+  const esconder = new Set(config?.esconderCampos || [])
+  let fields = formSpec.fields.filter((f) => !f.readOnly && (!esconder.has(f.name) || f.required))
+
+  const order = config?.ordenarCampos || []
+  if (order.length) {
+    const pos = new Map<string, number>()
+    order.forEach((n, i) => pos.set(n, i))
+    fields = fields.slice().sort((a, b) => {
+      const pa = pos.has(a.name) ? (pos.get(a.name) as number) : 9999
+      const pb = pos.has(b.name) ? (pos.get(b.name) as number) : 9999
+      if (pa !== pb) return pa - pb
+      return a.label.localeCompare(b.label, "pt")
+    })
+  }
+
+  return fields
+}
+
 type WizardStep = { key: string; title: string; description?: string }
 
 function Stepper({
@@ -423,6 +492,8 @@ export default function AutoForm({
   const [loadingOptionsSpec, setLoadingOptionsSpec] = useState(false)
   const [values, setValues] = useState<Record<string, any>>(initialValues)
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [relationOptions, setRelationOptions] = useState<Record<string, RelationOption[]>>({})
+  const [loadingRelationFields, setLoadingRelationFields] = useState<Set<string>>(new Set())
   const [submitting, setSubmitting] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
   const etapas = config?.etapas || null
@@ -459,6 +530,62 @@ export default function AutoForm({
     () => mergeSpecs(schemaFormSpec, optionsFormSpec),
     [schemaFormSpec, optionsFormSpec]
   )
+  const configHiddenKey = (config?.esconderCampos || []).join("|")
+  const configOrderKey = (config?.ordenarCampos || []).join("|")
+  const relationFieldTargets = useMemo(
+    () =>
+      visibleFormFields(formSpec, config)
+        .filter((field) => field.type === "integer")
+        .map((field) => {
+          const target = relationTargetForField(field.name, endpoint)
+          return target ? { field, target } : null
+        })
+        .filter(Boolean) as Array<{ field: FormField; target: RelationTarget }>,
+    [formSpec, configHiddenKey, configOrderKey, endpoint]
+  )
+
+  useEffect(() => {
+    let mounted = true
+
+    async function loadRelationOptions() {
+      if (!relationFieldTargets.length) {
+        setRelationOptions({})
+        setLoadingRelationFields(new Set())
+        return
+      }
+
+      const loadingNames = new Set(relationFieldTargets.map((item) => item.field.name))
+      setLoadingRelationFields(loadingNames)
+
+      const loaded: Record<string, RelationOption[]> = {}
+      await Promise.all(
+        relationFieldTargets.map(async ({ field, target }) => {
+          try {
+            const { items } = await apiFetchList<Record<string, any>>(target.endpoint, {
+              page: 1,
+              pageSize: 100,
+              clientCacheTtlMs: 60000,
+            })
+            loaded[field.name] = relationOptionsFromRows(items, target)
+          } catch {
+            loaded[field.name] = []
+          }
+        })
+      )
+
+      if (!mounted) return
+      setRelationOptions(loaded)
+      setLoadingRelationFields(new Set())
+    }
+
+    loadRelationOptions().catch(() => {
+      if (mounted) setLoadingRelationFields(new Set())
+    })
+
+    return () => {
+      mounted = false
+    }
+  }, [relationFieldTargets])
 
   useEffect(() => {
     if (!config?.lembrarCampos?.length) return
@@ -520,23 +647,7 @@ export default function AutoForm({
   }, [formSpec])
 
   function listVisibleFields(): FormField[] {
-    if (!formSpec) return []
-    const esconder = new Set(config?.esconderCampos || [])
-    let fields = formSpec.fields.filter((f) => !f.readOnly && (!esconder.has(f.name) || f.required))
-
-    const order = config?.ordenarCampos || []
-    if (order.length) {
-      const pos = new Map<string, number>()
-      order.forEach((n, i) => pos.set(n, i))
-      fields = fields.slice().sort((a, b) => {
-        const pa = pos.has(a.name) ? (pos.get(a.name) as number) : 9999
-        const pb = pos.has(b.name) ? (pos.get(b.name) as number) : 9999
-        if (pa !== pb) return pa - pb
-        return a.label.localeCompare(b.label, "pt")
-      })
-    }
-
-    return fields
+    return visibleFormFields(formSpec, config)
   }
 
   function firstStepIndexForField(fieldName: string): number {
@@ -736,7 +847,14 @@ export default function AutoForm({
                   values[field.name],
                   (v) => setValues((prev) => ({ ...prev, [field.name]: v })),
                   errors[field.name],
-                  { placeholder, widget, readOnly: isReadOnly, translate: tr }
+                  {
+                    placeholder,
+                    widget,
+                    readOnly: isReadOnly,
+                    translate: tr,
+                    relationOptions: relationOptions[field.name],
+                    relationLoading: loadingRelationFields.has(field.name),
+                  }
                 )}
                 {hint ? (
                   <div className="text-xs text-[var(--gray-500)]">{hint}</div>
