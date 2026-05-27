@@ -43,6 +43,9 @@ module.exports = (phase) => {
     { source: "/pharmacy/product-categories/:path*", destination: "/resources/pharmacy/" },
     { source: "/tenants/tenant-subscriptions/:path*", destination: "/resources/tenants/" },
   ]
+  const legacyRouteAliases = [
+    { source: "/consultations/holidaies/:path*", destination: "/consultations/holidays/:path*" },
+  ]
 
   return {
     // Django endpoints (admin/docs/schema) depend on trailing slashes.
@@ -83,7 +86,7 @@ module.exports = (phase) => {
     },
 
     async redirects() {
-      return retiredGeneratedRoutes.map((route) => ({
+      return [...legacyRouteAliases, ...retiredGeneratedRoutes].map((route) => ({
         ...route,
         permanent: false,
       }))

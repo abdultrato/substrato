@@ -20,10 +20,10 @@ type CrudMenuItem = {
 const MODULES: Record<string, CrudMenuItem[]> = {
   "accounting": [
     { nome: "Conta", href: "/accounting/accounts" },
-    { nome: "Saldo da Conta", href: "/accounting/account-balances" },
+    { nome: "Saldo da Conta", href: "/resources/accounting/" },
     { nome: "Conciliação Financeira", href: "/accounting/financial-reconciliations" },
     { nome: "Lançamento Contábil", href: "/accounting/ledger-entries" },
-    { nome: "Linha Contábil", href: "/accounting/ledger-lines" },
+    { nome: "Linha Contábil", href: "/resources/accounting/" },
     { nome: "Lançamento Legado", href: "/accounting/legacy-entries" },
     { nome: "Movimento Legado", href: "/accounting/legacy-movements" },
   ],
@@ -57,17 +57,17 @@ const MODULES: Record<string, CrudMenuItem[]> = {
     { nome: "Campo de Exame Laboratorial", href: "/clinical/lab-exam-fields" },
     { nome: "Resultado", href: "/clinical/results" },
     { nome: "Item de Resultado", href: "/clinical/result-items" },
-    { nome: "Evento Clínico", href: "/clinical/clinical-events" },
-    { nome: "Histórico Clínico", href: "/clinical/clinical-histories" },
+    { nome: "Evento Clínico", href: "/resources/clinical/" },
+    { nome: "Histórico Clínico", href: "/resources/clinical/" },
     { nome: "Exame Médico", href: "/clinical/medical-exams" },
     { nome: "Campo de Exame Médico", href: "/clinical/medical-exam-fields" },
     { nome: "Item da Requisição Laboratorial", href: "/clinical/lab-request-items" },
     { nome: "Ficheiro de Resultado Médico", href: "/clinical/medical-result-files" },
-    { nome: "Referência Clínica", href: "/clinical/clinical-references" },
+    { nome: "Referência Clínica", href: "/resources/clinical/" },
   ],
   "consultations": [
     { nome: "Especialidade de Consulta", href: "/consultations/consultation-specialties" },
-    { nome: "Feriado", href: "/consultations/holidaies" },
+    { nome: "Feriado", href: "/consultations/holidays" },
     { nome: "Consulta Médica", href: "/consultations/medical-consultations" },
   ],
   "education": [
@@ -145,7 +145,7 @@ const MODULES: Record<string, CrudMenuItem[]> = {
     { nome: "Item de Prescrição", href: "/medical_records/prescription-items" },
   ],
   "monitoring": [
-    { nome: "Evento Transacional", href: "/monitoring/transactional-outbox-events" },
+    { nome: "Evento Transacional", href: "/resources/monitoring/" },
     { nome: "Erro do Sistema", href: "/monitoring/system-errors" },
   ],
   "notifications": [
@@ -171,7 +171,7 @@ const MODULES: Record<string, CrudMenuItem[]> = {
   ],
   "payments": [
     { nome: "Pagamento", href: "/payments/payments" },
-    { nome: "Histórico de Pagamento", href: "/payments/payment-histories" },
+    { nome: "Histórico de Pagamento", href: "/resources/payments/" },
     { nome: "Recibo", href: "/payments/receipts" },
     { nome: "Reconciliação", href: "/payments/reconciliations" },
     { nome: "Transação", href: "/payments/transactions" },
@@ -182,8 +182,8 @@ const MODULES: Record<string, CrudMenuItem[]> = {
     { nome: "Requisição de Material", href: "/pharmacy/material-requisitions" },
     { nome: "Item de Requisição de Material", href: "/pharmacy/material-requisition-items" },
     { nome: "Produto", href: "/pharmacy/products" },
-    { nome: "Categoria Principal", href: "/pharmacy/parent-categories" },
-    { nome: "Categoria de Produto", href: "/pharmacy/product-categories" },
+    { nome: "Categoria Principal", href: "/resources/pharmacy/" },
+    { nome: "Categoria de Produto", href: "/resources/pharmacy/" },
     { nome: "Venda", href: "/pharmacy/sales" },
     { nome: "Item de Venda", href: "/pharmacy/sale-items" },
   ],
@@ -216,7 +216,7 @@ const MODULES: Record<string, CrudMenuItem[]> = {
   "tenants": [
     { nome: "Configuração do Cliente", href: "/tenants/tenant-configurations" },
     { nome: "Funcionalidade do Cliente", href: "/tenants/tenant-feature-flags" },
-    { nome: "Assinatura do Cliente", href: "/tenants/tenant-subscriptions" },
+    { nome: "Assinatura do Cliente", href: "/resources/tenants/" },
     { nome: "Plano de Assinatura", href: "/tenants/subscription-plans" },
     { nome: "Cliente", href: "/tenants/tenants" },
     { nome: "Uso do Cliente", href: "/tenants/tenant-usages" },

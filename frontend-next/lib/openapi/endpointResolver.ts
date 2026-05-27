@@ -8,6 +8,7 @@ const OPENAPI = schema as OpenApiDoc
 // Keep this map explicit and conservative: only add routes confirmed in backend routing.
 const STATIC_COLLECTION_ALIASES: Record<string, string> = {
   "/audit_activities/user-activities/": "/audit/atividade/",
+  "/consultations/holidaies/": "/consultations/holiday/",
   "/external_entities/companies/": "/external_entities/empresa/",
   "/tenants/tenant-feature-flags/": "/tenants/featureflagtenant/",
   "/accounting/legacy-entries/": "/accounting/entry/",
@@ -54,7 +55,7 @@ function camelToKebab(value: string): string {
 
 function pluralizeSimple(value: string): string {
   if (!value) return value
-  if (value.endsWith("y")) return `${value.slice(0, -1)}ies`
+  if (/[bcdfghjklmnpqrstvwxyz]y$/i.test(value)) return `${value.slice(0, -1)}ies`
   if (/(s|x|z)$/.test(value)) return `${value}es`
   return `${value}s`
 }

@@ -535,18 +535,20 @@ export default function AutoForm({
     () => mergeSpecs(schemaFormSpec, optionsFormSpec),
     [schemaFormSpec, optionsFormSpec]
   )
-  const configHiddenKey = (config?.esconderCampos || []).join("|")
-  const configOrderKey = (config?.ordenarCampos || []).join("|")
+  const visibleFieldsForRelationTargets = useMemo(
+    () => visibleFormFields(formSpec, config),
+    [formSpec, config]
+  )
   const relationFieldTargets = useMemo(
     () =>
-      visibleFormFields(formSpec, config)
+      visibleFieldsForRelationTargets
         .filter((field) => field.type === "integer")
         .map((field) => {
           const target = relationTargetForField(field.name, endpoint)
           return target ? { field, target } : null
         })
         .filter(Boolean) as Array<{ field: FormField; target: RelationTarget }>,
-    [formSpec, configHiddenKey, configOrderKey, endpoint]
+    [visibleFieldsForRelationTargets, endpoint]
   )
 
   useEffect(() => {

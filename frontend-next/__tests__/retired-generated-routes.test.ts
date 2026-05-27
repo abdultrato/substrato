@@ -1,20 +1,37 @@
 import { createRequire } from "module"
+import { readFileSync } from "fs"
+import { resolve } from "path"
 
 import { describe, expect, it } from "vitest"
 
 const require = createRequire(import.meta.url)
 const createNextConfig = require("../next.config.js")
 
+type RedirectRoute = { source: string; destination: string; permanent: boolean }
+
 describe("retired generated routes", () => {
-  it("redirects generated pages that have no OpenAPI contract to active resource hubs", async () => {
+  async function redirectsBySource(): Promise<Map<string, RedirectRoute>> {
     const config = createNextConfig("phase-production-build")
     const redirects = await config.redirects()
-    const bySource = new Map(
-      redirects.map((route: { source: string; destination: string; permanent: boolean }) => [
+    return new Map(
+      redirects.map((route: RedirectRoute) => [
         route.source,
         route,
       ])
     )
+  }
+
+  it("redirects misspelled public resource routes to readable active routes", async () => {
+    const bySource = await redirectsBySource()
+
+    expect(bySource.get("/consultations/holidaies/:path*")).toMatchObject({
+      destination: "/consultations/holidays/:path*",
+      permanent: false,
+    })
+  })
+
+  it("redirects generated pages that have no OpenAPI contract to active resource hubs", async () => {
+    const bySource = await redirectsBySource()
 
     const expected: Record<string, string> = {
       "/accounting/account-balances/:path*": "/resources/accounting/",
@@ -40,5 +57,15 @@ describe("retired generated routes", () => {
         permanent: false,
       })
     }
+  })
+
+  it("does not expose retired route sources in the legacy CRUD menu", async () => {
+    const bySource = await redirectsBySource()
+    const menu = readFileSync(resolve(process.cwd(), "app/components/CrudModelsMenu.tsx"), "utf-8")
+    const hits = Array.from(bySource.keys())
+      .map((source) => source.replace("/:path*", ""))
+      .filter((source) => menu.includes(`href: "${source}`))
+
+    expect(hits).toEqual([])
   })
 })

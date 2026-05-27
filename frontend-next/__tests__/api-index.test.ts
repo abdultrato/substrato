@@ -110,6 +110,28 @@ describe("API facade contract", () => {
     expect((global.fetch as any).mock.calls[0][0]).toBe("/api/v1/clinical/exam/")
   })
 
+  it("normaliza feriados de consulta com plural correto e alias legado", async () => {
+    ;(global.fetch as any)
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ results: [] }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        })
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ results: [] }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        })
+      )
+
+    await apiFetch("/consultations/holidays/", { clientCache: false })
+    await apiFetch("/consultations/holidaies/", { clientCache: false })
+
+    expect((global.fetch as any).mock.calls[0][0]).toBe("/api/v1/consultations/holiday/")
+    expect((global.fetch as any).mock.calls[1][0]).toBe("/api/v1/consultations/holiday/")
+  })
+
   it("mantém planos de cobertura no endpoint canónico em inglês", async () => {
     ;(global.fetch as any).mockResolvedValueOnce(
       new Response(JSON.stringify({ results: [] }), {
