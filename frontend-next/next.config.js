@@ -46,6 +46,17 @@ module.exports = (phase) => {
   const legacyRouteAliases = [
     { source: "/consultations/holidaies/:path*", destination: "/consultations/holidays/:path*" },
   ]
+  const collectionOnlyGeneratedRoutes = [
+    { source: "/ai_assistant/ai-investigations/new", destination: "/ai_assistant/ai-investigations/" },
+    { source: "/ai_assistant/ai-investigations/:id/edit", destination: "/ai_assistant/ai-investigations/" },
+    { source: "/ai_assistant/ai-investigations/:id", destination: "/ai_assistant/ai-investigations/" },
+    { source: "/ai_assistant/ai-operational-tasks/new", destination: "/ai_assistant/ai-operational-tasks/" },
+    { source: "/ai_assistant/ai-operational-tasks/:id/edit", destination: "/ai_assistant/ai-operational-tasks/" },
+    { source: "/ai_assistant/ai-operational-tasks/:id", destination: "/ai_assistant/ai-operational-tasks/" },
+    { source: "/ai_assistant/ai-sessions/new", destination: "/ai_assistant/ai-sessions/" },
+    { source: "/ai_assistant/ai-sessions/:id/edit", destination: "/ai_assistant/ai-sessions/" },
+    { source: "/ai_assistant/ai-sessions/:id", destination: "/ai_assistant/ai-sessions/" },
+  ]
 
   return {
     // Django endpoints (admin/docs/schema) depend on trailing slashes.
@@ -86,7 +97,7 @@ module.exports = (phase) => {
     },
 
     async redirects() {
-      return [...legacyRouteAliases, ...retiredGeneratedRoutes].map((route) => ({
+      return [...legacyRouteAliases, ...collectionOnlyGeneratedRoutes, ...retiredGeneratedRoutes].map((route) => ({
         ...route,
         permanent: false,
       }))
