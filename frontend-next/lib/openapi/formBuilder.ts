@@ -1,6 +1,7 @@
 import schema from "@/schema.generated.json"
 import { fieldLabel, isInternalField } from "@/lib/ui/fieldLabels"
 import { canonicalCollectionPath } from "@/lib/openapi/endpointResolver"
+import { normalizeEducationEndpoint } from "@/lib/education/ui"
 
 type HttpMethod = "post" | "put" | "patch"
 
@@ -187,6 +188,8 @@ function pathSegments(path: string): string[] {
 
 function normalizeEndpointAlias(endpoint: string): string {
   const normalized = normalizePath(canonicalCollectionPath(endpoint))
+  const educationEndpoint = normalizePath(normalizeEducationEndpoint(normalized))
+  if (educationEndpoint !== normalized) return educationEndpoint
   if (normalized === "/medical-records/registro") return "/medical_records/record"
   if (normalized.startsWith("/medical-records/registro/")) {
     return normalized.replace("/medical-records/registro", "/medical_records/record")
@@ -237,10 +240,11 @@ export function buildFormSpec(endpoint: string, method: HttpMethod): FormSpec | 
   const op = found?.item?.[method]
   const req = op?.requestBody?.content?.["application/json"]?.schema
   if (!req) return null
+  const canonicalEndpoint = normalizeEndpointAlias(endpoint)
 
   const reqNorm = normalizeSchema(req)
   const reqRequired = (reqNorm?.required || []) as string[]
-  const reqFields = schemaToFields(reqNorm, reqRequired, endpoint)
+  const reqFields = schemaToFields(reqNorm, reqRequired, canonicalEndpoint)
   if (!reqFields.length) return null
   const reqFieldNames = new Set(reqFields.map((f) => f.name))
 
@@ -253,7 +257,7 @@ export function buildFormSpec(endpoint: string, method: HttpMethod): FormSpec | 
   const respSchema = resp?.content?.["application/json"]?.schema
   const respNorm = normalizeSchema(respSchema)
   const respRequired = (respNorm?.required || []) as string[]
-  const respFields = schemaToFields(respNorm, respRequired, endpoint)
+  const respFields = schemaToFields(respNorm, respRequired, canonicalEndpoint)
 
   const baseFields = respFields.length ? respFields : reqFields
 

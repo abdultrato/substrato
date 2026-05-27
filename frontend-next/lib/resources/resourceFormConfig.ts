@@ -1,4 +1,9 @@
 import { canonicalModuleGroupKey } from "@/lib/modules"
+import {
+  educationResourceKeyFromEndpoint,
+  normalizeEducationEndpoint,
+  normalizeEducationResourceKey,
+} from "@/lib/education/ui"
 
 export type AutoFormStep = {
   titulo: string
@@ -65,10 +70,203 @@ const EQUIPMENT_INTERNAL_FIELDS = [
   "latest_maintenance",
 ]
 
+const WAREHOUSE_INTERNAL_FIELDS = [
+  "id",
+  "created_at",
+  "updated_at",
+  "custom_id",
+  "deleted",
+  "deleted_at",
+  "version",
+  "created_by",
+  "updated_by",
+  "deleted_by",
+  "tenant",
+]
+
+const WAREHOUSE_DERIVED_FIELDS = [
+  "lines",
+  "suggestions",
+  "warehouse_label",
+  "category_label",
+  "item_sku",
+  "current_stock",
+  "expired",
+  "location_code",
+  "reserved_quantity",
+  "available_quantity",
+  "received_quantity",
+  "pending_quantity",
+  "pending_reservation_quantity",
+  "pending_shipment_quantity",
+  "shipped_quantity",
+  "system_quantity",
+  "variance",
+  "purchase_order_number",
+  "posted_at",
+  "generated_at",
+  "confirmed_at",
+  "allocated_at",
+  "started_at",
+  "completed_at",
+  "reserved_at",
+  "released_at",
+  "consumed_at",
+  "shipped_at",
+]
+
 function normalizeEndpoint(endpoint: string): string {
   const p = String(endpoint || "").split("?")[0].split("#")[0]
   const withSlash = p.startsWith("/") ? p : `/${p}`
   return withSlash.replace(/\/+$/, "") + "/"
+}
+
+const EDUCATION_COMMON_LABELS: Record<string, string> = {
+  tenant: "Instituição",
+  user: "Utilizador",
+  student: "Estudante",
+  teacher: "Professor",
+  course: "Curso",
+  classroom: "Turma",
+  enrollment: "Matrícula",
+  student_code: "Código do estudante",
+  teacher_code: "Código do professor",
+  guardian_name: "Encarregado de educação",
+  birth_date: "Data de nascimento",
+  specialty: "Especialidade",
+  name: "Nome",
+  code: "Código",
+  title: "Título",
+  description: "Descrição",
+  instructions: "Instruções",
+  body: "Conteúdo",
+  content_text: "Texto da submissão",
+  submission_payload: "Conteúdo da resposta",
+  notes: "Observações",
+  status: "Estado",
+  academic_year: "Ano letivo",
+  capacity: "Capacidade",
+  homeroom_teacher: "Diretor de turma",
+  workload_hours: "Carga horária",
+  enrolled_on: "Matriculado em",
+  closed_on: "Encerrado em",
+  attendance_date: "Data da presença",
+  component: "Componente de avaliação",
+  score: "Nota obtida",
+  max_score: "Nota máxima",
+  weight: "Peso",
+  published_at: "Publicado em",
+  published: "Publicado",
+  scheduled_for: "Agendado para",
+  opens_at: "Abre em",
+  closes_at: "Fecha em",
+  due_at: "Prazo de entrega",
+  duration_minutes: "Duração (minutos)",
+  pass_mark: "Nota mínima de aprovação",
+  max_attempts: "Tentativas máximas",
+  max_submissions: "Submissões máximas",
+  allow_late_submission: "Permitir submissão fora do prazo",
+  allow_multiple_submissions: "Permitir várias submissões",
+  work_category: "Categoria do trabalho",
+  exam_type: "Tipo de exame",
+  test_slot: "Número do teste",
+  discipline_final_stage: "Etapa do exame final",
+  question_count: "Número de questões",
+  random_seed: "Semente aleatória",
+  submitted_at: "Submetido em",
+  attachment_url: "URL do anexo",
+  attempt_number: "Número da tentativa",
+  started_at: "Iniciado em",
+  expires_at: "Expira em",
+  time_limit_minutes_snapshot: "Tempo limite registado",
+  max_score_snapshot: "Nota máxima registada",
+  teacher_feedback: "Feedback do professor",
+  graded_by: "Avaliado por",
+  graded_at: "Avaliado em",
+  requires_year_repeat: "Requer repetição de ano",
+  file_url: "URL do ficheiro",
+  external_url: "Link externo",
+  author: "Professor autor",
+  content_type: "Tipo de conteúdo",
+  category: "Categoria",
+  level: "Nível",
+  item_type: "Tipo de item",
+  scheduled_date: "Data programada",
+  requires_attendance: "Requer presença",
+  completed_at: "Concluído em",
+  linked_examination: "Exame vinculado",
+  linked_assignment: "Trabalho vinculado",
+  linked_content: "Conteúdo vinculado",
+  schedule_item: "Item do cronograma",
+  completion_marked: "Marcar como concluído",
+  attendance_status_snapshot: "Estado de presença registado",
+}
+
+const EDUCATION_COMMON_PLACEHOLDERS: Record<string, string> = {
+  user: "Ex.: ID do utilizador",
+  student: "Ex.: ID do estudante",
+  teacher: "Ex.: ID do professor",
+  course: "Ex.: ID do curso",
+  classroom: "Ex.: ID da turma",
+  enrollment: "Ex.: ID da matrícula",
+  student_code: "Ex.: EST-2026-0001",
+  teacher_code: "Ex.: PROF-2026-0001",
+  guardian_name: "Ex.: Maria da Silva",
+  specialty: "Ex.: Matemática",
+  name: "Ex.: Matemática 8ª Classe",
+  code: "Ex.: MAT-8",
+  title: "Ex.: Avaliação do 1º trimestre",
+  description: "Descreva o objetivo, contexto e regras principais.",
+  instructions: "Descreva as instruções que o estudante deve seguir.",
+  body: "Escreva o conteúdo que ficará disponível para a turma.",
+  content_text: "Escreva a resposta ou resumo submetido pelo estudante.",
+  submission_payload: "Registe o conteúdo da resposta avaliada.",
+  notes: "Observações relevantes para este registo.",
+  academic_year: "Ex.: 2026",
+  capacity: "Ex.: 35",
+  workload_hours: "Ex.: 120",
+  component: "Ex.: Teste 1, Trabalho prático ou Exame final",
+  score: "Ex.: 14",
+  max_score: "Ex.: 20",
+  weight: "Ex.: 1",
+  pass_mark: "Ex.: 10",
+  duration_minutes: "Ex.: 90",
+  max_submissions: "Ex.: 1",
+  question_count: "Ex.: 20",
+  random_seed: "Ex.: 20260526",
+  attachment_url: "https://...",
+  file_url: "https://...",
+  external_url: "https://...",
+  teacher_feedback: "Escreva feedback claro para o estudante.",
+  category: "Ex.: Cognitiva, prática ou transversal",
+  level: "Ex.: Básico, intermédio ou avançado",
+}
+
+const EDUCATION_TEXT_WIDGETS: Record<string, "textarea"> = {
+  description: "textarea",
+  instructions: "textarea",
+  body: "textarea",
+  content_text: "textarea",
+  submission_payload: "textarea",
+  teacher_feedback: "textarea",
+  notes: "textarea",
+}
+
+function educationBaseConfig(config: ResourceFormConfig): ResourceFormConfig {
+  return {
+    esconderCampos: [...EDUCATION_INTERNAL_FIELDS, ...(config.esconderCampos || [])],
+    somenteLeituraCampos: ["tenant", ...(config.somenteLeituraCampos || [])],
+    labels: { ...EDUCATION_COMMON_LABELS, ...(config.labels || {}) },
+    placeholders: { ...EDUCATION_COMMON_PLACEHOLDERS, ...(config.placeholders || {}) },
+    hints: {
+      tenant: "A instituição é preenchida automaticamente pelo contexto da sessão.",
+      ...(config.hints || {}),
+    },
+    widgets: { ...EDUCATION_TEXT_WIDGETS, ...(config.widgets || {}) },
+    ordenarCampos: config.ordenarCampos,
+    etapas: config.etapas,
+    lembrarCampos: config.lembrarCampos,
+  }
 }
 
 function educationBibliographyConfig(): ResourceFormConfig {
@@ -77,7 +275,7 @@ function educationBibliographyConfig(): ResourceFormConfig {
     somenteLeituraCampos: ["tenant"],
     ordenarCampos: ["tenant", "course", "author", "title", "body", "file_url", "external_url", "published"],
     labels: {
-      tenant: "Inquilino (tenant)",
+      tenant: "Instituição",
       course: "Disciplina/Curso",
       author: "Professor autor",
       title: "Título do módulo bibliográfico",
@@ -127,7 +325,7 @@ function educationThematicMapConfig(): ResourceFormConfig {
     somenteLeituraCampos: ["tenant"],
     ordenarCampos: ["tenant", "course", "author", "title", "body", "file_url", "external_url", "published"],
     labels: {
-      tenant: "Inquilino (tenant)",
+      tenant: "Instituição",
       course: "Disciplina/Curso",
       author: "Professor autor",
       title: "Título do mapa temático",
@@ -193,7 +391,7 @@ function educationExaminationConfig(): ResourceFormConfig {
       "published_at",
     ],
     labels: {
-      tenant: "Inquilino (tenant)",
+      tenant: "Instituição",
       course: "Disciplina/Curso",
       classroom: "Turma",
       title: "Título do exame",
@@ -209,6 +407,13 @@ function educationExaminationConfig(): ResourceFormConfig {
       closes_at: "Fecha em",
       status: "Estado",
       published_at: "Publicado em",
+    },
+    placeholders: {
+      title: "Ex.: Exame final de Matemática",
+      pass_mark: "Ex.: 10",
+      max_score: "Ex.: 20",
+      duration_minutes: "Ex.: 90",
+      test_slot: "Ex.: 1",
     },
     hints: {
       exam_type:
@@ -263,7 +468,7 @@ function educationExamAttemptConfig(): ResourceFormConfig {
       "requires_year_repeat",
     ],
     labels: {
-      tenant: "Inquilino (tenant)",
+      tenant: "Instituição",
       examination: "Exame",
       enrollment: "Matrícula",
       student: "Estudante",
@@ -280,6 +485,14 @@ function educationExamAttemptConfig(): ResourceFormConfig {
       graded_by: "Avaliado por",
       graded_at: "Avaliado em",
       requires_year_repeat: "Obrigação de repetição de ano",
+    },
+    placeholders: {
+      attempt_number: "Ex.: 1",
+      time_limit_minutes_snapshot: "Ex.: 90",
+      max_score_snapshot: "Ex.: 20",
+      submission_payload: "Registe a resposta submetida pelo estudante.",
+      score: "Ex.: 14",
+      teacher_feedback: "Escreva feedback claro para o estudante.",
     },
     hints: {
       attempt_number:
@@ -334,7 +547,7 @@ function educationDisciplineScheduleConfig(): ResourceFormConfig {
       "notes",
     ],
     labels: {
-      tenant: "Inquilino (tenant)",
+      tenant: "Instituição",
       course: "Disciplina/Curso",
       classroom: "Turma",
       item_type: "Tipo de item",
@@ -348,6 +561,11 @@ function educationDisciplineScheduleConfig(): ResourceFormConfig {
       linked_assignment: "Trabalho vinculado",
       linked_content: "Conteúdo vinculado",
       notes: "Observações",
+    },
+    placeholders: {
+      title: "Ex.: Aula de introdução ao tema",
+      description: "Descreva o conteúdo, objetivo ou atividade prevista.",
+      notes: "Observações sobre execução, atrasos ou dependências.",
     },
     hints: {
       status: "Se a data passar sem conclusão, o item passa para matéria em atraso.",
@@ -393,7 +611,7 @@ function educationScheduleProgressConfig(): ResourceFormConfig {
       "notes",
     ],
     labels: {
-      tenant: "Inquilino (tenant)",
+      tenant: "Instituição",
       schedule_item: "Item do cronograma",
       enrollment: "Matrícula",
       status: "Estado do progresso",
@@ -401,6 +619,9 @@ function educationScheduleProgressConfig(): ResourceFormConfig {
       completed_at: "Concluído em",
       attendance_status_snapshot: "Snapshot de presença",
       notes: "Observações",
+    },
+    placeholders: {
+      notes: "Registe observações sobre o progresso do estudante.",
     },
     hints: {
       completion_marked: "Ao marcar concluído, o estudante fica em sucesso para o item.",
@@ -429,12 +650,1165 @@ function educationScheduleProgressConfig(): ResourceFormConfig {
   }
 }
 
+function educationStudentConfig(): ResourceFormConfig {
+  return educationBaseConfig({
+    ordenarCampos: ["tenant", "user", "student_code", "birth_date", "guardian_name", "status", "notes"],
+    labels: {
+      student_code: "Código do estudante",
+      status: "Estado do estudante",
+      notes: "Observações do estudante",
+    },
+    hints: {
+      user: "Associe este perfil ao utilizador que representa o estudante.",
+      student_code: "Código interno usado para localizar rapidamente o estudante.",
+      guardian_name: "Nome do encarregado de educação ou responsável.",
+    },
+    etapas: [
+      {
+        titulo: "Identificação",
+        descricao: "Utilizador, código e dados pessoais",
+        campos: ["tenant", "user", "student_code", "birth_date"],
+      },
+      {
+        titulo: "Responsável",
+        descricao: "Encarregado de educação e estado do perfil",
+        campos: ["guardian_name", "status", "notes"],
+      },
+    ],
+    lembrarCampos: ["status"],
+  })
+}
+
+function educationTeacherConfig(): ResourceFormConfig {
+  return educationBaseConfig({
+    ordenarCampos: ["tenant", "user", "teacher_code", "specialty", "status"],
+    labels: {
+      status: "Estado do professor",
+    },
+    hints: {
+      user: "Associe este perfil ao utilizador que terá permissões de professor.",
+      teacher_code: "Código interno do docente.",
+      specialty: "Área principal de lecionação.",
+    },
+    etapas: [
+      {
+        titulo: "Identificação",
+        descricao: "Utilizador e código do professor",
+        campos: ["tenant", "user", "teacher_code"],
+      },
+      {
+        titulo: "Perfil docente",
+        descricao: "Especialidade e estado",
+        campos: ["specialty", "status"],
+      },
+    ],
+    lembrarCampos: ["specialty", "status"],
+  })
+}
+
+function educationCourseConfig(): ResourceFormConfig {
+  return educationBaseConfig({
+    ordenarCampos: ["tenant", "name", "code", "description", "workload_hours", "status"],
+    labels: {
+      name: "Nome do curso",
+      code: "Código do curso",
+      status: "Estado do curso",
+    },
+    hints: {
+      code: "Use um código curto e único para relatórios, pautas e filtros.",
+      workload_hours: "Carga horária total prevista para o curso ou disciplina.",
+    },
+    etapas: [
+      {
+        titulo: "Curso",
+        descricao: "Nome, código e descrição",
+        campos: ["tenant", "name", "code", "description"],
+      },
+      {
+        titulo: "Configuração",
+        descricao: "Carga horária e estado",
+        campos: ["workload_hours", "status"],
+      },
+    ],
+    lembrarCampos: ["status"],
+  })
+}
+
+function educationClassroomConfig(): ResourceFormConfig {
+  return educationBaseConfig({
+    ordenarCampos: ["tenant", "course", "name", "academic_year", "capacity", "homeroom_teacher"],
+    labels: {
+      name: "Nome da turma",
+      capacity: "Capacidade da turma",
+    },
+    hints: {
+      course: "Curso ou disciplina principal associada à turma.",
+      academic_year: "Ano letivo em que a turma está ativa.",
+      homeroom_teacher: "Professor responsável pela turma, quando aplicável.",
+    },
+    etapas: [
+      {
+        titulo: "Turma",
+        descricao: "Curso, nome e ano letivo",
+        campos: ["tenant", "course", "name", "academic_year"],
+      },
+      {
+        titulo: "Gestão",
+        descricao: "Capacidade e professor responsável",
+        campos: ["capacity", "homeroom_teacher"],
+      },
+    ],
+    lembrarCampos: ["course", "academic_year"],
+  })
+}
+
+function educationEnrollmentConfig(): ResourceFormConfig {
+  return educationBaseConfig({
+    ordenarCampos: ["tenant", "student", "classroom", "status", "enrolled_on", "closed_on"],
+    labels: {
+      status: "Estado da matrícula",
+    },
+    hints: {
+      student: "Estudante que será vinculado à turma.",
+      classroom: "Turma onde o estudante ficará matriculado.",
+      closed_on: "Preencha apenas quando a matrícula for encerrada.",
+    },
+    etapas: [
+      {
+        titulo: "Vínculo",
+        descricao: "Estudante e turma",
+        campos: ["tenant", "student", "classroom"],
+      },
+      {
+        titulo: "Estado",
+        descricao: "Situação e datas da matrícula",
+        campos: ["status", "enrolled_on", "closed_on"],
+      },
+    ],
+    lembrarCampos: ["classroom", "status"],
+  })
+}
+
+function educationAttendanceConfig(): ResourceFormConfig {
+  return educationBaseConfig({
+    ordenarCampos: ["tenant", "enrollment", "attendance_date", "status", "notes"],
+    labels: {
+      status: "Estado da presença",
+    },
+    hints: {
+      enrollment: "Matrícula do estudante para a aula ou atividade.",
+      attendance_date: "Data em que a presença foi registada.",
+    },
+    etapas: [
+      {
+        titulo: "Presença",
+        descricao: "Matrícula, data e estado",
+        campos: ["tenant", "enrollment", "attendance_date", "status"],
+      },
+      {
+        titulo: "Observações",
+        campos: ["notes"],
+      },
+    ],
+    lembrarCampos: ["attendance_date", "status"],
+  })
+}
+
+function educationGradeConfig(): ResourceFormConfig {
+  return educationBaseConfig({
+    ordenarCampos: [
+      "tenant",
+      "enrollment",
+      "teacher",
+      "component",
+      "assignment_submission",
+      "examination_attempt",
+      "score",
+      "max_score",
+      "weight",
+      "published_at",
+    ],
+    labels: {
+      assignment_submission: "Submissão de trabalho",
+      examination_attempt: "Tentativa de exame",
+    },
+    hints: {
+      component: "Identifique a componente avaliada, por exemplo Teste 1 ou Trabalho prático.",
+      score: "Nota obtida pelo estudante.",
+      weight: "Peso da componente no cálculo final, quando aplicável.",
+    },
+    etapas: [
+      {
+        titulo: "Referência",
+        descricao: "Matrícula, professor e componente",
+        campos: ["tenant", "enrollment", "teacher", "component"],
+      },
+      {
+        titulo: "Avaliação",
+        descricao: "Origem da nota e pontuação",
+        campos: ["assignment_submission", "examination_attempt", "score", "max_score", "weight"],
+      },
+      {
+        titulo: "Publicação",
+        campos: ["published_at"],
+      },
+    ],
+    lembrarCampos: ["teacher", "component", "max_score"],
+  })
+}
+
+function educationAssignmentConfig(): ResourceFormConfig {
+  return educationBaseConfig({
+    ordenarCampos: [
+      "tenant",
+      "course",
+      "classroom",
+      "teacher",
+      "title",
+      "instructions",
+      "work_category",
+      "max_score",
+      "opens_at",
+      "due_at",
+      "allow_late_submission",
+      "allow_multiple_submissions",
+      "max_submissions",
+      "status",
+      "published_at",
+    ],
+    labels: {
+      title: "Título do trabalho",
+      status: "Estado do trabalho",
+    },
+    hints: {
+      due_at: "Após este prazo, a submissão só será aceite se estiver autorizada.",
+      max_submissions: "Número máximo de submissões permitidas por estudante.",
+      instructions: "Escreva instruções suficientes para o estudante executar o trabalho sem ambiguidade.",
+    },
+    etapas: [
+      {
+        titulo: "Contexto",
+        descricao: "Disciplina, turma e professor",
+        campos: ["tenant", "course", "classroom", "teacher"],
+      },
+      {
+        titulo: "Trabalho",
+        descricao: "Título, instruções e categoria",
+        campos: ["title", "instructions", "work_category", "max_score"],
+      },
+      {
+        titulo: "Prazos",
+        descricao: "Janela de submissão e regras",
+        campos: ["opens_at", "due_at", "allow_late_submission", "allow_multiple_submissions", "max_submissions", "status", "published_at"],
+      },
+    ],
+    lembrarCampos: ["course", "classroom", "teacher", "max_score"],
+  })
+}
+
+function educationSubmissionConfig(): ResourceFormConfig {
+  return educationBaseConfig({
+    ordenarCampos: [
+      "tenant",
+      "assignment",
+      "enrollment",
+      "student",
+      "attempt_number",
+      "submitted_at",
+      "status",
+      "content_text",
+      "attachment_url",
+      "max_score_snapshot",
+      "score",
+      "teacher_feedback",
+      "graded_by",
+      "graded_at",
+    ],
+    labels: {
+      assignment: "Trabalho",
+      status: "Estado da submissão",
+    },
+    hints: {
+      attempt_number: "Número da tentativa do estudante para este trabalho.",
+      content_text: "Resposta textual enviada pelo estudante.",
+      teacher_feedback: "Feedback visível para o estudante após avaliação.",
+    },
+    etapas: [
+      {
+        titulo: "Submissão",
+        descricao: "Trabalho, matrícula e estudante",
+        campos: ["tenant", "assignment", "enrollment", "student", "attempt_number", "submitted_at", "status"],
+      },
+      {
+        titulo: "Conteúdo",
+        descricao: "Resposta e anexo",
+        campos: ["content_text", "attachment_url"],
+      },
+      {
+        titulo: "Avaliação",
+        descricao: "Nota e feedback",
+        campos: ["max_score_snapshot", "score", "teacher_feedback", "graded_by", "graded_at"],
+      },
+    ],
+    lembrarCampos: ["assignment", "enrollment", "student"],
+  })
+}
+
+function educationContentConfig(): ResourceFormConfig {
+  return educationBaseConfig({
+    esconderCampos: ["content_type"],
+    ordenarCampos: ["tenant", "course", "author", "title", "body", "file_url", "external_url", "published"],
+    labels: {
+      title: "Título do conteúdo",
+      body: "Conteúdo de aprendizagem",
+    },
+    hints: {
+      course: "Curso ou disciplina onde este conteúdo será publicado.",
+      file_url: "Use quando o material estiver anexado como ficheiro.",
+      external_url: "Use quando o conteúdo estiver numa plataforma externa.",
+    },
+    etapas: [
+      {
+        titulo: "Contexto",
+        descricao: "Curso e autoria",
+        campos: ["tenant", "course", "author"],
+      },
+      {
+        titulo: "Conteúdo",
+        descricao: "Título, corpo e anexos",
+        campos: ["title", "body", "file_url", "external_url"],
+      },
+      {
+        titulo: "Publicação",
+        campos: ["published"],
+      },
+    ],
+    lembrarCampos: ["course", "author"],
+  })
+}
+
+function educationRandomTestConfig(): ResourceFormConfig {
+  return educationBaseConfig({
+    ordenarCampos: [
+      "tenant",
+      "course",
+      "classroom",
+      "enrollment",
+      "student",
+      "teacher",
+      "title",
+      "scheduled_for",
+      "opens_at",
+      "closes_at",
+      "duration_minutes",
+      "question_count",
+      "random_seed",
+      "status",
+      "notes",
+    ],
+    labels: {
+      title: "Título do teste",
+      status: "Estado do teste",
+    },
+    hints: {
+      enrollment: "Opcional quando o teste for para toda a turma.",
+      student: "Opcional quando o teste for para toda a turma.",
+      random_seed: "Mantém a geração reprodutível quando preenchida.",
+    },
+    etapas: [
+      {
+        titulo: "Alvo",
+        descricao: "Curso, turma e estudante",
+        campos: ["tenant", "course", "classroom", "enrollment", "student", "teacher"],
+      },
+      {
+        titulo: "Teste",
+        descricao: "Título e configuração",
+        campos: ["title", "duration_minutes", "question_count", "random_seed"],
+      },
+      {
+        titulo: "Agenda",
+        descricao: "Datas, estado e observações",
+        campos: ["scheduled_for", "opens_at", "closes_at", "status", "notes"],
+      },
+    ],
+    lembrarCampos: ["course", "classroom", "teacher", "duration_minutes"],
+  })
+}
+
+function educationSkillConfig(): ResourceFormConfig {
+  return educationBaseConfig({
+    ordenarCampos: ["tenant", "course", "name", "code", "category", "level", "description", "status"],
+    labels: {
+      name: "Nome da competência",
+      code: "Código da competência",
+      status: "Estado da competência",
+    },
+    hints: {
+      course: "Curso ou disciplina ao qual a competência pertence.",
+      level: "Nível pedagógico esperado para a competência.",
+    },
+    etapas: [
+      {
+        titulo: "Competência",
+        descricao: "Curso, nome e código",
+        campos: ["tenant", "course", "name", "code"],
+      },
+      {
+        titulo: "Classificação",
+        descricao: "Categoria, nível e estado",
+        campos: ["category", "level", "description", "status"],
+      },
+    ],
+    lembrarCampos: ["course", "category", "level", "status"],
+  })
+}
+
+const WAREHOUSE_COMMON_LABELS: Record<string, string> = {
+  tenant: "Instituição",
+  name: "Nome",
+  code: "Código",
+  status: "Estado",
+  notes: "Observações",
+  address: "Endereço",
+  warehouse: "Armazém",
+  warehouse_type: "Tipo de armazém",
+  warehouse_label: "Armazém",
+  parent: "Localização superior",
+  location: "Localização",
+  location_type: "Tipo de localização",
+  source_location: "Localização de origem",
+  destination_location: "Localização de destino",
+  default_location: "Localização padrão",
+  preferred_location: "Localização preferencial",
+  source_location_code: "Código da origem",
+  location_code: "Código da localização",
+  barcode: "Código de barras",
+  category: "Categoria",
+  category_label: "Categoria",
+  pharmacy_product: "Produto de farmácia",
+  item: "Item",
+  item_type: "Tipo de item",
+  item_sku: "SKU do item",
+  sku: "SKU",
+  unit_of_measure: "Unidade de medida",
+  reorder_point: "Ponto de reposição",
+  reorder_quantity: "Quantidade de reposição",
+  external_reference: "Referência externa",
+  current_stock: "Estoque atual",
+  lot: "Lote",
+  lot_number: "Número do lote",
+  expiration_date: "Data de validade",
+  received_at: "Recebido em",
+  unit_cost: "Custo unitário",
+  quantity: "Quantidade",
+  reserved_quantity: "Quantidade reservada",
+  available_quantity: "Quantidade disponível",
+  ordered_quantity: "Quantidade pedida",
+  received_quantity: "Quantidade recebida",
+  pending_quantity: "Quantidade pendente",
+  recommended_quantity: "Quantidade recomendada",
+  estimated_unit_cost: "Custo unitário estimado",
+  counted_quantity: "Quantidade contada",
+  system_quantity: "Quantidade no sistema",
+  variance: "Diferença",
+  movement_type: "Tipo de movimento",
+  reference_document: "Documento de referência",
+  reason: "Motivo",
+  posted_at: "Lançado em",
+  order_number: "Número do pedido",
+  supplier_name: "Fornecedor",
+  supplier_document: "Documento do fornecedor",
+  ordered_at: "Pedido em",
+  expected_at: "Previsão de recebimento",
+  purchase_order: "Pedido de compra",
+  purchase_order_line: "Linha do pedido de compra",
+  receipt: "Recebimento",
+  receipt_number: "Número do recebimento",
+  plan: "Plano de reposição",
+  plan_number: "Número do plano",
+  generated_at: "Gerado em",
+  purchase_order_number: "Número do pedido de compra",
+  customer_name: "Cliente",
+  customer_document: "Documento do cliente",
+  customer_reference: "Referência do cliente",
+  requested_ship_date: "Data solicitada de expedição",
+  priority: "Prioridade",
+  sales_order: "Pedido de venda",
+  sales_order_line: "Linha do pedido de venda",
+  pending_reservation_quantity: "Quantidade pendente de reserva",
+  pending_shipment_quantity: "Quantidade pendente de expedição",
+  shipped_quantity: "Quantidade expedida",
+  unit_price: "Preço unitário",
+  confirmed_at: "Confirmado em",
+  allocated_at: "Alocado em",
+  shipped_at: "Expedido em",
+  reservation: "Reserva",
+  pick_list: "Lista de separação",
+  pick_number: "Número da separação",
+  quantity_to_pick: "Quantidade a separar",
+  quantity_picked: "Quantidade separada",
+  started_at: "Iniciado em",
+  completed_at: "Concluído em",
+  shipment: "Expedição",
+  shipment_number: "Número da expedição",
+  carrier_name: "Transportadora",
+  tracking_number: "Código de rastreio",
+  transfer: "Transferência",
+  transfer_number: "Número da transferência",
+  cycle_count: "Inventário cíclico",
+  count_number: "Número do inventário",
+  counted_at: "Contado em",
+}
+
+const WAREHOUSE_COMMON_PLACEHOLDERS: Record<string, string> = {
+  name: "Ex.: Abastecimento de material clínico",
+  code: "Ex.: ARM-CENTRAL",
+  address: "Ex.: Rua principal, bloco logístico",
+  warehouse: "Ex.: ID do armazém",
+  parent: "Ex.: ID da localização superior",
+  location: "Ex.: ID da localização",
+  source_location: "Ex.: ID da localização de origem",
+  destination_location: "Ex.: ID da localização de destino",
+  default_location: "Ex.: ID da localização padrão",
+  preferred_location: "Ex.: ID da localização preferencial",
+  barcode: "Ex.: 5600000000012",
+  category: "Ex.: ID da categoria",
+  pharmacy_product: "Ex.: ID do produto de farmácia",
+  item: "Ex.: ID do item",
+  sku: "Ex.: MED-LUVAS-M",
+  unit_of_measure: "Ex.: un, cx, kg ou L",
+  reorder_point: "Ex.: 20",
+  reorder_quantity: "Ex.: 100",
+  external_reference: "Ex.: Código do fornecedor ou ERP externo",
+  lot: "Ex.: ID do lote",
+  lot_number: "Ex.: LOT-2026-001",
+  unit_cost: "Ex.: 125.50",
+  quantity: "Ex.: 10",
+  ordered_quantity: "Ex.: 50",
+  recommended_quantity: "Ex.: 80",
+  estimated_unit_cost: "Ex.: 125.50",
+  counted_quantity: "Ex.: 42",
+  reference_document: "Ex.: Guia, fatura ou requisição",
+  reason: "Explique o motivo operacional deste movimento.",
+  notes: "Observações úteis para auditoria e seguimento.",
+  order_number: "Ex.: PO-2026-0001",
+  supplier_name: "Ex.: Fornecedor Central, Lda.",
+  supplier_document: "Ex.: NUIT ou número fiscal",
+  purchase_order: "Ex.: ID do pedido de compra",
+  purchase_order_line: "Ex.: ID da linha do pedido de compra",
+  receipt: "Ex.: ID do recebimento",
+  receipt_number: "Ex.: GR-2026-0001",
+  plan: "Ex.: ID do plano de reposição",
+  plan_number: "Ex.: RPL-2026-0001",
+  customer_name: "Ex.: Cliente ou setor requisitante",
+  customer_document: "Ex.: NUIT, BI ou referência fiscal",
+  customer_reference: "Ex.: Requisição interna, contrato ou nota",
+  priority: "Ex.: 1 para maior prioridade",
+  sales_order: "Ex.: ID do pedido de venda",
+  sales_order_line: "Ex.: ID da linha do pedido de venda",
+  unit_price: "Ex.: 150.00",
+  reservation: "Ex.: ID da reserva",
+  pick_list: "Ex.: ID da lista de separação",
+  pick_number: "Ex.: PICK-2026-0001",
+  quantity_to_pick: "Ex.: 10",
+  quantity_picked: "Ex.: 10",
+  shipment: "Ex.: ID da expedição",
+  shipment_number: "Ex.: SHIP-2026-0001",
+  carrier_name: "Ex.: Transportadora ou motorista",
+  tracking_number: "Ex.: TRK-2026-0001",
+  transfer: "Ex.: ID da transferência",
+  transfer_number: "Ex.: TRF-2026-0001",
+  cycle_count: "Ex.: ID do inventário cíclico",
+  count_number: "Ex.: CNT-2026-0001",
+}
+
+const WAREHOUSE_TEXT_WIDGETS: Record<string, "textarea"> = {
+  address: "textarea",
+  notes: "textarea",
+  reason: "textarea",
+}
+
+function warehouseResourceKeyFromEndpoint(endpoint: string): string {
+  const match = normalizeEndpoint(endpoint).match(/^\/warehouse\/([^/]+)\//)
+  return match?.[1] || ""
+}
+
+function warehouseBaseConfig(config: ResourceFormConfig): ResourceFormConfig {
+  return {
+    esconderCampos: [
+      ...WAREHOUSE_INTERNAL_FIELDS,
+      ...WAREHOUSE_DERIVED_FIELDS,
+      ...(config.esconderCampos || []),
+    ],
+    somenteLeituraCampos: config.somenteLeituraCampos,
+    labels: { ...WAREHOUSE_COMMON_LABELS, ...(config.labels || {}) },
+    placeholders: { ...WAREHOUSE_COMMON_PLACEHOLDERS, ...(config.placeholders || {}) },
+    hints: {
+      warehouse: "Use o ID do armazém cadastrado no ERP/WMS.",
+      location: "Use o ID da localização física dentro do armazém.",
+      item: "Use o ID do item de estoque cadastrado.",
+      lot: "Opcional quando o item não é controlado por lote.",
+      status: "O estado controla o ciclo operacional e pode ser atualizado por ações do fluxo.",
+      ...(config.hints || {}),
+    },
+    widgets: { ...WAREHOUSE_TEXT_WIDGETS, ...(config.widgets || {}) },
+    ordenarCampos: config.ordenarCampos,
+    etapas: config.etapas,
+    lembrarCampos: config.lembrarCampos,
+  }
+}
+
+function warehouseConfigForResource(resourceKey: string, endpoint: string): ResourceFormConfig {
+  const key = resourceKey || warehouseResourceKeyFromEndpoint(endpoint)
+
+  switch (key) {
+    case "warehouse":
+      return warehouseBaseConfig({
+        ordenarCampos: ["name", "code", "warehouse_type", "address", "status"],
+        labels: {
+          name: "Nome do armazém",
+          code: "Código do armazém",
+          status: "Estado do armazém",
+        },
+        etapas: [
+          {
+            titulo: "Identificação",
+            descricao: "Nome, código e tipo do armazém",
+            campos: ["name", "code", "warehouse_type"],
+          },
+          {
+            titulo: "Endereço e estado",
+            descricao: "Localização administrativa e disponibilidade",
+            campos: ["address", "status"],
+          },
+        ],
+        lembrarCampos: ["warehouse_type", "status"],
+      })
+    case "storage_location":
+      return warehouseBaseConfig({
+        ordenarCampos: ["warehouse", "parent", "name", "code", "location_type", "barcode", "status"],
+        labels: {
+          name: "Nome da localização",
+          code: "Código da localização",
+          status: "Estado da localização",
+        },
+        etapas: [
+          {
+            titulo: "Hierarquia",
+            descricao: "Armazém e localização superior",
+            campos: ["warehouse", "parent"],
+          },
+          {
+            titulo: "Localização",
+            descricao: "Nome, código físico e tipo",
+            campos: ["name", "code", "location_type", "barcode", "status"],
+          },
+        ],
+        lembrarCampos: ["warehouse", "location_type", "status"],
+      })
+    case "item_category":
+      return warehouseBaseConfig({
+        ordenarCampos: ["name", "code", "status"],
+        labels: {
+          name: "Nome da categoria",
+          code: "Código da categoria",
+          status: "Estado da categoria",
+        },
+        etapas: [
+          {
+            titulo: "Categoria",
+            descricao: "Identificação da família de itens",
+            campos: ["name", "code", "status"],
+          },
+        ],
+        lembrarCampos: ["status"],
+      })
+    case "item":
+      return warehouseBaseConfig({
+        ordenarCampos: [
+          "category",
+          "pharmacy_product",
+          "name",
+          "sku",
+          "item_type",
+          "unit_of_measure",
+          "barcode",
+          "reorder_point",
+          "reorder_quantity",
+          "external_reference",
+          "status",
+        ],
+        labels: {
+          name: "Nome do item",
+          status: "Estado do item",
+        },
+        etapas: [
+          {
+            titulo: "Classificação",
+            descricao: "Categoria, origem e tipo do item",
+            campos: ["category", "pharmacy_product", "item_type", "status"],
+          },
+          {
+            titulo: "Identificação",
+            descricao: "Nome, SKU, unidade e código de barras",
+            campos: ["name", "sku", "unit_of_measure", "barcode", "external_reference"],
+          },
+          {
+            titulo: "Reposição",
+            descricao: "Parâmetros mínimos de abastecimento",
+            campos: ["reorder_point", "reorder_quantity"],
+          },
+        ],
+        lembrarCampos: ["category", "item_type", "unit_of_measure", "status"],
+      })
+    case "lot":
+      return warehouseBaseConfig({
+        ordenarCampos: ["item", "lot_number", "expiration_date", "received_at", "unit_cost", "status"],
+        labels: {
+          status: "Estado do lote",
+        },
+        etapas: [
+          {
+            titulo: "Lote",
+            descricao: "Item, número do lote e validade",
+            campos: ["item", "lot_number", "expiration_date"],
+          },
+          {
+            titulo: "Recebimento",
+            descricao: "Data, custo e estado",
+            campos: ["received_at", "unit_cost", "status"],
+          },
+        ],
+        lembrarCampos: ["item", "status"],
+      })
+    case "stock_level":
+      return warehouseBaseConfig({
+        ordenarCampos: ["item", "lot", "location"],
+        etapas: [
+          {
+            titulo: "Posição de estoque",
+            descricao: "Item, lote e localização controlados pelo saldo",
+            campos: ["item", "lot", "location"],
+          },
+        ],
+        lembrarCampos: ["item", "location"],
+      })
+    case "stock_movement":
+      return warehouseBaseConfig({
+        ordenarCampos: [
+          "name",
+          "movement_type",
+          "item",
+          "lot",
+          "quantity",
+          "unit_cost",
+          "source_location",
+          "destination_location",
+          "reference_document",
+          "reason",
+          "status",
+        ],
+        labels: {
+          name: "Descrição do movimento",
+          status: "Estado do movimento",
+        },
+        etapas: [
+          {
+            titulo: "Movimento",
+            descricao: "Tipo, item, lote e quantidade",
+            campos: ["name", "movement_type", "item", "lot", "quantity", "unit_cost"],
+          },
+          {
+            titulo: "Localizações",
+            descricao: "Origem, destino e documento",
+            campos: ["source_location", "destination_location", "reference_document"],
+          },
+          {
+            titulo: "Justificação",
+            descricao: "Motivo, observações e estado",
+            campos: ["reason", "status"],
+          },
+        ],
+        lembrarCampos: ["movement_type", "item", "source_location", "destination_location"],
+      })
+    case "purchase_order":
+      return warehouseBaseConfig({
+        ordenarCampos: [
+          "name",
+          "order_number",
+          "supplier_name",
+          "supplier_document",
+          "ordered_at",
+          "expected_at",
+          "status",
+          "notes",
+        ],
+        labels: {
+          name: "Nome do pedido de compra",
+          status: "Estado do pedido",
+        },
+        etapas: [
+          {
+            titulo: "Pedido",
+            descricao: "Número, nome e fornecedor",
+            campos: ["name", "order_number", "supplier_name", "supplier_document"],
+          },
+          {
+            titulo: "Prazos",
+            descricao: "Datas e estado do abastecimento",
+            campos: ["ordered_at", "expected_at", "status"],
+          },
+          {
+            titulo: "Observações",
+            descricao: "Notas internas para compra e auditoria",
+            campos: ["notes"],
+          },
+        ],
+        lembrarCampos: ["supplier_name", "supplier_document", "status"],
+      })
+    case "purchase_order_line":
+      return warehouseBaseConfig({
+        ordenarCampos: ["purchase_order", "item", "ordered_quantity", "unit_cost"],
+        etapas: [
+          {
+            titulo: "Linha de compra",
+            descricao: "Pedido, item, quantidade e custo",
+            campos: ["purchase_order", "item", "ordered_quantity", "unit_cost"],
+          },
+        ],
+        lembrarCampos: ["purchase_order", "item"],
+      })
+    case "goods_receipt":
+      return warehouseBaseConfig({
+        ordenarCampos: ["name", "receipt_number", "purchase_order", "warehouse", "default_location", "received_at", "notes"],
+        labels: {
+          name: "Nome do recebimento",
+        },
+        etapas: [
+          {
+            titulo: "Recebimento",
+            descricao: "Número, pedido de compra e data",
+            campos: ["name", "receipt_number", "purchase_order", "received_at"],
+          },
+          {
+            titulo: "Destino físico",
+            descricao: "Armazém e localização padrão",
+            campos: ["warehouse", "default_location"],
+          },
+          {
+            titulo: "Observações",
+            descricao: "Notas de conferência e entrada",
+            campos: ["notes"],
+          },
+        ],
+        lembrarCampos: ["warehouse", "default_location"],
+      })
+    case "goods_receipt_line":
+      return warehouseBaseConfig({
+        ordenarCampos: [
+          "receipt",
+          "purchase_order_line",
+          "item",
+          "lot",
+          "lot_number",
+          "expiration_date",
+          "quantity",
+          "unit_cost",
+          "location",
+        ],
+        etapas: [
+          {
+            titulo: "Vínculo",
+            descricao: "Recebimento, linha de compra e item",
+            campos: ["receipt", "purchase_order_line", "item"],
+          },
+          {
+            titulo: "Lote e quantidade",
+            descricao: "Lote, validade, quantidade e custo",
+            campos: ["lot", "lot_number", "expiration_date", "quantity", "unit_cost"],
+          },
+          {
+            titulo: "Localização",
+            descricao: "Destino físico da entrada",
+            campos: ["location"],
+          },
+        ],
+        lembrarCampos: ["receipt", "item", "location"],
+      })
+    case "replenishment_plan":
+      return warehouseBaseConfig({
+        ordenarCampos: ["name", "plan_number", "warehouse", "supplier_name", "notes"],
+        labels: {
+          name: "Nome do plano de reposição",
+        },
+        etapas: [
+          {
+            titulo: "Plano",
+            descricao: "Número, nome e escopo do cálculo",
+            campos: ["name", "plan_number", "warehouse"],
+          },
+          {
+            titulo: "Compra",
+            descricao: "Fornecedor preferencial e notas",
+            campos: ["supplier_name", "notes"],
+          },
+        ],
+        lembrarCampos: ["warehouse", "supplier_name"],
+      })
+    case "replenishment_suggestion":
+      return warehouseBaseConfig({
+        ordenarCampos: ["plan", "item", "warehouse", "recommended_quantity", "estimated_unit_cost", "status"],
+        labels: {
+          status: "Estado da sugestão",
+        },
+        etapas: [
+          {
+            titulo: "Sugestão",
+            descricao: "Plano, item e armazém",
+            campos: ["plan", "item", "warehouse"],
+          },
+          {
+            titulo: "Quantidade",
+            descricao: "Quantidade recomendada, custo e estado",
+            campos: ["recommended_quantity", "estimated_unit_cost", "status"],
+          },
+        ],
+        lembrarCampos: ["plan", "item", "warehouse"],
+      })
+    case "sales_order":
+      return warehouseBaseConfig({
+        ordenarCampos: [
+          "name",
+          "order_number",
+          "customer_name",
+          "customer_document",
+          "customer_reference",
+          "requested_ship_date",
+          "priority",
+          "status",
+          "notes",
+        ],
+        labels: {
+          name: "Nome do pedido de venda",
+          status: "Estado do pedido",
+        },
+        etapas: [
+          {
+            titulo: "Pedido",
+            descricao: "Número, nome e cliente",
+            campos: ["name", "order_number", "customer_name", "customer_document", "customer_reference"],
+          },
+          {
+            titulo: "Expedição",
+            descricao: "Data solicitada, prioridade e estado",
+            campos: ["requested_ship_date", "priority", "status"],
+          },
+          {
+            titulo: "Observações",
+            descricao: "Notas comerciais e operacionais",
+            campos: ["notes"],
+          },
+        ],
+        lembrarCampos: ["customer_name", "priority", "status"],
+      })
+    case "sales_order_line":
+      return warehouseBaseConfig({
+        ordenarCampos: ["sales_order", "item", "lot", "preferred_location", "ordered_quantity", "unit_price"],
+        etapas: [
+          {
+            titulo: "Linha de venda",
+            descricao: "Pedido, item, lote e localização preferencial",
+            campos: ["sales_order", "item", "lot", "preferred_location"],
+          },
+          {
+            titulo: "Quantidade e preço",
+            descricao: "Quantidade pedida e valor unitário",
+            campos: ["ordered_quantity", "unit_price"],
+          },
+        ],
+        lembrarCampos: ["sales_order", "item", "preferred_location"],
+      })
+    case "stock_reservation":
+      return warehouseBaseConfig({
+        ordenarCampos: ["sales_order", "sales_order_line", "item", "lot", "location", "quantity", "status"],
+        labels: {
+          status: "Estado da reserva",
+        },
+        etapas: [
+          {
+            titulo: "Pedido",
+            descricao: "Pedido de venda e linha associada",
+            campos: ["sales_order", "sales_order_line"],
+          },
+          {
+            titulo: "Reserva",
+            descricao: "Item, lote, localização e quantidade",
+            campos: ["item", "lot", "location", "quantity", "status"],
+          },
+        ],
+        lembrarCampos: ["sales_order", "sales_order_line", "item", "location"],
+      })
+    case "pick_list":
+      return warehouseBaseConfig({
+        ordenarCampos: ["sales_order", "name", "pick_number", "notes"],
+        labels: {
+          name: "Nome da lista de separação",
+        },
+        etapas: [
+          {
+            titulo: "Separação",
+            descricao: "Pedido de venda, número e identificação",
+            campos: ["sales_order", "name", "pick_number"],
+          },
+          {
+            titulo: "Observações",
+            descricao: "Notas para a equipe do armazém",
+            campos: ["notes"],
+          },
+        ],
+        lembrarCampos: ["sales_order"],
+      })
+    case "pick_list_line":
+      return warehouseBaseConfig({
+        ordenarCampos: [
+          "pick_list",
+          "sales_order_line",
+          "reservation",
+          "item",
+          "lot",
+          "source_location",
+          "quantity_to_pick",
+          "quantity_picked",
+        ],
+        etapas: [
+          {
+            titulo: "Origem",
+            descricao: "Lista, pedido, reserva e localização",
+            campos: ["pick_list", "sales_order_line", "reservation", "source_location"],
+          },
+          {
+            titulo: "Item",
+            descricao: "Item, lote e quantidades de separação",
+            campos: ["item", "lot", "quantity_to_pick", "quantity_picked"],
+          },
+        ],
+        lembrarCampos: ["pick_list", "source_location", "item"],
+      })
+    case "shipment":
+      return warehouseBaseConfig({
+        ordenarCampos: ["sales_order", "name", "shipment_number", "carrier_name", "tracking_number", "notes"],
+        labels: {
+          name: "Nome da expedição",
+        },
+        etapas: [
+          {
+            titulo: "Expedição",
+            descricao: "Pedido de venda, número e identificação",
+            campos: ["sales_order", "name", "shipment_number"],
+          },
+          {
+            titulo: "Transporte",
+            descricao: "Transportadora, rastreio e notas",
+            campos: ["carrier_name", "tracking_number", "notes"],
+          },
+        ],
+        lembrarCampos: ["sales_order", "carrier_name"],
+      })
+    case "shipment_line":
+      return warehouseBaseConfig({
+        ordenarCampos: ["shipment", "sales_order_line", "reservation", "item", "lot", "source_location", "quantity"],
+        etapas: [
+          {
+            titulo: "Origem",
+            descricao: "Expedição, linha de venda e reserva",
+            campos: ["shipment", "sales_order_line", "reservation"],
+          },
+          {
+            titulo: "Item expedido",
+            descricao: "Item, lote, localização e quantidade",
+            campos: ["item", "lot", "source_location", "quantity"],
+          },
+        ],
+        lembrarCampos: ["shipment", "item", "source_location"],
+      })
+    case "stock_transfer":
+      return warehouseBaseConfig({
+        ordenarCampos: ["name", "transfer_number", "source_location", "destination_location", "notes"],
+        labels: {
+          name: "Nome da transferência",
+        },
+        etapas: [
+          {
+            titulo: "Transferência",
+            descricao: "Número e identificação do movimento interno",
+            campos: ["name", "transfer_number"],
+          },
+          {
+            titulo: "Localizações",
+            descricao: "Origem, destino e observações",
+            campos: ["source_location", "destination_location", "notes"],
+          },
+        ],
+        lembrarCampos: ["source_location", "destination_location"],
+      })
+    case "stock_transfer_line":
+      return warehouseBaseConfig({
+        ordenarCampos: ["transfer", "item", "lot", "quantity"],
+        etapas: [
+          {
+            titulo: "Linha de transferência",
+            descricao: "Transferência, item, lote e quantidade",
+            campos: ["transfer", "item", "lot", "quantity"],
+          },
+        ],
+        lembrarCampos: ["transfer", "item"],
+      })
+    case "cycle_count":
+      return warehouseBaseConfig({
+        ordenarCampos: ["name", "count_number", "location", "counted_at", "notes"],
+        labels: {
+          name: "Nome do inventário",
+        },
+        etapas: [
+          {
+            titulo: "Inventário",
+            descricao: "Número, nome e localização contada",
+            campos: ["name", "count_number", "location"],
+          },
+          {
+            titulo: "Contagem",
+            descricao: "Data e observações da contagem",
+            campos: ["counted_at", "notes"],
+          },
+        ],
+        lembrarCampos: ["location"],
+      })
+    case "cycle_count_line":
+      return warehouseBaseConfig({
+        ordenarCampos: ["cycle_count", "item", "lot", "counted_quantity"],
+        etapas: [
+          {
+            titulo: "Linha de inventário",
+            descricao: "Inventário, item, lote e quantidade contada",
+            campos: ["cycle_count", "item", "lot", "counted_quantity"],
+          },
+        ],
+        lembrarCampos: ["cycle_count", "item"],
+      })
+    default:
+      return warehouseBaseConfig({
+        lembrarCampos: ["warehouse", "location", "item", "status"],
+      })
+  }
+}
+
 function bloodbankDonationConfig(): ResourceFormConfig {
   return {
     somenteLeituraCampos: ["tenant"],
     esconderCampos: BLOODBANK_INTERNAL_FIELDS,
     labels: {
-      tenant: "Inquilino (tenant)",
+      tenant: "Instituição",
       donor: "Dador (ID)",
       donor_role: "Tipo de dador",
       bag_identifier: "Identificador da bolsa",
@@ -554,7 +1928,7 @@ function bloodbankStorageConfig(): ResourceFormConfig {
     somenteLeituraCampos: ["tenant"],
     esconderCampos: BLOODBANK_INTERNAL_FIELDS,
     labels: {
-      tenant: "Inquilino (tenant)",
+      tenant: "Instituição",
       name: "Nome",
       location: "Localização",
       capacity_units: "Capacidade (unidades)",
@@ -606,7 +1980,7 @@ function bloodbankUnitConfig(): ResourceFormConfig {
     somenteLeituraCampos: ["tenant"],
     esconderCampos: BLOODBANK_INTERNAL_FIELDS,
     labels: {
-      tenant: "Inquilino (tenant)",
+      tenant: "Instituição",
       donation: "Doacao de origem (ID)",
       storage: "Armazenamento (ID)",
       reserved_for: "Reservada para (ID do paciente)",
@@ -669,7 +2043,7 @@ function bloodbankTransfusionConfig(): ResourceFormConfig {
     somenteLeituraCampos: ["tenant"],
     esconderCampos: BLOODBANK_INTERNAL_FIELDS,
     labels: {
-      tenant: "Inquilino (tenant)",
+      tenant: "Instituição",
       recipient: "Paciente receptor (ID)",
       blood_unit: "Unidade de sangue (ID)",
       requested_by: "Solicitada por (ID do utilizador)",
@@ -729,7 +2103,7 @@ function bloodbankStockMovementConfig(): ResourceFormConfig {
     somenteLeituraCampos: ["tenant"],
     esconderCampos: BLOODBANK_INTERNAL_FIELDS,
     labels: {
-      tenant: "Inquilino (tenant)",
+      tenant: "Instituição",
       unit: "Unidade movimentada (ID)",
       source_storage: "Armazenamento de origem (ID)",
       destination_storage: "Armazenamento de destino (ID)",
@@ -781,7 +2155,7 @@ function bloodbankStorageMaintenanceConfig(): ResourceFormConfig {
     somenteLeituraCampos: ["tenant"],
     esconderCampos: BLOODBANK_INTERNAL_FIELDS,
     labels: {
-      tenant: "Inquilino (tenant)",
+      tenant: "Instituição",
       storage: "Armazenamento (ID)",
       maintenance_type: "Tipo de manutencao",
       status: "Estado da manutencao",
@@ -848,7 +2222,7 @@ function equipmentMaintenanceConfig(): ResourceFormConfig {
       "description",
     ],
     labels: {
-      tenant: "Inquilino (tenant)",
+      tenant: "Instituição",
       incident: "Ocorrência de origem",
       equipment: "Equipamento",
       maintenance_type: "Tipo de manutenção",
@@ -898,7 +2272,7 @@ function equipmentIncidentConfig(): ResourceFormConfig {
       "resolved",
     ],
     labels: {
-      tenant: "Inquilino (tenant)",
+      tenant: "Instituição",
       equipment: "Equipamento",
       date: "Data/hora da ocorrência",
       type: "Tipo de ocorrência",
@@ -943,25 +2317,70 @@ export function getResourceFormConfig(
   const ep = normalizeEndpoint(endpoint)
 
   if (g === "education") {
-    if (r === "bibliography" || ep === "/education/bibliography/") {
+    const educationEp = normalizeEducationEndpoint(ep)
+    const educationResourceKey =
+      educationResourceKeyFromEndpoint(educationEp) ||
+      normalizeEducationResourceKey(r)
+
+    if (educationResourceKey === "student" || educationEp === "/education/student/") {
+      return educationStudentConfig()
+    }
+    if (educationResourceKey === "teacher" || educationEp === "/education/teacher/") {
+      return educationTeacherConfig()
+    }
+    if (educationResourceKey === "course" || educationEp === "/education/course/") {
+      return educationCourseConfig()
+    }
+    if (educationResourceKey === "classroom" || educationEp === "/education/classroom/") {
+      return educationClassroomConfig()
+    }
+    if (educationResourceKey === "enrollment" || educationEp === "/education/enrollment/") {
+      return educationEnrollmentConfig()
+    }
+    if (educationResourceKey === "attendance" || educationEp === "/education/attendance/") {
+      return educationAttendanceConfig()
+    }
+    if (educationResourceKey === "grade" || educationEp === "/education/grade/") {
+      return educationGradeConfig()
+    }
+    if (educationResourceKey === "bibliography" || educationEp === "/education/bibliography/") {
       return educationBibliographyConfig()
     }
-    if (r === "thematic_map" || ep === "/education/thematic_map/") {
+    if (educationResourceKey === "thematic_map" || educationEp === "/education/thematic_map/") {
       return educationThematicMapConfig()
     }
-    if (r === "examination" || ep === "/education/examination/") {
+    if (educationResourceKey === "examination" || educationEp === "/education/examination/") {
       return educationExaminationConfig()
     }
-    if (r === "exam_attempt" || r === "examination_attempt" || ep === "/education/exam_attempt/" || ep === "/education/examination_attempt/") {
+    if (educationResourceKey === "random_test" || educationEp === "/education/random_test/") {
+      return educationRandomTestConfig()
+    }
+    if (educationResourceKey === "assignment" || educationEp === "/education/assignment/") {
+      return educationAssignmentConfig()
+    }
+    if (educationResourceKey === "submission" || educationEp === "/education/submission/") {
+      return educationSubmissionConfig()
+    }
+    if (educationResourceKey === "exam_attempt" || educationEp === "/education/exam_attempt/" || educationEp === "/education/examination_attempt/") {
       return educationExamAttemptConfig()
     }
-    if (r === "discipline_schedule" || ep === "/education/discipline_schedule/") {
+    if (educationResourceKey === "content" || educationEp === "/education/content/" || educationEp === "/education/lesson/") {
+      return educationContentConfig()
+    }
+    if (educationResourceKey === "discipline_schedule" || educationEp === "/education/discipline_schedule/") {
       return educationDisciplineScheduleConfig()
     }
-    if (r === "schedule_progress" || ep === "/education/schedule_progress/") {
+    if (educationResourceKey === "schedule_progress" || educationEp === "/education/schedule_progress/") {
       return educationScheduleProgressConfig()
     }
+    if (educationResourceKey === "skill" || educationEp === "/education/skill/") {
+      return educationSkillConfig()
+    }
     return null
+  }
+
+  if (g === "warehouse") {
+    return warehouseConfigForResource(r || warehouseResourceKeyFromEndpoint(ep), ep)
   }
 
   if (g === "equipment") {

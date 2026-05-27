@@ -7,6 +7,7 @@ import AppLayout from "@/components/layout/AppLayout"
 import Card from "@/components/ui/Card"
 import DataTable from "@/components/ui/DataTable"
 import PageHeader from "@/components/ui/PageHeader"
+import { useLanguage } from "@/hooks/useLanguage"
 import { apiFetch } from "@/lib/api"
 import { isNotFoundLikeError } from "@/lib/errors/api-error"
 import { GROUPS } from "@/lib/rbac"
@@ -107,6 +108,7 @@ function workCategoryLabel(value?: string) {
 }
 
 export default function EducationDirectoriaPage() {
+  const { tr } = useLanguage()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -190,11 +192,11 @@ export default function EducationDirectoriaPage() {
   const teacherRows = useMemo(() => {
     return teachers.map((teacher) => ({
       teacher_code: teacher.teacher_code || `#${teacher.id}`,
-      status: teacher.status || "—",
+      status: teacher.status ? tr(teacher.status) : "—",
       timeline: normalizeStatus(teacher.status) === "ACTIVE" ? "Ativo (presente)" : "Inativo (passado)",
       user_ref: teacher.user ? `Utilizador #${teacher.user}` : "—",
     }))
-  }, [teachers])
+  }, [teachers, tr])
 
   const studentRows = useMemo(() => {
     return students.map((student) => {
@@ -222,7 +224,7 @@ export default function EducationDirectoriaPage() {
 
       return {
         student_code: student.student_code || `#${student.id}`,
-        status: student.status || "—",
+        status: student.status ? tr(student.status) : "—",
         enrollment_count: ownEnrollments.length,
         disciplines: disciplines.join(" | ") || "—",
         mandatory_done: mandatoryDone,
@@ -232,7 +234,7 @@ export default function EducationDirectoriaPage() {
         guardian: student.guardian_name || "—",
       }
     })
-  }, [assignmentsById, classroomsById, coursesById, enrollments, grades, students, submissions])
+  }, [assignmentsById, classroomsById, coursesById, enrollments, grades, students, submissions, tr])
 
   const assignmentRows = useMemo(() => {
     return assignments.map((assignment) => ({
@@ -247,13 +249,13 @@ export default function EducationDirectoriaPage() {
       const course = exam.course ? coursesById.get(exam.course) : undefined
       return {
         title: exam.title || `Prova #${exam.id}`,
-        status: exam.status || "—",
+        status: exam.status ? tr(exam.status) : "—",
         course: course?.name || course?.code || "—",
         classroom: classroom?.name || "—",
         window: `${exam.opens_at ? new Date(exam.opens_at).toLocaleString() : "—"} → ${exam.closes_at ? new Date(exam.closes_at).toLocaleString() : "—"}`,
       }
     })
-  }, [classroomsById, coursesById, examinations])
+  }, [classroomsById, coursesById, examinations, tr])
 
   const randomTestRows = useMemo(() => {
     return randomTests.map((test) => {
@@ -261,13 +263,13 @@ export default function EducationDirectoriaPage() {
       const student = test.student ? studentsById.get(test.student) : undefined
       return {
         title: test.title || `Teste #${test.id}`,
-        status: test.status || "—",
+        status: test.status ? tr(test.status) : "—",
         student: student?.student_code || "—",
         classroom: classroom?.name || "—",
         window: `${test.opens_at ? new Date(test.opens_at).toLocaleString() : "—"} → ${test.closes_at ? new Date(test.closes_at).toLocaleString() : "—"}`,
       }
     })
-  }, [classroomsById, randomTests, studentsById])
+  }, [classroomsById, randomTests, studentsById, tr])
 
   const activeTeachers = useMemo(
     () => teachers.filter((item) => normalizeStatus(item.status) === "ACTIVE").length,
@@ -301,7 +303,7 @@ export default function EducationDirectoriaPage() {
           actions={
             <Link
               href="/education"
-              className="inline-flex items-center border border-[var(--border)] bg-[var(--card)] px-2 py-1 text-xs text-[var(--gray-700)] transition hover:bg-[var(--gray-100)]"
+              className="inline-flex h-9 items-center rounded-md border border-[var(--border)] bg-[var(--card)] px-3 text-sm font-medium text-[var(--gray-700)] shadow-sm transition-all duration-150 hover:border-[var(--primary-300)] hover:bg-[var(--gray-100)] hover:text-[var(--text)]"
             >
               Voltar à Educação
             </Link>

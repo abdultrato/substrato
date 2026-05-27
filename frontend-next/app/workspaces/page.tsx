@@ -39,10 +39,10 @@ export default function WorkspacesPage() {
               writeStoredWorkspaceScope("healthcare")
               router.push("/healthcare")
             }}
-            className="group block rounded-2xl border border-border bg-card p-5 shadow-sm transition hover:-translate-y-0.5 hover:bg-muted/50 hover:shadow-md"
+            className="group block rounded-lg border border-border bg-card p-5 shadow-sm transition-colors hover:border-primary/35 hover:bg-muted/50"
           >
             <div className="flex items-start gap-3">
-              <div className="rounded-xl border border-border bg-background p-2.5 text-foreground">
+              <div className="rounded-md border border-border bg-primary-soft p-2.5 text-primary">
                 <Stethoscope size={20} />
               </div>
               <div className="space-y-1">
@@ -66,10 +66,10 @@ export default function WorkspacesPage() {
               writeStoredWorkspaceScope("education")
               router.push("/education")
             }}
-            className="group block rounded-2xl border border-border bg-card p-5 shadow-sm transition hover:-translate-y-0.5 hover:bg-muted/50 hover:shadow-md"
+            className="group block rounded-lg border border-border bg-card p-5 shadow-sm transition-colors hover:border-primary/35 hover:bg-muted/50"
           >
             <div className="flex items-start gap-3">
-              <div className="rounded-xl border border-border bg-background p-2.5 text-foreground">
+              <div className="rounded-md border border-border bg-primary-soft p-2.5 text-primary">
                 <GraduationCap size={20} />
               </div>
               <div className="space-y-1">
@@ -89,10 +89,10 @@ export default function WorkspacesPage() {
           {showErpWmsArea ? (
             <Link
               href="/warehouse"
-              className="group block rounded-2xl border border-border bg-card p-5 shadow-sm transition hover:-translate-y-0.5 hover:bg-muted/50 hover:shadow-md"
+              className="group block rounded-lg border border-border bg-card p-5 shadow-sm transition-colors hover:border-primary/35 hover:bg-muted/50"
             >
               <div className="flex items-start gap-3">
-                <div className="rounded-xl border border-border bg-background p-2.5 text-foreground">
+                <div className="rounded-md border border-border bg-primary-soft p-2.5 text-primary">
                   <PackageSearch size={20} />
                 </div>
                 <div className="space-y-1">
@@ -102,7 +102,7 @@ export default function WorkspacesPage() {
                   <p className="text-sm text-muted-foreground">
                     {t(
                       "Compras, reservas, separação, expedição, saldos e inventários com lógica empresarial.",
-                      "Purchasing, reservations, picking, shipping, stock balances, and enterprise inventory."
+                      "Compras, reservas, separação, expedição, saldos e inventários com lógica empresarial."
                     )}
                   </p>
                 </div>
@@ -118,10 +118,10 @@ export default function WorkspacesPage() {
                 writeStoredWorkspaceScope("education")
                 router.push("/education/teacher")
               }}
-              className="group block rounded-2xl border border-border bg-card p-5 shadow-sm transition hover:-translate-y-0.5 hover:bg-muted/50 hover:shadow-md"
+              className="group block rounded-lg border border-border bg-card p-5 shadow-sm transition-colors hover:border-primary/35 hover:bg-muted/50"
             >
               <div className="flex items-start gap-3">
-                <div className="rounded-xl border border-border bg-background p-2.5 text-foreground">
+                <div className="rounded-md border border-border bg-primary-soft p-2.5 text-primary">
                   <Users size={20} />
                 </div>
                 <div className="space-y-1">
@@ -147,10 +147,10 @@ export default function WorkspacesPage() {
                 writeStoredWorkspaceScope("education")
                 router.push("/education/directoria")
               }}
-              className="group block rounded-2xl border border-border bg-card p-5 shadow-sm transition hover:-translate-y-0.5 hover:bg-muted/50 hover:shadow-md"
+              className="group block rounded-lg border border-border bg-card p-5 shadow-sm transition-colors hover:border-primary/35 hover:bg-muted/50"
             >
               <div className="flex items-start gap-3">
-                <div className="rounded-xl border border-border bg-background p-2.5 text-foreground">
+                <div className="rounded-md border border-border bg-primary-soft p-2.5 text-primary">
                   <School size={20} />
                 </div>
                 <div className="space-y-1">
@@ -176,10 +176,10 @@ export default function WorkspacesPage() {
                 writeStoredWorkspaceScope("education")
                 router.push("/education/student")
               }}
-              className="group block rounded-2xl border border-border bg-card p-5 shadow-sm transition hover:-translate-y-0.5 hover:bg-muted/50 hover:shadow-md"
+              className="group block rounded-lg border border-border bg-card p-5 shadow-sm transition-colors hover:border-primary/35 hover:bg-muted/50"
             >
               <div className="flex items-start gap-3">
-                <div className="rounded-xl border border-border bg-background p-2.5 text-foreground">
+                <div className="rounded-md border border-border bg-primary-soft p-2.5 text-primary">
                   <GraduationCap size={20} />
                 </div>
                 <div className="space-y-1">

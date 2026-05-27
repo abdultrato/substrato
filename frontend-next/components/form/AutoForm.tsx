@@ -7,6 +7,8 @@ import { apiFetch } from "@/lib/api"
 import { buildFormSpec, FormField } from "@/lib/openapi/formBuilder"
 import Etapas from "@/components/form/Etapas"
 import type { ResourceFormConfig } from "@/lib/resources/resourceFormConfig"
+import { fieldLabel } from "@/lib/ui/fieldLabels"
+import { useLanguage } from "@/hooks/useLanguage"
 
 type Method = "post" | "put" | "patch"
 type RuntimeFormSpec = {
@@ -24,13 +26,39 @@ export type AutoFormProps = {
 }
 
 const LONG_TEXT_FIELDS = new Set([
+  "body",
+  "content_text",
+  "submission_payload",
+  "teacher_feedback",
+  "instructions",
   "notes",
   "findings",
   "actions_taken",
   "indication",
   "description",
   "reason",
+  "feedback",
+  "reaction_notes",
+  "post_incident_actions",
 ])
+
+function placeholderForField(field: FormField, label: string, explicit?: string): string | undefined {
+  if (explicit) return explicit
+  if (field.type === "boolean" || field.type === "date" || field.type === "datetime" || field.type === "select") {
+    return undefined
+  }
+  if (field.type === "array-string") return "Ex.: valor 1, valor 2"
+
+  const name = field.name.toLowerCase()
+  if (name.includes("url")) return "https://..."
+  if (name.includes("email")) return "nome@exemplo.com"
+  if (name.includes("phone") || name.includes("telefone") || name.includes("contact")) return "Ex.: +258 84 000 0000"
+  if (name.includes("code") || name.includes("codigo")) return "Ex.: COD-001"
+  if (field.type === "integer" || field.type === "number") return "Ex.: 10"
+
+  const normalizedLabel = label.trim().toLocaleLowerCase("pt")
+  return normalizedLabel ? `Introduza ${normalizedLabel}` : "Introduza o valor"
+}
 
 function fieldToZod(field: FormField): z.ZodTypeAny {
   const required = field.required
@@ -74,10 +102,13 @@ function renderInput(
   value: any,
   onChange: (v: any) => void,
   error?: string,
-  opts?: { readOnly?: boolean; placeholder?: string; widget?: "textarea" }
+  opts?: { readOnly?: boolean; placeholder?: string; translate?: (value: string) => string; widget?: "textarea" }
 ) {
   const common =
-    "w-full rounded-lg border border-[var(--border)] bg-[var(--card)] px-2.5 py-1 text-sm leading-tight text-[var(--text)] focus:border-[var(--primary-500)] focus:outline-none focus:ring-2 focus:ring-red-500/10"
+    "w-full rounded-md border bg-[var(--card)] px-3 py-2 text-sm leading-tight text-[var(--text)] shadow-sm transition-colors duration-150 placeholder:text-[var(--gray-400)] hover:border-[var(--primary-400)] focus:border-[var(--primary-500)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-100)] disabled:cursor-not-allowed disabled:bg-[var(--gray-100)] disabled:text-[var(--gray-500)]"
+  const stateClass = error
+    ? "border-red-300 focus:border-red-500 focus:ring-red-100"
+    : "border-[var(--border)]"
   const disabled = !!opts?.readOnly
   const placeholder = opts?.placeholder
   const widget = opts?.widget
@@ -100,7 +131,7 @@ function renderInput(
           type="number"
           value={value ?? ""}
           onChange={(e) => onChange(e.target.value === "" ? null : Number(e.target.value))}
-          className={common}
+          className={`${common} ${stateClass}`}
           placeholder={placeholder}
           disabled={disabled}
         />
@@ -111,7 +142,7 @@ function renderInput(
           type="date"
           value={value ?? ""}
           onChange={(e) => onChange(e.target.value || null)}
-          className={common}
+          className={`${common} ${stateClass}`}
           disabled={disabled}
         />
       )
@@ -121,7 +152,7 @@ function renderInput(
           type="datetime-local"
           value={value ?? ""}
           onChange={(e) => onChange(e.target.value || null)}
-          className={common}
+          className={`${common} ${stateClass}`}
           disabled={disabled}
         />
       )
@@ -130,12 +161,13 @@ function renderInput(
         <select
           value={value ?? ""}
           onChange={(e) => onChange(e.target.value || null)}
-          className={common}
+          className={`${common} ${stateClass}`}
           disabled={disabled}
         >
-          <option value="">Selecione...</option>
+          <option value="">Selecione uma opção...</option>
           {(field.enumValues || []).map((opt, idx) => {
-            const label = field.enumLabels?.[idx] || opt
+            const rawLabel = field.enumLabels?.[idx] || opt
+            const label = opts?.translate ? opts.translate(String(rawLabel)) : rawLabel
             return (
               <option key={opt} value={opt}>
                 {label}
@@ -157,7 +189,7 @@ function renderInput(
                 .filter(Boolean)
             )
           }
-          className={common}
+          className={`${common} ${stateClass}`}
           placeholder={placeholder || "valor1, valor2"}
           disabled={disabled}
         />
@@ -168,7 +200,7 @@ function renderInput(
           <textarea
             value={value ?? ""}
             onChange={(e) => onChange(e.target.value)}
-            className={`${common} min-h-[92px] resize-y px-3 py-2`}
+            className={`${common} ${stateClass} min-h-[108px] resize-y`}
             placeholder={placeholder}
             disabled={disabled}
             rows={4}
@@ -180,7 +212,7 @@ function renderInput(
           type="text"
           value={value ?? ""}
           onChange={(e) => onChange(e.target.value)}
-          className={common}
+          className={`${common} ${stateClass}`}
           placeholder={placeholder}
           disabled={disabled}
         />
@@ -200,7 +232,7 @@ function inferFormFieldTypeFromMetadata(rawType?: string): FormField["type"] {
   return "text"
 }
 
-function buildFallbackSpecFromOptions(metadata: any, method: Method): RuntimeFormSpec | null {
+function buildFallbackSpecFromOptions(metadata: any, method: Method, endpoint: string): RuntimeFormSpec | null {
   const actions = metadata && typeof metadata === "object" ? metadata.actions : null
   if (!actions || typeof actions !== "object") return null
 
@@ -233,10 +265,11 @@ function buildFallbackSpecFromOptions(metadata: any, method: Method): RuntimeFor
       ? "select"
       : inferFormFieldTypeFromMetadata(String(desc.type || ""))
 
-    const label =
-      typeof desc.label === "string" && desc.label.trim()
-        ? desc.label.trim()
-        : name
+    const label = fieldLabel({
+      endpoint,
+      name,
+      title: typeof desc.label === "string" && desc.label.trim() ? desc.label.trim() : undefined,
+    })
 
     fields.push({
       name,
@@ -367,6 +400,7 @@ export default function AutoForm({
   onSuccess,
   config,
 }: AutoFormProps) {
+  const { tr } = useLanguage()
   const effectiveMethod = useMemo<Method>(() => {
     if (buildFormSpec(endpoint, method)) return method
     if (method === "put" && buildFormSpec(endpoint, "patch")) return "patch"
@@ -397,7 +431,7 @@ export default function AutoForm({
           method: "OPTIONS",
           clientCache: false,
         })
-        const derivedSpec = buildFallbackSpecFromOptions(metadata, effectiveMethod)
+        const derivedSpec = buildFallbackSpecFromOptions(metadata, effectiveMethod, endpoint)
         if (mounted) setOptionsFormSpec(derivedSpec)
       } catch {
         if (mounted) setOptionsFormSpec(null)
@@ -586,7 +620,7 @@ export default function AutoForm({
         <Etapas etapas={etapas.map((e) => ({ titulo: e.titulo, descricao: e.descricao }))} etapaAtual={etapaAtual} onChange={setEtapaAtual} />
       ) : null}
 
-      <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-4 shadow-sm">
+      <div className="rounded-lg border border-[var(--border)] bg-[var(--card)] p-4 shadow-sm">
         {etapas?.length ? (
           <div className="mb-3 text-sm font-semibold text-[var(--text)]">
             {etapas[etapaAtual]?.titulo}
@@ -597,11 +631,11 @@ export default function AutoForm({
           {fieldsToRender.map((field) => {
             const label = config?.labels?.[field.name] || field.label
             const hint = config?.hints?.[field.name]
-            const placeholder = config?.placeholders?.[field.name]
-            const widget = config?.widgets?.[field.name]
+            const placeholder = placeholderForField(field, label, config?.placeholders?.[field.name])
+            const widget = config?.widgets?.[field.name] || (LONG_TEXT_FIELDS.has(field.name) ? "textarea" : undefined)
             const isReadOnly = somenteLeitura.has(field.name)
             return (
-              <label key={field.name} className="space-y-0.5 text-sm text-[var(--gray-700)]">
+              <label key={field.name} className="space-y-1 text-sm text-[var(--gray-700)]">
                 <div className="flex items-center justify-between">
                   <span className="font-medium text-[var(--gray-700)]">
                     {label}
@@ -616,7 +650,7 @@ export default function AutoForm({
                   values[field.name],
                   (v) => setValues((prev) => ({ ...prev, [field.name]: v })),
                   errors[field.name],
-                  { placeholder, widget, readOnly: isReadOnly }
+                  { placeholder, widget, readOnly: isReadOnly, translate: tr }
                 )}
                 {hint ? (
                   <div className="text-xs text-[var(--gray-500)]">{hint}</div>
@@ -631,7 +665,7 @@ export default function AutoForm({
           <div className="flex flex-wrap items-center justify-between gap-2">
             <button
               type="button"
-              className="inline-flex items-center rounded-lg border border-[var(--border)] bg-[var(--card)] px-2.5 py-1 text-sm font-semibold leading-tight text-[var(--gray-700)] transition hover:bg-[var(--gray-100)] disabled:opacity-60"
+              className="inline-flex h-9 items-center rounded-md border border-[var(--border)] bg-[var(--card)] px-3 text-sm font-semibold leading-tight text-[var(--gray-700)] shadow-sm transition-all duration-150 hover:border-[var(--primary-300)] hover:bg-[var(--gray-100)] hover:text-[var(--text)] disabled:opacity-60"
               onClick={() => setEtapaAtual((prev) => Math.max(0, prev - 1))}
               disabled={submitting || etapaAtual === 0}
             >
@@ -641,7 +675,7 @@ export default function AutoForm({
               type="button"
               onClick={handleSubmit}
               disabled={submitting}
-              className="inline-flex items-center rounded-lg bg-[var(--primary-600)] px-2.5 py-1 text-sm font-semibold leading-tight text-white transition hover:bg-[var(--primary-700)] disabled:opacity-60"
+              className="inline-flex h-9 items-center rounded-md bg-[var(--primary-600)] px-3 text-sm font-semibold leading-tight text-white shadow-sm transition-all duration-150 hover:bg-[var(--primary-700)] hover:shadow-md disabled:opacity-60"
             >
               {submitting ? "Salvando..." : etapaAtual < etapas.length - 1 ? "Seguinte" : submitLabel}
             </button>
@@ -651,7 +685,7 @@ export default function AutoForm({
             type="button"
             onClick={handleSubmit}
             disabled={submitting}
-            className="inline-flex items-center rounded-lg bg-[var(--primary-600)] px-2.5 py-1 text-sm font-semibold leading-tight text-white transition hover:bg-[var(--primary-700)] disabled:opacity-60"
+            className="inline-flex h-9 items-center rounded-md bg-[var(--primary-600)] px-3 text-sm font-semibold leading-tight text-white shadow-sm transition-all duration-150 hover:bg-[var(--primary-700)] hover:shadow-md disabled:opacity-60"
           >
             {submitting ? "Salvando..." : submitLabel}
           </button>

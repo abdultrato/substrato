@@ -1,22 +1,35 @@
 // Layout raiz do app Next.js: aplica tema dark/light e injeta AuthProvider.
-import "./globals.css"
+import "./globals.css";
 
-import { Inter, Plus_Jakarta_Sans } from "next/font/google"
-import { AuthProvider } from "@/hooks/useAuth"
-import Providers from "./providers"
+import { Inter, Plus_Jakarta_Sans } from "next/font/google";
+import type { Metadata, Viewport } from "next";
+import { AuthProvider } from "@/hooks/useAuth";
+import Providers from "./providers";
+
+export const metadata: Metadata = {
+  title: "Substrato Healthcare Platform",
+  description:
+    "Frontend da plataforma Substrato para atendimento e gestão de saúde.",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  themeColor: "#8430FC",
+};
 
 const inter = Inter({
-    subsets: ["latin"],
-    display: "swap",
-    variable: "--font-sans",
-})
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-sans",
+});
 
 const display = Plus_Jakarta_Sans({
-    subsets: ["latin"],
-    display: "swap",
-    variable: "--font-display",
-    weight: ["500", "600", "700", "800"],
-})
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-display",
+  weight: ["500", "600", "700", "800"],
+});
 
 const themeInitScript = `
 (function () {
@@ -39,29 +52,31 @@ const themeInitScript = `
   } catch (e) {
     // ignore
   }
-})();`
+})();`;
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
-    // Define HTML base (lang, tema) e envolve app no AuthProvider.
-    return (
-        <html
-            lang="pt"
-            className={`${inter.variable} ${display.variable}`}
-            suppressHydrationWarning
-        >
-            <head suppressHydrationWarning>
-                <script
-                    suppressHydrationWarning
-                    dangerouslySetInnerHTML={{ __html: themeInitScript }}
-                />
-            </head>
-            <body className="min-h-screen font-sans antialiased">
-                <AuthProvider>
-                    <Providers>
-                        {children}
-                    </Providers>
-                </AuthProvider>
-            </body>
-        </html>
-    )
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  // Define HTML base (lang, tema) e envolve app no AuthProvider.
+  return (
+    <html
+      lang="pt"
+      className={`${inter.variable} ${display.variable}`}
+      suppressHydrationWarning
+    >
+      <head suppressHydrationWarning>
+        <script
+          suppressHydrationWarning
+          dangerouslySetInnerHTML={{ __html: themeInitScript }}
+        />
+      </head>
+      <body className="min-h-screen font-sans antialiased">
+        <AuthProvider>
+          <Providers>{children}</Providers>
+        </AuthProvider>
+      </body>
+    </html>
+  );
 }

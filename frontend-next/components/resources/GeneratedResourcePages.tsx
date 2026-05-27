@@ -14,6 +14,7 @@ import useAuthGuard from "@/hooks/useAuthGuard"
 import { useLanguage } from "@/hooks/useLanguage"
 import { useModulesCatalog } from "@/hooks/useModulesCatalog"
 import { apiFetch } from "@/lib/api"
+import { educationResourceUiFromEndpoint, normalizeEducationEndpoint } from "@/lib/education/ui"
 import { isNotFoundLikeError } from "@/lib/errors/api-error"
 import { canonicalModuleGroupKey, type ModuleGroup, type ModuleResource } from "@/lib/modules"
 import { hasWriteContract } from "@/lib/openapi/writeContract"
@@ -71,7 +72,8 @@ function findByEndpoint(
 }
 
 function buildEndpointContext(modules: ModuleGroup[], endpoint: string): EndpointContext {
-  const normalizedEndpoint = normalizeEndpoint(endpoint)
+  const routeEndpoint = normalizeEndpoint(endpoint)
+  const normalizedEndpoint = normalizeEducationEndpoint(routeEndpoint)
   const match = findByEndpoint(modules, normalizedEndpoint)
 
   if (match) {
@@ -89,15 +91,16 @@ function buildEndpointContext(modules: ModuleGroup[], endpoint: string): Endpoin
   }
 
   const parsed = endpointParts(normalizedEndpoint)
-  const groupLabel = titleFromSlug(parsed.groupKey)
-  const resourceLabel = titleFromSlug(parsed.resourceKey)
+  const educationUi = parsed.groupKey === "education" ? educationResourceUiFromEndpoint(normalizedEndpoint) : null
+  const groupLabel = parsed.groupKey === "education" ? "Educação" : titleFromSlug(parsed.groupKey)
+  const resourceLabel = educationUi?.label || titleFromSlug(parsed.resourceKey)
 
   return {
     endpoint,
     normalizedEndpoint,
     groupKey: parsed.groupKey,
     groupLabel,
-    resourceKey: parsed.resourceKey,
+    resourceKey: educationUi?.key || parsed.resourceKey,
     resourceLabel,
     requiredGroups: requiredGroupsForResourceGroup(parsed.groupKey),
   }
@@ -154,6 +157,12 @@ function groupContextMessage(groupKey: string, action: "list" | "new" | "detail"
       new: "Registe informação académica com completude para fluxo escolar.",
       detail: "Consulte dados pedagógicos com leitura contextual por disciplina.",
       edit: "Atualize o registo académico preservando regras de progressão.",
+    },
+    warehouse: {
+      list: "Acompanhe compras, estoque, reservas, separação e expedições com leitura operacional clara.",
+      new: "Registe dados de armazém com campos completos para manter o fluxo ERP/WMS consistente.",
+      detail: "Consulte o registo de armazém com rastreabilidade de item, lote, localização e estado.",
+      edit: "Atualize o registo mantendo coerência entre estoque, pedidos, reservas e movimentos.",
     },
   }
 
@@ -238,14 +247,14 @@ export function GeneratedResourceCreatePage({ endpoint }: { endpoint: string }) 
           actions={
             <Link
               href={basePath}
-              className="inline-flex items-center rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-1.5 text-sm font-medium text-[var(--gray-700)] transition hover:bg-[var(--gray-100)]"
+              className="inline-flex h-9 items-center rounded-md border border-[var(--border)] bg-[var(--card)] px-3 text-sm font-medium text-[var(--gray-700)] shadow-sm transition-all duration-150 hover:border-[var(--primary-300)] hover:bg-[var(--gray-100)] hover:text-[var(--text)]"
             >
               {t("Voltar", "Back")}
             </Link>
           }
         />
 
-        <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-4 shadow-sm">
+        <div className="rounded-lg border border-[var(--border)] bg-[var(--card)] p-4 shadow-sm">
           <AutoForm
             endpoint={ctx.normalizedEndpoint}
             method="post"
@@ -317,13 +326,13 @@ export function GeneratedResourceDetailPage({ endpoint }: { endpoint: string }) 
             actions={
               <Link
                 href={basePath}
-                className="inline-flex items-center rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-1.5 text-sm font-medium text-[var(--gray-700)] transition hover:bg-[var(--gray-100)]"
+                className="inline-flex h-9 items-center rounded-md border border-[var(--border)] bg-[var(--card)] px-3 text-sm font-medium text-[var(--gray-700)] shadow-sm transition-all duration-150 hover:border-[var(--primary-300)] hover:bg-[var(--gray-100)] hover:text-[var(--text)]"
               >
                 {t("Voltar", "Back")}
               </Link>
             }
           />
-          <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">{message}</div>
+          <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">{message}</div>
         </div>
       </AppLayout>
     )
@@ -342,7 +351,7 @@ export function GeneratedResourceDetailPage({ endpoint }: { endpoint: string }) 
               {canEdit ? (
                 <Link
                   href={`${basePath}/${id}/edit`}
-                  className="inline-flex items-center rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-1.5 text-sm font-medium text-[var(--gray-700)] transition hover:bg-[var(--gray-100)]"
+                  className="inline-flex h-9 items-center rounded-md border border-[var(--border)] bg-[var(--card)] px-3 text-sm font-medium text-[var(--gray-700)] shadow-sm transition-all duration-150 hover:border-[var(--primary-300)] hover:bg-[var(--gray-100)] hover:text-[var(--text)]"
                 >
                   {t("Editar", "Edit")}
                 </Link>
@@ -352,14 +361,14 @@ export function GeneratedResourceDetailPage({ endpoint }: { endpoint: string }) 
                   type="button"
                   onClick={handleDelete}
                   disabled={deleting}
-                  className="inline-flex items-center rounded-lg bg-red-600 px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-red-500 disabled:opacity-60"
+                  className="inline-flex h-9 items-center rounded-md bg-red-600 px-3 text-sm font-semibold text-white shadow-sm transition-all duration-150 hover:bg-red-500 hover:shadow-md disabled:opacity-60"
                 >
                   {deleting ? t("Apagando...", "Deleting...") : t("Apagar", "Delete")}
                 </button>
               ) : null}
               <Link
                 href={basePath}
-                className="inline-flex items-center rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-1.5 text-sm font-medium text-[var(--gray-700)] transition hover:bg-[var(--gray-100)]"
+                className="inline-flex h-9 items-center rounded-md border border-[var(--border)] bg-[var(--card)] px-3 text-sm font-medium text-[var(--gray-700)] shadow-sm transition-all duration-150 hover:border-[var(--primary-300)] hover:bg-[var(--gray-100)] hover:text-[var(--text)]"
               >
                 {t("Voltar", "Back")}
               </Link>
@@ -370,7 +379,7 @@ export function GeneratedResourceDetailPage({ endpoint }: { endpoint: string }) 
         {data ? (
           <ResourceDetailsCard endpoint={ctx.normalizedEndpoint} data={data} />
         ) : (
-          <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
             {t("Registo não encontrado.", "Record not found.")}
           </div>
         )}
@@ -417,13 +426,13 @@ export function GeneratedResourceEditPage({ endpoint }: { endpoint: string }) {
             actions={
               <Link
                 href={detailPath}
-                className="inline-flex items-center rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-1.5 text-sm font-medium text-[var(--gray-700)] transition hover:bg-[var(--gray-100)]"
+                className="inline-flex h-9 items-center rounded-md border border-[var(--border)] bg-[var(--card)] px-3 text-sm font-medium text-[var(--gray-700)] shadow-sm transition-all duration-150 hover:border-[var(--primary-300)] hover:bg-[var(--gray-100)] hover:text-[var(--text)]"
               >
                 {t("Voltar", "Back")}
               </Link>
             }
           />
-          <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">{message}</div>
+          <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">{message}</div>
         </div>
       </AppLayout>
     )
@@ -438,14 +447,14 @@ export function GeneratedResourceEditPage({ endpoint }: { endpoint: string }) {
           actions={
             <Link
               href={detailPath}
-              className="inline-flex items-center rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-1.5 text-sm font-medium text-[var(--gray-700)] transition hover:bg-[var(--gray-100)]"
+              className="inline-flex h-9 items-center rounded-md border border-[var(--border)] bg-[var(--card)] px-3 text-sm font-medium text-[var(--gray-700)] shadow-sm transition-all duration-150 hover:border-[var(--primary-300)] hover:bg-[var(--gray-100)] hover:text-[var(--text)]"
             >
               {t("Voltar", "Back")}
             </Link>
           }
         />
 
-        <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-4 shadow-sm">
+        <div className="rounded-lg border border-[var(--border)] bg-[var(--card)] p-4 shadow-sm">
           <AutoForm
             endpoint={`${ctx.normalizedEndpoint}${id}/`}
             method="put"

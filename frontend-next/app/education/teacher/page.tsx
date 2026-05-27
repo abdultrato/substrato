@@ -8,6 +8,7 @@ import Card from "@/components/ui/Card"
 import DataTable from "@/components/ui/DataTable"
 import PageHeader from "@/components/ui/PageHeader"
 import { useAuth } from "@/hooks/useAuth"
+import { useLanguage } from "@/hooks/useLanguage"
 import { apiFetch, apiFetchAll } from "@/lib/api"
 import { isNotFoundLikeError } from "@/lib/errors/api-error"
 import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
@@ -200,8 +201,27 @@ function normalizeText(value?: string | number | null) {
     .trim()
 }
 
+const educationControlClass =
+  "w-full rounded-md border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-sm text-[var(--text)] shadow-sm transition-colors duration-150 placeholder:text-[var(--gray-400)] hover:border-[var(--primary-400)] focus:border-[var(--primary-500)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-100)]"
+
+const educationCompactControlClass =
+  "w-full rounded-md border border-[var(--border)] bg-[var(--card)] px-2.5 py-1.5 text-xs text-[var(--text)] shadow-sm transition-colors duration-150 placeholder:text-[var(--gray-400)] hover:border-[var(--primary-400)] focus:border-[var(--primary-500)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-100)]"
+
+const educationPrimaryButtonClass =
+  "inline-flex h-9 items-center justify-center rounded-md border border-[var(--primary-600)] bg-[var(--primary-600)] px-3 text-xs font-semibold text-white shadow-sm transition-all duration-150 hover:bg-[var(--primary-700)] hover:shadow-md disabled:cursor-not-allowed disabled:opacity-60"
+
+const educationSecondaryButtonClass =
+  "inline-flex h-9 items-center justify-center rounded-md border border-[var(--border)] bg-[var(--card)] px-3 text-xs font-semibold text-[var(--gray-700)] shadow-sm transition-all duration-150 hover:border-[var(--primary-300)] hover:bg-[var(--gray-100)] hover:text-[var(--text)] disabled:cursor-not-allowed disabled:opacity-60"
+
+const educationTileClass =
+  "w-full rounded-md border px-3 py-2 text-left text-xs shadow-sm transition-all duration-150 hover:shadow-md"
+
+const educationMetricClass =
+  "rounded-lg border border-[var(--border)] bg-[var(--card)] p-3 text-xs text-[var(--gray-700)] shadow-sm transition-colors duration-150 hover:border-[var(--primary-200)]"
+
 export default function EducationTeacherAreaPage() {
   const { user } = useAuth()
+  const { tr } = useLanguage()
   const isDirectorScope = useMemo(() => userHasAnyGroup(user, DIRECTOR_GROUPS), [user])
 
   const [loading, setLoading] = useState(true)
@@ -801,23 +821,23 @@ export default function EducationTeacherAreaPage() {
   const randomTestRows = useMemo(() => {
     return randomTests.map((item) => ({
       title: item.title || "—",
-      status: item.status || "—",
+      status: item.status ? tr(item.status) : "—",
       window: `${parseDate(item.opens_at)} → ${parseDate(item.closes_at)}`,
       details: `${item.question_count ?? 0} questões • ${item.duration_minutes ?? 0} min`,
     }))
-  }, [randomTests])
+  }, [randomTests, tr])
 
   const scheduleRows = useMemo(() => {
     return scheduleItems.map((item) => ({
       id: item.id,
       title: item.title || "—",
-      type: item.item_type || "—",
+      type: item.item_type ? tr(item.item_type) : "—",
       date: item.scheduled_date || "—",
-      status: item.status || "—",
+      status: item.status ? tr(item.status) : "—",
       attendance: item.requires_attendance ? "Sim" : "Não",
       completed: parseDate(item.completed_at),
     }))
-  }, [scheduleItems])
+  }, [scheduleItems, tr])
 
   const scheduleProgressRows = useMemo(() => {
     if (!selectedEnrollment) return []
@@ -829,12 +849,12 @@ export default function EducationTeacherAreaPage() {
           id: progress.id,
           item: scheduleItem?.title || `Item #${progress.schedule_item ?? "—"}`,
           date: scheduleItem?.scheduled_date || "—",
-          status: progress.status || "—",
-          attendance: progress.attendance_status_snapshot || "—",
+          status: progress.status ? tr(progress.status) : "—",
+          attendance: progress.attendance_status_snapshot ? tr(progress.attendance_status_snapshot) : "—",
           completed: progress.completion_marked ? "Sim" : "Não",
         }
       })
-  }, [scheduleItems, scheduleProgress, selectedEnrollment])
+  }, [scheduleItems, scheduleProgress, selectedEnrollment, tr])
 
   const filteredEnrollments = useMemo(() => {
     const query = normalizeText(studentSearch)
@@ -916,7 +936,7 @@ export default function EducationTeacherAreaPage() {
       return {
         id: student.id,
         code: student.student_code || `Estudante #${student.id}`,
-        status: student.status || "—",
+        status: student.status ? tr(student.status) : "—",
         guardian: student.guardian_name || "—",
         enrollments: enrollmentsForStudent.length,
         activeEnrollments: enrollmentsForStudent.filter((item) => item.status === "ACTIVE").length,
@@ -924,16 +944,16 @@ export default function EducationTeacherAreaPage() {
         hygienicDone: workCounts.hygienicDone,
       }
     })
-  }, [directorStudentSearch, directorStudents, enrollmentsByStudentId, workCountsByStudentId])
+  }, [directorStudentSearch, directorStudents, enrollmentsByStudentId, workCountsByStudentId, tr])
 
   const directorTeacherRows = useMemo(() => {
     return filteredDirectorTeachers.map((teacher) => ({
       code: teacher.teacher_code || `Professor #${teacher.id}`,
-      status: teacher.status || "—",
+      status: teacher.status ? tr(teacher.status) : "—",
       specialty: teacher.specialty || "—",
       user: teacher.user ? `#${teacher.user}` : "—",
     }))
-  }, [filteredDirectorTeachers])
+  }, [filteredDirectorTeachers, tr])
 
   return (
     <AppLayout requiredGroups={REQUIRED_GROUPS}>
@@ -944,7 +964,7 @@ export default function EducationTeacherAreaPage() {
           actions={
             <Link
               href="/education"
-              className="inline-flex items-center border border-[var(--border)] bg-[var(--card)] px-2 py-1 text-xs text-[var(--gray-700)] transition hover:bg-[var(--gray-100)]"
+              className={educationSecondaryButtonClass}
             >
               Voltar à Educação
             </Link>
@@ -967,10 +987,10 @@ export default function EducationTeacherAreaPage() {
                       key={classroom.id}
                       type="button"
                       onClick={() => setSelectedClassroomId(classroom.id)}
-                      className={`w-full border px-2 py-1 text-left text-xs transition ${
+                      className={`${educationTileClass} ${
                         active
                           ? "border-[var(--primary-600)] bg-[var(--primary-50)] text-[var(--primary-700)]"
-                          : "border-[var(--border)] bg-[var(--card)] text-[var(--gray-700)] hover:bg-[var(--gray-100)]"
+                          : "border-[var(--border)] bg-[var(--card)] text-[var(--gray-700)] hover:border-[var(--primary-300)] hover:bg-[var(--gray-100)]"
                       }`}
                     >
                       <div className="font-semibold">{classroom.name || `Turma #${classroom.id}`}</div>
@@ -993,7 +1013,7 @@ export default function EducationTeacherAreaPage() {
                 value={studentSearch}
                 onChange={(event) => setStudentSearch(event.target.value)}
                 placeholder="Buscar estudante/aluno/encarregado..."
-                className="w-full border border-[var(--border)] bg-[var(--card)] px-2 py-1 text-xs text-[var(--text)]"
+                className={educationCompactControlClass}
               />
               {filteredEnrollments.length ? (
                 filteredEnrollments.map((enrollment) => {
@@ -1004,15 +1024,15 @@ export default function EducationTeacherAreaPage() {
                       key={enrollment.id}
                       type="button"
                       onClick={() => setSelectedStudentId(enrollment.student ?? null)}
-                      className={`w-full border px-2 py-1 text-left text-xs transition ${
+                      className={`${educationTileClass} ${
                         active
                           ? "border-[var(--primary-600)] bg-[var(--primary-50)] text-[var(--primary-700)]"
-                          : "border-[var(--border)] bg-[var(--card)] text-[var(--gray-700)] hover:bg-[var(--gray-100)]"
+                          : "border-[var(--border)] bg-[var(--card)] text-[var(--gray-700)] hover:border-[var(--primary-300)] hover:bg-[var(--gray-100)]"
                       }`}
                     >
                       <div className="font-semibold">{student?.student_code || `Estudante #${enrollment.student ?? "—"}`}</div>
                       <div className="text-[0.9em] text-[var(--gray-500)]">
-                        Matrícula: {enrollment.status || "—"} • Encarregado: {student?.guardian_name || "—"}
+                        Matrícula: {enrollment.status ? tr(enrollment.status) : "—"} • Encarregado: {student?.guardian_name || "—"}
                       </div>
                     </button>
                   )
@@ -1048,22 +1068,22 @@ export default function EducationTeacherAreaPage() {
               ) : null}
 
               <div className="grid gap-2 md:grid-cols-4">
-                <div className="border border-[var(--border)] bg-[var(--card)] p-2 text-xs text-[var(--gray-700)]">
+                <div className={educationMetricClass}>
                   <div><strong>Professores:</strong> {directorLoading ? "..." : directorTeachers.length}</div>
                   <div className="text-[0.9em] text-[var(--gray-500)]">
                     Ativos: {directorLoading ? "..." : directorTeachers.filter((item) => item.status === "ACTIVE").length}
                   </div>
                 </div>
-                <div className="border border-[var(--border)] bg-[var(--card)] p-2 text-xs text-[var(--gray-700)]">
+                <div className={educationMetricClass}>
                   <div><strong>Estudantes:</strong> {directorLoading ? "..." : directorStudents.length}</div>
                   <div className="text-[0.9em] text-[var(--gray-500)]">
                     Matrículas: {directorLoading ? "..." : directorEnrollments.length}
                   </div>
                 </div>
-                <div className="border border-[var(--border)] bg-[var(--card)] p-2 text-xs text-[var(--gray-700)]">
+                <div className={educationMetricClass}>
                   <div><strong>Trabalhos obrigatórios:</strong> {directorLoading ? "..." : directorAssignments.filter((item) => item.work_category === "MANDATORY").length}</div>
                 </div>
-                <div className="border border-[var(--border)] bg-[var(--card)] p-2 text-xs text-[var(--gray-700)]">
+                <div className={educationMetricClass}>
                   <div><strong>Trabalhos higiénicos:</strong> {directorLoading ? "..." : directorAssignments.filter((item) => item.work_category === "HYGIENIC").length}</div>
                 </div>
               </div>
@@ -1076,7 +1096,7 @@ export default function EducationTeacherAreaPage() {
                     value={directorTeacherSearch}
                     onChange={(event) => setDirectorTeacherSearch(event.target.value)}
                     placeholder="Buscar professor por código, estado, especialidade..."
-                    className="w-full border border-[var(--border)] bg-[var(--card)] px-2 py-1 text-xs text-[var(--text)]"
+                    className={educationCompactControlClass}
                   />
                   <DataTable
                     columns={[
@@ -1097,7 +1117,7 @@ export default function EducationTeacherAreaPage() {
                     value={directorStudentSearch}
                     onChange={(event) => setDirectorStudentSearch(event.target.value)}
                     placeholder="Buscar estudante por código, encarregado, estado..."
-                    className="w-full border border-[var(--border)] bg-[var(--card)] px-2 py-1 text-xs text-[var(--text)]"
+                    className={educationCompactControlClass}
                   />
                   <DataTable
                     columns={[
@@ -1135,7 +1155,7 @@ export default function EducationTeacherAreaPage() {
                   value={testDatesInput}
                   onChange={(event) => setTestDatesInput(event.target.value)}
                   placeholder="2026-06-10, 2026-07-05"
-                  className="w-full border border-[var(--border)] bg-[var(--card)] px-2 py-1 text-xs text-[var(--text)]"
+                  className={educationCompactControlClass}
                 />
               </label>
               <label className="space-y-1 text-xs text-[var(--gray-700)]">
@@ -1145,7 +1165,7 @@ export default function EducationTeacherAreaPage() {
                   value={assignmentDatesInput}
                   onChange={(event) => setAssignmentDatesInput(event.target.value)}
                   placeholder="2026-06-15, 2026-07-20"
-                  className="w-full border border-[var(--border)] bg-[var(--card)] px-2 py-1 text-xs text-[var(--text)]"
+                  className={educationCompactControlClass}
                 />
               </label>
               <label className="space-y-1 text-xs text-[var(--gray-700)]">
@@ -1155,7 +1175,7 @@ export default function EducationTeacherAreaPage() {
                   value={exerciseDatesInput}
                   onChange={(event) => setExerciseDatesInput(event.target.value)}
                   placeholder="2026-06-12, 2026-06-26"
-                  className="w-full border border-[var(--border)] bg-[var(--card)] px-2 py-1 text-xs text-[var(--text)]"
+                  className={educationCompactControlClass}
                 />
               </label>
               <label className="space-y-1 text-xs text-[var(--gray-700)]">
@@ -1165,7 +1185,7 @@ export default function EducationTeacherAreaPage() {
                   value={schedulePlanNotes}
                   onChange={(event) => setSchedulePlanNotes(event.target.value)}
                   placeholder="Ex.: Plano trimestral oficial."
-                  className="w-full border border-[var(--border)] bg-[var(--card)] px-2 py-1 text-xs text-[var(--text)]"
+                  className={educationCompactControlClass}
                 />
               </label>
             </div>
@@ -1175,7 +1195,7 @@ export default function EducationTeacherAreaPage() {
               <textarea
                 value={themesInput}
                 onChange={(event) => setThemesInput(event.target.value)}
-                className="min-h-[88px] w-full border border-[var(--border)] bg-[var(--card)] px-2 py-1 text-xs text-[var(--text)]"
+                className={`${educationCompactControlClass} min-h-[88px] resize-y`}
                 placeholder={"2026-06-03|Tema 1|Introdução\n2026-06-10|Tema 2|Equações lineares"}
               />
             </label>
@@ -1184,7 +1204,7 @@ export default function EducationTeacherAreaPage() {
               type="button"
               onClick={handleCreateFullPlan}
               disabled={savingSchedule || !selectedClassroomId}
-              className="border border-[var(--border)] bg-[var(--primary-600)] px-2 py-1 text-xs text-white transition hover:bg-[var(--primary-700)] disabled:cursor-not-allowed disabled:opacity-60"
+              className={educationPrimaryButtonClass}
             >
               {savingSchedule ? "A criar cronograma..." : "Criar cronograma completo"}
             </button>
@@ -1211,7 +1231,7 @@ export default function EducationTeacherAreaPage() {
                     type="button"
                     onClick={() => handleMarkScheduleCompleted(row.id)}
                     disabled={markingScheduleItemId === row.id}
-                    className="border border-[var(--border)] bg-[var(--card)] px-2 py-1 text-xs text-[var(--gray-700)] transition hover:bg-[var(--gray-100)] disabled:cursor-not-allowed disabled:opacity-60"
+                    className={educationSecondaryButtonClass}
                   >
                     {markingScheduleItemId === row.id ? "A concluir..." : `Concluir #${row.id}`}
                   </button>
@@ -1236,7 +1256,7 @@ export default function EducationTeacherAreaPage() {
                 type="date"
                 value={rollCallDateInput}
                 onChange={(event) => setRollCallDateInput(event.target.value)}
-                className="w-full max-w-[220px] border border-[var(--border)] bg-[var(--card)] px-2 py-1 text-xs text-[var(--text)]"
+                className={`${educationCompactControlClass} max-w-[220px]`}
               />
             </label>
 
@@ -1249,7 +1269,7 @@ export default function EducationTeacherAreaPage() {
                 return (
                   <label
                     key={`roll-${enrollment.id}`}
-                    className="flex items-center justify-between border border-[var(--border)] bg-[var(--card)] px-2 py-1 text-xs text-[var(--gray-700)]"
+                    className="flex items-center justify-between rounded-md border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-xs text-[var(--gray-700)] shadow-sm transition-colors duration-150 hover:border-[var(--primary-200)]"
                   >
                     <span>{student?.student_code || `Estudante #${studentId}`}</span>
                     <select
@@ -1260,7 +1280,7 @@ export default function EducationTeacherAreaPage() {
                           [studentId]: event.target.value as RollCallStatus,
                         }))
                       }
-                      className="border border-[var(--border)] bg-[var(--card)] px-1 py-0.5 text-xs text-[var(--text)]"
+                      className="rounded-md border border-[var(--border)] bg-[var(--card)] px-2 py-1 text-xs text-[var(--text)] shadow-sm transition-colors duration-150 hover:border-[var(--primary-300)] focus:border-[var(--primary-500)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-100)]"
                     >
                       <option value="PRESENT">Presente</option>
                       <option value="LATE">Atrasado</option>
@@ -1275,7 +1295,7 @@ export default function EducationTeacherAreaPage() {
               type="button"
               onClick={handleSubmitRollCall}
               disabled={rollCallSaving || !selectedClassroomId || !enrollments.length}
-              className="border border-[var(--border)] bg-[var(--primary-600)] px-2 py-1 text-xs text-white transition hover:bg-[var(--primary-700)] disabled:cursor-not-allowed disabled:opacity-60"
+              className={educationPrimaryButtonClass}
             >
               {rollCallSaving ? "A registar chamada..." : "Registar chamada"}
             </button>
@@ -1299,7 +1319,7 @@ export default function EducationTeacherAreaPage() {
                     key={`progress-${row.id}`}
                     type="button"
                     onClick={() => handleMarkStudentProgressSuccess(row.id)}
-                    className="border border-[var(--border)] bg-[var(--card)] px-2 py-1 text-xs text-[var(--gray-700)] transition hover:bg-[var(--gray-100)]"
+                    className={educationSecondaryButtonClass}
                   >
                     Marcar sucesso #{row.id}
                   </button>
@@ -1325,7 +1345,7 @@ export default function EducationTeacherAreaPage() {
                   type="datetime-local"
                   value={scheduleAtInput}
                   onChange={(event) => setScheduleAtInput(event.target.value)}
-                  className="w-full border border-[var(--border)] bg-[var(--card)] px-2 py-1 text-xs text-[var(--text)]"
+                  className={educationCompactControlClass}
                 />
               </label>
 
@@ -1336,7 +1356,7 @@ export default function EducationTeacherAreaPage() {
                   min={1}
                   value={durationMinutesInput}
                   onChange={(event) => setDurationMinutesInput(event.target.value)}
-                  className="w-full border border-[var(--border)] bg-[var(--card)] px-2 py-1 text-xs text-[var(--text)]"
+                  className={educationCompactControlClass}
                 />
               </label>
 
@@ -1347,7 +1367,7 @@ export default function EducationTeacherAreaPage() {
                   min={1}
                   value={questionCountInput}
                   onChange={(event) => setQuestionCountInput(event.target.value)}
-                  className="w-full border border-[var(--border)] bg-[var(--card)] px-2 py-1 text-xs text-[var(--text)]"
+                  className={educationCompactControlClass}
                 />
               </label>
 
@@ -1357,7 +1377,7 @@ export default function EducationTeacherAreaPage() {
                   type="text"
                   value={titleTemplate}
                   onChange={(event) => setTitleTemplate(event.target.value)}
-                  className="w-full border border-[var(--border)] bg-[var(--card)] px-2 py-1 text-xs text-[var(--text)]"
+                  className={educationCompactControlClass}
                   placeholder="Teste Aleatório - {student_code}"
                 />
               </label>
@@ -1368,7 +1388,7 @@ export default function EducationTeacherAreaPage() {
               <textarea
                 value={scheduleNotes}
                 onChange={(event) => setScheduleNotes(event.target.value)}
-                className="min-h-[64px] w-full border border-[var(--border)] bg-[var(--card)] px-2 py-1 text-xs text-[var(--text)]"
+                className={`${educationCompactControlClass} min-h-[64px] resize-y`}
                 placeholder="Notas opcionais da marcação."
               />
             </label>
@@ -1378,7 +1398,7 @@ export default function EducationTeacherAreaPage() {
                 type="button"
                 onClick={() => handleScheduleRandomTest("classroom")}
                 disabled={schedulingClassroom || schedulingStudent || !selectedClassroomId}
-                className="border border-[var(--border)] bg-[var(--primary-600)] px-2 py-1 text-xs text-white transition hover:bg-[var(--primary-700)] disabled:cursor-not-allowed disabled:opacity-60"
+                className={educationPrimaryButtonClass}
               >
                 {schedulingClassroom ? "A marcar..." : "Marcar para toda turma"}
               </button>
@@ -1386,7 +1406,7 @@ export default function EducationTeacherAreaPage() {
                 type="button"
                 onClick={() => handleScheduleRandomTest("student")}
                 disabled={schedulingClassroom || schedulingStudent || !selectedClassroomId || !selectedStudentId}
-                className="border border-[var(--border)] bg-[var(--card)] px-2 py-1 text-xs text-[var(--gray-700)] transition hover:bg-[var(--gray-100)] disabled:cursor-not-allowed disabled:opacity-60"
+                className={educationSecondaryButtonClass}
               >
                 {schedulingStudent ? "A marcar..." : "Marcar para estudante selecionado"}
               </button>
@@ -1415,12 +1435,12 @@ export default function EducationTeacherAreaPage() {
               <div className="grid gap-2 md:grid-cols-2">
                 <div className="border border-[var(--border)] bg-[var(--card)] p-2 text-xs text-[var(--gray-700)]">
                   <div><strong>Código:</strong> {selectedStudent.student_code || "—"}</div>
-                  <div><strong>Estado:</strong> {selectedStudent.status || "—"}</div>
+                  <div><strong>Estado:</strong> {selectedStudent.status ? tr(selectedStudent.status) : "—"}</div>
                   <div><strong>Nascimento:</strong> {selectedStudent.birth_date || "—"}</div>
                   <div><strong>Encarregado:</strong> {selectedStudent.guardian_name || "—"}</div>
                 </div>
                 <div className="border border-[var(--border)] bg-[var(--card)] p-2 text-xs text-[var(--gray-700)]">
-                  <div><strong>Matrícula:</strong> {selectedEnrollment.status || "—"}</div>
+                  <div><strong>Matrícula:</strong> {selectedEnrollment.status ? tr(selectedEnrollment.status) : "—"}</div>
                   <div><strong>Inscrito em:</strong> {selectedEnrollment.enrolled_on || "—"}</div>
                   <div><strong>Encerrado em:</strong> {selectedEnrollment.closed_on || "—"}</div>
                   <div><strong>Observações:</strong> {selectedStudent.notes || "—"}</div>

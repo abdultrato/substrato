@@ -127,13 +127,13 @@ export default function WarehousePage() {
           title={t("ERP e WMS", "ERP & WMS")}
           subtitle={t(
             "Controle empresarial de compras, estoque, reservas, separação, expedição e inventário.",
-            "Enterprise control for purchasing, stock, reservations, picking, shipping, and inventory."
+            "Controle empresarial de compras, estoque, reservas, separação, expedição e inventário."
           )}
           actions={
             <div className="flex flex-wrap items-center gap-2">
               <Link
                 href="/resources/warehouse"
-                className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-3 py-1.5 text-sm font-medium text-foreground shadow-sm transition hover:bg-muted"
+                className="inline-flex items-center gap-2 rounded-md border border-border bg-card px-3 py-1.5 text-sm font-medium text-foreground shadow-sm transition-all duration-150 hover:border-primary/40 hover:bg-muted hover:shadow-md"
               >
                 <PackageSearch size={16} />
                 {t("Recursos", "Resources")}
@@ -141,7 +141,7 @@ export default function WarehousePage() {
               {podeVerAdmin ? (
                 <Link
                   href="/admin/warehouse/"
-                  className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-3 py-1.5 text-sm font-medium text-foreground shadow-sm transition hover:bg-muted"
+                  className="inline-flex items-center gap-2 rounded-md border border-border bg-card px-3 py-1.5 text-sm font-medium text-foreground shadow-sm transition-all duration-150 hover:border-primary/40 hover:bg-muted hover:shadow-md"
                 >
                   <ShieldCheck size={16} />
                   {t("Administração", "Administration")}
@@ -158,7 +158,7 @@ export default function WarehousePage() {
         ) : null}
 
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-6">
-          <MetricCard label="Itens" value={value(counts.items)} hint="SKUs cadastrados" />
+          <MetricCard label="Itens" value={value(counts.items)} hint="Códigos cadastrados" />
           <MetricCard label="Saldos" value={value(counts.stockLevels)} hint="Posições com estoque" />
           <MetricCard label="Pedidos abertos" value={value(counts.openSalesOrders)} hint="Confirmados para reserva" />
           <MetricCard label="Reservas ativas" value={value(counts.activeReservations)} hint="Estoque comprometido" />
@@ -200,7 +200,7 @@ export default function WarehousePage() {
           />
           <ActionTile
             title="Separação"
-            description="Gere listas de picking por pedido confirmado."
+            description="Gere listas de separação por pedido confirmado."
             href="/resources/warehouse/pick_list"
             icon={PackageSearch}
           />

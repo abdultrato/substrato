@@ -8,6 +8,7 @@ import Card from "@/components/ui/Card"
 import DataTable from "@/components/ui/DataTable"
 import PageHeader from "@/components/ui/PageHeader"
 import { useAuth } from "@/hooks/useAuth"
+import { useLanguage } from "@/hooks/useLanguage"
 import { apiFetch } from "@/lib/api"
 import { isNotFoundLikeError } from "@/lib/errors/api-error"
 import { GROUPS } from "@/lib/rbac"
@@ -35,6 +36,7 @@ type Grade = {
 
 export default function EducationStudentPage() {
   const { user } = useAuth()
+  const { tr } = useLanguage()
 
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -145,7 +147,7 @@ export default function EducationStudentPage() {
           <Card title="Perfil">
             <div className="text-sm text-foreground-2 space-y-1">
               <p><strong>Código:</strong> {loading ? "..." : (student?.student_code || "Não vinculado")}</p>
-              <p><strong>Estado:</strong> {loading ? "..." : (student?.status || "—")}</p>
+              <p><strong>Estado:</strong> {loading ? "..." : (student?.status ? tr(student.status) : "—")}</p>
             </div>
           </Card>
 
