@@ -1,8 +1,14 @@
 # Substrato
 
-Plataforma clínica e laboratorial multi-tenant com backend Django + DRF + Celery e frontend Next.js.
+Plataforma multi-domínio e multi-tenant com backend Django + DRF + Celery e frontend Next.js. O Substrato já não é apenas uma plataforma de saúde: reúne workspaces e módulos para saúde/laboratório, educação, ERP/WMS, recursos humanos, finanças, operação e inteligência operacional.
 
 A documentação consolidada do projeto está em `SUBSTRATO.md`. Este `README.md` permanece curto e funciona apenas como porta de entrada operacional do repositório.
+
+## Escopo do produto
+- **Saúde e laboratório:** recepção, pacientes, requisições, resultados, consultas, enfermagem, farmácia, banco de sangue, faturação e pagamentos.
+- **Educação:** domínio migrado de `schoolar-s` para `apps/education`, com cursos, turmas, estudantes, professores, matrículas, presenças, avaliações, exames, conteúdos e áreas dedicadas para professor, estudante e directoria.
+- **ERP e WMS:** compras, recebimentos, armazéns, localizações, itens, lotes, saldos, reservas, separação, expedição, transferências e inventário.
+- **Backoffice e plataforma:** identidade, tenants, RBAC, contabilidade, recursos humanos, notificações, auditoria, monitorização, IA operacional, CI/CD e observabilidade.
 
 ## Stack principal
 - Backend: Django 4.2, Django REST Framework, Postgres, Redis e Celery.

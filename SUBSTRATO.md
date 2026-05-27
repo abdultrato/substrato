@@ -2,9 +2,11 @@
 
 Documentação consolidada do projeto Substrato.
 
+Atualizado: 2026-05-27.
+
 Este arquivo centraliza toda a documentação autoral previamente distribuída em múltiplos arquivos Markdown do repositório. O `README.md` permanece como porta de entrada curta e operacional; este documento preserva o conteúdo consolidado e organizado por origem.
 
-A seção `Fonte: README.md` preserva a versão expandida do README existente no momento da consolidação, anterior à redução do arquivo de entrada atual.
+A seção `Fonte: README.md` preserva a versão expandida do README existente no momento da consolidação e foi atualizada para refletir o escopo multi-plataforma atual.
 
 ## Índice consolidado
 
@@ -38,9 +40,9 @@ A seção `Fonte: README.md` preserva a versão expandida do README existente no
 
 ## Fonte: `README.md`
 
-# Substrato – Plataforma Clínica/Laboratorial Multi‑Tenant
+# Substrato – Plataforma Multi-Domínio Multi‑Tenant
 
-Arquitetura profissional em Django + DRF + Celery, com frontend Next.js/React, orientada a domínio (DDD) e preparada para operação SaaS multi‑tenant.
+Arquitetura profissional em Django + DRF + Celery, com frontend Next.js/React, orientada a domínio (DDD) e preparada para operação SaaS multi‑tenant. O Substrato deixou de ser apenas uma plataforma clínica/laboratorial: depois da integração do domínio `schoolar-s` no módulo `education`, o produto passou a operar como uma multi-plataforma para saúde, educação, ERP/WMS, backoffice financeiro, recursos humanos, monitorização e automação operacional.
 
 ---
 
@@ -62,6 +64,7 @@ Arquitetura profissional em Django + DRF + Celery, com frontend Next.js/React, o
 - **Backend:** Django 4.2 + Django REST Framework, Postgres, Redis, Celery.
 - **Frontend:** Next.js (App Router), TypeScript, Tailwind CSS, tema claro/escuro (tokens CSS) e UI orientada a módulos.
 - **Multi‑tenant:** isolamento lógico por inquilino em toda a camada de dados (mixins + middleware).
+- **Workspaces de produto:** Saúde, Educação, ERP/WMS e áreas transversais de plataforma/gestão.
 - **Eventos/Integrações:** serviços de mensageria (e‑mail, SMS, WhatsApp), gateway de pagamentos e faturamento integrado.
 - **Observabilidade:** health checks /health/live e /health/ready; logs estruturados; métricas previstas.
 
@@ -79,10 +82,14 @@ Arquitetura profissional em Django + DRF + Celery, com frontend Next.js/React, o
 - **Faturamento** (`apps/billing`): faturas multi‑origem, itens (exame, farmácia, enfermagem, ajustes), estados (rascunho, emitida, paga).
 - **Pagamentos** (`apps/payments`): pagamentos, transações, recibos automáticos (1 por fatura) e PDF do recibo.
 - **Contabilidade** (`apps/accounting`): contas, lançamentos, movimentos (débito/crédito), conciliação.
+- **ERP/WMS** (`apps/warehouse`): armazéns, localizações, itens, lotes, saldos, compras, recebimentos, reservas, separação, expedição, transferências e inventário.
+- **Educação** (`apps/education`): cursos, turmas, estudantes, professores, matrículas, presenças, notas, exames, trabalhos, conteúdos e fluxos migrados do `schoolar-s`.
+- **Recursos Humanos** (`apps/human_resources`): colaboradores, cargos, horários, ausências, férias, horas extra, dependentes e folha salarial.
 - **Recepção** (`apps/reception`): fluxo check‑in → requisição → fatura → pagamento (testado end‑to‑end).
 - **Seguradora** (`apps/insurer`): seguradoras, planos, autorizações de procedimento.
 - **Notificações** (`apps/notifications`): templates, log de envio, canais (e‑mail/SMS/WhatsApp) com idempotência por referência.
 - **Entidades externas** (`apps/external_entities`): empresas para medicina ocupacional e requisições/terceirizações.
+- **IA Operacional** (`apps/ai_assistant`): sessões, investigações, tarefas operacionais, ferramentas e base de conhecimento para apoio auditável aos utilizadores autorizados.
 - **Dashboard/Estatísticas** (`api/v1/dashboard` + frontend): KPIs, gráficos e exportação de relatórios (PDF/CSV/Word).
 
 ---
@@ -119,6 +126,7 @@ Serviço HTTP: gunicorn + nginx/traefik (prod)
 
 ## 4) Frontend (Next.js)
 - App Router em `frontend-next/app`.
+- Seleção de workspaces por domínio: `/healthcare`, `/education`, `/warehouse` e áreas operacionais por perfil.
 - CRUD “Recursos” como exemplo de form auto‑gerado: usa `components/form/AutoForm.tsx` + schema OpenAPI para tipar campos.
 - Tema claro/escuro como atalho rápido (Header/Sidebar) e tokens no `app/globals.css`.
 - Testes com Vitest / Testing Library.
@@ -201,6 +209,7 @@ docker compose exec backend python manage.py bootstrap_role_users --reset-passwo
 Credenciais (senha padrão `admin123`):
 - `admin` (Administrador; único usuário com acesso ao `/admin`)
 - `recepcao`, `laboratorio`, `enfermagem`, `medico`, `ocupacional`, `farmacia`, `contabilidade`, `rh`
+- Perfis educacionais usam o mesmo login e RBAC central: professor, estudante, encarregado e directoria escolar quando configurados.
 
 ### Build das imagens
 ```bash
@@ -233,7 +242,7 @@ docker compose -f docker-compose.prod.yml exec backend python manage.py check_as
 pytest
 pytest apps/notifications/tests.py    # exemplo por app
 ```
-Cobertura atual: suíte completa de 46 testes cobre fluxos de clínica, recepção→faturamento→pagamento, contabilidade, enfermagem, farmácia, seguradora, notificações e inquilinos.
+Cobertura atual: suíte completa cobre fluxos de clínica, recepção→faturamento→pagamento, contabilidade, enfermagem, farmácia, seguradora, notificações, inquilinos e gates de migração/auditoria do domínio `education`.
 
 ### Frontend
 ```bash
@@ -269,7 +278,7 @@ npm test
 ---
 
 ## 10) Referências Rápidas
-- **Apps principais:** `apps/` (clinical, medical_records, maternity, nursing, pharmacy, billing, payments, accounting, consultations, reception, external_entities, insurer, notifications, tenants, identity).
+- **Apps principais:** `apps/` (clinical, medical_records, maternity, nursing, pharmacy, billing, payments, accounting, warehouse, education, human_resources, consultations, reception, external_entities, insurer, notifications, tenants, identity, monitoring, ai_assistant).
 - **OpenAPI UI:** `http://localhost:8000/api/docs/` e `http://localhost:8000/api/redoc/`.
 - **Schema para o frontend:** `python generate_schema.py` (gera `frontend-next/schema.json`).
 - **Documentos:** `API-DOCS.md`, `DOCKER-QUICK-START.md`, `CI-CD.md`, `MONITORING.md`, `PROXIMOS_PASSOS.md`.
@@ -329,7 +338,7 @@ npm test
 # SUBSTRATO (SUBS) System Blueprint
 
 **System name:** SUBSTRATO  
-**Acronym / slogan:** SUBS — *Sistema Unificado de Base em Saude*  
+**Acronym / slogan:** SUBS — *Sistema Unificado de Base do Substrato*
 **Repository type:** Modular monolith (Django + DRF + Celery) with a separate Next.js web frontend  
 **Primary language:** Portuguese (domain terminology, UI), with English-friendly structure in this blueprint  
 **Generated:** 2026-03-15
@@ -339,22 +348,27 @@ npm test
 ## 1. System Overview
 
 ### Purpose of the system
-SUBSTRATO is a digital infrastructure platform for healthcare operations, covering end-to-end workflows from reception (patient intake) to clinical/laboratory execution, nursing operations, pharmacy stock/sales, billing, payments, and reporting. It is designed to operate as a multi-tenant SaaS (multiple clinics/organizations sharing the same codebase with logical isolation by tenant).
+SUBSTRATO is a multi-domain digital infrastructure platform. It covers healthcare operations, education workflows migrated from `schoolar-s`, ERP/WMS stock operations, finance/backoffice, human resources, monitoring and operational automation. It is designed to operate as a multi-tenant SaaS where multiple organizations share the same codebase with logical isolation by tenant.
 
 ### Core capabilities
 - Multi-tenant foundation (tenant-aware models, middleware tenant resolution, per-tenant usage limits).
 - Identity and access control (JWT auth + role-based access control enforced at the API router; Django Admin available to Administrators only).
+- Workspace routing for Healthcare, Education, ERP/WMS and neutral platform areas.
 - Patient management (demographics, documents, contacts, provenance, occupational medicine company linkage).
 - Laboratory and clinical exam requisitions and result workflows (state machine: pendente -> em_analise -> aguardando_validacao -> validado).
 - Cardex (Prontuario) with structured prescription items.
 - Consultation scheduling with pricing rules (holiday surcharge configured per tenant).
 - Nursing workflows including procedures/materials and ward management (enfermaria, beds, hospitalizations, next medication tracking).
 - Pharmacy inventory (products, lots, FEFO stock movements) and sales.
+- Education domain (courses, classes, teachers, students, enrollments, attendance, grades, examinations, assignments, submissions and learning content) migrated into `apps/education`.
+- ERP/WMS workflows (warehouses, locations, items, lots, stock levels, purchase orders, goods receipts, reservations, pick lists, shipments, transfers and cycle counts).
+- Human resources workflows (employees, roles, schedules, absences, vacations, overtime and payroll).
 - Billing (multi-origin invoices) and payments, with automatic receipt generation when fully paid.
 - Document generation (A5 PDFs for requisition/results/invoice/receipt) with QR codes and Code128 barcodes.
 - Audit and monitoring (persisted user activity logs and error logs, plus Prometheus metrics).
 - Equipment integrations (worklist + results inbox HTTP JSON, authenticated by per-equipment API key).
 - Dashboards and analytics with export (PDF/CSV/Word).
+- Operational AI support for authorized users, investigations, tasks and tool calls.
 
 ### Target users
 - Administrador (system administrator)
@@ -365,11 +379,16 @@ SUBSTRATO is a digital infrastructure platform for healthcare operations, coveri
 - Tecnico de Farmacia (stock, lots, sales)
 - Contabilidade (accounts/ledger, financial reconciliation, read-only billing history)
 - Gestor de RH (employees and schedules)
+- Professor / Directoria / Estudante / Encarregado (education workspace roles)
+- Operador WMS / Gestor de Armazem (purchase, receipt, reservation, picking, shipment and inventory)
+- Operador de plataforma (monitoring, tenancy, audits and operational AI)
 
 ### Domain context
-- Clinic/laboratory setting (patient-centered workflows, exam catalogs, result validation, billing documents).
+- Multi-domain SaaS setting: healthcare/laboratory, education, ERP/WMS, finance/backoffice and operational governance coexist under one identity, tenancy and permission model.
 - Mozambican operational context is visible in defaults (Africa/Maputo timezone, MZN currency, NUIT fields, Portuguese naming).
-- Occupational medicine support: patients can be linked to an originating company; requisitions can be requested/executed by external companies.
+- Healthcare/laboratory support remains a first-class domain, including occupational medicine, clinical requests, result validation and billing documents.
+- Education support is isolated in `apps/education` and integrated through shared identity, RBAC, tenancy, frontend workspaces and migration/audit commands for `schoolar-s`.
+- ERP/WMS support is isolated in `apps/warehouse` and integrated with stock, purchases, reservations, picking, shipment and inventory flows.
 
 ---
 
@@ -383,7 +402,7 @@ The repository is a single workspace containing backend, frontend, infrastructur
 | --- | --- |
 | `platform/` | Django project package: settings, WSGI/ASGI entrypoints, URL root, Celery app wiring. |
 | `api/` | REST API implementation: `api/v1/` is the active DRF API; `api/endpoints/` contains legacy/unused endpoints. |
-| `apps/` | Main Django apps (bounded contexts): accounting, audit_activities, billing, clinical, consultations, equipment, equipment_integrations, external_entities, human_resources, identity, incidents, inspections, insurer, maintenance, maternity, medical_records, monitoring, notifications, nursing, payments, pharmacy, reception, surgery, tenants. |
+| `apps/` | Main Django apps (bounded contexts): accounting, ai_assistant, audit_activities, billing, bloodbank, clinical, consultations, education, equipment, equipment_integrations, external_entities, human_resources, identity, incidents, inspections, insurer, maintenance, maternity, medical_records, monitoring, notifications, nursing, payments, pharmacy, reception, surgery, tenants, warehouse. |
 | `application/` | Application/use-case orchestration (service functions coordinating multiple apps, transactions, invariants). |
 | `domain/` | Domain rules and state machines (business logic that should remain framework-light). |
 | `services/` | Cross-cutting services (billing, tenant usage limits, notifications, reports) used by apps/API. |
@@ -392,7 +411,7 @@ The repository is a single workspace containing backend, frontend, infrastructur
 | `events/` | In-process event bus and event handler registration; used to decouple domain actions. |
 | `tasks/` | Celery tasks and PDF generators (ReportLab), cleanup scripts, seeding helpers (some legacy). |
 | `integrations/` | External integration adapters (messaging, payments, government/insurance, HL7/FHIR stubs, storage stubs). |
-| `frontend-next/` | Next.js 14 (App Router) frontend: pages, components, Tailwind, API client, RBAC UI. |
+| `frontend-next/` | Next.js 15 (App Router) frontend: pages, components, Tailwind, API client, RBAC UI and workspace routes for healthcare, education and ERP/WMS. |
 | `scripts/` | Operational scripts: backups, reset DB+migrations (dev), RBAC user creation wrapper, DB init SQL, schema conversion. |
 | `kubernetes/` | Kubernetes manifests (base deployment/service/HPA, Postgres statefulset, configmap/secret, ingress). |
 | `monitoring/` | Prometheus and Grafana provisioning/config for observability. |
@@ -528,7 +547,7 @@ Note on optional dependencies: `requirements.txt` includes packages such as `dja
 ### API layer (`api/v1/`)
 - DRF `DefaultRouter` with `trailing_slash="/?"` and a central `registrar_rotas(router)` that registers all ViewSets and enforces RBAC.
 - Custom exception handler implements RFC 7807-like responses and converts Django `ValidationError` into DRF-friendly 400 payloads.
-- Key API groups: clinico, recepcao, faturamento, pagamentos, farmacia, enfermagem, consultas, prontuario, maternidade, cirurgia, entidades, seguradora, contabilidade, recursos_humanos, notificacoes, auditoria, monitoramento, dashboard, inquilinos.
+- Key API groups: clinical/clinico, reception/recepcao, billing/faturamento, payments/pagamentos, pharmacy/farmacia, nursing/enfermagem, consultations, medical_records/prontuario, maternity, surgery, education, warehouse, bloodbank, external_entities/entidades, insurer/seguradora, accounting/contabilidade, human_resources/recursos_humanos, notifications/notificacoes, audit/auditoria, monitoring/monitoramento, dashboard, tenants/inquilinos and ai_assistant.
 - Auth endpoints: `/api/v1/auth/login/`, `/api/v1/auth/refresh/`, `/api/v1/auth/logout/`, `/api/v1/auth/user/`.
 - Password reset endpoints: `/api/v1/auth/password-reset/request/`, `/api/v1/auth/password-reset/confirm/`.
 - Password change endpoint: `/api/v1/auth/password/change/`.
@@ -561,6 +580,9 @@ Note on optional dependencies: `requirements.txt` includes packages such as `dja
 | Payment (`Pagamento`) | FK `Fatura`; transitions update invoice status; on full payment triggers receipt generation |
 | Receipt (`Recibo`) | FK `Fatura`, 1-1 with `Pagamento` that closed the invoice; used to generate separate PDF document |
 | Pharmacy (`Produto`, `Lote`, `MovimentoEstoque`, `Venda`, `ItemVenda`) | lots track initial quantity and compute saldo via movements; `ItemVenda` consumes stock FEFO and updates sale totals; invoices can sync from sales |
+| Warehouse (`Warehouse`, `WarehouseItem`, `StockLevel`, `PurchaseOrder`, `SalesOrder`, `Shipment`) | WMS controls stock by warehouse/location/lot, receives purchases, reserves confirmed demand, generates pick lists, ships orders and records transfers/cycle counts |
+| Education (`Course`, `Classroom`, `StudentProfile`, `TeacherProfile`, `Enrollment`, `Attendance`, `Grade`, `Examination`) | academic records are tenant-scoped and linked to shared identity; migration/audit commands preserve parity with `schoolar-s` legacy data |
+| Human resources (`Employee`, `JobTitle`, `WorkSchedule`, `Absence`, `Vacation`, `Overtime`, `Payroll`) | employee lifecycle, schedules, absence/vacation tracking and payroll calculation for backoffice operations |
 | Ward (`Enfermaria`, `CamaEnfermaria`, `InternamentoEnfermaria`) | bed occupancy enforced (one active admission per bed); dashboard and next medication fields supported |
 | Cardex (`RegistroProntuario`, `PrescricaoItem`) | FK patient + doctor; M2M consultations; structured medication dosage, units, interval/doses rules |
 | Occupational medicine (`Empresa`) | linked from patient and requisitions (solicitante/executora externa) |
@@ -616,6 +638,33 @@ This section maps the functional modules to the codebase and explains interactio
 ### Pharmacy
 - App: `apps/pharmacy`
 - Features: products and lots, FEFO stock consumption via movements, sales and sale items, invoice sync from sales.
+
+### ERP/WMS
+- App: `apps/warehouse`
+- API: `api/v1/warehouse/*`
+- Frontend: `frontend-next/app/warehouse`
+- Features: warehouses, storage locations, item categories, stock items, lots, stock levels, movements, replenishment plans/suggestions, purchase orders, goods receipts, sales orders, reservations, pick lists, shipments, stock transfers and cycle counts.
+- Interaction: confirmed demand reserves stock; picking guides warehouse execution; shipment consumes reservations and records stock output; replenishment can generate purchase orders from reorder points.
+
+### Education
+- App: `apps/education`
+- API: `api/v1/education/*`
+- Frontend: `frontend-next/app/education`, including teacher, student and directoria areas.
+- Migration: legacy `schoolar-s` data is handled by `education_migrate_legacy`, `education_migration_inventory` and `education_migration_audit`.
+- Features: courses, classrooms, teachers, students, enrollments, attendance, grades, examinations, random tests, assignments, submissions, learning content, bibliography, thematic maps, discipline schedules, progress and skills.
+- Boundary: education uses shared identity/RBAC/tenancy but does not import healthcare models directly; cross-domain integration should happen through services, contracts or events.
+
+### Human resources
+- App: `apps/human_resources`
+- API: `api/v1/human_resources/*`
+- Features: employees, job roles, schedules, family dependents, absences, vacations, dismissals/terminations, overtime and payroll.
+- Interaction: HR supports backoffice and ERP operations and can feed accounting/payroll workflows.
+
+### Blood bank
+- App: `apps/bloodbank`
+- API: `api/v1/bloodbank/*`
+- Features: donations, blood units, storage, storage maintenance, stock movements and transfusions.
+- Boundary: blood stock state changes must be treated as domain transitions because they carry clinical and inventory risk.
 
 ### Billing and payments
 - Apps: `apps/billing`, `apps/payments`
@@ -706,13 +755,28 @@ This section maps the functional modules to the codebase and explains interactio
 3. FEFO stock consumption chooses available lots (`Lote.disponiveis(produto)`) ordered by expiry and creates `MovimentoEstoque` outputs to deduct saldo.
 4. Billing can sync invoice items from the sale.
 
+### ERP/WMS replenishment-to-shipment flow
+1. Configure warehouses, storage locations, items, lots and reorder points.
+2. Generate a replenishment plan/suggestion when stock falls below minimum.
+3. Create a purchase order and register goods receipt into warehouse/location/lot stock.
+4. Confirm a sales order to create operational demand and active stock reservations.
+5. Generate pick lists, execute shipment, consume reservations and create stock movements.
+6. Use transfers and cycle counts to keep physical and system stock aligned.
+
+### Education academic flow
+1. Create courses, classrooms, teachers and student profiles under the shared tenant and identity model.
+2. Register enrollments and assign academic activities.
+3. Record attendance, grades, examinations, random tests, assignments and submissions.
+4. Track content, bibliography, thematic maps, discipline schedules and student progress.
+5. Keep migration parity checks active when data comes from `schoolar-s`.
+
 ### Ward (enfermaria) flow
 1. Configure `Enfermaria` and `CamaEnfermaria`.
 2. Create `InternamentoEnfermaria` assigning a patient to a bed; enforce one active admission per bed.
 3. Track next medication schedule in the admission record; dashboard endpoints aggregate occupancy and next medication times.
 
 ### Clinical history aggregation
-The patient history endpoint aggregates records across modules (cardex, requisitions, consultations, nursing, ward admissions, pharmacy, invoices, receipts). When available, linking can be done by shared patient document number for continuity.
+The patient history endpoint aggregates records across healthcare modules (cardex, requisitions, consultations, nursing, ward admissions, pharmacy, invoices, receipts). When available, linking can be done by shared patient document number for continuity.
 
 ---
 
@@ -790,9 +854,10 @@ Production (`docker-compose.prod.yml`) provides:
 
 ## 11. Scalability Strategy
 
-### Multi-clinic / multi-tenant growth
-- Keep tenant isolation strict: ensure every business query is scoped by `inquilino`, and consider DB-level constraints and Postgres row-level security (RLS) for defense-in-depth.
-- Tenant configuration (`ConfiguracaoInquilino`) can evolve to support multi-unit branches (`permite_multi_unidade`) and per-unit reporting.
+### Multi-domain / multi-tenant growth
+- Keep tenant isolation strict across healthcare, education, ERP/WMS, HR, finance and platform modules: ensure every business query is scoped by `inquilino`, and consider DB-level constraints and Postgres row-level security (RLS) for defense-in-depth.
+- Tenant configuration (`ConfiguracaoInquilino`) can evolve to support multi-unit branches (`permite_multi_unidade`), school/clinic/warehouse units and per-domain reporting.
+- Cross-domain features must use shared identity/RBAC/tenancy and explicit services, contracts or events instead of direct coupling between unrelated domains.
 
 ### Horizontal scaling
 - Backend is largely stateless (JWT auth + DB/Redis state), so it scales with additional Gunicorn replicas.
@@ -858,6 +923,9 @@ flowchart TB
     FAT[faturamento]
     PAG[pagamentos]
     FAR[farmacia]
+    WMS[warehouse]
+    EDU[educacao]
+    BS[banco_sangue]
     ENF[enfermagem]
     PRO[prontuario]
     CON[consultas]
@@ -871,6 +939,7 @@ flowchart TB
     INT[integracoes_equipamentos]
     RH[recursos_humanos]
     ACC[contabilidade]
+    AI[ia_operacional]
   end
 
   API[api/v1/*\nDRF ViewSets] --> Apps

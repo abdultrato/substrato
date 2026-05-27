@@ -1,13 +1,19 @@
 # Direct migration: Schoolar-S -> Substrato Education
 
+## Product context
+
+The `schoolar-s` merge changes Substrato's product boundary: Substrato must be documented and maintained as a multi-platform SaaS, not as a healthcare-only system. Education is now a first-class domain beside healthcare, ERP/WMS, finance, HR, monitoring and operational AI.
+
 ## Applied in this rollout
 
 1. Created bounded context `apps/education`.
 2. Added centralized API routes under `/api/v1/education/*`.
-3. Enabled role-aware access for `Professor` and `Estudante` with single login.
+3. Enabled role-aware access for `Professor`, `Estudante` and school leadership flows with single login.
 4. Added unified frontend routes:
    - `/education`
    - `/education/student`
+   - `/education/teacher`
+   - `/education/directoria`
 5. Legacy module `apps/education/legacy_schoolar/` decommissioned and removed.
 
 ## Critical precautions

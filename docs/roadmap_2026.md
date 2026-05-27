@@ -2,10 +2,10 @@
 
 ## Visão Geral
 
-Plano de evolução do Substrato com foco em: (1) eliminar dívida técnica crítica, (2) melhorar escalabilidade operacional, (3) expandir funcionalidades clínicas, (4) otimizar frontend.
+Plano de evolução do Substrato como multi-plataforma com foco em: (1) eliminar dívida técnica crítica, (2) melhorar escalabilidade operacional, (3) consolidar domínios de saúde, educação, ERP/WMS e backoffice, (4) otimizar frontend e workspaces.
 
 **Status**: Ativo desde maio/2026  
-**Última atualização**: 2026-05-20  
+**Última atualização**: 2026-05-27
 **Owner**: Squad de engenharia
 
 ---
@@ -14,7 +14,7 @@ Plano de evolução do Substrato com foco em: (1) eliminar dívida técnica crí
 
 ```
 Maio/2026          Junho/2026         Julho/2026         Agosto/2026
-├─ T1 (Relatos)   ├─ T2 (DB Perf)    ├─ T3 (Obs)        ├─ T4 (Clínico)
+├─ T1 (Relatos)   ├─ T2 (DB Perf)    ├─ T3 (Obs)        ├─ T4 (Domínios)
 └─ Init Sprint 1   └─ Init Sprint 2   └─ Init Sprint 3   └─ Init Sprint 4+
 ```
 
@@ -171,7 +171,7 @@ Expandir dashboards Prometheus/Grafana com SLOs e error budgets segmentados por 
 
 ---
 
-## Sprint 4: Novas Funcionalidades Clínicas
+## Sprint 4: Consolidação de Domínios de Produto
 
 **Período**: 2026-07-15 → 2026-08-31 (2 sprints)  
 **Owner**: Product Squad + Backend  
@@ -233,7 +233,9 @@ Gestão de RH: colaboradores, escalas, folha de pagamento básica.
 ### Critérios de Sucesso
 
 - ✅ Cirurgia: MVP em produção com >= 5 clientes testando
-- ✅ RH: Escalas funcionales e folha automática
+- ✅ RH: Escalas funcionais e folha automática
+- ✅ Educação: workspaces de professor, estudante e directoria alinhados com `apps/education`
+- ✅ ERP/WMS: fluxo compra -> recebimento -> reserva -> separação -> expedição rastreável
 - ✅ Cobertura >= 35%
 
 ---
@@ -251,13 +253,18 @@ Gestão de RH: colaboradores, escalas, folha de pagamento básica.
   - Exemplos de uso em documentação
 
 - [ ] **T5.2**: Dashboard executivo consolidado
-  - KPIs: pacientes, receita, taxa de ocupação
-  - Gráficos: trend de atendimentos, faturamento
+  - KPIs: pacientes, receita, taxa de ocupação, estudantes, turmas, estoque, pedidos e SLOs
+  - Gráficos: tendência de atendimentos, faturamento, evolução académica, estoque e operação
 
 - [ ] **T5.3**: Educação – migração completa do legacy
-  - Converter `legacy/` → `apps/education`
-  - Testes migrados
-  - Documentação de deprecated
+  - Manter `schoolar-s` isolado como legado e consolidar runtime em `apps/education`
+  - Testes e auditorias de migração com `education_migration_audit`
+  - Documentação de deprecated e contratos finais do domínio education
+
+- [ ] **T5.4**: ERP/WMS – consolidação operacional
+  - Validar reposição, compras, recebimentos, reservas, separação e expedição
+  - Publicar guias de operação para armazém, compras e inventário
+  - Integrar métricas de estoque e expedição no command center
 
 ### Tarefas Contínuas
 
@@ -277,7 +284,7 @@ Sprint 2 (DB Perf) ← Pode rodar em paralelo
   ↓
 Sprint 3 (Observabilidade)
   ↓
-Sprint 4 (Funcionalidades) ← Paralelo com Sprint 3
+Sprint 4 (Domínios) ← Paralelo com Sprint 3
   ↓
 Sprint 5+ (Consolidação)
 ```
@@ -299,7 +306,7 @@ Sprint 5+ (Consolidação)
 | Error Rate 5xx           | 5%         | 3%          | Sprint 1 |
 | DB Query p95             | 2.5s       | 1.5s        | Sprint 2 |
 | SLO Visibility           | 0% tenants | 90% tenants | Sprint 3 |
-| Funcionalidades Clínicas | 8 apps     | 10 apps     | Sprint 4 |
+| Domínios de produto ativos | saúde      | saúde + educação + ERP/WMS + backoffice | Sprint 4 |
 | Test Coverage            | 35%        | 45%         | Sprint 4 |
 
 ---
