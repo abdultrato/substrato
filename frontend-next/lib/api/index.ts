@@ -91,11 +91,6 @@ function rewriteUrl(url: string): string {
     ["/medical-records/record", "/medical_records/record"],
     ["/medical-records", "/medical_records"],
 
-    // Legacy backend modules still exposed with Portuguese slugs.
-    ["/maternity", "/maternidade"],
-    ["/audit", "/auditoria"],
-    ["/notifications", "/notificacoes"],
-    ["/monitoring", "/monitoramento"],
   ]
 
   for (const [from, to] of mappings) {

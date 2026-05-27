@@ -112,7 +112,9 @@ describe("modules catalog discovery", () => {
 
     expect(session?.group.label).toBe("IA Operacional")
     expect(session?.resource.label).toBe("Sessões da IA")
+    expect(session?.resource.endpoint).toBe("/ai/assistant/sessions/")
     expect(session?.resource.adminListHref).toBe("/admin/ai_assistant/aisession/")
+    expect(task?.resource.endpoint).toBe("/ai/assistant/tasks/")
     expect(task?.resource.adminListHref).toBe("/admin/ai_assistant/aioperationaltask/")
   })
 
@@ -185,6 +187,28 @@ describe("modules catalog discovery", () => {
 
     expect(invoiceItem?.resource.adminListHref).toBeUndefined()
     expect(tenantPlan?.resource.adminListHref).toBeUndefined()
+  })
+
+  it("keeps the static catalog aligned with canonical exposed endpoints", () => {
+    const endpoints = new Set(MODULES.flatMap((group) => group.resources.map((resource) => resource.endpoint)))
+
+    expect(endpoints).toContain("/monitoring/export_job/")
+    expect(endpoints).toContain("/notifications/notification/")
+    expect(endpoints).toContain("/notifications/template/")
+    expect(endpoints).toContain("/equipment_integrations/equipment/")
+    expect(endpoints).toContain("/audit/atividade/")
+    expect(endpoints).toContain("/dashboard/analytics/")
+    expect(endpoints).toContain("/human_resources/profissao/")
+    expect(endpoints).toContain("/nursing/ward_dashboard/")
+  })
+
+  it("does not expose known misleading legacy API routes in the static catalog", () => {
+    const endpoints = MODULES.flatMap((group) => group.resources.map((resource) => resource.endpoint))
+
+    expect(endpoints).not.toContain("/notifications/notificacao/")
+    expect(endpoints).not.toContain("/ai_assistant/ai-sessions/")
+    expect(endpoints).not.toContain("/ai_assistant/ai-investigations/")
+    expect(endpoints).not.toContain("/ai_assistant/ai-operational-tasks/")
   })
 
   it("does not expose legacy portuguese admin slugs in generated shortcuts", () => {

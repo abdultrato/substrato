@@ -101,7 +101,28 @@ class SystemErrorSerializer(LegacyAliasSerializerMixin, serializers.ModelSeriali
             return getattr(u, "username", "")
 
 
+class ExportJobSerializer(serializers.Serializer):
+    id = serializers.CharField()
+    status = serializers.CharField(allow_blank=True, allow_null=True)
+    export_key = serializers.CharField(allow_blank=True, allow_null=True)
+    created_at = serializers.CharField(allow_blank=True, allow_null=True)
+    updated_at = serializers.CharField(allow_blank=True, allow_null=True)
+    started_at = serializers.CharField(allow_blank=True, allow_null=True)
+    finished_at = serializers.CharField(allow_blank=True, allow_null=True)
+    filename = serializers.CharField(allow_blank=True, allow_null=True)
+    content_type = serializers.CharField(allow_blank=True, allow_null=True)
+    error = serializers.CharField(allow_blank=True, allow_null=True)
+    status_url = serializers.URLField()
+    download_url = serializers.URLField()
+
+
+class ExportJobListSerializer(serializers.Serializer):
+    count = serializers.IntegerField()
+    results = ExportJobSerializer(many=True)
+
+
 SERIALIZER_MAP = {
     "error": SystemErrorSerializer,
+    "export_job": ExportJobSerializer,
 }
 

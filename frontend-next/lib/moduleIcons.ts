@@ -44,6 +44,7 @@ const MODULE_ICON_BY_KEY: Record<string, LucideIcon> = {
   education: GraduationCap,
   entities: Building2,
   equipment: Microscope,
+  equipment_integrations: TerminalSquare,
   human_resources: Users,
   identity: ShieldCheck,
   insurer: ShieldCheck,

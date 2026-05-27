@@ -6,6 +6,7 @@ from django.db.models.functions import TruncDay, TruncHour
 from django.http import HttpResponse
 from django.urls import reverse
 from django.utils import timezone
+from drf_spectacular.utils import OpenApiParameter, OpenApiTypes, extend_schema
 from rest_framework.decorators import action
 from rest_framework.exceptions import NotFound
 from rest_framework.permissions import IsAdminUser, IsAuthenticated  # Protege o endpoint
@@ -21,11 +22,12 @@ from services.reports.async_exports import (
     can_access_export_job,
     get_export_job_result,
     get_export_job_state,
+    list_export_job_states,
 )
 from substrato_os.cloud import CloudControlPlaneError
 
 from ..filters import SystemErrorFilter
-from ..serializers import SystemErrorSerializer
+from ..serializers import ExportJobListSerializer, ExportJobSerializer, SystemErrorSerializer
 
 
 class SystemErrorViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
@@ -1001,6 +1003,7 @@ class TelemetryViewSet(ValidatedSearchOrderingMixin, ViewSet):
 class ExportJobViewSet(ValidatedSearchOrderingMixin, ViewSet):
     permission_classes = [IsAuthenticated]
     http_method_names = ["get", "head", "options"]
+    serializer_class = ExportJobSerializer
 
     def _get_job_or_404(self, request, pk: str) -> dict:
         state = get_export_job_state(pk)
@@ -1028,6 +1031,8 @@ class ExportJobViewSet(ValidatedSearchOrderingMixin, ViewSet):
         except Exception:
             status_path = f"/api/v1/monitoring/export_job/{job_id}/"
             download_path = f"/api/v1/monitoring/export_job/{job_id}/download/"
+        status_path = f"{str(status_path).rstrip('/')}/"
+        download_path = f"{str(download_path).rstrip('/')}/"
 
         return {
             "id": job_id,
@@ -1044,10 +1049,31 @@ class ExportJobViewSet(ValidatedSearchOrderingMixin, ViewSet):
             "download_url": request.build_absolute_uri(download_path),
         }
 
+    @extend_schema(
+        parameters=[
+            OpenApiParameter("status", OpenApiTypes.STR, OpenApiParameter.QUERY),
+            OpenApiParameter("limit", OpenApiTypes.INT, OpenApiParameter.QUERY),
+        ],
+        responses={200: ExportJobListSerializer},
+    )
+    def list(self, request):
+        limit = _coerce_int(request.query_params.get("limit"), default=50, min_value=1, max_value=200)
+        states = list_export_job_states(
+            tenant_id=getattr(getattr(request, "tenant", None), "id", None),
+            user_id=getattr(getattr(request, "user", None), "id", None),
+            is_superuser=bool(getattr(getattr(request, "user", None), "is_superuser", False)),
+            status=request.query_params.get("status"),
+            limit=limit,
+        )
+        results = [self._serialize_job(request, state) for state in states]
+        return Response({"count": len(results), "results": results})
+
+    @extend_schema(responses={200: ExportJobSerializer})
     def retrieve(self, request, pk=None):
         state = self._get_job_or_404(request, pk)
         return Response(self._serialize_job(request, state))
 
+    @extend_schema(responses={(200, "application/octet-stream"): OpenApiTypes.BINARY})
     @action(detail=True, methods=["get"], url_path="download", url_name="download")
     def download(self, request, pk=None):
         state = self._get_job_or_404(request, pk)

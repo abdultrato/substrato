@@ -3,6 +3,7 @@ from services.reports.async_exports import (
     create_export_job,
     get_export_job_result,
     get_export_job_state,
+    list_export_job_states,
     mark_export_job_processing,
     mark_export_job_ready,
 )
@@ -56,3 +57,30 @@ def test_export_job_access_control_by_tenant_and_user():
     assert not can_access_export_job(state, tenant_id=10, user_id=22, is_superuser=False)
     assert not can_access_export_job(state, tenant_id=11, user_id=21, is_superuser=False)
     assert can_access_export_job(state, tenant_id=None, user_id=None, is_superuser=True)
+
+
+def test_list_export_job_states_respects_access_and_status():
+    own = create_export_job(
+        export_key="invoice_pdf",
+        payload={"invoice_id": 123},
+        tenant_id=11,
+        user_id=22,
+    )
+    other = create_export_job(
+        export_key="analytics_pdf",
+        payload={},
+        tenant_id=12,
+        user_id=22,
+    )
+    mark_export_job_processing(own["id"])
+
+    visible = list_export_job_states(
+        tenant_id=11,
+        user_id=22,
+        is_superuser=False,
+        status="processing",
+    )
+    visible_ids = {state["id"] for state in visible}
+
+    assert own["id"] in visible_ids
+    assert other["id"] not in visible_ids

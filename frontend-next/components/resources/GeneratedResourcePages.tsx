@@ -258,22 +258,20 @@ export function GeneratedResourceCreatePage({ endpoint }: { endpoint: string }) 
           }
         />
 
-        <div className="rounded-lg border border-[var(--border)] bg-[var(--card)] p-4 shadow-sm">
-          <AutoForm
-            endpoint={ctx.normalizedEndpoint}
-            method="post"
-            submitLabel={t("Criar", "Create")}
-            config={getResourceFormConfig(ctx.groupKey, ctx.resourceKey, ctx.normalizedEndpoint)}
-            onSuccess={(data) => {
-              const id = data?.id ?? data?.pk ?? data?.id_custom ?? data?.custom_id
-              if (id !== undefined && id !== null && String(id).trim()) {
-                router.push(`${basePath}/${id}`)
-                return
-              }
-              router.push(basePath)
-            }}
-          />
-        </div>
+        <AutoForm
+          endpoint={ctx.normalizedEndpoint}
+          method="post"
+          submitLabel={t("Criar", "Create")}
+          config={getResourceFormConfig(ctx.groupKey, ctx.resourceKey, ctx.normalizedEndpoint)}
+          onSuccess={(data) => {
+            const id = data?.id ?? data?.pk ?? data?.id_custom ?? data?.custom_id
+            if (id !== undefined && id !== null && String(id).trim()) {
+              router.push(`${basePath}/${id}`)
+              return
+            }
+            router.push(basePath)
+          }}
+        />
       </div>
     </AppLayout>
   )
@@ -460,16 +458,14 @@ export function GeneratedResourceEditPage({ endpoint }: { endpoint: string }) {
           }
         />
 
-        <div className="rounded-lg border border-[var(--border)] bg-[var(--card)] p-4 shadow-sm">
-          <AutoForm
-            endpoint={`${ctx.normalizedEndpoint}${id}/`}
-            method="put"
-            initialValues={data || {}}
-            submitLabel={t("Guardar alterações", "Save changes")}
-            config={getResourceFormConfig(ctx.groupKey, ctx.resourceKey, ctx.normalizedEndpoint)}
-            onSuccess={() => router.push(detailPath)}
-          />
-        </div>
+        <AutoForm
+          endpoint={`${ctx.normalizedEndpoint}${id}/`}
+          method="put"
+          initialValues={data || {}}
+          submitLabel={t("Guardar alterações", "Save changes")}
+          config={getResourceFormConfig(ctx.groupKey, ctx.resourceKey, ctx.normalizedEndpoint)}
+          onSuccess={() => router.push(detailPath)}
+        />
       </div>
     </AppLayout>
   )

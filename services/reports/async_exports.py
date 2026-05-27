@@ -12,6 +12,8 @@ from django.utils import timezone
 
 DEFAULT_EXPORT_JOB_TTL_SECONDS = 60 * 60
 _LOCAL_FALLBACK_STORE: dict[str, object] = {}
+_EXPORT_JOB_INDEX_KEY = "export_job:index"
+_EXPORT_JOB_INDEX_LIMIT = 500
 
 
 def _job_ttl_seconds() -> int:
@@ -54,6 +56,13 @@ def _cache_get(key: str):
     return _LOCAL_FALLBACK_STORE.get(key)
 
 
+def _remember_export_job_id(job_id: str) -> None:
+    raw = _cache_get(_EXPORT_JOB_INDEX_KEY)
+    ids = [str(item) for item in raw] if isinstance(raw, list) else []
+    ids = [job_id, *[item for item in ids if item != job_id]][:_EXPORT_JOB_INDEX_LIMIT]
+    _cache_set(_EXPORT_JOB_INDEX_KEY, ids, ttl=_job_ttl_seconds())
+
+
 def create_export_job(
     *,
     export_key: str,
@@ -82,6 +91,7 @@ def create_export_job(
     ttl = _job_ttl_seconds()
     _cache_set(export_job_state_key(job_id), state, ttl=ttl)
     _cache_set(export_job_payload_key(job_id), payload or {}, ttl=ttl)
+    _remember_export_job_id(job_id)
     return state
 
 
@@ -90,6 +100,44 @@ def get_export_job_state(job_id: str) -> dict | None:
     if not isinstance(state, dict):
         return None
     return state
+
+
+def list_export_job_states(
+    *,
+    tenant_id=None,
+    user_id=None,
+    is_superuser: bool = False,
+    status: str | None = None,
+    limit: int = 50,
+) -> list[dict]:
+    raw = _cache_get(_EXPORT_JOB_INDEX_KEY)
+    ids = [str(item) for item in raw] if isinstance(raw, list) else []
+    normalized_status = (status or "").strip().lower()
+    try:
+        parsed_limit = int(limit or 50)
+    except Exception:
+        parsed_limit = 50
+    safe_limit = max(1, min(parsed_limit, 200))
+
+    states: list[dict] = []
+    for job_id in ids:
+        state = get_export_job_state(job_id)
+        if not state:
+            continue
+        if normalized_status and str(state.get("status") or "").lower() != normalized_status:
+            continue
+        if not can_access_export_job(
+            state,
+            tenant_id=tenant_id,
+            user_id=user_id,
+            is_superuser=is_superuser,
+        ):
+            continue
+        states.append(state)
+        if len(states) >= safe_limit:
+            break
+
+    return states
 
 
 def get_export_job_payload(job_id: str) -> dict:

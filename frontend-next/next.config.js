@@ -26,6 +26,23 @@ function buildCsp(isDevelopment) {
 module.exports = (phase) => {
   const isDevelopment = phase === PHASE_DEVELOPMENT_SERVER
   const csp = buildCsp(isDevelopment)
+  const retiredGeneratedRoutes = [
+    { source: "/accounting/account-balances/:path*", destination: "/resources/accounting/" },
+    { source: "/accounting/ledger-lines/:path*", destination: "/resources/accounting/" },
+    { source: "/ai_assistant/ai-knowledge-entries/:path*", destination: "/resources/ai_assistant/" },
+    { source: "/ai_assistant/ai-messages/:path*", destination: "/resources/ai_assistant/" },
+    { source: "/ai_assistant/ai-policy-events/:path*", destination: "/resources/ai_assistant/" },
+    { source: "/ai_assistant/ai-suggested-actions/:path*", destination: "/resources/ai_assistant/" },
+    { source: "/ai_assistant/ai-tool-calls/:path*", destination: "/resources/ai_assistant/" },
+    { source: "/clinical/clinical-events/:path*", destination: "/resources/clinical/" },
+    { source: "/clinical/clinical-histories/:path*", destination: "/resources/clinical/" },
+    { source: "/clinical/clinical-references/:path*", destination: "/resources/clinical/" },
+    { source: "/monitoring/transactional-outbox-events/:path*", destination: "/resources/monitoring/" },
+    { source: "/payments/payment-histories/:path*", destination: "/resources/payments/" },
+    { source: "/pharmacy/parent-categories/:path*", destination: "/resources/pharmacy/" },
+    { source: "/pharmacy/product-categories/:path*", destination: "/resources/pharmacy/" },
+    { source: "/tenants/tenant-subscriptions/:path*", destination: "/resources/tenants/" },
+  ]
 
   return {
     // Django endpoints (admin/docs/schema) depend on trailing slashes.
@@ -63,6 +80,13 @@ module.exports = (phase) => {
           ],
         },
       ]
+    },
+
+    async redirects() {
+      return retiredGeneratedRoutes.map((route) => ({
+        ...route,
+        permanent: false,
+      }))
     },
 
     async rewrites() {

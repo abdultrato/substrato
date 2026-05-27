@@ -6,7 +6,7 @@ import { GeneratedResourceDetailPage } from "@/components/resources/GeneratedRes
 export default function AiInvestigationsDetailPage() {
   return (
     <Suspense fallback={<div className="p-4 text-sm text-[var(--gray-500)]">Carregando...</div>}>
-      <GeneratedResourceDetailPage endpoint="/ai_assistant/ai-investigations/" />
+      <GeneratedResourceDetailPage endpoint="/ai/assistant/investigations/" />
     </Suspense>
   );
 }

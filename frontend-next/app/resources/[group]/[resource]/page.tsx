@@ -10,6 +10,7 @@ import useAuthGuard from "@/hooks/useAuthGuard"
 import { useLanguage } from "@/hooks/useLanguage"
 import { useModulesCatalog } from "@/hooks/useModulesCatalog"
 import { findModuleResource } from "@/lib/modules"
+import { hasWriteContract } from "@/lib/openapi/writeContract"
 import { routeParamToString } from "@/lib/routeParams"
 import { requiredGroupsForResourceGroup } from "@/lib/resourcesAccess"
 
@@ -48,6 +49,7 @@ export default function RecursosRecursoPage() {
     }
 
     const basePath = `/resources/${found.group.key}/${found.resource.key}`
+    const canCreate = hasWriteContract(found.resource.endpoint, "post")
 
     return (
         <ResourceListPage
@@ -55,7 +57,7 @@ export default function RecursosRecursoPage() {
             subtitle={t("Registos disponíveis no recurso selecionado.", "Available records in the selected resource.")}
             endpoint={found.resource.endpoint}
             adminListHref={found.resource.adminListHref}
-            createHref={`${basePath}/new`}
+            createHref={canCreate ? `${basePath}/new` : undefined}
             rowHref={(row) =>
                 `${basePath}/${row.id ?? row.pk ?? row.id_custom ?? ""}`.replace(/\/?$/, "")
             }

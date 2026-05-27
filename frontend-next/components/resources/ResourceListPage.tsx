@@ -87,6 +87,14 @@ function normalizeEndpointPath(value: string): string {
   return prefixed.endsWith("/") ? prefixed : `${prefixed}/`
 }
 
+function objectFallbackRows(raw: any): Row[] {
+  const value = raw && typeof raw === "object" && "data" in raw ? raw.data : raw
+  if (!value || typeof value !== "object" || Array.isArray(value)) return []
+  if (Array.isArray(value.results)) return []
+  if ("detail" in value && Object.keys(value).length <= 2) return []
+  return [value as Row]
+}
+
 const BLOODBANK_MAINTENANCE_TYPE: Record<string, string> = {
   PRV: "Preventiva",
   COR: "Corretiva",
@@ -186,7 +194,7 @@ export default function ResourceListPage({
         setError(null)
         const res = await apiFetchList<Row>(requestUrl, { page, pageSize })
         if (!mounted) return
-        const items = Array.isArray(res?.items) ? res.items : []
+        const items = Array.isArray(res?.items) && res.items.length ? res.items : objectFallbackRows(res?.raw)
         const total = res?.meta?.total ?? items.length
         const computedTotalPages =
           res?.meta?.totalPages ??

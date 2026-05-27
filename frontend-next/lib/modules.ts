@@ -22,9 +22,11 @@ const GROUP_LABEL_PT_BY_KEY: Record<string, string> = {
   bloodbank: "Banco de Sangue",
   clinical: "Clínica",
   consultations: "Consultas",
+  dashboard: "Painel",
   education: "Educação",
   entities: "Entidades",
   equipment: "Equipamentos",
+  equipment_integrations: "Integrações de Equipamentos",
   human_resources: "Recursos Humanos",
   identity: "Identidade",
   insurer: "Seguradora",
@@ -51,6 +53,14 @@ const RESOURCE_LABEL_PT_BY_KEY: Record<string, string> = {
 // Single source of truth for the Django apps currently exposed under /api/v1.
 const MODULES_BASE: ModuleGroup[] = [
   {
+    key: "audit",
+    label: "Auditoria",
+    resources: [
+      { key: "atividade", label: "Actividades", endpoint: "/audit/atividade/", adminListHref: "/admin/auditoria_atividades/useractivity/" },
+      { key: "usuarios", label: "Utilizadores Auditados", endpoint: "/audit/usuarios/", adminListHref: "/admin/identity/user/" },
+    ],
+  },
+  {
     key: "clinical",
     label: "Clínico",
     resources: [
@@ -76,6 +86,14 @@ const MODULES_BASE: ModuleGroup[] = [
     ],
   },
   {
+    key: "dashboard",
+    label: "Painel",
+    resources: [
+      { key: "stats", label: "Indicadores Gerais", endpoint: "/dashboard/stats/" },
+      { key: "analytics", label: "Análises Operacionais", endpoint: "/dashboard/analytics/" },
+    ],
+  },
+  {
     key: "equipment",
     label: "Equipamentos",
     resources: [
@@ -83,6 +101,20 @@ const MODULES_BASE: ModuleGroup[] = [
       { key: "daily_inspection", label: "Inspeções Diárias", endpoint: "/equipment/daily_inspection/", adminListHref: "/admin/inspections/dailyinspection/" },
       { key: "maintenance", label: "Manutenções", endpoint: "/maintenance/maintenance/", adminListHref: "/admin/maintenance/maintenance/" },
       { key: "incident", label: "Ocorrências", endpoint: "/equipment/incident/", adminListHref: "/admin/incidents/incident/" },
+    ],
+  },
+  {
+    key: "equipment_integrations",
+    label: "Integrações de Equipamentos",
+    resources: [
+      { key: "equipment", label: "Equipamentos Integrados", endpoint: "/equipment_integrations/equipment/", adminListHref: "/admin/integracoes_equipamentos/integrationequipment/" },
+      { key: "credential", label: "Credenciais", endpoint: "/equipment_integrations/credential/", adminListHref: "/admin/integracoes_equipamentos/integrationcredential/" },
+      { key: "routing", label: "Regras de Encaminhamento", endpoint: "/equipment_integrations/routing/", adminListHref: "/admin/integracoes_equipamentos/integrationrouting/" },
+      { key: "order", label: "Ordens de Integração", endpoint: "/equipment_integrations/order/", adminListHref: "/admin/integracoes_equipamentos/integrationorder/" },
+      { key: "order_item", label: "Itens de Ordem", endpoint: "/equipment_integrations/order_item/", adminListHref: "/admin/integracoes_equipamentos/integrationorderitem/" },
+      { key: "message", label: "Mensagens", endpoint: "/equipment_integrations/message/", adminListHref: "/admin/integracoes_equipamentos/integrationmessage/" },
+      { key: "document", label: "Documentos", endpoint: "/equipment_integrations/document/", adminListHref: "/admin/integracoes_equipamentos/integrationdocument/" },
+      { key: "analyte_mapping", label: "Mapeamento de Analitos", endpoint: "/equipment_integrations/analyte_mapping/", adminListHref: "/admin/integracoes_equipamentos/integrationanalytemapping/" },
     ],
   },
   {
@@ -184,6 +216,7 @@ const MODULES_BASE: ModuleGroup[] = [
       { key: "ward", label: "Enfermarias", endpoint: "/nursing/ward/" },
       { key: "ward_bed", label: "Camas (Enfermaria)", endpoint: "/nursing/ward_bed/" },
       { key: "ward_admission", label: "Internamentos (Enfermaria)", endpoint: "/nursing/ward_admission/" },
+      { key: "ward_dashboard", label: "Painel de Enfermaria", endpoint: "/nursing/ward_dashboard/" },
     ],
   },
   {
@@ -192,6 +225,7 @@ const MODULES_BASE: ModuleGroup[] = [
     resources: [
       { key: "insurer", label: "Seguradoras", endpoint: "/insurer/insurer/", adminListHref: "/admin/insurer/insurer/" },
       { key: "coverage_plan", label: "Planos", endpoint: "/insurer/coverage_plan/", adminListHref: "/admin/insurer/coverageplan/" },
+      { key: "tenant_coverage_plan", label: "Planos por Cliente", endpoint: "/insurer/tenant_coverage_plan/" },
       { key: "procedure_authorization", label: "Autorizações", endpoint: "/insurer/procedure_authorization/", adminListHref: "/admin/insurer/procedureauthorization/" },
     ],
   },
@@ -226,12 +260,15 @@ const MODULES_BASE: ModuleGroup[] = [
       { key: "enrollment", label: "Matrículas", endpoint: "/education/enrollment/", adminListHref: "/admin/education/enrollment/" },
       { key: "attendance", label: "Presenças", endpoint: "/education/attendance/", adminListHref: "/admin/education/attendancerecord/" },
       { key: "grade", label: "Notas", endpoint: "/education/grade/", adminListHref: "/admin/education/graderecord/" },
+      { key: "assessment", label: "Avaliações", endpoint: "/education/assessment/", adminListHref: "/admin/education/graderecord/" },
       { key: "examination", label: "Exames", endpoint: "/education/examination/", adminListHref: "/admin/education/examination/" },
       { key: "random_test", label: "Testes Aleatórios", endpoint: "/education/random_test/", adminListHref: "/admin/education/randomtest/" },
       { key: "assignment", label: "Trabalhos", endpoint: "/education/assignment/", adminListHref: "/admin/education/assignment/" },
       { key: "submission", label: "Submissões de Trabalho", endpoint: "/education/submission/", adminListHref: "/admin/education/assignmentsubmission/" },
       { key: "exam_attempt", label: "Tentativas de Exame", endpoint: "/education/exam_attempt/", adminListHref: "/admin/education/examinationattempt/" },
+      { key: "examination_attempt", label: "Tentativas de Exame", endpoint: "/education/examination_attempt/", adminListHref: "/admin/education/examinationattempt/" },
       { key: "content", label: "Conteúdos de Aprendizagem", endpoint: "/education/content/", adminListHref: "/admin/education/learningcontent/" },
+      { key: "lesson", label: "Aulas", endpoint: "/education/lesson/", adminListHref: "/admin/education/learningcontent/" },
       { key: "bibliography", label: "Referências Bibliográficas", endpoint: "/education/bibliography/", adminListHref: "/admin/education/learningcontent/" },
       { key: "thematic_map", label: "Mapa de Conteúdo Temático", endpoint: "/education/thematic_map/", adminListHref: "/admin/education/learningcontent/" },
       { key: "discipline_schedule", label: "Cronograma da Disciplina", endpoint: "/education/discipline_schedule/", adminListHref: "/admin/education/disciplinescheduleitem/" },
@@ -254,7 +291,8 @@ const MODULES_BASE: ModuleGroup[] = [
     key: "notifications",
     label: "Notificações",
     resources: [
-      { key: "notificacao", label: "Notificações", endpoint: "/notifications/notificacao/", adminListHref: "/admin/notifications/notificacao/" },
+      { key: "notification", label: "Notificações", endpoint: "/notifications/notification/", adminListHref: "/admin/notifications/notification/" },
+      { key: "template", label: "Modelos de Notificação", endpoint: "/notifications/template/", adminListHref: "/admin/notifications/notificationtemplate/" },
       { key: "logenvio", label: "Logs de Envio", endpoint: "/notifications/logenvio/", adminListHref: "/admin/notifications/logenvio/" },
     ],
   },
@@ -297,7 +335,9 @@ const MODULES_BASE: ModuleGroup[] = [
     label: "Recursos Humanos",
     resources: [
       { key: "cargo", label: "Cargos", endpoint: "/human_resources/role/", adminListHref: "/admin/human-resources/jobtitle/" },
+      { key: "profissao", label: "Profissões", endpoint: "/human_resources/profissao/", adminListHref: "/admin/human-resources/profession/" },
       { key: "funcionario", label: "Funcionários", endpoint: "/human_resources/employee/", adminListHref: "/admin/human-resources/employee/" },
+      { key: "processodisciplinar", label: "Processos Disciplinares", endpoint: "/human_resources/processodisciplinar/", adminListHref: "/admin/human-resources/disciplinaryprocess/" },
       { key: "agregadofamiliar", label: "Agregados Familiares", endpoint: "/human_resources/agregadofamiliar/", adminListHref: "/admin/human-resources/familydependent/" },
       { key: "horario", label: "Horários", endpoint: "/human_resources/horario/", adminListHref: "/admin/human-resources/workschedule/" },
       { key: "falta", label: "Faltas", endpoint: "/human_resources/falta/", adminListHref: "/admin/human-resources/absence/" },
@@ -312,15 +352,18 @@ const MODULES_BASE: ModuleGroup[] = [
     label: "Monitoramento",
     resources: [
       { key: "error", label: "Erros do Sistema", endpoint: "/monitoring/error/", adminListHref: "/admin/monitoring/systemerror/" },
+      { key: "telemetry", label: "Telemetria", endpoint: "/monitoring/telemetry/" },
+      { key: "export_job", label: "Exportações", endpoint: "/monitoring/export_job/" },
+      { key: "cloud_control", label: "Controlo Cloud", endpoint: "/monitoring/cloud_control/" },
     ],
   },
   {
     key: "ai_assistant",
     label: "IA Operacional",
     resources: [
-      { key: "ai_session", label: "Sessões da IA", endpoint: "/ai_assistant/ai-sessions/", adminListHref: "/admin/ai_assistant/aisession/" },
-      { key: "ai_investigation", label: "Investigações da IA", endpoint: "/ai_assistant/ai-investigations/", adminListHref: "/admin/ai_assistant/aiinvestigation/" },
-      { key: "ai_operational_task", label: "Tarefas Operacionais da IA", endpoint: "/ai_assistant/ai-operational-tasks/", adminListHref: "/admin/ai_assistant/aioperationaltask/" },
+      { key: "ai_session", label: "Sessões da IA", endpoint: "/ai/assistant/sessions/", adminListHref: "/admin/ai_assistant/aisession/" },
+      { key: "ai_investigation", label: "Investigações da IA", endpoint: "/ai/assistant/investigations/", adminListHref: "/admin/ai_assistant/aiinvestigation/" },
+      { key: "ai_operational_task", label: "Tarefas Operacionais da IA", endpoint: "/ai/assistant/tasks/", adminListHref: "/admin/ai_assistant/aioperationaltask/" },
       { key: "ai_tools", label: "Ferramentas da IA", endpoint: "/ai/assistant/tools/" },
     ],
   },
@@ -340,6 +383,15 @@ const ADMIN_LIST_BY_ENDPOINT: Record<string, string> = {
   "/equipment/daily_inspection/": "/admin/inspections/dailyinspection/",
   "/maintenance/maintenance/": "/admin/maintenance/maintenance/",
   "/equipment/incident/": "/admin/incidents/incident/",
+  // Equipment integrations
+  "/equipment_integrations/equipment/": "/admin/integracoes_equipamentos/integrationequipment/",
+  "/equipment_integrations/credential/": "/admin/integracoes_equipamentos/integrationcredential/",
+  "/equipment_integrations/routing/": "/admin/integracoes_equipamentos/integrationrouting/",
+  "/equipment_integrations/order/": "/admin/integracoes_equipamentos/integrationorder/",
+  "/equipment_integrations/order_item/": "/admin/integracoes_equipamentos/integrationorderitem/",
+  "/equipment_integrations/message/": "/admin/integracoes_equipamentos/integrationmessage/",
+  "/equipment_integrations/document/": "/admin/integracoes_equipamentos/integrationdocument/",
+  "/equipment_integrations/analyte_mapping/": "/admin/integracoes_equipamentos/integrationanalytemapping/",
   // External entities
   "/entities/company/": "/admin/externall-entities/company/",
   "/external_entities/empresa/": "/admin/externall-entities/company/",
@@ -419,6 +471,7 @@ const ADMIN_LIST_BY_ENDPOINT: Record<string, string> = {
   "/education/enrollment/": "/admin/education/enrollment/",
   "/education/attendance/": "/admin/education/attendancerecord/",
   "/education/grade/": "/admin/education/graderecord/",
+  "/education/assessment/": "/admin/education/graderecord/",
   "/education/examination/": "/admin/education/examination/",
   "/education/random_test/": "/admin/education/randomtest/",
   "/education/assignment/": "/admin/education/assignment/",
@@ -426,6 +479,7 @@ const ADMIN_LIST_BY_ENDPOINT: Record<string, string> = {
   "/education/exam_attempt/": "/admin/education/examinationattempt/",
   "/education/examination_attempt/": "/admin/education/examinationattempt/",
   "/education/content/": "/admin/education/learningcontent/",
+  "/education/lesson/": "/admin/education/learningcontent/",
   "/education/bibliography/": "/admin/education/learningcontent/",
   "/education/thematic_map/": "/admin/education/learningcontent/",
   "/education/skill/": "/admin/education/skill/",
@@ -439,9 +493,9 @@ const ADMIN_LIST_BY_ENDPOINT: Record<string, string> = {
   "/tenants/configuracaoinquilino/": "/admin/tenants/tenantconfiguration/",
   "/tenants/tenantconfiguration/": "/admin/tenants/tenantconfiguration/",
   // Notifications
-  "/notifications/notificacao/": "/admin/notifications/notification/",
   "/notifications/logenvio/": "/admin/notifications/deliverylog/",
   "/notifications/notification/": "/admin/notifications/notification/",
+  "/notifications/template/": "/admin/notifications/notificationtemplate/",
   "/notifications/deliverylog/": "/admin/notifications/deliverylog/",
   // Identity
   "/identidade/usuario/": "/admin/identity/user/",
@@ -469,7 +523,9 @@ const ADMIN_LIST_BY_ENDPOINT: Record<string, string> = {
   "/resources_humanos/horaextra/": "/admin/human-resources/overtime/",
   "/resources_humanos/folhapagamento/": "/admin/human-resources/payroll/",
   "/human_resources/role/": "/admin/human-resources/jobtitle/",
+  "/human_resources/profissao/": "/admin/human-resources/profession/",
   "/human_resources/employee/": "/admin/human-resources/employee/",
+  "/human_resources/processodisciplinar/": "/admin/human-resources/disciplinaryprocess/",
   "/human_resources/agregadofamiliar/": "/admin/human-resources/familydependent/",
   "/human_resources/horario/": "/admin/human-resources/workschedule/",
   "/human_resources/falta/": "/admin/human-resources/absence/",
@@ -480,10 +536,8 @@ const ADMIN_LIST_BY_ENDPOINT: Record<string, string> = {
   // Monitoring
   "/monitoring/erro/": "/admin/monitoring/systemerror/",
   "/monitoring/error/": "/admin/monitoring/systemerror/",
+  "/monitoring/telemetry/": "/admin/monitoring/systemerror/",
   // Operational AI
-  "/ai_assistant/ai-sessions/": "/admin/ai_assistant/aisession/",
-  "/ai_assistant/ai-investigations/": "/admin/ai_assistant/aiinvestigation/",
-  "/ai_assistant/ai-operational-tasks/": "/admin/ai_assistant/aioperationaltask/",
   "/ai/assistant/sessions/": "/admin/ai_assistant/aisession/",
   "/ai/assistant/investigations/": "/admin/ai_assistant/aiinvestigation/",
   "/ai/assistant/tasks/": "/admin/ai_assistant/aioperationaltask/",
@@ -513,6 +567,9 @@ const GROUP_KEY_ALIASES: Record<string, string> = {
   recepcao: "reception",
   equipment: "equipment",
   equipamentos: "equipment",
+  equipment_integrations: "equipment_integrations",
+  integracoes_equipamentos: "equipment_integrations",
+  integrações_equipamentos: "equipment_integrations",
   maintenance: "equipment",
   manutencoes: "equipment",
   manutenções: "equipment",
@@ -545,6 +602,8 @@ const GROUP_KEY_ALIASES: Record<string, string> = {
   recursos_humanos: "human_resources",
   consultations: "consultations",
   consultas: "consultations",
+  dashboard: "dashboard",
+  painel: "dashboard",
   education: "education",
   educacao: "education",
   educação: "education",

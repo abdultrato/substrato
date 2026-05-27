@@ -77,7 +77,7 @@ function fieldToZod(field: FormField): z.ZodTypeAny {
       break
     case "date":
     case "datetime":
-      base = z.string()
+      base = required ? z.string().trim().min(1, "Campo obrigatório") : z.string()
       break
     case "select":
       {
@@ -89,10 +89,10 @@ function fieldToZod(field: FormField): z.ZodTypeAny {
       }
       break
     case "array-string":
-      base = z.array(z.string())
+      base = required ? z.array(z.string()).min(1, "Informe pelo menos um valor") : z.array(z.string())
       break
     default:
-      base = z.string()
+      base = required ? z.string().trim().min(1, "Campo obrigatório") : z.string()
   }
   return required ? base : base.optional().nullable()
 }
@@ -335,6 +335,14 @@ function normalizeDraftKey(method: Method, endpoint: string): string {
   return `draft:autofrm:${method}:${e}`
 }
 
+function hasRequiredValue(value: any): boolean {
+  if (Array.isArray(value)) return value.some((item) => String(item ?? "").trim() !== "")
+  if (typeof value === "boolean") return true
+  if (typeof value === "number") return Number.isFinite(value)
+  if (value === null || value === undefined) return false
+  return String(value).trim() !== ""
+}
+
 type WizardStep = { key: string; title: string; description?: string }
 
 function Stepper({
@@ -419,6 +427,7 @@ export default function AutoForm({
   const [message, setMessage] = useState<string | null>(null)
   const etapas = config?.etapas || null
   const [etapaAtual, setEtapaAtual] = useState(0)
+  const draftKey = useMemo(() => normalizeDraftKey(effectiveMethod, endpoint), [effectiveMethod, endpoint])
 
   useEffect(() => {
     let mounted = true
@@ -472,6 +481,35 @@ export default function AutoForm({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [config?.lembrarCampos?.join(",")])
 
+  useEffect(() => {
+    if (effectiveMethod !== "post") return
+    try {
+      const raw = typeof localStorage !== "undefined" ? localStorage.getItem(draftKey) : null
+      if (!raw) return
+      const draft = JSON.parse(raw)
+      if (!draft || typeof draft !== "object") return
+      setValues((prev) => ({ ...draft, ...prev }))
+    } catch {}
+  }, [draftKey, effectiveMethod])
+
+  useEffect(() => {
+    if (effectiveMethod !== "post" || !formSpec) return
+    const payload: Record<string, any> = {}
+    for (const field of formSpec.submitFields) {
+      const value = values[field.name]
+      if (!hasRequiredValue(value)) continue
+      payload[field.name] = value
+    }
+    try {
+      if (typeof localStorage === "undefined") return
+      if (Object.keys(payload).length) {
+        localStorage.setItem(draftKey, JSON.stringify(payload))
+      } else {
+        localStorage.removeItem(draftKey)
+      }
+    } catch {}
+  }, [draftKey, effectiveMethod, formSpec, values])
+
   const schema = useMemo(() => {
     if (!formSpec) return null
     const shape: Record<string, z.ZodTypeAny> = {}
@@ -484,7 +522,7 @@ export default function AutoForm({
   function listVisibleFields(): FormField[] {
     if (!formSpec) return []
     const esconder = new Set(config?.esconderCampos || [])
-    let fields = formSpec.fields.filter((f) => !f.readOnly && !esconder.has(f.name))
+    let fields = formSpec.fields.filter((f) => !f.readOnly && (!esconder.has(f.name) || f.required))
 
     const order = config?.ordenarCampos || []
     if (order.length) {
@@ -499,6 +537,12 @@ export default function AutoForm({
     }
 
     return fields
+  }
+
+  function firstStepIndexForField(fieldName: string): number {
+    if (!etapas?.length) return 0
+    const idx = etapas.findIndex((etapa) => etapa.campos.includes(fieldName))
+    return idx >= 0 ? idx : etapas.length - 1
   }
 
   function stepFieldNames(): string[] | null {
@@ -550,12 +594,28 @@ export default function AutoForm({
     setMessage(null)
     setErrors({})
     try {
+      const missing = formSpec.submitFields.filter((field) => field.required && !hasRequiredValue(values[field.name]))
+      if (missing.length) {
+        const errs: Record<string, string> = {}
+        missing.forEach((field) => {
+          errs[field.name] = "Campo obrigatório"
+        })
+        setErrors(errs)
+        setMessage(`Preencha os campos obrigatórios: ${missing.map((field) => field.label).join(", ")}.`)
+        if (etapas?.length) setEtapaAtual(firstStepIndexForField(missing[0].name))
+        return
+      }
       const parsed = schema.parse(values)
       const res = await apiFetch(endpoint, {
         method: effectiveMethod.toUpperCase(),
         body: JSON.stringify(parsed),
       })
       setMessage("Salvo com sucesso.")
+      if (effectiveMethod === "post") {
+        try {
+          if (typeof localStorage !== "undefined") localStorage.removeItem(draftKey)
+        } catch {}
+      }
       if (config?.lembrarCampos?.length) {
         for (const f of config.lembrarCampos || []) {
           const v = (parsed as any)?.[f]
@@ -603,10 +663,25 @@ export default function AutoForm({
   const visibleFields = listVisibleFields()
   const visibleByName = new Map(visibleFields.map((f) => [f.name, f] as const))
   const stepNames = stepFieldNames()
-  const fieldsToRender = stepNames
+  const configuredStepNames = new Set((etapas || []).flatMap((etapa) => etapa.campos))
+  const unassignedRequiredFields =
+    stepNames && etapas?.length && etapaAtual === etapas.length - 1
+      ? visibleFields.filter((field) => field.required && !configuredStepNames.has(field.name))
+      : []
+  const stepFields = stepNames
     ? stepNames.map((n) => visibleByName.get(n)).filter(Boolean) as FormField[]
     : visibleFields
+  const fieldsToRender = stepNames
+    ? [
+        ...stepFields,
+        ...unassignedRequiredFields.filter((field) => !stepFields.some((current) => current.name === field.name)),
+      ]
+    : visibleFields
   const somenteLeitura = new Set(config?.somenteLeituraCampos || [])
+  const requiredFields = formSpec.submitFields.filter((field) => field.required)
+  const missingRequiredFields = requiredFields.filter((field) => !hasRequiredValue(values[field.name]))
+  const isFinalStep = !etapas?.length || etapaAtual >= etapas.length - 1
+  const submitDisabled = submitting || (isFinalStep && missingRequiredFields.length > 0)
 
   return (
     <div className="mx-auto w-full max-w-3xl space-y-3">
@@ -621,6 +696,17 @@ export default function AutoForm({
       ) : null}
 
       <div className="rounded-lg border border-[var(--border)] bg-[var(--card)] p-4 shadow-sm">
+        {requiredFields.length ? (
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-2 rounded-md border border-[var(--border)] bg-[var(--gray-50)] px-3 py-2 text-xs text-[var(--gray-700)]">
+            <span className="font-semibold">
+              Obrigatórios: {requiredFields.length}
+            </span>
+            <span className={missingRequiredFields.length ? "font-semibold text-red-600" : "font-semibold text-emerald-700"}>
+              Em falta: {missingRequiredFields.length}
+            </span>
+          </div>
+        ) : null}
+
         {etapas?.length ? (
           <div className="mb-3 text-sm font-semibold text-[var(--text)]">
             {etapas[etapaAtual]?.titulo}
@@ -674,7 +760,7 @@ export default function AutoForm({
             <button
               type="button"
               onClick={handleSubmit}
-              disabled={submitting}
+              disabled={submitDisabled}
               className="inline-flex h-9 items-center rounded-md bg-[var(--primary-600)] px-3 text-sm font-semibold leading-tight text-white shadow-sm transition-all duration-150 hover:bg-[var(--primary-700)] hover:shadow-md disabled:opacity-60"
             >
               {submitting ? "Salvando..." : etapaAtual < etapas.length - 1 ? "Seguinte" : submitLabel}
@@ -684,7 +770,7 @@ export default function AutoForm({
           <button
             type="button"
             onClick={handleSubmit}
-            disabled={submitting}
+            disabled={submitDisabled}
             className="inline-flex h-9 items-center rounded-md bg-[var(--primary-600)] px-3 text-sm font-semibold leading-tight text-white shadow-sm transition-all duration-150 hover:bg-[var(--primary-700)] hover:shadow-md disabled:opacity-60"
           >
             {submitting ? "Salvando..." : submitLabel}

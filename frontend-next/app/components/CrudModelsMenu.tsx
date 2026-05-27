@@ -4,13 +4,9 @@ import Link from "next/link";
 import { useState } from "react";
 import {
   Bot,
-  BrainCircuit,
   ClipboardCheck,
-  FileText,
-  Lightbulb,
   Package,
   Search,
-  ShieldCheck,
   TerminalSquare,
   type LucideIcon,
 } from "lucide-react";
@@ -32,14 +28,10 @@ const MODULES: Record<string, CrudMenuItem[]> = {
     { nome: "Movimento Legado", href: "/accounting/legacy-movements" },
   ],
   "ai_assistant": [
-    { nome: "Sessões da IA", href: "/ai_assistant/ai-sessions", icon: Bot },
-    { nome: "Mensagens da IA", href: "/ai_assistant/ai-messages", icon: FileText },
-    { nome: "Chamadas de Ferramenta", href: "/ai_assistant/ai-tool-calls", icon: TerminalSquare },
-    { nome: "Acções Sugeridas", href: "/ai_assistant/ai-suggested-actions", icon: Lightbulb },
-    { nome: "Tarefas Operacionais", href: "/ai_assistant/ai-operational-tasks", icon: ClipboardCheck },
-    { nome: "Investigações da IA", href: "/ai_assistant/ai-investigations", icon: Search },
-    { nome: "Base de Conhecimento", href: "/ai_assistant/ai-knowledge-entries", icon: BrainCircuit },
-    { nome: "Eventos de Política", href: "/ai_assistant/ai-policy-events", icon: ShieldCheck },
+    { nome: "Sessões da IA", href: "/resources/ai_assistant/ai_session", icon: Bot },
+    { nome: "Tarefas Operacionais", href: "/resources/ai_assistant/ai_operational_task", icon: ClipboardCheck },
+    { nome: "Investigações da IA", href: "/resources/ai_assistant/ai_investigation", icon: Search },
+    { nome: "Ferramentas da IA", href: "/resources/ai_assistant/ai_tools", icon: TerminalSquare },
   ],
   "audit_activities": [
     { nome: "Actividade do Utilizador", href: "/audit_activities/user-activities" },

@@ -27,7 +27,7 @@ export default function NotificacoesPage() {
                 setErro(null)
 
                 const [n, l] = await Promise.all([
-                    apiFetch<any>("/notifications/notificacao/"),
+                    apiFetch<any>("/notifications/notification/"),
                     apiFetch<any>("/notifications/logenvio/"),
                 ])
 
