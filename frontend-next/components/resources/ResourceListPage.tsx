@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react"
 import { Search, RotateCcw } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
+import ResourceActionPanel from "@/components/resources/ResourceActionPanel"
 import ResourceModelReportPanel from "@/components/resources/ResourceModelReportPanel"
 import DataTable from "@/components/ui/DataTable"
 import PageHeader from "@/components/ui/PageHeader"
@@ -346,6 +347,13 @@ export default function ResourceListPage({
         <ResourceModelReportPanel
           endpoint={normalizedEndpoint}
           groupLabel={resolvedGroupLabel}
+          resourceLabel={resolvedResourceLabel}
+          searchTerm={debouncedSearch}
+          statusFilter={statusFilter}
+        />
+
+        <ResourceActionPanel
+          endpoint={normalizedEndpoint}
           resourceLabel={resolvedResourceLabel}
           searchTerm={debouncedSearch}
           statusFilter={statusFilter}

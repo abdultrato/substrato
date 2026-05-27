@@ -7,7 +7,7 @@
   "paths": {
     "/api/v1/auth/user/": {
       "get": {
-        "operationId": "listUsers",
+        "operationId": "listAuthUser",
         "description": "",
         "parameters": [],
         "responses": {
@@ -28,7 +28,7 @@
         ]
       },
       "patch": {
-        "operationId": "partialUpdateUser",
+        "operationId": "partialUpdateAuthUser",
         "description": "",
         "parameters": [],
         "requestBody": {
@@ -735,7 +735,7 @@
     },
     "/api/v1/audit/usuarios/": {
       "get": {
-        "operationId": "listUsers",
+        "operationId": "listAuditUsuarios",
         "description": "Lista usu\u00e1rios com contagem e \u00faltima actividade registrada.",
         "parameters": [
           {
@@ -779,7 +779,7 @@
     },
     "/api/v1/audit/usuarios/{id}/": {
       "get": {
-        "operationId": "retrieveUser",
+        "operationId": "retrieveAuditUsuariosById",
         "description": "Lista usu\u00e1rios com contagem e \u00faltima actividade registrada.",
         "parameters": [
           {
@@ -829,7 +829,7 @@
     },
     "/api/v1/dashboard/analytics/": {
       "get": {
-        "operationId": "listLabRequests",
+        "operationId": "listDashboardAnalytics",
         "description": "Painel de estat\u00edsticas (Top N) para o Administrador/Contabilidade.",
         "parameters": [
           {
@@ -1511,7 +1511,7 @@
     },
     "/api/v1/clinical/labrequest/": {
       "get": {
-        "operationId": "listLabRequests",
+        "operationId": "listClinicalLabrequest",
         "description": "Viewset for laboratory and medical requests.",
         "parameters": [
           {
@@ -4669,7 +4669,7 @@
     },
     "/api/v1/consultations/doctors/": {
       "get": {
-        "operationId": "listEmployees",
+        "operationId": "listConsultationsDoctors",
         "description": "",
         "parameters": [
           {
@@ -4713,7 +4713,7 @@
     },
     "/api/v1/consultations/doctors/{id}/": {
       "get": {
-        "operationId": "retrieveEmployee",
+        "operationId": "retrieveConsultationsDoctorsById",
         "description": "",
         "parameters": [
           {
@@ -27495,7 +27495,7 @@
     },
     "/api/v1/identity/user/": {
       "get": {
-        "operationId": "listUsers",
+        "operationId": "listIdentityUser",
         "description": "",
         "parameters": [
           {
@@ -27578,7 +27578,7 @@
     },
     "/api/v1/identity/user/{id}/": {
       "get": {
-        "operationId": "retrieveUser",
+        "operationId": "retrieveIdentityUserById",
         "description": "",
         "parameters": [
           {
@@ -27693,7 +27693,7 @@
         ]
       },
       "patch": {
-        "operationId": "partialUpdateUser",
+        "operationId": "partialUpdateIdentityUserById",
         "description": "",
         "parameters": [
           {
@@ -36258,7 +36258,7 @@
     },
     "/api/v1/human_resources/employee/": {
       "get": {
-        "operationId": "listEmployees",
+        "operationId": "listHumanResourcesEmployee",
         "description": "",
         "parameters": [
           {
@@ -36341,7 +36341,7 @@
     },
     "/api/v1/human_resources/employee/{id}/": {
       "get": {
-        "operationId": "retrieveEmployee",
+        "operationId": "retrieveHumanResourcesEmployeeById",
         "description": "",
         "parameters": [
           {
@@ -39549,7 +39549,7 @@
     },
     "/api/v1/education/assessment/": {
       "get": {
-        "operationId": "listGradeRecords",
+        "operationId": "listEducationAssessment",
         "description": "",
         "parameters": [
           {
@@ -39591,7 +39591,7 @@
         ]
       },
       "post": {
-        "operationId": "createGradeRecord",
+        "operationId": "createEducationAssessment",
         "description": "",
         "parameters": [],
         "requestBody": {
@@ -39632,7 +39632,7 @@
     },
     "/api/v1/education/assessment/{id}/": {
       "get": {
-        "operationId": "retrieveGradeRecord",
+        "operationId": "retrieveEducationAssessmentById",
         "description": "",
         "parameters": [
           {
@@ -39680,7 +39680,7 @@
         ]
       },
       "put": {
-        "operationId": "updateGradeRecord",
+        "operationId": "updateEducationAssessmentById",
         "description": "",
         "parameters": [
           {
@@ -39747,7 +39747,7 @@
         ]
       },
       "patch": {
-        "operationId": "partialUpdateGradeRecord",
+        "operationId": "partialUpdateEducationAssessmentById",
         "description": "",
         "parameters": [
           {
@@ -39814,7 +39814,7 @@
         ]
       },
       "delete": {
-        "operationId": "destroyGradeRecord",
+        "operationId": "destroyEducationAssessmentById",
         "description": "",
         "parameters": [
           {
@@ -40473,7 +40473,7 @@
     },
     "/api/v1/education/bibliography/": {
       "get": {
-        "operationId": "listLearningContents",
+        "operationId": "listEducationBibliography",
         "description": "",
         "parameters": [
           {
@@ -40515,7 +40515,7 @@
         ]
       },
       "post": {
-        "operationId": "createLearningContent",
+        "operationId": "createEducationBibliography",
         "description": "",
         "parameters": [],
         "requestBody": {
@@ -40556,7 +40556,7 @@
     },
     "/api/v1/education/bibliography/{id}/": {
       "get": {
-        "operationId": "retrieveLearningContent",
+        "operationId": "retrieveEducationBibliographyById",
         "description": "",
         "parameters": [
           {
@@ -40604,7 +40604,7 @@
         ]
       },
       "put": {
-        "operationId": "updateLearningContent",
+        "operationId": "updateEducationBibliographyById",
         "description": "",
         "parameters": [
           {
@@ -40671,7 +40671,7 @@
         ]
       },
       "patch": {
-        "operationId": "partialUpdateLearningContent",
+        "operationId": "partialUpdateEducationBibliographyById",
         "description": "",
         "parameters": [
           {
@@ -40738,7 +40738,7 @@
         ]
       },
       "delete": {
-        "operationId": "destroyLearningContent",
+        "operationId": "destroyEducationBibliographyById",
         "description": "",
         "parameters": [
           {
@@ -41089,7 +41089,7 @@
     },
     "/api/v1/education/content/": {
       "get": {
-        "operationId": "listLearningContents",
+        "operationId": "listEducationContent",
         "description": "",
         "parameters": [
           {
@@ -41131,7 +41131,7 @@
         ]
       },
       "post": {
-        "operationId": "createLearningContent",
+        "operationId": "createEducationContent",
         "description": "",
         "parameters": [],
         "requestBody": {
@@ -41172,7 +41172,7 @@
     },
     "/api/v1/education/content/{id}/": {
       "get": {
-        "operationId": "retrieveLearningContent",
+        "operationId": "retrieveEducationContentById",
         "description": "",
         "parameters": [
           {
@@ -41220,7 +41220,7 @@
         ]
       },
       "put": {
-        "operationId": "updateLearningContent",
+        "operationId": "updateEducationContentById",
         "description": "",
         "parameters": [
           {
@@ -41287,7 +41287,7 @@
         ]
       },
       "patch": {
-        "operationId": "partialUpdateLearningContent",
+        "operationId": "partialUpdateEducationContentById",
         "description": "",
         "parameters": [
           {
@@ -41354,7 +41354,7 @@
         ]
       },
       "delete": {
-        "operationId": "destroyLearningContent",
+        "operationId": "destroyEducationContentById",
         "description": "",
         "parameters": [
           {
@@ -42321,7 +42321,7 @@
     },
     "/api/v1/education/exam_attempt/": {
       "get": {
-        "operationId": "listExaminationAttempts",
+        "operationId": "listEducationExamAttempt",
         "description": "",
         "parameters": [
           {
@@ -42363,7 +42363,7 @@
         ]
       },
       "post": {
-        "operationId": "createExaminationAttempt",
+        "operationId": "createEducationExamAttempt",
         "description": "",
         "parameters": [],
         "requestBody": {
@@ -42404,7 +42404,7 @@
     },
     "/api/v1/education/exam_attempt/{id}/": {
       "get": {
-        "operationId": "retrieveExaminationAttempt",
+        "operationId": "retrieveEducationExamAttemptById",
         "description": "",
         "parameters": [
           {
@@ -42452,7 +42452,7 @@
         ]
       },
       "put": {
-        "operationId": "updateExaminationAttempt",
+        "operationId": "updateEducationExamAttemptById",
         "description": "",
         "parameters": [
           {
@@ -42519,7 +42519,7 @@
         ]
       },
       "patch": {
-        "operationId": "partialUpdateExaminationAttempt",
+        "operationId": "partialUpdateEducationExamAttemptById",
         "description": "",
         "parameters": [
           {
@@ -42586,7 +42586,7 @@
         ]
       },
       "delete": {
-        "operationId": "destroyExaminationAttempt",
+        "operationId": "destroyEducationExamAttemptById",
         "description": "",
         "parameters": [
           {
@@ -42937,7 +42937,7 @@
     },
     "/api/v1/education/examination_attempt/": {
       "get": {
-        "operationId": "listExaminationAttempts",
+        "operationId": "listEducationExaminationAttempt",
         "description": "",
         "parameters": [
           {
@@ -42979,7 +42979,7 @@
         ]
       },
       "post": {
-        "operationId": "createExaminationAttempt",
+        "operationId": "createEducationExaminationAttempt",
         "description": "",
         "parameters": [],
         "requestBody": {
@@ -43020,7 +43020,7 @@
     },
     "/api/v1/education/examination_attempt/{id}/": {
       "get": {
-        "operationId": "retrieveExaminationAttempt",
+        "operationId": "retrieveEducationExaminationAttemptById",
         "description": "",
         "parameters": [
           {
@@ -43068,7 +43068,7 @@
         ]
       },
       "put": {
-        "operationId": "updateExaminationAttempt",
+        "operationId": "updateEducationExaminationAttemptById",
         "description": "",
         "parameters": [
           {
@@ -43135,7 +43135,7 @@
         ]
       },
       "patch": {
-        "operationId": "partialUpdateExaminationAttempt",
+        "operationId": "partialUpdateEducationExaminationAttemptById",
         "description": "",
         "parameters": [
           {
@@ -43202,7 +43202,7 @@
         ]
       },
       "delete": {
-        "operationId": "destroyExaminationAttempt",
+        "operationId": "destroyEducationExaminationAttemptById",
         "description": "",
         "parameters": [
           {
@@ -43245,7 +43245,7 @@
     },
     "/api/v1/education/grade/": {
       "get": {
-        "operationId": "listGradeRecords",
+        "operationId": "listEducationGrade",
         "description": "",
         "parameters": [
           {
@@ -43287,7 +43287,7 @@
         ]
       },
       "post": {
-        "operationId": "createGradeRecord",
+        "operationId": "createEducationGrade",
         "description": "",
         "parameters": [],
         "requestBody": {
@@ -43328,7 +43328,7 @@
     },
     "/api/v1/education/grade/{id}/": {
       "get": {
-        "operationId": "retrieveGradeRecord",
+        "operationId": "retrieveEducationGradeById",
         "description": "",
         "parameters": [
           {
@@ -43376,7 +43376,7 @@
         ]
       },
       "put": {
-        "operationId": "updateGradeRecord",
+        "operationId": "updateEducationGradeById",
         "description": "",
         "parameters": [
           {
@@ -43443,7 +43443,7 @@
         ]
       },
       "patch": {
-        "operationId": "partialUpdateGradeRecord",
+        "operationId": "partialUpdateEducationGradeById",
         "description": "",
         "parameters": [
           {
@@ -43510,7 +43510,7 @@
         ]
       },
       "delete": {
-        "operationId": "destroyGradeRecord",
+        "operationId": "destroyEducationGradeById",
         "description": "",
         "parameters": [
           {
@@ -43553,7 +43553,7 @@
     },
     "/api/v1/education/lesson/": {
       "get": {
-        "operationId": "listLearningContents",
+        "operationId": "listEducationLesson",
         "description": "",
         "parameters": [
           {
@@ -43595,7 +43595,7 @@
         ]
       },
       "post": {
-        "operationId": "createLearningContent",
+        "operationId": "createEducationLesson",
         "description": "",
         "parameters": [],
         "requestBody": {
@@ -43636,7 +43636,7 @@
     },
     "/api/v1/education/lesson/{id}/": {
       "get": {
-        "operationId": "retrieveLearningContent",
+        "operationId": "retrieveEducationLessonById",
         "description": "",
         "parameters": [
           {
@@ -43684,7 +43684,7 @@
         ]
       },
       "put": {
-        "operationId": "updateLearningContent",
+        "operationId": "updateEducationLessonById",
         "description": "",
         "parameters": [
           {
@@ -43751,7 +43751,7 @@
         ]
       },
       "patch": {
-        "operationId": "partialUpdateLearningContent",
+        "operationId": "partialUpdateEducationLessonById",
         "description": "",
         "parameters": [
           {
@@ -43818,7 +43818,7 @@
         ]
       },
       "delete": {
-        "operationId": "destroyLearningContent",
+        "operationId": "destroyEducationLessonById",
         "description": "",
         "parameters": [
           {
@@ -45709,7 +45709,7 @@
     },
     "/api/v1/education/thematic_map/": {
       "get": {
-        "operationId": "listLearningContents",
+        "operationId": "listEducationThematicMap",
         "description": "",
         "parameters": [
           {
@@ -45751,7 +45751,7 @@
         ]
       },
       "post": {
-        "operationId": "createLearningContent",
+        "operationId": "createEducationThematicMap",
         "description": "",
         "parameters": [],
         "requestBody": {
@@ -45792,7 +45792,7 @@
     },
     "/api/v1/education/thematic_map/{id}/": {
       "get": {
-        "operationId": "retrieveLearningContent",
+        "operationId": "retrieveEducationThematicMapById",
         "description": "",
         "parameters": [
           {
@@ -45840,7 +45840,7 @@
         ]
       },
       "put": {
-        "operationId": "updateLearningContent",
+        "operationId": "updateEducationThematicMapById",
         "description": "",
         "parameters": [
           {
@@ -45907,7 +45907,7 @@
         ]
       },
       "patch": {
-        "operationId": "partialUpdateLearningContent",
+        "operationId": "partialUpdateEducationThematicMapById",
         "description": "",
         "parameters": [
           {
@@ -45974,7 +45974,7 @@
         ]
       },
       "delete": {
-        "operationId": "destroyLearningContent",
+        "operationId": "destroyEducationThematicMapById",
         "description": "",
         "parameters": [
           {
