@@ -1,4 +1,5 @@
 import schema from "@/schema.generated.json"
+import { translateRuntimeText } from "@/lib/i18nRuntime"
 
 export type ModuleResource = {
   key: string
@@ -11,6 +12,40 @@ export type ModuleGroup = {
   key: string
   label: string
   resources: ModuleResource[]
+}
+
+const GROUP_LABEL_PT_BY_KEY: Record<string, string> = {
+  accounting: "Contabilidade",
+  ai_assistant: "IA Operacional",
+  audit: "Auditoria",
+  billing: "Faturação",
+  bloodbank: "Banco de Sangue",
+  clinical: "Clínica",
+  consultations: "Consultas",
+  education: "Educação",
+  entities: "Entidades",
+  equipment: "Equipamentos",
+  human_resources: "Recursos Humanos",
+  identity: "Identidade",
+  insurer: "Seguradora",
+  maternity: "Maternidade",
+  medical_records: "Prontuário",
+  monitoring: "Monitorização",
+  notifications: "Notificações",
+  nursing: "Enfermagem",
+  payments: "Pagamentos",
+  pharmacy: "Farmácia",
+  reception: "Recepção",
+  surgery: "Cirurgia",
+  tenants: "Clientes",
+  warehouse: "ERP e WMS",
+}
+
+const RESOURCE_LABEL_PT_BY_KEY: Record<string, string> = {
+  audit: "Auditoria",
+  user_audit: "Auditoria de Utilizador",
+  user_activity: "Actividades de Utilizador",
+  workspace: "Área de trabalho",
 }
 
 // Single source of truth for the Django apps currently exposed under /api/v1.
@@ -35,7 +70,7 @@ const MODULES_BASE: ModuleGroup[] = [
     key: "reception",
     label: "Recepção",
     resources: [
-      { key: "workspace", label: "Workspace", endpoint: "/reception/workspace/", adminListHref: "/admin/reception/" },
+      { key: "workspace", label: "Área de trabalho", endpoint: "/reception/workspace/", adminListHref: "/admin/reception/" },
       { key: "checkin", label: "Check-ins", endpoint: "/reception/checkin/", adminListHref: "/admin/reception/checkinrecepcao/" },
       { key: "care", label: "Atendimentos", endpoint: "/reception/care/", adminListHref: "/admin/reception/" },
     ],
@@ -552,6 +587,16 @@ function titleFromSlug(slug: string): string {
     .join(" ")
 }
 
+function groupLabelFromKey(groupKey: string): string {
+  const canonical = canonicalModuleGroupKey(groupKey)
+  return GROUP_LABEL_PT_BY_KEY[canonical] || translateRuntimeText(titleFromSlug(canonical), "pt")
+}
+
+function resourceLabelFromKey(resourceKey: string): string {
+  const normalized = normalizeResourceKey(resourceKey)
+  return RESOURCE_LABEL_PT_BY_KEY[normalized] || translateRuntimeText(titleFromSlug(normalized), "pt")
+}
+
 function getResourceSegment(endpoint: string): string {
   const parts = normalizeEndpoint(endpoint).split("/").filter(Boolean)
   return parts[1] || ""
@@ -630,7 +675,7 @@ export function discoverModulesFromApiRoot(
       ? { ...staticMatch.resource, endpoint }
       : {
           key: normalizeResourceKey(resourceSegment),
-          label: titleFromSlug(resourceSegment),
+          label: resourceLabelFromKey(resourceSegment),
           endpoint,
           adminListHref: inferAdminListHref(endpoint),
         }
@@ -640,7 +685,7 @@ export function discoverModulesFromApiRoot(
       const staticGroup = MODULES.find((item) => item.key === groupKey)
       group = {
         key: groupKey,
-        label: staticGroup?.label || staticMatch?.group.label || titleFromSlug(groupKey),
+        label: staticGroup?.label || staticMatch?.group.label || groupLabelFromKey(groupKey),
         resources: [],
       }
       grouped.set(groupKey, group)
@@ -707,7 +752,7 @@ export function discoverModulesFromOpenApiSchema(
       ? { ...staticMatch.resource, endpoint }
       : {
           key: normalizeResourceKey(resourceSegment),
-          label: titleFromSlug(resourceSegment),
+          label: resourceLabelFromKey(resourceSegment),
           endpoint,
           adminListHref: inferAdminListHref(endpoint),
         }
@@ -720,7 +765,7 @@ export function discoverModulesFromOpenApiSchema(
         label:
           staticGroup?.label ||
           staticMatch?.group.label ||
-          titleFromSlug(groupKey),
+          groupLabelFromKey(groupKey),
         resources: [],
       }
       grouped.set(groupKey, group)
@@ -762,7 +807,7 @@ export function mergeModules(
     if (!target) {
       target = {
         key: canonicalGroupKey,
-        label: incomingGroup.label || titleFromSlug(canonicalGroupKey),
+        label: incomingGroup.label || groupLabelFromKey(canonicalGroupKey),
         resources: [],
       }
       merged.push(target)
@@ -861,4 +906,3 @@ export function findModuleResource(
   if (!resource) return null
   return { group, resource }
 }
-

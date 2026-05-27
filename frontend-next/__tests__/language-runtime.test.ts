@@ -75,6 +75,9 @@ describe("language defaults and runtime translation", () => {
     expect(translateRuntimeText("Patients", "pt")).toBe("Pacientes")
     expect(translateRuntimeText("Requests (Laboratory)", "pt")).toBe("Requisições (Laboratório)")
     expect(translateRuntimeText("Substrato Healthcare", "pt")).toBe("Substrato Saúde")
+    expect(translateRuntimeText("Record not found.", "pt")).toBe("Registo não encontrado.")
+    expect(translateRuntimeText("Open list", "pt")).toBe("Abrir lista")
+    expect(translateRuntimeText("Save changes", "pt")).toBe("Guardar alterações")
   })
 
   it("keeps Portuguese text Portuguese and translates it only in English mode", () => {

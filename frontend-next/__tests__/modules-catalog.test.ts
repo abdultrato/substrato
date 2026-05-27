@@ -56,7 +56,25 @@ describe("modules catalog discovery", () => {
     const found = findModuleResource("audit", "usuario", merged)
 
     expect(found).not.toBeNull()
-    expect(found?.group.label).toBe("Audit")
+    expect(found?.group.label).toBe("Auditoria")
+  })
+
+  it("localizes unknown discovered audit resources to Portuguese", () => {
+    const discovered = discoverModulesFromApiRoot({
+      "audit/user_audit": "/api/v1/audit/user_audit/",
+    })
+    const merged = mergeModules(MODULES, discovered)
+    const found = findModuleResource("audit", "user_audit", merged)
+
+    expect(found).not.toBeNull()
+    expect(found?.group.label).toBe("Auditoria")
+    expect(found?.resource.label).toBe("Auditoria de Utilizador")
+  })
+
+  it("does not expose the English Workspace label in the static catalog", () => {
+    const workspace = findModuleResource("reception", "workspace", MODULES)
+
+    expect(workspace?.resource.label).toBe("Área de trabalho")
   })
 
   it("uses real django admin paths for mapped resources", () => {

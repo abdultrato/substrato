@@ -208,17 +208,20 @@ function useEndpointContext(endpoint: string): EndpointContext {
 
 export function GeneratedResourceListPage({ endpoint }: { endpoint: string }) {
   const ctx = useEndpointContext(endpoint)
+  const { tr } = useLanguage()
   const pathname = usePathname()
   const basePath = stripTrailingSlash(pathname || "")
   const canCreate = hasWriteContract(ctx.normalizedEndpoint, "post")
+  const groupLabel = tr(ctx.groupLabel)
+  const resourceLabel = tr(ctx.resourceLabel)
 
   return (
     <ResourceListPage
-      title={`${ctx.groupLabel} / ${ctx.resourceLabel}`}
+      title={`${groupLabel} / ${resourceLabel}`}
       subtitle={groupContextMessage(ctx.groupKey, "list")}
       endpoint={ctx.normalizedEndpoint}
-      groupLabel={ctx.groupLabel}
-      resourceLabel={ctx.resourceLabel}
+      groupLabel={groupLabel}
+      resourceLabel={resourceLabel}
       adminListHref={ctx.adminListHref}
       createHref={canCreate ? `${basePath}/new` : undefined}
       rowHref={(row) => {
@@ -232,17 +235,18 @@ export function GeneratedResourceListPage({ endpoint }: { endpoint: string }) {
 
 export function GeneratedResourceCreatePage({ endpoint }: { endpoint: string }) {
   useAuthGuard()
-  const { t } = useLanguage()
+  const { t, tr } = useLanguage()
   const router = useRouter()
   const pathname = usePathname()
   const ctx = useEndpointContext(endpoint)
   const basePath = stripTrailingSlash((pathname || "").replace(/\/new\/?$/, ""))
+  const resourceLabel = tr(ctx.resourceLabel)
 
   return (
     <AppLayout requiredGroups={ctx.requiredGroups}>
       <div className="mx-auto w-full max-w-5xl space-y-4">
         <PageHeader
-          title={`${t("Novo", "New")} ${ctx.resourceLabel}`}
+          title={`${t("Novo", "New")} ${resourceLabel}`}
           subtitle={groupContextMessage(ctx.groupKey, "new")}
           actions={
             <Link
@@ -277,7 +281,7 @@ export function GeneratedResourceCreatePage({ endpoint }: { endpoint: string }) 
 
 export function GeneratedResourceDetailPage({ endpoint }: { endpoint: string }) {
   useAuthGuard()
-  const { t } = useLanguage()
+  const { t, tr } = useLanguage()
   const router = useRouter()
   const pathname = usePathname()
   const params = useParams()
@@ -286,6 +290,7 @@ export function GeneratedResourceDetailPage({ endpoint }: { endpoint: string }) 
   const ctx = useEndpointContext(endpoint)
   const basePath = stripTrailingSlash((pathname || "").replace(/\/[^/]+\/?$/, ""))
   const canEdit = hasWriteContract(`${ctx.normalizedEndpoint}{id}/`, "put")
+  const resourceLabel = tr(ctx.resourceLabel)
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["generated-resource-detail", ctx.normalizedEndpoint, id],
@@ -321,7 +326,7 @@ export function GeneratedResourceDetailPage({ endpoint }: { endpoint: string }) 
       <AppLayout requiredGroups={ctx.requiredGroups}>
         <div className="mx-auto w-full max-w-5xl space-y-4">
           <PageHeader
-            title={`${ctx.resourceLabel} #${id}`}
+            title={`${resourceLabel} #${id}`}
             subtitle={groupContextMessage(ctx.groupKey, "detail")}
             actions={
               <Link
@@ -344,7 +349,7 @@ export function GeneratedResourceDetailPage({ endpoint }: { endpoint: string }) 
     <AppLayout requiredGroups={ctx.requiredGroups}>
       <div className="mx-auto w-full max-w-5xl space-y-4">
         <PageHeader
-          title={primary ? primary : `${ctx.resourceLabel} #${id}`}
+          title={primary ? primary : `${resourceLabel} #${id}`}
           subtitle={groupContextMessage(ctx.groupKey, "detail")}
           actions={
             <div className="flex flex-wrap items-center gap-2">
@@ -390,13 +395,14 @@ export function GeneratedResourceDetailPage({ endpoint }: { endpoint: string }) 
 
 export function GeneratedResourceEditPage({ endpoint }: { endpoint: string }) {
   useAuthGuard()
-  const { t } = useLanguage()
+  const { t, tr } = useLanguage()
   const router = useRouter()
   const pathname = usePathname()
   const params = useParams()
   const id = routeParamToString((params as any)?.id)
   const ctx = useEndpointContext(endpoint)
   const detailPath = stripTrailingSlash((pathname || "").replace(/\/edit\/?$/, ""))
+  const resourceLabel = tr(ctx.resourceLabel)
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["generated-resource-edit", ctx.normalizedEndpoint, id],
@@ -421,7 +427,7 @@ export function GeneratedResourceEditPage({ endpoint }: { endpoint: string }) {
       <AppLayout requiredGroups={ctx.requiredGroups}>
         <div className="mx-auto w-full max-w-5xl space-y-4">
           <PageHeader
-            title={`${t("Editar", "Edit")} ${ctx.resourceLabel}`}
+            title={`${t("Editar", "Edit")} ${resourceLabel}`}
             subtitle={groupContextMessage(ctx.groupKey, "edit")}
             actions={
               <Link
@@ -442,7 +448,7 @@ export function GeneratedResourceEditPage({ endpoint }: { endpoint: string }) {
     <AppLayout requiredGroups={ctx.requiredGroups}>
       <div className="mx-auto w-full max-w-5xl space-y-4">
         <PageHeader
-          title={`${t("Editar", "Edit")} ${ctx.resourceLabel}`}
+          title={`${t("Editar", "Edit")} ${resourceLabel}`}
           subtitle={groupContextMessage(ctx.groupKey, "edit")}
           actions={
             <Link
