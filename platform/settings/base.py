@@ -6,6 +6,7 @@ import socket
 
 from django.core.exceptions import ImproperlyConfigured
 from dotenv import load_dotenv
+from kombu import Exchange, Queue
 
 # =========================================================
 # PATH & ENV
@@ -29,6 +30,29 @@ def get_env(name, default=None, required=False):
         raise ImproperlyConfigured(f"{name} is required")
 
     return value
+
+
+def get_env_bool(name: str, default: bool = False) -> bool:
+    raw = os.getenv(name)
+    if raw is None:
+        return default
+    return raw.strip().lower() in {"1", "true", "yes", "on", "sim"}
+
+
+def get_env_int(name: str, default: int) -> int:
+    raw = os.getenv(name)
+    if raw is None or str(raw).strip() == "":
+        return default
+    try:
+        return int(str(raw).strip())
+    except ValueError as exc:
+        raise ImproperlyConfigured(f"{name} must be an integer") from exc
+
+
+def get_env_csv(name: str, default: str) -> list[str]:
+    raw = os.getenv(name, default)
+    values = [item.strip() for item in str(raw or "").split(",") if item.strip()]
+    return values or [item.strip() for item in default.split(",") if item.strip()]
 
 
 def _module_available(module_name: str) -> bool:
@@ -1211,18 +1235,74 @@ SECURE_BROWSER_XSS_FILTER = True
 # CELERY
 # =========================================================
 
-CELERY_BROKER_URL = REDIS_URL
-CELERY_RESULT_BACKEND = REDIS_URL
+ASYNC_PROCESSING_ENABLED = get_env_bool("ASYNC_PROCESSING_ENABLED", True)
+
+CELERY_BROKER_URL = get_env("CELERY_BROKER_URL", REDIS_URL)
+CELERY_RESULT_BACKEND = get_env("CELERY_RESULT_BACKEND", CELERY_BROKER_URL)
 
 # Celery 6+ mudança: broker_connection_retry não controla mais retries no startup.
 # Definimos explicitamente para remover warning e manter comportamento previsível.
 CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
+CELERY_BROKER_CONNECTION_TIMEOUT = float(get_env("CELERY_BROKER_CONNECTION_TIMEOUT_SECONDS", "3"))
 
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
 
 CELERY_TIMEZONE = TIME_ZONE
+CELERY_ENABLE_UTC = True
+
+CELERY_TASK_DEFAULT_QUEUE = get_env("CELERY_TASK_DEFAULT_QUEUE", "default")
+CELERY_TASK_DEFAULT_EXCHANGE = CELERY_TASK_DEFAULT_QUEUE
+CELERY_TASK_DEFAULT_ROUTING_KEY = CELERY_TASK_DEFAULT_QUEUE
+CELERY_WORKER_QUEUES = get_env_csv("CELERY_WORKER_QUEUES", "default,exports,billing,operations")
+CELERY_TASK_CREATE_MISSING_QUEUES = True
+
+
+def _celery_direct_queue(name: str) -> Queue:
+    exchange = Exchange(name, type="direct")
+    return Queue(name, exchange, routing_key=name)
+
+
+CELERY_TASK_QUEUES = tuple(_celery_direct_queue(queue_name) for queue_name in CELERY_WORKER_QUEUES)
+CELERY_TASK_ROUTES = {
+    "tasks.export_jobs.run_export_job": {"queue": "exports", "routing_key": "exports"},
+    "tasks.billing.recalculation.recalculate_invoice_task": {"queue": "billing", "routing_key": "billing"},
+    "tasks.billing.recalculation.recalculate_invoices": {"queue": "billing", "routing_key": "billing"},
+    "tasks.authorization_worker.process_authorization_task": {
+        "queue": "operations",
+        "routing_key": "operations",
+    },
+}
+CELERY_IMPORTS = ("tasks.tasks",)
+
+# Execução previsível: tarefas longas não devem travar workers indefinidamente.
+CELERY_TASK_TRACK_STARTED = True
+CELERY_TASK_TIME_LIMIT = get_env_int("CELERY_TASK_TIME_LIMIT_SECONDS", 15 * 60)
+CELERY_TASK_SOFT_TIME_LIMIT = get_env_int("CELERY_TASK_SOFT_TIME_LIMIT_SECONDS", 12 * 60)
+CELERY_RESULT_EXPIRES = get_env_int("CELERY_RESULT_EXPIRES_SECONDS", 60 * 60)
+CELERY_WORKER_PREFETCH_MULTIPLIER = get_env_int("CELERY_WORKER_PREFETCH_MULTIPLIER", 1)
+CELERY_WORKER_MAX_TASKS_PER_CHILD = get_env_int("CELERY_WORKER_MAX_TASKS_PER_CHILD", 100)
+CELERY_TASK_ACKS_LATE = get_env_bool("CELERY_TASK_ACKS_LATE", True)
+CELERY_TASK_REJECT_ON_WORKER_LOST = get_env_bool("CELERY_TASK_REJECT_ON_WORKER_LOST", True)
+CELERY_TASK_ALWAYS_EAGER = get_env_bool("CELERY_TASK_ALWAYS_EAGER", False)
+CELERY_TASK_EAGER_PROPAGATES = get_env_bool("CELERY_TASK_EAGER_PROPAGATES", DEBUG)
+
+# Eventos alimentam Flower/celery-exporter/Prometheus sem alterar o contrato das APIs.
+CELERY_WORKER_SEND_TASK_EVENTS = get_env_bool("CELERY_WORKER_SEND_TASK_EVENTS", True)
+CELERY_TASK_SEND_SENT_EVENT = get_env_bool("CELERY_TASK_SEND_SENT_EVENT", True)
+
+CELERY_REDIS_VISIBILITY_TIMEOUT = get_env_int("CELERY_REDIS_VISIBILITY_TIMEOUT_SECONDS", 60 * 60)
+CELERY_BROKER_TRANSPORT_OPTIONS = {
+    "visibility_timeout": CELERY_REDIS_VISIBILITY_TIMEOUT,
+    "socket_timeout": float(get_env("CELERY_REDIS_SOCKET_TIMEOUT_SECONDS", "5")),
+    "socket_connect_timeout": float(get_env("CELERY_REDIS_CONNECT_TIMEOUT_SECONDS", "5")),
+}
+CELERY_RESULT_BACKEND_TRANSPORT_OPTIONS = {
+    "retry_policy": {
+        "timeout": float(get_env("CELERY_RESULT_BACKEND_RETRY_TIMEOUT_SECONDS", "5")),
+    }
+}
 
 # =========================================================
 # E-MAIL

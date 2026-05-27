@@ -124,6 +124,10 @@ USE_X_FORWARDED_HOST = _env_bool("USE_X_FORWARDED_HOST", False)
 # Em desenvolvimento, só usa Redis quando USE_REDIS=true.
 # Isso evita latência alta quando REDIS_URL está definido mas o serviço não está ativo.
 REDIS_URL = os.getenv("REDIS_URL", "").strip()
+CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", REDIS_URL or "memory://")
+CELERY_RESULT_BACKEND = os.getenv("CELERY_RESULT_BACKEND", REDIS_URL or "cache+memory://")
+CELERY_TASK_ALWAYS_EAGER = _env_bool("CELERY_TASK_ALWAYS_EAGER", not bool(REDIS_URL))
+CELERY_TASK_EAGER_PROPAGATES = _env_bool("CELERY_TASK_EAGER_PROPAGATES", True)
 if USE_REDIS and REDIS_URL:
     CACHES = {
         "default": {

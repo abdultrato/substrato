@@ -146,7 +146,7 @@ python manage.py runserver
 Variáveis (.env local):
 - `DJANGO_SECRET_KEY`, `DJANGO_DEBUG=True`, `DJANGO_ALLOWED_HOSTS=127.0.0.1,localhost`
 - `DB_*` para Postgres ou use SQLite default.
-- `REDIS_URL` se usar Celery/Redis local.
+- `REDIS_URL`, `USE_REDIS=true`, `CELERY_BROKER_URL` e `CELERY_RESULT_BACKEND` se usar Celery/Redis local.
 - Notificações (e-mail/WhatsApp):
 - `DEFAULT_FROM_EMAIL`
 - `EMAIL_BACKEND`, `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD`, `EMAIL_USE_TLS`, `EMAIL_USE_SSL`
@@ -216,6 +216,7 @@ docker build -f Dockerfile.frontend -t substrato_frontend:latest .
 docker compose -f docker-compose.prod.yml run --rm backend python manage.py migrate
 docker compose -f docker-compose.prod.yml run --rm backend python manage.py collectstatic --noinput
 docker compose -f docker-compose.prod.yml up -d traefik backend frontend celery celery_beat redis db
+docker compose -f docker-compose.prod.yml exec backend python manage.py check_async_processing --strict
 ```
 - Volume persistente: `media_volume` para uploads.
 

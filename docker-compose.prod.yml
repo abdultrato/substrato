@@ -27,6 +27,10 @@ services:
       DJANGO_SETTINGS_MODULE: platform.settings.production
       DJANGO_DEBUG: "False"
       REDIS_URL: redis://redis:6379/0
+      USE_REDIS: "true"
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+      CELERY_WORKER_QUEUES: default,exports,billing,operations
       WAREHOUSE_EVENT_BACKBONE: ${WAREHOUSE_EVENT_BACKBONE:-local}
       RABBITMQ_URL: ${RABBITMQ_URL:-}
       KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS:-}
@@ -66,6 +70,12 @@ services:
     env_file:
       - .env.prod
     environment:
+      DJANGO_SETTINGS_MODULE: platform.settings.production
+      USE_REDIS: "true"
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+      CELERY_WORKER_QUEUES: default,exports,billing,operations
       WAREHOUSE_EVENT_BACKBONE: ${WAREHOUSE_EVENT_BACKBONE:-local}
       RABBITMQ_URL: ${RABBITMQ_URL:-}
       KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS:-}
@@ -74,7 +84,7 @@ services:
       OTEL_ENABLED: ${OTEL_ENABLED:-false}
       OTEL_SERVICE_NAME: ${OTEL_SERVICE_NAME:-substrato-celery}
       OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://otel_collector:4318}
-    command: celery -A platform worker -l info
+    command: celery -A platform worker -l info -Q default,exports,billing,operations --concurrency=${CELERY_WORKER_CONCURRENCY:-2} --max-tasks-per-child=${CELERY_WORKER_MAX_TASKS_PER_CHILD:-100}
     healthcheck:
       disable: true
     depends_on:
@@ -88,6 +98,12 @@ services:
     env_file:
       - .env.prod
     environment:
+      DJANGO_SETTINGS_MODULE: platform.settings.production
+      USE_REDIS: "true"
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+      CELERY_WORKER_QUEUES: default,exports,billing,operations
       WAREHOUSE_EVENT_BACKBONE: ${WAREHOUSE_EVENT_BACKBONE:-local}
       RABBITMQ_URL: ${RABBITMQ_URL:-}
       KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS:-}

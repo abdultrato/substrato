@@ -44,6 +44,9 @@ help:
 	@echo "Celery:"
 	@echo "  make celery-logs        - Ver logs do Celery"
 	@echo "  make celery-inspect     - Inspetar workers"
+	@echo "  make celery-worker      - Worker local (filas default,exports,billing,operations)"
+	@echo "  make celery-beat        - Scheduler local do Celery Beat"
+	@echo "  make async-check        - Verificar broker, cache e registo de tasks"
 	@echo ""
 	@echo "Operações:"
 	@echo "  make ops-health         - Verificar health, metrics e Prometheus rules"
@@ -185,6 +188,15 @@ celery-inspect:
 
 celery-purge:
 	$(COMPOSE) exec backend python -m celery -A platform purge
+
+celery-worker:
+	python -m celery -A platform worker -l info -Q default,exports,billing,operations --concurrency=2 --max-tasks-per-child=100
+
+celery-beat:
+	python -m celery -A platform beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
+
+async-check:
+	python manage.py check_async_processing
 
 redis-cli:
 	$(COMPOSE) exec redis redis-cli

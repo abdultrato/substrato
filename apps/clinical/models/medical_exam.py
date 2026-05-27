@@ -171,11 +171,11 @@ class MedicalExam(TenantPropagationMixin, CoreModel):
                 name="unique_name_medical_exam_por_sector_nao_deleted",
             ),
             models.CheckConstraint(
-                condition=Q(turnaround_hours__gt=0),
+                check=Q(turnaround_hours__gt=0),
                 name="exm_turnaround_hours_positivo",
             ),
             models.CheckConstraint(
-                condition=Q(price__gte=0),
+                check=Q(price__gte=0),
                 name="exm_price_nao_negativo",
             ),
         ]
@@ -263,4 +263,3 @@ class MedicalExamField(TenantPropagationMixin, ScopedPositionMixin, CoreModel):
 
 
 tipos_result_permitidos_para_method = allowed_result_types_for_method
-

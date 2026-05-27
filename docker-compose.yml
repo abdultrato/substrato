@@ -142,6 +142,10 @@ services:
       DB_PORT: "5432"
 
       REDIS_URL: redis://redis:6379/1
+      USE_REDIS: "true"
+      CELERY_BROKER_URL: redis://redis:6379/1
+      CELERY_RESULT_BACKEND: redis://redis:6379/1
+      CELERY_WORKER_QUEUES: default,exports,billing,operations
       WAREHOUSE_EVENT_BACKBONE: "${WAREHOUSE_EVENT_BACKBONE:-local}"
       RABBITMQ_URL: "${RABBITMQ_URL:-amqp://guest:guest@rabbitmq:5672/}"
       KAFKA_BOOTSTRAP_SERVERS: "${KAFKA_BOOTSTRAP_SERVERS:-kafka:9092}"
@@ -252,7 +256,7 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: substrato_celery
-    command: celery -A platform worker -l info --concurrency=2
+    command: celery -A platform worker -l info -Q default,exports,billing,operations --concurrency=2 --max-tasks-per-child=100
     healthcheck:
       disable: true
 
@@ -267,6 +271,10 @@ services:
       DB_PORT: "5432"
 
       REDIS_URL: redis://redis:6379/1
+      USE_REDIS: "true"
+      CELERY_BROKER_URL: redis://redis:6379/1
+      CELERY_RESULT_BACKEND: redis://redis:6379/1
+      CELERY_WORKER_QUEUES: default,exports,billing,operations
       WAREHOUSE_EVENT_BACKBONE: "${WAREHOUSE_EVENT_BACKBONE:-local}"
       RABBITMQ_URL: "${RABBITMQ_URL:-amqp://guest:guest@rabbitmq:5672/}"
       KAFKA_BOOTSTRAP_SERVERS: "${KAFKA_BOOTSTRAP_SERVERS:-kafka:9092}"
@@ -319,6 +327,10 @@ services:
       DB_PORT: "5432"
 
       REDIS_URL: redis://redis:6379/1
+      USE_REDIS: "true"
+      CELERY_BROKER_URL: redis://redis:6379/1
+      CELERY_RESULT_BACKEND: redis://redis:6379/1
+      CELERY_WORKER_QUEUES: default,exports,billing,operations
       WAREHOUSE_EVENT_BACKBONE: "${WAREHOUSE_EVENT_BACKBONE:-local}"
       RABBITMQ_URL: "${RABBITMQ_URL:-amqp://guest:guest@rabbitmq:5672/}"
       KAFKA_BOOTSTRAP_SERVERS: "${KAFKA_BOOTSTRAP_SERVERS:-kafka:9092}"

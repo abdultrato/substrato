@@ -5,6 +5,7 @@ from __future__ import annotations
 import importlib
 import logging
 
+from django.conf import settings
 from django.db import transaction
 
 from observability.metrics import register_async_task_enqueue
@@ -51,6 +52,10 @@ def enqueue_task(
     task_kwargs = task_kwargs or {}
     task = _resolve_task(task_ref)
     task_name = _task_name(task).lower()
+
+    if not getattr(settings, "ASYNC_PROCESSING_ENABLED", True):
+        register_async_task_enqueue(task_name, "disabled", tenant_id=tenant_id)
+        return task(*args, **task_kwargs)
 
     apply_kwargs = {}
     if queue:

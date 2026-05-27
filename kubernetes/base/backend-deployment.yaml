@@ -56,6 +56,10 @@ spec:
             secretKeyRef:
               name: substrato-secrets
               key: redis-url
+        - name: USE_REDIS
+          value: "true"
+        - name: CELERY_WORKER_QUEUES
+          value: "default,exports,billing,operations"
         - name: DJANGO_ALLOWED_HOSTS
           valueFrom:
             configMapKeyRef:
@@ -177,3 +181,193 @@ spec:
         value: 2
         periodSeconds: 60
       selectPolicy: Max
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: substrato-celery-beat
+  labels:
+    app: substrato
+    component: celery-beat
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: substrato
+      component: celery-beat
+  template:
+    metadata:
+      labels:
+        app: substrato
+        component: celery-beat
+    spec:
+      serviceAccountName: substrato
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+      containers:
+      - name: celery-beat
+        image: ghcr.io/seu-usuario/substrato/backend:latest
+        imagePullPolicy: Always
+        args:
+        - celery
+        - -A
+        - platform
+        - beat
+        - -l
+        - info
+        - --scheduler
+        - django_celery_beat.schedulers:DatabaseScheduler
+        env:
+        - name: DJANGO_ENV
+          value: "production"
+        - name: DJANGO_SETTINGS_MODULE
+          value: "platform.settings.production"
+        - name: DJANGO_DEBUG
+          value: "False"
+        - name: DJANGO_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: substrato-secrets
+              key: django-secret-key
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: substrato-secrets
+              key: database-url
+        - name: REDIS_URL
+          valueFrom:
+            secretKeyRef:
+              name: substrato-secrets
+              key: redis-url
+        - name: USE_REDIS
+          value: "true"
+        - name: CELERY_WORKER_QUEUES
+          value: "default,exports,billing,operations"
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        securityContext:
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+        volumeMounts:
+        - name: tmp
+          mountPath: /tmp
+      volumes:
+      - name: tmp
+        emptyDir: {}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: substrato-celery-worker
+  labels:
+    app: substrato
+    component: celery-worker
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: substrato
+      component: celery-worker
+  template:
+    metadata:
+      labels:
+        app: substrato
+        component: celery-worker
+    spec:
+      serviceAccountName: substrato
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+      containers:
+      - name: celery-worker
+        image: ghcr.io/seu-usuario/substrato/backend:latest
+        imagePullPolicy: Always
+        args:
+        - celery
+        - -A
+        - platform
+        - worker
+        - -l
+        - info
+        - -Q
+        - default,exports,billing,operations
+        - --concurrency=2
+        - --max-tasks-per-child=100
+        env:
+        - name: DJANGO_ENV
+          value: "production"
+        - name: DJANGO_SETTINGS_MODULE
+          value: "platform.settings.production"
+        - name: DJANGO_DEBUG
+          value: "False"
+        - name: DJANGO_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: substrato-secrets
+              key: django-secret-key
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: substrato-secrets
+              key: database-url
+        - name: REDIS_URL
+          valueFrom:
+            secretKeyRef:
+              name: substrato-secrets
+              key: redis-url
+        - name: USE_REDIS
+          value: "true"
+        - name: CELERY_WORKER_QUEUES
+          value: "default,exports,billing,operations"
+        resources:
+          requests:
+            cpu: 250m
+            memory: 512Mi
+          limits:
+            cpu: 1000m
+            memory: 1Gi
+        securityContext:
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+        volumeMounts:
+        - name: tmp
+          mountPath: /tmp
+      volumes:
+      - name: tmp
+        emptyDir: {}
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: substrato-celery-worker-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: substrato-celery-worker
+  minReplicas: 2
+  maxReplicas: 8
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
