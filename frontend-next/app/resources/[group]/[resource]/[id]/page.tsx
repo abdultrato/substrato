@@ -24,6 +24,14 @@ function ensureTrailingSlash(url: string) {
     return url.endsWith("/") ? url : `${url}/`
 }
 
+function detailActionContractEndpoint(endpoint: string, action: string) {
+    return `${ensureTrailingSlash(endpoint)}{id}/${action}/`
+}
+
+function recordActionEndpoint(endpoint: string, id: string, action: string) {
+    return `${ensureTrailingSlash(endpoint)}${id}/${action}/`
+}
+
 export default function ResourceDetailPage() {
     const params = useParams()
     const groupKey = routeParamToString((params as any)?.group)
@@ -39,9 +47,12 @@ export default function ResourceDetailPage() {
     const canonicalGroupKey = canonicalModuleGroupKey(groupKey)
     const [data, setData] = useState<any | null>(null)
     const [error, setError] = useState<string | null>(null)
+    const [feedback, setFeedback] = useState<string | null>(null)
     const [loadingData, setLoadingData] = useState(true)
     const [deleting, setDeleting] = useState(false)
-    const [actionId, setActionId] = useState<number | null>(null)
+    const [activeAction, setActiveAction] = useState<string | null>(null)
+    const [bloodRecipient, setBloodRecipient] = useState("")
+    const [bloodIndication, setBloodIndication] = useState("")
     const detailContractEndpoint = found ? ensureTrailingSlash(found.resource.endpoint) + "{id}/" : ""
     const canReadDetail = found ? hasOpenApiMethod(detailContractEndpoint, "get") : false
     const canDeleteRecord = found ? hasOpenApiMethod(detailContractEndpoint, "delete") : false
@@ -52,6 +63,13 @@ export default function ResourceDetailPage() {
     const isSurgery =
         canonicalGroupKey === "surgery" &&
         surgeryKeys.includes(resourceKey.toLocaleLowerCase())
+    const canReserveUnit = found ? hasOpenApiMethod(detailActionContractEndpoint(found.resource.endpoint, "reserve"), "post") : false
+    const canReleaseUnit = found ? hasOpenApiMethod(detailActionContractEndpoint(found.resource.endpoint, "release"), "post") : false
+    const canTransfuseUnit = found ? hasOpenApiMethod(detailActionContractEndpoint(found.resource.endpoint, "transfuse"), "post") : false
+    const canCreateSurgeryInvoice = found
+        ? hasOpenApiMethod(detailActionContractEndpoint(found.resource.endpoint, "create-invoice"), "post")
+        : false
+    const canDownloadInvoicePdf = hasOpenApiMethod("/billing/invoice/{id}/pdf/", "get")
 
     const reloadResource = useCallback(async () => {
         if (!found || !canReadDetail) {
@@ -104,89 +122,110 @@ export default function ResourceDetailPage() {
             id: Number(data?.id || 0) || undefined,
             groups: Array.isArray(data?.group_names) ? data.group_names : [],
         })
+    const invoiceId = data?.fatura_id ?? data?.invoice_id ?? data?.invoice?.id ?? null
 
     const createInvoice = useCallback(async () => {
-        alert("Criar fatura apenas nos módulos Faturamento/Recepção.")
-    }, [])
+        if (!found || !canCreateSurgeryInvoice) return
+        try {
+            setActiveAction("invoice")
+            setError(null)
+            setFeedback(null)
+            const result = await apiFetch<any>(recordActionEndpoint(found.resource.endpoint, id, "create-invoice"), {
+                method: "POST",
+                body: JSON.stringify({ issue: true }),
+            })
+            const createdInvoiceId = result?.invoice_id ?? result?.fatura_id ?? result?.invoice?.id
+            if (createdInvoiceId) {
+                setData((current: any) => ({ ...(current || {}), fatura_id: createdInvoiceId }))
+            }
+            setFeedback(t("Fatura criada.", "Invoice created."))
+            await reloadResource()
+        } catch (e: any) {
+            setError(isNotFoundLikeError(e) ? null : (e?.message || t("Falha ao criar fatura.", "Failed to create invoice.")))
+        } finally {
+            setActiveAction(null)
+        }
+    }, [found, id, canCreateSurgeryInvoice, reloadResource, t])
 
     const openPdf = useCallback(async () => {
-        const faturaId = data?.fatura_id
-        if (!faturaId) return
+        if (!invoiceId || !canDownloadInvoicePdf) return
         try {
-            setActionId(faturaId)
-            const blob = await apiFetch<Blob>(`/invoices/${faturaId}/pdf/`, { responseType: "blob" })
+            setActiveAction("invoice-pdf")
+            setError(null)
+            setFeedback(null)
+            const blob = await apiFetch<Blob>(`/billing/invoice/${invoiceId}/pdf/`, { responseType: "blob" })
             const url = window.URL.createObjectURL(blob)
             const a = document.createElement("a")
             a.href = url
-            a.download = `fatura_${faturaId}.pdf`
+            a.download = `fatura_${invoiceId}.pdf`
             a.click()
             window.URL.revokeObjectURL(url)
+            setFeedback(t("PDF da fatura baixado.", "Invoice PDF downloaded."))
         } catch (e: any) {
-            setError(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao gerar PDF."))
+            setError(isNotFoundLikeError(e) ? null : (e?.message || t("Falha ao gerar PDF.", "Failed to generate PDF.")))
         } finally {
-            setActionId(null)
+            setActiveAction(null)
         }
-    }, [data?.fatura_id])
+    }, [invoiceId, canDownloadInvoicePdf, t])
 
-    const reserveUnit = useCallback(async () => {
-        const recipientRaw = prompt("ID do paciente receptor para reserva:")
-        if (!recipientRaw) return
-        const recipient = Number(recipientRaw)
-        if (!Number.isFinite(recipient)) {
-            alert("ID inválido.")
-            return
+    function parseRecipientId(value: string) {
+        const parsed = Number(value)
+        if (!Number.isInteger(parsed) || parsed < 1) {
+            setError(t("Informe um ID numérico válido para o paciente receptor.", "Enter a valid numeric recipient patient ID."))
+            return null
         }
+        return parsed
+    }
 
+    async function runBloodUnitAction(action: "reserve" | "release" | "transfuse", payload?: Record<string, unknown>) {
+        if (!found) return
         try {
-            setActionId(recipient)
-            const endpoint = ensureTrailingSlash(found!.resource.endpoint) + `${id}/reserve/`
-            await apiFetch(endpoint, { method: "POST", body: JSON.stringify({ recipient }) })
-            await reloadResource()
-        } catch (e: any) {
-            setError(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao reservar."))
-        } finally {
-            setActionId(null)
-        }
-    }, [found, id, reloadResource])
-
-    const releaseReservation = useCallback(async () => {
-        try {
-            setActionId(-1)
-            const endpoint = ensureTrailingSlash(found!.resource.endpoint) + `${id}/release/`
-            await apiFetch(endpoint, { method: "POST" })
-            await reloadResource()
-        } catch (e: any) {
-            setError(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao liberar reserva."))
-        } finally {
-            setActionId(null)
-        }
-    }, [found, id, reloadResource])
-
-    const transfuseUnit = useCallback(async () => {
-        const recipientRaw = prompt("ID do paciente receptor para transfusão:")
-        if (!recipientRaw) return
-        const recipient = Number(recipientRaw)
-        if (!Number.isFinite(recipient)) {
-            alert("ID inválido.")
-            return
-        }
-
-        const indication = prompt("Indicação clínica (opcional):") || ""
-
-        try {
-            setActionId(recipient)
-            const endpoint = ensureTrailingSlash(found!.resource.endpoint) + `${id}/transfuse/`
-            await apiFetch(endpoint, {
+            setActiveAction(action)
+            setError(null)
+            setFeedback(null)
+            await apiFetch(recordActionEndpoint(found.resource.endpoint, id, action), {
                 method: "POST",
-                body: JSON.stringify({ recipient, indication }),
+                ...(payload ? { body: JSON.stringify(payload) } : {}),
             })
+            setFeedback(
+                action === "reserve"
+                    ? t("Unidade reservada.", "Unit reserved.")
+                    : action === "release"
+                        ? t("Reserva liberada.", "Reservation released.")
+                        : t("Unidade transfundida.", "Unit transfused.")
+            )
             await reloadResource()
         } catch (e: any) {
-            setError(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao transfundir."))
+            const fallback =
+                action === "reserve"
+                    ? t("Falha ao reservar.", "Failed to reserve.")
+                    : action === "release"
+                        ? t("Falha ao liberar reserva.", "Failed to release reservation.")
+                        : t("Falha ao transfundir.", "Failed to transfuse.")
+            setError(isNotFoundLikeError(e) ? null : (e?.message || fallback))
         } finally {
-            setActionId(null)
+            setActiveAction(null)
         }
-    }, [found, id, reloadResource])
+    }
+
+    async function reserveUnit() {
+        const recipient = parseRecipientId(bloodRecipient)
+        if (recipient === null) return
+        await runBloodUnitAction("reserve", { recipient })
+    }
+
+    async function releaseReservation() {
+        await runBloodUnitAction("release")
+    }
+
+    async function transfuseUnit() {
+        const recipient = parseRecipientId(bloodRecipient)
+        if (recipient === null) return
+        await runBloodUnitAction("transfuse", {
+            recipient,
+            indication: bloodIndication.trim(),
+        })
+    }
 
     if (loading) return null
 
@@ -236,51 +275,26 @@ export default function ResourceDetailPage() {
                     subtitle={t("Detalhes do registo selecionado.", "Details of the selected record.")}
                     actions={
                         <div className="flex gap-3">
-                            {isBloodUnit ? (
-                                <>
-                                    <button
-                                        onClick={reserveUnit}
-                                        disabled={actionId !== null}
-                                        className="inline-flex items-center rounded-lg border border-[var(--border)] bg-white px-3 py-1.5 text-sm font-medium text-[var(--gray-700)] transition hover:bg-[var(--gray-50)] disabled:opacity-60"
-                                    >
-                                        Reservar
-                                    </button>
-                                    <button
-                                        onClick={releaseReservation}
-                                        disabled={actionId !== null}
-                                        className="inline-flex items-center rounded-lg border border-[var(--border)] bg-white px-3 py-1.5 text-sm font-medium text-[var(--gray-700)] transition hover:bg-[var(--gray-50)] disabled:opacity-60"
-                                    >
-                                        Liberar reserva
-                                    </button>
-                                    <button
-                                        onClick={transfuseUnit}
-                                        disabled={actionId !== null}
-                                        className="inline-flex items-center rounded-lg border border-[var(--border)] bg-white px-3 py-1.5 text-sm font-medium text-[var(--gray-700)] transition hover:bg-[var(--gray-50)] disabled:opacity-60"
-                                    >
-                                        Transfundir
-                                    </button>
-                                </>
-                            ) : null}
                             {isSurgery ? (
-                                data?.fatura_id ? (
+                                invoiceId && canDownloadInvoicePdf ? (
                                     <button
                                         onClick={openPdf}
-                                        disabled={actionId === data?.fatura_id}
+                                        disabled={activeAction === "invoice-pdf"}
                                         className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--border)] bg-white px-3 py-1.5 text-sm font-medium text-[var(--gray-700)] transition hover:bg-[var(--gray-50)] disabled:opacity-60"
                                     >
-                                        <PdfActionLabel loading={actionId === data?.fatura_id} loadingLabel="PDF...">
+                                        <PdfActionLabel loading={activeAction === "invoice-pdf"} loadingLabel="PDF...">
                                             PDF Fatura
                                         </PdfActionLabel>
                                     </button>
-                                ) : (
+                                ) : canCreateSurgeryInvoice ? (
                                     <button
                                         onClick={createInvoice}
-                                        disabled={actionId !== null}
+                                        disabled={activeAction === "invoice"}
                                         className="inline-flex items-center rounded-lg border border-[var(--border)] bg-white px-3 py-1.5 text-sm font-medium text-[var(--gray-700)] transition hover:bg-[var(--gray-50)] disabled:opacity-60"
                                     >
-                                        Criar fatura
+                                        {activeAction === "invoice" ? t("Criando...", "Creating...") : t("Criar fatura", "Create invoice")}
                                     </button>
-                                )
+                                ) : null
                             ) : null}
                             {canManageCurrentRecord && (canEditRecordContract || canDeleteRecord) ? (
                                 <>
@@ -318,6 +332,82 @@ export default function ResourceDetailPage() {
                         {error}
                     </div>
                 )}
+
+                {feedback && (
+                    <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+                        {feedback}
+                    </div>
+                )}
+
+                {isBloodUnit && (canReserveUnit || canReleaseUnit || canTransfuseUnit) ? (
+                    <section className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-4 shadow-sm">
+                        <div className="grid gap-3 md:grid-cols-3">
+                            {canReserveUnit || canTransfuseUnit ? (
+                                <label className="space-y-1">
+                                    <span className="text-xs font-semibold uppercase tracking-wide text-[var(--gray-600)]">
+                                        {t("Paciente receptor", "Recipient patient")}
+                                    </span>
+                                    <input
+                                        type="number"
+                                        min={1}
+                                        value={bloodRecipient}
+                                        onChange={(event) => setBloodRecipient(event.target.value)}
+                                        disabled={activeAction !== null}
+                                        className="w-full rounded-md border border-[var(--border)] bg-white px-3 py-2 text-sm text-[var(--text)] shadow-sm outline-none transition-colors hover:border-[var(--primary-400)] focus:border-[var(--primary-500)] focus:ring-2 focus:ring-[var(--primary-100)] disabled:opacity-60"
+                                    />
+                                </label>
+                            ) : null}
+
+                            {canTransfuseUnit ? (
+                                <label className="space-y-1 md:col-span-2">
+                                    <span className="text-xs font-semibold uppercase tracking-wide text-[var(--gray-600)]">
+                                        {t("Indicação clínica", "Clinical indication")}
+                                    </span>
+                                    <input
+                                        type="text"
+                                        value={bloodIndication}
+                                        onChange={(event) => setBloodIndication(event.target.value)}
+                                        disabled={activeAction !== null}
+                                        className="w-full rounded-md border border-[var(--border)] bg-white px-3 py-2 text-sm text-[var(--text)] shadow-sm outline-none transition-colors hover:border-[var(--primary-400)] focus:border-[var(--primary-500)] focus:ring-2 focus:ring-[var(--primary-100)] disabled:opacity-60"
+                                    />
+                                </label>
+                            ) : null}
+                        </div>
+
+                        <div className="mt-3 flex flex-wrap gap-2">
+                            {canReserveUnit ? (
+                                <button
+                                    type="button"
+                                    onClick={() => void reserveUnit()}
+                                    disabled={activeAction !== null}
+                                    className="inline-flex h-9 items-center rounded-md border border-[var(--border)] bg-white px-3 text-sm font-medium text-[var(--gray-700)] shadow-sm transition hover:bg-[var(--gray-50)] disabled:opacity-60"
+                                >
+                                    {activeAction === "reserve" ? t("Reservando...", "Reserving...") : t("Reservar", "Reserve")}
+                                </button>
+                            ) : null}
+                            {canReleaseUnit ? (
+                                <button
+                                    type="button"
+                                    onClick={() => void releaseReservation()}
+                                    disabled={activeAction !== null}
+                                    className="inline-flex h-9 items-center rounded-md border border-[var(--border)] bg-white px-3 text-sm font-medium text-[var(--gray-700)] shadow-sm transition hover:bg-[var(--gray-50)] disabled:opacity-60"
+                                >
+                                    {activeAction === "release" ? t("Liberando...", "Releasing...") : t("Liberar reserva", "Release reservation")}
+                                </button>
+                            ) : null}
+                            {canTransfuseUnit ? (
+                                <button
+                                    type="button"
+                                    onClick={() => void transfuseUnit()}
+                                    disabled={activeAction !== null}
+                                    className="inline-flex h-9 items-center rounded-md bg-red-600 px-3 text-sm font-semibold text-white shadow-sm transition hover:bg-red-500 disabled:opacity-60"
+                                >
+                                    {activeAction === "transfuse" ? t("Transfundindo...", "Transfusing...") : t("Transfundir", "Transfuse")}
+                                </button>
+                            ) : null}
+                        </div>
+                    </section>
+                ) : null}
 
                 {loadingData ? (
                     <div className="text-sm text-[var(--gray-500)]">{t("Carregando...", "Loading...")}</div>
