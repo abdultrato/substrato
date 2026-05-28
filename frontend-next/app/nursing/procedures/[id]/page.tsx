@@ -8,6 +8,8 @@ import { useCallback, useEffect, useState } from "react"
 import AppLayout from "@/components/layout/AppLayout"
 import PageHeader from "@/components/ui/PageHeader"
 import PdfActionLabel from "@/components/ui/PdfActionLabel"
+import ConfirmDialog from "@/components/ui/ConfirmDialog"
+import ResourceDetailsCard from "@/components/resources/ResourceDetailsCard"
 import { apiFetch } from "@/lib/api"
 import { GROUPS } from "@/lib/rbac"
 import { routeParamToString } from "@/lib/routeParams"
@@ -46,7 +48,6 @@ export default function ProcedureDetailPage() {
   }, [reload])
 
   async function handleDelete() {
-    if (!confirm("Apagar este registro?")) return
     setDeleting(true)
     setErrorMessage(null)
     try {
@@ -100,14 +101,21 @@ export default function ProcedureDetailPage() {
               >
                 Editar
               </Link>
-              <button
-                type="button"
-                onClick={handleDelete}
+              <ConfirmDialog
+                title="Apagar procedimento"
+                message="Este procedimento será removido definitivamente."
+                confirmText="Apagar"
+                onConfirm={handleDelete}
                 disabled={deleting}
-                className="inline-flex items-center rounded-lg bg-red-600 px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-red-500 disabled:opacity-60"
               >
-                {deleting ? "Apagando..." : "Apagar"}
-              </button>
+                <button
+                  type="button"
+                  disabled={deleting}
+                  className="inline-flex items-center rounded-lg bg-red-600 px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-red-500 disabled:opacity-60"
+                >
+                  {deleting ? "Apagando..." : "Apagar"}
+                </button>
+              </ConfirmDialog>
               <Link
                 href="/nursing/procedures"
                 className="inline-flex items-center rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-1.5 text-sm font-medium text-[var(--gray-700)] transition hover:bg-[var(--gray-100)]"
@@ -126,10 +134,12 @@ export default function ProcedureDetailPage() {
 
         {loading ? (
           <div className="text-sm text-gray-500">Carregando...</div>
+        ) : data ? (
+          <ResourceDetailsCard endpoint="/nursing/procedure/" data={data} />
         ) : (
-          <pre className="overflow-x-auto rounded-lg border border-[var(--border)] bg-[var(--gray-100)] p-4 text-xs text-[var(--text)]">
-            {JSON.stringify(data, null, 2)}
-          </pre>
+          <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            Procedimento não encontrado.
+          </div>
         )}
       </div>
     </AppLayout>

@@ -8,7 +8,6 @@ const OPENAPI = schema as OpenApiDoc
 // Keep this map explicit and conservative: only add routes confirmed in backend routing.
 const STATIC_COLLECTION_ALIASES: Record<string, string> = {
   "/audit_activities/user-activities/": "/audit/atividade/",
-  "/consultations/holidaies/": "/consultations/holiday/",
   "/external_entities/companies/": "/external_entities/empresa/",
   "/medical-records/registro/": "/medical_records/record/",
   "/medical-records/record/": "/medical_records/record/",

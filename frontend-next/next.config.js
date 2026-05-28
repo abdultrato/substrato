@@ -44,7 +44,6 @@ module.exports = (phase) => {
     { source: "/tenants/tenant-subscriptions/:path*", destination: "/resources/tenants/" },
   ]
   const legacyRouteAliases = [
-    { source: "/consultations/holidaies/:path*", destination: "/consultations/holidays/:path*" },
     { source: "/modules", destination: "/resources" },
     { source: "/modules/:path*", destination: "/resources/:path*" },
   ]

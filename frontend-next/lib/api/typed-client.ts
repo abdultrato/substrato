@@ -418,7 +418,7 @@ export class ConsultationsService {
   }
 
   async listHolidays(retryOptions?: RetryOptions) {
-    return this.client.get('/api/v1/consultations/feriado/', HolidaySchema.array(), { retryOptions })
+    return this.client.get('/api/v1/consultations/holiday/', HolidaySchema.array(), { retryOptions })
   }
 }
 

@@ -1,7 +1,7 @@
 "use client"
 
 import { isNotFoundLikeError } from "@/lib/errors/api-error"
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 
 import AppLayout from "@/components/layout/AppLayout"
@@ -15,6 +15,7 @@ import TextInput from "@/components/ui/TextInput"
 import StatusBadge from "@/components/ui/StatusBadge"
 import MoneyValue from "@/components/ui/MoneyValue"
 import PdfActionLabel from "@/components/ui/PdfActionLabel"
+import ConfirmDialog from "@/components/ui/ConfirmDialog"
 import { apiFetch } from "@/lib/api"
 import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
 import { routeParamToString } from "@/lib/routeParams"
@@ -109,6 +110,8 @@ export default function FaturaRascunhoPage() {
   const [paciente, setPaciente] = useState<Row | null>(null)
   const [itens, setItens] = useState<FaturaItem[]>([])
   const [acaoId, setAcaoId] = useState<number | null>(null)
+  const [addingItemKey, setAddingItemKey] = useState<string | null>(null)
+  const addingItemRef = useRef(false)
 
   const [requisicoes, setRequisicoes] = useState<Row[]>([])
   const [requisicaoItens, setRequisicaoItens] = useState<Record<number, Row[]>>({})
@@ -164,6 +167,11 @@ export default function FaturaRascunhoPage() {
   }, [])
 
   const faturaRascunho = fatura?.estado === "RASC"
+  const addItemButtonDisabled = !faturaRascunho || !podeEditar || addingItemKey !== null
+  const addItemButtonLabel = useCallback(
+    (key: string) => (addingItemKey === key ? "Adicionando..." : "Adicionar"),
+    [addingItemKey]
+  )
 
   const exameById = useMemo(() => {
     const map = new Map<number, Row>()
@@ -251,6 +259,47 @@ export default function FaturaRascunhoPage() {
     })
     && totalLiquidoPagamentoCents === totalFaturaCents
     && !faltamDadosSeguro
+  const podeEmitirFatura = faturaRascunho
+    && podeEditar
+    && itens.length > 0
+    && addingItemKey === null
+    && acaoId !== faturaId
+  const motivoBloqueioEmissao = useMemo(() => {
+    if (!faturaRascunho || !podeEditar) return ""
+    if (addingItemKey !== null) return "Aguarde o item em gravação antes de emitir a fatura."
+    if (itens.length === 0) return "Adicione pelo menos um item antes de emitir a fatura."
+    return ""
+  }, [addingItemKey, faturaRascunho, itens.length, podeEditar])
+  const mensagemValidacaoPagamento = useMemo(() => {
+    if (fatura?.estado !== "EMIT" || !podePagar) return ""
+    if (!pagamentoMetodosSelecionados.length) return "Selecione pelo menos um método de pagamento."
+    const metodoInvalido = pagamentoMetodosSelecionados.find((metodo) => {
+      const cents = parseMoneyToCents(pagamentoValoresPorMetodo[metodo])
+      return typeof cents !== "number" || cents <= 0
+    })
+    if (metodoInvalido) {
+      const label = metodosLabelByValue.get(metodoInvalido) || metodoInvalido
+      return `Informe um valor válido para ${label}.`
+    }
+    if (faltaPagamentoCents > 0) {
+      return `Total informado insuficiente. Ainda faltam ${centsToMoney(faltaPagamentoCents)}.`
+    }
+    if (totalLiquidoPagamentoCents !== totalFaturaCents) {
+      return "O valor líquido do pagamento deve ser exatamente o total da fatura."
+    }
+    if (faltamDadosSeguro) return "Preencha a seguradora e o número de autorização do seguro."
+    return ""
+  }, [
+    faltaPagamentoCents,
+    faltamDadosSeguro,
+    fatura?.estado,
+    metodosLabelByValue,
+    pagamentoMetodosSelecionados,
+    pagamentoValoresPorMetodo,
+    podePagar,
+    totalFaturaCents,
+    totalLiquidoPagamentoCents,
+  ])
 
   const carregarItens = useCallback(async (fatId: number) => {
     try {
@@ -417,7 +466,8 @@ export default function FaturaRascunhoPage() {
     carregarFatura()
   }, [carregarFatura])
 
-  const adicionarItem = useCallback(async (payload: any) => {
+  const adicionarItem = useCallback(async (payload: any, actionKey = "item") => {
+    if (addingItemRef.current) return
     if (!faturaId || Number.isNaN(faturaId)) return
     if (!podeEditar) {
       setErro("Sem permissão para adicionar itens.")
@@ -427,6 +477,8 @@ export default function FaturaRascunhoPage() {
       setErro("Somente rascunhos podem receber itens.")
       return
     }
+    addingItemRef.current = true
+    setAddingItemKey(actionKey)
     try {
       setErro(null)
       await apiFetch("/billing/invoiceitem/", {
@@ -438,6 +490,9 @@ export default function FaturaRascunhoPage() {
       setFatura(fat)
     } catch (e: any) {
       setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao adicionar item."))
+    } finally {
+      addingItemRef.current = false
+      setAddingItemKey(null)
     }
   }, [carregarItens, faturaId, faturaRascunho, podeEditar])
 
@@ -450,8 +505,8 @@ export default function FaturaRascunhoPage() {
       setErro("Somente rascunhos podem ser alterados.")
       return
     }
-    if (!confirm("Remover item da fatura?")) return
     try {
+      setErro(null)
       await apiFetch(`/billing/invoiceitem/${itemId}/`, { method: "DELETE" })
       if (faturaId) await carregarItens(faturaId)
     } catch (e: any) {
@@ -478,12 +533,26 @@ export default function FaturaRascunhoPage() {
 
   const issueInvoiceAction = useCallback(async () => {
     if (!faturaId) return
+    if (acaoId === faturaId) return
     if (!podeEditar) {
       setErro("Sem permissão para emitir fatura.")
       return
     }
+    if (!faturaRascunho) {
+      setErro("Somente faturas em rascunho podem ser emitidas.")
+      return
+    }
+    if (addingItemRef.current || addingItemKey !== null) {
+      setErro("Aguarde o item em gravação antes de emitir a fatura.")
+      return
+    }
+    if (itens.length === 0) {
+      setErro("Adicione pelo menos um item antes de emitir a fatura.")
+      return
+    }
     try {
       setAcaoId(faturaId)
+      setErro(null)
       await apiFetch(`/invoices/${faturaId}/issue/`, { method: "POST" })
       await carregarFatura()
     } catch (e: any) {
@@ -491,7 +560,7 @@ export default function FaturaRascunhoPage() {
     } finally {
       setAcaoId(null)
     }
-  }, [carregarFatura, faturaId, podeEditar])
+  }, [acaoId, addingItemKey, carregarFatura, faturaId, faturaRascunho, itens.length, podeEditar])
 
   const alternarMetodoPagamento = useCallback((metodo: MetodoPagamento, checked: boolean) => {
     setPagamentoMetodosSelecionados((prev) => {
@@ -758,13 +827,21 @@ export default function FaturaRascunhoPage() {
       {
         header: "Ações",
         render: (i: FaturaItem) => (
-          <button
-            className="inline-flex items-center rounded-lg border border-rose-200 px-3 py-1.5 text-xs font-medium text-rose-700 transition hover:bg-rose-50 disabled:opacity-50"
-            onClick={() => removerItem(i.id)}
+          <ConfirmDialog
+            title="Remover item"
+            message="Este item será removido da fatura em rascunho."
+            confirmText="Remover"
+            onConfirm={() => removerItem(i.id)}
             disabled={!faturaRascunho || !podeEditar}
           >
-            Remover
-          </button>
+            <button
+              type="button"
+              className="inline-flex items-center rounded-lg border border-rose-200 px-3 py-1.5 text-xs font-medium text-rose-700 transition hover:bg-rose-50 disabled:opacity-50"
+              disabled={!faturaRascunho || !podeEditar}
+            >
+              Remover
+            </button>
+          </ConfirmDialog>
         ),
       },
     ],
@@ -834,13 +911,18 @@ export default function FaturaRascunhoPage() {
 
           <div className="mt-4 flex flex-wrap items-center gap-2">
             {faturaRascunho && podeEditar ? (
-              <button
-                className="inline-flex items-center rounded-lg bg-[var(--primary-600)] px-3 py-2 text-sm font-semibold text-white transition hover:bg-[var(--primary-700)] disabled:opacity-50"
-                onClick={issueInvoiceAction}
-                disabled={acaoId === fatura.id}
-              >
-                Emitir fatura
-              </button>
+              <div className="flex flex-col gap-1">
+                <button
+                  className="inline-flex items-center rounded-lg bg-[var(--primary-600)] px-3 py-2 text-sm font-semibold text-white transition hover:bg-[var(--primary-700)] disabled:opacity-50"
+                  onClick={issueInvoiceAction}
+                  disabled={!podeEmitirFatura}
+                >
+                  {acaoId === fatura.id ? "Emitindo..." : "Emitir fatura"}
+                </button>
+                {motivoBloqueioEmissao ? (
+                  <div className="max-w-xs text-xs text-amber-700">{motivoBloqueioEmissao}</div>
+                ) : null}
+              </div>
             ) : null}
             {faturaRascunho && !podeEditar ? (
               <div className="text-xs text-amber-700">Sem permissão para emitir fatura.</div>
@@ -958,9 +1040,12 @@ export default function FaturaRascunhoPage() {
                     onClick={pagarFatura}
                     disabled={acaoId === fatura.id || !podeConfirmarPagamentoComposto}
                   >
-                    Confirmar pagamento
+                    {acaoId === fatura.id ? "Registrando..." : "Confirmar pagamento"}
                   </button>
                 </div>
+                {mensagemValidacaoPagamento ? (
+                  <div className="text-xs text-amber-700">{mensagemValidacaoPagamento}</div>
+                ) : null}
               </div>
               {pagamentoMetodosSelecionados.includes("SEG") ? (
                 <>
@@ -1048,6 +1133,7 @@ export default function FaturaRascunhoPage() {
                                 exame?.nome ||
                                 exameMed?.nome ||
                                 (it.exame ? `Exame ${it.exame}` : `Exame médico ${it.exame_medico}`)
+                              const addKey = it.exame ? `req-exam-${it.id}` : `req-medical-exam-${it.id}`
                               return (
                                 <div key={it.id} className="flex items-center justify-between gap-2">
                                   <div className="text-gray-700">{label}</div>
@@ -1055,14 +1141,14 @@ export default function FaturaRascunhoPage() {
                                     className="inline-flex items-center rounded-lg border border-emerald-200 px-2.5 py-1 text-xs font-medium text-emerald-700 transition hover:bg-emerald-50 disabled:opacity-50"
                                     onClick={() => {
                                       if (it.exame) {
-                                        adicionarItem({ tipo_item: "EXA", exame: it.exame })
+                                        adicionarItem({ tipo_item: "EXA", exame: it.exame }, addKey)
                                       } else if (it.exame_medico) {
-                                        adicionarItem({ tipo_item: "EXM", exame_medico: it.exame_medico })
+                                        adicionarItem({ tipo_item: "EXM", exame_medico: it.exame_medico }, addKey)
                                       }
                                     }}
-                                    disabled={!faturaRascunho}
+                                    disabled={addItemButtonDisabled}
                                   >
-                                    Adicionar
+                                    {addItemButtonLabel(addKey)}
                                   </button>
                                 </div>
                               )
@@ -1104,10 +1190,10 @@ export default function FaturaRascunhoPage() {
                                 <div className="text-gray-700">{it.descricao || `Serviço ${it.id}`}</div>
                                 <button
                                   className="inline-flex items-center rounded-lg border border-emerald-200 px-2.5 py-1 text-xs font-medium text-emerald-700 transition hover:bg-emerald-50 disabled:opacity-50"
-                                  onClick={() => adicionarItem({ tipo_item: "PRC", procedimento_item: it.id })}
-                                  disabled={!faturaRascunho}
+                                  onClick={() => adicionarItem({ tipo_item: "PRC", procedimento_item: it.id }, `procedure-item-${it.id}`)}
+                                  disabled={addItemButtonDisabled}
                                 >
-                                  Adicionar
+                                  {addItemButtonLabel(`procedure-item-${it.id}`)}
                                 </button>
                               </div>
                             ))
@@ -1123,10 +1209,10 @@ export default function FaturaRascunhoPage() {
                                   <div className="text-gray-700">{nome}</div>
                                   <button
                                     className="inline-flex items-center rounded-lg border border-emerald-200 px-2.5 py-1 text-xs font-medium text-emerald-700 transition hover:bg-emerald-50 disabled:opacity-50"
-                                    onClick={() => adicionarItem({ tipo_item: "MAT", procedimento_material: mat.id })}
-                                    disabled={!faturaRascunho}
+                                    onClick={() => adicionarItem({ tipo_item: "MAT", procedimento_material: mat.id }, `procedure-material-${mat.id}`)}
+                                    disabled={addItemButtonDisabled}
                                   >
-                                    Adicionar
+                                    {addItemButtonLabel(`procedure-material-${mat.id}`)}
                                   </button>
                                 </div>
                               )
@@ -1166,10 +1252,10 @@ export default function FaturaRascunhoPage() {
                                   <div className="text-gray-700">{prod?.nome || `Produto ${it.produto}`}</div>
                                   <button
                                     className="inline-flex items-center rounded-lg border border-emerald-200 px-2.5 py-1 text-xs font-medium text-emerald-700 transition hover:bg-emerald-50 disabled:opacity-50"
-                                    onClick={() => adicionarItem({ tipo_item: "FAR", item_venda: it.id })}
-                                    disabled={!faturaRascunho}
+                                    onClick={() => adicionarItem({ tipo_item: "FAR", item_venda: it.id }, `sale-item-${it.id}`)}
+                                    disabled={addItemButtonDisabled}
                                   >
-                                    Adicionar
+                                    {addItemButtonLabel(`sale-item-${it.id}`)}
                                   </button>
                                 </div>
                               )
@@ -1201,10 +1287,10 @@ export default function FaturaRascunhoPage() {
                           preco_unitario: c.preco_estimado || 0,
                           iva_percentual: c.iva_percentual,
                           aplica_iva: c.aplica_iva_por_padrao,
-                        })}
-                        disabled={!faturaRascunho}
+                        }, `patient-surgery-${c.id}`)}
+                        disabled={addItemButtonDisabled}
                       >
-                        Adicionar
+                        {addItemButtonLabel(`patient-surgery-${c.id}`)}
                       </button>
                     </div>
                   ))}
@@ -1230,10 +1316,10 @@ export default function FaturaRascunhoPage() {
                           preco_unitario: c.preco || 0,
                           iva_percentual: c.iva_percentual,
                           aplica_iva: true,
-                        })}
-                        disabled={!faturaRascunho}
+                        }, `patient-consultation-${c.id}`)}
+                        disabled={addItemButtonDisabled}
                       >
-                        Adicionar
+                        {addItemButtonLabel(`patient-consultation-${c.id}`)}
                       </button>
                     </div>
                   ))}
@@ -1258,10 +1344,10 @@ export default function FaturaRascunhoPage() {
                     <div className="text-gray-700">{e.nome || e.id_custom || `Exame ${e.id}`}</div>
                     <button
                       className="inline-flex items-center rounded-lg border border-emerald-200 px-2.5 py-1 text-xs font-medium text-emerald-700 transition hover:bg-emerald-50 disabled:opacity-50"
-                      onClick={() => adicionarItem({ tipo_item: "EXA", exame: e.id })}
-                      disabled={!faturaRascunho}
+                      onClick={() => adicionarItem({ tipo_item: "EXA", exame: e.id }, `catalog-exam-${e.id}`)}
+                      disabled={addItemButtonDisabled}
                     >
-                      Adicionar
+                      {addItemButtonLabel(`catalog-exam-${e.id}`)}
                     </button>
                   </div>
                 ))}
@@ -1277,10 +1363,10 @@ export default function FaturaRascunhoPage() {
                     <div className="text-gray-700">{e.nome || e.id_custom || `Exame ${e.id}`}</div>
                     <button
                       className="inline-flex items-center rounded-lg border border-emerald-200 px-2.5 py-1 text-xs font-medium text-emerald-700 transition hover:bg-emerald-50 disabled:opacity-50"
-                      onClick={() => adicionarItem({ tipo_item: "EXM", exame_medico: e.id })}
-                      disabled={!faturaRascunho}
+                      onClick={() => adicionarItem({ tipo_item: "EXM", exame_medico: e.id }, `catalog-medical-exam-${e.id}`)}
+                      disabled={addItemButtonDisabled}
                     >
-                      Adicionar
+                      {addItemButtonLabel(`catalog-medical-exam-${e.id}`)}
                     </button>
                   </div>
                 ))}
@@ -1303,10 +1389,10 @@ export default function FaturaRascunhoPage() {
                         preco_unitario: p.preco_padrao || 0,
                         iva_percentual: p.iva_percentual,
                         aplica_iva: p.aplica_iva_por_padrao,
-                      })}
-                      disabled={!faturaRascunho}
+                      }, `catalog-procedure-${p.id}`)}
+                      disabled={addItemButtonDisabled}
                     >
-                      Adicionar
+                      {addItemButtonLabel(`catalog-procedure-${p.id}`)}
                     </button>
                   </div>
                 ))}
@@ -1329,10 +1415,10 @@ export default function FaturaRascunhoPage() {
                         preco_unitario: p.preco_base || 0,
                         iva_percentual: p.iva_percentual,
                         aplica_iva: p.aplica_iva_por_padrao,
-                      })}
-                      disabled={!faturaRascunho}
+                      }, `catalog-surgery-${p.id}`)}
+                      disabled={addItemButtonDisabled}
                     >
-                      Adicionar
+                      {addItemButtonLabel(`catalog-surgery-${p.id}`)}
                     </button>
                   </div>
                 ))}
@@ -1355,10 +1441,10 @@ export default function FaturaRascunhoPage() {
                         preco_unitario: p.preco_venda || 0,
                         iva_percentual: p.iva_percentual,
                         aplica_iva: p.aplica_iva_por_padrao,
-                      })}
-                      disabled={!faturaRascunho}
+                      }, `catalog-product-${p.id}`)}
+                      disabled={addItemButtonDisabled}
                     >
-                      Adicionar
+                      {addItemButtonLabel(`catalog-product-${p.id}`)}
                     </button>
                   </div>
                 ))}

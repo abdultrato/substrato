@@ -74,6 +74,8 @@ export default function LaboratoryRequestsPage() {
   const [clinicalPriority, setClinicalPriority] = useState<string>("")
   const [criticalFilter, setCriticalFilter] = useState<CriticalFilter>("all")
   const [ordering, setOrdering] = useState<string>("-created_at")
+  const [pdfError, setPdfError] = useState<string | null>(null)
+  const [pdfLoadingId, setPdfLoadingId] = useState<number | null>(null)
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(50)
   const debouncedSearch = useDebounce(search, 300)
@@ -132,12 +134,17 @@ export default function LaboratoryRequestsPage() {
   }, [clinicalPriority, criticalFilter, debouncedSearch, status])
 
   const onPdf = useCallback(async (id: number) => {
+    if (pdfLoadingId === id) return
     try {
+      setPdfLoadingId(id)
+      setPdfError(null)
       await openResultsPdf(id)
     } catch (e: any) {
-      alert(e?.message || t("Falha ao gerar PDF de resultados.", "Failed to generate results PDF."))
+      setPdfError(e?.message || t("Falha ao gerar PDF de resultados.", "Failed to generate results PDF."))
+    } finally {
+      setPdfLoadingId(null)
     }
-  }, [t])
+  }, [pdfLoadingId, t])
 
   const cleanFilters = useCallback(() => {
     setSearch("")
@@ -165,8 +172,12 @@ export default function LaboratoryRequestsPage() {
       { header: "Crítico", render: (r: RequestRow) => (r.has_critical_result ? "SIM" : "—") },
       {
         header: "Ações",
-        render: (r: RequestRow) => (
-          <div className="flex flex-wrap gap-2">
+        render: (r: RequestRow) => {
+          const requestId = Number(r.id)
+          const generatingPdf = pdfLoadingId === requestId
+
+          return (
+            <div className="flex flex-wrap gap-2">
             {r.id && String(r.status || "").toLowerCase() !== "validado" ? (
               <Link
                 href={`/laboratory/requests/${r.id}`}
@@ -200,18 +211,20 @@ export default function LaboratoryRequestsPage() {
             {r.custom_id ? (
               <button
                 type="button"
-                onClick={() => onPdf(Number(r.id))}
-                className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-50"
+                onClick={() => onPdf(requestId)}
+                disabled={generatingPdf}
+                className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-50"
               >
                 <FileDown size={14} />
-                Gerar PDF
+                {generatingPdf ? t("Gerando...", "Generating...") : t("Gerar PDF", "Generate PDF")}
               </button>
             ) : null}
           </div>
-        ),
+          )
+        },
       },
     ],
-    [canViewAdmin, isPortuguese, onPdf]
+    [canViewAdmin, isPortuguese, onPdf, pdfLoadingId, t]
   )
 
   return (
@@ -228,6 +241,12 @@ export default function LaboratoryRequestsPage() {
         {isError ? (
           <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
             {(error as any)?.message || t("Falha ao carregar requisições.", "Failed to load requests.")}
+          </div>
+        ) : null}
+
+        {pdfError ? (
+          <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            {pdfError}
           </div>
         ) : null}
 

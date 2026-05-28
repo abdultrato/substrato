@@ -15,6 +15,7 @@ interface Props {
     onConfirm: () => void | Promise<void>
     children: ReactNode
     danger?: boolean
+    disabled?: boolean
 }
 
 export default function ConfirmDialog ( {
@@ -25,6 +26,7 @@ export default function ConfirmDialog ( {
     onConfirm,
     children,
     danger = true,
+    disabled = false,
 }: Props ) {
     const [open, setOpen] = useState( false )
     const [loading, setLoading] = useState( false )
@@ -68,8 +70,10 @@ export default function ConfirmDialog ( {
     return (
         <>
             <span
-                onClick={() => setOpen( true )}
-                className="cursor-pointer inline-flex"
+                onClick={() => {
+                    if ( !disabled ) setOpen( true )
+                }}
+                className={`inline-flex ${disabled ? "cursor-not-allowed opacity-60" : "cursor-pointer"}`}
             >
                 {children}
             </span>

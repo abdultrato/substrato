@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { __clearApiClientCacheForTests, apiFetch, apiFetchList, extractListMeta, extractResults, extractTotalCount } from "@/lib/api"
+import { canonicalizeEndpointPath } from "@/lib/openapi/endpointResolver"
 import { subscribeRequestActivity } from "@/lib/requestActivity"
 import { logout } from "@/lib/session"
 
@@ -110,26 +111,21 @@ describe("API facade contract", () => {
     expect((global.fetch as any).mock.calls[0][0]).toBe("/api/v1/clinical/exam/")
   })
 
-  it("normaliza feriados de consulta com plural correto e alias legado", async () => {
-    ;(global.fetch as any)
-      .mockResolvedValueOnce(
-        new Response(JSON.stringify({ results: [] }), {
-          status: 200,
-          headers: { "Content-Type": "application/json" },
-        })
-      )
-      .mockResolvedValueOnce(
-        new Response(JSON.stringify({ results: [] }), {
-          status: 200,
-          headers: { "Content-Type": "application/json" },
-        })
-      )
+  it("normaliza feriados de consulta com plural correto", async () => {
+    ;(global.fetch as any).mockResolvedValueOnce(
+      new Response(JSON.stringify({ results: [] }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      })
+    )
 
     await apiFetch("/consultations/holidays/", { clientCache: false })
-    await apiFetch("/consultations/holidaies/", { clientCache: false })
 
     expect((global.fetch as any).mock.calls[0][0]).toBe("/api/v1/consultations/holiday/")
-    expect((global.fetch as any).mock.calls[1][0]).toBe("/api/v1/consultations/holiday/")
+  })
+
+  it("não reativa o plural incorreto holidaies", () => {
+    expect(canonicalizeEndpointPath("/consultations/holidaies/")).toBe("/consultations/holidaies/")
   })
 
   it("mantém planos de cobertura no endpoint canónico em inglês", async () => {
@@ -351,6 +347,44 @@ describe("API facade contract", () => {
     const refreshed = await apiFetch("/patients/")
 
     expect(refreshed).toEqual({ results: [{ id: 1 }, { id: 2 }] })
+    expect((global.fetch as any).mock.calls.length).toBe(3)
+  })
+
+  it("não regrava cache antigo quando GET em voo termina depois de mutação", async () => {
+    let resolveStaleList: ((res: Response) => void) | null = null
+    const staleList = new Promise<Response>((resolve) => {
+      resolveStaleList = resolve
+    })
+
+    ;(global.fetch as any)
+      .mockImplementationOnce(() => staleList)
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ id: 1, nome: "Atualizado" }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        })
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ results: [{ id: 1, nome: "Atualizado" }] }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        })
+      )
+
+    const staleListPromise = apiFetch("/patients/")
+    await apiFetch("/patients/1/", { method: "PATCH", body: JSON.stringify({ nome: "Atualizado" }) })
+
+    resolveStaleList?.(
+      new Response(JSON.stringify({ results: [{ id: 1, nome: "Antigo" }] }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      })
+    )
+    await expect(staleListPromise).resolves.toEqual({ results: [{ id: 1, nome: "Antigo" }] })
+
+    const refreshed = await apiFetch("/patients/")
+
+    expect(refreshed).toEqual({ results: [{ id: 1, nome: "Atualizado" }] })
     expect((global.fetch as any).mock.calls.length).toBe(3)
   })
 

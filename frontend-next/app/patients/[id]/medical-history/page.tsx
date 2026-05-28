@@ -437,14 +437,6 @@ export default function MedicalHistoryPage() {
               </div>
             </Card>
 
-            <details className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-4">
-              <summary className="cursor-pointer text-sm font-semibold text-[var(--text)]">
-                Payload completo (debug)
-              </summary>
-              <pre className="mt-3 overflow-x-auto rounded-lg border border-[var(--border)] bg-[var(--gray-100)] p-4 text-xs text-[var(--text)]">
-                {JSON.stringify(payload, null, 2)}
-              </pre>
-            </details>
           </>
         )}
       </div>

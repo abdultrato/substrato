@@ -21,13 +21,10 @@ describe("retired generated routes", () => {
     )
   }
 
-  it("redirects misspelled public resource routes to readable active routes", async () => {
+  it("does not keep redirects for misspelled public resource routes", async () => {
     const bySource = await redirectsBySource()
 
-    expect(bySource.get("/consultations/holidaies/:path*")).toMatchObject({
-      destination: "/consultations/holidays/:path*",
-      permanent: false,
-    })
+    expect(bySource.has("/consultations/holidaies/:path*")).toBe(false)
   })
 
   it("redirects legacy modules routes to the contract-guarded resource catalog", async () => {

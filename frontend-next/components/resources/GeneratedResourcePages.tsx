@@ -10,6 +10,7 @@ import AutoForm from "@/components/form/AutoForm"
 import ResourceDetailsCard from "@/components/resources/ResourceDetailsCard"
 import ResourceListPage from "@/components/resources/ResourceListPage"
 import PageHeader from "@/components/ui/PageHeader"
+import ConfirmDialog from "@/components/ui/ConfirmDialog"
 import useAuthGuard from "@/hooks/useAuthGuard"
 import { useLanguage } from "@/hooks/useLanguage"
 import { useModulesCatalog } from "@/hooks/useModulesCatalog"
@@ -327,6 +328,7 @@ export function GeneratedResourceDetailPage({ endpoint }: { endpoint: string }) 
   const params = useParams()
   const id = routeParamToString((params as any)?.id)
   const [deleting, setDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
   const ctx = useEndpointContext(endpoint)
   const basePath = stripTrailingSlash((pathname || "").replace(/\/[^/]+\/?$/, ""))
   const detailEndpoint = detailContractEndpoint(ctx.normalizedEndpoint)
@@ -343,11 +345,17 @@ export function GeneratedResourceDetailPage({ endpoint }: { endpoint: string }) 
 
   async function handleDelete() {
     if (!canDelete) return
-    if (!confirm("Tem certeza que deseja apagar este registo?")) return
     setDeleting(true)
+    setDeleteError(null)
     try {
       await apiFetch(`${ctx.normalizedEndpoint}${id}/`, { method: "DELETE" })
       router.push(basePath)
+    } catch (e: any) {
+      setDeleteError(
+        isNotFoundLikeError(e)
+          ? t("Registo não encontrado.", "Record not found.")
+          : e?.message || t("Erro ao apagar registo.", "Failed to delete record.")
+      )
     } finally {
       setDeleting(false)
     }
@@ -427,14 +435,21 @@ export function GeneratedResourceDetailPage({ endpoint }: { endpoint: string }) 
                 </Link>
               ) : null}
               {canDelete ? (
-                <button
-                  type="button"
-                  onClick={handleDelete}
+                <ConfirmDialog
+                  title={t("Apagar registo", "Delete record")}
+                  message={t("Esta ação apaga o registo selecionado.", "This action deletes the selected record.")}
+                  confirmText={t("Apagar", "Delete")}
+                  onConfirm={handleDelete}
                   disabled={deleting}
-                  className="inline-flex h-9 items-center rounded-md bg-red-600 px-3 text-sm font-semibold text-white shadow-sm transition-all duration-150 hover:bg-red-500 hover:shadow-md disabled:opacity-60"
                 >
-                  {deleting ? t("Apagando...", "Deleting...") : t("Apagar", "Delete")}
-                </button>
+                  <button
+                    type="button"
+                    disabled={deleting}
+                    className="inline-flex h-9 items-center rounded-md bg-red-600 px-3 text-sm font-semibold text-white shadow-sm transition-all duration-150 hover:bg-red-500 hover:shadow-md disabled:opacity-60"
+                  >
+                    {deleting ? t("Apagando...", "Deleting...") : t("Apagar", "Delete")}
+                  </button>
+                </ConfirmDialog>
               ) : null}
               <Link
                 href={basePath}
@@ -445,6 +460,12 @@ export function GeneratedResourceDetailPage({ endpoint }: { endpoint: string }) 
             </div>
           }
         />
+
+        {deleteError ? (
+          <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            {deleteError}
+          </div>
+        ) : null}
 
         {data ? (
           <ResourceDetailsCard endpoint={ctx.normalizedEndpoint} data={data} />

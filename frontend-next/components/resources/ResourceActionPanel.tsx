@@ -12,6 +12,7 @@ import {
   type ResourceActionDefinition,
   type ResourceActionField,
 } from "@/lib/resourceActions"
+import { fieldLabel } from "@/lib/ui/fieldLabels"
 
 type FieldValue = string | boolean | number
 type FieldValues = Record<string, FieldValue>
@@ -190,6 +191,58 @@ function summarizeResult(result: unknown): string {
     return `${Object.keys(obj).length} campos recebidos.`
   }
   return "Resposta recebida."
+}
+
+function readableResultValue(value: unknown): string {
+  if (value === null || value === undefined || value === "") return "-"
+  if (typeof value === "boolean") return value ? "Sim" : "Não"
+  if (typeof value === "string" || typeof value === "number") return String(value)
+  if (Array.isArray(value)) return value.length ? `${value.length} itens` : "-"
+
+  if (typeof value === "object") {
+    const obj = value as Record<string, any>
+    const primary =
+      obj.name ??
+      obj.nome ??
+      obj.title ??
+      obj.titulo ??
+      obj.description ??
+      obj.descricao ??
+      obj.id_custom ??
+      obj.custom_id ??
+      obj.codigo ??
+      obj.code ??
+      obj.id
+
+    return primary !== null && primary !== undefined && String(primary).trim()
+      ? String(primary)
+      : `${Object.keys(obj).length} campos`
+  }
+
+  return String(value)
+}
+
+function resultRows(result: unknown): Array<{ label: string; value: string }> {
+  if (Array.isArray(result)) {
+    return [
+      { label: "Total", value: `${result.length} registos` },
+      ...result.slice(0, 5).map((item, index) => ({
+        label: `Registo ${index + 1}`,
+        value: readableResultValue(item),
+      })),
+    ]
+  }
+
+  if (result && typeof result === "object") {
+    return Object.entries(result as Record<string, unknown>)
+      .slice(0, 8)
+      .map(([key, value]) => ({
+        label: fieldLabel({ name: key }),
+        value: readableResultValue(value),
+      }))
+  }
+
+  return [{ label: "Resposta", value: readableResultValue(result) }]
 }
 
 function renderField(
@@ -500,9 +553,14 @@ export default function ResourceActionPanel({
               ) : null}
 
               {hasResult ? (
-                <pre className="mt-2 max-h-64 overflow-auto rounded-md border border-[var(--border)] bg-[var(--gray-100)] p-2 text-[11px] leading-relaxed text-[var(--gray-800)]">
-                  {JSON.stringify(state.result, null, 2)}
-                </pre>
+                <div className="mt-2 max-h-64 overflow-auto rounded-md border border-[var(--border)] bg-[var(--gray-50)] text-[11px] leading-relaxed text-[var(--gray-800)]">
+                  {resultRows(state.result).map((row) => (
+                    <div key={row.label} className="grid grid-cols-3 gap-2 border-b border-[var(--border)] px-2 py-1.5 last:border-b-0">
+                      <span className="font-semibold uppercase tracking-wide text-[var(--gray-500)]">{row.label}</span>
+                      <span className="col-span-2 whitespace-pre-wrap text-[var(--gray-800)]">{row.value}</span>
+                    </div>
+                  ))}
+                </div>
               ) : null}
             </div>
           )

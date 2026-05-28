@@ -3,7 +3,38 @@
 import { useLanguage } from "@/hooks/useLanguage"
 import { fieldLabel, isInternalField } from "@/lib/ui/fieldLabels"
 
-function fmtValue(key: string, value: any, tr: (value: string) => string): string {
+function readableObjectLabel(value: Record<string, any>): string {
+  const candidates = [
+    "name",
+    "nome",
+    "title",
+    "titulo",
+    "description",
+    "descricao",
+    "id_custom",
+    "custom_id",
+    "codigo",
+    "code",
+    "id",
+  ]
+
+  for (const key of candidates) {
+    const candidate = value[key]
+    if (candidate !== null && candidate !== undefined && String(candidate).trim()) {
+      return String(candidate)
+    }
+  }
+
+  return ""
+}
+
+function fmtValue(
+  key: string,
+  value: any,
+  tr: (value: string) => string,
+  endpoint = "",
+  depth = 0
+): string {
   if (value === null || value === undefined || value === "") return "-"
   if (typeof value === "boolean") return value ? tr("Sim") : tr("Não")
   if (typeof value === "number") return String(value)
@@ -17,17 +48,39 @@ function fmtValue(key: string, value: any, tr: (value: string) => string): strin
     return tr(value)
   }
 
-  if (typeof value === "object") {
-    // Avoid dumping nested objects in the details view; show an identifier.
-    const anyObj = value as any
-    if (anyObj.id_custom) return String(anyObj.id_custom)
-    if (anyObj.custom_id) return String(anyObj.custom_id)
-    if (anyObj.id) return String(anyObj.id)
-    try {
-      return JSON.stringify(value)
-    } catch {
-      return String(value)
+  if (Array.isArray(value)) {
+    if (!value.length) return "-"
+    const visible = value.slice(0, 5)
+    const lines = visible.map((item, index) => {
+      if (item && typeof item === "object") {
+        const label = readableObjectLabel(item as Record<string, any>)
+        return label || `${tr("Item")} ${index + 1}`
+      }
+      return fmtValue(key, item, tr, endpoint, depth + 1)
+    })
+    if (value.length > visible.length) {
+      lines.push(`+${value.length - visible.length} ${tr("itens")}`)
     }
+    return lines.join("\n")
+  }
+
+  if (typeof value === "object") {
+    const label = readableObjectLabel(value as Record<string, any>)
+    if (label) return label
+
+    if (depth >= 1) {
+      return `${Object.keys(value).length} ${tr("campos")}`
+    }
+
+    const lines = Object.entries(value as Record<string, any>)
+      .filter(([nestedKey]) => !isInternalField(nestedKey))
+      .slice(0, 6)
+      .map(([nestedKey, nestedValue]) => {
+        const labelText = fieldLabel({ endpoint, name: nestedKey })
+        return `${labelText}: ${fmtValue(nestedKey, nestedValue, tr, endpoint, depth + 1)}`
+      })
+
+    return lines.length ? lines.join("\n") : "-"
   }
 
   return String(value)
@@ -55,7 +108,7 @@ export default function ResourceDetailsCard({
             </div>
             <div className="md:col-span-2">
               <div className="whitespace-pre-wrap text-sm text-foreground">
-                {fmtValue(k, v, tr)}
+                {fmtValue(k, v, tr, endpoint)}
               </div>
             </div>
           </div>

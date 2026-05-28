@@ -287,29 +287,5 @@ export class ApiClient {
  * Factory para criar API client pré-configurado
  */
 export function createApiClient(config: ApiClientConfig): ApiClient {
-  const client = new ApiClient(config)
-
-  // Request interceptor: log
-  client.useRequestInterceptor((config) => {
-    console.debug(`[API] ${config.method} ${config.url}`)
-    return config
-  })
-
-  // Error interceptor: log
-  client.useErrorInterceptor((error) => {
-    const status =
-      typeof (error as Error & { status?: unknown }).status === 'number'
-        ? (error as Error & { status: number }).status
-        : undefined
-
-    if (status === 404) {
-      console.warn(`[API 404] ${error.message}`)
-      return error
-    }
-
-    console.error('[API Error]', error)
-    return error
-  })
-
-  return client
+  return new ApiClient(config)
 }

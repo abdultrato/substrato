@@ -253,9 +253,12 @@ export async function apiFetch<T = any>(
     }
     if (cached.hit && cached.state === "stale" && allowStaleWhileRevalidate) {
       if (!inFlightGetRequests.has(cacheKey)) {
+        const refreshCacheGeneration = clientCacheGeneration
         const refreshPromise = runRequest(false)
           .then((result) => {
-            writeClientCache(cacheKey, result, cacheTtlMs, staleWhileRevalidateMs)
+            if (refreshCacheGeneration === clientCacheGeneration) {
+              writeClientCache(cacheKey, result, cacheTtlMs, staleWhileRevalidateMs)
+            }
             return result
           })
           .catch(() => cached.value)
@@ -274,13 +277,6 @@ export async function apiFetch<T = any>(
 
   async function runRequest(trackActivity = true): Promise<T> {
     const requestActivity = trackActivity ? beginRequestActivity(rewritten, method) : null
-    // Log rewritten URL for debugging routing mismatches (dev-time only)
-    try {
-      // eslint-disable-next-line no-console
-      console.debug(`[apiFetch] requesting /api/v1${rewritten} from ${url}`)
-    } catch {
-      // ignore
-    }
 
     try {
       // Use o signal fornecido ou crie um novo controller
@@ -423,9 +419,12 @@ export async function apiFetch<T = any>(
     return runRequest()
   }
 
+  const requestCacheGeneration = clientCacheGeneration
   const requestPromise = runRequest()
     .then((result) => {
-      writeClientCache(cacheKey, result, cacheTtlMs, staleWhileRevalidateMs)
+      if (requestCacheGeneration === clientCacheGeneration) {
+        writeClientCache(cacheKey, result, cacheTtlMs, staleWhileRevalidateMs)
+      }
       return result
     })
     .finally(() => {
@@ -447,6 +446,7 @@ type ClientCacheEntry = {
 
 const clientGetCache = new Map<string, ClientCacheEntry>()
 const inFlightGetRequests = new Map<string, Promise<unknown>>()
+let clientCacheGeneration = 0
 
 function methodOf(options: ApiFetchOptions): string {
   return (options.method || "GET").toUpperCase()
@@ -517,17 +517,32 @@ function normalizeCachePath(path: string): string {
 
 function invalidateClientCacheByPath(path: string) {
   const target = normalizeCachePath(path)
+  let invalidated = false
   for (const key of clientGetCache.keys()) {
     const parts = key.split(":")
     const cachedPath = normalizeCachePath(parts[1] || "")
-    if (
-      cachedPath === target ||
-      cachedPath.startsWith(`${target}/`) ||
-      target.startsWith(`${cachedPath}/`)
-    ) {
+    if (cachePathMatchesMutation(cachedPath, target)) {
       clientGetCache.delete(key)
+      invalidated = true
     }
   }
+  for (const key of inFlightGetRequests.keys()) {
+    const parts = key.split(":")
+    const cachedPath = normalizeCachePath(parts[1] || "")
+    if (cachePathMatchesMutation(cachedPath, target)) {
+      inFlightGetRequests.delete(key)
+      invalidated = true
+    }
+  }
+  if (invalidated) clientCacheGeneration += 1
+}
+
+function cachePathMatchesMutation(cachedPath: string, target: string): boolean {
+  return (
+    cachedPath === target ||
+    cachedPath.startsWith(`${target}/`) ||
+    target.startsWith(`${cachedPath}/`)
+  )
 }
 
 function unwrapMaybeData(v: any): any {
@@ -744,4 +759,5 @@ export async function apiFetchAll<T = any>(
 export function __clearApiClientCacheForTests() {
   clientGetCache.clear()
   inFlightGetRequests.clear()
+  clientCacheGeneration = 0
 }

@@ -9,6 +9,7 @@ import DataTable from "@/components/ui/DataTable"
 import PageHeader from "@/components/ui/PageHeader"
 import MoneyValue from "@/components/ui/MoneyValue"
 import PdfActionLabel from "@/components/ui/PdfActionLabel"
+import ConfirmDialog from "@/components/ui/ConfirmDialog"
 import { useAuth } from "@/hooks/useAuth"
 import { useLanguage } from "@/hooks/useLanguage"
 import { apiFetch } from "@/lib/api"
@@ -80,6 +81,7 @@ export default function ConsultationsPage() {
   ])
 
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [formError, setFormError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
   const [consultations, setConsultations] = useState<ConsultationRow[]>([])
@@ -95,9 +97,11 @@ export default function ConsultationsPage() {
   const [saving, setSaving] = useState(false)
   const [pricePreview, setPricePreview] = useState<PricePreview | null>(null)
   const [rescheduleModalOpen, setRescheduleModalOpen] = useState(false)
+  const [rescheduleError, setRescheduleError] = useState<string | null>(null)
   const [rescheduling, setRescheduling] = useState(false)
   const [consultationToReschedule, setConsultationToReschedule] = useState<ConsultationRow | null>(null)
   const [newScheduledFor, setNewScheduledFor] = useState("")
+  const [invoicePdfId, setInvoicePdfId] = useState<number | null>(null)
 
   const localizeErrorMessage = useCallback((message?: string) => {
     const raw = (message || "").trim()
@@ -155,12 +159,13 @@ export default function ConsultationsPage() {
     e.preventDefault()
     if (!canWrite) return
 
+    setFormError(null)
     if (!patientId) {
-      alert(t("Selecione um paciente.", "Select a patient."))
+      setFormError(t("Selecione um paciente.", "Select a patient."))
       return
     }
     if (!specialtyId) {
-      alert(t("Selecione uma especialidade.", "Select a specialty."))
+      setFormError(t("Selecione uma especialidade.", "Select a specialty."))
       return
     }
 
@@ -191,10 +196,11 @@ export default function ConsultationsPage() {
       setScheduledForInput("")
       setManualHoliday(false)
       setPricePreview(null)
+      setFormError(null)
 
       await loadData()
     } catch (e: any) {
-      alert(localizeErrorMessage(e?.message) || t("Falha ao criar consulta.", "Failed to create consultation."))
+      setFormError(localizeErrorMessage(e?.message) || t("Falha ao criar consulta.", "Failed to create consultation."))
     } finally {
       setSaving(false)
     }
@@ -202,29 +208,29 @@ export default function ConsultationsPage() {
 
   const cancelConsultation = useCallback(async (consultationId: number) => {
     if (!canWrite) return
-    if (!confirm(t("Cancelar esta consulta?", "Cancel this consultation?"))) return
     try {
+      setErrorMessage(null)
       await apiFetch(`/consultations/${consultationId}/cancel/`, {
         method: "POST",
         body: JSON.stringify({}),
       })
       await loadData()
     } catch (e: any) {
-      alert(localizeErrorMessage(e?.message) || t("Falha ao cancelar consulta.", "Failed to cancel consultation."))
+      setErrorMessage(localizeErrorMessage(e?.message) || t("Falha ao cancelar consulta.", "Failed to cancel consultation."))
     }
   }, [canWrite, loadData, localizeErrorMessage, t])
 
   const completeConsultation = useCallback(async (consultationId: number) => {
     if (!canWrite) return
-    if (!confirm(t("Marcar esta consulta como concluída?", "Mark this consultation as completed?"))) return
     try {
+      setErrorMessage(null)
       await apiFetch(`/consultations/${consultationId}/complete/`, {
         method: "POST",
         body: JSON.stringify({}),
       })
       await loadData()
     } catch (e: any) {
-      alert(localizeErrorMessage(e?.message) || t("Falha ao concluir consulta.", "Failed to complete consultation."))
+      setErrorMessage(localizeErrorMessage(e?.message) || t("Falha ao concluir consulta.", "Failed to complete consultation."))
     }
   }, [canWrite, loadData, localizeErrorMessage, t])
 
@@ -233,6 +239,7 @@ export default function ConsultationsPage() {
     setRescheduleModalOpen(false)
     setConsultationToReschedule(null)
     setNewScheduledFor("")
+    setRescheduleError(null)
   }, [rescheduling])
 
   const openRescheduleModal = useCallback(async (row: ConsultationRow) => {
@@ -243,13 +250,15 @@ export default function ConsultationsPage() {
       : ""
     setConsultationToReschedule(row)
     setNewScheduledFor(defaultValue)
+    setRescheduleError(null)
     setRescheduleModalOpen(true)
   }, [canWrite])
 
   const confirmReschedule = useCallback(async () => {
     if (!consultationToReschedule?.id) return
+    setRescheduleError(null)
     if (!newScheduledFor.trim()) {
-      alert(t("Informe a nova data/hora da consulta.", "Provide the new consultation date/time."))
+      setRescheduleError(t("Informe a nova data/hora da consulta.", "Provide the new consultation date/time."))
       return
     }
     const d = new Date(newScheduledFor)
@@ -264,13 +273,27 @@ export default function ConsultationsPage() {
       setRescheduleModalOpen(false)
       setConsultationToReschedule(null)
       setNewScheduledFor("")
+      setRescheduleError(null)
       await loadData()
     } catch (e: any) {
-      alert(localizeErrorMessage(e?.message) || t("Falha ao remarcar consulta.", "Failed to reschedule consultation."))
+      setRescheduleError(localizeErrorMessage(e?.message) || t("Falha ao remarcar consulta.", "Failed to reschedule consultation."))
     } finally {
       setRescheduling(false)
     }
   }, [loadData, consultationToReschedule?.id, localizeErrorMessage, newScheduledFor, t])
+
+  const openConsultationInvoicePdf = useCallback(async (invoiceId: number) => {
+    if (invoicePdfId === invoiceId) return
+    try {
+      setInvoicePdfId(invoiceId)
+      setErrorMessage(null)
+      await openInvoicePdf(invoiceId)
+    } catch (e: any) {
+      setErrorMessage(localizeErrorMessage(e?.message) || t("Falha ao gerar PDF da fatura.", "Failed to generate invoice PDF."))
+    } finally {
+      setInvoicePdfId(null)
+    }
+  }, [invoicePdfId, localizeErrorMessage, t])
 
   const columns = useMemo(
     () => {
@@ -318,32 +341,48 @@ export default function ConsultationsPage() {
               ) : null}
 
               {canWrite && r.status === "MARCADA" ? (
-                <button
-                  type="button"
-                  onClick={() => completeConsultation(r.id)}
-                  className="inline-flex items-center rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-50"
+                <ConfirmDialog
+                  title={t("Concluir consulta", "Complete consultation")}
+                  message={t("Marcar esta consulta como concluída?", "Mark this consultation as completed?")}
+                  confirmText={t("Concluir", "Complete")}
+                  danger={false}
+                  onConfirm={() => completeConsultation(r.id)}
                 >
-                  {t("Concluir", "Complete")}
-                </button>
+                  <button
+                    type="button"
+                    className="inline-flex items-center rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-50"
+                  >
+                    {t("Concluir", "Complete")}
+                  </button>
+                </ConfirmDialog>
               ) : null}
 
               {canWrite && r.status !== "CANCELADA" && r.status !== "CONCLUIDA" ? (
-                <button
-                  type="button"
-                  onClick={() => cancelConsultation(r.id)}
-                  className="inline-flex items-center rounded-lg border border-red-200 bg-white px-3 py-1.5 text-xs font-medium text-red-700 transition hover:bg-red-50"
+                <ConfirmDialog
+                  title={t("Cancelar consulta", "Cancel consultation")}
+                  message={t("Cancelar esta consulta?", "Cancel this consultation?")}
+                  confirmText={t("Cancelar consulta", "Cancel consultation")}
+                  onConfirm={() => cancelConsultation(r.id)}
                 >
-                  {t("Cancelar", "Cancel")}
-                </button>
+                  <button
+                    type="button"
+                    className="inline-flex items-center rounded-lg border border-red-200 bg-white px-3 py-1.5 text-xs font-medium text-red-700 transition hover:bg-red-50"
+                  >
+                    {t("Cancelar", "Cancel")}
+                  </button>
+                </ConfirmDialog>
               ) : null}
 
             {r.invoice_id ? (
               <button
                 type="button"
-                onClick={() => openInvoicePdf(Number(r.invoice_id))}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-50"
+                onClick={() => openConsultationInvoicePdf(Number(r.invoice_id))}
+                disabled={invoicePdfId === Number(r.invoice_id)}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-50"
               >
-                <PdfActionLabel>{t("PDF Fatura", "Invoice PDF")}</PdfActionLabel>
+                <PdfActionLabel loading={invoicePdfId === Number(r.invoice_id)} loadingLabel={t("PDF...", "PDF...")}>
+                  {t("PDF Fatura", "Invoice PDF")}
+                </PdfActionLabel>
               </button>
             ) : (
               <span className="text-xs text-gray-500">—</span>
@@ -353,7 +392,7 @@ export default function ConsultationsPage() {
       },
       ]
     },
-    [canWrite, cancelConsultation, completeConsultation, openRescheduleModal, t]
+    [canWrite, cancelConsultation, completeConsultation, invoicePdfId, openConsultationInvoicePdf, openRescheduleModal, t]
   )
 
   const scheduleTypeLabel = useMemo(() => {
@@ -425,6 +464,11 @@ export default function ConsultationsPage() {
             title={t("Nova consulta", "New consultation")}
             subtitle={t("Crie a consulta e, se necessário, emita a fatura.", "Create the consultation and issue the invoice if needed.")}
           >
+            {formError ? (
+              <div className="mb-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+                {formError}
+              </div>
+            ) : null}
             <form onSubmit={createConsultation} className="grid gap-3 md:grid-cols-2">
               <div className="space-y-1">
                 <label className="text-xs text-gray-600">{t("Paciente", "Patient")}</label>
@@ -607,11 +651,19 @@ export default function ConsultationsPage() {
                 <input
                   type="datetime-local"
                   value={newScheduledFor}
-                  onChange={(e) => setNewScheduledFor(e.target.value)}
+                  onChange={(e) => {
+                    setNewScheduledFor(e.target.value)
+                    if (rescheduleError) setRescheduleError(null)
+                  }}
                   className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm"
                   autoFocus
                 />
               </label>
+              {rescheduleError ? (
+                <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+                  {rescheduleError}
+                </div>
+              ) : null}
             </div>
 
             <div className="flex items-center justify-end gap-2 border-t border-[var(--border)] px-4 py-3">

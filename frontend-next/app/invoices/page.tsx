@@ -14,6 +14,7 @@ import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
 import MoneyValue from "@/components/ui/MoneyValue"
 import Card from "@/components/ui/Card"
 import PdfActionLabel from "@/components/ui/PdfActionLabel"
+import ConfirmDialog from "@/components/ui/ConfirmDialog"
 
 type FaturaRow = Record<string, any>
 type FaturaItem = {
@@ -164,8 +165,8 @@ export default function FaturasPage() {
       setErro("Sem permissão para anular fatura.")
       return
     }
-    if (!confirm("Anular esta fatura?")) return
     try {
+      setErro(null)
       setAcaoId(id)
       await apiFetch(`/invoices/${id}/void/`, { method: "POST" })
       await carregar()
@@ -389,13 +390,21 @@ export default function FaturasPage() {
               Itens/IVA
             </button>
             {podeAlterar && f.estado === "RASC" ? (
-              <button
-                className="inline-flex items-center rounded-lg border border-red-200 px-3 py-1.5 text-xs font-medium text-red-700 transition hover:bg-red-50 disabled:opacity-50"
+              <ConfirmDialog
+                title="Anular fatura"
+                message="Esta fatura será anulada. Confirme apenas se já revisou o rascunho."
+                confirmText="Anular"
+                onConfirm={() => voidInvoiceAction(f.id)}
                 disabled={acaoId === f.id}
-                onClick={() => voidInvoiceAction(f.id)}
               >
-                Anular
-              </button>
+                <button
+                  type="button"
+                  className="inline-flex items-center rounded-lg border border-red-200 px-3 py-1.5 text-xs font-medium text-red-700 transition hover:bg-red-50 disabled:opacity-50"
+                  disabled={acaoId === f.id}
+                >
+                  Anular
+                </button>
+              </ConfirmDialog>
             ) : null}
           </div>
         ),
@@ -464,7 +473,7 @@ export default function FaturasPage() {
       <div className="space-y-6">
         <PageHeader
           title="Faturas"
-          subtitle="Emissão, anulação e PDF via API (admin permanece como backoffice completo)."
+          subtitle="Emita, acompanhe pagamentos, gere PDFs e reveja o histórico de faturação."
           actions={
             <div className="flex flex-wrap items-center gap-2">
               {podeCriar ? (
