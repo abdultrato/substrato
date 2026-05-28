@@ -10,7 +10,7 @@ import useAuthGuard from "@/hooks/useAuthGuard"
 import { useLanguage } from "@/hooks/useLanguage"
 import { useModulesCatalog } from "@/hooks/useModulesCatalog"
 import { findModuleResource } from "@/lib/modules"
-import { hasWriteContract } from "@/lib/openapi/writeContract"
+import { hasOpenApiMethod } from "@/lib/openapi/writeContract"
 import { routeParamToString } from "@/lib/routeParams"
 import { requiredGroupsForResourceGroup } from "@/lib/resourcesAccess"
 
@@ -49,7 +49,27 @@ export default function RecursosRecursoPage() {
     }
 
     const basePath = `/resources/${found.group.key}/${found.resource.key}`
-    const canCreate = hasWriteContract(found.resource.endpoint, "post")
+    const canList = hasOpenApiMethod(found.resource.endpoint, "get")
+    const canCreate = hasOpenApiMethod(found.resource.endpoint, "post")
+
+    if (!canList) {
+        return (
+            <AppLayout requiredGroups={requiredGroups}>
+                <div className="space-y-6">
+                    <PageHeader
+                        title={t("Listagem indisponível", "List unavailable")}
+                        subtitle={t("Este recurso existe no catálogo, mas a API não expõe listagem para ele.", "This resource exists in the catalog, but the API does not expose a list endpoint for it.")}
+                    />
+                    <Link
+                        href={`/resources/${found.group.key}`}
+                        className="text-sm text-[var(--gray-700)] underline"
+                    >
+                        {t("Voltar ao módulo", "Back to module")}
+                    </Link>
+                </div>
+            </AppLayout>
+        )
+    }
 
     return (
         <ResourceListPage

@@ -4,8 +4,7 @@ import { join, relative, resolve } from "path"
 
 import { describe, expect, it } from "vitest"
 
-import schema from "@/schema.generated.json"
-import { canonicalizeEndpointPath } from "@/lib/openapi/endpointResolver"
+import { hasOpenApiMethod } from "@/lib/openapi/writeContract"
 
 const require = createRequire(import.meta.url)
 const createNextConfig = require("../next.config.js")
@@ -66,25 +65,17 @@ function collectGeneratedRouteTargets(): GeneratedRouteTarget[] {
   return targets
 }
 
-function normalizeEndpoint(value: string): string {
-  const clean = canonicalizeEndpointPath(value).split("?")[0].split("#")[0]
-  const prefixed = clean.startsWith("/") ? clean : `/${clean}`
-  return prefixed.endsWith("/") ? prefixed : `${prefixed}/`
-}
-
-function openApiPathFor(target: GeneratedRouteTarget): string {
+function contractEndpointFor(target: GeneratedRouteTarget): string {
   const detail = target.kind === "Detail" || target.kind === "Edit"
-  return `/api/v1${normalizeEndpoint(target.endpoint)}${detail ? "{id}/" : ""}`
+  const clean = String(target.endpoint || "").replace(/\/$/, "")
+  return `${clean}/${detail ? "{id}/" : ""}`
 }
 
 function hasOpenApiContract(target: GeneratedRouteTarget): boolean {
-  const paths = (schema as any).paths || {}
-  const item = paths[openApiPathFor(target)]
-  if (!item) return false
-
-  if (target.kind === "List" || target.kind === "Detail") return !!item.get
-  if (target.kind === "Create") return !!item.post
-  return !!item.put || !!item.patch
+  const endpoint = contractEndpointFor(target)
+  if (target.kind === "List" || target.kind === "Detail") return hasOpenApiMethod(endpoint, "get")
+  if (target.kind === "Create") return hasOpenApiMethod(endpoint, "post")
+  return hasOpenApiMethod(endpoint, "put") || hasOpenApiMethod(endpoint, "patch")
 }
 
 function routePatternMatches(source: string, routePath: string): boolean {
@@ -120,7 +111,7 @@ describe("generated resource route contracts", () => {
       .filter((target) => !redirectRules.some((route) => routePatternMatches(route.source, target.routePath)))
       .map(
         (target) =>
-          `${target.file}: ${target.kind} ${target.endpoint} sem contrato ${openApiPathFor(target)} nem redirect`
+          `${target.file}: ${target.kind} ${target.endpoint} sem contrato ${contractEndpointFor(target)} nem redirect`
       )
 
     expect(targets.length).toBeGreaterThan(0)

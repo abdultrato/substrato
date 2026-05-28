@@ -15,6 +15,7 @@ import { useLanguage } from "@/hooks/useLanguage"
 import { useModulesCatalog } from "@/hooks/useModulesCatalog"
 import { apiFetch } from "@/lib/api"
 import { canonicalModuleGroupKey, findModuleResource } from "@/lib/modules"
+import { hasOpenApiMethod } from "@/lib/openapi/writeContract"
 import { canManageUserByHierarchy } from "@/lib/rbac"
 import { routeParamToString } from "@/lib/routeParams"
 import { requiredGroupsForResourceGroup } from "@/lib/resourcesAccess"
@@ -41,13 +42,22 @@ export default function ResourceDetailPage() {
     const [loadingData, setLoadingData] = useState(true)
     const [deleting, setDeleting] = useState(false)
     const [actionId, setActionId] = useState<number | null>(null)
+    const detailContractEndpoint = found ? ensureTrailingSlash(found.resource.endpoint) + "{id}/" : ""
+    const canReadDetail = found ? hasOpenApiMethod(detailContractEndpoint, "get") : false
+    const canDeleteRecord = found ? hasOpenApiMethod(detailContractEndpoint, "delete") : false
+    const canEditRecordContract = found
+        ? hasOpenApiMethod(detailContractEndpoint, "put") || hasOpenApiMethod(detailContractEndpoint, "patch")
+        : false
     const surgeryKeys = ["surgery", "small_surgery", "large_surgery"]
     const isSurgery =
         canonicalGroupKey === "surgery" &&
         surgeryKeys.includes(resourceKey.toLocaleLowerCase())
 
     const reloadResource = useCallback(async () => {
-        if (!found) return
+        if (!found || !canReadDetail) {
+            setLoadingData(false)
+            return
+        }
         setLoadingData(true)
         setError(null)
         try {
@@ -59,7 +69,7 @@ export default function ResourceDetailPage() {
         } finally {
             setLoadingData(false)
         }
-    }, [found, id])
+    }, [found, id, canReadDetail])
 
     useEffect(() => {
         reloadResource().catch(() => { })
@@ -199,6 +209,25 @@ export default function ResourceDetailPage() {
         )
     }
 
+    if (!canReadDetail) {
+        return (
+            <AppLayout requiredGroups={requiredGroups}>
+                <div className="space-y-6">
+                    <PageHeader
+                        title={t("Detalhe indisponível", "Detail unavailable")}
+                        subtitle={t("Este recurso não expõe consulta por identificador no contrato atual da API.", "This resource does not expose detail lookup in the current API contract.")}
+                    />
+                    <Link
+                        href={`/resources/${found.group.key}/${found.resource.key}`}
+                        className="text-sm text-[var(--gray-700)] underline"
+                    >
+                        {t("Voltar à listagem", "Back to list")}
+                    </Link>
+                </div>
+            </AppLayout>
+        )
+    }
+
     return (
         <AppLayout requiredGroups={requiredGroups}>
             <div className="space-y-6">
@@ -253,21 +282,25 @@ export default function ResourceDetailPage() {
                                     </button>
                                 )
                             ) : null}
-                            {canManageCurrentRecord ? (
+                            {canManageCurrentRecord && (canEditRecordContract || canDeleteRecord) ? (
                                 <>
-                                    <Link
-                                        href={`${basePath}/${id}/edit`}
-                                        className="inline-flex items-center rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-1.5 text-sm font-medium text-[var(--gray-700)] transition hover:bg-[var(--gray-100)]"
-                                    >
-                                        {t("Editar", "Edit")}
-                                    </Link>
-                                    <button
-                                        onClick={handleDelete}
-                                        disabled={deleting}
-                                        className="inline-flex items-center rounded-lg bg-red-600 px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-red-500 disabled:opacity-60"
-                                    >
-                                        {deleting ? t("Apagando...", "Deleting...") : t("Apagar", "Delete")}
-                                    </button>
+                                    {canEditRecordContract ? (
+                                        <Link
+                                            href={`${basePath}/${id}/edit`}
+                                            className="inline-flex items-center rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-1.5 text-sm font-medium text-[var(--gray-700)] transition hover:bg-[var(--gray-100)]"
+                                        >
+                                            {t("Editar", "Edit")}
+                                        </Link>
+                                    ) : null}
+                                    {canDeleteRecord ? (
+                                        <button
+                                            onClick={handleDelete}
+                                            disabled={deleting}
+                                            className="inline-flex items-center rounded-lg bg-red-600 px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-red-500 disabled:opacity-60"
+                                        >
+                                            {deleting ? t("Apagando...", "Deleting...") : t("Apagar", "Delete")}
+                                        </button>
+                                    ) : null}
                                 </>
                             ) : null}
                             <Link

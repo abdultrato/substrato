@@ -30,19 +30,14 @@ describe("retired generated routes", () => {
     })
   })
 
-  it("redirects generated detail/create pages for collection-only AI resources", async () => {
+  it("redirects generated create pages for collection-only AI resources", async () => {
     const bySource = await redirectsBySource()
 
     const expected: Record<string, string> = {
       "/ai_assistant/ai-investigations/new": "/ai_assistant/ai-investigations/",
-      "/ai_assistant/ai-investigations/:id/edit": "/ai_assistant/ai-investigations/",
-      "/ai_assistant/ai-investigations/:id": "/ai_assistant/ai-investigations/",
       "/ai_assistant/ai-operational-tasks/new": "/ai_assistant/ai-operational-tasks/",
-      "/ai_assistant/ai-operational-tasks/:id/edit": "/ai_assistant/ai-operational-tasks/",
-      "/ai_assistant/ai-operational-tasks/:id": "/ai_assistant/ai-operational-tasks/",
       "/ai_assistant/ai-sessions/new": "/ai_assistant/ai-sessions/",
       "/ai_assistant/ai-sessions/:id/edit": "/ai_assistant/ai-sessions/",
-      "/ai_assistant/ai-sessions/:id": "/ai_assistant/ai-sessions/",
     }
 
     for (const [source, destination] of Object.entries(expected)) {

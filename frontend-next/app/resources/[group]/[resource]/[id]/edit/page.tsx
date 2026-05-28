@@ -13,6 +13,7 @@ import useAuthGuard from "@/hooks/useAuthGuard"
 import { useLanguage } from "@/hooks/useLanguage"
 import { useModulesCatalog } from "@/hooks/useModulesCatalog"
 import { findModuleResource } from "@/lib/modules"
+import { hasOpenApiMethod } from "@/lib/openapi/writeContract"
 import { canManageUserByHierarchy } from "@/lib/rbac"
 import { routeParamToString } from "@/lib/routeParams"
 import { requiredGroupsForResourceGroup } from "@/lib/resourcesAccess"
@@ -33,6 +34,10 @@ export default function EditarRecursoPage() {
     const [initial, setInitial] = useState<Record<string, any> | null>(null)
     const [error, setError] = useState<string | null>(null)
     const [loadingData, setLoadingData] = useState(true)
+    const detailContractEndpoint = found ? `${found.resource.endpoint.replace(/\/$/, "")}/{id}/` : ""
+    const canUpdateContract = found
+        ? hasOpenApiMethod(detailContractEndpoint, "put") || hasOpenApiMethod(detailContractEndpoint, "patch")
+        : false
     const normalizedEndpoint = (found?.resource.endpoint || "").toLowerCase()
     const isIdentityUserResource =
         normalizedEndpoint === "/identity/user/" || normalizedEndpoint === "/identidade/user/"
@@ -46,7 +51,10 @@ export default function EditarRecursoPage() {
     useEffect(() => {
         let mounted = true
         async function load() {
-            if (!found) return
+            if (!found || !canUpdateContract) {
+                if (mounted) setLoadingData(false)
+                return
+            }
             try {
                 setLoadingData(true)
                 setError(null)
@@ -63,7 +71,7 @@ export default function EditarRecursoPage() {
         return () => {
             mounted = false
         }
-    }, [found, id])
+    }, [found, id, canUpdateContract])
 
     if (loading) return null
 
@@ -87,6 +95,27 @@ export default function EditarRecursoPage() {
     }
 
     const basePath = `/resources/${groupKey}/${resourceKey}`
+
+    if (!canUpdateContract) {
+        return (
+            <AppLayout requiredGroups={requiredGroups}>
+                <div className="mx-auto w-full max-w-5xl space-y-6">
+                    <PageHeader
+                        title={t("Edição indisponível", "Editing unavailable")}
+                        subtitle={t("Este recurso não expõe edição no contrato atual da API.", "This resource does not expose editing in the current API contract.")}
+                        actions={
+                            <Link
+                                href={basePath}
+                                className="text-sm text-[var(--gray-700)] underline"
+                            >
+                                {t("Voltar", "Back")}
+                            </Link>
+                        }
+                    />
+                </div>
+            </AppLayout>
+        )
+    }
 
     return (
         <AppLayout requiredGroups={requiredGroups}>

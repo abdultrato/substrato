@@ -48,14 +48,9 @@ module.exports = (phase) => {
   ]
   const collectionOnlyGeneratedRoutes = [
     { source: "/ai_assistant/ai-investigations/new", destination: "/ai_assistant/ai-investigations/" },
-    { source: "/ai_assistant/ai-investigations/:id/edit", destination: "/ai_assistant/ai-investigations/" },
-    { source: "/ai_assistant/ai-investigations/:id", destination: "/ai_assistant/ai-investigations/" },
     { source: "/ai_assistant/ai-operational-tasks/new", destination: "/ai_assistant/ai-operational-tasks/" },
-    { source: "/ai_assistant/ai-operational-tasks/:id/edit", destination: "/ai_assistant/ai-operational-tasks/" },
-    { source: "/ai_assistant/ai-operational-tasks/:id", destination: "/ai_assistant/ai-operational-tasks/" },
     { source: "/ai_assistant/ai-sessions/new", destination: "/ai_assistant/ai-sessions/" },
     { source: "/ai_assistant/ai-sessions/:id/edit", destination: "/ai_assistant/ai-sessions/" },
-    { source: "/ai_assistant/ai-sessions/:id", destination: "/ai_assistant/ai-sessions/" },
   ]
 
   return {

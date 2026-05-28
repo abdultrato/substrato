@@ -11,6 +11,7 @@ import { useAuth } from "@/hooks/useAuth"
 import { useLanguage } from "@/hooks/useLanguage"
 import { useModulesCatalog } from "@/hooks/useModulesCatalog"
 import { findModuleResource } from "@/lib/modules"
+import { hasOpenApiMethod } from "@/lib/openapi/writeContract"
 import { canCreateUserWithGroupsByHierarchy, GROUPS } from "@/lib/rbac"
 import { routeParamToString } from "@/lib/routeParams"
 import { requiredGroupsForResourceGroup } from "@/lib/resourcesAccess"
@@ -48,6 +49,28 @@ export default function NovoRecursoPage() {
                     >
                         {t("Voltar", "Back")}
                     </Link>
+                </div>
+            </AppLayout>
+        )
+    }
+
+    const canCreateResource = hasOpenApiMethod(found.resource.endpoint, "post")
+    if (!canCreateResource) {
+        return (
+            <AppLayout requiredGroups={requiredGroups}>
+                <div className="mx-auto w-full max-w-5xl space-y-6">
+                    <PageHeader
+                        title={t("Criação indisponível", "Creation unavailable")}
+                        subtitle={t("Este recurso não expõe criação no contrato atual da API.", "This resource does not expose creation in the current API contract.")}
+                        actions={
+                            <Link
+                                href={`/resources/${found.group.key}/${found.resource.key}`}
+                                className="text-sm text-[var(--gray-700)] underline"
+                            >
+                                {t("Voltar", "Back")}
+                            </Link>
+                        }
+                    />
                 </div>
             </AppLayout>
         )
