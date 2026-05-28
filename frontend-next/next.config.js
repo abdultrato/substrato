@@ -45,6 +45,8 @@ module.exports = (phase) => {
   ]
   const legacyRouteAliases = [
     { source: "/consultations/holidaies/:path*", destination: "/consultations/holidays/:path*" },
+    { source: "/modules", destination: "/resources" },
+    { source: "/modules/:path*", destination: "/resources/:path*" },
   ]
   const collectionOnlyGeneratedRoutes = [
     { source: "/ai_assistant/ai-investigations/new", destination: "/ai_assistant/ai-investigations/" },

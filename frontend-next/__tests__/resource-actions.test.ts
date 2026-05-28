@@ -7,6 +7,7 @@ import {
   getResourceActionsForEndpoint,
   listExposedActionEndpoints,
   normalizeActionEndpoint,
+  resourceActionHasOpenApiContract,
 } from "@/lib/resourceActions"
 
 const PRIORITY_ACTION_ENDPOINTS = [
@@ -65,6 +66,14 @@ describe("resource action exposure", () => {
     const missingFromSchema = PRIORITY_ACTION_ENDPOINTS.filter((endpoint) => !schemaPaths.has(endpoint))
 
     expect(missingFromSchema).toEqual([])
+  })
+
+  it("keeps exposed action methods aligned with the generated OpenAPI schema", () => {
+    const missingMethod = RESOURCE_ACTIONS
+      .filter((action) => !resourceActionHasOpenApiContract(action))
+      .map((action) => `${action.method} ${action.endpoint}`)
+
+    expect(missingMethod).toEqual([])
   })
 
   it("does not duplicate action keys or endpoint coverage entries", () => {

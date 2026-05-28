@@ -104,13 +104,12 @@ const NAV_ITEMS: NavItem[] = [
     { href: "/entities", label: "Empresas", labelEn: "Companies", icon: BriefcaseIcon, desc: "Convênios e clientes", descEn: "Contracts and clients", groups: [GROUPS.ADMIN, GROUPS.RECEPCAO, GROUPS.MEDICINA_OCUPACIONAL] },
     { href: "/resources/human-resources", label: "Recursos Humanos", labelEn: "Human resources", icon: BriefcaseIcon, desc: "Equipa e funcionários", descEn: "Team and staff", groups: [GROUPS.ADMIN, GROUPS.RECURSOS_HUMANOS] },
     { href: "/statistics", label: "Estatísticas", labelEn: "Statistics", icon: BarChart3, desc: "Indicadores e relatórios", descEn: "Indicators and reports", groups: [GROUPS.ADMIN, GROUPS.CONTABILIDADE] },
-    { href: "/modules/equipment", label: "Equipamentos", labelEn: "Equipment", icon: Settings, desc: "Ativos e manutenção", descEn: "Assets and maintenance", groups: ALL_GROUPS },
-    { href: "/modules", label: "Módulos", labelEn: "Modules", icon: Layers, desc: "Configuração de módulos", descEn: "Modules configuration", groups: [GROUPS.ADMIN, GROUPS.LABORATORIO] },
+    { href: "/resources/equipment", label: "Equipamentos", labelEn: "Equipment", icon: Settings, desc: "Ativos e manutenção", descEn: "Assets and maintenance", groups: [GROUPS.ADMIN, GROUPS.MANUTENCAO] },
+    { href: "/resources", label: "Módulos", labelEn: "Modules", icon: Layers, desc: "Configuração de módulos", descEn: "Modules configuration", groups: [GROUPS.ADMIN] },
     { href: "/notifications", label: "Notificações", labelEn: "Notifications", icon: Bell, desc: "Centro de avisos", descEn: "Alerts center", groups: [GROUPS.ADMIN] },
     { href: "/audit", label: "Auditoria", labelEn: "Audit", icon: Activity, desc: "Trilha de eventos", descEn: "Events trail", groups: [GROUPS.ADMIN] },
     { href: "/monitoring", label: "Monitoramento", labelEn: "Monitoring", icon: Bug, desc: "Saúde do sistema", descEn: "System health", groups: [GROUPS.ADMIN] },
     { href: "/ai", label: "IA Operacional", labelEn: "Operational AI", icon: Bot, desc: "Copiloto seguro por perfil", descEn: "Profile-safe copilot", groups: ALL_GROUPS },
-    { href: "/resources", label: "Recursos API", labelEn: "API resources", icon: Layers, desc: "Endpoints disponíveis", descEn: "Available endpoints", groups: [GROUPS.ADMIN] },
     { href: "/admin", label: "Administração", labelEn: "Administration", icon: Shield, desc: "Painel administrativo", descEn: "Administrative panel", groups: [GROUPS.ADMIN] },
 ]
 
@@ -148,7 +147,7 @@ const NAV_SECTIONS: NavSection[] = [
     {
         label: "Operações",
         labelEn: "Operations",
-        hrefs: ["/pharmacy", "/warehouse", "/pharmacy/material-requests", "/modules/equipment", "/modules", "/ai"],
+        hrefs: ["/pharmacy", "/warehouse", "/pharmacy/material-requests", "/resources/equipment", "/resources", "/ai"],
     },
     {
         label: "Financeiro",
@@ -158,7 +157,7 @@ const NAV_SECTIONS: NavSection[] = [
     {
         label: "Administração",
         labelEn: "Administration",
-        hrefs: ["/notifications", "/audit", "/monitoring", "/resources", "/admin"],
+        hrefs: ["/notifications", "/audit", "/monitoring", "/admin"],
     },
 ]
 

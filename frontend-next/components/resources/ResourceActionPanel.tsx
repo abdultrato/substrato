@@ -7,7 +7,7 @@ import { Bot, CheckCircle2, Clipboard, ExternalLink, FileDown, Loader2, Play, Wr
 import { useLanguage } from "@/hooks/useLanguage"
 import { apiFetch } from "@/lib/api"
 import {
-  getResourceActionsForEndpoint,
+  getAvailableResourceActionsForEndpoint,
   normalizeActionEndpoint,
   type ResourceActionDefinition,
   type ResourceActionField,
@@ -267,7 +267,7 @@ export default function ResourceActionPanel({
   statusFilter?: string
 }) {
   const { t } = useLanguage()
-  const actions = useMemo(() => getResourceActionsForEndpoint(endpoint), [endpoint])
+  const actions = useMemo(() => getAvailableResourceActionsForEndpoint(endpoint), [endpoint])
   const [valuesByAction, setValuesByAction] = useState<Record<string, FieldValues>>({})
   const [stateByAction, setStateByAction] = useState<Record<string, ActionUiState>>({})
 

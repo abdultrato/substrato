@@ -17,7 +17,7 @@ import { apiFetch } from "@/lib/api"
 import { educationResourceUiFromEndpoint, normalizeEducationEndpoint } from "@/lib/education/ui"
 import { isNotFoundLikeError } from "@/lib/errors/api-error"
 import { canonicalModuleGroupKey, type ModuleGroup, type ModuleResource } from "@/lib/modules"
-import { hasWriteContract } from "@/lib/openapi/writeContract"
+import { hasOpenApiMethod, hasWriteContract } from "@/lib/openapi/writeContract"
 import { routeParamToString } from "@/lib/routeParams"
 import { requiredGroupsForResourceGroup } from "@/lib/resourcesAccess"
 import { getResourceFormConfig } from "@/lib/resources/resourceFormConfig"
@@ -111,6 +111,10 @@ function stripTrailingSlash(path: string): string {
   if (!clean) return "/"
   const trimmed = clean.replace(/\/+$/, "")
   return trimmed || "/"
+}
+
+function detailContractEndpoint(endpoint: string): string {
+  return `${normalizeEndpoint(endpoint).replace(/\/$/, "")}/{id}/`
 }
 
 function groupContextMessage(groupKey: string, action: "list" | "new" | "detail" | "edit"): string {
@@ -208,12 +212,34 @@ function useEndpointContext(endpoint: string): EndpointContext {
 
 export function GeneratedResourceListPage({ endpoint }: { endpoint: string }) {
   const ctx = useEndpointContext(endpoint)
-  const { tr } = useLanguage()
+  const { t, tr } = useLanguage()
   const pathname = usePathname()
   const basePath = stripTrailingSlash(pathname || "")
-  const canCreate = hasWriteContract(ctx.normalizedEndpoint, "post")
+  const canList = hasOpenApiMethod(ctx.normalizedEndpoint, "get")
+  const canCreate = hasOpenApiMethod(ctx.normalizedEndpoint, "post")
   const groupLabel = tr(ctx.groupLabel)
   const resourceLabel = tr(ctx.resourceLabel)
+
+  if (!canList) {
+    return (
+      <AppLayout requiredGroups={ctx.requiredGroups}>
+        <div className="mx-auto w-full max-w-5xl space-y-4">
+          <PageHeader
+            title={t("Listagem indisponível", "List unavailable")}
+            subtitle={t("Este recurso existe no catálogo, mas a API não expõe listagem para ele.", "This resource exists in the catalog, but the API does not expose a list endpoint for it.")}
+            actions={
+              <Link
+                href={`/resources/${ctx.groupKey}`}
+                className="inline-flex h-9 items-center rounded-md border border-[var(--border)] bg-[var(--card)] px-3 text-sm font-medium text-[var(--gray-700)] shadow-sm transition-all duration-150 hover:border-[var(--primary-300)] hover:bg-[var(--gray-100)] hover:text-[var(--text)]"
+              >
+                {t("Voltar ao módulo", "Back to module")}
+              </Link>
+            }
+          />
+        </div>
+      </AppLayout>
+    )
+  }
 
   return (
     <ResourceListPage
@@ -240,7 +266,29 @@ export function GeneratedResourceCreatePage({ endpoint }: { endpoint: string }) 
   const pathname = usePathname()
   const ctx = useEndpointContext(endpoint)
   const basePath = stripTrailingSlash((pathname || "").replace(/\/new\/?$/, ""))
+  const canCreate = hasOpenApiMethod(ctx.normalizedEndpoint, "post")
   const resourceLabel = tr(ctx.resourceLabel)
+
+  if (!canCreate) {
+    return (
+      <AppLayout requiredGroups={ctx.requiredGroups}>
+        <div className="mx-auto w-full max-w-5xl space-y-4">
+          <PageHeader
+            title={t("Criação indisponível", "Creation unavailable")}
+            subtitle={t("Este recurso não expõe criação no contrato atual da API.", "This resource does not expose creation in the current API contract.")}
+            actions={
+              <Link
+                href={basePath}
+                className="inline-flex h-9 items-center rounded-md border border-[var(--border)] bg-[var(--card)] px-3 text-sm font-medium text-[var(--gray-700)] shadow-sm transition-all duration-150 hover:border-[var(--primary-300)] hover:bg-[var(--gray-100)] hover:text-[var(--text)]"
+              >
+                {t("Voltar", "Back")}
+              </Link>
+            }
+          />
+        </div>
+      </AppLayout>
+    )
+  }
 
   return (
     <AppLayout requiredGroups={ctx.requiredGroups}>
@@ -287,16 +335,20 @@ export function GeneratedResourceDetailPage({ endpoint }: { endpoint: string }) 
   const [deleting, setDeleting] = useState(false)
   const ctx = useEndpointContext(endpoint)
   const basePath = stripTrailingSlash((pathname || "").replace(/\/[^/]+\/?$/, ""))
-  const canEdit = hasWriteContract(`${ctx.normalizedEndpoint}{id}/`, "put")
+  const detailEndpoint = detailContractEndpoint(ctx.normalizedEndpoint)
+  const canReadDetail = hasOpenApiMethod(detailEndpoint, "get")
+  const canEdit = hasWriteContract(detailEndpoint, "put")
+  const canDelete = hasOpenApiMethod(detailEndpoint, "delete")
   const resourceLabel = tr(ctx.resourceLabel)
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["generated-resource-detail", ctx.normalizedEndpoint, id],
     queryFn: async () => await apiFetch<Record<string, any>>(`${ctx.normalizedEndpoint}${id}/`),
-    enabled: !!id,
+    enabled: !!id && canReadDetail,
   })
 
   async function handleDelete() {
+    if (!canDelete) return
     if (!confirm("Tem certeza que deseja apagar este registo?")) return
     setDeleting(true)
     try {
@@ -305,6 +357,27 @@ export function GeneratedResourceDetailPage({ endpoint }: { endpoint: string }) 
     } finally {
       setDeleting(false)
     }
+  }
+
+  if (!canReadDetail) {
+    return (
+      <AppLayout requiredGroups={ctx.requiredGroups}>
+        <div className="mx-auto w-full max-w-5xl space-y-4">
+          <PageHeader
+            title={t("Detalhe indisponível", "Detail unavailable")}
+            subtitle={t("Este recurso não expõe consulta por identificador no contrato atual da API.", "This resource does not expose detail lookup in the current API contract.")}
+            actions={
+              <Link
+                href={basePath}
+                className="inline-flex h-9 items-center rounded-md border border-[var(--border)] bg-[var(--card)] px-3 text-sm font-medium text-[var(--gray-700)] shadow-sm transition-all duration-150 hover:border-[var(--primary-300)] hover:bg-[var(--gray-100)] hover:text-[var(--text)]"
+              >
+                {t("Voltar", "Back")}
+              </Link>
+            }
+          />
+        </div>
+      </AppLayout>
+    )
   }
 
   if (isLoading) {
@@ -359,7 +432,7 @@ export function GeneratedResourceDetailPage({ endpoint }: { endpoint: string }) 
                   {t("Editar", "Edit")}
                 </Link>
               ) : null}
-              {canEdit ? (
+              {canDelete ? (
                 <button
                   type="button"
                   onClick={handleDelete}
@@ -400,13 +473,37 @@ export function GeneratedResourceEditPage({ endpoint }: { endpoint: string }) {
   const id = routeParamToString((params as any)?.id)
   const ctx = useEndpointContext(endpoint)
   const detailPath = stripTrailingSlash((pathname || "").replace(/\/edit\/?$/, ""))
+  const detailEndpoint = detailContractEndpoint(ctx.normalizedEndpoint)
+  const canReadDetail = hasOpenApiMethod(detailEndpoint, "get")
+  const canUpdate = hasWriteContract(detailEndpoint, "put")
   const resourceLabel = tr(ctx.resourceLabel)
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["generated-resource-edit", ctx.normalizedEndpoint, id],
     queryFn: async () => await apiFetch<Record<string, any>>(`${ctx.normalizedEndpoint}${id}/`),
-    enabled: !!id,
+    enabled: !!id && canReadDetail && canUpdate,
   })
+
+  if (!canReadDetail || !canUpdate) {
+    return (
+      <AppLayout requiredGroups={ctx.requiredGroups}>
+        <div className="mx-auto w-full max-w-5xl space-y-4">
+          <PageHeader
+            title={t("Edição indisponível", "Editing unavailable")}
+            subtitle={t("Este recurso não expõe leitura e edição no contrato atual da API.", "This resource does not expose both read and edit operations in the current API contract.")}
+            actions={
+              <Link
+                href={detailPath}
+                className="inline-flex h-9 items-center rounded-md border border-[var(--border)] bg-[var(--card)] px-3 text-sm font-medium text-[var(--gray-700)] shadow-sm transition-all duration-150 hover:border-[var(--primary-300)] hover:bg-[var(--gray-100)] hover:text-[var(--text)]"
+              >
+                {t("Voltar", "Back")}
+              </Link>
+            }
+          />
+        </div>
+      </AppLayout>
+    )
+  }
 
   if (isLoading) {
     return (

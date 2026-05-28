@@ -30,6 +30,19 @@ describe("retired generated routes", () => {
     })
   })
 
+  it("redirects legacy modules routes to the contract-guarded resource catalog", async () => {
+    const bySource = await redirectsBySource()
+
+    expect(bySource.get("/modules")).toMatchObject({
+      destination: "/resources",
+      permanent: false,
+    })
+    expect(bySource.get("/modules/:path*")).toMatchObject({
+      destination: "/resources/:path*",
+      permanent: false,
+    })
+  })
+
   it("redirects generated create pages for collection-only AI resources", async () => {
     const bySource = await redirectsBySource()
 
@@ -85,5 +98,11 @@ describe("retired generated routes", () => {
       .filter((source) => menu.includes(`href: "${source}`))
 
     expect(hits).toEqual([])
+  })
+
+  it("does not link the main sidebar to legacy modules routes", () => {
+    const sidebar = readFileSync(resolve(process.cwd(), "components/layout/Sidebar.tsx"), "utf-8")
+
+    expect(sidebar).not.toContain('href: "/modules')
   })
 })

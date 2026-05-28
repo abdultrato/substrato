@@ -1,3 +1,5 @@
+import { hasOpenApiMethod } from "@/lib/openapi/writeContract"
+
 export type ResourceActionMethod = "GET" | "POST"
 export type ResourceActionRequestMode = "query" | "json"
 export type ResourceActionResponseMode = "json" | "blob" | "jobPdf"
@@ -536,6 +538,15 @@ export function normalizeActionEndpoint(endpoint: string): string {
 export function getResourceActionsForEndpoint(endpoint: string): ResourceActionDefinition[] {
   const normalized = normalizeActionEndpoint(endpoint)
   return RESOURCE_ACTIONS.filter((action) => normalizeActionEndpoint(action.parentEndpoint) === normalized)
+}
+
+export function resourceActionHasOpenApiContract(action: ResourceActionDefinition): boolean {
+  const method = action.method.toLocaleLowerCase() as "get" | "post"
+  return hasOpenApiMethod(action.endpoint, method)
+}
+
+export function getAvailableResourceActionsForEndpoint(endpoint: string): ResourceActionDefinition[] {
+  return getResourceActionsForEndpoint(endpoint).filter(resourceActionHasOpenApiContract)
 }
 
 export function listExposedActionEndpoints(): string[] {
