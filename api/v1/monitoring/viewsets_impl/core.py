@@ -6,7 +6,6 @@ from django.db.models.functions import TruncDay, TruncHour
 from django.http import HttpResponse
 from django.urls import reverse
 from django.utils import timezone
-from drf_spectacular.utils import OpenApiParameter, OpenApiTypes, extend_schema
 from rest_framework.decorators import action
 from rest_framework.exceptions import NotFound
 from rest_framework.permissions import IsAdminUser, IsAuthenticated  # Protege o endpoint
@@ -17,6 +16,7 @@ from api.v1.viewset_mixins import TenantScopedQuerysetMixin, ValidatedSearchOrde
 from apps.audit_activities.models.user_activity import UserActivity
 from apps.monitoring.models.outbox_event import TransactionalOutboxEvent
 from apps.monitoring.models.system_error import SystemError
+from drf_spectacular.utils import OpenApiParameter, OpenApiTypes, extend_schema
 from events.runtime_bridge import get_runtime, runtime_enabled
 from services.reports.async_exports import (
     can_access_export_job,

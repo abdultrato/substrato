@@ -1,10 +1,9 @@
 from __future__ import annotations
 
-import re
 from collections import defaultdict
+import re
 
 from rest_framework.schemas.openapi import SchemaGenerator as DRFSchemaGenerator
-
 
 HTTP_METHODS = {"get", "post", "put", "patch", "delete", "head", "options", "trace"}
 VERB_PREFIXES = (

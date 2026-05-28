@@ -3,28 +3,29 @@
 Script de validação manual dos 8 critical fixes do módulo nursing.
 Não usa pytest, roda validações diretas.
 """
+from datetime import timedelta
+from decimal import Decimal
 import os
 import sys
+
 import django
-from datetime import datetime, timedelta
-from decimal import Decimal
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'plataforma.settings.development')
 django.setup()
 
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.utils import timezone
+
 from apps.clinical.models import Patient
 from apps.nursing.models import (
     Procedure,
-    ProcedureItem,
     ProcedureCatalog,
+    ProcedureItem,
     Ward,
-    WardBed,
     WardAdmission,
+    WardBed,
 )
 from apps.tenants.models import Tenant
-
 
 # ============================================================================
 # HELPERS

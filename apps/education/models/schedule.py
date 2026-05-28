@@ -4,8 +4,8 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils import timezone
 
-from apps.education.models.attendance import AttendanceRecord
 from apps.education.i18n import education_label
+from apps.education.models.attendance import AttendanceRecord
 from core.models.base import NoNameCoreModel
 
 

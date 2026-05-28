@@ -5,7 +5,6 @@ from django.contrib import admin
 from django.core.exceptions import FieldDoesNotExist
 from django.db import models
 
-
 LOCAL_APP_PREFIX = "apps."
 MAX_LIST_DISPLAY_FIELDS = 7
 MAX_SEARCH_FIELDS = 8

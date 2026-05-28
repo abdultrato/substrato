@@ -20,7 +20,7 @@ for path in sorted(download.glob('*.pdf')):
             snippet = text[max(0,pos-80):pos+160]
             print(path.name)
             print('  snippet:', repr(snippet))
-    except Exception as e:
+    except Exception:
         pass
 print('---')
 cv_path = download / 'cv-lab.odg'
