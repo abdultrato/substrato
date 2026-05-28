@@ -193,6 +193,7 @@ OTEL_TRACES_EXPORTER = get_env("OTEL_TRACES_EXPORTER", "otlp")
 # =========================================================
 
 DJANGO_APPS = [
+    *(["jazzmin"] if _module_available("jazzmin") else []),
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -251,8 +252,6 @@ INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 # =========================================================
 #
 # Precisa vir ANTES de `django.contrib.admin` para sobrescrever templates/static.
-# TEMPORARIAMENTE DESATIVADO - módulo não instalado
-# INSTALLED_APPS = ["jazzmin", *INSTALLED_APPS]
 
 JAZZMIN_SETTINGS = {
     "site_title": "Substrato Admin",
@@ -697,8 +696,13 @@ _JAZZMIN_ICON_ALIASES = {
     # Maternity
     "maternidade.pregnancy": "maternidade.gestacao",
     # Nursing
+    "enfermagem.ward": "enfermagem.enfermaria",
+    "enfermagem.wardbed": "enfermagem.camaenfermaria",
+    "enfermagem.wardadmission": "enfermagem.internamentoenfermaria",
     "enfermagem.nursingrecord": "enfermagem.registroenfermagem",
     "enfermagem.nursingvitalsign": "enfermagem.sinalvitalenfermagem",
+    "enfermagem.nursingevolution": "enfermagem.evolucaoenfermagem",
+    "enfermagem.nursingprescription": "enfermagem.prescricaoenfermagem",
     "enfermagem.procedure": "enfermagem.procedimento",
     "enfermagem.procedurecatalog": "enfermagem.procedimentocatalogo",
     "enfermagem.procedurecatalogmaterial": "enfermagem.procedimentocatalogomaterial",
@@ -715,6 +719,15 @@ _JAZZMIN_ICON_ALIASES = {
     "farmacia.saleitem": "farmacia.itemvenda",
     # Billing
     "faturamento.invoice": "faturamento.fatura",
+    "faturamento.invoiceitem": "faturamento.faturaitem",
+    "faturamento.invoicehistory": "faturamento.historicofatura",
+    # Payments
+    "payments": "pagamentos",
+    "pagamentos.payment": "pagamentos.pagamento",
+    "pagamentos.transaction": "pagamentos.transacao",
+    "pagamentos.receipt": "pagamentos.recibo",
+    "pagamentos.reconciliation": "pagamentos.reconciliacao",
+    "pagamentos.paymenthistory": "pagamentos.historicopagamento",
     # Accounting
     "contabilidade.account": "contabilidade.conta",
     "contabilidade.legacyentry": "contabilidade.lancamento",
@@ -750,6 +763,8 @@ _JAZZMIN_ICON_ALIASES = {
     "manutencoes.maintenance": "equipamentos.manutencao",
     # Audit activities
     "auditoria_atividades.useractivity": "audit_activities.atividadeusuario",
+    # Reception
+    "recepcao.receptioncheckin": "recepcao.checkinrecepcao",
 }
 
 _JAZZMIN_ICON_DEFAULTS = {
@@ -766,6 +781,8 @@ _JAZZMIN_ICON_DEFAULTS = {
     "warehouse": "fas fa-warehouse",
     "bloodbank": "fas fa-tint",
     "faturamento": "fas fa-file-invoice-dollar",
+    "pagamentos": "fas fa-money-check-alt",
+    "payments": "fas fa-money-check-alt",
     "contabilidade": "fas fa-calculator",
     "entidades": "fas fa-building",
     "seguradora": "fas fa-shield-alt",
@@ -813,8 +830,13 @@ _JAZZMIN_ICON_DEFAULTS = {
     "prontuario.medicalrecordentry": "fas fa-book-medical",
     "prontuario.prescriptionitem": "fas fa-pills",
     "maternidade.pregnancy": "fas fa-baby",
+    "enfermagem.ward": "fas fa-bed",
+    "enfermagem.wardbed": "fas fa-bed",
+    "enfermagem.wardadmission": "fas fa-hospital",
     "enfermagem.nursingrecord": "fas fa-notes-medical",
     "enfermagem.nursingvitalsign": "fas fa-heartbeat",
+    "enfermagem.nursingevolution": "fas fa-chart-line",
+    "enfermagem.nursingprescription": "fas fa-prescription-bottle-alt",
     "enfermagem.procedure": "fas fa-syringe",
     "enfermagem.procedurecatalog": "fas fa-th-list",
     "enfermagem.procedurecatalogmaterial": "fas fa-boxes",
@@ -830,6 +852,7 @@ _JAZZMIN_ICON_DEFAULTS = {
     "farmacia.sale": "fas fa-cash-register",
     "farmacia.saleitem": "fas fa-receipt",
     "farmacia.materialrequisition": "fas fa-clipboard-list",
+    "farmacia.materialrequisitionitem": "fas fa-box-open",
     "warehouse.warehouse": "fas fa-warehouse",
     "warehouse.storagelocation": "fas fa-map-marker-alt",
     "warehouse.warehouseitemcategory": "fas fa-tags",
@@ -861,6 +884,13 @@ _JAZZMIN_ICON_DEFAULTS = {
     "bloodbank.bloodstockmovement": "fas fa-exchange-alt",
     "bloodbank.bloodstoragemaintenance": "fas fa-tools",
     "faturamento.invoice": "fas fa-file-invoice-dollar",
+    "faturamento.invoicehistory": "fas fa-history",
+    "faturamento.invoiceitem": "fas fa-list-ul",
+    "pagamentos.payment": "fas fa-money-bill-wave",
+    "pagamentos.transaction": "fas fa-exchange-alt",
+    "pagamentos.receipt": "fas fa-receipt",
+    "pagamentos.reconciliation": "fas fa-balance-scale",
+    "pagamentos.paymenthistory": "fas fa-history",
     "contabilidade.account": "fas fa-wallet",
     "contabilidade.accountbalance": "fas fa-chart-pie",
     "contabilidade.financialreconciliation": "fas fa-balance-scale",
@@ -911,6 +941,7 @@ _JAZZMIN_ICON_DEFAULTS = {
     "recursos_humanos.workschedule": "fas fa-calendar-alt",
     "recursos_humanos.disciplinaryprocess": "fas fa-gavel",
     "recursos_humanos.profession": "fas fa-user-md",
+    "recepcao.receptioncheckin": "fas fa-clipboard-check",
 }
 
 _jazzmin_icons = JAZZMIN_SETTINGS.setdefault("icons", {})
