@@ -98,7 +98,7 @@ export default function ProntuarioCardexPage() {
                                 href="/resources/medical-records/registro/new"
                                 className="inline-flex items-center rounded-xl bg-[var(--primary-600)] px-3 py-1.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[var(--primary-700)]"
                             >
-                                Novo
+                                Criar Cardex
                             </Link>
                             <Link
                                 href="/resources/medical-records/registro"

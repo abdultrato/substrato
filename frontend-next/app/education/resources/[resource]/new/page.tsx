@@ -13,6 +13,7 @@ import { useModulesCatalog } from "@/hooks/useModulesCatalog"
 import { EDUCATION_REQUIRED_GROUPS, getEducationResource } from "@/lib/education/resources"
 import { hasOpenApiMethod } from "@/lib/openapi/writeContract"
 import { routeParamToString } from "@/lib/routeParams"
+import { createResourceActionLabel } from "@/lib/resources/createLabels"
 import { getResourceFormConfig } from "@/lib/resources/resourceFormConfig"
 import { getTenantIdFromUser } from "@/lib/tenancy"
 
@@ -20,7 +21,7 @@ export default function EducationResourceCreatePage() {
   const params = useParams()
   const resourceKey = routeParamToString((params as any)?.resource)
   const { loading } = useAuthGuard()
-  const { t, tr } = useLanguage()
+  const { t, tr, language } = useLanguage()
   const { user } = useAuth()
   const { modules } = useModulesCatalog()
   const found = getEducationResource(modules, resourceKey)
@@ -70,6 +71,8 @@ export default function EducationResourceCreatePage() {
   }
 
   const cfg = getResourceFormConfig("education", found.resource.key, found.resource.endpoint)
+  const resourceLabel = tr(found.resource.label)
+  const createActionLabel = createResourceActionLabel(resourceLabel, language)
   const tenantId = getTenantIdFromUser(user)
   const makeTenantEditable = !!cfg?.somenteLeituraCampos?.includes("tenant") && !tenantId
   const effectiveConfig = makeTenantEditable
@@ -84,7 +87,7 @@ export default function EducationResourceCreatePage() {
     <AppLayout requiredGroups={EDUCATION_REQUIRED_GROUPS}>
       <div className="mx-auto w-full max-w-5xl space-y-4">
         <PageHeader
-          title={`${t("Novo", "New")} ${tr(found.resource.label)}`}
+          title={createActionLabel}
           subtitle={t(
             "Criação de registo em Educação.",
             "Create a new Education record."
@@ -99,7 +102,7 @@ export default function EducationResourceCreatePage() {
         <AutoForm
           endpoint={found.resource.endpoint}
           method="post"
-          submitLabel={t("Criar", "Create")}
+          submitLabel={createActionLabel}
           initialValues={initialValues}
           config={effectiveConfig}
           onSuccess={() => {

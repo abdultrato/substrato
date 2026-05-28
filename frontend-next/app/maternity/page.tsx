@@ -83,7 +83,7 @@ export default function MaternidadePage() {
                         icon={Baby}
                     />
                     <ActionTile
-                        title="Nova gestação"
+                        title="Criar gestação"
                         description="Criar um registo de gestação para um paciente."
                         href="/resources/maternity/gestacao/new"
                         icon={PlusCircle}

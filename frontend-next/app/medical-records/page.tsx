@@ -90,7 +90,7 @@ export default function ProntuarioPage() {
                         icon={ScrollText}
                     />
                     <ActionTile
-                        title="Novo Cardex"
+                        title="Criar Cardex"
                         description="Criar registro de cardex para um paciente."
                         href="/resources/medical-records/registro/new"
                         icon={PlusCircle}

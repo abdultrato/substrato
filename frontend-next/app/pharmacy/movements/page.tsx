@@ -247,7 +247,7 @@ export default function FarmaciaMovimentosPage() {
                 href="/resources/pharmacy/inventory_movement/new"
                 className="inline-flex items-center rounded-xl bg-[var(--primary-600)] px-3 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[var(--primary-700)]"
               >
-                Novo
+                Criar movimento de estoque
               </Link>
               <Link
                 href="/resources/pharmacy/inventory_movement"

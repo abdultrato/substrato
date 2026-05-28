@@ -15,15 +15,16 @@ import { hasOpenApiMethod } from "@/lib/openapi/writeContract"
 import { canCreateUserWithGroupsByHierarchy, GROUPS } from "@/lib/rbac"
 import { routeParamToString } from "@/lib/routeParams"
 import { requiredGroupsForResourceGroup } from "@/lib/resourcesAccess"
+import { createResourceActionLabel } from "@/lib/resources/createLabels"
 import { getResourceFormConfig } from "@/lib/resources/resourceFormConfig"
 import { getTenantIdFromUser } from "@/lib/tenancy"
 
-export default function NovoRecursoPage() {
+export default function CriarRecursoPage() {
     const params = useParams()
     const groupKey = routeParamToString((params as any)?.group)
     const resourceKey = routeParamToString((params as any)?.resource)
     const { loading } = useAuthGuard()
-    const { t, tr } = useLanguage()
+    const { t, tr, language } = useLanguage()
     const { user } = useAuth()
     const { modules } = useModulesCatalog("neutral")
     const found = findModuleResource(groupKey, resourceKey, modules)
@@ -55,6 +56,8 @@ export default function NovoRecursoPage() {
     }
 
     const canCreateResource = hasOpenApiMethod(found.resource.endpoint, "post")
+    const resourceLabel = tr(found.resource.label)
+    const createActionLabel = createResourceActionLabel(resourceLabel, language)
     if (!canCreateResource) {
         return (
             <AppLayout requiredGroups={requiredGroups}>
@@ -80,7 +83,7 @@ export default function NovoRecursoPage() {
         <AppLayout requiredGroups={requiredGroups}>
             <div className="mx-auto w-full max-w-5xl space-y-6">
                 <PageHeader
-                    title={`${t("Novo", "New")} ${tr(found.resource.label)}`}
+                    title={createActionLabel}
                     subtitle={t("Preencha os dados para criar um novo registo.", "Fill in the fields to create a new record.")}
                     actions={
                         <Link
@@ -121,7 +124,7 @@ export default function NovoRecursoPage() {
                 <AutoForm
                     endpoint={found.resource.endpoint}
                     method="post"
-                    submitLabel={t("Criar", "Create")}
+                    submitLabel={createActionLabel}
                     initialValues={initialValues}
                     config={effectiveConfig}
                     onSuccess={() => {

@@ -108,7 +108,7 @@ export default function ProntuarioPrescricoesPage() {
                                 href="/resources/medical-records/prescricaoitem/new"
                                 className="inline-flex items-center rounded-xl bg-[var(--primary-600)] px-3 py-1.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[var(--primary-700)]"
                             >
-                                Novo
+                                Criar item de prescrição
                             </Link>
                             <Link
                                 href="/resources/medical-records/prescricaoitem"

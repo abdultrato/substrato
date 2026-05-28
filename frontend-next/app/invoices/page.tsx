@@ -481,7 +481,7 @@ export default function FaturasPage() {
                   href="/invoices/new"
                   className="inline-flex items-center rounded-lg bg-[var(--primary-600)] px-3 py-2 text-sm font-semibold text-white transition hover:bg-[var(--primary-700)]"
                 >
-                  Nova fatura
+                  Criar fatura
                 </Link>
               ) : null}
               {podeVerAdmin ? (

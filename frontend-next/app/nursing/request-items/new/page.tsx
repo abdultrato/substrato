@@ -3,7 +3,7 @@
 import { Suspense } from "react";
 import { GeneratedResourceCreatePage } from "@/components/resources/GeneratedResourcePages";
 
-export default function NovoItemRequisicaoPage() {
+export default function CriarItemRequisicaoPage() {
   return (
     <Suspense fallback={<div className="p-4 text-sm text-[var(--gray-500)]">Carregando...</div>}>
       <GeneratedResourceCreatePage endpoint="/clinical/lab-request-items/" />

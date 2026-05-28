@@ -103,7 +103,7 @@ export default function ContabilidadeMovimentosPage() {
                 href="/resources/accounting/movement/new"
                 className="inline-flex items-center rounded-xl bg-[var(--primary-600)] px-3 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[var(--primary-700)]"
               >
-                Novo
+                Criar movimento
               </Link>
               <Link
                 href="/resources/accounting/movimento"

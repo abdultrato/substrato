@@ -27,7 +27,7 @@ function listFrom(res: any): any[] {
   return Array.isArray(res) ? res : []
 }
 
-export default function NovaFaturaPage() {
+export default function CriarFaturaPage() {
   const router = useRouter()
   const [search, setSearch] = useState("")
   const [pacientes, setPacientes] = useState<PacienteRow[]>([])
@@ -108,7 +108,7 @@ export default function NovaFaturaPage() {
             onClick={() => criarRascunho(p)}
             disabled={acaoId === p.id}
           >
-            Criar rascunho
+            Criar fatura
           </button>
         ),
       },
@@ -120,7 +120,7 @@ export default function NovaFaturaPage() {
     <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.RECEPCAO]}>
       <div className="space-y-6">
         <PageHeader
-          title="Nova fatura"
+          title="Criar fatura"
           subtitle="Selecione o paciente para criar uma fatura em rascunho."
         />
 

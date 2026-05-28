@@ -157,7 +157,7 @@ export default function RequisicoesMateriaisPage() {
                 href="/pharmacy/material-requests/new"
                 className="inline-flex items-center rounded-lg bg-[var(--primary-600)] px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-[var(--primary-700)]"
               >
-                Nova requisição
+                Criar requisição de materiais
               </Link>
             ) : null
           }

@@ -61,19 +61,19 @@ export default function BloodBankPage() {
   const eventCreateLinks = [
     {
       key: "stock_movement",
-      label: "Novo evento de movimento",
+      label: "Criar movimento de sangue",
       href: "/resources/bloodbank/stock_movement/new",
       description: "Entrada, saida, transferencia, reserva, liberacao, descarte e ajustes.",
     },
     {
       key: "transfusion",
-      label: "Nova transfusao",
+      label: "Criar transfusão",
       href: "/resources/bloodbank/transfusion/new",
       description: "Solicitacao e execucao de transfusao com validacoes clinicas.",
     },
     {
       key: "storage_maintenance",
-      label: "Nova manutencao",
+      label: "Criar manutenção",
       href: "/resources/bloodbank/storage_maintenance/new",
       description: "Plano preventivo/corretivo e registo de execucao tecnica.",
     },

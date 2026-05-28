@@ -461,7 +461,7 @@ export default function ConsultationsPage() {
 
         {canWrite ? (
           <Card
-            title={t("Nova consulta", "New consultation")}
+            title={t("Criar consulta", "Create consultation")}
             subtitle={t("Crie a consulta e, se necessário, emita a fatura.", "Create the consultation and issue the invoice if needed.")}
           >
             {formError ? (

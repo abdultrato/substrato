@@ -90,7 +90,7 @@ export default function MedicinaOcupacionalPage() {
             icon={Users}
           />
           <ActionTile
-            title="Nova requisição (laboratório)"
+            title="Criar requisição laboratorial"
             description="Solicitar análises laboratoriais."
             href="/requests/new"
             icon={FilePlus2}

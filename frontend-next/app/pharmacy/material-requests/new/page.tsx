@@ -51,7 +51,7 @@ function formatLotLabel(l: LotDisponivel) {
   return `${l.product_name || "Produto"} — Lote ${l.lot_number || l.id} (disp.: ${saldo})`
 }
 
-export default function NovaRequisicaoMateriaisPage() {
+export default function CriarRequisicaoMateriaisPage() {
   useAuthGuard()
   const router = useRouter()
 
@@ -199,7 +199,7 @@ export default function NovaRequisicaoMateriaisPage() {
     <AppLayout requiredGroups={requiredGroups}>
       <div className="space-y-6">
         <PageHeader
-          title="Nova requisição de materiais"
+          title="Criar requisição de materiais"
           subtitle="Informe o material e a quantidade para solicitar ao setor da farmácia."
           actions={
             <Link

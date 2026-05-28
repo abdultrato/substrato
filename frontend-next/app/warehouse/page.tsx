@@ -84,6 +84,7 @@ type QueueConfig = {
   resource: string
   href: string
   createHref?: string
+  createLabel?: string
   emptyMessage: string
   titleFields: string[]
   detailFields: string[]
@@ -271,7 +272,7 @@ function QueueCard({ config, rows, loading }: { config: QueueConfig; rows: Wareh
             className="inline-flex h-8 items-center gap-1 rounded-md bg-primary px-2.5 text-xs font-semibold text-primary-foreground transition hover:bg-primary/90"
           >
             <Plus size={13} />
-            Novo
+            {config.createLabel || `Criar ${config.title.toLocaleLowerCase("pt")}`}
           </Link>
         ) : null}
       </div>
@@ -368,6 +369,7 @@ export default function WarehousePage() {
       resource: "replenishment_plan",
       href: "/resources/warehouse/replenishment_plan",
       createHref: "/resources/warehouse/replenishment_plan/new",
+      createLabel: "Criar plano de reposição",
       emptyMessage: "Sem plano de reposição recente.",
       titleFields: ["plan_number", "name", "custom_id"],
       detailFields: ["warehouse_label", "supplier_name", "purchase_order_number"],
@@ -379,6 +381,7 @@ export default function WarehousePage() {
       resource: "purchase_order",
       href: "/resources/warehouse/purchase_order",
       createHref: "/resources/warehouse/purchase_order/new",
+      createLabel: "Criar pedido de compra",
       emptyMessage: "Sem pedido de compra pendente.",
       titleFields: ["order_number", "name", "custom_id"],
       detailFields: ["supplier_name", "supplier_document", "expected_date"],
@@ -390,6 +393,7 @@ export default function WarehousePage() {
       resource: "goods_receipt",
       href: "/resources/warehouse/goods_receipt",
       createHref: "/resources/warehouse/goods_receipt/new",
+      createLabel: "Criar recebimento",
       emptyMessage: "Sem recebimento em rascunho.",
       titleFields: ["receipt_number", "name", "custom_id"],
       detailFields: ["purchase_order_number", "warehouse_label", "received_at"],
@@ -401,6 +405,7 @@ export default function WarehousePage() {
       resource: "sales_order",
       href: "/resources/warehouse/sales_order",
       createHref: "/resources/warehouse/sales_order/new",
+      createLabel: "Criar pedido de venda",
       emptyMessage: "Sem pedido confirmado a reservar.",
       titleFields: ["order_number", "name", "custom_id"],
       detailFields: ["customer_name", "customer_document", "requested_ship_date"],
@@ -432,6 +437,7 @@ export default function WarehousePage() {
       resource: "shipment",
       href: "/resources/warehouse/shipment",
       createHref: "/resources/warehouse/shipment/new",
+      createLabel: "Criar expedição",
       emptyMessage: "Sem expedição em rascunho.",
       titleFields: ["shipment_number", "name", "custom_id"],
       detailFields: ["sales_order", "carrier_name", "tracking_number"],
@@ -443,6 +449,7 @@ export default function WarehousePage() {
       resource: "stock_transfer",
       href: "/resources/warehouse/stock_transfer",
       createHref: "/resources/warehouse/stock_transfer/new",
+      createLabel: "Criar transferência",
       emptyMessage: "Sem transferência em rascunho.",
       titleFields: ["transfer_number", "name", "custom_id"],
       detailFields: ["source_location", "destination_location", "requested_at"],

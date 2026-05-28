@@ -21,6 +21,7 @@ import { canonicalModuleGroupKey, type ModuleGroup, type ModuleResource } from "
 import { hasOpenApiMethod, hasWriteContract } from "@/lib/openapi/writeContract"
 import { routeParamToString } from "@/lib/routeParams"
 import { requiredGroupsForResourceGroup } from "@/lib/resourcesAccess"
+import { createResourceActionLabel } from "@/lib/resources/createLabels"
 import { getResourceFormConfig } from "@/lib/resources/resourceFormConfig"
 import { buildRecordDetailHref, primaryRecordId } from "@/lib/resources/recordIdentity"
 
@@ -256,13 +257,14 @@ export function GeneratedResourceListPage({ endpoint }: { endpoint: string }) {
 
 export function GeneratedResourceCreatePage({ endpoint }: { endpoint: string }) {
   useAuthGuard()
-  const { t, tr } = useLanguage()
+  const { t, tr, language } = useLanguage()
   const router = useRouter()
   const pathname = usePathname()
   const ctx = useEndpointContext(endpoint)
   const basePath = stripTrailingSlash((pathname || "").replace(/\/new\/?$/, ""))
   const canCreate = hasOpenApiMethod(ctx.normalizedEndpoint, "post")
   const resourceLabel = tr(ctx.resourceLabel)
+  const createActionLabel = createResourceActionLabel(resourceLabel, language)
 
   if (!canCreate) {
     return (
@@ -289,7 +291,7 @@ export function GeneratedResourceCreatePage({ endpoint }: { endpoint: string }) 
     <AppLayout requiredGroups={ctx.requiredGroups}>
       <div className="mx-auto w-full max-w-5xl space-y-4">
         <PageHeader
-          title={`${t("Novo", "New")} ${resourceLabel}`}
+          title={createActionLabel}
           subtitle={groupContextMessage(ctx.groupKey, "new")}
           actions={
             <Link
@@ -304,7 +306,7 @@ export function GeneratedResourceCreatePage({ endpoint }: { endpoint: string }) 
         <AutoForm
           endpoint={ctx.normalizedEndpoint}
           method="post"
-          submitLabel={t("Criar", "Create")}
+          submitLabel={createActionLabel}
           config={getResourceFormConfig(ctx.groupKey, ctx.resourceKey, ctx.normalizedEndpoint)}
           onSuccess={(data) => {
             const id = primaryRecordId(data)

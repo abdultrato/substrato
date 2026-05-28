@@ -88,7 +88,7 @@ export default function ContabilidadeConciliacoesPage() {
                 href="/resources/accounting/financialreconciliation/new"
                 className="inline-flex items-center rounded-xl bg-[var(--primary-600)] px-3 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[var(--primary-700)]"
               >
-                Novo
+                Criar conciliação
               </Link>
               <Link
                 href="/resources/accounting/conciliacaofinanceira"

@@ -115,7 +115,7 @@ export default function PagamentosPage() {
                             href="/resources/payments/payment/new"
                             className="inline-flex items-center rounded-xl bg-[var(--primary-600)] px-3 py-1.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[var(--primary-700)]"
                         >
-                            Novo pagamento
+                            Criar pagamento
                         </Link>
                     </div>
                 </Card>

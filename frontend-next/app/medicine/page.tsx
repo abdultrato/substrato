@@ -100,7 +100,7 @@ export default function MedicinaPage() {
             icon={Users}
           />
           <ActionTile
-            title="Nova requisição (laboratório)"
+            title="Criar requisição laboratorial"
             description="Solicitar exames laboratoriais para um paciente."
             href="/requests/new"
             icon={FilePlus2}

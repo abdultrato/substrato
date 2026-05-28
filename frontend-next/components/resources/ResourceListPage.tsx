@@ -17,6 +17,7 @@ import useDebounce from "@/hooks/useDebounce"
 import { apiFetch, apiFetchList } from "@/lib/api"
 import { bloodbankResourceKeyFromEndpoint } from "@/lib/ui/fieldLabels"
 import { canManageUserByHierarchy, GROUPS, userHasAnyGroup } from "@/lib/rbac"
+import { createResourceActionLabel } from "@/lib/resources/createLabels"
 
 type Row = Record<string, any>
 
@@ -134,7 +135,7 @@ export default function ResourceListPage({
 }) {
   const { loading } = useAuthGuard()
   const { user } = useAuth()
-  const { t, tr } = useLanguage()
+  const { t, tr, language } = useLanguage()
   const canViewAdmin = userHasAnyGroup(user, [GROUPS.ADMIN])
   const canCreateIdentityUsers = userHasAnyGroup(user, [
     GROUPS.ADMIN,
@@ -165,6 +166,10 @@ export default function ResourceListPage({
     const fallback = (titleParts[1] || titleParts[0] || "").trim()
     return fallback || "Recurso"
   }, [resourceLabel, title])
+  const createActionLabel = useMemo(
+    () => createResourceActionLabel(tr(resolvedResourceLabel), language),
+    [language, resolvedResourceLabel, tr]
+  )
 
   const bloodbankResource = bloodbankResourceKeyFromEndpoint(endpoint)
   const normalizedEndpoint = normalizeEndpointPath(endpoint)
@@ -322,7 +327,7 @@ export default function ResourceListPage({
                     href={createHref}
                     className="inline-flex h-9 items-center rounded-md bg-[var(--primary-600)] px-3 text-sm font-semibold leading-tight text-white shadow-sm transition-all duration-150 hover:bg-[var(--primary-700)] hover:shadow-md"
                   >
-                    {t("Novo", "New")}
+                    {createActionLabel}
                   </Link>
                 ) : null
               ) : null}
