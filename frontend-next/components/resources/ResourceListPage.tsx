@@ -20,7 +20,7 @@ import { canManageUserByHierarchy, GROUPS, userHasAnyGroup } from "@/lib/rbac"
 
 type Row = Record<string, any>
 
-type RowHref = (row: Row) => string
+type RowHref = (row: Row) => string | null | undefined
 
 function pickLabel(row: Row): string {
   const candidates = [
@@ -277,10 +277,11 @@ export default function ResourceListPage({
             id: Number(row?.id || 0) || undefined,
             groups: Array.isArray(row?.group_names) ? row.group_names : [],
           })
-          if (!rowHref || !canOpenDetails) return label
+          const href = rowHref?.(row)
+          if (!href || !canOpenDetails) return label
           return (
             <Link
-              href={rowHref(row)}
+              href={href}
               className="font-medium text-[var(--text)] transition-colors duration-150 hover:text-[var(--hover-accent)]"
             >
               {label}

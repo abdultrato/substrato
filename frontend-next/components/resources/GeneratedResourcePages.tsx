@@ -21,6 +21,7 @@ import { hasOpenApiMethod, hasWriteContract } from "@/lib/openapi/writeContract"
 import { routeParamToString } from "@/lib/routeParams"
 import { requiredGroupsForResourceGroup } from "@/lib/resourcesAccess"
 import { getResourceFormConfig } from "@/lib/resources/resourceFormConfig"
+import { buildRecordDetailHref, primaryRecordId } from "@/lib/resources/recordIdentity"
 
 type EndpointContext = {
   endpoint: string
@@ -181,10 +182,6 @@ function groupContextMessage(groupKey: string, action: "list" | "new" | "detail"
   )
 }
 
-function rowIdentity(row: Record<string, any>): string | number | null {
-  return row?.id ?? row?.pk ?? row?.id_custom ?? row?.custom_id ?? null
-}
-
 function pickPrimaryLabel(data: Record<string, any> | null | undefined): string {
   if (!data || typeof data !== "object") return ""
   const candidates = [
@@ -250,10 +247,7 @@ export function GeneratedResourceListPage({ endpoint }: { endpoint: string }) {
       resourceLabel={resourceLabel}
       adminListHref={ctx.adminListHref}
       createHref={canCreate ? `${basePath}/new` : undefined}
-      rowHref={(row) => {
-        const id = rowIdentity(row)
-        return id === null ? basePath : `${basePath}/${id}`
-      }}
+      rowHref={(row) => buildRecordDetailHref(basePath, row)}
       requiredGroups={ctx.requiredGroups}
     />
   )
@@ -312,9 +306,9 @@ export function GeneratedResourceCreatePage({ endpoint }: { endpoint: string }) 
           submitLabel={t("Criar", "Create")}
           config={getResourceFormConfig(ctx.groupKey, ctx.resourceKey, ctx.normalizedEndpoint)}
           onSuccess={(data) => {
-            const id = data?.id ?? data?.pk ?? data?.id_custom ?? data?.custom_id
+            const id = primaryRecordId(data)
             if (id !== undefined && id !== null && String(id).trim()) {
-              router.push(`${basePath}/${id}`)
+              router.push(`${basePath}/${encodeURIComponent(String(id))}`)
               return
             }
             router.push(basePath)

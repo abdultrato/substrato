@@ -13,6 +13,7 @@ import { useModulesCatalog } from "@/hooks/useModulesCatalog"
 import { apiFetch } from "@/lib/api"
 import { EDUCATION_REQUIRED_GROUPS, getEducationResource } from "@/lib/education/resources"
 import { isNotFoundLikeError } from "@/lib/errors/api-error"
+import { hasOpenApiMethod } from "@/lib/openapi/writeContract"
 import { routeParamToString } from "@/lib/routeParams"
 
 function ensureTrailingSlash(value: string) {
@@ -31,9 +32,18 @@ export default function EducationResourceDetailPage() {
   const [loadingData, setLoadingData] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [data, setData] = useState<Record<string, any> | null>(null)
+  const detailEndpoint = found ? `${ensureTrailingSlash(found.resource.endpoint)}{id}/` : ""
+  const canReadDetail = found ? hasOpenApiMethod(detailEndpoint, "get") : false
+  const canEdit = found
+    ? hasOpenApiMethod(detailEndpoint, "put") || hasOpenApiMethod(detailEndpoint, "patch")
+    : false
+  const canDelete = found ? hasOpenApiMethod(detailEndpoint, "delete") : false
 
   const loadDetails = useCallback(async () => {
-    if (!found) return
+    if (!found || !canReadDetail) {
+      setLoadingData(false)
+      return
+    }
     try {
       setLoadingData(true)
       setError(null)
@@ -45,7 +55,7 @@ export default function EducationResourceDetailPage() {
     } finally {
       setLoadingData(false)
     }
-  }, [found, id, t])
+  }, [found, id, t, canReadDetail])
 
   useEffect(() => {
     loadDetails().catch(() => undefined)
@@ -74,6 +84,25 @@ export default function EducationResourceDetailPage() {
 
   const basePath = `/education/resources/${found.resource.key}`
 
+  if (!canReadDetail) {
+    return (
+      <AppLayout requiredGroups={EDUCATION_REQUIRED_GROUPS}>
+        <div className="space-y-4">
+          <PageHeader
+            title={t("Detalhe indisponível", "Detail unavailable")}
+            subtitle={t(
+              "Este recurso de Educação não expõe consulta por identificador no contrato atual da API.",
+              "This Education resource does not expose detail lookup in the current API contract."
+            )}
+          />
+          <Link href={basePath} className="text-xs text-[var(--gray-700)] underline">
+            {t("Voltar", "Back")}
+          </Link>
+        </div>
+      </AppLayout>
+    )
+  }
+
   return (
     <AppLayout requiredGroups={EDUCATION_REQUIRED_GROUPS}>
       <div className="space-y-4">
@@ -82,18 +111,22 @@ export default function EducationResourceDetailPage() {
           subtitle={t("Visualização do registo.", "Record details view.")}
           actions={
             <div className="flex flex-wrap items-center gap-1">
-              <Link
-                href={`${basePath}/${id}/edit`}
-                className="inline-flex items-center border border-[var(--border)] bg-[var(--gray-100)] px-2 py-1 text-xs text-[var(--gray-700)] transition hover:bg-[var(--gray-200)]"
-              >
-                {t("Editar", "Edit")}
-              </Link>
-              <Link
-                href={`${basePath}/${id}/delete`}
-                className="inline-flex items-center border border-red-300 bg-red-600 px-2 py-1 text-xs text-white transition hover:bg-red-500"
-              >
-                {t("Apagar", "Delete")}
-              </Link>
+              {canEdit ? (
+                <Link
+                  href={`${basePath}/${id}/edit`}
+                  className="inline-flex items-center border border-[var(--border)] bg-[var(--gray-100)] px-2 py-1 text-xs text-[var(--gray-700)] transition hover:bg-[var(--gray-200)]"
+                >
+                  {t("Editar", "Edit")}
+                </Link>
+              ) : null}
+              {canDelete ? (
+                <Link
+                  href={`${basePath}/${id}/delete`}
+                  className="inline-flex items-center border border-red-300 bg-red-600 px-2 py-1 text-xs text-white transition hover:bg-red-500"
+                >
+                  {t("Apagar", "Delete")}
+                </Link>
+              ) : null}
               <Link
                 href={basePath}
                 className="inline-flex items-center border border-[var(--border)] bg-[var(--card)] px-2 py-1 text-xs text-[var(--gray-700)] transition hover:bg-[var(--gray-100)]"
@@ -117,4 +150,3 @@ export default function EducationResourceDetailPage() {
     </AppLayout>
   )
 }
-

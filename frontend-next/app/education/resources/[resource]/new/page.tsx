@@ -11,6 +11,7 @@ import useAuthGuard from "@/hooks/useAuthGuard"
 import { useLanguage } from "@/hooks/useLanguage"
 import { useModulesCatalog } from "@/hooks/useModulesCatalog"
 import { EDUCATION_REQUIRED_GROUPS, getEducationResource } from "@/lib/education/resources"
+import { hasOpenApiMethod } from "@/lib/openapi/writeContract"
 import { routeParamToString } from "@/lib/routeParams"
 import { getResourceFormConfig } from "@/lib/resources/resourceFormConfig"
 import { getTenantIdFromUser } from "@/lib/tenancy"
@@ -46,6 +47,28 @@ export default function EducationResourceCreatePage() {
   }
 
   const basePath = `/education/resources/${found.resource.key}`
+  const canCreate = hasOpenApiMethod(found.resource.endpoint, "post")
+  if (!canCreate) {
+    return (
+      <AppLayout requiredGroups={EDUCATION_REQUIRED_GROUPS}>
+        <div className="mx-auto w-full max-w-5xl space-y-4">
+          <PageHeader
+            title={t("Criação indisponível", "Creation unavailable")}
+            subtitle={t(
+              "Este recurso de Educação não expõe criação no contrato atual da API.",
+              "This Education resource does not expose creation in the current API contract."
+            )}
+            actions={
+              <Link href={basePath} className="text-xs text-[var(--gray-700)] underline">
+                {t("Voltar", "Back")}
+              </Link>
+            }
+          />
+        </div>
+      </AppLayout>
+    )
+  }
+
   const cfg = getResourceFormConfig("education", found.resource.key, found.resource.endpoint)
   const tenantId = getTenantIdFromUser(user)
   const makeTenantEditable = !!cfg?.somenteLeituraCampos?.includes("tenant") && !tenantId

@@ -13,6 +13,7 @@ import { findModuleResource } from "@/lib/modules"
 import { hasOpenApiMethod } from "@/lib/openapi/writeContract"
 import { routeParamToString } from "@/lib/routeParams"
 import { requiredGroupsForResourceGroup } from "@/lib/resourcesAccess"
+import { buildRecordDetailHref } from "@/lib/resources/recordIdentity"
 
 export default function RecursosRecursoPage() {
     const params = useParams()
@@ -78,9 +79,7 @@ export default function RecursosRecursoPage() {
             endpoint={found.resource.endpoint}
             adminListHref={found.resource.adminListHref}
             createHref={canCreate ? `${basePath}/new` : undefined}
-            rowHref={(row) =>
-                `${basePath}/${row.id ?? row.pk ?? row.id_custom ?? ""}`.replace(/\/?$/, "")
-            }
+            rowHref={(row) => buildRecordDetailHref(basePath, row)}
             requiredGroups={requiredGroups}
         />
     )

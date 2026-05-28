@@ -12,6 +12,7 @@ import { useModulesCatalog } from "@/hooks/useModulesCatalog"
 import { apiFetch } from "@/lib/api"
 import { EDUCATION_REQUIRED_GROUPS, getEducationResource } from "@/lib/education/resources"
 import { isNotFoundLikeError } from "@/lib/errors/api-error"
+import { hasOpenApiMethod } from "@/lib/openapi/writeContract"
 import { routeParamToString } from "@/lib/routeParams"
 
 function ensureTrailingSlash(value: string) {
@@ -42,9 +43,15 @@ export default function EducationResourceDeletePage() {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [record, setRecord] = useState<Record<string, any> | null>(null)
+  const detailEndpoint = found ? `${ensureTrailingSlash(found.resource.endpoint)}{id}/` : ""
+  const canReadDetail = found ? hasOpenApiMethod(detailEndpoint, "get") : false
+  const canDelete = found ? hasOpenApiMethod(detailEndpoint, "delete") : false
 
   const loadRecord = useCallback(async () => {
-    if (!found) return
+    if (!found || !canReadDetail) {
+      setLoadingData(false)
+      return
+    }
     try {
       setLoadingData(true)
       setError(null)
@@ -56,14 +63,14 @@ export default function EducationResourceDeletePage() {
     } finally {
       setLoadingData(false)
     }
-  }, [found, id, t])
+  }, [found, id, t, canReadDetail])
 
   useEffect(() => {
     loadRecord().catch(() => undefined)
   }, [loadRecord])
 
   async function handleDelete() {
-    if (!found) return
+    if (!found || !canDelete) return
     try {
       setSubmitting(true)
       setError(null)
@@ -99,6 +106,27 @@ export default function EducationResourceDeletePage() {
   }
 
   const basePath = `/education/resources/${found.resource.key}`
+
+  if (!canReadDetail || !canDelete) {
+    return (
+      <AppLayout requiredGroups={EDUCATION_REQUIRED_GROUPS}>
+        <div className="mx-auto w-full max-w-3xl space-y-4">
+          <PageHeader
+            title={t("Remoção indisponível", "Deletion unavailable")}
+            subtitle={t(
+              "Este recurso de Educação não expõe leitura e remoção no contrato atual da API.",
+              "This Education resource does not expose both read and delete operations in the current API contract."
+            )}
+            actions={
+              <Link href={`${basePath}/${id}`} className="text-xs text-[var(--gray-700)] underline">
+                {t("Voltar", "Back")}
+              </Link>
+            }
+          />
+        </div>
+      </AppLayout>
+    )
+  }
 
   return (
     <AppLayout requiredGroups={EDUCATION_REQUIRED_GROUPS}>
@@ -152,4 +180,3 @@ export default function EducationResourceDeletePage() {
     </AppLayout>
   )
 }
-

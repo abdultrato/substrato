@@ -13,8 +13,13 @@ import { useModulesCatalog } from "@/hooks/useModulesCatalog"
 import { apiFetch } from "@/lib/api"
 import { EDUCATION_REQUIRED_GROUPS, getEducationResource } from "@/lib/education/resources"
 import { isNotFoundLikeError } from "@/lib/errors/api-error"
+import { hasOpenApiMethod } from "@/lib/openapi/writeContract"
 import { routeParamToString } from "@/lib/routeParams"
 import { getResourceFormConfig } from "@/lib/resources/resourceFormConfig"
+
+function detailContractEndpoint(endpoint: string): string {
+  return `${endpoint.replace(/\/$/, "")}/{id}/`
+}
 
 export default function EducationResourceEditPage() {
   const params = useParams()
@@ -29,11 +34,19 @@ export default function EducationResourceEditPage() {
   const [loadingData, setLoadingData] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [initialValues, setInitialValues] = useState<Record<string, any> | null>(null)
+  const detailEndpoint = found ? detailContractEndpoint(found.resource.endpoint) : ""
+  const canReadDetail = found ? hasOpenApiMethod(detailEndpoint, "get") : false
+  const canUpdate = found
+    ? hasOpenApiMethod(detailEndpoint, "put") || hasOpenApiMethod(detailEndpoint, "patch")
+    : false
 
   useEffect(() => {
     let mounted = true
     async function load() {
-      if (!found) return
+      if (!found || !canReadDetail || !canUpdate) {
+        if (mounted) setLoadingData(false)
+        return
+      }
       try {
         setLoadingData(true)
         setError(null)
@@ -52,7 +65,7 @@ export default function EducationResourceEditPage() {
     return () => {
       mounted = false
     }
-  }, [found, id, t])
+  }, [found, id, t, canReadDetail, canUpdate])
 
   if (loading) return null
 
@@ -76,6 +89,27 @@ export default function EducationResourceEditPage() {
   }
 
   const basePath = `/education/resources/${found.resource.key}`
+
+  if (!canReadDetail || !canUpdate) {
+    return (
+      <AppLayout requiredGroups={EDUCATION_REQUIRED_GROUPS}>
+        <div className="mx-auto w-full max-w-5xl space-y-4">
+          <PageHeader
+            title={t("Edição indisponível", "Editing unavailable")}
+            subtitle={t(
+              "Este recurso de Educação não expõe leitura e edição no contrato atual da API.",
+              "This Education resource does not expose both read and edit operations in the current API contract."
+            )}
+            actions={
+              <Link href={`${basePath}/${id}`} className="text-xs text-[var(--gray-700)] underline">
+                {t("Voltar", "Back")}
+              </Link>
+            }
+          />
+        </div>
+      </AppLayout>
+    )
+  }
 
   return (
     <AppLayout requiredGroups={EDUCATION_REQUIRED_GROUPS}>
@@ -110,4 +144,3 @@ export default function EducationResourceEditPage() {
     </AppLayout>
   )
 }
-
