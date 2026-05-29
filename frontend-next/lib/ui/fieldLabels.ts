@@ -120,6 +120,21 @@ const COMMON_LABELS: LabelsByField = {
   post_incident_actions: "Ações após ocorrência",
   is_active: "Ativo",
   active: "Ativo",
+  modality: "Modalidade",
+  protocol: "Protocolo",
+  manufacturer: "Fabricante",
+  model: "Modelo",
+  serial_number: "Número de série",
+  connection_mode: "Modo de comunicação",
+  tcp_host: "Host TCP/IP",
+  tcp_port: "Porta TCP/IP",
+  tcp_timeout_seconds: "Timeout TCP/IP (s)",
+  tcp_framing: "Enquadramento TCP/IP",
+  encoding: "Codificação",
+  auto_consume_results: "Consumir resultados automaticamente",
+  supported_exam_types: "Tipos de exame suportados",
+  last_seen_at: "Última comunicação",
+  config: "Configuração",
 }
 
 const EDUCATION_LABELS: Record<string, LabelsByField> = {

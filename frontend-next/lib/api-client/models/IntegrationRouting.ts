@@ -10,8 +10,8 @@ export type IntegrationRouting = {
     readonly deleted?: boolean;
     readonly deleted_at?: string | null;
     readonly version?: number;
-    exam_type?: 'LAB' | 'MED';
-    sector: 'Hematologia' | 'Bioquimica' | 'Microbiologia' | 'Imunologia' | 'Serologia' | 'Parasitologia' | 'BiologiaMolecular' | 'Toxicologia' | 'Hormonios' | 'MarcadoresTumorais' | 'Coagulacao' | 'Urinalise' | 'LiquidosCorporais' | 'Gasometria' | 'NutricaoClinica' | 'Micologia' | 'Virologia' | 'Bacteriologia' | 'BancoSangue' | 'ImunoHematologia' | 'Triagem' | 'RecepcaoAmostras' | 'ControleQualidade' | 'Pesquisa' | 'Outro';
+    exam_type?: 'LAB' | 'MED' | 'RAD' | 'SDX' | 'CAR' | 'NEU' | 'OFT';
+    sector: 'Hematologia' | 'Bioquimica' | 'Microbiologia' | 'Imunologia' | 'Serologia' | 'Parasitologia' | 'BiologiaMolecular' | 'Toxicologia' | 'Hormonios' | 'MarcadoresTumorais' | 'Coagulacao' | 'Urinalise' | 'LiquidosCorporais' | 'Gasometria' | 'NutricaoClinica' | 'Micologia' | 'Virologia' | 'Bacteriologia' | 'BancoSangue' | 'ImunoHematologia' | 'Triagem' | 'RecepcaoAmostras' | 'ControleQualidade' | 'Pesquisa' | 'Outro' | 'Radiologia' | 'DiagnosticoImagem' | 'Cardiologia' | 'GinecoObstetricia' | 'Ortopedia' | 'Neurologia' | 'Otorrino' | 'Oftalmologia' | 'MedicinaNuclear' | 'Endoscopia';
     active?: boolean;
     readonly created_by?: string | null;
     readonly updated_by?: string | null;

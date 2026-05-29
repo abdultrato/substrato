@@ -3,7 +3,22 @@
 from django.db import models
 
 from core.constants.laboratory.sector import Sector
+from core.constants.medical_exam.medical_exam_sector import MedicalExamSector
 from core.models.base import NoNameCoreModel
+
+
+def _sector_choices():
+    seen = set()
+    choices = []
+    for value, label in [*Sector.choices, *MedicalExamSector.choices]:
+        if value in seen:
+            continue
+        seen.add(value)
+        choices.append((value, label))
+    return choices
+
+
+SECTOR_CHOICES = _sector_choices()
 
 
 class IntegrationRouting(NoNameCoreModel):
@@ -17,6 +32,11 @@ class IntegrationRouting(NoNameCoreModel):
     class ExamType(models.TextChoices):
         LABORATORIO = "LAB", "Exame laboratorial"
         MEDICO = "MED", "Exame médico (imagem/diagnóstico)"
+        RADIOLOGIA = "RAD", "Radiologia / Imagiologia"
+        DIAGNOSTICO_ESPECIALIZADO = "SDX", "Diagnóstico especializado"
+        CARDIOLOGIA = "CAR", "Cardiologia"
+        NEUROLOGIA = "NEU", "Neurologia"
+        OFTALMOLOGIA = "OFT", "Oftalmologia"
 
     TipoExame = ExamType
 
@@ -45,7 +65,7 @@ class IntegrationRouting(NoNameCoreModel):
         db_column="sector",
 
         max_length=40,
-        choices=Sector.choices,
+        choices=SECTOR_CHOICES,
         db_index=True,
     )
 

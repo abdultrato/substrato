@@ -43,8 +43,29 @@ class IntegrationEquipmentViewSet(TenantScopedIntegrationViewSet):
     queryset = IntegrationEquipment.objects.all()
     serializer_class = IntegrationEquipmentSerializer
     filterset_class = IntegrationEquipmentFilter
-    search_fields = ["custom_id", "name", "manufacturer", "model", "serial_number", "protocol", "modality"]
-    ordering_fields = ["name", "modality", "protocol", "serial_number", "active", "created_at", "updated_at"]
+    search_fields = [
+        "custom_id",
+        "name",
+        "manufacturer",
+        "model",
+        "serial_number",
+        "protocol",
+        "modality",
+        "tcp_host",
+    ]
+    ordering_fields = [
+        "name",
+        "modality",
+        "protocol",
+        "connection_mode",
+        "tcp_host",
+        "tcp_port",
+        "last_seen_at",
+        "serial_number",
+        "active",
+        "created_at",
+        "updated_at",
+    ]
     ordering = ["name", "-created_at"]
 
 

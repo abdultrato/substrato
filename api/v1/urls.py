@@ -40,5 +40,10 @@ urlpatterns = [
         EquipmentResultsInboxView.as_view(),
         name="equipment-integrations-results",
     ),
+    re_path(
+        r"^equipment_integrations/equipment/(?P<equipment_custom_id>[^/]+)/ingest/?$",
+        EquipmentResultsInboxView.as_view(),
+        name="equipment-integrations-ingest",
+    ),
     path("", include(router.urls)),
 ]

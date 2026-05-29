@@ -17,9 +17,23 @@ from .models import (
 @admin.register(IntegrationEquipment)
 class IntegrationEquipmentAdmin(admin.ModelAdmin):
     """Admin de equipamentos integrados (modalidade/protocolo)."""
-    list_display = ("id", "custom_id", "name", "modality", "protocol", "active", "tenant")
-    list_filter = ("modality", "protocol", "active", "tenant")
-    search_fields = ("custom_id", "name", "manufacturer", "model", "serial_number")
+    list_display = (
+        "id",
+        "custom_id",
+        "name",
+        "modality",
+        "protocol",
+        "connection_mode",
+        "tcp_host",
+        "tcp_port",
+        "auto_consume_results",
+        "active",
+        "last_seen_at",
+        "tenant",
+    )
+    list_filter = ("modality", "protocol", "connection_mode", "tcp_framing", "auto_consume_results", "active", "tenant")
+    search_fields = ("custom_id", "name", "manufacturer", "model", "serial_number", "tcp_host")
+    readonly_fields = ("last_seen_at", "created_at", "updated_at")
 
 
 @admin.register(IntegrationCredential)

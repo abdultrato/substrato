@@ -42,6 +42,20 @@ INTEGRATION_EQUIPMENT_ALIASES = {
     "número_de_série": "serial_number",
     "ativo": "active",
     "activa": "active",
+    "modo_comunicacao": "connection_mode",
+    "modo_comunicação": "connection_mode",
+    "host_tcp": "tcp_host",
+    "endereco_tcp": "tcp_host",
+    "endereço_tcp": "tcp_host",
+    "porta_tcp": "tcp_port",
+    "timeout_tcp": "tcp_timeout_seconds",
+    "enquadramento_tcp": "tcp_framing",
+    "codificacao": "encoding",
+    "codificação": "encoding",
+    "consumo_automatico": "auto_consume_results",
+    "tipos_exame_suportados": "supported_exam_types",
+    "ultima_comunicacao": "last_seen_at",
+    "última_comunicação": "last_seen_at",
     "configuracao": "config",
     "configuração": "config",
 }
@@ -154,7 +168,7 @@ class IntegrationEquipmentSerializer(LegacyAliasSerializerMixin, serializers.Mod
     class Meta:
         model = IntegrationEquipment
         fields = "__all__"
-        read_only_fields = CORE_READ_ONLY_FIELDS
+        read_only_fields = [*CORE_READ_ONLY_FIELDS, "last_seen_at"]
 
 
 class IntegrationCredentialSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer):
