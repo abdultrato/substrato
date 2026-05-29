@@ -7,6 +7,7 @@ import { useEffect, useMemo, useState } from "react"
 import AppLayout from "@/components/layout/AppLayout"
 import DataTable from "@/components/ui/DataTable"
 import PageHeader from "@/components/ui/PageHeader"
+import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { apiFetch } from "@/lib/api"
 import { useAuth } from "@/hooks/useAuth"
 import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
@@ -23,6 +24,7 @@ function fmtDate(value: any): string {
 export default function ContabilidadeConciliacoesPage() {
   const { user } = useAuth()
   const podeVerAdmin = userHasAnyGroup(user, [GROUPS.ADMIN])
+  const safeRefreshToken = useSafeDataRefreshSignal()
 
   const [erro, setErro] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
@@ -34,7 +36,9 @@ export default function ContabilidadeConciliacoesPage() {
       try {
         setLoading(true)
         setErro(null)
-        const res = await apiFetch<any>("/accounting/financialreconciliation/")
+        const res = await apiFetch<any>("/accounting/financialreconciliation/", {
+          clientCache: safeRefreshToken === 0,
+        })
         const items = res && (res as any).results ? (res as any).results : res
         if (!mounted) return
         setData(Array.isArray(items) ? items : [])
@@ -49,7 +53,7 @@ export default function ContabilidadeConciliacoesPage() {
     return () => {
       mounted = false
     }
-  }, [])
+  }, [safeRefreshToken])
 
   const columns = useMemo(
     () => [

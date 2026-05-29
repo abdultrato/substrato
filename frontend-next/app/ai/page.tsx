@@ -34,6 +34,7 @@ import Card from "@/components/ui/Card"
 import PageHeader from "@/components/ui/PageHeader"
 import TextAreaInput from "@/components/ui/TextAreaInput"
 import { useLanguage } from "@/hooks/useLanguage"
+import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { apiFetch } from "@/lib/api"
 
 type AiChatResponse = {
@@ -564,6 +565,7 @@ function AiContextAside({
 
 export default function AiOperationalPage() {
   const { t, language } = useLanguage()
+  const safeRefreshToken = useSafeDataRefreshSignal()
   const [sessionId, setSessionId] = useState<number | null>(null)
   const [composer, setComposer] = useState("")
   const [messages, setMessages] = useState<ConversationMessage[]>([])
@@ -686,7 +688,7 @@ export default function AiOperationalPage() {
     return () => {
       mounted = false
     }
-  }, [language])
+  }, [language, safeRefreshToken])
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" })

@@ -6,12 +6,14 @@ import { ClipboardCheck, ClipboardList, FlaskConical, Pill, ShieldCheck } from "
 import AppLayout from "@/components/layout/AppLayout"
 import WorkspaceHub from "@/components/workspace/WorkspaceHub"
 import { useLanguage } from "@/hooks/useLanguage"
+import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { apiFetch, extractTotalCount } from "@/lib/api"
 import { isNotFoundLikeError } from "@/lib/errors/api-error"
 import { GROUPS } from "@/lib/rbac"
 
 export default function ClinicalPharmacyHubPage() {
   const { t } = useLanguage()
+  const safeRefreshToken = useSafeDataRefreshSignal()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [preparations, setPreparations] = useState(0)
@@ -29,12 +31,12 @@ export default function ClinicalPharmacyHubPage() {
         setLoading(true)
         setError(null)
         const [preparationRes, ingredientRes, ruleRes, checkRes, controlledRes, antibioticRes] = await Promise.all([
-          apiFetch<any>("/clinical_pharmacy/preparation/"),
-          apiFetch<any>("/clinical_pharmacy/ingredient/"),
-          apiFetch<any>("/clinical_pharmacy/interaction_rule/"),
-          apiFetch<any>("/clinical_pharmacy/interaction_check/"),
-          apiFetch<any>("/clinical_pharmacy/controlled_movement/"),
-          apiFetch<any>("/clinical_pharmacy/antibiotic_review/"),
+          apiFetch<any>("/clinical_pharmacy/preparation/", { clientCache: safeRefreshToken === 0 }),
+          apiFetch<any>("/clinical_pharmacy/ingredient/", { clientCache: safeRefreshToken === 0 }),
+          apiFetch<any>("/clinical_pharmacy/interaction_rule/", { clientCache: safeRefreshToken === 0 }),
+          apiFetch<any>("/clinical_pharmacy/interaction_check/", { clientCache: safeRefreshToken === 0 }),
+          apiFetch<any>("/clinical_pharmacy/controlled_movement/", { clientCache: safeRefreshToken === 0 }),
+          apiFetch<any>("/clinical_pharmacy/antibiotic_review/", { clientCache: safeRefreshToken === 0 }),
         ])
 
         if (!mounted) return
@@ -60,7 +62,7 @@ export default function ClinicalPharmacyHubPage() {
     return () => {
       mounted = false
     }
-  }, [t])
+  }, [safeRefreshToken, t])
 
   const metricValue = useMemo(() => (loading ? "..." : null), [loading])
 

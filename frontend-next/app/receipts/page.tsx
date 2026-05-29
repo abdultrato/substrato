@@ -9,6 +9,7 @@ import PageHeader from "@/components/ui/PageHeader"
 import useAuthGuard from "@/hooks/useAuthGuard"
 import MoneyValue from "@/components/ui/MoneyValue"
 import PdfActionLabel from "@/components/ui/PdfActionLabel"
+import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { apiFetch } from "@/lib/api"
 import { GROUPS } from "@/lib/rbac"
 
@@ -32,6 +33,7 @@ function fmtDate(value: any): string {
 
 export default function RecibosPage() {
   const { loading } = useAuthGuard()
+  const safeRefreshToken = useSafeDataRefreshSignal()
 
   const [recibos, setRecibos] = useState<ReciboRow[]>([])
   const [erro, setErro] = useState<string | null>(null)
@@ -49,11 +51,11 @@ export default function RecibosPage() {
     }
   }, [])
 
-  async function carregar() {
+  const carregar = useCallback(async () => {
     try {
       setCarregando(true)
       setErro(null)
-      const res = await apiFetch<any>("/payments/receipt/")
+      const res = await apiFetch<any>("/payments/receipt/", { clientCache: safeRefreshToken === 0 })
       const items = res && (res as any).results ? (res as any).results : res
       setRecibos(Array.isArray(items) ? items : [])
     } catch (e: any) {
@@ -61,11 +63,11 @@ export default function RecibosPage() {
     } finally {
       setCarregando(false)
     }
-  }
+  }, [safeRefreshToken])
 
   useEffect(() => {
     carregar()
-  }, [])
+  }, [carregar])
 
   const columns = useMemo(
     () => [

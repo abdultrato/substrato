@@ -10,10 +10,12 @@ import Card from "@/components/ui/Card"
 import PageHeader from "@/components/ui/PageHeader"
 import MetricCard from "@/components/ui/MetricCard"
 import ActionTile from "@/components/ui/ActionTile"
+import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { apiFetch, extractTotalCount } from "@/lib/api"
 import { GROUPS } from "@/lib/rbac"
 
 export default function PagamentosPage() {
+    const safeRefreshToken = useSafeDataRefreshSignal()
     const [loading, setLoading] = useState(true)
     const [erro, setErro] = useState<string | null>(null)
 
@@ -30,10 +32,10 @@ export default function PagamentosPage() {
                 setErro(null)
 
                 const [pags, recs, trans, recs2] = await Promise.all([
-                    apiFetch<any>("/payments/payment/"),
-                    apiFetch<any>("/payments/receipt/"),
-                    apiFetch<any>("/payments/transaction/"),
-                    apiFetch<any>("/payments/reconciliation/"),
+                    apiFetch<any>("/payments/payment/", { clientCache: safeRefreshToken === 0 }),
+                    apiFetch<any>("/payments/receipt/", { clientCache: safeRefreshToken === 0 }),
+                    apiFetch<any>("/payments/transaction/", { clientCache: safeRefreshToken === 0 }),
+                    apiFetch<any>("/payments/reconciliation/", { clientCache: safeRefreshToken === 0 }),
                 ])
 
                 if (!mounted) return
@@ -52,7 +54,7 @@ export default function PagamentosPage() {
         return () => {
             mounted = false
         }
-    }, [])
+    }, [safeRefreshToken])
 
     return (
         <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.RECEPCAO, GROUPS.CONTABILIDADE]}>

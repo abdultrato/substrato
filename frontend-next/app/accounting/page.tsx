@@ -12,11 +12,13 @@ import MetricCard from "@/components/ui/MetricCard"
 import ActionTile from "@/components/ui/ActionTile"
 import { apiFetch, extractTotalCount } from "@/lib/api"
 import { useAuth } from "@/hooks/useAuth"
+import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
 
 export default function ContabilidadePage() {
   const { user } = useAuth()
   const podeVerAdmin = userHasAnyGroup(user, [GROUPS.ADMIN])
+  const safeRefreshToken = useSafeDataRefreshSignal()
 
   const [loading, setLoading] = useState(true)
   const [erro, setErro] = useState<string | null>(null)
@@ -32,9 +34,9 @@ export default function ContabilidadePage() {
         setErro(null)
 
         const [fats, recs, lancs] = await Promise.all([
-          apiFetch<any>("/invoices/"),
-          apiFetch<any>("/payments/receipt/"),
-          apiFetch<any>("/accounting/entry/"),
+          apiFetch<any>("/invoices/", { clientCache: safeRefreshToken === 0 }),
+          apiFetch<any>("/payments/receipt/", { clientCache: safeRefreshToken === 0 }),
+          apiFetch<any>("/accounting/entry/", { clientCache: safeRefreshToken === 0 }),
         ])
 
         if (!mounted) return
@@ -52,7 +54,7 @@ export default function ContabilidadePage() {
     return () => {
       mounted = false
     }
-  }, [])
+  }, [safeRefreshToken])
 
   return (
     <AppLayout

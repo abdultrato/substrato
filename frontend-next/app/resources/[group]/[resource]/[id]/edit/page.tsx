@@ -12,6 +12,7 @@ import { useAuth } from "@/hooks/useAuth"
 import useAuthGuard from "@/hooks/useAuthGuard"
 import { useLanguage } from "@/hooks/useLanguage"
 import { useModulesCatalog } from "@/hooks/useModulesCatalog"
+import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { findModuleResource } from "@/lib/modules"
 import { hasOpenApiMethod } from "@/lib/openapi/writeContract"
 import { canManageUserByHierarchy } from "@/lib/rbac"
@@ -29,6 +30,7 @@ export default function EditarRecursoPage() {
     const { t, tr } = useLanguage()
     const router = useRouter()
     const { modules } = useModulesCatalog("neutral")
+    const safeRefreshToken = useSafeDataRefreshSignal()
     const found = findModuleResource(groupKey, resourceKey, modules)
     const requiredGroups = requiredGroupsForResourceGroup(groupKey)
     const [initial, setInitial] = useState<Record<string, any> | null>(null)
@@ -59,7 +61,9 @@ export default function EditarRecursoPage() {
                 setLoadingData(true)
                 setError(null)
                 const endpoint = `${found.resource.endpoint.replace(/\/$/, "")}/${id}/`
-                const res = await (await import("@/lib/api")).apiFetch<any>(endpoint)
+                const res = await (await import("@/lib/api")).apiFetch<any>(endpoint, {
+                    clientCache: safeRefreshToken === 0,
+                })
                 if (mounted) setInitial(res ?? {})
             } catch (e: any) {
                 if (mounted) setError(isNotFoundLikeError(e) ? null : (e?.message || "Erro ao carregar recurso."))
@@ -71,7 +75,7 @@ export default function EditarRecursoPage() {
         return () => {
             mounted = false
         }
-    }, [found, id, canUpdateContract])
+    }, [found, id, canUpdateContract, safeRefreshToken])
 
     if (loading) return null
 

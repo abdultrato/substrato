@@ -10,6 +10,7 @@ import DataTable from "@/components/ui/DataTable"
 import MetricCard from "@/components/ui/MetricCard"
 import PageHeader from "@/components/ui/PageHeader"
 import { useLanguage } from "@/hooks/useLanguage"
+import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { apiFetch } from "@/lib/api"
 import { GROUPS } from "@/lib/rbac"
 
@@ -118,6 +119,7 @@ function severityPill(severity: string | undefined, label: string) {
 
 export default function MonitoringCommandCenterPage() {
   const { t, isPortuguese } = useLanguage()
+  const safeRefreshToken = useSafeDataRefreshSignal()
 
   const [days, setDays] = useState(30)
   const [loading, setLoading] = useState(true)
@@ -155,7 +157,7 @@ export default function MonitoringCommandCenterPage() {
     return () => {
       mounted = false
     }
-  }, [days, t])
+  }, [days, safeRefreshToken, t])
 
   const totals = data?.global_totals || {}
   const alerts = data?.alerts || []

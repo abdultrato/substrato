@@ -5,6 +5,7 @@ import { CalendarClock, ClipboardCheck, ClipboardList, FileText, PackageCheck, S
 
 import AppLayout from "@/components/layout/AppLayout"
 import WorkspaceHub from "@/components/workspace/WorkspaceHub"
+import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { apiFetch, extractTotalCount } from "@/lib/api"
 import { isNotFoundLikeError } from "@/lib/errors/api-error"
 import { GROUPS } from "@/lib/rbac"
@@ -12,6 +13,7 @@ import { useLanguage } from "@/hooks/useLanguage"
 
 export default function DentalPage() {
   const { t } = useLanguage()
+  const safeRefreshToken = useSafeDataRefreshSignal()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [procedures, setProcedures] = useState(0)
@@ -29,11 +31,11 @@ export default function DentalPage() {
         setError(null)
 
         const [procedureRes, appointmentRes, recordRes, planRes, labOrderRes] = await Promise.all([
-          apiFetch<any>("/dental/procedure/"),
-          apiFetch<any>("/dental/appointment/"),
-          apiFetch<any>("/dental/record/"),
-          apiFetch<any>("/dental/treatment_plan/"),
-          apiFetch<any>("/dental/prosthesis_lab_order/"),
+          apiFetch<any>("/dental/procedure/", { clientCache: safeRefreshToken === 0 }),
+          apiFetch<any>("/dental/appointment/", { clientCache: safeRefreshToken === 0 }),
+          apiFetch<any>("/dental/record/", { clientCache: safeRefreshToken === 0 }),
+          apiFetch<any>("/dental/treatment_plan/", { clientCache: safeRefreshToken === 0 }),
+          apiFetch<any>("/dental/prosthesis_lab_order/", { clientCache: safeRefreshToken === 0 }),
         ])
 
         if (!mounted) return
@@ -58,7 +60,7 @@ export default function DentalPage() {
     return () => {
       mounted = false
     }
-  }, [t])
+  }, [safeRefreshToken, t])
 
   const metricValue = useMemo(() => (loading ? "..." : null), [loading])
 

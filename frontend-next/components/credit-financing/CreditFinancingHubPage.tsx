@@ -6,12 +6,14 @@ import { Calculator, ClipboardList, CreditCard, FileText, GraduationCap } from "
 import AppLayout from "@/components/layout/AppLayout"
 import WorkspaceHub from "@/components/workspace/WorkspaceHub"
 import { useLanguage } from "@/hooks/useLanguage"
+import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { apiFetch, extractTotalCount } from "@/lib/api"
 import { isNotFoundLikeError } from "@/lib/errors/api-error"
 import { GROUPS } from "@/lib/rbac"
 
 export default function CreditFinancingHubPage() {
   const { t } = useLanguage()
+  const safeRefreshToken = useSafeDataRefreshSignal()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [consortiums, setConsortiums] = useState(0)
@@ -28,11 +30,11 @@ export default function CreditFinancingHubPage() {
         setLoading(true)
         setError(null)
         const [consortiumRes, procedureRes, installmentRes, reimbursementRes, studentRes] = await Promise.all([
-          apiFetch<any>("/credit_financing/consortium/"),
-          apiFetch<any>("/credit_financing/procedure_financing/"),
-          apiFetch<any>("/credit_financing/installment/"),
-          apiFetch<any>("/credit_financing/reimbursement_claim/"),
-          apiFetch<any>("/credit_financing/student_funding/"),
+          apiFetch<any>("/credit_financing/consortium/", { clientCache: safeRefreshToken === 0 }),
+          apiFetch<any>("/credit_financing/procedure_financing/", { clientCache: safeRefreshToken === 0 }),
+          apiFetch<any>("/credit_financing/installment/", { clientCache: safeRefreshToken === 0 }),
+          apiFetch<any>("/credit_financing/reimbursement_claim/", { clientCache: safeRefreshToken === 0 }),
+          apiFetch<any>("/credit_financing/student_funding/", { clientCache: safeRefreshToken === 0 }),
         ])
 
         if (!mounted) return
@@ -57,7 +59,7 @@ export default function CreditFinancingHubPage() {
     return () => {
       mounted = false
     }
-  }, [t])
+  }, [safeRefreshToken, t])
 
   const metricValue = useMemo(() => (loading ? "..." : null), [loading])
 

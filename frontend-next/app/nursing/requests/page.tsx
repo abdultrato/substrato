@@ -8,6 +8,7 @@ import DataTable from "@/components/ui/DataTable"
 import Pagination from "@/components/ui/Pagination"
 import PageHeader from "@/components/ui/PageHeader"
 import useDebounce from "@/hooks/useDebounce"
+import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { apiFetchList } from "@/lib/api"
 import { GROUPS } from "@/lib/rbac"
 
@@ -23,6 +24,7 @@ const STATUS_OPTIONS = [
 ]
 
 export default function NursingRequestsPage() {
+  const safeRefreshToken = useSafeDataRefreshSignal()
   const [status, setStatus] = useState<string>("")
   const [search, setSearch] = useState("")
   const [page, setPage] = useState(1)
@@ -49,7 +51,11 @@ export default function NursingRequestsPage() {
         if (status) params.set("status", status)
         if (debouncedSearch.trim()) params.set("search", debouncedSearch.trim())
         const url = `/requests/?${params.toString()}`
-        const res = await apiFetchList<RequestRow>(url, { page, pageSize })
+        const res = await apiFetchList<RequestRow>(url, {
+          page,
+          pageSize,
+          clientCache: safeRefreshToken === 0,
+        })
         const items = res?.items ?? []
         if (!mounted) return
         const total = res?.meta?.total ?? items.length
@@ -71,7 +77,7 @@ export default function NursingRequestsPage() {
     return () => {
       mounted = false
     }
-  }, [debouncedSearch, status, page, pageSize])
+  }, [debouncedSearch, status, page, pageSize, safeRefreshToken])
 
   const columns = useMemo(
     () => [

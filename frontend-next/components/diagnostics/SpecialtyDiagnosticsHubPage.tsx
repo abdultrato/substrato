@@ -6,6 +6,7 @@ import { Activity, ClipboardList, FileText, HeartPulse, TerminalSquare, Wrench }
 import AppLayout from "@/components/layout/AppLayout"
 import WorkspaceHub from "@/components/workspace/WorkspaceHub"
 import { useLanguage } from "@/hooks/useLanguage"
+import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { apiFetch, extractTotalCount } from "@/lib/api"
 import { isNotFoundLikeError } from "@/lib/errors/api-error"
 import { GROUPS } from "@/lib/rbac"
@@ -26,6 +27,7 @@ export default function SpecialtyDiagnosticsHubPage({
   requiredGroups,
 }: SpecialtyDiagnosticsHubPageProps) {
   const { t } = useLanguage()
+  const safeRefreshToken = useSafeDataRefreshSignal()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [equipment, setEquipment] = useState(0)
@@ -44,12 +46,12 @@ export default function SpecialtyDiagnosticsHubPage({
         setError(null)
         const qs = `?specialty=${specialty}`
         const [equipmentRes, protocolRes, orderRes, measurementRes, reportRes, integrationRes] = await Promise.all([
-          apiFetch<any>(`/specialty_diagnostics/equipment/${qs}`),
-          apiFetch<any>(`/specialty_diagnostics/protocol/${qs}`),
-          apiFetch<any>(`/specialty_diagnostics/order/${qs}`),
-          apiFetch<any>(`/specialty_diagnostics/measurement/${qs}`),
-          apiFetch<any>(`/specialty_diagnostics/report/${qs}`),
-          apiFetch<any>(`/specialty_diagnostics/integration_event/${qs}`),
+          apiFetch<any>(`/specialty_diagnostics/equipment/${qs}`, { clientCache: safeRefreshToken === 0 }),
+          apiFetch<any>(`/specialty_diagnostics/protocol/${qs}`, { clientCache: safeRefreshToken === 0 }),
+          apiFetch<any>(`/specialty_diagnostics/order/${qs}`, { clientCache: safeRefreshToken === 0 }),
+          apiFetch<any>(`/specialty_diagnostics/measurement/${qs}`, { clientCache: safeRefreshToken === 0 }),
+          apiFetch<any>(`/specialty_diagnostics/report/${qs}`, { clientCache: safeRefreshToken === 0 }),
+          apiFetch<any>(`/specialty_diagnostics/integration_event/${qs}`, { clientCache: safeRefreshToken === 0 }),
         ])
 
         if (!mounted) return
@@ -75,7 +77,7 @@ export default function SpecialtyDiagnosticsHubPage({
     return () => {
       mounted = false
     }
-  }, [specialty, t])
+  }, [safeRefreshToken, specialty, t])
 
   const metricValue = useMemo(() => (loading ? "..." : null), [loading])
 

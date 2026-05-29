@@ -8,6 +8,7 @@ import AppLayout from "@/components/layout/AppLayout"
 import PageHeader from "@/components/ui/PageHeader"
 import Card from "@/components/ui/Card"
 import useAuthGuard from "@/hooks/useAuthGuard"
+import { useSafeDataRefresh, useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { apiFetch, apiFetchAll, extractResults } from "@/lib/api"
 import { GROUPS } from "@/lib/rbac"
 
@@ -54,6 +55,8 @@ function formatLotLabel(l: LotDisponivel) {
 export default function CriarRequisicaoMateriaisPage() {
   useAuthGuard()
   const router = useRouter()
+  const safeRefreshToken = useSafeDataRefreshSignal()
+  const { hasUnsavedInput } = useSafeDataRefresh()
 
   const requiredGroups = useMemo(
     () => [
@@ -82,15 +85,18 @@ export default function CriarRequisicaoMateriaisPage() {
   const [items, setItems] = useState<DraftItem[]>([{ lotId: null, requestedQuantity: 1 }])
 
   useEffect(() => {
+    if (safeRefreshToken > 0 && hasUnsavedInput) return
     let mounted = true
     async function loadLots() {
       try {
         setLoadingLots(true)
         setError(null)
         const [availableRes, allLotsRes, requesterContextRes] = await Promise.all([
-          apiFetch<any>("/pharmacy/lot/available/"),
+          apiFetch<any>("/pharmacy/lot/available/", { clientCache: safeRefreshToken === 0 }),
           apiFetchAll<LotDisponivel>("/pharmacy/lot/", { pageSize: 200, maxPages: 25 }),
-          apiFetch<RequesterContextResponse>("/pharmacy/material_requisition/requester-context/"),
+          apiFetch<RequesterContextResponse>("/pharmacy/material_requisition/requester-context/", {
+            clientCache: safeRefreshToken === 0,
+          }),
         ])
         if (!mounted) return
         setLots(extractResults<LotDisponivel>(availableRes))
@@ -108,7 +114,7 @@ export default function CriarRequisicaoMateriaisPage() {
     return () => {
       mounted = false
     }
-  }, [])
+  }, [hasUnsavedInput, safeRefreshToken])
 
   const lotById = useMemo(() => new Map(lots.map((l) => [l.id, l])), [lots])
   const productStocks = useMemo<ProductStockRow[]>(() => {

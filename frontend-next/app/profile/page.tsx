@@ -8,6 +8,7 @@ import { useEffect, useMemo, useState } from "react"
 import AppLayout from "@/components/layout/AppLayout"
 import Card from "@/components/ui/Card"
 import PageHeader from "@/components/ui/PageHeader"
+import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { apiFetch } from "@/lib/api"
 
 type UserMe = {
@@ -34,6 +35,7 @@ function ProfileValue ( { label, value }: { label: string; value?: string | null
 }
 
 export default function PerfilPage () {
+    const safeRefreshToken = useSafeDataRefreshSignal()
     const [loading, setLoading] = useState( true )
     const [error, setError] = useState<string | null>( null )
     const [me, setMe] = useState<UserMe | null>( null )
@@ -42,7 +44,7 @@ export default function PerfilPage () {
         async function load () {
             try {
                 setError( null )
-                const data = await apiFetch<UserMe>( "/auth/user/" )
+                const data = await apiFetch<UserMe>( "/auth/user/", { clientCache: safeRefreshToken === 0 } )
                 setMe( data )
             } catch (e) {
                 setError( isNotFoundLikeError( e ) ? null : ( e instanceof Error ? e.message : "Falha ao carregar o perfil." ) )
@@ -52,7 +54,7 @@ export default function PerfilPage () {
         }
 
         load()
-    }, [] )
+    }, [safeRefreshToken] )
 
     const displayName = useMemo( () => {
         const composed = `${me?.first_name || ""} ${me?.last_name || ""}`.trim()

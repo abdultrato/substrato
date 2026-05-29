@@ -13,6 +13,7 @@ import Button from "@/components/ui/Button"
 import Card from "@/components/ui/Card"
 import PageHeader from "@/components/ui/PageHeader"
 import { useLanguage } from "@/hooks/useLanguage"
+import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { apiFetch } from "@/lib/api"
 import { routeParamToString } from "@/lib/routeParams"
 
@@ -87,6 +88,7 @@ export default function AiInvestigationDetailPage() {
   const params = useParams()
   const id = routeParamToString((params as any)?.id)
   const { t, language } = useLanguage()
+  const safeRefreshToken = useSafeDataRefreshSignal()
   const [investigation, setInvestigation] = useState<AiInvestigation | null>(null)
   const [loading, setLoading] = useState(true)
   const [savingStatus, setSavingStatus] = useState("")
@@ -115,7 +117,7 @@ export default function AiInvestigationDetailPage() {
 
   useEffect(() => {
     void loadInvestigation()
-  }, [loadInvestigation])
+  }, [loadInvestigation, safeRefreshToken])
 
   async function updateStatus(nextStatus: string) {
     if (!id || !investigation || savingStatus) return

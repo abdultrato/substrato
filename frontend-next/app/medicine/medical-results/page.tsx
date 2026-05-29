@@ -1,11 +1,12 @@
 "use client"
 import { isNotFoundLikeError } from "@/lib/errors/api-error"
 
-import { useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 
 import AppLayout from "@/components/layout/AppLayout"
 import Card from "@/components/ui/Card"
 import PageHeader from "@/components/ui/PageHeader"
+import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { apiFetch, apiFetchList } from "@/lib/api"
 import {
   getMedicalResultTypesByMethod,
@@ -50,6 +51,7 @@ function fmtDate(value: any): string {
 }
 
 export default function MedicalResultsPage() {
+  const safeRefreshToken = useSafeDataRefreshSignal()
   const [files, setFiles] = useState<MedicalFileRow[]>([])
   const [exams, setExams] = useState<MedicalExamSummary[]>([])
   const [requests, setRequests] = useState<MedicalRequestSummary[]>([])
@@ -64,41 +66,50 @@ export default function MedicalResultsPage() {
     description: "",
   })
 
-  useEffect(() => {
-    loadExams()
-    loadRequests()
-    loadFiles()
-  }, [])
-
-  async function loadFiles() {
+  const loadFiles = useCallback(async () => {
     try {
       const { items } = await apiFetchList<MedicalFileRow>("/clinical/medicalresultfile/", {
         page: 1,
         pageSize: 50,
+        clientCache: safeRefreshToken === 0,
       })
       setFiles(items.map(normalizeMedicalFile))
     } catch (e: any) {
       setErrorMessage(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao carregar anexos médicos."))
     }
-  }
+  }, [safeRefreshToken])
 
-  async function loadExams() {
+  const loadExams = useCallback(async () => {
     try {
-      const res = await apiFetchList<MedicalExamSummary>("/clinical/medicalexam/", { page: 1, pageSize: 200 })
+      const res = await apiFetchList<MedicalExamSummary>("/clinical/medicalexam/", {
+        page: 1,
+        pageSize: 200,
+        clientCache: safeRefreshToken === 0,
+      })
       setExams(res.items.map(normalizeMedicalExam))
     } catch (e: any) {
       setErrorMessage(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao carregar catálogo de exames médicos."))
     }
-  }
+  }, [safeRefreshToken])
 
-  async function loadRequests() {
+  const loadRequests = useCallback(async () => {
     try {
-      const res = await apiFetchList<MedicalRequestSummary>("/requests/?type=MED", { page: 1, pageSize: 200 })
+      const res = await apiFetchList<MedicalRequestSummary>("/requests/?type=MED", {
+        page: 1,
+        pageSize: 200,
+        clientCache: safeRefreshToken === 0,
+      })
       setRequests(res.items.map(normalizeMedicalRequest))
     } catch (e: any) {
       setErrorMessage(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao listar requisições de exames médicos."))
     }
-  }
+  }, [safeRefreshToken])
+
+  useEffect(() => {
+    loadExams()
+    loadRequests()
+    loadFiles()
+  }, [loadExams, loadFiles, loadRequests])
 
   const selectedResultId = useMemo(() => {
     const req = requests.find((r) => String(r.id) === form.requestId)

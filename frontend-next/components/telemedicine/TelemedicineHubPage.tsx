@@ -6,12 +6,14 @@ import { Bell, ClipboardCheck, ClipboardList, FileText, HeartPulse, Activity } f
 import AppLayout from "@/components/layout/AppLayout"
 import WorkspaceHub from "@/components/workspace/WorkspaceHub"
 import { useLanguage } from "@/hooks/useLanguage"
+import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { apiFetch, extractTotalCount } from "@/lib/api"
 import { isNotFoundLikeError } from "@/lib/errors/api-error"
 import { GROUPS } from "@/lib/rbac"
 
 export default function TelemedicineHubPage() {
   const { t } = useLanguage()
+  const safeRefreshToken = useSafeDataRefreshSignal()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [waitingRoom, setWaitingRoom] = useState(0)
@@ -29,12 +31,12 @@ export default function TelemedicineHubPage() {
         setLoading(true)
         setError(null)
         const [waitingRes, deviceRes, vitalRes, asyncRes, programRes, alertRes] = await Promise.all([
-          apiFetch<any>("/telemedicine/waiting_room/"),
-          apiFetch<any>("/telemedicine/device/"),
-          apiFetch<any>("/telemedicine/vital_reading/"),
-          apiFetch<any>("/telemedicine/async_case/"),
-          apiFetch<any>("/telemedicine/program/"),
-          apiFetch<any>("/telemedicine/alert/"),
+          apiFetch<any>("/telemedicine/waiting_room/", { clientCache: safeRefreshToken === 0 }),
+          apiFetch<any>("/telemedicine/device/", { clientCache: safeRefreshToken === 0 }),
+          apiFetch<any>("/telemedicine/vital_reading/", { clientCache: safeRefreshToken === 0 }),
+          apiFetch<any>("/telemedicine/async_case/", { clientCache: safeRefreshToken === 0 }),
+          apiFetch<any>("/telemedicine/program/", { clientCache: safeRefreshToken === 0 }),
+          apiFetch<any>("/telemedicine/alert/", { clientCache: safeRefreshToken === 0 }),
         ])
 
         if (!mounted) return
@@ -60,7 +62,7 @@ export default function TelemedicineHubPage() {
     return () => {
       mounted = false
     }
-  }, [t])
+  }, [safeRefreshToken, t])
 
   const metricValue = useMemo(() => (loading ? "..." : null), [loading])
 

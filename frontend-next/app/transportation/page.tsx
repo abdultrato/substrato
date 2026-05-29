@@ -6,6 +6,7 @@ import { ClipboardList, Fuel, Gauge, MapPin, Router, Truck, Users, Wrench } from
 import AppLayout from "@/components/layout/AppLayout"
 import WorkspaceHub from "@/components/workspace/WorkspaceHub"
 import { useLanguage } from "@/hooks/useLanguage"
+import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { apiFetch, extractTotalCount } from "@/lib/api"
 import { isNotFoundLikeError } from "@/lib/errors/api-error"
 import { GROUPS } from "@/lib/rbac"
@@ -20,6 +21,7 @@ const REQUIRED_GROUPS = [
 
 export default function TransportationPage() {
   const { t } = useLanguage()
+  const safeRefreshToken = useSafeDataRefreshSignal()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [vehicles, setVehicles] = useState(0)
@@ -38,12 +40,12 @@ export default function TransportationPage() {
         setError(null)
 
         const [vehicleRes, driverRes, routeRes, tripRes, maintenanceRes, fuelRes] = await Promise.all([
-          apiFetch<any>("/transportation/vehicle/"),
-          apiFetch<any>("/transportation/driver/"),
-          apiFetch<any>("/transportation/route/"),
-          apiFetch<any>("/transportation/trip/"),
-          apiFetch<any>("/transportation/maintenance_order/"),
-          apiFetch<any>("/transportation/fuel_log/"),
+          apiFetch<any>("/transportation/vehicle/", { clientCache: safeRefreshToken === 0 }),
+          apiFetch<any>("/transportation/driver/", { clientCache: safeRefreshToken === 0 }),
+          apiFetch<any>("/transportation/route/", { clientCache: safeRefreshToken === 0 }),
+          apiFetch<any>("/transportation/trip/", { clientCache: safeRefreshToken === 0 }),
+          apiFetch<any>("/transportation/maintenance_order/", { clientCache: safeRefreshToken === 0 }),
+          apiFetch<any>("/transportation/fuel_log/", { clientCache: safeRefreshToken === 0 }),
         ])
 
         if (!mounted) return
@@ -69,7 +71,7 @@ export default function TransportationPage() {
     return () => {
       mounted = false
     }
-  }, [t])
+  }, [safeRefreshToken, t])
 
   const metricValue = useMemo(() => (loading ? "..." : null), [loading])
 

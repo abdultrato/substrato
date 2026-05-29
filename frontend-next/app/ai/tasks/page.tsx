@@ -12,6 +12,7 @@ import Card from "@/components/ui/Card"
 import PageHeader from "@/components/ui/PageHeader"
 import TextInput from "@/components/ui/TextInput"
 import { useLanguage } from "@/hooks/useLanguage"
+import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { apiFetch } from "@/lib/api"
 import { GROUPS } from "@/lib/rbac"
 
@@ -66,6 +67,7 @@ function priorityVariant(priority?: string): "default" | "success" | "warning" |
 
 export default function AiOperationalTasksPage() {
   const { t } = useLanguage()
+  const safeRefreshToken = useSafeDataRefreshSignal()
   const [tasks, setTasks] = useState<AiOperationalTask[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
@@ -102,7 +104,7 @@ export default function AiOperationalTasksPage() {
 
   useEffect(() => {
     void loadTasks()
-  }, [loadTasks])
+  }, [loadTasks, safeRefreshToken])
 
   const openTasks = tasks.filter((task) => task.status === "open").length
   const inProgressTasks = tasks.filter((task) => task.status === "in_progress").length

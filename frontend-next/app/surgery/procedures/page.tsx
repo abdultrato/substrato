@@ -10,6 +10,7 @@ import PageHeader from "@/components/ui/PageHeader"
 import Pagination from "@/components/ui/Pagination"
 import { apiFetchList } from "@/lib/api"
 import { useAuth } from "@/hooks/useAuth"
+import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
 
 type ProcedureRow = Record<string, any>
@@ -25,6 +26,7 @@ export default function SurgicalProceduresPage() {
     const [pageSize, setPageSize] = useState(50)
     const [totalItems, setTotalItems] = useState(0)
     const [totalPages, setTotalPages] = useState(1)
+    const safeRefreshToken = useSafeDataRefreshSignal()
 
     useEffect(() => {
         let mounted = true
@@ -35,6 +37,7 @@ export default function SurgicalProceduresPage() {
                 const { items, meta } = await apiFetchList<ProcedureRow>("/surgery/surgical_procedure/", {
                     page,
                     pageSize,
+                    clientCache: safeRefreshToken === 0,
                 })
                 const total = meta.total ?? items.length
                 const computedTotalPages =
@@ -56,7 +59,7 @@ export default function SurgicalProceduresPage() {
         return () => {
             mounted = false
         }
-    }, [page, pageSize])
+    }, [page, pageSize, safeRefreshToken])
 
     const columns = useMemo(
         () => [

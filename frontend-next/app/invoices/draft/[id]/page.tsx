@@ -20,6 +20,7 @@ import { apiFetch } from "@/lib/api"
 import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
 import { routeParamToString } from "@/lib/routeParams"
 import { useAuth } from "@/hooks/useAuth"
+import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 
 
 type Row = Record<string, any>
@@ -99,6 +100,7 @@ export default function FaturaRascunhoPage() {
   const params = useParams()
   const router = useRouter()
   const { user } = useAuth()
+  const safeRefreshToken = useSafeDataRefreshSignal()
   const idRaw = routeParamToString((params as any)?.id)
   const faturaId = Number(idRaw)
   const podeEditar = userHasAnyGroup(user, [GROUPS.ADMIN, GROUPS.RECEPCAO])
@@ -303,31 +305,35 @@ export default function FaturaRascunhoPage() {
 
   const carregarItens = useCallback(async (fatId: number) => {
     try {
-      const res = await apiFetch<any>(`/billing/invoiceitem/?fatura=${fatId}`)
+      const res = await apiFetch<any>(`/billing/invoiceitem/?fatura=${fatId}`, {
+        clientCache: safeRefreshToken === 0,
+      })
       const lista = listFrom(res)
       setItens(lista as FaturaItem[])
     } catch (e: any) {
       setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao carregar itens da fatura."))
       setItens([])
     }
-  }, [])
+  }, [safeRefreshToken])
 
   const carregarRecibo = useCallback(async (fatId: number) => {
     try {
-      const res = await apiFetch<any>(`/payments/receipt/?fatura=${fatId}`)
+      const res = await apiFetch<any>(`/payments/receipt/?fatura=${fatId}`, {
+        clientCache: safeRefreshToken === 0,
+      })
       const lista = listFrom(res)
       setRecibo(lista.length ? lista[0] : null)
     } catch {
       setRecibo(null)
     }
-  }, [])
+  }, [safeRefreshToken])
 
   const carregarCatalogos = useCallback(async () => {
     try {
       const [exs, exsMed, prods] = await Promise.all([
-        apiFetch<any>("/exams/"),
-        apiFetch<any>("/clinical/medicalexam/"),
-        apiFetch<any>("/pharmacy/product/"),
+        apiFetch<any>("/exams/", { clientCache: safeRefreshToken === 0 }),
+        apiFetch<any>("/clinical/medicalexam/", { clientCache: safeRefreshToken === 0 }),
+        apiFetch<any>("/pharmacy/product/", { clientCache: safeRefreshToken === 0 }),
       ])
       setExames(listFrom(exs))
       setExamesMedicos(listFrom(exsMed))
@@ -335,13 +341,13 @@ export default function FaturaRascunhoPage() {
     } catch {
       // silencioso
     }
-  }, [])
+  }, [safeRefreshToken])
 
   const carregarSeguros = useCallback(async () => {
     try {
       const [segRes, planoRes] = await Promise.all([
-        apiFetch<any>("/insurer/insurer/"),
-        apiFetch<any>("/insurer/coverage_plan/"),
+        apiFetch<any>("/insurer/insurer/", { clientCache: safeRefreshToken === 0 }),
+        apiFetch<any>("/insurer/coverage_plan/", { clientCache: safeRefreshToken === 0 }),
       ])
       setSeguradoras(listFrom(segRes))
       setPlanos(listFrom(planoRes))
@@ -349,16 +355,16 @@ export default function FaturaRascunhoPage() {
       setSeguradoras([])
       setPlanos([])
     }
-  }, [])
+  }, [safeRefreshToken])
 
   const carregarRecursosPaciente = useCallback(async (pacienteId: number) => {
     try {
       const [reqRes, procRes, vendaRes, cirRes, consRes] = await Promise.all([
-        apiFetch<any>(`/requests/?paciente=${pacienteId}`),
-        apiFetch<any>(`/nursing/procedure/?paciente=${pacienteId}`),
-        apiFetch<any>(`/pharmacy/sale/?paciente=${pacienteId}`),
-        apiFetch<any>(`/surgery/surgery/?paciente=${pacienteId}`),
-        apiFetch<any>(`/consultations/consultation/?paciente=${pacienteId}`),
+        apiFetch<any>(`/requests/?paciente=${pacienteId}`, { clientCache: safeRefreshToken === 0 }),
+        apiFetch<any>(`/nursing/procedure/?paciente=${pacienteId}`, { clientCache: safeRefreshToken === 0 }),
+        apiFetch<any>(`/pharmacy/sale/?paciente=${pacienteId}`, { clientCache: safeRefreshToken === 0 }),
+        apiFetch<any>(`/surgery/surgery/?paciente=${pacienteId}`, { clientCache: safeRefreshToken === 0 }),
+        apiFetch<any>(`/consultations/consultation/?paciente=${pacienteId}`, { clientCache: safeRefreshToken === 0 }),
       ])
 
       const reqs = listFrom(reqRes)
@@ -374,7 +380,7 @@ export default function FaturaRascunhoPage() {
       setConsultas(cons)
 
       const reqItemsPairs = await Promise.all(
-        reqs.map((r) => apiFetch<any>(`/clinical/labrequestitem/?requisicao=${r.id}`))
+        reqs.map((r) => apiFetch<any>(`/clinical/labrequestitem/?requisicao=${r.id}`, { clientCache: safeRefreshToken === 0 }))
       )
       const reqMap: Record<number, Row[]> = {}
       reqs.forEach((r, idx) => {
@@ -383,10 +389,10 @@ export default function FaturaRascunhoPage() {
       setRequisicaoItens(reqMap)
 
       const procItemPairs = await Promise.all(
-        procs.map((p) => apiFetch<any>(`/nursing/procedure_item/?procedimento=${p.id}`))
+        procs.map((p) => apiFetch<any>(`/nursing/procedure_item/?procedimento=${p.id}`, { clientCache: safeRefreshToken === 0 }))
       )
       const procMatPairs = await Promise.all(
-        procs.map((p) => apiFetch<any>(`/nursing/procedure_material/?procedimento=${p.id}`))
+        procs.map((p) => apiFetch<any>(`/nursing/procedure_material/?procedimento=${p.id}`, { clientCache: safeRefreshToken === 0 }))
       )
       const procItemMap: Record<number, Row[]> = {}
       const procMatMap: Record<number, Row[]> = {}
@@ -398,7 +404,7 @@ export default function FaturaRascunhoPage() {
       setProcedimentoMateriais(procMatMap)
 
       const vendaItemPairs = await Promise.all(
-        vendasList.map((v) => apiFetch<any>(`/pharmacy/sale_item/?venda=${v.id}`))
+        vendasList.map((v) => apiFetch<any>(`/pharmacy/sale_item/?venda=${v.id}`, { clientCache: safeRefreshToken === 0 }))
       )
       const vendaMap: Record<number, Row[]> = {}
       vendasList.forEach((v, idx) => {
@@ -408,7 +414,7 @@ export default function FaturaRascunhoPage() {
     } catch (e: any) {
       setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao carregar itens do paciente."))
     }
-  }, [])
+  }, [safeRefreshToken])
 
   useEffect(() => {
     if (!podePagar) return
@@ -429,11 +435,11 @@ export default function FaturaRascunhoPage() {
     setLoading(true)
     setErro(null)
     try {
-      const fat = await apiFetch<any>(`/invoices/${faturaId}/`)
+      const fat = await apiFetch<any>(`/invoices/${faturaId}/`, { clientCache: safeRefreshToken === 0 })
       setFatura(fat)
 
       if (fat?.paciente) {
-        const pac = await apiFetch<any>(`/clinical/patients/${fat.paciente}/`)
+        const pac = await apiFetch<any>(`/clinical/patients/${fat.paciente}/`, { clientCache: safeRefreshToken === 0 })
         setPaciente(pac)
         if (podeEditar) {
           await carregarRecursosPaciente(fat.paciente)
@@ -460,6 +466,7 @@ export default function FaturaRascunhoPage() {
     carregarRecursosPaciente,
     faturaId,
     podeEditar,
+    safeRefreshToken,
   ])
 
   useEffect(() => {

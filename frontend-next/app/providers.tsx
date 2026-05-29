@@ -10,22 +10,25 @@ import NavigationClickFeedback from "@/components/navigation/NavigationClickFeed
 import FrontendErrorTelemetry from "@/components/monitoring/FrontendErrorTelemetry"
 import AutoTranslateTree from "@/components/i18n/AutoTranslateTree"
 import { LanguageProvider } from "@/hooks/useLanguage"
+import { SafeDataRefreshProvider } from "@/hooks/useSafeDataRefresh"
 
 export default function Providers ( { children }: { children: React.ReactNode } ) {
     // Envolve toda a árvore com React Query e container de toasts.
     return (
         <LanguageProvider>
             <QueryClientProvider client={queryClient}>
-                <AutoTranslateTree>
-                    <NavigationWarmup />
-                    <Suspense fallback={null}>
-                        <NavigationClickFeedback />
-                    </Suspense>
-                    <FrontendErrorTelemetry />
-                    {children}
-                    <RequestActivityIndicator />
-                    <ToastContainer />
-                </AutoTranslateTree>
+                <SafeDataRefreshProvider>
+                    <AutoTranslateTree>
+                        <NavigationWarmup />
+                        <Suspense fallback={null}>
+                            <NavigationClickFeedback />
+                        </Suspense>
+                        <FrontendErrorTelemetry />
+                        {children}
+                        <RequestActivityIndicator />
+                        <ToastContainer />
+                    </AutoTranslateTree>
+                </SafeDataRefreshProvider>
             </QueryClientProvider>
         </LanguageProvider>
     )

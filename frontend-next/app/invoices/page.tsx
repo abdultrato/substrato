@@ -9,6 +9,7 @@ import DataTable from "@/components/ui/DataTable"
 import PageHeader from "@/components/ui/PageHeader"
 import useAuthGuard from "@/hooks/useAuthGuard"
 import { useAuth } from "@/hooks/useAuth"
+import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { apiFetch } from "@/lib/api"
 import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
 import MoneyValue from "@/components/ui/MoneyValue"
@@ -50,6 +51,7 @@ const ITEM_TYPE_LABELS: Record<string, string> = {
 export default function FaturasPage() {
   const { loading } = useAuthGuard()
   const { user } = useAuth()
+  const safeRefreshToken = useSafeDataRefreshSignal()
   const podeVerAdmin = userHasAnyGroup(user, [GROUPS.ADMIN])
   const podeCriar = userHasAnyGroup(user, [GROUPS.ADMIN, GROUPS.RECEPCAO])
   const [faturas, setFaturas] = useState<FaturaRow[]>([])
@@ -99,7 +101,7 @@ export default function FaturasPage() {
     try {
       setCarregando(true)
       setErro(null)
-      const res = await apiFetch<any>("/invoices/")
+      const res = await apiFetch<any>("/invoices/", { clientCache: safeRefreshToken === 0 })
       const items = res && (res as any).results ? (res as any).results : res
       setFaturas(Array.isArray(items) ? items : [])
     } catch (e: any) {
@@ -107,7 +109,7 @@ export default function FaturasPage() {
     } finally {
       setCarregando(false)
     }
-  }, [])
+  }, [safeRefreshToken])
 
   useEffect(() => {
     carregar()
@@ -117,7 +119,7 @@ export default function FaturasPage() {
     try {
       setReportUsersLoading(true)
       setReportUsersError(null)
-      const res = await apiFetch<any>("/identity/user/?page_size=500")
+      const res = await apiFetch<any>("/identity/user/?page_size=500", { clientCache: safeRefreshToken === 0 })
       const items = res && res.results ? res.results : res
       const rows = Array.isArray(items) ? items : []
       const options: UserOption[] = rows.map((row: any) => {
@@ -138,7 +140,7 @@ export default function FaturasPage() {
     } finally {
       setReportUsersLoading(false)
     }
-  }, [])
+  }, [safeRefreshToken])
 
   useEffect(() => {
     carregarUtilizadores()
@@ -249,7 +251,9 @@ export default function FaturasPage() {
   const carregarItens = useCallback(async (faturaId: number) => {
     setCarregandoItens(true)
     try {
-      const res = await apiFetch<any>(`/billing/invoiceitem/?fatura=${faturaId}`)
+      const res = await apiFetch<any>(`/billing/invoiceitem/?fatura=${faturaId}`, {
+        clientCache: safeRefreshToken === 0,
+      })
       const lista = res && res.results ? res.results : res
       setItens(Array.isArray(lista) ? lista : [])
       setItensFaturaId(faturaId)
@@ -260,18 +264,20 @@ export default function FaturasPage() {
     } finally {
       setCarregandoItens(false)
     }
-  }, [])
+  }, [safeRefreshToken])
 
   const carregarPagamentosPendentes = useCallback(async (faturaId: number) => {
     try {
-      const res = await apiFetch<any>(`/payments/payment/?fatura=${faturaId}&status=PEN`)
+      const res = await apiFetch<any>(`/payments/payment/?fatura=${faturaId}&status=PEN`, {
+        clientCache: safeRefreshToken === 0,
+      })
       const lista = res && res.results ? res.results : res
       const pendentes = Array.isArray(lista) ? lista : []
       setTemPagamentoPendente(pendentes.length > 0)
     } catch {
       setTemPagamentoPendente(false)
     }
-  }, [])
+  }, [safeRefreshToken])
 
   const detalhar = useCallback(
     (fatura: FaturaRow) => {
@@ -295,6 +301,12 @@ export default function FaturasPage() {
       setTemPagamentoPendente(false)
     }
   }, [selectedFatura])
+
+  useEffect(() => {
+    if (!selectedFatura?.id) return
+    carregarItens(selectedFatura.id)
+    carregarPagamentosPendentes(selectedFatura.id)
+  }, [carregarItens, carregarPagamentosPendentes, safeRefreshToken, selectedFatura?.id])
 
   const confirmPayment = useCallback(
     async (id: number) => {

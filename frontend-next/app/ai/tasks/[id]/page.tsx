@@ -12,6 +12,7 @@ import Button from "@/components/ui/Button"
 import Card from "@/components/ui/Card"
 import PageHeader from "@/components/ui/PageHeader"
 import { useLanguage } from "@/hooks/useLanguage"
+import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { apiFetch } from "@/lib/api"
 import { GROUPS } from "@/lib/rbac"
 import { routeParamToString } from "@/lib/routeParams"
@@ -69,6 +70,7 @@ export default function AiTaskDetailPage() {
   const params = useParams()
   const id = routeParamToString((params as any)?.id)
   const { t } = useLanguage()
+  const safeRefreshToken = useSafeDataRefreshSignal()
   const [task, setTask] = useState<AiOperationalTask | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState("")
@@ -93,7 +95,7 @@ export default function AiTaskDetailPage() {
 
   useEffect(() => {
     void loadTask()
-  }, [loadTask])
+  }, [loadTask, safeRefreshToken])
 
   async function updateTask(payload: { status?: string; priority?: string }) {
     if (!id || !task || saving) return

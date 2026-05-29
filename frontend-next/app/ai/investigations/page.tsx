@@ -12,6 +12,7 @@ import Card from "@/components/ui/Card"
 import PageHeader from "@/components/ui/PageHeader"
 import TextInput from "@/components/ui/TextInput"
 import { useLanguage } from "@/hooks/useLanguage"
+import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { apiFetch } from "@/lib/api"
 
 const STATUS_OPTIONS = ["", "ready", "open", "blocked", "archived"]
@@ -57,6 +58,7 @@ function humanize(value?: string) {
 
 export default function AiInvestigationsPage() {
   const { t } = useLanguage()
+  const safeRefreshToken = useSafeDataRefreshSignal()
   const [rows, setRows] = useState<AiInvestigation[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
@@ -88,7 +90,7 @@ export default function AiInvestigationsPage() {
 
   useEffect(() => {
     void loadInvestigations()
-  }, [loadInvestigations])
+  }, [loadInvestigations, safeRefreshToken])
 
   const stats = useMemo(() => {
     return rows.reduce(

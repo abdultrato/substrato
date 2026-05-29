@@ -22,6 +22,7 @@ import DataTable from "@/components/ui/DataTable"
 import MetricCard from "@/components/ui/MetricCard"
 import PageHeader from "@/components/ui/PageHeader"
 import Pagination from "@/components/ui/Pagination"
+import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { apiFetch, apiFetchList } from "@/lib/api"
 import { GROUPS } from "@/lib/rbac"
 
@@ -122,6 +123,7 @@ function EmptyChart() {
 }
 
 export default function MonitoringErrorsPage() {
+  const safeRefreshToken = useSafeDataRefreshSignal()
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [loadingList, setLoadingList] = useState(true)
   const [loadingTelemetry, setLoadingTelemetry] = useState(true)
@@ -176,7 +178,7 @@ export default function MonitoringErrorsPage() {
     return () => {
       mounted = false
     }
-  }, [page, pageSize])
+  }, [page, pageSize, safeRefreshToken])
 
   useEffect(() => {
     let mounted = true
@@ -206,7 +208,7 @@ export default function MonitoringErrorsPage() {
     return () => {
       mounted = false
     }
-  }, [days])
+  }, [days, safeRefreshToken])
 
   const columns = useMemo(
     () => [

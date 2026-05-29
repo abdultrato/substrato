@@ -10,6 +10,7 @@ import PageHeader from "@/components/ui/PageHeader"
 import { apiFetchList } from "@/lib/api"
 import Pagination from "@/components/ui/Pagination"
 import { useAuth } from "@/hooks/useAuth"
+import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
 
 type MovimentoRow = Record<string, any>
@@ -32,6 +33,7 @@ export default function ContabilidadeMovimentosPage() {
   const [pageSize, setPageSize] = useState(50)
   const [totalItems, setTotalItems] = useState(0)
   const [totalPages, setTotalPages] = useState(1)
+  const safeRefreshToken = useSafeDataRefreshSignal()
 
   useEffect(() => {
     let mounted = true
@@ -41,7 +43,7 @@ export default function ContabilidadeMovimentosPage() {
         setErro(null)
         const { items, meta } = await apiFetchList<MovimentoRow>(
           "/accounting/movement/",
-          { page, pageSize }
+          { page, pageSize, clientCache: safeRefreshToken === 0 }
         )
         const total = meta.total ?? items.length
         const computedTotalPages =
@@ -63,7 +65,7 @@ export default function ContabilidadeMovimentosPage() {
     return () => {
       mounted = false
     }
-  }, [page, pageSize])
+  }, [page, pageSize, safeRefreshToken])
 
   const columns = useMemo(
     () => [

@@ -5,6 +5,7 @@ import { CalendarClock, ClipboardList, FlaskConical, Users } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
 import WorkspaceHub from "@/components/workspace/WorkspaceHub"
+import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { apiFetch, extractTotalCount } from "@/lib/api"
 import { GROUPS } from "@/lib/rbac"
 import { isNotFoundLikeError } from "@/lib/errors/api-error"
@@ -12,6 +13,7 @@ import { useLanguage } from "@/hooks/useLanguage"
 
 export default function HealthcarePage() {
   const { t } = useLanguage()
+  const safeRefreshToken = useSafeDataRefreshSignal()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [patients, setPatients] = useState(0)
@@ -28,10 +30,10 @@ export default function HealthcarePage() {
         setError(null)
 
         const [patientsRes, consultationsRes, requestsRes, resultsRes] = await Promise.all([
-          apiFetch<any>("/clinical/patient/"),
-          apiFetch<any>("/consultations/consultation/"),
-          apiFetch<any>("/clinical/labrequest/"),
-          apiFetch<any>("/clinical/resultitem/"),
+          apiFetch<any>("/clinical/patient/", { clientCache: safeRefreshToken === 0 }),
+          apiFetch<any>("/consultations/consultation/", { clientCache: safeRefreshToken === 0 }),
+          apiFetch<any>("/clinical/labrequest/", { clientCache: safeRefreshToken === 0 }),
+          apiFetch<any>("/clinical/resultitem/", { clientCache: safeRefreshToken === 0 }),
         ])
 
         if (!mounted) return
@@ -55,7 +57,7 @@ export default function HealthcarePage() {
     return () => {
       mounted = false
     }
-  }, [t])
+  }, [safeRefreshToken, t])
 
   const metricValue = useMemo(() => (loading ? "..." : null), [loading])
 

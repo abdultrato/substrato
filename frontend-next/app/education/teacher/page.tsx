@@ -9,6 +9,7 @@ import DataTable from "@/components/ui/DataTable"
 import PageHeader from "@/components/ui/PageHeader"
 import { useAuth } from "@/hooks/useAuth"
 import { useLanguage } from "@/hooks/useLanguage"
+import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { apiFetch, apiFetchAll } from "@/lib/api"
 import { isNotFoundLikeError } from "@/lib/errors/api-error"
 import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
@@ -222,6 +223,7 @@ const educationMetricClass =
 export default function EducationTeacherAreaPage() {
   const { user } = useAuth()
   const { tr } = useLanguage()
+  const safeRefreshToken = useSafeDataRefreshSignal()
   const isDirectorScope = useMemo(() => userHasAnyGroup(user, DIRECTOR_GROUPS), [user])
 
   const [loading, setLoading] = useState(true)
@@ -290,9 +292,11 @@ export default function EducationTeacherAreaPage() {
         setError(null)
 
         const [coursesRes, classroomsRes, teacherRes] = await Promise.all([
-          apiFetch<any>("/education/course/"),
-          apiFetch<any>("/education/classroom/"),
-          user?.id ? apiFetch<any>(`/education/teacher/?user=${user.id}`) : Promise.resolve([]),
+          apiFetch<any>("/education/course/", { clientCache: safeRefreshToken === 0 }),
+          apiFetch<any>("/education/classroom/", { clientCache: safeRefreshToken === 0 }),
+          user?.id
+            ? apiFetch<any>(`/education/teacher/?user=${user.id}`, { clientCache: safeRefreshToken === 0 })
+            : Promise.resolve([]),
         ])
 
         if (!mounted) return
@@ -322,7 +326,7 @@ export default function EducationTeacherAreaPage() {
     return () => {
       mounted = false
     }
-  }, [user?.id])
+  }, [safeRefreshToken, user?.id])
 
   useEffect(() => {
     let mounted = true
@@ -372,7 +376,7 @@ export default function EducationTeacherAreaPage() {
     return () => {
       mounted = false
     }
-  }, [isDirectorScope])
+  }, [isDirectorScope, safeRefreshToken])
 
   useEffect(() => {
     let mounted = true
@@ -386,13 +390,19 @@ export default function EducationTeacherAreaPage() {
       }
       try {
         setLoadingDetail(true)
-        const enrollmentRes = await apiFetch<any>(`/education/enrollment/?classroom=${selectedClassroomId}`)
+        const enrollmentRes = await apiFetch<any>(`/education/enrollment/?classroom=${selectedClassroomId}`, {
+          clientCache: safeRefreshToken === 0,
+        })
         const enrollmentList = toList<Enrollment>(enrollmentRes)
         if (!mounted) return
         setEnrollments(enrollmentList)
 
         const studentIds = Array.from(new Set(enrollmentList.map((item) => item.student).filter(Boolean))) as number[]
-        const students = await Promise.all(studentIds.map((id) => apiFetch<StudentProfile>(`/education/student/${id}/`)))
+        const students = await Promise.all(
+          studentIds.map((id) =>
+            apiFetch<StudentProfile>(`/education/student/${id}/`, { clientCache: safeRefreshToken === 0 })
+          )
+        )
         if (!mounted) return
         setStudentsById(new Map(students.map((student) => [student.id, student])))
 
@@ -414,7 +424,7 @@ export default function EducationTeacherAreaPage() {
     return () => {
       mounted = false
     }
-  }, [selectedClassroomId, selectedStudentId])
+  }, [safeRefreshToken, selectedClassroomId, selectedStudentId])
 
   const selectedClassroom = useMemo(
     () => classrooms.find((item) => item.id === selectedClassroomId) ?? null,
@@ -446,11 +456,15 @@ export default function EducationTeacherAreaPage() {
       return
     }
     try {
-      const scheduleRes = await apiFetch<any>(`/education/discipline_schedule/?classroom=${classroomId}`)
+      const scheduleRes = await apiFetch<any>(`/education/discipline_schedule/?classroom=${classroomId}`, {
+        clientCache: safeRefreshToken === 0,
+      })
       const items = toList<ScheduleItem>(scheduleRes)
       setScheduleItems(items)
       if (enrollmentId) {
-        const progressRes = await apiFetch<any>(`/education/schedule_progress/?enrollment=${enrollmentId}`)
+        const progressRes = await apiFetch<any>(`/education/schedule_progress/?enrollment=${enrollmentId}`, {
+          clientCache: safeRefreshToken === 0,
+        })
         setScheduleProgress(toList<ScheduleProgress>(progressRes))
       } else {
         setScheduleProgress([])
@@ -464,7 +478,7 @@ export default function EducationTeacherAreaPage() {
           : (e?.message || "Falha ao carregar cronograma da disciplina.")
       )
     }
-  }, [])
+  }, [safeRefreshToken])
 
   useEffect(() => {
     refreshScheduleContext(selectedClassroomId, selectedEnrollment?.id ?? null).catch(() => undefined)
@@ -487,7 +501,9 @@ export default function EducationTeacherAreaPage() {
     async function loadExistingRollCall() {
       if (!selectedClassroomId || !rollCallDateInput || !enrollments.length) return
       try {
-        const attendanceRes = await apiFetch<any>(`/education/attendance/?attendance_date=${rollCallDateInput}`)
+        const attendanceRes = await apiFetch<any>(`/education/attendance/?attendance_date=${rollCallDateInput}`, {
+          clientCache: safeRefreshToken === 0,
+        })
         if (!mounted) return
         const enrollmentById = new Map(enrollments.map((item) => [item.id, item]))
         const byStudent: Record<number, RollCallStatus> = {}
@@ -518,7 +534,7 @@ export default function EducationTeacherAreaPage() {
     return () => {
       mounted = false
     }
-  }, [selectedClassroomId, rollCallDateInput, enrollments])
+  }, [enrollments, rollCallDateInput, safeRefreshToken, selectedClassroomId])
 
   useEffect(() => {
     let mounted = true
@@ -531,7 +547,9 @@ export default function EducationTeacherAreaPage() {
       }
       try {
         setLoadingDetail(true)
-        const enrollmentsRes = await apiFetch<any>(`/education/enrollment/?student=${selectedStudent.id}`)
+        const enrollmentsRes = await apiFetch<any>(`/education/enrollment/?student=${selectedStudent.id}`, {
+          clientCache: safeRefreshToken === 0,
+        })
         if (!mounted) return
         const enrollmentList = toList<Enrollment>(enrollmentsRes)
         setStudentEnrollments(enrollmentList)
@@ -540,7 +558,7 @@ export default function EducationTeacherAreaPage() {
         if (!canViewAllGrades && teacherProfileId) {
           gradeEndpoint += `&teacher=${teacherProfileId}`
         }
-        const gradesRes = await apiFetch<any>(gradeEndpoint)
+        const gradesRes = await apiFetch<any>(gradeEndpoint, { clientCache: safeRefreshToken === 0 })
         if (!mounted) return
         setGrades(toList<Grade>(gradesRes))
       } catch (e: any) {
@@ -559,7 +577,7 @@ export default function EducationTeacherAreaPage() {
     return () => {
       mounted = false
     }
-  }, [canViewAllGrades, selectedEnrollment, selectedStudent, teacherProfileId])
+  }, [canViewAllGrades, safeRefreshToken, selectedEnrollment, selectedStudent, teacherProfileId])
 
   useEffect(() => {
     let mounted = true
@@ -574,7 +592,7 @@ export default function EducationTeacherAreaPage() {
         const query = selectedStudentId
           ? `/education/random_test/?classroom=${selectedClassroomId}&student=${selectedStudentId}`
           : `/education/random_test/?classroom=${selectedClassroomId}`
-        const testsRes = await apiFetch<any>(query)
+        const testsRes = await apiFetch<any>(query, { clientCache: safeRefreshToken === 0 })
         if (!mounted) return
         setRandomTests(toList<RandomTest>(testsRes))
       } catch (e: any) {
@@ -592,7 +610,7 @@ export default function EducationTeacherAreaPage() {
     return () => {
       mounted = false
     }
-  }, [selectedClassroomId, selectedStudentId])
+  }, [safeRefreshToken, selectedClassroomId, selectedStudentId])
 
   async function handleScheduleRandomTest(scope: "classroom" | "student") {
     if (!selectedClassroomId) {

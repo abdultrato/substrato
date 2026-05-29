@@ -12,6 +12,7 @@ import PageHeader from "@/components/ui/PageHeader"
 import { useAuth } from "@/hooks/useAuth"
 import useDebounce from "@/hooks/useDebounce"
 import { useLanguage } from "@/hooks/useLanguage"
+import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { ApiListMeta, apiFetch, apiFetchList } from "@/lib/api"
 import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
 
@@ -79,6 +80,7 @@ export default function LaboratoryRequestsPage() {
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(50)
   const debouncedSearch = useDebounce(search, 300)
+  const safeRefreshToken = useSafeDataRefreshSignal()
 
   const looksLikeRequestCode = useMemo(() => {
     const q = debouncedSearch.trim().toUpperCase()
@@ -108,8 +110,8 @@ export default function LaboratoryRequestsPage() {
   }, [queryUrl, pageSize])
 
   const { data, isFetching, isError, error } = useQuery<RequestList>({
-    queryKey: ["lab-requests", queryUrl, page, pageSize],
-    queryFn: () => apiFetchList<RequestRow>(queryUrl, { page, pageSize }),
+    queryKey: ["lab-requests", queryUrl, page, pageSize, safeRefreshToken],
+    queryFn: () => apiFetchList<RequestRow>(queryUrl, { page, pageSize, clientCache: safeRefreshToken === 0 }),
     placeholderData: keepPreviousData,
     staleTime: 20_000,
   })

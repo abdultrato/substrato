@@ -12,11 +12,13 @@ import MetricCard from "@/components/ui/MetricCard"
 import ActionTile from "@/components/ui/ActionTile"
 import { apiFetch, extractTotalCount } from "@/lib/api"
 import { useAuth } from "@/hooks/useAuth"
+import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
 
 export default function MaternidadePage() {
     const { user } = useAuth()
     const podeVerAdmin = userHasAnyGroup(user, [GROUPS.ADMIN])
+    const safeRefreshToken = useSafeDataRefreshSignal()
 
     const [loading, setLoading] = useState(true)
     const [erro, setErro] = useState<string | null>(null)
@@ -28,7 +30,7 @@ export default function MaternidadePage() {
             try {
                 setLoading(true)
                 setErro(null)
-                const res = await apiFetch<any>("/maternity/gestacao/")
+                const res = await apiFetch<any>("/maternity/gestacao/", { clientCache: safeRefreshToken === 0 })
                 if (!mounted) return
                 setGestacoes(extractTotalCount(res))
             } catch (e: any) {
@@ -42,7 +44,7 @@ export default function MaternidadePage() {
         return () => {
             mounted = false
         }
-    }, [])
+    }, [safeRefreshToken])
 
     return (
         <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.MEDICINA, GROUPS.MEDICINA_OCUPACIONAL]}>

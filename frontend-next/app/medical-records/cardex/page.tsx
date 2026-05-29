@@ -10,6 +10,7 @@ import PageHeader from "@/components/ui/PageHeader"
 import Pagination from "@/components/ui/Pagination"
 import { apiFetchList } from "@/lib/api"
 import { useAuth } from "@/hooks/useAuth"
+import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
 
 type RegistroRow = Record<string, any>
@@ -32,6 +33,7 @@ export default function ProntuarioCardexPage() {
     const [pageSize, setPageSize] = useState(50)
     const [totalItems, setTotalItems] = useState(0)
     const [totalPages, setTotalPages] = useState(1)
+    const safeRefreshToken = useSafeDataRefreshSignal()
 
     useEffect(() => {
         let mounted = true
@@ -42,6 +44,7 @@ export default function ProntuarioCardexPage() {
                 const { items, meta } = await apiFetchList<RegistroRow>("/medical-records/registro/", {
                     page,
                     pageSize,
+                    clientCache: safeRefreshToken === 0,
                 })
                 const total = meta.total ?? items.length
                 const computedTotalPages =
@@ -63,7 +66,7 @@ export default function ProntuarioCardexPage() {
         return () => {
             mounted = false
         }
-    }, [page, pageSize])
+    }, [page, pageSize, safeRefreshToken])
 
     const columns = useMemo(
         () => [

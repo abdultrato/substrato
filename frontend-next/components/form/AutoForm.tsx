@@ -17,6 +17,7 @@ import {
 } from "@/lib/resources/relationOptions"
 import { fieldLabel } from "@/lib/ui/fieldLabels"
 import { useLanguage } from "@/hooks/useLanguage"
+import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 
 type Method = "post" | "put" | "patch"
 type RuntimeFormSpec = {
@@ -508,6 +509,7 @@ export default function AutoForm({
   config,
 }: AutoFormProps) {
   const { tr } = useLanguage()
+  const safeRefreshToken = useSafeDataRefreshSignal()
   const effectiveMethod = useMemo<Method>(() => {
     if (buildFormSpec(endpoint, method)) return method
     if (method === "put" && buildFormSpec(endpoint, "patch")) return "patch"
@@ -604,6 +606,7 @@ export default function AutoForm({
             const { items } = await apiFetchList<Record<string, any>>(target.endpoint, {
               page: 1,
               pageSize: 100,
+              clientCache: safeRefreshToken === 0,
               clientCacheTtlMs: 60000,
             })
             options = relationOptionsFromRows(items, target)
@@ -622,6 +625,7 @@ export default function AutoForm({
             if (!selectedOption) {
               try {
                 const row = await apiFetch<Record<string, any>>(relationDetailEndpoint(target, currentValue), {
+                  clientCache: safeRefreshToken === 0,
                   clientCacheTtlMs: 60000,
                 })
                 selectedOption = relationOptionFromRow(row, target)
@@ -651,7 +655,7 @@ export default function AutoForm({
     }
     // relationSelectedValueKey limits reloads to relation field ID changes instead of every keystroke.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [relationFieldTargets, relationSelectedValueKey])
+  }, [relationFieldTargets, relationSelectedValueKey, safeRefreshToken])
 
   useEffect(() => {
     if (!config?.lembrarCampos?.length) return

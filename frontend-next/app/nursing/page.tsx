@@ -18,6 +18,7 @@ import MetricCard from "@/components/ui/MetricCard"
 import ActionTile from "@/components/ui/ActionTile"
 import { apiFetch, extractTotalCount } from "@/lib/api"
 import { useAuth } from "@/hooks/useAuth"
+import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
 import { useLanguage } from "@/hooks/useLanguage"
 
@@ -25,6 +26,7 @@ export default function NursingPage() {
   const { user } = useAuth()
   const { t } = useLanguage()
   const canViewAdmin = userHasAnyGroup(user, [GROUPS.ADMIN])
+  const safeRefreshToken = useSafeDataRefreshSignal()
 
   const [loading, setLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
@@ -39,8 +41,8 @@ export default function NursingPage() {
         setErrorMessage(null)
 
         const [requests, procedureResponse] = await Promise.all([
-          apiFetch<any>("/requests/?type=LAB&status=pendente"),
-          apiFetch<any>("/nursing/procedure/"),
+          apiFetch<any>("/requests/?type=LAB&status=pendente", { clientCache: safeRefreshToken === 0 }),
+          apiFetch<any>("/nursing/procedure/", { clientCache: safeRefreshToken === 0 }),
         ])
 
         if (!mounted) return
@@ -61,7 +63,7 @@ export default function NursingPage() {
     return () => {
       mounted = false
     }
-  }, [t])
+  }, [safeRefreshToken, t])
 
   return (
     <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.ENFERMAGEM]}>
@@ -166,5 +168,4 @@ export default function NursingPage() {
     </AppLayout>
   )
 }
-
 

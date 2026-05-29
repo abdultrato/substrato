@@ -10,6 +10,7 @@ import PageHeader from "@/components/ui/PageHeader"
 import useAuthGuard from "@/hooks/useAuthGuard"
 import { useLanguage } from "@/hooks/useLanguage"
 import { useModulesCatalog } from "@/hooks/useModulesCatalog"
+import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { apiFetch } from "@/lib/api"
 import { EDUCATION_REQUIRED_GROUPS, getEducationResource } from "@/lib/education/resources"
 import { isNotFoundLikeError } from "@/lib/errors/api-error"
@@ -29,6 +30,7 @@ export default function EducationResourceEditPage() {
   const { t, tr } = useLanguage()
   const { modules } = useModulesCatalog()
   const router = useRouter()
+  const safeRefreshToken = useSafeDataRefreshSignal()
   const found = getEducationResource(modules, resourceKey)
 
   const [loadingData, setLoadingData] = useState(true)
@@ -51,7 +53,7 @@ export default function EducationResourceEditPage() {
         setLoadingData(true)
         setError(null)
         const endpoint = `${found.resource.endpoint.replace(/\/$/, "")}/${id}/`
-        const result = await apiFetch<Record<string, any>>(endpoint)
+        const result = await apiFetch<Record<string, any>>(endpoint, { clientCache: safeRefreshToken === 0 })
         if (!mounted) return
         setInitialValues(result || {})
       } catch (e: any) {
@@ -65,7 +67,7 @@ export default function EducationResourceEditPage() {
     return () => {
       mounted = false
     }
-  }, [found, id, t, canReadDetail, canUpdate])
+  }, [found, id, t, canReadDetail, canUpdate, safeRefreshToken])
 
   if (loading) return null
 

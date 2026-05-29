@@ -5,6 +5,7 @@ import { CalendarClock, ClipboardCheck, ClipboardList, FileText, FlaskConical, H
 
 import AppLayout from "@/components/layout/AppLayout"
 import WorkspaceHub from "@/components/workspace/WorkspaceHub"
+import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { apiFetch, extractTotalCount } from "@/lib/api"
 import { isNotFoundLikeError } from "@/lib/errors/api-error"
 import { GROUPS } from "@/lib/rbac"
@@ -12,6 +13,7 @@ import { useLanguage } from "@/hooks/useLanguage"
 
 export default function VeterinaryPage() {
   const { t } = useLanguage()
+  const safeRefreshToken = useSafeDataRefreshSignal()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [animals, setAnimals] = useState(0)
@@ -32,13 +34,13 @@ export default function VeterinaryPage() {
 
         const [animalRes, appointmentRes, recordRes, vaccinationRes, labRequestRes, admissionRes, prescriptionRes] =
           await Promise.all([
-            apiFetch<any>("/veterinary/animal/"),
-            apiFetch<any>("/veterinary/appointment/"),
-            apiFetch<any>("/veterinary/record/"),
-            apiFetch<any>("/veterinary/vaccination/"),
-            apiFetch<any>("/veterinary/lab_request/"),
-            apiFetch<any>("/veterinary/admission/"),
-            apiFetch<any>("/veterinary/prescription/"),
+            apiFetch<any>("/veterinary/animal/", { clientCache: safeRefreshToken === 0 }),
+            apiFetch<any>("/veterinary/appointment/", { clientCache: safeRefreshToken === 0 }),
+            apiFetch<any>("/veterinary/record/", { clientCache: safeRefreshToken === 0 }),
+            apiFetch<any>("/veterinary/vaccination/", { clientCache: safeRefreshToken === 0 }),
+            apiFetch<any>("/veterinary/lab_request/", { clientCache: safeRefreshToken === 0 }),
+            apiFetch<any>("/veterinary/admission/", { clientCache: safeRefreshToken === 0 }),
+            apiFetch<any>("/veterinary/prescription/", { clientCache: safeRefreshToken === 0 }),
           ])
 
         if (!mounted) return
@@ -65,7 +67,7 @@ export default function VeterinaryPage() {
     return () => {
       mounted = false
     }
-  }, [t])
+  }, [safeRefreshToken, t])
 
   const metricValue = useMemo(() => (loading ? "..." : null), [loading])
 

@@ -10,6 +10,7 @@ import PageHeader from "@/components/ui/PageHeader"
 import { apiFetchList } from "@/lib/api"
 import Pagination from "@/components/ui/Pagination"
 import { useAuth } from "@/hooks/useAuth"
+import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
 
 type LancamentoRow = Record<string, any>
@@ -32,6 +33,7 @@ export default function ContabilidadeLancamentosPage() {
   const [pageSize, setPageSize] = useState(50)
   const [totalItems, setTotalItems] = useState(0)
   const [totalPages, setTotalPages] = useState(1)
+  const safeRefreshToken = useSafeDataRefreshSignal()
 
   useEffect(() => {
     let mounted = true
@@ -41,7 +43,7 @@ export default function ContabilidadeLancamentosPage() {
         setErro(null)
         const { items, meta } = await apiFetchList<LancamentoRow>(
           "/accounting/entry/",
-          { page, pageSize }
+          { page, pageSize, clientCache: safeRefreshToken === 0 }
         )
         const total = meta.total ?? items.length
         const computedTotalPages =
@@ -63,7 +65,7 @@ export default function ContabilidadeLancamentosPage() {
     return () => {
       mounted = false
     }
-  }, [page, pageSize])
+  }, [page, pageSize, safeRefreshToken])
 
   const columns = useMemo(
     () => [

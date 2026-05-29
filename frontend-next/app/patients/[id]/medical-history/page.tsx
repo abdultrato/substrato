@@ -13,6 +13,7 @@ import PageHeader from "@/components/ui/PageHeader"
 import MoneyValue from "@/components/ui/MoneyValue"
 import PdfActionLabel from "@/components/ui/PdfActionLabel"
 import useAuthGuard from "@/hooks/useAuthGuard"
+import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { apiFetch } from "@/lib/api"
 import { routeParamToString } from "@/lib/routeParams"
 import { GROUPS } from "@/lib/rbac"
@@ -56,6 +57,7 @@ export default function MedicalHistoryPage() {
   const routeParams = useParams()
   const id = routeParamToString((routeParams as any)?.id)
   const { loading } = useAuthGuard()
+  const safeRefreshToken = useSafeDataRefreshSignal()
   const [payload, setPayload] = useState<ClinicalHistoryPayload | null>(null)
   const [erro, setErro] = useState<string | null>(null)
   const [carregando, setCarregando] = useState(true)
@@ -68,7 +70,8 @@ export default function MedicalHistoryPage() {
         setCarregando(true)
         setErro(null)
         const res = await apiFetch<ClinicalHistoryPayload>(
-          `/patients/${id}/clinical-history/?limit=200`
+          `/patients/${id}/clinical-history/?limit=200`,
+          { clientCache: safeRefreshToken === 0 }
         )
         if (!mounted) return
         setPayload(res || null)
@@ -83,7 +86,7 @@ export default function MedicalHistoryPage() {
     return () => {
       mounted = false
     }
-  }, [id])
+  }, [id, safeRefreshToken])
 
   async function downloadHistoryPdf(
     type: "medical" | "invoices" | "payments",

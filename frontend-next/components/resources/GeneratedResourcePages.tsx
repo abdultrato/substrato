@@ -14,6 +14,7 @@ import ConfirmDialog from "@/components/ui/ConfirmDialog"
 import useAuthGuard from "@/hooks/useAuthGuard"
 import { useLanguage } from "@/hooks/useLanguage"
 import { useModulesCatalog } from "@/hooks/useModulesCatalog"
+import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { apiFetch } from "@/lib/api"
 import { educationResourceUiFromEndpoint, normalizeEducationEndpoint } from "@/lib/education/ui"
 import { isNotFoundLikeError } from "@/lib/errors/api-error"
@@ -329,6 +330,7 @@ export function GeneratedResourceDetailPage({ endpoint }: { endpoint: string }) 
   const pathname = usePathname()
   const params = useParams()
   const id = routeParamToString((params as any)?.id)
+  const safeRefreshToken = useSafeDataRefreshSignal()
   const [deleting, setDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
   const ctx = useEndpointContext(endpoint)
@@ -340,8 +342,11 @@ export function GeneratedResourceDetailPage({ endpoint }: { endpoint: string }) 
   const resourceLabel = tr(ctx.resourceLabel)
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ["generated-resource-detail", ctx.normalizedEndpoint, id],
-    queryFn: async () => await apiFetch<Record<string, any>>(`${ctx.normalizedEndpoint}${id}/`),
+    queryKey: ["generated-resource-detail", ctx.normalizedEndpoint, id, safeRefreshToken],
+    queryFn: async () =>
+      await apiFetch<Record<string, any>>(`${ctx.normalizedEndpoint}${id}/`, {
+        clientCache: safeRefreshToken === 0,
+      }),
     enabled: !!id && canReadDetail,
   })
 
@@ -488,6 +493,7 @@ export function GeneratedResourceEditPage({ endpoint }: { endpoint: string }) {
   const pathname = usePathname()
   const params = useParams()
   const id = routeParamToString((params as any)?.id)
+  const safeRefreshToken = useSafeDataRefreshSignal()
   const ctx = useEndpointContext(endpoint)
   const detailPath = stripTrailingSlash((pathname || "").replace(/\/edit\/?$/, ""))
   const detailEndpoint = detailContractEndpoint(ctx.normalizedEndpoint)
@@ -496,8 +502,11 @@ export function GeneratedResourceEditPage({ endpoint }: { endpoint: string }) {
   const resourceLabel = tr(ctx.resourceLabel)
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ["generated-resource-edit", ctx.normalizedEndpoint, id],
-    queryFn: async () => await apiFetch<Record<string, any>>(`${ctx.normalizedEndpoint}${id}/`),
+    queryKey: ["generated-resource-edit", ctx.normalizedEndpoint, id, safeRefreshToken],
+    queryFn: async () =>
+      await apiFetch<Record<string, any>>(`${ctx.normalizedEndpoint}${id}/`, {
+        clientCache: safeRefreshToken === 0,
+      }),
     enabled: !!id && canReadDetail && canUpdate,
   })
 

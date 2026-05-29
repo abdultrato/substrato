@@ -31,9 +31,16 @@
 
   :root {
     color-scheme: light;
-    --chrome-from: hsl(215 45% 23%);
-    --chrome-mid: hsl(211 48% 30%);
-    --chrome-to: hsl(187 58% 30%);
+    --substrato-logo-url: url("/static/img/logo.png");
+    --substrato-ink-hsl: 240 100% 6%;
+    --substrato-root-hsl: 257 100% 16%;
+    --substrato-violet-hsl: 258 61% 39%;
+    --substrato-lilac-hsl: 267 86% 64%;
+    --substrato-glow-hsl: 276 100% 76%;
+
+    --chrome-from: hsl(var(--substrato-ink-hsl));
+    --chrome-mid: hsl(var(--substrato-root-hsl));
+    --chrome-to: hsl(var(--substrato-violet-hsl));
 
     /* Fonts: Inter (texto) e Plus Jakarta Sans (títulos) carregadas via
        next/font no app/layout.tsx. As variáveis abaixo são usadas como
@@ -61,9 +68,9 @@
 
     --border-hsl: 214 22% 86%;
 
-    --primary-hsl: 211 92% 37%;
-    --primary-hover-hsl: 211 92% 31%;
-    --primary-soft-hsl: 210 90% 95%;
+    --primary-hsl: 258 82% 42%;
+    --primary-hover-hsl: var(--substrato-root-hsl);
+    --primary-soft-hsl: 264 84% 96%;
     --primary-foreground-hsl: 0 0% 100%;
 
     --ring-hsl: var(--primary-hsl);
@@ -114,9 +121,9 @@
 
     --border-hsl: 217 24% 24%;
 
-    --primary-hsl: 199 89% 48%;
-    --primary-hover-hsl: 199 89% 42%;
-    --primary-soft-hsl: 207 44% 20%;
+    --primary-hsl: 267 86% 70%;
+    --primary-hover-hsl: 267 86% 64%;
+    --primary-soft-hsl: 261 45% 21%;
     --primary-foreground-hsl: 0 0% 100%;
 
     --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.32);
@@ -134,6 +141,11 @@
     font-size: var(--ui-text-size);
     line-height: 1.45;
     background-color: hsl(var(--background-hsl));
+    background-image:
+      radial-gradient(circle at 7% -8%, hsl(var(--substrato-lilac-hsl) / 0.22), transparent 28rem),
+      radial-gradient(circle at 92% 4%, hsl(var(--substrato-violet-hsl) / 0.12), transparent 30rem),
+      linear-gradient(180deg, hsl(var(--primary-soft-hsl) / 0.42), transparent 24rem);
+    background-attachment: fixed;
     color: hsl(var(--foreground-hsl));
     isolation: isolate;
     -webkit-font-smoothing: antialiased;
@@ -141,6 +153,76 @@
     text-rendering: optimizeLegibility;
     font-feature-settings: "cv11", "ss01", "ss03";
     letter-spacing: 0;
+  }
+
+  .substrato-brand-canvas {
+    position: relative;
+  }
+
+  .substrato-brand-canvas::before {
+    content: "";
+    position: fixed;
+    right: clamp(-7rem, -8vw, -3rem);
+    bottom: clamp(-8rem, -9vw, -4rem);
+    z-index: 0;
+    width: min(54vw, 36rem);
+    aspect-ratio: 1;
+    background-image: var(--substrato-logo-url);
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: contain;
+    filter: saturate(1.08);
+    opacity: 0.035;
+    pointer-events: none;
+  }
+
+  .dark .substrato-brand-canvas::before {
+    filter: saturate(1.16) brightness(1.18);
+    mix-blend-mode: screen;
+    opacity: 0.07;
+  }
+
+  .substrato-brand-canvas > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  .substrato-app-surface {
+    position: relative;
+    isolation: isolate;
+    background-image:
+      radial-gradient(circle at 0% 0%, hsl(var(--substrato-lilac-hsl) / 0.12), transparent 26rem),
+      radial-gradient(circle at 100% 100%, hsl(var(--substrato-violet-hsl) / 0.1), transparent 30rem),
+      linear-gradient(180deg, hsl(var(--primary-soft-hsl) / 0.34), transparent 18rem);
+    background-attachment: local, local, local;
+  }
+
+  .substrato-app-surface::before {
+    content: "";
+    position: fixed;
+    right: clamp(1rem, 4vw, 3.5rem);
+    bottom: clamp(1rem, 4vw, 3.5rem);
+    z-index: 0;
+    width: clamp(15rem, 34vw, 32rem);
+    aspect-ratio: 1;
+    background-image: var(--substrato-logo-url);
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: contain;
+    filter: saturate(1.08);
+    opacity: 0.04;
+    pointer-events: none;
+  }
+
+  .dark .substrato-app-surface::before {
+    filter: saturate(1.16) brightness(1.18);
+    mix-blend-mode: screen;
+    opacity: 0.075;
+  }
+
+  .substrato-app-surface > * {
+    position: relative;
+    z-index: 1;
   }
 
   h1,
@@ -504,16 +586,49 @@
   --------------------------------- */
   .login-wrapper {
     @apply min-h-screen px-4 py-10 grid place-items-center;
+    position: relative;
+    isolation: isolate;
+    background-image:
+      radial-gradient(circle at 18% 18%, hsl(var(--substrato-lilac-hsl) / 0.2), transparent 24rem),
+      radial-gradient(circle at 84% 76%, hsl(var(--substrato-violet-hsl) / 0.16), transparent 28rem);
+  }
+
+  .login-wrapper::before {
+    content: "";
+    position: absolute;
+    inset: auto 5vw 4vh auto;
+    z-index: 0;
+    width: min(44vw, 28rem);
+    aspect-ratio: 1;
+    background-image: var(--substrato-logo-url);
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: contain;
+    filter: saturate(1.08);
+    opacity: 0.045;
+    pointer-events: none;
+  }
+
+  .dark .login-wrapper::before {
+    filter: saturate(1.16) brightness(1.18);
+    mix-blend-mode: screen;
+    opacity: 0.08;
   }
 
   .login-card {
     @apply w-full max-w-4xl overflow-hidden rounded-xl border border-border bg-card shadow-lg;
     @apply grid grid-cols-1 md:grid-cols-2;
+    position: relative;
+    z-index: 1;
+    background-color: hsl(var(--card-hsl) / 0.94);
+    backdrop-filter: blur(18px);
   }
 
   .login-image {
     @apply flex items-center justify-center p-8 border-b border-border md:border-b-0 md:border-r;
-    background: hsl(var(--primary-soft-hsl));
+    background:
+      radial-gradient(circle at 50% 42%, hsl(var(--substrato-glow-hsl) / 0.28), transparent 12rem),
+      linear-gradient(135deg, hsl(var(--substrato-root-hsl) / 0.09), hsl(var(--primary-soft-hsl)));
     min-height: 220px;
   }
 
@@ -584,9 +699,10 @@
      Chrome surfaces (header/nav/footer)
   --------------------------------- */
   .chrome-surface {
-    background-color: hsl(215 45% 23%);
+    background:
+      linear-gradient(135deg, var(--chrome-from), var(--chrome-mid) 48%, var(--chrome-to));
     color: #fff;
-    border-color: hsl(214 34% 32%);
+    border-color: hsl(var(--substrato-lilac-hsl) / 0.24);
   }
 
   .chrome-surface .chrome-pill {
@@ -596,7 +712,8 @@
   }
 
   .dark .chrome-surface {
-    background-color: hsl(215 38% 15%);
+    background:
+      linear-gradient(135deg, hsl(var(--substrato-ink-hsl)), hsl(var(--substrato-root-hsl)) 52%, hsl(261 62% 22%));
     color: #f8fafc;
     border-color: hsl(0 0% 100% / 0.08);
   }
@@ -611,6 +728,15 @@
      Mobile adjustments (stack-first)
   --------------------------------- */
   @media (max-width: 768px) {
+    .substrato-brand-canvas::before,
+    .substrato-app-surface::before,
+    .login-wrapper::before {
+      width: 18rem;
+      right: -6rem;
+      bottom: -6rem;
+      opacity: 0.035;
+    }
+
     .page-box {
       padding: 12px;
       border-radius: var(--radius-lg);

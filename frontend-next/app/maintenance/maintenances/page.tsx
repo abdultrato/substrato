@@ -9,6 +9,7 @@ import DataTable from "@/components/ui/DataTable"
 import PageHeader from "@/components/ui/PageHeader"
 import useAuthGuard from "@/hooks/useAuthGuard"
 import { useLanguage } from "@/hooks/useLanguage"
+import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { apiFetch, apiFetchList } from "@/lib/api"
 import { requiredGroupsForResourceGroup } from "@/lib/resourcesAccess"
 
@@ -104,6 +105,7 @@ function buildInitialForm(): MaintenanceForm {
 export default function MaintenanceMaintenancesPage() {
   const { loading } = useAuthGuard()
   const { t, tr } = useLanguage()
+  const safeRefreshToken = useSafeDataRefreshSignal()
   const [incidents, setIncidents] = useState<IncidentRow[]>([])
   const [maintenances, setMaintenances] = useState<MaintenanceRow[]>([])
   const [selectedIncident, setSelectedIncident] = useState<IncidentRow | null>(null)
@@ -142,7 +144,7 @@ export default function MaintenanceMaintenancesPage() {
   useEffect(() => {
     loadData().catch(() => {})
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [safeRefreshToken])
 
   const selectedContext = useMemo(() => selectedIncident, [selectedIncident])
 

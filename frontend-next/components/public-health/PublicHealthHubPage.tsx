@@ -9,6 +9,7 @@ import Badge from "@/components/ui/Badge"
 import Card from "@/components/ui/Card"
 import WorkspaceHub from "@/components/workspace/WorkspaceHub"
 import { useLanguage } from "@/hooks/useLanguage"
+import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { apiFetch } from "@/lib/api"
 import { isNotFoundLikeError } from "@/lib/errors/api-error"
 import { GROUPS } from "@/lib/rbac"
@@ -123,6 +124,7 @@ const EMPTY_DASHBOARD: PublicHealthDashboard = {
 
 export default function PublicHealthHubPage() {
   const { t } = useLanguage()
+  const safeRefreshToken = useSafeDataRefreshSignal()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [dashboard, setDashboard] = useState<PublicHealthDashboard>(EMPTY_DASHBOARD)
@@ -135,6 +137,7 @@ export default function PublicHealthHubPage() {
         setLoading(true)
         setError(null)
         const payload = await apiFetch<PublicHealthDashboard>("/public_health/dashboard/", {
+          clientCache: safeRefreshToken === 0,
           clientCacheTtlMs: 30000,
         })
 
@@ -156,7 +159,7 @@ export default function PublicHealthHubPage() {
     return () => {
       mounted = false
     }
-  }, [t])
+  }, [safeRefreshToken, t])
 
   const metricValue = useMemo(() => (loading ? "..." : null), [loading])
   const summary = dashboard.summary

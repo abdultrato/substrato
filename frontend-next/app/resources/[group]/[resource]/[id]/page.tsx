@@ -14,6 +14,7 @@ import { useAuth } from "@/hooks/useAuth"
 import useAuthGuard from "@/hooks/useAuthGuard"
 import { useLanguage } from "@/hooks/useLanguage"
 import { useModulesCatalog } from "@/hooks/useModulesCatalog"
+import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { apiFetch } from "@/lib/api"
 import { canonicalModuleGroupKey, findModuleResource } from "@/lib/modules"
 import { hasOpenApiMethod } from "@/lib/openapi/writeContract"
@@ -183,6 +184,7 @@ export default function ResourceDetailPage() {
     const { t, tr } = useLanguage()
     const router = useRouter()
     const { modules } = useModulesCatalog("neutral")
+    const safeRefreshToken = useSafeDataRefreshSignal()
     const found = findModuleResource(groupKey, resourceKey, modules)
     const requiredGroups = requiredGroupsForResourceGroup(groupKey)
     const canonicalGroupKey = canonicalModuleGroupKey(groupKey)
@@ -227,14 +229,14 @@ export default function ResourceDetailPage() {
         setError(null)
         try {
             const endpoint = ensureTrailingSlash(found.resource.endpoint) + `${id}/`
-            const res = await apiFetch<any>(endpoint)
+            const res = await apiFetch<any>(endpoint, { clientCache: safeRefreshToken === 0 })
             setData(res)
         } catch (e: any) {
             setError(isNotFoundLikeError(e) ? null : (e?.message || "Erro ao carregar recurso."))
         } finally {
             setLoadingData(false)
         }
-    }, [found, id, canReadDetail])
+    }, [found, id, canReadDetail, safeRefreshToken])
 
     useEffect(() => {
         reloadResource().catch(() => { })

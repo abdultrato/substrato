@@ -17,6 +17,7 @@ import {
 
 import AppLayout from "@/components/layout/AppLayout"
 import WorkspaceHub from "@/components/workspace/WorkspaceHub"
+import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { apiFetch, extractTotalCount } from "@/lib/api"
 import { EDUCATION_REQUIRED_GROUPS, EDUCATION_RESOURCE_DESCRIPTORS } from "@/lib/education/resources"
 import { GROUPS } from "@/lib/rbac"
@@ -25,6 +26,7 @@ import { useLanguage } from "@/hooks/useLanguage"
 
 export default function EducationPage() {
   const { t } = useLanguage()
+  const safeRefreshToken = useSafeDataRefreshSignal()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [students, setStudents] = useState(0)
@@ -41,10 +43,10 @@ export default function EducationPage() {
         setError(null)
 
         const [studentsRes, teachersRes, coursesRes, enrollmentsRes] = await Promise.all([
-          apiFetch<any>("/education/student/"),
-          apiFetch<any>("/education/teacher/"),
-          apiFetch<any>("/education/course/"),
-          apiFetch<any>("/education/enrollment/"),
+          apiFetch<any>("/education/student/", { clientCache: safeRefreshToken === 0 }),
+          apiFetch<any>("/education/teacher/", { clientCache: safeRefreshToken === 0 }),
+          apiFetch<any>("/education/course/", { clientCache: safeRefreshToken === 0 }),
+          apiFetch<any>("/education/enrollment/", { clientCache: safeRefreshToken === 0 }),
         ])
 
         if (!mounted) return
@@ -68,7 +70,7 @@ export default function EducationPage() {
     return () => {
       mounted = false
     }
-  }, [t])
+  }, [safeRefreshToken, t])
 
   const metricValue = useMemo(() => (loading ? "..." : null), [loading])
   const iconByResourceKey = useMemo(

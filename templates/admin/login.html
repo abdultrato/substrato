@@ -17,6 +17,42 @@
     border-radius: 1rem;
     padding: 0.4rem;
   }
+  .admin-login-wrap {
+    position: relative;
+    isolation: isolate;
+    background:
+      radial-gradient(circle at 16% 12%, rgba(216, 183, 255, 0.24), transparent 28rem),
+      radial-gradient(circle at 88% 82%, rgba(48, 12, 132, 0.16), transparent 30rem),
+      #f7f6fb;
+  }
+  .admin-login-wrap::before {
+    content: "";
+    position: fixed;
+    right: clamp(-7rem, -8vw, -3rem);
+    bottom: clamp(-8rem, -9vw, -4rem);
+    z-index: 0;
+    width: min(54vw, 36rem);
+    aspect-ratio: 1;
+    background-image: url("{% static 'img/logo.png' %}");
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: contain;
+    filter: saturate(1.08);
+    opacity: 0.05;
+    pointer-events: none;
+  }
+  .admin-login-wrap > * {
+    position: relative;
+    z-index: 1;
+  }
+  .admin-login-visual {
+    background-image:
+      radial-gradient(circle at 50% 40%, rgba(216, 183, 255, 0.28), transparent 14rem),
+      url("{% static 'img/logo.png' %}");
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: min(70%, 26rem);
+  }
 </style>
 {% get_current_language as LANGUAGE_CODE %}
 <form action="{% url 'set_language' %}" method="post" class="admin-lang-switch">

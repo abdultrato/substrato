@@ -9,6 +9,7 @@ import PageHeader from "@/components/ui/PageHeader"
 import Card from "@/components/ui/Card"
 import useAuthGuard from "@/hooks/useAuthGuard"
 import { useAuth } from "@/hooks/useAuth"
+import { useSafeDataRefresh, useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { apiFetch } from "@/lib/api"
 import { isMaterialRequisitionPharmacyUser } from "@/lib/material-requisition-rbac"
 import { GROUPS } from "@/lib/rbac"
@@ -82,6 +83,8 @@ export default function MaterialRequisitionDetailPage() {
   const params = useParams()
   const router = useRouter()
   const { user } = useAuth()
+  const safeRefreshToken = useSafeDataRefreshSignal()
+  const { hasUnsavedInput } = useSafeDataRefresh()
 
   const requiredGroups = useMemo(
     () => [
@@ -112,7 +115,9 @@ export default function MaterialRequisitionDetailPage() {
     setError(null)
     try {
       setLoading(true)
-      const res = await apiFetch<Requisition>(`/pharmacy/material_requisition/${id}/`)
+      const res = await apiFetch<Requisition>(`/pharmacy/material_requisition/${id}/`, {
+        clientCache: safeRefreshToken === 0,
+      })
       setData(res)
       const defaults: Record<number, number> = {}
       for (const it of res?.items || []) {
@@ -128,9 +133,10 @@ export default function MaterialRequisitionDetailPage() {
   }
 
   useEffect(() => {
+    if (safeRefreshToken > 0 && hasUnsavedInput) return
     reload()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id])
+  }, [id, safeRefreshToken, hasUnsavedInput])
 
   async function fulfill() {
     if (!data) return

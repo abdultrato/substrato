@@ -6,7 +6,8 @@ import { SessionUser } from "@/lib/session"
 import { useAuth } from "@/hooks/useAuth"
 import useTheme from "@/hooks/useTheme"
 import { useLanguage } from "@/hooks/useLanguage"
-import { AlignJustify, ChevronDown, LogOut, Moon, Settings, Sun, User } from "lucide-react"
+import { useSafeDataRefresh } from "@/hooks/useSafeDataRefresh"
+import { AlignJustify, ChevronDown, LogOut, Moon, RefreshCw, Settings, Sun, User } from "lucide-react"
 
 interface Props {
     user: SessionUser | null
@@ -17,6 +18,7 @@ export default function Header({ user, onMenuClick }: Props) {
     const { signOut } = useAuth()
     const { isDark, toggle: toggleTheme } = useTheme()
     const { t } = useLanguage()
+    const { refreshNow, isRefreshing, lastRefreshAt, hasUnsavedInput } = useSafeDataRefresh()
     const [open, setOpen] = useState(false)
     const menuRef = useRef<HTMLDivElement>(null)
 
@@ -76,6 +78,29 @@ export default function Header({ user, onMenuClick }: Props) {
             </div>
 
             <div className="ml-auto flex items-center gap-2">
+                <button
+                    type="button"
+                    onClick={() => void refreshNow("manual")}
+                    disabled={isRefreshing}
+                    className="relative inline-flex h-8 w-8 items-center justify-center rounded-md border border-white/25 bg-white/15 text-white shadow-sm transition-colors hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent disabled:cursor-wait disabled:opacity-70"
+                    aria-label={t("Atualizar dados sem recarregar", "Refresh data without reloading")}
+                    title={
+                        hasUnsavedInput
+                            ? t(
+                                "Atualizar dados em segundo plano sem perder campos ainda não gravados",
+                                "Refresh data in the background without losing unsaved fields"
+                            )
+                            : lastRefreshAt
+                              ? t("Atualizar dados", "Refresh data")
+                              : t("Atualizar dados sem recarregar", "Refresh data without reloading")
+                    }
+                >
+                    <RefreshCw size={15} className={isRefreshing ? "animate-spin" : ""} />
+                    {hasUnsavedInput ? (
+                        <span className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-amber-300" />
+                    ) : null}
+                </button>
+
                 <button
                     type="button"
                     onClick={toggleTheme}

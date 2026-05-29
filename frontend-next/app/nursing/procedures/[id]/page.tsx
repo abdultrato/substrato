@@ -10,6 +10,7 @@ import PageHeader from "@/components/ui/PageHeader"
 import PdfActionLabel from "@/components/ui/PdfActionLabel"
 import ConfirmDialog from "@/components/ui/ConfirmDialog"
 import ResourceDetailsCard from "@/components/resources/ResourceDetailsCard"
+import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { apiFetch } from "@/lib/api"
 import { GROUPS } from "@/lib/rbac"
 import { routeParamToString } from "@/lib/routeParams"
@@ -22,6 +23,7 @@ export default function ProcedureDetailPage() {
   const params = useParams()
   const router = useRouter()
   const id = routeParamToString((params as any)?.id)
+  const safeRefreshToken = useSafeDataRefreshSignal()
 
   const [data, setData] = useState<any | null>(null)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
@@ -34,14 +36,14 @@ export default function ProcedureDetailPage() {
     setErrorMessage(null)
     try {
       const endpoint = ensureTrailingSlash("/nursing/procedure/") + `${id}/`
-      const res = await apiFetch<any>(endpoint)
+      const res = await apiFetch<any>(endpoint, { clientCache: safeRefreshToken === 0 })
       setData(res)
     } catch (e: any) {
       setErrorMessage(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao carregar procedimento."))
     } finally {
       setLoading(false)
     }
-  }, [id])
+  }, [id, safeRefreshToken])
 
   useEffect(() => {
     reload().catch(() => {})

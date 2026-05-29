@@ -10,6 +10,7 @@ import PageHeader from "@/components/ui/PageHeader"
 import Pagination from "@/components/ui/Pagination"
 import PdfActionLabel from "@/components/ui/PdfActionLabel"
 import { useAuth } from "@/hooks/useAuth"
+import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { apiFetch, apiFetchList } from "@/lib/api"
 import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
 
@@ -25,6 +26,7 @@ function fmtDate(value: string | null | undefined): string {
 export default function FarmaciaMovimentosPage() {
   const { user } = useAuth()
   const podeVerAdmin = userHasAnyGroup(user, [GROUPS.ADMIN])
+  const safeRefreshToken = useSafeDataRefreshSignal()
 
   const [erro, setErro] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
@@ -51,6 +53,7 @@ export default function FarmaciaMovimentosPage() {
         const { items, meta } = await apiFetchList<MovimentoRow>("/pharmacy/inventory_movement/", {
           page,
           pageSize,
+          clientCache: safeRefreshToken === 0,
           timeoutMs: 5000,
           retryOnTimeout: 0,
         })
@@ -76,7 +79,7 @@ export default function FarmaciaMovimentosPage() {
     return () => {
       mounted = false
     }
-  }, [page, pageSize])
+  }, [page, pageSize, safeRefreshToken])
 
   const downloadPdf = useCallback(async (url: string, filename: string) => {
     const blob = await apiFetch<Blob>(url, { responseType: "blob" })

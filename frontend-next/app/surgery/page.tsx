@@ -12,11 +12,13 @@ import MetricCard from "@/components/ui/MetricCard"
 import ActionTile from "@/components/ui/ActionTile"
 import { apiFetch, extractTotalCount } from "@/lib/api"
 import { useAuth } from "@/hooks/useAuth"
+import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
 
 export default function SurgeryPage() {
     const { user } = useAuth()
     const canViewAdmin = userHasAnyGroup(user, [GROUPS.ADMIN])
+    const safeRefreshToken = useSafeDataRefreshSignal()
 
     const [loading, setLoading] = useState(true)
     const [errorMessage, setErrorMessage] = useState<string | null>(null)
@@ -32,9 +34,9 @@ export default function SurgeryPage() {
                 setErrorMessage(null)
 
                 const [small, large, procs] = await Promise.all([
-                    apiFetch<any>("/surgery/small_surgery/"),
-                    apiFetch<any>("/surgery/large_surgery/"),
-                    apiFetch<any>("/surgery/surgical_procedure/"),
+                    apiFetch<any>("/surgery/small_surgery/", { clientCache: safeRefreshToken === 0 }),
+                    apiFetch<any>("/surgery/large_surgery/", { clientCache: safeRefreshToken === 0 }),
+                    apiFetch<any>("/surgery/surgical_procedure/", { clientCache: safeRefreshToken === 0 }),
                 ])
 
                 if (!mounted) return
@@ -52,7 +54,7 @@ export default function SurgeryPage() {
         return () => {
             mounted = false
         }
-    }, [])
+    }, [safeRefreshToken])
 
     return (
         <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.MEDICINA, GROUPS.MEDICINA_OCUPACIONAL]}>

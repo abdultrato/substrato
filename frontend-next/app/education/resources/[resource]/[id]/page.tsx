@@ -10,6 +10,7 @@ import PageHeader from "@/components/ui/PageHeader"
 import useAuthGuard from "@/hooks/useAuthGuard"
 import { useLanguage } from "@/hooks/useLanguage"
 import { useModulesCatalog } from "@/hooks/useModulesCatalog"
+import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { apiFetch } from "@/lib/api"
 import { EDUCATION_REQUIRED_GROUPS, getEducationResource } from "@/lib/education/resources"
 import { isNotFoundLikeError } from "@/lib/errors/api-error"
@@ -27,6 +28,7 @@ export default function EducationResourceDetailPage() {
   const { loading } = useAuthGuard()
   const { t, tr } = useLanguage()
   const { modules } = useModulesCatalog()
+  const safeRefreshToken = useSafeDataRefreshSignal()
   const found = getEducationResource(modules, resourceKey)
 
   const [loadingData, setLoadingData] = useState(true)
@@ -48,14 +50,14 @@ export default function EducationResourceDetailPage() {
       setLoadingData(true)
       setError(null)
       const endpoint = `${ensureTrailingSlash(found.resource.endpoint)}${id}/`
-      const result = await apiFetch<Record<string, any>>(endpoint)
+      const result = await apiFetch<Record<string, any>>(endpoint, { clientCache: safeRefreshToken === 0 })
       setData(result || null)
     } catch (e: any) {
       setError(isNotFoundLikeError(e) ? null : (e?.message || t("Falha ao carregar.", "Failed to load.")))
     } finally {
       setLoadingData(false)
     }
-  }, [found, id, t, canReadDetail])
+  }, [canReadDetail, found, id, safeRefreshToken, t])
 
   useEffect(() => {
     loadDetails().catch(() => undefined)

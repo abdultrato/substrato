@@ -72,7 +72,7 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: themeInitScript }}
         />
       </head>
-      <body className="min-h-screen font-sans antialiased">
+      <body className="substrato-brand-canvas min-h-screen font-sans antialiased">
         <AuthProvider>
           <Providers>{children}</Providers>
         </AuthProvider>

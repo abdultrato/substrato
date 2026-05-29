@@ -7,6 +7,7 @@ import { useEffect, useMemo, useState } from "react"
 import AppLayout from "@/components/layout/AppLayout"
 import DataTable from "@/components/ui/DataTable"
 import PageHeader from "@/components/ui/PageHeader"
+import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { apiFetchList } from "@/lib/api"
 import { useAuth } from "@/hooks/useAuth"
 import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
@@ -17,6 +18,7 @@ type ExameMedicoRow = Record<string, any>
 export default function ExamesMedicosPage() {
   const { user } = useAuth()
   const podeVerAdmin = userHasAnyGroup(user, [GROUPS.ADMIN])
+  const safeRefreshToken = useSafeDataRefreshSignal()
 
   const [erro, setErro] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
@@ -34,7 +36,7 @@ export default function ExamesMedicosPage() {
         setErro(null)
         const { items, meta } = await apiFetchList<ExameMedicoRow>(
           "/clinical/medicalexam/",
-          { page, pageSize }
+          { page, pageSize, clientCache: safeRefreshToken === 0 }
         )
         const total = meta.total ?? items.length
         const computedTotalPages =
@@ -56,7 +58,7 @@ export default function ExamesMedicosPage() {
     return () => {
       mounted = false
     }
-  }, [page, pageSize])
+  }, [page, pageSize, safeRefreshToken])
 
   const columns = useMemo(
     () => [

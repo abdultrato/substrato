@@ -6,6 +6,7 @@ import { ClipboardList, FileText, Layers, Microscope, TerminalSquare, Wrench } f
 import AppLayout from "@/components/layout/AppLayout"
 import WorkspaceHub from "@/components/workspace/WorkspaceHub"
 import { useLanguage } from "@/hooks/useLanguage"
+import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { apiFetch, extractTotalCount } from "@/lib/api"
 import { isNotFoundLikeError } from "@/lib/errors/api-error"
 import { GROUPS } from "@/lib/rbac"
@@ -21,6 +22,7 @@ const REQUIRED_GROUPS = [
 
 export default function RadiologyPage() {
   const { t } = useLanguage()
+  const safeRefreshToken = useSafeDataRefreshSignal()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [equipment, setEquipment] = useState(0)
@@ -40,13 +42,13 @@ export default function RadiologyPage() {
         setError(null)
 
         const [equipmentRes, protocolRes, studyRes, seriesRes, fileRes, reportRes, pacsRes] = await Promise.all([
-          apiFetch<any>("/radiology/equipment/"),
-          apiFetch<any>("/radiology/protocol/"),
-          apiFetch<any>("/radiology/study/"),
-          apiFetch<any>("/radiology/series/"),
-          apiFetch<any>("/radiology/file/"),
-          apiFetch<any>("/radiology/report/"),
-          apiFetch<any>("/radiology/pacs_event/"),
+          apiFetch<any>("/radiology/equipment/", { clientCache: safeRefreshToken === 0 }),
+          apiFetch<any>("/radiology/protocol/", { clientCache: safeRefreshToken === 0 }),
+          apiFetch<any>("/radiology/study/", { clientCache: safeRefreshToken === 0 }),
+          apiFetch<any>("/radiology/series/", { clientCache: safeRefreshToken === 0 }),
+          apiFetch<any>("/radiology/file/", { clientCache: safeRefreshToken === 0 }),
+          apiFetch<any>("/radiology/report/", { clientCache: safeRefreshToken === 0 }),
+          apiFetch<any>("/radiology/pacs_event/", { clientCache: safeRefreshToken === 0 }),
         ])
 
         if (!mounted) return
@@ -73,7 +75,7 @@ export default function RadiologyPage() {
     return () => {
       mounted = false
     }
-  }, [t])
+  }, [safeRefreshToken, t])
 
   const metricValue = useMemo(() => (loading ? "..." : null), [loading])
 

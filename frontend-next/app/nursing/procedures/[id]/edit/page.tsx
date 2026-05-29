@@ -8,6 +8,7 @@ import { useEffect, useState } from "react"
 import AppLayout from "@/components/layout/AppLayout"
 import AutoForm from "@/components/form/AutoForm"
 import PageHeader from "@/components/ui/PageHeader"
+import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { apiFetch } from "@/lib/api"
 import { GROUPS } from "@/lib/rbac"
 import { routeParamToString } from "@/lib/routeParams"
@@ -20,6 +21,7 @@ export default function EditProcedurePage() {
   const params = useParams()
   const router = useRouter()
   const id = routeParamToString((params as any)?.id)
+  const safeRefreshToken = useSafeDataRefreshSignal()
 
   const [initial, setInitial] = useState<Record<string, any> | null>(null)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
@@ -32,7 +34,7 @@ export default function EditProcedurePage() {
         setLoading(true)
         setErrorMessage(null)
         const endpoint = ensureTrailingSlash("/nursing/procedure/") + `${id}/`
-        const res = await apiFetch<any>(endpoint)
+        const res = await apiFetch<any>(endpoint, { clientCache: safeRefreshToken === 0 })
         if (!mounted) return
         setInitial(res ?? {})
       } catch (e: any) {
@@ -46,7 +48,7 @@ export default function EditProcedurePage() {
     return () => {
       mounted = false
     }
-  }, [id])
+  }, [id, safeRefreshToken])
 
   return (
     <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.ENFERMAGEM]}>

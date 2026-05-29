@@ -7,6 +7,7 @@ import { Paciente } from "@/lib/types";
 import { apiFetch } from "@/lib/api";
 import useAuthGuard from "@/hooks/useAuthGuard";
 import { useAuth } from "@/hooks/useAuth";
+import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh";
 import AppLayout from "@/components/layout/AppLayout";
 import { GROUPS, userHasAnyGroup } from "@/lib/rbac";
 
@@ -34,6 +35,7 @@ function calcularIdade(dataNascimento?: string): string {
 export default function PacienteDetalhePage() {
     useAuthGuard();
     const { user } = useAuth();
+    const safeRefreshToken = useSafeDataRefreshSignal();
 
     const { id } = useParams() as { id?: string | string[] };
     const idStr = Array.isArray(id) ? id[0] : id;
@@ -61,14 +63,14 @@ export default function PacienteDetalhePage() {
             setLoading(true);
             setError(null);
             setPaciente(null);
-            const data = await apiFetch(`/patients/${idStr}/`);
+            const data = await apiFetch(`/patients/${idStr}/`, { clientCache: safeRefreshToken === 0 });
             setPaciente(data);
         } catch (err: any) {
             setError(isNotFoundLikeError(err) ? null : (err.message || "Erro ao carregar paciente"));
         } finally {
             setLoading(false);
         }
-    }, [idStr]);
+    }, [idStr, safeRefreshToken]);
 
     useEffect(() => {
         carregar();

@@ -7,6 +7,7 @@ import AppLayout from "@/components/layout/AppLayout"
 import Card from "@/components/ui/Card"
 import DataTable from "@/components/ui/DataTable"
 import PageHeader from "@/components/ui/PageHeader"
+import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { apiFetch } from "@/lib/api"
 import { GROUPS } from "@/lib/rbac"
 
@@ -20,6 +21,7 @@ function fmtDate(value: any): string {
 }
 
 export default function ContabilidadeRecepcaoAuditPage() {
+  const safeRefreshToken = useSafeDataRefreshSignal()
   const [erro, setErro] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [checkins, setCheckins] = useState<Row[]>([])
@@ -33,8 +35,8 @@ export default function ContabilidadeRecepcaoAuditPage() {
         setErro(null)
 
         const [cRes, aRes] = await Promise.all([
-          apiFetch<any>("/reception/checkin/"),
-          apiFetch<any>("/reception/care/"),
+          apiFetch<any>("/reception/checkin/", { clientCache: safeRefreshToken === 0 }),
+          apiFetch<any>("/reception/care/", { clientCache: safeRefreshToken === 0 }),
         ])
 
         const list = (v: any) => (v && v.results ? v.results : v) || []
@@ -53,7 +55,7 @@ export default function ContabilidadeRecepcaoAuditPage() {
     return () => {
       mounted = false
     }
-  }, [])
+  }, [safeRefreshToken])
 
   const checkinCols = useMemo(
     () => [

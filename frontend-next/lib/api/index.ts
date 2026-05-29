@@ -757,7 +757,11 @@ export async function apiFetchAll<T = any>(
 }
 
 export function __clearApiClientCacheForTests() {
+  clearApiClientCache()
+}
+
+export function clearApiClientCache() {
   clientGetCache.clear()
   inFlightGetRequests.clear()
-  clientCacheGeneration = 0
+  clientCacheGeneration += 1
 }

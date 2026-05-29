@@ -8,6 +8,7 @@ import AppLayout from "@/components/layout/AppLayout"
 import DataTable from "@/components/ui/DataTable"
 import PageHeader from "@/components/ui/PageHeader"
 import Pagination from "@/components/ui/Pagination"
+import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { apiFetchList } from "@/lib/api"
 import { useAuth } from "@/hooks/useAuth"
 import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
@@ -17,6 +18,7 @@ type PrescricaoItemRow = Record<string, any>
 export default function ProntuarioPrescricoesPage() {
     const { user } = useAuth()
     const podeVerAdmin = userHasAnyGroup(user, [GROUPS.ADMIN])
+    const safeRefreshToken = useSafeDataRefreshSignal()
 
     const [erro, setErro] = useState<string | null>(null)
     const [loading, setLoading] = useState(true)
@@ -35,6 +37,7 @@ export default function ProntuarioPrescricoesPage() {
                 const { items, meta } = await apiFetchList<PrescricaoItemRow>("/medical-records/prescricaoitem/", {
                     page,
                     pageSize,
+                    clientCache: safeRefreshToken === 0,
                 })
                 const total = meta.total ?? items.length
                 const computedTotalPages =
@@ -56,7 +59,7 @@ export default function ProntuarioPrescricoesPage() {
         return () => {
             mounted = false
         }
-    }, [page, pageSize])
+    }, [page, pageSize, safeRefreshToken])
 
     const columns = useMemo(
         () => [

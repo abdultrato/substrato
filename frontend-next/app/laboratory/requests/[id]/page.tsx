@@ -9,6 +9,7 @@ import { FileDown, FlaskConical, Loader2 } from "lucide-react"
 import AppLayout from "@/components/layout/AppLayout"
 import PageHeader from "@/components/ui/PageHeader"
 import Card from "@/components/ui/Card"
+import { useSafeDataRefresh, useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { apiFetch } from "@/lib/api"
 import { GROUPS } from "@/lib/rbac"
 
@@ -66,6 +67,8 @@ export default function LaboratoryRequestResultsPage() {
   const params = useParams() as any
   const idRaw = params?.id
   const requestId = Number(Array.isArray(idRaw) ? idRaw[0] : idRaw)
+  const safeRefreshToken = useSafeDataRefreshSignal()
+  const { hasUnsavedInput } = useSafeDataRefresh()
 
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
@@ -82,7 +85,9 @@ export default function LaboratoryRequestResultsPage() {
       setLoading(true)
       setErrorMessage(null)
 
-      const response = await apiFetch<LaboratoryResultItemsResponse>(`/requests/${requestId}/result-items/`)
+      const response = await apiFetch<LaboratoryResultItemsResponse>(`/requests/${requestId}/result-items/`, {
+        clientCache: safeRefreshToken === 0,
+      })
       const resultItems = Array.isArray(response.items) ? response.items : []
 
       setRequestRecord(response.request)
@@ -101,9 +106,10 @@ export default function LaboratoryRequestResultsPage() {
   }
 
   useEffect(() => {
+    if (safeRefreshToken > 0 && hasUnsavedInput) return
     load()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [requestId])
+  }, [requestId, safeRefreshToken, hasUnsavedInput])
 
   const summary = useMemo(() => {
     const counts = { pending: 0, inAnalysis: 0, awaitingValidation: 0, validated: 0, rejected: 0, total: 0 }

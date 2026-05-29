@@ -20,6 +20,7 @@ import PageHeader from "@/components/ui/PageHeader"
 import MoneyValue from "@/components/ui/MoneyValue"
 import useAuthGuard from "@/hooks/useAuthGuard"
 import { useAuth } from "@/hooks/useAuth"
+import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { apiFetch } from "@/lib/api"
 import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
 
@@ -120,6 +121,7 @@ export default function RecepcaoPage() {
     const { loading } = useAuthGuard()
     const { user } = useAuth()
     const podeVerAdmin = userHasAnyGroup(user, [GROUPS.ADMIN])
+    const safeRefreshToken = useSafeDataRefreshSignal()
 
     const [workspace, setWorkspace] = useState<ReceptionWorkspace>(EMPTY_WORKSPACE)
     const [erro, setErro] = useState<string | null>(null)
@@ -128,7 +130,9 @@ export default function RecepcaoPage() {
     useEffect(() => {
         async function carregarWorkspace() {
             try {
-                const data = await apiFetch<any>("/reception/workspace/")
+                const data = await apiFetch<any>("/reception/workspace/", {
+                    clientCache: safeRefreshToken === 0,
+                })
                 setWorkspace(normalizeReceptionWorkspace(data))
             } catch (error) {
                 setErro(
@@ -142,7 +146,7 @@ export default function RecepcaoPage() {
         }
 
         carregarWorkspace()
-    }, [])
+    }, [safeRefreshToken])
 
     if (loading) return null
 

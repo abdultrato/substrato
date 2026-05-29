@@ -11,11 +11,13 @@ import MetricCard from "@/components/ui/MetricCard"
 import ActionTile from "@/components/ui/ActionTile"
 import { apiFetch, extractTotalCount } from "@/lib/api"
 import { useAuth } from "@/hooks/useAuth"
+import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
 
 export default function MedicinaOcupacionalPage() {
   const { user } = useAuth()
   const podeVerAdmin = userHasAnyGroup(user, [GROUPS.ADMIN])
+  const safeRefreshToken = useSafeDataRefreshSignal()
 
   const [loading, setLoading] = useState(true)
   const [erro, setErro] = useState<string | null>(null)
@@ -30,8 +32,10 @@ export default function MedicinaOcupacionalPage() {
         setErro(null)
 
         const [pacs, reqs] = await Promise.all([
-          apiFetch<any>("/clinical/patient/?proveniencia=Medicina%20Ocupacional"),
-          apiFetch<any>("/clinical/labrequest/"),
+          apiFetch<any>("/clinical/patient/?proveniencia=Medicina%20Ocupacional", {
+            clientCache: safeRefreshToken === 0,
+          }),
+          apiFetch<any>("/clinical/labrequest/", { clientCache: safeRefreshToken === 0 }),
         ])
 
         if (!mounted) return
@@ -49,7 +53,7 @@ export default function MedicinaOcupacionalPage() {
     return () => {
       mounted = false
     }
-  }, [])
+  }, [safeRefreshToken])
 
   return (
     <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.MEDICINA_OCUPACIONAL]}>

@@ -12,11 +12,13 @@ import MetricCard from "@/components/ui/MetricCard"
 import ActionTile from "@/components/ui/ActionTile"
 import { apiFetch, extractTotalCount } from "@/lib/api"
 import { useAuth } from "@/hooks/useAuth"
+import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
 
 export default function ProntuarioPage() {
     const { user } = useAuth()
     const podeVerAdmin = userHasAnyGroup(user, [GROUPS.ADMIN])
+    const safeRefreshToken = useSafeDataRefreshSignal()
 
     const [loading, setLoading] = useState(true)
     const [erro, setErro] = useState<string | null>(null)
@@ -31,8 +33,8 @@ export default function ProntuarioPage() {
                 setErro(null)
 
                 const [registros, itens] = await Promise.all([
-                    apiFetch<any>("/medical-records/registro/"),
-                    apiFetch<any>("/medical-records/prescricaoitem/"),
+                    apiFetch<any>("/medical-records/registro/", { clientCache: safeRefreshToken === 0 }),
+                    apiFetch<any>("/medical-records/prescricaoitem/", { clientCache: safeRefreshToken === 0 }),
                 ])
 
                 if (!mounted) return
@@ -49,7 +51,7 @@ export default function ProntuarioPage() {
         return () => {
             mounted = false
         }
-    }, [])
+    }, [safeRefreshToken])
 
     return (
         <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.MEDICINA, GROUPS.MEDICINA_OCUPACIONAL]}>

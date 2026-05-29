@@ -18,6 +18,7 @@ import MetricCard from "@/components/ui/MetricCard"
 import ActionTile from "@/components/ui/ActionTile"
 import DataTable from "@/components/ui/DataTable"
 import { useAuth } from "@/hooks/useAuth"
+import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { apiFetch, extractResults, extractTotalCount } from "@/lib/api"
 import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
 
@@ -35,6 +36,7 @@ async function openResultsPdf(requestId: number) {
 export default function LaboratoryPage() {
   const { user } = useAuth()
   const canViewAdmin = userHasAnyGroup(user, [GROUPS.ADMIN])
+  const safeRefreshToken = useSafeDataRefreshSignal()
 
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
@@ -67,10 +69,10 @@ export default function LaboratoryPage() {
           criticalRequestsResponse,
           pendingItemsResponse,
         ] = await Promise.all([
-          apiFetch<any>("/requests/?type=LAB&status=pendente"),
-          apiFetch<any>("/requests/?type=LAB&status=aguardando_validacao"),
-          apiFetch<any>("/requests/?type=LAB&has_critical_result=true"),
-          apiFetch<any>("/clinical/resultitem/?status=pendente"),
+          apiFetch<any>("/requests/?type=LAB&status=pendente", { clientCache: safeRefreshToken === 0 }),
+          apiFetch<any>("/requests/?type=LAB&status=aguardando_validacao", { clientCache: safeRefreshToken === 0 }),
+          apiFetch<any>("/requests/?type=LAB&has_critical_result=true", { clientCache: safeRefreshToken === 0 }),
+          apiFetch<any>("/clinical/resultitem/?status=pendente", { clientCache: safeRefreshToken === 0 }),
         ])
 
         if (!mounted) return
@@ -91,7 +93,7 @@ export default function LaboratoryPage() {
     return () => {
       mounted = false
     }
-  }, [])
+  }, [safeRefreshToken])
 
   const columns = useMemo(
     () => [
@@ -214,6 +216,5 @@ export default function LaboratoryPage() {
     </AppLayout>
   )
 }
-
 
 

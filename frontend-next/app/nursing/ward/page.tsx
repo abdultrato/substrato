@@ -10,6 +10,7 @@ import Card from "@/components/ui/Card"
 import DataTable from "@/components/ui/DataTable"
 import MetricCard from "@/components/ui/MetricCard"
 import PageHeader from "@/components/ui/PageHeader"
+import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { apiFetch } from "@/lib/api"
 import { GROUPS } from "@/lib/rbac"
 
@@ -44,6 +45,7 @@ function fmtDateTime(v: any) {
 }
 
 export default function WardDashboardPage() {
+  const safeRefreshToken = useSafeDataRefreshSignal()
   const [data, setData] = useState<DashboardData | null>(null)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
@@ -54,7 +56,7 @@ export default function WardDashboardPage() {
       try {
         setLoading(true)
         setErrorMessage(null)
-        const res = await apiFetch<any>("/nursing/ward_dashboard/")
+        const res = await apiFetch<any>("/nursing/ward_dashboard/", { clientCache: safeRefreshToken === 0 })
         if (!mounted) return
         setData(normalizeDashboardData(res))
       } catch (e: any) {
@@ -68,7 +70,7 @@ export default function WardDashboardPage() {
     return () => {
       mounted = false
     }
-  }, [])
+  }, [safeRefreshToken])
 
   const columns = useMemo(
     () => [
@@ -210,5 +212,4 @@ function normalizeDashboardData(raw: any): DashboardData {
       : [],
   }
 }
-
 

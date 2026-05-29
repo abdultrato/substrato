@@ -10,6 +10,7 @@ import Pagination from "@/components/ui/Pagination"
 import useAuthGuard from "@/hooks/useAuthGuard"
 import { useAuth } from "@/hooks/useAuth"
 import useDebounce from "@/hooks/useDebounce"
+import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { ApiListMeta, apiFetchList } from "@/lib/api"
 import {
   canCreateMaterialRequisition,
@@ -73,6 +74,7 @@ function sectorLabel(s?: string) {
 export default function RequisicoesMateriaisPage() {
   useAuthGuard()
   const { user } = useAuth()
+  const safeRefreshToken = useSafeDataRefreshSignal()
 
   const isPharmacy = isMaterialRequisitionPharmacyUser(user)
   const canCreate = canCreateMaterialRequisition(user)
@@ -117,6 +119,7 @@ export default function RequisicoesMateriaisPage() {
         const res = await apiFetchList<MaterialRequisition>(url, {
           page,
           pageSize,
+          clientCache: safeRefreshToken === 0,
         })
         if (!mounted) return
         setData(res)
@@ -131,7 +134,7 @@ export default function RequisicoesMateriaisPage() {
     return () => {
       mounted = false
     }
-  }, [debouncedSearch, page, pageSize])
+  }, [debouncedSearch, page, pageSize, safeRefreshToken])
 
   const items = useMemo(() => {
     const itemsRaw = data?.items ?? []

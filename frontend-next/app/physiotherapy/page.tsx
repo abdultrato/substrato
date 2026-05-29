@@ -6,6 +6,7 @@ import { Activity, ClipboardCheck, ClipboardList, FileText, HeartPulse, Stethosc
 import AppLayout from "@/components/layout/AppLayout"
 import WorkspaceHub from "@/components/workspace/WorkspaceHub"
 import { useLanguage } from "@/hooks/useLanguage"
+import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { apiFetch, extractTotalCount } from "@/lib/api"
 import { isNotFoundLikeError } from "@/lib/errors/api-error"
 import { GROUPS } from "@/lib/rbac"
@@ -20,6 +21,7 @@ const REQUIRED_GROUPS = [
 
 export default function PhysiotherapyPage() {
   const { t } = useLanguage()
+  const safeRefreshToken = useSafeDataRefreshSignal()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [devices, setDevices] = useState(0)
@@ -38,12 +40,12 @@ export default function PhysiotherapyPage() {
         setError(null)
 
         const [deviceRes, assessmentRes, planRes, sessionRes, progressRes, usageRes] = await Promise.all([
-          apiFetch<any>("/physiotherapy/device/"),
-          apiFetch<any>("/physiotherapy/assessment/"),
-          apiFetch<any>("/physiotherapy/treatment_plan/"),
-          apiFetch<any>("/physiotherapy/session/"),
-          apiFetch<any>("/physiotherapy/progress_note/"),
-          apiFetch<any>("/physiotherapy/device_usage/"),
+          apiFetch<any>("/physiotherapy/device/", { clientCache: safeRefreshToken === 0 }),
+          apiFetch<any>("/physiotherapy/assessment/", { clientCache: safeRefreshToken === 0 }),
+          apiFetch<any>("/physiotherapy/treatment_plan/", { clientCache: safeRefreshToken === 0 }),
+          apiFetch<any>("/physiotherapy/session/", { clientCache: safeRefreshToken === 0 }),
+          apiFetch<any>("/physiotherapy/progress_note/", { clientCache: safeRefreshToken === 0 }),
+          apiFetch<any>("/physiotherapy/device_usage/", { clientCache: safeRefreshToken === 0 }),
         ])
 
         if (!mounted) return
@@ -69,7 +71,7 @@ export default function PhysiotherapyPage() {
     return () => {
       mounted = false
     }
-  }, [t])
+  }, [safeRefreshToken, t])
 
   const metricValue = useMemo(() => (loading ? "..." : null), [loading])
 

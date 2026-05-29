@@ -25,6 +25,7 @@ import Card from "@/components/ui/Card"
 import MetricCard from "@/components/ui/MetricCard"
 import PageHeader from "@/components/ui/PageHeader"
 import { useAuth } from "@/hooks/useAuth"
+import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { useLanguage } from "@/hooks/useLanguage"
 import { apiFetchList } from "@/lib/api"
 import { isNotFoundLikeError } from "@/lib/errors/api-error"
@@ -96,6 +97,7 @@ async function countEndpoint(endpoint: string, query?: Record<string, string>): 
       page: 1,
       pageSize: 1,
       query,
+      clientCache: false,
       timeoutMs: 4000,
       retryOnTimeout: 0,
     })
@@ -297,6 +299,7 @@ export default function WarehousePage() {
   const { t } = useLanguage()
   const { user } = useAuth()
   const podeVerAdmin = userHasAnyGroup(user, [GROUPS.ADMIN])
+  const safeRefreshToken = useSafeDataRefreshSignal()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [counts, setCounts] = useState<Counts>(EMPTY_COUNTS)
@@ -371,7 +374,7 @@ export default function WarehousePage() {
 
   useEffect(() => {
     void loadData()
-  }, [loadData])
+  }, [loadData, safeRefreshToken])
 
   const value = (number: number) => (loading ? "..." : number)
   const queueConfigs: QueueConfig[] = [

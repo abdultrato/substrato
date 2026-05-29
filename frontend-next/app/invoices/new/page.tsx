@@ -9,6 +9,7 @@ import PageHeader from "@/components/ui/PageHeader"
 import Card from "@/components/ui/Card"
 import DataTable from "@/components/ui/DataTable"
 import SearchInput from "@/components/ui/SearchInput"
+import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { apiFetch } from "@/lib/api"
 import { GROUPS } from "@/lib/rbac"
 
@@ -29,6 +30,7 @@ function listFrom(res: any): any[] {
 
 export default function CriarFaturaPage() {
   const router = useRouter()
+  const safeRefreshToken = useSafeDataRefreshSignal()
   const [search, setSearch] = useState("")
   const [pacientes, setPacientes] = useState<PacienteRow[]>([])
   const [loading, setLoading] = useState(false)
@@ -45,7 +47,9 @@ export default function CriarFaturaPage() {
           return
         }
         setLoading(true)
-        const res = await apiFetch<any>(`/clinical/patients/?search=${encodeURIComponent(search.trim())}`)
+        const res = await apiFetch<any>(`/clinical/patients/?search=${encodeURIComponent(search.trim())}`, {
+          clientCache: safeRefreshToken === 0,
+        })
         const items = listFrom(res)
         if (mounted) setPacientes(items as PacienteRow[])
       } catch (e: any) {
@@ -59,7 +63,7 @@ export default function CriarFaturaPage() {
     return () => {
       mounted = false
     }
-  }, [search])
+  }, [safeRefreshToken, search])
 
   const criarRascunho = useCallback(async (paciente: PacienteRow) => {
     if (!paciente?.id) return

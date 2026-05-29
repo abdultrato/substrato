@@ -9,6 +9,7 @@ import Card from "@/components/ui/Card"
 import PageHeader from "@/components/ui/PageHeader"
 import MetricCard from "@/components/ui/MetricCard"
 import ActionTile from "@/components/ui/ActionTile"
+import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { apiFetchList } from "@/lib/api"
 import { useAuth } from "@/hooks/useAuth"
 import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
@@ -17,6 +18,7 @@ import { isNotFoundLikeError } from "@/lib/errors/api-error"
 export default function FarmaciaPage() {
   const { user } = useAuth()
   const podeVerAdmin = userHasAnyGroup(user, [GROUPS.ADMIN])
+  const safeRefreshToken = useSafeDataRefreshSignal()
 
   const [loading, setLoading] = useState(true)
   const [erro, setErro] = useState<string | null>(null)
@@ -36,6 +38,7 @@ export default function FarmaciaPage() {
             const { meta } = await apiFetchList(endpoint, {
               page: 1,
               pageSize: 1,
+              clientCache: false,
               timeoutMs: 4000,
               retryOnTimeout: 0,
             })
@@ -69,7 +72,7 @@ export default function FarmaciaPage() {
     return () => {
       mounted = false
     }
-  }, [])
+  }, [safeRefreshToken])
 
   return (
     <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.FARMACIA]}>

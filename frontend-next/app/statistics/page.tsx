@@ -12,6 +12,7 @@ import MoneyValue from "@/components/ui/MoneyValue"
 import PageHeader from "@/components/ui/PageHeader"
 import PdfActionLabel from "@/components/ui/PdfActionLabel"
 import { useModulesCatalog } from "@/hooks/useModulesCatalog"
+import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { apiFetch, extractTotalCount } from "@/lib/api"
 import { GROUPS } from "@/lib/rbac"
 import {
@@ -229,6 +230,7 @@ function BasicPie({
 }
 
 export default function EstatisticasPage() {
+  const safeRefreshToken = useSafeDataRefreshSignal()
   const [dias, setDias] = useState(30)
   const [limit, setLimit] = useState(10)
   const [mode, setMode] = useState<"dias" | "range">("dias")
@@ -308,7 +310,9 @@ export default function EstatisticasPage() {
 
       const resolved = await mapInBatches(resourceProbes, 12, async (probe): Promise<ResourceSnapshot> => {
         try {
-          const raw = await apiFetch<any>(`${probe.endpoint}?page=1&page_size=1`)
+          const raw = await apiFetch<any>(`${probe.endpoint}?page=1&page_size=1`, {
+            clientCache: safeRefreshToken === 0,
+          })
           return {
             moduleKey: probe.moduleKey,
             moduleLabel: probe.moduleLabel,
@@ -400,7 +404,7 @@ export default function EstatisticasPage() {
     } finally {
       setModuleLoading(false)
     }
-  }, [resourceProbes])
+  }, [resourceProbes, safeRefreshToken])
 
   useEffect(() => {
     let mounted = true
@@ -410,8 +414,12 @@ export default function EstatisticasPage() {
         setErro(null)
 
         const [analytics, stats] = await Promise.all([
-          apiFetch<AnalyticsResponse>(`/dashboard/analytics/?${analyticsQuery}`),
-          apiFetch<DashboardStatsResponse>("/dashboard/stats/").catch(() => null),
+          apiFetch<AnalyticsResponse>(`/dashboard/analytics/?${analyticsQuery}`, {
+            clientCache: safeRefreshToken === 0,
+          }),
+          apiFetch<DashboardStatsResponse>("/dashboard/stats/", {
+            clientCache: safeRefreshToken === 0,
+          }).catch(() => null),
         ])
 
         if (!mounted) return
@@ -428,7 +436,7 @@ export default function EstatisticasPage() {
     return () => {
       mounted = false
     }
-  }, [analyticsQuery, refreshCounter])
+  }, [analyticsQuery, refreshCounter, safeRefreshToken])
 
   useEffect(() => {
     fetchModules()

@@ -16,6 +16,7 @@ import Pagination from "@/components/ui/Pagination"
 import useAuthGuard from "@/hooks/useAuthGuard"
 import { useLanguage } from "@/hooks/useLanguage"
 import useDebounce from "@/hooks/useDebounce"
+import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { apiFetch, apiFetchList } from "@/lib/api"
 import { isNotFoundLikeError } from "@/lib/errors/api-error"
 import { hasOpenApiMethod, hasWriteContract } from "@/lib/openapi/writeContract"
@@ -309,6 +310,7 @@ export function PublicHealthListPage({ resourceKey }: { resourceKey: PublicHealt
   const [loadingData, setLoadingData] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const debouncedSearch = useDebounce(search, 300)
+  const safeRefreshToken = useSafeDataRefreshSignal()
   const createAvailable = hasOpenApiMethod(config.endpoint, "post")
 
   useEffect(() => {
@@ -331,6 +333,7 @@ export function PublicHealthListPage({ resourceKey }: { resourceKey: PublicHealt
           pageSize,
           query,
           clientCacheTtlMs: 30000,
+          clientCache: safeRefreshToken === 0,
         })
 
         if (!mounted) return
@@ -355,7 +358,7 @@ export function PublicHealthListPage({ resourceKey }: { resourceKey: PublicHealt
     return () => {
       mounted = false
     }
-  }, [config, debouncedSearch, filterValue, page, pageSize, t])
+  }, [config, debouncedSearch, filterValue, page, pageSize, safeRefreshToken, t])
 
   const columns = useMemo(
     () => [

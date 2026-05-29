@@ -12,6 +12,7 @@ import PdfActionLabel from "@/components/ui/PdfActionLabel"
 import ConfirmDialog from "@/components/ui/ConfirmDialog"
 import { useAuth } from "@/hooks/useAuth"
 import { useLanguage } from "@/hooks/useLanguage"
+import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { apiFetch } from "@/lib/api"
 import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
 
@@ -72,6 +73,7 @@ async function openInvoicePdf(invoiceId: number) {
 export default function ConsultationsPage() {
   const { user } = useAuth()
   const { t } = useLanguage()
+  const safeRefreshToken = useSafeDataRefreshSignal()
 
   const canWrite = userHasAnyGroup(user, [
     GROUPS.ADMIN,
@@ -114,10 +116,10 @@ export default function ConsultationsPage() {
 
   const loadData = useCallback(async () => {
     const [consultationsResponse, patientsResponse, doctorsResponse, specialtiesResponse] = await Promise.all([
-      apiFetch<any>("/consultations/"),
-      apiFetch<any>("/clinical/patients/"),
-      apiFetch<any>("/consultations/doctors/"),
-      apiFetch<any>("/consultations/specialty/"),
+      apiFetch<any>("/consultations/", { clientCache: safeRefreshToken === 0 }),
+      apiFetch<any>("/clinical/patients/", { clientCache: safeRefreshToken === 0 }),
+      apiFetch<any>("/consultations/doctors/", { clientCache: safeRefreshToken === 0 }),
+      apiFetch<any>("/consultations/specialty/", { clientCache: safeRefreshToken === 0 }),
     ])
 
     const list = (v: any) => (v && v.results ? v.results : v) || []
@@ -128,7 +130,7 @@ export default function ConsultationsPage() {
     const specialtyItems = Array.isArray(list(specialtiesResponse)) ? (list(specialtiesResponse) as Specialty[]) : []
     setSpecialties(specialtyItems)
     setSpecialtyId((prev) => prev || (specialtyItems[0]?.id ? String(specialtyItems[0].id) : ""))
-  }, [])
+  }, [safeRefreshToken])
 
   useEffect(() => {
     let mounted = true

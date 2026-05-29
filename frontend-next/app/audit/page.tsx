@@ -7,6 +7,7 @@ import { useEffect, useMemo, useState } from "react"
 import AppLayout from "@/components/layout/AppLayout"
 import DataTable from "@/components/ui/DataTable"
 import PageHeader from "@/components/ui/PageHeader"
+import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { apiFetch } from "@/lib/api"
 import { GROUPS } from "@/lib/rbac"
 
@@ -38,6 +39,7 @@ function normalizeUserRow(raw: any): UserRow {
 }
 
 export default function AuditoriaUsuariosPage() {
+  const safeRefreshToken = useSafeDataRefreshSignal()
   const [erro, setErro] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [q, setQ] = useState("")
@@ -49,7 +51,7 @@ export default function AuditoriaUsuariosPage() {
       try {
         setLoading(true)
         setErro(null)
-        const res = await apiFetch<any>("/audit/users/")
+        const res = await apiFetch<any>("/audit/users/", { clientCache: safeRefreshToken === 0 })
         const items = res && res.results ? res.results : res
         if (!mounted) return
         setRows(Array.isArray(items) ? items.map(normalizeUserRow) : [])
@@ -64,7 +66,7 @@ export default function AuditoriaUsuariosPage() {
     return () => {
       mounted = false
     }
-  }, [])
+  }, [safeRefreshToken])
 
   const filtered = useMemo(() => {
     const term = q.trim().toLowerCase()

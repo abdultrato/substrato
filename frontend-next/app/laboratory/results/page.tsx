@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from "react"
 import AppLayout from "@/components/layout/AppLayout"
 import DataTable from "@/components/ui/DataTable"
 import PageHeader from "@/components/ui/PageHeader"
+import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { apiFetch } from "@/lib/api"
 import { GROUPS } from "@/lib/rbac"
 
@@ -27,6 +28,7 @@ function fmtDate(value: any): string {
 }
 
 export default function LaboratoryResultsPage() {
+  const safeRefreshToken = useSafeDataRefreshSignal()
   const [status, setStatus] = useState<string>("pendente")
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
@@ -39,7 +41,8 @@ export default function LaboratoryResultsPage() {
         setLoading(true)
         setErrorMessage(null)
         const res = await apiFetch<any>(
-          `/clinical/resultitem/?status=${encodeURIComponent(status)}`
+          `/clinical/resultitem/?status=${encodeURIComponent(status)}`,
+          { clientCache: safeRefreshToken === 0 }
         )
         const items = res && (res as any).results ? (res as any).results : res
         if (!mounted) return
@@ -55,7 +58,7 @@ export default function LaboratoryResultsPage() {
     return () => {
       mounted = false
     }
-  }, [status])
+  }, [safeRefreshToken, status])
 
   const columns = useMemo(
     () => [

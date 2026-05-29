@@ -9,6 +9,7 @@ import DataTable from "@/components/ui/DataTable"
 import PageHeader from "@/components/ui/PageHeader"
 import { useAuth } from "@/hooks/useAuth"
 import { useLanguage } from "@/hooks/useLanguage"
+import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { apiFetch, apiFetchAll } from "@/lib/api"
 import { isNotFoundLikeError } from "@/lib/errors/api-error"
 import { GROUPS } from "@/lib/rbac"
@@ -257,6 +258,7 @@ function matchScheduleItems(
 export default function EducationStudentPage() {
   const { user } = useAuth()
   const { tr } = useLanguage()
+  const safeRefreshToken = useSafeDataRefreshSignal()
 
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -282,7 +284,9 @@ export default function EducationStudentPage() {
           return
         }
 
-        const studentRes = await apiFetch<any>(`/education/student/?user=${user.id}`)
+        const studentRes = await apiFetch<any>(`/education/student/?user=${user.id}`, {
+          clientCache: safeRefreshToken === 0,
+        })
         const studentList = normalizeList<StudentProfile>(studentRes)
         const currentStudent: StudentProfile | null = studentList[0] ?? null
 
@@ -300,7 +304,9 @@ export default function EducationStudentPage() {
           return
         }
 
-        const enrollmentRes = await apiFetch<any>(`/education/enrollment/?student=${currentStudent.id}`)
+        const enrollmentRes = await apiFetch<any>(`/education/enrollment/?student=${currentStudent.id}`, {
+          clientCache: safeRefreshToken === 0,
+        })
         const enrollmentList = normalizeList<Enrollment>(enrollmentRes)
 
         if (!mounted) return
@@ -337,7 +343,7 @@ export default function EducationStudentPage() {
     return () => {
       mounted = false
     }
-  }, [user?.id])
+  }, [safeRefreshToken, user?.id])
 
   const courseById = useMemo(() => new Map(courses.map((course) => [course.id, course])), [courses])
   const classroomById = useMemo(

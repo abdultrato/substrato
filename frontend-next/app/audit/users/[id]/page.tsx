@@ -7,6 +7,7 @@ import { useParams } from "next/navigation"
 import AppLayout from "@/components/layout/AppLayout"
 import DataTable from "@/components/ui/DataTable"
 import PageHeader from "@/components/ui/PageHeader"
+import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { apiFetch } from "@/lib/api"
 import { GROUPS } from "@/lib/rbac"
 
@@ -81,6 +82,7 @@ function normalizeActivityRow(raw: any): AtividadeRow {
 export default function AuditoriaUsuarioDetalhePage() {
   const params = useParams() as any
   const userId = String(params?.id || "")
+  const safeRefreshToken = useSafeDataRefreshSignal()
 
   const [erro, setErro] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
@@ -95,8 +97,8 @@ export default function AuditoriaUsuarioDetalhePage() {
         setErro(null)
 
         const [u, acts] = await Promise.all([
-          apiFetch<any>(`/audit/users/${encodeURIComponent(userId)}/`),
-          apiFetch<any>(`/audit/atividade/?user=${encodeURIComponent(userId)}`),
+          apiFetch<any>(`/audit/users/${encodeURIComponent(userId)}/`, { clientCache: safeRefreshToken === 0 }),
+          apiFetch<any>(`/audit/atividade/?user=${encodeURIComponent(userId)}`, { clientCache: safeRefreshToken === 0 }),
         ])
 
         const items = acts && (acts as any).results ? (acts as any).results : acts
@@ -115,7 +117,7 @@ export default function AuditoriaUsuarioDetalhePage() {
     return () => {
       mounted = false
     }
-  }, [userId])
+  }, [safeRefreshToken, userId])
 
   const columns = useMemo(
     () => [

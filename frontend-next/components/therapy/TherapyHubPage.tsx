@@ -6,6 +6,7 @@ import { Activity, ClipboardCheck, ClipboardList, FileText, HeartPulse, Pill, Wr
 import AppLayout from "@/components/layout/AppLayout"
 import WorkspaceHub from "@/components/workspace/WorkspaceHub"
 import { useLanguage } from "@/hooks/useLanguage"
+import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { apiFetch, extractTotalCount } from "@/lib/api"
 import { isNotFoundLikeError } from "@/lib/errors/api-error"
 import { GROUPS } from "@/lib/rbac"
@@ -26,6 +27,7 @@ export default function TherapyHubPage({
   requiredGroups,
 }: TherapyHubPageProps) {
   const { t } = useLanguage()
+  const safeRefreshToken = useSafeDataRefreshSignal()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [resources, setResources] = useState(0)
@@ -45,13 +47,13 @@ export default function TherapyHubPage({
         setError(null)
         const qs = `?discipline=${discipline}`
         const [resourceRes, evaluationRes, planRes, goalRes, sessionRes, progressRes, prescriptionRes] = await Promise.all([
-          apiFetch<any>(`/therapy/resource/${qs}`),
-          apiFetch<any>(`/therapy/evaluation/${qs}`),
-          apiFetch<any>(`/therapy/treatment_plan/${qs}`),
-          apiFetch<any>(`/therapy/goal/${qs}`),
-          apiFetch<any>(`/therapy/session/${qs}`),
-          apiFetch<any>(`/therapy/progress_note/${qs}`),
-          apiFetch<any>(`/therapy/prescription_link/${qs}`),
+          apiFetch<any>(`/therapy/resource/${qs}`, { clientCache: safeRefreshToken === 0 }),
+          apiFetch<any>(`/therapy/evaluation/${qs}`, { clientCache: safeRefreshToken === 0 }),
+          apiFetch<any>(`/therapy/treatment_plan/${qs}`, { clientCache: safeRefreshToken === 0 }),
+          apiFetch<any>(`/therapy/goal/${qs}`, { clientCache: safeRefreshToken === 0 }),
+          apiFetch<any>(`/therapy/session/${qs}`, { clientCache: safeRefreshToken === 0 }),
+          apiFetch<any>(`/therapy/progress_note/${qs}`, { clientCache: safeRefreshToken === 0 }),
+          apiFetch<any>(`/therapy/prescription_link/${qs}`, { clientCache: safeRefreshToken === 0 }),
         ])
 
         if (!mounted) return
@@ -78,7 +80,7 @@ export default function TherapyHubPage({
     return () => {
       mounted = false
     }
-  }, [discipline, t])
+  }, [discipline, safeRefreshToken, t])
 
   const metricValue = useMemo(() => (loading ? "..." : null), [loading])
 

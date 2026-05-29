@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react"
 
 import { useLanguage } from "@/hooks/useLanguage"
+import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { apiFetch } from "@/lib/api"
 import {
   relationOptionFromRow,
@@ -123,6 +124,7 @@ export default function ResourceDetailsCard({
   data: Record<string, any>
 }) {
   const { tr } = useLanguage()
+  const safeRefreshToken = useSafeDataRefreshSignal()
   const [relationLabels, setRelationLabels] = useState<Record<string, string>>({})
   const entries = useMemo(
     () =>
@@ -163,6 +165,7 @@ export default function ResourceDetailsCard({
         relationLookups.map(async ({ key, id, target }) => {
           try {
             const row = await apiFetch<Record<string, any>>(relationDetailEndpoint(target, id), {
+              clientCache: safeRefreshToken === 0,
               clientCacheTtlMs: 60000,
             })
             const option = relationOptionFromRow(row, target)
@@ -183,7 +186,7 @@ export default function ResourceDetailsCard({
     return () => {
       mounted = false
     }
-  }, [relationLookups])
+  }, [relationLookups, safeRefreshToken])
 
   return (
     <div className="rounded-lg border border-border bg-card shadow-sm">

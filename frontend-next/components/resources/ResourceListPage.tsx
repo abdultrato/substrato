@@ -14,6 +14,7 @@ import useAuthGuard from "@/hooks/useAuthGuard"
 import { useAuth } from "@/hooks/useAuth"
 import { useLanguage } from "@/hooks/useLanguage"
 import useDebounce from "@/hooks/useDebounce"
+import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { apiFetch, apiFetchList } from "@/lib/api"
 import { bloodbankResourceKeyFromEndpoint } from "@/lib/ui/fieldLabels"
 import { canManageUserByHierarchy, GROUPS, userHasAnyGroup } from "@/lib/rbac"
@@ -154,6 +155,7 @@ export default function ResourceListPage({
   const [loadingData, setLoadingData] = useState(true)
   const [bloodStorages, setBloodStorages] = useState<Record<number, string>>({})
   const debouncedSearch = useDebounce(search, 300)
+  const safeRefreshToken = useSafeDataRefreshSignal()
   const resolvedGroupLabel = useMemo(() => {
     if (groupLabel && groupLabel.trim()) return groupLabel.trim()
     const [fromTitle] = String(title || "").split("/")
@@ -198,7 +200,11 @@ export default function ResourceListPage({
       try {
         setLoadingData(true)
         setError(null)
-        const res = await apiFetchList<Row>(requestUrl, { page, pageSize })
+        const res = await apiFetchList<Row>(requestUrl, {
+          page,
+          pageSize,
+          clientCache: safeRefreshToken === 0,
+        })
         if (!mounted) return
         const items = Array.isArray(res?.items) && res.items.length ? res.items : objectFallbackRows(res?.raw)
         const total = res?.meta?.total ?? items.length
@@ -219,14 +225,16 @@ export default function ResourceListPage({
     return () => {
       mounted = false
     }
-  }, [page, pageSize, requestUrl, t])
+  }, [page, pageSize, requestUrl, safeRefreshToken, t])
 
   useEffect(() => {
     let mounted = true
     async function loadStorages() {
       if (!needsBloodStorageLookup) return
       try {
-        const res = await apiFetch<any>("/bloodbank/storage/")
+        const res = await apiFetch<any>("/bloodbank/storage/", {
+          clientCache: safeRefreshToken === 0,
+        })
         const items = res && (res as any).results ? (res as any).results : res
         const map: Record<number, string> = {}
         if (Array.isArray(items)) {
@@ -246,7 +254,7 @@ export default function ResourceListPage({
     return () => {
       mounted = false
     }
-  }, [needsBloodStorageLookup])
+  }, [needsBloodStorageLookup, safeRefreshToken])
 
   const statusOptions = useMemo(() => {
     const set = new Set<string>()

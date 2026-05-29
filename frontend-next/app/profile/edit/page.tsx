@@ -14,6 +14,7 @@ import TextInput from "@/components/ui/TextInput"
 import Button from "@/components/ui/Button"
 import { apiFetch } from "@/lib/api"
 import { useAuth } from "@/hooks/useAuth"
+import { useSafeDataRefresh, useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 
 type UserMe = {
     id: number
@@ -29,6 +30,8 @@ type UserMe = {
 export default function EditarPerfilPage () {
     const router = useRouter()
     const { refreshUser } = useAuth()
+    const safeRefreshToken = useSafeDataRefreshSignal()
+    const { hasUnsavedInput } = useSafeDataRefresh()
 
     const [loading, setLoading] = useState( true )
     const [saving, setSaving] = useState( false )
@@ -48,10 +51,11 @@ export default function EditarPerfilPage () {
     }, [firstName, lastName, me] )
 
     useEffect( () => {
+        if ( safeRefreshToken > 0 && hasUnsavedInput ) return
         async function load () {
             try {
                 setError( null )
-                const data = await apiFetch<UserMe>( "/auth/user/" )
+                const data = await apiFetch<UserMe>( "/auth/user/", { clientCache: safeRefreshToken === 0 } )
                 setMe( data )
                 setFirstName( ( data?.first_name || "" ).toString() )
                 setLastName( ( data?.last_name || "" ).toString() )
@@ -65,7 +69,7 @@ export default function EditarPerfilPage () {
         }
 
         load()
-    }, [] )
+    }, [hasUnsavedInput, safeRefreshToken] )
 
     useEffect( () => {
         if ( !fotoFile ) {

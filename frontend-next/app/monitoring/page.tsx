@@ -10,6 +10,7 @@ import Card from "@/components/ui/Card"
 import PageHeader from "@/components/ui/PageHeader"
 import MetricCard from "@/components/ui/MetricCard"
 import ActionTile from "@/components/ui/ActionTile"
+import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { apiFetch, extractTotalCount } from "@/lib/api"
 import { GROUPS } from "@/lib/rbac"
 
@@ -48,6 +49,7 @@ function toNumber(value: unknown): number {
 }
 
 export default function MonitoramentoPage() {
+    const safeRefreshToken = useSafeDataRefreshSignal()
     const [loading, setLoading] = useState(true)
     const [erro, setErro] = useState<string | null>(null)
     const [metrics, setMetrics] = useState<MonitoringMetrics>(EMPTY_METRICS)
@@ -117,7 +119,7 @@ export default function MonitoramentoPage() {
             mounted = false
             if (timer) clearInterval(timer)
         }
-    }, [])
+    }, [safeRefreshToken])
 
     return (
         <AppLayout requiredGroups={[GROUPS.ADMIN]}>
@@ -200,6 +202,5 @@ export default function MonitoramentoPage() {
         </AppLayout>
     )
 }
-
 
 

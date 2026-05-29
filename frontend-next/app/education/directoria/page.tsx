@@ -8,6 +8,7 @@ import Card from "@/components/ui/Card"
 import DataTable from "@/components/ui/DataTable"
 import PageHeader from "@/components/ui/PageHeader"
 import { useLanguage } from "@/hooks/useLanguage"
+import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { apiFetch } from "@/lib/api"
 import { isNotFoundLikeError } from "@/lib/errors/api-error"
 import { GROUPS } from "@/lib/rbac"
@@ -109,6 +110,7 @@ function workCategoryLabel(value?: string) {
 
 export default function EducationDirectoriaPage() {
   const { tr } = useLanguage()
+  const safeRefreshToken = useSafeDataRefreshSignal()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -143,16 +145,16 @@ export default function EducationDirectoriaPage() {
           submissionsRes,
           gradesRes,
         ] = await Promise.all([
-          apiFetch<any>("/education/teacher/"),
-          apiFetch<any>("/education/student/"),
-          apiFetch<any>("/education/course/"),
-          apiFetch<any>("/education/classroom/"),
-          apiFetch<any>("/education/enrollment/"),
-          apiFetch<any>("/education/assignment/"),
-          apiFetch<any>("/education/examination/"),
-          apiFetch<any>("/education/random_test/"),
-          apiFetch<any>("/education/submission/"),
-          apiFetch<any>("/education/grade/"),
+          apiFetch<any>("/education/teacher/", { clientCache: safeRefreshToken === 0 }),
+          apiFetch<any>("/education/student/", { clientCache: safeRefreshToken === 0 }),
+          apiFetch<any>("/education/course/", { clientCache: safeRefreshToken === 0 }),
+          apiFetch<any>("/education/classroom/", { clientCache: safeRefreshToken === 0 }),
+          apiFetch<any>("/education/enrollment/", { clientCache: safeRefreshToken === 0 }),
+          apiFetch<any>("/education/assignment/", { clientCache: safeRefreshToken === 0 }),
+          apiFetch<any>("/education/examination/", { clientCache: safeRefreshToken === 0 }),
+          apiFetch<any>("/education/random_test/", { clientCache: safeRefreshToken === 0 }),
+          apiFetch<any>("/education/submission/", { clientCache: safeRefreshToken === 0 }),
+          apiFetch<any>("/education/grade/", { clientCache: safeRefreshToken === 0 }),
         ])
 
         if (!mounted) return
@@ -182,7 +184,7 @@ export default function EducationDirectoriaPage() {
     return () => {
       mounted = false
     }
-  }, [])
+  }, [safeRefreshToken])
 
   const coursesById = useMemo(() => new Map(courses.map((item) => [item.id, item])), [courses])
   const classroomsById = useMemo(() => new Map(classrooms.map((item) => [item.id, item])), [classrooms])
