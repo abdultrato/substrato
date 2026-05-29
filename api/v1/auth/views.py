@@ -72,12 +72,19 @@ def _set_jwt_cookies(response: Response, request, access: str | None = None, ref
     samesite = "Lax"
     path = "/"
     domain = _cookie_domain(request)
+    session_cookie_only = bool(getattr(settings, "AUTH_COOKIE_SESSION_ONLY", True))
+    refresh_cookie_age = int(settings.SIMPLE_JWT["REFRESH_TOKEN_LIFETIME"].total_seconds())
+
+    def cookie_lifetime_kwargs(max_age: int) -> dict:
+        if session_cookie_only:
+            return {}
+        return {"max_age": max_age}
 
     if access is not None:
         response.set_cookie(
             COOKIE_ACCESS_NAME,
             access,
-            max_age=SESSION_IDLE_TIMEOUT_SECONDS,
+            **cookie_lifetime_kwargs(SESSION_IDLE_TIMEOUT_SECONDS),
             httponly=True,
             secure=secure,
             samesite=samesite,
@@ -88,7 +95,7 @@ def _set_jwt_cookies(response: Response, request, access: str | None = None, ref
         response.set_cookie(
             COOKIE_REFRESH_NAME,
             refresh,
-            max_age=int(timedelta(days=7).total_seconds()),
+            **cookie_lifetime_kwargs(refresh_cookie_age),
             httponly=True,
             secure=secure,
             samesite=samesite,
