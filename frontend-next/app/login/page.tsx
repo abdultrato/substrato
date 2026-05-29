@@ -139,7 +139,7 @@ export default function LoginPage () {
 
                 <div className="login-form">
                     <h1 className="login-title">Substrato</h1>
-                    <p className="login-subtitle">{t("Estrutura Unificada de Gestão", "Unified Management Structure")}</p>
+                    <p className="login-subtitle">{t("Sistema Unificado de Base Sustentável", "Unified Sustainable Base System")}</p>
 
                     {error && <div className="login-error">{error}</div>}
                     {resetInfo && (

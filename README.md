@@ -2,6 +2,8 @@
 
 Plataforma multi-domínio e multi-tenant com backend Django + DRF + Celery e frontend Next.js. O Substrato já não é apenas uma plataforma de saúde: reúne workspaces e módulos para saúde/laboratório, educação, ERP/WMS, recursos humanos, finanças, operação e inteligência operacional.
 
+O nome **Substrato** remete a **Sistema Unificado de Base Sustentável** unido a **Trato**, apelido do criador do projecto.
+
 A documentação consolidada do projeto está em `SUBSTRATO.md`. Este `README.md` permanece curto e funciona apenas como porta de entrada operacional do repositório.
 
 ## Escopo do produto
