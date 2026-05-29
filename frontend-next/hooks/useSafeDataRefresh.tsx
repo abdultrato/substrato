@@ -31,6 +31,7 @@ type SafeDataRefreshContextValue = {
 const SafeDataRefreshContext = createContext<SafeDataRefreshContextValue | null>(null)
 const AUTO_REFRESH_MS = 30000
 const MIN_REFRESH_GAP_MS = 2500
+const STRONG_REFRESH_REASONS = new Set<SafeDataRefreshReason>(["manual", "mutation"])
 
 function isEditableElement(target: EventTarget | null): target is HTMLElement {
   if (!(target instanceof HTMLElement)) return false
@@ -65,23 +66,31 @@ export function SafeDataRefreshProvider({ children }: { children: ReactNode }) {
       if (reason !== "manual" && now - lastRefreshRef.current < MIN_REFRESH_GAP_MS) return
 
       const preserveDraft = hasUnsavedInputRef.current || activeElementIsEditable()
+      const strongRefresh = STRONG_REFRESH_REASONS.has(reason)
 
       refreshingRef.current = true
-      setIsRefreshing(true)
+      if (strongRefresh) setIsRefreshing(true)
       try {
-        clearApiClientCache()
-        emitSafeDataRefresh(reason)
-        await queryClient.invalidateQueries()
-        await queryClient.refetchQueries({ type: "active" }, { cancelRefetch: false })
-        if (!preserveDraft) {
-          router.refresh()
+        if (strongRefresh) {
+          clearApiClientCache()
+          emitSafeDataRefresh(reason)
+          await queryClient.invalidateQueries()
+          await queryClient.refetchQueries({ type: "active" }, { cancelRefetch: false })
+          if (!preserveDraft) {
+            router.refresh()
+          }
+        } else {
+          void queryClient.invalidateQueries(
+            { refetchType: "active" },
+            { cancelRefetch: false }
+          )
         }
         const finishedAt = Date.now()
         lastRefreshRef.current = finishedAt
         setLastRefreshAt(finishedAt)
       } finally {
         refreshingRef.current = false
-        setIsRefreshing(false)
+        if (strongRefresh) setIsRefreshing(false)
       }
     },
     [queryClient, router]
@@ -176,15 +185,17 @@ export function useSafeDataRefresh() {
   return ctx
 }
 
-export function useSafeDataRefreshSignal(): number {
+export function useSafeDataRefreshSignal(options: { includeBackground?: boolean } = {}): number {
   const [token, setToken] = useState(0)
+  const includeBackground = options.includeBackground === true
 
   useEffect(
     () =>
-      subscribeSafeDataRefresh(() => {
+      subscribeSafeDataRefresh((detail) => {
+        if (!includeBackground && !STRONG_REFRESH_REASONS.has(detail.reason)) return
         setToken((value) => value + 1)
       }),
-    []
+    [includeBackground]
   )
 
   return token

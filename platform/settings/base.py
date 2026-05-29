@@ -1193,6 +1193,8 @@ ENABLE_LEGACY_USER_ACTIVITY_MIDDLEWARE = (
     get_env("ENABLE_LEGACY_USER_ACTIVITY_MIDDLEWARE", "false").lower() in ("1", "true", "yes", "on")
 )
 ENABLE_API_LOGGING_MIDDLEWARE = get_env("ENABLE_API_LOGGING_MIDDLEWARE", "true").lower() in ("1", "true", "yes", "on")
+AUDIT_ACTIVITY_ASYNC = get_env_bool("AUDIT_ACTIVITY_ASYNC", True)
+AUDIT_ACTIVITY_WORKERS = get_env_int("AUDIT_ACTIVITY_WORKERS", 1)
 
 MIDDLEWARE = [
     *(["django_prometheus.middleware.PrometheusBeforeMiddleware"] if _module_available("django_prometheus") else []),

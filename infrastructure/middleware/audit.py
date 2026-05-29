@@ -1,9 +1,45 @@
 """Middleware que registra eventos de auditoria multi-tenant."""
 
+from concurrent.futures import ThreadPoolExecutor
+import logging
+
 from django.conf import settings
+from django.db import close_old_connections
 
 from apps.audit_activities.models.user_activity import UserActivity
 from observability.audit import register_event
+
+logger = logging.getLogger("tenant_audit")
+
+_executor: ThreadPoolExecutor | None = None
+
+
+def _get_executor() -> ThreadPoolExecutor:
+    global _executor
+    if _executor is None:
+        workers = max(1, int(getattr(settings, "AUDIT_ACTIVITY_WORKERS", 1) or 1))
+        _executor = ThreadPoolExecutor(
+            max_workers=workers,
+            thread_name_prefix="substrato-audit",
+        )
+    return _executor
+
+
+def _create_activity(payload: dict) -> None:
+    close_old_connections()
+    try:
+        UserActivity.objects.create(**payload)
+    except Exception:
+        logger.debug("Falha ao gravar atividade de auditoria.", exc_info=True)
+    finally:
+        close_old_connections()
+
+
+def _persist_activity(payload: dict) -> None:
+    if getattr(settings, "AUDIT_ACTIVITY_ASYNC", True):
+        _get_executor().submit(_create_activity, payload)
+        return
+    _create_activity(payload)
 
 
 def _client_ip(request) -> str | None:
@@ -83,7 +119,7 @@ class TenantAuditMiddleware:
                 return response
 
             user = getattr(request, "user", None)
-            user = user if getattr(user, "is_authenticated", False) else None
+            user_id = getattr(user, "pk", None) if getattr(user, "is_authenticated", False) else None
 
             status_code = getattr(request, "status_code", None) or getattr(response, "status_code", None)
             duration_ms = getattr(request, "duration_ms", None)
@@ -96,23 +132,25 @@ class TenantAuditMiddleware:
 
             view_basename, view_action, object_id = _resolver_info(request)
 
-            UserActivity.objects.create(
-                tenant=tenant,
-                user=user,
-                method=request.method,
-                path=(request.path or "")[:255],
-                full_path=(request.get_full_path() or ""),
-                status_code=status_code,
-                duration_ms=duration_ms_int,
-                ip=_client_ip(request),
-                user_agent=(request.META.get("HTTP_USER_AGENT") or "")[:255],
-                view_basename=(view_basename or "")[:120],
-                view_action=(view_action or "")[:120],
-                object_id=(object_id or "")[:80],
-                message="",
-                metadata={
-                    "referer": (request.META.get("HTTP_REFERER") or "")[:500],
-                },
+            _persist_activity(
+                {
+                    "tenant_id": getattr(tenant, "id", None),
+                    "user_id": user_id,
+                    "method": request.method,
+                    "path": (request.path or "")[:255],
+                    "full_path": (request.get_full_path() or ""),
+                    "status_code": status_code,
+                    "duration_ms": duration_ms_int,
+                    "ip": _client_ip(request),
+                    "user_agent": (request.META.get("HTTP_USER_AGENT") or "")[:255],
+                    "view_basename": (view_basename or "")[:120],
+                    "view_action": (view_action or "")[:120],
+                    "object_id": (object_id or "")[:80],
+                    "message": "",
+                    "metadata": {
+                        "referer": (request.META.get("HTTP_REFERER") or "")[:500],
+                    },
+                }
             )
         except Exception:
             # Não pode quebrar a response por error de audit.

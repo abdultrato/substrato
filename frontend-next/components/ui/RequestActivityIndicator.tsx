@@ -7,7 +7,7 @@ import {
 } from "@/lib/requestActivity"
 import type { RequestActivityStartEvent } from "@/lib/requestActivity"
 
-const SHOW_DELAY_MS = 250
+const SHOW_DELAY_MS = 650
 const FLUSH_INTERVAL_MS = 80
 
 function pickLatest(events: RequestActivityStartEvent[]): RequestActivityStartEvent | null {

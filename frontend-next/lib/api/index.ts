@@ -435,8 +435,8 @@ export async function apiFetch<T = any>(
   return (await requestPromise) as T
 }
 
-const DEFAULT_CLIENT_CACHE_TTL_MS = 15000
-const DEFAULT_STALE_WHILE_REVALIDATE_MS = 120000
+const DEFAULT_CLIENT_CACHE_TTL_MS = 30000
+const DEFAULT_STALE_WHILE_REVALIDATE_MS = 300000
 
 type ClientCacheEntry = {
   value: unknown
