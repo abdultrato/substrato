@@ -3,11 +3,14 @@
     "dev": "npm --prefix frontend-next run dev",
     "dev:frontend": "npm --prefix frontend-next run dev",
     "dev:backend": "python manage.py runserver 0.0.0.0:8000",
-      "dev:full": "concurrently -k -n django,next \"python manage.py runserver 0.0.0.0:8000\" \"npm --prefix frontend-next run dev\"",
-    "test:frontend": "npm --prefix frontend-next test -- --run"
+    "dev:full": "concurrently -k -n django,next \"python manage.py runserver 0.0.0.0:8000\" \"npm --prefix frontend-next run dev\"",
+    "test:frontend": "npm --prefix frontend-next test -- --run",
+    "quality:phase1": "python scripts/phase1_quality_gate.py",
+    "quality:full": "python scripts/phase1_quality_gate.py --full",
+    "quality:strict": "python scripts/phase1_quality_gate.py --full --strict-ruff"
   },
   "dependencies": {
-      "codex": "^0.2.3",
+    "codex": "^0.2.3",
     "concurrently": "^9.2.1",
     "http-proxy-middleware": "^3.0.5",
     "openai": "^6.34.0"

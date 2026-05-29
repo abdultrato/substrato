@@ -81,7 +81,7 @@ export default function VeterinaryPage() {
         ) : null}
 
         <WorkspaceHub
-          title="Substrato Veterinária"
+          title="Veterinária"
           subtitle={t(
             "Fluxo veterinário para animais, vacinação, laboratório, internamento e prescrição.",
             "Veterinary flow for animals, vaccination, laboratory, admission and prescription."

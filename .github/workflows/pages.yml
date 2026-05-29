@@ -34,11 +34,10 @@ jobs:
         run: |
           set -euo pipefail
           rm -rf .pages-dist
-          mkdir -p .pages-dist/static/img .pages-dist/frontend-next/app
+          mkdir -p .pages-dist/static/img
           cp index.html styles.css script.js .pages-dist/
           cp cv-lab-abdultrato.pdf .pages-dist/cv-lab-abdultrato.pdf
           cp static/img/logo.png .pages-dist/static/img/logo.png
-          cp frontend-next/app/login-side.png .pages-dist/frontend-next/app/login-side.png
           touch .pages-dist/.nojekyll
 
       - name: Upload artifact

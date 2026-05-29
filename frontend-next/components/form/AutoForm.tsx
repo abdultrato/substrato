@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useId, useMemo, useState } from "react"
 import { z } from "zod"
 import { Loader2, Search, X } from "lucide-react"
 
@@ -128,6 +128,7 @@ function SearchableRelationSelect({
   const [open, setOpen] = useState(false)
   const [results, setResults] = useState<RelationOption[]>(EMPTY_RELATION_OPTIONS)
   const [searching, setSearching] = useState(false)
+  const listboxId = useId()
   const debouncedQuery = useDebounce(query.trim(), 250)
 
   const selectedOption = useMemo(() => {
@@ -227,7 +228,9 @@ function SearchableRelationSelect({
         type="text"
         role="combobox"
         aria-autocomplete="list"
+        aria-controls={listboxId}
         aria-expanded={open}
+        aria-haspopup="listbox"
         aria-invalid={!!error}
         value={query}
         onChange={(e) => handleInputChange(e.target.value)}
@@ -254,7 +257,11 @@ function SearchableRelationSelect({
         </button>
       ) : null}
       {open && !disabled ? (
-        <div className="absolute z-30 mt-1 max-h-72 w-full overflow-auto rounded-md border border-[var(--border)] bg-[var(--card)] py-1 text-sm shadow-lg">
+        <div
+          id={listboxId}
+          role="listbox"
+          className="absolute z-30 mt-1 max-h-72 w-full overflow-auto rounded-md border border-[var(--border)] bg-[var(--card)] py-1 text-sm shadow-lg"
+        >
           {searching || loadingInitial ? (
             <div className="flex items-center gap-2 px-3 py-2 text-[var(--gray-600)]">
               <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
@@ -266,6 +273,8 @@ function SearchableRelationSelect({
               <button
                 key={`${fieldName}-${option.value}`}
                 type="button"
+                role="option"
+                aria-selected={option.value === selectedId}
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => selectOption(option)}
                 className="block w-full px-3 py-2 text-left text-[var(--text)] transition hover:bg-[var(--gray-100)] focus:bg-[var(--gray-100)] focus:outline-none"

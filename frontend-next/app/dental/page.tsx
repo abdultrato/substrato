@@ -74,7 +74,7 @@ export default function DentalPage() {
         ) : null}
 
         <WorkspaceHub
-          title="Substrato Odontologia"
+          title="Odontologia"
           subtitle={t(
             "Fluxo especializado para atendimento dentário, odontograma, tratamento e prótese.",
             "Specialized flow for dental care, odontogram, treatment and prosthesis."

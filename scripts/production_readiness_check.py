@@ -81,6 +81,24 @@ def _validate_production_flags() -> bool:
     else:
         _ok("DJANGO_SECRET_KEY com formato aceitavel")
 
+    try:
+        session_idle_minutes = int((os.getenv("SESSION_IDLE_TIMEOUT_MINUTES") or "30").strip())
+    except ValueError:
+        _fail("SESSION_IDLE_TIMEOUT_MINUTES deve ser um inteiro")
+        checks_ok = False
+    else:
+        if session_idle_minutes != 30:
+            _fail("SESSION_IDLE_TIMEOUT_MINUTES deve ser 30 em producao")
+            checks_ok = False
+        else:
+            _ok("Sessao expira apos 30 minutos de inatividade")
+
+    if not _is_truthy(os.getenv("AUTH_COOKIE_SESSION_ONLY", "true")):
+        _fail("AUTH_COOKIE_SESSION_ONLY deve ser true para exigir novo login ao fechar o navegador")
+        checks_ok = False
+    else:
+        _ok("Cookies de autenticacao expiram ao fechar o navegador")
+
     return checks_ok
 
 

@@ -85,7 +85,7 @@ export default function PhysiotherapyPage() {
         ) : null}
 
         <WorkspaceHub
-          title="Substrato Fisioterapia"
+          title="Fisioterapia"
           subtitle={t(
             "Avaliação funcional, planos de tratamento, acompanhamento de evolução e gestão de aparelhos.",
             "Functional assessment, treatment plans, progress monitoring and device management."

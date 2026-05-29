@@ -174,7 +174,7 @@ export default function PublicHealthHubPage() {
         ) : null}
 
         <WorkspaceHub
-          title="Substrato Saúde Pública"
+          title="Saúde Pública"
           subtitle={t(
             "Gestão de vacinas, lotes, reforços, campanhas por região, eventos adversos pós-vacinação e notificações oficiais.",
             "Management of vaccines, lots, boosters, regional campaigns, adverse events following immunization and official notifications."
