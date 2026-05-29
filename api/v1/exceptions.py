@@ -14,10 +14,62 @@ from typing import Any
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import IntegrityError
 from rest_framework import status
+from rest_framework.exceptions import ErrorDetail
 from rest_framework.response import Response
 from rest_framework.views import exception_handler
 
 logger = logging.getLogger(__name__)
+
+
+def _friendly_error_message(value: Any) -> str:
+    text = str(value or "").strip()
+    code = getattr(value, "code", "")
+    lowered = text.lower()
+    normalized_code = str(code or "").lower()
+
+    if (
+        normalized_code == "does_not_exist"
+        or "pk inv" in lowered
+        or "objeto não existe" in lowered
+        or "objeto nao existe" in lowered
+        or ("objeto" in lowered and "existe" in lowered)
+    ):
+        return "O registo selecionado não existe ou já não está disponível. Atualize a lista e selecione novamente."
+    if normalized_code == "incorrect_type" or "expected pk value" in lowered or "tipo incorreto" in lowered:
+        return "Selecione uma opção válida da lista."
+    if normalized_code == "required" or "this field is required" in lowered or "campo obrigatório" in lowered:
+        return "Este campo é obrigatório."
+    if normalized_code == "blank" or "may not be blank" in lowered or "não pode ficar em branco" in lowered:
+        return "Este campo não pode ficar em branco."
+    if normalized_code == "null" or "may not be null" in lowered or "não pode ser nulo" in lowered:
+        return "Este campo não pode ficar vazio."
+    if normalized_code == "unique" or "already exists" in lowered or "já existe" in lowered:
+        return "Já existe um registo com este valor."
+
+    return text
+
+
+def _serialize_error_details(value: Any) -> Any:
+    if isinstance(value, ErrorDetail):
+        return _friendly_error_message(value)
+    if isinstance(value, str):
+        return _friendly_error_message(value)
+    if isinstance(value, dict):
+        return {str(key): _serialize_error_details(nested) for key, nested in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_serialize_error_details(item) for item in value]
+    return value
+
+
+def _first_error_message(value: Any) -> str:
+    if isinstance(value, dict) and value:
+        first_key = sorted(value.keys(), key=lambda x: str(x))[0]
+        return _first_error_message(value[first_key])
+    if isinstance(value, (list, tuple)) and value:
+        return _first_error_message(value[0])
+    if value not in (None, "", []):
+        return _friendly_error_message(value)
+    return "Erro de validação. Revise os dados enviados."
 
 
 class APIException(Exception):
@@ -184,17 +236,8 @@ def custom_exception_handler(exc: Exception, context: dict[str, Any]) -> Respons
             validation_errors = exc.messages
         else:
             validation_errors = str(exc)
-
-        def _first_message(value: Any) -> str:
-            if isinstance(value, (list, tuple)) and value:
-                return _first_message(value[0])
-            if isinstance(value, dict) and value:
-                # Try to pick a stable first key for message extraction.
-                k = sorted(value.keys(), key=lambda x: str(x))[0]
-                return _first_message(value[k])
-            return str(value)
-
-        detail = _first_message(validation_errors) if validation_errors not in (None, "", []) else "Erro de validação."
+        validation_errors = _serialize_error_details(validation_errors)
+        detail = _first_error_message(validation_errors)
 
         problem_details = {
             "type": "about:blank",
@@ -214,13 +257,11 @@ def custom_exception_handler(exc: Exception, context: dict[str, Any]) -> Respons
     # when they are triggered by client payloads.
     if isinstance(exc, IntegrityError):
         request_path = context.get("request").path if context.get("request") else None
-        raw = (str(exc) or "").strip()
         detail = (
             "Não foi possível concluir a operação: os dados enviados violaram uma "
-            "restrição de integridade."
+            "restrição de integridade. Verifique duplicados, campos obrigatórios e relações selecionadas."
         )
-        if raw:
-            detail = f"{detail} {raw}"
+        logger.warning("Integrity error while processing API request", exc_info=True)
 
         problem_details = {
             "type": "about:blank",
@@ -268,8 +309,15 @@ def custom_exception_handler(exc: Exception, context: dict[str, Any]) -> Respons
         elif status_code >= 500:
             error_code = "INTERNAL_SERVER_ERROR"
 
+        serialized_data = _serialize_error_details(response.data)
+
         # Extrair message de error
-        detail = response.data.get("detail", str(exc)) if isinstance(response.data, dict) else str(exc)
+        if isinstance(serialized_data, dict) and "detail" in serialized_data:
+            detail = _first_error_message(serialized_data.get("detail"))
+        elif isinstance(serialized_data, dict):
+            detail = _first_error_message(serialized_data)
+        else:
+            detail = _first_error_message(serialized_data)
 
         # Formato RFC 7807
         problem_details = {
@@ -282,8 +330,8 @@ def custom_exception_handler(exc: Exception, context: dict[str, Any]) -> Respons
         }
 
         # Se houver campos específicos de error (ex: validação)
-        if isinstance(response.data, dict) and "detail" not in response.data:
-            problem_details["validationErrors"] = response.data
+        if isinstance(serialized_data, dict) and "detail" not in serialized_data:
+            problem_details["validationErrors"] = serialized_data
 
         response.data = problem_details
         return response

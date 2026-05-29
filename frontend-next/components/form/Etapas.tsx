@@ -14,7 +14,7 @@ type Props = {
 export default function Etapas( { etapas, etapaAtual, onChange }: Props ) {
     return (
         <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
-            <div className="flex items-center justify-between gap-3">
+            <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
                 <div className="text-sm font-semibold text-foreground">
                     Etapa {etapaAtual + 1} de {etapas.length}
                 </div>
@@ -23,7 +23,7 @@ export default function Etapas( { etapas, etapaAtual, onChange }: Props ) {
                 </div>
             </div>
 
-            <div className="mt-3 grid grid-cols-2 gap-2 md:grid-cols-4">
+            <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-4">
                 {etapas.map( ( e, idx ) => {
                     const ativa = idx === etapaAtual
                     const concluida = idx < etapaAtual
@@ -34,7 +34,7 @@ export default function Etapas( { etapas, etapaAtual, onChange }: Props ) {
                             type="button"
                             onClick={() => podeClique && onChange( idx )}
                             className={[
-                                "inline-flex items-center justify-center rounded-xl border px-3 py-2 text-left text-xs font-semibold transition",
+                                "inline-flex min-h-11 items-center justify-center rounded-xl border px-3 py-2 text-left text-xs font-semibold transition",
                                 ativa
                                     ? "border-primary bg-primary/10 text-primary"
                                     : concluida

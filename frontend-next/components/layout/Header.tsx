@@ -43,11 +43,11 @@ export default function Header({ user, onMenuClick }: Props) {
     }, [open])
 
     return (
-        <header className="chrome-surface sticky top-0 z-40 flex h-12 flex-nowrap items-center justify-between gap-3 border-b px-3 shadow-sm backdrop-blur">
-            <div className="flex min-w-0 flex-1 items-start gap-2">
+        <header className="chrome-surface sticky top-0 z-40 flex h-14 flex-nowrap items-center justify-between gap-2 border-b px-2 shadow-sm backdrop-blur sm:gap-3 sm:px-3">
+            <div className="flex min-w-0 flex-1 items-center gap-2">
                 <button
                     type="button"
-                    className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-white/25 bg-white/10 text-white shadow-sm transition hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30"
+                    className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-white/25 bg-white/10 text-white shadow-sm transition hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30"
                     onClick={onMenuClick}
                     aria-label={t("Mostrar ou ocultar menu lateral", "Show or hide sidebar")}
                     title={t("Mostrar ou ocultar menu lateral", "Show or hide sidebar")}
@@ -71,7 +71,7 @@ export default function Header({ user, onMenuClick }: Props) {
                             className="h-full w-full object-contain p-1"
                         />
                     </div>
-                    <div className="font-display text-base font-bold tracking-tight text-white">
+                    <div className="hidden font-display text-base font-bold tracking-tight text-white min-[360px]:block">
                         Substrato
                     </div>
                 </Link>
@@ -82,7 +82,7 @@ export default function Header({ user, onMenuClick }: Props) {
                     type="button"
                     onClick={() => void refreshNow("manual")}
                     disabled={isRefreshing}
-                    className="relative inline-flex h-8 w-8 items-center justify-center rounded-md border border-white/25 bg-white/15 text-white shadow-sm transition-colors hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent disabled:cursor-wait disabled:opacity-70"
+                    className="relative inline-flex h-10 w-10 items-center justify-center rounded-md border border-white/25 bg-white/15 text-white shadow-sm transition-colors hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent disabled:cursor-wait disabled:opacity-70"
                     aria-label={t("Atualizar dados sem recarregar", "Refresh data without reloading")}
                     title={
                         hasUnsavedInput
@@ -104,7 +104,7 @@ export default function Header({ user, onMenuClick }: Props) {
                 <button
                     type="button"
                     onClick={toggleTheme}
-                    className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-white/25 bg-white/15 text-white shadow-sm transition-colors hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
+                    className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-white/25 bg-white/15 text-white shadow-sm transition-colors hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
                     aria-label={isDark ? t("Mudar para modo claro", "Switch to light mode") : t("Mudar para modo escuro", "Switch to dark mode")}
                     title={isDark ? t("Modo claro", "Light mode") : t("Modo escuro", "Dark mode")}
                 >
@@ -114,7 +114,7 @@ export default function Header({ user, onMenuClick }: Props) {
                 <div className="relative" ref={menuRef}>
                     <button
                         onClick={toggle}
-                        className="flex items-center gap-2 text-sm text-white/90 transition-colors hover:text-white"
+                        className="flex min-h-10 items-center gap-2 rounded-md text-sm text-white/90 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30"
                     >
                         {fotoUrl ? (
                             <>
@@ -122,11 +122,11 @@ export default function Header({ user, onMenuClick }: Props) {
                                 <img
                                     src={fotoUrl}
                                     alt={name}
-                                    className="h-8 w-8 rounded-full border border-white/30 object-cover shadow-sm"
+                                    className="h-9 w-9 rounded-full border border-white/30 object-cover shadow-sm"
                                 />
                             </>
                         ) : (
-                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-sm text-xs font-semibold">
+                            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground shadow-sm">
                                 {name.charAt(0).toUpperCase()}
                             </div>
                         )}
@@ -137,7 +137,7 @@ export default function Header({ user, onMenuClick }: Props) {
                     </button>
 
                     {open && (
-                        <div className="absolute right-0 z-50 mt-1.5 w-56 rounded-lg border border-white/20 bg-black/70 p-1 text-white shadow-lg backdrop-blur">
+                        <div className="absolute right-0 z-50 mt-1.5 w-56 max-w-[calc(100vw-1rem)] rounded-lg border border-white/20 bg-black/70 p-1 text-white shadow-lg backdrop-blur">
                             <Link
                                 href="/profile"
                                 onClick={() => setOpen(false)}

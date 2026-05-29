@@ -18,8 +18,8 @@ export default function PageHeader ( {
 
     return (
         <div className="mb-4 flex flex-col gap-3 border-b border-border pb-3 md:flex-row md:items-end md:justify-between">
-            <div>
-                <h1 className="font-display text-2xl font-semibold text-foreground">
+            <div className="min-w-0">
+                <h1 className="break-words font-display text-xl font-semibold text-foreground sm:text-2xl">
                     {tr(title)}
                 </h1>
 
@@ -31,7 +31,7 @@ export default function PageHeader ( {
             </div>
 
             {actions && (
-                <div className="flex flex-wrap items-center gap-2">
+                <div data-page-actions className="flex w-full flex-wrap items-center gap-2 md:w-auto md:justify-end">
                     {actions}
                 </div>
             )}

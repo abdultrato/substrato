@@ -73,7 +73,7 @@ export default function CreditFinancingHubPage() {
         ) : null}
 
         <WorkspaceHub
-          title="Substrato Créditos e Financiamento"
+          title="Créditos e Financiamento"
           subtitle={t(
             "Consórcios de saúde, financiamento de procedimentos, reembolsos, glosas e bolsas estudantis.",
             "Health consortiums, procedure financing, reimbursements, denials and student funding."

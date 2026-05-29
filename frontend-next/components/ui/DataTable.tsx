@@ -46,6 +46,13 @@ export default function DataTable<T> ( {
 
     const showSearch = searchable && data.length > 0
 
+    function renderCell(row: T, col: Column<T>): ReactNode {
+        const value = col.render
+            ? col.render(row)
+            : (row[col.accessor as keyof T] as ReactNode)
+        return typeof value === "string" ? tr(value) : value
+    }
+
     if (!data.length) {
         return (
             <div className="py-6 text-center text-sm text-muted-foreground">
@@ -57,8 +64,8 @@ export default function DataTable<T> ( {
     return (
         <div className="space-y-2">
             {showSearch ? (
-                <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border bg-card px-3 py-2 shadow-sm">
-                    <div className="relative min-w-[220px] flex-1">
+                <div className="flex flex-col gap-2 rounded-lg border border-border bg-card px-3 py-2 shadow-sm sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+                    <div className="relative min-w-0 flex-1">
                         <Search className="pointer-events-none absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                         <input
                             value={query}
@@ -67,7 +74,7 @@ export default function DataTable<T> ( {
                             className="h-9 w-full rounded-md border border-border bg-background py-2 pl-8 pr-3 text-sm text-foreground shadow-sm outline-none focus-visible:border-ring"
                         />
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex w-full flex-wrap items-center justify-between gap-2 sm:w-auto sm:justify-end">
                         <span className="text-xs text-muted-foreground">
                             {t("Resultados:", "Results:")} {filteredData.length}/{data.length}
                         </span>
@@ -75,7 +82,7 @@ export default function DataTable<T> ( {
                             <button
                                 type="button"
                                 onClick={() => setQuery("")}
-                                className="inline-flex h-8 items-center gap-1 rounded-md border border-border bg-card px-2 text-xs font-semibold text-foreground-2 transition hover:bg-muted"
+                                className="inline-flex h-9 items-center gap-1 rounded-md border border-border bg-card px-2 text-xs font-semibold text-foreground-2 transition hover:bg-muted"
                             >
                                 <RotateCcw size={12} />
                                 {t("Limpar", "Clear")}
@@ -85,7 +92,34 @@ export default function DataTable<T> ( {
                 </div>
             ) : null}
 
-            <div className="overflow-x-auto rounded-lg border border-border bg-card shadow-sm">
+            <div className="space-y-2 md:hidden">
+                {filteredData.length ? (
+                    filteredData.map((row, i) => (
+                        <article key={i} className="rounded-lg border border-border bg-card p-3 shadow-sm">
+                            <div className="space-y-3">
+                                {columns.map((col, idx) => (
+                                    <div key={idx} className={idx === 0 ? "space-y-1" : "grid grid-cols-[minmax(0,0.42fr)_minmax(0,0.58fr)] gap-2"}>
+                                        <div className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                                            {tr(col.header)}
+                                        </div>
+                                        <div className={`${idx === 0 ? "text-sm font-semibold text-foreground" : "min-w-0 text-sm text-foreground"} ${col.className ?? ""}`}>
+                                            {renderCell(row, col)}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </article>
+                    ))
+                ) : (
+                    <div className="rounded-lg border border-border bg-card p-4 text-sm text-muted-foreground">
+                        {query.trim()
+                            ? t("Nenhum resultado para a pesquisa.", "No results for this search.")
+                            : tr(emptyMessage)}
+                    </div>
+                )}
+            </div>
+
+            <div className="hidden overflow-x-auto rounded-lg border border-border bg-card shadow-sm md:block">
                 <table className="min-w-full text-sm">
                     <thead className="sticky top-0 z-10 bg-muted text-muted-foreground">
                         <tr>
@@ -110,10 +144,7 @@ export default function DataTable<T> ( {
                                             className={`px-3 py-2.5 align-top ${col.className ?? ""}`}
                                         >
                                             {(() => {
-                                                const value = col.render
-                                                    ? col.render( row )
-                                                    : ( row[col.accessor as keyof T] as ReactNode )
-                                                return typeof value === "string" ? tr(value) : value
+                                                return renderCell(row, col)
                                             })()}
                                         </td>
                                     ) )}

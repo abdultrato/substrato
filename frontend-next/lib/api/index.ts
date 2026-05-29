@@ -3,6 +3,7 @@ import { beginRequestActivity, finishRequestActivity } from "../requestActivity"
 import { reportFrontendApiError, reportFrontendTelemetry } from "../monitoring/telemetry"
 import { getCurrentLanguage, toBackendLanguage } from "../language"
 import { canonicalizeEndpointPath } from "@/lib/openapi/endpointResolver"
+import { sanitizeValidationMessage, summarizeApiErrorPayload } from "@/lib/resources/formErrors"
 
 export type ApiFetchOptions = RequestInit & {
   responseType?: "json" | "blob" | "text"
@@ -181,7 +182,7 @@ async function parseError(
               : typeof value === "string"
                 ? value
                 : JSON.stringify(value)
-          const err = new Error(`${field}: ${firstMessage}`)
+          const err = new Error(`${field}: ${sanitizeValidationMessage(firstMessage)}`)
             ; (err as any).validation = j
           emitApiErrorTelemetry({
             requestUrl: context?.requestUrl,
@@ -193,12 +194,10 @@ async function parseError(
           return withStatus(err)
         }
       }
-      const msg =
-        j?.detail ||
-        j?.message ||
-        (typeof j === "string" ? j : JSON.stringify(j))
+      const msg = summarizeApiErrorPayload(j, res.statusText, { endpoint: context?.requestUrl })
       const err = new Error(msg || res.statusText)
-        ; (err as any).validation = j
+        ; (err as any).validation = j?.validationErrors || j
+        ; (err as any).problem = j
       emitApiErrorTelemetry({
         requestUrl: context?.requestUrl,
         method: context?.method,

@@ -38,7 +38,7 @@ describe("form error normalization", () => {
 
     expect(normalized.fieldErrors).toEqual({})
     expect(normalized.message).toContain("Operação inválida para o estado atual.")
-    expect(normalized.message).toContain("stock balance: Sem stock suficiente.")
+    expect(normalized.message).toContain("Stock Balance: Sem stock suficiente.")
   })
 
   it("extracts readable nested validation values", () => {
@@ -47,5 +47,34 @@ describe("form error normalization", () => {
         items: [{ product: ["Produto inválido."] }, { quantity: ["Quantidade obrigatória."] }],
       })
     ).toBe("items: product: Produto inválido.; quantity: Quantidade obrigatória.")
+  })
+
+  it("unwraps problem-details validation errors into clear field messages", () => {
+    const normalized = normalizeFormApiErrors(
+      {
+        validation: {
+          type: "about:blank",
+          title: "Bad Request",
+          detail:
+            "{'prescription_item': [ErrorDetail(string='Pk inválido \"2\" - objeto não existe.', code='does_not_exist')]}",
+          code: "VALIDATION_ERROR",
+          validationErrors: {
+            prescription_item: ['Pk inválido "2" - objeto não existe.'],
+            plan: ['Pk inválido "2" - objeto não existe.'],
+          },
+        },
+      },
+      ["prescription_item", "plan"],
+      { endpoint: "/therapy/prescription_link/" }
+    )
+
+    expect(normalized.fieldErrors).toEqual({
+      prescription_item:
+        "O registo selecionado não existe ou já não está disponível. Atualize a lista e selecione novamente.",
+      plan:
+        "O registo selecionado não existe ou já não está disponível. Atualize a lista e selecione novamente.",
+    })
+    expect(normalized.message).toBeNull()
+    expect(normalized.firstField).toBe("prescription_item")
   })
 })

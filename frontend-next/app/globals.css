@@ -134,6 +134,9 @@
   html,
   body {
     min-height: 100%;
+    width: 100%;
+    overflow-x: hidden;
+    overscroll-behavior-y: none;
   }
 
   body {
@@ -155,6 +158,14 @@
     letter-spacing: 0;
   }
 
+  img,
+  svg,
+  canvas,
+  video,
+  iframe {
+    max-width: 100%;
+  }
+
   .substrato-brand-canvas {
     position: relative;
   }
@@ -162,8 +173,8 @@
   .substrato-brand-canvas::before {
     content: "";
     position: fixed;
-    right: clamp(-7rem, -8vw, -3rem);
-    bottom: clamp(-8rem, -9vw, -4rem);
+    left: 50%;
+    top: 50%;
     z-index: 0;
     width: min(54vw, 36rem);
     aspect-ratio: 1;
@@ -174,6 +185,7 @@
     filter: saturate(1.08);
     opacity: 0.035;
     pointer-events: none;
+    transform: translate(-50%, -50%);
   }
 
   .dark .substrato-brand-canvas::before {
@@ -200,8 +212,8 @@
   .substrato-app-surface::before {
     content: "";
     position: fixed;
-    right: clamp(1rem, 4vw, 3.5rem);
-    bottom: clamp(1rem, 4vw, 3.5rem);
+    left: 50%;
+    top: 50%;
     z-index: 0;
     width: clamp(15rem, 34vw, 32rem);
     aspect-ratio: 1;
@@ -212,6 +224,7 @@
     filter: saturate(1.08);
     opacity: 0.04;
     pointer-events: none;
+    transform: translate(-50%, -50%);
   }
 
   .dark .substrato-app-surface::before {
@@ -596,7 +609,8 @@
   .login-wrapper::before {
     content: "";
     position: absolute;
-    inset: auto 5vw 4vh auto;
+    left: 50%;
+    top: 50%;
     z-index: 0;
     width: min(44vw, 28rem);
     aspect-ratio: 1;
@@ -607,6 +621,7 @@
     filter: saturate(1.08);
     opacity: 0.045;
     pointer-events: none;
+    transform: translate(-50%, -50%);
   }
 
   .dark .login-wrapper::before {
@@ -728,18 +743,34 @@
      Mobile adjustments (stack-first)
   --------------------------------- */
   @media (max-width: 768px) {
+    input:not([type="checkbox"]):not([type="radio"]),
+    select,
+    textarea {
+      min-height: 2.75rem;
+      font-size: 16px !important;
+    }
+
+    [data-page-actions] > a,
+    [data-page-actions] > button {
+      width: 100%;
+      justify-content: center;
+    }
+
     .substrato-brand-canvas::before,
     .substrato-app-surface::before,
     .login-wrapper::before {
       width: 18rem;
-      right: -6rem;
-      bottom: -6rem;
+      left: 50%;
+      top: 50%;
       opacity: 0.035;
+      transform: translate(-50%, -50%);
     }
 
     .page-box {
       padding: 12px;
       border-radius: var(--radius-lg);
+      margin-left: 0;
+      margin-right: 0;
     }
 
     .table-container,
@@ -754,6 +785,12 @@
 
     .login-card {
       border-radius: var(--radius-xl);
+    }
+  }
+
+  @supports (height: 100dvh) {
+    .substrato-mobile-dvh {
+      min-height: 100dvh;
     }
   }
 

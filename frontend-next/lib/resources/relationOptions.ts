@@ -450,7 +450,7 @@ export function relationLabelForRow(row: Record<string, any>, labelFields: strin
   }
   const id = row?.id ?? row?.pk
   if (pieces.length) {
-    return id === undefined || id === null ? pieces.join(" - ") : `${pieces.join(" - ")} (#${id})`
+    return pieces.join(" - ")
   }
   return id === undefined || id === null ? "Registo sem identificador" : `Registo #${id}`
 }

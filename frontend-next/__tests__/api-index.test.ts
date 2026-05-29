@@ -238,6 +238,33 @@ describe("API facade contract", () => {
     await expect(apiFetch("/patients/", { method: "POST" })).rejects.toThrow("nome: Campo obrigatorio.")
   })
 
+  it("resume problem-details de validação sem expor ErrorDetail técnico", async () => {
+    ;(global.fetch as any).mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          type: "about:blank",
+          title: "Bad Request",
+          detail:
+            "{'prescription_item': [ErrorDetail(string='Pk inválido \"2\" - objeto não existe.', code='does_not_exist')]}",
+          instance: "/api/v1/therapy/prescription_link/",
+          code: "VALIDATION_ERROR",
+          validationErrors: {
+            prescription_item: ['Pk inválido "2" - objeto não existe.'],
+            plan: ['Pk inválido "2" - objeto não existe.'],
+          },
+        }),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json" },
+        }
+      )
+    )
+
+    await expect(apiFetch("/therapy/prescription_link/", { method: "POST" })).rejects.toThrow(
+      "Item de prescrição: O registo selecionado não existe"
+    )
+  })
+
   it("extrai resultados e metadata de payloads paginados com wrapper data/meta", () => {
     const payload = {
       data: {

@@ -318,3 +318,34 @@ def test_therapy_api_exposes_occupational_and_specialized_physiotherapy_workflow
     list_response = api_client.get("/api/v1/therapy/treatment_plan/?discipline=SPECIALIZED_PHYSIOTHERAPY")
     assert list_response.status_code == 200
     assert len(_items(list_response)) == 1
+
+
+@pytest.mark.django_db
+def test_therapy_prescription_link_invalid_relations_returns_clear_problem_details(api_client):
+    tenant = _tenant()
+    patient = _patient(tenant)
+    _authenticate_admin(tenant, api_client)
+
+    response = api_client.post(
+        "/api/v1/therapy/prescription_link/",
+        {
+            "patient": patient.id,
+            "prescription_item": 999999,
+            "plan": 999999,
+            "discipline": "OCCUPATIONAL_THERAPY",
+            "requested_service": "Terapia ocupacional",
+            "requested_sessions": 2,
+        },
+        format="json",
+    )
+
+    payload = _response_data(response)
+    assert response.status_code == 400
+    assert payload["code"] == "VALIDATION_ERROR"
+    assert "ErrorDetail" not in str(payload)
+    assert payload["validationErrors"]["prescription_item"] == [
+        "O registo selecionado não existe ou já não está disponível. Atualize a lista e selecione novamente."
+    ]
+    assert payload["validationErrors"]["plan"] == [
+        "O registo selecionado não existe ou já não está disponível. Atualize a lista e selecione novamente."
+    ]

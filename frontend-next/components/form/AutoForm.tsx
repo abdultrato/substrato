@@ -2,10 +2,12 @@
 
 import { useEffect, useMemo, useState } from "react"
 import { z } from "zod"
+import { Loader2, Search, X } from "lucide-react"
 
 import { apiFetch, apiFetchList } from "@/lib/api"
 import { buildFormSpec, FormField } from "@/lib/openapi/formBuilder"
 import Etapas from "@/components/form/Etapas"
+import useDebounce from "@/hooks/useDebounce"
 import type { ResourceFormConfig } from "@/lib/resources/resourceFormConfig"
 import { normalizeFormApiErrors } from "@/lib/resources/formErrors"
 import {
@@ -51,6 +53,8 @@ const LONG_TEXT_FIELDS = new Set([
   "post_incident_actions",
 ])
 
+const EMPTY_RELATION_OPTIONS: RelationOption[] = []
+
 function placeholderForField(field: FormField, label: string, explicit?: string): string | undefined {
   if (explicit) return explicit
   if (field.type === "boolean" || field.type === "date" || field.type === "datetime" || field.type === "select") {
@@ -67,6 +71,217 @@ function placeholderForField(field: FormField, label: string, explicit?: string)
 
   const normalizedLabel = label.trim().toLocaleLowerCase("pt")
   return normalizedLabel ? `Introduza ${normalizedLabel}` : "Introduza o valor"
+}
+
+function uniqueRelationOptions(options: RelationOption[]): RelationOption[] {
+  const seen = new Set<string>()
+  const unique: RelationOption[] = []
+  for (const option of options) {
+    if (seen.has(option.value)) continue
+    seen.add(option.value)
+    unique.push(option)
+  }
+  return unique
+}
+
+function fallbackSelectedRelationOption(value: any, target: RelationTarget): RelationOption | null {
+  const selectedId = relationIdFromValue(value)
+  if (!selectedId) return null
+
+  if (value && typeof value === "object" && !Array.isArray(value)) {
+    const option = relationOptionFromRow(value, target)
+    if (option) return option
+  }
+
+  return {
+    value: selectedId,
+    label: "Registo selecionado",
+  }
+}
+
+function SearchableRelationSelect({
+  fieldName,
+  value,
+  onChange,
+  target,
+  initialOptions,
+  loadingInitial,
+  readOnly,
+  error,
+  placeholder,
+  safeRefreshToken,
+}: {
+  fieldName: string
+  value: any
+  onChange: (v: any) => void
+  target: RelationTarget
+  initialOptions?: RelationOption[]
+  loadingInitial?: boolean
+  readOnly?: boolean
+  error?: string
+  placeholder?: string
+  safeRefreshToken?: number
+}) {
+  const knownOptions = initialOptions || EMPTY_RELATION_OPTIONS
+  const selectedId = relationIdFromValue(value)
+  const [query, setQuery] = useState("")
+  const [open, setOpen] = useState(false)
+  const [results, setResults] = useState<RelationOption[]>(EMPTY_RELATION_OPTIONS)
+  const [searching, setSearching] = useState(false)
+  const debouncedQuery = useDebounce(query.trim(), 250)
+
+  const selectedOption = useMemo(() => {
+    if (!selectedId) return null
+    const fromKnown = knownOptions.find((option) => option.value === selectedId)
+    if (fromKnown) return fromKnown
+    const fromResults = results.find((option) => option.value === selectedId)
+    if (fromResults) return fromResults
+    return fallbackSelectedRelationOption(value, target)
+  }, [knownOptions, results, selectedId, target, value])
+
+  useEffect(() => {
+    if (open) return
+    setQuery(selectedOption?.label || "")
+  }, [open, selectedOption?.label])
+
+  useEffect(() => {
+    if (!open) return
+
+    let active = true
+    async function searchRelationOptions() {
+      const searchText = debouncedQuery.trim()
+      if (!searchText) {
+        setResults(knownOptions.slice(0, 25))
+        setSearching(false)
+        return
+      }
+
+      setSearching(true)
+      try {
+        const { items } = await apiFetchList<Record<string, any>>(target.endpoint, {
+          page: 1,
+          pageSize: 25,
+          query: { search: searchText },
+          clientCache: safeRefreshToken === 0,
+          clientCacheTtlMs: 30000,
+        })
+        if (active) setResults(relationOptionsFromRows(items, target))
+      } catch {
+        if (active) setResults([])
+      } finally {
+        if (active) setSearching(false)
+      }
+    }
+
+    searchRelationOptions().catch(() => {
+      if (active) setSearching(false)
+    })
+
+    return () => {
+      active = false
+    }
+  }, [debouncedQuery, knownOptions, open, safeRefreshToken, target])
+
+  const options = useMemo(() => {
+    const base = debouncedQuery ? results : knownOptions
+    return uniqueRelationOptions(mergeSelectedRelationOption(base, selectedOption)).slice(0, 25)
+  }, [debouncedQuery, knownOptions, results, selectedOption])
+
+  const common =
+    "min-h-11 w-full rounded-md border bg-[var(--card)] px-3 py-2 text-base leading-tight text-[var(--text)] shadow-sm transition-colors duration-150 placeholder:text-[var(--gray-400)] hover:border-[var(--primary-400)] focus:border-[var(--primary-500)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-100)] disabled:cursor-not-allowed disabled:bg-[var(--gray-100)] disabled:text-[var(--gray-500)] sm:text-sm"
+  const stateClass = error
+    ? "border-red-300 focus:border-red-500 focus:ring-red-100"
+    : "border-[var(--border)]"
+  const disabled = !!readOnly
+
+  function handleInputChange(next: string) {
+    setQuery(next)
+    setOpen(true)
+    if (selectedId && next !== selectedOption?.label) {
+      onChange(null)
+    }
+  }
+
+  function selectOption(option: RelationOption) {
+    setQuery(option.label)
+    setOpen(false)
+    onChange(Number(option.value))
+  }
+
+  function clearSelection() {
+    setQuery("")
+    setResults(knownOptions.slice(0, 25))
+    setOpen(false)
+    onChange(null)
+  }
+
+  const showEmptyState = open && !searching && !loadingInitial && options.length === 0
+
+  return (
+    <div className="relative">
+      <Search
+        aria-hidden="true"
+        className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--gray-400)]"
+      />
+      <input
+        type="text"
+        role="combobox"
+        aria-autocomplete="list"
+        aria-expanded={open}
+        aria-invalid={!!error}
+        value={query}
+        onChange={(e) => handleInputChange(e.target.value)}
+        onFocus={() => setOpen(true)}
+        onBlur={() => window.setTimeout(() => setOpen(false), 120)}
+        onKeyDown={(e) => {
+          if (e.key === "Escape") setOpen(false)
+        }}
+        className={`${common} ${stateClass} pl-9 pr-10`}
+        placeholder={placeholder || "Pesquisar pelo nome, código ou referência..."}
+        disabled={disabled}
+      />
+      {selectedId || query ? (
+        <button
+          type="button"
+          aria-label="Limpar seleção"
+          title="Limpar seleção"
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={clearSelection}
+          disabled={disabled}
+          className="absolute right-2 top-1/2 inline-flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-md text-[var(--gray-500)] transition hover:bg-[var(--gray-100)] hover:text-[var(--text)] disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          <X className="h-4 w-4" aria-hidden="true" />
+        </button>
+      ) : null}
+      {open && !disabled ? (
+        <div className="absolute z-30 mt-1 max-h-72 w-full overflow-auto rounded-md border border-[var(--border)] bg-[var(--card)] py-1 text-sm shadow-lg">
+          {searching || loadingInitial ? (
+            <div className="flex items-center gap-2 px-3 py-2 text-[var(--gray-600)]">
+              <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+              A pesquisar...
+            </div>
+          ) : null}
+          {!searching &&
+            options.map((option) => (
+              <button
+                key={`${fieldName}-${option.value}`}
+                type="button"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => selectOption(option)}
+                className="block w-full px-3 py-2 text-left text-[var(--text)] transition hover:bg-[var(--gray-100)] focus:bg-[var(--gray-100)] focus:outline-none"
+              >
+                {option.label}
+              </button>
+            ))}
+          {showEmptyState ? (
+            <div className="px-3 py-2 text-[var(--gray-500)]">
+              {debouncedQuery ? "Nenhum registo encontrado." : "Digite para pesquisar."}
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+    </div>
+  )
 }
 
 function fieldToZod(field: FormField): z.ZodTypeAny {
@@ -118,10 +333,12 @@ function renderInput(
     widget?: "textarea"
     relationOptions?: RelationOption[]
     relationLoading?: boolean
+    relationTarget?: RelationTarget
+    safeRefreshToken?: number
   }
 ) {
   const common =
-    "w-full rounded-md border bg-[var(--card)] px-3 py-2 text-sm leading-tight text-[var(--text)] shadow-sm transition-colors duration-150 placeholder:text-[var(--gray-400)] hover:border-[var(--primary-400)] focus:border-[var(--primary-500)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-100)] disabled:cursor-not-allowed disabled:bg-[var(--gray-100)] disabled:text-[var(--gray-500)]"
+    "min-h-11 w-full rounded-md border bg-[var(--card)] px-3 py-2 text-base leading-tight text-[var(--text)] shadow-sm transition-colors duration-150 placeholder:text-[var(--gray-400)] hover:border-[var(--primary-400)] focus:border-[var(--primary-500)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-100)] disabled:cursor-not-allowed disabled:bg-[var(--gray-100)] disabled:text-[var(--gray-500)] sm:text-sm"
   const stateClass = error
     ? "border-red-300 focus:border-red-500 focus:ring-red-100"
     : "border-[var(--border)]"
@@ -141,30 +358,20 @@ function renderInput(
         />
       )
     case "integer":
-      if (opts?.relationOptions?.length || opts?.relationLoading) {
-        const options = opts.relationOptions || []
-        const currentValue = value === undefined || value === null || value === "" ? "" : String(value)
-        const hasCurrent = !currentValue || options.some((option) => option.value === currentValue)
-        const renderedOptions = hasCurrent
-          ? options
-          : [{ value: currentValue, label: `Registo #${currentValue}` }, ...options]
-
+      if (opts?.relationTarget) {
         return (
-          <select
-            value={currentValue}
-            onChange={(e) => onChange(e.target.value === "" ? null : Number(e.target.value))}
-            className={`${common} ${stateClass}`}
-            disabled={disabled || !!opts.relationLoading}
-          >
-            <option value="">
-              {opts.relationLoading ? "Carregando opções..." : "Selecione uma opção..."}
-            </option>
-            {renderedOptions.map((option) => (
-              <option key={`${field.name}-${option.value}`} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
+          <SearchableRelationSelect
+            fieldName={field.name}
+            value={value}
+            onChange={onChange}
+            target={opts.relationTarget}
+            initialOptions={opts.relationOptions}
+            loadingInitial={opts.relationLoading}
+            readOnly={disabled}
+            error={error}
+            placeholder={placeholder}
+            safeRefreshToken={opts.safeRefreshToken}
+          />
         )
       }
       return (
@@ -577,6 +784,13 @@ export default function AutoForm({
         .filter(Boolean) as Array<{ field: FormField; target: RelationTarget }>,
     [visibleFieldsForRelationTargets, endpoint]
   )
+  const relationTargetsByField = useMemo(() => {
+    const byField: Record<string, RelationTarget> = {}
+    for (const { field, target } of relationFieldTargets) {
+      byField[field.name] = target
+    }
+    return byField
+  }, [relationFieldTargets])
   const relationSelectedValueKey = useMemo(
     () =>
       relationFieldTargets
@@ -843,7 +1057,8 @@ export default function AutoForm({
       } else {
         const normalized = normalizeFormApiErrors(
           e,
-          formSpec.submitFields.map((field) => field.name)
+          formSpec.submitFields.map((field) => field.name),
+          { endpoint }
         )
         const hasFieldErrors = Object.keys(normalized.fieldErrors).length > 0
         if (hasFieldErrors) {
@@ -964,6 +1179,8 @@ export default function AutoForm({
                     translate: tr,
                     relationOptions: relationOptions[field.name],
                     relationLoading: loadingRelationFields.has(field.name),
+                    relationTarget: relationTargetsByField[field.name],
+                    safeRefreshToken,
                   }
                 )}
                 {hint ? (
@@ -979,7 +1196,7 @@ export default function AutoForm({
           <div className="flex flex-wrap items-center justify-between gap-2">
             <button
               type="button"
-              className="inline-flex h-9 items-center rounded-md border border-[var(--border)] bg-[var(--card)] px-3 text-sm font-semibold leading-tight text-[var(--gray-700)] shadow-sm transition-all duration-150 hover:border-[var(--primary-300)] hover:bg-[var(--gray-100)] hover:text-[var(--text)] disabled:opacity-60"
+              className="inline-flex h-11 w-full items-center justify-center rounded-md border border-[var(--border)] bg-[var(--card)] px-3 text-sm font-semibold leading-tight text-[var(--gray-700)] shadow-sm transition-all duration-150 hover:border-[var(--primary-300)] hover:bg-[var(--gray-100)] hover:text-[var(--text)] disabled:opacity-60 sm:w-auto"
               onClick={() => setEtapaAtual((prev) => Math.max(0, prev - 1))}
               disabled={submitting || etapaAtual === 0}
             >
@@ -989,7 +1206,7 @@ export default function AutoForm({
               type="button"
               onClick={handleSubmit}
               disabled={submitDisabled}
-              className="inline-flex h-9 items-center rounded-md bg-[var(--primary-600)] px-3 text-sm font-semibold leading-tight text-white shadow-sm transition-all duration-150 hover:bg-[var(--primary-700)] hover:shadow-md disabled:opacity-60"
+              className="inline-flex h-11 w-full items-center justify-center rounded-md bg-[var(--primary-600)] px-3 text-sm font-semibold leading-tight text-white shadow-sm transition-all duration-150 hover:bg-[var(--primary-700)] hover:shadow-md disabled:opacity-60 sm:w-auto"
             >
               {submitting ? "Salvando..." : etapaAtual < etapas.length - 1 ? "Seguinte" : submitLabel}
             </button>
@@ -999,7 +1216,7 @@ export default function AutoForm({
             type="button"
             onClick={handleSubmit}
             disabled={submitDisabled}
-            className="inline-flex h-9 items-center rounded-md bg-[var(--primary-600)] px-3 text-sm font-semibold leading-tight text-white shadow-sm transition-all duration-150 hover:bg-[var(--primary-700)] hover:shadow-md disabled:opacity-60"
+            className="inline-flex h-11 w-full items-center justify-center rounded-md bg-[var(--primary-600)] px-3 text-sm font-semibold leading-tight text-white shadow-sm transition-all duration-150 hover:bg-[var(--primary-700)] hover:shadow-md disabled:opacity-60 sm:w-auto"
           >
             {submitting ? "Salvando..." : submitLabel}
           </button>

@@ -78,7 +78,7 @@ const PRIORITY_PREFETCH_LIMIT = 5
  * Definição dos menus com RBAC
  */
 const NAV_ITEMS: NavItem[] = [
-    { href: "/workspaces", label: "Áreas de trabalho", labelEn: "Workspaces", icon: Layers, desc: "Escolha entre Saúde e Educação", descEn: "Choose between Healthcare and Education", groups: [GROUPS.ADMIN] },
+    { href: "/workspaces", label: "Áreas de trabalho", labelEn: "Workspaces", icon: Layers, desc: "Escolha entre Saúde, Educação e Transportes e Logística", descEn: "Choose between Healthcare, Education, and Transport & Logistics", groups: [GROUPS.ADMIN] },
     { href: "/", label: "Painel", labelEn: "Dashboard", icon: ClipboardList, desc: "Visão geral e indicadores", descEn: "Overview and indicators", groups: [GROUPS.ADMIN, GROUPS.CONTABILIDADE] },
     { href: "/healthcare", label: "Saúde", labelEn: "Healthcare", icon: Stethoscope, desc: "Hub clínico unificado", descEn: "Unified clinical hub", groups: [GROUPS.ADMIN, GROUPS.RECEPCAO, GROUPS.LABORATORIO, GROUPS.ENFERMAGEM, GROUPS.MEDICINA, GROUPS.MEDICINA_OCUPACIONAL, GROUPS.FARMACIA, GROUPS.FARMACIA_CLINICA, GROUPS.TELEMEDICINA, GROUPS.SAUDE_PUBLICA, GROUPS.FISIOTERAPIA, GROUPS.RADIOLOGIA, GROUPS.CARDIOLOGIA, GROUPS.NEUROLOGIA, GROUPS.OFTALMOLOGIA, GROUPS.TERAPIA_OCUPACIONAL, GROUPS.FONOAUDIOLOGIA] },
     { href: "/reception", label: "Recepção", labelEn: "Reception", icon: BriefcaseIcon, desc: "Triagem e atendimento", descEn: "Triage and attendance", groups: [GROUPS.ADMIN, GROUPS.RECEPCAO] },
@@ -340,7 +340,7 @@ export default function Sidebar({ user, open = false, onClose, className }: Prop
                 <button
                     type="button"
                     onClick={onClose}
-                    className="md:hidden rounded-md p-1 text-white/70 transition-colors hover:bg-white/10 hover:text-white"
+                    className="inline-flex h-10 w-10 items-center justify-center rounded-md text-white/70 transition-colors hover:bg-white/10 hover:text-white md:hidden"
                     aria-label={t("Fechar menu", "Close menu")}
                 >
                     ✕
@@ -409,13 +409,13 @@ export default function Sidebar({ user, open = false, onClose, className }: Prop
         <>
             <aside className={`hidden md:flex ${className || ""}`}>{menu}</aside>
 
-            <div className={`md:hidden fixed inset-0 z-40 pointer-events-none ${open ? "" : ""}`}>
+            <div className={`fixed inset-0 z-50 pointer-events-none md:hidden ${open ? "" : ""}`}>
                 <div
                     className={`absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity duration-200 ${open ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"}`}
                     onClick={onClose}
                 />
                 <div
-                    className={`absolute inset-y-0 left-0 w-72 max-w-[90vw] shadow-2xl transition-transform duration-200 pointer-events-auto ${open ? "translate-x-0" : "-translate-x-full"}`}
+                    className={`pointer-events-auto absolute inset-y-0 left-0 w-72 max-w-[92vw] shadow-2xl transition-transform duration-200 ${open ? "translate-x-0" : "-translate-x-full"}`}
                 >
                     {menu}
                 </div>
