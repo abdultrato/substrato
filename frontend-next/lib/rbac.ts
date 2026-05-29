@@ -12,9 +12,23 @@ export const GROUPS = {
   STUDENT: "Estudante",
   ESTUDANTE: "Estudante",
   FARMACIA: "Técnico de Farmácia",
+  FARMACIA_CLINICA: "Farmácia Clínica",
+  CREDITO_FINANCIAMENTO: "Créditos e Financiamento",
+  TELEMEDICINA: "Telemedicina",
+  SAUDE_PUBLICA: "Saúde Pública",
   MANUTENCAO: "Manutenção",
   MEDICINA: "Médico",
   MEDICINA_OCUPACIONAL: "Medicina Ocupacional",
+  ODONTOLOGIA: "Odontologia",
+  VETERINARIA: "Medicina Veterinária",
+  FISIOTERAPIA: "Fisioterapia",
+  RADIOLOGIA: "Radiologia",
+  CARDIOLOGIA: "Cardiologia",
+  NEUROLOGIA: "Neurologia",
+  OFTALMOLOGIA: "Oftalmologia",
+  TERAPIA_OCUPACIONAL: "Terapia Ocupacional",
+  FONOAUDIOLOGIA: "Fonoaudiologia",
+  LOGISTICA: "Gestor de Logística",
   CONTABILIDADE: "Contabilidade",
   RECURSOS_HUMANOS: "Gestor de RH",
 } as const
@@ -53,6 +67,20 @@ const GROUP_SYNONYMS: Record<string, string[]> = {
     "parent",
   ],
   Estudante: ["student", "estudante", "aluno", "discente"],
+  "Farmácia Clínica": ["farmacia clinica", "farmácia clínica", "clinical pharmacy", "terapia iv", "terapia intravenosa", "quimioterapia", "tpn", "antibiotic stewardship"],
+  "Créditos e Financiamento": ["creditos", "créditos", "financiamento", "financiamentos", "credit financing", "consorcio", "consórcio", "reembolso", "glosa", "bolsa", "bolsas"],
+  Telemedicina: ["telemedicina", "telemedicine", "monitoramento remoto", "monitorização remota", "remote monitoring", "iot clinico", "iot clínico", "wearables"],
+  "Saúde Pública": ["saude publica", "saúde pública", "public health", "imunizacao", "imunização", "vacinacao", "vacinação", "vacinas", "aefi"],
+  Odontologia: ["odontologia", "dentista", "dental", "dental clinic"],
+  "Medicina Veterinária": ["veterinaria", "veterinária", "veterinary", "vet", "medico veterinario", "médico veterinário"],
+  Fisioterapia: ["fisioterapia", "physiotherapy", "reabilitacao", "reabilitação", "rehab", "fisioterapeuta"],
+  Radiologia: ["radiologia", "radiology", "imagiologia", "diagnostico por imagem", "diagnóstico por imagem", "pacs", "raio-x"],
+  Cardiologia: ["cardiologia", "cardiology", "cardiologista", "ecocardiograma", "holter", "teste ergometrico", "teste ergométrico"],
+  Neurologia: ["neurologia", "neurology", "neurologista", "eeg", "potencial evocado", "doppler transcraniano"],
+  Oftalmologia: ["oftalmologia", "ophthalmology", "oftalmologista", "campo visual", "topografia corneal", "oct"],
+  "Terapia Ocupacional": ["terapia ocupacional", "occupational therapy", "occupational_therapy", "terapeuta ocupacional"],
+  Fonoaudiologia: ["fonoaudiologia", "speech therapy", "speech_therapy", "terapia da fala", "fonoaudiologo", "fonoaudiólogo"],
+  "Gestor de Logística": ["logistica", "logística", "transporte", "transportes", "fleet", "frota", "motorista", "driver"],
 }
 
 export type WorkspaceKey =
@@ -67,6 +95,20 @@ export type WorkspaceKey =
   | "education-directoria"
   | "education-student"
   | "medicine"
+  | "clinical-pharmacy"
+  | "credit-financing"
+  | "telemedicine"
+  | "public-health"
+  | "dental"
+  | "veterinary"
+  | "physiotherapy"
+  | "radiology"
+  | "cardiology"
+  | "neurology"
+  | "ophthalmology"
+  | "occupational-therapy"
+  | "physical-therapy"
+  | "transportation"
   | "pharmacy"
   | "erp-wms"
   | "occupational-medicine"
@@ -101,6 +143,17 @@ export const WORKSPACES: WorkspaceDef[] = [
       GROUPS.ENFERMAGEM,
       GROUPS.MEDICINA,
       GROUPS.MEDICINA_OCUPACIONAL,
+      GROUPS.FARMACIA,
+      GROUPS.FARMACIA_CLINICA,
+      GROUPS.TELEMEDICINA,
+      GROUPS.SAUDE_PUBLICA,
+      GROUPS.RADIOLOGIA,
+      GROUPS.CARDIOLOGIA,
+      GROUPS.NEUROLOGIA,
+      GROUPS.OFTALMOLOGIA,
+      GROUPS.FISIOTERAPIA,
+      GROUPS.TERAPIA_OCUPACIONAL,
+      GROUPS.FONOAUDIOLOGIA,
     ],
   },
   {
@@ -175,6 +228,128 @@ export const WORKSPACES: WorkspaceDef[] = [
     href: "/medicine",
     description: "Seguimento clínico e pedidos de exames/procedimentos.",
     anyOfGroups: [GROUPS.ADMIN, GROUPS.MEDICINA],
+  },
+  {
+    key: "clinical-pharmacy",
+    label: "Farmácia Clínica",
+    href: "/clinical-pharmacy",
+    description: "Preparações IV, quimioterapia, TPN, controlados, interações e stewardship antibiótico.",
+    anyOfGroups: [GROUPS.ADMIN, GROUPS.RECEPCAO, GROUPS.MEDICINA, GROUPS.MEDICINA_OCUPACIONAL, GROUPS.FARMACIA, GROUPS.FARMACIA_CLINICA],
+  },
+  {
+    key: "credit-financing",
+    label: "Créditos e Financiamento",
+    href: "/credit-financing",
+    description: "Consórcios, financiamento de procedimentos, reembolsos, glosas e bolsas estudantis.",
+    anyOfGroups: [
+      GROUPS.ADMIN,
+      GROUPS.RECEPCAO,
+      GROUPS.CONTABILIDADE,
+      GROUPS.MEDICINA,
+      GROUPS.MEDICINA_OCUPACIONAL,
+      GROUPS.DIRETOR_ESCOLA,
+      GROUPS.DIRETOR_ADJUNTO_PEDAGOGICO,
+      GROUPS.CREDITO_FINANCIAMENTO,
+    ],
+  },
+  {
+    key: "telemedicine",
+    label: "Telemedicina",
+    href: "/telemedicine",
+    description: "Sala virtual, dispositivos remotos, leituras, alertas e programas crónicos.",
+    anyOfGroups: [
+      GROUPS.ADMIN,
+      GROUPS.RECEPCAO,
+      GROUPS.MEDICINA,
+      GROUPS.MEDICINA_OCUPACIONAL,
+      GROUPS.ENFERMAGEM,
+      GROUPS.TELEMEDICINA,
+    ],
+  },
+  {
+    key: "public-health",
+    label: "Saúde Pública",
+    href: "/public-health",
+    description: "Vacinas, campanhas, metas, AEFI e notificações oficiais.",
+    anyOfGroups: [
+      GROUPS.ADMIN,
+      GROUPS.RECEPCAO,
+      GROUPS.MEDICINA,
+      GROUPS.MEDICINA_OCUPACIONAL,
+      GROUPS.ENFERMAGEM,
+      GROUPS.LABORATORIO,
+      GROUPS.SAUDE_PUBLICA,
+    ],
+  },
+  {
+    key: "dental",
+    label: "Odontologia",
+    href: "/dental",
+    description: "Agenda dentária, prontuário odontológico, planos de tratamento e prótese.",
+    anyOfGroups: [GROUPS.ADMIN, GROUPS.RECEPCAO, GROUPS.MEDICINA, GROUPS.ODONTOLOGIA],
+  },
+  {
+    key: "veterinary",
+    label: "Medicina Veterinária",
+    href: "/veterinary",
+    description: "Animais, vacinação, internamentos, exames e receitas veterinárias.",
+    anyOfGroups: [GROUPS.ADMIN, GROUPS.RECEPCAO, GROUPS.MEDICINA, GROUPS.VETERINARIA],
+  },
+  {
+    key: "physiotherapy",
+    label: "Fisioterapia e Reabilitação",
+    href: "/physiotherapy",
+    description: "Avaliação funcional, planos de tratamento, evolução e aparelhos.",
+    anyOfGroups: [GROUPS.ADMIN, GROUPS.RECEPCAO, GROUPS.MEDICINA, GROUPS.MEDICINA_OCUPACIONAL, GROUPS.FISIOTERAPIA],
+  },
+  {
+    key: "radiology",
+    label: "Radiologia e Imagiologia",
+    href: "/radiology",
+    description: "Estudos de imagem, laudos, ficheiros DICOM e integração PACS.",
+    anyOfGroups: [GROUPS.ADMIN, GROUPS.RECEPCAO, GROUPS.LABORATORIO, GROUPS.MEDICINA, GROUPS.MEDICINA_OCUPACIONAL, GROUPS.RADIOLOGIA],
+  },
+  {
+    key: "cardiology",
+    label: "Cardiologia Diagnóstica",
+    href: "/cardiology",
+    description: "Ecocardiograma, teste ergométrico, Holter e laudos cardiológicos.",
+    anyOfGroups: [GROUPS.ADMIN, GROUPS.RECEPCAO, GROUPS.MEDICINA, GROUPS.MEDICINA_OCUPACIONAL, GROUPS.CARDIOLOGIA],
+  },
+  {
+    key: "neurology",
+    label: "Neurologia Diagnóstica",
+    href: "/neurology",
+    description: "EEG, potencial evocado, doppler transcraniano e laudos neurológicos.",
+    anyOfGroups: [GROUPS.ADMIN, GROUPS.RECEPCAO, GROUPS.MEDICINA, GROUPS.MEDICINA_OCUPACIONAL, GROUPS.NEUROLOGIA],
+  },
+  {
+    key: "ophthalmology",
+    label: "Oftalmologia Diagnóstica",
+    href: "/ophthalmology",
+    description: "Campo visual, topografia corneal, OCT e laudos oftalmológicos.",
+    anyOfGroups: [GROUPS.ADMIN, GROUPS.RECEPCAO, GROUPS.MEDICINA, GROUPS.MEDICINA_OCUPACIONAL, GROUPS.OFTALMOLOGIA],
+  },
+  {
+    key: "occupational-therapy",
+    label: "Terapia Ocupacional",
+    href: "/occupational-therapy",
+    description: "Avaliações funcionais, AVD, adaptação laboral e planos individualizados.",
+    anyOfGroups: [GROUPS.ADMIN, GROUPS.RECEPCAO, GROUPS.MEDICINA, GROUPS.MEDICINA_OCUPACIONAL, GROUPS.TERAPIA_OCUPACIONAL],
+  },
+  {
+    key: "physical-therapy",
+    label: "Fisioterapia Especializada",
+    href: "/physical-therapy",
+    description: "Planos especializados, evolução motora e prescrição terapêutica.",
+    anyOfGroups: [GROUPS.ADMIN, GROUPS.RECEPCAO, GROUPS.MEDICINA, GROUPS.MEDICINA_OCUPACIONAL, GROUPS.FISIOTERAPIA, GROUPS.FONOAUDIOLOGIA],
+  },
+  {
+    key: "transportation",
+    label: "Transporte e Logística",
+    href: "/transportation",
+    description: "Frota, motoristas, rotas, rastreamento, combustível e manutenção preventiva.",
+    anyOfGroups: [GROUPS.ADMIN, GROUPS.LOGISTICA, GROUPS.MANUTENCAO, GROUPS.CONTABILIDADE, GROUPS.RECURSOS_HUMANOS],
   },
   {
     key: "pharmacy",
@@ -335,6 +510,7 @@ export function getAccessibleWorkspaces(user: SessionUser | null): WorkspaceDef[
 
 export function getDefaultWorkspaceHref(user: SessionUser | null): string {
   if (userHasAnyGroup(user, [GROUPS.ADMIN])) return "/workspaces"
+  if (userHasAnyGroup(user, [GROUPS.CREDITO_FINANCIAMENTO])) return "/credit-financing"
 
   if (
     userHasAnyGroup(user, [
@@ -343,6 +519,17 @@ export function getDefaultWorkspaceHref(user: SessionUser | null): string {
       GROUPS.ENFERMAGEM,
       GROUPS.MEDICINA,
       GROUPS.MEDICINA_OCUPACIONAL,
+      GROUPS.FARMACIA,
+      GROUPS.FARMACIA_CLINICA,
+      GROUPS.TELEMEDICINA,
+      GROUPS.SAUDE_PUBLICA,
+      GROUPS.RADIOLOGIA,
+      GROUPS.CARDIOLOGIA,
+      GROUPS.NEUROLOGIA,
+      GROUPS.OFTALMOLOGIA,
+      GROUPS.FISIOTERAPIA,
+      GROUPS.TERAPIA_OCUPACIONAL,
+      GROUPS.FONOAUDIOLOGIA,
     ])
   ) {
     return "/healthcare"

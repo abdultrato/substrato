@@ -3,7 +3,7 @@
 import { Suspense } from "react";
 import { GeneratedResourceDetailPage } from "@/components/resources/GeneratedResourcePages";
 
-export default function SmallSurgeriesDetailPage() {
+export default function SurgerySmallSurgeriesDetailPage() {
   return (
     <Suspense fallback={<div className="p-4 text-sm text-[var(--gray-500)]">Carregando...</div>}>
       <GeneratedResourceDetailPage endpoint="/surgery/small_surgery/" />

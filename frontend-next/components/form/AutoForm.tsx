@@ -9,6 +9,7 @@ import Etapas from "@/components/form/Etapas"
 import type { ResourceFormConfig } from "@/lib/resources/resourceFormConfig"
 import { normalizeFormApiErrors } from "@/lib/resources/formErrors"
 import {
+  relationOptionFromRow,
   relationOptionsFromRows,
   relationTargetForField,
   type RelationOption,
@@ -417,6 +418,30 @@ function safeFieldSelector(fieldName: string): string {
   return fieldName.replace(/\\/g, "\\\\").replace(/"/g, '\\"')
 }
 
+function relationIdFromValue(value: any): string | null {
+  const raw =
+    value && typeof value === "object" && !Array.isArray(value)
+      ? value.id ?? value.pk
+      : value
+  if (raw === undefined || raw === null || raw === "") return null
+  if (typeof raw === "number" && !Number.isFinite(raw)) return null
+  return String(raw)
+}
+
+function relationDetailEndpoint(target: RelationTarget, id: string): string {
+  const base = target.endpoint.split("?")[0].replace(/\/?$/, "/")
+  return `${base}${encodeURIComponent(id)}/`
+}
+
+function mergeSelectedRelationOption(
+  options: RelationOption[],
+  selected: RelationOption | null
+): RelationOption[] {
+  if (!selected) return options
+  if (options.some((option) => option.value === selected.value)) return options
+  return [selected, ...options]
+}
+
 type WizardStep = { key: string; title: string; description?: string }
 
 function Stepper({
@@ -550,6 +575,13 @@ export default function AutoForm({
         .filter(Boolean) as Array<{ field: FormField; target: RelationTarget }>,
     [visibleFieldsForRelationTargets, endpoint]
   )
+  const relationSelectedValueKey = useMemo(
+    () =>
+      relationFieldTargets
+        .map(({ field }) => `${field.name}:${relationIdFromValue(values[field.name]) || ""}`)
+        .join("|"),
+    [relationFieldTargets, values]
+  )
 
   useEffect(() => {
     let mounted = true
@@ -567,16 +599,41 @@ export default function AutoForm({
       const loaded: Record<string, RelationOption[]> = {}
       await Promise.all(
         relationFieldTargets.map(async ({ field, target }) => {
+          let options: RelationOption[] = []
           try {
             const { items } = await apiFetchList<Record<string, any>>(target.endpoint, {
               page: 1,
               pageSize: 100,
               clientCacheTtlMs: 60000,
             })
-            loaded[field.name] = relationOptionsFromRows(items, target)
+            options = relationOptionsFromRows(items, target)
           } catch {
-            loaded[field.name] = []
+            options = []
           }
+
+          const currentValue = relationIdFromValue(values[field.name])
+          if (currentValue && !options.some((option) => option.value === currentValue)) {
+            const currentRaw = values[field.name]
+            let selectedOption =
+              currentRaw && typeof currentRaw === "object" && !Array.isArray(currentRaw)
+                ? relationOptionFromRow(currentRaw, target)
+                : null
+
+            if (!selectedOption) {
+              try {
+                const row = await apiFetch<Record<string, any>>(relationDetailEndpoint(target, currentValue), {
+                  clientCacheTtlMs: 60000,
+                })
+                selectedOption = relationOptionFromRow(row, target)
+              } catch {
+                selectedOption = null
+              }
+            }
+
+            options = mergeSelectedRelationOption(options, selectedOption)
+          }
+
+          loaded[field.name] = options
         })
       )
 
@@ -592,7 +649,9 @@ export default function AutoForm({
     return () => {
       mounted = false
     }
-  }, [relationFieldTargets])
+    // relationSelectedValueKey limits reloads to relation field ID changes instead of every keystroke.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [relationFieldTargets, relationSelectedValueKey])
 
   useEffect(() => {
     if (!config?.lembrarCampos?.length) return

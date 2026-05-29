@@ -3,10 +3,10 @@
 import { Suspense } from "react";
 import { GeneratedResourceDetailPage } from "@/components/resources/GeneratedResourcePages";
 
-export default function PregnanciesDetailPage() {
+export default function MaternityPregnanciesDetailPage() {
   return (
     <Suspense fallback={<div className="p-4 text-sm text-[var(--gray-500)]">Carregando...</div>}>
-      <GeneratedResourceDetailPage endpoint="/maternity/pregnancies/" />
+      <GeneratedResourceDetailPage endpoint="/maternity/gestacao/" />
     </Suspense>
   );
 }

@@ -228,7 +228,7 @@ export function GeneratedResourceListPage({ endpoint }: { endpoint: string }) {
             subtitle={t("Este recurso existe no catálogo, mas a API não expõe listagem para ele.", "This resource exists in the catalog, but the API does not expose a list endpoint for it.")}
             actions={
               <Link
-                href={`/resources/${ctx.groupKey}`}
+                href="/workspaces"
                 className="inline-flex h-9 items-center rounded-md border border-[var(--border)] bg-[var(--card)] px-3 text-sm font-medium text-[var(--gray-700)] shadow-sm transition-all duration-150 hover:border-[var(--primary-300)] hover:bg-[var(--gray-100)] hover:text-[var(--text)]"
               >
                 {t("Voltar ao módulo", "Back to module")}

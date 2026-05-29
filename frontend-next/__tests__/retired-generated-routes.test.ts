@@ -27,15 +27,15 @@ describe("retired generated routes", () => {
     expect(bySource.has("/consultations/holidaies/:path*")).toBe(false)
   })
 
-  it("redirects legacy modules routes to the contract-guarded resource catalog", async () => {
+  it("redirects legacy modules routes to the workspace selector", async () => {
     const bySource = await redirectsBySource()
 
     expect(bySource.get("/modules")).toMatchObject({
-      destination: "/resources",
+      destination: "/workspaces",
       permanent: false,
     })
     expect(bySource.get("/modules/:path*")).toMatchObject({
-      destination: "/resources/:path*",
+      destination: "/workspaces",
       permanent: false,
     })
   })
@@ -58,25 +58,25 @@ describe("retired generated routes", () => {
     }
   })
 
-  it("redirects generated pages that have no OpenAPI contract to active resource hubs", async () => {
+  it("redirects generated pages that have no OpenAPI contract to active module pages", async () => {
     const bySource = await redirectsBySource()
 
     const expected: Record<string, string> = {
-      "/accounting/account-balances/:path*": "/resources/accounting/",
-      "/accounting/ledger-lines/:path*": "/resources/accounting/",
-      "/ai_assistant/ai-knowledge-entries/:path*": "/resources/ai_assistant/",
-      "/ai_assistant/ai-messages/:path*": "/resources/ai_assistant/",
-      "/ai_assistant/ai-policy-events/:path*": "/resources/ai_assistant/",
-      "/ai_assistant/ai-suggested-actions/:path*": "/resources/ai_assistant/",
-      "/ai_assistant/ai-tool-calls/:path*": "/resources/ai_assistant/",
-      "/clinical/clinical-events/:path*": "/resources/clinical/",
-      "/clinical/clinical-histories/:path*": "/resources/clinical/",
-      "/clinical/clinical-references/:path*": "/resources/clinical/",
-      "/monitoring/transactional-outbox-events/:path*": "/resources/monitoring/",
-      "/payments/payment-histories/:path*": "/resources/payments/",
-      "/pharmacy/parent-categories/:path*": "/resources/pharmacy/",
-      "/pharmacy/product-categories/:path*": "/resources/pharmacy/",
-      "/tenants/tenant-subscriptions/:path*": "/resources/tenants/",
+      "/accounting/account-balances/:path*": "/accounting/accounts/",
+      "/accounting/ledger-lines/:path*": "/accounting/ledger-entries/",
+      "/ai_assistant/ai-knowledge-entries/:path*": "/ai/",
+      "/ai_assistant/ai-messages/:path*": "/ai/",
+      "/ai_assistant/ai-policy-events/:path*": "/ai/",
+      "/ai_assistant/ai-suggested-actions/:path*": "/ai/",
+      "/ai_assistant/ai-tool-calls/:path*": "/ai/",
+      "/clinical/clinical-events/:path*": "/healthcare/",
+      "/clinical/clinical-histories/:path*": "/clinical/patients/",
+      "/clinical/clinical-references/:path*": "/healthcare/",
+      "/monitoring/transactional-outbox-events/:path*": "/monitoring/errors/",
+      "/payments/payment-histories/:path*": "/payments/payments/",
+      "/pharmacy/parent-categories/:path*": "/pharmacy/products/",
+      "/pharmacy/product-categories/:path*": "/pharmacy/products/",
+      "/tenants/tenant-subscriptions/:path*": "/tenants/tenants/",
     }
 
     for (const [source, destination] of Object.entries(expected)) {
@@ -85,6 +85,15 @@ describe("retired generated routes", () => {
         permanent: false,
       })
     }
+  })
+
+  it("does not redirect retired module routes back to /resources", async () => {
+    const bySource = await redirectsBySource()
+    const offenders = Array.from(bySource.values())
+      .filter((route) => route.destination === "/resources" || route.destination.startsWith("/resources/"))
+      .map((route) => `${route.source} -> ${route.destination}`)
+
+    expect(offenders).toEqual([])
   })
 
   it("does not expose retired route sources in the legacy CRUD menu", async () => {

@@ -52,6 +52,9 @@ class MedicalConsultationSerializer(serializers.ModelSerializer):
             "schedule_type",
             "price_multiplier",
         )
+        extra_kwargs = {
+            "consultation_type": {"required": False},
+        }
 
     def get_doctor_name(self, obj: MedicalConsultation) -> str:
         doctor = getattr(obj, "doctor", None)

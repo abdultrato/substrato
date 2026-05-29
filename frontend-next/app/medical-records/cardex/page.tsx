@@ -71,7 +71,7 @@ export default function ProntuarioCardexPage() {
                 header: "Código",
                 render: (r: RegistroRow) => (
                     <Link
-                        href={`/resources/medical-records/registro/${r.id}`}
+                        href={`/medical-records/records/${r.id}`}
                         className="font-medium text-[var(--text)] underline decoration-[var(--border)] underline-offset-2 hover:decoration-[var(--gray-300)]"
                     >
                         {r.id_custom || r.id || "-"}
@@ -95,13 +95,13 @@ export default function ProntuarioCardexPage() {
                     actions={
                         <div className="flex flex-wrap items-center gap-2">
                             <Link
-                                href="/resources/medical-records/registro/new"
+                                href="/medical-records/records/new"
                                 className="inline-flex items-center rounded-xl bg-[var(--primary-600)] px-3 py-1.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[var(--primary-700)]"
                             >
                                 Criar Cardex
                             </Link>
                             <Link
-                                href="/resources/medical-records/registro"
+                                href="/medical-records/records"
                                 className="inline-flex items-center rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-1.5 text-sm font-medium text-[var(--gray-700)] shadow-sm transition hover:bg-[var(--gray-100)]"
                             >
                                 Gerenciamento

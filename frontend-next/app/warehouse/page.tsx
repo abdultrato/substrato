@@ -148,9 +148,22 @@ function recordDetail(row: WarehouseRow, fields: string[]): string {
   return values.length ? values.join(" · ") : "-"
 }
 
+const WAREHOUSE_RESOURCE_ROUTES: Record<string, string> = {
+  replenishment_plan: "replenishment-plans",
+  purchase_order: "purchase-orders",
+  goods_receipt: "goods-receipts",
+  sales_order: "sales-orders",
+  stock_reservation: "stock-reservations",
+  pick_list: "pick-lists",
+  shipment: "shipments",
+  stock_transfer: "stock-transfers",
+  stock_level: "stock-levels",
+}
+
 function recordHref(resource: string, row: WarehouseRow): string {
   const id = recordId(row)
-  return id ? `/resources/warehouse/${resource}/${id}` : `/resources/warehouse/${resource}`
+  const route = WAREHOUSE_RESOURCE_ROUTES[resource] || resource.replace(/_/g, "-")
+  return id ? `/warehouse/${route}/${id}` : `/warehouse/${route}`
 }
 
 function statusLabel(status: string): string {
@@ -367,8 +380,8 @@ export default function WarehousePage() {
       title: "Reposição",
       description: "Planos para gerar sugestões e criar pedidos de compra.",
       resource: "replenishment_plan",
-      href: "/resources/warehouse/replenishment_plan",
-      createHref: "/resources/warehouse/replenishment_plan/new",
+      href: "/warehouse/replenishment-plans",
+      createHref: "/warehouse/replenishment-plans/new",
       createLabel: "Criar plano de reposição",
       emptyMessage: "Sem plano de reposição recente.",
       titleFields: ["plan_number", "name", "custom_id"],
@@ -379,8 +392,8 @@ export default function WarehousePage() {
       title: "Compras",
       description: "Pedidos em rascunho antes de abastecer fisicamente.",
       resource: "purchase_order",
-      href: "/resources/warehouse/purchase_order",
-      createHref: "/resources/warehouse/purchase_order/new",
+      href: "/warehouse/purchase-orders",
+      createHref: "/warehouse/purchase-orders/new",
       createLabel: "Criar pedido de compra",
       emptyMessage: "Sem pedido de compra pendente.",
       titleFields: ["order_number", "name", "custom_id"],
@@ -391,8 +404,8 @@ export default function WarehousePage() {
       title: "Recebimentos",
       description: "Entradas físicas por armazém, localização e lote.",
       resource: "goods_receipt",
-      href: "/resources/warehouse/goods_receipt",
-      createHref: "/resources/warehouse/goods_receipt/new",
+      href: "/warehouse/goods-receipts",
+      createHref: "/warehouse/goods-receipts/new",
       createLabel: "Criar recebimento",
       emptyMessage: "Sem recebimento em rascunho.",
       titleFields: ["receipt_number", "name", "custom_id"],
@@ -403,8 +416,8 @@ export default function WarehousePage() {
       title: "Pedidos confirmados",
       description: "Vendas prontas para reserva, separação e expedição.",
       resource: "sales_order",
-      href: "/resources/warehouse/sales_order",
-      createHref: "/resources/warehouse/sales_order/new",
+      href: "/warehouse/sales-orders",
+      createHref: "/warehouse/sales-orders/new",
       createLabel: "Criar pedido de venda",
       emptyMessage: "Sem pedido confirmado a reservar.",
       titleFields: ["order_number", "name", "custom_id"],
@@ -415,7 +428,7 @@ export default function WarehousePage() {
       title: "Reservas ativas",
       description: "Estoque já comprometido para pedidos de venda.",
       resource: "stock_reservation",
-      href: "/resources/warehouse/stock_reservation",
+      href: "/warehouse/stock-reservations",
       emptyMessage: "Sem reserva ativa.",
       titleFields: ["order_number", "custom_id"],
       detailFields: ["item_sku", "lot_number", "location_code"],
@@ -425,7 +438,7 @@ export default function WarehousePage() {
       title: "Separação",
       description: "Listas abertas para concluir a preparação do pedido.",
       resource: "pick_list",
-      href: "/resources/warehouse/pick_list",
+      href: "/warehouse/pick-lists",
       emptyMessage: "Sem lista de separação aberta.",
       titleFields: ["pick_number", "name", "custom_id"],
       detailFields: ["sales_order", "started_at", "completed_at"],
@@ -435,8 +448,8 @@ export default function WarehousePage() {
       title: "Expedições",
       description: "Documentos em rascunho antes de baixar estoque.",
       resource: "shipment",
-      href: "/resources/warehouse/shipment",
-      createHref: "/resources/warehouse/shipment/new",
+      href: "/warehouse/shipments",
+      createHref: "/warehouse/shipments/new",
       createLabel: "Criar expedição",
       emptyMessage: "Sem expedição em rascunho.",
       titleFields: ["shipment_number", "name", "custom_id"],
@@ -447,8 +460,8 @@ export default function WarehousePage() {
       title: "Transferências",
       description: "Movimentações internas aguardando lançamento.",
       resource: "stock_transfer",
-      href: "/resources/warehouse/stock_transfer",
-      createHref: "/resources/warehouse/stock_transfer/new",
+      href: "/warehouse/stock-transfers",
+      createHref: "/warehouse/stock-transfers/new",
       createLabel: "Criar transferência",
       emptyMessage: "Sem transferência em rascunho.",
       titleFields: ["transfer_number", "name", "custom_id"],
@@ -459,7 +472,7 @@ export default function WarehousePage() {
       title: "Saldos",
       description: "Disponibilidade por item, lote e localização.",
       resource: "stock_level",
-      href: "/resources/warehouse/stock_level",
+      href: "/warehouse/stock-levels",
       emptyMessage: "Sem saldo de estoque visível.",
       titleFields: ["item_sku", "custom_id"],
       detailFields: ["location_code", "lot_number", "quantity"],
@@ -478,7 +491,7 @@ export default function WarehousePage() {
           actions={
             <div className="flex flex-wrap items-center gap-2">
               <Link
-                href="/resources/warehouse"
+                href="/warehouse/stock-levels"
                 className="inline-flex items-center gap-2 rounded-md border border-border bg-card px-3 py-1.5 text-sm font-medium text-foreground shadow-sm transition-all duration-150 hover:border-primary/40 hover:bg-muted hover:shadow-md"
               >
                 <PackageSearch size={16} />
@@ -549,55 +562,55 @@ export default function WarehousePage() {
           <ActionTile
             title="Pedidos de compra"
             description="Planeie abastecimento, custos e fornecedores."
-            href="/resources/warehouse/purchase_order"
+            href="/warehouse/purchase-orders"
             icon={ClipboardList}
           />
           <ActionTile
             title="Recebimentos"
             description="Dê entrada física por armazém, localização e lote."
-            href="/resources/warehouse/goods_receipt"
+            href="/warehouse/goods-receipts"
             icon={PackageCheck}
           />
           <ActionTile
             title="Reposição automática"
             description="Calcule faltas por ponto de reposição e gere compra."
-            href="/resources/warehouse/replenishment_plan"
+            href="/warehouse/replenishment-plans"
             icon={ClipboardCheck}
           />
           <ActionTile
             title="Pedidos de venda"
             description="Registe demanda, confirme e reserve estoque."
-            href="/resources/warehouse/sales_order"
+            href="/warehouse/sales-orders"
             icon={ShoppingCart}
           />
           <ActionTile
             title="Reservas"
             description="Acompanhe estoque prometido antes da expedição."
-            href="/resources/warehouse/stock_reservation"
+            href="/warehouse/stock-reservations"
             icon={ClipboardCheck}
           />
           <ActionTile
             title="Separação"
             description="Gere listas de separação por pedido confirmado."
-            href="/resources/warehouse/pick_list"
+            href="/warehouse/pick-lists"
             icon={PackageSearch}
           />
           <ActionTile
             title="Expedição"
             description="Baixe estoque e feche entregas de clientes."
-            href="/resources/warehouse/shipment"
+            href="/warehouse/shipments"
             icon={Truck}
           />
           <ActionTile
             title="Transferências"
             description="Movimente estoque entre localizações internas."
-            href="/resources/warehouse/stock_transfer"
+            href="/warehouse/stock-transfers"
             icon={Repeat}
           />
           <ActionTile
             title="Saldos e inventário"
             description="Audite disponibilidade, reservas e contagens."
-            href="/resources/warehouse/stock_level"
+            href="/warehouse/stock-levels"
             icon={Boxes}
           />
         </div>

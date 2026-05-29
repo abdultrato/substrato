@@ -1,12 +1,24 @@
 "use client"
 
+import { useEffect, useMemo, useState } from "react"
+
 import { useLanguage } from "@/hooks/useLanguage"
+import { apiFetch } from "@/lib/api"
+import {
+  relationOptionFromRow,
+  relationTargetForField,
+  type RelationTarget,
+} from "@/lib/resources/relationOptions"
 import { fieldLabel, isInternalField } from "@/lib/ui/fieldLabels"
 
 function readableObjectLabel(value: Record<string, any>): string {
   const candidates = [
+    "full_name",
+    "display_name",
     "name",
     "nome",
+    "username",
+    "email",
     "title",
     "titulo",
     "description",
@@ -26,6 +38,23 @@ function readableObjectLabel(value: Record<string, any>): string {
   }
 
   return ""
+}
+
+function relationIdFromScalar(value: any): string | null {
+  if (typeof value === "number") return Number.isFinite(value) ? String(value) : null
+  if (typeof value !== "string") return null
+  const text = value.trim()
+  return /^\d+$/.test(text) ? text : null
+}
+
+function relationLookupKey(fieldName: string, value: any): string | null {
+  const id = relationIdFromScalar(value)
+  return id ? `${fieldName}:${id}` : null
+}
+
+function relationDetailEndpoint(target: RelationTarget, id: string): string {
+  const base = target.endpoint.split("?")[0].replace(/\/?$/, "/")
+  return `${base}${encodeURIComponent(id)}/`
 }
 
 function fmtValue(
@@ -94,25 +123,86 @@ export default function ResourceDetailsCard({
   data: Record<string, any>
 }) {
   const { tr } = useLanguage()
-  const entries = Object.entries(data || {})
-    .filter(([k]) => !isInternalField(k))
-    .filter(([k]) => k !== "tenant" && k !== "created_by" && k !== "updated_by" && k !== "deleted_by")
+  const [relationLabels, setRelationLabels] = useState<Record<string, string>>({})
+  const entries = useMemo(
+    () =>
+      Object.entries(data || {})
+        .filter(([k]) => !isInternalField(k))
+        .filter(([k]) => k !== "tenant" && k !== "created_by" && k !== "updated_by" && k !== "deleted_by"),
+    [data]
+  )
+  const relationLookups = useMemo(
+    () =>
+      entries
+        .map(([fieldName, value]) => {
+          const id = relationIdFromScalar(value)
+          if (!id) return null
+          const target = relationTargetForField(fieldName, endpoint)
+          if (!target) return null
+          return {
+            key: `${fieldName}:${id}`,
+            id,
+            target,
+          }
+        })
+        .filter(Boolean) as Array<{ key: string; id: string; target: RelationTarget }>,
+    [entries, endpoint]
+  )
+
+  useEffect(() => {
+    let mounted = true
+
+    async function loadRelationLabels() {
+      if (!relationLookups.length) {
+        setRelationLabels({})
+        return
+      }
+
+      const loaded: Record<string, string> = {}
+      await Promise.all(
+        relationLookups.map(async ({ key, id, target }) => {
+          try {
+            const row = await apiFetch<Record<string, any>>(relationDetailEndpoint(target, id), {
+              clientCacheTtlMs: 60000,
+            })
+            const option = relationOptionFromRow(row, target)
+            if (option) loaded[key] = option.label
+          } catch {
+            // Keep the original scalar visible when the relation endpoint is unavailable.
+          }
+        })
+      )
+
+      if (mounted) setRelationLabels(loaded)
+    }
+
+    loadRelationLabels().catch(() => {
+      if (mounted) setRelationLabels({})
+    })
+
+    return () => {
+      mounted = false
+    }
+  }, [relationLookups])
 
   return (
     <div className="rounded-lg border border-border bg-card shadow-sm">
       <div className="grid gap-0 divide-y divide-border">
-        {entries.map(([k, v]) => (
-          <div key={k} className="grid grid-cols-1 gap-1 px-4 py-3 transition-colors duration-150 hover:bg-[var(--gray-50)] md:grid-cols-3 md:gap-3">
-            <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              {fieldLabel({ endpoint, name: k })}
-            </div>
-            <div className="md:col-span-2">
-              <div className="whitespace-pre-wrap text-sm text-foreground">
-                {fmtValue(k, v, tr, endpoint)}
+        {entries.map(([k, v]) => {
+          const resolvedLabel = relationLabels[relationLookupKey(k, v) || ""]
+          return (
+            <div key={k} className="grid grid-cols-1 gap-1 px-4 py-3 transition-colors duration-150 hover:bg-[var(--gray-50)] md:grid-cols-3 md:gap-3">
+              <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                {fieldLabel({ endpoint, name: k })}
+              </div>
+              <div className="md:col-span-2">
+                <div className="whitespace-pre-wrap text-sm text-foreground">
+                  {resolvedLabel || fmtValue(k, v, tr, endpoint)}
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          )
+        })}
       </div>
     </div>
   )

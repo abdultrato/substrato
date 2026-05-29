@@ -64,7 +64,7 @@ export default function SurgicalProceduresPage() {
                 header: "Código",
                 render: (p: ProcedureRow) => (
                     <Link
-                        href={`/resources/surgery/surgical_procedure/${p.id}`}
+                        href={`/surgery/surgical-procedures/${p.id}`}
                         className="font-medium text-[var(--text)] underline decoration-[var(--border)] underline-offset-2 hover:decoration-[var(--gray-300)]"
                     >
                         {p.id_custom || p.id || "-"}
@@ -86,13 +86,13 @@ export default function SurgicalProceduresPage() {
                     actions={
                         <div className="flex flex-wrap items-center gap-2">
                             <Link
-                                href="/resources/surgery/surgical_procedure/new"
+                                href="/surgery/surgical-procedures/new"
                                 className="inline-flex items-center rounded-xl bg-[var(--primary-600)] px-3 py-1.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[var(--primary-700)]"
                             >
                                 Criar procedimento cirúrgico
                             </Link>
                             <Link
-                                href="/resources/surgery/surgical_procedure"
+                                href="/surgery/surgical-procedures"
                                 className="inline-flex items-center rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-1.5 text-sm font-medium text-[var(--gray-700)] shadow-sm transition hover:bg-[var(--gray-100)]"
                             >
                                 Gerenciamento

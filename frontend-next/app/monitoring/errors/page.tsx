@@ -217,7 +217,7 @@ export default function MonitoringErrorsPage() {
           const custom = pick<string>(row, ["custom_id", "id_custom"], String(id))
           return (
             <Link
-              href={`/resources/monitoring/error/${id}`}
+              href={`/monitoring/errors/${id}`}
               className="font-medium text-[var(--text)] underline decoration-[var(--border)] underline-offset-2 hover:decoration-[var(--gray-300)]"
             >
               {custom || id}

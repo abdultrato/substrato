@@ -92,7 +92,7 @@ export default function ProntuarioPage() {
                     <ActionTile
                         title="Criar Cardex"
                         description="Criar registro de cardex para um paciente."
-                        href="/resources/medical-records/registro/new"
+                        href="/medical-records/records/new"
                         icon={PlusCircle}
                     />
                     <ActionTile
@@ -104,7 +104,7 @@ export default function ProntuarioPage() {
                     <ActionTile
                         title="Gerenciamento (API)"
                         description="Acesso direto à interface genérica do prontuário."
-                        href="/resources/medical-records"
+                        href="/medical-records/records"
                         icon={ClipboardList}
                     />
                 </div>

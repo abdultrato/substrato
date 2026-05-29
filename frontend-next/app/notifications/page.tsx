@@ -92,7 +92,7 @@ export default function NotificacoesPage() {
                     <ActionTile
                         title="Gerenciamento (API)"
                         description="Acesso direto à interface genérica do módulo."
-                        href="/resources/notifications"
+                        href="/notifications/notifications"
                         icon={ClipboardList}
                     />
                 </div>

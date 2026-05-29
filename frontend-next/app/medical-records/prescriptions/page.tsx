@@ -64,7 +64,7 @@ export default function ProntuarioPrescricoesPage() {
                 header: "Código",
                 render: (r: PrescricaoItemRow) => (
                     <Link
-                        href={`/resources/medical-records/prescricaoitem/${r.id}`}
+                        href={`/medical-records/prescription-items/${r.id}`}
                         className="font-medium text-[var(--text)] underline decoration-[var(--border)] underline-offset-2 hover:decoration-[var(--gray-300)]"
                     >
                         {r.id_custom || r.id || "-"}
@@ -105,13 +105,13 @@ export default function ProntuarioPrescricoesPage() {
                     actions={
                         <div className="flex flex-wrap items-center gap-2">
                             <Link
-                                href="/resources/medical-records/prescricaoitem/new"
+                                href="/medical-records/prescription-items/new"
                                 className="inline-flex items-center rounded-xl bg-[var(--primary-600)] px-3 py-1.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[var(--primary-700)]"
                             >
                                 Criar item de prescrição
                             </Link>
                             <Link
-                                href="/resources/medical-records/prescricaoitem"
+                                href="/medical-records/prescription-items"
                                 className="inline-flex items-center rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-1.5 text-sm font-medium text-[var(--gray-700)] shadow-sm transition hover:bg-[var(--gray-100)]"
                             >
                                 Gerenciamento

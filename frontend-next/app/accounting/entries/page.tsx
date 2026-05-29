@@ -71,7 +71,7 @@ export default function ContabilidadeLancamentosPage() {
         header: "Código",
         render: (l: LancamentoRow) => (
           <Link
-            href={`/resources/accounting/entry/${l.id}`}
+            href={`/accounting/entries/${l.id}`}
             className="font-medium text-[var(--text)] underline decoration-[var(--border)] underline-offset-2 hover:decoration-[var(--gray-300)]"
           >
             {l.id_custom || l.id || "-"}
@@ -100,13 +100,13 @@ export default function ContabilidadeLancamentosPage() {
           actions={
             <div className="flex flex-wrap items-center gap-2">
               <Link
-                href="/resources/accounting/entry/new"
+                href="/accounting/entries/new"
                 className="inline-flex items-center rounded-xl bg-[var(--primary-600)] px-3 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[var(--primary-700)]"
               >
                 Criar lançamento
               </Link>
               <Link
-                href="/resources/accounting/lancamento"
+                href="/accounting/entries"
                 className="inline-flex items-center rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-sm font-medium text-[var(--gray-700)] shadow-sm transition hover:bg-[var(--gray-100)]"
               >
                 CRUD

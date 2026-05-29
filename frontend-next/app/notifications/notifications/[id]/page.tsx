@@ -3,10 +3,10 @@
 import { Suspense } from "react";
 import { GeneratedResourceDetailPage } from "@/components/resources/GeneratedResourcePages";
 
-export default function NotificationsDetailPage() {
+export default function NotificationsNotificationsDetailPage() {
   return (
     <Suspense fallback={<div className="p-4 text-sm text-[var(--gray-500)]">Carregando...</div>}>
-      <GeneratedResourceDetailPage endpoint="/notifications/notifications/" />
+      <GeneratedResourceDetailPage endpoint="/notifications/notification/" />
     </Suspense>
   );
 }

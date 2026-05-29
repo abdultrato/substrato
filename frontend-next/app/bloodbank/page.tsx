@@ -62,22 +62,31 @@ export default function BloodBankPage() {
     {
       key: "stock_movement",
       label: "Criar movimento de sangue",
-      href: "/resources/bloodbank/stock_movement/new",
+      href: "/bloodbank/blood-stock-movements/new",
       description: "Entrada, saida, transferencia, reserva, liberacao, descarte e ajustes.",
     },
     {
       key: "transfusion",
       label: "Criar transfusão",
-      href: "/resources/bloodbank/transfusion/new",
+      href: "/bloodbank/blood-transfusions/new",
       description: "Solicitacao e execucao de transfusao com validacoes clinicas.",
     },
     {
       key: "storage_maintenance",
       label: "Criar manutenção",
-      href: "/resources/bloodbank/storage_maintenance/new",
+      href: "/bloodbank/blood-storage-maintenances/new",
       description: "Plano preventivo/corretivo e registo de execucao tecnica.",
     },
   ]
+
+  const resourceRoutes: Record<string, string> = {
+    donation: "/bloodbank/blood-donations",
+    unit: "/bloodbank/blood-units",
+    transfusion: "/bloodbank/blood-transfusions",
+    storage: "/bloodbank/blood-storages",
+    stock_movement: "/bloodbank/blood-stock-movements",
+    storage_maintenance: "/bloodbank/blood-storage-maintenances",
+  }
 
   return (
     <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.LABORATORIO]}>
@@ -105,7 +114,7 @@ export default function BloodBankPage() {
                 key={resource.key}
                 title={resource.label}
                 description={tiles[resource.key]?.description || "Abrir lista e criar novos registros."}
-                href={`/resources/${group.key}/${resource.key}`}
+                href={resourceRoutes[resource.key] || "/bloodbank"}
                 icon={tiles[resource.key]?.icon || Droplet}
               />
             ))

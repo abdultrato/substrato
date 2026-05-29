@@ -25,7 +25,7 @@ export default function RecursosGrupoPage() {
   const moduleGroup = findModuleGroup(groupKey, modules)
   const requiredGroups = requiredGroupsForResourceGroup(groupKey)
   const podeVerIndice = userHasAnyGroup(user, [GROUPS.ADMIN])
-  const hrefVoltar = podeVerIndice ? "/resources" : "/"
+  const hrefVoltar = podeVerIndice ? "/workspaces" : "/"
 
   if (loading) return null
 

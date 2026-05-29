@@ -92,13 +92,13 @@ export default function SurgeryPage() {
                     <ActionTile
                         title="Pequenas cirurgias"
                         description="Listar e gerir pequenas cirurgias (CRUD)."
-                        href="/resources/surgery/small_surgery"
+                        href="/surgery/small-surgeries"
                         icon={Scissors}
                     />
                     <ActionTile
                         title="Grandes cirurgias"
                         description="Listar e gerir grandes cirurgias (CRUD)."
-                        href="/resources/surgery/large_surgery"
+                        href="/surgery/large-surgeries"
                         icon={ClipboardList}
                     />
                     <ActionTile
@@ -110,7 +110,7 @@ export default function SurgeryPage() {
                     <ActionTile
                         title="Gerenciamento (API)"
                         description="Acesso direto à interface genérica do módulo."
-                        href="/resources/surgery"
+                        href="/surgery/surgeries"
                         icon={ClipboardList}
                     />
                 </div>

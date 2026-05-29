@@ -85,13 +85,13 @@ export default function MaternidadePage() {
                     <ActionTile
                         title="Criar gestação"
                         description="Criar um registo de gestação para um paciente."
-                        href="/resources/maternity/gestacao/new"
+                        href="/maternity/pregnancies/new"
                         icon={PlusCircle}
                     />
                     <ActionTile
                         title="CRUD (API)"
                         description="Acesso direto ao CRUD genérico deste módulo."
-                        href="/resources/maternity/gestacao"
+                        href="/maternity/pregnancies"
                         icon={ClipboardList}
                     />
                     <ActionTile

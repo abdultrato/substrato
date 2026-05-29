@@ -41,6 +41,12 @@ class MedicalConsultation(NoNameCoreModel):
         WEEKEND = "FIM_SEMANA", "Fim de semana"
         MANUAL_HOLIDAY = "FERIADO_MANUAL", "Feriado (marcado)"
 
+    class ConsultationType(models.TextChoices):
+        IN_PERSON = "IN_PERSON", "Presencial"
+        TELEMEDICINE = "TELEMEDICINE", "Telemedicina"
+        ASYNC = "ASYNC", "Assíncrona"
+        REMOTE_MONITORING = "REMOTE_MONITORING", "Monitoramento remoto"
+
     patient = models.ForeignKey(
 
         "clinical.Patient",
@@ -80,6 +86,14 @@ class MedicalConsultation(NoNameCoreModel):
         db_column="type",
 
          max_length=120, db_index=True)
+    consultation_type = models.CharField(
+        "Modalidade da consulta",
+        db_column="consultation_type",
+        max_length=24,
+        choices=ConsultationType.choices,
+        default=ConsultationType.IN_PERSON,
+        db_index=True,
+    )
     description = models.TextField("Descrição",
         db_column="description",
          blank=True, default="")
@@ -145,6 +159,7 @@ class MedicalConsultation(NoNameCoreModel):
             models.Index(fields=["tenant", "doctor", "scheduled_for"]),
             models.Index(fields=["tenant", "status", "scheduled_for"]),
             models.Index(fields=["tenant", "type"]),
+            models.Index(fields=["tenant", "consultation_type", "scheduled_for"]),
         ]
 
     def clean(self):
@@ -236,4 +251,3 @@ class MedicalConsultation(NoNameCoreModel):
 
     def __str__(self) -> str:
         return f"{self.custom_id} - {self.patient.name} ({self.type})"
-

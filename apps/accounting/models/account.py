@@ -16,7 +16,6 @@ class Account(CoreModel):
     Tipo = TipoConta
 
     type = models.CharField(
-        "Tipo de account",  # Rótulo traduzido
         db_column="type",  # Nome da coluna
         max_length=3,  # Tamanho do código
         choices=TipoConta.choices,  # Limita aos tipos válidos

@@ -20,7 +20,7 @@ class LegacyEntry(CoreModel):
         default="",
     )
     date = models.DateField(
-        "Data",  # Rótulo
+        "Data da transação",  # Rótulo
         db_column="date",  # Coluna
         default=timezone.localdate,  # Data padrão = hoje
         db_index=True,

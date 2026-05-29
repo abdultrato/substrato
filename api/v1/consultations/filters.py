@@ -12,6 +12,7 @@ class MedicalConsultationFilter(SafeFilterSet):
             "patient",
             "doctor",
             "type",
+            "consultation_type",
             "status",
             "schedule_type",
             "manual_holiday",

@@ -7,6 +7,8 @@ const HEALTHCARE_SWITCH_PATH_PREFIX = "/healthcare"
 const NEUTRAL_PATH_PREFIXES = [
   "/workspaces",
   "/warehouse",
+  "/transportation",
+  "/credit-financing",
   "/resources",
   "/modules",
   "/ai",
@@ -70,6 +72,8 @@ export function resolveWorkspaceScope(pathname: string, storedScope: WorkspaceSc
   if (isPrefixMatch(normalized, EDUCATION_PATH_PREFIX)) return "education"
   if (isPrefixMatch(normalized, HEALTHCARE_SWITCH_PATH_PREFIX)) return "healthcare"
   if (isPrefixMatch(normalized, "/warehouse")) return "neutral"
+  if (isPrefixMatch(normalized, "/transportation")) return "neutral"
+  if (isPrefixMatch(normalized, "/credit-financing")) return "neutral"
 
   // For all other routes, preserve selected workspace when available.
   if (storedScope === "education" || storedScope === "healthcare") return storedScope

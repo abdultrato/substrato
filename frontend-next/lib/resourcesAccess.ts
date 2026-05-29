@@ -12,6 +12,68 @@ export function requiredGroupsForResourceGroup(groupKey: string): string[] {
         GROUPS.MEDICINA,
         GROUPS.MEDICINA_OCUPACIONAL,
       ]
+    case "clinical_pharmacy":
+      return [GROUPS.ADMIN, GROUPS.RECEPCAO, GROUPS.MEDICINA, GROUPS.MEDICINA_OCUPACIONAL, GROUPS.FARMACIA, GROUPS.FARMACIA_CLINICA]
+    case "credit_financing":
+      return [
+        GROUPS.ADMIN,
+        GROUPS.RECEPCAO,
+        GROUPS.CONTABILIDADE,
+        GROUPS.MEDICINA,
+        GROUPS.MEDICINA_OCUPACIONAL,
+        GROUPS.DIRETOR_ESCOLA,
+        GROUPS.DIRETOR_ADJUNTO_PEDAGOGICO,
+        GROUPS.CREDITO_FINANCIAMENTO,
+      ]
+    case "telemedicine":
+      return [
+        GROUPS.ADMIN,
+        GROUPS.RECEPCAO,
+        GROUPS.MEDICINA,
+        GROUPS.MEDICINA_OCUPACIONAL,
+        GROUPS.ENFERMAGEM,
+        GROUPS.TELEMEDICINA,
+      ]
+    case "public_health":
+      return [
+        GROUPS.ADMIN,
+        GROUPS.RECEPCAO,
+        GROUPS.MEDICINA,
+        GROUPS.MEDICINA_OCUPACIONAL,
+        GROUPS.ENFERMAGEM,
+        GROUPS.LABORATORIO,
+        GROUPS.SAUDE_PUBLICA,
+      ]
+    case "dental":
+      return [GROUPS.ADMIN, GROUPS.RECEPCAO, GROUPS.MEDICINA, GROUPS.MEDICINA_OCUPACIONAL, GROUPS.ODONTOLOGIA]
+    case "veterinary":
+      return [GROUPS.ADMIN, GROUPS.RECEPCAO, GROUPS.MEDICINA, GROUPS.VETERINARIA]
+    case "physiotherapy":
+      return [GROUPS.ADMIN, GROUPS.RECEPCAO, GROUPS.MEDICINA, GROUPS.MEDICINA_OCUPACIONAL, GROUPS.FISIOTERAPIA]
+    case "radiology":
+      return [GROUPS.ADMIN, GROUPS.RECEPCAO, GROUPS.LABORATORIO, GROUPS.MEDICINA, GROUPS.MEDICINA_OCUPACIONAL, GROUPS.RADIOLOGIA]
+    case "specialty_diagnostics":
+      return [
+        GROUPS.ADMIN,
+        GROUPS.RECEPCAO,
+        GROUPS.MEDICINA,
+        GROUPS.MEDICINA_OCUPACIONAL,
+        GROUPS.CARDIOLOGIA,
+        GROUPS.NEUROLOGIA,
+        GROUPS.OFTALMOLOGIA,
+      ]
+    case "therapy":
+      return [
+        GROUPS.ADMIN,
+        GROUPS.RECEPCAO,
+        GROUPS.MEDICINA,
+        GROUPS.MEDICINA_OCUPACIONAL,
+        GROUPS.FISIOTERAPIA,
+        GROUPS.TERAPIA_OCUPACIONAL,
+        GROUPS.FONOAUDIOLOGIA,
+      ]
+    case "transportation":
+      return [GROUPS.ADMIN, GROUPS.LOGISTICA, GROUPS.MANUTENCAO, GROUPS.CONTABILIDADE, GROUPS.RECURSOS_HUMANOS]
     case "reception":
       return [GROUPS.ADMIN, GROUPS.RECEPCAO]
     case "billing":

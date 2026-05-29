@@ -57,7 +57,7 @@ export default function ContabilidadeConciliacoesPage() {
         header: "Código",
         render: (c: ConciliacaoRow) => (
           <Link
-            href={`/resources/accounting/financialreconciliation/${c.id}`}
+            href={`/accounting/reconciliations/${c.id}`}
             className="font-medium text-[var(--text)] underline decoration-[var(--border)] underline-offset-2 hover:decoration-[var(--gray-300)]"
           >
             {c.id_custom || c.id || "-"}
@@ -85,13 +85,13 @@ export default function ContabilidadeConciliacoesPage() {
           actions={
             <div className="flex flex-wrap items-center gap-2">
               <Link
-                href="/resources/accounting/financialreconciliation/new"
+                href="/accounting/reconciliations/new"
                 className="inline-flex items-center rounded-xl bg-[var(--primary-600)] px-3 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[var(--primary-700)]"
               >
                 Criar conciliação
               </Link>
               <Link
-                href="/resources/accounting/conciliacaofinanceira"
+                href="/accounting/reconciliations"
                 className="inline-flex items-center rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-sm font-medium text-[var(--gray-700)] shadow-sm transition hover:bg-[var(--gray-100)]"
               >
                 CRUD

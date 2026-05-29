@@ -139,7 +139,7 @@ export default function ContabilidadePage() {
           <ActionTile
             title="Pagamentos"
             description="Lançar e auditar pagamentos (sem redirecionar ao admin)."
-            href="/resources/payments/pagamento"
+            href="/payments/payments"
             icon={ClipboardList}
           />
         </div>

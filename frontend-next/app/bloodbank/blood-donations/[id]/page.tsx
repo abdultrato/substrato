@@ -3,10 +3,10 @@
 import { Suspense } from "react";
 import { GeneratedResourceDetailPage } from "@/components/resources/GeneratedResourcePages";
 
-export default function BloodDonationsDetailPage() {
+export default function BloodbankBloodDonationsDetailPage() {
   return (
     <Suspense fallback={<div className="p-4 text-sm text-[var(--gray-500)]">Carregando...</div>}>
-      <GeneratedResourceDetailPage endpoint="/bloodbank/blood-donations/" />
+      <GeneratedResourceDetailPage endpoint="/bloodbank/donation/" />
     </Suspense>
   );
 }

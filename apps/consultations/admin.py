@@ -40,6 +40,7 @@ class MedicalConsultationAdmin(CoreAdmin):
         "doctor",
         "specialty",
         "type",
+        "consultation_type",
         "status",
         "price",
         "schedule_type",
@@ -47,7 +48,7 @@ class MedicalConsultationAdmin(CoreAdmin):
         "cardex_count",
         "historia_clinica_api",
     )
-    list_filter = ("status", "schedule_type", "manual_holiday", "type")
+    list_filter = ("status", "consultation_type", "schedule_type", "manual_holiday", "type")
     search_fields = ("type", "patient__name", "doctor__name")
     ordering = ("-scheduled_for", "-created_at")
 

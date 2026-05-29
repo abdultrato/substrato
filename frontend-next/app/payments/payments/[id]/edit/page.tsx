@@ -3,10 +3,10 @@
 import { Suspense } from "react";
 import { GeneratedResourceEditPage } from "@/components/resources/GeneratedResourcePages";
 
-export default function PaymentsEditPage() {
+export default function PaymentsPaymentsEditPage() {
   return (
     <Suspense fallback={<div className="p-4 text-sm text-[var(--gray-500)]">Carregando...</div>}>
-      <GeneratedResourceEditPage endpoint="/payments/payments/" />
+      <GeneratedResourceEditPage endpoint="/payments/payment/" />
     </Suspense>
   );
 }

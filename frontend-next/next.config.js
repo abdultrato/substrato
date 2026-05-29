@@ -27,25 +27,25 @@ module.exports = (phase) => {
   const isDevelopment = phase === PHASE_DEVELOPMENT_SERVER
   const csp = buildCsp(isDevelopment)
   const retiredGeneratedRoutes = [
-    { source: "/accounting/account-balances/:path*", destination: "/resources/accounting/" },
-    { source: "/accounting/ledger-lines/:path*", destination: "/resources/accounting/" },
-    { source: "/ai_assistant/ai-knowledge-entries/:path*", destination: "/resources/ai_assistant/" },
-    { source: "/ai_assistant/ai-messages/:path*", destination: "/resources/ai_assistant/" },
-    { source: "/ai_assistant/ai-policy-events/:path*", destination: "/resources/ai_assistant/" },
-    { source: "/ai_assistant/ai-suggested-actions/:path*", destination: "/resources/ai_assistant/" },
-    { source: "/ai_assistant/ai-tool-calls/:path*", destination: "/resources/ai_assistant/" },
-    { source: "/clinical/clinical-events/:path*", destination: "/resources/clinical/" },
-    { source: "/clinical/clinical-histories/:path*", destination: "/resources/clinical/" },
-    { source: "/clinical/clinical-references/:path*", destination: "/resources/clinical/" },
-    { source: "/monitoring/transactional-outbox-events/:path*", destination: "/resources/monitoring/" },
-    { source: "/payments/payment-histories/:path*", destination: "/resources/payments/" },
-    { source: "/pharmacy/parent-categories/:path*", destination: "/resources/pharmacy/" },
-    { source: "/pharmacy/product-categories/:path*", destination: "/resources/pharmacy/" },
-    { source: "/tenants/tenant-subscriptions/:path*", destination: "/resources/tenants/" },
+    { source: "/accounting/account-balances/:path*", destination: "/accounting/accounts/" },
+    { source: "/accounting/ledger-lines/:path*", destination: "/accounting/ledger-entries/" },
+    { source: "/ai_assistant/ai-knowledge-entries/:path*", destination: "/ai/" },
+    { source: "/ai_assistant/ai-messages/:path*", destination: "/ai/" },
+    { source: "/ai_assistant/ai-policy-events/:path*", destination: "/ai/" },
+    { source: "/ai_assistant/ai-suggested-actions/:path*", destination: "/ai/" },
+    { source: "/ai_assistant/ai-tool-calls/:path*", destination: "/ai/" },
+    { source: "/clinical/clinical-events/:path*", destination: "/healthcare/" },
+    { source: "/clinical/clinical-histories/:path*", destination: "/clinical/patients/" },
+    { source: "/clinical/clinical-references/:path*", destination: "/healthcare/" },
+    { source: "/monitoring/transactional-outbox-events/:path*", destination: "/monitoring/errors/" },
+    { source: "/payments/payment-histories/:path*", destination: "/payments/payments/" },
+    { source: "/pharmacy/parent-categories/:path*", destination: "/pharmacy/products/" },
+    { source: "/pharmacy/product-categories/:path*", destination: "/pharmacy/products/" },
+    { source: "/tenants/tenant-subscriptions/:path*", destination: "/tenants/tenants/" },
   ]
   const legacyRouteAliases = [
-    { source: "/modules", destination: "/resources" },
-    { source: "/modules/:path*", destination: "/resources/:path*" },
+    { source: "/modules", destination: "/workspaces" },
+    { source: "/modules/:path*", destination: "/workspaces" },
   ]
   const collectionOnlyGeneratedRoutes = [
     { source: "/ai_assistant/ai-investigations/new", destination: "/ai_assistant/ai-investigations/" },
