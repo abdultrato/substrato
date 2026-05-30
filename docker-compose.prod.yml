@@ -39,6 +39,9 @@ services:
       OTEL_ENABLED: ${OTEL_ENABLED:-false}
       OTEL_SERVICE_NAME: ${OTEL_SERVICE_NAME:-substrato-backend}
       OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://otel_collector:4318}
+      ASGI_WORKERS: ${ASGI_WORKERS:-3}
+      ASGI_KEEPALIVE_TIMEOUT: ${ASGI_KEEPALIVE_TIMEOUT:-30}
+      ASGI_FORWARDED_ALLOW_IPS: ${ASGI_FORWARDED_ALLOW_IPS:-*}
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.backend.rule=Host(`${API_DOMAIN}`)"

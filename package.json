@@ -2,8 +2,8 @@
   "scripts": {
     "dev": "npm --prefix frontend-next run dev",
     "dev:frontend": "npm --prefix frontend-next run dev",
-    "dev:backend": "python manage.py runserver 0.0.0.0:8000",
-    "dev:full": "concurrently -k -n django,next \"python manage.py runserver 0.0.0.0:8000\" \"npm --prefix frontend-next run dev\"",
+    "dev:backend": "python -m uvicorn platform.asgi:application --host 0.0.0.0 --port 8000 --reload",
+    "dev:full": "concurrently -k -n django,next \"python -m uvicorn platform.asgi:application --host 0.0.0.0 --port 8000 --reload\" \"npm --prefix frontend-next run dev\"",
     "test:frontend": "npm --prefix frontend-next test -- --run",
     "quality:phase1": "python scripts/phase1_quality_gate.py",
     "quality:full": "python scripts/phase1_quality_gate.py --full",

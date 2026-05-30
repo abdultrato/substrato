@@ -122,12 +122,15 @@ services:
       dockerfile: Dockerfile
     container_name: substrato_backend
     entrypoint: /app/entrypoint.sh
-    command: gunicorn platform.wsgi:application --bind 0.0.0.0:8000 --workers 4 --timeout 120 --access-logfile - --error-logfile -
+    command: python -m uvicorn platform.asgi:application --host 0.0.0.0 --port 8000 --workers ${ASGI_WORKERS:-4} --timeout-keep-alive ${ASGI_KEEPALIVE_TIMEOUT:-30} --proxy-headers --forwarded-allow-ips=${ASGI_FORWARDED_ALLOW_IPS:-*}
     environment:
       DJANGO_ENV: development
       DJANGO_SETTINGS_MODULE: platform.settings.development
       DJANGO_DEBUG: "True"
       SKIP_MIGRATIONS: "1"
+      ASGI_WORKERS: "${ASGI_WORKERS:-4}"
+      ASGI_KEEPALIVE_TIMEOUT: "${ASGI_KEEPALIVE_TIMEOUT:-30}"
+      ASGI_FORWARDED_ALLOW_IPS: "${ASGI_FORWARDED_ALLOW_IPS:-*}"
 
       DJANGO_SECRET_KEY: dev-insecure-key-change-in-production
       DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1,backend,0.0.0.0

@@ -74,6 +74,14 @@ Configurações principais:
 - Tarefas idempotentes são preferíveis; quando não forem, documentar porquê.
 - Evitar side effects irreversíveis sem registo de auditoria.
 
+## ASGI e concorrência HTTP
+
+- O backend deve ser servido por `python -m uvicorn platform.asgi:application` em desenvolvimento, Docker e produção.
+- `platform/wsgi.py` fica disponível só para compatibilidade com ferramentas antigas.
+- `ASGI_WORKERS` define processos concorrentes; dentro de cada processo, o event loop ASGI suporta várias ligações simultâneas de I/O.
+- ASGI melhora concorrência HTTP e prepara streaming/eventos, mas tarefas longas continuam em Celery para não prender workers.
+- Qualquer WebSocket, Server-Sent Events ou consumer persistente deve validar JWT/RBAC, tenant e auditoria antes de entrar em produção beta.
+
 ## Ficheiros, PDFs e media
 
 - `MEDIA_ROOT` recebe ficheiros carregados/gerados.

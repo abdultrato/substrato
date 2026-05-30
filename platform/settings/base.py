@@ -21,6 +21,7 @@ load_dotenv(BASE_DIR / ".env.staging", override=False)
 
 ROOT_URLCONF = "platform.urls"
 WSGI_APPLICATION = "platform.wsgi.application"
+ASGI_APPLICATION = "platform.asgi.application"
 
 
 def get_env(name, default=None, required=False):

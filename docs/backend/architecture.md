@@ -2,7 +2,7 @@
 
 Actualizado: 2026-05-25
 
-O backend do Substrato é uma aplicação Django 4.2 com Django REST Framework, JWT, RBAC, multi-tenant, Celery, Redis opcional, PostgreSQL como base recomendada e fallback local para SQLite em desenvolvimento. A arquitectura mistura módulos Django maduros com camadas adicionais (`domain/`, `application/`, `services/`, `infrastructure/`) para separar regra de negócio, orquestração e adaptação técnica.
+O backend do Substrato é uma aplicação Django 4.2 com Django REST Framework, runtime ASGI/Uvicorn, JWT, RBAC, multi-tenant, Celery, Redis opcional, PostgreSQL como base recomendada e fallback local para SQLite em desenvolvimento. A arquitectura mistura módulos Django maduros com camadas adicionais (`domain/`, `application/`, `services/`, `infrastructure/`) para separar regra de negócio, orquestração e adaptação técnica.
 
 ## Princípios
 
@@ -40,6 +40,22 @@ O backend do Substrato é uma aplicação Django 4.2 com Django REST Framework, 
 7. O serializer normaliza aliases, valida payload, aplica `full_clean` quando configurado e devolve representação estável.
 8. Serviços de domínio executam regras, transacções e side effects quando o caso de uso não é CRUD trivial.
 9. A resposta passa pelo exception handler e pelos middlewares de auditoria/observabilidade.
+
+## Runtime ASGI
+
+O runtime HTTP operacional é ASGI através de `platform/asgi.py` e Uvicorn. `platform/wsgi.py` permanece apenas como compatibilidade para ferramentas legadas, mas Docker, Compose, scripts locais e produção devem arrancar com:
+
+```bash
+python -m uvicorn platform.asgi:application --host 0.0.0.0 --port 8000
+```
+
+Regras de operação:
+
+- `ASGI_APPLICATION = "platform.asgi.application"` é o contrato Django.
+- `ASGI_WORKERS` controla o número de processos Uvicorn em produção.
+- Cada worker ASGI consegue manter várias ligações concorrentes no mesmo event loop, útil para I/O, streaming e futuras integrações de eventos.
+- Workloads longos, PDFs, exportações e processamento pesado continuam fora da request em Celery; ASGI não substitui filas de trabalho.
+- WebSockets ou consumers persistentes só devem ser adicionados com contrato explícito, autenticação, tenant scope e teste de carga.
 
 ## Configuração Django
 

@@ -14,15 +14,19 @@ if [[ "${RUN_MIGRATIONS_ON_START:-1}" == "1" ]]; then
   python scripts/migrate_with_lock.py
 fi
 
-# Start Django (gunicorn) on port 8000 in the background.
+# Start Django ASGI on port 8000 in the background.
 # Next.js will proxy /api, /admin, /pdf, /static, /media to it.
-gunicorn platform.wsgi:application \
-  --bind "${DJANGO_BIND:-127.0.0.1:8000}" \
-  --workers "${DJANGO_WORKERS:-2}" \
-  --threads "${DJANGO_THREADS:-4}" \
-  --timeout "${DJANGO_TIMEOUT:-120}" \
-  --access-logfile - \
-  --error-logfile - &
+DJANGO_BIND="${DJANGO_BIND:-127.0.0.1:8000}"
+DJANGO_HOST="${DJANGO_BIND%:*}"
+DJANGO_PORT="${DJANGO_BIND##*:}"
+
+python -m uvicorn platform.asgi:application \
+  --host "$DJANGO_HOST" \
+  --port "$DJANGO_PORT" \
+  --workers "${ASGI_WORKERS:-2}" \
+  --timeout-keep-alive "${ASGI_KEEPALIVE_TIMEOUT:-30}" \
+  --proxy-headers \
+  --forwarded-allow-ips "${ASGI_FORWARDED_ALLOW_IPS:-*}" &
 
 DJANGO_PID=$!
 

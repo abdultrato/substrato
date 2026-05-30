@@ -1,4 +1,4 @@
-"""ASGI entrypoint para a aplicação Django."""
+"""ASGI entrypoint para o runtime HTTP concorrente do Substrato."""
 
 # ruff: noqa: I001
 import os

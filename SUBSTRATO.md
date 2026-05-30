@@ -153,7 +153,7 @@ Cliente Web (Next.js) ──────► API DRF (Django)
 
 Persistência: Postgres
 Cache/Filas: Redis
-Serviço HTTP: gunicorn + nginx/traefik (prod)
+Serviço HTTP: ASGI/Uvicorn + nginx/traefik (prod)
 ```
 
 ### Tenancy
@@ -192,7 +192,7 @@ python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 python manage.py migrate
-python manage.py runserver
+python -m uvicorn platform.asgi:application --host 0.0.0.0 --port 8000 --reload
 ```
 Variáveis (.env local):
 - `DJANGO_SECRET_KEY`, `DJANGO_DEBUG=True`, `DJANGO_ALLOWED_HOSTS=127.0.0.1,localhost`
@@ -2769,8 +2769,8 @@ REST_FRAMEWORK = {
 ### Integration Test 2: Manual curl Test
 
 ```bash
-# Start Django
-python manage.py runserver &
+# Start Django ASGI
+python -m uvicorn platform.asgi:application --host 127.0.0.1 --port 8000 &
 DJANGO_PID=$!
 
 sleep 3
@@ -5409,8 +5409,8 @@ REST_FRAMEWORK = {
 
 **Teste rápido:**
 ```bash
-# Terminal 1: Inicie o Django
-python manage.py runserver
+# Terminal 1: Inicie o Django ASGI
+python -m uvicorn platform.asgi:application --host 127.0.0.1 --port 8000
 
 # Terminal 2: Teste validação
 curl -X POST http://localhost:8000/api/v1/pacientes/ \
@@ -11187,4 +11187,3 @@ Fonte de verdade para alinhar frontend <-> backend.
 | percentual_override | DecimalField | nao |  | 0 |
 | plano_global | ForeignKey | sim | fk:seguradora.PlanoCobertura | 0 |
 | versao | PositiveIntegerField | sim |  | 0 |
-

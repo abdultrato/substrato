@@ -5,7 +5,7 @@ Padronizar rotina diária e resposta a incidentes para backend/API, filas assín
 
 ## Pré-requisitos
 - Stack observável ativa (`prometheus`, `grafana`, `alertmanager`, `celery_exporter`).
-- Backend exposto com `/health/ready` e `/metrics`.
+- Backend ASGI exposto com `/health/ready` e `/metrics`.
 - Worker Celery ativo.
 
 ## Rotina diária (N1)
@@ -32,8 +32,15 @@ Padronizar rotina diária e resposta a incidentes para backend/API, filas assín
 ### Latência API alta
 1. Confirmar alertas `ApiLatencyP95Warning` e `ApiLatencyP95Critical`.
 2. Conferir saturação de banco e queries mais lentas.
-3. Acionar cache curto de agregações (`refresh=0`) e reduzir consultas não essenciais.
-4. Se necessário, aplicar mitigação: escalar backend/celery e revalidar em 10 minutos.
+3. Confirmar saturação de workers ASGI (`ASGI_WORKERS`) e ligações concorrentes.
+4. Acionar cache curto de agregações (`refresh=0`) e reduzir consultas não essenciais.
+5. Se necessário, aplicar mitigação: escalar backend/celery e revalidar em 10 minutos.
+
+### Falha do runtime ASGI
+1. Confirmar que o processo foi iniciado com `python -m uvicorn platform.asgi:application`.
+2. Validar variáveis `DJANGO_SETTINGS_MODULE`, `ASGI_WORKERS`, `ASGI_KEEPALIVE_TIMEOUT` e reverse proxy headers.
+3. Testar `curl http://localhost:8000/health/live`.
+4. Se a falha estiver ligada a WebSocket/SSE ou streaming, isolar a rota e manter APIs REST críticas activas.
 
 ### Erro 5xx alto
 1. Confirmar alerta `ApiHigh5xxRate`.

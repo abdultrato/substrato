@@ -76,4 +76,4 @@ HEALTHCHECK CMD curl -f http://localhost:8000/health/live || exit 1
 
 ENTRYPOINT ["/usr/local/bin/substrato-entrypoint.sh"]
 
-CMD gunicorn plataforma.wsgi:application --bind 0.0.0.0:8000 --workers 3 --worker-class gthread --threads 4 --timeout 120 --access-logfile - --error-logfile -
+CMD python -m uvicorn platform.asgi:application --host 0.0.0.0 --port 8000 --workers ${ASGI_WORKERS:-3} --timeout-keep-alive ${ASGI_KEEPALIVE_TIMEOUT:-30} --proxy-headers --forwarded-allow-ips="${ASGI_FORWARDED_ALLOW_IPS:-*}"

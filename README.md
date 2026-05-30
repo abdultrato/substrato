@@ -40,7 +40,7 @@ O Substrato só deve sair de produção beta quando cumprir, no mínimo:
 - **Backoffice e plataforma:** identidade, tenants, RBAC, contabilidade, recursos humanos, notificações, auditoria, monitorização, IA operacional, CI/CD e observabilidade.
 
 ## Stack principal
-- Backend: Django 4.2, Django REST Framework, Postgres, Redis e Celery.
+- Backend: Django 4.2, Django REST Framework, ASGI/Uvicorn, Postgres, Redis e Celery.
 - Frontend: Next.js 15, React 18, TypeScript e Tailwind CSS.
 - Infraestrutura: Docker Compose, Nginx e OpenAPI via DRF Spectacular.
 
@@ -58,7 +58,7 @@ O Substrato só deve sair de produção beta quando cumprir, no mínimo:
 ```bash
 pip install -r requirements.txt
 python manage.py migrate
-python manage.py runserver
+python -m uvicorn platform.asgi:application --host 0.0.0.0 --port 8000 --reload
 ```
 
 ```bash
