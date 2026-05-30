@@ -382,7 +382,7 @@ npm test
 
 **System name:** SUBSTRATO  
 **Acronym / slogan:** SUBS — *Sistema Unificado de Base Sustentável*
-**Identidade do nome:** Substrato combina a ideia de um sistema unificado com base sustentável e a assinatura Trato, apelido do criador do projecto.
+**Identidade do nome:** Substrato significa **Sistema Unificado de Base Sustentável**.
 **Repository type:** Modular monolith (Django + DRF + Celery) with a separate Next.js web frontend  
 **Primary language:** Portuguese (domain terminology, UI), with English-friendly structure in this blueprint  
 **Generated:** 2026-03-15
