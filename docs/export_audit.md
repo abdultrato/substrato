@@ -476,3 +476,21 @@ Para cada endpoint síncrono:
 | Versão | Data       | Mudanças                          |
 | ------ | ---------- | --------------------------------- |
 | 1.0    | 2026-05-20 | Versão inicial com audit completo |
+
+## Alinhamento com beta e produção
+
+**Última revisão documental:** 2026-05-30.
+
+**Propósito no projecto.** Regista o audit de endpoints de exportação para decidir o que migra para jobs assíncronos.
+
+**Valor que protege.** Protege a API contra timeouts, geração bloqueante e relatórios sem ownership.
+
+**Como usar na implementação.**
+1. Ler este documento antes de alterar modelos, serializers, viewsets, tarefas, páginas, contratos ou prompts relacionados.
+2. Confirmar impacto em tenant, RBAC, auditoria, dados sensíveis, jobs assíncronos, PDFs, eventos e experiência do utilizador.
+3. Actualizar testes, schemas, runbooks e documentação no mesmo ciclo da alteração.
+4. Registar dívida técnica remanescente com owner, impacto e prazo.
+
+**Até produção beta.** Deve listar endpoints críticos, risco, prioridade e plano de conversão para tenants piloto.
+
+**Para production-ready.** Exige evidência de migração, métricas de latência, compatibilidade e plano de remoção de legado síncrono.

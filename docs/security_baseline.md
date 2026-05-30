@@ -45,3 +45,21 @@
 2. `python manage.py check --deploy`
 3. Validar `/health/live` e `/health/ready`
 4. Confirmar alertas críticos zerados
+
+## Alinhamento com beta e produção
+
+**Última revisão documental:** 2026-05-30.
+
+**Propósito no projecto.** Define o mínimo de segurança exigido para qualquer ambiente com dados reais.
+
+**Valor que protege.** Protege tenants, dados sensíveis, autenticação, autorização, segredos e superfícies públicas.
+
+**Como usar na implementação.**
+1. Ler este documento antes de alterar modelos, serializers, viewsets, tarefas, páginas, contratos ou prompts relacionados.
+2. Confirmar impacto em tenant, RBAC, auditoria, dados sensíveis, jobs assíncronos, PDFs, eventos e experiência do utilizador.
+3. Actualizar testes, schemas, runbooks e documentação no mesmo ciclo da alteração.
+4. Registar dívida técnica remanescente com owner, impacto e prazo.
+
+**Até produção beta.** Deve bloquear configurações inseguras e validar permissões nos workflows críticos.
+
+**Para production-ready.** Exige hardening, scans contínuos, resposta a incidentes, rotação de credenciais e revisão de acessos.

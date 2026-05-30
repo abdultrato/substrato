@@ -3,7 +3,7 @@ PDF Improvements — Advanced Clinical Document Templates
 
 ✔ Personalized Headers by Document Type
 ✔ Tenant Name as Institution
-✔ Optimized Fonts (Calibri, Segoe with Fallbacks)
+✔ Fontes padronizadas em Helvetica com fallback Arial
 ✔ A5 Optimized Margins & Spacing
 ✔ Transparent Logo Background Processing
 ✔ Multi-sector Support (Lab, Nursing, Medical, Pharmacy, etc.)
@@ -15,7 +15,6 @@ import io
 import logging
 import os
 
-from django.conf import settings
 from PIL import Image
 from reportlab.lib import colors
 from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
@@ -23,8 +22,18 @@ from reportlab.lib.pagesizes import A5
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib.units import cm
 from reportlab.lib.utils import ImageReader
-from reportlab.pdfbase import pdfmetrics
-from reportlab.pdfbase.ttfonts import TTFont
+
+from .pdf_base import (
+    FONT,
+    FONT_BOLD,
+    PDF_BODY_FONT_SIZE,
+    PDF_BODY_LEADING,
+    PDF_BOTTOM_MARGIN,
+    PDF_HEADER_TOP_MARGIN,
+    PDF_MARGIN,
+    PDF_TITLE_FONT_SIZE,
+    PDF_TITLE_LEADING,
+)
 
 logger = logging.getLogger("pdf.improvements")
 
@@ -110,85 +119,14 @@ class DocumentType:
     }
 
 
-# =========================================================
-# FONTES OTIMIZADAS
-# =========================================================
-
-def _first_existing(paths: list[str]) -> str | None:
-    """Encontra o primeiro arquivo de fonte que existe."""
-    for p in paths:
-        if p and os.path.exists(p):
-            return p
-    return None
-
-
 def _configure_fonts_improved() -> tuple[str, str]:
     """
-    Configura fontes otimizadas para documentos clínicos.
+    Mantém os templates avançados na mesma política tipográfica global.
 
-    Ordem de preferência:
-    1) Calibri (Microsoft, muito legível para documentos)
-    2) Segoe UI (Microsoft, profissional)
-    3) Roboto (Google, sem serifa moderno)
-    4) Liberation Sans (fallback livre)
-    5) Helvetica (fallback final)
+    A fonte principal dos PDFs é Helvetica; se ela não estiver disponível,
+    o fallback configurado no módulo base passa a ser Arial.
     """
-
-    base_dir = getattr(settings, "BASE_DIR", os.getcwd())
-
-    # 1) Calibri (preferido)
-    calibri_paths = [
-        os.path.join(base_dir, "static", "fonts", "Calibri.ttf"),
-        os.path.join(base_dir, "static", "fonts", "calibri.ttf"),
-        "/usr/share/fonts/truetype/msttcorefonts/Calibri.ttf",
-        "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf",
-    ]
-
-    calibri_bold_paths = [
-        os.path.join(base_dir, "static", "fonts", "Calibri-Bold.ttf"),
-        os.path.join(base_dir, "static", "fonts", "calibrib.ttf"),
-        "/usr/share/fonts/truetype/msttcorefonts/Calibri_Bold.ttf",
-        "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",
-    ]
-
-    calibri_regular = _first_existing(calibri_paths)
-    calibri_bold = _first_existing(calibri_bold_paths)
-
-    if calibri_regular and calibri_bold:
-        try:
-            pdfmetrics.registerFont(TTFont("Calibri", calibri_regular))
-            pdfmetrics.registerFont(TTFont("Calibri-Bold", calibri_bold))
-            logger.info("✓ Fonte Calibri ativada (legível para documentos clínicos)")
-            return "Calibri", "Calibri-Bold"
-        except Exception as err:
-            logger.warning("Falha ao registar Calibri. Tentando Segoe.", exc_info=err)
-
-    # 2) Segoe UI (fallback Microsoft)
-    segoe_paths = [
-        "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf",
-        "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
-    ]
-
-    segoe_bold_paths = [
-        "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",
-        "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
-    ]
-
-    segoe_regular = _first_existing(segoe_paths)
-    segoe_bold = _first_existing(segoe_bold_paths)
-
-    if segoe_regular and segoe_bold:
-        try:
-            pdfmetrics.registerFont(TTFont("Segoe", segoe_regular))
-            pdfmetrics.registerFont(TTFont("Segoe-Bold", segoe_bold))
-            logger.info("✓ Fonte Segoe/Liberation Sans ativada (fallback sem serifa)")
-            return "Segoe", "Segoe-Bold"
-        except Exception as err:
-            logger.warning("Falha ao registar Segoe. Usando Helvetica.", exc_info=err)
-
-    # 3) Fallback final (Helvetica)
-    logger.info("Fontes otimizadas indisponiveis; a usar Helvetica como fallback.")
-    return "Helvetica", "Helvetica-Bold"
+    return FONT, FONT_BOLD
 
 
 FONT_IMPROVED, FONT_IMPROVED_BOLD = _configure_fonts_improved()
@@ -268,12 +206,12 @@ def _safe_image_reader_transparent(path: str):
 # =========================================================
 
 def title_style_improved(name="TitleImproved"):
-    """Estilo para títulos principais — grande e impactante."""
+    """Estilo para títulos principais dos documentos."""
     return ParagraphStyle(
         name,
         fontName=FONT_IMPROVED_BOLD,
-        fontSize=12,
-        leading=14,
+        fontSize=PDF_TITLE_FONT_SIZE,
+        leading=PDF_TITLE_LEADING,
         textColor=colors.HexColor("#1A1A1A"),
         alignment=TA_CENTER,
         spaceAfter=0.15*cm,
@@ -285,8 +223,8 @@ def subtitle_style_improved(name="SubtitleImproved"):
     return ParagraphStyle(
         name,
         fontName=FONT_IMPROVED,
-        fontSize=9,
-        leading=11,
+        fontSize=PDF_BODY_FONT_SIZE,
+        leading=PDF_BODY_LEADING,
         textColor=colors.HexColor("#555555"),
         alignment=TA_CENTER,
         spaceAfter=0.10*cm,
@@ -298,8 +236,8 @@ def section_style_improved(color=colors.HexColor("#1976D2"), name="SectionImprov
     return ParagraphStyle(
         name,
         fontName=FONT_IMPROVED_BOLD,
-        fontSize=10,
-        leading=12,
+        fontSize=PDF_TITLE_FONT_SIZE,
+        leading=PDF_TITLE_LEADING,
         textColor=color,
         spaceAfter=0.08*cm,
     )
@@ -310,8 +248,8 @@ def info_style_improved(name="InfoImproved"):
     return ParagraphStyle(
         name,
         fontName=FONT_IMPROVED,
-        fontSize=8,
-        leading=10,
+        fontSize=PDF_BODY_FONT_SIZE,
+        leading=PDF_BODY_LEADING,
         textColor=colors.HexColor("#333333"),
         alignment=TA_LEFT,
     )
@@ -322,8 +260,8 @@ def info_right_style_improved(name="InfoRightImproved"):
     return ParagraphStyle(
         name,
         fontName=FONT_IMPROVED,
-        fontSize=8,
-        leading=10,
+        fontSize=PDF_BODY_FONT_SIZE,
+        leading=PDF_BODY_LEADING,
         textColor=colors.HexColor("#333333"),
         alignment=TA_RIGHT,
     )
@@ -335,8 +273,8 @@ def cell_style_improved(is_bold=False, name="CellImproved"):
     return ParagraphStyle(
         name,
         fontName=font,
-        fontSize=8,
-        leading=9,
+        fontSize=PDF_BODY_FONT_SIZE,
+        leading=PDF_BODY_LEADING,
         textColor=colors.HexColor("#1A1A1A"),
         alignment=TA_LEFT,
     )
@@ -349,11 +287,10 @@ def cell_style_improved(is_bold=False, name="CellImproved"):
 class A5Margins:
     """Margens otimizadas para documentos A5 (tamanho reduzido)."""
 
-    # Margens mínimas (0.8 cm = ~0.3 polegadas)
-    LEFT = 0.8 * cm
-    RIGHT = 0.8 * cm
-    TOP = 3.5 * cm  # Para cabeçalho
-    BOTTOM = 1.8 * cm
+    LEFT = PDF_MARGIN
+    RIGHT = PDF_MARGIN
+    TOP = PDF_HEADER_TOP_MARGIN  # Reserva vertical do cabeçalho.
+    BOTTOM = PDF_BOTTOM_MARGIN
 
     # Espaçamento compacto
     SECTION_SPACING = 0.08 * cm
@@ -455,16 +392,16 @@ def draw_header_improved(canvas_obj, doc, header_config: dict):
 
     try:
         canvas_obj.setFillColor(sector_color)
-        canvas_obj.setFont(FONT_IMPROVED_BOLD, 10)
+        canvas_obj.setFont(FONT_IMPROVED_BOLD, PDF_TITLE_FONT_SIZE)
         canvas_obj.drawString(text_x, text_top_y, tenant_name.upper())
 
         canvas_obj.setFillColor(sector_color)
-        canvas_obj.setFont(FONT_IMPROVED_BOLD, 9)
+        canvas_obj.setFont(FONT_IMPROVED_BOLD, PDF_BODY_FONT_SIZE)
         canvas_obj.drawString(text_x, text_top_y - 0.50 * cm, sector_title)
 
         if sector_subtitle:
             canvas_obj.setFillColor(colors.HexColor("#666666"))
-            canvas_obj.setFont(FONT_IMPROVED, 8)
+            canvas_obj.setFont(FONT_IMPROVED, PDF_BODY_FONT_SIZE)
             canvas_obj.drawString(text_x, text_top_y - 0.90 * cm, sector_subtitle)
     except Exception as e:
         logger.warning("Falha ao desenhar texto do cabeçalho: %s", e)

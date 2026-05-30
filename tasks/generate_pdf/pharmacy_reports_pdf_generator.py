@@ -12,6 +12,9 @@ from reportlab.platypus import HRFlowable, Paragraph, SimpleDocTemplate, Spacer,
 from .pdf_base import (
     FONT_BOLD,
     NumberedCanvas,
+    PDF_BOTTOM_MARGIN,
+    PDF_HEADER_TOP_MARGIN,
+    PDF_MARGIN,
     append_fim,
     bold,
     cell_paragraph,
@@ -65,7 +68,7 @@ def _build_document(title: str, payload: dict, request=None, summary_rows: list[
     buffer = io.BytesIO()
 
     page_width, _ = A5
-    margin = 1 * cm
+    margin = PDF_MARGIN
     usable_width = page_width - (margin * 2)
 
     doc = SimpleDocTemplate(
@@ -73,8 +76,8 @@ def _build_document(title: str, payload: dict, request=None, summary_rows: list[
         pagesize=A5,
         leftMargin=margin,
         rightMargin=margin,
-        topMargin=3.8 * cm,
-        bottomMargin=2.0 * cm,
+        topMargin=PDF_HEADER_TOP_MARGIN,
+        bottomMargin=PDF_BOTTOM_MARGIN,
         encrypt=pdf_encryption(),
     )
     doc.include_signatures = False

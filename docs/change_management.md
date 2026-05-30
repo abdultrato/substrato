@@ -31,3 +31,21 @@ Padronizar mudanças em produção com previsibilidade, baixo risco e rastreabil
 1. Confirmar health checks (`/health/live`, `/health/ready`).
 2. Verificar alertas e métricas de erro/latência.
 3. Registrar resultado da mudança (sucesso/rollback/incidente).
+
+## Alinhamento com beta e produção
+
+**Última revisão documental:** 2026-05-30.
+
+**Propósito no projecto.** Define como mudanças são classificadas, aprovadas, comunicadas e revertidas.
+
+**Valor que protege.** Protege estabilidade operacional e evita deploys sem contexto, owner ou plano de recuperação.
+
+**Como usar na implementação.**
+1. Ler este documento antes de alterar modelos, serializers, viewsets, tarefas, páginas, contratos ou prompts relacionados.
+2. Confirmar impacto em tenant, RBAC, auditoria, dados sensíveis, jobs assíncronos, PDFs, eventos e experiência do utilizador.
+3. Actualizar testes, schemas, runbooks e documentação no mesmo ciclo da alteração.
+4. Registar dívida técnica remanescente com owner, impacto e prazo.
+
+**Até produção beta.** Deve ser usado em alterações com impacto em dados, permissões, workflows ou disponibilidade.
+
+**Para production-ready.** Exige calendário de mudanças, CAB leve, revisão pós-release e integração com incidentes.

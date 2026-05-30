@@ -17,7 +17,7 @@ import {
   type RelationOption,
   type RelationTarget,
 } from "@/lib/resources/relationOptions"
-import { fieldLabel } from "@/lib/ui/fieldLabels"
+import { fieldLabel, isInternalField } from "@/lib/ui/fieldLabels"
 import { useLanguage } from "@/hooks/useLanguage"
 import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 
@@ -54,6 +54,58 @@ const LONG_TEXT_FIELDS = new Set([
 ])
 
 const EMPTY_RELATION_OPTIONS: RelationOption[] = []
+
+const RUNTIME_READONLY_FIELDS = new Set([
+  "id",
+  "id_custom",
+  "tenant",
+  "tenant_id",
+  "inquilino",
+  "criado_por",
+  "atualizado_por",
+  "criado_em",
+  "atualizado_em",
+  "deletado",
+  "deletado_em",
+  "deletado_por",
+  "versao",
+  "created_at",
+  "updated_at",
+  "custom_id",
+  "deleted",
+  "deleted_at",
+  "version",
+  "created_by",
+  "updated_by",
+  "deleted_by",
+])
+
+function isForcedReadOnlyFormField(name: string): boolean {
+  const key = String(name || "")
+  return RUNTIME_READONLY_FIELDS.has(key) || isInternalField(key)
+}
+
+function shouldUseRelationField(field: FormField, endpoint: string): boolean {
+  if (!relationTargetForField(field.name, endpoint)) return false
+  return field.type === "integer" || field.type === "number" || field.type === "select"
+}
+
+function normalizeRuntimeRelationField(field: FormField, endpoint: string): FormField {
+  if (!shouldUseRelationField(field, endpoint)) return field
+  return {
+    ...field,
+    type: "integer",
+    enumValues: undefined,
+    enumLabels: undefined,
+  }
+}
+
+function normalizeRuntimeFormSpec(spec: RuntimeFormSpec | null, endpoint: string): RuntimeFormSpec | null {
+  if (!spec) return null
+  const fields = spec.fields.map((field) => normalizeRuntimeRelationField(field, endpoint))
+  const submitFields = fields.filter((field) => !field.readOnly)
+  return { fields, submitFields }
+}
 
 function placeholderForField(field: FormField, label: string, explicit?: string): string | undefined {
   if (explicit) return explicit
@@ -355,6 +407,23 @@ function renderInput(
   const placeholder = opts?.placeholder
   const widget = opts?.widget
 
+  if (opts?.relationTarget) {
+    return (
+      <SearchableRelationSelect
+        fieldName={field.name}
+        value={value}
+        onChange={onChange}
+        target={opts.relationTarget}
+        initialOptions={opts.relationOptions}
+        loadingInitial={opts.relationLoading}
+        readOnly={disabled}
+        error={error}
+        placeholder={placeholder}
+        safeRefreshToken={opts.safeRefreshToken}
+      />
+    )
+  }
+
   switch (field.type) {
     case "boolean":
       return (
@@ -367,22 +436,6 @@ function renderInput(
         />
       )
     case "integer":
-      if (opts?.relationTarget) {
-        return (
-          <SearchableRelationSelect
-            fieldName={field.name}
-            value={value}
-            onChange={onChange}
-            target={opts.relationTarget}
-            initialOptions={opts.relationOptions}
-            loadingInitial={opts.relationLoading}
-            readOnly={disabled}
-            error={error}
-            placeholder={placeholder}
-            safeRefreshToken={opts.safeRefreshToken}
-          />
-        )
-      }
       return (
         <input
           type="number"
@@ -500,6 +553,11 @@ function inferFormFieldTypeFromMetadata(rawType?: string): FormField["type"] {
   return "text"
 }
 
+function metadataLooksLikeRelation(rawType?: string): boolean {
+  const t = String(rawType || "").toLocaleLowerCase()
+  return t === "field" || t === "related" || t === "primarykeyrelatedfield"
+}
+
 function buildFallbackSpecFromOptions(metadata: any, method: Method, endpoint: string): RuntimeFormSpec | null {
   const actions = metadata && typeof metadata === "object" ? metadata.actions : null
   if (!actions || typeof actions !== "object") return null
@@ -529,9 +587,14 @@ function buildFallbackSpecFromOptions(metadata: any, method: Method, endpoint: s
       )
       .filter(Boolean)
 
-    const type = enumValues.length
-      ? "select"
-      : inferFormFieldTypeFromMetadata(String(desc.type || ""))
+    const rawType = String(desc.type || "")
+    const relationTarget = relationTargetForField(name, endpoint)
+    const type =
+      relationTarget && (metadataLooksLikeRelation(rawType) || enumValues.length)
+        ? "integer"
+        : enumValues.length
+          ? "select"
+          : inferFormFieldTypeFromMetadata(rawType)
 
     const label = fieldLabel({
       endpoint,
@@ -543,10 +606,10 @@ function buildFallbackSpecFromOptions(metadata: any, method: Method, endpoint: s
       name,
       label,
       required: !!desc.required,
-      readOnly: !!desc.read_only,
+      readOnly: isForcedReadOnlyFormField(name) || !!desc.read_only,
       type,
-      enumValues: enumValues.length ? enumValues : undefined,
-      enumLabels: enumLabels.length ? enumLabels : undefined,
+      enumValues: type === "select" && enumValues.length ? enumValues : undefined,
+      enumLabels: type === "select" && enumLabels.length ? enumLabels : undefined,
     })
   }
 
@@ -557,28 +620,35 @@ function buildFallbackSpecFromOptions(metadata: any, method: Method, endpoint: s
 
 function mergeSpecs(
   schemaSpec: RuntimeFormSpec | null,
-  optionsSpec: RuntimeFormSpec | null
+  optionsSpec: RuntimeFormSpec | null,
+  endpoint = ""
 ): RuntimeFormSpec | null {
   if (!schemaSpec && !optionsSpec) return null
-  if (!schemaSpec) return optionsSpec
-  if (!optionsSpec) return schemaSpec
+  if (!schemaSpec) return normalizeRuntimeFormSpec(optionsSpec, endpoint)
+  if (!optionsSpec) return normalizeRuntimeFormSpec(schemaSpec, endpoint)
 
   const byName = new Map<string, FormField>()
   for (const field of schemaSpec.fields) {
-    byName.set(field.name, { ...field })
+    byName.set(field.name, normalizeRuntimeRelationField({ ...field }, endpoint))
   }
 
   for (const source of optionsSpec.fields) {
     const current = byName.get(source.name)
     if (!current) {
-      byName.set(source.name, { ...source })
+      byName.set(source.name, normalizeRuntimeRelationField({
+        ...source,
+        readOnly: isForcedReadOnlyFormField(source.name) || source.readOnly,
+      }, endpoint))
       continue
     }
 
     const merged: FormField = {
       ...current,
       required: source.required || current.required,
-      readOnly: source.readOnly ?? current.readOnly,
+      readOnly:
+        isForcedReadOnlyFormField(source.name) ||
+        Boolean(source.readOnly) ||
+        Boolean(current.readOnly),
     }
 
     if (source.type === "select" && source.enumValues?.length) {
@@ -590,7 +660,7 @@ function mergeSpecs(
       merged.type = source.type
     }
 
-    byName.set(source.name, merged)
+    byName.set(source.name, normalizeRuntimeRelationField(merged, endpoint))
   }
 
   const fields = Array.from(byName.values())
@@ -614,7 +684,11 @@ function hasRequiredValue(value: any): boolean {
 function visibleFormFields(formSpec: RuntimeFormSpec | null, config?: ResourceFormConfig | null): FormField[] {
   if (!formSpec) return []
   const esconder = new Set(config?.esconderCampos || [])
-  let fields = formSpec.fields.filter((f) => !f.readOnly && (!esconder.has(f.name) || f.required))
+  let fields = formSpec.fields.filter((f) => {
+    if (f.readOnly || isForcedReadOnlyFormField(f.name)) return false
+    if (esconder.has(f.name)) return false
+    return true
+  })
 
   const order = config?.ordenarCampos || []
   if (order.length) {
@@ -775,8 +849,8 @@ export default function AutoForm({
   }, [endpoint, effectiveMethod])
 
   const formSpec = useMemo(
-    () => mergeSpecs(schemaFormSpec, optionsFormSpec),
-    [schemaFormSpec, optionsFormSpec]
+    () => mergeSpecs(schemaFormSpec, optionsFormSpec, endpoint),
+    [schemaFormSpec, optionsFormSpec, endpoint]
   )
   const visibleFieldsForRelationTargets = useMemo(
     () => visibleFormFields(formSpec, config),
@@ -785,7 +859,7 @@ export default function AutoForm({
   const relationFieldTargets = useMemo(
     () =>
       visibleFieldsForRelationTargets
-        .filter((field) => field.type === "integer")
+        .filter((field) => shouldUseRelationField(field, endpoint))
         .map((field) => {
           const target = relationTargetForField(field.name, endpoint)
           return target ? { field, target } : null
@@ -912,10 +986,16 @@ export default function AutoForm({
     } catch {}
   }, [draftKey, effectiveMethod])
 
+  const activeSubmitFields = useMemo(() => {
+    if (!formSpec) return []
+    const visibleNames = new Set(visibleFieldsForRelationTargets.map((field) => field.name))
+    return formSpec.submitFields.filter((field) => visibleNames.has(field.name))
+  }, [formSpec, visibleFieldsForRelationTargets])
+
   useEffect(() => {
     if (effectiveMethod !== "post" || !formSpec) return
     const payload: Record<string, any> = {}
-    for (const field of formSpec.submitFields) {
+    for (const field of activeSubmitFields) {
       const value = values[field.name]
       if (!hasRequiredValue(value)) continue
       payload[field.name] = value
@@ -928,16 +1008,16 @@ export default function AutoForm({
         localStorage.removeItem(draftKey)
       }
     } catch {}
-  }, [draftKey, effectiveMethod, formSpec, values])
+  }, [activeSubmitFields, draftKey, effectiveMethod, formSpec, values])
 
   const schema = useMemo(() => {
     if (!formSpec) return null
     const shape: Record<string, z.ZodTypeAny> = {}
-    formSpec.submitFields.forEach((f) => {
+    activeSubmitFields.forEach((f) => {
       shape[f.name] = fieldToZod(f)
     })
     return z.object(shape)
-  }, [formSpec])
+  }, [activeSubmitFields, formSpec])
 
   function listVisibleFields(): FormField[] {
     return visibleFormFields(formSpec, config)
@@ -977,7 +1057,7 @@ export default function AutoForm({
 
   function buildStepSchema(names: string[]): z.ZodObject<any> | null {
     if (!formSpec) return null
-    const byName = new Map(formSpec.submitFields.map((f) => [f.name, f] as const))
+    const byName = new Map(activeSubmitFields.map((f) => [f.name, f] as const))
     const shape: Record<string, z.ZodTypeAny> = {}
     for (const n of names) {
       const f = byName.get(n)
@@ -1019,7 +1099,7 @@ export default function AutoForm({
     setMessage(null)
     setErrors({})
     try {
-      const missing = formSpec.submitFields.filter((field) => field.required && !hasRequiredValue(values[field.name]))
+      const missing = activeSubmitFields.filter((field) => field.required && !hasRequiredValue(values[field.name]))
       if (missing.length) {
         const errs: Record<string, string> = {}
         missing.forEach((field) => {
@@ -1066,7 +1146,7 @@ export default function AutoForm({
       } else {
         const normalized = normalizeFormApiErrors(
           e,
-          formSpec.submitFields.map((field) => field.name),
+          activeSubmitFields.map((field) => field.name),
           { endpoint }
         )
         const hasFieldErrors = Object.keys(normalized.fieldErrors).length > 0
@@ -1120,7 +1200,7 @@ export default function AutoForm({
       ]
     : visibleFields
   const somenteLeitura = new Set(config?.somenteLeituraCampos || [])
-  const requiredFields = formSpec.submitFields.filter((field) => field.required)
+  const requiredFields = activeSubmitFields.filter((field) => field.required)
   const missingRequiredFields = requiredFields.filter((field) => !hasRequiredValue(values[field.name]))
   const submitDisabled = submitting
 

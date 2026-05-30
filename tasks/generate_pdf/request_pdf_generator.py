@@ -17,6 +17,9 @@ from reportlab.platypus import (
 
 from .pdf_base import (
     NumberedCanvas,
+    PDF_BOTTOM_MARGIN,
+    PDF_HEADER_TOP_MARGIN,
+    PDF_MARGIN,
     append_fim,
     bold,
     cell_paragraph,
@@ -52,7 +55,7 @@ def generate_request_pdf(request) -> tuple[bytes, str]:
     """Monta e devolve o PDF da requisição de exames em bytes."""
     buffer = io.BytesIO()
     page_width, _ = A5
-    min_margin = 1 * cm
+    min_margin = PDF_MARGIN
     usable_width = page_width - 2 * min_margin
 
     doc = SimpleDocTemplate(
@@ -60,8 +63,8 @@ def generate_request_pdf(request) -> tuple[bytes, str]:
         pagesize=A5,
         leftMargin=min_margin,
         rightMargin=min_margin,
-        topMargin=3.8 * cm,
-        bottomMargin=2 * cm,
+        topMargin=PDF_HEADER_TOP_MARGIN,
+        bottomMargin=PDF_BOTTOM_MARGIN,
         encrypt=pdf_encryption(),
     )
     doc.include_signatures = False

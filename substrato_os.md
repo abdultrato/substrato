@@ -1,9 +1,42 @@
 # SUBSTRATO OS
 
-Arquitetura consolidada e executavel do SUBSTRATO, resultante da fusao entre `substrato.md` e a versao anterior de `substrato_os.md`.
+Arquitectura consolidada e executável do SUBSTRATO, resultante da fusão entre `substrato.md` e a versão anterior de `substrato_os.md`.
 
 Data: 2026-05-18  
-Estado: aprovado para inicio de implementacao
+Estado: aprovado para início de implementação
+
+---
+
+## 0. Norte de Arquitectura e Produto
+
+O SUBSTRATO OS é o contrato técnico que impede o produto de crescer como um conjunto de módulos soltos. Cada decisão aqui deve aproximar o projecto de uma plataforma multi-domínio, multi-tenant, segura, auditável e operável em produção.
+
+### Missão técnica
+
+Criar uma base de execução onde saúde, educação, ERP/WMS, RH, finanças, relatórios, automações e IA operacional partilhem os mesmos princípios de identidade, tenant, permissões, eventos, observabilidade e qualidade.
+
+### Visão de plataforma
+
+Evoluir o monolito modular actual para uma arquitectura distribuível por domínio, sem reescrita total e sem quebrar fluxos funcionais já existentes. O objectivo é chegar a production-ready por incrementos mensuráveis: contratos estáveis, filas robustas, eventos versionados, leitura desacoplada e operação com SLOs.
+
+### Valor principal
+
+O valor central é previsibilidade operacional. Um módulo novo só é aceitável quando consegue ser implementado, testado, observado, protegido por tenant/RBAC, documentado e revertido sem fragilizar os restantes domínios.
+
+### Marcos até produção beta
+
+1. **Consolidação documental e contratual:** documentação técnica, contratos de eventos/API e regras de implementação alinhados.
+2. **Beta interna:** fluxos críticos executados com dados realistas, filas e relatórios fora do caminho síncrono sempre que necessário.
+3. **Beta fechada:** tenants piloto, auditoria, permissões, backups, rollback, alertas e suporte a incidentes validados.
+4. **Produção beta:** operação limitada, monitorizada e com critérios explícitos de aceitação por domínio.
+
+### Critérios para production-ready
+
+- Nenhum domínio crítico sem owner, testes, documentação, auditoria e observabilidade mínima.
+- Eventos publicados por contrato versionado e consumidores idempotentes.
+- Exportações pesadas, PDFs e jobs longos executados fora do request síncrono.
+- Rollback, migrações, backups e restauração comprovados em ambiente equivalente a produção.
+- Segurança de tenant e RBAC validada por testes e revisão técnica.
 
 ---
 

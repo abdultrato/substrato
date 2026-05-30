@@ -10,6 +10,32 @@ Plano de evolução do Substrato como multi-plataforma com foco em: (1) eliminar
 
 ---
 
+## Critério de maturidade do roadmap
+
+Este roadmap não é apenas uma lista de features. Ele mede a passagem do Substrato de plataforma funcional em consolidação para produto operável em produção beta e, depois, para production-ready.
+
+### Missão do ciclo 2026
+
+Consolidar o Substrato como plataforma multi-domínio capaz de operar saúde, educação, ERP/WMS, RH, finanças e inteligência operacional com tenant, RBAC, auditoria, observabilidade e documentação como requisitos de primeira ordem.
+
+### Sequência até produção beta
+
+| Marco | Janela planeada | Foco | Evidência mínima |
+| --- | --- | --- | --- |
+| Fundação técnica | 30/05/2026 a 15/06/2026 | Documentação, contratos, readiness, segurança base e dívida crítica | `make quality-gate`, readiness check e documentação de domínio actualizada |
+| Beta interna | 16/06/2026 a 30/06/2026 | Fluxos essenciais executados por equipa interna | Testes de regressão, dados realistas, endpoints críticos e PDFs validados |
+| Beta fechada | 01/07/2026 a 31/07/2026 | Tenants piloto e operação assistida | RBAC, auditoria, backups, rollback, alertas e suporte testados |
+| Produção beta | 01/08/2026 a 31/08/2026 | Uso real controlado | SLOs acompanhados, incidentes registados, releases reversíveis |
+| Production-ready | A partir de 01/09/2026 | Endurecimento, escala e suporte formal | Testes de carga, RPO/RTO, compliance, runbooks completos e operação repetível |
+
+### Regras de avanço entre fases
+
+1. Uma fase só avança quando há evidência executável: testes, logs, métricas, checklist ou runbook.
+2. Funcionalidade sem tenant/RBAC/auditoria mínima não entra em beta fechada.
+3. Fluxos pesados de relatório, exportação e PDF não devem bloquear requests síncronos em produção beta.
+4. Dívida técnica de impacto alto precisa de owner, prazo e mitigação antes de uso real.
+5. Cada release de beta deve ter plano de rollback e critérios de observação pós-deploy.
+
 ## 📈 Timeline Consolidada
 
 ```

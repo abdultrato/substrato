@@ -24,3 +24,21 @@ Reduzir risco de dependências vulneráveis e melhorar rastreabilidade dos compo
 1. Dependência crítica/alta: tratar antes da próxima release.
 2. Dependência média: priorizar no sprint vigente.
 3. Dependência baixa: avaliar risco/contexto e registrar no backlog técnico.
+
+## Alinhamento com beta e produção
+
+**Última revisão documental:** 2026-05-30.
+
+**Propósito no projecto.** Controla o risco introduzido por dependências, imagens, workflows e artefactos externos.
+
+**Valor que protege.** Protege a cadeia de entrega contra vulnerabilidades e alterações não verificadas.
+
+**Como usar na implementação.**
+1. Ler este documento antes de alterar modelos, serializers, viewsets, tarefas, páginas, contratos ou prompts relacionados.
+2. Confirmar impacto em tenant, RBAC, auditoria, dados sensíveis, jobs assíncronos, PDFs, eventos e experiência do utilizador.
+3. Actualizar testes, schemas, runbooks e documentação no mesmo ciclo da alteração.
+4. Registar dívida técnica remanescente com owner, impacto e prazo.
+
+**Até produção beta.** Deve manter lockfiles, Dependabot, auditorias e revisão de dependências novas.
+
+**Para production-ready.** Exige SBOM quando aplicável, scans por release, política de actualização e resposta a CVEs.

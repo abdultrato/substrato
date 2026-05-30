@@ -50,3 +50,21 @@ Dentro de `backend-quality`, há um gate adicional de migração education:
 3. `DJANGO_SECRET_KEY` forte
 4. `DJANGO_ALLOWED_HOSTS`, `CORS_ALLOWED_ORIGINS`, `CSRF_TRUSTED_ORIGINS`
 5. `DB_*` e `REDIS_URL`
+
+## Alinhamento com beta e produção
+
+**Última revisão documental:** 2026-05-30.
+
+**Propósito no projecto.** Define a esteira de entrega que transforma alterações em releases verificáveis.
+
+**Valor que protege.** Protege qualidade, segurança, repetibilidade e bloqueios automáticos antes de beta/produção.
+
+**Como usar na implementação.**
+1. Ler este documento antes de alterar modelos, serializers, viewsets, tarefas, páginas, contratos ou prompts relacionados.
+2. Confirmar impacto em tenant, RBAC, auditoria, dados sensíveis, jobs assíncronos, PDFs, eventos e experiência do utilizador.
+3. Actualizar testes, schemas, runbooks e documentação no mesmo ciclo da alteração.
+4. Registar dívida técnica remanescente com owner, impacto e prazo.
+
+**Até produção beta.** Deve executar gates essenciais, build frontend/backend, checks de segurança e readiness.
+
+**Para production-ready.** Exige promoção por ambientes, artefactos versionados, rollback automatizável e auditoria de releases.

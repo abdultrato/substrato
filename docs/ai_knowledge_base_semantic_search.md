@@ -94,3 +94,21 @@ Para substituir uma resposta interna, criar uma entrada activa com o mesmo `slug
 3. Adicionar métricas de acerto por categoria e módulo.
 4. Permitir aprovação de sugestões aprendidas a partir do uso real.
 5. Evoluir para embeddings externos ou vector store quando houver contrato de privacidade e custo aprovado.
+
+## Alinhamento com beta e produção
+
+**Última revisão documental:** 2026-05-30.
+
+**Propósito no projecto.** Orienta a IA operacional como apoio auditável, seguro e limitado por evidência.
+
+**Valor que protege.** Protege confiança, privacidade, permissões e separação entre recomendação operacional e decisão humana.
+
+**Como usar na implementação.**
+1. Ler este documento antes de alterar modelos, serializers, viewsets, tarefas, páginas, contratos ou prompts relacionados.
+2. Confirmar impacto em tenant, RBAC, auditoria, dados sensíveis, jobs assíncronos, PDFs, eventos e experiência do utilizador.
+3. Actualizar testes, schemas, runbooks e documentação no mesmo ciclo da alteração.
+4. Registar dívida técnica remanescente com owner, impacto e prazo.
+
+**Até produção beta.** Deve validar fontes citadas, limites clínicos/financeiros, logs de auditoria e revisão humana.
+
+**Para production-ready.** Exige avaliação contínua, política de segurança, métricas de erro, base de conhecimento governada e circuit breakers funcionais.

@@ -47,3 +47,21 @@ Transformar o Substrato num Command Center operacional com automação fim-a-fim
 - Redução sustentada de 5xx em produção.
 - Tempo médio de resposta para incidentes (MTTR) menor por ciclo.
 - Cobertura de idioma PT/EN sem conteúdo residual fora da camada i18n.
+
+## Alinhamento com beta e produção
+
+**Última revisão documental:** 2026-05-30.
+
+**Propósito no projecto.** Orienta o Command Center como visão operacional consolidada para decisão executiva e suporte.
+
+**Valor que protege.** Protege a capacidade de observar tenants, fluxos críticos, incidentes, SLOs e prioridades numa superfície única.
+
+**Como usar na implementação.**
+1. Ler este documento antes de alterar modelos, serializers, viewsets, tarefas, páginas, contratos ou prompts relacionados.
+2. Confirmar impacto em tenant, RBAC, auditoria, dados sensíveis, jobs assíncronos, PDFs, eventos e experiência do utilizador.
+3. Actualizar testes, schemas, runbooks e documentação no mesmo ciclo da alteração.
+4. Registar dívida técnica remanescente com owner, impacto e prazo.
+
+**Até produção beta.** Deve mostrar KPIs reais, estados de fila, incidentes, saúde de módulos e alertas accionáveis.
+
+**Para production-ready.** Exige dados fiáveis, permissões por perfil, drill-down auditável e integração com alertas/runbooks.

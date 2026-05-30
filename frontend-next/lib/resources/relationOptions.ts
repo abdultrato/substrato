@@ -22,6 +22,8 @@ const DEFAULT_LABEL_FIELDS = [
   "employee_code",
   "username",
   "email",
+  "identifier",
+  "document_number",
   "custom_id",
   "id_custom",
   "code",
@@ -47,6 +49,7 @@ const USER_LABEL_FIELDS = [
 const TENANT_LABEL_FIELDS = [
   "name",
   "nome",
+  "identifier",
   "slug",
   "schema_name",
   "domain",
@@ -65,6 +68,7 @@ const RELATION_TARGETS: Record<string, RelationTarget> = {
   animal: { endpoint: "/veterinary/animal/", labelFields: ["name", "owner_name", "species", ...DEFAULT_LABEL_FIELDS] },
   assignment: { endpoint: "/education/assignment/", labelFields: ["title", "custom_id", ...DEFAULT_LABEL_FIELDS] },
   assignment_submission: { endpoint: "/education/submission/", labelFields: ["custom_id", "id", ...DEFAULT_LABEL_FIELDS] },
+  attendant: { endpoint: "/identity/user/", labelFields: USER_LABEL_FIELDS },
   bed: { endpoint: "/nursing/ward_bed/", labelFields: ["code", "name", ...DEFAULT_LABEL_FIELDS] },
   blood_unit: { endpoint: "/bloodbank/unit/", labelFields: ["unit_number", "custom_id", ...DEFAULT_LABEL_FIELDS] },
   catalog: { endpoint: "/nursing/procedure_catalog/", labelFields: ["name", "code", ...DEFAULT_LABEL_FIELDS] },
@@ -153,6 +157,11 @@ const RELATION_TARGETS: Record<string, RelationTarget> = {
   student_funding: { endpoint: "/credit_financing/student_funding/", labelFields: ["custom_id", "student_code", "academic_year", ...DEFAULT_LABEL_FIELDS] },
   teacher: { endpoint: "/education/teacher/", labelFields: ["teacher_code", "name", ...DEFAULT_LABEL_FIELDS] },
   tenant: { endpoint: "/tenants/tenant/", labelFields: TENANT_LABEL_FIELDS },
+  tenant_unit: { endpoint: "/tenants/tenant/", labelFields: TENANT_LABEL_FIELDS },
+  tenant_unidade: { endpoint: "/tenants/tenant/", labelFields: TENANT_LABEL_FIELDS },
+  tenantunit: { endpoint: "/tenants/tenant/", labelFields: TENANT_LABEL_FIELDS },
+  unidade_tenant: { endpoint: "/tenants/tenant/", labelFields: TENANT_LABEL_FIELDS },
+  unidade_do_tenant: { endpoint: "/tenants/tenant/", labelFields: TENANT_LABEL_FIELDS },
   cliente: { endpoint: "/tenants/tenant/", labelFields: TENANT_LABEL_FIELDS },
   inquilino: { endpoint: "/tenants/tenant/", labelFields: TENANT_LABEL_FIELDS },
   therapist: { endpoint: "/human_resources/employee/", labelFields: ["name", "employee_code", ...DEFAULT_LABEL_FIELDS] },
@@ -169,6 +178,13 @@ const RELATION_TARGETS: Record<string, RelationTarget> = {
 }
 
 const ENDPOINT_FIELD_OVERRIDES: Record<string, Record<string, RelationTarget>> = {
+  "/reception/checkin/": {
+    tenant: { endpoint: "/tenants/tenant/", labelFields: TENANT_LABEL_FIELDS },
+    tenant_unit: { endpoint: "/tenants/tenant/", labelFields: TENANT_LABEL_FIELDS },
+    tenant_unidade: { endpoint: "/tenants/tenant/", labelFields: TENANT_LABEL_FIELDS },
+    unit: { endpoint: "/tenants/tenant/", labelFields: TENANT_LABEL_FIELDS },
+    unidade: { endpoint: "/tenants/tenant/", labelFields: TENANT_LABEL_FIELDS },
+  },
   "/pharmacy/inventory_movement/": {
     lot: { endpoint: "/pharmacy/lot/", labelFields: ["lot_number", "product_name", ...DEFAULT_LABEL_FIELDS] },
   },
@@ -414,8 +430,8 @@ const ENDPOINT_FIELD_OVERRIDES: Record<string, Record<string, RelationTarget>> =
 function normalizeFieldName(name: string): string {
   return String(name || "")
     .trim()
-    .replace(/_id$/, "")
-    .replace(/Id$/, "")
+    .replace(/([a-z0-9])([A-Z])/g, "$1_$2")
+    .replace(/_id$/i, "")
     .toLowerCase()
 }
 
@@ -427,7 +443,10 @@ export function relationTargetForField(fieldName: string, currentEndpoint = ""):
   const normalizedField = normalizeFieldName(fieldName)
   const normalizedEndpoint = normalizeEndpoint(currentEndpoint)
   const override = ENDPOINT_FIELD_OVERRIDES[normalizedEndpoint]?.[normalizedField]
-  const target = override || RELATION_TARGETS[normalizedField]
+  const target =
+    override ||
+    RELATION_TARGETS[normalizedField] ||
+    (normalizedField.endsWith("_by") ? RELATION_TARGETS.user : null)
   if (!target) return null
   if (normalizeEndpoint(target.endpoint) === normalizedEndpoint) return null
   return target

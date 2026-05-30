@@ -16,6 +16,16 @@ from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import mm
 from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
+from .pdf_base import (
+    FONT,
+    FONT_BOLD,
+    PDF_BODY_FONT_SIZE,
+    PDF_BODY_LEADING,
+    PDF_MARGIN,
+    PDF_TITLE_FONT_SIZE,
+    PDF_TITLE_LEADING,
+)
+
 MAX_ROWS = 40
 MAX_TEXT_LENGTH = 500
 
@@ -127,10 +137,10 @@ def generate_generic_app_pdf(
     doc = SimpleDocTemplate(
         buffer,
         pagesize=A4,
-        leftMargin=18 * mm,
-        rightMargin=18 * mm,
-        topMargin=18 * mm,
-        bottomMargin=18 * mm,
+        leftMargin=PDF_MARGIN,
+        rightMargin=PDF_MARGIN,
+        topMargin=PDF_MARGIN,
+        bottomMargin=PDF_MARGIN,
         title=resolved_title,
     )
 
@@ -138,17 +148,17 @@ def generate_generic_app_pdf(
     title_style = ParagraphStyle(
         "GenericTitle",
         parent=styles["Heading1"],
-        fontName="Helvetica-Bold",
-        fontSize=16,
-        leading=18,
+        fontName=FONT_BOLD,
+        fontSize=PDF_TITLE_FONT_SIZE,
+        leading=PDF_TITLE_LEADING,
         spaceAfter=8,
     )
     text_style = ParagraphStyle(
         "GenericText",
         parent=styles["BodyText"],
-        fontName="Helvetica",
-        fontSize=9,
-        leading=11,
+        fontName=FONT,
+        fontSize=PDF_BODY_FONT_SIZE,
+        leading=PDF_BODY_LEADING,
     )
 
     info_line = (
@@ -171,8 +181,8 @@ def generate_generic_app_pdf(
             [
                 ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#EDEDED")),
                 ("TEXTCOLOR", (0, 0), (-1, 0), colors.black),
-                ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-                ("FONTSIZE", (0, 0), (-1, 0), 9),
+                ("FONTNAME", (0, 0), (-1, 0), FONT_BOLD),
+                ("FONTSIZE", (0, 0), (-1, 0), PDF_BODY_FONT_SIZE),
                 ("ALIGN", (0, 0), (-1, -1), "LEFT"),
                 ("VALIGN", (0, 0), (-1, -1), "TOP"),
                 ("GRID", (0, 0), (-1, -1), 0.25, colors.HexColor("#D0D0D0")),

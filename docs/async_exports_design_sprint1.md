@@ -746,3 +746,21 @@ Fases de rollout:
 - **Async Exports (atual)**: `docs/async_exports.md`
 - **Export Audit**: `docs/export_audit.md`
 - **Roadmap**: `docs/roadmap_2026.md`
+
+## Alinhamento com beta e produção
+
+**Última revisão documental:** 2026-05-30.
+
+**Propósito no projecto.** Orienta a migração de exportações e relatórios para processamento assíncrono.
+
+**Valor que protege.** Protege disponibilidade da API, experiência do utilizador e previsibilidade de relatórios pesados.
+
+**Como usar na implementação.**
+1. Ler este documento antes de alterar modelos, serializers, viewsets, tarefas, páginas, contratos ou prompts relacionados.
+2. Confirmar impacto em tenant, RBAC, auditoria, dados sensíveis, jobs assíncronos, PDFs, eventos e experiência do utilizador.
+3. Actualizar testes, schemas, runbooks e documentação no mesmo ciclo da alteração.
+4. Registar dívida técnica remanescente com owner, impacto e prazo.
+
+**Até produção beta.** Deve cobrir estados de job, retry, polling, erros, permissões e migração de endpoints síncronos.
+
+**Para production-ready.** Exige métricas de fila, alertas de jobs presos, DLQ, idempotência e limpeza de artefactos.

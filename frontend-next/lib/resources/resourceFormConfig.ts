@@ -70,6 +70,20 @@ const EQUIPMENT_INTERNAL_FIELDS = [
   "latest_maintenance",
 ]
 
+const DENTAL_INTERNAL_FIELDS = [
+  "id",
+  "created_at",
+  "updated_at",
+  "custom_id",
+  "deleted",
+  "deleted_at",
+  "version",
+  "created_by",
+  "updated_by",
+  "deleted_by",
+  "tenant",
+]
+
 const WAREHOUSE_INTERNAL_FIELDS = [
   "id",
   "created_at",
@@ -2307,6 +2321,92 @@ function equipmentIncidentConfig(): ResourceFormConfig {
   }
 }
 
+function dentalProcedureConfig(): ResourceFormConfig {
+  return {
+    esconderCampos: [...DENTAL_INTERNAL_FIELDS, "code"],
+    labels: {
+      name: "Nome do procedimento",
+      code: "Código do procedimento",
+      category: "Categoria",
+      default_duration_minutes: "Duração padrão (minutos)",
+      base_price: "Preço base",
+      requires_prosthesis_lab: "Requer laboratório de prótese",
+      active: "Ativo",
+      notes: "Observações",
+    },
+    hints: {
+      code: "Gerado automaticamente pelo identificador do procedimento.",
+    },
+    widgets: {
+      notes: "textarea",
+    },
+    ordenarCampos: [
+      "name",
+      "category",
+      "default_duration_minutes",
+      "base_price",
+      "requires_prosthesis_lab",
+      "active",
+      "notes",
+    ],
+    etapas: [
+      {
+        titulo: "Identificação",
+        descricao: "Nome, categoria e duração do procedimento",
+        campos: ["name", "category", "default_duration_minutes"],
+      },
+      {
+        titulo: "Preço e execução",
+        descricao: "Valor base e necessidade de laboratório",
+        campos: ["base_price", "requires_prosthesis_lab", "active"],
+      },
+      {
+        titulo: "Observações",
+        descricao: "Notas clínicas ou administrativas",
+        campos: ["notes"],
+      },
+    ],
+    lembrarCampos: ["category", "default_duration_minutes", "requires_prosthesis_lab"],
+  }
+}
+
+function dentalOdontogramConfig(): ResourceFormConfig {
+  return {
+    esconderCampos: DENTAL_INTERNAL_FIELDS,
+    labels: {
+      record: "Prontuário dentário",
+      tooth_number: "Numeração dentária",
+      surface: "Face",
+      condition: "Condição",
+      procedure: "Procedimento relacionado",
+      notes: "Observações",
+    },
+    placeholders: {
+      tooth_number: "Ex.: 11, 26, 48 ou 75",
+    },
+    hints: {
+      tooth_number: "Use a numeração dentária FDI.",
+    },
+    widgets: {
+      notes: "textarea",
+    },
+    ordenarCampos: ["record", "tooth_number", "surface", "condition", "procedure", "notes"],
+    etapas: [
+      {
+        titulo: "Dente",
+        descricao: "Numeração dentária, face e condição",
+        campos: ["record", "tooth_number", "surface", "condition"],
+      },
+      {
+        titulo: "Procedimento",
+        descricao: "Procedimento relacionado e observações",
+        campos: ["procedure", "notes"],
+      },
+    ],
+    lembrarCampos: ["record", "surface", "condition"],
+  }
+}
+
 export function getResourceFormConfig(
   groupKey: string,
   resourceKey: string,
@@ -2315,6 +2415,16 @@ export function getResourceFormConfig(
   const g = canonicalModuleGroupKey(groupKey)
   const r = String(resourceKey || "").toLowerCase()
   const ep = normalizeEndpoint(endpoint)
+
+  if (g === "dental") {
+    if (r === "procedure" || ep === "/dental/procedure/") {
+      return dentalProcedureConfig()
+    }
+    if (r === "odontogram" || ep === "/dental/odontogram/") {
+      return dentalOdontogramConfig()
+    }
+    return null
+  }
 
   if (g === "education") {
     const educationEp = normalizeEducationEndpoint(ep)

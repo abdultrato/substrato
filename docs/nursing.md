@@ -44,3 +44,21 @@ Grupo: `/api/v1/nursing/`
 - Itens realizados de um procedimento: `GET /api/v1/nursing/procedureitem/?procedure=ID&performed=true`
 - Materiais consumidos com produto específico: `GET /api/v1/nursing/procedurematerial/?product=ID`
 - Sinais vitais mais recentes: `GET /api/v1/nursing/vitalsign/?ordering=-collected_at`
+
+## Alinhamento com beta e produção
+
+**Última revisão documental:** 2026-05-30.
+
+**Propósito no projecto.** Documenta o domínio ou capacidade descrita por 'Enfermagem (`apps/nursing`)' dentro da plataforma Substrato.
+
+**Valor que protege.** Protege clareza de âmbito, fronteiras de responsabilidade, integração com módulos vizinhos e critérios de entrega.
+
+**Como usar na implementação.**
+1. Ler este documento antes de alterar modelos, serializers, viewsets, tarefas, páginas, contratos ou prompts relacionados.
+2. Confirmar impacto em tenant, RBAC, auditoria, dados sensíveis, jobs assíncronos, PDFs, eventos e experiência do utilizador.
+3. Actualizar testes, schemas, runbooks e documentação no mesmo ciclo da alteração.
+4. Registar dívida técnica remanescente com owner, impacto e prazo.
+
+**Até produção beta.** Deve descrever o fluxo mínimo demonstrável, dados principais, permissões, endpoints/UI e validação necessária.
+
+**Para production-ready.** Exige owners, testes, auditoria, métricas, runbook de falhas e política de evolução do domínio.

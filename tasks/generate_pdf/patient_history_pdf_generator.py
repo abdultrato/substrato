@@ -21,6 +21,11 @@ from .pdf_base import (
     FONT,
     FONT_BOLD,
     NumberedCanvas,
+    PDF_BODY_FONT_SIZE,
+    PDF_BODY_LEADING,
+    PDF_BOTTOM_MARGIN,
+    PDF_HEADER_TOP_MARGIN,
+    PDF_MARGIN,
     append_fim,
     bold,
     document_section_style,
@@ -172,7 +177,7 @@ def _generate_patient_history_pdf(payload: dict, request=None, scope: str = "med
     buffer = io.BytesIO()
 
     page_width, _ = A5
-    margin = 1 * cm
+    margin = PDF_MARGIN
     usable_width = page_width - (margin * 2)
 
     doc = SimpleDocTemplate(
@@ -180,8 +185,8 @@ def _generate_patient_history_pdf(payload: dict, request=None, scope: str = "med
         pagesize=A5,
         leftMargin=margin,
         rightMargin=margin,
-        topMargin=3.8 * cm,
-        bottomMargin=2.0 * cm,
+        topMargin=PDF_HEADER_TOP_MARGIN,
+        bottomMargin=PDF_BOTTOM_MARGIN,
         encrypt=pdf_encryption(),
     )
     doc.include_signatures = False
@@ -208,35 +213,35 @@ def _generate_patient_history_pdf(payload: dict, request=None, scope: str = "med
 
     elements: list = []
 
-    title_style = _style_minus_two(document_title_style("HistoryTitle"), "HistoryTitleSmall")
-    section_style = _style_minus_two(document_section_style("HistorySection"), "HistorySectionSmall")
+    title_style = document_title_style("HistoryTitle")
+    section_style = document_section_style("HistorySection")
     cell_style = ParagraphStyle(
         "HistoryCellSmall",
         fontName=FONT,
-        fontSize=7,
-        leading=8,
+        fontSize=PDF_BODY_FONT_SIZE,
+        leading=PDF_BODY_LEADING,
         alignment=TA_LEFT,
     )
     cell_bold_style = ParagraphStyle(
         "HistoryCellBoldSmall",
         fontName=FONT_BOLD,
-        fontSize=7,
-        leading=8,
+        fontSize=PDF_BODY_FONT_SIZE,
+        leading=PDF_BODY_LEADING,
         alignment=TA_LEFT,
     )
     info_left_style = ParagraphStyle(
         "HistoryInfoLeftSmall",
         fontName=FONT,
-        fontSize=7,
-        leading=9,
+        fontSize=PDF_BODY_FONT_SIZE,
+        leading=PDF_BODY_LEADING,
         textColor=colors.HexColor("#333333"),
         alignment=TA_LEFT,
     )
     info_right_style = ParagraphStyle(
         "HistoryInfoRightSmall",
         fontName=FONT,
-        fontSize=7,
-        leading=9,
+        fontSize=PDF_BODY_FONT_SIZE,
+        leading=PDF_BODY_LEADING,
         textColor=colors.HexColor("#333333"),
         alignment=TA_RIGHT,
     )

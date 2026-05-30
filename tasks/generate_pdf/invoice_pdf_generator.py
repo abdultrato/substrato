@@ -22,6 +22,9 @@ from apps.billing.models.invoice_items import InvoiceItem
 from .pdf_base import (
     FONT_BOLD,
     NumberedCanvas,
+    PDF_BOTTOM_MARGIN,
+    PDF_HEADER_TOP_MARGIN,
+    PDF_MARGIN,
     append_fim,
     bold,
     cell_paragraph,
@@ -84,10 +87,10 @@ def generate_invoice_pdf(invoice, request=None) -> tuple[bytes, str]:
     # ==========================
     page_width, _page_height = A5
 
-    left_margin = 1.0 * cm
-    right_margin = 1.0 * cm
-    top_margin = 3.8 * cm
-    bottom_margin = 2.0 * cm
+    left_margin = PDF_MARGIN
+    right_margin = PDF_MARGIN
+    top_margin = PDF_HEADER_TOP_MARGIN
+    bottom_margin = PDF_BOTTOM_MARGIN
 
     usable_width = page_width - (left_margin + right_margin)
 

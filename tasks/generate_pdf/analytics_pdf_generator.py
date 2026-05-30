@@ -12,6 +12,9 @@ from reportlab.platypus import HRFlowable, Paragraph, SimpleDocTemplate, Spacer,
 
 from .pdf_base import (
     NumberedCanvas,
+    PDF_BOTTOM_MARGIN,
+    PDF_HEADER_TOP_MARGIN,
+    PDF_MARGIN,
     append_fim,
     bold,
     cell_paragraph,
@@ -64,10 +67,10 @@ def generate_analytics_pdf(payload: dict, request=None) -> tuple[bytes, str]:
     buffer = io.BytesIO()
 
     page_width, _page_height = A5
-    left_margin = 1.0 * cm
-    right_margin = 1.0 * cm
-    top_margin = 3.8 * cm
-    bottom_margin = 2.0 * cm
+    left_margin = PDF_MARGIN
+    right_margin = PDF_MARGIN
+    top_margin = PDF_HEADER_TOP_MARGIN
+    bottom_margin = PDF_BOTTOM_MARGIN
 
     usable_width = page_width - (left_margin + right_margin)
 

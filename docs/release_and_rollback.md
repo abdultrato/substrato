@@ -35,3 +35,21 @@
 1. Registrar timeline técnica.
 2. Atualizar `docs/technical_debt_register.md`.
 3. Criar ação preventiva no backlog com owner e prazo.
+
+## Alinhamento com beta e produção
+
+**Última revisão documental:** 2026-05-30.
+
+**Propósito no projecto.** Define como publicar versões e recuperar quando uma release falha.
+
+**Valor que protege.** Protege reversibilidade, confiança de beta e redução de impacto em tenants reais.
+
+**Como usar na implementação.**
+1. Ler este documento antes de alterar modelos, serializers, viewsets, tarefas, páginas, contratos ou prompts relacionados.
+2. Confirmar impacto em tenant, RBAC, auditoria, dados sensíveis, jobs assíncronos, PDFs, eventos e experiência do utilizador.
+3. Actualizar testes, schemas, runbooks e documentação no mesmo ciclo da alteração.
+4. Registar dívida técnica remanescente com owner, impacto e prazo.
+
+**Até produção beta.** Deve incluir checklist de release, migrações, validação pós-deploy e rollback manual.
+
+**Para production-ready.** Exige rollback ensaiado, artefactos versionados, janelas de deploy e métricas de estabilização.

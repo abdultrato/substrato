@@ -58,7 +58,7 @@ class DentalProcedureSerializer(LegacyAliasSerializerMixin, serializers.ModelSer
     class Meta:
         model = DentalProcedure
         fields = "__all__"
-        read_only_fields = CORE_READ_ONLY_FIELDS
+        read_only_fields = (*CORE_READ_ONLY_FIELDS, "code")
 
 
 class DentalAppointmentSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer):

@@ -62,3 +62,21 @@ Use `infrastructure.task_queue.enqueue_task(...)` ou
 `enqueue_task_on_commit(...)` para novas tarefas. Para exportações HTTP, prefira
 `api.utils.async_exports.queue_export_if_requested(...)`, que já devolve `202`
 com `status_url` e `download_url`.
+
+## Alinhamento com beta e produção
+
+**Última revisão documental:** 2026-05-30.
+
+**Propósito no projecto.** Orienta a evolução do backend Django/DRF/Celery, incluindo domínio, API, dados, segurança, tarefas e operação.
+
+**Valor que protege.** Protege regras de negócio, tenant, RBAC, auditoria, compatibilidade de API e previsibilidade das migrações.
+
+**Como usar na implementação.**
+1. Ler este documento antes de alterar modelos, serializers, viewsets, tarefas, páginas, contratos ou prompts relacionados.
+2. Confirmar impacto em tenant, RBAC, auditoria, dados sensíveis, jobs assíncronos, PDFs, eventos e experiência do utilizador.
+3. Actualizar testes, schemas, runbooks e documentação no mesmo ciclo da alteração.
+4. Registar dívida técnica remanescente com owner, impacto e prazo.
+
+**Até produção beta.** Deve cobrir endpoints críticos, migrations, jobs assíncronos, permissões e testes mínimos para tenants piloto.
+
+**Para production-ready.** Exige contratos OpenAPI fiáveis, métricas, alertas, rollback de deploy/migração e validação por production_readiness_check.

@@ -8,6 +8,49 @@ Este arquivo centraliza toda a documentação autoral previamente distribuída e
 
 A seção `Fonte: README.md` preserva a versão expandida do README existente no momento da consolidação e foi atualizada para refletir o escopo multi-plataforma atual.
 
+## Norte estratégico 2026
+
+O Substrato existe para transformar uma operação institucional fragmentada numa plataforma integrada, tenant-aware, auditável e preparada para crescer por domínios. A missão técnica é manter a velocidade de implementação sem perder segurança, rastreabilidade, qualidade de dados e capacidade de operar em produção.
+
+### Missão
+
+Construir uma base operacional sustentável para saúde, educação, ERP/WMS, recursos humanos, finanças e inteligência operacional, onde cada fluxo crítico tenha contrato de dados, permissões, auditoria, observabilidade e documentação de execução.
+
+### Visão
+
+Evoluir para uma plataforma production-ready que possa ser adoptada por organizações reais como núcleo de trabalho diário, com módulos independentes o suficiente para crescer e integrados o suficiente para evitar duplicação de sistemas, decisões manuais e dados incoerentes.
+
+### Maior valor
+
+O maior valor do projecto é a unificação controlada: um só modelo de identidade, tenant, auditoria, permissões, relatórios e operação para vários domínios de negócio. Isso reduz retrabalho, melhora confiança operacional e cria uma base de produto vendável, extensível e demonstrável.
+
+### Problemas que este projecto pretende resolver
+
+1. Fragmentação entre sistemas clínicos, educacionais, administrativos, financeiros e logísticos.
+2. Processos manuais sem rastreabilidade, sem auditoria e sem garantia de permissões.
+3. Relatórios e exportações que bloqueiam a API ou dependem de geração manual.
+4. Dificuldade em ligar stock, facturação, pagamentos, RH, educação e operação num histórico coerente.
+5. Falta de critérios objectivos para saber quando uma funcionalidade está pronta para beta ou produção.
+
+### Cronograma de maturidade até produção beta
+
+| Fase | Janela planeada | Resultado esperado |
+| --- | --- | --- |
+| Fundação técnica | 30/05/2026 a 15/06/2026 | Documentação coerente, contratos revistos, dívida crítica inventariada, gates de qualidade e readiness executáveis. |
+| Beta interna | 16/06/2026 a 30/06/2026 | Workflows essenciais testados por equipa interna com dados realistas, exportações assíncronas e PDFs estabilizados. |
+| Beta fechada | 01/07/2026 a 31/07/2026 | Tenants piloto, RBAC, auditoria, backups, rollback, observabilidade e suporte operacional validados. |
+| Produção beta | 01/08/2026 a 31/08/2026 | Operação controlada com SLOs, runbooks, alertas, critérios de aceitação por domínio e ciclo de incidentes. |
+
+### Caminho para production-ready
+
+Depois da produção beta, o projecto deve avançar para production-ready apenas quando houver evidência de:
+
+- SLOs estáveis por API, fila, exportação, frontend e workflows críticos.
+- RPO/RTO definidos, backups restauráveis e rollback ensaiado.
+- Segurança por omissão, segredos fora do código, dependências auditadas e permissões verificadas.
+- Testes de carga, testes de regressão, migrações reversíveis e monitorização accionável.
+- Documentação de implementação e operação sincronizada com o código entregue.
+
 ## Índice consolidado
 
 - `README.md`

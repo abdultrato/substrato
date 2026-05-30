@@ -521,3 +521,21 @@ c:\Users\Laboratorio.Pemba\Contacts\substrato\
 **Total de Linhas em schema.json: 42.359**
 **Endpoints únicos: 290+**
 **Modelos Django: 136**
+
+## Alinhamento com beta e produção
+
+**Última revisão documental:** 2026-05-30.
+
+**Propósito no projecto.** Mantém o mapa visual do produto alinhado com módulos, rotas, workspaces e prioridades de implementação.
+
+**Valor que protege.** Protege navegação coerente e evita que funcionalidades maduras fiquem escondidas ou duplicadas na interface.
+
+**Como usar na implementação.**
+1. Ler este documento antes de alterar modelos, serializers, viewsets, tarefas, páginas, contratos ou prompts relacionados.
+2. Confirmar impacto em tenant, RBAC, auditoria, dados sensíveis, jobs assíncronos, PDFs, eventos e experiência do utilizador.
+3. Actualizar testes, schemas, runbooks e documentação no mesmo ciclo da alteração.
+4. Registar dívida técnica remanescente com owner, impacto e prazo.
+
+**Até produção beta.** Deve reflectir o que será demonstrado em tenants piloto e o que ainda é experimental.
+
+**Para production-ready.** Exige rastreabilidade entre mapa visual, rotas reais, permissões, módulos activos e documentação de frontend.

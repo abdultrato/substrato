@@ -62,3 +62,21 @@ runtime.publish(
 runtime.cache_put("apps.billing", "invoice:INV-001", json!({"status": "issued"}));
 let cached = runtime.cache_get("apps.billing", "invoice:INV-001");
 ```
+
+## Alinhamento com beta e produção
+
+**Última revisão documental:** 2026-05-30.
+
+**Propósito no projecto.** Documenta o runtime Rust usado para eventos, cache, módulos e capacidades de alta previsibilidade.
+
+**Valor que protege.** Protege a fronteira entre regras de negócio em Python e componentes de desempenho em Rust.
+
+**Como usar na implementação.**
+1. Ler este documento antes de alterar modelos, serializers, viewsets, tarefas, páginas, contratos ou prompts relacionados.
+2. Confirmar impacto em tenant, RBAC, auditoria, dados sensíveis, jobs assíncronos, PDFs, eventos e experiência do utilizador.
+3. Actualizar testes, schemas, runbooks e documentação no mesmo ciclo da alteração.
+4. Registar dívida técnica remanescente com owner, impacto e prazo.
+
+**Até produção beta.** Deve provar bootstrap de módulos, publicação de eventos, cache TTL e replay offline em cenários controlados.
+
+**Para production-ready.** Exige benchmarks, observabilidade, contratos de eventos estáveis, testes de concorrência e política de compatibilidade.

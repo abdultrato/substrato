@@ -23,5 +23,13 @@ describe("formBuilder aliases", () => {
     expect(spec).not.toBeNull()
     expect((spec?.submitFields.length || 0) > 0).toBe(true)
   })
-})
 
+  it("mantem tenant de check-in como campo interno fora do envio manual", () => {
+    const spec = buildFormSpec("/reception/checkin/", "post")
+    expect(spec).not.toBeNull()
+
+    const tenant = spec?.fields.find((field) => field.name === "tenant")
+    expect(tenant?.readOnly).toBe(true)
+    expect(spec?.submitFields.some((field) => field.name === "tenant")).toBe(false)
+  })
+})

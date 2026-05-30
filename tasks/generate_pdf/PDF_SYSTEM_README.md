@@ -423,3 +423,21 @@ Para dúvidas ou problemas:
    obj = LabResult.objects.first()
    pdf_bytes, filename = gen(obj)
    ```
+
+## Alinhamento com beta e produção
+
+**Última revisão documental:** 2026-05-30.
+
+**Propósito no projecto.** Documenta o sistema de geração de PDFs e a sua integração administrativa por domínio.
+
+**Valor que protege.** Protege documentos oficiais, rastreabilidade, consistência visual, tenant-awareness e execução fora do caminho crítico quando necessário.
+
+**Como usar na implementação.**
+1. Ler este documento antes de alterar modelos, serializers, viewsets, tarefas, páginas, contratos ou prompts relacionados.
+2. Confirmar impacto em tenant, RBAC, auditoria, dados sensíveis, jobs assíncronos, PDFs, eventos e experiência do utilizador.
+3. Actualizar testes, schemas, runbooks e documentação no mesmo ciclo da alteração.
+4. Registar dívida técnica remanescente com owner, impacto e prazo.
+
+**Até produção beta.** Deve garantir atalhos de admin, geradores por modelo, nomes de ficheiro, permissões e exemplos reproduzíveis.
+
+**Para production-ready.** Exige geração resiliente, logging, testes por tipo de documento, controlo de dados sensíveis e fallback operacional.

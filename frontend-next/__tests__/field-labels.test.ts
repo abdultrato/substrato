@@ -32,4 +32,23 @@ describe("field labels", () => {
     expect(labelsByName.get("prescription_item")).toBe("Item de prescrição")
     expect(labelsByName.get("plan")).toBe("Plano")
   })
+
+  it("usa rótulos portugueses no formulário de check-in da recepção", () => {
+    const spec = buildFormSpec("/reception/checkin/", "post")
+    const labelsByName = new Map(spec?.fields.map((field) => [field.name, field.label]))
+
+    expect(labelsByName.get("patient")).toBe("Paciente")
+    expect(labelsByName.get("attendant")).toBe("Atendente")
+    expect(labelsByName.get("priority")).toBe("Prioridade")
+    expect(labelsByName.get("reason")).toBe("Motivo")
+    expect(labelsByName.get("arrived_at")).toBe("Chegada em")
+    expect(labelsByName.get("called_at")).toBe("Chamado em")
+    expect(labelsByName.get("completed_at")).toBe("Concluído em")
+  })
+
+  it("rotula dente de odontograma como numeração dentária", () => {
+    expect(fieldLabel({ endpoint: "/dental/odontogram/", name: "tooth_number", title: "Dente" })).toBe(
+      "Numeração dentária"
+    )
+  })
 })

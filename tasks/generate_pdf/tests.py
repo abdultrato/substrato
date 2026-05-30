@@ -7,6 +7,7 @@ from unittest.mock import patch
 
 from django.http import HttpRequest
 import pytest
+from reportlab.lib.units import cm
 
 from apps.clinical.models.lab_exam import LabExam
 from apps.clinical.models.lab_exam_field import LabExamField
@@ -27,11 +28,20 @@ from tasks.generate_pdf.patient_history_pdf_generator import generate_patient_hi
 from tasks.generate_pdf.patient_invoice_history_pdf_generator import generate_patient_invoice_history_pdf
 from tasks.generate_pdf.patient_payment_history_pdf_generator import generate_patient_payment_history_pdf
 from tasks.generate_pdf.pdf_base import (
+    FONT,
+    FONT_BOLD,
+    PDF_BODY_FONT_SIZE,
+    PDF_BOTTOM_MARGIN,
+    PDF_MARGIN,
+    PDF_TITLE_FONT_SIZE,
     _should_draw_signatures,
+    cell_style,
+    document_title_style,
     institutional_user_identity,
     user_name,
     user_primary_group,
 )
+from tasks.generate_pdf.pdf_improvements import A5Margins, FONT_IMPROVED, FONT_IMPROVED_BOLD
 from tasks.generate_pdf.result_pdf_generator import generate_results_pdf
 from tasks.generate_pdf.views import request_pdf
 
@@ -95,6 +105,20 @@ def test_institutional_identity_uses_group_and_username_when_no_full_name():
     user = SimpleNamespace(first_name="", last_name="", username="lab.user", groups=groups)
     assert user_primary_group(user) == "Laboratório"
     assert institutional_user_identity(user) == "Laboratório: lab.user"
+
+
+def test_pdf_style_policy_uses_helvetica_minimal_margins_and_requested_sizes():
+    assert FONT == "Helvetica"
+    assert FONT_BOLD == "Helvetica-Bold"
+    assert FONT_IMPROVED == FONT
+    assert FONT_IMPROVED_BOLD == FONT_BOLD
+    assert PDF_MARGIN == pytest.approx(0.5 * cm)
+    assert PDF_BOTTOM_MARGIN == pytest.approx(0.5 * cm)
+    assert A5Margins.LEFT == pytest.approx(PDF_MARGIN)
+    assert A5Margins.RIGHT == pytest.approx(PDF_MARGIN)
+    assert A5Margins.BOTTOM == pytest.approx(PDF_BOTTOM_MARGIN)
+    assert cell_style.fontSize == PDF_BODY_FONT_SIZE == 10
+    assert document_title_style().fontSize == PDF_TITLE_FONT_SIZE == 11
 
 
 def test_generate_patient_history_pdf_with_basic_payload():

@@ -25,7 +25,7 @@ class DentalProcedure(CoreModel):
 
     prefix = "DPR"
 
-    code = models.CharField("Código", max_length=32, db_index=True)
+    code = models.CharField("Código", max_length=32, blank=True, default="", editable=False, db_index=True)
     category = models.CharField(
         "Categoria",
         max_length=20,
@@ -61,6 +61,12 @@ class DentalProcedure(CoreModel):
             models.Index(fields=["tenant", "category"]),
             models.Index(fields=["tenant", "active"]),
         ]
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        if not self.code and self.custom_id:
+            self.__class__.all_objects.filter(pk=self.pk).update(code=self.custom_id)
+            self.code = self.custom_id
 
     def __str__(self) -> str:
         return f"{self.code} - {self.name}" if self.code else self.name
@@ -242,7 +248,12 @@ class DentalOdontogramEntry(NoNameCoreModel):
         related_name="odontogram_entries",
         db_index=True,
     )
-    tooth_number = models.CharField("Dente", max_length=4, db_index=True)
+    tooth_number = models.CharField(
+        "Numeração dentária",
+        max_length=4,
+        db_index=True,
+        help_text="Use a numeração dentária FDI, como 11, 26, 48 ou 75.",
+    )
     surface = models.CharField("Face", max_length=8, choices=Surface.choices, default=Surface.WHOLE, db_index=True)
     condition = models.CharField("Condição", max_length=24, choices=Condition.choices, default=Condition.HEALTHY)
     procedure = models.ForeignKey(

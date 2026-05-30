@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django import forms
 
 from apps.dental.models import (
     DentalAppointment,
@@ -11,6 +12,18 @@ from apps.dental.models import (
 )
 
 
+TOOTH_NUMBER_PLACEHOLDER = "Ex.: 11, 26, 48 ou 75"
+
+
+class DentalOdontogramEntryAdminForm(forms.ModelForm):
+    class Meta:
+        model = DentalOdontogramEntry
+        fields = "__all__"
+        widgets = {
+            "tooth_number": forms.TextInput(attrs={"placeholder": TOOTH_NUMBER_PLACEHOLDER}),
+        }
+
+
 class DentalCoreAdmin(admin.ModelAdmin):
     list_filter = ("deleted",)
     readonly_fields = ("custom_id", "created_at", "updated_at")
@@ -20,6 +33,7 @@ class DentalCoreAdmin(admin.ModelAdmin):
 
 class DentalOdontogramInline(admin.TabularInline):
     model = DentalOdontogramEntry
+    form = DentalOdontogramEntryAdminForm
     extra = 0
     autocomplete_fields = ("procedure",)
     fields = ("tooth_number", "surface", "condition", "procedure", "notes")
@@ -70,6 +84,7 @@ class DentalRecordAdmin(DentalCoreAdmin):
 
 @admin.register(DentalOdontogramEntry)
 class DentalOdontogramEntryAdmin(DentalCoreAdmin):
+    form = DentalOdontogramEntryAdminForm
     list_display = ("record", "tooth_number", "surface", "condition", "procedure")
     list_filter = ("surface", "condition", "deleted")
     search_fields = ("custom_id", "record__custom_id", "record__patient__name", "tooth_number", "notes")

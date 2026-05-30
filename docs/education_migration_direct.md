@@ -44,3 +44,21 @@ The `schoolar-s` merge changes Substrato's product boundary: Substrato must be d
 2. Remove duplicate auth/users/middleware from legacy path.
 3. Rewrite frontend workflows in `frontend-next/app/education/*`.
 4. Keep migration parity checks active with `education_migration_audit`.
+
+## Alinhamento com beta e produção
+
+**Última revisão documental:** 2026-05-30.
+
+**Propósito no projecto.** Governa a migração e prontidão do domínio Education dentro do Substrato.
+
+**Valor que protege.** Protege compatibilidade com o legado, continuidade académica e integração segura com identidade, pagamentos e relatórios.
+
+**Como usar na implementação.**
+1. Ler este documento antes de alterar modelos, serializers, viewsets, tarefas, páginas, contratos ou prompts relacionados.
+2. Confirmar impacto em tenant, RBAC, auditoria, dados sensíveis, jobs assíncronos, PDFs, eventos e experiência do utilizador.
+3. Actualizar testes, schemas, runbooks e documentação no mesmo ciclo da alteração.
+4. Registar dívida técnica remanescente com owner, impacto e prazo.
+
+**Até produção beta.** Deve validar estudantes, professores, turmas, matrículas, avaliações, exames, presenças e workspaces principais.
+
+**Para production-ready.** Exige migração auditável, rollback, contratos de dados, formação operacional e critérios de descontinuação do legado.

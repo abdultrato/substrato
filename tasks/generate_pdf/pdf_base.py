@@ -44,6 +44,13 @@ PAGE_SIZE = A5
 LOGO_PATH = os.path.join(settings.BASE_DIR, "static", "img", "logo.png")
 ADD_FIM_PAGE = True
 HEADER_VERTICAL_INSET = 0.5 * cm
+PDF_MARGIN = 0.5 * cm
+PDF_HEADER_TOP_MARGIN = 3.6 * cm
+PDF_BOTTOM_MARGIN = 0.5 * cm
+PDF_BODY_FONT_SIZE = 10
+PDF_TITLE_FONT_SIZE = 11
+PDF_BODY_LEADING = 12
+PDF_TITLE_LEADING = 13
 
 # =========================================================
 # FONTES
@@ -62,62 +69,47 @@ def _configure_fonts() -> tuple[str, str]:
     Define as fontes padrão para TODOS os PDFs.
 
     Ordem:
-    1) Tinos (fonts-croscore, livre e muito próximo de Times)
-    2) Liberation Serif (fallback serif, livre)
-    3) Helvetica (fallback final)
+    1) Helvetica (padrão solicitado e nativo do ReportLab)
+    2) Arial (fallback quando Helvetica não estiver disponível)
+    3) Helvetica builtin como fallback defensivo final
     """
 
+    try:
+        pdfmetrics.getFont("Helvetica")
+        pdfmetrics.getFont("Helvetica-Bold")
+        logger.info("PDF fontes: Helvetica ativada.")
+        return "Helvetica", "Helvetica-Bold"
+    except Exception as err:
+        logger.warning("Helvetica indisponível. Tentando Arial.", exc_info=err)
+
     base_dir = getattr(settings, "BASE_DIR", os.getcwd())
-
-    # 1) Tinos (preferido)
-    tinos_regular = _first_existing(
+    arial_regular = _first_existing(
         [
-            # Projeto (se você fornecer manualmente)
-            os.path.join(base_dir, "static", "fonts", "Tinos-Regular.ttf"),
-            # Debian (fonts-croscore)
-            "/usr/share/fonts/truetype/croscore/Tinos-Regular.ttf",
+            os.path.join(base_dir, "static", "fonts", "arial.ttf"),
+            os.path.join(base_dir, "static", "fonts", "Arial.ttf"),
+            r"C:\Windows\Fonts\arial.ttf",
+            "/usr/share/fonts/truetype/msttcorefonts/arial.ttf",
         ]
     )
-    tinos_bold = _first_existing(
+    arial_bold = _first_existing(
         [
-            os.path.join(base_dir, "static", "fonts", "Tinos-Bold.ttf"),
-            "/usr/share/fonts/truetype/croscore/Tinos-Bold.ttf",
+            os.path.join(base_dir, "static", "fonts", "arialbd.ttf"),
+            os.path.join(base_dir, "static", "fonts", "Arial-Bold.ttf"),
+            r"C:\Windows\Fonts\arialbd.ttf",
+            "/usr/share/fonts/truetype/msttcorefonts/arialbd.ttf",
         ]
     )
 
-    if tinos_regular and tinos_bold:
+    if arial_regular and arial_bold:
         try:
-            pdfmetrics.registerFont(TTFont("Tinos", tinos_regular))
-            pdfmetrics.registerFont(TTFont("Tinos-Bold", tinos_bold))
-            logger.info("PDF fontes: Tinos ativado (%s, %s).", tinos_regular, tinos_bold)
-            return "Tinos", "Tinos-Bold"
+            pdfmetrics.registerFont(TTFont("Arial", arial_regular))
+            pdfmetrics.registerFont(TTFont("Arial-Bold", arial_bold))
+            logger.info("PDF fontes: Arial ativada como fallback.")
+            return "Arial", "Arial-Bold"
         except Exception as err:
-            logger.warning("Falha ao registar Tinos. A usar fallback.", exc_info=err)
+            logger.warning("Falha ao registar Arial. A usar Helvetica builtin.", exc_info=err)
 
-    # 2) Liberation Serif (fallback serif livre)
-    lib_regular = _first_existing(
-        [
-            "/usr/share/fonts/truetype/liberation2/LiberationSerif-Regular.ttf",
-            "/usr/share/fonts/truetype/liberation/LiberationSerif-Regular.ttf",
-        ]
-    )
-    lib_bold = _first_existing(
-        [
-            "/usr/share/fonts/truetype/liberation2/LiberationSerif-Bold.ttf",
-            "/usr/share/fonts/truetype/liberation/LiberationSerif-Bold.ttf",
-        ]
-    )
-    if lib_regular and lib_bold:
-        try:
-            pdfmetrics.registerFont(TTFont("LiberationSerif", lib_regular))
-            pdfmetrics.registerFont(TTFont("LiberationSerif-Bold", lib_bold))
-            logger.warning("Tinos não disponível — usando Liberation Serif.")
-            return "LiberationSerif", "LiberationSerif-Bold"
-        except Exception as err:
-            logger.warning("Falha ao registar Liberation Serif. A usar Helvetica.", exc_info=err)
-
-    # 3) Fallback final
-    logger.warning("Tinos/Liberation Serif não disponíveis — usando Helvetica.")
+    logger.warning("Arial indisponível — usando Helvetica builtin.")
     return "Helvetica", "Helvetica-Bold"
 
 
@@ -226,8 +218,8 @@ def append_fim(elements):
     style = ParagraphStyle(
         "fim",
         fontName=FONT,
-        fontSize=9,
-        leading=10,
+        fontSize=PDF_BODY_FONT_SIZE,
+        leading=PDF_BODY_LEADING,
         alignment=TA_CENTER,
         textColor=colors.HexColor("#333333"),
     )
@@ -270,13 +262,13 @@ class NumberedCanvas(rl_canvas.Canvas):
         page_w, _ = self._pagesize
 
         try:
-            self.setFont(FONT, 9)
+            self.setFont(FONT, PDF_BODY_FONT_SIZE)
         except Exception:
-            self.setFont("Helvetica", 9)
+            self.setFont("Helvetica", PDF_BODY_FONT_SIZE)
 
         footer = f"Gerado em {now_str} | Página {self._pageNumber}/{total_pages}"
         self.drawRightString(
-            page_w - 1 * cm,
+            page_w - PDF_MARGIN,
             0.7 * cm,
             footer,
         )
@@ -331,9 +323,9 @@ def draw_header(canvas_obj, doc):
 
     page_w, page_h = doc.pagesize
 
-    left_margin = getattr(doc, "leftMargin", 1 * cm)
-    right_margin = getattr(doc, "rightMargin", 1 * cm)
-    top_margin = getattr(doc, "topMargin", 3.8 * cm)
+    left_margin = getattr(doc, "leftMargin", PDF_MARGIN)
+    right_margin = getattr(doc, "rightMargin", PDF_MARGIN)
+    top_margin = getattr(doc, "topMargin", PDF_HEADER_TOP_MARGIN)
 
     logo = _safe_image_reader(LOGO_PATH)
 
@@ -352,19 +344,19 @@ def draw_header(canvas_obj, doc):
             mask="auto",
         )
     else:
-        canvas_obj.setFont(FONT, 9)
+        canvas_obj.setFont(FONT, PDF_BODY_FONT_SIZE)
         canvas_obj.drawString(logo_x, logo_y + 1.2 * cm, "LOGO INDISPONÍVEL")
 
     text_x = logo_x + logo_w + 0.4 * cm
     text_top_y = logo_y + logo_h - 0.2 * cm
 
-    canvas_obj.setFont(FONT_BOLD, 10)
+    canvas_obj.setFont(FONT_BOLD, PDF_TITLE_FONT_SIZE)
     canvas_obj.drawString(text_x, text_top_y, "CLÍNICA DE DIAGNÓSTICOS E SAÚDE")
 
-    canvas_obj.setFont(FONT, 9)
+    canvas_obj.setFont(FONT, PDF_BODY_FONT_SIZE)
     canvas_obj.drawString(text_x, text_top_y - 0.65 * cm, "Laboratório de Análises Clínicas")
 
-    canvas_obj.setFont(FONT, 9)
+    canvas_obj.setFont(FONT, PDF_BODY_FONT_SIZE)
     canvas_obj.drawString(text_x, text_top_y - 1.10 * cm, "Pemba - Cabo Delgado, Moçambique")
 
     canvas_obj.drawString(
@@ -414,9 +406,9 @@ def draw_signatures(canvas_obj, doc, user=None):
     canvas_obj.saveState()
 
     page_w, _ = doc.pagesize
-    left_margin = getattr(doc, "leftMargin", 1 * cm)
-    right_margin = getattr(doc, "rightMargin", 1 * cm)
-    bottom_margin = getattr(doc, "bottomMargin", 2 * cm)
+    left_margin = getattr(doc, "leftMargin", PDF_MARGIN)
+    right_margin = getattr(doc, "rightMargin", PDF_MARGIN)
+    bottom_margin = getattr(doc, "bottomMargin", PDF_BOTTOM_MARGIN)
 
     y = max(0.9 * cm, bottom_margin - 0.6 * cm)
 
@@ -433,7 +425,7 @@ def draw_signatures(canvas_obj, doc, user=None):
 
     name = institutional_user_identity(user)
 
-    canvas_obj.setFont(FONT, 9)
+    canvas_obj.setFont(FONT, PDF_BODY_FONT_SIZE)
     canvas_obj.drawCentredString(x1 + width_line / 2, y - 9, f"Assinatura de {name}")
     canvas_obj.drawCentredString(x2 + width_line / 2, y - 9, "Assinatura do Paciente/Responsável")
 
@@ -458,9 +450,9 @@ def on_page(canvas_obj, doc, user=None):
 
 def draw_line_full_width(canvas_obj, doc):
     page_w, _ = doc.pagesize
-    left_margin = getattr(doc, "leftMargin", 1 * cm)
-    right_margin = getattr(doc, "rightMargin", 1 * cm)
-    y_line = getattr(doc, "bottomMargin", 2 * cm) + 0.15 * cm
+    left_margin = getattr(doc, "leftMargin", PDF_MARGIN)
+    right_margin = getattr(doc, "rightMargin", PDF_MARGIN)
+    y_line = getattr(doc, "bottomMargin", PDF_BOTTOM_MARGIN) + 0.15 * cm
 
     canvas_obj.saveState()
     canvas_obj.setStrokeColor(colors.lightgrey)
@@ -473,8 +465,20 @@ def draw_line_full_width(canvas_obj, doc):
 # UTILIDADES PARA TABELAS
 # =========================================================
 
-bold_style = ParagraphStyle("Bold", fontName=FONT_BOLD, fontSize=9, leading=10, alignment=TA_LEFT)
-cell_style = ParagraphStyle("Cell", fontName=FONT, fontSize=9, leading=10, alignment=TA_LEFT)
+bold_style = ParagraphStyle(
+    "Bold",
+    fontName=FONT_BOLD,
+    fontSize=PDF_BODY_FONT_SIZE,
+    leading=PDF_BODY_LEADING,
+    alignment=TA_LEFT,
+)
+cell_style = ParagraphStyle(
+    "Cell",
+    fontName=FONT,
+    fontSize=PDF_BODY_FONT_SIZE,
+    leading=PDF_BODY_LEADING,
+    alignment=TA_LEFT,
+)
 
 
 def cell_paragraph(text, is_bold=False):
@@ -560,8 +564,8 @@ def document_title_style(name="HeadingDoc"):
     return ParagraphStyle(
         name,
         fontName=FONT_BOLD,
-        fontSize=10,
-        leading=12,
+        fontSize=PDF_TITLE_FONT_SIZE,
+        leading=PDF_TITLE_LEADING,
         textColor=colors.darkblue,
     )
 
@@ -570,8 +574,8 @@ def document_section_style(name="SectionDoc"):
     return ParagraphStyle(
         name,
         fontName=FONT_BOLD,
-        fontSize=10,
-        leading=11,
+        fontSize=PDF_TITLE_FONT_SIZE,
+        leading=PDF_TITLE_LEADING,
         textColor=colors.darkblue,
     )
 
@@ -580,8 +584,8 @@ def estilo_info_esquerda(name="InfoLeftDoc"):
     return ParagraphStyle(
         name,
         fontName=FONT,
-        fontSize=9,
-        leading=11,
+        fontSize=PDF_BODY_FONT_SIZE,
+        leading=PDF_BODY_LEADING,
         textColor=colors.HexColor("#333333"),
     )
 
@@ -590,8 +594,8 @@ def estilo_info_direita(name="InfoRightDoc"):
     return ParagraphStyle(
         name,
         fontName=FONT,
-        fontSize=9,
-        leading=11,
+        fontSize=PDF_BODY_FONT_SIZE,
+        leading=PDF_BODY_LEADING,
         textColor=colors.HexColor("#333333"),
         alignment=TA_RIGHT,
     )

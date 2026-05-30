@@ -976,3 +976,21 @@ Abrir o Command Center filtrado para 7 dias e priorizar a rota /api/v1/clinical/
 A IA do Substrato deve nascer como **camada de inteligência operacional auditável**, não como automação livre.
 
 O primeiro valor deve vir de explicar o que o sistema já sabe: alertas, filas, erros, módulos afetados, relatórios e navegação. Depois, com auditoria e política consolidadas, a IA pode evoluir para preparar ações e finalmente executar ações confirmadas.
+
+## Alinhamento com beta e produção
+
+**Última revisão documental:** 2026-05-30.
+
+**Propósito no projecto.** Orienta a IA operacional como apoio auditável, seguro e limitado por evidência.
+
+**Valor que protege.** Protege confiança, privacidade, permissões e separação entre recomendação operacional e decisão humana.
+
+**Como usar na implementação.**
+1. Ler este documento antes de alterar modelos, serializers, viewsets, tarefas, páginas, contratos ou prompts relacionados.
+2. Confirmar impacto em tenant, RBAC, auditoria, dados sensíveis, jobs assíncronos, PDFs, eventos e experiência do utilizador.
+3. Actualizar testes, schemas, runbooks e documentação no mesmo ciclo da alteração.
+4. Registar dívida técnica remanescente com owner, impacto e prazo.
+
+**Até produção beta.** Deve validar fontes citadas, limites clínicos/financeiros, logs de auditoria e revisão humana.
+
+**Para production-ready.** Exige avaliação contínua, política de segurança, métricas de erro, base de conhecimento governada e circuit breakers funcionais.

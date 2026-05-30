@@ -61,3 +61,21 @@ Criar consistência visual, acessibilidade e uma base escalável para o frontend
 3. Auditar contraste de cores com Lighthouse/axe.
 4. Implementar lazy loading para imagens e componentes pesados.
 5. Remover estilos globais duplicados e migrar para classes de componente onde possível.
+
+## Alinhamento com beta e produção
+
+**Última revisão documental:** 2026-05-30.
+
+**Propósito no projecto.** Documenta decisões do design system usado pelo frontend activo rontend-next/.
+
+**Valor que protege.** Protege coerência de interface, reutilização de componentes, legibilidade e evolução visual sem regressões.
+
+**Como usar na implementação.**
+1. Ler este documento antes de alterar modelos, serializers, viewsets, tarefas, páginas, contratos ou prompts relacionados.
+2. Confirmar impacto em tenant, RBAC, auditoria, dados sensíveis, jobs assíncronos, PDFs, eventos e experiência do utilizador.
+3. Actualizar testes, schemas, runbooks e documentação no mesmo ciclo da alteração.
+4. Registar dívida técnica remanescente com owner, impacto e prazo.
+
+**Até produção beta.** Deve alinhar componentes críticos com fluxos reais de saúde, educação, ERP/WMS, RH e backoffice.
+
+**Para production-ready.** Exige estados completos, acessibilidade, responsividade, testes visuais quando aplicável e integração com padrões de qualidade do frontend.

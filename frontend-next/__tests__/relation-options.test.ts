@@ -23,6 +23,12 @@ describe("relation options", () => {
     expect(relationTargetForField("fatura", "/payments/payment/")?.endpoint).toBe("/billing/invoice/")
     expect(relationTargetForField("unidade", "/clinical/patient/")?.endpoint).toBe("/bloodbank/unit/")
     expect(relationTargetForField("tenant", "/billing/invoice/")?.endpoint).toBe("/tenants/tenant/")
+    expect(relationTargetForField("tenant_unit", "/reception/checkin/")?.endpoint).toBe("/tenants/tenant/")
+    expect(relationTargetForField("tenantUnitId", "/reception/checkin/")?.endpoint).toBe("/tenants/tenant/")
+    expect(relationTargetForField("unidade", "/reception/checkin/")?.endpoint).toBe("/tenants/tenant/")
+    expect(relationTargetForField("patient", "/reception/checkin/")?.endpoint).toBe("/clinical/patient/")
+    expect(relationTargetForField("attendant", "/reception/checkin/")?.endpoint).toBe("/identity/user/")
+    expect(relationTargetForField("approved_by", "/accounting/entry/")?.endpoint).toBe("/identity/user/")
   })
 
   it("does not suggest the current endpoint as its own relation source", () => {
@@ -59,6 +65,12 @@ describe("relation options", () => {
 
     expect(relationLabelForRow({ id: 8, invoice_code: "FT-2026-001" }, ["invoice_code"])).toBe(
       "FT-2026-001"
+    )
+    expect(relationLabelForRow({ id: 2, name: "Hospital Central", identifier: "hc" })).toBe(
+      "Hospital Central - hc"
+    )
+    expect(relationLabelForRow({ id: 4, name: "Ana Mabunda", document_number: "BI-123" })).toBe(
+      "Ana Mabunda - BI-123"
     )
   })
 })
