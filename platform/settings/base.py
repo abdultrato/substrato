@@ -1185,7 +1185,7 @@ JAZZMIN_UI_TWEAKS = {
     "sidebar_fixed": True,
     "footer_fixed": True,
 }
-
+LANGUAGE_CODE = get_env("LANGUAGE_CODE", "pt-BR")
 # =========================================================
 # MIDDLEWARE
 # =========================================================
