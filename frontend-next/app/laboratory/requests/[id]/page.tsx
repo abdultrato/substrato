@@ -4,7 +4,7 @@ import { isNotFoundLikeError } from "@/lib/errors/api-error"
 import Link from "next/link"
 import { useParams, useRouter } from "next/navigation"
 import { useEffect, useMemo, useState } from "react"
-import { Ban, FlaskConical, Loader2 } from "lucide-react"
+import { FlaskConical, Loader2 } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
 import PageHeader from "@/components/ui/PageHeader"
@@ -82,8 +82,8 @@ export default function LaboratoryRequestResultsPage() {
   const [draft, setDraft] = useState<Record<string, string>>({})
   const [busyAll, setBusyAll] = useState<null | "start" | "save" | "validate" | "disregard">(null)
   const [busyRow, setBusyRowState] = useState<Record<string, boolean>>({})
-  const [showDisregardPanel, setShowDisregardPanel] = useState(false)
-  const [disregardReason, setDisregardReason] = useState("")
+  const [examDisregardName, setExamDisregardName] = useState<string | null>(null)
+  const [examDisregardReason, setExamDisregardReason] = useState("")
 
   function applyResultItemsResponse(response: LaboratoryResultItemsResponse) {
     const resultItems = Array.isArray(response.items) ? response.items : []
@@ -169,16 +169,6 @@ export default function LaboratoryRequestResultsPage() {
         item.status === "aguardando_validacao" ||
         (item.status === "desconsiderado" && !item.disregard_validation_date)
     )
-  const canDisregardEmpty =
-    !busyAll &&
-    items.some(
-      (item) =>
-        item.status !== "validado" &&
-        item.status !== "desconsiderado" &&
-        item.result_value == null &&
-        !(draft[toKey(item.id)] || "").trim()
-    )
-
   const groupedItems = useMemo(() => {
     const map = new Map<string, LaboratoryResultItem[]>()
     for (const item of items) {
@@ -233,6 +223,50 @@ export default function LaboratoryRequestResultsPage() {
     }
   }
 
+  async function disregardItem(id: number) {
+    setRowBusy(id, true)
+    try {
+      setErrorMessage(null)
+      await apiFetch<LaboratoryResultItem>(`/clinical/resultitem/${id}/disregard-result/`, {
+        method: "POST",
+        body: JSON.stringify({}),
+      })
+      await refreshResultItems()
+    } finally {
+      setRowBusy(id, false)
+    }
+  }
+
+  async function disregardExam(examName: string, rows: LaboratoryResultItem[]) {
+    const reason = examDisregardReason.trim()
+    if (reason.length < 5) {
+      setErrorMessage("Explique o motivo da desconsideração com pelo menos 5 caracteres.")
+      return
+    }
+
+    try {
+      setBusyAll("disregard")
+      setErrorMessage(null)
+      for (const row of rows) {
+        if (row.status === "desconsiderado") continue
+        if (row.status === "validado") continue
+        if (row.result_value != null) continue
+        if ((draft[toKey(row.id)] || "").trim()) continue
+        await apiFetch<LaboratoryResultItem>(`/clinical/resultitem/${row.id}/disregard-result/`, {
+          method: "POST",
+          body: JSON.stringify({ reason }),
+        })
+      }
+      await refreshResultItems()
+      setExamDisregardName(null)
+      setExamDisregardReason("")
+    } catch (error: any) {
+      setErrorMessage(isNotFoundLikeError(error) ? null : (error?.message || "Falha ao desconsiderar exame."))
+    } finally {
+      setBusyAll(null)
+    }
+  }
+
   async function saveAll() {
     try {
       setBusyAll("save")
@@ -264,34 +298,6 @@ export default function LaboratoryRequestResultsPage() {
       }
     } catch (error: any) {
       setErrorMessage(isNotFoundLikeError(error) ? null : (error?.message || "Falha ao validar resultados."))
-    } finally {
-      setBusyAll(null)
-    }
-  }
-
-  async function disregardEmptyResults() {
-    const reason = disregardReason.trim()
-    if (reason.length < 5) {
-      setErrorMessage("Explique o motivo da desconsideração com pelo menos 5 caracteres.")
-      return
-    }
-
-    try {
-      setBusyAll("disregard")
-      setErrorMessage(null)
-
-      const response = await apiFetch<LaboratoryResultItemsResponse>(
-        `/requests/${requestId}/disregard-empty-results/`,
-        {
-          method: "POST",
-          body: JSON.stringify({ reason }),
-        }
-      )
-      applyResultItemsResponse(response)
-      setShowDisregardPanel(false)
-      setDisregardReason("")
-    } catch (error: any) {
-      setErrorMessage(isNotFoundLikeError(error) ? null : (error?.message || "Falha ao desconsiderar resultados vazios."))
     } finally {
       setBusyAll(null)
     }
@@ -333,16 +339,6 @@ export default function LaboratoryRequestResultsPage() {
                 Validar requisição
               </button>
 
-              <button
-                type="button"
-                onClick={() => setShowDisregardPanel(true)}
-                disabled={!canDisregardEmpty}
-                className="inline-flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-medium text-amber-900 shadow-sm transition hover:bg-amber-100 disabled:opacity-50"
-              >
-                {busyAll === "disregard" ? <Loader2 className="animate-spin" size={16} /> : <Ban size={16} />}
-                Desconsiderar vazios
-              </button>
-
             </div>
           }
         />
@@ -350,40 +346,6 @@ export default function LaboratoryRequestResultsPage() {
         {errorMessage ? (
           <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
             {errorMessage}
-          </div>
-        ) : null}
-
-        {showDisregardPanel ? (
-          <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 shadow-sm">
-            <label className="text-sm font-semibold text-amber-950" htmlFor="disregard-reason">
-              Motivo da desconsideração dos campos vazios
-            </label>
-            <textarea
-              id="disregard-reason"
-              value={disregardReason}
-              onChange={(event) => setDisregardReason(event.target.value)}
-              className="mt-2 min-h-24 w-full rounded-xl border border-amber-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm outline-none focus:border-amber-400"
-              placeholder="Ex.: Amostra insuficiente para estes parâmetros."
-            />
-            <div className="mt-3 flex flex-wrap items-center gap-2">
-              <button
-                type="button"
-                onClick={disregardEmptyResults}
-                disabled={busyAll === "disregard"}
-                className="inline-flex items-center gap-2 rounded-xl bg-amber-700 px-3 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-amber-800 disabled:opacity-50"
-              >
-                {busyAll === "disregard" ? <Loader2 className="animate-spin" size={16} /> : null}
-                Confirmar desconsideração
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowDisregardPanel(false)}
-                disabled={busyAll === "disregard"}
-                className="rounded-xl border border-amber-200 bg-white px-3 py-2 text-sm font-medium text-amber-900 shadow-sm transition hover:bg-amber-100 disabled:opacity-50"
-              >
-                Cancelar
-              </button>
-            </div>
           </div>
         ) : null}
 
@@ -420,8 +382,78 @@ export default function LaboratoryRequestResultsPage() {
 
         {!loading ? (
           <div className="space-y-4">
-            {groupedItems.map(([examName, rows]) => (
-              <Card key={examName} title={examName} subtitle={`${rows.length} parâmetros`}>
+            {groupedItems.map(([examName, rows]) => {
+              const canDisregardExam =
+                !busyAll &&
+                rows.length > 0 &&
+                rows.every(
+                  (row) =>
+                    row.status === "desconsiderado" ||
+                    (
+                      row.status !== "validado" &&
+                      row.result_value == null &&
+                      !(draft[toKey(row.id)] || "").trim()
+                    )
+                ) &&
+                rows.some((row) => row.status !== "desconsiderado")
+
+              return (
+              <Card
+                key={examName}
+                title={examName}
+                subtitle={`${rows.length} parâmetros`}
+                actions={
+                  canDisregardExam ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setExamDisregardName(examName)
+                        setExamDisregardReason("")
+                      }}
+                      className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-900 shadow-sm hover:bg-amber-100"
+                    >
+                      Desconsiderar exame
+                    </button>
+                  ) : null
+                }
+              >
+                {examDisregardName === examName ? (
+                  <div className="mb-4 rounded-2xl border border-amber-200 bg-amber-50 p-4 shadow-sm">
+                    <label className="text-sm font-semibold text-amber-950" htmlFor={`exam-disregard-${examName}`}>
+                      Motivo para desconsiderar todos os campos deste exame
+                    </label>
+                    <textarea
+                      id={`exam-disregard-${examName}`}
+                      value={examDisregardReason}
+                      onChange={(event) => setExamDisregardReason(event.target.value)}
+                      className="mt-2 min-h-24 w-full rounded-xl border border-amber-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm outline-none focus:border-amber-400"
+                      placeholder="Ex.: Amostra insuficiente para executar todos os parâmetros deste exame."
+                      autoFocus
+                    />
+                    <div className="mt-3 flex flex-wrap items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => disregardExam(examName, rows)}
+                        disabled={busyAll === "disregard"}
+                        className="inline-flex items-center gap-2 rounded-xl bg-amber-700 px-3 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-amber-800 disabled:opacity-50"
+                      >
+                        {busyAll === "disregard" ? <Loader2 className="animate-spin" size={16} /> : null}
+                        Confirmar desconsideração
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setExamDisregardName(null)
+                          setExamDisregardReason("")
+                        }}
+                        disabled={busyAll === "disregard"}
+                        className="rounded-xl border border-amber-200 bg-white px-3 py-2 text-sm font-medium text-amber-900 shadow-sm transition hover:bg-amber-100 disabled:opacity-50"
+                      >
+                        Cancelar
+                      </button>
+                    </div>
+                  </div>
+                ) : null}
                 <div className="overflow-x-auto">
                   <table className="w-full min-w-[820px] text-sm">
                     <thead>
@@ -442,6 +474,13 @@ export default function LaboratoryRequestResultsPage() {
                         const draftValue = draft[id] ?? ""
                         const canSave = isEditable && !isBusy && !busyAll && !!draftValue.trim()
                         const canValidate = row.status === "aguardando_validacao" && !isBusy && !busyAll
+                        const canDisregard =
+                          row.status !== "validado" &&
+                          row.status !== "desconsiderado" &&
+                          row.result_value == null &&
+                          !draftValue.trim() &&
+                          !isBusy &&
+                          !busyAll
                         const disregardLabel = row.disregard_validation_date
                           ? "Desconsideração validada"
                           : "Desconsideração a validar"
@@ -478,7 +517,7 @@ export default function LaboratoryRequestResultsPage() {
                               ) : null}
                             </td>
                             <td className="py-2 pr-0">
-                              <div className="flex items-center gap-2">
+                              <div className="flex flex-wrap items-center gap-2">
                                 {isBusy ? (
                                   <span className="inline-flex items-center gap-2 text-xs text-slate-500">
                                     <Loader2 className="animate-spin" size={14} />
@@ -494,6 +533,16 @@ export default function LaboratoryRequestResultsPage() {
                                     className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-800 shadow-sm hover:bg-slate-50 disabled:opacity-50"
                                   >
                                     Gravar
+                                  </button>
+                                ) : null}
+
+                                {canDisregard ? (
+                                  <button
+                                    type="button"
+                                    onClick={() => disregardItem(row.id).catch((error: any) => setErrorMessage(isNotFoundLikeError(error) ? null : (error?.message || String(error))))}
+                                    className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-900 shadow-sm hover:bg-amber-100"
+                                  >
+                                    Desconsiderar
                                   </button>
                                 ) : null}
 
@@ -515,7 +564,8 @@ export default function LaboratoryRequestResultsPage() {
                   </table>
                 </div>
               </Card>
-            ))}
+              )
+            })}
           </div>
         ) : null}
       </div>

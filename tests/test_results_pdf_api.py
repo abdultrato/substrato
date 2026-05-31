@@ -408,6 +408,47 @@ def test_disregard_empty_results_requires_reason_and_does_not_touch_filled_value
 
 
 @pytest.mark.django_db
+def test_individual_result_line_can_be_disregarded_without_touching_other_fields(api_client):
+    """A single empty parameter can be disregarded inline without closing the whole exam."""
+    tenant = _tenant()
+    _authenticate_lab_user(tenant, api_client)
+    patient = _patient(tenant)
+    exam = _exam(tenant)
+    fields = _fields(exam, 3)
+    request, _ = _request_with_result_item(tenant, patient, exam, fields[0])
+    first, second, third = list(ResultItem.objects.filter(result=request.result).order_by("position", "id"))
+
+    save_response = api_client.post(
+        f"/api/v1/clinical/resultitem/{first.id}/save-result/",
+        data={"result_value": "11.5"},
+        format="json",
+    )
+    assert save_response.status_code == 200
+
+    disregard_response = api_client.post(
+        f"/api/v1/clinical/resultitem/{third.id}/disregard-result/",
+        data={},
+        format="json",
+    )
+    assert disregard_response.status_code == 200
+    payload = _response_data(disregard_response)
+    assert payload["id"] == third.id
+    assert payload["status"] == ResultState.DISREGARDED
+    assert payload["disregard_reason"] == ""
+
+    first.refresh_from_db()
+    second.refresh_from_db()
+    third.refresh_from_db()
+    request.refresh_from_db()
+
+    assert first.status == ResultState.AWAITING_VALIDATION
+    assert second.status == ResultState.PENDING
+    assert second.disregard_reason == ""
+    assert third.status == ResultState.DISREGARDED
+    assert request.status == ResultState.IN_ANALYSIS
+
+
+@pytest.mark.django_db
 def test_validated_request_can_contain_only_validated_disregarded_results(api_client):
     """A request can be finalized when every empty result was disregarded and validated."""
     tenant = _tenant()

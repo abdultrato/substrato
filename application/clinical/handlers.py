@@ -77,7 +77,7 @@ def handle_validate_result(command: ValidateResultCommand) -> ResultItem:
 
 
 def handle_disregard_result(command: DisregardResultCommand) -> ResultItem:
-    reason = _normalize_reason(command.reason)
+    reason = _normalize_optional_reason(command.reason)
 
     with transaction.atomic():
         locked = (
@@ -191,6 +191,10 @@ def _normalize_reason(raw_reason) -> str:
     if len(reason) < 5:
         raise ValidationError({"reason": "Explique o motivo da desconsideração com pelo menos 5 caracteres."})
     return reason
+
+
+def _normalize_optional_reason(raw_reason) -> str:
+    return str(raw_reason or "").strip()
 
 
 def _request_result_items_for_update(lab_request):
