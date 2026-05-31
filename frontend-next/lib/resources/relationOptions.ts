@@ -199,12 +199,18 @@ const ENDPOINT_FIELD_OVERRIDES: Record<string, Record<string, RelationTarget>> =
     record: { endpoint: "/dental/record/", labelFields: ["custom_id", "patient_name", ...DEFAULT_LABEL_FIELDS] },
   },
   "/dental/treatment_item/": {
-    treatment_plan: { endpoint: "/dental/treatment_plan/", labelFields: ["title", "patient_name", ...DEFAULT_LABEL_FIELDS] },
+    treatment_plan: { endpoint: "/dental/treatment_plan/", labelFields: ["title", ...DEFAULT_LABEL_FIELDS] },
     procedure: { endpoint: "/dental/procedure/", labelFields: ["code", "name", ...DEFAULT_LABEL_FIELDS] },
     appointment: { endpoint: "/dental/appointment/", labelFields: ["custom_id", "patient_name", "scheduled_start", ...DEFAULT_LABEL_FIELDS] },
   },
+  "/dental/patient_treatment_plan/": {
+    patient: { endpoint: "/clinical/patient/", labelFields: ["name", "document_number", ...DEFAULT_LABEL_FIELDS] },
+    treatment_plan: { endpoint: "/dental/treatment_plan/", labelFields: ["title", ...DEFAULT_LABEL_FIELDS] },
+    dentist: { endpoint: "/human_resources/employee/", labelFields: ["name", "employee_code", ...DEFAULT_LABEL_FIELDS] },
+    record: { endpoint: "/dental/record/", labelFields: ["custom_id", "patient_name", ...DEFAULT_LABEL_FIELDS] },
+  },
   "/dental/prosthesis_lab_order/": {
-    treatment_item: { endpoint: "/dental/treatment_item/", labelFields: ["custom_id", "procedure_name", "patient_name", ...DEFAULT_LABEL_FIELDS] },
+    treatment_item: { endpoint: "/dental/treatment_item/", labelFields: ["custom_id", "procedure_name", "treatment_plan_title", ...DEFAULT_LABEL_FIELDS] },
   },
   "/veterinary/record/": {
     appointment: { endpoint: "/veterinary/appointment/", labelFields: ["custom_id", "animal_name", "scheduled_start", ...DEFAULT_LABEL_FIELDS] },

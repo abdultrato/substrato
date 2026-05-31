@@ -4,6 +4,7 @@ from api.v1.compat import LegacyAliasSerializerMixin
 from apps.dental.models import (
     DentalAppointment,
     DentalOdontogramEntry,
+    DentalPatientTreatmentPlan,
     DentalProcedure,
     DentalProsthesisLabOrder,
     DentalRecord,
@@ -147,11 +148,12 @@ class DentalTreatmentPlanSerializer(LegacyAliasSerializerMixin, serializers.Mode
     patient_name = serializers.CharField(source="patient.name", read_only=True)
     dentist_name = serializers.CharField(source="dentist.name", read_only=True)
     item_count = serializers.IntegerField(source="items.count", read_only=True)
+    patient_assignment_count = serializers.IntegerField(source="patient_assignments.count", read_only=True)
 
     class Meta:
         model = DentalTreatmentPlan
         fields = "__all__"
-        read_only_fields = (*CORE_READ_ONLY_FIELDS, "patient_name", "dentist_name", "item_count")
+        read_only_fields = (*CORE_READ_ONLY_FIELDS, "patient_name", "dentist_name", "item_count", "patient_assignment_count")
 
 
 class DentalTreatmentPlanItemSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer):
@@ -176,13 +178,53 @@ class DentalTreatmentPlanItemSerializer(LegacyAliasSerializerMixin, serializers.
     legacy_output_aliases = legacy_input_aliases
 
     procedure_name = serializers.CharField(source="procedure.name", read_only=True)
-    patient_name = serializers.CharField(source="treatment_plan.patient.name", read_only=True)
+    treatment_plan_title = serializers.CharField(source="treatment_plan.title", read_only=True)
     total_price = serializers.DecimalField(max_digits=12, decimal_places=2, read_only=True)
 
     class Meta:
         model = DentalTreatmentPlanItem
         fields = "__all__"
-        read_only_fields = (*CORE_READ_ONLY_FIELDS, "procedure_name", "patient_name", "total_price")
+        read_only_fields = (*CORE_READ_ONLY_FIELDS, "procedure_name", "treatment_plan_title", "total_price")
+
+
+class DentalPatientTreatmentPlanSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer):
+    legacy_input_aliases = {
+        **BASE_ALIASES,
+        "plano_tratamento": "treatment_plan",
+        "plano_dentario": "treatment_plan",
+        "plano_dentário": "treatment_plan",
+        "prontuario": "record",
+        "prontuário": "record",
+        "atribuido_em": "assigned_at",
+        "atribuído_em": "assigned_at",
+        "inicio_vigencia": "valid_from",
+        "início_vigência": "valid_from",
+        "fim_vigencia": "valid_until",
+        "fim_vigência": "valid_until",
+    }
+    legacy_output_aliases = legacy_input_aliases
+
+    patient_name = serializers.CharField(source="patient.name", read_only=True)
+    treatment_plan_title = serializers.CharField(source="treatment_plan.title", read_only=True)
+    dentist_name = serializers.CharField(source="dentist.name", read_only=True)
+    item_count = serializers.IntegerField(source="treatment_plan.items.count", read_only=True)
+    is_valid = serializers.BooleanField(read_only=True)
+    is_expired = serializers.BooleanField(read_only=True)
+    validity_status = serializers.CharField(read_only=True)
+
+    class Meta:
+        model = DentalPatientTreatmentPlan
+        fields = "__all__"
+        read_only_fields = (
+            *CORE_READ_ONLY_FIELDS,
+            "patient_name",
+            "treatment_plan_title",
+            "dentist_name",
+            "item_count",
+            "is_valid",
+            "is_expired",
+            "validity_status",
+        )
 
 
 class DentalProsthesisLabOrderSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer):
@@ -226,5 +268,6 @@ SERIALIZER_MAP = {
     "odontogram": DentalOdontogramEntrySerializer,
     "treatment_plan": DentalTreatmentPlanSerializer,
     "treatment_item": DentalTreatmentPlanItemSerializer,
+    "patient_treatment_plan": DentalPatientTreatmentPlanSerializer,
     "prosthesis_lab_order": DentalProsthesisLabOrderSerializer,
 }

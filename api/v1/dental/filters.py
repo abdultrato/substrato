@@ -2,6 +2,7 @@ from api.core.filters import SafeFilterSet
 from apps.dental.models import (
     DentalAppointment,
     DentalOdontogramEntry,
+    DentalPatientTreatmentPlan,
     DentalProcedure,
     DentalProsthesisLabOrder,
     DentalRecord,
@@ -91,6 +92,25 @@ class DentalTreatmentPlanItemFilter(SafeFilterSet):
         ]
 
 
+class DentalPatientTreatmentPlanFilter(SafeFilterSet):
+    class Meta:
+        model = DentalPatientTreatmentPlan
+        fields = [
+            "tenant",
+            "custom_id",
+            "deleted",
+            "patient",
+            "treatment_plan",
+            "dentist",
+            "record",
+            "status",
+            "assigned_at",
+            "valid_from",
+            "valid_until",
+            "created_at",
+        ]
+
+
 class DentalProsthesisLabOrderFilter(SafeFilterSet):
     class Meta:
         model = DentalProsthesisLabOrder
@@ -116,5 +136,6 @@ FILTER_MAP = {
     "odontogram": DentalOdontogramEntryFilter,
     "treatment_plan": DentalTreatmentPlanFilter,
     "treatment_item": DentalTreatmentPlanItemFilter,
+    "patient_treatment_plan": DentalPatientTreatmentPlanFilter,
     "prosthesis_lab_order": DentalProsthesisLabOrderFilter,
 }

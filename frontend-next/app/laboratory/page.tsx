@@ -2,11 +2,11 @@
 
 import { isNotFoundLikeError } from "@/lib/errors/api-error"
 import Link from "next/link"
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import {
   FileText,
-  FileDown,
   ListChecks,
+  Printer,
   Shield,
   PackageSearch,
 } from "lucide-react"
@@ -24,15 +24,6 @@ import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
 
 type RequestRow = Record<string, any>
 
-async function openResultsPdf(requestId: number) {
-  const blob = await apiFetch<Blob>(`/requests/${requestId}/results-pdf/`, {
-    responseType: "blob",
-  })
-  const url = window.URL.createObjectURL(blob)
-  window.open(url, "_blank", "noopener,noreferrer")
-  setTimeout(() => window.URL.revokeObjectURL(url), 60_000)
-}
-
 export default function LaboratoryPage() {
   const { user } = useAuth()
   const canViewAdmin = userHasAnyGroup(user, [GROUPS.ADMIN])
@@ -46,14 +37,6 @@ export default function LaboratoryPage() {
   const [awaitingValidationTotal, setAwaitingValidationTotal] = useState<number>(0)
   const [criticalRequestsTotal, setCriticalRequestsTotal] = useState<number>(0)
   const [pendingItemsTotal, setPendingItemsTotal] = useState<number>(0)
-
-  const onPdf = useCallback(async (id: number) => {
-    try {
-      await openResultsPdf(id)
-    } catch (e: any) {
-      setErrorMessage(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao gerar PDF de resultados."))
-    }
-  }, [])
 
   useEffect(() => {
     let mounted = true
@@ -115,20 +98,11 @@ export default function LaboratoryPage() {
               </Link>
             ) : null}
 
-            {r.id ? (
-              <button
-                type="button"
-                onClick={() => onPdf(Number(r.id))}
-                className="inline-flex items-center rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-50"
-              >
-                PDF
-              </button>
-            ) : null}
           </div>
         ),
       },
     ],
-    [canViewAdmin, onPdf]
+    [canViewAdmin]
   )
 
   return (
@@ -185,10 +159,10 @@ export default function LaboratoryPage() {
             />
           ) : null}
           <ActionTile
-            title="PDF de resultados"
-            description="Emita o PDF institucional (somente resultados validados)."
-            href="/laboratory/requests"
-            icon={FileDown}
+            title="Requisições validadas"
+            description="Lista final para imprimir o PDF institucional dos resultados."
+            href="/laboratory/requests/validated"
+            icon={Printer}
           />
           <ActionTile
             title="Criar requisição de materiais"
@@ -200,7 +174,7 @@ export default function LaboratoryPage() {
 
         <Card
           title="Próximas requisições"
-          subtitle="Atalhos para lançar resultado pela Administração e emitir PDF."
+          subtitle="Atalhos para acompanhar requisições ainda não validadas."
         >
           {loading ? (
             <div className="text-sm text-gray-500">Carregando...</div>
@@ -216,5 +190,3 @@ export default function LaboratoryPage() {
     </AppLayout>
   )
 }
-
-

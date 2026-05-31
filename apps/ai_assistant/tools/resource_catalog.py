@@ -2125,6 +2125,15 @@ def match_resource_descriptors(message: str, *, limit: int = 8) -> list[Resource
     if not normalized:
         return []
 
+    try:
+        from apps.ai_assistant.services.alias_normalization import match_resource_aliases
+
+        alias_matches = match_resource_aliases(message, limit=limit)
+    except Exception:
+        alias_matches = []
+    if alias_matches:
+        return [match.descriptor for match in alias_matches]
+
     scored: list[tuple[int, ResourceDescriptor]] = []
     for descriptor in get_resource_descriptors():
         score = 0

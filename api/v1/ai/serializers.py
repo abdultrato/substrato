@@ -3,6 +3,8 @@ from __future__ import annotations
 from rest_framework import serializers
 
 from apps.ai_assistant.models import AiInvestigation, AiMessage, AiOperationalTask, AiSession, AiSuggestedAction
+from apps.ai_assistant.services.clarification_learning import VALID_LEARNED_RESOLUTION_FEEDBACK_EVENTS
+from apps.ai_assistant.services.suggestion_learning import VALID_PROACTIVE_FEEDBACK_EVENTS
 
 
 class AiChatRequestSerializer(serializers.Serializer):
@@ -96,6 +98,41 @@ class AiInvestigationUpdateSerializer(serializers.Serializer):
 class AiInvestigationFollowUpSerializer(serializers.Serializer):
     action_type = serializers.ChoiceField(choices=("create_operational_task", "prepare_ai_report_export"), required=True)
     language = serializers.ChoiceField(choices=("pt", "en"), required=False, default="pt")
+
+
+class AiSuggestionFeedbackSerializer(serializers.Serializer):
+    session_id = serializers.IntegerField(required=True)
+    message_id = serializers.IntegerField(required=False, allow_null=True)
+    event = serializers.ChoiceField(choices=VALID_PROACTIVE_FEEDBACK_EVENTS, required=True)
+    source = serializers.CharField(max_length=80, required=False, allow_blank=True, default="chat")
+    suggestion = serializers.JSONField(required=False, default=dict)
+    prompt = serializers.CharField(max_length=1000, required=False, allow_blank=True, default="")
+
+    def validate(self, attrs):
+        suggestion = attrs.get("suggestion") or {}
+        if suggestion and not isinstance(suggestion, dict):
+            raise serializers.ValidationError({"suggestion": "suggestion deve ser um objecto JSON."})
+        prompt = str(attrs.get("prompt") or "").strip()
+        if not suggestion and prompt:
+            attrs["suggestion"] = {"prompt": prompt}
+        if not attrs.get("suggestion"):
+            raise serializers.ValidationError({"suggestion": "Informe a sugestão ou o prompt seleccionado."})
+        return attrs
+
+
+class AiLearnedResolutionFeedbackSerializer(serializers.Serializer):
+    session_id = serializers.IntegerField(required=True)
+    message_id = serializers.IntegerField(required=False, allow_null=True)
+    event = serializers.ChoiceField(choices=VALID_LEARNED_RESOLUTION_FEEDBACK_EVENTS, required=True)
+    replacement_message = serializers.CharField(max_length=1000, required=False, allow_blank=True, default="")
+    resolution = serializers.JSONField(required=True)
+
+    def validate_resolution(self, value):
+        if not isinstance(value, dict):
+            raise serializers.ValidationError("resolution deve ser um objecto JSON.")
+        if not value.get("resolved") and not value.get("selected_option") and not value.get("selected_module"):
+            raise serializers.ValidationError("resolution deve conter a auto-resolução ou o módulo/sugestão seleccionado.")
+        return value
 
 
 class AiActionConfirmSerializer(serializers.Serializer):

@@ -80,6 +80,7 @@ def test_consultations_use_english_payload_and_reject_legacy_aliases(api_client)
 
     assert payload["patient"] == patient.id
     assert payload["specialty"] == specialty.id
+    assert payload["specialty_name"] == specialty.name
     assert payload["manual_holiday"] is True
     assert payload["patient_name"] == patient.name
     assert "paciente" not in payload

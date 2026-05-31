@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import { CalendarClock, ClipboardCheck, ClipboardList, FileText, PackageCheck, Stethoscope } from "lucide-react"
+import { CalendarClock, ClipboardCheck, ClipboardList, FileText, PackageCheck, Stethoscope, Users } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
 import WorkspaceHub from "@/components/workspace/WorkspaceHub"
@@ -20,6 +20,8 @@ export default function DentalPage() {
   const [appointments, setAppointments] = useState(0)
   const [records, setRecords] = useState(0)
   const [treatmentPlans, setTreatmentPlans] = useState(0)
+  const [validPatientPlans, setValidPatientPlans] = useState(0)
+  const [expiredPatientPlans, setExpiredPatientPlans] = useState(0)
   const [labOrders, setLabOrders] = useState(0)
 
   useEffect(() => {
@@ -30,11 +32,13 @@ export default function DentalPage() {
         setLoading(true)
         setError(null)
 
-        const [procedureRes, appointmentRes, recordRes, planRes, labOrderRes] = await Promise.all([
+        const [procedureRes, appointmentRes, recordRes, planRes, validPlanRes, expiredPlanRes, labOrderRes] = await Promise.all([
           apiFetch<any>("/dental/procedure/", { clientCache: safeRefreshToken === 0 }),
           apiFetch<any>("/dental/appointment/", { clientCache: safeRefreshToken === 0 }),
           apiFetch<any>("/dental/record/", { clientCache: safeRefreshToken === 0 }),
           apiFetch<any>("/dental/treatment_plan/", { clientCache: safeRefreshToken === 0 }),
+          apiFetch<any>("/dental/patient_treatment_plan/?validity=valid", { clientCache: safeRefreshToken === 0 }),
+          apiFetch<any>("/dental/patient_treatment_plan/?validity=expired", { clientCache: safeRefreshToken === 0 }),
           apiFetch<any>("/dental/prosthesis_lab_order/", { clientCache: safeRefreshToken === 0 }),
         ])
 
@@ -43,6 +47,8 @@ export default function DentalPage() {
         setAppointments(extractTotalCount(appointmentRes))
         setRecords(extractTotalCount(recordRes))
         setTreatmentPlans(extractTotalCount(planRes))
+        setValidPatientPlans(extractTotalCount(validPlanRes))
+        setExpiredPatientPlans(extractTotalCount(expiredPlanRes))
         setLabOrders(extractTotalCount(labOrderRes))
       } catch (e: any) {
         if (!mounted) return
@@ -86,6 +92,8 @@ export default function DentalPage() {
             { label: "Consultas", value: metricValue || appointments },
             { label: "Prontuários", value: metricValue || records },
             { label: "Planos", value: metricValue || treatmentPlans },
+            { label: "Planos válidos", value: metricValue || validPatientPlans },
+            { label: "Planos expirados", value: metricValue || expiredPatientPlans },
             { label: "Ordens de prótese", value: metricValue || labOrders },
           ]}
           actions={[
@@ -109,13 +117,25 @@ export default function DentalPage() {
             },
             {
               title: "Planos de tratamento",
-              description: t("Planeamento, aprovação, execução e custo estimado.", "Planning, approval, execution and estimated cost."),
+              description: t("Catálogo de planos, itens e custo estimado.", "Plan catalog, items and estimated cost."),
               href: "/dental/treatment-plans",
               icon: ClipboardList,
             },
             {
+              title: "Pacientes com plano válido",
+              description: t("Pacientes com plano dentário ativo dentro da vigência.", "Patients with active dental plans within validity."),
+              href: "/dental/patient-treatment-plans/valid",
+              icon: Users,
+            },
+            {
+              title: "Pacientes com plano expirado",
+              description: t("Pacientes cujo plano dentário expirou.", "Patients whose dental plan has expired."),
+              href: "/dental/patient-treatment-plans/expired",
+              icon: Users,
+            },
+            {
               title: "Itens do plano",
-              description: t("Procedimentos por dente, data prevista e preço.", "Procedures by tooth, scheduled date and price."),
+              description: t("Itens pertencentes ao plano dentário, sem paciente direto.", "Items belonging to the dental plan, without direct patient ownership."),
               href: "/dental/treatment-items",
               icon: Stethoscope,
             },

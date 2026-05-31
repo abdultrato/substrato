@@ -1,16 +1,16 @@
-from django.contrib import admin
 from django import forms
+from django.contrib import admin
 
 from apps.dental.models import (
     DentalAppointment,
     DentalOdontogramEntry,
+    DentalPatientTreatmentPlan,
     DentalProcedure,
     DentalProsthesisLabOrder,
     DentalRecord,
     DentalTreatmentPlan,
     DentalTreatmentPlanItem,
 )
-
 
 TOOTH_NUMBER_PLACEHOLDER = "Ex.: 11, 26, 48 ou 75"
 
@@ -93,19 +93,30 @@ class DentalOdontogramEntryAdmin(DentalCoreAdmin):
 
 @admin.register(DentalTreatmentPlan)
 class DentalTreatmentPlanAdmin(DentalCoreAdmin):
-    list_display = ("title", "patient", "dentist", "status", "planned_start", "planned_end", "estimated_total")
+    exclude = ("patient", "record")
+    list_display = ("title", "dentist", "status", "planned_start", "planned_end", "estimated_total")
     list_filter = ("status", "deleted", "planned_start")
-    search_fields = ("custom_id", "title", "patient__name", "dentist__name", "objectives")
-    autocomplete_fields = ("patient", "dentist", "record")
+    search_fields = ("custom_id", "title", "dentist__name", "objectives", "notes")
+    autocomplete_fields = ("dentist",)
     inlines = [DentalTreatmentPlanItemInline]
 
 
 @admin.register(DentalTreatmentPlanItem)
 class DentalTreatmentPlanItemAdmin(DentalCoreAdmin):
+    exclude = ("appointment", "completed_at")
     list_display = ("position", "treatment_plan", "procedure", "tooth_number", "status", "scheduled_date", "total_price")
     list_filter = ("status", "lab_required", "deleted", "scheduled_date")
     search_fields = ("custom_id", "treatment_plan__title", "procedure__name", "tooth_number", "clinical_notes")
-    autocomplete_fields = ("treatment_plan", "procedure", "appointment")
+    autocomplete_fields = ("treatment_plan", "procedure")
+
+
+@admin.register(DentalPatientTreatmentPlan)
+class DentalPatientTreatmentPlanAdmin(DentalCoreAdmin):
+    list_display = ("patient", "treatment_plan", "status", "valid_from", "valid_until", "is_valid", "dentist")
+    list_filter = ("status", "deleted", "valid_from", "valid_until")
+    search_fields = ("custom_id", "patient__name", "treatment_plan__title", "dentist__name", "notes")
+    autocomplete_fields = ("patient", "treatment_plan", "dentist", "record")
+    date_hierarchy = "valid_from"
 
 
 @admin.register(DentalProsthesisLabOrder)

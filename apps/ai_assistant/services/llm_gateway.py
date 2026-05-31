@@ -414,6 +414,14 @@ class LocalLlmGateway:
                 for record in records[:3]:
                     safe_refs.append(str(record.get("custom_id") or record.get("student_code") or record.get("teacher_code") or record.get("id")))
                 line += (" Safe sample: " if language == "en" else " Amostra segura: ") + ", ".join(safe_refs)
+            filters = item.get("applied_filters") or []
+            if filters:
+                filter_labels = []
+                for applied_filter in filters[:3]:
+                    field = applied_filter.get("field") or applied_filter.get("kind") or "filter"
+                    value = applied_filter.get("value") or applied_filter.get("values") or applied_filter.get("label") or ""
+                    filter_labels.append(f"{field}={value}" if value else str(field))
+                line += (" Filters: " if language == "en" else " Filtros: ") + ", ".join(filter_labels)
             lines.append(line)
 
         if language == "en":

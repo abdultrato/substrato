@@ -8191,6 +8191,358 @@
         ]
       }
     },
+    "/api/v1/dental/patient_treatment_plan/": {
+      "get": {
+        "operationId": "listDentalPatientTreatmentPlans",
+        "description": "",
+        "parameters": [
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "A search term.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Which field to use when ordering the results.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DentalPatientTreatmentPlan"
+                  }
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      },
+      "post": {
+        "operationId": "createDentalPatientTreatmentPlan",
+        "description": "",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DentalPatientTreatmentPlan"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/DentalPatientTreatmentPlan"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/DentalPatientTreatmentPlan"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DentalPatientTreatmentPlan"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      }
+    },
+    "/api/v1/dental/patient_treatment_plan/expired/": {
+      "get": {
+        "operationId": "expiredDentalPatientTreatmentPlan",
+        "description": "",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DentalPatientTreatmentPlan"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      }
+    },
+    "/api/v1/dental/patient_treatment_plan/valid/": {
+      "get": {
+        "operationId": "validDentalPatientTreatmentPlan",
+        "description": "",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DentalPatientTreatmentPlan"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      }
+    },
+    "/api/v1/dental/patient_treatment_plan/{id}/": {
+      "get": {
+        "operationId": "retrieveDentalPatientTreatmentPlan",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "A unique integer value identifying this Paciente com Plano Dent\u00e1rio.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "A search term.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Which field to use when ordering the results.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DentalPatientTreatmentPlan"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      },
+      "put": {
+        "operationId": "updateDentalPatientTreatmentPlan",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "A unique integer value identifying this Paciente com Plano Dent\u00e1rio.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "A search term.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Which field to use when ordering the results.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DentalPatientTreatmentPlan"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/DentalPatientTreatmentPlan"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/DentalPatientTreatmentPlan"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DentalPatientTreatmentPlan"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      },
+      "patch": {
+        "operationId": "partialUpdateDentalPatientTreatmentPlan",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "A unique integer value identifying this Paciente com Plano Dent\u00e1rio.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "A search term.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Which field to use when ordering the results.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DentalPatientTreatmentPlan"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/DentalPatientTreatmentPlan"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/DentalPatientTreatmentPlan"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DentalPatientTreatmentPlan"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      },
+      "delete": {
+        "operationId": "destroyDentalPatientTreatmentPlan",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "A unique integer value identifying this Paciente com Plano Dent\u00e1rio.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "A search term.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Which field to use when ordering the results.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      }
+    },
     "/api/v1/dental/procedure/": {
       "get": {
         "operationId": "listDentalProcedures",
@@ -25334,6 +25686,29 @@
         ],
         "responses": {
           "204": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      }
+    },
+    "/api/v1/public_health/dashboard/": {
+      "get": {
+        "operationId": "listPublicHealthDashboardViewSets",
+        "description": "",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {}
+                }
+              }
+            },
             "description": ""
           }
         },
@@ -70516,7 +70891,50 @@
     },
     "/api/v1/equipment_integrations/equipment/{equipment_custom_id}/results/": {
       "post": {
-        "operationId": "createEquipmentResultsInbox",
+        "operationId": "createEquipmentIntegrationsEquipmentByEquipmentCustomIdResults",
+        "description": "Inbox de resultados para equipamentos (HTTP JSON).\n\nAutentica\u00e7\u00e3o: header `X-Integration-Key`.\n\nPayload (exemplo):\n{\n  \"message_id\": \"uuid-externo-opcional\",\n  \"accession\": \"ORD-....\",\n  \"results\": [{\"code\": \"HB\", \"value\": \"13.2\"}, ...],\n  \"documents\": [{\"filename\":\"ecg.pdf\",\"content_type\":\"application/pdf\",\"base64\":\"...\",\"request_item_id\": 123}]\n}",
+        "parameters": [
+          {
+            "name": "equipment_custom_id",
+            "in": "path",
+            "required": true,
+            "description": "",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {}
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {}
+            },
+            "multipart/form-data": {
+              "schema": {}
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      }
+    },
+    "/api/v1/equipment_integrations/equipment/{equipment_custom_id}/ingest/": {
+      "post": {
+        "operationId": "createEquipmentIntegrationsEquipmentByEquipmentCustomIdIngest",
         "description": "Inbox de resultados para equipamentos (HTTP JSON).\n\nAutentica\u00e7\u00e3o: header `X-Integration-Key`.\n\nPayload (exemplo):\n{\n  \"message_id\": \"uuid-externo-opcional\",\n  \"accession\": \"ORD-....\",\n  \"results\": [{\"code\": \"HB\", \"value\": \"13.2\"}, ...],\n  \"documents\": [{\"filename\":\"ecg.pdf\",\"content_type\":\"application/pdf\",\"base64\":\"...\",\"request_item_id\": 123}]\n}",
         "parameters": [
           {
@@ -77831,6 +78249,7 @@
           },
           "tooth_number": {
             "type": "string",
+            "description": "Use a numera\u00e7\u00e3o dent\u00e1ria FDI, como 11, 26, 48 ou 75.",
             "maxLength": 4
           },
           "surface": {
@@ -77898,6 +78317,133 @@
           "record"
         ]
       },
+      "DentalPatientTreatmentPlan": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "patient_name": {
+            "type": "string",
+            "readOnly": true
+          },
+          "treatment_plan_title": {
+            "type": "string",
+            "readOnly": true
+          },
+          "dentist_name": {
+            "type": "string",
+            "readOnly": true
+          },
+          "item_count": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "is_valid": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "is_expired": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "validity_status": {
+            "type": "string",
+            "readOnly": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "custom_id": {
+            "type": "string",
+            "readOnly": true,
+            "nullable": true
+          },
+          "deleted": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "deleted_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true,
+            "nullable": true
+          },
+          "version": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "assigned_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "valid_from": {
+            "type": "string",
+            "format": "date"
+          },
+          "valid_until": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          },
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "EXPIRED",
+              "CANCELLED"
+            ],
+            "type": "string"
+          },
+          "notes": {
+            "type": "string"
+          },
+          "created_by": {
+            "type": "string",
+            "readOnly": true,
+            "nullable": true
+          },
+          "updated_by": {
+            "type": "string",
+            "readOnly": true,
+            "nullable": true
+          },
+          "deleted_by": {
+            "type": "string",
+            "readOnly": true,
+            "nullable": true
+          },
+          "tenant": {
+            "type": "string",
+            "readOnly": true
+          },
+          "patient": {
+            "type": "integer"
+          },
+          "treatment_plan": {
+            "type": "integer"
+          },
+          "dentist": {
+            "type": "integer",
+            "nullable": true
+          },
+          "record": {
+            "type": "integer",
+            "nullable": true
+          }
+        },
+        "required": [
+          "patient",
+          "treatment_plan"
+        ]
+      },
       "DentalProcedure": {
         "type": "object",
         "properties": {
@@ -77940,7 +78486,8 @@
           },
           "code": {
             "type": "string",
-            "maxLength": 32
+            "readOnly": true,
+            "default": ""
           },
           "category": {
             "enum": [
@@ -77997,8 +78544,7 @@
           }
         },
         "required": [
-          "name",
-          "code"
+          "name"
         ]
       },
       "DentalProsthesisLabOrder": {
@@ -78289,7 +78835,7 @@
             "type": "string",
             "readOnly": true
           },
-          "patient_name": {
+          "treatment_plan_title": {
             "type": "string",
             "readOnly": true
           },
@@ -78435,6 +78981,10 @@
             "type": "integer",
             "readOnly": true
           },
+          "patient_assignment_count": {
+            "type": "integer",
+            "readOnly": true
+          },
           "created_at": {
             "type": "string",
             "format": "date-time",
@@ -78527,7 +79077,8 @@
             "readOnly": true
           },
           "patient": {
-            "type": "integer"
+            "type": "integer",
+            "nullable": true
           },
           "dentist": {
             "type": "integer",
@@ -78539,8 +79090,7 @@
           }
         },
         "required": [
-          "title",
-          "patient"
+          "title"
         ]
       },
       "MedicalConsultation": {
@@ -81302,8 +81852,22 @@
               "ECG",
               "HEM",
               "BIO",
+              "IMU",
+              "COAG",
+              "URI",
+              "GAS",
               "US",
               "XR",
+              "CT",
+              "MRI",
+              "MG",
+              "ECHO",
+              "HOLTER",
+              "MAPA",
+              "EEG",
+              "OCT",
+              "VISUAL_FIELD",
+              "CORNEAL_TOPOGRAPHY",
               "OUT"
             ],
             "type": "string"
@@ -81313,6 +81877,8 @@
               "HTTP_JSON",
               "HL7_MLLP",
               "ASTM_TCP",
+              "TCP_JSON",
+              "TCP_RAW",
               "DICOM",
               "FILE_DROP"
             ],
@@ -81332,6 +81898,56 @@
           },
           "active": {
             "type": "boolean"
+          },
+          "connection_mode": {
+            "enum": [
+              "PASSIVE_API",
+              "TCP_SERVER",
+              "TCP_CLIENT"
+            ],
+            "type": "string"
+          },
+          "tcp_host": {
+            "type": "string",
+            "description": "Endere\u00e7o do equipamento ou interface local para escuta.",
+            "maxLength": 120
+          },
+          "tcp_port": {
+            "type": "integer",
+            "maximum": 65535,
+            "minimum": 1,
+            "nullable": true
+          },
+          "tcp_timeout_seconds": {
+            "type": "integer",
+            "maximum": 600,
+            "minimum": 1
+          },
+          "tcp_framing": {
+            "enum": [
+              "JSON_LINE",
+              "MLLP",
+              "ASTM",
+              "RAW"
+            ],
+            "type": "string"
+          },
+          "encoding": {
+            "type": "string",
+            "maxLength": 40
+          },
+          "auto_consume_results": {
+            "type": "boolean"
+          },
+          "supported_exam_types": {
+            "type": "object",
+            "description": "Ex.: LAB, MED, RAD, SDX, ECG, EEG, OCT."
+          },
+          "last_seen_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true,
+            "nullable": true
           },
           "config": {
             "type": "object"
@@ -81675,7 +82291,12 @@
           "exam_type": {
             "enum": [
               "LAB",
-              "MED"
+              "MED",
+              "RAD",
+              "SDX",
+              "CAR",
+              "NEU",
+              "OFT"
             ],
             "type": "string",
             "default": "LAB"
@@ -81706,7 +82327,17 @@
               "RecepcaoAmostras",
               "ControleQualidade",
               "Pesquisa",
-              "Outro"
+              "Outro",
+              "Radiologia",
+              "DiagnosticoImagem",
+              "Cardiologia",
+              "GinecoObstetricia",
+              "Ortopedia",
+              "Neurologia",
+              "Otorrino",
+              "Oftalmologia",
+              "MedicinaNuclear",
+              "Endoscopia"
             ],
             "type": "string"
           },

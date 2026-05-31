@@ -108,6 +108,7 @@ const RESOURCE_ICON_BY_KEY: Record<string, LucideIcon> = {
   "dental.procedure": Stethoscope,
   "dental.prosthesis_lab_order": PackageCheck,
   "dental.record": FileText,
+  "dental.patient_treatment_plan": Users,
   "dental.treatment_item": ClipboardCheck,
   "dental.treatment_plan": ClipboardList,
   "veterinary.admission": HeartPulse,

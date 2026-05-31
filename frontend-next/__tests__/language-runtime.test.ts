@@ -73,7 +73,9 @@ describe("language defaults and runtime translation", () => {
 
   it("translates loose English UI text back to Portuguese in Portuguese mode", () => {
     expect(translateRuntimeText("Patients", "pt")).toBe("Pacientes")
-    expect(translateRuntimeText("Requests (Laboratory)", "pt")).toBe("Requisições (Laboratório)")
+    expect(translateRuntimeText("Requests (Laboratory)", "pt")).toBe(
+      "Ordens de Trabalho (Requisições de Exames Laboratoriais)"
+    )
     expect(translateRuntimeText("Substrato Healthcare", "pt")).toBe("Substrato Saúde")
     expect(translateRuntimeText("Record not found.", "pt")).toBe("Registo não encontrado.")
     expect(translateRuntimeText("Open list", "pt")).toBe("Abrir lista")

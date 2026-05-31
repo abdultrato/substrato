@@ -1,11 +1,9 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-import re
 from typing import Any
 
-from apps.ai_assistant.tools.knowledge_base import should_select_knowledge_base
-from apps.ai_assistant.tools.resource_catalog import match_resource_descriptors, normalize_text
+from apps.ai_assistant.services.intent_signals import build_intent_signals
 
 CLARIFICATION_METADATA_KEY = "intent_clarification"
 CONVERSATION_FOCUS_KEY = "conversation_focus"
@@ -74,156 +72,6 @@ DEFAULT_OPTIONS_EN = (
     "Generate an operational report for the last 30 days.",
 )
 
-PERSONAL_TERMS = (
-    "quem sou",
-    "meu login",
-    "meus grupos",
-    "minha conta",
-    "meu perfil",
-    "o que posso investigar",
-    "que dados posso investigar",
-    "who am i",
-    "my account",
-    "my profile",
-    "what can i investigate",
-)
-PROJECT_IDENTITY_TERMS = (
-    "quem criou",
-    "quem desenvolveu",
-    "criador",
-    "criado por",
-    "autor",
-    "dono",
-    "proprietario",
-    "proprietário",
-    "quando comecou",
-    "quando começou",
-    "quando iniciou",
-    "inicio do desenvolvimento",
-    "início do desenvolvimento",
-    "github",
-    "repositorio",
-    "repositório",
-    "who created",
-    "who built",
-    "owner",
-    "creator",
-    "started development",
-)
-CRUD_TERMS = (
-    "criar",
-    "crie",
-    "inserir",
-    "insira",
-    "cadastrar",
-    "cadastre",
-    "registar",
-    "registe",
-    "registrar",
-    "adicione",
-    "adicionar",
-    "novo",
-    "nova",
-    "actualizar",
-    "atualizar",
-    "actualize",
-    "atualize",
-    "alterar",
-    "altere",
-    "editar",
-    "edite",
-    "apagar",
-    "apague",
-    "remover",
-    "remova",
-    "eliminar",
-    "elimine",
-    "excluir",
-    "exclua",
-    "create",
-    "insert",
-    "update",
-    "delete",
-    "remove",
-)
-DATA_TERMS = (
-    "quantos",
-    "quantas",
-    "listar",
-    "lista",
-    "mostre",
-    "mostrar",
-    "ver",
-    "consultar",
-    "procure",
-    "buscar",
-    "pesquisar",
-    "investigar",
-    "analise",
-    "analisar",
-    "dados",
-    "base de dados",
-    "banco de dados",
-    "registos",
-    "registros",
-    "records",
-    "show",
-    "list",
-    "search",
-)
-OPERATIONAL_TERMS = (
-    "alerta",
-    "alertas",
-    "erro",
-    "erros",
-    "falha",
-    "falhas",
-    "saude",
-    "saúde",
-    "health",
-    "monitor",
-    "slo",
-    "outbox",
-    "rota",
-    "rotas",
-    "pendente",
-    "pendentes",
-)
-REPORT_TERMS = ("relatorio", "relatório", "report", "export", "exportar", "pdf", "csv", "download")
-TASK_TERMS = (
-    "tarefa",
-    "task",
-    "atribuir",
-    "atribui",
-    "encaminhar",
-    "encaminha",
-    "notificar",
-    "notifica",
-)
-GREETING_TERMS = (
-    "ola",
-    "olá",
-    "bom dia",
-    "boa tarde",
-    "boa noite",
-    "hello",
-    "hi",
-)
-VAGUE_REFERENCES = (
-    "isso",
-    "isto",
-    "aquilo",
-    "essa informacao",
-    "essa informação",
-    "este assunto",
-    "o problema",
-    "os dados",
-    "a situacao",
-    "a situação",
-    "ver isso",
-    "mostrar isso",
-)
-
 
 class AiIntentRouter:
     """Lê a intenção antes de seleccionar ferramentas operacionais."""
@@ -236,14 +84,15 @@ class AiIntentRouter:
         session_metadata: dict[str, Any] | None = None,
         tenant=None,
     ) -> IntentDecision:
-        raw = message or ""
-        normalized = normalize_text(raw)
         session_metadata = session_metadata or {}
-        active_module = normalize_text(active_module or "")
-        focus = session_metadata.get(CONVERSATION_FOCUS_KEY) if isinstance(session_metadata, dict) else {}
-        pending = session_metadata.get(CLARIFICATION_METADATA_KEY) if isinstance(session_metadata, dict) else {}
+        signals = build_intent_signals(
+            message=message,
+            active_module=active_module,
+            session_metadata=session_metadata,
+            tenant=tenant,
+        )
 
-        if not normalized:
+        if not signals["normalized"]:
             return self._clarification(
                 intent="empty",
                 reason="empty_message",
@@ -256,8 +105,6 @@ class AiIntentRouter:
         if isinstance(session_metadata.get("crud_draft"), dict):
             return self._ready("crud_followup", 88, {"crud_draft": True})
 
-        signals = self._signals(normalized=normalized, active_module=active_module, focus=focus, pending=pending, tenant=tenant)
-
         if signals["project_identity"]:
             return self._ready("project_identity", 94, signals)
         if signals["knowledge_base"]:
@@ -266,10 +113,34 @@ class AiIntentRouter:
         if signals["personal"]:
             return self._ready("user_context", 92, signals)
 
+        if signals["resource_ambiguous"] and not (signals["active_module_scoped"] or signals["has_previous_focus"]):
+            modules_pt = _candidate_module_options_pt(signals["resource_candidate_modules"])
+            modules_en = _candidate_module_options_en(signals["resource_candidate_modules"])
+            return self._clarification(
+                intent="ambiguous_resource",
+                reason=signals["resource_ambiguity_reason"] or "ambiguous_resource_without_context",
+                question_pt="Este pedido pode referir-se a mais de um módulo. Qual contexto devo usar?",
+                question_en="This request may refer to more than one module. Which context should I use?",
+                confidence=42,
+                signals=signals,
+                options_pt=modules_pt,
+                options_en=modules_en,
+            )
+
+        if _is_short_operational_without_scope(signals):
+            return self._clarification(
+                intent="underspecified_operational",
+                reason="short_operational_without_scope",
+                question_pt="A pendencia ou estado operacional pertence a que modulo ou processo?",
+                question_en="Which module or process does this pending or operational state belong to?",
+                confidence=34,
+                signals=signals,
+            )
+
         if signals["resource_count"] or signals["code_or_id"] or signals["json_payload"]:
             if signals["crud"]:
                 return self._ready("crud_operation", 92, signals)
-            if signals["data"] or signals["operational"] or active_module:
+            if signals["data"] or signals["operational"] or signals["active_module_scoped"]:
                 return self._ready("data_or_operational_lookup", 86, signals)
             if signals["resource_count"]:
                 return self._ready("data_lookup", 76, signals)
@@ -303,7 +174,9 @@ class AiIntentRouter:
                 signals=signals,
             )
 
-        if signals["broad_request"] and not (signals["resource_count"] or active_module or signals["has_previous_focus"]):
+        if signals["broad_request"] and not (
+            signals["resource_count"] or signals["active_module_scoped"] or signals["has_previous_focus"]
+        ):
             return self._clarification(
                 intent="broad_request",
                 reason="broad_request_without_scope",
@@ -313,7 +186,7 @@ class AiIntentRouter:
                 signals=signals,
             )
 
-        if signals["short"] and not (active_module or signals["has_previous_focus"]):
+        if signals["short"] and not (signals["active_module_scoped"] or signals["has_previous_focus"]):
             return self._clarification(
                 intent="underspecified",
                 reason="short_message_without_scope",
@@ -323,7 +196,7 @@ class AiIntentRouter:
                 signals=signals,
             )
 
-        if signals["data"] or active_module or signals["has_previous_focus"]:
+        if signals["data"] or signals["active_module_scoped"] or signals["has_previous_focus"]:
             return self._ready("data_or_context_followup", 68, signals)
 
         return self._clarification(
@@ -335,41 +208,6 @@ class AiIntentRouter:
             signals=signals,
         )
 
-    def _signals(
-        self,
-        *,
-        normalized: str,
-        active_module: str,
-        focus: Any,
-        pending: Any,
-        tenant=None,
-    ) -> dict[str, Any]:
-        tokens = normalized.split()
-        resource_matches = match_resource_descriptors(normalized, limit=5)
-        has_previous_focus = isinstance(focus, dict) and bool(focus.get("intent") or focus.get("resources"))
-        has_pending_clarification = isinstance(pending, dict) and pending.get("status") == "needs_clarification"
-        return {
-            "short": len(tokens) <= 3,
-            "greeting_only": self._is_greeting_only(normalized),
-            "vague_reference": any(term in normalized for term in (normalize_text(item) for item in VAGUE_REFERENCES)),
-            "broad_request": self._has_any(normalized, ("ajuda", "help", "investigar", "analisar", "verificar", "mostra-me", "mostre me")),
-            "project_identity": self._has_project_identity(normalized),
-            "knowledge_base": should_select_knowledge_base(message=normalized, active_module=active_module, tenant=tenant),
-            "personal": self._has_any(normalized, PERSONAL_TERMS),
-            "crud": self._has_any(normalized, CRUD_TERMS),
-            "data": self._has_any(normalized, DATA_TERMS),
-            "operational": self._has_any(normalized, OPERATIONAL_TERMS),
-            "report": self._has_any(normalized, REPORT_TERMS),
-            "task": self._has_any(normalized, TASK_TERMS),
-            "resource_count": len(resource_matches),
-            "resource_basenames": [item.basename for item in resource_matches[:5]],
-            "code_or_id": bool(re.search(r"\b(?:id\s*)?\d+\b|\b[A-Z]{2,12}-[A-Z0-9-]+\b", normalized, flags=re.IGNORECASE)),
-            "json_payload": "{" in normalized and "}" in normalized,
-            "active_module": active_module,
-            "has_previous_focus": has_previous_focus,
-            "has_pending_clarification": has_pending_clarification,
-        }
-
     def _clarification(
         self,
         *,
@@ -379,6 +217,8 @@ class AiIntentRouter:
         question_en: str,
         confidence: int,
         signals: dict[str, Any],
+        options_pt: tuple[str, ...] | None = None,
+        options_en: tuple[str, ...] | None = None,
     ) -> IntentDecision:
         return IntentDecision(
             intent=intent,
@@ -387,8 +227,8 @@ class AiIntentRouter:
             reason=reason,
             question_pt=question_pt,
             question_en=question_en,
-            options_pt=DEFAULT_OPTIONS_PT,
-            options_en=DEFAULT_OPTIONS_EN,
+            options_pt=options_pt or DEFAULT_OPTIONS_PT,
+            options_en=options_en or DEFAULT_OPTIONS_EN,
             signals=signals,
         )
 
@@ -401,23 +241,49 @@ class AiIntentRouter:
             signals=signals,
         )
 
-    @staticmethod
-    def _has_any(normalized: str, terms: tuple[str, ...]) -> bool:
-        return any(re.search(rf"(?<!\w){re.escape(normalize_text(term))}(?!\w)", normalized) for term in terms)
 
-    @staticmethod
-    def _has_project_identity(normalized: str) -> bool:
-        scope_terms = ("sistema", "projecto", "projeto", "substrato", "software", "app", "plataforma", "system", "project")
-        if not any(re.search(rf"(?<!\w){re.escape(normalize_text(term))}(?!\w)", normalized) for term in scope_terms):
-            return False
-        return any(
-            re.search(rf"(?<!\w){re.escape(normalize_text(term))}(?!\w)", normalized)
-            for term in PROJECT_IDENTITY_TERMS
-        )
+MODULE_OPTIONS_PT = {
+    "pharmacy": "Farmácia",
+    "warehouse": "Armazém/Logística",
+    "bloodbank": "Banco de Sangue",
+    "billing": "Faturamento",
+    "payments": "Pagamentos",
+    "dental": "Odontologia",
+}
 
-    @staticmethod
-    def _is_greeting_only(normalized: str) -> bool:
-        cleaned = re.sub(r"[!?.;,]+", " ", normalized).strip()
-        if not cleaned:
-            return False
-        return any(cleaned == normalize_text(term) for term in GREETING_TERMS)
+MODULE_OPTIONS_EN = {
+    "pharmacy": "Pharmacy",
+    "warehouse": "Warehouse/Logistics",
+    "bloodbank": "Blood bank",
+    "billing": "Billing",
+    "payments": "Payments",
+    "dental": "Dental",
+}
+
+
+def _candidate_module_options_pt(modules: list[str]) -> tuple[str, ...]:
+    options = [MODULE_OPTIONS_PT.get(module, module.replace("_", " ").title()) for module in modules[:4]]
+    options.append("Explorar todos os recursos encontrados")
+    return tuple(dict.fromkeys(options))
+
+
+def _candidate_module_options_en(modules: list[str]) -> tuple[str, ...]:
+    options = [MODULE_OPTIONS_EN.get(module, module.replace("_", " ").title()) for module in modules[:4]]
+    options.append("Explore all matched resources")
+    return tuple(dict.fromkeys(options))
+
+
+def _is_short_operational_without_scope(signals: dict[str, Any]) -> bool:
+    if not (signals.get("operational") and signals.get("short")):
+        return False
+    if signals.get("active_module_scoped") or signals.get("has_previous_focus") or signals.get("monitoring"):
+        return False
+    if signals.get("data") or signals.get("crud") or signals.get("report") or signals.get("task"):
+        return False
+    if signals.get("code_or_id") or signals.get("json_payload"):
+        return False
+    matches = [item for item in signals.get("resource_matches") or [] if isinstance(item, dict)]
+    if not matches:
+        return True
+    best_score = max(int(item.get("score") or 0) for item in matches)
+    return best_score < 60

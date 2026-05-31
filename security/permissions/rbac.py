@@ -602,6 +602,15 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
 
 ROLE_POLICY = _policy()
 
+ROLE_ACTION_POLICY = {
+    _normalize(GROUPS["LABORATORIO"]): {
+        "clinical-labrequest": {
+            "disregard_empty_results",
+            "validate_results",
+        },
+    },
+}
+
 
 class RBACPermission(permissions.BasePermission):
     """
@@ -653,6 +662,7 @@ class RBACPermission(permissions.BasePermission):
             return True
 
         method = (getattr(request, "method", "") or "").upper()
+        action = getattr(view, "action", None)
 
         allowed = False
         for group in user_groups:
@@ -661,6 +671,10 @@ class RBACPermission(permissions.BasePermission):
                 continue
             methods = perms.get(basename)
             if methods and method in methods:
+                allowed = True
+                break
+            actions = (ROLE_ACTION_POLICY.get(group) or {}).get(basename)
+            if actions and method == "POST" and action in actions:
                 allowed = True
                 break
 

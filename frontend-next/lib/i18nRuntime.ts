@@ -255,7 +255,7 @@ const EXACT_EN_TO_PT: Record<string, string> = {
   "Consultations": "Consultas",
   "Request": "Requisição",
   "Requests": "Requisições",
-  "Requests (Laboratory)": "Requisições (Laboratório)",
+  "Requests (Laboratory)": "Ordens de Trabalho (Requisições de Exames Laboratoriais)",
   "Request Items": "Itens de requisição",
   "Result": "Resultado",
   "Results": "Resultados",

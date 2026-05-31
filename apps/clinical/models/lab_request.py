@@ -42,6 +42,8 @@ class LabRequest(NoNameCoreModel):
         VALIDADO = ResultState.VALIDATED
         REJEITADA = ResultState.REJECTED
         REJEITADO = ResultState.REJECTED
+        DESCONSIDERADA = ResultState.DISREGARDED
+        DESCONSIDERADO = ResultState.DISREGARDED
 
     patient = models.ForeignKey(
 
@@ -463,6 +465,14 @@ class LabRequest(NoNameCoreModel):
                 pendentes=models.Count("id", filter=models.Q(status=ResultState.PENDING)),
                 aguardando=models.Count("id", filter=models.Q(status=ResultState.AWAITING_VALIDATION)),
                 validados=models.Count("id", filter=models.Q(status=ResultState.VALIDATED)),
+                desconsiderados=models.Count("id", filter=models.Q(status=ResultState.DISREGARDED)),
+                desconsiderados_validados=models.Count(
+                    "id",
+                    filter=models.Q(
+                        status=ResultState.DISREGARDED,
+                        disregard_validation_date__isnull=False,
+                    ),
+                ),
             )
 
             total = int(stats.get("total") or 0)
@@ -488,12 +498,13 @@ class LabRequest(NoNameCoreModel):
                 pendentes = int(stats.get("pendentes") or 0)
                 aguardando = int(stats.get("aguardando") or 0)
                 validados = int(stats.get("validados") or 0)
+                desconsiderados = int(stats.get("desconsiderados") or 0)
+                desconsiderados_validados = int(stats.get("desconsiderados_validados") or 0)
+                entradas_concluidas = (aguardando + validados + desconsiderados) == total
 
-                # Sincroniza o status geral da requisição com o fluxo dos itens:
-                # PENDENTE -> EM_ANALISE -> AGUARDANDO_VALIDACAO -> VALIDADO
-                if validados == total:
+                if (validados + desconsiderados_validados) == total:
                     novo_status_fluxo = ResultState.VALIDATED
-                elif (validados + aguardando) == total:
+                elif entradas_concluidas:
                     novo_status_fluxo = ResultState.AWAITING_VALIDATION
                 elif pendentes == total:
                     novo_status_fluxo = ResultState.PENDING

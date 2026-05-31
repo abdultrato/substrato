@@ -19,6 +19,8 @@ import {
   Sparkles,
   Table2,
   TerminalSquare,
+  ThumbsDown,
+  ThumbsUp,
   TrendingUp,
   UserPlus,
 } from "lucide-react"
@@ -121,6 +123,71 @@ type AiKnowledgeBaseSchema = {
   follow_ups?: string[]
 }
 
+type AiProactiveSuggestion = {
+  id?: string
+  kind?: string
+  priority?: string
+  label?: string
+  prompt?: string
+  reason?: string
+  resource_basename?: string
+  module?: string
+  learning?: {
+    selected_count?: number
+    positive_count?: number
+    negative_count?: number
+    score?: number
+  }
+}
+
+type AiProactiveGuidance = {
+  status?: "available" | "empty" | string
+  suggestions?: AiProactiveSuggestion[]
+  recommended_questions?: string[]
+  context?: Record<string, any>
+}
+
+type AiLearnedClarificationResolution = {
+  original_message?: string
+  effective_message?: string
+  resolved?: boolean
+  reason?: string
+  blocked_reason?: string
+  selected_module?: string
+  selected_option?: AiProactiveSuggestion | Record<string, any>
+  confidence_score?: number
+  calibration?: {
+    status?: string
+    reliability?: number
+    rated_events?: number
+    recent_negative_streak?: number
+  }
+}
+
+type AiUnderstandingTrace = {
+  status?: string
+  original_message?: string
+  effective_message?: string
+  message_changed?: boolean
+  conversation_status?: string
+  intent?: string
+  confidence_score?: number
+  loose_input?: boolean
+  summary_pt?: string
+  summary_en?: string
+  selected_tools?: Array<{ name?: string; mode?: string }>
+  safety?: {
+    learned_resolution_reason?: string
+    learned_resolution_blocked_reason?: string
+    confidence_score?: number
+  }
+  decision_path?: Array<{
+    stage?: string
+    status?: string
+    detail?: string
+  }>
+}
+
 type AiResponseSchema = {
   cards?: Array<{
     tool_name?: string
@@ -130,6 +197,7 @@ type AiResponseSchema = {
   }>
   analytics?: AiAnalyticsSchema | null
   knowledge_base?: AiKnowledgeBaseSchema | null
+  proactive_guidance?: AiProactiveGuidance | null
 }
 
 type AiConversationState = {
@@ -138,6 +206,10 @@ type AiConversationState = {
   confidence_score?: number
   question?: string
   options?: string[]
+  recommended_questions?: string[]
+  proactive_suggestions?: AiProactiveSuggestion[]
+  learned_clarification_resolution?: AiLearnedClarificationResolution
+  understanding_trace?: AiUnderstandingTrace
 }
 
 type AiToolDefinition = {
@@ -159,6 +231,7 @@ type AiSessionSummary = {
 
 type ConversationMessage = {
   id: string
+  messageId?: number
   role: "user" | "assistant" | "error"
   content: string
   sources?: AiSource[]
@@ -167,6 +240,8 @@ type ConversationMessage = {
   investigation?: AiInvestigation | null
   conversation?: AiConversationState
   schema?: AiResponseSchema
+  proactiveGuidance?: AiProactiveGuidance | null
+  learnedResolutionFeedback?: "accepted" | "wrong" | "corrected" | "dismissed"
 }
 
 function formatToolName(value: string) {
@@ -454,6 +529,201 @@ function AiKnowledgeBasePanel({ schema, onAsk }: { schema?: AiResponseSchema; on
   )
 }
 
+function AiProactiveGuidancePanel({
+  guidance,
+  onSelect,
+  onFeedback,
+}: {
+  guidance?: AiProactiveGuidance | null
+  onSelect: (suggestion: AiProactiveSuggestion) => void
+  onFeedback: (suggestion: AiProactiveSuggestion, event: "helpful" | "not_helpful") => void
+}) {
+  const { t } = useLanguage()
+  const suggestions = (guidance?.suggestions || []).filter((suggestion) => suggestion.prompt)
+  if (!suggestions.length) return null
+
+  return (
+    <div className="mt-3 rounded-2xl border border-sky-200 bg-sky-50/70 p-3 text-sky-950 shadow-sm dark:border-sky-500/25 dark:bg-sky-500/10 dark:text-sky-50">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-2 text-sm font-semibold">
+          <Sparkles size={15} />
+          {t("Sugestões proactivas", "Proactive suggestions")}
+        </div>
+        <Badge variant="info">{suggestions.length}</Badge>
+      </div>
+      <div className="mt-3 grid gap-2 md:grid-cols-2">
+        {suggestions.slice(0, 6).map((suggestion) => {
+          const prompt = suggestion.prompt || ""
+          const label = suggestion.label || prompt
+          return (
+            <div
+              key={suggestion.id || prompt}
+              className="flex min-h-[4.5rem] items-stretch gap-2 rounded-xl border border-sky-200 bg-white/80 p-2 shadow-sm dark:border-sky-500/25 dark:bg-black/15"
+            >
+              <button
+                type="button"
+                onClick={() => onSelect(suggestion)}
+                className="flex min-w-0 flex-1 flex-col justify-center rounded-lg px-2 text-left transition hover:bg-sky-100 dark:hover:bg-sky-500/10"
+              >
+                <span className="line-clamp-1 text-xs font-semibold">{label}</span>
+                <span className="mt-1 line-clamp-2 text-[11px] leading-snug text-sky-900/75 dark:text-sky-100/70">
+                  {prompt}
+                </span>
+              </button>
+              <div className="flex w-8 flex-col gap-1">
+                <button
+                  type="button"
+                  aria-label={t("Marcar como útil", "Mark as helpful")}
+                  title={t("Útil", "Helpful")}
+                  onClick={() => onFeedback(suggestion, "helpful")}
+                  className="grid h-8 w-8 place-items-center rounded-lg border border-sky-200 bg-white/80 text-sky-700 transition hover:border-emerald-300 hover:text-emerald-700 dark:border-sky-500/25 dark:bg-black/10 dark:text-sky-100"
+                >
+                  <ThumbsUp size={14} />
+                </button>
+                <button
+                  type="button"
+                  aria-label={t("Marcar como pouco útil", "Mark as not helpful")}
+                  title={t("Pouco útil", "Not helpful")}
+                  onClick={() => onFeedback(suggestion, "not_helpful")}
+                  className="grid h-8 w-8 place-items-center rounded-lg border border-sky-200 bg-white/80 text-sky-700 transition hover:border-rose-300 hover:text-rose-700 dark:border-sky-500/25 dark:bg-black/10 dark:text-sky-100"
+                >
+                  <ThumbsDown size={14} />
+                </button>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+function AiLearnedResolutionPanel({
+  resolution,
+  feedback,
+  onFeedback,
+}: {
+  resolution?: AiLearnedClarificationResolution
+  feedback?: "accepted" | "wrong" | "corrected" | "dismissed"
+  onFeedback: (event: "accepted" | "wrong") => void
+}) {
+  const { t } = useLanguage()
+  if (!resolution?.resolved) return null
+
+  const confidence = typeof resolution.confidence_score === "number" ? `${resolution.confidence_score}%` : ""
+  const effectiveMessage = resolution.effective_message || ""
+
+  return (
+    <div className="mt-3 rounded-xl border border-emerald-200 bg-emerald-50/70 p-3 text-emerald-950 shadow-sm dark:border-emerald-500/25 dark:bg-emerald-500/10 dark:text-emerald-50">
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2 text-sm font-semibold">
+            <BrainCircuit size={15} />
+            {t("Resolvido por aprendizagem", "Resolved by learning")}
+          </div>
+          {effectiveMessage ? (
+            <div className="mt-1 line-clamp-2 text-xs text-emerald-900/80 dark:text-emerald-100/75">
+              {effectiveMessage}
+            </div>
+          ) : null}
+        </div>
+        {confidence ? <Badge variant="success">{confidence}</Badge> : null}
+      </div>
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          aria-label={t("Confirmar resolução aprendida", "Confirm learned resolution")}
+          title={t("Certo", "Correct")}
+          onClick={() => onFeedback("accepted")}
+          disabled={!!feedback}
+          className="grid h-8 w-8 place-items-center rounded-lg border border-emerald-200 bg-white/80 text-emerald-700 transition hover:border-emerald-300 hover:text-emerald-800 disabled:cursor-not-allowed disabled:opacity-60 dark:border-emerald-500/25 dark:bg-black/10 dark:text-emerald-100"
+        >
+          <ThumbsUp size={14} />
+        </button>
+        <button
+          type="button"
+          aria-label={t("Rejeitar resolução aprendida", "Reject learned resolution")}
+          title={t("Errado", "Wrong")}
+          onClick={() => onFeedback("wrong")}
+          disabled={!!feedback}
+          className="grid h-8 w-8 place-items-center rounded-lg border border-emerald-200 bg-white/80 text-emerald-700 transition hover:border-rose-300 hover:text-rose-700 disabled:cursor-not-allowed disabled:opacity-60 dark:border-emerald-500/25 dark:bg-black/10 dark:text-emerald-100"
+        >
+          <ThumbsDown size={14} />
+        </button>
+        {feedback ? (
+          <span className="text-xs font-medium text-emerald-900/75 dark:text-emerald-100/70">
+            {feedback === "accepted" ? t("Confirmado", "Confirmed") : t("Registado", "Recorded")}
+          </span>
+        ) : null}
+      </div>
+    </div>
+  )
+}
+
+function AiUnderstandingTracePanel({ trace }: { trace?: AiUnderstandingTrace }) {
+  const { t, language } = useLanguage()
+  if (!trace || trace.status !== "available") return null
+
+  const summary = language === "en" ? trace.summary_en : trace.summary_pt
+  const tools = trace.selected_tools || []
+  const reason = trace.safety?.learned_resolution_reason || trace.safety?.learned_resolution_blocked_reason || ""
+  const steps = (trace.decision_path || []).slice(0, 4)
+
+  return (
+    <div className="mt-3 rounded-xl border border-violet-200 bg-violet-50/70 p-3 text-violet-950 shadow-sm dark:border-violet-500/25 dark:bg-violet-500/10 dark:text-violet-50">
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2 text-sm font-semibold">
+            <TerminalSquare size={15} />
+            {t("Como a IA entendeu", "How AI understood")}
+          </div>
+          {summary ? (
+            <div className="mt-1 line-clamp-2 text-xs text-violet-900/80 dark:text-violet-100/75">
+              {summary}
+            </div>
+          ) : null}
+        </div>
+        <div className="flex flex-wrap gap-1">
+          {trace.loose_input ? <Badge variant="warning">{t("Entrada solta", "Loose input")}</Badge> : null}
+          {typeof trace.confidence_score === "number" ? <Badge variant="info">{trace.confidence_score}%</Badge> : null}
+        </div>
+      </div>
+      <div className="mt-3 grid gap-2 text-xs md:grid-cols-2">
+        <div className="rounded-lg border border-violet-200 bg-white/70 p-2 dark:border-violet-500/25 dark:bg-black/10">
+          <div className="font-semibold">{t("Mensagem efectiva", "Effective message")}</div>
+          <div className="mt-1 line-clamp-2 text-violet-900/75 dark:text-violet-100/70">
+            {trace.effective_message || trace.original_message || "—"}
+          </div>
+        </div>
+        <div className="rounded-lg border border-violet-200 bg-white/70 p-2 dark:border-violet-500/25 dark:bg-black/10">
+          <div className="font-semibold">{t("Decisão", "Decision")}</div>
+          <div className="mt-1 text-violet-900/75 dark:text-violet-100/70">
+            {reason || trace.intent || "—"}
+          </div>
+        </div>
+      </div>
+      {steps.length ? (
+        <div className="mt-2 flex flex-wrap gap-1">
+          {steps.map((step) => (
+            <span
+              key={`${step.stage}-${step.status}-${step.detail}`}
+              className="rounded-md border border-violet-200 bg-white/60 px-2 py-1 text-[11px] font-medium text-violet-900 dark:border-violet-500/25 dark:bg-black/10 dark:text-violet-100"
+              title={step.detail || ""}
+            >
+              {step.stage}
+            </span>
+          ))}
+        </div>
+      ) : null}
+      {tools.length ? (
+        <div className="mt-2 text-[11px] text-violet-900/75 dark:text-violet-100/70">
+          {t("Ferramentas", "Tools")}: {tools.map((tool) => formatToolName(tool.name || "")).filter(Boolean).join(", ")}
+        </div>
+      ) : null}
+    </div>
+  )
+}
+
 function AiContextAside({
   tools,
   sessions,
@@ -729,6 +999,7 @@ export default function AiOperationalPage() {
         ...current,
         {
           id: `assistant-${response.message_id}`,
+          messageId: response.message_id,
           role: "assistant",
           content: response.answer,
           sources: response.sources || [],
@@ -737,6 +1008,16 @@ export default function AiOperationalPage() {
           investigation: response.investigation || null,
           conversation: response.conversation,
           schema: response.schema,
+          proactiveGuidance:
+            response.schema?.proactive_guidance ||
+            (response.conversation?.proactive_suggestions?.length
+              ? {
+                  status: "available",
+                  suggestions: response.conversation.proactive_suggestions,
+                  recommended_questions: response.conversation.recommended_questions || [],
+                  context: {},
+                }
+              : null),
         },
       ])
       if (response.investigation) {
@@ -771,6 +1052,57 @@ export default function AiOperationalPage() {
       ])
     } finally {
       setLoading(false)
+    }
+  }
+
+  async function recordSuggestionFeedback(
+    suggestion: AiProactiveSuggestion,
+    event: "selected" | "helpful" | "not_helpful" | "dismissed",
+    messageId?: number
+  ) {
+    if (!sessionId) return
+    try {
+      await apiFetch("/ai/assistant/suggestions/feedback/", {
+        method: "POST",
+        clientCache: false,
+        timeoutMs: 15_000,
+        body: JSON.stringify({
+          session_id: sessionId,
+          message_id: messageId || null,
+          event,
+          source: "chat",
+          suggestion,
+        }),
+      })
+    } catch {
+      // Feedback de sugestoes nunca deve bloquear a conversa principal.
+    }
+  }
+
+  async function recordLearnedResolutionFeedback(
+    message: ConversationMessage,
+    event: "accepted" | "wrong"
+  ) {
+    const resolution = message.conversation?.learned_clarification_resolution
+    if (!sessionId || !message.messageId || !resolution?.resolved) return
+
+    try {
+      await apiFetch("/ai/assistant/learned-resolution/feedback/", {
+        method: "POST",
+        clientCache: false,
+        timeoutMs: 15_000,
+        body: JSON.stringify({
+          session_id: sessionId,
+          message_id: message.messageId,
+          event,
+          resolution,
+        }),
+      })
+      setMessages((current) =>
+        current.map((item) => (item.id === message.id ? { ...item, learnedResolutionFeedback: event } : item))
+      )
+    } catch {
+      // Feedback da resolucao aprendida nao deve interromper o chat.
     }
   }
 
@@ -815,6 +1147,20 @@ export default function AiOperationalPage() {
 
   function handleAskRecommended(question: string) {
     void sendMessage(question)
+  }
+
+  function handleAskProactive(suggestion: AiProactiveSuggestion, messageId?: number) {
+    if (!suggestion.prompt) return
+    void recordSuggestionFeedback(suggestion, "selected", messageId)
+    void sendMessage(suggestion.prompt)
+  }
+
+  function handleProactiveFeedback(
+    suggestion: AiProactiveSuggestion,
+    event: "helpful" | "not_helpful",
+    messageId?: number
+  ) {
+    void recordSuggestionFeedback(suggestion, event, messageId)
   }
 
   const aside = (
@@ -1011,8 +1357,19 @@ export default function AiOperationalPage() {
                       </div>
                     ) : null}
 
+                    <AiLearnedResolutionPanel
+                      resolution={message.conversation?.learned_clarification_resolution}
+                      feedback={message.learnedResolutionFeedback}
+                      onFeedback={(event) => void recordLearnedResolutionFeedback(message, event)}
+                    />
+                    <AiUnderstandingTracePanel trace={message.conversation?.understanding_trace} />
                     <AiStructuredResultPanel schema={message.schema} onAsk={handleAskRecommended} />
                     <AiKnowledgeBasePanel schema={message.schema} onAsk={handleAskRecommended} />
+                    <AiProactiveGuidancePanel
+                      guidance={message.proactiveGuidance || message.schema?.proactive_guidance}
+                      onSelect={(suggestion) => handleAskProactive(suggestion, message.messageId)}
+                      onFeedback={(suggestion, event) => handleProactiveFeedback(suggestion, event, message.messageId)}
+                    />
 
                     <AiInvestigationPanel
                       investigation={message.investigation || null}

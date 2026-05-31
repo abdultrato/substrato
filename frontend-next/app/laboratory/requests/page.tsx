@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { useCallback, useEffect, useMemo, useState } from "react"
-import { Shield, FileDown, FlaskConical, Search, RotateCcw } from "lucide-react"
+import { CheckCircle2, Shield, FlaskConical, Search, RotateCcw } from "lucide-react"
 import { keepPreviousData, useQuery } from "@tanstack/react-query"
 
 import AppLayout from "@/components/layout/AppLayout"
@@ -13,7 +13,7 @@ import { useAuth } from "@/hooks/useAuth"
 import useDebounce from "@/hooks/useDebounce"
 import { useLanguage } from "@/hooks/useLanguage"
 import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
-import { ApiListMeta, apiFetch, apiFetchList } from "@/lib/api"
+import { ApiListMeta, apiFetchList } from "@/lib/api"
 import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
 
 type RequestRow = Record<string, any>
@@ -21,43 +21,32 @@ type RequestList = { items: RequestRow[]; meta: ApiListMeta; raw: any }
 type CriticalFilter = "all" | "critical" | "non_critical"
 type FilterOption = { value: string; labelPt: string; labelEn: string }
 
-async function openResultsPdf(requestId: number) {
-  const blob = await apiFetch<Blob>(`/requests/${requestId}/results-pdf/`, {
-    responseType: "blob",
-  })
-  const url = window.URL.createObjectURL(blob)
-  window.open(url, "_blank", "noopener,noreferrer")
-  setTimeout(() => window.URL.revokeObjectURL(url), 60_000)
-}
-
 const STATUS_OPTIONS: FilterOption[] = [
-  { value: "", labelPt: "Todos os estados", labelEn: "All statuses" },
   { value: "pendente", labelPt: "Pendente", labelEn: "Pending" },
   { value: "em_analise", labelPt: "Em análise", labelEn: "In analysis" },
   { value: "aguardando_validacao", labelPt: "Aguardando validação", labelEn: "Awaiting validation" },
-  { value: "validado", labelPt: "Validado", labelEn: "Validated" },
   { value: "rejeitado", labelPt: "Rejeitado", labelEn: "Rejected" },
 ]
 
 const PRIORITY_OPTIONS: FilterOption[] = [
   { value: "", labelPt: "Todas as prioridades", labelEn: "All priorities" },
-  { value: "NAO_URGENTE", labelPt: "Não urgente", labelEn: "Non-urgent" },
-  { value: "NORMAL", labelPt: "Normal", labelEn: "Normal" },
-  { value: "ROTINA", labelPt: "Rotina", labelEn: "Routine" },
+  { value: "EMERGENCIA", labelPt: "Emergência", labelEn: "Emergency" },
+  { value: "URGENTISSIMO", labelPt: "Urgentíssimo", labelEn: "Extremely urgent" },
+  { value: "MUITO_URGENTE", labelPt: "Muito urgente", labelEn: "Very urgent" },
+  { value: "URGENTE", labelPt: "Urgente", labelEn: "Urgent" },
   { value: "POUCO_URGENTE", labelPt: "Pouco urgente", labelEn: "Low urgency" },
   { value: "PRIORITARIO", labelPt: "Prioritário", labelEn: "Priority" },
-  { value: "URGENTE", labelPt: "Urgente", labelEn: "Urgent" },
-  { value: "MUITO_URGENTE", labelPt: "Muito urgente", labelEn: "Very urgent" },
-  { value: "URGENTISSIMO", labelPt: "Urgentíssimo", labelEn: "Extremely urgent" },
-  { value: "EMERGENCIA", labelPt: "Emergência", labelEn: "Emergency" },
+  { value: "NORMAL", labelPt: "Normal", labelEn: "Normal" },
+  { value: "NAO_URGENTE", labelPt: "Não urgente", labelEn: "Non-urgent" },
+  { value: "ROTINA", labelPt: "Rotina", labelEn: "Routine" },
 ]
 
 const ORDERING_OPTIONS: FilterOption[] = [
+  { value: "clinical_attendance_priority", labelPt: "Prioridade de atendimento", labelEn: "Attendance priority" },
   { value: "-created_at", labelPt: "Mais recentes", labelEn: "Newest first" },
   { value: "created_at", labelPt: "Mais antigos", labelEn: "Oldest first" },
   { value: "custom_id", labelPt: "Código (A-Z)", labelEn: "Code (A-Z)" },
   { value: "-custom_id", labelPt: "Código (Z-A)", labelEn: "Code (Z-A)" },
-  { value: "-clinical_status", labelPt: "Prioridade (alta primeiro)", labelEn: "Priority (high first)" },
 ]
 
 function optionLabel(option: FilterOption | undefined, isPortuguese: boolean, fallback: string): string {
@@ -71,12 +60,10 @@ export default function LaboratoryRequestsPage() {
   const canViewAdmin = userHasAnyGroup(user, [GROUPS.ADMIN])
 
   const [search, setSearch] = useState("")
-  const [status, setStatus] = useState<string>("")
+  const [status, setStatus] = useState<string>("pendente")
   const [clinicalPriority, setClinicalPriority] = useState<string>("")
   const [criticalFilter, setCriticalFilter] = useState<CriticalFilter>("all")
-  const [ordering, setOrdering] = useState<string>("-created_at")
-  const [pdfError, setPdfError] = useState<string | null>(null)
-  const [pdfLoadingId, setPdfLoadingId] = useState<number | null>(null)
+  const [ordering, setOrdering] = useState<string>("clinical_attendance_priority")
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(50)
   const debouncedSearch = useDebounce(search, 300)
@@ -135,25 +122,12 @@ export default function LaboratoryRequestsPage() {
     return count
   }, [clinicalPriority, criticalFilter, debouncedSearch, status])
 
-  const onPdf = useCallback(async (id: number) => {
-    if (pdfLoadingId === id) return
-    try {
-      setPdfLoadingId(id)
-      setPdfError(null)
-      await openResultsPdf(id)
-    } catch (e: any) {
-      setPdfError(e?.message || t("Falha ao gerar PDF de resultados.", "Failed to generate results PDF."))
-    } finally {
-      setPdfLoadingId(null)
-    }
-  }, [pdfLoadingId, t])
-
   const cleanFilters = useCallback(() => {
     setSearch("")
-    setStatus("")
+    setStatus("pendente")
     setClinicalPriority("")
     setCriticalFilter("all")
-    setOrdering("-created_at")
+    setOrdering("clinical_attendance_priority")
     setPageSize(50)
     setPage(1)
   }, [])
@@ -176,8 +150,6 @@ export default function LaboratoryRequestsPage() {
         header: "Ações",
         render: (r: RequestRow) => {
           const requestId = Number(r.id)
-          const generatingPdf = pdfLoadingId === requestId
-
           return (
             <div className="flex flex-wrap gap-2">
             {r.id && String(r.status || "").toLowerCase() !== "validado" ? (
@@ -210,45 +182,37 @@ export default function LaboratoryRequestsPage() {
               </Link>
             ) : null}
 
-            {r.custom_id ? (
-              <button
-                type="button"
-                onClick={() => onPdf(requestId)}
-                disabled={generatingPdf}
-                className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-50"
-              >
-                <FileDown size={14} />
-                {generatingPdf ? t("Gerando...", "Generating...") : t("Gerar PDF", "Generate PDF")}
-              </button>
-            ) : null}
           </div>
           )
         },
       },
     ],
-    [canViewAdmin, isPortuguese, onPdf, pdfLoadingId, t]
+    [canViewAdmin, isPortuguese]
   )
 
   return (
     <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.LABORATORIO]}>
       <div className="space-y-6">
         <PageHeader
-          title={t("Requisições (Laboratório)", "Requests (Laboratory)")}
+          title={t("Ordens de Trabalho (Requisições de Exames Laboratoriais)", "Requests (Laboratory)")}
           subtitle={t(
             "Triagem de requisições com filtros para busca rápida em grande volume.",
             "Request triage with fast filters for high-volume data.",
           )}
+          actions={
+            <Link
+              href="/laboratory/requests/validated"
+              className="inline-flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-900 shadow-sm transition hover:bg-emerald-100"
+            >
+              <CheckCircle2 size={16} />
+              {t("Ver validados", "View validated")}
+            </Link>
+          }
         />
 
         {isError ? (
           <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
             {(error as any)?.message || t("Falha ao carregar requisições.", "Failed to load requests.")}
-          </div>
-        ) : null}
-
-        {pdfError ? (
-          <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-            {pdfError}
           </div>
         ) : null}
 

@@ -2407,6 +2407,144 @@ function dentalOdontogramConfig(): ResourceFormConfig {
   }
 }
 
+function dentalTreatmentPlanConfig(): ResourceFormConfig {
+  return {
+    esconderCampos: [...DENTAL_INTERNAL_FIELDS, "patient", "dentist", "record", "approved_at"],
+    labels: {
+      title: "Plano dentário",
+      status: "Estado",
+      objectives: "Objetivos",
+      planned_start: "Início previsto",
+      planned_end: "Fim previsto",
+      estimated_total: "Total estimado",
+      notes: "Observações",
+    },
+    hints: {
+      title: "Modelo de plano; a associação ao paciente é feita em Pacientes com Plano Dentário.",
+    },
+    widgets: {
+      objectives: "textarea",
+      notes: "textarea",
+    },
+    ordenarCampos: ["title", "status", "objectives", "planned_start", "planned_end", "estimated_total", "notes"],
+    etapas: [
+      {
+        titulo: "Plano",
+        descricao: "Identificação do plano dentário",
+        campos: ["title", "status", "estimated_total"],
+      },
+      {
+        titulo: "Vigência base",
+        descricao: "Datas de referência do plano",
+        campos: ["planned_start", "planned_end"],
+      },
+      {
+        titulo: "Conteúdo",
+        descricao: "Objetivos e notas gerais",
+        campos: ["objectives", "notes"],
+      },
+    ],
+    lembrarCampos: ["status"],
+  }
+}
+
+function dentalTreatmentItemConfig(): ResourceFormConfig {
+  return {
+    esconderCampos: [...DENTAL_INTERNAL_FIELDS, "appointment", "completed_at"],
+    labels: {
+      treatment_plan: "Plano dentário",
+      procedure: "Procedimento",
+      tooth_number: "Dente",
+      surface: "Face",
+      status: "Estado",
+      scheduled_date: "Data prevista",
+      quantity: "Quantidade",
+      unit_price: "Preço unitário",
+      lab_required: "Requer laboratório",
+      clinical_notes: "Notas clínicas",
+    },
+    placeholders: {
+      tooth_number: "Ex.: 11, 26, 48 ou 75",
+    },
+    hints: {
+      treatment_plan: "O item pertence ao plano dentário, não ao paciente.",
+      tooth_number: "Use a numeração dentária FDI.",
+    },
+    widgets: {
+      clinical_notes: "textarea",
+    },
+    ordenarCampos: [
+      "treatment_plan",
+      "procedure",
+      "tooth_number",
+      "surface",
+      "status",
+      "scheduled_date",
+      "quantity",
+      "unit_price",
+      "lab_required",
+      "clinical_notes",
+    ],
+    etapas: [
+      {
+        titulo: "Plano e procedimento",
+        descricao: "Vincule o item ao plano dentário",
+        campos: ["treatment_plan", "procedure", "status"],
+      },
+      {
+        titulo: "Dente e execução",
+        descricao: "Detalhes do item previsto no plano",
+        campos: ["tooth_number", "surface", "scheduled_date"],
+      },
+      {
+        titulo: "Preço e notas",
+        descricao: "Quantidade, custo e observações clínicas",
+        campos: ["quantity", "unit_price", "lab_required", "clinical_notes"],
+      },
+    ],
+    lembrarCampos: ["treatment_plan", "status"],
+  }
+}
+
+function dentalPatientTreatmentPlanConfig(): ResourceFormConfig {
+  return {
+    esconderCampos: DENTAL_INTERNAL_FIELDS,
+    labels: {
+      patient: "Paciente",
+      treatment_plan: "Plano dentário",
+      dentist: "Dentista responsável",
+      record: "Prontuário dentário",
+      assigned_at: "Atribuído em",
+      valid_from: "Início da vigência",
+      valid_until: "Fim da vigência",
+      status: "Estado",
+      notes: "Observações",
+    },
+    widgets: {
+      notes: "textarea",
+    },
+    ordenarCampos: ["patient", "treatment_plan", "status", "valid_from", "valid_until", "dentist", "record", "assigned_at", "notes"],
+    etapas: [
+      {
+        titulo: "Paciente e plano",
+        descricao: "Associe o paciente a um plano dentário",
+        campos: ["patient", "treatment_plan", "status"],
+      },
+      {
+        titulo: "Vigência",
+        descricao: "Controle se o paciente está na lista válida ou expirada",
+        campos: ["valid_from", "valid_until", "assigned_at"],
+      },
+      {
+        titulo: "Contexto clínico",
+        descricao: "Responsável, prontuário e observações",
+        campos: ["dentist", "record", "notes"],
+      },
+    ],
+    lembrarCampos: ["treatment_plan", "status"],
+  }
+}
+
 export function getResourceFormConfig(
   groupKey: string,
   resourceKey: string,
@@ -2422,6 +2560,15 @@ export function getResourceFormConfig(
     }
     if (r === "odontogram" || ep === "/dental/odontogram/") {
       return dentalOdontogramConfig()
+    }
+    if (r === "treatment_plan" || ep === "/dental/treatment_plan/") {
+      return dentalTreatmentPlanConfig()
+    }
+    if (r === "treatment_item" || ep === "/dental/treatment_item/") {
+      return dentalTreatmentItemConfig()
+    }
+    if (r === "patient_treatment_plan" || ep === "/dental/patient_treatment_plan/") {
+      return dentalPatientTreatmentPlanConfig()
     }
     return null
   }

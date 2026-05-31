@@ -8,7 +8,19 @@ from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
 
-from apps.ai_assistant.models import AiMessage, AiSuggestedAction, AiToolCall
+from apps.ai_assistant.models import AiInvestigation, AiMessage, AiSuggestedAction, AiToolCall
+from apps.ai_assistant.services.clarification_learning import (
+    apply_learning_to_clarification,
+    apply_resolution_feedback_repairs_to_clarification,
+    build_profile_learned_resolution_feedback_snapshot,
+    resolve_learned_clarification,
+    resolve_repair_auto_promotion,
+)
+from apps.ai_assistant.services.conversation_memory import (
+    ConversationFollowupResolution,
+    build_conversation_focus_payload,
+    resolve_conversation_followup,
+)
 from apps.ai_assistant.services.crud import CRUD_DRAFT_KEY
 from apps.ai_assistant.services.intent_router import (
     CLARIFICATION_METADATA_KEY,
@@ -23,8 +35,11 @@ from .audit import AiAuditLogger
 from .investigation import AiInvestigationBuilder
 from .llm_gateway import LocalLlmGateway
 from .policy import AiPolicyError, AiPolicyGuard
+from .proactive_guidance import build_proactive_guidance, merge_recommended_questions
 from .registry import AiToolRegistry
 from .response_schema import build_response_schema
+from .suggestion_learning import build_profile_learning_snapshot
+from .understanding_trace import build_understanding_trace
 
 
 class AiOrchestrator:
@@ -67,32 +82,145 @@ class AiOrchestrator:
                 active_module=active_module,
                 title_seed=message,
             )
+            session_metadata = session.metadata or {}
+            profile_learning = build_profile_learning_snapshot(
+                tenant=tenant,
+                user=user,
+                current_session=session,
+            )
+            profile_resolution_feedback = build_profile_learned_resolution_feedback_snapshot(
+                tenant=tenant,
+                user=user,
+                current_session=session,
+            )
+            followup_resolution = resolve_conversation_followup(
+                message=message,
+                active_module=active_module,
+                session_metadata=session_metadata,
+            )
+            routing_message = followup_resolution.effective_message
             user_message = self.audit.create_message(
                 tenant=tenant,
                 session=session,
                 role=AiMessage.Role.USER,
                 content=message,
                 user=user,
-                metadata={"active_module": active_module, "context": context},
+                metadata={
+                    "active_module": active_module,
+                    "context": context,
+                    "conversation_followup": followup_resolution.as_payload(),
+                },
             )
 
             intent_decision = self.intent_router.analyze(
-                message=message,
+                message=routing_message,
                 active_module=active_module,
-                session_metadata=session.metadata or {},
+                session_metadata=session_metadata,
                 tenant=tenant,
             )
+            learned_clarification_resolution = {}
             if intent_decision.needs_clarification:
-                return self._return_clarification(
-                    tenant=tenant,
-                    session=session,
-                    user=user,
+                intent_decision = apply_learning_to_clarification(
+                    decision=intent_decision,
+                    learning=profile_learning,
                     language=language,
-                    intent_decision=intent_decision,
                 )
+                learned_resolution = resolve_learned_clarification(
+                    decision=intent_decision,
+                    learning=profile_learning,
+                    original_message=routing_message,
+                    language=language,
+                    session_metadata=session_metadata,
+                    profile_feedback=profile_resolution_feedback,
+                )
+                learned_clarification_resolution = learned_resolution.as_payload()
+                if learned_resolution.resolved:
+                    routing_message = learned_resolution.effective_message
+                    user_metadata = dict(user_message.metadata or {})
+                    user_metadata["learned_clarification_resolution"] = learned_clarification_resolution
+                    user_message.metadata = user_metadata
+                    user_message.save(update_fields=["metadata"])
+                    intent_decision = self.intent_router.analyze(
+                        message=routing_message,
+                        active_module=active_module,
+                        session_metadata=session_metadata,
+                        tenant=tenant,
+                    )
+                else:
+                    repair_resolution = resolve_repair_auto_promotion(
+                        decision=intent_decision,
+                        original_message=routing_message,
+                        session_metadata=session_metadata,
+                        profile_feedback=profile_resolution_feedback,
+                        learned_resolution=learned_resolution,
+                        language=language,
+                    )
+                    if repair_resolution.resolved:
+                        learned_resolution = repair_resolution
+                        learned_clarification_resolution = repair_resolution.as_payload()
+                        routing_message = repair_resolution.effective_message
+                        user_metadata = dict(user_message.metadata or {})
+                        user_metadata["learned_clarification_resolution"] = learned_clarification_resolution
+                        user_message.metadata = user_metadata
+                        user_message.save(update_fields=["metadata"])
+                        intent_decision = self.intent_router.analyze(
+                            message=routing_message,
+                            active_module=active_module,
+                            session_metadata=session_metadata,
+                            tenant=tenant,
+                        )
+                    else:
+                        intent_decision = apply_resolution_feedback_repairs_to_clarification(
+                            decision=intent_decision,
+                            session_metadata=session_metadata,
+                            profile_feedback=profile_resolution_feedback,
+                            learned_resolution=learned_resolution,
+                            language=language,
+                        )
+                if intent_decision.needs_clarification:
+                    understanding_trace = build_understanding_trace(
+                        original_message=message,
+                        effective_message=routing_message,
+                        active_module=active_module,
+                        language=language,
+                        status="needs_clarification",
+                        intent_decision=intent_decision,
+                        followup_resolution=followup_resolution.as_payload(),
+                        learned_resolution=learned_clarification_resolution,
+                        profile_learning=profile_learning,
+                        profile_resolution_feedback=profile_resolution_feedback,
+                        selected_tools=[],
+                        blocked_tools=[],
+                        tool_results=[],
+                    )
+                    return self._return_clarification(
+                        tenant=tenant,
+                        session=session,
+                        user=user,
+                        language=language,
+                        intent_decision=intent_decision,
+                        original_message=message,
+                        effective_message=routing_message,
+                        followup_resolution=followup_resolution,
+                        learned_clarification_resolution=learned_clarification_resolution,
+                        understanding_trace=understanding_trace,
+                    )
 
-            arguments = self._build_tool_arguments(message=message, context=context, session_id=session.id)
-            selected_tools = self.registry.select_tools(message=message, active_module=active_module, tenant=tenant)
+            arguments = self._build_tool_arguments(
+                message=routing_message,
+                context=context,
+                session_id=session.id,
+                session_metadata=session_metadata,
+                original_message=message,
+                followup_resolution=followup_resolution,
+            )
+            selected_tools = self.registry.select_tools(
+                message=routing_message,
+                active_module=active_module,
+                tenant=tenant,
+                session_metadata=session_metadata,
+                learning=profile_learning,
+            )
             selected_tools = self._with_crud_draft_tool(selected_tools=selected_tools, session=session)
             tool_results: list[dict[str, Any]] = []
             blocked_tools: list[dict[str, Any]] = []
@@ -185,7 +313,7 @@ class AiOrchestrator:
                 tenant=tenant,
                 session=session,
                 user=user,
-                question=message,
+                question=routing_message,
                 language=language,
                 active_module=active_module,
                 tool_results=tool_results,
@@ -193,12 +321,47 @@ class AiOrchestrator:
                 sources=sources,
                 suggested_actions=suggested_actions,
             )
+            conversation_focus_payload = build_conversation_focus_payload(
+                intent_decision=intent_decision,
+                tool_results=tool_results,
+                investigation=investigation_payload,
+                original_message=message,
+                effective_message=routing_message,
+                updated_at=timezone.now().isoformat(),
+            )
+            proactive_guidance = build_proactive_guidance(
+                conversation_focus=conversation_focus_payload,
+                tool_results=tool_results,
+                investigation=investigation_payload,
+                language=language,
+                learning=profile_learning,
+            )
+            investigation_payload = self._merge_proactive_questions(
+                investigation=investigation_payload,
+                proactive_guidance=proactive_guidance,
+            )
             response_schema = build_response_schema(
                 tool_results=tool_results,
                 sources=sources,
                 suggested_actions=suggested_actions,
                 investigation=investigation_payload,
+                proactive_guidance=proactive_guidance,
                 language=language,
+            )
+            understanding_trace = build_understanding_trace(
+                original_message=message,
+                effective_message=routing_message,
+                active_module=active_module,
+                language=language,
+                status="answered",
+                intent_decision=intent_decision,
+                followup_resolution=followup_resolution.as_payload(),
+                learned_resolution=learned_clarification_resolution,
+                profile_learning=profile_learning,
+                profile_resolution_feedback=profile_resolution_feedback,
+                selected_tools=selected_tools,
+                blocked_tools=blocked_tools,
+                tool_results=tool_results,
             )
             assistant_message = self.audit.create_message(
                 tenant=tenant,
@@ -213,6 +376,10 @@ class AiOrchestrator:
                     "schema": response_schema,
                     "provider": self.gateway.provider,
                     "intent_decision": intent_decision.as_payload(language=language),
+                    "conversation_followup": followup_resolution.as_payload(),
+                    "learned_clarification_resolution": learned_clarification_resolution,
+                    "proactive_guidance": proactive_guidance,
+                    "understanding_trace": understanding_trace,
                 },
             )
 
@@ -221,6 +388,10 @@ class AiOrchestrator:
                 intent_decision=intent_decision,
                 tool_results=tool_results,
                 investigation=investigation_payload,
+                original_message=message,
+                effective_message=routing_message,
+                conversation_focus_payload=conversation_focus_payload,
+                proactive_guidance=proactive_guidance,
             )
             session.last_message_at = assistant_message.created_at
             session.save(update_fields=["metadata", "last_message_at", "updated_at"])
@@ -240,6 +411,10 @@ class AiOrchestrator:
                     "status": "answered",
                     "intent": intent_decision.intent,
                     "confidence_score": intent_decision.confidence_score,
+                    "recommended_questions": proactive_guidance.get("recommended_questions") or [],
+                    "proactive_suggestions": proactive_guidance.get("suggestions") or [],
+                    "learned_clarification_resolution": learned_clarification_resolution,
+                    "understanding_trace": understanding_trace,
                 },
             }
 
@@ -251,14 +426,23 @@ class AiOrchestrator:
         user,
         language: str,
         intent_decision: IntentDecision,
+        original_message: str = "",
+        effective_message: str = "",
+        followup_resolution: ConversationFollowupResolution | None = None,
+        learned_clarification_resolution: dict[str, Any] | None = None,
+        understanding_trace: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         answer = intent_decision.answer(language=language)
         conversation_payload = intent_decision.as_payload(language=language)
+        followup_payload = (followup_resolution.as_payload() if followup_resolution else {})
+        learned_resolution_payload = learned_clarification_resolution or {}
+        understanding_trace_payload = understanding_trace or {}
         response_schema = build_response_schema(
             tool_results=[],
             sources=[],
             suggested_actions=[],
             investigation=None,
+            proactive_guidance=None,
             language=language,
         )
         assistant_message = self.audit.create_message(
@@ -275,11 +459,19 @@ class AiOrchestrator:
                 "schema": response_schema,
                 "provider": self.gateway.provider,
                 "intent_decision": conversation_payload,
+                "conversation_followup": followup_payload,
+                "learned_clarification_resolution": learned_resolution_payload,
+                "understanding_trace": understanding_trace_payload,
             },
         )
         metadata = dict(session.metadata or {})
         metadata[CLARIFICATION_METADATA_KEY] = {
             **conversation_payload,
+            "original_message": original_message or effective_message,
+            "effective_message": effective_message or original_message,
+            "conversation_followup": followup_payload,
+            "learned_clarification_resolution": learned_resolution_payload,
+            "understanding_trace": understanding_trace_payload,
             "updated_at": timezone.now().isoformat(),
         }
         session.metadata = metadata
@@ -296,11 +488,28 @@ class AiOrchestrator:
             "investigation": None,
             "schema": response_schema,
             "provider": self.gateway.provider,
-            "conversation": conversation_payload,
+            "conversation": {
+                **conversation_payload,
+                "learned_clarification_resolution": learned_resolution_payload,
+                "understanding_trace": understanding_trace_payload,
+            },
         }
 
-    def _build_tool_arguments(self, *, message: str, context: dict[str, Any], session_id: int | None = None) -> dict[str, Any]:
+    def _build_tool_arguments(
+        self,
+        *,
+        message: str,
+        context: dict[str, Any],
+        session_id: int | None = None,
+        session_metadata: dict[str, Any] | None = None,
+        original_message: str = "",
+        followup_resolution: ConversationFollowupResolution | None = None,
+    ) -> dict[str, Any]:
         filters = context.get("filters") if isinstance(context.get("filters"), dict) else {}
+        conversation_focus = {}
+        if isinstance(session_metadata, dict):
+            value = session_metadata.get(CONVERSATION_FOCUS_KEY)
+            conversation_focus = value if isinstance(value, dict) else {}
         days = filters.get("days") or context.get("days")
         request_code = filters.get("request_code") or filters.get("request") or context.get("request_code") or ""
         if not days:
@@ -319,7 +528,11 @@ class AiOrchestrator:
             "top": filters.get("top") or 8,
             "request_code": request_code,
             "message": message,
+            "original_message": original_message or message,
             "ai_session_id": session_id,
+            "conversation_focus": conversation_focus,
+            "intent_clarification": (session_metadata or {}).get(CLARIFICATION_METADATA_KEY) if isinstance(session_metadata, dict) else {},
+            "conversation_followup": followup_resolution.as_payload() if followup_resolution else {},
         }
 
     def _with_crud_draft_tool(self, *, selected_tools: list, session) -> list:
@@ -351,6 +564,10 @@ class AiOrchestrator:
         intent_decision: IntentDecision,
         tool_results: list[dict[str, Any]],
         investigation: dict[str, Any] | None,
+        original_message: str = "",
+        effective_message: str = "",
+        conversation_focus_payload: dict[str, Any] | None = None,
+        proactive_guidance: dict[str, Any] | None = None,
     ) -> None:
         # Ferramentas como CRUD conversacional podem gravar rascunhos em
         # AiSession.metadata durante a execução. Recarregar evita sobrescrever
@@ -358,37 +575,39 @@ class AiOrchestrator:
         session.refresh_from_db(fields=["metadata"])
         metadata = dict(session.metadata or {})
         metadata.pop(CLARIFICATION_METADATA_KEY, None)
-        resources: list[dict[str, Any]] = []
-        seen = set()
-        for item in tool_results:
-            result = item.get("result") or {}
-            for key in ("resource_results", "denied_resources", "catalog"):
-                values = result.get(key) or (result.get("summary") or {}).get(key) or []
-                if not isinstance(values, list):
-                    continue
-                for value in values:
-                    if not isinstance(value, dict):
-                        continue
-                    basename = value.get("basename")
-                    if not basename or basename in seen:
-                        continue
-                    seen.add(basename)
-                    resources.append(
-                        {
-                            "basename": basename,
-                            "label_pt": value.get("label_pt") or "",
-                            "label_en": value.get("label_en") or "",
-                            "href": value.get("href") or "",
-                        }
-                    )
-        metadata[CONVERSATION_FOCUS_KEY] = {
-            "intent": (investigation or {}).get("intent") or intent_decision.intent,
-            "confidence_score": intent_decision.confidence_score,
-            "tool_names": [str(item.get("tool_name") or "") for item in tool_results if item.get("tool_name")],
-            "resources": resources[:8],
-            "updated_at": timezone.now().isoformat(),
-        }
+        focus_payload = conversation_focus_payload or build_conversation_focus_payload(
+            intent_decision=intent_decision,
+            tool_results=tool_results,
+            investigation=investigation,
+            original_message=original_message,
+            effective_message=effective_message,
+            updated_at=timezone.now().isoformat(),
+        )
+        if proactive_guidance:
+            focus_payload = {**focus_payload, "proactive_guidance": proactive_guidance}
+            metadata["proactive_guidance"] = proactive_guidance
+        metadata[CONVERSATION_FOCUS_KEY] = focus_payload
         session.metadata = metadata
+
+    def _merge_proactive_questions(
+        self,
+        *,
+        investigation: dict[str, Any] | None,
+        proactive_guidance: dict[str, Any] | None,
+    ) -> dict[str, Any] | None:
+        if not investigation:
+            return None
+        recommended_questions = merge_recommended_questions(
+            existing=investigation.get("recommended_questions") or [],
+            proactive_guidance=proactive_guidance,
+        )
+        if recommended_questions == (investigation.get("recommended_questions") or []):
+            return investigation
+        merged = {**investigation, "recommended_questions": recommended_questions}
+        investigation_id = investigation.get("id")
+        if investigation_id:
+            AiInvestigation.objects.filter(id=investigation_id).update(recommended_questions=recommended_questions)
+        return merged
 
     def _create_investigation(
         self,

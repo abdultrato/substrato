@@ -44,6 +44,8 @@ type ConsultationRow = {
   patient_name?: string
   doctor?: number | null
   doctor_name?: string
+  specialty?: number | null
+  specialty_name?: string
   type?: string
   status?: string
   price?: string | number
@@ -320,6 +322,7 @@ export default function ConsultationsPage() {
         { header: t("Paciente", "Patient"), render: (r: ConsultationRow) => r.patient_name || "-" },
         { header: t("Médico", "Doctor"), render: (r: ConsultationRow) => r.doctor_name || "—" },
         { header: t("Tipo", "Type"), render: (r: ConsultationRow) => r.type || "-" },
+        { header: t("Especialidade", "Specialty"), render: (r: ConsultationRow) => r.specialty_name || r.type || "-" },
         { header: t("Estado", "Status"), render: (r: ConsultationRow) => formatStatus(r.status) },
         { header: t("Horário", "Schedule"), render: (r: ConsultationRow) => formatScheduleType(r.schedule_type) },
         { header: t("Agendada", "Scheduled"), render: (r: ConsultationRow) => fmtDate(r.scheduled_for) },

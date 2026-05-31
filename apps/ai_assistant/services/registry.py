@@ -3,16 +3,19 @@ from __future__ import annotations
 import re
 from typing import Any
 
+from apps.ai_assistant.services.alias_normalization import normalize_alias_text
+from apps.ai_assistant.services.intent_signals import build_intent_signals
+from apps.ai_assistant.services.tool_learning import rank_tools_with_learning
 from apps.ai_assistant.tools.clinical import ClinicalOperationalSummaryTool, LabRequestCollectionGuidanceTool
 from apps.ai_assistant.tools.command_center import CommandCenterAlertsTool
 from apps.ai_assistant.tools.crud import PrepareCrudOperationTool
 from apps.ai_assistant.tools.data_explorer import ExploreDatabaseTool
 from apps.ai_assistant.tools.education import EducationSummaryTool
 from apps.ai_assistant.tools.finance import FinancialOperationalSummaryTool
-from apps.ai_assistant.tools.knowledge_base import KnowledgeBaseTool, should_select_knowledge_base
+from apps.ai_assistant.tools.knowledge_base import KnowledgeBaseTool
 from apps.ai_assistant.tools.nursing import NursingPendingWorkTool
 from apps.ai_assistant.tools.pharmacy import PharmacyStockSummaryTool
-from apps.ai_assistant.tools.project_identity import ProjectIdentityTool, should_select_project_identity
+from apps.ai_assistant.tools.project_identity import ProjectIdentityTool
 from apps.ai_assistant.tools.reporting import PrepareOperationalReportTool
 from apps.ai_assistant.tools.sql_analytics import SqlAnalyticsTool, should_select_sql_analytics
 from apps.ai_assistant.tools.tasks import PrepareOperationalTaskTool
@@ -63,173 +66,83 @@ class AiToolRegistry:
             )
         return definitions
 
-    def select_tools(self, *, message: str, active_module: str = "", tenant=None) -> list:
+    def select_tools(
+        self,
+        *,
+        message: str,
+        active_module: str = "",
+        tenant=None,
+        session_metadata: dict[str, Any] | None = None,
+        learning: dict[str, Any] | None = None,
+    ) -> list:
         active_module_key = (active_module or "").strip().lower()
-        normalized = f"{message or ''} {active_module_key}".lower()
+        signals = build_intent_signals(
+            message=message,
+            active_module=active_module_key,
+            session_metadata=session_metadata or {},
+            tenant=tenant,
+        )
+        normalized = signals["normalized"]
+        resource_modules = set(signals["resource_modules"])
+        if signals["resource_ambiguous"] and not (signals["active_module_scoped"] or signals["has_previous_focus"]):
+            resource_modules = set()
+        has_resource = bool(signals["resource_count"])
+        is_task_request = bool(signals["task"])
+        is_crud_request = bool(signals["crud"] and not is_task_request)
         selected = []
-        if should_select_project_identity(message=message, active_module=active_module_key):
+        if signals["project_identity"]:
             return [self._tools[ProjectIdentityTool.name]]
-        if should_select_knowledge_base(message=message, active_module=active_module_key, tenant=tenant):
+        if signals["knowledge_base"]:
             return [self._tools[KnowledgeBaseTool.name]]
 
         if should_select_sql_analytics(message=message, active_module=active_module_key):
             selected.append(self._tools[SqlAnalyticsTool.name])
 
-        personal_terms = (
-            "quem sou",
-            "meu login",
-            "meus grupos",
-            "minha conta",
-            "meu perfil",
-            "quem está logado",
-            "quem esta logado",
-            "who am i",
-            "my account",
-            "my profile",
-            "what can i investigate",
-            "que dados posso investigar",
-            "o que posso investigar",
-        )
-        if _contains_any(normalized, personal_terms):
+        if signals["personal"]:
             selected.append(self._tools[GetUserContextTool.name])
 
-        data_terms = (
-            "quantos",
-            "quantas",
-            "listar",
-            "lista",
-            "mostre",
-            "mostrar",
-            "ver",
-            "consultar",
-            "procure",
-            "buscar",
-            "pesquisar",
-            "investigar",
-            "investigue",
-            "analisar",
-            "analise",
-            "dados",
-            "base de dados",
-            "banco de dados",
-            "registos",
-            "registros",
-            "tabela",
-            "pacientes",
-            "faturas",
-            "facturas",
-            "pagamentos",
-            "estudantes",
-            "professores",
-            "farmácia",
-            "farmacia",
-            "erros do sistema",
-            "system errors",
-            "records",
-        )
-        if _contains_any(normalized, data_terms):
+        if (signals["data"] or has_resource) and not (is_crud_request or signals["report"] or is_task_request):
             selected.append(self._tools[ExploreDatabaseTool.name])
 
-        command_terms = (
-            "alert",
-            "command",
-            "erro",
-            "error",
-            "falha",
-            "health",
-            "monitor",
-            "outbox",
-            "rota",
-            "slo",
-            "saúde",
-            "estado operacional",
-        )
-        if active_module_key in {"monitoring", "command_center"} or _contains_any(normalized, command_terms):
+        if signals["monitoring"] or "monitoring" in resource_modules:
             selected.append(self._tools[CommandCenterAlertsTool.name])
 
         if _contains_any(normalized, ("frasco", "tubo", "amostra", "colheita", "coleta", "collection", "sample")):
             selected.append(self._tools[LabRequestCollectionGuidanceTool.name])
-        elif _contains_any(normalized, ("clinico", "clínico", "paciente", "requisicao", "requisição", "resultado", "laboratorio", "laboratório")):
+        elif "clinical" in resource_modules or _contains_any(
+            normalized,
+            ("clinico", "clínico", "paciente", "requisicao", "requisição", "resultado", "laboratorio", "laboratório"),
+        ):
             selected.append(self._tools[ClinicalOperationalSummaryTool.name])
 
-        if _contains_any(normalized, ("enfermagem", "enfermeiro", "procedimento", "internamento", "nursing")):
+        if "nursing" in resource_modules or _contains_any(normalized, ("enfermagem", "enfermeiro", "procedimento", "internamento", "nursing")):
             selected.append(self._tools[NursingPendingWorkTool.name])
 
-        if _contains_any(normalized, ("fatura", "factura", "invoice", "pagamento", "payment", "financeiro", "contabilidade")):
+        if resource_modules & {"accounting", "billing", "payments"} or _contains_any(
+            normalized,
+            ("fatura", "factura", "invoice", "pagamento", "payment", "financeiro", "contabilidade"),
+        ):
             selected.append(self._tools[FinancialOperationalSummaryTool.name])
 
-        if _contains_any(normalized, ("farmacia", "farmácia", "stock", "estoque", "lote", "medicamento", "pharmacy")):
+        if "pharmacy" in resource_modules or _contains_any(
+            normalized,
+            ("farmacia", "farmácia", "medicacao", "medicação", "medicamento", "farmaco", "fármaco", "pharmacy"),
+        ):
             selected.append(self._tools[PharmacyStockSummaryTool.name])
 
-        if _contains_any(normalized, ("educacao", "educação", "education", "estudante", "student", "matricula", "matrícula", "turma", "professor")):
+        if "education" in resource_modules or _contains_any(
+            normalized,
+            ("educacao", "educação", "education", "estudante", "student", "matricula", "matrícula", "turma", "professor"),
+        ):
             selected.append(self._tools[EducationSummaryTool.name])
 
-        if _contains_any(normalized, ("relatorio", "relatório", "report", "export", "exportar", "pdf", "csv", "word", "download")):
+        if signals["report"]:
             selected.append(self._tools[PrepareOperationalReportTool.name])
 
-        if "tarefa" not in normalized and "task" not in normalized and _contains_any(
-            normalized,
-            (
-                "criar",
-                "crie",
-                "inserir",
-                "insira",
-                "cadastrar",
-                "cadastre",
-                "registar",
-                "registe",
-                "registrar",
-                "adicione",
-                "adicionar",
-                "novo",
-                "nova",
-                "actualizar",
-                "atualizar",
-                "actualize",
-                "atualize",
-                "alterar",
-                "altere",
-                "editar",
-                "edite",
-                "corrigir",
-                "corrija",
-                "apagar",
-                "apague",
-                "remover",
-                "remova",
-                "eliminar",
-                "elimine",
-                "excluir",
-                "exclua",
-                "create",
-                "insert",
-                "update",
-                "delete",
-                "remove",
-            ),
-        ):
+        if is_crud_request:
             selected.append(self._tools[PrepareCrudOperationTool.name])
 
-        if _contains_any(
-            normalized,
-            (
-                "cria tarefa",
-                "criar tarefa",
-                "tarefa",
-                "atribui",
-                "atribuir",
-                "encaminha",
-                "encaminhar",
-                "notifica",
-                "notificar",
-                "investigar pendência",
-                "investigar pendencias",
-                "resolver pendência",
-                "resolver pendencias",
-                "follow-up",
-                "follow up",
-            ),
-        ):
+        if is_task_request:
             selected.append(self._tools[PrepareOperationalTaskTool.name])
 
         unique = []
@@ -241,12 +154,17 @@ class AiToolRegistry:
             unique.append(tool)
         if not unique:
             return [self._tools[GetUserContextTool.name]]
-        return unique
+        return rank_tools_with_learning(
+            selected_tools=unique,
+            tool_lookup=self._tools,
+            signals=signals,
+            learning=learning,
+        )
 
 
 def _contains_any(normalized: str, terms: tuple[str, ...]) -> bool:
     for raw_term in terms:
-        term = (raw_term or "").strip().lower()
+        term = normalize_alias_text(raw_term)
         if not term:
             continue
         if len(term) <= 3:

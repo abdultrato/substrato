@@ -1167,6 +1167,11 @@ class LaboratoryResultItemSerializer(serializers.ModelSerializer):
             "status",
             "validated_by",
             "validation_date",
+            "disregard_reason",
+            "disregarded_by",
+            "disregarded_at",
+            "disregard_validated_by",
+            "disregard_validation_date",
             "created_at",
             "updated_at",
         ]
@@ -1192,6 +1197,11 @@ class LaboratoryResultItemSerializer(serializers.ModelSerializer):
             "status",
             "validated_by",
             "validation_date",
+            "disregard_reason",
+            "disregarded_by",
+            "disregarded_at",
+            "disregard_validated_by",
+            "disregard_validation_date",
             "created_at",
             "updated_at",
         ]

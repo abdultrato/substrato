@@ -6,6 +6,7 @@ class ResultState:
     AWAITING_VALIDATION = "aguardando_validacao"
     VALIDATED = "validado"
     REJECTED = "rejeitado"
+    DISREGARDED = "desconsiderado"
 
     TERMINAL = {VALIDATED}
 
@@ -15,4 +16,5 @@ class ResultState:
         (AWAITING_VALIDATION, "Aguardando Validação"),
         (VALIDATED, "Validado"),
         (REJECTED, "Rejeitado"),
+        (DISREGARDED, "Desconsiderado"),
     ]

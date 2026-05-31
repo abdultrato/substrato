@@ -145,6 +145,7 @@ const MODULES_BASE: ModuleGroup[] = [
       { key: "odontogram", label: "Odontogramas", endpoint: "/dental/odontogram/", adminListHref: "/admin/odontologia/dentalodontogramentry/" },
       { key: "treatment_plan", label: "Planos de Tratamento", endpoint: "/dental/treatment_plan/", adminListHref: "/admin/odontologia/dentaltreatmentplan/" },
       { key: "treatment_item", label: "Itens do Plano", endpoint: "/dental/treatment_item/", adminListHref: "/admin/odontologia/dentaltreatmentplanitem/" },
+      { key: "patient_treatment_plan", label: "Pacientes com Plano Dentário", endpoint: "/dental/patient_treatment_plan/", adminListHref: "/admin/odontologia/dentalpatienttreatmentplan/" },
       { key: "prosthesis_lab_order", label: "Ordens de Prótese", endpoint: "/dental/prosthesis_lab_order/", adminListHref: "/admin/odontologia/dentalprosthesislaborder/" },
     ],
   },
@@ -540,6 +541,7 @@ const ADMIN_LIST_BY_ENDPOINT: Record<string, string> = {
   "/dental/odontogram/": "/admin/odontologia/dentalodontogramentry/",
   "/dental/treatment_plan/": "/admin/odontologia/dentaltreatmentplan/",
   "/dental/treatment_item/": "/admin/odontologia/dentaltreatmentplanitem/",
+  "/dental/patient_treatment_plan/": "/admin/odontologia/dentalpatienttreatmentplan/",
   "/dental/prosthesis_lab_order/": "/admin/odontologia/dentalprosthesislaborder/",
   // Veterinary
   "/veterinary/animal/": "/admin/veterinaria/veterinaryanimal/",

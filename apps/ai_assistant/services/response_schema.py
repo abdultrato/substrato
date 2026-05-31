@@ -10,6 +10,7 @@ def build_response_schema(
     suggested_actions: list[dict[str, Any]],
     language: str,
     investigation: dict[str, Any] | None = None,
+    proactive_guidance: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Normaliza a resposta para UI rica sem depender do texto livre do modelo."""
 
@@ -54,6 +55,7 @@ def build_response_schema(
         "project_identity": _project_identity_schema(tool_results=tool_results),
         "knowledge_base": _knowledge_base_schema(tool_results=tool_results),
         "investigation": _investigation_schema(investigation=investigation, language=language),
+        "proactive_guidance": _proactive_guidance_schema(proactive_guidance=proactive_guidance),
     }
 
 
@@ -148,4 +150,15 @@ def _investigation_schema(*, investigation: dict[str, Any] | None, language: str
         "findings": (investigation.get("findings") or [])[:8],
         "next_steps": (investigation.get("next_steps") or [])[:6],
         "recommended_questions": (investigation.get("recommended_questions") or [])[:5],
+    }
+
+
+def _proactive_guidance_schema(*, proactive_guidance: dict[str, Any] | None) -> dict[str, Any]:
+    if not proactive_guidance:
+        return {"status": "empty", "suggestions": [], "recommended_questions": [], "context": {}}
+    return {
+        "status": proactive_guidance.get("status") or "empty",
+        "suggestions": (proactive_guidance.get("suggestions") or [])[:6],
+        "recommended_questions": (proactive_guidance.get("recommended_questions") or [])[:6],
+        "context": proactive_guidance.get("context") or {},
     }

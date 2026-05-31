@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from decimal import Decimal
 from typing import Any
 
+from apps.clinical.models.lab_request import LabRequest
 from apps.clinical.models.result_item import ResultItem
 
 
@@ -27,3 +28,25 @@ class ValidateResultCommand:
     user: Any = None
     idempotent: bool = True
 
+
+@dataclass(frozen=True, slots=True)
+class DisregardResultCommand:
+    result_item: ResultItem
+    reason: str
+    user: Any = None
+    idempotent: bool = True
+
+
+@dataclass(frozen=True, slots=True)
+class DisregardEmptyRequestResultsCommand:
+    lab_request: LabRequest
+    reason: str
+    user: Any = None
+    idempotent: bool = True
+
+
+@dataclass(frozen=True, slots=True)
+class ValidateRequestResultsCommand:
+    lab_request: LabRequest
+    user: Any = None
+    idempotent: bool = True

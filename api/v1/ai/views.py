@@ -10,6 +10,7 @@ from rest_framework.views import APIView
 
 from apps.ai_assistant.models import AiInvestigation, AiOperationalTask, AiSession, AiSuggestedAction
 from apps.ai_assistant.services.action_executor import AiActionExecutionError, AiActionExecutor
+from apps.ai_assistant.services.clarification_learning import record_learned_resolution_feedback
 from apps.ai_assistant.services.investigation_followup import (
     AiInvestigationFollowUpBuilder,
     AiInvestigationFollowUpError,
@@ -17,6 +18,11 @@ from apps.ai_assistant.services.investigation_followup import (
 from apps.ai_assistant.services.orchestrator import AiOrchestrator
 from apps.ai_assistant.services.policy import AiPolicyError, AiPolicyGuard
 from apps.ai_assistant.services.registry import AiToolRegistry
+from apps.ai_assistant.services.suggestion_learning import (
+    build_profile_learning_snapshot,
+    record_proactive_suggestion_feedback,
+    summarize_learning,
+)
 
 from .serializers import (
     AiActionConfirmSerializer,
@@ -24,11 +30,13 @@ from .serializers import (
     AiInvestigationFollowUpSerializer,
     AiInvestigationSerializer,
     AiInvestigationUpdateSerializer,
+    AiLearnedResolutionFeedbackSerializer,
     AiOperationalTaskSerializer,
     AiOperationalTaskUpdateSerializer,
     AiSessionDetailSerializer,
     AiSessionSerializer,
     AiSuggestedActionSerializer,
+    AiSuggestionFeedbackSerializer,
 )
 
 
@@ -218,6 +226,93 @@ class AiAssistantInvestigationFollowUpView(APIView):
         except AiInvestigationFollowUpError as exc:
             raise ValidationError({"action_type": str(exc)}) from exc
         return Response(AiSuggestedActionSerializer(action).data, status=status.HTTP_201_CREATED)
+
+
+class AiAssistantSuggestionFeedbackView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        serializer = AiSuggestionFeedbackSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+        tenant = request_tenant(request)
+        session = AiSession.objects.filter(
+            tenant=tenant,
+            user=request.user,
+            id=data["session_id"],
+            deleted=False,
+        ).first()
+        if session is None:
+            raise NotFound("Sessão da IA não encontrada.")
+
+        try:
+            learning = record_proactive_suggestion_feedback(
+                session=session,
+                user=request.user,
+                suggestion=data["suggestion"],
+                event=data["event"],
+                source=data.get("source") or "chat",
+                message_id=data.get("message_id"),
+            )
+        except ValueError as exc:
+            raise ValidationError({"event": str(exc)}) from exc
+        return Response({"status": "recorded", "learning": learning}, status=status.HTTP_200_OK)
+
+
+class AiAssistantSuggestionLearningView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        tenant = request_tenant(request)
+        session = None
+        session_id = str(request.query_params.get("session_id") or "").strip()
+        if session_id.isdigit():
+            session = AiSession.objects.filter(
+                tenant=tenant,
+                user=request.user,
+                id=int(session_id),
+                deleted=False,
+            ).first()
+            if session is None:
+                raise NotFound("Sessão da IA não encontrada.")
+
+        learning = build_profile_learning_snapshot(
+            tenant=tenant,
+            user=request.user,
+            current_session=session,
+        )
+        return Response({"status": "available", "learning": summarize_learning(learning)}, status=status.HTTP_200_OK)
+
+
+class AiAssistantLearnedResolutionFeedbackView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        serializer = AiLearnedResolutionFeedbackSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+        tenant = request_tenant(request)
+        session = AiSession.objects.filter(
+            tenant=tenant,
+            user=request.user,
+            id=data["session_id"],
+            deleted=False,
+        ).first()
+        if session is None:
+            raise NotFound("Sessão da IA não encontrada.")
+
+        try:
+            feedback = record_learned_resolution_feedback(
+                session=session,
+                user=request.user,
+                resolution=data["resolution"],
+                event=data["event"],
+                replacement_message=data.get("replacement_message") or "",
+                message_id=data.get("message_id"),
+            )
+        except ValueError as exc:
+            raise ValidationError({"event": str(exc)}) from exc
+        return Response({"status": "recorded", "feedback": feedback}, status=status.HTTP_200_OK)
 
 
 class AiAssistantTasksView(APIView):

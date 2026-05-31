@@ -1,15 +1,27 @@
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.http import HttpResponse
 from rest_framework import status
 from rest_framework.decorators import action
-from rest_framework.exceptions import PermissionDenied
+from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
 from api.utils.async_exports import queue_export_if_requested
+from api.v1.clinical.lab_permissions import ensure_laboratory_result_privilege
 from api.v1.viewset_mixins import TenantScopedQuerysetMixin, ValidatedSearchOrderingMixin
+from application.clinical.commands import (
+    DisregardEmptyRequestResultsCommand,
+    ValidateRequestResultsCommand,
+)
+from application.clinical.handlers import (
+    handle_disregard_empty_request_results,
+    handle_validate_request_results,
+)
 from apps.clinical.models.lab_request import LabRequest
 from apps.clinical.models.lab_request_item import LabRequestItem
+from apps.clinical.models.result_item import ResultItem
+from core.constants.laboratory.clinical_status import clinical_attendance_priority_case
 from domain.clinical.result_state import ResultState
 from drf_spectacular.utils import extend_schema
 
@@ -32,6 +44,7 @@ class LabRequestViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin,
     serializer_class = LabRequestSerializer
     filterset_class = LabRequestFilter
     permission_classes = [IsAuthenticated]
+    extra_ordering_fields = ("clinical_attendance_priority",)
     # LabRequest does not expose `name`/`description`/`active`/`order`/`notes`/`status`.
     # Keep search focused on request code, patient, and state.
     search_fields = [
@@ -66,8 +79,29 @@ class LabRequestViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin,
         "requires_fasting",
         "fasting_hours",
         "version",
+        "clinical_attendance_priority",
     ]
-    ordering = ["-created_at"]
+    ordering = ["clinical_attendance_priority", "-created_at", "-id"]
+
+    def get_queryset(self):
+        return (
+            super()
+            .get_queryset()
+            .select_related("patient", "analyst", "requesting_company", "external_executing_company")
+            .annotate(clinical_attendance_priority=clinical_attendance_priority_case())
+        )
+
+    def _execute_command(self, handler, command):
+        try:
+            return handler(command)
+        except DjangoValidationError as err:
+            if hasattr(err, "message_dict"):
+                raise ValidationError(err.message_dict) from err
+            if hasattr(err, "messages"):
+                raise ValidationError(err.messages) from err
+            raise ValidationError(str(err)) from err
+        except Exception as err:
+            raise ValidationError(str(err)) from err
 
     @action(detail=True, methods=["get"], url_path="results-pdf", url_name="results-pdf")
     def results_pdf(self, request, pk=None):
@@ -122,7 +156,7 @@ class LabRequestViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin,
 
     def _results_pdf_not_ready_response(self, request_record):
         result = getattr(request_record, "result", None)
-        items = result.items.all() if result else LabRequestItem.objects.none()
+        items = result.items.all() if result else ResultItem.objects.none()
         summary = {
             "total": items.count(),
             "validated": items.filter(status=ResultState.VALIDATED).count(),
@@ -130,6 +164,11 @@ class LabRequestViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin,
             "in_analysis": items.filter(status=ResultState.IN_ANALYSIS).count(),
             "awaiting_validation": items.filter(status=ResultState.AWAITING_VALIDATION).count(),
             "rejected": items.filter(status=ResultState.REJECTED).count(),
+            "disregarded": items.filter(status=ResultState.DISREGARDED).count(),
+            "disregard_awaiting_validation": items.filter(
+                status=ResultState.DISREGARDED,
+                disregard_validation_date__isnull=True,
+            ).count(),
         }
         return Response(
             {
@@ -161,6 +200,52 @@ class LabRequestViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin,
         if request_record.type != request_record.Type.LABORATORY:
             raise PermissionDenied("Esta requisição não possui resultados laboratoriais.")
 
+        return self._result_items_response(request_record)
+
+    @action(detail=True, methods=["post"], url_path="disregard-empty-results", url_name="disregard-empty-results")
+    def disregard_empty_results(self, request, pk=None):
+        """
+        Mark empty result fields as disregarded with a required reason.
+        """
+        ensure_laboratory_result_privilege(getattr(request, "user", None))
+        request_record = self.get_object()
+        if request_record.type != request_record.Type.LABORATORY:
+            raise PermissionDenied("Esta requisição não possui resultados laboratoriais.")
+
+        workflow = self._execute_command(
+            handle_disregard_empty_request_results,
+            DisregardEmptyRequestResultsCommand(
+                lab_request=request_record,
+                reason=(request.data or {}).get("reason") or "",
+                user=getattr(request, "user", None),
+                idempotent=True,
+            ),
+        )
+        request_record.refresh_from_db()
+        return self._result_items_response(request_record, workflow=workflow)
+
+    @action(detail=True, methods=["post"], url_path="validate-results", url_name="validate-results")
+    def validate_results(self, request, pk=None):
+        """
+        Validate filled results and validate previously disregarded empty fields.
+        """
+        ensure_laboratory_result_privilege(getattr(request, "user", None))
+        request_record = self.get_object()
+        if request_record.type != request_record.Type.LABORATORY:
+            raise PermissionDenied("Esta requisição não possui resultados laboratoriais.")
+
+        workflow = self._execute_command(
+            handle_validate_request_results,
+            ValidateRequestResultsCommand(
+                lab_request=request_record,
+                user=getattr(request, "user", None),
+                idempotent=True,
+            ),
+        )
+        request_record.refresh_from_db()
+        return self._result_items_response(request_record, workflow=workflow)
+
+    def _result_items_response(self, request_record, workflow: dict | None = None):
         from apps.clinical.models.result import Result
 
         result, _ = Result.objects.get_or_create(
@@ -191,6 +276,11 @@ class LabRequestViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin,
             "awaiting_validation": qs.filter(status=ResultState.AWAITING_VALIDATION).count(),
             "validated": qs.filter(status=ResultState.VALIDATED).count(),
             "rejected": qs.filter(status=ResultState.REJECTED).count(),
+            "disregarded": qs.filter(status=ResultState.DISREGARDED).count(),
+            "disregard_awaiting_validation": qs.filter(
+                status=ResultState.DISREGARDED,
+                disregard_validation_date__isnull=True,
+            ).count(),
         }
 
         request_payload = {
@@ -203,13 +293,14 @@ class LabRequestViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin,
             "has_critical_result": request_record.has_critical_result,
         }
 
-        return Response(
-            {
-                "request": request_payload,
-                "summary": summary,
-                "items": items,
-            }
-        )
+        payload = {
+            "request": request_payload,
+            "summary": summary,
+            "items": items,
+        }
+        if workflow is not None:
+            payload["workflow"] = workflow
+        return Response(payload)
 
 
 @extend_schema(

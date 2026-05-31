@@ -17,6 +17,7 @@ from apps.clinical.models.result import Result
 from apps.clinical.models.result_item import ResultItem
 from apps.clinical.models.sample import Sample
 from apps.tenants.models.tenant import Tenant
+from core.constants.laboratory.clinical_status import ClinicalStatus
 from core.constants.laboratory.method import Method
 from core.constants.laboratory.result_type import ResultType
 from core.constants.laboratory.sector import Sector
@@ -80,6 +81,20 @@ def _field(exam: LabExam):
         type=ResultType.NUMERICO,
         unit=DefaultUnit.G_DL,
     )
+
+
+def _fields(exam: LabExam, total: int):
+    """Create multiple result fields for a multi-parameter exam."""
+    return [
+        LabExamField.objects.create(
+            tenant=exam.tenant,
+            exam=exam,
+            name=f"Parâmetro {index}",
+            type=ResultType.NUMERICO,
+            unit=DefaultUnit.G_DL,
+        )
+        for index in range(1, total + 1)
+    ]
 
 
 def _authenticate_lab_user(tenant: Tenant, api_client):
@@ -182,6 +197,8 @@ def test_result_items_contract_uses_english_payload_and_routes(api_client):
         "awaiting_validation",
         "validated",
         "rejected",
+        "disregarded",
+        "disregard_awaiting_validation",
     }
     assert "requisicao" not in payload
     assert "resumo" not in payload
@@ -200,6 +217,41 @@ def test_result_items_contract_uses_english_payload_and_routes(api_client):
     assert "resultado_valor" not in item_payload
     assert "alerta_critico" not in item_payload
     assert "data_validacao" not in item_payload
+
+
+@pytest.mark.django_db
+def test_lab_requests_are_ordered_by_clinical_attendance_priority(api_client):
+    """The request queue prioritizes emergency, then urgent levels, then normal care."""
+    tenant = _tenant()
+    _authenticate_lab_user(tenant, api_client)
+    patient = _patient(tenant)
+    shuffled_priorities = [
+        ClinicalStatus.NORMAL,
+        ClinicalStatus.URGENT,
+        ClinicalStatus.EMERGENCY,
+        ClinicalStatus.LOW_URGENCY,
+        ClinicalStatus.EXTREMELY_URGENT,
+        ClinicalStatus.PRIORITY,
+        ClinicalStatus.VERY_URGENT,
+    ]
+
+    for priority in shuffled_priorities:
+        LabRequest.objects.create(tenant=tenant, patient=patient, clinical_status=priority)
+
+    response = api_client.get("/api/v1/clinical/labrequest/?type=LAB&status=pendente&page_size=20")
+
+    assert response.status_code == 200
+    payload = _response_data(response)
+    rows = payload["results"] if isinstance(payload, dict) else payload
+    assert [row["clinical_status"] for row in rows] == [
+        ClinicalStatus.EMERGENCY,
+        ClinicalStatus.EXTREMELY_URGENT,
+        ClinicalStatus.VERY_URGENT,
+        ClinicalStatus.URGENT,
+        ClinicalStatus.LOW_URGENCY,
+        ClinicalStatus.PRIORITY,
+        ClinicalStatus.NORMAL,
+    ]
 
 
 @pytest.mark.django_db
@@ -247,3 +299,138 @@ def test_result_item_actions_use_english_routes_and_payload(api_client):
     assert validate_payload["status"] == ResultState.VALIDATED
     assert "estado" not in validate_payload
     assert old_validate_response.status_code == 404
+
+
+@pytest.mark.django_db
+def test_partial_entered_results_keep_request_in_analysis_until_empty_fields_are_disregarded(api_client):
+    """A request stays in analysis until all fields are filled or disregarded."""
+    tenant = _tenant()
+    user = _authenticate_lab_user(tenant, api_client)
+    patient = _patient(tenant)
+    exam = _exam(tenant)
+    fields = _fields(exam, 3)
+    request, _ = _request_with_result_item(tenant, patient, exam, fields[0])
+    items = list(ResultItem.objects.filter(result=request.result).order_by("position", "id"))
+
+    for index, item in enumerate(items[:2], start=1):
+        response = api_client.post(
+            f"/api/v1/clinical/resultitem/{item.id}/save-result/",
+            data={"result_value": str(10 + index)},
+            format="json",
+        )
+        assert response.status_code == 200
+
+    request.refresh_from_db()
+    assert request.status == ResultState.IN_ANALYSIS
+
+    validate_response = api_client.post(f"/api/v1/clinical/labrequest/{request.id}/validate-results/")
+    assert validate_response.status_code == 400
+    request.refresh_from_db()
+    assert request.status == ResultState.IN_ANALYSIS
+
+    items = list(ResultItem.objects.filter(result=request.result).order_by("position", "id"))
+    assert [item.status for item in items] == [
+        ResultState.AWAITING_VALIDATION,
+        ResultState.AWAITING_VALIDATION,
+        ResultState.PENDING,
+    ]
+    assert items[2].result_value is None
+    assert items[0].validated_by_id is None
+
+    disregard_response = api_client.post(
+        f"/api/v1/clinical/labrequest/{request.id}/disregard-empty-results/",
+        data={"reason": "Amostra insuficiente para o terceiro parâmetro."},
+        format="json",
+    )
+    assert disregard_response.status_code == 200
+    payload = _response_data(disregard_response)
+    assert payload["workflow"]["disregarded"] == 1
+
+    empty_item = ResultItem.objects.get(result=request.result, exam_field=fields[2])
+    assert empty_item.status == ResultState.DISREGARDED
+    assert empty_item.disregard_reason == "Amostra insuficiente para o terceiro parâmetro."
+    assert empty_item.disregard_validation_date is None
+    request.refresh_from_db()
+    assert request.status == ResultState.AWAITING_VALIDATION
+
+    final_response = api_client.post(f"/api/v1/clinical/labrequest/{request.id}/validate-results/")
+    assert final_response.status_code == 200
+    final_payload = _response_data(final_response)
+    assert final_payload["workflow"]["validated_disregards"] == 1
+
+    empty_item.refresh_from_db()
+    validated_items = list(ResultItem.objects.filter(result=request.result).order_by("position", "id"))
+    request.refresh_from_db()
+    assert empty_item.disregard_validated_by_id == user.id
+    assert empty_item.disregard_validation_date is not None
+    assert [item.validated_by_id for item in validated_items[:2]] == [user.id, user.id]
+    assert request.status == ResultState.VALIDATED
+
+
+@pytest.mark.django_db
+def test_disregard_empty_results_requires_reason_and_does_not_touch_filled_values(api_client):
+    """Disregarding is explicit, reasoned, and only affects empty result fields."""
+    tenant = _tenant()
+    _authenticate_lab_user(tenant, api_client)
+    patient = _patient(tenant)
+    exam = _exam(tenant)
+    fields = _fields(exam, 2)
+    request, _ = _request_with_result_item(tenant, patient, exam, fields[0])
+    filled, empty = list(ResultItem.objects.filter(result=request.result).order_by("position", "id"))
+
+    save_response = api_client.post(
+        f"/api/v1/clinical/resultitem/{filled.id}/save-result/",
+        data={"result_value": "13.2"},
+        format="json",
+    )
+    assert save_response.status_code == 200
+
+    invalid_response = api_client.post(
+        f"/api/v1/clinical/labrequest/{request.id}/disregard-empty-results/",
+        data={"reason": ""},
+        format="json",
+    )
+    assert invalid_response.status_code == 400
+
+    valid_response = api_client.post(
+        f"/api/v1/clinical/labrequest/{request.id}/disregard-empty-results/",
+        data={"reason": "Parâmetro sem material suficiente."},
+        format="json",
+    )
+    assert valid_response.status_code == 200
+
+    filled.refresh_from_db()
+    empty.refresh_from_db()
+    assert filled.status == ResultState.AWAITING_VALIDATION
+    assert filled.result_value == Decimal("13.20")
+    assert empty.status == ResultState.DISREGARDED
+    assert empty.disregard_reason == "Parâmetro sem material suficiente."
+
+
+@pytest.mark.django_db
+def test_validated_request_can_contain_only_validated_disregarded_results(api_client):
+    """A request can be finalized when every empty result was disregarded and validated."""
+    tenant = _tenant()
+    user = _authenticate_lab_user(tenant, api_client)
+    patient = _patient(tenant)
+    exam = _exam(tenant)
+    fields = _fields(exam, 2)
+    request, _ = _request_with_result_item(tenant, patient, exam, fields[0])
+
+    disregard_response = api_client.post(
+        f"/api/v1/clinical/labrequest/{request.id}/disregard-empty-results/",
+        data={"reason": "Sem amostra suficiente para executar os parâmetros."},
+        format="json",
+    )
+    assert disregard_response.status_code == 200
+    request.refresh_from_db()
+    assert request.status == ResultState.AWAITING_VALIDATION
+
+    validate_response = api_client.post(f"/api/v1/clinical/labrequest/{request.id}/validate-results/")
+    assert validate_response.status_code == 200
+
+    request.refresh_from_db()
+    items = list(ResultItem.objects.filter(result=request.result).order_by("position", "id"))
+    assert request.status == ResultState.VALIDATED
+    assert [item.status for item in items] == [ResultState.DISREGARDED, ResultState.DISREGARDED]
+    assert [item.disregard_validated_by_id for item in items] == [user.id, user.id]

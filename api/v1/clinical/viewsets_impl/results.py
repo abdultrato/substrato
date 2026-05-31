@@ -5,13 +5,16 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
+from api.v1.clinical.lab_permissions import ensure_laboratory_result_privilege
 from api.v1.viewset_mixins import TenantScopedQuerysetMixin, ValidatedSearchOrderingMixin
 from application.clinical.commands import (
+    DisregardResultCommand,
     SaveResultValueCommand,
     StartResultAnalysisCommand,
     ValidateResultCommand,
 )
 from application.clinical.handlers import (
+    handle_disregard_result,
     handle_save_result_value,
     handle_start_result_analysis,
     handle_validate_result,
@@ -112,6 +115,7 @@ class ResultItemViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin,
     @action(detail=True, methods=["post"], url_path="start-analysis", url_name="start-analysis")
     def start_analysis(self, request, pk=None):
         """Move the result item to EM_ANALISE."""
+        ensure_laboratory_result_privilege(getattr(request, "user", None))
         updated = self._execute_command(
             handle_start_result_analysis,
             StartResultAnalysisCommand(
@@ -127,6 +131,7 @@ class ResultItemViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin,
         """
         Save the result value and move to AGUARDANDO_VALIDACAO.
         """
+        ensure_laboratory_result_privilege(getattr(request, "user", None))
         payload = request.data or {}
         raw = payload.get("result_value")
 
@@ -143,10 +148,27 @@ class ResultItemViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin,
     @action(detail=True, methods=["post"], url_path="validate-result", url_name="validate-result")
     def validate_result(self, request, pk=None):
         """Move the result item to VALIDADO."""
+        ensure_laboratory_result_privilege(getattr(request, "user", None))
         updated = self._execute_command(
             handle_validate_result,
             ValidateResultCommand(
                 result_item=self.get_object(),
+                user=getattr(request, "user", None),
+                idempotent=True,
+            ),
+        )
+        return Response(LaboratoryResultItemSerializer(updated).data)
+
+    @action(detail=True, methods=["post"], url_path="disregard-result", url_name="disregard-result")
+    def disregard_result(self, request, pk=None):
+        """Mark an empty result item as disregarded with a required reason."""
+        ensure_laboratory_result_privilege(getattr(request, "user", None))
+        payload = request.data or {}
+        updated = self._execute_command(
+            handle_disregard_result,
+            DisregardResultCommand(
+                result_item=self.get_object(),
+                reason=payload.get("reason") or "",
                 user=getattr(request, "user", None),
                 idempotent=True,
             ),

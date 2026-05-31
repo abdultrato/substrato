@@ -51,6 +51,51 @@ body {
   @apply bg-slate-50;
 }
 
+/* Independent scroll regions: main content and lateral navigation. */
+body:not(.jazzmin-login-page):not(.popup) {
+  --substrato-admin-navbar-height: 3.5rem;
+  --substrato-admin-footer-height: 3rem;
+  overflow: hidden;
+}
+
+body:not(.jazzmin-login-page):not(.popup) .wrapper {
+  height: 100vh;
+  min-height: 100vh;
+  height: 100dvh;
+  min-height: 100dvh;
+  overflow: hidden;
+}
+
+body:not(.jazzmin-login-page):not(.popup) .content-wrapper {
+  height: calc(100vh - var(--substrato-admin-navbar-height) - var(--substrato-admin-footer-height));
+  height: calc(100dvh - var(--substrato-admin-navbar-height) - var(--substrato-admin-footer-height));
+  min-height: 0 !important;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+
+body:not(.jazzmin-login-page):not(.popup) .main-sidebar,
+body:not(.jazzmin-login-page):not(.popup) #jazzy-sidebar {
+  height: 100vh;
+  max-height: 100vh;
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
+  overscroll-behavior: contain;
+}
+
+body:not(.jazzmin-login-page):not(.popup) .main-sidebar .sidebar,
+body:not(.jazzmin-login-page):not(.popup) #jazzy-sidebar .sidebar {
+  height: calc(100vh - var(--substrato-admin-navbar-height));
+  height: calc(100dvh - var(--substrato-admin-navbar-height));
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+
 /* Make admin denser (requested): less padding/gap */
 #content {
   @apply px-3 py-4;

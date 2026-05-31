@@ -6,7 +6,6 @@ from functools import lru_cache
 import re
 from typing import Any
 
-from apps.ai_assistant.services.vector_store import get_vector_store_service
 from apps.ai_assistant.tools.resource_catalog import match_resource_descriptors, normalize_text
 
 from .base import AiTool, AiToolContext
@@ -361,6 +360,8 @@ def _vector_search_knowledge_entries(message: str, *, limit: int = 5, tenant=Non
         List of tuples (entry_id, similarity_score) sorted by score descending
     """
     try:
+        from apps.ai_assistant.services.vector_store import get_vector_store_service
+
         # Get vector store service
         vector_store = get_vector_store_service()
         if vector_store is None:

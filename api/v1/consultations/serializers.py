@@ -35,6 +35,7 @@ class MedicalConsultationSerializer(serializers.ModelSerializer):
     type = serializers.CharField(required=False, allow_blank=True)
     patient_name = serializers.CharField(source="patient.name", read_only=True)
     doctor_name = serializers.SerializerMethodField(method_name="get_doctor_name")
+    specialty_name = serializers.CharField(source="specialty.name", read_only=True)
     invoice_id = serializers.SerializerMethodField(method_name="get_invoice_id")
     invoice_code = serializers.SerializerMethodField(method_name="get_invoice_code")
     invoice_status = serializers.SerializerMethodField(method_name="get_invoice_status")
@@ -46,6 +47,7 @@ class MedicalConsultationSerializer(serializers.ModelSerializer):
             *CORE_READ_ONLY_FIELDS,
             "patient_name",
             "doctor_name",
+            "specialty_name",
             "invoice_id",
             "invoice_code",
             "invoice_status",

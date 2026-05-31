@@ -11,16 +11,20 @@ class ResultStateMachine:
     TRANSITIONS = {
         ResultState.PENDING: {
             ResultState.IN_ANALYSIS,
+            ResultState.DISREGARDED,
         },
         ResultState.IN_ANALYSIS: {
             ResultState.AWAITING_VALIDATION,
+            ResultState.DISREGARDED,
         },
         ResultState.AWAITING_VALIDATION: {
             ResultState.VALIDATED,
             ResultState.REJECTED,
+            ResultState.DISREGARDED,
         },
         ResultState.REJECTED: {
             ResultState.IN_ANALYSIS,
+            ResultState.DISREGARDED,
         },
     }
 

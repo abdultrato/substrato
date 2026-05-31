@@ -2,9 +2,9 @@
 
 import { isNotFoundLikeError } from "@/lib/errors/api-error"
 import Link from "next/link"
-import { useParams } from "next/navigation"
+import { useParams, useRouter } from "next/navigation"
 import { useEffect, useMemo, useState } from "react"
-import { FileDown, FlaskConical, Loader2 } from "lucide-react"
+import { Ban, FlaskConical, Loader2 } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
 import PageHeader from "@/components/ui/PageHeader"
@@ -13,7 +13,14 @@ import { useSafeDataRefresh, useSafeDataRefreshSignal } from "@/hooks/useSafeDat
 import { apiFetch } from "@/lib/api"
 import { GROUPS } from "@/lib/rbac"
 
-type ResultStatus = "pendente" | "em_analise" | "aguardando_validacao" | "validado" | "rejeitado" | string
+type ResultStatus =
+  | "pendente"
+  | "em_analise"
+  | "aguardando_validacao"
+  | "validado"
+  | "rejeitado"
+  | "desconsiderado"
+  | string
 
 type LaboratoryResultItem = {
   id: number
@@ -23,6 +30,9 @@ type LaboratoryResultItem = {
   clinical_status?: string | null
   critical_alert?: boolean
   validation_date?: string | null
+  disregard_reason?: string | null
+  disregarded_at?: string | null
+  disregard_validation_date?: string | null
   exam_name?: string | null
   exam_field_name?: string | null
   exam_field_unit?: string | null
@@ -46,17 +56,11 @@ type LaboratoryResultItemsResponse = {
     awaiting_validation: number
     validated: number
     rejected: number
+    disregarded?: number
+    disregard_awaiting_validation?: number
   }
   items: LaboratoryResultItem[]
-}
-
-async function openResultsPdf(requestId: number) {
-  const blob = await apiFetch<Blob>(`/requests/${requestId}/results-pdf/`, {
-    responseType: "blob",
-  })
-  const url = window.URL.createObjectURL(blob)
-  window.open(url, "_blank", "noopener,noreferrer")
-  setTimeout(() => window.URL.revokeObjectURL(url), 60_000)
+  workflow?: Record<string, number>
 }
 
 function toKey(value: unknown): string {
@@ -64,6 +68,7 @@ function toKey(value: unknown): string {
 }
 
 export default function LaboratoryRequestResultsPage() {
+  const router = useRouter()
   const params = useParams() as any
   const idRaw = params?.id
   const requestId = Number(Array.isArray(idRaw) ? idRaw[0] : idRaw)
@@ -75,8 +80,23 @@ export default function LaboratoryRequestResultsPage() {
   const [requestRecord, setRequestRecord] = useState<LaboratoryResultItemsResponse["request"] | null>(null)
   const [items, setItems] = useState<LaboratoryResultItem[]>([])
   const [draft, setDraft] = useState<Record<string, string>>({})
-  const [busyAll, setBusyAll] = useState<null | "start" | "save" | "validate">(null)
+  const [busyAll, setBusyAll] = useState<null | "start" | "save" | "validate" | "disregard">(null)
   const [busyRow, setBusyRowState] = useState<Record<string, boolean>>({})
+  const [showDisregardPanel, setShowDisregardPanel] = useState(false)
+  const [disregardReason, setDisregardReason] = useState("")
+
+  function applyResultItemsResponse(response: LaboratoryResultItemsResponse) {
+    const resultItems = Array.isArray(response.items) ? response.items : []
+
+    setRequestRecord(response.request)
+    setItems(resultItems)
+
+    const nextDraft: Record<string, string> = {}
+    for (const item of resultItems) {
+      nextDraft[toKey(item.id)] = item.result_value == null ? "" : String(item.result_value)
+    }
+    setDraft(nextDraft)
+  }
 
   async function load() {
     if (!requestId || Number.isNaN(requestId)) return
@@ -88,21 +108,20 @@ export default function LaboratoryRequestResultsPage() {
       const response = await apiFetch<LaboratoryResultItemsResponse>(`/requests/${requestId}/result-items/`, {
         clientCache: safeRefreshToken === 0,
       })
-      const resultItems = Array.isArray(response.items) ? response.items : []
-
-      setRequestRecord(response.request)
-      setItems(resultItems)
-
-      const nextDraft: Record<string, string> = {}
-      for (const item of resultItems) {
-        nextDraft[toKey(item.id)] = item.result_value == null ? "" : String(item.result_value)
-      }
-      setDraft(nextDraft)
+      applyResultItemsResponse(response)
     } catch (error: any) {
       setErrorMessage(isNotFoundLikeError(error) ? null : (error?.message || "Falha ao carregar resultados da requisição."))
     } finally {
       setLoading(false)
     }
+  }
+
+  async function refreshResultItems() {
+    const response = await apiFetch<LaboratoryResultItemsResponse>(`/requests/${requestId}/result-items/`, {
+      clientCache: false,
+    })
+    applyResultItemsResponse(response)
+    return response
   }
 
   useEffect(() => {
@@ -112,7 +131,16 @@ export default function LaboratoryRequestResultsPage() {
   }, [requestId, safeRefreshToken, hasUnsavedInput])
 
   const summary = useMemo(() => {
-    const counts = { pending: 0, inAnalysis: 0, awaitingValidation: 0, validated: 0, rejected: 0, total: 0 }
+    const counts = {
+      pending: 0,
+      inAnalysis: 0,
+      awaitingValidation: 0,
+      validated: 0,
+      rejected: 0,
+      disregarded: 0,
+      disregardAwaitingValidation: 0,
+      total: 0,
+    }
     for (const item of items) {
       counts.total += 1
       if (item.status === "pendente") counts.pending += 1
@@ -120,23 +148,36 @@ export default function LaboratoryRequestResultsPage() {
       if (item.status === "aguardando_validacao") counts.awaitingValidation += 1
       if (item.status === "validado") counts.validated += 1
       if (item.status === "rejeitado") counts.rejected += 1
+      if (item.status === "desconsiderado") {
+        counts.disregarded += 1
+        if (!item.disregard_validation_date) counts.disregardAwaitingValidation += 1
+      }
     }
     return counts
   }, [items])
 
-  const hasValidatedItem = summary.validated > 0
-  const canStartAll = !busyAll && items.some((item) => item.status === "pendente" || item.status === "rejeitado")
   const canSaveAll =
     !busyAll &&
-    summary.pending === 0 &&
-    summary.rejected === 0 &&
-    items.some((item) => item.status === "em_analise")
+    items.some((item) => ["pendente", "em_analise", "rejeitado"].includes(item.status) && !!(draft[toKey(item.id)] || "").trim())
+  const readyForRequestValidation =
+    summary.total > 0 && summary.pending === 0 && summary.inAnalysis === 0 && summary.rejected === 0
   const canValidateAll =
     !busyAll &&
-    summary.pending === 0 &&
-    summary.inAnalysis === 0 &&
-    summary.rejected === 0 &&
-    items.some((item) => item.status === "aguardando_validacao")
+    readyForRequestValidation &&
+    items.some(
+      (item) =>
+        item.status === "aguardando_validacao" ||
+        (item.status === "desconsiderado" && !item.disregard_validation_date)
+    )
+  const canDisregardEmpty =
+    !busyAll &&
+    items.some(
+      (item) =>
+        item.status !== "validado" &&
+        item.status !== "desconsiderado" &&
+        item.result_value == null &&
+        !(draft[toKey(item.id)] || "").trim()
+    )
 
   const groupedItems = useMemo(() => {
     const map = new Map<string, LaboratoryResultItem[]>()
@@ -161,18 +202,6 @@ export default function LaboratoryRequestResultsPage() {
     }))
   }
 
-  async function startItem(id: number) {
-    setRowBusy(id, true)
-    try {
-      const updated = await apiFetch<LaboratoryResultItem>(`/clinical/resultitem/${id}/start-analysis/`, {
-        method: "POST",
-      })
-      updateItem(updated)
-    } finally {
-      setRowBusy(id, false)
-    }
-  }
-
   async function saveItem(id: number) {
     const value = (draft[toKey(id)] || "").trim()
     if (!value) throw new Error("Informe um valor antes de gravar.")
@@ -192,27 +221,15 @@ export default function LaboratoryRequestResultsPage() {
   async function validateItem(id: number) {
     setRowBusy(id, true)
     try {
-      const updated = await apiFetch<LaboratoryResultItem>(`/clinical/resultitem/${id}/validate-result/`, {
+      await apiFetch<LaboratoryResultItem>(`/clinical/resultitem/${id}/validate-result/`, {
         method: "POST",
       })
-      updateItem(updated)
+      const response = await refreshResultItems()
+      if (response.request?.status === "validado") {
+        router.push("/laboratory/requests/validated")
+      }
     } finally {
       setRowBusy(id, false)
-    }
-  }
-
-  async function startAll() {
-    try {
-      setBusyAll("start")
-      setErrorMessage(null)
-      for (const item of items) {
-        if (item.status !== "pendente" && item.status !== "rejeitado") continue
-        await startItem(item.id)
-      }
-    } catch (error: any) {
-      setErrorMessage(isNotFoundLikeError(error) ? null : (error?.message || "Falha ao lançar itens."))
-    } finally {
-      setBusyAll(null)
     }
   }
 
@@ -221,18 +238,9 @@ export default function LaboratoryRequestResultsPage() {
       setBusyAll("save")
       setErrorMessage(null)
 
-      if (summary.pending > 0 || summary.rejected > 0) {
-        throw new Error("Lance todos os itens antes de gravar.")
-      }
-
       for (const item of items) {
-        if (item.status !== "em_analise") continue
-        const value = (draft[toKey(item.id)] || "").trim()
-        if (!value) throw new Error("Não é possível gravar: existe resultado vazio.")
-      }
-
-      for (const item of items) {
-        if (item.status !== "em_analise") continue
+        if (!["pendente", "em_analise", "rejeitado"].includes(item.status)) continue
+        if (!(draft[toKey(item.id)] || "").trim()) continue
         await saveItem(item.id)
       }
     } catch (error: any) {
@@ -247,16 +255,43 @@ export default function LaboratoryRequestResultsPage() {
       setBusyAll("validate")
       setErrorMessage(null)
 
-      if (summary.pending > 0 || summary.inAnalysis > 0 || summary.rejected > 0) {
-        throw new Error("Grave todos os resultados antes de validar.")
-      }
-
-      for (const item of items) {
-        if (item.status !== "aguardando_validacao") continue
-        await validateItem(item.id)
+      const response = await apiFetch<LaboratoryResultItemsResponse>(`/requests/${requestId}/validate-results/`, {
+        method: "POST",
+      })
+      applyResultItemsResponse(response)
+      if (response.request?.status === "validado") {
+        router.push("/laboratory/requests/validated")
       }
     } catch (error: any) {
       setErrorMessage(isNotFoundLikeError(error) ? null : (error?.message || "Falha ao validar resultados."))
+    } finally {
+      setBusyAll(null)
+    }
+  }
+
+  async function disregardEmptyResults() {
+    const reason = disregardReason.trim()
+    if (reason.length < 5) {
+      setErrorMessage("Explique o motivo da desconsideração com pelo menos 5 caracteres.")
+      return
+    }
+
+    try {
+      setBusyAll("disregard")
+      setErrorMessage(null)
+
+      const response = await apiFetch<LaboratoryResultItemsResponse>(
+        `/requests/${requestId}/disregard-empty-results/`,
+        {
+          method: "POST",
+          body: JSON.stringify({ reason }),
+        }
+      )
+      applyResultItemsResponse(response)
+      setShowDisregardPanel(false)
+      setDisregardReason("")
+    } catch (error: any) {
+      setErrorMessage(isNotFoundLikeError(error) ? null : (error?.message || "Falha ao desconsiderar resultados vazios."))
     } finally {
       setBusyAll(null)
     }
@@ -280,22 +315,12 @@ export default function LaboratoryRequestResultsPage() {
 
               <button
                 type="button"
-                onClick={startAll}
-                disabled={!canStartAll}
-                className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50 disabled:opacity-50"
-              >
-                {busyAll === "start" ? <Loader2 className="animate-spin" size={16} /> : null}
-                1. Lançar
-              </button>
-
-              <button
-                type="button"
                 onClick={saveAll}
                 disabled={!canSaveAll}
                 className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50 disabled:opacity-50"
               >
                 {busyAll === "save" ? <Loader2 className="animate-spin" size={16} /> : null}
-                2. Gravar
+                Gravar preenchidos
               </button>
 
               <button
@@ -305,19 +330,19 @@ export default function LaboratoryRequestResultsPage() {
                 className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50 disabled:opacity-50"
               >
                 {busyAll === "validate" ? <Loader2 className="animate-spin" size={16} /> : null}
-                3. Validar
+                Validar requisição
               </button>
 
               <button
                 type="button"
-                onClick={() => (requestRecord ? openResultsPdf(requestRecord.id) : null)}
-                disabled={!requestRecord || !hasValidatedItem}
-                className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50 disabled:opacity-50"
-                title={!hasValidatedItem ? "Precisa ter pelo menos 1 resultado validado." : "Gerar PDF (somente validados)"}
+                onClick={() => setShowDisregardPanel(true)}
+                disabled={!canDisregardEmpty}
+                className="inline-flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-medium text-amber-900 shadow-sm transition hover:bg-amber-100 disabled:opacity-50"
               >
-                <FileDown size={16} />
-                Gerar PDF
+                {busyAll === "disregard" ? <Loader2 className="animate-spin" size={16} /> : <Ban size={16} />}
+                Desconsiderar vazios
               </button>
+
             </div>
           }
         />
@@ -328,10 +353,44 @@ export default function LaboratoryRequestResultsPage() {
           </div>
         ) : null}
 
+        {showDisregardPanel ? (
+          <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 shadow-sm">
+            <label className="text-sm font-semibold text-amber-950" htmlFor="disregard-reason">
+              Motivo da desconsideração dos campos vazios
+            </label>
+            <textarea
+              id="disregard-reason"
+              value={disregardReason}
+              onChange={(event) => setDisregardReason(event.target.value)}
+              className="mt-2 min-h-24 w-full rounded-xl border border-amber-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm outline-none focus:border-amber-400"
+              placeholder="Ex.: Amostra insuficiente para estes parâmetros."
+            />
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={disregardEmptyResults}
+                disabled={busyAll === "disregard"}
+                className="inline-flex items-center gap-2 rounded-xl bg-amber-700 px-3 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-amber-800 disabled:opacity-50"
+              >
+                {busyAll === "disregard" ? <Loader2 className="animate-spin" size={16} /> : null}
+                Confirmar desconsideração
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowDisregardPanel(false)}
+                disabled={busyAll === "disregard"}
+                className="rounded-xl border border-amber-200 bg-white px-3 py-2 text-sm font-medium text-amber-900 shadow-sm transition hover:bg-amber-100 disabled:opacity-50"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        ) : null}
+
         {loading ? (
           <div className="text-sm text-gray-500">Carregando...</div>
         ) : (
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-6">
             <div className="rounded-xl border bg-white p-4 shadow-sm">
               <div className="text-xs text-slate-500">Pendentes</div>
               <div className="text-2xl font-semibold text-slate-900">{summary.pending}</div>
@@ -347,6 +406,10 @@ export default function LaboratoryRequestResultsPage() {
             <div className="rounded-xl border bg-white p-4 shadow-sm">
               <div className="text-xs text-slate-500">Validados</div>
               <div className="text-2xl font-semibold text-slate-900">{summary.validated}</div>
+            </div>
+            <div className="rounded-xl border bg-white p-4 shadow-sm">
+              <div className="text-xs text-slate-500">Desconsiderados</div>
+              <div className="text-2xl font-semibold text-slate-900">{summary.disregarded}</div>
             </div>
             <div className="rounded-xl border bg-white p-4 shadow-sm">
               <div className="text-xs text-slate-500">Total</div>
@@ -375,11 +438,13 @@ export default function LaboratoryRequestResultsPage() {
                       {rows.map((row) => {
                         const id = toKey(row.id)
                         const isBusy = !!busyRow[id]
-                        const isEditable = row.status === "em_analise"
+                        const isEditable = ["pendente", "em_analise", "rejeitado"].includes(row.status)
                         const draftValue = draft[id] ?? ""
                         const canSave = isEditable && !isBusy && !busyAll && !!draftValue.trim()
-                        const canStart = (row.status === "pendente" || row.status === "rejeitado") && !isBusy && !busyAll
                         const canValidate = row.status === "aguardando_validacao" && !isBusy && !busyAll
+                        const disregardLabel = row.disregard_validation_date
+                          ? "Desconsideração validada"
+                          : "Desconsideração a validar"
 
                         return (
                           <tr key={row.id} className="border-b border-slate-100 last:border-b-0">
@@ -403,7 +468,15 @@ export default function LaboratoryRequestResultsPage() {
                                 placeholder={isEditable ? "Digite..." : "-"}
                               />
                             </td>
-                            <td className="py-2 pr-3 text-slate-700">{row.status || "-"}</td>
+                            <td className="py-2 pr-3 text-slate-700">
+                              <div>{row.status || "-"}</div>
+                              {row.status === "desconsiderado" ? (
+                                <div className="mt-1 max-w-48 text-xs text-amber-700">
+                                  {disregardLabel}
+                                  {row.disregard_reason ? `: ${row.disregard_reason}` : ""}
+                                </div>
+                              ) : null}
+                            </td>
                             <td className="py-2 pr-0">
                               <div className="flex items-center gap-2">
                                 {isBusy ? (
@@ -411,16 +484,6 @@ export default function LaboratoryRequestResultsPage() {
                                     <Loader2 className="animate-spin" size={14} />
                                     Processando
                                   </span>
-                                ) : null}
-
-                                {canStart ? (
-                                  <button
-                                    type="button"
-                                    onClick={() => startItem(row.id).catch((error: any) => setErrorMessage(isNotFoundLikeError(error) ? null : (error?.message || String(error))))}
-                                    className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-800 shadow-sm hover:bg-slate-50"
-                                  >
-                                    Lançar
-                                  </button>
                                 ) : null}
 
                                 {isEditable ? (

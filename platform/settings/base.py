@@ -1180,7 +1180,9 @@ except Exception:
     pass
 
 JAZZMIN_UI_TWEAKS = {
-    # Keep the footer always visible (requested by product).
+    # Keep admin chrome stable while main/sidebar scroll independently.
+    "navbar_fixed": True,
+    "sidebar_fixed": True,
     "footer_fixed": True,
 }
 

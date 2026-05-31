@@ -10,6 +10,10 @@ from django.utils import timezone
 from core.mixins.model.position import ScopedPositionMixin
 from core.models.base import CoreModel, NoNameCoreModel
 
+DENTAL_HISTORY_AUTO_MARKER = "Histórico gerado automaticamente a partir dos registos dentários anteriores."
+MAX_DENTAL_HISTORY_RECORDS = 5
+MAX_DENTAL_HISTORY_TREATMENT_PLANS = 5
+
 
 class DentalProcedure(CoreModel):
     class Category(models.TextChoices):
@@ -208,8 +212,19 @@ class DentalRecord(NoNameCoreModel):
 
     def save(self, *args, **kwargs):
         _propagate_tenant_from(self, "patient")
+        history_before = self.dental_history
+        if self._should_refresh_dental_history():
+            self.dental_history = build_patient_dental_history(self)
         self.full_clean()
+        if self.dental_history != history_before and kwargs.get("update_fields") is not None:
+            update_fields = set(kwargs["update_fields"])
+            update_fields.add("dental_history")
+            kwargs["update_fields"] = list(update_fields)
         return super().save(*args, **kwargs)
+
+    def _should_refresh_dental_history(self) -> bool:
+        current = (self.dental_history or "").strip()
+        return not current or current.startswith(DENTAL_HISTORY_AUTO_MARKER)
 
     def __str__(self) -> str:
         return self.custom_id or f"Prontuário dentário {self.pk}"
@@ -313,6 +328,8 @@ class DentalTreatmentPlan(NoNameCoreModel):
         "clinical.Patient",
         verbose_name="Paciente",
         on_delete=models.PROTECT,
+        null=True,
+        blank=True,
         related_name="dental_treatment_plans",
         db_index=True,
     )
@@ -355,6 +372,7 @@ class DentalTreatmentPlan(NoNameCoreModel):
         ordering = ["-created_at"]
         indexes = [
             models.Index(fields=["tenant", "patient", "status"]),
+            models.Index(fields=["tenant", "status"]),
             models.Index(fields=["tenant", "dentist", "status"]),
             models.Index(fields=["tenant", "planned_start"]),
         ]
@@ -371,6 +389,7 @@ class DentalTreatmentPlan(NoNameCoreModel):
 
     def save(self, *args, **kwargs):
         _propagate_tenant_from(self, "patient")
+        _propagate_tenant_from(self, "record")
         self.full_clean()
         return super().save(*args, **kwargs)
 
@@ -456,12 +475,6 @@ class DentalTreatmentPlanItem(ScopedPositionMixin, NoNameCoreModel):
         _validate_same_tenant(self, "appointment")
         if self.tooth_number:
             _validate_tooth_number(self.tooth_number)
-        if (
-            self.appointment_id
-            and self.treatment_plan_id
-            and self.appointment.patient_id != self.treatment_plan.patient_id
-        ):
-            raise ValidationError({"appointment": "A consulta deve pertencer ao mesmo paciente do plano."})
 
     def save(self, *args, **kwargs):
         _propagate_tenant_from(self, "treatment_plan")
@@ -475,6 +488,115 @@ class DentalTreatmentPlanItem(ScopedPositionMixin, NoNameCoreModel):
 
     def __str__(self) -> str:
         return f"{self.position}. {self.procedure}"
+
+
+class DentalPatientTreatmentPlan(NoNameCoreModel):
+    class Status(models.TextChoices):
+        ACTIVE = "ACTIVE", "Válido"
+        EXPIRED = "EXPIRED", "Expirado"
+        CANCELLED = "CANCELLED", "Cancelado"
+
+    prefix = "DPP"
+
+    patient = models.ForeignKey(
+        "clinical.Patient",
+        verbose_name="Paciente",
+        on_delete=models.PROTECT,
+        related_name="dental_plan_assignments",
+        db_index=True,
+    )
+    treatment_plan = models.ForeignKey(
+        "odontologia.DentalTreatmentPlan",
+        verbose_name="Plano dentário",
+        on_delete=models.PROTECT,
+        related_name="patient_assignments",
+        db_index=True,
+    )
+    dentist = models.ForeignKey(
+        "recursos_humanos.Employee",
+        verbose_name="Dentista responsável",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="dental_patient_treatment_plans",
+        db_index=True,
+    )
+    record = models.ForeignKey(
+        "odontologia.DentalRecord",
+        verbose_name="Prontuário dentário",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="patient_treatment_plans",
+    )
+    assigned_at = models.DateTimeField("Atribuído em", default=timezone.now, db_index=True)
+    valid_from = models.DateField("Início da vigência", default=timezone.localdate, db_index=True)
+    valid_until = models.DateField("Fim da vigência", null=True, blank=True, db_index=True)
+    status = models.CharField("Estado", max_length=20, choices=Status.choices, default=Status.ACTIVE, db_index=True)
+    notes = models.TextField("Observações", blank=True, default="")
+
+    class Meta:
+        db_table = "odontologia_plano_tratamento_paciente"
+        verbose_name = "Paciente com Plano Dentário"
+        verbose_name_plural = "Pacientes com Plano Dentário"
+        ordering = ["-valid_from", "-created_at"]
+        indexes = [
+            models.Index(fields=["tenant", "patient", "status"]),
+            models.Index(fields=["tenant", "treatment_plan", "status"]),
+            models.Index(fields=["tenant", "valid_until"]),
+        ]
+
+    @property
+    def is_valid(self) -> bool:
+        return self.is_valid_on(timezone.localdate())
+
+    @property
+    def is_expired(self) -> bool:
+        return self.is_expired_on(timezone.localdate())
+
+    @property
+    def validity_status(self) -> str:
+        if self.is_valid:
+            return "VALID"
+        if self.is_expired:
+            return "EXPIRED"
+        return self.status
+
+    def is_valid_on(self, date) -> bool:
+        if self.status != self.Status.ACTIVE:
+            return False
+        if self.valid_from and self.valid_from > date:
+            return False
+        return not self.valid_until or self.valid_until >= date
+
+    def is_expired_on(self, date) -> bool:
+        return self.status == self.Status.EXPIRED or bool(self.valid_until and self.valid_until < date)
+
+    def clean(self):
+        super().clean()
+        _validate_same_tenant(self, "patient")
+        _validate_same_tenant(self, "treatment_plan")
+        _validate_same_tenant(self, "dentist")
+        _validate_same_tenant(self, "record")
+        if self.record_id and self.patient_id and self.record.patient_id != self.patient_id:
+            raise ValidationError({"record": "O prontuário dentário deve pertencer ao mesmo paciente."})
+        if (
+            self.treatment_plan_id
+            and self.patient_id
+            and self.treatment_plan.patient_id
+            and self.treatment_plan.patient_id != self.patient_id
+        ):
+            raise ValidationError({"treatment_plan": "Este plano dentário legado pertence a outro paciente."})
+        if self.valid_until and self.valid_from and self.valid_until < self.valid_from:
+            raise ValidationError({"valid_until": "O fim da vigência não pode ser anterior ao início."})
+
+    def save(self, *args, **kwargs):
+        _propagate_tenant_from(self, "patient")
+        self.full_clean()
+        return super().save(*args, **kwargs)
+
+    def __str__(self) -> str:
+        return f"{self.patient} - {self.treatment_plan}"
 
 
 class DentalProsthesisLabOrder(NoNameCoreModel):
@@ -581,6 +703,7 @@ class DentalProsthesisLabOrder(NoNameCoreModel):
         if (
             self.treatment_item_id
             and self.patient_id
+            and self.treatment_item.treatment_plan.patient_id
             and self.treatment_item.treatment_plan.patient_id != self.patient_id
         ):
             raise ValidationError({"treatment_item": "O item do plano deve pertencer ao mesmo paciente."})
@@ -596,6 +719,171 @@ class DentalProsthesisLabOrder(NoNameCoreModel):
 
     def __str__(self) -> str:
         return self.order_number or self.custom_id or f"Ordem de prótese {self.pk}"
+
+
+def build_patient_dental_history(record: DentalRecord) -> str:
+    if not record.patient_id:
+        return ""
+
+    previous_records = list(_previous_dental_records(record))
+    treatment_plans = list(_previous_treatment_plans(record))
+    if not previous_records and not treatment_plans:
+        return ""
+
+    sections: list[str] = []
+    if previous_records:
+        record_lines: list[str] = []
+        for previous_record in previous_records:
+            record_lines.extend(_format_previous_record(previous_record))
+        sections.append("Consultas e prontuários anteriores:\n" + "\n".join(record_lines))
+
+    if treatment_plans:
+        treatment_lines: list[str] = []
+        for treatment_plan in treatment_plans:
+            treatment_lines.extend(_format_previous_treatment_plan(treatment_plan))
+        sections.append("Tratamentos anteriores:\n" + "\n".join(treatment_lines))
+
+    return f"{DENTAL_HISTORY_AUTO_MARKER}\n\n" + "\n\n".join(sections)
+
+
+def _previous_dental_records(record: DentalRecord):
+    opened_at = record.opened_at or timezone.now()
+    queryset = DentalRecord.objects.select_related("dentist", "appointment").filter(patient_id=record.patient_id)
+
+    if record.tenant_id:
+        queryset = queryset.filter(tenant_id=record.tenant_id)
+    if record.pk:
+        queryset = queryset.exclude(pk=record.pk)
+
+    return queryset.filter(opened_at__lt=opened_at).order_by("-opened_at", "-created_at")[
+        :MAX_DENTAL_HISTORY_RECORDS
+    ]
+
+
+def _previous_treatment_plans(record: DentalRecord):
+    opened_at = record.opened_at or timezone.now()
+    opened_date = _as_local_date(opened_at)
+    item_queryset = DentalTreatmentPlanItem.objects.select_related("procedure", "appointment").order_by("position", "id")
+    assignment_plan_ids = DentalPatientTreatmentPlan.objects.filter(patient_id=record.patient_id)
+    if record.tenant_id:
+        assignment_plan_ids = assignment_plan_ids.filter(tenant_id=record.tenant_id)
+    assignment_plan_ids = assignment_plan_ids.filter(
+        models.Q(valid_from__lte=opened_date) | models.Q(assigned_at__lt=opened_at)
+    ).values("treatment_plan_id")
+    queryset = (
+        DentalTreatmentPlan.objects.select_related("dentist", "record")
+        .prefetch_related(models.Prefetch("items", queryset=item_queryset))
+        .filter(models.Q(patient_id=record.patient_id) | models.Q(id__in=assignment_plan_ids))
+    )
+
+    if record.tenant_id:
+        queryset = queryset.filter(tenant_id=record.tenant_id)
+    if record.pk:
+        queryset = queryset.exclude(record_id=record.pk)
+
+    return queryset.filter(
+        models.Q(record__opened_at__lt=opened_at)
+        | models.Q(planned_start__lte=opened_date)
+        | models.Q(planned_start__isnull=True, created_at__lt=opened_at)
+        | models.Q(patient_assignments__patient_id=record.patient_id, patient_assignments__valid_from__lte=opened_date)
+    ).distinct().order_by("-planned_start", "-created_at")[:MAX_DENTAL_HISTORY_TREATMENT_PLANS]
+
+
+def _format_previous_record(record: DentalRecord) -> list[str]:
+    dental_history = (record.dental_history or "").strip()
+    if dental_history.startswith(DENTAL_HISTORY_AUTO_MARKER):
+        dental_history = ""
+
+    return [
+        f"- Abertura: {_format_datetime(record.opened_at)}",
+        f"  Dentista: {_related_label(record.dentist)}",
+        f"  Consulta dentária: {_related_label(record.appointment)}",
+        f"  Fecho: {_format_datetime(record.closed_at)}",
+        f"  Estado: {_status_label(record)}",
+        f"  Queixa principal: {_text_value(record.chief_complaint)}",
+        f"  Histórico dentário: {_text_value(dental_history)}",
+        f"  Diagnóstico dentário: {_text_value(record.diagnosis)}",
+        f"  Resumo do tratamento: {_text_value(record.treatment_summary)}",
+        f"  Observações: {_text_value(record.notes)}",
+    ]
+
+
+def _format_previous_treatment_plan(plan: DentalTreatmentPlan) -> list[str]:
+    lines = [
+        f"- Plano: {_text_value(plan.title)}",
+        f"  Dentista: {_related_label(plan.dentist)}",
+        f"  Prontuário dentário: {_related_label(plan.record)}",
+        f"  Estado: {_status_label(plan)}",
+        f"  Início previsto: {_format_date(plan.planned_start)}",
+        f"  Fim previsto: {_format_date(plan.planned_end)}",
+        f"  Objetivos: {_text_value(plan.objectives)}",
+        f"  Observações: {_text_value(plan.notes)}",
+    ]
+
+    items = list(plan.items.all())
+    if not items:
+        return lines
+
+    lines.append("  Itens do tratamento:")
+    for item in items[:10]:
+        procedure = _related_label(item.procedure)
+        tooth = _text_value(item.tooth_number)
+        surface = _text_value(item.surface)
+        appointment = _related_label(item.appointment)
+        lines.append(
+            "    - "
+            f"{procedure}; Dente: {tooth}; Face: {surface}; Estado: {_status_label(item)}; "
+            f"Data prevista: {_format_date(item.scheduled_date)}; Concluído em: {_format_datetime(item.completed_at)}; "
+            f"Consulta dentária: {appointment}; Notas clínicas: {_text_value(item.clinical_notes)}"
+        )
+    if len(items) > 10:
+        lines.append(f"    - +{len(items) - 10} item(ns) adicionais.")
+    return lines
+
+
+def _as_local_date(value):
+    if timezone.is_aware(value):
+        return timezone.localtime(value).date()
+    return value.date()
+
+
+def _format_datetime(value) -> str:
+    if not value:
+        return "-"
+    if timezone.is_aware(value):
+        value = timezone.localtime(value)
+    return value.strftime("%Y-%m-%d %H:%M")
+
+
+def _format_date(value) -> str:
+    if not value:
+        return "-"
+    return value.isoformat()
+
+
+def _related_label(value) -> str:
+    if not value:
+        return "-"
+    for field_name in ("name", "title", "custom_id", "code"):
+        field_value = getattr(value, field_name, None)
+        if field_value:
+            return str(field_value)
+    return str(value)
+
+
+def _status_label(value) -> str:
+    if not value:
+        return "-"
+    if hasattr(value, "get_status_display"):
+        return value.get_status_display()
+    return _text_value(getattr(value, "status", ""))
+
+
+def _text_value(value) -> str:
+    text = str(value or "").strip()
+    if not text:
+        return "-"
+    return text.replace("\r\n", "\n").replace("\r", "\n").replace("\n", "\n    ")
 
 
 def _propagate_tenant_from(instance: NoNameCoreModel, field_name: str) -> None:

@@ -270,6 +270,10 @@ class ResultItemFilter(SafeFilterSet):
             "status",
             "validated_by",
             "validation_date",
+            "disregarded_by",
+            "disregarded_at",
+            "disregard_validated_by",
+            "disregard_validation_date",
         ]
 
 

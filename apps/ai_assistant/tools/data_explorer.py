@@ -6,12 +6,14 @@ from typing import Any
 from django.core.exceptions import FieldDoesNotExist
 from django.db.models import Model, Q, QuerySet
 
+from apps.ai_assistant.services.resource_disambiguation import resolve_resource_matches
+from apps.ai_assistant.services.semantic_filters import apply_semantic_filters
+
 from .base import AiTool, AiToolContext
 from .resource_catalog import (
     ResourceDescriptor,
     accessible_resources_for_user,
     descriptors_by_module,
-    match_resource_descriptors,
     normalize_text,
     scoped_queryset_for_resource,
     user_can_read_resource,
@@ -105,7 +107,15 @@ class ExploreDatabaseTool(AiTool):
     def run(self, context: AiToolContext) -> dict[str, Any]:
         message = str(context.arguments.get("message") or "")
         language = context.language
-        matches = self._match_resources(message)
+        session_metadata = {
+            "conversation_focus": context.arguments.get("conversation_focus") or {},
+            "intent_clarification": context.arguments.get("intent_clarification") or {},
+        }
+        matches = self._match_resources(
+            message,
+            active_module=context.active_module,
+            session_metadata=session_metadata,
+        )
         accessible = accessible_resources_for_user(context.user)
 
         if not matches:
@@ -199,6 +209,8 @@ class ExploreDatabaseTool(AiTool):
     def _resource_result(self, *, descriptor: ResourceDescriptor, context: AiToolContext, message: str) -> dict[str, Any]:
         queryset = scoped_queryset_for_resource(descriptor=descriptor, tenant=context.tenant, user=context.user)
         total_count = queryset.count()
+        semantic_filters = apply_semantic_filters(queryset=queryset, message=message, descriptor=descriptor)
+        queryset = semantic_filters.queryset
         queryset = self._apply_search(queryset=queryset, message=message)
         filtered_count = queryset.count()
         rows = self._sample_rows(queryset=queryset)
@@ -214,15 +226,28 @@ class ExploreDatabaseTool(AiTool):
             "total_count": total_count,
             "filtered_count": filtered_count,
             "sample_count": len(rows),
+            "applied_filters": list(semantic_filters.applied_filters),
+            "skipped_filters": list(semantic_filters.skipped_filters),
             "records": rows,
         }
 
-    def _match_resources(self, message: str) -> list[ResourceDescriptor]:
+    def _match_resources(
+        self,
+        message: str,
+        *,
+        active_module: str = "",
+        session_metadata: dict[str, Any] | None = None,
+    ) -> list[ResourceDescriptor]:
         normalized = normalize_text(message)
         if not normalized:
             return []
 
-        matches = match_resource_descriptors(message)
+        resolution = resolve_resource_matches(
+            message,
+            active_module=active_module,
+            session_metadata=session_metadata or {},
+        )
+        matches = [match.descriptor for match in resolution.matches]
         if not matches and any(term in normalized for term in (normalize_text(item) for item in DATA_QUERY_TERMS)):
             return []
         return matches

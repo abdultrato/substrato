@@ -116,6 +116,46 @@ class ResultItem(TenantPropagationMixin, ScopedPositionMixin, NoNameCoreModel):
 
         null=True, blank=True)
 
+    disregard_reason = models.TextField(
+        db_column="disregard_reason",
+        verbose_name="Motivo da desconsideração",
+        blank=True,
+    )
+
+    disregarded_by = models.ForeignKey(
+        User,
+        db_column="disregarded_by_id",
+        on_delete=models.SET_NULL,
+        verbose_name="Desconsiderado por",
+        null=True,
+        blank=True,
+        related_name="disregarded_results",
+    )
+
+    disregarded_at = models.DateTimeField(
+        db_column="disregarded_at",
+        verbose_name="Data da desconsideração",
+        null=True,
+        blank=True,
+    )
+
+    disregard_validated_by = models.ForeignKey(
+        User,
+        db_column="disregard_validated_by_id",
+        on_delete=models.SET_NULL,
+        verbose_name="Desconsideração validada por",
+        null=True,
+        blank=True,
+        related_name="validated_result_disregards",
+    )
+
+    disregard_validation_date = models.DateTimeField(
+        db_column="disregard_validation_date",
+        verbose_name="Data de validação da desconsideração",
+        null=True,
+        blank=True,
+    )
+
     class Meta:
         db_table = "clinico_resultadoitem"
         unique_together = ("result", "exam_field")
@@ -182,7 +222,7 @@ class ResultItem(TenantPropagationMixin, ScopedPositionMixin, NoNameCoreModel):
     # =====================================================
 
     def delete(self, *args, **kwargs):
-        if self.status in ResultState.TERMINAL:
+        if self.status in {*ResultState.TERMINAL, ResultState.DISREGARDED}:
             raise ValidationError("Resultado validado não pode ser removido.")
 
         super().delete(*args, **kwargs)
