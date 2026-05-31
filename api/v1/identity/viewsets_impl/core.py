@@ -5,7 +5,6 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet  # CRUD base DRF
 
 from api.v1.viewset_mixins import TenantScopedQuerysetMixin, ValidatedSearchOrderingMixin
-from apps.identity.models.password_reset_token import PasswordResetToken
 from apps.identity.models.professional_profile import ProfessionalProfile
 from apps.identity.models.user import User
 from security.permissions.user_hierarchy import (
@@ -13,18 +12,8 @@ from security.permissions.user_hierarchy import (
     manageable_users_queryset,
 )
 
-from ..filters import PasswordResetTokenFilter, ProfessionalProfileFilter, UserFilter
-from ..serializers import PasswordResetTokenSerializer, ProfessionalProfileSerializer, UserSerializer
-
-
-class PasswordResetTokenViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
-    queryset = PasswordResetToken.objects.all()  # Inclui soft delete handled via mixin
-    serializer_class = PasswordResetTokenSerializer
-    filterset_class = PasswordResetTokenFilter
-    permission_classes = [IsAuthenticated]
-    search_fields = []  # Busca desabilitada (tokens são sigilosos)
-    ordering_fields = ["user", "token", "created_at", "used"]
-    ordering = ["-created_at"]
+from ..filters import ProfessionalProfileFilter, UserFilter
+from ..serializers import ProfessionalProfileSerializer, UserSerializer
 
 
 class ProfessionalProfileViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
@@ -121,14 +110,12 @@ class UserViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Model
 
 
 VIEWSET_MAP = {
-    "passwordresettoken": PasswordResetTokenViewSet,
     "perfilprofissional": ProfessionalProfileViewSet,
     "user": UserViewSet,
 }
 
 __all__ = [
     "VIEWSET_MAP",
-    "PasswordResetTokenViewSet",
     "ProfessionalProfileViewSet",
     "UserViewSet",
 ]

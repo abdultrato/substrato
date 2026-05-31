@@ -425,17 +425,12 @@ class PasswordResetRequestView(APIView):
                 status=status.HTTP_200_OK,
             )
 
-        cutoff = _password_reset_cutoff()
-        token_obj = (
-            PasswordResetToken.objects.filter(user=user, used=False, created_at__gte=cutoff)
-            .order_by("-created_at")
-            .first()
-        )
-        if not token_obj:
+        with transaction.atomic():
+            PasswordResetToken.objects.filter(user=user, used=False).update(used=True)
             token_obj = PasswordResetToken.objects.create(user=user)
 
         ttl = _password_reset_ttl_minutes()
-        message = f"Reposição de palavra-passe\nCódigo: {token_obj.token}\nValidade: {ttl} minutos."
+        message = f"Reposição de palavra-passe\nCódigo: {token_obj.raw_token}\nValidade: {ttl} minutos."
 
         selected_channel = payload.get("channel")
         channels = []
@@ -485,11 +480,18 @@ class PasswordResetConfirmView(APIView):
         token_str = ser.validated_data["token"]
         new_password = ser.validated_data["new_password"]
 
-        token_obj = (
-            PasswordResetToken.objects.select_related("user").filter(token=token_str).order_by("-created_at").first()
+        token_obj = next(
+            (
+                candidate
+                for candidate in PasswordResetToken.objects.select_related("user")
+                .filter(used=False, created_at__gte=_password_reset_cutoff())
+                .order_by("-created_at")
+                if candidate.matches(token_str)
+            ),
+            None,
         )
         if not token_obj or token_obj.used:
-            return Response({"detail": "Token inválido ou já used."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"detail": "Token inválido ou já utilizado."}, status=status.HTTP_400_BAD_REQUEST)
 
         if token_obj.created_at < _password_reset_cutoff():
             return Response({"detail": "Token expirado."}, status=status.HTTP_400_BAD_REQUEST)

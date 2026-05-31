@@ -178,7 +178,7 @@ AI_RATE_LIMIT_PER_USER_PER_HOUR = int(get_env("AI_RATE_LIMIT_PER_USER_PER_HOUR",
 # PROMETHEUS (django-prometheus)
 # =========================================================
 #
-# Se definido, exige `Authorization: Bearer <token>` no endpoint /metrics.
+# Em producao, platform.settings.production exige este valor para fechar /metrics.
 PROMETHEUS_BEARER_TOKEN = get_env("PROMETHEUS_BEARER_TOKEN", "")
 
 # =========================================================
@@ -1185,7 +1185,7 @@ JAZZMIN_UI_TWEAKS = {
     "sidebar_fixed": True,
     "footer_fixed": True,
 }
-LANGUAGE_CODE = "pt-BR"
+
 # =========================================================
 # MIDDLEWARE
 # =========================================================
@@ -1380,8 +1380,9 @@ MEDIA_ROOT = BASE_DIR / "media"
 # INTERNATIONALIZATION
 # =========================================================
 
-LANGUAGE_CODE = "pt"
+LANGUAGE_CODE = "pt-br"
 LANGUAGES = [
+    ("pt-br", "Português (Brasil)"),
     ("pt", "Português (Portugal)"),
     ("en", "English"),
 ]

@@ -458,7 +458,6 @@ const MODULES_BASE: ModuleGroup[] = [
     resources: [
       { key: "usuario", label: "Usuários", endpoint: "/identity/user/", adminListHref: "/admin/identity/user/" },
       { key: "perfilprofissional", label: "Perfis Profissionais", endpoint: "/identity/perfilprofissional/" },
-      { key: "passwordresettoken", label: "Tokens de Reset", endpoint: "/identity/passwordresettoken/" },
     ],
   },
   {

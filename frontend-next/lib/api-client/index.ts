@@ -87,7 +87,6 @@ export type { NursingPrescription } from './models/NursingPrescription';
 export type { NursingRecord } from './models/NursingRecord';
 export type { NursingVitalSign } from './models/NursingVitalSign';
 export type { Overtime } from './models/Overtime';
-export type { PasswordResetToken } from './models/PasswordResetToken';
 export type { Patient } from './models/Patient';
 export type { Payment } from './models/Payment';
 export type { Payroll } from './models/Payroll';

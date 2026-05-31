@@ -1,7 +1,6 @@
 from rest_framework import serializers  # DRF base
 
 from api.v1.compat import LegacyAliasSerializerMixin
-from apps.identity.models.password_reset_token import PasswordResetToken
 from apps.identity.models.professional_profile import ProfessionalProfile
 from apps.identity.models.user import User
 from security.permissions.user_hierarchy import can_assign_groups, is_admin_user, normalized_group_names
@@ -20,20 +19,6 @@ CORE_READ_ONLY_FIELDS = (
     "version",
 )
 
-
-PASSWORD_RESET_TOKEN_ALIASES = {
-    "utilizador": "user",
-    "usuario": "user",
-    "usuário": "user",
-    "conta": "user",
-    "token_reset": "token",
-    "token_redefinicao": "token",
-    "token_redefinição": "token",
-    "usado": "used",
-    "usada": "used",
-    "utilizado": "used",
-    "utilizada": "used",
-}
 
 PROFESSIONAL_PROFILE_ALIASES = {
     "utilizador": "user",
@@ -106,15 +91,6 @@ USER_ALIASES = {
     "permissoes": "user_permissions",
     "permissões": "user_permissions",
 }
-
-
-class PasswordResetTokenSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer):
-    legacy_input_aliases = PASSWORD_RESET_TOKEN_ALIASES
-    legacy_output_aliases = PASSWORD_RESET_TOKEN_ALIASES
-
-    class Meta:
-        model = PasswordResetToken
-        fields = "__all__"
 
 
 class ProfessionalProfileSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer):
@@ -199,7 +175,6 @@ class UserSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer):
 
 
 SERIALIZER_MAP = {
-    "passwordresettoken": PasswordResetTokenSerializer,
     "perfilprofissional": ProfessionalProfileSerializer,
     "user": UserSerializer,
 }

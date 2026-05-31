@@ -441,7 +441,7 @@ def generate_invoice_pdf(invoice, request=None) -> tuple[bytes, str]:
             from reportlab.platypus import Image as RLImage
 
             qr = qrcode.QRCode(box_size=4, border=1)
-            qr.add_date(link_invoice)
+            qr.add_data(link_invoice)
             qr.make(fit=True)
             img = qr.make_image(fill_color="black", back_color="white")
 

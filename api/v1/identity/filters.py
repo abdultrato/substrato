@@ -1,13 +1,6 @@
 from api.core.filters import SafeFilterSet  # Base que saneia filtros inválidos
-from apps.identity.models.password_reset_token import PasswordResetToken
 from apps.identity.models.professional_profile import ProfessionalProfile
 from apps.identity.models.user import User
-
-
-class PasswordResetTokenFilter(SafeFilterSet):
-    class Meta:
-        model = PasswordResetToken  # Dataset alvo
-        fields = ["user", "token", "created_at", "used"]  # Filtros permitidos
 
 
 class ProfessionalProfileFilter(SafeFilterSet):
@@ -36,7 +29,6 @@ class UserFilter(SafeFilterSet):
 
 
 FILTER_MAP = {
-    "passwordresettoken": PasswordResetTokenFilter,
     "perfilprofissional": ProfessionalProfileFilter,
     "user": UserFilter,
 }

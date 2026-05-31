@@ -19,6 +19,13 @@ def _required_csv(name):
     return values
 
 
+def _required_env(name):
+    value = os.getenv(name, "").strip()
+    if not value:
+        raise ImproperlyConfigured(f"{name} must be set in production")
+    return value
+
+
 def _validate_secret_key():
     weak_prefixes = ("django-insecure-", "change-me", "changeme")
     normalized = (SECRET_KEY or "").strip().lower()
@@ -37,6 +44,7 @@ if DEBUG:
 _validate_secret_key()
 
 ALLOWED_HOSTS = _required_csv("DJANGO_ALLOWED_HOSTS")
+PROMETHEUS_BEARER_TOKEN = _required_env("PROMETHEUS_BEARER_TOKEN")
 
 
 # =========================================================

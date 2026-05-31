@@ -172,6 +172,9 @@ frontend-next/yarn.lock
 # Local envs
 .env.local
 .env.*.local
+.env.*
+!.env.example
+!.env.*.example
 # Editor/OS
 .vscode/
 .idea/
@@ -232,6 +235,8 @@ media/
 uploads/
 
 # Local databases (dev)
+db.sqlite3
+*.sqlite3
 *.sqlite3-journal
 *.sqlite3-wal
 *.sqlite3-shm

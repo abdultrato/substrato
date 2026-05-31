@@ -121,6 +121,14 @@ def test_pdf_style_policy_uses_helvetica_minimal_margins_and_requested_sizes():
     assert document_title_style().fontSize == PDF_TITLE_FONT_SIZE == 11
 
 
+def test_generate_qr_code_returns_image_reader_for_valid_url():
+    pdf_base.generate_qr_code.cache_clear()
+
+    qr = pdf_base.generate_qr_code("https://example.test/fatura/FAT-001")
+
+    assert qr is not None
+
+
 def test_generate_patient_history_pdf_with_basic_payload():
     payload = {
         "patient": {

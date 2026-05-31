@@ -191,7 +191,7 @@ def generate_qr_code(url: str):
             border=1,
             error_correction=qrcode.constants.ERROR_CORRECT_M,
         )
-        qr.add_date(url)
+        qr.add_data(url)
         qr.make(fit=True)
 
         img = qr.make_image(fill_color="black", back_color="white")

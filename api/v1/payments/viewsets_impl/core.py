@@ -222,6 +222,10 @@ class TransactionViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin
             }
         )
 
+    @action(detail=True, methods=["post"], url_path="verificar", url_name="verificar")
+    def verificar(self, request, pk=None):
+        return self.verify(request, pk=pk)
+
     @action(detail=True, methods=["post"], url_path="reconcile", url_name="reconcile")
     def reconcile(self, request, pk=None):
         payload = request.data or {}
@@ -257,6 +261,10 @@ class TransactionViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin
                 "reconciliation": reconciliation_payload,
             }
         )
+
+    @action(detail=True, methods=["post"], url_path="reconciliar", url_name="reconciliar")
+    def reconciliar(self, request, pk=None):
+        return self.reconcile(request, pk=pk)
 
 
 VIEWSET_MAP = {

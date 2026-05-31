@@ -45,7 +45,8 @@ try {
 # Criar .env
 if (-not (Test-Path ".env")) {
     Write-Host "✓ Criando arquivo .env..." -ForegroundColor Yellow
-    Copy-Item ".env.docker" ".env"
+    $envTemplate = if (Test-Path ".env.docker") { ".env.docker" } else { ".env.docker.example" }
+    Copy-Item $envTemplate ".env"
     Write-Host "✓ .env criado" -ForegroundColor Green
 } else {
     Write-Host ".env já existe" -ForegroundColor Yellow

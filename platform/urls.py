@@ -70,11 +70,15 @@ def prometheus_metrics(request):
     /metrics (django-prometheus)
 
     Hardening:
-    - Se PROMETHEUS_BEARER_TOKEN estiver definido, exige
-      `Authorization: Bearer <token>` e responde 404 caso não corresponda.
+    - Em producao, PROMETHEUS_BEARER_TOKEN e obrigatorio.
+    - Se o token estiver definido, exige `Authorization: Bearer <token>`
+      e responde 404 caso não corresponda.
     """
 
     token = getattr(settings, "PROMETHEUS_BEARER_TOKEN", "") or ""
+    if not token and not getattr(settings, "DEBUG", False):
+        return HttpResponse(status=404)
+
     if token:
         auth = (request.headers.get("Authorization") or request.META.get("HTTP_AUTHORIZATION") or "").strip()
         if auth != f"Bearer {token}":

@@ -261,7 +261,11 @@ ok "✓ Docker OK"
 # Criar .env
 if [ ! -f .env ]; then
   log "✓ Criando arquivo .env..."
-  cp .env.docker .env
+  if [ -f .env.docker ]; then
+    cp .env.docker .env
+  else
+    cp .env.docker.example .env
+  fi
   ok "✓ .env criado"
 else
   log "ℹ️  .env já existe"

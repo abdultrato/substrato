@@ -118,7 +118,6 @@ const MODULES: Record<string, CrudMenuItem[]> = {
     { nome: "Horário de Trabalho", href: "/human_resources/work-schedules" },
   ],
   "identity": [
-    { nome: "Token de Reposição de Palavra-passe", href: "/identity/password-reset-tokens" },
     { nome: "Perfil Profissional", href: "/identity/professional-profiles" },
     { nome: "Utilizador", href: "/identity/users" },
   ],
