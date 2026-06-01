@@ -99,8 +99,8 @@ SEARCHABLE_FIELD_NAMES = (
 
 class ExploreDatabaseTool(AiTool):
     name = "explore_database"
-    description_pt = "Explora recursos do banco de dados com tenant, RBAC e amostras seguras."
-    description_en = "Explores database resources with tenant, RBAC and safe samples."
+    description_pt = "Explora recursos do banco de dados com tenant, RBAC e resumos seguros."
+    description_en = "Explores database resources with tenant, RBAC and safe summaries."
     required_groups: tuple[str, ...] = ()
     mode = "read"
 

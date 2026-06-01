@@ -34,6 +34,7 @@ from apps.ai_assistant.tools.crud import PrepareCrudOperationTool
 from .audit import AiAuditLogger
 from .investigation import AiInvestigationBuilder
 from .llm_gateway import LocalLlmGateway
+from .natural_bridge import build_natural_bridge
 from .policy import AiPolicyError, AiPolicyGuard
 from .proactive_guidance import build_proactive_guidance, merge_recommended_questions
 from .registry import AiToolRegistry
@@ -293,11 +294,18 @@ class AiOrchestrator:
                     )
                     tool_call_payload.append(self._tool_call_payload(call))
 
+            natural_bridge = build_natural_bridge(
+                question=message,
+                language=language,
+                active_module=active_module,
+                tool_results=tool_results,
+            )
             answer = self.gateway.build_answer(
                 question=message,
                 language=language,
                 tool_results=tool_results,
                 blocked_tools=blocked_tools,
+                natural_bridge=natural_bridge,
             )
 
             sources = self._collect_sources(tool_results)
@@ -346,6 +354,7 @@ class AiOrchestrator:
                 suggested_actions=suggested_actions,
                 investigation=investigation_payload,
                 proactive_guidance=proactive_guidance,
+                natural_bridge=natural_bridge,
                 language=language,
             )
             understanding_trace = build_understanding_trace(
@@ -379,6 +388,7 @@ class AiOrchestrator:
                     "conversation_followup": followup_resolution.as_payload(),
                     "learned_clarification_resolution": learned_clarification_resolution,
                     "proactive_guidance": proactive_guidance,
+                    "natural_bridge": natural_bridge,
                     "understanding_trace": understanding_trace,
                 },
             )
@@ -413,6 +423,7 @@ class AiOrchestrator:
                     "confidence_score": intent_decision.confidence_score,
                     "recommended_questions": proactive_guidance.get("recommended_questions") or [],
                     "proactive_suggestions": proactive_guidance.get("suggestions") or [],
+                    "natural_bridge": natural_bridge,
                     "learned_clarification_resolution": learned_clarification_resolution,
                     "understanding_trace": understanding_trace,
                 },
@@ -443,6 +454,7 @@ class AiOrchestrator:
             suggested_actions=[],
             investigation=None,
             proactive_guidance=None,
+            natural_bridge=None,
             language=language,
         )
         assistant_message = self.audit.create_message(
@@ -550,12 +562,28 @@ class AiOrchestrator:
         for item in tool_results:
             result = item.get("result") or {}
             for source in result.get("sources") or []:
-                key = (source.get("type"), source.get("label"), source.get("href"))
+                public_source = self._public_source(source)
+                key = (public_source.get("type"), public_source.get("label"), public_source.get("href"))
                 if key in seen:
                     continue
                 seen.add(key)
-                sources.append(source)
+                sources.append(public_source)
         return sources
+
+    @staticmethod
+    def _public_source(source: dict[str, Any]) -> dict[str, Any]:
+        source_type = source.get("type") or "source"
+        href = str(source.get("href") or "")
+        label = source.get("label") or ""
+        if href.startswith("/monitoring/command-center"):
+            label = "Command Center"
+        if source_type in {"model", "sql_template"} or href.startswith("/api/v1/"):
+            href = ""
+        return {
+            "type": source_type,
+            "label": label,
+            "href": href,
+        }
 
     def _store_conversation_focus(
         self,

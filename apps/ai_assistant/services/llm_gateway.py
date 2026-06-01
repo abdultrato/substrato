@@ -4,6 +4,8 @@ import hashlib
 import json
 from typing import Any
 
+from apps.ai_assistant.services.natural_bridge import polish_natural_answer
+
 
 class LocalLlmGateway:
     """
@@ -26,6 +28,7 @@ class LocalLlmGateway:
         language: str,
         tool_results: list[dict[str, Any]],
         blocked_tools: list[dict[str, Any]] | None,
+        natural_bridge: dict[str, Any] | None = None,
     ) -> str:
         """Generate a deterministic cache key from the inputs."""
         # Sort tool_results and blocked_tools by tool_name for consistent ordering
@@ -38,6 +41,7 @@ class LocalLlmGateway:
             "language": language,
             "tool_results": sorted_tool_results,
             "blocked_tools": sorted_blocked_tools,
+            "natural_bridge": natural_bridge or {},
         }
 
         # JSON serialize with sort_keys=True for deterministic output
@@ -59,34 +63,42 @@ class LocalLlmGateway:
         language: str,
         tool_results: list[dict[str, Any]],
         blocked_tools: list[dict[str, Any]] | None = None,
+        natural_bridge: dict[str, Any] | None = None,
     ) -> str:
         # Check cache first
-        cache_key = self._get_cache_key(question, language, tool_results, blocked_tools)
+        cache_key = self._get_cache_key(question, language, tool_results, blocked_tools, natural_bridge)
         if cache_key in self._cache:
             return self._cache[cache_key]
 
         blocked_tools = blocked_tools or []
+
+        def finalize(result: str) -> str:
+            return self._remember(
+                cache_key,
+                polish_natural_answer(answer=result, bridge=natural_bridge, language=language),
+            )
+
         denied_result = next((item for item in tool_results if (item.get("result") or {}).get("access_denied")), None)
         if denied_result:
             result = self._access_denied_answer(denied_result.get("result") or {}, language=language)
-            return self._remember(cache_key, result)
+            return finalize(result)
 
         project_identity_result = next((item for item in tool_results if item.get("tool_name") == "get_project_identity"), None)
         if project_identity_result:
             result = self._project_identity_answer(project_identity_result.get("result") or {}, language=language)
-            return self._remember(cache_key, result)
+            return finalize(result)
 
         knowledge_result = next((item for item in tool_results if item.get("tool_name") == "answer_predicted_question"), None)
         if knowledge_result:
             result = self._knowledge_base_answer(knowledge_result.get("result") or {}, language=language)
-            return self._remember(cache_key, result)
+            return finalize(result)
 
         user_context_result = next((item for item in tool_results if item.get("tool_name") == "get_user_context"), None)
         data_explorer_result = next((item for item in tool_results if item.get("tool_name") == "explore_database"), None)
         command_result = next((item for item in tool_results if item.get("tool_name") == "get_command_center_alerts"), None)
         if command_result and len(tool_results) == 1:
             result = self._command_center_answer(command_result.get("result") or {}, language=language)
-            return self._remember(cache_key, result)
+            return finalize(result)
 
         if command_result and len(tool_results) > 1:
             other_results = [item for item in tool_results if item.get("tool_name") != "get_command_center_alerts"]
@@ -96,24 +108,24 @@ class LocalLlmGateway:
                     self._generic_tool_answer(other_results, language=language),
                 ]
             )
-            return self._remember(cache_key, result)
+            return finalize(result)
 
         sql_analytics_result = next((item for item in tool_results if item.get("tool_name") == "run_sql_analytics"), None)
         if sql_analytics_result:
             result = self._sql_analytics_answer(sql_analytics_result.get("result") or {}, language=language)
-            return self._remember(cache_key, result)
+            return finalize(result)
 
         crud_result = next((item for item in tool_results if item.get("tool_name") == "prepare_crud_operation"), None)
         if crud_result:
             result = self._crud_answer(crud_result.get("result") or {}, language=language)
-            return self._remember(cache_key, result)
+            return finalize(result)
 
         if user_context_result and len(tool_results) == 1:
             result = self._user_context_answer(user_context_result.get("result") or {}, language=language)
-            return self._remember(cache_key, result)
+            return finalize(result)
         if data_explorer_result and len(tool_results) == 1:
             result = self._data_explorer_answer(data_explorer_result.get("result") or {}, language=language)
-            return self._remember(cache_key, result)
+            return finalize(result)
         if user_context_result and data_explorer_result and len(tool_results) == 2:
             result = "\n\n".join(
                 [
@@ -121,11 +133,11 @@ class LocalLlmGateway:
                     self._data_explorer_answer(data_explorer_result.get("result") or {}, language=language),
                 ]
             )
-            return self._remember(cache_key, result)
+            return finalize(result)
 
         if tool_results:
             result = self._generic_tool_answer(tool_results, language=language)
-            return self._remember(cache_key, result)
+            return finalize(result)
 
         if blocked_tools:
             if language == "en":
@@ -142,7 +154,7 @@ class LocalLlmGateway:
                     "Limitação: nenhum dado operacional foi consultado depois do bloqueio de política.\n"
                     "Próximo passo sugerido: peça a um administrador para rever o seu perfil de acesso."
                 )
-            return self._remember(cache_key, result)
+            return finalize(result)
 
         if language == "en":
             result = (
@@ -158,7 +170,7 @@ class LocalLlmGateway:
                 "Limitação: só executo ferramentas que correspondem à pergunta e ao seu perfil RBAC.\n"
                 "Próximo passo sugerido: pergunte por alertas activos, requisições clínicas, pendências de enfermagem, financeiro, farmácia ou educação."
             )
-        return self._remember(cache_key, result)
+        return finalize(result)
 
     def _command_center_answer(self, result: dict[str, Any], *, language: str) -> str:
         totals = result.get("global_totals") or {}
@@ -408,12 +420,6 @@ class LocalLlmGateway:
                 line = f"- {label}: {count} matching record(s), {total} total in your scope."
             else:
                 line = f"- {label}: {count} registo(s) encontrados, {total} no total do seu escopo."
-            records = item.get("records") or []
-            if records:
-                safe_refs = []
-                for record in records[:3]:
-                    safe_refs.append(str(record.get("custom_id") or record.get("student_code") or record.get("teacher_code") or record.get("id")))
-                line += (" Safe sample: " if language == "en" else " Amostra segura: ") + ", ".join(safe_refs)
             filters = item.get("applied_filters") or []
             if filters:
                 filter_labels = []
@@ -430,8 +436,8 @@ class LocalLlmGateway:
                     "I queried only the database resources allowed by your RBAC profile.",
                     "\n".join(lines) if lines else "No matching records were found.",
                     "Internal evidence used: API resource catalog, tenant scope and RBAC.",
-                    "Limitation: I returned counts and safe samples, not raw sensitive records.",
-                    "Suggested next step: ask for a specific code/reference if you want a narrower investigation.",
+                    "Limitation: I returned a narrative summary with counts and filters, not tables, row samples or direct record links.",
+                    "Suggested next step: ask for a period, status or priority if you want a narrower investigation.",
                 ]
             )
         return "\n\n".join(
@@ -439,8 +445,8 @@ class LocalLlmGateway:
                 "Consultei apenas os recursos da base de dados permitidos pelo seu perfil RBAC.",
                 "\n".join(lines) if lines else "Nenhum registo correspondente foi encontrado.",
                 "Evidência interna usada: catálogo de recursos da API, tenant e RBAC.",
-                "Limitação: devolvi contagens e amostras seguras, não registos sensíveis brutos.",
-                "Próximo passo sugerido: indique um código/referência específica se quiser uma investigação mais estreita.",
+                "Limitação: devolvi um resumo narrativo com contagens e filtros, não tabelas, amostras de linhas nem ligações directas para registos.",
+                "Próximo passo sugerido: indique período, estado ou prioridade se quiser uma investigação mais estreita.",
             ]
         )
 
@@ -468,7 +474,7 @@ class LocalLlmGateway:
                 return "\n\n".join(
                     [
                         direct,
-                        "Internal evidence used: parameterized SQL template over ReceptionCheckin, scoped by tenant and RBAC.",
+                        "Internal evidence used: authorized analytics over reception entries, scoped by tenant and RBAC.",
                         "Limitation: this counts reception check-ins/admissions, not every clinical event after admission.",
                     ]
                 )
@@ -481,7 +487,7 @@ class LocalLlmGateway:
             return "\n\n".join(
                 [
                     direct,
-                    "Evidência interna usada: template SQL parametrizado sobre ReceptionCheckin, com tenant e RBAC.",
+                    "Evidência interna usada: análise autorizada das entradas da recepção, com tenant e RBAC.",
                     "Limitação: isto conta entradas/check-ins da recepção, não todos os eventos clínicos posteriores.",
                 ]
             )
@@ -502,7 +508,7 @@ class LocalLlmGateway:
                     [
                         direct,
                         "\n".join(lines) if lines else "No matching product was found.",
-                        "Internal evidence used: parameterized SQL templates over Product, Lot and InventoryMovement, scoped by tenant and RBAC.",
+                        "Internal evidence used: authorized stock analytics scoped by tenant and RBAC.",
                         "Limitation: historical stock is reconstructed from recorded movements up to the end of the requested day.",
                     ]
                 )
@@ -516,7 +522,7 @@ class LocalLlmGateway:
                 [
                     direct,
                     "\n".join(lines) if lines else "Nenhum produto correspondente foi encontrado.",
-                    "Evidência interna usada: templates SQL parametrizados sobre Product, Lot e InventoryMovement, com tenant e RBAC.",
+                    "Evidência interna usada: análise autorizada de stock, com tenant e RBAC.",
                     "Limitação: o stock histórico é reconstruído a partir dos movimentos registados até ao fim do dia solicitado.",
                 ]
             )
@@ -532,14 +538,13 @@ class LocalLlmGateway:
             date_field = analytics.get("date_field") or summary.get("date_field") or ""
             date_filter_applied = bool(analytics.get("date_filter_applied") or summary.get("date_filter_applied"))
             groups = analytics.get("groups") or summary.get("groups") or []
-            sample_rows = analytics.get("sample_rows") or summary.get("sample_rows") or []
             search_query = analytics.get("search_query") or summary.get("search_query") or ""
             numeric_summaries = analytics.get("numeric_summaries") or summary.get("numeric_summaries") or []
             comparison = analytics.get("comparison") or summary.get("comparison") or {}
             insights = analytics.get("insights") or summary.get("insights") or []
 
             if language == "en":
-                direct = f"I queried {label} with parameterized SQL and found {total_count} matching record(s)."
+                direct = f"I summarized {label} in your authorized scope and found {total_count} matching record(s)."
                 if start_date and end_date:
                     if date_filter_applied:
                         direct += f" The range filter used {date_field or 'the available date field'} between {start_date} and {end_date}."
@@ -552,7 +557,6 @@ class LocalLlmGateway:
                 numeric_text = self._sql_numeric_lines(numeric_summaries=numeric_summaries, language="en")
                 comparison_text = self._sql_comparison_line(comparison=comparison, language="en")
                 insight_text = self._sql_insight_lines(insights=insights, language="en")
-                sample_text = self._sql_sample_line(sample_rows=sample_rows, language="en")
                 return "\n\n".join(
                     part
                     for part in [
@@ -561,14 +565,13 @@ class LocalLlmGateway:
                         insight_text,
                         numeric_text,
                         group_text,
-                        sample_text,
-                        f"Internal evidence used: API resource catalog, RBAC and SQL template over {resource.get('model') or label}.",
-                        "Limitation: I returned counts, grouped summaries and safe samples, not unrestricted raw records.",
+                        "Internal evidence used: API resource catalog, RBAC and an authorized analytical template.",
+                        "Limitation: I returned counts, trends and grouped summaries, not tables or individual rows.",
                     ]
                     if part
                 )
 
-            direct = f"Consultei {label} com SQL parametrizado e encontrei {total_count} registo(s) correspondente(s)."
+            direct = f"Analisei {label} no seu escopo autorizado e encontrei {total_count} registo(s) correspondente(s)."
             if start_date and end_date:
                 if date_filter_applied:
                     direct += f" O filtro temporal usou {date_field or 'o campo temporal disponível'} entre {start_date} e {end_date}."
@@ -581,7 +584,6 @@ class LocalLlmGateway:
             numeric_text = self._sql_numeric_lines(numeric_summaries=numeric_summaries, language="pt")
             comparison_text = self._sql_comparison_line(comparison=comparison, language="pt")
             insight_text = self._sql_insight_lines(insights=insights, language="pt")
-            sample_text = self._sql_sample_line(sample_rows=sample_rows, language="pt")
             return "\n\n".join(
                 part
                 for part in [
@@ -590,9 +592,8 @@ class LocalLlmGateway:
                     insight_text,
                     numeric_text,
                     group_text,
-                    sample_text,
-                    f"Evidência interna usada: catálogo de recursos da API, RBAC e template SQL sobre {resource.get('model') or label}.",
-                    "Limitação: devolvi contagens, agrupamentos e amostras seguras, não registos brutos irrestritos.",
+                    "Evidência interna usada: catálogo de recursos da API, RBAC e consulta analítica autorizada.",
+                    "Limitação: devolvi contagens, tendências e agrupamentos, não tabelas nem linhas individuais.",
                 ]
                 if part
             )
@@ -773,32 +774,6 @@ class LocalLlmGateway:
             else:
                 lines.append(f"- {value}: {count} registo(s)")
         return "\n".join([title, *lines])
-
-    def _sql_sample_line(self, *, sample_rows: list[dict[str, Any]], language: str) -> str:
-        if not sample_rows:
-            return ""
-        refs = []
-        priority_keys = (
-            "custom_id",
-            "student_code",
-            "teacher_code",
-            "code",
-            "number",
-            "external_reference",
-            "serial_number",
-            "name",
-            "title",
-            "id",
-        )
-        for row in sample_rows[:5]:
-            ref = next((row.get(key) for key in priority_keys if row.get(key) not in ("", None)), None)
-            if ref is not None:
-                refs.append(str(ref))
-        if not refs:
-            return ""
-        if language == "en":
-            return "Safe sample references: " + ", ".join(refs) + "."
-        return "Referências seguras de amostra: " + ", ".join(refs) + "."
 
     def _format_number(self, value: Any) -> str:
         if value in (None, ""):

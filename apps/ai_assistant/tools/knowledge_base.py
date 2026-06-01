@@ -627,11 +627,11 @@ def _builtin_knowledge_entries() -> tuple[KnowledgeEntry, ...]:
             questions_en=("How do I run statistics with AI?", "Can the AI run SQL analytics?"),
             answer_pt=(
                 "Use perguntas com recurso, período e agrupamento. Exemplos: 'Quanto faturou este mês por estado?', "
-                "'Quantos pacientes deram entrada hoje?', 'Mostre erros 5xx dos últimos 7 dias'. A IA devolve contagens, agrupamentos, tendência, comparação e amostras seguras."
+                "'Quantos pacientes deram entrada hoje?', 'Mostre erros 5xx dos últimos 7 dias'. A IA devolve contagens, agrupamentos, tendência e comparação em formato narrativo, sem listar tabelas ou linhas individuais."
             ),
             answer_en=(
                 "Use questions with resource, period and grouping. Examples: 'How much was billed this month by status?', "
-                "'How many patients were admitted today?', 'Show 5xx errors from the last 7 days'. The AI returns counts, groups, trend, comparison and safe samples."
+                "'How many patients were admitted today?', 'Show 5xx errors from the last 7 days'. The AI returns counts, groups, trend and comparison as a narrative, without listing tables or individual rows."
             ),
             follow_ups_pt=("Quanto faturou este mês por estado?", "Quantos pacientes deram entrada hoje?", "Mostre erros do sistema dos últimos 7 dias"),
             follow_ups_en=("How much was billed this month by status?", "How many patients were admitted today?", "Show system errors from the last 7 days"),
@@ -776,8 +776,8 @@ def _module_entries(module: dict[str, str]) -> list[KnowledgeEntry]:
             category="analytics",
             questions_pt=(f"Que estatísticas posso pedir em {pt}?", f"Como analisar {pt}?", f"Que indicadores existem em {pt}?"),
             questions_en=(f"What statistics can I ask in {en}?", f"How do I analyse {en}?"),
-            answer_pt=f"Pode pedir totais, evolução temporal, comparação com período anterior, distribuição por estado/tipo/prioridade e amostras seguras de {lower_pt}, desde que tenha permissão.",
-            answer_en=f"You can ask totals, time trend, comparison with previous period, distribution by status/type/priority and safe samples for {en}, if you have permission.",
+            answer_pt=f"Pode pedir totais, evolução temporal, comparação com período anterior e distribuição por estado/tipo/prioridade de {lower_pt}, desde que tenha permissão. A resposta fica em resumo narrativo, sem tabelas nem linhas individuais.",
+            answer_en=f"You can ask totals, time trend, comparison with previous period and distribution by status/type/priority for {en}, if you have permission. The answer stays as a narrative summary, without tables or individual rows.",
             follow_ups_pt=(f"Quantos registos de {lower_pt} existem este mês?", f"Compare {lower_pt} com o período anterior", f"Distribua {lower_pt} por estado"),
             follow_ups_en=(f"How many {en} records exist this month?", f"Compare {en} with the previous period", f"Break down {en} by status"),
             tags=(key, "analytics", "estatisticas"),

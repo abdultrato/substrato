@@ -11,6 +11,7 @@ def build_response_schema(
     language: str,
     investigation: dict[str, Any] | None = None,
     proactive_guidance: dict[str, Any] | None = None,
+    natural_bridge: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Normaliza a resposta para UI rica sem depender do texto livre do modelo."""
 
@@ -19,7 +20,7 @@ def build_response_schema(
         result = item.get("result") or {}
         summary = result.get("summary") or {}
         title = summary.get("title_en") if language == "en" else summary.get("title_pt")
-        metrics = summary.get("metrics") or []
+        metrics = _public_metrics(summary.get("metrics") or [], language=language)
         if not title and not metrics:
             continue
         cards.append(
@@ -56,7 +57,25 @@ def build_response_schema(
         "knowledge_base": _knowledge_base_schema(tool_results=tool_results),
         "investigation": _investigation_schema(investigation=investigation, language=language),
         "proactive_guidance": _proactive_guidance_schema(proactive_guidance=proactive_guidance),
+        "natural_bridge": _natural_bridge_schema(natural_bridge=natural_bridge),
     }
+
+
+def _public_metrics(metrics: list[dict[str, Any]], *, language: str) -> list[dict[str, Any]]:
+    hidden_terms = {
+        "amostras seguras",
+        "safe samples",
+        "safe sample",
+    }
+    public = []
+    for metric in metrics:
+        label_pt = str(metric.get("label_pt") or "").strip().lower()
+        label_en = str(metric.get("label_en") or "").strip().lower()
+        label = str(metric.get("label") or "").strip().lower()
+        if {label_pt, label_en, label} & hidden_terms:
+            continue
+        public.append(metric)
+    return public
 
 
 def _knowledge_base_schema(*, tool_results: list[dict[str, Any]]) -> dict[str, Any] | None:
@@ -112,7 +131,7 @@ def _analytics_schema(*, tool_results: list[dict[str, Any]], language: str) -> d
         "groups": (analytics.get("groups") or summary.get("groups") or [])[:4],
         "period_rows": (analytics.get("period_rows") or analytics.get("daily_rows") or summary.get("period_rows") or summary.get("daily_rows") or [])[:90],
         "numeric_summaries": (analytics.get("numeric_summaries") or summary.get("numeric_summaries") or [])[:5],
-        "sample_rows": (analytics.get("sample_rows") or summary.get("sample_rows") or [])[:5],
+        "sample_rows": [],
         "insights": (analytics.get("insights") or summary.get("insights") or [])[:6],
         "next_questions": (analytics.get("next_questions") or summary.get("next_questions") or [])[:4],
     }
@@ -161,4 +180,34 @@ def _proactive_guidance_schema(*, proactive_guidance: dict[str, Any] | None) -> 
         "suggestions": (proactive_guidance.get("suggestions") or [])[:6],
         "recommended_questions": (proactive_guidance.get("recommended_questions") or [])[:6],
         "context": proactive_guidance.get("context") or {},
+    }
+
+
+def _natural_bridge_schema(*, natural_bridge: dict[str, Any] | None) -> dict[str, Any]:
+    if not natural_bridge:
+        return {
+            "status": "empty",
+            "modules": [],
+            "resources": [],
+            "database_scope": "",
+            "conversation_mode": "human_summary",
+            "privacy_mode": "summary_only",
+            "privacy_note": "",
+            "lead": "",
+            "narrative_items": [],
+            "suggested_questions": [],
+        }
+    return {
+        "status": natural_bridge.get("status") or "empty",
+        "active_module": natural_bridge.get("active_module") or "",
+        "conversation_mode": natural_bridge.get("conversation_mode") or "human_summary",
+        "privacy_mode": natural_bridge.get("privacy_mode") or "summary_only",
+        "modules": (natural_bridge.get("modules") or [])[:8],
+        "resources": (natural_bridge.get("resources") or [])[:8],
+        "database_scope": natural_bridge.get("database_scope") or "",
+        "privacy_note": natural_bridge.get("privacy_note") or "",
+        "lead": natural_bridge.get("lead") or "",
+        "narrative_items": (natural_bridge.get("narrative_items") or [])[:6],
+        "suggested_questions": (natural_bridge.get("suggested_questions") or [])[:6],
+        "tool_names": natural_bridge.get("tool_names") or [],
     }

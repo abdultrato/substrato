@@ -583,7 +583,7 @@ class SqlAnalyticsTool(AiTool):
             {"label_pt": "Registos encontrados", "label_en": "Matched records", "value": total_count},
             {"label_pt": "Agrupamentos calculados", "label_en": "Calculated groupings", "value": len(group_results)},
             {"label_pt": "Indicadores numéricos", "label_en": "Numeric indicators", "value": len(numeric_summaries)},
-            {"label_pt": "Amostras seguras", "label_en": "Safe samples", "value": len(safe_sample_rows)},
+            {"label_pt": "Itens revistos", "label_en": "Reviewed items", "value": len(safe_sample_rows)},
         ]
         if date_range:
             metrics.append(

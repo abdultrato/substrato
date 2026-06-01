@@ -147,6 +147,38 @@ type AiProactiveGuidance = {
   context?: Record<string, any>
 }
 
+type AiNaturalBridge = {
+  status?: "connected" | "empty" | string
+  active_module?: string
+  database_scope?: string
+  conversation_mode?: string
+  privacy_mode?: string
+  privacy_note?: string
+  lead?: string
+  narrative_items?: string[]
+  tool_names?: string[]
+  modules?: Array<{
+    module?: string
+    label?: string
+    label_pt?: string
+    label_en?: string
+    resource_count?: number
+  }>
+  resources?: Array<{
+    basename?: string
+    label?: string
+    label_pt?: string
+    label_en?: string
+    module?: string
+    module_label?: string
+    module_label_pt?: string
+    module_label_en?: string
+    filtered_count?: number | null
+    total_count?: number | null
+  }>
+  suggested_questions?: string[]
+}
+
 type AiLearnedClarificationResolution = {
   original_message?: string
   effective_message?: string
@@ -198,6 +230,7 @@ type AiResponseSchema = {
   analytics?: AiAnalyticsSchema | null
   knowledge_base?: AiKnowledgeBaseSchema | null
   proactive_guidance?: AiProactiveGuidance | null
+  natural_bridge?: AiNaturalBridge | null
 }
 
 type AiConversationState = {
@@ -208,6 +241,7 @@ type AiConversationState = {
   options?: string[]
   recommended_questions?: string[]
   proactive_suggestions?: AiProactiveSuggestion[]
+  natural_bridge?: AiNaturalBridge
   learned_clarification_resolution?: AiLearnedClarificationResolution
   understanding_trace?: AiUnderstandingTrace
 }
@@ -281,7 +315,6 @@ function AiStructuredResultPanel({ schema, onAsk }: { schema?: AiResponseSchema;
   const primaryGroup = analytics?.groups?.[0]
   const periodRows = analytics?.period_rows || []
   const numericRows = analytics?.numeric_summaries || []
-  const sampleRows = analytics?.sample_rows || []
   const insights = analytics?.insights || []
   const nextQuestions = analytics?.next_questions || []
 
@@ -416,20 +449,6 @@ function AiStructuredResultPanel({ schema, onAsk }: { schema?: AiResponseSchema;
             </div>
           ) : null}
 
-          {sampleRows.length ? (
-            <div className="mt-3 rounded-xl border border-border bg-muted/20 p-3">
-              <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                {t("Amostras seguras", "Safe samples")}
-              </div>
-              <div className="mt-2 flex flex-wrap gap-2">
-                {sampleRows.map((row, index) => {
-                  const value = row.custom_id || row.student_code || row.teacher_code || row.code || row.number || row.serial_number || row.name || row.title || row.id
-                  return <Badge key={`${value}-${index}`} variant="info">{formatValue(value)}</Badge>
-                })}
-              </div>
-            </div>
-          ) : null}
-
           {nextQuestions.length ? (
             <div className="mt-3 rounded-xl border border-border bg-muted/20 p-3">
               <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -525,6 +544,129 @@ function AiKnowledgeBasePanel({ schema, onAsk }: { schema?: AiResponseSchema; on
           ) : null}
         </>
       )}
+    </div>
+  )
+}
+
+function AiNaturalBridgePanel({
+  bridge,
+  onAsk,
+}: {
+  bridge?: AiNaturalBridge | null
+  onAsk?: (question: string) => void
+}) {
+  const { t } = useLanguage()
+  if (!bridge || bridge.status !== "connected") return null
+
+  const modules = bridge.modules || []
+  const resources = bridge.resources || []
+  const questions = bridge.suggested_questions || []
+  const narrativeItems = bridge.narrative_items || []
+  const scopeLabel =
+    bridge.database_scope === "tenant_rbac_parameterized_sql"
+      ? t("Resumo analítico", "Analytical summary")
+      : bridge.database_scope === "tenant_rbac_safe_samples"
+        ? t("Resumo autorizado", "Authorized summary")
+        : t("Resumo interno", "Internal summary")
+
+  return (
+    <div className="mt-3 rounded-2xl border border-emerald-200 bg-emerald-50/60 p-3 text-emerald-950 shadow-sm dark:border-emerald-500/25 dark:bg-emerald-500/10 dark:text-emerald-50">
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2 text-sm font-semibold">
+            <BrainCircuit size={15} />
+            {t("Ligação inteligente", "Intelligent link")}
+          </div>
+          {bridge.lead ? (
+            <p className="mt-1 text-xs leading-relaxed text-emerald-900/80 dark:text-emerald-100/75">
+              {bridge.lead}
+            </p>
+          ) : null}
+          {bridge.privacy_note ? (
+            <p className="mt-1 text-[11px] leading-relaxed text-emerald-900/65 dark:text-emerald-100/60">
+              {bridge.privacy_note}
+            </p>
+          ) : null}
+        </div>
+        <Badge variant="success">{scopeLabel}</Badge>
+      </div>
+
+      {modules.length || resources.length ? (
+        <div className="mt-3 grid gap-2 md:grid-cols-2">
+          {modules.length ? (
+            <div className="rounded-xl border border-emerald-200 bg-white/75 p-2 dark:border-emerald-500/25 dark:bg-black/10">
+              <div className="text-[11px] font-semibold uppercase tracking-wide text-emerald-900/65 dark:text-emerald-100/60">
+                {t("Módulos detectados", "Detected modules")}
+              </div>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {modules.slice(0, 6).map((module) => (
+                  <Badge key={module.module || module.label} variant="success">
+                    {module.label || module.module}
+                    {typeof module.resource_count === "number" && module.resource_count > 0 ? ` · ${module.resource_count}` : ""}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
+          {resources.length ? (
+            <div className="rounded-xl border border-emerald-200 bg-white/75 p-2 dark:border-emerald-500/25 dark:bg-black/10">
+              <div className="text-[11px] font-semibold uppercase tracking-wide text-emerald-900/65 dark:text-emerald-100/60">
+                {t("Dados resumidos", "Summarized data")}
+              </div>
+              <div className="mt-2 space-y-1.5">
+                {resources.slice(0, 4).map((resource) => {
+                  const count = resource.filtered_count ?? resource.total_count
+                  return (
+                    <div
+                      key={resource.basename || resource.label}
+                      className="flex items-center justify-between gap-2 rounded-lg bg-emerald-100/70 px-2 py-1.5 text-xs font-medium dark:bg-emerald-500/10"
+                    >
+                      <span className="truncate">{resource.label || resource.basename}</span>
+                      {typeof count === "number" ? <span className="shrink-0 text-emerald-800/70 dark:text-emerald-100/60">{count}</span> : null}
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+
+      {narrativeItems.length ? (
+        <div className="mt-3 rounded-xl border border-emerald-200 bg-white/75 p-2 dark:border-emerald-500/25 dark:bg-black/10">
+          <div className="text-[11px] font-semibold uppercase tracking-wide text-emerald-900/65 dark:text-emerald-100/60">
+            {t("Leitura iterada", "Iterated reading")}
+          </div>
+          <div className="mt-2 space-y-1.5">
+            {narrativeItems.slice(0, 5).map((item) => (
+              <div key={item} className="rounded-lg bg-emerald-100/70 px-2 py-1.5 text-xs leading-relaxed dark:bg-emerald-500/10">
+                {item}
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      {questions.length ? (
+        <div className="mt-3">
+          <div className="text-[11px] font-semibold uppercase tracking-wide text-emerald-900/65 dark:text-emerald-100/60">
+            {t("Continuar naturalmente", "Continue naturally")}
+          </div>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {questions.slice(0, 6).map((question) => (
+              <button
+                key={question}
+                type="button"
+                onClick={() => onAsk?.(question)}
+                className="rounded-full border border-emerald-200 bg-white/80 px-3 py-1.5 text-xs font-semibold text-emerald-900 transition hover:border-emerald-300 hover:bg-emerald-100 dark:border-emerald-500/25 dark:bg-black/10 dark:text-emerald-50 dark:hover:bg-emerald-500/20"
+              >
+                {question}
+              </button>
+            ))}
+          </div>
+        </div>
+      ) : null}
     </div>
   )
 }
@@ -1363,6 +1505,10 @@ export default function AiOperationalPage() {
                       onFeedback={(event) => void recordLearnedResolutionFeedback(message, event)}
                     />
                     <AiUnderstandingTracePanel trace={message.conversation?.understanding_trace} />
+                    <AiNaturalBridgePanel
+                      bridge={message.schema?.natural_bridge || message.conversation?.natural_bridge}
+                      onAsk={handleAskRecommended}
+                    />
                     <AiStructuredResultPanel schema={message.schema} onAsk={handleAskRecommended} />
                     <AiKnowledgeBasePanel schema={message.schema} onAsk={handleAskRecommended} />
                     <AiProactiveGuidancePanel

@@ -14,17 +14,30 @@ export default function AiEvidencePanel({ sources }: { sources: AiSource[] }) {
 
   return (
     <div className="mt-3 flex flex-wrap gap-2">
-      {sources.map((source) => (
-        <Link
-          key={`${source.label}-${source.href}`}
-          href={source.href || "#"}
-          prefetch={false}
-          className="inline-flex items-center gap-1 rounded-full border border-border bg-card px-2.5 py-1 text-xs font-semibold text-foreground shadow-sm transition hover:bg-muted"
-        >
-          <ExternalLink size={13} />
-          {source.label || source.type || "source"}
-        </Link>
-      ))}
+      {sources.map((source) => {
+        const label = source.label || source.type || "source"
+        if (!source.href) {
+          return (
+            <span
+              key={`${label}-${source.type || "source"}`}
+              className="inline-flex items-center gap-1 rounded-full border border-border bg-card px-2.5 py-1 text-xs font-semibold text-foreground shadow-sm"
+            >
+              {label}
+            </span>
+          )
+        }
+        return (
+          <Link
+            key={`${label}-${source.href}`}
+            href={source.href}
+            prefetch={false}
+            className="inline-flex items-center gap-1 rounded-full border border-border bg-card px-2.5 py-1 text-xs font-semibold text-foreground shadow-sm transition hover:bg-muted"
+          >
+            <ExternalLink size={13} />
+            {label}
+          </Link>
+        )
+      })}
     </div>
   )
 }
