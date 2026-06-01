@@ -6,7 +6,26 @@ import type { Metadata, Viewport } from "next";
 import { AuthProvider } from "@/hooks/useAuth";
 import Providers from "./providers";
 
+function metadataBaseUrl(): URL {
+  const configured =
+    process.env.NEXT_PUBLIC_APP_URL ||
+    process.env.NEXT_PUBLIC_FRONTEND_URL ||
+    process.env.VERCEL_URL ||
+    "http://localhost:5000";
+
+  const origin = /^https?:\/\//i.test(configured)
+    ? configured
+    : `https://${configured}`;
+
+  try {
+    return new URL(origin);
+  } catch {
+    return new URL("http://localhost:5000");
+  }
+}
+
 export const metadata: Metadata = {
+  metadataBase: metadataBaseUrl(),
   title: "Substrato Healthcare Platform",
   description:
     "Frontend da plataforma Substrato para atendimento e gestão de saúde.",

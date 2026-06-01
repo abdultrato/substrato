@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { useCallback, useEffect, useMemo, useState } from "react"
-import { CheckCircle2, Shield, FlaskConical, Search, RotateCcw } from "lucide-react"
+import { CheckCircle2, FlaskConical, Printer, RotateCcw, Search, Shield } from "lucide-react"
 import { keepPreviousData, useQuery } from "@tanstack/react-query"
 
 import AppLayout from "@/components/layout/AppLayout"
@@ -13,7 +13,7 @@ import { useAuth } from "@/hooks/useAuth"
 import useDebounce from "@/hooks/useDebounce"
 import { useLanguage } from "@/hooks/useLanguage"
 import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
-import { ApiListMeta, apiFetchList } from "@/lib/api"
+import { ApiListMeta, apiFetch, apiFetchList } from "@/lib/api"
 import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
 
 type RequestRow = Record<string, any>
@@ -54,12 +54,41 @@ function optionLabel(option: FilterOption | undefined, isPortuguese: boolean, fa
   return isPortuguese ? option.labelPt : option.labelEn
 }
 
+async function openResultsPdf(requestId: number) {
+  const target = window.open("about:blank", "_blank")
+  if (target) {
+    target.opener = null
+  }
+
+  try {
+    const blob = await apiFetch<Blob>(`/requests/${requestId}/results-pdf/`, {
+      responseType: "blob",
+    })
+    const url = window.URL.createObjectURL(blob)
+
+    if (target) {
+      target.location.href = url
+    } else {
+      window.open(url, "_blank", "noopener,noreferrer")
+    }
+
+    setTimeout(() => window.URL.revokeObjectURL(url), 60_000)
+  } catch (error) {
+    if (target && !target.closed) {
+      target.close()
+    }
+    throw error
+  }
+}
+
 export default function LaboratoryRequestsPage() {
   const { user } = useAuth()
   const { t, isPortuguese } = useLanguage()
   const canViewAdmin = userHasAnyGroup(user, [GROUPS.ADMIN])
 
   const [search, setSearch] = useState("")
+  const [pdfError, setPdfError] = useState<string | null>(null)
+  const [pdfLoadingId, setPdfLoadingId] = useState<number | null>(null)
   const [status, setStatus] = useState<string>("pendente")
   const [clinicalPriority, setClinicalPriority] = useState<string>("")
   const [criticalFilter, setCriticalFilter] = useState<CriticalFilter>("all")
@@ -132,6 +161,19 @@ export default function LaboratoryRequestsPage() {
     setPage(1)
   }, [])
 
+  const onPdf = useCallback(async (id: number) => {
+    if (pdfLoadingId === id) return
+    try {
+      setPdfLoadingId(id)
+      setPdfError(null)
+      await openResultsPdf(id)
+    } catch (e: any) {
+      setPdfError(e?.message || t("Falha ao gerar PDF de resultados.", "Failed to generate results PDF."))
+    } finally {
+      setPdfLoadingId(null)
+    }
+  }, [pdfLoadingId, t])
+
   const columns = useMemo(
     () => [
       { header: "Código", render: (r: RequestRow) => r.custom_id || r.id || "-" },
@@ -150,9 +192,12 @@ export default function LaboratoryRequestsPage() {
         header: "Ações",
         render: (r: RequestRow) => {
           const requestId = Number(r.id)
+          const hasRequestId = Number.isFinite(requestId) && requestId > 0
+          const isValidated = String(r.status || "").toLowerCase() === "validado"
+          const generatingPdf = pdfLoadingId === requestId
           return (
             <div className="flex flex-wrap gap-2">
-            {r.id && String(r.status || "").toLowerCase() !== "validado" ? (
+            {r.id && !isValidated ? (
               <Link
                 href={`/laboratory/requests/${r.id}`}
                 className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-50"
@@ -168,6 +213,18 @@ export default function LaboratoryRequestsPage() {
                 <FlaskConical size={14} />
                 Ver
               </Link>
+            ) : null}
+
+            {hasRequestId && isValidated ? (
+              <button
+                type="button"
+                onClick={() => onPdf(requestId)}
+                disabled={generatingPdf}
+                className="inline-flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-900 transition hover:bg-emerald-100 disabled:opacity-50"
+              >
+                <Printer size={14} />
+                {generatingPdf ? t("Gerando...", "Generating...") : t("Imprimir", "Print")}
+              </button>
             ) : null}
 
             {canViewAdmin ? (
@@ -187,7 +244,7 @@ export default function LaboratoryRequestsPage() {
         },
       },
     ],
-    [canViewAdmin, isPortuguese]
+    [canViewAdmin, isPortuguese, onPdf, pdfLoadingId, t]
   )
 
   return (
@@ -213,6 +270,12 @@ export default function LaboratoryRequestsPage() {
         {isError ? (
           <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
             {(error as any)?.message || t("Falha ao carregar requisições.", "Failed to load requests.")}
+          </div>
+        ) : null}
+
+        {pdfError ? (
+          <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            {pdfError}
           </div>
         ) : null}
 

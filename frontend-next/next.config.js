@@ -68,6 +68,12 @@ module.exports = (phase) => {
     // Disable the Next.js DevTools indicator ("N" badge) in development.
     devIndicators: false,
 
+    // The dev server is started on 0.0.0.0, and Next validates the Origin
+    // header by hostname only when loading /_next assets from another host.
+    ...(isDevelopment
+      ? { allowedDevOrigins: ["127.0.0.1", "0.0.0.0"] }
+      : {}),
+
     // Keep dev and production build artifacts separate so running `next build`
     // doesn't break an active `next dev` (common when using Docker bind mounts).
     distDir: isDevelopment ? ".next-dev" : ".next",

@@ -21,6 +21,14 @@ function readableKey(key: string): string {
   return key.replace(/_/g, " ")
 }
 
+function readableUnknownKey(key: string): string {
+  return readableKey(key)
+    .split(" ")
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toLocaleUpperCase("pt") + part.slice(1))
+    .join(" ")
+}
+
 function readableField(key: string, endpoint?: string): string {
   return fieldLabel({ endpoint, name: key }) || readableKey(key)
 }
@@ -140,7 +148,7 @@ export function normalizeFormApiErrors(
       } else if (FORM_LEVEL_KEYS.has(key)) {
         formMessages.push(message)
       } else {
-        formMessages.push(`${readableField(key, options.endpoint)}: ${message}`)
+        formMessages.push(`${readableUnknownKey(key)}: ${message}`)
       }
     }
   } else {
