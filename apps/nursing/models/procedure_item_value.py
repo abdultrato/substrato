@@ -5,13 +5,15 @@ from django.db import models
 from core.mixins.tenant_propagation import TenantPropagationMixin
 from core.models.base import NoNameCoreModel
 from infrastructure.orm.fields.money_field import MoneyField
+from .ward import WardScopedModel
 
 
-class ProcedureItemValue(TenantPropagationMixin, NoNameCoreModel):
+class ProcedureItemValue(TenantPropagationMixin, WardScopedModel, NoNameCoreModel):
     """Valor unitário efetivo de um item de procedimento (serviço)."""
 
     tenant_source = "item"
     prefix = "PIV"
+    ward_source_paths = ("item",)
 
     item = models.OneToOneField(
         "enfermagem.ProcedureItem",

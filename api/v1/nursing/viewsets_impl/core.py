@@ -99,11 +99,12 @@ class NursingRecordViewSet(TenantScopedModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return NursingRecord.objects.select_related('patient', 'tenant', 'lab_request')
+        return NursingRecord.objects.select_related('patient', 'ward', 'tenant', 'lab_request')
     search_fields = [
         "custom_id",
         "name",
         "patient__name",
+        "ward__name",
         "lab_request__custom_id",
         "origin_role",
         "observation",
@@ -112,6 +113,7 @@ class NursingRecordViewSet(TenantScopedModelViewSet):
         "tenant",
         "custom_id",
         "name",
+        "ward",
         "patient",
         "lab_request",
         "record_kind",
@@ -126,13 +128,14 @@ class NursingRecordViewSet(TenantScopedModelViewSet):
 
 
 class ProcedureCatalogViewSet(TenantScopedModelViewSet):
-    queryset = ProcedureCatalog.objects.all()
+    queryset = ProcedureCatalog.objects.select_related("ward").all()
     serializer_class = ProcedureCatalogSerializer
     filterset_class = ProcedureCatalogFilter
     permission_classes = [IsAuthenticated]
     search_fields = [
         "custom_id",
         "name",
+        "ward__name",
         "procedure_code",
         "description",
     ]
@@ -140,6 +143,7 @@ class ProcedureCatalogViewSet(TenantScopedModelViewSet):
         "tenant",
         "custom_id",
         "name",
+        "ward",
         "procedure_code",
         "estimated_duration_minutes",
         "active",
@@ -157,15 +161,17 @@ class ProcedureCatalogMaterialViewSet(TenantScopedModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return ProcedureCatalogMaterial.objects.select_related('catalog', 'product', 'tenant')
+        return ProcedureCatalogMaterial.objects.select_related('ward', 'catalog', 'product', 'tenant')
     search_fields = [
         "custom_id",
+        "ward__name",
         "catalog__name",
         "product__name",
     ]
     ordering_fields = [
         "tenant",
         "custom_id",
+        "ward",
         "catalog",
         "product",
         "default_quantity",
@@ -183,15 +189,17 @@ class ProcedureViewSet(TenantScopedModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return Procedure.objects.select_related('patient', 'tenant')
+        return Procedure.objects.select_related('patient', 'ward', 'tenant')
     search_fields = [
         "custom_id",
         "patient__name",
+        "ward__name",
         "notes",
     ]
     ordering_fields = [
         "tenant",
         "custom_id",
+        "ward",
         "patient",
         "workflow_status",
         "billing_status",
@@ -237,9 +245,10 @@ class ProcedureItemViewSet(TenantScopedModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return ProcedureItem.objects.select_related('procedure', 'procedure__patient', 'catalog', 'tenant')
+        return ProcedureItem.objects.select_related('ward', 'procedure', 'procedure__patient', 'catalog', 'tenant')
     search_fields = [
         "custom_id",
+        "ward__name",
         "description",
         "catalog__name",
         "procedure__custom_id",
@@ -248,6 +257,7 @@ class ProcedureItemViewSet(TenantScopedModelViewSet):
     ordering_fields = [
         "tenant",
         "custom_id",
+        "ward",
         "position",
         "procedure",
         "catalog",
@@ -371,9 +381,10 @@ class ProcedureItemValueViewSet(TenantScopedModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return ProcedureItemValue.objects.select_related('item', 'item__procedure', 'item__tenant')
+        return ProcedureItemValue.objects.select_related('ward', 'item', 'item__procedure', 'item__tenant')
     search_fields = [
         "custom_id",
+        "ward__name",
         "item__custom_id",
         "item__description",
         "item__procedure__custom_id",
@@ -381,6 +392,7 @@ class ProcedureItemValueViewSet(TenantScopedModelViewSet):
     ordering_fields = [
         "tenant",
         "custom_id",
+        "ward",
         "item",
         "unit_price",
         "created_at",
@@ -396,18 +408,19 @@ class ProcedureMaterialViewSet(TenantScopedModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return ProcedureMaterial.objects.select_related('procedure', 'procedure__patient', 'product', 'lot', 'tenant')
+        return ProcedureMaterial.objects.select_related('ward', 'procedure', 'product', 'lot', 'tenant')
     search_fields = [
         "custom_id",
+        "ward__name",
         "product__name",
         "lot__lot_number",
         "procedure__custom_id",
-        "procedure__patient__name",
         "procedure_item__custom_id",
     ]
     ordering_fields = [
         "tenant",
         "custom_id",
+        "ward",
         "position",
         "procedure",
         "procedure_item",
@@ -428,9 +441,10 @@ class ProcedureMaterialValueViewSet(TenantScopedModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return ProcedureMaterialValue.objects.select_related('material', 'material__product', 'material__procedure', 'tenant')
+        return ProcedureMaterialValue.objects.select_related('ward', 'material', 'material__product', 'material__procedure', 'tenant')
     search_fields = [
         "custom_id",
+        "ward__name",
         "material__custom_id",
         "material__product__name",
         "material__procedure__custom_id",
@@ -438,6 +452,7 @@ class ProcedureMaterialValueViewSet(TenantScopedModelViewSet):
     ordering_fields = [
         "tenant",
         "custom_id",
+        "ward",
         "material",
         "unit_cost",
         "created_at",
@@ -453,10 +468,11 @@ class NursingVitalSignViewSet(TenantScopedModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return NursingVitalSign.objects.select_related('record', 'record__patient', 'tenant')
+        return NursingVitalSign.objects.select_related('ward', 'record', 'record__patient', 'tenant')
     search_fields = [
         "custom_id",
         "name",
+        "ward__name",
         "record__patient__name",
         "blood_pressure",
     ]
@@ -464,6 +480,7 @@ class NursingVitalSignViewSet(TenantScopedModelViewSet):
         "tenant",
         "custom_id",
         "name",
+        "ward",
         "record",
         "temperature_c",
         "heart_rate",
@@ -483,17 +500,19 @@ class NursingPrescriptionViewSet(TenantScopedModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return NursingPrescription.objects.select_related('patient', 'tenant')
+        return NursingPrescription.objects.select_related('patient', 'ward', 'tenant')
     search_fields = [
         "custom_id",
         "name",
         "patient__name",
+        "ward__name",
         "description",
     ]
     ordering_fields = [
         "tenant",
         "custom_id",
         "name",
+        "ward",
         "patient",
         "active",
         "prescription_date",
@@ -510,17 +529,19 @@ class NursingEvolutionViewSet(TenantScopedModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return NursingEvolution.objects.select_related('patient', 'tenant')
+        return NursingEvolution.objects.select_related('patient', 'ward', 'tenant')
     search_fields = [
         "custom_id",
         "name",
         "patient__name",
+        "ward__name",
         "observation",
     ]
     ordering_fields = [
         "tenant",
         "custom_id",
         "name",
+        "ward",
         "patient",
         "evolution_date",
         "created_at",
@@ -552,6 +573,7 @@ class WardBedViewSet(TenantScopedModelViewSet):
 
 class WardAdmissionViewSet(TenantScopedModelViewSet):
     queryset = WardAdmission.objects.select_related(
+        "ward",
         "bed",
         "bed__ward",
         "patient",
@@ -562,6 +584,7 @@ class WardAdmissionViewSet(TenantScopedModelViewSet):
     search_fields = [
         "custom_id",
         "patient__name",
+        "ward__name",
         "bed__number",
         "bed__ward__name",
         "next_medication_description",
@@ -569,6 +592,7 @@ class WardAdmissionViewSet(TenantScopedModelViewSet):
     ]
     ordering_fields = [
         "admission_date",
+        "ward",
         "expected_discharge_date",
         "discharged_at",
         "next_medication_at",

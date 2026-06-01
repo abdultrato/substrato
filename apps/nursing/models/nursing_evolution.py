@@ -2,9 +2,10 @@ from django.db import models
 
 from core.mixins.tenant_propagation import TenantPropagationMixin
 from core.models.base import CoreModel
+from .ward import WardScopedModel
 
 
-class NursingEvolution(TenantPropagationMixin, CoreModel):
+class NursingEvolution(TenantPropagationMixin, WardScopedModel, CoreModel):
     """Evolução clínica registrada pela enfermagem."""
 
     tenant_source = "patient"  # Propaga tenant do paciente

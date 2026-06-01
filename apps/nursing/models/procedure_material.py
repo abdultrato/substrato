@@ -12,11 +12,16 @@ from apps.pharmacy.models.inventory_movement import (
 from apps.pharmacy.models.lot import Lot
 from core.mixins.model.position import ScopedPositionMixin
 from core.models.base import NoNameCoreModel
+from .ward import WardScopedModel
 
 
-class ProcedureMaterial(ScopedPositionMixin, NoNameCoreModel):
-    """Material consumido/associado a um procedimento de enfermagem."""
+class ProcedureMaterial(ScopedPositionMixin, WardScopedModel, NoNameCoreModel):
+    """Produto farmacêutico/médico-cirúrgico vinculado a um procedimento.
+
+    O paciente não pertence ao material. Ele é obtido apenas pelo procedimento.
+    """
     prefix = "PROCMAT"
+    ward_source_paths = ("procedure",)
 
     procedure = models.ForeignKey(
 

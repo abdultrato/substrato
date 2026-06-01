@@ -119,7 +119,7 @@ const RELATION_TARGETS: Record<string, RelationTarget> = {
   payment: { endpoint: "/payments/payment/", labelFields: ["custom_id", "value", "status", ...DEFAULT_LABEL_FIELDS] },
   pick_list: { endpoint: "/warehouse/pick_list/", labelFields: ["custom_id", "status", ...DEFAULT_LABEL_FIELDS] },
   payer_company: { endpoint: "/external_entities/empresa/", labelFields: ["name", "nuit", ...DEFAULT_LABEL_FIELDS] },
-  procedure: { endpoint: "/nursing/procedure/", labelFields: ["custom_id", "status", ...DEFAULT_LABEL_FIELDS] },
+  procedure: { endpoint: "/nursing/procedure/", labelFields: ["custom_id", "patient_name", "ward_name", "workflow_status_display", ...DEFAULT_LABEL_FIELDS] },
   procedure_financing: { endpoint: "/credit_financing/procedure_financing/", labelFields: ["custom_id", "patient_name", "contract_number", ...DEFAULT_LABEL_FIELDS] },
   procedure_item: { endpoint: "/nursing/procedure_item/", labelFields: ["custom_id", "id", ...DEFAULT_LABEL_FIELDS] },
   product: { endpoint: "/pharmacy/product/", labelFields: ["name", "custom_id", ...DEFAULT_LABEL_FIELDS] },

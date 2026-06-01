@@ -3,9 +3,10 @@ from django.db import models
 
 from core.mixins.tenant_propagation import TenantPropagationMixin
 from core.models.base import CoreModel
+from .ward import WardScopedModel
 
 
-class NursingRecord(TenantPropagationMixin, CoreModel):
+class NursingRecord(TenantPropagationMixin, WardScopedModel, CoreModel):
     """Registro de procedimentos/observações realizados pela enfermagem."""
 
     tenant_source = "patient"  # Propaga tenant do paciente

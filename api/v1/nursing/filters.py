@@ -26,6 +26,7 @@ class NursingRecordFilter(SafeFilterSet):
             "tenant",
             "custom_id",
             "name",
+            "ward",
             "patient",
             "lab_request",
             "record_kind",
@@ -45,6 +46,7 @@ class ProcedureCatalogFilter(SafeFilterSet):
             "tenant",
             "custom_id",
             "name",
+            "ward",
             "procedure_code",
             "estimated_duration_minutes",
             "active",
@@ -61,6 +63,7 @@ class ProcedureCatalogMaterialFilter(SafeFilterSet):
         fields = [
             "tenant",
             "custom_id",
+            "ward",
             "catalog",
             "product",
             "default_quantity",
@@ -77,6 +80,7 @@ class ProcedureFilter(SafeFilterSet):
         fields = [
             "tenant",
             "custom_id",
+            "ward",
             "patient",
             "professional",
             "workflow_status",
@@ -97,6 +101,7 @@ class ProcedureItemFilter(SafeFilterSet):
         fields = [
             "tenant",
             "custom_id",
+            "ward",
             "position",
             "procedure",
             "catalog",
@@ -120,6 +125,7 @@ class ProcedureMaterialFilter(SafeFilterSet):
         fields = [
             "tenant",
             "custom_id",
+            "ward",
             "position",
             "procedure",
             "procedure_item",
@@ -139,6 +145,7 @@ class ProcedureItemValueFilter(SafeFilterSet):
         fields = [
             "tenant",
             "custom_id",
+            "ward",
             "item",
             "unit_price",
             "created_at",
@@ -153,6 +160,7 @@ class ProcedureMaterialValueFilter(SafeFilterSet):
         fields = [
             "tenant",
             "custom_id",
+            "ward",
             "material",
             "unit_cost",
             "created_at",
@@ -168,6 +176,7 @@ class NursingVitalSignFilter(SafeFilterSet):
             "tenant",
             "custom_id",
             "name",
+            "ward",
             "record",
             "temperature_c",
             "heart_rate",
@@ -187,6 +196,7 @@ class NursingPrescriptionFilter(SafeFilterSet):
             "tenant",
             "custom_id",
             "name",
+            "ward",
             "patient",
             "active",
             "prescription_date",
@@ -203,6 +213,7 @@ class NursingEvolutionFilter(SafeFilterSet):
             "tenant",
             "custom_id",
             "name",
+            "ward",
             "patient",
             "evolution_date",
             "created_at",
@@ -246,6 +257,7 @@ class WardAdmissionFilter(SafeFilterSet):
         fields = [
             "tenant",
             "custom_id",
+            "ward",
             "bed",
             "patient",
             "active",

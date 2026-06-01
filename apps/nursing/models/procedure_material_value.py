@@ -5,13 +5,15 @@ from django.db import models
 from core.mixins.tenant_propagation import TenantPropagationMixin
 from core.models.base import NoNameCoreModel
 from infrastructure.orm.fields.money_field import MoneyField
+from .ward import WardScopedModel
 
 
-class ProcedureMaterialValue(TenantPropagationMixin, NoNameCoreModel):
+class ProcedureMaterialValue(TenantPropagationMixin, WardScopedModel, NoNameCoreModel):
     """Valor unitário efetivo de um material consumido em procedimento."""
 
     tenant_source = "material"
     prefix = "PMV"
+    ward_source_paths = ("material",)
 
     material = models.OneToOneField(
         "enfermagem.ProcedureMaterial",

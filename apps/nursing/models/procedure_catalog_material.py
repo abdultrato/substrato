@@ -7,13 +7,15 @@ from django.db import models
 from core.mixins.tenant_propagation import TenantPropagationMixin
 from core.models.base import NoNameCoreModel
 from infrastructure.orm.fields.money_field import MoneyField
+from .ward import WardScopedModel
 
 
-class ProcedureCatalogMaterial(TenantPropagationMixin, NoNameCoreModel):
+class ProcedureCatalogMaterial(TenantPropagationMixin, WardScopedModel, NoNameCoreModel):
     """Materiais padrão sugeridos para um procedimento do catálogo."""
 
     tenant_source = "catalog"
     prefix = "PCM"
+    ward_source_paths = ("catalog",)
 
     catalog = models.ForeignKey(
 

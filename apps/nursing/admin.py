@@ -27,6 +27,9 @@ from .models import (
     ProcedureItemValue,
     ProcedureMaterial,
     ProcedureMaterialValue,
+    Ward,
+    WardAdmission,
+    WardBed,
 )
 
 
@@ -66,11 +69,32 @@ def _available_products_queryset():
     return Product.objects.filter(Exists(available_lots)).order_by("name")
 
 
+class ProcedureMaterialAdminForm(forms.ModelForm):
+    class Meta:
+        model = ProcedureMaterial
+        fields = "__all__"
+        labels = {
+            "procedure": "Procedimento",
+            "product": "Produto farmacêutico / médico-cirúrgico",
+            "procedure_item": "Item do procedimento (herdado, opcional)",
+            "lot": "Lote específico",
+            "quantity": "Quantidade",
+            "observation": "Observações",
+        }
+        help_texts = {
+            "procedure": "O paciente fica vinculado somente ao procedimento.",
+            "product": "Use medicamentos, materiais, reagentes, insumos e outros produtos farmacêuticos ou médico-cirúrgicos.",
+            "procedure_item": "Preenchido quando o material foi gerado a partir de um item do procedimento.",
+            "lot": "Opcional no lançamento manual; o sistema pode selecionar um lote disponível.",
+        }
+
+
 class ProcedimentoItemInline(admin.TabularInline):
     """Inline para itens de serviço de um procedimento de enfermagem."""
     model = ProcedureItem
     extra = 1  # Sugere 1 linha para facilitar lançamento
     fields = (
+        "ward",
         "position",
         "catalog",
         "description",
@@ -78,6 +102,7 @@ class ProcedimentoItemInline(admin.TabularInline):
         "performed",
         "observation",
     )
+    readonly_fields = ("ward",)
     ordering = ("position", "id")
     autocomplete_fields = ("catalog",)
 
@@ -90,8 +115,10 @@ class ProcedimentoMaterialInline(admin.TabularInline):
     e um novo movimento de saída com a quantidade atualizada.
     """
     model = ProcedureMaterial
+    form = ProcedureMaterialAdminForm
     extra = 1
     fields = (
+        "ward",
         "position",
         "procedure_item",
         "product",
@@ -102,7 +129,7 @@ class ProcedimentoMaterialInline(admin.TabularInline):
         "observation",
     )
     ordering = ("position", "id")
-    readonly_fields = ("procedure_item", "unit_cost", "stock_reversal_status")
+    readonly_fields = ("ward", "procedure_item", "unit_cost", "stock_reversal_status")
     autocomplete_fields = ("product",)
 
     def stock_reversal_status(self, obj):
@@ -151,12 +178,199 @@ class ProcedimentoCatalogoMaterialInline(admin.TabularInline):
     form = ProcedimentoCatalogoMaterialInlineForm
 
     fields = (
+        "ward",
         "product",
         "default_quantity",
         "default_unit_cost",
         "observation",
     )
+    readonly_fields = ("ward",)
     autocomplete_fields = ("product",)
+
+
+@admin.register(Ward)
+class WardAdmin(admin.ModelAdmin):
+    """Administra enfermarias/alas usadas como contexto dos cuidados."""
+
+    list_display = (
+        "custom_id",
+        "name",
+        "active",
+        "created_at",
+    )
+    search_fields = (
+        "custom_id",
+        "name",
+        "description",
+    )
+    list_filter = ("active", "created_at")
+    ordering = ("name",)
+    readonly_fields = (
+        "custom_id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "version",
+    )
+    fieldsets = (
+        (
+            "Enfermaria",
+            {
+                "fields": (
+                    "custom_id",
+                    "name",
+                    "description",
+                    "active",
+                )
+            },
+        ),
+        (
+            "Auditoria",
+            {
+                "classes": ("collapse",),
+                "fields": (
+                    "created_at",
+                    "updated_at",
+                    "created_by",
+                    "updated_by",
+                    "version",
+                ),
+            },
+        ),
+    )
+
+
+@admin.register(WardBed)
+class WardBedAdmin(admin.ModelAdmin):
+    """Administra camas vinculadas a uma enfermaria."""
+
+    list_display = (
+        "custom_id",
+        "ward",
+        "number",
+        "active",
+        "created_at",
+    )
+    search_fields = (
+        "custom_id",
+        "ward__name",
+        "number",
+    )
+    list_filter = ("ward", "active", "created_at")
+    ordering = ("ward__name", "number")
+    autocomplete_fields = ("ward",)
+    list_select_related = ("ward",)
+    readonly_fields = (
+        "custom_id",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "version",
+    )
+    fieldsets = (
+        (
+            "Cama",
+            {
+                "fields": (
+                    "custom_id",
+                    "ward",
+                    "number",
+                    "active",
+                )
+            },
+        ),
+        (
+            "Auditoria",
+            {
+                "classes": ("collapse",),
+                "fields": (
+                    "created_at",
+                    "updated_at",
+                    "created_by",
+                    "updated_by",
+                    "version",
+                ),
+            },
+        ),
+    )
+
+
+@admin.register(WardAdmission)
+class WardAdmissionAdmin(admin.ModelAdmin):
+    """Administra internamentos e a enfermaria herdada da cama."""
+
+    list_display = (
+        "custom_id",
+        "patient",
+        "ward",
+        "bed",
+        "admission_date",
+        "expected_discharge_date",
+        "discharged_at",
+        "active",
+    )
+    search_fields = (
+        "custom_id",
+        "patient__name",
+        "ward__name",
+        "bed__number",
+        "next_medication_description",
+    )
+    list_filter = ("ward", "active", "admission_date", "discharged_at")
+    ordering = ("-admission_date",)
+    autocomplete_fields = ("patient", "bed")
+    list_select_related = ("patient", "ward", "bed")
+    readonly_fields = (
+        "custom_id",
+        "ward",
+        "created_at",
+        "updated_at",
+        "created_by",
+        "updated_by",
+        "version",
+    )
+    fieldsets = (
+        (
+            "Internamento",
+            {
+                "fields": (
+                    "custom_id",
+                    "patient",
+                    "bed",
+                    "ward",
+                    "estimated_observation_hours",
+                    "admission_date",
+                    "expected_discharge_date",
+                    "discharged_at",
+                    "active",
+                )
+            },
+        ),
+        (
+            "Próxima medicação",
+            {
+                "fields": (
+                    "next_medication_description",
+                    "next_medication_at",
+                )
+            },
+        ),
+        (
+            "Auditoria",
+            {
+                "classes": ("collapse",),
+                "fields": (
+                    "created_at",
+                    "updated_at",
+                    "created_by",
+                    "updated_by",
+                    "version",
+                ),
+            },
+        ),
+    )
 
 
 @admin.register(ProcedureCatalog)
@@ -165,6 +379,7 @@ class ProcedimentoCatalogoAdmin(admin.ModelAdmin):
     list_display = (
         "custom_id",
         "name",
+        "ward",
         "default_price",
         "vat_percentage",
         "applies_vat_by_default",
@@ -173,9 +388,12 @@ class ProcedimentoCatalogoAdmin(admin.ModelAdmin):
     search_fields = (
         "custom_id",
         "name",
+        "ward__name",
         "description",
     )
-    list_filter = ("created_at",)
+    list_filter = ("ward", "created_at")
+    autocomplete_fields = ("ward",)
+    list_select_related = ("ward",)
     ordering = ("name",)  # Ordena por nome para catálogo
     readonly_fields = (
         "custom_id",
@@ -193,6 +411,7 @@ class ProcedimentoCatalogoAdmin(admin.ModelAdmin):
                 "fields": (
                     "custom_id",
                     "name",
+                    "ward",
                     "description",
                     "default_price",
                     "vat_percentage",
@@ -249,6 +468,7 @@ class ProcedimentoCatalogoMaterialAdmin(admin.ModelAdmin):
     """Administra materiais padrão associados a cada catálogo de procedimento."""
     list_display = (
         "custom_id",
+        "ward",
         "catalog",
         "product",
         "default_quantity",
@@ -257,18 +477,21 @@ class ProcedimentoCatalogoMaterialAdmin(admin.ModelAdmin):
     )
     search_fields = (
         "custom_id",
+        "ward__name",
         "catalog__name",
         "product__name",
     )
     list_filter = (
+        "ward",
         "catalog",
         "created_at",
     )
     ordering = ("catalog", "product")  # Agrupa por catálogo
     autocomplete_fields = ("catalog", "product")
-    list_select_related = ("catalog", "product")
+    list_select_related = ("ward", "catalog", "product")
     readonly_fields = (
         "custom_id",
+        "ward",
         "default_unit_cost",
         "created_at",
         "updated_at",
@@ -282,6 +505,7 @@ class ProcedimentoCatalogoMaterialAdmin(admin.ModelAdmin):
             {
                 "fields": (
                     "custom_id",
+                    "ward",
                     "catalog",
                     "product",
                     "default_quantity",
@@ -313,6 +537,7 @@ class NursingRecordAdmin(admin.ModelAdmin):
         "custom_id",
         "name",
         "patient",
+        "ward",
         "lab_request",
         "record_kind",
         "origin_role",
@@ -324,17 +549,19 @@ class NursingRecordAdmin(admin.ModelAdmin):
         "custom_id",
         "name",
         "patient__name",
+        "ward__name",
         "lab_request__custom_id",
         "origin_role",
     )
     list_filter = (
+        "ward",
         "record_kind",
         "origin_role",
         "priority",
         "record_date",
     )
-    autocomplete_fields = ("patient",)
-    list_select_related = ("patient",)
+    autocomplete_fields = ("patient", "ward")
+    list_select_related = ("patient", "ward", "lab_request")
     ordering = ("-record_date",)  # Mais recentes primeiro
     readonly_fields = (
         "custom_id",
@@ -353,6 +580,7 @@ class NursingRecordAdmin(admin.ModelAdmin):
                     "custom_id",
                     "name",
                     "patient",
+                    "ward",
                     "lab_request",
                     "record_kind",
                     "origin_role",
@@ -385,6 +613,7 @@ class ProcedimentoAdmin(SimplePDFAdminMixin, admin.ModelAdmin):
     list_display = (
         "custom_id",
         "patient",
+        "ward",
         "professionals_display",
         "performed_date",
         "itens_total",
@@ -397,16 +626,19 @@ class ProcedimentoAdmin(SimplePDFAdminMixin, admin.ModelAdmin):
     search_fields = (
         "custom_id",
         "patient__name",
+        "ward__name",
         "notes",
     )
     list_filter = (
+        "ward",
         "performed_date",
         "created_at",
     )
     autocomplete_fields = (
         "patient",
+        "ward",
     )
-    list_select_related = ("patient",)
+    list_select_related = ("patient", "ward")
     ordering = ("-performed_date",)  # Procedimentos mais recentes primeiro
     readonly_fields = (
         "custom_id",
@@ -432,6 +664,7 @@ class ProcedimentoAdmin(SimplePDFAdminMixin, admin.ModelAdmin):
                     "pdf_link",
                     "tenant",
                     "patient",
+                    "ward",
                     "professional",
                     "performed_date",
                     "notes",
@@ -603,6 +836,7 @@ class ProcedimentoItemAdmin(admin.ModelAdmin):
     list_display = (
         "custom_id",
         "procedure",
+        "ward",
         "position",
         "catalog",
         "description",
@@ -612,17 +846,19 @@ class ProcedimentoItemAdmin(admin.ModelAdmin):
     )
     search_fields = (
         "custom_id",
+        "ward__name",
         "catalog__name",
         "description",
         "procedure__custom_id",
         "procedure__patient__name",
     )
-    list_filter = ("performed", "created_at")
+    list_filter = ("ward", "performed", "created_at")
     autocomplete_fields = ("procedure", "catalog")
-    list_select_related = ("procedure", "procedure__patient", "catalog")
+    list_select_related = ("procedure", "procedure__patient", "ward", "catalog")
     ordering = ("procedure", "position", "id")
     readonly_fields = (
         "custom_id",
+        "ward",
         "created_at",
         "updated_at",
         "created_by",
@@ -636,6 +872,7 @@ class ProcedimentoItemAdmin(admin.ModelAdmin):
                 "fields": (
                     "custom_id",
                     "procedure",
+                    "ward",
                     "position",
                     "catalog",
                     "description",
@@ -663,10 +900,13 @@ class ProcedimentoItemAdmin(admin.ModelAdmin):
 
 @admin.register(ProcedureMaterial)
 class ProcedimentoMaterialAdmin(admin.ModelAdmin):
-    """Admin de materiais consumidos em procedimentos de enfermagem."""
+    """Admin de produtos vinculados ao procedimento, sem paciente direto."""
+
+    form = ProcedureMaterialAdminForm
     list_display = (
         "custom_id",
         "procedure",
+        "ward",
         "position",
         "procedure_item",
         "product",
@@ -679,13 +919,13 @@ class ProcedimentoMaterialAdmin(admin.ModelAdmin):
     )
     search_fields = (
         "custom_id",
+        "ward__name",
         "product__name",
         "lot__lot_number",
         "procedure__custom_id",
-        "procedure__patient__name",
         "procedure_item__custom_id",
     )
-    list_filter = ("created_at", "product")
+    list_filter = ("ward", "created_at", "product")
     autocomplete_fields = (
         "procedure",
         "procedure_item",
@@ -693,6 +933,7 @@ class ProcedimentoMaterialAdmin(admin.ModelAdmin):
     )
     list_select_related = (
         "procedure",
+        "ward",
         "procedure_item",
         "product",
         "lot",
@@ -701,6 +942,7 @@ class ProcedimentoMaterialAdmin(admin.ModelAdmin):
     ordering = ("procedure", "position", "id")
     readonly_fields = (
         "custom_id",
+        "ward",
         "lot",
         "unit_cost",
         "line_total",
@@ -718,6 +960,7 @@ class ProcedimentoMaterialAdmin(admin.ModelAdmin):
                 "fields": (
                     "custom_id",
                     "procedure",
+                    "ward",
                     "position",
                     "procedure_item",
                     "product",
@@ -780,22 +1023,25 @@ class ProcedureItemValueAdmin(admin.ModelAdmin):
     """Admin para valores unitários de itens de procedimento."""
     list_display = (
         "custom_id",
+        "ward",
         "item",
         "unit_price",
         "created_at",
     )
     search_fields = (
         "custom_id",
+        "ward__name",
         "item__custom_id",
         "item__description",
         "item__procedure__custom_id",
     )
-    list_filter = ("created_at",)
+    list_filter = ("ward", "created_at")
     autocomplete_fields = ("item",)
-    list_select_related = ("item", "item__procedure")
+    list_select_related = ("ward", "item", "item__procedure")
     ordering = ("-created_at",)  # Valores mais recentes primeiro
     readonly_fields = (
         "custom_id",
+        "ward",
         "created_at",
         "updated_at",
         "created_by",
@@ -809,6 +1055,7 @@ class ProcedureItemValueAdmin(admin.ModelAdmin):
                 "fields": (
                     "custom_id",
                     "item",
+                    "ward",
                     "unit_price",
                 )
             },
@@ -834,22 +1081,25 @@ class ProcedureMaterialValueAdmin(admin.ModelAdmin):
     """Admin para valores unitários de materiais consumidos."""
     list_display = (
         "custom_id",
+        "ward",
         "material",
         "unit_cost",
         "created_at",
     )
     search_fields = (
         "custom_id",
+        "ward__name",
         "material__custom_id",
         "material__product__name",
         "material__procedure__custom_id",
     )
-    list_filter = ("created_at",)
+    list_filter = ("ward", "created_at")
     autocomplete_fields = ("material",)
-    list_select_related = ("material", "material__procedure", "material__product")
+    list_select_related = ("ward", "material", "material__procedure", "material__product")
     ordering = ("-created_at",)  # Valores mais recentes primeiro
     readonly_fields = (
         "custom_id",
+        "ward",
         "created_at",
         "updated_at",
         "created_by",
@@ -863,6 +1113,7 @@ class ProcedureMaterialValueAdmin(admin.ModelAdmin):
                 "fields": (
                     "custom_id",
                     "material",
+                    "ward",
                     "unit_cost",
                 )
             },
@@ -889,6 +1140,7 @@ class SinalVitalEnfermagemAdmin(admin.ModelAdmin):
     list_display = (
         "custom_id",
         "patient",
+        "ward",
         "name",
         "record",
         "temperature_c",
@@ -899,14 +1151,16 @@ class SinalVitalEnfermagemAdmin(admin.ModelAdmin):
     search_fields = (
         "custom_id",
         "name",
+        "ward__name",
         "record__patient__name",
     )
-    list_filter = ("collected_at",)
+    list_filter = ("ward", "collected_at")
     autocomplete_fields = ("record",)
-    list_select_related = ("record", "record__patient")
+    list_select_related = ("ward", "record", "record__patient")
     ordering = ("-collected_at",)  # Sinais mais recentes primeiro
     readonly_fields = (
         "custom_id",
+        "ward",
         "collected_at",
         "created_at",
         "updated_at",
@@ -923,6 +1177,7 @@ class SinalVitalEnfermagemAdmin(admin.ModelAdmin):
                     "patient",
                     "name",
                     "record",
+                    "ward",
                     "temperature_c",
                     "heart_rate",
                     "respiratory_rate",

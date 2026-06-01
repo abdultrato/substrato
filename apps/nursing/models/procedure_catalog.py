@@ -5,9 +5,10 @@ from django.db import models
 
 from core.models import CoreModel
 from infrastructure.orm.fields.money_field import MoneyField
+from .ward import WardScopedModel
 
 
-class ProcedureCatalog(CoreModel):
+class ProcedureCatalog(WardScopedModel, CoreModel):
     """Catálogo de procedimentos de enfermagem (preço e materiais padrão)."""
 
     prefix = "PCAT"

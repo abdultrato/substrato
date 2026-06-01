@@ -2,9 +2,10 @@ from django.db import models
 
 from core.mixins.tenant_propagation import TenantPropagationMixin
 from core.models.base import CoreModel
+from .ward import WardScopedModel
 
 
-class NursingPrescription(TenantPropagationMixin, CoreModel):
+class NursingPrescription(TenantPropagationMixin, WardScopedModel, CoreModel):
     """Prescrição de cuidados de enfermagem para um paciente."""
 
     tenant_source = "patient"

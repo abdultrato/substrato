@@ -7,11 +7,12 @@ from django.db.models.functions import Coalesce
 from django.utils import timezone
 
 from core.models.base import NoNameCoreModel
+from .ward import WardScopedModel
 
 User = settings.AUTH_USER_MODEL
 
 
-class Procedure(NoNameCoreModel):
+class Procedure(WardScopedModel, NoNameCoreModel):
     """Procedimento de enfermagem com itens de serviço e materiais."""
     prefix = "PROC"
 

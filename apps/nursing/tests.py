@@ -249,6 +249,45 @@ def test_procedure_material_line_total_uses_value():
 
 
 @pytest.mark.django_db
+def test_procedure_material_links_product_through_procedure_not_patient():
+    tenant = _tenant()
+    patient = _patient(tenant)
+    ward = Ward.objects.create(tenant=tenant, name="Enfermaria A")
+    procedure = Procedure.objects.create(patient=patient, ward=ward)
+    category = ProductCategory.objects.create(tenant=tenant, name="Medicamentos", description="")
+    medication = Product.objects.create(
+        tenant=tenant,
+        name="Paracetamol 500mg",
+        type=Product.ProductType.MEDICAMENTO,
+        sale_price=Decimal("4.00"),
+        category=category,
+    )
+
+    material = ProcedureMaterial(
+        procedure=procedure,
+        product=medication,
+        quantity=2,
+    )
+    material.save(alocar_estoque=False)
+    material.refresh_from_db()
+
+    assert material.tenant == tenant
+    assert material.ward == ward
+    assert material.product == medication
+    assert material.procedure.patient == patient
+    assert "patient" not in {field.name for field in ProcedureMaterial._meta.get_fields()}
+
+    from api.v1.nursing.serializers import ProcedureMaterialSerializer
+
+    serializer = ProcedureMaterialSerializer(material)
+    assert "patient" not in serializer.fields
+    assert serializer.data["procedure"] == procedure.id
+    assert serializer.data["product"] == medication.id
+    assert serializer.data["product_name"] == medication.name
+    assert serializer.data["product_type"] == "Medicamento"
+
+
+@pytest.mark.django_db
 def test_record_and_vital_sign():
     tenant = _tenant()
     patient = _patient(tenant)
@@ -259,6 +298,90 @@ def test_record_and_vital_sign():
     assert record.tenant == tenant
     assert sv.tenant == tenant
     assert sv.record == record
+
+
+@pytest.mark.django_db
+def test_ward_context_is_inherited_by_operational_nursing_models():
+    tenant = _tenant()
+    patient = _patient(tenant)
+    ward = Ward.objects.create(tenant=tenant, name="Enfermaria A")
+    bed = WardBed.objects.create(tenant=tenant, ward=ward, number="A1")
+
+    admission = WardAdmission.objects.create(tenant=tenant, bed=bed, patient=patient)
+    record = NursingRecord.objects.create(patient=patient, tenant=tenant, ward=ward, observation="Obs")
+    vital_sign = NursingVitalSign.objects.create(
+        record=record,
+        patient=patient,
+        tenant=tenant,
+        temperature_c=Decimal("36.5"),
+    )
+    evolution = NursingEvolution.objects.create(patient=patient, ward=ward, observation="Evolução")
+    prescription = NursingPrescription.objects.create(patient=patient, ward=ward, description="Prescrição")
+
+    catalog = ProcedureCatalog.objects.create(tenant=tenant, ward=ward, name="Curativo", default_price=Decimal("10.00"))
+    product = _product(tenant)
+    catalog_material = ProcedureCatalogMaterial.objects.create(
+        catalog=catalog,
+        product=product,
+        default_quantity=Decimal("1.00"),
+        default_unit_cost=Decimal("2.50"),
+    )
+    procedure = Procedure.objects.create(patient=patient, ward=ward)
+    item = ProcedureItem.objects.create(
+        procedure=procedure,
+        catalog=catalog,
+        quantity=1,
+    )
+    material = item.materiais_gerados.get()
+
+    admission.refresh_from_db()
+    vital_sign.refresh_from_db()
+    evolution.refresh_from_db()
+    prescription.refresh_from_db()
+    catalog_material.refresh_from_db()
+    item.refresh_from_db()
+    material.refresh_from_db()
+    item.value.refresh_from_db()
+    material.value.refresh_from_db()
+
+    assert admission.ward == ward
+    assert vital_sign.ward == ward
+    assert evolution.ward == ward
+    assert prescription.ward == ward
+    assert catalog_material.ward == ward
+    assert item.ward == ward
+    assert item.value.ward == ward
+    assert material.ward == ward
+    assert material.value.ward == ward
+
+
+@pytest.mark.django_db
+def test_ward_context_rejects_cross_tenant_ward():
+    tenant = _tenant()
+    other_tenant = Tenant.objects.create(
+        identifier="tn-enf-outro",
+        name="Tenant Enf Outro",
+        domain="tenant-enf-outro.local",
+        active=True,
+    )
+    patient = _patient(tenant)
+    other_ward = Ward.objects.create(tenant=other_tenant, name="Enfermaria Externa")
+
+    with pytest.raises(ValidationError):
+        NursingRecord.objects.create(patient=patient, tenant=tenant, ward=other_ward, observation="Obs")
+
+
+@pytest.mark.django_db
+def test_ward_context_rejects_conflicting_parent_wards():
+    tenant = _tenant()
+    patient = _patient(tenant)
+    ward = Ward.objects.create(tenant=tenant, name="Enfermaria A")
+    other_ward = Ward.objects.create(tenant=tenant, name="Enfermaria B")
+    procedure = Procedure.objects.create(patient=patient, ward=ward)
+    catalog = ProcedureCatalog.objects.create(tenant=tenant, ward=other_ward, name="Curativo")
+
+    with pytest.raises(ValidationError):
+        ProcedureItem.objects.create(procedure=procedure, catalog=catalog, quantity=1)
 
 
 @pytest.mark.django_db

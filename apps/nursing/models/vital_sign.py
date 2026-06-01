@@ -4,13 +4,15 @@ from django.utils import timezone
 
 from core.mixins.tenant_propagation import TenantPropagationMixin
 from core.models.base import CoreModel
+from .ward import WardScopedModel
 
 
-class NursingVitalSign(TenantPropagationMixin, CoreModel):
+class NursingVitalSign(TenantPropagationMixin, WardScopedModel, CoreModel):
     """Registro de sinais vitais coletados pela enfermagem."""
 
     tenant_source = "record"
     prefix = "SVI"
+    ward_source_paths = ("record",)
 
     patient = models.ForeignKey("clinical.Patient", verbose_name="Paciente", on_delete=models.PROTECT)
 

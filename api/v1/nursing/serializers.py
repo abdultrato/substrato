@@ -58,9 +58,19 @@ PATIENT_ALIASES = {
     "patient": "patient",
 }
 
+WARD_CONTEXT_ALIASES = {
+    "enfermaria": "ward",
+    "ala": "ward",
+    "ward": "ward",
+    "id_enfermaria": "ward",
+    "enfermaria_id": "ward",
+    "ward_id": "ward",
+}
+
 NURSING_RECORD_ALIASES = {
     **BASE_ALIASES,
     **PATIENT_ALIASES,
+    **WARD_CONTEXT_ALIASES,
     "requisicao": "lab_request",
     "requisição": "lab_request",
     "requisicao_laboratorial": "lab_request",
@@ -91,6 +101,7 @@ NURSING_RECORD_ALIASES = {
 VITAL_SIGN_ALIASES = {
     **BASE_ALIASES,
     **PATIENT_ALIASES,
+    **WARD_CONTEXT_ALIASES,
     "registro": "record",
     "registo": "record",
     "record": "record",
@@ -124,6 +135,7 @@ VITAL_SIGN_ALIASES = {
 NURSING_PRESCRIPTION_ALIASES = {
     **BASE_ALIASES,
     **PATIENT_ALIASES,
+    **WARD_CONTEXT_ALIASES,
     "prescricao": "description",
     "prescrição": "description",
     "cuidados": "description",
@@ -137,6 +149,7 @@ NURSING_PRESCRIPTION_ALIASES = {
 NURSING_EVOLUTION_ALIASES = {
     **BASE_ALIASES,
     **PATIENT_ALIASES,
+    **WARD_CONTEXT_ALIASES,
     "evolucao": "observation",
     "evolução": "observation",
     "nota_evolucao": "observation",
@@ -149,6 +162,7 @@ NURSING_EVOLUTION_ALIASES = {
 
 PROCEDURE_CATALOG_ALIASES = {
     **BASE_ALIASES,
+    **WARD_CONTEXT_ALIASES,
     "codigo": "procedure_code",
     "código": "procedure_code",
     "codigo_procedimento": "procedure_code",
@@ -174,6 +188,7 @@ PROCEDURE_CATALOG_ALIASES = {
 
 PROCEDURE_CATALOG_MATERIAL_ALIASES = {
     **BASE_ALIASES,
+    **WARD_CONTEXT_ALIASES,
     "catalogo": "catalog",
     "catálogo": "catalog",
     "procedimento_catalogo": "catalog",
@@ -191,6 +206,7 @@ PROCEDURE_CATALOG_MATERIAL_ALIASES = {
 PROCEDURE_ALIASES = {
     **BASE_ALIASES,
     **PATIENT_ALIASES,
+    **WARD_CONTEXT_ALIASES,
     "profissional": "professional",
     "profissionais": "professional",
     "enfermeiro": "professional",
@@ -223,6 +239,7 @@ PROCEDURE_ALIASES = {
 
 PROCEDURE_ITEM_ALIASES = {
     **BASE_ALIASES,
+    **WARD_CONTEXT_ALIASES,
     "procedimento": "procedure",
     "procedure": "procedure",
     "catalogo": "catalog",
@@ -260,6 +277,7 @@ PROCEDURE_ITEM_ALIASES = {
 
 PROCEDURE_ITEM_VALUE_ALIASES = {
     **BASE_ALIASES,
+    **WARD_CONTEXT_ALIASES,
     "item": "item",
     "preco_unitario": "unit_price",
     "preço_unitário": "unit_price",
@@ -270,6 +288,7 @@ PROCEDURE_ITEM_VALUE_ALIASES = {
 
 PROCEDURE_MATERIAL_ALIASES = {
     **BASE_ALIASES,
+    **WARD_CONTEXT_ALIASES,
     "procedimento": "procedure",
     "procedure": "procedure",
     "item_procedimento": "procedure_item",
@@ -292,6 +311,7 @@ PROCEDURE_MATERIAL_ALIASES = {
 
 PROCEDURE_MATERIAL_VALUE_ALIASES = {
     **BASE_ALIASES,
+    **WARD_CONTEXT_ALIASES,
     "material": "material",
     "custo_unitario": "unit_cost",
     "custo_unitário": "unit_cost",
@@ -321,6 +341,7 @@ WARD_BED_ALIASES = {
 WARD_ADMISSION_ALIASES = {
     **BASE_ALIASES,
     **PATIENT_ALIASES,
+    **WARD_CONTEXT_ALIASES,
     "cama": "bed",
     "bed": "bed",
     "horas_observacao": "estimated_observation_hours",
@@ -349,33 +370,45 @@ class NursingRecordSerializer(LegacyAliasSerializerMixin, serializers.ModelSeria
     legacy_output_aliases = NURSING_RECORD_ALIASES
 
     patient_name = serializers.CharField(source="patient.name", read_only=True)
+    ward_name = serializers.CharField(source="ward.name", read_only=True)
     lab_request_code = serializers.CharField(source="lab_request.custom_id", read_only=True)
     lab_request_status = serializers.CharField(source="lab_request.status", read_only=True)
 
     class Meta:
         model = NursingRecord
         fields = "__all__"
-        read_only_fields = (*CORE_READ_ONLY_FIELDS, "patient_name", "lab_request_code", "lab_request_status", "record_date")
+        read_only_fields = (
+            *CORE_READ_ONLY_FIELDS,
+            "patient_name",
+            "ward_name",
+            "lab_request_code",
+            "lab_request_status",
+            "record_date",
+        )
 
 
 class ProcedureCatalogSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer):
     legacy_input_aliases = PROCEDURE_CATALOG_ALIASES
     legacy_output_aliases = PROCEDURE_CATALOG_ALIASES
 
+    ward_name = serializers.CharField(source="ward.name", read_only=True)
+
     class Meta:
         model = ProcedureCatalog
         fields = "__all__"
-        read_only_fields = CORE_READ_ONLY_FIELDS
+        read_only_fields = (*CORE_READ_ONLY_FIELDS, "ward_name")
 
 
 class ProcedureCatalogMaterialSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer):
     legacy_input_aliases = PROCEDURE_CATALOG_MATERIAL_ALIASES
     legacy_output_aliases = PROCEDURE_CATALOG_MATERIAL_ALIASES
 
+    ward_name = serializers.CharField(source="ward.name", read_only=True)
+
     class Meta:
         model = ProcedureCatalogMaterial
         fields = "__all__"
-        read_only_fields = (*CORE_READ_ONLY_FIELDS, "default_unit_cost")
+        read_only_fields = (*CORE_READ_ONLY_FIELDS, "ward_name", "default_unit_cost")
 
 
 class ProcedureSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer):
@@ -383,6 +416,7 @@ class ProcedureSerializer(LegacyAliasSerializerMixin, serializers.ModelSerialize
     legacy_output_aliases = PROCEDURE_ALIASES
 
     patient_name = serializers.CharField(source="patient.name", read_only=True)
+    ward_name = serializers.CharField(source="ward.name", read_only=True)
     professional_name = serializers.SerializerMethodField()
     professional_names = serializers.SerializerMethodField()
     workflow_status_display = serializers.CharField(source="get_workflow_status_display", read_only=True)
@@ -415,6 +449,7 @@ class ProcedureSerializer(LegacyAliasSerializerMixin, serializers.ModelSerialize
         read_only_fields = (
             *CORE_READ_ONLY_FIELDS,
             "patient_name",
+            "ward_name",
             "professional_name",
             "professional_names",
             "workflow_status_display",
@@ -433,6 +468,7 @@ class ProcedureItemSerializer(LegacyAliasSerializerMixin, serializers.ModelSeria
     legacy_input_aliases = PROCEDURE_ITEM_ALIASES
     legacy_output_aliases = PROCEDURE_ITEM_ALIASES
 
+    ward_name = serializers.CharField(source="ward.name", read_only=True)
     value_unitario = serializers.DecimalField(
         source="value.unit_price",
         max_digits=14,
@@ -442,18 +478,17 @@ class ProcedureItemSerializer(LegacyAliasSerializerMixin, serializers.ModelSeria
     catalog_name = serializers.CharField(source="catalog.name", read_only=True)
     catalog_code = serializers.CharField(source="catalog.procedure_code", read_only=True)
     execution_status_display = serializers.CharField(source="get_execution_status_display", read_only=True)
-    patient_name = serializers.CharField(source="procedure.patient.name", read_only=True)
 
     class Meta:
         model = ProcedureItem
         exclude = ("unit_price",)
         read_only_fields = (
             *CORE_READ_ONLY_FIELDS,
+            "ward_name",
             "value_unitario",
             "catalog_name",
             "catalog_code",
             "execution_status_display",
-            "patient_name",
         )
 
 
@@ -461,6 +496,11 @@ class ProcedureMaterialSerializer(LegacyAliasSerializerMixin, serializers.ModelS
     legacy_input_aliases = PROCEDURE_MATERIAL_ALIASES
     legacy_output_aliases = PROCEDURE_MATERIAL_ALIASES
 
+    procedure_code = serializers.CharField(source="procedure.custom_id", read_only=True)
+    product_name = serializers.CharField(source="product.name", read_only=True)
+    product_type = serializers.CharField(source="product.get_type_display", read_only=True)
+    lot_number = serializers.CharField(source="lot.lot_number", read_only=True)
+    ward_name = serializers.CharField(source="ward.name", read_only=True)
     value_unitario = serializers.DecimalField(
         source="value.unit_cost",
         max_digits=14,
@@ -471,57 +511,75 @@ class ProcedureMaterialSerializer(LegacyAliasSerializerMixin, serializers.ModelS
     class Meta:
         model = ProcedureMaterial
         exclude = ("unit_cost",)
-        read_only_fields = (*CORE_READ_ONLY_FIELDS, "value_unitario")
+        read_only_fields = (
+            *CORE_READ_ONLY_FIELDS,
+            "procedure_code",
+            "product_name",
+            "product_type",
+            "lot_number",
+            "ward_name",
+            "value_unitario",
+        )
 
 
 class ProcedureItemValueSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer):
     legacy_input_aliases = PROCEDURE_ITEM_VALUE_ALIASES
     legacy_output_aliases = PROCEDURE_ITEM_VALUE_ALIASES
 
+    ward_name = serializers.CharField(source="ward.name", read_only=True)
+
     class Meta:
         model = ProcedureItemValue
         fields = "__all__"
-        read_only_fields = CORE_READ_ONLY_FIELDS
+        read_only_fields = (*CORE_READ_ONLY_FIELDS, "ward_name")
 
 
 class ProcedureMaterialValueSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer):
     legacy_input_aliases = PROCEDURE_MATERIAL_VALUE_ALIASES
     legacy_output_aliases = PROCEDURE_MATERIAL_VALUE_ALIASES
 
+    ward_name = serializers.CharField(source="ward.name", read_only=True)
+
     class Meta:
         model = ProcedureMaterialValue
         fields = "__all__"
-        read_only_fields = CORE_READ_ONLY_FIELDS
+        read_only_fields = (*CORE_READ_ONLY_FIELDS, "ward_name")
 
 
 class NursingVitalSignSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer):
     legacy_input_aliases = VITAL_SIGN_ALIASES
     legacy_output_aliases = VITAL_SIGN_ALIASES
 
+    ward_name = serializers.CharField(source="ward.name", read_only=True)
+
     class Meta:
         model = NursingVitalSign
         fields = "__all__"
-        read_only_fields = CORE_READ_ONLY_FIELDS
+        read_only_fields = (*CORE_READ_ONLY_FIELDS, "ward_name")
 
 
 class NursingPrescriptionSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer):
     legacy_input_aliases = NURSING_PRESCRIPTION_ALIASES
     legacy_output_aliases = NURSING_PRESCRIPTION_ALIASES
 
+    ward_name = serializers.CharField(source="ward.name", read_only=True)
+
     class Meta:
         model = NursingPrescription
         fields = "__all__"
-        read_only_fields = (*CORE_READ_ONLY_FIELDS, "prescription_date")
+        read_only_fields = (*CORE_READ_ONLY_FIELDS, "ward_name", "prescription_date")
 
 
 class NursingEvolutionSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer):
     legacy_input_aliases = NURSING_EVOLUTION_ALIASES
     legacy_output_aliases = NURSING_EVOLUTION_ALIASES
 
+    ward_name = serializers.CharField(source="ward.name", read_only=True)
+
     class Meta:
         model = NursingEvolution
         fields = "__all__"
-        read_only_fields = (*CORE_READ_ONLY_FIELDS, "evolution_date")
+        read_only_fields = (*CORE_READ_ONLY_FIELDS, "ward_name", "evolution_date")
 
 
 class WardSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer):
@@ -552,7 +610,7 @@ class WardAdmissionSerializer(LegacyAliasSerializerMixin, serializers.ModelSeria
 
     patient_name = serializers.CharField(source="patient.name", read_only=True)
     bed_number = serializers.CharField(source="bed.number", read_only=True)
-    ward_name = serializers.CharField(source="bed.ward.name", read_only=True)
+    ward_name = serializers.CharField(source="ward.name", read_only=True)
 
     class Meta:
         model = WardAdmission

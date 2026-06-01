@@ -84,6 +84,20 @@ const DENTAL_INTERNAL_FIELDS = [
   "tenant",
 ]
 
+const NURSING_INTERNAL_FIELDS = [
+  "id",
+  "created_at",
+  "updated_at",
+  "custom_id",
+  "deleted",
+  "deleted_at",
+  "version",
+  "created_by",
+  "updated_by",
+  "deleted_by",
+  "tenant",
+]
+
 const WAREHOUSE_INTERNAL_FIELDS = [
   "id",
   "created_at",
@@ -2545,6 +2559,61 @@ function dentalPatientTreatmentPlanConfig(): ResourceFormConfig {
   }
 }
 
+function nursingProcedureMaterialConfig(): ResourceFormConfig {
+  return {
+    esconderCampos: [
+      ...NURSING_INTERNAL_FIELDS,
+      "ward",
+      "ward_name",
+      "procedure_item",
+      "inventory_movement",
+      "procedure_code",
+      "product_name",
+      "product_type",
+      "lot_number",
+      "value_unitario",
+    ],
+    ordenarCampos: ["procedure", "product", "quantity", "lot", "observation"],
+    labels: {
+      procedure: "Procedimento",
+      product: "Produto farmacêutico / médico-cirúrgico",
+      quantity: "Quantidade",
+      lot: "Lote específico",
+      observation: "Observações",
+    },
+    placeholders: {
+      observation: "Observações sobre o consumo ou uso do produto neste procedimento.",
+    },
+    hints: {
+      procedure: "Selecione o procedimento. O paciente fica apenas no procedimento, não no material.",
+      product:
+        "Vincule medicamentos, materiais, reagentes, insumos e outros produtos farmacêuticos ou médico-cirúrgicos.",
+      lot: "Opcional: quando não informado, o backend tenta selecionar um lote disponível.",
+    },
+    widgets: {
+      observation: "textarea",
+    },
+    etapas: [
+      {
+        titulo: "Procedimento",
+        descricao: "Contexto clínico herdado pelo material",
+        campos: ["procedure"],
+      },
+      {
+        titulo: "Produto",
+        descricao: "Produto consumido ou associado ao procedimento",
+        campos: ["product", "quantity", "lot"],
+      },
+      {
+        titulo: "Observações",
+        descricao: "Detalhes adicionais do consumo",
+        campos: ["observation"],
+      },
+    ],
+    lembrarCampos: ["procedure"],
+  }
+}
+
 export function getResourceFormConfig(
   groupKey: string,
   resourceKey: string,
@@ -2569,6 +2638,13 @@ export function getResourceFormConfig(
     }
     if (r === "patient_treatment_plan" || ep === "/dental/patient_treatment_plan/") {
       return dentalPatientTreatmentPlanConfig()
+    }
+    return null
+  }
+
+  if (g === "nursing") {
+    if (r === "procedure_material" || ep === "/nursing/procedure_material/") {
+      return nursingProcedureMaterialConfig()
     }
     return null
   }

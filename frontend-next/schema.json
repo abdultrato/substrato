@@ -39287,6 +39287,314 @@
         ]
       }
     },
+    "/api/v1/identity/passwordresettoken/": {
+      "get": {
+        "operationId": "listPasswordResetTokens",
+        "description": "",
+        "parameters": [
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PasswordResetToken"
+                  }
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      },
+      "post": {
+        "operationId": "createPasswordResetToken",
+        "description": "",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PasswordResetToken"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/PasswordResetToken"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/PasswordResetToken"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PasswordResetToken"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      }
+    },
+    "/api/v1/identity/passwordresettoken/{id}/": {
+      "get": {
+        "operationId": "retrievePasswordResetToken",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Um valor inteiro \u00fanico que identifica este Token de Reset de Password.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PasswordResetToken"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      },
+      "put": {
+        "operationId": "updatePasswordResetToken",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Um valor inteiro \u00fanico que identifica este Token de Reset de Password.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PasswordResetToken"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/PasswordResetToken"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/PasswordResetToken"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PasswordResetToken"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      },
+      "patch": {
+        "operationId": "partialUpdatePasswordResetToken",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Um valor inteiro \u00fanico que identifica este Token de Reset de Password.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PasswordResetToken"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/PasswordResetToken"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/PasswordResetToken"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PasswordResetToken"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      },
+      "delete": {
+        "operationId": "destroyPasswordResetToken",
+        "description": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Um valor inteiro \u00fanico que identifica este Token de Reset de Password.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Um termo de busca.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ordering",
+            "required": false,
+            "in": "query",
+            "description": "Qual campo usar ao ordenar os resultados.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "api"
+        ]
+      }
+    },
     "/api/v1/identity/perfilprofissional/": {
       "get": {
         "operationId": "listProfessionalProfiles",
@@ -79894,6 +80202,10 @@
             "type": "integer",
             "readOnly": true
           },
+          "ward_name": {
+            "type": "string",
+            "readOnly": true
+          },
           "created_at": {
             "type": "string",
             "format": "date-time",
@@ -79954,6 +80266,10 @@
             "type": "string",
             "readOnly": true
           },
+          "ward": {
+            "type": "integer",
+            "nullable": true
+          },
           "patient": {
             "type": "integer"
           }
@@ -79969,6 +80285,10 @@
         "properties": {
           "id": {
             "type": "integer",
+            "readOnly": true
+          },
+          "ward_name": {
+            "type": "string",
             "readOnly": true
           },
           "created_at": {
@@ -80034,6 +80354,10 @@
             "type": "string",
             "readOnly": true
           },
+          "ward": {
+            "type": "integer",
+            "nullable": true
+          },
           "patient": {
             "type": "integer"
           }
@@ -80052,6 +80376,10 @@
             "readOnly": true
           },
           "patient_name": {
+            "type": "string",
+            "readOnly": true
+          },
+          "ward_name": {
             "type": "string",
             "readOnly": true
           },
@@ -80146,6 +80474,10 @@
             "type": "string",
             "readOnly": true
           },
+          "ward": {
+            "type": "integer",
+            "nullable": true
+          },
           "patient": {
             "type": "integer"
           },
@@ -80164,6 +80496,10 @@
         "properties": {
           "id": {
             "type": "integer",
+            "readOnly": true
+          },
+          "ward_name": {
+            "type": "string",
             "readOnly": true
           },
           "created_at": {
@@ -80246,6 +80582,10 @@
             "type": "string",
             "readOnly": true
           },
+          "ward": {
+            "type": "integer",
+            "nullable": true
+          },
           "patient": {
             "type": "integer"
           },
@@ -80267,6 +80607,10 @@
             "readOnly": true
           },
           "patient_name": {
+            "type": "string",
+            "readOnly": true
+          },
+          "ward_name": {
             "type": "string",
             "readOnly": true
           },
@@ -80406,6 +80750,10 @@
             "type": "string",
             "readOnly": true
           },
+          "ward": {
+            "type": "integer",
+            "nullable": true
+          },
           "patient": {
             "type": "integer"
           },
@@ -80437,6 +80785,10 @@
         "properties": {
           "id": {
             "type": "integer",
+            "readOnly": true
+          },
+          "ward_name": {
+            "type": "string",
             "readOnly": true
           },
           "created_at": {
@@ -80524,6 +80876,10 @@
           "tenant": {
             "type": "string",
             "readOnly": true
+          },
+          "ward": {
+            "type": "integer",
+            "nullable": true
           }
         },
         "required": [
@@ -80535,6 +80891,10 @@
         "properties": {
           "id": {
             "type": "integer",
+            "readOnly": true
+          },
+          "ward_name": {
+            "type": "string",
             "readOnly": true
           },
           "created_at": {
@@ -80603,6 +80963,10 @@
             "type": "string",
             "readOnly": true
           },
+          "ward": {
+            "type": "integer",
+            "nullable": true
+          },
           "catalog": {
             "type": "integer"
           },
@@ -80622,6 +80986,10 @@
             "type": "integer",
             "readOnly": true
           },
+          "ward_name": {
+            "type": "string",
+            "readOnly": true
+          },
           "value_unitario": {
             "type": "string",
             "format": "decimal",
@@ -80639,10 +81007,6 @@
             "readOnly": true
           },
           "execution_status_display": {
-            "type": "string",
-            "readOnly": true
-          },
-          "patient_name": {
             "type": "string",
             "readOnly": true
           },
@@ -80738,6 +81102,10 @@
             "type": "string",
             "readOnly": true
           },
+          "ward": {
+            "type": "integer",
+            "nullable": true
+          },
           "procedure": {
             "type": "integer"
           },
@@ -80755,6 +81123,10 @@
         "properties": {
           "id": {
             "type": "integer",
+            "readOnly": true
+          },
+          "ward_name": {
+            "type": "string",
             "readOnly": true
           },
           "created_at": {
@@ -80815,6 +81187,10 @@
             "type": "string",
             "readOnly": true
           },
+          "ward": {
+            "type": "integer",
+            "nullable": true
+          },
           "item": {
             "type": "integer"
           }
@@ -80828,6 +81204,26 @@
         "properties": {
           "id": {
             "type": "integer",
+            "readOnly": true
+          },
+          "procedure_code": {
+            "type": "string",
+            "readOnly": true
+          },
+          "product_name": {
+            "type": "string",
+            "readOnly": true
+          },
+          "product_type": {
+            "type": "string",
+            "readOnly": true
+          },
+          "lot_number": {
+            "type": "string",
+            "readOnly": true
+          },
+          "ward_name": {
+            "type": "string",
             "readOnly": true
           },
           "value_unitario": {
@@ -80896,6 +81292,10 @@
             "type": "string",
             "readOnly": true
           },
+          "ward": {
+            "type": "integer",
+            "nullable": true
+          },
           "procedure": {
             "type": "integer"
           },
@@ -80926,6 +81326,10 @@
         "properties": {
           "id": {
             "type": "integer",
+            "readOnly": true
+          },
+          "ward_name": {
+            "type": "string",
             "readOnly": true
           },
           "created_at": {
@@ -80985,6 +81389,10 @@
           "tenant": {
             "type": "string",
             "readOnly": true
+          },
+          "ward": {
+            "type": "integer",
+            "nullable": true
           },
           "material": {
             "type": "integer"
@@ -81164,6 +81572,10 @@
           "tenant": {
             "type": "string",
             "readOnly": true
+          },
+          "ward": {
+            "type": "integer",
+            "nullable": true
           },
           "bed": {
             "type": "integer"
@@ -91005,6 +91417,29 @@
           "collected_at",
           "expires_at",
           "donation"
+        ]
+      },
+      "PasswordResetToken": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "readOnly": true
+          },
+          "user": {
+            "type": "integer"
+          },
+          "used": {
+            "type": "boolean"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          }
+        },
+        "required": [
+          "user"
         ]
       },
       "ProfessionalProfile": {

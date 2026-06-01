@@ -34,6 +34,103 @@ class Ward(CoreModel):
         return self.name or (self.custom_id or f"Enfermaria {self.pk}")
 
 
+class WardScopedModel(models.Model):
+    """Base abstrata para registos operacionais vinculados a uma enfermaria."""
+
+    ward_source_paths: tuple[str, ...] = ()
+
+    ward = models.ForeignKey(
+        "enfermagem.Ward",
+        db_column="ward_id",
+        verbose_name="Enfermaria",
+        on_delete=models.PROTECT,
+        related_name="%(app_label)s_%(class)s_items",
+        null=True,
+        blank=True,
+        db_index=True,
+    )
+
+    class Meta:
+        abstract = True
+
+    def _resolve_path(self, path: str):
+        value = self
+        for part in path.replace("__", ".").split("."):
+            if not part:
+                continue
+            value = getattr(value, part, None)
+            if value is None:
+                return None
+        return value
+
+    def _ward_from_source_value(self, value):
+        if value is None:
+            return None
+        if isinstance(value, Ward):
+            return value
+        return getattr(value, "ward", None)
+
+    def _source_ward(self):
+        source_ward = None
+        source_label = ""
+
+        for path in self.ward_source_paths:
+            ward = self._ward_from_source_value(self._resolve_path(path))
+            if ward is None:
+                continue
+
+            if source_ward is None:
+                source_ward = ward
+                source_label = path
+                continue
+
+            if source_ward.pk and ward.pk and source_ward.pk != ward.pk:
+                raise ValidationError(
+                    {
+                        "ward": (
+                            "As referências de enfermaria do registo não coincidem "
+                            f"entre {source_label} e {path}."
+                        )
+                    }
+                )
+
+        return source_ward
+
+    def sync_ward_context(self) -> set[str]:
+        changed_fields: set[str] = set()
+        source_ward = self._source_ward()
+
+        if source_ward is not None:
+            if not self.ward_id:
+                self.ward = source_ward
+                changed_fields.add("ward")
+            elif source_ward.pk and self.ward_id != source_ward.pk:
+                raise ValidationError(
+                    {"ward": "Enfermaria informada não coincide com a enfermaria do registo relacionado."}
+                )
+
+        if self.ward_id:
+            ward_tenant_id = self.ward.tenant_id
+            if not self.tenant_id:
+                self.tenant_id = ward_tenant_id
+                changed_fields.add("tenant")
+            elif self.tenant_id != ward_tenant_id:
+                raise ValidationError({"ward": "Enfermaria e registo devem pertencer ao mesmo tenant."})
+
+        return changed_fields
+
+    def clean(self):
+        super().clean()
+        self.sync_ward_context()
+
+    def save(self, *args, **kwargs):
+        changed_fields = self.sync_ward_context()
+        update_fields = kwargs.get("update_fields")
+        if update_fields is not None and changed_fields:
+            kwargs["update_fields"] = set(update_fields) | changed_fields
+        return super().save(*args, **kwargs)
+
+
 class WardBed(NoNameCoreModel):
     """Cama vinculada a uma enfermaria."""
 
@@ -96,10 +193,11 @@ class WardBed(NoNameCoreModel):
         return f"Cama {self.number} ({self.ward})"
 
 
-class WardAdmission(NoNameCoreModel):
+class WardAdmission(WardScopedModel, NoNameCoreModel):
     """Internamento/ocupação de uma cama por um paciente (inclui próxima medicação)."""
 
     prefix = "INT"
+    ward_source_paths = ("bed",)
 
     bed = models.ForeignKey(
 

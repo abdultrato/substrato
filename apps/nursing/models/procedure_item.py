@@ -7,11 +7,13 @@ from django.db import models, transaction
 from apps.pharmacy.models.lot import Lot
 from core.mixins.model.position import ScopedPositionMixin
 from core.models.base import NoNameCoreModel
+from .ward import WardScopedModel
 
 
-class ProcedureItem(ScopedPositionMixin, NoNameCoreModel):
+class ProcedureItem(ScopedPositionMixin, WardScopedModel, NoNameCoreModel):
     """Serviço (ato) realizado dentro de um procedimento de enfermagem."""
     prefix = "PROCIT"
+    ward_source_paths = ("procedure", "catalog")
 
     class ExecutionStatus(models.TextChoices):
         PENDING = "PEN", "Pendente"
@@ -267,6 +269,7 @@ class ProcedureItem(ScopedPositionMixin, NoNameCoreModel):
                 # A baixa de estoque será exigida no momento da invoiceção/emissão.
                 material = ProcedureMaterial(
                     tenant=self.tenant,
+                    ward=self.ward,
                     procedure=self.procedure,
                     procedure_item=self,
                     product=material_padrao.product,
@@ -279,6 +282,7 @@ class ProcedureItem(ScopedPositionMixin, NoNameCoreModel):
             else:
                 material = ProcedureMaterial(
                     tenant=self.tenant,
+                    ward=self.ward,
                     procedure=self.procedure,
                     procedure_item=self,
                     product=material_padrao.product,

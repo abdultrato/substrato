@@ -10,6 +10,10 @@ from .models import (
     ProcedureItemValue,
     ProcedureMaterial,
     ProcedureMaterialValue,
+    Ward,
+    WardAdmission,
+    WardBed,
+    WardScopedModel,
 )
 
 __all__ = [
@@ -24,4 +28,8 @@ __all__ = [
     "ProcedureItemValue",
     "ProcedureMaterial",
     "ProcedureMaterialValue",
+    "Ward",
+    "WardAdmission",
+    "WardBed",
+    "WardScopedModel",
 ]

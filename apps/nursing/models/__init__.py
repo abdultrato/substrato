@@ -9,7 +9,7 @@ from .procedure_item_value import ProcedureItemValue
 from .procedure_material import ProcedureMaterial
 from .procedure_material_value import ProcedureMaterialValue
 from .vital_sign import NursingVitalSign
-from .ward import Ward, WardAdmission, WardBed
+from .ward import Ward, WardAdmission, WardBed, WardScopedModel
 
 __all__ = [
     "NursingEvolution",
@@ -26,4 +26,5 @@ __all__ = [
     "Ward",
     "WardAdmission",
     "WardBed",
+    "WardScopedModel",
 ]
