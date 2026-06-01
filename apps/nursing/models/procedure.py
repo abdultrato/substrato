@@ -180,12 +180,9 @@ class Procedure(NoNameCoreModel):
                 .get(pk=self.pk)
             )
 
-            # Busca items com lock também para evitar leitura suja
-            items = list(
-                locked_procedure.itens
-                .select_for_update()
-                .filter(deleted=False)
-            )
+            # Busca itens com lock também para evitar leitura suja.
+            items_qs = locked_procedure.itens.select_for_update().filter(deleted=False)
+            items = list(items_qs)
 
             if not items:
                 workflow_status = self.WorkflowStatus.REQUESTED
@@ -194,21 +191,20 @@ class Procedure(NoNameCoreModel):
                 executed_at = None
                 completed_at = None
             else:
-                # OTIMIZAÇÃO P1: Usar aggregate() em vez de loops em Python
-                from django.db.models import Count, Max, Q, Case, When, Value
-                from django.db.models.functions import Greatest
+                # OTIMIZAÇÃO P1: Usar aggregate() no related_name real (`itens`).
+                from django.db.models import Count, Max, Q
 
-                agg_result = self.__class__._default_manager.filter(pk=self.pk).values_list('id').aggregate(
-                    billed_count=Count('items', filter=Q(items__billed=True)),
-                    total_items=Count('items'),
-                    max_billed_at=Max('items__billed_at'),
-                    max_executed_at=Max('items__executed_at'),
-                    max_completed_at=Max('items__completed_at'),
-                    pending_count=Count('items', filter=Q(items__execution_status='PENDING')),
-                    executed_count=Count('items', filter=Q(items__execution_status='EXECUTED')),
-                    completed_count=Count('items', filter=Q(items__execution_status='COMPLETED')),
-                    not_completed_count=Count('items', filter=Q(items__execution_status='NOT_COMPLETED')),
-                )[0] if items else None
+                agg_result = items_qs.aggregate(
+                    billed_count=Count("id", filter=Q(billed=True)),
+                    total_items=Count("id"),
+                    max_billed_at=Max("billed_at"),
+                    max_executed_at=Max("executed_at"),
+                    max_completed_at=Max("completed_at"),
+                    pending_count=Count("id", filter=Q(execution_status="PEN")),
+                    executed_count=Count("id", filter=Q(execution_status="EXE")),
+                    completed_count=Count("id", filter=Q(execution_status="CON")),
+                    not_completed_count=Count("id", filter=Q(execution_status="NCO")),
+                )
 
                 # Se não temos items, manter valores anteriores
                 if not agg_result or agg_result['total_items'] == 0:

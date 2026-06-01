@@ -203,6 +203,8 @@ def should_select_knowledge_base(*, message: str, active_module: str = "", tenan
         "ajuda",
         "ajude",
         "como",
+        "qual e",
+        "qual é",
         "o que",
         "oque",
         "onde",
@@ -319,28 +321,46 @@ def entry_by_id(entry_id: str, *, tenant=None) -> KnowledgeEntry | None:
 
 
 def rank_knowledge_entries(message: str, *, limit: int = 5, tenant=None, active_module: str = "") -> list[RankedEntry]:
-    # Try vector search first if available
-    vector_results = _vector_search_knowledge_entries(message, limit=limit, tenant=tenant)
-    if vector_results:
-        # Convert vector results to RankedEntry objects
-        ranked: list[RankedEntry] = []
-        for entry_id, score in vector_results:
-            entry = entry_by_id(entry_id, tenant=tenant)
-            if entry:
-                # Get the best matched question for this entry
-                _, matched_question = _entry_score(entry=entry, normalized=normalize_text(message))
-                # Apply module boost
-                score = min(1.0, score + _module_boost(entry=entry, active_module=active_module))
-                ranked.append(RankedEntry(entry=entry, score=score, matched_question=matched_question))
-
-        # Sort by score and return
-        ranked.sort(key=lambda item: (item.score, item.entry.priority, item.entry.source == "database"), reverse=True)
-        return ranked[:limit]
-
-    # Fallback to original text-based search
     normalized = normalize_text(message)
     if not normalized:
         return []
+
+    text_ranked = _text_rank_knowledge_entries(
+        normalized=normalized,
+        tenant=tenant,
+        active_module=active_module,
+        limit=limit,
+    )
+    if text_ranked and text_ranked[0].score >= 0.84:
+        return text_ranked[:limit]
+
+    # Try vector search when text matching is not confident enough.
+    vector_results = _vector_search_knowledge_entries(message, limit=limit, tenant=tenant)
+    if vector_results:
+        ranked_by_entry: dict[str, RankedEntry] = {item.entry.id: item for item in text_ranked}
+        for entry_id, score in vector_results:
+            entry = entry_by_id(entry_id, tenant=tenant)
+            if entry:
+                _, matched_question = _entry_score(entry=entry, normalized=normalized)
+                score = min(1.0, score + _module_boost(entry=entry, active_module=active_module))
+                current = ranked_by_entry.get(entry.id)
+                if current is None or score > current.score:
+                    ranked_by_entry[entry.id] = RankedEntry(entry=entry, score=score, matched_question=matched_question)
+
+        ranked = list(ranked_by_entry.values())
+        ranked.sort(key=lambda item: (item.score, item.entry.priority, item.entry.source == "database"), reverse=True)
+        return ranked[:limit]
+
+    return text_ranked[:limit]
+
+
+def _text_rank_knowledge_entries(
+    *,
+    normalized: str,
+    tenant=None,
+    active_module: str = "",
+    limit: int = 5,
+) -> list[RankedEntry]:
     ranked: list[RankedEntry] = []
     for entry in knowledge_entries(tenant=tenant):
         score, matched = _entry_score(entry=entry, normalized=normalized)

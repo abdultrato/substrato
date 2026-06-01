@@ -168,6 +168,18 @@ MODULE_CONTEXT_TERMS: dict[str, tuple[str, ...]] = {
         "500",
         "health",
     ),
+    "equipment_integrations": (
+        "equipamento integrado",
+        "equipamentos integrados",
+        "integracao de equipamento",
+        "integração de equipamento",
+        "integracao de equipamentos",
+        "integração de equipamentos",
+        "credencial de integracao",
+        "credencial de integração",
+        "analisador integrado",
+        "http_json",
+    ),
     "education": (
         "educacao",
         "escola",

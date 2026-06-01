@@ -20,6 +20,41 @@ CORE_READ_ONLY_FIELDS = (
     "version",
 )
 
+CONSULTATION_SPECIALTY_ALIASES = {
+    "descricao": "description",
+    "descrição": "description",
+    "preco": "base_price",
+    "preço": "base_price",
+    "preco_base": "base_price",
+    "preço_base": "base_price",
+    "preco base": "base_price",
+    "preço base": "base_price",
+    "iva": "vat_percentage",
+    "vat": "vat_percentage",
+    "percentagem_iva": "vat_percentage",
+    "percentagem iva": "vat_percentage",
+    "ativo": "active",
+    "ativa": "active",
+}
+
+MEDICAL_CONSULTATION_ALIASES = {
+    "paciente": "patient",
+    "doente": "patient",
+    "especialidade": "specialty",
+    "servico": "specialty",
+    "serviço": "specialty",
+    "medico": "doctor",
+    "médico": "doctor",
+    "agendada para": "scheduled_for",
+    "marcada para": "scheduled_for",
+    "data": "scheduled_for",
+    "descricao": "description",
+    "descrição": "description",
+    "feriado manual": "manual_holiday",
+    "feriado_manual": "manual_holiday",
+    "manual holiday": "manual_holiday",
+}
+
 
 class DoctorSerializer(serializers.ModelSerializer):
     role_name = serializers.CharField(source="role.name", read_only=True)
@@ -39,6 +74,7 @@ class MedicalConsultationSerializer(serializers.ModelSerializer):
     invoice_id = serializers.SerializerMethodField(method_name="get_invoice_id")
     invoice_code = serializers.SerializerMethodField(method_name="get_invoice_code")
     invoice_status = serializers.SerializerMethodField(method_name="get_invoice_status")
+    legacy_input_aliases = MEDICAL_CONSULTATION_ALIASES
 
     class Meta:
         model = MedicalConsultation
@@ -99,6 +135,8 @@ class MedicalConsultationSerializer(serializers.ModelSerializer):
 
 
 class ConsultationSpecialtySerializer(serializers.ModelSerializer):
+    legacy_input_aliases = CONSULTATION_SPECIALTY_ALIASES
+
     class Meta:
         model = ConsultationSpecialty
         fields = "__all__"

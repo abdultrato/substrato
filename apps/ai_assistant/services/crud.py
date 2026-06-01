@@ -1593,7 +1593,7 @@ class AiCrudActionRunner:
 
     def _current_nursing_procedure_item_status(self, *, descriptor: ResourceDescriptor, tenant, user, object_pk: Any) -> str:
         queryset = scoped_queryset_for_resource(descriptor=descriptor, tenant=tenant, user=user)
-        item = queryset.filter(pk=object_pk).only("execution_status").first()
+        item = queryset.filter(pk=object_pk).first()
         return str(getattr(item, "execution_status", "") or "")
 
     @staticmethod

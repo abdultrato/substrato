@@ -510,7 +510,7 @@ class NursingEvolutionViewSet(TenantScopedModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return NursingEvolution.objects.select_related('patient', 'record', 'tenant')
+        return NursingEvolution.objects.select_related('patient', 'tenant')
     search_fields = [
         "custom_id",
         "name",

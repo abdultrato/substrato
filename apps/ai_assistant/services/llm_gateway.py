@@ -368,7 +368,7 @@ class LocalLlmGateway:
             )
         return "\n\n".join(
             [
-                "Não posso fazê-lo porque o utilizador autenticado não tem acesso aos dados solicitados nem permissão para este recurso.",
+                "Não posso fazê-lo porque o utilizador autenticado não tem permissão para este recurso e não tem acesso aos dados solicitados.",
                 f"Recurso(s) bloqueado(s): {resources}.",
                 "Evidência interna usada: RBAC e catálogo de recursos da API.",
                 "Limitação: nenhum dado operacional do recurso bloqueado foi consultado.",

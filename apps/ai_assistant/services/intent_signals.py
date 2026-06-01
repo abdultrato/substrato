@@ -194,6 +194,8 @@ SUPPORT_TERMS = (
     "ajuda",
     "ajude",
     "como",
+    "qual e",
+    "qual é",
     "o que",
     "oque",
     "onde",
