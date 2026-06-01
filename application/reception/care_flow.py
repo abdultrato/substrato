@@ -130,14 +130,21 @@ def create_request_for_checkin(
     request.full_clean()
     request.save()
 
-    for exam in exams:
-        item = LabRequestItem(
+    # OTIMIZAÇÃO P1: Usar bulk_create em vez de criar em loop
+    items_to_create = [
+        LabRequestItem(
             tenant=checkin.tenant,
             request=request,
             exam=exam,
         )
+        for exam in exams
+    ]
+
+    # Validar e criar em batch
+    for item in items_to_create:
         item.full_clean()
-        item.save()
+
+    LabRequestItem.objects.bulk_create(items_to_create)
 
     Result.objects.get_or_create(
         request=request,

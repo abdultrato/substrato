@@ -228,6 +228,11 @@ class ProcedureItem(ScopedPositionMixin, NoNameCoreModel):
         )
 
         materiais = self.catalog.materiais_padrao.select_related("product").all()
+
+        # OTIMIZAÇÃO P1: Usar bulk_create em vez de criar em loop
+        materials_to_create = []
+        materials_to_save_without_stock = []
+
         for material_padrao in materiais:
             quantity_material = material_padrao.default_quantity * Decimal(self.quantity or 0)
             if quantity_material <= 0:
@@ -270,9 +275,9 @@ class ProcedureItem(ScopedPositionMixin, NoNameCoreModel):
                     unit_cost=cost,
                     observation=material_padrao.observation,
                 )
-                material.save(alocar_estoque=False)
+                materials_to_save_without_stock.append(material)
             else:
-                ProcedureMaterial.objects.create(
+                material = ProcedureMaterial(
                     tenant=self.tenant,
                     procedure=self.procedure,
                     procedure_item=self,
@@ -282,6 +287,15 @@ class ProcedureItem(ScopedPositionMixin, NoNameCoreModel):
                     unit_cost=cost,
                     observation=material_padrao.observation,
                 )
+                materials_to_create.append(material)
+
+        # Criar em batch com estoque disponível
+        if materials_to_create:
+            ProcedureMaterial.objects.bulk_create(materials_to_create)
+
+        # Salvar sem alocar estoque
+        for material in materials_to_save_without_stock:
+            material.save(alocar_estoque=False)
 
     @transaction.atomic
     def save(self, *args, **kwargs):

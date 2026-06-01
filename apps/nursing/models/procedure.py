@@ -194,46 +194,64 @@ class Procedure(NoNameCoreModel):
                 executed_at = None
                 completed_at = None
             else:
-                billed_count = sum(1 for item in items if item.billed)
-                if billed_count == 0:
+                # OTIMIZAÇÃO P1: Usar aggregate() em vez de loops em Python
+                from django.db.models import Count, Max, Q, Case, When, Value
+                from django.db.models.functions import Greatest
+
+                agg_result = self.__class__._default_manager.filter(pk=self.pk).values_list('id').aggregate(
+                    billed_count=Count('items', filter=Q(items__billed=True)),
+                    total_items=Count('items'),
+                    max_billed_at=Max('items__billed_at'),
+                    max_executed_at=Max('items__executed_at'),
+                    max_completed_at=Max('items__completed_at'),
+                    pending_count=Count('items', filter=Q(items__execution_status='PENDING')),
+                    executed_count=Count('items', filter=Q(items__execution_status='EXECUTED')),
+                    completed_count=Count('items', filter=Q(items__execution_status='COMPLETED')),
+                    not_completed_count=Count('items', filter=Q(items__execution_status='NOT_COMPLETED')),
+                )[0] if items else None
+
+                # Se não temos items, manter valores anteriores
+                if not agg_result or agg_result['total_items'] == 0:
+                    workflow_status = self.WorkflowStatus.REQUESTED
                     billing_status = self.BillingStatus.PENDING
                     billed_at = None
-                elif billed_count == len(items):
-                    billing_status = self.BillingStatus.BILLED
-                    billed_dates = [item.billed_at for item in items if item.billed_at]
-                    billed_at = max(billed_dates) if billed_dates else timezone.now()
+                    executed_at = None
+                    completed_at = None
                 else:
-                    billing_status = self.BillingStatus.PARTIAL
-                    billed_dates = [item.billed_at for item in items if item.billed_at]
-                    billed_at = max(billed_dates) if billed_dates else None
+                    billed_count = agg_result['billed_count'] or 0
+                    total_items = agg_result['total_items'] or 0
 
-                statuses = {item.execution_status for item in items}
-                execution_status = items[0].ExecutionStatus
-                if statuses == {execution_status.PENDING}:
-                    workflow_status = (
-                        self.WorkflowStatus.BILLED if billing_status == self.BillingStatus.BILLED else self.WorkflowStatus.REQUESTED
-                    )
-                elif statuses == {execution_status.EXECUTED}:
-                    workflow_status = self.WorkflowStatus.EXECUTED
-                elif statuses == {execution_status.COMPLETED}:
-                    workflow_status = self.WorkflowStatus.COMPLETED
-                elif statuses == {execution_status.NOT_COMPLETED}:
-                    workflow_status = self.WorkflowStatus.NOT_COMPLETED
-                else:
-                    workflow_status = self.WorkflowStatus.PARTIAL
+                    if billed_count == 0:
+                        billing_status = self.BillingStatus.PENDING
+                        billed_at = None
+                    elif billed_count == total_items:
+                        billing_status = self.BillingStatus.BILLED
+                        billed_at = agg_result['max_billed_at'] or timezone.now()
+                    else:
+                        billing_status = self.BillingStatus.PARTIAL
+                        billed_at = agg_result['max_billed_at']
 
-                executed_dates = [
-                    dt
-                    for dt in [item.executed_at for item in items]
-                    if dt is not None
-                ]
-                completed_dates = [
-                    dt
-                    for dt in [item.completed_at for item in items]
-                    if dt is not None
-                ]
-                executed_at = max(executed_dates) if executed_dates else None
-                completed_at = max(completed_dates) if completed_dates else None
+                    # Determinar workflow status baseado na contagem agregada
+                    pending_count = agg_result['pending_count'] or 0
+                    executed_count = agg_result['executed_count'] or 0
+                    completed_count = agg_result['completed_count'] or 0
+                    not_completed_count = agg_result['not_completed_count'] or 0
+
+                    if pending_count == total_items:
+                        workflow_status = (
+                            self.WorkflowStatus.BILLED if billing_status == self.BillingStatus.BILLED else self.WorkflowStatus.REQUESTED
+                        )
+                    elif executed_count == total_items:
+                        workflow_status = self.WorkflowStatus.EXECUTED
+                    elif completed_count == total_items:
+                        workflow_status = self.WorkflowStatus.COMPLETED
+                    elif not_completed_count == total_items:
+                        workflow_status = self.WorkflowStatus.NOT_COMPLETED
+                    else:
+                        workflow_status = self.WorkflowStatus.PARTIAL
+
+                    executed_at = agg_result['max_executed_at']
+                    completed_at = agg_result['max_completed_at']
 
             self.__class__.all_objects.filter(pk=self.pk).update(
                 workflow_status=workflow_status,

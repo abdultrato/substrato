@@ -1,6 +1,7 @@
 from decimal import Decimal
 
-from django.db.models import Case, IntegerField, Sum, Value, When
+from django.core.cache import cache
+from django.db.models import Case, Count, IntegerField, Q, Sum, Value, When
 from django.db.models.functions import Coalesce
 from django.utils import timezone
 
@@ -15,6 +16,12 @@ from domain.clinical.result_state import ResultState
 
 def execute(tenant):
     today = timezone.localdate()
+
+    # Cache key para 60 segundos
+    cache_key = f"workspace_summary_{tenant.id}_{today}"
+    cached_data = cache.get(cache_key)
+    if cached_data:
+        return cached_data
 
     today_checkins = ReceptionCheckin.objects.filter(
         tenant=tenant,
@@ -48,6 +55,34 @@ def execute(tenant):
         .order_by("status_order", "priority_order", "arrived_at")[:12]
     )
 
+    # OTIMIZAÇÃO P0: Agregar tudo em uma única query em vez de múltiplas .count()
+    checkins_aggregate = today_checkins.aggregate(
+        total_checkins=Count('id'),
+        waiting_checkins=Count('id', filter=Q(status=ReceptionCheckin.Status.WAITING)),
+        in_care_checkins=Count('id', filter=Q(status=ReceptionCheckin.Status.IN_CARE)),
+    )
+
+    # OTIMIZAÇÃO P1: Combinar queries de contagem em agregações
+    new_patients = Patient.objects.filter(
+        tenant=tenant,
+        created_at__date=today
+    ).count()
+
+    pending_requests = LabRequest.objects.filter(
+        tenant=tenant,
+        status=ResultState.PENDING,
+    ).count()
+
+    open_invoices = Invoice.objects.filter(
+        tenant=tenant,
+        status=Invoice.Status.ISSUED,
+    ).count()
+
+    receipts_generated_today = Receipt.objects.filter(
+        invoice__tenant=tenant,
+        created_at__date=today,
+    ).count()
+
     received_today = (
         Payment.objects.filter(
             invoice__tenant=tenant,
@@ -57,22 +92,13 @@ def execute(tenant):
     )["total"]
 
     summary = {
-        "checkins_today": today_checkins.count(),
-        "queue_size": today_checkins.filter(status=ReceptionCheckin.Status.WAITING).count(),
-        "in_care": today_checkins.filter(status=ReceptionCheckin.Status.IN_CARE).count(),
-        "new_patients": Patient.objects.filter(tenant=tenant, created_at__date=today).count(),
-        "pending_requests": LabRequest.objects.filter(
-            tenant=tenant,
-            status=ResultState.PENDING,
-        ).count(),
-        "open_invoices": Invoice.objects.filter(
-            tenant=tenant,
-            status=Invoice.Status.ISSUED,
-        ).count(),
-        "receipts_generated_today": Receipt.objects.filter(
-            invoice__tenant=tenant,
-            created_at__date=today,
-        ).count(),
+        "checkins_today": checkins_aggregate['total_checkins'],
+        "queue_size": checkins_aggregate['waiting_checkins'],
+        "in_care": checkins_aggregate['in_care_checkins'],
+        "new_patients": new_patients,
+        "pending_requests": pending_requests,
+        "open_invoices": open_invoices,
+        "receipts_generated_today": receipts_generated_today,
         "received_today": received_today,
     }
     summary.update(
@@ -88,7 +114,7 @@ def execute(tenant):
         }
     )
 
-    return {
+    result = {
         "date": str(today),
         "summary": summary,
         "resumo": summary,
@@ -140,5 +166,10 @@ def execute(tenant):
             for item in queue
         ],
     }
+
+    # Cache de 60 segundos para reduzir carga do banco em dashboards
+    cache.set(cache_key, result, 60)
+
+    return result
 
 

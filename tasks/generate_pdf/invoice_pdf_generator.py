@@ -19,23 +19,23 @@ from reportlab.platypus import (
 
 from apps.billing.models.invoice_items import InvoiceItem
 
-from .pdf_base import (
-    FONT_BOLD,
-    NumberedCanvas,
+from .institutional_pdf_design import (
+    FONT_BOLD_INST as FONT_BOLD,
+    InstitutionalNumberedCanvas as NumberedCanvas,
     PDF_BOTTOM_MARGIN,
     PDF_HEADER_TOP_MARGIN,
     PDF_MARGIN,
     append_fim,
-    bold,
-    cell_paragraph,
-    document_section_style,
-    document_title_style,
-    draw_line_full_width,
-    montar_bloco_identificacao,
-    on_page,
+    bold_inst as bold,
+    institutional_cell_paragraph as cell_paragraph,
+    institutional_section_style as document_section_style,
+    institutional_title_style as document_title_style,
+    institutional_draw_line_full_width as draw_line_full_width,
+    institutional_montar_bloco_identificacao as montar_bloco_identificacao,
+    institutional_on_page as on_page,
     pdf_encryption,
-    user_name,
-    user_primary_group,
+    user_name_inst as user_name,
+    user_primary_group_inst as user_primary_group,
 )
 
 logger = logging.getLogger(__name__)

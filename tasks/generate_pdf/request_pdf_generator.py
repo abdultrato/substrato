@@ -15,20 +15,20 @@ from reportlab.platypus import (
     TableStyle,
 )
 
-from .pdf_base import (
-    NumberedCanvas,
+from .institutional_pdf_design import (
+    InstitutionalNumberedCanvas as NumberedCanvas,
     PDF_BOTTOM_MARGIN,
     PDF_HEADER_TOP_MARGIN,
     PDF_MARGIN,
     append_fim,
-    bold,
-    cell_paragraph,
-    document_section_style,
-    document_title_style,
-    draw_line_full_width,
+    bold_inst as bold,
+    institutional_cell_paragraph as cell_paragraph,
+    institutional_section_style as document_section_style,
+    institutional_title_style as document_title_style,
+    institutional_draw_line_full_width as draw_line_full_width,
     institutional_user_identity,
-    montar_bloco_identificacao,
-    on_page,
+    institutional_montar_bloco_identificacao as montar_bloco_identificacao,
+    institutional_on_page as on_page,
     pdf_encryption,
 )
 

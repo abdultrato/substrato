@@ -239,13 +239,15 @@ class WardAdmission(NoNameCoreModel):
                 ]
             )
 
-            if pending_procedures.exists():
+            # OTIMIZAÇÃO P2: Usar count() direto ao invés de exists() + count()
+            pending_count = pending_procedures.count()
+            if pending_count > 0:
                 proc_ids = ", ".join(
                     str(p.custom_id or p.pk) for p in pending_procedures[:5]
                 )
                 raise ValidationError(
                     {"discharged_at":
-                     f"Paciente possui {pending_procedures.count()} procedimento(s) de enfermagem não concluído(s): {proc_ids}. "
+                     f"Paciente possui {pending_count} procedimento(s) de enfermagem não concluído(s): {proc_ids}. "
                      f"Conclua ou cancele antes de dar alta."}
                 )
 

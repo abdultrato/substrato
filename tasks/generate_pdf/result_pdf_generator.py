@@ -16,24 +16,22 @@ from reportlab.platypus import (
 
 from domain.clinical.result_state import ResultState
 
-from .pdf_base import (
-    NumberedCanvas,
+from .institutional_pdf_design import (
+    ImprovedInstitutionalNumberedCanvas as NumberedCanvas,
     append_fim,
-    cell_paragraph,
-    draw_line_full_width,
-    institutional_user_identity,
-    montar_bloco_identificacao,
+    institutional_cell_paragraph as cell_paragraph,
+    institutional_draw_line_full_width_improved as draw_line_full_width,
+    institutional_user_identity_improved as institutional_user_identity,
+    institutional_montar_bloco_identificacao as montar_bloco_identificacao,
     pdf_encryption,
-)
-from .pdf_improvements import (
-    FONT_IMPROVED_BOLD,
-    A5Margins,
-    DocumentType,
-    bold_text,
-    build_personalized_header,
-    draw_header_improved,
-    section_style_improved,
-    title_style_improved,
+    institutional_title_style as title_style_improved,
+    institutional_section_style as section_style_improved,
+    institutional_bold_text as bold_text,
+    FONT_BOLD_INST as FONT_IMPROVED_BOLD,
+    build_institutional_header_config as build_personalized_header,
+    draw_institutional_header_improved as draw_header_improved,
+    institutional_a5_margins as A5Margins,
+    institutional_document_type as DocumentType,
 )
 
 

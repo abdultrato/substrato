@@ -94,10 +94,12 @@ class WardDashboardResponseSerializer(serializers.Serializer):
 
 
 class NursingRecordViewSet(TenantScopedModelViewSet):
-    queryset = NursingRecord.objects.all()
     serializer_class = NursingRecordSerializer
     filterset_class = NursingRecordFilter
     permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return NursingRecord.objects.select_related('patient', 'tenant', 'lab_request')
     search_fields = [
         "custom_id",
         "name",
@@ -150,10 +152,12 @@ class ProcedureCatalogViewSet(TenantScopedModelViewSet):
 
 
 class ProcedureCatalogMaterialViewSet(TenantScopedModelViewSet):
-    queryset = ProcedureCatalogMaterial.objects.all()
     serializer_class = ProcedureCatalogMaterialSerializer
     filterset_class = ProcedureCatalogMaterialFilter
     permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return ProcedureCatalogMaterial.objects.select_related('catalog', 'product', 'tenant')
     search_fields = [
         "custom_id",
         "catalog__name",
@@ -174,10 +178,12 @@ class ProcedureCatalogMaterialViewSet(TenantScopedModelViewSet):
 
 
 class ProcedureViewSet(TenantScopedModelViewSet):
-    queryset = Procedure.objects.all()
     serializer_class = ProcedureSerializer
     filterset_class = ProcedureFilter
     permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return Procedure.objects.select_related('patient', 'tenant')
     search_fields = [
         "custom_id",
         "patient__name",
@@ -226,10 +232,12 @@ class ProcedureViewSet(TenantScopedModelViewSet):
 
 
 class ProcedureItemViewSet(TenantScopedModelViewSet):
-    queryset = ProcedureItem.objects.all()
     serializer_class = ProcedureItemSerializer
     filterset_class = ProcedureItemFilter
     permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return ProcedureItem.objects.select_related('procedure', 'procedure__patient', 'catalog', 'tenant')
     search_fields = [
         "custom_id",
         "description",
@@ -358,10 +366,12 @@ class ProcedureItemViewSet(TenantScopedModelViewSet):
 
 
 class ProcedureItemValueViewSet(TenantScopedModelViewSet):
-    queryset = ProcedureItemValue.objects.all()
     serializer_class = ProcedureItemValueSerializer
     filterset_class = ProcedureItemValueFilter
     permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return ProcedureItemValue.objects.select_related('item', 'item__procedure', 'item__tenant')
     search_fields = [
         "custom_id",
         "item__custom_id",
@@ -381,10 +391,12 @@ class ProcedureItemValueViewSet(TenantScopedModelViewSet):
 
 
 class ProcedureMaterialViewSet(TenantScopedModelViewSet):
-    queryset = ProcedureMaterial.objects.all()
     serializer_class = ProcedureMaterialSerializer
     filterset_class = ProcedureMaterialFilter
     permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return ProcedureMaterial.objects.select_related('procedure', 'procedure__patient', 'product', 'lot', 'tenant')
     search_fields = [
         "custom_id",
         "product__name",
@@ -411,10 +423,12 @@ class ProcedureMaterialViewSet(TenantScopedModelViewSet):
 
 
 class ProcedureMaterialValueViewSet(TenantScopedModelViewSet):
-    queryset = ProcedureMaterialValue.objects.all()
     serializer_class = ProcedureMaterialValueSerializer
     filterset_class = ProcedureMaterialValueFilter
     permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return ProcedureMaterialValue.objects.select_related('material', 'material__product', 'material__procedure', 'tenant')
     search_fields = [
         "custom_id",
         "material__custom_id",
@@ -434,10 +448,12 @@ class ProcedureMaterialValueViewSet(TenantScopedModelViewSet):
 
 
 class NursingVitalSignViewSet(TenantScopedModelViewSet):
-    queryset = NursingVitalSign.objects.all()
     serializer_class = NursingVitalSignSerializer
     filterset_class = NursingVitalSignFilter
     permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return NursingVitalSign.objects.select_related('record', 'record__patient', 'tenant')
     search_fields = [
         "custom_id",
         "name",
@@ -462,10 +478,12 @@ class NursingVitalSignViewSet(TenantScopedModelViewSet):
 
 
 class NursingPrescriptionViewSet(TenantScopedModelViewSet):
-    queryset = NursingPrescription.objects.all()
     serializer_class = NursingPrescriptionSerializer
     filterset_class = NursingPrescriptionFilter
     permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return NursingPrescription.objects.select_related('patient', 'tenant')
     search_fields = [
         "custom_id",
         "name",
@@ -487,10 +505,12 @@ class NursingPrescriptionViewSet(TenantScopedModelViewSet):
 
 
 class NursingEvolutionViewSet(TenantScopedModelViewSet):
-    queryset = NursingEvolution.objects.all()
     serializer_class = NursingEvolutionSerializer
     filterset_class = NursingEvolutionFilter
     permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return NursingEvolution.objects.select_related('patient', 'record', 'tenant')
     search_fields = [
         "custom_id",
         "name",
