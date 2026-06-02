@@ -4,6 +4,7 @@ import hashlib
 import json
 from typing import Any
 
+from apps.ai_assistant.services.cache import cache_manager
 from apps.ai_assistant.services.natural_bridge import polish_natural_answer
 
 
@@ -13,14 +14,11 @@ class LocalLlmGateway:
 
     Mantém a arquitectura pronta para provedor externo, mas evita enviar dados
     sensíveis a terceiros enquanto as políticas e ferramentas ainda amadurecem.
-    Implementa cache para evitar regeneracao de respostas identicas.
+    Implementa cache robusto com Redis e fallback para memória.
     """
 
     provider = "local"
-
-    # Cache simples em memoria (em producao, usar Redis ou similar)
-    _cache: dict[str, str] = {}
-    _max_cache_size = 100  # Limite simples para evitar crescimento infinito
+    DEFAULT_CACHE_TTL = 3600  # 1 hour
 
     def _get_cache_key(
         self,
@@ -47,13 +45,16 @@ class LocalLlmGateway:
         # JSON serialize with sort_keys=True for deterministic output
         cache_string = json.dumps(cache_data, sort_keys=True, default=str)
 
-        # Return MD5 hash as the cache key
-        return hashlib.md5(cache_string.encode()).hexdigest()
+        # Return MD5 hash as the cache key with ai_gateway prefix
+        return f"ai_gateway:{hashlib.md5(cache_string.encode()).hexdigest()}"
 
-    def _remember(self, cache_key: str, result: str) -> str:
-        self._cache[cache_key] = result
-        if len(self._cache) > self._max_cache_size:
-            self._cache.pop(next(iter(self._cache)), None)
+    def _get_from_cache(self, cache_key: str) -> str | None:
+        """Retrieve from cache manager."""
+        return cache_manager.get(cache_key)
+
+    def _save_to_cache(self, cache_key: str, result: str) -> str:
+        """Save to cache manager with TTL."""
+        cache_manager.set(cache_key, result, ttl_seconds=self.DEFAULT_CACHE_TTL)
         return result
 
     def build_answer(
@@ -67,16 +68,15 @@ class LocalLlmGateway:
     ) -> str:
         # Check cache first
         cache_key = self._get_cache_key(question, language, tool_results, blocked_tools, natural_bridge)
-        if cache_key in self._cache:
-            return self._cache[cache_key]
+        cached_result = self._get_from_cache(cache_key)
+        if cached_result is not None:
+            return cached_result
 
         blocked_tools = blocked_tools or []
 
         def finalize(result: str) -> str:
-            return self._remember(
-                cache_key,
-                polish_natural_answer(answer=result, bridge=natural_bridge, language=language),
-            )
+            polished = polish_natural_answer(answer=result, bridge=natural_bridge, language=language)
+            return self._save_to_cache(cache_key, polished)
 
         denied_result = next((item for item in tool_results if (item.get("result") or {}).get("access_denied")), None)
         if denied_result:
