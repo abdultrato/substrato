@@ -7,6 +7,7 @@ import re
 from typing import Any
 
 from apps.ai_assistant.services.alias_normalization import normalize_alias_text
+from apps.ai_assistant.services.greetings import is_standalone_greeting
 from apps.ai_assistant.services.resource_disambiguation import (
     ResourceDisambiguationResult,
     resolve_resource_matches,
@@ -323,7 +324,7 @@ def build_intent_signals(
         "normalized": normalized,
         "tokens": tokens,
         "short": len(tokens) <= 3,
-        "greeting_only": _is_greeting_only(normalized),
+        "greeting_only": is_standalone_greeting(raw),
         "vague_reference": _has_any(normalized, VAGUE_REFERENCES),
         "broad_request": _has_any(normalized, BROAD_REQUEST_TERMS),
         "project_identity": project_identity,
@@ -472,13 +473,6 @@ def _has_term(normalized: str, raw_term: str) -> bool:
     if not term:
         return False
     return bool(re.search(rf"(?<!\w){re.escape(term)}(?!\w)", normalized))
-
-
-def _is_greeting_only(normalized: str) -> bool:
-    cleaned = re.sub(r"[!?.;,]+", " ", normalized).strip()
-    if not cleaned:
-        return False
-    return any(cleaned == normalize_alias_text(term) for term in GREETING_TERMS)
 
 
 def _phase4_findings(probes: list[dict[str, Any]]) -> list[str]:

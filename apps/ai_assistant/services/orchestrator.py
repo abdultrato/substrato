@@ -32,6 +32,7 @@ from apps.ai_assistant.tools.base import AiToolContext
 from apps.ai_assistant.tools.crud import PrepareCrudOperationTool
 
 from .audit import AiAuditLogger
+from .greetings import build_greeting_response
 from .investigation import AiInvestigationBuilder
 from .llm_gateway import LocalLlmGateway
 from .natural_bridge import build_natural_bridge
@@ -119,6 +120,16 @@ class AiOrchestrator:
                 session_metadata=session_metadata,
                 tenant=tenant,
             )
+            if (intent_decision.signals or {}).get("greeting_only"):
+                return self._return_greeting(
+                    tenant=tenant,
+                    session=session,
+                    user=user,
+                    language=language,
+                    intent_decision=intent_decision,
+                    followup_resolution=followup_resolution,
+                )
+
             learned_clarification_resolution = {}
             if intent_decision.needs_clarification:
                 intent_decision = apply_learning_to_clarification(
@@ -428,6 +439,82 @@ class AiOrchestrator:
                     "understanding_trace": understanding_trace,
                 },
             }
+
+    def _return_greeting(
+        self,
+        *,
+        tenant,
+        session,
+        user,
+        language: str,
+        intent_decision: IntentDecision,
+        followup_resolution: ConversationFollowupResolution | None = None,
+    ) -> dict[str, Any]:
+        greeting = build_greeting_response(
+            user=user,
+            is_admin_like=self.policy.is_admin_like(user),
+            language=language,
+        )
+        conversation_payload = {
+            **intent_decision.as_payload(language=language),
+            "status": "answered",
+            "intent": "greeting",
+            "needs_clarification": False,
+        }
+        followup_payload = followup_resolution.as_payload() if followup_resolution else {}
+        response_schema = build_response_schema(
+            tool_results=[],
+            sources=[],
+            suggested_actions=[],
+            investigation=None,
+            proactive_guidance=None,
+            natural_bridge=None,
+            language=language,
+        )
+        assistant_message = self.audit.create_message(
+            tenant=tenant,
+            session=session,
+            role=AiMessage.Role.ASSISTANT,
+            content=greeting.answer,
+            user=user,
+            metadata={
+                "sources": [],
+                "tool_calls": [],
+                "suggested_actions": [],
+                "investigation": None,
+                "schema": response_schema,
+                "provider": self.gateway.provider,
+                "intent_decision": conversation_payload,
+                "conversation_followup": followup_payload,
+                "greeting": greeting.metadata,
+            },
+        )
+        metadata = dict(session.metadata or {})
+        metadata["last_greeting"] = {
+            **greeting.metadata,
+            "updated_at": timezone.now().isoformat(),
+        }
+        session.metadata = metadata
+        session.last_message_at = assistant_message.created_at
+        session.save(update_fields=["metadata", "last_message_at", "updated_at"])
+        return {
+            "session_id": session.id,
+            "message_id": assistant_message.id,
+            "answer": greeting.answer,
+            "language": language,
+            "sources": [],
+            "tool_calls": [],
+            "suggested_actions": [],
+            "investigation": None,
+            "schema": response_schema,
+            "provider": self.gateway.provider,
+            "conversation": {
+                **conversation_payload,
+                "recommended_questions": [],
+                "proactive_suggestions": [],
+                "greeting": greeting.metadata,
+            },
+        }
 
     def _return_clarification(
         self,

@@ -285,6 +285,41 @@ def test_ai_chat_requires_authentication(api_client):
 
 
 @pytest.mark.django_db
+def test_ai_chat_answers_greeting_with_time_aware_salutation(api_client, monkeypatch):
+    tenant = _tenant(identifier="tn-ai-greeting", domain="tn-ai-greeting.local")
+    admin = _user(tenant, "admin_ai_greeting", GROUPS["ADMIN"], is_staff=True)
+    _authenticate(api_client, tenant, admin)
+    fixed_now = timezone.make_aware(datetime(2026, 6, 2, 15, 30, 0))
+    monkeypatch.setattr("apps.ai_assistant.services.greetings.timezone.now", lambda: fixed_now)
+
+    response = api_client.post(
+        "/api/v1/ai/assistant/chat/",
+        {
+            "message": "ola admin, tudo bem ai?",
+            "language": "pt",
+            "active_module": "ai",
+        },
+        format="json",
+    )
+
+    assert response.status_code == 200, _response_data(response)
+    data = _response_data(response)
+    assert data["conversation"]["status"] == "answered"
+    assert data["conversation"]["intent"] == "greeting"
+    assert data["conversation"]["greeting"]["time_greeting"] == "boa tarde"
+    assert data["answer"] == "Olá admin, boa tarde, tudo bem aí? Em que posso ajudar agora?"
+    assert data["tool_calls"] == []
+    assert data["suggested_actions"] == []
+    assert data["investigation"] is None
+
+    session = AiSession.objects.get(id=data["session_id"])
+    assert session.metadata["last_greeting"]["time_greeting"] == "boa tarde"
+    assert AiMessage.objects.filter(session=session, role=AiMessage.Role.USER).count() == 1
+    assert AiMessage.objects.filter(session=session, role=AiMessage.Role.ASSISTANT).count() == 1
+    assert not AiToolCall.objects.filter(session=session).exists()
+
+
+@pytest.mark.django_db
 def test_ai_command_center_chat_returns_sources_and_audit(api_client):
     tenant = _tenant()
     admin = _user(tenant, "admin_ai", GROUPS["ADMIN"], is_staff=True)
