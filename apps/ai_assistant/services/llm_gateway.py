@@ -88,6 +88,11 @@ class LocalLlmGateway:
             result = self._project_identity_answer(project_identity_result.get("result") or {}, language=language)
             return finalize(result)
 
+        project_context_result = next((item for item in tool_results if item.get("tool_name") == "search_project_context"), None)
+        if project_context_result:
+            result = self._project_context_answer(project_context_result.get("result") or {}, language=language)
+            return finalize(result)
+
         knowledge_result = next((item for item in tool_results if item.get("tool_name") == "answer_predicted_question"), None)
         if knowledge_result:
             result = self._knowledge_base_answer(knowledge_result.get("result") or {}, language=language)
@@ -296,6 +301,96 @@ class LocalLlmGateway:
             "Perguntas seguintes sugeridas:\n" + "\n".join(f"- {item}" for item in follow_ups[:5]) if follow_ups else "",
             "Evidência interna usada: catálogo de perguntas previstas da IA.",
             "Limitação: isto é orientação. Dados operacionais continuam a exigir a ferramenta adequada e permissões RBAC.",
+        ]
+        return "\n\n".join(part for part in parts if part)
+
+    def _project_context_answer(self, result: dict[str, Any], *, language: str) -> str:
+        context = result.get("project_context") or (result.get("summary") or {}).get("project_context") or {}
+        matches = context.get("matches") or []
+        memory = context.get("memory") or {}
+        agents = context.get("agents") or []
+        decisions = context.get("decisions") or []
+        docs_status = context.get("docs_status") or {}
+        recommended_actions = context.get("recommended_actions") or []
+
+        if language == "en":
+            direct = (
+                f"I searched the real project context and found {len(matches)} relevant snippet(s)."
+                if matches
+                else "I did not find enough project context for a confident technical answer."
+            )
+            if agents:
+                direct += f" Primary specialist lens: {agents[0].get('role') or agents[0].get('key')}."
+
+            match_lines = [
+                f"- {item.get('path')}:{item.get('line_start')} - {item.get('title') or 'context'}"
+                for item in matches[:6]
+            ]
+            agent_lines = [
+                f"- {item.get('role')}: " + "; ".join(str(resp) for resp in (item.get("responsibilities") or [])[:3])
+                for item in agents[:3]
+            ]
+            decision_lines = [
+                f"- {item.get('title')} ({item.get('path')})"
+                for item in decisions[:3]
+            ]
+            action_lines = [f"- {item.get('label_en')}" for item in recommended_actions[:4] if item.get("label_en")]
+            missing_docs = docs_status.get("missing") or []
+            limitation = (
+                "Limitation: this is a read-only project-context pass; code edits, migrations, deploys and destructive actions still require explicit confirmation."
+            )
+            if missing_docs:
+                limitation += f" Missing expected docs: {', '.join(missing_docs[:4])}."
+
+            parts = [
+                direct,
+                "Matched project sources:\n" + "\n".join(match_lines) if match_lines else "",
+                "Relevant specialist agents:\n" + "\n".join(agent_lines) if agent_lines else "",
+                "Project decisions considered:\n" + "\n".join(decision_lines) if decision_lines else "",
+                "Project memory excerpt:\n" + str(memory.get("excerpt") or "")[:800] if memory.get("excerpt") else "",
+                "Suggested next steps:\n" + "\n".join(action_lines) if action_lines else "",
+                "Internal evidence used: documentation, selected source files, project memory, ADRs and agent config.",
+                limitation,
+            ]
+            return "\n\n".join(part for part in parts if part)
+
+        direct = (
+            f"Consultei o contexto real do projeto e encontrei {len(matches)} trecho(s) relevante(s)."
+            if matches
+            else "Não encontrei contexto suficiente do projeto para uma resposta técnica confiante."
+        )
+        if agents:
+            direct += f" Lente especialista principal: {agents[0].get('role') or agents[0].get('key')}."
+
+        match_lines = [
+            f"- {item.get('path')}:{item.get('line_start')} - {item.get('title') or 'contexto'}"
+            for item in matches[:6]
+        ]
+        agent_lines = [
+            f"- {item.get('role')}: " + "; ".join(str(resp) for resp in (item.get("responsibilities") or [])[:3])
+            for item in agents[:3]
+        ]
+        decision_lines = [
+            f"- {item.get('title')} ({item.get('path')})"
+            for item in decisions[:3]
+        ]
+        action_lines = [f"- {item.get('label_pt')}" for item in recommended_actions[:4] if item.get("label_pt")]
+        missing_docs = docs_status.get("missing") or []
+        limitation = (
+            "Limitação: esta é uma passagem de contexto em modo leitura; edições de código, migrations, deploys e ações destrutivas continuam a exigir confirmação explícita."
+        )
+        if missing_docs:
+            limitation += f" Documentos esperados ausentes: {', '.join(missing_docs[:4])}."
+
+        parts = [
+            direct,
+            "Fontes do projeto encontradas:\n" + "\n".join(match_lines) if match_lines else "",
+            "Agentes especialistas relevantes:\n" + "\n".join(agent_lines) if agent_lines else "",
+            "Decisões do projeto consideradas:\n" + "\n".join(decision_lines) if decision_lines else "",
+            "Excerto da memória do projeto:\n" + str(memory.get("excerpt") or "")[:800] if memory.get("excerpt") else "",
+            "Próximos passos sugeridos:\n" + "\n".join(action_lines) if action_lines else "",
+            "Evidência interna usada: documentação, ficheiros de código selecionados, memória do projeto, ADRs e configuração de agentes.",
+            limitation,
         ]
         return "\n\n".join(part for part in parts if part)
 

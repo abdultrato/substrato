@@ -10,7 +10,7 @@
     "build:admin-css": "tailwindcss -c tailwind.admin.config.js -i styles/admin-tailwind.input.css -o ../apps/clinical/static/admin/css/substrato-admin-tailwind.css --minify",
     "start": "next start -p 5000 -H 0.0.0.0",
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
-    "type-check": "next typegen && tsc --noEmit --incremental false",
+    "type-check": "node -e \"for (const dir of ['.next/types', '.next-dev/types']) require('fs').rmSync(dir, { recursive: true, force: true })\" && next typegen && tsc --noEmit --incremental false",
     "test": "vitest",
     "test:ui": "vitest --ui",
     "generate:schema": "cd .. && python generate_schema.py && python scripts/convert_schema_json.py",

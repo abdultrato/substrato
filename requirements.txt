@@ -69,15 +69,16 @@ referencing==0.37.0
 reportlab==4.4.7
 rpds-py==0.30.0
 ruff==0.15.5
-sentence-transformers==2.2.2
-faiss-cpu==1.7.4
-numpy==1.24.3
+# Comentado por causa de torch (dependência pesada que causa timeouts)
+# sentence-transformers==2.2.2
+# faiss-cpu==1.14.2
+numpy>=1.26.0
 six==1.17.0
 sqlparse==0.5.5
 tablib==3.9.0
 typing_extensions==4.15.0
 tzdata==2025.3
-uvicorn==0.48.0
+uvicorn[standard]==0.48.0
 unicorn==2.1.4
 uritemplate==4.2.0
 whitenoise==6.11.0

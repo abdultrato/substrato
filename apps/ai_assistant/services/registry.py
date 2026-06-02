@@ -15,6 +15,7 @@ from apps.ai_assistant.tools.finance import FinancialOperationalSummaryTool
 from apps.ai_assistant.tools.knowledge_base import KnowledgeBaseTool
 from apps.ai_assistant.tools.nursing import NursingPendingWorkTool
 from apps.ai_assistant.tools.pharmacy import PharmacyStockSummaryTool
+from apps.ai_assistant.tools.project_context import ProjectContextTool
 from apps.ai_assistant.tools.project_identity import ProjectIdentityTool
 from apps.ai_assistant.tools.reporting import PrepareOperationalReportTool
 from apps.ai_assistant.tools.sql_analytics import SqlAnalyticsTool, should_select_sql_analytics
@@ -41,6 +42,7 @@ class AiToolRegistry:
             PrepareOperationalTaskTool.name: PrepareOperationalTaskTool(),
             SqlAnalyticsTool.name: SqlAnalyticsTool(),
             ProjectIdentityTool.name: ProjectIdentityTool(),
+            ProjectContextTool.name: ProjectContextTool(),
             KnowledgeBaseTool.name: KnowledgeBaseTool(),
         }
 
@@ -92,6 +94,8 @@ class AiToolRegistry:
         selected = []
         if signals["project_identity"]:
             return [self._tools[ProjectIdentityTool.name]]
+        if signals["project_context"]:
+            return [self._tools[ProjectContextTool.name]]
         if signals["knowledge_base"]:
             return [self._tools[KnowledgeBaseTool.name]]
 

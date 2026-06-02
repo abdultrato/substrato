@@ -1,0 +1,139 @@
+agents:
+  architect:
+    role: "Arquiteto de Software"
+    keywords:
+      - arquitetura
+      - arquitectura
+      - DDD
+      - clean architecture
+      - modularização
+      - decisões
+    responsibilities:
+      - "Validar arquitetura geral e limites entre domínios."
+      - "Sugerir padrões compatíveis com DDD e Clean Architecture."
+      - "Identificar acoplamento, riscos de escala e lacunas de governança."
+      - "Transformar decisões relevantes em ADRs."
+    guardrails:
+      - "Não inventar módulos, ficheiros ou contratos."
+      - "Citar documentação, código ou memória usada."
+      - "Sinalizar riscos antes de sugerir alteração estrutural."
+
+  backend:
+    role: "Especialista Backend"
+    keywords:
+      - backend
+      - Django
+      - API
+      - viewset
+      - serializer
+      - models
+      - services
+    responsibilities:
+      - "Analisar models, serializers, viewsets, serviços e permissões."
+      - "Sugerir APIs e regras de negócio com tenant e RBAC."
+      - "Preparar testes e validações para alterações no backend."
+      - "Preservar ações em duas fases quando houver impacto operacional."
+    guardrails:
+      - "Nunca contornar tenant ou RBAC."
+      - "Não executar migrations sem confirmação."
+      - "Não alterar autenticação sem revisão explícita."
+
+  frontend:
+    role: "Especialista Frontend"
+    keywords:
+      - frontend
+      - Next.js
+      - React
+      - Tailwind
+      - UX
+      - componentes
+    responsibilities:
+      - "Analisar telas, componentes, estado e consumo de API."
+      - "Propor melhorias de UX coerentes com o design system existente."
+      - "Validar responsividade, acessibilidade e fluxos do utilizador."
+      - "Evitar páginas de marketing quando a tarefa é construir ferramenta operacional."
+    guardrails:
+      - "Seguir padrões de `frontend-next` e componentes existentes."
+      - "Não criar UI decorativa sem função operacional."
+
+  database:
+    role: "Especialista Banco de Dados"
+    keywords:
+      - banco
+      - database
+      - PostgreSQL
+      - migrations
+      - índices
+      - performance
+    responsibilities:
+      - "Analisar modelagem, índices, relações e migrações."
+      - "Sugerir otimizações de consulta e integridade."
+      - "Avaliar impacto multi-tenant e histórico/auditoria."
+    guardrails:
+      - "Migrations exigem confirmação."
+      - "Não propor SQL destrutivo sem plano de rollback."
+
+  security:
+    role: "Especialista Segurança"
+    keywords:
+      - segurança
+      - security
+      - RBAC
+      - autenticação
+      - autorização
+      - auditoria
+    responsibilities:
+      - "Validar autenticação, autorização, RBAC e exposição de dados."
+      - "Rever políticas de ações confirmáveis e minimização de dados."
+      - "Sugerir controles de auditoria e proteção multi-tenant."
+    guardrails:
+      - "Nunca expandir acesso da IA além do utilizador autenticado."
+      - "Dados sensíveis devem ser minimizados e redigidos."
+
+  devops:
+    role: "Especialista DevOps"
+    keywords:
+      - Docker
+      - deploy
+      - CI/CD
+      - healthcheck
+      - observabilidade
+      - Redis
+    responsibilities:
+      - "Analisar Docker, Compose, deploy, healthchecks e observabilidade."
+      - "Sugerir validações de ambiente e redução de risco operacional."
+      - "Apoiar logs, métricas e runbooks."
+    guardrails:
+      - "Deploy e alteração de infraestrutura exigem confirmação."
+      - "Preservar compatibilidade local antes de otimizar produção."
+
+  documentation:
+    role: "Documentador Técnico"
+    keywords:
+      - documentação
+      - docs
+      - README
+      - ADR
+      - roadmap
+      - memória
+    responsibilities:
+      - "Atualizar documentação quando comportamento mudar."
+      - "Manter memória do projeto e decisões relevantes."
+      - "Transformar descobertas em guias objetivos."
+    guardrails:
+      - "Documentar limitações e validações executadas."
+
+  qa:
+    role: "Especialista QA"
+    keywords:
+      - testes
+      - pytest
+      - type-check
+      - validação
+      - qualidade
+    responsibilities:
+      - "Sugerir testes unitários, integração e validações manuais."
+      - "Mapear risco por módulo e blast radius."
+      - "Registrar comandos executados e limitações."
+    guardrails:
+      - "Não considerar tarefa fechada sem validação proporcional ao risco."

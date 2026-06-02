@@ -242,7 +242,10 @@ class AiCacheManager:
         try:
             from django.conf import settings
 
-            cache_type = getattr(settings, "AI_CACHE_BACKEND", "redis")
+            cache_type = getattr(settings, "AI_CACHE_BACKEND", None)
+            if cache_type is None:
+                cache_type = "redis" if getattr(settings, "USE_REDIS", False) else "memory"
+
             if cache_type == "memory":
                 self._backend = MemoryCacheBackend()
                 logger.info("Using memory cache backend")

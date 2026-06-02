@@ -13,6 +13,7 @@ from apps.ai_assistant.services.resource_disambiguation import (
     resolve_resource_matches,
 )
 from apps.ai_assistant.tools.knowledge_base import should_select_knowledge_base
+from apps.ai_assistant.tools.project_context import should_select_project_context
 from apps.ai_assistant.tools.project_identity import should_select_project_identity
 from apps.ai_assistant.tools.resource_catalog import ResourceDescriptor
 
@@ -306,6 +307,7 @@ def build_intent_signals(
     resource_matches = _resource_signals(resource_resolution)
     resource_modules = tuple(sorted({match.module for match in resource_matches}))
     project_identity = should_select_project_identity(message=raw, active_module=active_module_key)
+    project_context = should_select_project_context(message=raw, active_module=active_module_key)
     personal = _has_any(normalized, PERSONAL_TERMS)
     crud = _has_any(normalized, CRUD_TERMS)
     data = _has_any(normalized, DATA_TERMS)
@@ -315,7 +317,7 @@ def build_intent_signals(
     task = _has_any(normalized, TASK_TERMS)
     support_request = _has_any(normalized, SUPPORT_TERMS)
     knowledge_base = False
-    if not (project_identity or personal) and (
+    if not (project_identity or project_context or personal) and (
         support_request or (not resource_matches and not (crud or report or task or monitoring))
     ):
         knowledge_base = should_select_knowledge_base(message=raw, active_module=active_module_key, tenant=tenant)
@@ -328,6 +330,7 @@ def build_intent_signals(
         "vague_reference": _has_any(normalized, VAGUE_REFERENCES),
         "broad_request": _has_any(normalized, BROAD_REQUEST_TERMS),
         "project_identity": project_identity,
+        "project_context": project_context,
         "knowledge_base": knowledge_base,
         "support_request": support_request,
         "personal": personal,

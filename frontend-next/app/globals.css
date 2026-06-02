@@ -42,9 +42,7 @@
     --chrome-mid: hsl(var(--substrato-root-hsl));
     --chrome-to: hsl(var(--substrato-violet-hsl));
 
-    /* Fonts: Inter (texto) e Plus Jakarta Sans (títulos) carregadas via
-       next/font no app/layout.tsx. As variáveis abaixo são usadas como
-       fallback caso o carregamento do next/font falhe. */
+    /* Fontes do sistema para evitar download externo no boot do Next dev. */
     --font-sans:
       "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI Variable",
       "Segoe UI", Roboto, Arial, sans-serif;

@@ -1,31 +1,5 @@
 # ==========================================================
-# STAGE 1 — BUILDER
-# ==========================================================
-FROM python:3.13-slim AS builder
-
-WORKDIR /app
-
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    libpq-dev \
-    postgresql-client \
-    && rm -rf /var/lib/apt/lists/*
-
-ENV PIP_DISABLE_PIP_VERSION_CHECK=1
-
-COPY requirements.txt .
-
-RUN pip install --root-user-action=ignore --upgrade pip setuptools wheel
-
-RUN --mount=type=cache,target=/root/.cache/pip \
-    pip wheel \
-    --prefer-binary \
-    --wheel-dir /wheels \
-    -r requirements.txt
-
-
-# ==========================================================
-# STAGE 2 — RUNTIME
+# RUNTIME
 # ==========================================================
 FROM python:3.13-slim
 
@@ -38,7 +12,9 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     DJANGO_SETTINGS_MODULE=plataforma.settings.development
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
     libpq5 \
+    libpq-dev \
     postgresql-client \
     curl \
     # Fontes para PDFs (Tinos/Liberation, livres)
@@ -47,10 +23,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     fonts-liberation \
     && rm -rf /var/lib/apt/lists/*
 
-COPY --from=builder /wheels /wheels
+COPY requirements.txt .
 
-RUN pip install --root-user-action=ignore --no-cache-dir --no-index --find-links=/wheels /wheels/* \
-    && rm -rf /wheels
+RUN pip install --root-user-action=ignore --upgrade pip setuptools wheel && \
+    pip install --root-user-action=ignore --prefer-binary -r requirements.txt
 
 # entrypoint fora de /app para não ser sobrescrito por bind-mount (Windows)
 COPY entrypoint.sh /usr/local/bin/substrato-entrypoint.sh
