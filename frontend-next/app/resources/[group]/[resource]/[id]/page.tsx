@@ -405,7 +405,7 @@ export default function ResourceDetailPage() {
                     />
                     <Link
                         href={`/resources/${groupKey}`}
-                        className="text-sm text-[var(--gray-700)] underline"
+                        className="text-sm text-[var(--gray-700)] no-underline hover:underline"
                     >
                         {t("Voltar", "Back")}
                     </Link>
@@ -424,7 +424,7 @@ export default function ResourceDetailPage() {
                     />
                     <Link
                         href={`/resources/${found.group.key}/${found.resource.key}`}
-                        className="text-sm text-[var(--gray-700)] underline"
+                        className="text-sm text-[var(--gray-700)] no-underline hover:underline"
                     >
                         {t("Voltar à listagem", "Back to list")}
                     </Link>

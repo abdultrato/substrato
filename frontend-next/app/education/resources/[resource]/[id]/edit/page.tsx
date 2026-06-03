@@ -82,7 +82,7 @@ export default function EducationResourceEditPage() {
               "Could not open the requested edit screen."
             )}
           />
-          <Link href="/education/resources" className="text-xs text-[var(--gray-700)] underline">
+          <Link href="/education/resources" className="text-xs text-[var(--gray-700)] no-underline hover:underline">
             {t("Voltar", "Back")}
           </Link>
         </div>
@@ -103,7 +103,7 @@ export default function EducationResourceEditPage() {
               "This Education resource does not expose both read and edit operations in the current API contract."
             )}
             actions={
-              <Link href={`${basePath}/${id}`} className="text-xs text-[var(--gray-700)] underline">
+              <Link href={`${basePath}/${id}`} className="text-xs text-[var(--gray-700)] no-underline hover:underline">
                 {t("Voltar", "Back")}
               </Link>
             }
@@ -120,7 +120,7 @@ export default function EducationResourceEditPage() {
           title={`${t("Editar", "Edit")} ${tr(found.resource.label)} #${id}`}
           subtitle={t("Edição do registo selecionado.", "Edit selected record.")}
           actions={
-            <Link href={`${basePath}/${id}`} className="text-xs text-[var(--gray-700)] underline">
+            <Link href={`${basePath}/${id}`} className="text-xs text-[var(--gray-700)] no-underline hover:underline">
               {t("Voltar", "Back")}
             </Link>
           }

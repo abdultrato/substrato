@@ -143,12 +143,18 @@ if USE_REDIS and REDIS_URL:
             },
         }
     }
+
 else:
     CACHES = {
         "default": {
             "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
         }
     }
+
+if DATABASES["default"]["ENGINE"].endswith("postgresql"):
+    # Dev ASGI can receive many parallel frontend probes. Do not keep idle
+    # database sessions around after each request in the Docker environment.
+    DATABASES["default"]["CONN_MAX_AGE"] = int(os.getenv("DB_CONN_MAX_AGE", "0"))
 
 
 SECURE_SSL_REDIRECT = False

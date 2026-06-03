@@ -210,7 +210,7 @@ export default function CriarRequisicaoMateriaisPage() {
           actions={
             <Link
               href="/pharmacy/material-requests"
-              className="text-sm text-[var(--gray-700)] underline"
+              className="text-sm text-[var(--gray-700)] no-underline hover:underline"
             >
               Voltar
             </Link>

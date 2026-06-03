@@ -49,6 +49,8 @@ def backfill_ward_context(apps, schema_editor):
 
 class Migration(migrations.Migration):
 
+    atomic = False
+
     dependencies = [
         ('enfermagem', '0004_alter_nursingprescription_active_and_more'),
     ]

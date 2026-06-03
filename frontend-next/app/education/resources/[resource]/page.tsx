@@ -35,7 +35,7 @@ export default function EducationResourceListPage() {
               "The requested resource is not available in Education."
             )}
           />
-          <Link href="/education/resources" className="text-xs text-[var(--gray-700)] underline">
+          <Link href="/education/resources" className="text-xs text-[var(--gray-700)] no-underline hover:underline">
             {t("Voltar", "Back")}
           </Link>
         </div>
@@ -58,7 +58,7 @@ export default function EducationResourceListPage() {
               "This Education resource does not expose listing in the current API contract."
             )}
           />
-          <Link href="/education/resources" className="text-xs text-[var(--gray-700)] underline">
+          <Link href="/education/resources" className="text-xs text-[var(--gray-700)] no-underline hover:underline">
             {t("Voltar", "Back")}
           </Link>
         </div>

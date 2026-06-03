@@ -6,6 +6,7 @@ services:
   db:
     image: postgres:15-alpine
     container_name: substrato_db
+    command: postgres -c max_connections=${POSTGRES_MAX_CONNECTIONS:-200}
     environment:
       POSTGRES_DB: substrato
       POSTGRES_USER: substrato_user
@@ -121,16 +122,17 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: substrato_backend
-    entrypoint: /app/entrypoint.sh
-    command: python -m uvicorn platform.asgi:application --host 0.0.0.0 --port 8000 --workers ${ASGI_WORKERS:-4} --timeout-keep-alive ${ASGI_KEEPALIVE_TIMEOUT:-30} --proxy-headers --forwarded-allow-ips=${ASGI_FORWARDED_ALLOW_IPS:-*}
+    entrypoint: /usr/local/bin/substrato-entrypoint.sh
+    command: python -m uvicorn platform.asgi:application --host 0.0.0.0 --port 8000 --workers ${ASGI_WORKERS:-2} --timeout-keep-alive ${ASGI_KEEPALIVE_TIMEOUT:-30} --proxy-headers --forwarded-allow-ips=${ASGI_FORWARDED_ALLOW_IPS:-*}
     environment:
       DJANGO_ENV: development
       DJANGO_SETTINGS_MODULE: platform.settings.development
       DJANGO_DEBUG: "True"
-      SKIP_MIGRATIONS: "1"
-      ASGI_WORKERS: "${ASGI_WORKERS:-4}"
+      SKIP_MIGRATIONS: "${SKIP_MIGRATIONS:-0}"
+      ASGI_WORKERS: "${ASGI_WORKERS:-2}"
       ASGI_KEEPALIVE_TIMEOUT: "${ASGI_KEEPALIVE_TIMEOUT:-30}"
       ASGI_FORWARDED_ALLOW_IPS: "${ASGI_FORWARDED_ALLOW_IPS:-*}"
+      DB_CONN_MAX_AGE: "${DB_CONN_MAX_AGE:-0}"
 
       DJANGO_SECRET_KEY: dev-insecure-key-change-in-production
       DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1,backend,0.0.0.0

@@ -1045,8 +1045,8 @@ class ExportJobViewSet(ValidatedSearchOrderingMixin, ViewSet):
             "filename": state.get("filename"),
             "content_type": state.get("content_type"),
             "error": state.get("error"),
-            "status_url": request.build_absolute_uri(status_path),
-            "download_url": request.build_absolute_uri(download_path),
+            "status_url": status_path,
+            "download_url": download_path,
         }
 
     @extend_schema(

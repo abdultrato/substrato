@@ -409,7 +409,7 @@ function QueuePanel({
       title={title}
       subtitle={subtitle}
       actions={
-        <Link href={href} className="text-xs font-semibold text-primary hover:underline">
+        <Link href={href} className="text-xs font-semibold text-primary no-underline hover:underline">
           {t("Abrir", "Open")}
         </Link>
       }

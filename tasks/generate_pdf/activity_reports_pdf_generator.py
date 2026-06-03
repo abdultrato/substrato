@@ -12,6 +12,7 @@ from reportlab.lib.units import cm
 from reportlab.platypus import HRFlowable, Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
 from .institutional_pdf_design import (
+    FONT_BOLD_INST as FONT_BOLD,
     InstitutionalNumberedCanvas as NumberedCanvas,
     PDF_BOTTOM_MARGIN,
     PDF_HEADER_TOP_MARGIN,

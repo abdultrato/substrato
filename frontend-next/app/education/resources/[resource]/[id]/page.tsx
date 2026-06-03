@@ -76,7 +76,7 @@ export default function EducationResourceDetailPage() {
               "Could not load the requested detail."
             )}
           />
-          <Link href="/education/resources" className="text-xs text-[var(--gray-700)] underline">
+          <Link href="/education/resources" className="text-xs text-[var(--gray-700)] no-underline hover:underline">
             {t("Voltar", "Back")}
           </Link>
         </div>
@@ -97,7 +97,7 @@ export default function EducationResourceDetailPage() {
               "This Education resource does not expose detail lookup in the current API contract."
             )}
           />
-          <Link href={basePath} className="text-xs text-[var(--gray-700)] underline">
+          <Link href={basePath} className="text-xs text-[var(--gray-700)] no-underline hover:underline">
             {t("Voltar", "Back")}
           </Link>
         </div>

@@ -37,7 +37,7 @@ export default function ModuloGrupoPage() {
           <div className="text-sm text-gray-600">
             {t("O módulo solicitado não existe na lista atual.", "The requested module does not exist in the current list.")}
           </div>
-          <Link href="/modules" className="text-sm text-gray-700 underline">
+          <Link href="/modules" className="text-sm text-gray-700 no-underline hover:underline">
             {t("Voltar para módulos", "Back to modules")}
           </Link>
         </div>
@@ -77,7 +77,7 @@ export default function ModuloGrupoPage() {
         </div>
 
         <div className="pt-2">
-          <Link href="/modules" className="text-sm text-gray-700 underline">
+          <Link href="/modules" className="text-sm text-gray-700 no-underline hover:underline">
             {t("Voltar", "Back")}
           </Link>
         </div>

@@ -81,7 +81,7 @@ export default function WardDashboardPage() {
         render: (r: any) => (
           <Link
             href={`/patients/${r.patient_id}`}
-            className="font-medium text-[var(--text)] underline decoration-[var(--border)] underline-offset-2 hover:decoration-[var(--gray-300)]"
+            className="font-medium text-[var(--text)] no-underline decoration-[var(--border)] underline-offset-2 hover:underline hover:decoration-[var(--gray-300)]"
           >
             {r.patient_name || "—"}
           </Link>

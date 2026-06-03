@@ -112,8 +112,8 @@ class ExportJobSerializer(serializers.Serializer):
     filename = serializers.CharField(allow_blank=True, allow_null=True)
     content_type = serializers.CharField(allow_blank=True, allow_null=True)
     error = serializers.CharField(allow_blank=True, allow_null=True)
-    status_url = serializers.URLField()
-    download_url = serializers.URLField()
+    status_url = serializers.CharField()
+    download_url = serializers.CharField()
 
 
 class ExportJobListSerializer(serializers.Serializer):
@@ -125,4 +125,3 @@ SERIALIZER_MAP = {
     "error": SystemErrorSerializer,
     "export_job": ExportJobSerializer,
 }
-

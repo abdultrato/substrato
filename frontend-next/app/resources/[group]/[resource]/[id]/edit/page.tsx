@@ -89,7 +89,7 @@ export default function EditarRecursoPage() {
                     />
                     <Link
                         href={`/resources/${groupKey}`}
-                        className="text-sm text-gray-700 underline"
+                        className="text-sm text-gray-700 no-underline hover:underline"
                     >
                         {t("Voltar", "Back")}
                     </Link>
@@ -110,7 +110,7 @@ export default function EditarRecursoPage() {
                         actions={
                             <Link
                                 href={basePath}
-                                className="text-sm text-[var(--gray-700)] underline"
+                                className="text-sm text-[var(--gray-700)] no-underline hover:underline"
                             >
                                 {t("Voltar", "Back")}
                             </Link>
@@ -130,7 +130,7 @@ export default function EditarRecursoPage() {
                     actions={
                         <Link
                             href={`${basePath}/${id}`}
-                            className="text-sm text-[var(--gray-700)] underline"
+                            className="text-sm text-[var(--gray-700)] no-underline hover:underline"
                         >
                             {t("Voltar", "Back")}
                         </Link>

@@ -2,14 +2,27 @@
 
 # LOCAL: infrastrutura/middleware/request_user.py
 
-from django.utils.functional import SimpleLazyObject
+from contextlib import suppress
 
-from infrastructure.context.request_user import clear_current_user, set_current_user
+from infrastructure.context.request_user import clear_current_user, get_current_user as _get_current_user, set_current_user
 
 
-def _get_user(request):
-    """Obtém o usuário do objeto request, se presente."""
-    return getattr(request, "user", None)
+def get_current_user():
+    """Compatibilidade para imports antigos deste módulo."""
+    return _get_current_user()
+
+
+def _get_authenticated_user(request):
+    """Resolve o usuário autenticado sem guardar SimpleLazyObject no ContextVar."""
+    user = getattr(request, "user", None)
+    if user is None:
+        return None
+
+    with suppress(Exception):
+        if getattr(user, "is_authenticated", False):
+            return getattr(user, "_wrapped", user)
+
+    return None
 
 
 class RequestUserMiddleware:
@@ -19,10 +32,8 @@ class RequestUserMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
-        user = SimpleLazyObject(lambda: _get_user(request))
-
         try:
-            set_current_user(user)
+            set_current_user(_get_authenticated_user(request))
             return self.get_response(request)
         finally:
             clear_current_user()

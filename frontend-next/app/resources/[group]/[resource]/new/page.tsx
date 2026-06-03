@@ -46,7 +46,7 @@ export default function CriarRecursoPage() {
                     />
                     <Link
                         href={`/resources/${groupKey}`}
-                        className="text-sm text-gray-700 underline"
+                        className="text-sm text-gray-700 no-underline hover:underline"
                     >
                         {t("Voltar", "Back")}
                     </Link>
@@ -68,7 +68,7 @@ export default function CriarRecursoPage() {
                         actions={
                             <Link
                                 href={`/resources/${found.group.key}/${found.resource.key}`}
-                                className="text-sm text-[var(--gray-700)] underline"
+                                className="text-sm text-[var(--gray-700)] no-underline hover:underline"
                             >
                                 {t("Voltar", "Back")}
                             </Link>
@@ -88,7 +88,7 @@ export default function CriarRecursoPage() {
                     actions={
                         <Link
                             href={`/resources/${groupKey}/${resourceKey}`}
-                            className="text-sm text-[var(--gray-700)] underline"
+                            className="text-sm text-[var(--gray-700)] no-underline hover:underline"
                         >
                             {t("Voltar", "Back")}
                         </Link>

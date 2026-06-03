@@ -319,7 +319,7 @@ export default function MedicalResultsPage() {
                           href={row.file}
                           target="_blank"
                           rel="noreferrer"
-                          className="font-medium text-slate-900 underline"
+                          className="font-medium text-slate-900 no-underline hover:underline"
                         >
                           Abrir arquivo
                         </a>

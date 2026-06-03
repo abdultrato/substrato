@@ -235,7 +235,7 @@ export default function RequisicoesMateriaisPage() {
                       <td className="py-2 pr-3">
                         <Link
                           href={`/pharmacy/material-requests/${r.id}`}
-                          className="text-[var(--primary-700)] underline"
+                          className="text-[var(--primary-700)] no-underline hover:underline"
                         >
                           {r.custom_id || r.id}
                         </Link>

@@ -39,7 +39,7 @@ export default function EducationResourceCreatePage() {
               "Could not open the requested form."
             )}
           />
-          <Link href="/education/resources" className="text-xs text-[var(--gray-700)] underline">
+          <Link href="/education/resources" className="text-xs text-[var(--gray-700)] no-underline hover:underline">
             {t("Voltar", "Back")}
           </Link>
         </div>
@@ -60,7 +60,7 @@ export default function EducationResourceCreatePage() {
               "This Education resource does not expose creation in the current API contract."
             )}
             actions={
-              <Link href={basePath} className="text-xs text-[var(--gray-700)] underline">
+              <Link href={basePath} className="text-xs text-[var(--gray-700)] no-underline hover:underline">
                 {t("Voltar", "Back")}
               </Link>
             }
@@ -93,7 +93,7 @@ export default function EducationResourceCreatePage() {
             "Create a new Education record."
           )}
           actions={
-            <Link href={basePath} className="text-xs text-[var(--gray-700)] underline">
+            <Link href={basePath} className="text-xs text-[var(--gray-700)] no-underline hover:underline">
               {t("Voltar", "Back")}
             </Link>
           }

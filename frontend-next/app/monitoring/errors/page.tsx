@@ -220,7 +220,7 @@ export default function MonitoringErrorsPage() {
           return (
             <Link
               href={`/monitoring/errors/${id}`}
-              className="font-medium text-[var(--text)] underline decoration-[var(--border)] underline-offset-2 hover:decoration-[var(--gray-300)]"
+              className="font-medium text-[var(--text)] no-underline decoration-[var(--border)] underline-offset-2 hover:underline hover:decoration-[var(--gray-300)]"
             >
               {custom || id}
             </Link>

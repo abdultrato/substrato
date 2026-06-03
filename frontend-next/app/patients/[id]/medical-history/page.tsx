@@ -159,7 +159,7 @@ export default function MedicalHistoryPage() {
         header: "Detalhes",
         render: (r: any) => (
           <details className="text-xs text-[var(--gray-700)]">
-            <summary className="cursor-pointer underline underline-offset-2 hover:text-[var(--hover-accent)]">
+            <summary className="cursor-pointer no-underline underline-offset-2 hover:text-[var(--hover-accent)] hover:underline">
               Ver
             </summary>
             <div className="mt-2 space-y-2">
@@ -207,7 +207,7 @@ export default function MedicalHistoryPage() {
         render: (r: any) => (
           <Link
             href={`/requests/${r.id}`}
-            className="font-medium text-[var(--text)] underline decoration-[var(--border)] underline-offset-2 hover:decoration-[var(--gray-300)]"
+            className="font-medium text-[var(--text)] no-underline decoration-[var(--border)] underline-offset-2 hover:underline hover:decoration-[var(--gray-300)]"
           >
             {r.id_custom || r.id || "-"}
           </Link>

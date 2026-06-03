@@ -288,6 +288,7 @@
   a {
     text-decoration: none;
     color: inherit;
+    text-underline-offset: 0.15em;
     transition:
       color 180ms cubic-bezier(0.2, 0.8, 0.2, 1),
       opacity 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
@@ -318,7 +319,7 @@
   }
 
   a[href]:where(:hover, :focus-visible) {
-    text-decoration: none;
+    text-decoration: underline;
     color: hsl(var(--primary-hover-hsl));
     opacity: 0.98;
   }

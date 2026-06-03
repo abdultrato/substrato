@@ -99,7 +99,7 @@ export default function EducationResourceDeletePage() {
               "Could not open delete screen."
             )}
           />
-          <Link href="/education/resources" className="text-xs text-[var(--gray-700)] underline">
+          <Link href="/education/resources" className="text-xs text-[var(--gray-700)] no-underline hover:underline">
             {t("Voltar", "Back")}
           </Link>
         </div>
@@ -120,7 +120,7 @@ export default function EducationResourceDeletePage() {
               "This Education resource does not expose both read and delete operations in the current API contract."
             )}
             actions={
-              <Link href={`${basePath}/${id}`} className="text-xs text-[var(--gray-700)] underline">
+              <Link href={`${basePath}/${id}`} className="text-xs text-[var(--gray-700)] no-underline hover:underline">
                 {t("Voltar", "Back")}
               </Link>
             }
@@ -140,7 +140,7 @@ export default function EducationResourceDeletePage() {
             "Confirm record deletion."
           )}
           actions={
-            <Link href={`${basePath}/${id}`} className="text-xs text-[var(--gray-700)] underline">
+            <Link href={`${basePath}/${id}`} className="text-xs text-[var(--gray-700)] no-underline hover:underline">
               {t("Voltar", "Back")}
             </Link>
           }

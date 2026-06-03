@@ -24,7 +24,7 @@ def is_async_requested(request) -> bool:
     return _truthy(request.query_params.get("async") or request.query_params.get("assinc"))
 
 
-def _job_urls(request, job_id: str) -> tuple[str, str]:
+def _job_urls(job_id: str) -> tuple[str, str]:
     try:
         status_path = reverse("monitoring-export_job-detail", kwargs={"pk": job_id})
         download_path = reverse("monitoring-export_job-download", kwargs={"pk": job_id})
@@ -32,12 +32,12 @@ def _job_urls(request, job_id: str) -> tuple[str, str]:
         status_path = f"/api/v1/monitoring/export_job/{job_id}/"
         download_path = f"/api/v1/monitoring/export_job/{job_id}/download/"
 
-    return request.build_absolute_uri(status_path), request.build_absolute_uri(download_path)
+    return f"{str(status_path).rstrip('/')}/", f"{str(download_path).rstrip('/')}/"
 
 
 def _serialize_job_for_response(request, state: dict) -> dict:
     job_id = state["id"]
-    status_url, download_url = _job_urls(request, job_id)
+    status_url, download_url = _job_urls(job_id)
     return {
         "id": job_id,
         "status": state.get("status"),

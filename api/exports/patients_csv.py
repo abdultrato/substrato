@@ -62,12 +62,8 @@ class ExportPatientsCSV(APIView):
                 "status": "queued",
                 "export_key": "patients_csv",
                 "created_at": job_state["created_at"],
-                "status_url": request.build_absolute_uri(
-                    f"/api/v1/monitoring/export_job/{job_state['id']}/"
-                ),
-                "download_url": request.build_absolute_uri(
-                    f"/api/v1/monitoring/export_job/{job_state['id']}/download/"
-                ),
+                "status_url": f"/api/v1/monitoring/export_job/{job_state['id']}/",
+                "download_url": f"/api/v1/monitoring/export_job/{job_state['id']}/download/",
             },
             status=202,
         )

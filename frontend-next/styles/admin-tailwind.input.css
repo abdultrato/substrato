@@ -25,15 +25,19 @@
 @tailwind utilities;
 
 /* ------------------------------
-   Global: remove underlines
+   Global: underline only on hover
 -------------------------------- */
 a,
 a:link,
 a:visited,
-a:hover,
 a:active,
 a:focus {
   text-decoration: none !important;
+}
+
+a:hover {
+  text-decoration: underline !important;
+  text-underline-offset: 0.15em;
 }
 
 /* ------------------------------
@@ -107,11 +111,18 @@ body:not(.jazzmin-login-page):not(.popup) #jazzy-sidebar .sidebar {
 #jazzy-navbar,
 .main-header.navbar {
   @apply bg-slate-900 text-slate-50 shadow-sm;
+  min-height: var(--substrato-admin-navbar-height);
+  height: var(--substrato-admin-navbar-height);
+  overflow: hidden;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
 }
 
 #jazzy-navbar .nav-link,
 .main-header.navbar .nav-link {
   @apply text-slate-50;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
 }
 
 #jazzy-navbar .nav-link:hover,
@@ -127,6 +138,22 @@ body:not(.jazzmin-login-page):not(.popup) #jazzy-sidebar .sidebar {
 #jazzy-sidebar .brand-link,
 .main-sidebar .brand-link {
   @apply border-slate-800 bg-slate-950 text-slate-100;
+  display: flex;
+  align-items: center;
+  min-height: var(--substrato-admin-navbar-height);
+  height: var(--substrato-admin-navbar-height);
+  overflow: hidden;
+  font-size: 0.95rem;
+  line-height: 1.2;
+}
+
+#jazzy-sidebar .brand-link .brand-text,
+.main-sidebar .brand-link .brand-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.95rem;
+  line-height: 1.2;
 }
 
 #jazzy-sidebar .nav-sidebar .nav-link,
@@ -179,6 +206,25 @@ body:not(.jazzmin-login-page):not(.popup) #jazzy-sidebar .sidebar {
 -------------------------------- */
 #header {
   @apply bg-slate-900 text-slate-50 shadow-sm;
+  display: flex;
+  align-items: center;
+  min-height: 3rem;
+  overflow: hidden;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+
+#header #branding,
+#header #branding h1,
+#header #branding h1 a {
+  font-size: 1rem;
+  line-height: 1.25rem;
+}
+
+#header img {
+  width: auto;
+  max-height: 2rem;
+  object-fit: contain;
 }
 
 #header a:link,
@@ -499,6 +545,12 @@ body.dark-mode .content-wrapper {
 .brand-link .brand-image,
 .brand-link .brand-image-xs,
 .admin-logo-image {
+  width: 2rem !important;
+  height: 2rem !important;
+  max-width: 2rem !important;
+  max-height: 2rem !important;
+  flex: 0 0 2rem;
+  margin-top: 0 !important;
   object-fit: contain;
   padding: 0.2rem;
 }
@@ -545,7 +597,7 @@ body.dark-mode .content-wrapper {
 }
 
 .admin-reset-link {
-  @apply text-right text-xs font-semibold text-slate-600 underline;
+  @apply text-right text-xs font-semibold text-slate-600 no-underline hover:underline;
 }
 
 .admin-actions {

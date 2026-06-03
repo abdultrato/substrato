@@ -38,7 +38,7 @@ export default function ModuloRecursoPage() {
                     <div className="text-sm text-gray-600">
                         {t("O recurso solicitado não existe na lista atual.", "The requested resource does not exist in the current list.")}
                     </div>
-                    <Link href={`/modules/${groupKey}`} className="text-sm text-gray-700 underline">
+                    <Link href={`/modules/${groupKey}`} className="text-sm text-gray-700 no-underline hover:underline">
                         {t("Voltar", "Back")}
                     </Link>
                 </div>

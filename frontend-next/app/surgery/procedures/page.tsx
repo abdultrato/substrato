@@ -68,7 +68,7 @@ export default function SurgicalProceduresPage() {
                 render: (p: ProcedureRow) => (
                     <Link
                         href={`/surgery/surgical-procedures/${p.id}`}
-                        className="font-medium text-[var(--text)] underline decoration-[var(--border)] underline-offset-2 hover:decoration-[var(--gray-300)]"
+                        className="font-medium text-[var(--text)] no-underline decoration-[var(--border)] underline-offset-2 hover:underline hover:decoration-[var(--gray-300)]"
                     >
                         {p.id_custom || p.id || "-"}
                     </Link>

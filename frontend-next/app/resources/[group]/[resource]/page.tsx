@@ -40,7 +40,7 @@ export default function RecursosRecursoPage() {
                     </div>
                     <Link
                         href={`/resources/${groupKey}`}
-                        className="text-sm text-[var(--gray-700)] underline"
+                        className="text-sm text-[var(--gray-700)] no-underline hover:underline"
                     >
                         {t("Voltar", "Back")}
                     </Link>
@@ -63,7 +63,7 @@ export default function RecursosRecursoPage() {
                     />
                     <Link
                         href={`/resources/${found.group.key}`}
-                        className="text-sm text-[var(--gray-700)] underline"
+                        className="text-sm text-[var(--gray-700)] no-underline hover:underline"
                     >
                         {t("Voltar ao módulo", "Back to module")}
                     </Link>

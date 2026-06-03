@@ -43,7 +43,7 @@ export default function Footer({ leftOffset = "16rem", rightOffset = "0px" }: Pr
           <span className="hidden sm:inline text-white/70">{t("Plataforma", "Platform")}</span>
           <Link
             href="/substrato"
-            className="truncate font-semibold text-white transition hover:text-white/90 underline-offset-4 hover:underline"
+            className="truncate font-semibold text-white transition hover:text-white/90 no-underline underline-offset-4 hover:underline"
           >
             Substrato
           </Link>
