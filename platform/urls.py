@@ -20,7 +20,7 @@ if find_spec("django_prometheus"):
 else:
     ExportToDjangoView = None
 
-if find_spec("drf_spectacular"):
+if find_spec("drf_spectacular.views"):
     from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
 else:
     SpectacularAPIView = SpectacularRedocView = SpectacularSwaggerView = None

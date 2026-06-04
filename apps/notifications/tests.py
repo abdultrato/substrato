@@ -4,10 +4,13 @@ from uuid import uuid4
 import pytest
 from django.conf import settings as django_settings
 
+from apps.billing.models.invoice import Invoice
 from apps.notifications.models.delivery_log import DeliveryLog
 from apps.notifications.models.notification import Notification
 from apps.notifications.models.notification_template import NotificationTemplate
 from apps.notifications.services import NotificationService
+from apps.notifications.use_cases import send_lab_results_notification, send_paid_invoice_notification
+from domain.clinical.result_state import ResultState
 
 
 @pytest.fixture
@@ -195,6 +198,123 @@ def test_send_to_patient_with_email_and_whatsapp(monkeypatch, settings):
     assert stub_email.calls == [(f"pac-{suffix}@example.com", "Fatura paga", "Fatura")]
     assert stub_whatsapp.calls == [(f"+25885{suffix[:6]}", "Fatura paga", "Fatura")]
     assert DeliveryLog.objects.filter(notification__in=notifications, status="sucesso").count() == 2
+
+
+@pytest.mark.django_db
+def test_send_to_patient_uses_companion_contacts_when_patient_contacts_missing(monkeypatch, settings):
+    stub_email = StubChannel()
+    stub_whatsapp = StubChannel()
+    monkeypatch.setattr(
+        "apps.notifications.services.CHANNELS",
+        {
+            Notification.Channel.EMAIL: stub_email,
+            Notification.Channel.WHATSAPP: stub_whatsapp,
+        },
+        raising=False,
+    )
+    settings.NOTIFICACOES_EMAIL_ATIVAS = True
+    settings.NOTIFICACOES_WHATSAPP_ATIVAS = True
+    settings.WHATSAPP_API_URL = "http://whatsapp.test"
+    settings.WHATSAPP_API_KEY = "key"
+    suffix = uuid4().hex
+
+    fake_patient = SimpleNamespace(
+        email=None,
+        contact=None,
+        companion_email=f"acomp-{suffix}@example.com",
+        companion_contact=f"+25886{suffix[:6]}",
+    )
+
+    service = NotificationService()
+    notifications = service.send_to_patient(
+        patient=fake_patient,
+        message="Resultados disponíveis",
+        subject="Resultados",
+        event_type=Notification.EventType.RESULTADO_DISPONIVEL,
+        external_reference=f"req-companion-{suffix}",
+        channels=[Notification.Channel.EMAIL, Notification.Channel.WHATSAPP],
+    )
+
+    assert len(notifications) == 2
+    assert stub_email.calls == [(f"acomp-{suffix}@example.com", "Resultados disponíveis", "Resultados")]
+    assert stub_whatsapp.calls == [(f"+25886{suffix[:6]}", "Resultados disponíveis", "Resultados")]
+
+
+@pytest.mark.django_db
+def test_paid_invoice_notification_uses_companion_contacts(monkeypatch, settings):
+    stub_email = StubChannel()
+    stub_whatsapp = StubChannel()
+    monkeypatch.setattr(
+        "apps.notifications.services.CHANNELS",
+        {
+            Notification.Channel.EMAIL: stub_email,
+            Notification.Channel.WHATSAPP: stub_whatsapp,
+        },
+        raising=False,
+    )
+    settings.NOTIFICACOES_EMAIL_ATIVAS = True
+    settings.NOTIFICACOES_WHATSAPP_ATIVAS = True
+    settings.WHATSAPP_API_URL = "http://whatsapp.test"
+    settings.WHATSAPP_API_KEY = "key"
+    suffix = uuid4().hex
+    patient = SimpleNamespace(
+        name="Paciente sem contacto",
+        email=None,
+        contact=None,
+        companion_email=f"fatura-acomp-{suffix}@example.com",
+        companion_contact=f"+25887{suffix[:6]}",
+    )
+    invoice = SimpleNamespace(
+        pk=f"fat-{suffix}",
+        custom_id=f"FAT-{suffix[:8]}",
+        status=Invoice.Status.PAID,
+        total="123.45",
+        patient=patient,
+    )
+
+    result = send_paid_invoice_notification(invoice, payload={"channels": ["email", "whatsapp"]})
+
+    assert result["total"] == 2
+    assert stub_email.calls[0][0] == f"fatura-acomp-{suffix}@example.com"
+    assert stub_whatsapp.calls[0][0] == f"+25887{suffix[:6]}"
+
+
+@pytest.mark.django_db
+def test_lab_results_notification_uses_companion_contacts(monkeypatch, settings):
+    stub_email = StubChannel()
+    stub_whatsapp = StubChannel()
+    monkeypatch.setattr(
+        "apps.notifications.services.CHANNELS",
+        {
+            Notification.Channel.EMAIL: stub_email,
+            Notification.Channel.WHATSAPP: stub_whatsapp,
+        },
+        raising=False,
+    )
+    settings.NOTIFICACOES_EMAIL_ATIVAS = True
+    settings.NOTIFICACOES_WHATSAPP_ATIVAS = True
+    settings.WHATSAPP_API_URL = "http://whatsapp.test"
+    settings.WHATSAPP_API_KEY = "key"
+    suffix = uuid4().hex
+    patient = SimpleNamespace(
+        name="Paciente sem contacto",
+        email=None,
+        contact=None,
+        companion_email=f"resultado-acomp-{suffix}@example.com",
+        companion_contact=f"+25888{suffix[:6]}",
+    )
+    lab_request = SimpleNamespace(
+        pk=f"req-{suffix}",
+        custom_id=f"REQ-{suffix[:8]}",
+        status=ResultState.VALIDATED,
+        patient=patient,
+    )
+
+    result = send_lab_results_notification(lab_request, payload={"channels": ["email", "whatsapp"]})
+
+    assert result["total"] == 2
+    assert stub_email.calls[0][0] == f"resultado-acomp-{suffix}@example.com"
+    assert stub_whatsapp.calls[0][0] == f"+25888{suffix[:6]}"
 
 
 @pytest.mark.django_db

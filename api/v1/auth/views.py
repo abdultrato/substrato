@@ -25,7 +25,21 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from apps.identity.models.password_reset_token import PasswordResetToken
 from apps.notifications.models.notification import Notification
 from apps.notifications.services import NotificationService
-from drf_spectacular.utils import OpenApiResponse, extend_schema
+try:
+    from drf_spectacular.utils import OpenApiResponse, extend_schema
+except Exception:  # pragma: no cover - fallback for local/dev environments without docs package.
+    class OpenApiResponse:
+        def __init__(self, response=None, description=None, **kwargs):
+            self.response = response
+            self.description = description
+            self.kwargs = kwargs
+
+    def extend_schema(*args, **kwargs):
+        def decorator(obj):
+            return obj
+
+        return decorator
+
 from security.permissions.rbac import RBACPermission
 
 User = get_user_model()
@@ -270,20 +284,95 @@ class UserMeSerializer(serializers.Serializer):
 
 
 class UserPatchSerializer(serializers.ModelSerializer):
+    first_name = serializers.CharField(required=False, allow_blank=True, max_length=150, trim_whitespace=True)
+    last_name = serializers.CharField(required=False, allow_blank=True, max_length=150, trim_whitespace=True)
+    email = serializers.EmailField(required=False, allow_blank=False, trim_whitespace=True)
+    phone = serializers.CharField(required=False, allow_blank=True, allow_null=True, max_length=20, trim_whitespace=True)
+    photo = serializers.ImageField(required=False, allow_null=True)
+
     class Meta:
         model = User
         fields = ("first_name", "last_name", "email", "phone", "photo")
 
     def validate_email(self, value):
         # Permitir manter o mesmo email; garantir unicidade case-insensitive.
-        if not value:
-            return value
-        qs = User.objects.filter(email__iexact=value)
+        email = str(value or "").strip().lower()
+        if not email:
+            raise serializers.ValidationError("Informe um e-mail válido.")
+
+        qs = User.objects.filter(email__iexact=email)
         if self.instance:
             qs = qs.exclude(pk=self.instance.pk)
         if qs.exists():
             raise serializers.ValidationError("Este e-mail já está em uso.")
-        return value
+        return email
+
+    def validate_phone(self, value):
+        phone = str(value or "").strip()
+        return phone or None
+
+    def update(self, instance, validated_data):
+        old_full_name = f"{getattr(instance, 'first_name', '')} {getattr(instance, 'last_name', '')}".strip()
+        changed_fields: list[str] = []
+
+        for field in ("first_name", "last_name", "email", "phone", "photo"):
+            if field not in validated_data:
+                continue
+            value = validated_data[field]
+            if field == "photo" or getattr(instance, field) != value:
+                setattr(instance, field, value)
+                changed_fields.append(field)
+
+        new_full_name = f"{getattr(instance, 'first_name', '')} {getattr(instance, 'last_name', '')}".strip()
+        current_name = str(getattr(instance, "name", "") or "").strip()
+        if new_full_name and (not current_name or current_name == old_full_name):
+            instance.name = new_full_name
+            if "name" not in changed_fields:
+                changed_fields.append("name")
+
+        if changed_fields:
+            instance.save(update_fields=changed_fields)
+        return instance
+
+
+def _user_photo_url(user) -> str | None:
+    photo = getattr(user, "photo", None)
+    if not photo:
+        return None
+    try:
+        return photo.url
+    except Exception:
+        return None
+
+
+def _user_me_payload(user) -> dict:
+    if not hasattr(user, "_prefetched_objects_cache") or "groups" not in getattr(user, "_prefetched_objects_cache", {}):
+        user = User.objects.prefetch_related("groups").get(id=user.id)
+
+    full_name = ""
+    try:
+        full_name = (user.get_full_name() or "").strip()
+    except Exception:
+        full_name = ""
+
+    groups = []
+    try:
+        groups = list(user.groups.values_list("name", flat=True))
+    except Exception:
+        groups = []
+
+    return {
+        "id": user.id,
+        "username": getattr(user, "username", None),
+        "email": getattr(user, "email", None),
+        "phone": getattr(user, "phone", None),
+        "first_name": getattr(user, "first_name", ""),
+        "last_name": getattr(user, "last_name", ""),
+        # Retorne path relativo (/media/...) para funcionar via proxy do Next.js e diretamente no backend.
+        "photo_url": _user_photo_url(user),
+        "full_name": full_name or getattr(user, "name", None) or getattr(user, "username", None),
+        "groups": groups,
+    }
 
 
 class LoginView(TokenObtainPairView):
@@ -354,43 +443,7 @@ class UserView(APIView):
 
     @extend_schema(responses={200: UserMeSerializer})
     def get(self, request):
-        user = request.user
-
-        # Otimização: prefetch groups para evitar N+1 query ao iterar em user.groups
-        # Se o usuário não foi carregado com prefetch_related, fazer query adicional controlada
-        if not hasattr(user, '_prefetched_objects_cache') or 'groups' not in getattr(user, '_prefetched_objects_cache', {}):
-            user = User.objects.prefetch_related('groups').get(id=user.id)
-
-        full_name = ""
-        try:
-            full_name = (user.get_full_name() or "").strip()
-        except Exception:
-            full_name = ""
-
-        groups = []
-        try:
-            groups = list(user.groups.values_list("name", flat=True))
-        except Exception:
-            groups = []
-
-        return Response(
-            {
-                "id": user.id,
-                "username": getattr(user, "username", None),
-                "email": getattr(user, "email", None),
-                "phone": getattr(user, "phone", None),
-                "first_name": getattr(user, "first_name", ""),
-                "last_name": getattr(user, "last_name", ""),
-                # IMPORTANT:
-                # Retorne um path relativo (/media/...) para funcionar tanto:
-                # - via proxy do Next.js (localhost:3000 -> backend:8000), onde build_absolute_uri
-                #   pode gerar "http://backend:8000/..." (host interno, inacessivel no browser)
-                # - quanto diretamente no backend (localhost:8000) e via nginx.
-                "photo_url": (user.photo.url if getattr(user, "photo", None) else None),
-                "full_name": full_name or getattr(user, "username", None),
-                "groups": groups,
-            }
-        )
+        return Response(_user_me_payload(request.user))
 
     @extend_schema(request=UserPatchSerializer, responses={200: UserMeSerializer})
     def patch(self, request):

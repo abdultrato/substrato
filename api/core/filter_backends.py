@@ -1,3 +1,4 @@
+# encoding: utf-8
 from __future__ import annotations
 
 from django_filters.rest_framework import DjangoFilterBackend as DjangoFilterBackendBase

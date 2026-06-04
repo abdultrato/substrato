@@ -1,10 +1,23 @@
-"""Serializers DRF para cirurgias e procedimentos cirúrgicos."""
+"""Serializers DRF para cirurgias, bloco operatório e procedimentos cirúrgicos."""
 
 from rest_framework import serializers
 
 from api.v1.compat import LegacyAliasSerializerMixin
-from apps.surgery.models.surgery import LargeSurgery, SmallSurgery, Surgery
-from apps.surgery.models.surgical_procedure import SurgicalProcedure
+from apps.surgery.models import (
+    AnesthesiaRecord,
+    LargeSurgery,
+    OperatingRoom,
+    OperativeReport,
+    RecoveryRecord,
+    SmallSurgery,
+    Surgery,
+    SurgicalConsumption,
+    SurgicalMaterial,
+    SurgicalProcedure,
+    SurgicalSafetyChecklist,
+    SurgicalSchedule,
+    SurgicalTeamMember,
+)
 
 CORE_READ_ONLY_FIELDS = (
     "id",
@@ -44,6 +57,9 @@ BASE_ALIASES = {
     "aplicar_iva": "applies_vat_by_default",
     "aplica_iva_por_padrao": "applies_vat_by_default",
     "aplica_iva_por_padrão": "applies_vat_by_default",
+    "observacoes": "notes",
+    "observações": "notes",
+    "notas": "notes",
 }
 
 SURGICAL_PROCEDURE_ALIASES = {
@@ -203,10 +219,242 @@ class LargeSurgerySerializer(BaseSurgerySerializer):
         model = LargeSurgery
 
 
+class OperatingRoomSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer):
+    legacy_input_aliases = {
+        **BASE_ALIASES,
+        "tipo_sala": "room_type",
+        "localizacao": "location",
+        "localização": "location",
+        "capacidade": "capacity",
+        "esterilizada": "sterile",
+        "equipamentos": "equipment_notes",
+    }
+    legacy_output_aliases = legacy_input_aliases
+
+    class Meta:
+        model = OperatingRoom
+        fields = "__all__"
+        read_only_fields = CORE_READ_ONLY_FIELDS
+
+
+class SurgicalScheduleSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer):
+    surgery_code = serializers.CharField(source="surgery.custom_id", read_only=True)
+    patient_name = serializers.CharField(source="surgery.patient.name", read_only=True)
+    operating_room_name = serializers.CharField(source="operating_room.name", read_only=True)
+    legacy_input_aliases = {
+        **BASE_ALIASES,
+        "cirurgia": "surgery",
+        "centro_cirurgico": "operating_room",
+        "centro_cirúrgico": "operating_room",
+        "sala": "operating_room",
+        "inicio_previsto": "scheduled_start",
+        "início_previsto": "scheduled_start",
+        "fim_previsto": "scheduled_end",
+        "prioridade": "priority",
+        "motivo_cancelamento": "cancellation_reason",
+    }
+    legacy_output_aliases = legacy_input_aliases
+
+    class Meta:
+        model = SurgicalSchedule
+        fields = "__all__"
+        read_only_fields = (*CORE_READ_ONLY_FIELDS, "surgery_code", "patient_name", "operating_room_name")
+
+
+class SurgicalTeamMemberSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer):
+    surgery_code = serializers.CharField(source="surgery.custom_id", read_only=True)
+    employee_name = serializers.CharField(source="employee.name", read_only=True)
+    legacy_input_aliases = {
+        **BASE_ALIASES,
+        "cirurgia": "surgery",
+        "funcionario": "employee",
+        "funcionário": "employee",
+        "profissional": "employee",
+        "funcao": "role",
+        "função": "role",
+        "principal": "lead",
+        "presente": "present",
+    }
+    legacy_output_aliases = legacy_input_aliases
+
+    class Meta:
+        model = SurgicalTeamMember
+        fields = "__all__"
+        read_only_fields = (*CORE_READ_ONLY_FIELDS, "surgery_code", "employee_name")
+
+
+class AnesthesiaRecordSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer):
+    surgery_code = serializers.CharField(source="surgery.custom_id", read_only=True)
+    anesthetist_name = serializers.CharField(source="anesthetist.name", read_only=True)
+    legacy_input_aliases = {
+        **BASE_ALIASES,
+        "cirurgia": "surgery",
+        "anestesista": "anesthetist",
+        "tipo_anestesia": "anesthesia_type",
+        "classe_asa": "asa_class",
+        "iniciada_em": "started_at",
+        "terminada_em": "ended_at",
+        "via_aerea": "airway_management",
+        "via_aérea": "airway_management",
+        "farmacos": "medications",
+        "fármacos": "medications",
+        "fluidos": "fluids",
+        "complicacoes": "complications",
+        "complicações": "complications",
+    }
+    legacy_output_aliases = legacy_input_aliases
+
+    class Meta:
+        model = AnesthesiaRecord
+        fields = "__all__"
+        read_only_fields = (*CORE_READ_ONLY_FIELDS, "surgery_code", "anesthetist_name")
+
+
+class SurgicalSafetyChecklistSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer):
+    surgery_code = serializers.CharField(source="surgery.custom_id", read_only=True)
+    completed_by_name = serializers.CharField(source="completed_by.name", read_only=True)
+    is_complete = serializers.BooleanField(read_only=True)
+    legacy_input_aliases = {
+        **BASE_ALIASES,
+        "cirurgia": "surgery",
+        "preenchido_por": "completed_by",
+        "fase": "phase",
+        "identidade_confirmada": "patient_identity_confirmed",
+        "procedimento_confirmado": "procedure_confirmed",
+        "local_marcado": "site_marked",
+        "consentimento_confirmado": "consent_confirmed",
+        "seguranca_anestesica": "anesthesia_safety_checked",
+        "segurança_anestésica": "anesthesia_safety_checked",
+        "profilaxia_antibiotica": "antibiotic_prophylaxis",
+        "contagem_instrumentos": "instrument_count_confirmed",
+        "amostras_identificadas": "specimens_labeled",
+        "concluido_em": "completed_at",
+        "concluído_em": "completed_at",
+    }
+    legacy_output_aliases = legacy_input_aliases
+
+    class Meta:
+        model = SurgicalSafetyChecklist
+        fields = "__all__"
+        read_only_fields = (*CORE_READ_ONLY_FIELDS, "surgery_code", "completed_by_name", "is_complete")
+
+
+class SurgicalMaterialSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer):
+    product_name = serializers.CharField(source="product.name", read_only=True)
+    legacy_input_aliases = {
+        **BASE_ALIASES,
+        "produto": "product",
+        "tipo_material": "material_type",
+        "unidade": "unit",
+        "reutilizavel": "reusable",
+        "reutilizável": "reusable",
+        "esteril": "sterile",
+        "estéril": "sterile",
+    }
+    legacy_output_aliases = legacy_input_aliases
+
+    class Meta:
+        model = SurgicalMaterial
+        fields = "__all__"
+        read_only_fields = (*CORE_READ_ONLY_FIELDS, "product_name")
+
+
+class SurgicalConsumptionSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer):
+    surgery_code = serializers.CharField(source="surgery.custom_id", read_only=True)
+    material_name = serializers.CharField(source="material.name", read_only=True)
+    product_name = serializers.CharField(source="product.name", read_only=True)
+    consumed_by_name = serializers.CharField(source="consumed_by.name", read_only=True)
+    total_cost = serializers.DecimalField(max_digits=14, decimal_places=2, read_only=True)
+    legacy_input_aliases = {
+        **BASE_ALIASES,
+        "cirurgia": "surgery",
+        "material": "material",
+        "produto": "product",
+        "consumido_por": "consumed_by",
+        "quantidade": "quantity",
+        "custo_unitario": "unit_cost",
+        "custo_unitário": "unit_cost",
+        "consumido_em": "consumed_at",
+        "lote": "batch_number",
+    }
+    legacy_output_aliases = legacy_input_aliases
+
+    class Meta:
+        model = SurgicalConsumption
+        fields = "__all__"
+        read_only_fields = (*CORE_READ_ONLY_FIELDS, "surgery_code", "material_name", "product_name", "consumed_by_name", "total_cost")
+
+
+class RecoveryRecordSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer):
+    surgery_code = serializers.CharField(source="surgery.custom_id", read_only=True)
+    nurse_name = serializers.CharField(source="nurse.name", read_only=True)
+    legacy_input_aliases = {
+        **BASE_ALIASES,
+        "cirurgia": "surgery",
+        "enfermeiro": "nurse",
+        "admitido_em": "admitted_at",
+        "alta_em": "discharged_at",
+        "dor": "pain_score",
+        "aldrete": "aldrete_score",
+        "sinais_vitais": "vital_signs",
+        "complicacoes": "complications",
+        "complicações": "complications",
+        "destino": "destination",
+    }
+    legacy_output_aliases = legacy_input_aliases
+
+    class Meta:
+        model = RecoveryRecord
+        fields = "__all__"
+        read_only_fields = (*CORE_READ_ONLY_FIELDS, "surgery_code", "nurse_name")
+
+
+class OperativeReportSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer):
+    surgery_code = serializers.CharField(source="surgery.custom_id", read_only=True)
+    patient_name = serializers.CharField(source="surgery.patient.name", read_only=True)
+    primary_surgeon_name = serializers.CharField(source="primary_surgeon.name", read_only=True)
+    legacy_input_aliases = {
+        **BASE_ALIASES,
+        "cirurgia": "surgery",
+        "cirurgiao_principal": "primary_surgeon",
+        "cirurgião_principal": "primary_surgeon",
+        "diagnostico_pre_operatorio": "preoperative_diagnosis",
+        "diagnóstico_pré_operatório": "preoperative_diagnosis",
+        "diagnostico_pos_operatorio": "postoperative_diagnosis",
+        "diagnóstico_pós_operatório": "postoperative_diagnosis",
+        "procedimento_realizado": "procedure_performed",
+        "achados": "findings",
+        "tecnica": "technique",
+        "técnica": "technique",
+        "complicacoes": "complications",
+        "complicações": "complications",
+        "perda_sanguinea_ml": "estimated_blood_loss_ml",
+        "amostra_patologia": "specimen_sent_to_pathology",
+        "numero_patologia": "pathology_accession_number",
+        "iniciada_em": "started_at",
+        "terminada_em": "ended_at",
+        "assinado_em": "signed_at",
+    }
+    legacy_output_aliases = legacy_input_aliases
+
+    class Meta:
+        model = OperativeReport
+        fields = "__all__"
+        read_only_fields = (*CORE_READ_ONLY_FIELDS, "surgery_code", "patient_name", "primary_surgeon_name")
+
+
 SERIALIZER_MAP = {
     "surgery": SurgerySerializer,
     "small_surgery": SmallSurgerySerializer,
     "large_surgery": LargeSurgerySerializer,
     "surgical_procedure": SurgicalProcedureSerializer,
+    "agenda_cirurgica": SurgicalScheduleSerializer,
+    "centro_cirurgico": OperatingRoomSerializer,
+    "equipa_cirurgica": SurgicalTeamMemberSerializer,
+    "anestesia": AnesthesiaRecordSerializer,
+    "checklist_seguranca": SurgicalSafetyChecklistSerializer,
+    "materiais": SurgicalMaterialSerializer,
+    "consumos": SurgicalConsumptionSerializer,
+    "recuperacao": RecoveryRecordSerializer,
+    "relatorio_operatorio": OperativeReportSerializer,
 }
-

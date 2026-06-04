@@ -113,6 +113,16 @@ class PatientSerializer(serializers.ModelSerializer):
         "contato": "contact",
         "telefone": "contact",
         "phone": "contact",
+        "nome_acompanhante": "companion_name",
+        "acompanhante_nome": "companion_name",
+        "parentesco_acompanhante": "companion_relationship",
+        "relacao_acompanhante": "companion_relationship",
+        "relação_acompanhante": "companion_relationship",
+        "telefone_acompanhante": "companion_contact",
+        "contacto_acompanhante": "companion_contact",
+        "contato_acompanhante": "companion_contact",
+        "companion_phone": "companion_contact",
+        "email_acompanhante": "companion_email",
         "morada": "address",
         "endereco": "address",
         "endereço": "address",
@@ -144,6 +154,11 @@ class PatientSerializer(serializers.ModelSerializer):
         "tipo_documento": "document_type",
         "numero_id": "document_number",
         "contacto": "contact",
+        "nome_acompanhante": "companion_name",
+        "parentesco_acompanhante": "companion_relationship",
+        "telefone_acompanhante": "companion_contact",
+        "contacto_acompanhante": "companion_contact",
+        "email_acompanhante": "companion_email",
         "morada": "address",
         "empresa_origem": "origin_company",
         "empresa_origem_nome": "origin_company_name",
@@ -189,6 +204,30 @@ class PatientSerializer(serializers.ModelSerializer):
                 "required": False,
                 "allow_blank": True,
                 "help_text": "Número de phone para contato (incluir indicativo país)",
+            },
+            "companion_name": {
+                "required": False,
+                "allow_blank": True,
+                "help_text": "Nome do acompanhante para notificações quando necessário",
+            },
+            "companion_relationship": {
+                "required": False,
+                "allow_blank": True,
+                "help_text": "Parentesco ou relação do acompanhante com o paciente",
+            },
+            "companion_contact": {
+                "required": False,
+                "allow_blank": True,
+                "help_text": "Telefone do acompanhante para WhatsApp/SMS",
+            },
+            "companion_email": {
+                "required": False,
+                "allow_blank": True,
+                "allow_null": True,
+                "help_text": "Email do acompanhante para notificações",
+                "error_messages": {
+                    "invalid": "Email do acompanhante inválido",
+                },
             },
             "birth_date": {
                 "required": False,
@@ -302,6 +341,12 @@ class PatientSerializer(serializers.ModelSerializer):
         ):
             raise serializers.ValidationError("Este email já está registrado.")
         return value
+
+    def validate_companion_contact(self, value):
+        """Mantém o telefone do acompanhante flexível para formatos com indicativo."""
+        if value in (None, ""):
+            return value
+        return str(value).strip()
 
     def validate_document_number(self, value):
         """Validação adicional de número de documento."""

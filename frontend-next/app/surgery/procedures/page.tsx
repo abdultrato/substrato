@@ -81,7 +81,7 @@ export default function SurgicalProceduresPage() {
     )
 
     return (
-        <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.MEDICINA, GROUPS.MEDICINA_OCUPACIONAL]}>
+        <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.RECEPCAO, GROUPS.MEDICINA, GROUPS.MEDICINA_OCUPACIONAL]}>
             <div className="space-y-6">
                 <PageHeader
                     title="Procedimentos cirúrgicos"
@@ -159,6 +159,5 @@ export default function SurgicalProceduresPage() {
         </AppLayout>
     )
 }
-
 
 

@@ -3,7 +3,7 @@
 import { isNotFoundLikeError } from "@/lib/errors/api-error"
 import Link from "next/link"
 import { useEffect, useState } from "react"
-import { ClipboardList, Scissors, Settings } from "lucide-react"
+import { ClipboardCheck, ClipboardList, FileText, HeartPulse, PackageCheck, PackageSearch, Scissors, Settings, Users } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
 import Card from "@/components/ui/Card"
@@ -57,7 +57,7 @@ export default function SurgeryPage() {
     }, [safeRefreshToken])
 
     return (
-        <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.MEDICINA, GROUPS.MEDICINA_OCUPACIONAL]}>
+        <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.RECEPCAO, GROUPS.MEDICINA, GROUPS.MEDICINA_OCUPACIONAL]}>
             <div className="space-y-6">
                 <PageHeader
                     title="Cirurgia"
@@ -115,6 +115,60 @@ export default function SurgeryPage() {
                         href="/surgery/surgeries"
                         icon={ClipboardList}
                     />
+                    <ActionTile
+                        title="Agenda cirúrgica"
+                        description="Marcação por sala, prioridade, estado e horário previsto."
+                        href="/resources/surgery/agenda_cirurgica"
+                        icon={ClipboardList}
+                    />
+                    <ActionTile
+                        title="Centro cirúrgico"
+                        description="Salas, esterilização, disponibilidade e equipamentos."
+                        href="/resources/surgery/centro_cirurgico"
+                        icon={Scissors}
+                    />
+                    <ActionTile
+                        title="Equipa cirúrgica"
+                        description="Cirurgião, anestesista, instrumentista, circulante e assistentes."
+                        href="/resources/surgery/equipa_cirurgica"
+                        icon={Users}
+                    />
+                    <ActionTile
+                        title="Anestesia"
+                        description="Tipo, ASA, fármacos, fluidos, via aérea e complicações."
+                        href="/resources/surgery/anestesia"
+                        icon={HeartPulse}
+                    />
+                    <ActionTile
+                        title="Checklist de segurança"
+                        description="Sign-in, time-out, sign-out e confirmação de segurança."
+                        href="/resources/surgery/checklist_seguranca"
+                        icon={ClipboardCheck}
+                    />
+                    <ActionTile
+                        title="Materiais"
+                        description="Catálogo de materiais cirúrgicos, implantes e consumíveis."
+                        href="/resources/surgery/materiais"
+                        icon={PackageSearch}
+                    />
+                    <ActionTile
+                        title="Consumos"
+                        description="Materiais e produtos consumidos por cirurgia."
+                        href="/resources/surgery/consumos"
+                        icon={PackageCheck}
+                    />
+                    <ActionTile
+                        title="Recuperação"
+                        description="Sala de recuperação, dor, Aldrete, sinais vitais e alta."
+                        href="/resources/surgery/recuperacao"
+                        icon={HeartPulse}
+                    />
+                    <ActionTile
+                        title="Relatório operatório"
+                        description="Achados, técnica, complicações e amostras para patologia."
+                        href="/resources/surgery/relatorio_operatorio"
+                        icon={FileText}
+                    />
                 </div>
 
                 <Card
@@ -130,6 +184,4 @@ export default function SurgeryPage() {
         </AppLayout>
     )
 }
-
-
 

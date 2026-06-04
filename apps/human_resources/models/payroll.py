@@ -389,6 +389,25 @@ class Payroll(NoNameCoreModel):
     def salary_liquido(self) -> Decimal:
         return Decimal(self.total_salary or Decimal("0.00")).quantize(Decimal("0.01"))
 
+    def __str__(self) -> str:
+        code = str(self.custom_id or "").strip()
+        if not code and self.pk:
+            code = f"#{self.pk}"
+
+        employee_name = ""
+        if self.employee_id:
+            try:
+                employee_name = str(self.employee).strip()
+            except Exception:
+                employee_name = ""
+
+        period = ""
+        if self.month and self.year:
+            period = f"{int(self.month):02d}/{int(self.year)}"
+
+        parts = ["Folha de Pagamento", code, employee_name, period]
+        return " - ".join(part for part in parts if part)
+
     def save(self, *args, **kwargs):
         if not self.tenant_id and self.employee_id:
             self.tenant_id = self.employee.tenant_id

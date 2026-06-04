@@ -174,6 +174,23 @@ function schemaToFields(
   })
 }
 
+function collectionItemSchema(responseSchema: any): any {
+  const normalized = normalizeSchema(responseSchema)
+  if (!normalized) return null
+
+  if (normalized.type === "array") {
+    return normalizeSchema(normalized.items)
+  }
+
+  const results = normalizeSchema(normalized.properties?.results)
+  if (results?.type === "array") {
+    return normalizeSchema(results.items)
+  }
+
+  if (normalized.properties) return normalized
+  return null
+}
+
 function normalizePath(path: string): string {
   const p = String(path || "").split("?")[0].split("#")[0]
   if (!p) return "/"
@@ -287,4 +304,17 @@ export function buildFormSpec(endpoint: string, method: HttpMethod): FormSpec | 
 
   const submitFields = fields.filter((f) => !f.readOnly)
   return { fields, submitFields }
+}
+
+export function buildListFields(endpoint: string): FormField[] {
+  const found = findPathItem(endpoint)
+  const op = found?.item?.get
+  const resp = op?.responses?.["200"] || op?.responses?.["201"]
+  const respSchema = resp?.content?.["application/json"]?.schema
+  const itemSchema = collectionItemSchema(respSchema)
+  if (!itemSchema?.properties) return []
+
+  const canonicalEndpoint = normalizeEndpointAlias(endpoint)
+  const required = (itemSchema.required || []) as string[]
+  return schemaToFields(itemSchema, required, canonicalEndpoint)
 }

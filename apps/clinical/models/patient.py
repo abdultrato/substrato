@@ -213,6 +213,33 @@ class Patient(CoreModel):
         null=True,
     )
 
+    companion_name = models.CharField(
+        db_column="companion_name",
+        verbose_name="Nome do acompanhante",
+        max_length=120,
+        blank=True,
+        default="",
+    )
+    companion_relationship = models.CharField(
+        db_column="companion_relationship",
+        verbose_name="Parentesco do acompanhante",
+        max_length=60,
+        blank=True,
+        default="",
+    )
+    companion_contact = models.CharField(
+        db_column="companion_contact",
+        verbose_name="Contacto do acompanhante",
+        max_length=30,
+        blank=True,
+        default="",
+    )
+    companion_email = NormalizedEmailField(
+        verbose_name="E-mail do acompanhante",
+        blank=True,
+        null=True,
+    )
+
     provenance = models.CharField(
 
         db_column="provenance",

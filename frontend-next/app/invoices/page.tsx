@@ -323,12 +323,14 @@ export default function FaturasPage() {
         setErro(null)
         setFeedback(null)
         setAcaoId(id)
-        await apiFetch(`/invoices/${id}/confirm-payment/`, { method: "POST" })
-        await carregar()
-        if (selectedFatura?.id === id) {
-          const atual = faturas.find((f) => f.id === id)
-          if (atual) setSelectedFatura(atual)
+        const updated = await apiFetch<FaturaRow>(`/invoices/${id}/confirm-payment/`, { method: "POST" })
+        if (updated?.id) {
+          setFaturas((prev) => prev.map((f) => (f.id === updated.id ? updated : f)))
+          if (selectedFatura?.id === updated.id) setSelectedFatura(updated)
+          setTemPagamentoPendente(false)
+          setFeedback("Pagamento confirmado. Pode enviar a notificação da fatura por email e WhatsApp.")
         }
+        await carregar()
         await carregarPagamentosPendentes(id)
       } catch (e: any) {
         setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao confirmar pagamento."))
@@ -336,7 +338,7 @@ export default function FaturasPage() {
         setAcaoId(null)
       }
     },
-    [carregar, faturas, podeAlterar, selectedFatura, carregarPagamentosPendentes]
+    [carregar, podeAlterar, selectedFatura, carregarPagamentosPendentes]
   )
 
   const sendInvoiceNotification = useCallback(async (id: number) => {

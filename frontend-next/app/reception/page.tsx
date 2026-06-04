@@ -3,12 +3,16 @@
 import Link from "next/link"
 import { useEffect, useState } from "react"
 import {
+    Activity,
     ClipboardList,
     CreditCard,
     FilePlus2,
     FileText,
     CalendarClock,
+    HeartPulse,
     Receipt,
+    Scissors,
+    Stethoscope,
     UserPlus,
     Users,
     PackageSearch,
@@ -117,6 +121,39 @@ const atalhos = [
     },
 ]
 
+const marcacoesPorSector = [
+    {
+        title: "Consultas médicas",
+        description: "Marcar consulta clínica para um paciente, com especialidade, horário e faturação.",
+        href: "/consultations",
+        icon: Stethoscope,
+    },
+    {
+        title: "Consultas cirúrgicas",
+        description: "Agendar cirurgia pequena, grande ou geral com procedimento e data prevista.",
+        href: "/surgery/surgeries/new",
+        icon: Scissors,
+    },
+    {
+        title: "Odontologia",
+        description: "Marcar consulta dentária com cadeira/gabinete, motivo e estado do atendimento.",
+        href: "/dental/appointments/new",
+        icon: CalendarClock,
+    },
+    {
+        title: "Medicina veterinária",
+        description: "Marcar consulta veterinária para animal/paciente e tutor responsável.",
+        href: "/veterinary/appointments/new",
+        icon: HeartPulse,
+    },
+    {
+        title: "Fisioterapia e reabilitação",
+        description: "Abrir marcação de avaliação funcional inicial antes do plano e das sessões.",
+        href: "/physiotherapy/assessments/new",
+        icon: Activity,
+    },
+]
+
 export default function RecepcaoPage() {
     const { loading } = useAuthGuard()
     const { user } = useAuth()
@@ -184,6 +221,40 @@ export default function RecepcaoPage() {
                         icon={Receipt}
                     />
                 </div>
+
+                <Card
+                    title="Marcação por sector"
+                    subtitle="A recepção inicia a marcação e o registo fica vinculado ao módulo operacional correto."
+                >
+                    <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+                        {marcacoesPorSector.map((sector) => {
+                            const Icon = sector.icon
+
+                            return (
+                                <Link
+                                    key={sector.href}
+                                    href={sector.href}
+                                    className="group flex min-h-[150px] flex-col justify-between rounded-2xl border border-slate-200 bg-gradient-to-br from-white to-slate-50 p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md"
+                                >
+                                    <div>
+                                        <div className="mb-3 inline-flex rounded-xl bg-slate-900 p-2 text-white shadow-sm">
+                                            <Icon size={19} />
+                                        </div>
+                                        <div className="text-sm font-semibold text-slate-950">
+                                            {sector.title}
+                                        </div>
+                                        <div className="mt-1 text-xs leading-5 text-slate-600">
+                                            {sector.description}
+                                        </div>
+                                    </div>
+                                    <div className="mt-4 text-xs font-semibold text-slate-900 transition group-hover:translate-x-0.5">
+                                        Marcar na recepção
+                                    </div>
+                                </Link>
+                            )
+                        })}
+                    </div>
+                </Card>
 
                 <div className="grid gap-6 xl:grid-cols-[1.3fr_0.9fr]">
                     <Card

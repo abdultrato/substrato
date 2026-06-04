@@ -28,6 +28,13 @@ def _payload_value(payload, *keys):
     return None
 
 
+def _first_non_empty(*values):
+    for value in values:
+        if value not in (None, ""):
+            return value
+    return None
+
+
 def _channels_from_payload(payload):
     raw = _payload_value(payload, "channels", "canais", "channel", "canal")
     if raw in (None, ""):
@@ -71,7 +78,10 @@ def _recipient_overrides(payload):
         "recipient_phone",
         "destinatario_telefone",
         "telefone_acompanhante",
+        "contacto_acompanhante",
+        "contato_acompanhante",
         "companion_phone",
+        "companion_contact",
     )
     return email, phone
 
@@ -102,9 +112,25 @@ def _money(value):
         return "0.00"
 
 
-def _ensure_reachable(patient, email, phone, channels):
-    patient_email = email or getattr(patient, "email", None)
-    patient_phone = phone or getattr(patient, "contact", None)
+def _recipient_targets(patient, email=None, phone=None):
+    resolved_email = _first_non_empty(
+        email,
+        getattr(patient, "email", None),
+        getattr(patient, "companion_email", None),
+    )
+    resolved_phone = _first_non_empty(
+        phone,
+        getattr(patient, "contact", None),
+        getattr(patient, "contacto", None),
+        getattr(patient, "companion_contact", None),
+        getattr(patient, "companion_phone", None),
+    )
+    return resolved_email, resolved_phone
+
+
+def _ensure_reachable(email, phone, channels):
+    patient_email = email
+    patient_phone = phone
 
     has_email_target = Notification.Channel.EMAIL in channels and bool(patient_email)
     has_phone_target = any(
@@ -147,7 +173,8 @@ def send_paid_invoice_notification(invoice, payload=None):
 
     channels = _channels_from_payload(payload)
     email, phone = _recipient_overrides(payload)
-    _ensure_reachable(patient, email, phone, channels)
+    email, phone = _recipient_targets(patient, email=email, phone=phone)
+    _ensure_reachable(email, phone, channels)
 
     invoice_code = invoice.custom_id or invoice.pk
     patient_label = _patient_name(patient)
@@ -188,7 +215,8 @@ def send_lab_results_notification(lab_request, payload=None):
 
     channels = _channels_from_payload(payload)
     email, phone = _recipient_overrides(payload)
-    _ensure_reachable(patient, email, phone, channels)
+    email, phone = _recipient_targets(patient, email=email, phone=phone)
+    _ensure_reachable(email, phone, channels)
 
     request_code = lab_request.custom_id or lab_request.pk
     patient_label = _patient_name(patient)

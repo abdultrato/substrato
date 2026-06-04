@@ -144,6 +144,13 @@ export default function WorkspacesPage() {
     GROUPS.MEDICINA_OCUPACIONAL,
     GROUPS.RADIOLOGIA,
   ])
+  const showPathologyArea = userHasAnyGroup(user, [
+    GROUPS.ADMIN,
+    GROUPS.RECEPCAO,
+    GROUPS.LABORATORIO,
+    GROUPS.MEDICINA,
+    GROUPS.MEDICINA_OCUPACIONAL,
+  ])
   const showCardiologyArea = userHasAnyGroup(user, [
     GROUPS.ADMIN,
     GROUPS.RECEPCAO,
@@ -303,6 +310,18 @@ export default function WorkspacesPage() {
         href: "/radiology",
         icon: Microscope,
         visible: showRadiologyArea,
+        scope: "healthcare",
+      },
+      {
+        key: "pathology",
+        title: "Patologia",
+        description: t(
+          "Recepção de amostras, macroscopia, histologia, citologia, imunohistoquímica, laudos e arquivo.",
+          "Sample reception, grossing, histology, cytology, immunohistochemistry, reports and archive."
+        ),
+        href: "/pathology",
+        icon: Microscope,
+        visible: showPathologyArea,
         scope: "healthcare",
       },
       {
@@ -488,6 +507,7 @@ export default function WorkspacesPage() {
     showOphthalmologyArea,
     showPhysicalTherapyArea,
     showPhysiotherapyArea,
+    showPathologyArea,
     showPublicHealthArea,
     showRadiologyArea,
     showStudentArea,

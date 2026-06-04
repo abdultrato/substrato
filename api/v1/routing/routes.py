@@ -21,6 +21,7 @@ from api.v1.medical_records.viewsets import VIEWSET_MAP as MEDICAL_RECORDS_VIEWS
 from api.v1.monitoring.viewsets import VIEWSET_MAP as MONITORING_VIEWSET_MAP
 from api.v1.notifications.viewsets import VIEWSET_MAP as NOTIFICATIONS_VIEWSET_MAP
 from api.v1.nursing.viewsets import VIEWSET_MAP as NURSING_VIEWSET_MAP
+from api.v1.pathology.viewsets import VIEWSET_MAP as PATHOLOGY_VIEWSET_MAP
 from api.v1.payments.viewsets import VIEWSET_MAP as PAYMENTS_VIEWSET_MAP
 from api.v1.pharmacy.viewsets import VIEWSET_MAP as PHARMACY_VIEWSET_MAP
 from api.v1.physiotherapy.viewsets import VIEWSET_MAP as PHYSIOTHERAPY_VIEWSET_MAP
@@ -47,6 +48,7 @@ VIEWSET_GROUPS = {
     "consultations": CONSULTATIONS_VIEWSET_MAP,
     "accounting": ACCOUNTING_VIEWSET_MAP,
     "nursing": NURSING_VIEWSET_MAP,
+    "pathology": PATHOLOGY_VIEWSET_MAP,
     "equipment": EQUIPMENT_VIEWSET_MAP,
     "equipment_integrations": EQUIPMENT_INTEGRATIONS_VIEWSET_MAP,
     "external_entities": EXTERNAL_ENTITIES_VIEWSET_MAP,

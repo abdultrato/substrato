@@ -479,11 +479,11 @@ class Migration(migrations.Migration):
         ),
         migrations.AddConstraint(
             model_name='medicalexam',
-            constraint=models.CheckConstraint(check=models.Q(('turnaround_hours__gt', 0)), name='exm_turnaround_hours_positivo'),
+            constraint=models.CheckConstraint(condition=models.Q(('turnaround_hours__gt', 0)), name='exm_turnaround_hours_positivo'),
         ),
         migrations.AddConstraint(
             model_name='medicalexam',
-            constraint=models.CheckConstraint(check=models.Q(('price__gte', 0)), name='exm_price_nao_negativo'),
+            constraint=models.CheckConstraint(condition=models.Q(('price__gte', 0)), name='exm_price_nao_negativo'),
         ),
         migrations.AddIndex(
             model_name='labrequestitem',
@@ -511,11 +511,11 @@ class Migration(migrations.Migration):
         ),
         migrations.AddConstraint(
             model_name='labexam',
-            constraint=models.CheckConstraint(check=models.Q(('turnaround_hours__gt', 0)), name='turnaround_hours_positivo'),
+            constraint=models.CheckConstraint(condition=models.Q(('turnaround_hours__gt', 0)), name='turnaround_hours_positivo'),
         ),
         migrations.AddConstraint(
             model_name='labexam',
-            constraint=models.CheckConstraint(check=models.Q(('price__gte', 0)), name='price_nao_negativo'),
+            constraint=models.CheckConstraint(condition=models.Q(('price__gte', 0)), name='price_nao_negativo'),
         ),
         migrations.AddIndex(
             model_name='clinicalreference',
@@ -531,15 +531,15 @@ class Migration(migrations.Migration):
         ),
         migrations.AddConstraint(
             model_name='clinicalreference',
-            constraint=models.CheckConstraint(check=models.Q(('maximum_age_days__gte', models.F('minimum_age_days')), ('minimum_age_days__isnull', True), ('maximum_age_days__isnull', True), _connector='OR'), name='ref_idade_intervalo_valido'),
+            constraint=models.CheckConstraint(condition=models.Q(('maximum_age_days__gte', models.F('minimum_age_days')), ('minimum_age_days__isnull', True), ('maximum_age_days__isnull', True), _connector='OR'), name='ref_idade_intervalo_valido'),
         ),
         migrations.AddConstraint(
             model_name='clinicalreference',
-            constraint=models.CheckConstraint(check=models.Q(('maximum_value__gte', models.F('minimum_value')), ('minimum_value__isnull', True), ('maximum_value__isnull', True), _connector='OR'), name='ref_value_intervalo_valido'),
+            constraint=models.CheckConstraint(condition=models.Q(('maximum_value__gte', models.F('minimum_value')), ('minimum_value__isnull', True), ('maximum_value__isnull', True), _connector='OR'), name='ref_value_intervalo_valido'),
         ),
         migrations.AddConstraint(
             model_name='clinicalreference',
-            constraint=models.CheckConstraint(check=models.Q(('critical_high__gte', models.F('critical_low')), ('critical_low__isnull', True), ('critical_high__isnull', True), _connector='OR'), name='ref_critico_intervalo_valido'),
+            constraint=models.CheckConstraint(condition=models.Q(('critical_high__gte', models.F('critical_low')), ('critical_low__isnull', True), ('critical_high__isnull', True), _connector='OR'), name='ref_critico_intervalo_valido'),
         ),
         migrations.AddIndex(
             model_name='clinicalevent',
@@ -563,6 +563,6 @@ class Migration(migrations.Migration):
         ),
         migrations.AddConstraint(
             model_name='clinicalevent',
-            constraint=models.CheckConstraint(check=models.Q(('request__isnull', False), ('result__isnull', False), _connector='OR'), name='evento_clinico_deve_ter_contexto'),
+            constraint=models.CheckConstraint(condition=models.Q(('request__isnull', False), ('result__isnull', False), _connector='OR'), name='evento_clinico_deve_ter_contexto'),
         ),
     ]

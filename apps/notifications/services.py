@@ -15,6 +15,13 @@ CHANNELS = {
 }
 
 
+def _first_non_empty(*values):
+    for value in values:
+        if value not in (None, ""):
+            return value
+    return None
+
+
 class NotificationService:
     def _normalize_channels(self, channels=None):
         if not channels:
@@ -174,17 +181,34 @@ class NotificationService:
 
         related_patient = patient if hasattr(patient, "_meta") else None
         email = (
-            email
-            or kwargs.pop("recipient_email", None)
-            or kwargs.pop("destinatario_email", None)
-            or getattr(patient, "email", None)
+            _first_non_empty(
+                email,
+                kwargs.pop("recipient_email", None),
+                kwargs.pop("destinatario_email", None),
+                kwargs.pop("email_acompanhante", None),
+                kwargs.pop("companion_email", None),
+                getattr(patient, "email", None),
+                getattr(patient, "companion_email", None),
+            )
         )
         phone = (
-            phone
-            or kwargs.pop("recipient_phone", None)
-            or kwargs.pop("telefone", None)
-            or kwargs.pop("contacto", None)
-            or getattr(patient, "contact", None)
+            _first_non_empty(
+                phone,
+                kwargs.pop("recipient_phone", None),
+                kwargs.pop("destinatario_telefone", None),
+                kwargs.pop("telefone", None),
+                kwargs.pop("contacto", None),
+                kwargs.pop("contato", None),
+                kwargs.pop("telefone_acompanhante", None),
+                kwargs.pop("contacto_acompanhante", None),
+                kwargs.pop("contato_acompanhante", None),
+                kwargs.pop("companion_phone", None),
+                kwargs.pop("companion_contact", None),
+                getattr(patient, "contact", None),
+                getattr(patient, "contacto", None),
+                getattr(patient, "companion_contact", None),
+                getattr(patient, "companion_phone", None),
+            )
         )
         requested_channels = self._normalize_channels(channels or kwargs.pop("canais", None))
         seen_destinations = set()

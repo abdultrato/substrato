@@ -58,6 +58,22 @@ function relationDetailEndpoint(target: RelationTarget, id: string): string {
   return `${base}${encodeURIComponent(id)}/`
 }
 
+function normalizeEndpointPath(value: string): string {
+  const clean = String(value || "").split("?")[0].split("#")[0].trim()
+  const prefixed = clean.startsWith("/") ? clean : `/${clean}`
+  return prefixed.replace(/\/+$/, "") + "/"
+}
+
+const RECEPTION_CHECKIN_VISIBLE_INTERNAL_FIELDS = new Set([
+  "id",
+  "custom_id",
+  "tenant",
+  "created_at",
+  "updated_at",
+  "created_by",
+  "updated_by",
+])
+
 function fmtValue(
   key: string,
   value: any,
@@ -126,12 +142,16 @@ export default function ResourceDetailsCard({
   const { tr } = useLanguage()
   const safeRefreshToken = useSafeDataRefreshSignal()
   const [relationLabels, setRelationLabels] = useState<Record<string, string>>({})
+  const showReceptionCheckinAudit = normalizeEndpointPath(endpoint) === "/reception/checkin/"
   const entries = useMemo(
     () =>
       Object.entries(data || {})
-        .filter(([k]) => !isInternalField(k))
-        .filter(([k]) => k !== "tenant" && k !== "created_by" && k !== "updated_by" && k !== "deleted_by"),
-    [data]
+        .filter(([k]) => !isInternalField(k) || (showReceptionCheckinAudit && RECEPTION_CHECKIN_VISIBLE_INTERNAL_FIELDS.has(k)))
+        .filter(([k]) => {
+          if (showReceptionCheckinAudit) return k !== "deleted_by"
+          return k !== "tenant" && k !== "created_by" && k !== "updated_by" && k !== "deleted_by"
+        }),
+    [data, showReceptionCheckinAudit]
   )
   const relationLookups = useMemo(
     () =>

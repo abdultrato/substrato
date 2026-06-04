@@ -1,7 +1,11 @@
 """Serviços utilitários de cache (global e por tenant)."""
 
 from django.core.cache import cache
-from django_redis import get_redis_connection
+
+try:
+    from django_redis import get_redis_connection
+except Exception:  # pragma: no cover - fallback for local environments without django-redis
+    get_redis_connection = None
 
 DEFAULT_TIMEOUT = 600  # 10 minutos
 
@@ -101,6 +105,8 @@ class TenantCache:
 
         key = TenantCache._key(tenant_id, suffix)
         try:
+            if get_redis_connection is None:
+                raise RuntimeError("django-redis is not installed")
             conn = get_redis_connection("default")
         except Exception:
             # Fallback para LocMemCache quando Redis não estiver disponível.

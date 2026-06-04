@@ -817,10 +817,15 @@ export default function AutoForm({
   const [relationOptions, setRelationOptions] = useState<Record<string, RelationOption[]>>({})
   const [loadingRelationFields, setLoadingRelationFields] = useState<Set<string>>(new Set())
   const [submitting, setSubmitting] = useState(false)
+  const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
   const etapas = config?.etapas || null
   const [etapaAtual, setEtapaAtual] = useState(0)
   const draftKey = useMemo(() => normalizeDraftKey(effectiveMethod, endpoint), [effectiveMethod, endpoint])
+
+  useEffect(() => {
+    setHasAttemptedSubmit(false)
+  }, [endpoint, effectiveMethod])
 
   useEffect(() => {
     let mounted = true
@@ -1081,6 +1086,7 @@ export default function AutoForm({
         stepSchema.parse(values)
         setEtapaAtual((prev) => Math.min(etapas.length - 1, prev + 1))
       } catch (e: any) {
+        setHasAttemptedSubmit(true)
         if (e?.issues) {
           const errs: Record<string, string> = {}
           e.issues.forEach((issue: any) => {
@@ -1101,6 +1107,7 @@ export default function AutoForm({
     try {
       const missing = activeSubmitFields.filter((field) => field.required && !hasRequiredValue(values[field.name]))
       if (missing.length) {
+        setHasAttemptedSubmit(true)
         const errs: Record<string, string> = {}
         missing.forEach((field) => {
           errs[field.name] = "Campo obrigatório"
@@ -1117,6 +1124,7 @@ export default function AutoForm({
         body: JSON.stringify(parsed),
       })
       setMessage("Salvo com sucesso.")
+      setHasAttemptedSubmit(false)
       if (effectiveMethod === "post") {
         try {
           if (typeof localStorage !== "undefined") localStorage.removeItem(draftKey)
@@ -1136,6 +1144,7 @@ export default function AutoForm({
       onSuccess?.(res)
     } catch (e: any) {
       if (e?.issues) {
+        setHasAttemptedSubmit(true)
         // ZodError
         const errs: Record<string, string> = {}
         e.issues.forEach((issue: any) => {
@@ -1151,6 +1160,7 @@ export default function AutoForm({
         )
         const hasFieldErrors = Object.keys(normalized.fieldErrors).length > 0
         if (hasFieldErrors) {
+          setHasAttemptedSubmit(true)
           setErrors(normalized.fieldErrors)
           if (normalized.firstField && etapas?.length) {
             setEtapaAtual(firstStepIndexForField(normalized.firstField))
@@ -1222,9 +1232,11 @@ export default function AutoForm({
             <span className="font-semibold">
               Obrigatórios: {requiredFields.length}
             </span>
-            <span className={missingRequiredFields.length ? "font-semibold text-red-600" : "font-semibold text-emerald-700"}>
-              Em falta: {missingRequiredFields.length}
-            </span>
+            {hasAttemptedSubmit ? (
+              <span className={missingRequiredFields.length ? "font-semibold text-red-600" : "font-semibold text-emerald-700"}>
+                Em falta: {missingRequiredFields.length}
+              </span>
+            ) : null}
           </div>
         ) : null}
 

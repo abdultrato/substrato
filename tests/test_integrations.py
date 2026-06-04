@@ -8,8 +8,10 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.utils import timezone
 import pytest
+from rest_framework.test import APIRequestFactory, force_authenticate
 
 import application.payments.start_payment as start_payment_module
+from api.v1.auth.views import UserView
 from apps.billing.models.invoice import Invoice
 from apps.clinical.models.patient import Patient
 from apps.consultations.models.medical_consultation import MedicalConsultation
@@ -128,6 +130,14 @@ def _authenticate_doctor(tenant, api_client=None):
     return user
 
 
+def _call_user_view_patch(user, tenant, payload):
+    factory = APIRequestFactory()
+    request = factory.patch("/api/v1/auth/user/", payload, format="json", HTTP_HOST=tenant.domain)
+    request.tenant = tenant
+    force_authenticate(request, user=user)
+    return UserView.as_view()(request)
+
+
 @pytest.mark.django_db
 def test_clinical_alias_route_exposes_frontend_patient_contract(api_client):
     tenant = _tenant()
@@ -141,6 +151,40 @@ def test_clinical_alias_route_exposes_frontend_patient_contract(api_client):
     assert payload["id"] == patient.id
     assert payload["nome"] == patient.name
     assert "id_custom" in payload
+
+
+@pytest.mark.django_db
+def test_auth_user_patch_updates_own_profile_without_server_error():
+    tenant = _tenant()
+    suffix = uuid4().hex
+    user = _authenticate_admin(
+        tenant,
+        username=f"profile_user_{suffix}",
+        email=f"profile-user-{suffix}@example.com",
+    )
+
+    response = _call_user_view_patch(
+        user,
+        tenant,
+        {
+            "first_name": "Abdul Daniel",
+            "last_name": "Trato",
+            "email": f"Abdul.Profile.{suffix}@Example.COM",
+            "phone": "+258847778476",
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.data["full_name"] == "Abdul Daniel Trato"
+    assert response.data["email"] == f"abdul.profile.{suffix}@example.com"
+    assert response.data["phone"] == "+258847778476"
+
+    user.refresh_from_db()
+    assert user.first_name == "Abdul Daniel"
+    assert user.last_name == "Trato"
+    assert user.email == f"abdul.profile.{suffix}@example.com"
+    assert user.phone == "+258847778476"
+    assert user.name == "Abdul Daniel Trato"
 
 
 @pytest.mark.django_db
@@ -802,6 +846,29 @@ def test_payroll_recalculate_exposes_month_variables_and_absence_discount_rule()
     assert payroll.total_salary == expected_total_salary
     assert payroll.salary_liquido == expected_total_salary
     assert employee.salary_liquido == expected_total_salary
+
+
+@pytest.mark.django_db
+def test_payroll_string_uses_business_label_for_history():
+    tenant = _tenant()
+    employee = Employee.objects.create(
+        tenant=tenant,
+        name="Abdul Daniel Trato",
+        status=Employee.Status.ACTIVE,
+    )
+
+    payroll = Payroll.objects.create(
+        tenant=tenant,
+        employee=employee,
+        year=2026,
+        month=6,
+    )
+
+    label = str(payroll)
+    assert label.startswith("Folha de Pagamento")
+    assert "Abdul Daniel Trato" in label
+    assert "06/2026" in label
+    assert "Payroll object" not in label
 
 
 @pytest.mark.django_db

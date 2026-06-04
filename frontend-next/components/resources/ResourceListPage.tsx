@@ -15,8 +15,9 @@ import { useAuth } from "@/hooks/useAuth"
 import { useLanguage } from "@/hooks/useLanguage"
 import useDebounce from "@/hooks/useDebounce"
 import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
-import { apiFetch, apiFetchList } from "@/lib/api"
-import { bloodbankResourceKeyFromEndpoint } from "@/lib/ui/fieldLabels"
+import { apiFetchList } from "@/lib/api"
+import { buildListFields, type FormField } from "@/lib/openapi/formBuilder"
+import { fieldLabel } from "@/lib/ui/fieldLabels"
 import { canManageUserByHierarchy, GROUPS, userHasAnyGroup } from "@/lib/rbac"
 import { createResourceActionLabel } from "@/lib/resources/createLabels"
 
@@ -57,6 +58,23 @@ function fmtDate(value: any): string {
   return d.toLocaleString()
 }
 
+function looksLikeDateKey(key: string): boolean {
+  const normalized = String(key || "").toLowerCase()
+  return (
+    normalized.endsWith("_at") ||
+    normalized.endsWith("_on") ||
+    normalized.endsWith("_date") ||
+    normalized.includes("data") ||
+    normalized.includes("date")
+  )
+}
+
+function looksLikeDateValue(value: any): boolean {
+  if (typeof value !== "string") return false
+  if (!/^\d{4}-\d{2}-\d{2}/.test(value)) return false
+  return !Number.isNaN(new Date(value).getTime())
+}
+
 function pickCode(row: Row): string {
   return (
     row?.id_custom ||
@@ -75,14 +93,6 @@ function fmtBool(value: any): string {
   return "-"
 }
 
-function fmtTemp(minC: any, maxC: any): string {
-  const min = minC ?? ""
-  const max = maxC ?? ""
-  if (min === "" && max === "") return "-"
-  if (min !== "" && max !== "") return `${min} - ${max} °C`
-  return `${min || max} °C`
-}
-
 function normalizeEndpointPath(value: string): string {
   const clean = String(value || "").split("?")[0].split("#")[0].trim()
   if (!clean) return "/"
@@ -98,19 +108,198 @@ function objectFallbackRows(raw: any): Row[] {
   return [value as Row]
 }
 
-const BLOODBANK_MAINTENANCE_TYPE: Record<string, string> = {
-  PRV: "Preventiva",
-  COR: "Corretiva",
-  CAL: "Calibração",
-  SAN: "Higienização",
-  TMP: "Validação de temperatura",
+const TECHNICAL_NOISE_FIELDS = new Set([
+  "deleted",
+  "deletado",
+  "deleted_at",
+  "deletado_em",
+  "deleted_by",
+  "deletado_por",
+])
+
+const CODE_FIELDS = new Set(["custom_id", "id_custom", "codigo", "código", "code"])
+
+const DUPLICATE_FIELD_GROUPS = [
+  ["custom_id", "id_custom", "codigo", "código", "code"],
+  ["name", "nome"],
+  ["status_display", "estado_legivel", "estado_legível"],
+  ["status", "estado"],
+  ["created_at", "criado_em"],
+  ["updated_at", "atualizado_em"],
+  ["created_by", "criado_por"],
+  ["updated_by", "atualizado_por"],
+  ["tenant", "unidade"],
+  ["patient_name", "paciente_nome", "nome_paciente"],
+  ["patient_code", "paciente_codigo", "paciente_código", "codigo_paciente", "código_paciente"],
+  ["doctor_name", "medico_nome", "médico_nome", "nome_medico", "nome_médico"],
+  ["professional_name", "profissional_nome", "nome_profissional"],
+  ["employee_name", "funcionario_nome", "funcionário_nome", "nome_funcionario", "nome_funcionário"],
+  ["invoice_code", "fatura_codigo", "factura_codigo", "codigo_fatura", "codigo_factura"],
+  ["request_code", "requisicao_codigo", "requisição_codigo", "codigo_requisicao", "código_requisição"],
+]
+
+const DUPLICATE_CANONICAL_BY_FIELD = DUPLICATE_FIELD_GROUPS.reduce<Record<string, string>>((acc, group) => {
+  const canonical = group[0]
+  for (const field of group) acc[field] = canonical
+  return acc
+}, {})
+
+function normalizeFieldName(name: string): string {
+  return String(name || "").trim()
 }
 
-const BLOODBANK_MAINTENANCE_STATUS: Record<string, string> = {
-  SCH: "Agendada",
-  INP: "Em andamento",
-  COM: "Concluída",
-  CAN: "Cancelada",
+function valueIsEmpty(value: any): boolean {
+  if (value === null || value === undefined || value === "") return true
+  if (Array.isArray(value)) return value.length === 0
+  if (typeof value === "object") return Object.keys(value).length === 0
+  return false
+}
+
+function rowHasMeaningfulValue(rows: Row[], key: string): boolean {
+  return rows.some((row) => !valueIsEmpty(row?.[key]))
+}
+
+function summarizeObject(value: Record<string, any>): string {
+  const labelKeys = [
+    "name",
+    "nome",
+    "full_name",
+    "display_name",
+    "label",
+    "title",
+    "code",
+    "custom_id",
+    "id_custom",
+    "codigo",
+    "email",
+    "username",
+    "id",
+  ]
+  const parts: string[] = []
+  for (const key of labelKeys) {
+    const raw = value?.[key]
+    if (raw === null || raw === undefined || raw === "") continue
+    parts.push(String(raw))
+    if (parts.length >= 2) break
+  }
+  if (parts.length) return parts.join(" · ")
+
+  const entries = Object.entries(value)
+    .filter(([, raw]) => !valueIsEmpty(raw))
+    .slice(0, 3)
+    .map(([key, raw]) => `${key}: ${String(raw)}`)
+  return entries.length ? entries.join(" · ") : "-"
+}
+
+function formatListValue(key: string, value: any): string {
+  if (valueIsEmpty(value)) return "-"
+  if (typeof value === "boolean") return fmtBool(value)
+  if (looksLikeDateKey(key) || looksLikeDateValue(value)) return fmtDate(value)
+  if (Array.isArray(value)) {
+    const rendered = value
+      .slice(0, 4)
+      .map((item) => {
+        if (item && typeof item === "object") return summarizeObject(item)
+        return String(item)
+      })
+      .filter(Boolean)
+    const suffix = value.length > rendered.length ? ` +${value.length - rendered.length}` : ""
+    return rendered.length ? `${rendered.join(", ")}${suffix}` : "-"
+  }
+  if (typeof value === "object") return summarizeObject(value)
+  return String(value)
+}
+
+function columnClassName(key: string): string {
+  const normalized = key.toLowerCase()
+  if (looksLikeDateKey(key)) return "whitespace-nowrap"
+  if (
+    normalized.includes("amount") ||
+    normalized.includes("valor") ||
+    normalized.includes("price") ||
+    normalized.includes("preco") ||
+    normalized.includes("preço") ||
+    normalized.includes("total") ||
+    normalized.includes("salary") ||
+    normalized.includes("salario") ||
+    normalized.includes("salário") ||
+    normalized.includes("quantity") ||
+    normalized.includes("quantidade")
+  ) {
+    return "whitespace-nowrap text-right"
+  }
+  if (
+    normalized.includes("notes") ||
+    normalized.includes("observ") ||
+    normalized.includes("description") ||
+    normalized.includes("descricao") ||
+    normalized.includes("descrição") ||
+    normalized.includes("reason") ||
+    normalized.includes("motivo") ||
+    normalized.includes("message") ||
+    normalized.includes("mensagem")
+  ) {
+    return "max-w-[340px] min-w-[220px]"
+  }
+  return "min-w-[140px]"
+}
+
+function columnRank(key: string): number {
+  const normalized = key.toLowerCase()
+  if (CODE_FIELDS.has(normalized)) return 0
+  if (normalized === "id") return 1
+  if (["name", "nome", "title", "titulo", "título"].includes(normalized)) return 2
+  if (normalized.endsWith("_name") || normalized.endsWith("_nome")) return 3
+  if (normalized.endsWith("_code") || normalized.endsWith("_codigo") || normalized.endsWith("_código")) return 4
+  if (normalized === "status_display" || normalized === "estado_legivel" || normalized === "estado_legível") return 5
+  if (normalized === "status" || normalized === "estado") return 6
+  if (normalized === "type" || normalized === "tipo" || normalized.endsWith("_type")) return 7
+  if (normalized.includes("patient") || normalized.includes("paciente")) return 8
+  if (looksLikeDateKey(normalized) && !["created_at", "updated_at", "criado_em", "atualizado_em"].includes(normalized)) return 20
+  if (normalized === "tenant" || normalized === "unidade") return 90
+  if (normalized === "created_at" || normalized === "criado_em") return 91
+  if (normalized === "updated_at" || normalized === "atualizado_em") return 92
+  if (normalized === "created_by" || normalized === "criado_por") return 93
+  if (normalized === "updated_by" || normalized === "atualizado_por") return 94
+  if (normalized === "version" || normalized === "versao") return 99
+  return 40
+}
+
+function buildDetailedColumnKeys(rows: Row[], listFields: FormField[]): string[] {
+  const schemaKeys = listFields.map((field) => normalizeFieldName(field.name)).filter(Boolean)
+  const rowKeys = rows.flatMap((row) => Object.keys(row || {}).map(normalizeFieldName)).filter(Boolean)
+  const firstSeenIndex = new Map<string, number>()
+  const ordered = [...schemaKeys, ...rowKeys]
+  ordered.forEach((key, index) => {
+    if (!firstSeenIndex.has(key)) firstSeenIndex.set(key, index)
+  })
+
+  const candidatesByCanonical = new Map<string, string[]>()
+  for (const key of ordered) {
+    const normalized = key.toLowerCase()
+    if (TECHNICAL_NOISE_FIELDS.has(normalized)) continue
+    const canonical = DUPLICATE_CANONICAL_BY_FIELD[normalized] || normalized
+    const inSchema = schemaKeys.includes(key)
+    const hasValue = rowHasMeaningfulValue(rows, key)
+    if (!inSchema && !hasValue) continue
+    const current = candidatesByCanonical.get(canonical) || []
+    if (!current.includes(key)) current.push(key)
+    candidatesByCanonical.set(canonical, current)
+  }
+
+  const keys = Array.from(candidatesByCanonical.values()).map((candidates) => {
+    return (
+      candidates.find((key) => rowHasMeaningfulValue(rows, key)) ||
+      candidates.find((key) => schemaKeys.includes(key)) ||
+      candidates[0]
+    )
+  })
+
+  return keys.sort((a, b) => {
+    const rankDiff = columnRank(a) - columnRank(b)
+    if (rankDiff !== 0) return rankDiff
+    return (firstSeenIndex.get(a) ?? 0) - (firstSeenIndex.get(b) ?? 0)
+  })
 }
 
 export default function ResourceListPage({
@@ -153,7 +342,6 @@ export default function ResourceListPage({
   const [totalPages, setTotalPages] = useState(1)
   const [error, setError] = useState<string | null>(null)
   const [loadingData, setLoadingData] = useState(true)
-  const [bloodStorages, setBloodStorages] = useState<Record<number, string>>({})
   const debouncedSearch = useDebounce(search, 300)
   const safeRefreshToken = useSafeDataRefreshSignal()
   const resolvedGroupLabel = useMemo(() => {
@@ -173,12 +361,10 @@ export default function ResourceListPage({
     [language, resolvedResourceLabel, tr]
   )
 
-  const bloodbankResource = bloodbankResourceKeyFromEndpoint(endpoint)
   const normalizedEndpoint = normalizeEndpointPath(endpoint)
+  const listFields = useMemo(() => buildListFields(normalizedEndpoint), [normalizedEndpoint])
   const isIdentityUserResource =
     normalizedEndpoint === "/identity/user/" || normalizedEndpoint === "/identidade/user/"
-  const needsBloodStorageLookup =
-    bloodbankResource === "storage_maintenance" || bloodbankResource === "unit" || bloodbankResource === "stock_movement"
 
   const requestUrl = useMemo(() => {
     const parsed = new URL(endpoint, "http://local")
@@ -227,35 +413,6 @@ export default function ResourceListPage({
     }
   }, [page, pageSize, requestUrl, safeRefreshToken, t])
 
-  useEffect(() => {
-    let mounted = true
-    async function loadStorages() {
-      if (!needsBloodStorageLookup) return
-      try {
-        const res = await apiFetch<any>("/bloodbank/storage/", {
-          clientCache: safeRefreshToken === 0,
-        })
-        const items = res && (res as any).results ? (res as any).results : res
-        const map: Record<number, string> = {}
-        if (Array.isArray(items)) {
-          for (const s of items) {
-            const id = Number(s?.id)
-            if (!Number.isFinite(id)) continue
-            const name = String(s?.name || s?.custom_id || s?.id_custom || id)
-            map[id] = name
-          }
-        }
-        if (mounted) setBloodStorages(map)
-      } catch {
-        // ignore (still show numeric ids)
-      }
-    }
-    loadStorages()
-    return () => {
-      mounted = false
-    }
-  }, [needsBloodStorageLookup, safeRefreshToken])
-
   const statusOptions = useMemo(() => {
     const set = new Set<string>()
     for (const row of data) {
@@ -281,42 +438,59 @@ export default function ResourceListPage({
   }, [filteredData, isIdentityUserResource, user])
 
   const columns = useMemo(
-    () => [
-      {
-        header: t("Código", "Code"),
-        render: (row: Row) => {
-          const label = pickCode(row)
-          const canOpenDetails = !isIdentityUserResource || canManageUserByHierarchy(user, {
-            id: Number(row?.id || 0) || undefined,
-            groups: Array.isArray(row?.group_names) ? row.group_names : [],
-          })
-          const href = rowHref?.(row)
-          if (!href || !canOpenDetails) return label
-          return (
-            <Link
-              href={href}
-              className="font-medium text-[var(--text)] transition-colors duration-150 hover:text-[var(--hover-accent)]"
-            >
-              {label}
-            </Link>
-          )
-        },
-      },
-      {
-        header: t("Nome", "Name"),
-        render: (row: Row) => pickLabel(row) || "-",
-      },
-      {
-        header: t("Estado", "Status"),
-        render: (row: Row) =>
-          tr(String(row.estado || row.status || row.status_comercial || "-")),
-      },
-      {
-        header: t("Criado em", "Created at"),
-        render: (row: Row) => fmtDate(row.criado_em || row.created_at),
-      },
-    ],
-    [isIdentityUserResource, rowHref, t, tr, user]
+    () => {
+      const codeCell = (row: Row) => {
+        const label = pickCode(row)
+        const canOpenDetails = !isIdentityUserResource || canManageUserByHierarchy(user, {
+          id: Number(row?.id || 0) || undefined,
+          groups: Array.isArray(row?.group_names) ? row.group_names : [],
+        })
+        const href = rowHref?.(row)
+        if (!href || !canOpenDetails) return label
+        return (
+          <Link
+            href={href}
+            className="font-medium text-[var(--text)] transition-colors duration-150 hover:text-[var(--hover-accent)]"
+          >
+            {label}
+          </Link>
+        )
+      }
+
+      const labelByField = new Map(listFields.map((field) => [field.name, field.label] as const))
+      const keys = buildDetailedColumnKeys(visibleData, listFields)
+      if (!keys.length) {
+        return [
+          {
+            header: t("Código", "Code"),
+            render: codeCell,
+          },
+        ]
+      }
+
+      const hasDedicatedCodeColumn = keys.some((key) => CODE_FIELDS.has(key.toLowerCase()))
+      return keys.map((key) => {
+        const normalized = key.toLowerCase()
+        const isCodeColumn = CODE_FIELDS.has(normalized) || (normalized === "id" && !hasDedicatedCodeColumn)
+        return {
+          header: labelByField.get(key) || fieldLabel({ endpoint: normalizedEndpoint, name: key }),
+          render: (row: Row) => {
+            if (isCodeColumn) return codeCell(row)
+            const formatted = formatListValue(key, row?.[key])
+            if (formatted.length > 120) {
+              return (
+                <span title={formatted} className="block max-w-[340px] truncate">
+                  {formatted}
+                </span>
+              )
+            }
+            return formatted
+          },
+          className: columnClassName(key),
+        }
+      })
+    },
+    [isIdentityUserResource, listFields, normalizedEndpoint, rowHref, t, user, visibleData]
   )
 
   if (loading) return null

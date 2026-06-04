@@ -210,10 +210,34 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
         "surgery-small_surgery": SAFE_METHODS,
         "surgery-large_surgery": SAFE_METHODS,
         "surgery-surgical_procedure": SAFE_METHODS,
+        "surgery-agenda_cirurgica": SAFE_METHODS,
+        "surgery-centro_cirurgico": SAFE_METHODS,
+        "surgery-equipa_cirurgica": SAFE_METHODS,
+        "surgery-anestesia": SAFE_METHODS,
+        "surgery-checklist_seguranca": SAFE_METHODS,
+        "surgery-materiais": SAFE_METHODS,
+        "surgery-consumos": SAFE_METHODS,
+        "surgery-recuperacao": SAFE_METHODS,
+        "surgery-relatorio_operatorio": SAFE_METHODS,
     }
     surgery_crud = {
         basename: SAFE_METHODS | WRITE_METHODS | frozenset({"DELETE"})
         for basename in surgery_read
+    }
+    pathology_resources = (
+        "recepcao_amostras",
+        "macroscopia",
+        "processamento",
+        "histologia",
+        "citologia",
+        "imunohistoquimica",
+        "laudos",
+        "arquivamento",
+    )
+    pathology_read = {f"pathology-{resource}": SAFE_METHODS for resource in pathology_resources}
+    pathology_crud = {
+        basename: SAFE_METHODS | WRITE_METHODS | frozenset({"DELETE"})
+        for basename in pathology_read
     }
     medical_records_read = {
         "prontuario-record": SAFE_METHODS,
@@ -337,6 +361,10 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
             # Logística interna → requisições à farmácia
             "pharmacy-lot": SAFE_METHODS,
             "pharmacy-material_requisition": SAFE_METHODS | WRITE_METHODS,
+            # Marcação cirúrgica e recepção de amostras patológicas
+            **surgery_crud,
+            "pathology-recepcao_amostras": SAFE_METHODS | WRITE_METHODS,
+            "pathology-laudos": SAFE_METHODS,
         },
         g["LABORATORIO"]: {
             # Laboratorio só: requisicoes + resultados (sem catálogo de exams)
@@ -366,6 +394,8 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
             # SGE (CRUD total)
             **equipment_crud,
             **equipment_integration_crud,
+            # Patologia faz parte do fluxo laboratorial especializado.
+            **pathology_crud,
         },
         g["ENFERMAGEM"]: {
             # Apoio operacional + execucao de procedures
@@ -405,6 +435,7 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
             **medical_records_read,
             **maternity_read,
             **surgery_read,
+            **pathology_read,
         },
         g["MEDICINA"]: {
             # Jornada clinica (anamnese/diagnosis não expostos na API v1)
@@ -439,6 +470,7 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
             **medical_records_crud,
             **maternity_crud,
             **surgery_crud,
+            **pathology_read,
             # Banco de sangue (consulta clínica e solicitação de transfusão)
             "bloodbank-donation": bloodbank_read,
             "bloodbank-unit": bloodbank_read,
@@ -488,6 +520,7 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
             **medical_records_crud,
             **maternity_crud,
             **surgery_crud,
+            **pathology_read,
             # Logística interna → requisições à farmácia
             "pharmacy-lot": SAFE_METHODS,
             "pharmacy-material_requisition": SAFE_METHODS | WRITE_METHODS,

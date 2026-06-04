@@ -1,8 +1,31 @@
-from .models import LargeSurgery, SmallSurgery, Surgery, SurgicalProcedure
+from .models import (
+    AnesthesiaRecord,
+    LargeSurgery,
+    OperatingRoom,
+    OperativeReport,
+    RecoveryRecord,
+    SmallSurgery,
+    Surgery,
+    SurgicalConsumption,
+    SurgicalMaterial,
+    SurgicalProcedure,
+    SurgicalSafetyChecklist,
+    SurgicalSchedule,
+    SurgicalTeamMember,
+)
 
 __all__ = [
+    "AnesthesiaRecord",
     "LargeSurgery",
+    "OperatingRoom",
+    "OperativeReport",
+    "RecoveryRecord",
     "SmallSurgery",
     "Surgery",
+    "SurgicalConsumption",
+    "SurgicalMaterial",
     "SurgicalProcedure",
+    "SurgicalSafetyChecklist",
+    "SurgicalSchedule",
+    "SurgicalTeamMember",
 ]
