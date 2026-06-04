@@ -177,6 +177,22 @@ describe("modules catalog discovery", () => {
     expect(large?.resource.adminListHref).toBe("/admin/surgery/largesurgery/")
   })
 
+  it("keeps expanded surgery and pathology resources available", () => {
+    const schedule = findModuleResource("surgery", "agenda_cirurgica", MODULES)
+    const anesthesia = findModuleResource("surgery", "anestesia", MODULES)
+    const report = findModuleResource("surgery", "relatorio_operatorio", MODULES)
+    const sampleReception = findModuleResource("pathology", "recepcao_amostras", MODULES)
+    const pathologyReport = findModuleResource("pathology", "laudos", MODULES)
+
+    expect(schedule?.resource.endpoint).toBe("/surgery/agenda_cirurgica/")
+    expect(schedule?.resource.adminListHref).toBe("/admin/surgery/surgicalschedule/")
+    expect(anesthesia?.resource.endpoint).toBe("/surgery/anestesia/")
+    expect(report?.resource.endpoint).toBe("/surgery/relatorio_operatorio/")
+    expect(sampleReception?.resource.endpoint).toBe("/pathology/recepcao_amostras/")
+    expect(sampleReception?.resource.adminListHref).toBe("/admin/patologia/pathologysamplereception/")
+    expect(pathologyReport?.resource.endpoint).toBe("/pathology/laudos/")
+  })
+
   it("hides admin shortcut when backend has no registered model admin", () => {
     const invoiceItem = findModuleResource("billing", "faturaitem", MODULES)
     const discovered = discoverModulesFromApiRoot({

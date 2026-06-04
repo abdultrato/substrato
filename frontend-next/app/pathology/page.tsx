@@ -105,7 +105,7 @@ export default function PathologyPage() {
             "Sample traceability, grossing, processing, histology, cytology, immunohistochemistry, reports and archiving."
           )}
           adminHref="/admin/patologia/"
-          secondaryCta={{ href: "/resources/pathology", label: t("Recursos de Patologia", "Pathology resources") }}
+          secondaryCta={{ href: "/resources/pathology", label: t("Recursos técnicos", "Technical resources") }}
           metrics={[
             { label: "Amostras", value: metricValue || metrics.recepcao_amostras },
             { label: "Macroscopia", value: metricValue || metrics.macroscopia },
@@ -120,49 +120,49 @@ export default function PathologyPage() {
             {
               title: "Recepção de amostras",
               description: t("Entrada, aceitação/rejeição e prioridade da amostra.", "Sample intake, acceptance/rejection and priority."),
-              href: "/resources/pathology/recepcao_amostras",
+              href: "/pathology/sample-receptions",
               icon: FlaskConical,
             },
             {
               title: "Macroscopia",
               description: t("Descrição macroscópica, fragmentos e cassetes.", "Gross description, fragments and cassettes."),
-              href: "/resources/pathology/macroscopia",
+              href: "/pathology/grossing",
               icon: Search,
             },
             {
               title: "Processamento",
               description: t("Lotes, protocolos, processador e reagentes.", "Batches, protocols, processor and reagents."),
-              href: "/resources/pathology/processamento",
+              href: "/pathology/processing",
               icon: Gauge,
             },
             {
               title: "Histologia",
               description: t("Lâminas, blocos, coloração e qualidade.", "Slides, blocks, stain and quality."),
-              href: "/resources/pathology/histologia",
+              href: "/pathology/histology",
               icon: Microscope,
             },
             {
               title: "Citologia",
               description: t("Adequabilidade, triagem e interpretação citológica.", "Adequacy, screening and cytology interpretation."),
-              href: "/resources/pathology/citologia",
+              href: "/pathology/cytology",
               icon: ClipboardCheck,
             },
             {
               title: "Imunohistoquímica",
               description: t("Marcadores, clones, resultados e controlo.", "Markers, clones, results and controls."),
-              href: "/resources/pathology/imunohistoquimica",
+              href: "/pathology/immunohistochemistry",
               icon: FlaskConical,
             },
             {
               title: "Laudos",
               description: t("Diagnóstico, conclusão, assinatura e entrega.", "Diagnosis, conclusion, signature and delivery."),
-              href: "/resources/pathology/laudos",
+              href: "/pathology/reports",
               icon: FileText,
             },
             {
               title: "Arquivamento",
               description: t("Blocos, lâminas, localização e retenção.", "Blocks, slides, location and retention."),
-              href: "/resources/pathology/arquivamento",
+              href: "/pathology/archives",
               icon: Archive,
             },
           ]}

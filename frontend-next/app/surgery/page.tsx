@@ -25,6 +25,9 @@ export default function SurgeryPage() {
     const [smallSurgeries, setSmallSurgeries] = useState<number>(0)
     const [largeSurgeries, setLargeSurgeries] = useState<number>(0)
     const [procedures, setProcedures] = useState<number>(0)
+    const [schedules, setSchedules] = useState<number>(0)
+    const [operatingRooms, setOperatingRooms] = useState<number>(0)
+    const [operativeReports, setOperativeReports] = useState<number>(0)
 
     useEffect(() => {
         let mounted = true
@@ -33,16 +36,22 @@ export default function SurgeryPage() {
                 setLoading(true)
                 setErrorMessage(null)
 
-                const [small, large, procs] = await Promise.all([
+                const [small, large, procs, agenda, rooms, reports] = await Promise.all([
                     apiFetch<any>("/surgery/small_surgery/", { clientCache: safeRefreshToken === 0 }),
                     apiFetch<any>("/surgery/large_surgery/", { clientCache: safeRefreshToken === 0 }),
                     apiFetch<any>("/surgery/surgical_procedure/", { clientCache: safeRefreshToken === 0 }),
+                    apiFetch<any>("/surgery/agenda_cirurgica/", { clientCache: safeRefreshToken === 0 }),
+                    apiFetch<any>("/surgery/centro_cirurgico/", { clientCache: safeRefreshToken === 0 }),
+                    apiFetch<any>("/surgery/relatorio_operatorio/", { clientCache: safeRefreshToken === 0 }),
                 ])
 
                 if (!mounted) return
                 setSmallSurgeries(extractTotalCount(small))
                 setLargeSurgeries(extractTotalCount(large))
                 setProcedures(extractTotalCount(procs))
+                setSchedules(extractTotalCount(agenda))
+                setOperatingRooms(extractTotalCount(rooms))
+                setOperativeReports(extractTotalCount(reports))
             } catch (e: any) {
                 if (!mounted) return
                 setErrorMessage(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao carregar cirurgia."))
@@ -80,14 +89,13 @@ export default function SurgeryPage() {
                     </div>
                 ) : null}
 
-                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-6">
                     <MetricCard label="Pequenas cirurgias" value={loading ? "..." : smallSurgeries} />
                     <MetricCard label="Grandes cirurgias" value={loading ? "..." : largeSurgeries} />
                     <MetricCard label="Procedimentos (catálogo)" value={loading ? "..." : procedures} />
-                    <MetricCard
-                        label="Total"
-                        value={loading ? "..." : smallSurgeries + largeSurgeries}
-                    />
+                    <MetricCard label="Agenda cirúrgica" value={loading ? "..." : schedules} />
+                    <MetricCard label="Salas operatórias" value={loading ? "..." : operatingRooms} />
+                    <MetricCard label="Relatórios operatórios" value={loading ? "..." : operativeReports} />
                 </div>
 
                 <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -106,7 +114,7 @@ export default function SurgeryPage() {
                     <ActionTile
                         title="Procedimentos cirúrgicos"
                         description="Gerir catálogo de procedimentos (CRUD)."
-                        href="/surgery/procedures"
+                        href="/surgery/surgical-procedures"
                         icon={Settings}
                     />
                     <ActionTile
@@ -118,70 +126,69 @@ export default function SurgeryPage() {
                     <ActionTile
                         title="Agenda cirúrgica"
                         description="Marcação por sala, prioridade, estado e horário previsto."
-                        href="/resources/surgery/agenda_cirurgica"
+                        href="/surgery/schedules"
                         icon={ClipboardList}
                     />
                     <ActionTile
                         title="Centro cirúrgico"
                         description="Salas, esterilização, disponibilidade e equipamentos."
-                        href="/resources/surgery/centro_cirurgico"
+                        href="/surgery/operating-rooms"
                         icon={Scissors}
                     />
                     <ActionTile
                         title="Equipa cirúrgica"
                         description="Cirurgião, anestesista, instrumentista, circulante e assistentes."
-                        href="/resources/surgery/equipa_cirurgica"
+                        href="/surgery/teams"
                         icon={Users}
                     />
                     <ActionTile
                         title="Anestesia"
                         description="Tipo, ASA, fármacos, fluidos, via aérea e complicações."
-                        href="/resources/surgery/anestesia"
+                        href="/surgery/anesthesia"
                         icon={HeartPulse}
                     />
                     <ActionTile
                         title="Checklist de segurança"
                         description="Sign-in, time-out, sign-out e confirmação de segurança."
-                        href="/resources/surgery/checklist_seguranca"
+                        href="/surgery/safety-checklists"
                         icon={ClipboardCheck}
                     />
                     <ActionTile
                         title="Materiais"
                         description="Catálogo de materiais cirúrgicos, implantes e consumíveis."
-                        href="/resources/surgery/materiais"
+                        href="/surgery/materials"
                         icon={PackageSearch}
                     />
                     <ActionTile
                         title="Consumos"
                         description="Materiais e produtos consumidos por cirurgia."
-                        href="/resources/surgery/consumos"
+                        href="/surgery/consumptions"
                         icon={PackageCheck}
                     />
                     <ActionTile
                         title="Recuperação"
                         description="Sala de recuperação, dor, Aldrete, sinais vitais e alta."
-                        href="/resources/surgery/recuperacao"
+                        href="/surgery/recovery"
                         icon={HeartPulse}
                     />
                     <ActionTile
                         title="Relatório operatório"
                         description="Achados, técnica, complicações e amostras para patologia."
-                        href="/resources/surgery/relatorio_operatorio"
+                        href="/surgery/operative-reports"
                         icon={FileText}
                     />
                 </div>
 
                 <Card
                     title="Nota"
-                    subtitle="Este é um MVP focado em agendamento e rastreabilidade."
+                    subtitle="Fluxo operatório expandido com sala, equipa, anestesia, checklist, consumos, recuperação e relatório."
                 >
                     <div className="text-sm text-slate-700">
-                        A modelagem agora separa pequenas e grandes cirurgias, mantendo os mesmos campos em ambos.
-                        Se precisar, adicionamos equipe, sala e checklist.
+                        A modelagem separa pequenas e grandes cirurgias e inclui os documentos operatórios necessários
+                        para rastrear o paciente desde a agenda até ao relatório final.
                     </div>
                 </Card>
             </div>
         </AppLayout>
     )
 }
-

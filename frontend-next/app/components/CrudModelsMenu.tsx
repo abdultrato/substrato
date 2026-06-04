@@ -3,11 +3,22 @@
 import Link from "next/link";
 import { useState } from "react";
 import {
+  Archive,
   Bot,
   ClipboardCheck,
+  FileText,
+  FlaskConical,
+  Gauge,
+  HeartPulse,
+  Microscope,
   Package,
+  PackageCheck,
+  PackageSearch,
   Search,
+  Scissors,
+  Settings,
   TerminalSquare,
+  Users,
   type LucideIcon,
 } from "lucide-react";
 
@@ -186,6 +197,16 @@ const MODULES: Record<string, CrudMenuItem[]> = {
     { nome: "Venda", href: "/pharmacy/sales" },
     { nome: "Item de Venda", href: "/pharmacy/sale-items" },
   ],
+  "pathology": [
+    { nome: "Recepção de Amostras", href: "/pathology/sample-receptions", icon: FlaskConical },
+    { nome: "Macroscopia", href: "/pathology/grossing", icon: Search },
+    { nome: "Processamento", href: "/pathology/processing", icon: Gauge },
+    { nome: "Histologia", href: "/pathology/histology", icon: Microscope },
+    { nome: "Citologia", href: "/pathology/cytology", icon: ClipboardCheck },
+    { nome: "Imunohistoquímica", href: "/pathology/immunohistochemistry", icon: FlaskConical },
+    { nome: "Laudos", href: "/pathology/reports", icon: FileText },
+    { nome: "Arquivamento", href: "/pathology/archives", icon: Archive },
+  ],
   "warehouse": [
     { nome: "Armazém", href: "/warehouse/warehouses" },
     { nome: "Localização de Armazém", href: "/warehouse/storage-locations" },
@@ -210,7 +231,16 @@ const MODULES: Record<string, CrudMenuItem[]> = {
     { nome: "Cirurgia", href: "/surgery/surgeries" },
     { nome: "Pequena Cirurgia", href: "/surgery/small-surgeries" },
     { nome: "Grande Cirurgia", href: "/surgery/large-surgeries" },
-    { nome: "Procedimento Cirúrgico", href: "/surgery/surgical-procedures" },
+    { nome: "Procedimento Cirúrgico", href: "/surgery/surgical-procedures", icon: Settings },
+    { nome: "Agenda Cirúrgica", href: "/surgery/schedules", icon: ClipboardCheck },
+    { nome: "Centro Cirúrgico", href: "/surgery/operating-rooms", icon: Scissors },
+    { nome: "Equipa Cirúrgica", href: "/surgery/teams", icon: Users },
+    { nome: "Anestesia", href: "/surgery/anesthesia", icon: HeartPulse },
+    { nome: "Checklist de Segurança", href: "/surgery/safety-checklists", icon: ClipboardCheck },
+    { nome: "Materiais Cirúrgicos", href: "/surgery/materials", icon: PackageSearch },
+    { nome: "Consumos Cirúrgicos", href: "/surgery/consumptions", icon: PackageCheck },
+    { nome: "Recuperação", href: "/surgery/recovery", icon: HeartPulse },
+    { nome: "Relatório Operatório", href: "/surgery/operative-reports", icon: FileText },
   ],
   "tenants": [
     { nome: "Configuração do Cliente", href: "/tenants/tenant-configurations" },
@@ -224,6 +254,8 @@ const MODULES: Record<string, CrudMenuItem[]> = {
 
 const MODULE_ICONS: Record<string, LucideIcon> = {
   ai_assistant: Bot,
+  pathology: Microscope,
+  surgery: Scissors,
 };
 
 const MODULE_LABELS: Record<string, string> = {
@@ -250,6 +282,7 @@ const MODULE_LABELS: Record<string, string> = {
   notifications: "Notificações",
   nursing: "Enfermagem",
   payments: "Pagamentos",
+  pathology: "Patologia",
   pharmacy: "Farmácia",
   reception: "Recepção",
   surgery: "Cirurgia",
