@@ -7,6 +7,7 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models import Q
 
+from configuration.utils.django_compat import check_constraint
 from core.mixins.tenant_propagation import TenantPropagationMixin
 from core.models.base import CoreModel
 from infrastructure.orm.fields.method_field import MethodField
@@ -121,12 +122,12 @@ class LabExam(TenantPropagationMixin, CoreModel):
                 condition=Q(deleted=False),
                 name="unique_name_exam_por_sector_nao_deleted",
             ),
-            models.CheckConstraint(
-                check=Q(turnaround_hours__gt=0),
+            check_constraint(
+                condition=Q(turnaround_hours__gt=0),
                 name="turnaround_hours_positivo",
             ),
-            models.CheckConstraint(
-                check=Q(price__gte=0),
+            check_constraint(
+                condition=Q(price__gte=0),
                 name="price_nao_negativo",
             ),
         ]

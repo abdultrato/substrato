@@ -5,7 +5,7 @@ interface Props {
 
 export default function PageContainer ( { children, className }: Props ) {
     return (
-        <div className={`p-4 md:p-6 max-w-7xl mx-auto ${className || ""}`}>
+        <div className={`mx-auto w-full max-w-7xl ${className || ""}`}>
             {children}
         </div>
     )

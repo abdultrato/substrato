@@ -32,15 +32,15 @@
   :root {
     color-scheme: light;
     --substrato-logo-url: url("/static/img/logo.png");
-    --substrato-ink-hsl: 240 100% 6%;
-    --substrato-root-hsl: 257 100% 16%;
+    --substrato-ink-hsl: 222 47% 8%;
+    --substrato-root-hsl: 224 36% 14%;
     --substrato-violet-hsl: 258 61% 39%;
     --substrato-lilac-hsl: 267 86% 64%;
     --substrato-glow-hsl: 276 100% 76%;
 
-    --chrome-from: hsl(var(--substrato-ink-hsl));
-    --chrome-mid: hsl(var(--substrato-root-hsl));
-    --chrome-to: hsl(var(--substrato-violet-hsl));
+    --chrome-from: hsl(222 47% 8%);
+    --chrome-mid: hsl(224 36% 14%);
+    --chrome-to: hsl(219 32% 18%);
 
     /* Fontes do sistema para evitar download externo no boot do Next dev. */
     --font-sans:
@@ -53,7 +53,7 @@
     --ui-text-size-relaxed: 1em;
     --ui-title-size: 1.5em;
 
-    --background-hsl: 210 20% 98%;
+    --background-hsl: 210 24% 97%;
     --foreground-hsl: 222 47% 11%;
     --foreground-2-hsl: 215 24% 27%;
 
@@ -66,9 +66,9 @@
 
     --border-hsl: 214 22% 86%;
 
-    --primary-hsl: 258 82% 42%;
-    --primary-hover-hsl: var(--substrato-root-hsl);
-    --primary-soft-hsl: 264 84% 96%;
+    --primary-hsl: 214 72% 36%;
+    --primary-hover-hsl: 214 78% 28%;
+    --primary-soft-hsl: 210 72% 96%;
     --primary-foreground-hsl: 0 0% 100%;
 
     --ring-hsl: var(--primary-hsl);
@@ -106,7 +106,7 @@
   .dark {
     color-scheme: dark;
 
-    --background-hsl: 222 47% 7%;
+    --background-hsl: 222 34% 8%;
     --foreground-hsl: 210 40% 96%;
     --foreground-2-hsl: 214 22% 78%;
 
@@ -119,9 +119,9 @@
 
     --border-hsl: 217 24% 24%;
 
-    --primary-hsl: 267 86% 70%;
-    --primary-hover-hsl: 267 86% 64%;
-    --primary-soft-hsl: 261 45% 21%;
+    --primary-hsl: 204 94% 70%;
+    --primary-hover-hsl: 204 94% 63%;
+    --primary-soft-hsl: 214 38% 18%;
     --primary-foreground-hsl: 0 0% 100%;
 
     --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.32);
@@ -142,11 +142,6 @@
     font-size: var(--ui-text-size);
     line-height: 1.45;
     background-color: hsl(var(--background-hsl));
-    background-image:
-      radial-gradient(circle at 7% -8%, hsl(var(--substrato-lilac-hsl) / 0.22), transparent 28rem),
-      radial-gradient(circle at 92% 4%, hsl(var(--substrato-violet-hsl) / 0.12), transparent 30rem),
-      linear-gradient(180deg, hsl(var(--primary-soft-hsl) / 0.42), transparent 24rem);
-    background-attachment: fixed;
     color: hsl(var(--foreground-hsl));
     isolation: isolate;
     -webkit-font-smoothing: antialiased;
@@ -164,76 +159,10 @@
     max-width: 100%;
   }
 
-  .substrato-brand-canvas {
-    position: relative;
-  }
-
-  .substrato-brand-canvas::before {
-    content: "";
-    position: fixed;
-    left: 50%;
-    top: 50%;
-    z-index: 0;
-    width: min(54vw, 36rem);
-    aspect-ratio: 1;
-    background-image: var(--substrato-logo-url);
-    background-position: center;
-    background-repeat: no-repeat;
-    background-size: contain;
-    filter: saturate(1.08);
-    opacity: 0.035;
-    pointer-events: none;
-    transform: translate(-50%, -50%);
-  }
-
-  .dark .substrato-brand-canvas::before {
-    filter: saturate(1.16) brightness(1.18);
-    mix-blend-mode: screen;
-    opacity: 0.07;
-  }
-
-  .substrato-brand-canvas > * {
-    position: relative;
-    z-index: 1;
-  }
-
+  .substrato-brand-canvas,
   .substrato-app-surface {
     position: relative;
-    isolation: isolate;
-    background-image:
-      radial-gradient(circle at 0% 0%, hsl(var(--substrato-lilac-hsl) / 0.12), transparent 26rem),
-      radial-gradient(circle at 100% 100%, hsl(var(--substrato-violet-hsl) / 0.1), transparent 30rem),
-      linear-gradient(180deg, hsl(var(--primary-soft-hsl) / 0.34), transparent 18rem);
-    background-attachment: local, local, local;
-  }
-
-  .substrato-app-surface::before {
-    content: "";
-    position: fixed;
-    left: 50%;
-    top: 50%;
-    z-index: 0;
-    width: clamp(15rem, 34vw, 32rem);
-    aspect-ratio: 1;
-    background-image: var(--substrato-logo-url);
-    background-position: center;
-    background-repeat: no-repeat;
-    background-size: contain;
-    filter: saturate(1.08);
-    opacity: 0.04;
-    pointer-events: none;
-    transform: translate(-50%, -50%);
-  }
-
-  .dark .substrato-app-surface::before {
-    filter: saturate(1.16) brightness(1.18);
-    mix-blend-mode: screen;
-    opacity: 0.075;
-  }
-
-  .substrato-app-surface > * {
-    position: relative;
-    z-index: 1;
+    background-color: hsl(var(--background-hsl));
   }
 
   h1,
@@ -319,7 +248,7 @@
   }
 
   a[href]:where(:hover, :focus-visible) {
-    text-decoration: underline;
+    text-decoration: none;
     color: hsl(var(--primary-hover-hsl));
     opacity: 0.98;
   }
@@ -335,7 +264,7 @@
   --------------------------------- */
   .page-box {
     @apply w-full rounded-lg border border-border bg-card shadow-sm;
-    margin: 8px auto;
+    margin: 0 auto;
     padding: 16px;
   }
 
@@ -352,7 +281,7 @@
   .table-container:hover,
   .info-grid > div:hover,
   .login-card:hover {
-    box-shadow: var(--shadow-md);
+    box-shadow: var(--shadow-sm);
     transform: none;
   }
 
@@ -561,7 +490,7 @@
   }
 
   .info-grid > div {
-    @apply rounded-xl border border-border bg-muted px-3 py-2 shadow-sm;
+    @apply rounded-lg border border-border bg-card px-3 py-2 shadow-sm;
   }
 
   /* --------------------------------
@@ -600,27 +529,12 @@
     @apply min-h-screen px-4 py-10 grid place-items-center;
     position: relative;
     isolation: isolate;
-    background-image:
-      radial-gradient(circle at 18% 18%, hsl(var(--substrato-lilac-hsl) / 0.2), transparent 24rem),
-      radial-gradient(circle at 84% 76%, hsl(var(--substrato-violet-hsl) / 0.16), transparent 28rem);
+    background:
+      linear-gradient(180deg, hsl(var(--background-hsl)), hsl(var(--muted-hsl)));
   }
 
   .login-wrapper::before {
-    content: "";
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    z-index: 0;
-    width: min(44vw, 28rem);
-    aspect-ratio: 1;
-    background-image: var(--substrato-logo-url);
-    background-position: center;
-    background-repeat: no-repeat;
-    background-size: contain;
-    filter: saturate(1.08);
-    opacity: 0.045;
-    pointer-events: none;
-    transform: translate(-50%, -50%);
+    content: none;
   }
 
   .dark .login-wrapper::before {
@@ -630,7 +544,7 @@
   }
 
   .login-card {
-    @apply w-full max-w-4xl overflow-hidden rounded-xl border border-border bg-card shadow-lg;
+    @apply w-full max-w-4xl overflow-hidden rounded-lg border border-border bg-card shadow-lg;
     @apply grid grid-cols-1 md:grid-cols-2;
     position: relative;
     z-index: 1;
@@ -640,9 +554,7 @@
 
   .login-image {
     @apply flex items-center justify-center p-8 border-b border-border md:border-b-0 md:border-r;
-    background:
-      radial-gradient(circle at 50% 42%, hsl(var(--substrato-glow-hsl) / 0.28), transparent 12rem),
-      linear-gradient(135deg, hsl(var(--substrato-root-hsl) / 0.09), hsl(var(--primary-soft-hsl)));
+    background: hsl(var(--muted-hsl));
     min-height: 220px;
   }
 
@@ -653,7 +565,7 @@
     object-fit: contain;
     display: block;
     background-color: #fff;
-    border-radius: var(--radius-xl);
+    border-radius: var(--radius-lg);
     padding: 1rem;
     filter: drop-shadow(0 14px 30px rgba(0, 0, 0, 0.12));
   }
@@ -713,10 +625,9 @@
      Chrome surfaces (header/nav/footer)
   --------------------------------- */
   .chrome-surface {
-    background:
-      linear-gradient(135deg, var(--chrome-from), var(--chrome-mid) 48%, var(--chrome-to));
+    background: linear-gradient(180deg, var(--chrome-from), var(--chrome-mid));
     color: #fff;
-    border-color: hsl(var(--substrato-lilac-hsl) / 0.24);
+    border-color: hsl(0 0% 100% / 0.1);
   }
 
   .chrome-surface .chrome-pill {
@@ -726,8 +637,7 @@
   }
 
   .dark .chrome-surface {
-    background:
-      linear-gradient(135deg, hsl(var(--substrato-ink-hsl)), hsl(var(--substrato-root-hsl)) 52%, hsl(261 62% 22%));
+    background: linear-gradient(180deg, hsl(var(--substrato-ink-hsl)), hsl(var(--substrato-root-hsl)));
     color: #f8fafc;
     border-color: hsl(0 0% 100% / 0.08);
   }
@@ -755,16 +665,6 @@
       justify-content: center;
     }
 
-    .substrato-brand-canvas::before,
-    .substrato-app-surface::before,
-    .login-wrapper::before {
-      width: 18rem;
-      left: 50%;
-      top: 50%;
-      opacity: 0.035;
-      transform: translate(-50%, -50%);
-    }
-
     .page-box {
       padding: 12px;
       border-radius: var(--radius-lg);
@@ -783,7 +683,17 @@
     }
 
     .login-card {
-      border-radius: var(--radius-xl);
+      border-radius: var(--radius-lg);
+    }
+
+    .login-image {
+      min-height: 170px;
+      padding: 1.5rem;
+    }
+
+    .login-image img {
+      max-width: 190px;
+      padding: 0.75rem;
     }
   }
 

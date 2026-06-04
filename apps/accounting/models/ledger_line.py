@@ -6,6 +6,7 @@ from django.core.exceptions import ValidationError  # Validação de domínio
 from django.db import models  # ORM
 from django.db.models import Q  # Constraints condicionais
 
+from configuration.utils.django_compat import check_constraint
 from core.mixins.model.position import ScopedPositionMixin
 from core.models.base import CoreModel  # Modelo base
 
@@ -79,8 +80,8 @@ class LedgerLine(ScopedPositionMixin, CoreModel):
         ]
 
         constraints = [
-            models.CheckConstraint(
-                check=Q(value__gt=0),  # Valor deve ser positivo
+            check_constraint(
+                condition=Q(value__gt=0),  # Valor deve ser positivo
                 name="ledgerline_value_positivo",
             ),
         ]

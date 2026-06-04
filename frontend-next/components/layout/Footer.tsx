@@ -28,7 +28,7 @@ export default function Footer({ leftOffset = "16rem", rightOffset = "0px" }: Pr
 
   return (
     <footer
-      className="chrome-surface fixed bottom-0 left-0 right-0 z-40 border-t text-xs text-white shadow-sm backdrop-blur md:left-[var(--layout-left)] md:right-[var(--layout-right)]"
+      className="fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-card/95 text-xs text-muted-foreground shadow-sm backdrop-blur md:left-[var(--layout-left)] md:right-[var(--layout-right)]"
       style={
         {
           // Used by the Tailwind arbitrary values on md:left/right.
@@ -39,11 +39,11 @@ export default function Footer({ leftOffset = "16rem", rightOffset = "0px" }: Pr
     >
       <div className="flex h-10 min-w-0 items-center justify-between gap-2 px-2 sm:px-3 md:px-4">
         <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
-          <span className="text-white/80">© {year}</span>
-          <span className="hidden sm:inline text-white/70">{t("Plataforma", "Platform")}</span>
+          <span>© {year}</span>
+          <span className="hidden sm:inline">{t("Plataforma", "Platform")}</span>
           <Link
             href="/substrato"
-            className="truncate font-semibold text-white transition hover:text-white/90 no-underline underline-offset-4 hover:underline"
+            className="truncate font-semibold text-foreground transition hover:text-primary no-underline"
           >
             Substrato
           </Link>
@@ -52,7 +52,7 @@ export default function Footer({ leftOffset = "16rem", rightOffset = "0px" }: Pr
         <div className="ml-1 flex shrink-0 items-center gap-1 sm:gap-2">
           <PageActivityReportMenuWithDirection direction="up" />
           <GlobalLanguageSwitch compact />
-          <span className="chrome-pill hidden rounded-full border px-2 py-0.5 font-semibold sm:inline-flex">
+          <span className="hidden rounded-full border border-border bg-background px-2 py-0.5 font-semibold text-foreground-2 sm:inline-flex">
             {versionText}
           </span>
         </div>

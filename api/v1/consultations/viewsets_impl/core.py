@@ -5,12 +5,12 @@ from django.db import transaction
 from django.http import HttpResponse
 from django.utils import timezone
 from django.utils.dateparse import parse_date, parse_datetime
-from rest_framework import serializers as drf_serializers, status
+from drf_spectacular.utils import OpenApiParameter, OpenApiTypes, extend_schema
+from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from rest_framework.schemas.openapi import AutoSchema
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 
 from api.utils.async_exports import queue_export_if_requested
@@ -39,124 +39,6 @@ from ..serializers import (
     MedicalConsultationSerializer,
     RescheduleConsultationSerializer,
 )
-
-
-class MedicalConsultationActionSchema(AutoSchema):
-    query_parameters = {
-        "price_preview": [
-            {"name": "specialty", "type": "integer", "required": True},
-            {"name": "scheduled_for", "type": "string", "format": "date-time", "required": False},
-            {"name": "manual_holiday", "type": "boolean", "required": False},
-        ],
-        "schedule": [
-            {"name": "doctor", "type": "integer", "required": False},
-            {"name": "start", "type": "string", "format": "date-time", "required": False},
-            {"name": "end", "type": "string", "format": "date-time", "required": False},
-            {"name": "status", "type": "string", "required": False},
-        ],
-    }
-    request_serializers = {
-        "create_invoice": CreateConsultationInvoiceSerializer,
-        "reschedule": RescheduleConsultationSerializer,
-        "cancel": CancelConsultationSerializer,
-        "complete": None,
-    }
-    response_serializers = {
-        "price_preview": ConsultationPricePreviewSerializer,
-        "schedule": MedicalConsultationSerializer(many=True),
-        "create_invoice": CreateConsultationInvoiceResponseSerializer,
-        "reschedule": MedicalConsultationSerializer,
-        "cancel": MedicalConsultationSerializer,
-        "complete": MedicalConsultationSerializer,
-    }
-
-    def _action_name(self) -> str:
-        return getattr(self.view, "action", "") or ""
-
-    def _serializer_instance(self, value):
-        if value is None:
-            return None
-        if isinstance(value, drf_serializers.BaseSerializer):
-            return value
-        if isinstance(value, type) and issubclass(value, drf_serializers.BaseSerializer):
-            return value()
-        return value
-
-    def _schema_for_serializer(self, serializer):
-        if isinstance(serializer, drf_serializers.ListSerializer):
-            return {"type": "array", "items": self.get_reference(serializer.child)}
-        if isinstance(serializer, drf_serializers.Serializer):
-            return self.get_reference(serializer)
-        return {}
-
-    def get_operation(self, path, method):
-        operation = super().get_operation(path, method)
-        parameters = self.query_parameters.get(self._action_name(), [])
-        if parameters:
-            existing = operation.get("parameters", [])
-            operation["parameters"] = existing + [
-                {
-                    "name": item["name"],
-                    "in": "query",
-                    "required": item.get("required", False),
-                    "schema": {
-                        key: value
-                        for key, value in {
-                            "type": item["type"],
-                            "format": item.get("format"),
-                        }.items()
-                        if value
-                    },
-                }
-                for item in parameters
-            ]
-        return operation
-
-    def get_request_body(self, path, method):
-        action = self._action_name()
-        if action in self.request_serializers and self.request_serializers[action] is None:
-            return {}
-        return super().get_request_body(path, method)
-
-    def get_request_serializer(self, path, method):
-        action = self._action_name()
-        if action in self.request_serializers:
-            return self._serializer_instance(self.request_serializers[action])
-        return super().get_request_serializer(path, method)
-
-    def get_response_serializer(self, path, method):
-        action = self._action_name()
-        if action in self.response_serializers:
-            return self._serializer_instance(self.response_serializers[action])
-        return super().get_response_serializer(path, method)
-
-    def get_responses(self, path, method):
-        if self._action_name() not in self.response_serializers:
-            return super().get_responses(path, method)
-
-        self.response_media_types = self.map_renderers(path, method)
-        response_schema = self._schema_for_serializer(self.get_response_serializer(path, method))
-        return {
-            "200": {
-                "content": {
-                    content_type: {"schema": response_schema}
-                    for content_type in self.response_media_types
-                },
-                "description": "",
-            }
-        }
-
-    def get_components(self, path, method):
-        components = super().get_components(path, method)
-        for serializer in (
-            self.get_request_serializer(path, method),
-            self.get_response_serializer(path, method),
-        ):
-            if isinstance(serializer, drf_serializers.ListSerializer):
-                serializer = serializer.child
-            if isinstance(serializer, drf_serializers.Serializer):
-                components[self.get_component_name(serializer)] = self.map_serializer(serializer)
-        return components
 
 
 class DoctorsViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ReadOnlyModelViewSet):
@@ -199,7 +81,6 @@ class HolidayViewSet(TenantScopedModelViewSet):
 class MedicalConsultationViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
     queryset = MedicalConsultation.objects.select_related("patient", "doctor", "specialty").all()
     serializer_class = MedicalConsultationSerializer
-    schema = MedicalConsultationActionSchema()
     filterset_class = MedicalConsultationFilter
     permission_classes = [IsAuthenticated]
     search_fields = ["custom_id", "type", "patient__name", "doctor__name"]
@@ -253,6 +134,14 @@ class MedicalConsultationViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
         response["Content-Disposition"] = f'inline; filename="{filename}"'
         return response
 
+    @extend_schema(
+        parameters=[
+            OpenApiParameter("specialty", OpenApiTypes.INT, OpenApiParameter.QUERY, required=True),
+            OpenApiParameter("scheduled_for", OpenApiTypes.DATETIME, OpenApiParameter.QUERY, required=False),
+            OpenApiParameter("manual_holiday", OpenApiTypes.BOOL, OpenApiParameter.QUERY, required=False),
+        ],
+        responses=ConsultationPricePreviewSerializer,
+    )
     @action(detail=False, methods=["get"], url_path="price", url_name="price")
     def price_preview(self, request):
         """
@@ -320,6 +209,15 @@ class MedicalConsultationViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
         }
         return Response(payload, status=status.HTTP_200_OK)
 
+    @extend_schema(
+        parameters=[
+            OpenApiParameter("doctor", OpenApiTypes.INT, OpenApiParameter.QUERY, required=False),
+            OpenApiParameter("start", OpenApiTypes.DATETIME, OpenApiParameter.QUERY, required=False),
+            OpenApiParameter("end", OpenApiTypes.DATETIME, OpenApiParameter.QUERY, required=False),
+            OpenApiParameter("status", OpenApiTypes.STR, OpenApiParameter.QUERY, required=False),
+        ],
+        responses=MedicalConsultationSerializer(many=True),
+    )
     @action(detail=False, methods=["get"], url_path="schedule", url_name="schedule")
     def schedule(self, request):
         """
@@ -366,6 +264,10 @@ class MedicalConsultationViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
         ser = self.get_serializer(qs, many=True)
         return Response(ser.data, status=status.HTTP_200_OK)
 
+    @extend_schema(
+        request=CreateConsultationInvoiceSerializer,
+        responses=CreateConsultationInvoiceResponseSerializer,
+    )
     @transaction.atomic
     @action(detail=True, methods=["post"], url_path="create-invoice", url_name="create-invoice")
     def create_invoice(self, request, pk=None):
@@ -408,6 +310,10 @@ class MedicalConsultationViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
             status=status.HTTP_200_OK,
         )
 
+    @extend_schema(
+        request=RescheduleConsultationSerializer,
+        responses=MedicalConsultationSerializer,
+    )
     @transaction.atomic
     @action(detail=True, methods=["post"], url_path="reschedule", url_name="reschedule")
     def reschedule(self, request, pk=None):
@@ -427,6 +333,10 @@ class MedicalConsultationViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
             status=status.HTTP_200_OK,
         )
 
+    @extend_schema(
+        request=CancelConsultationSerializer,
+        responses=MedicalConsultationSerializer,
+    )
     @transaction.atomic
     @action(detail=True, methods=["post"], url_path="cancel", url_name="cancel")
     def cancel(self, request, pk=None):
@@ -448,6 +358,10 @@ class MedicalConsultationViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
             status=status.HTTP_200_OK,
         )
 
+    @extend_schema(
+        request=None,
+        responses=MedicalConsultationSerializer,
+    )
     @transaction.atomic
     @action(detail=True, methods=["post"], url_path="complete", url_name="complete")
     def complete(self, request, pk=None):

@@ -13,7 +13,7 @@
     "type-check": "node -e \"for (const dir of ['.next/types', '.next-dev/types']) require('fs').rmSync(dir, { recursive: true, force: true })\" && next typegen && tsc --noEmit --incremental false",
     "test": "vitest",
     "test:ui": "vitest --ui",
-    "generate:schema": "cd .. && python generate_schema.py && python scripts/convert_schema_json.py",
+    "generate:schema": "cd .. && node scripts/run-python.js generate_schema.py && node scripts/run-python.js scripts/convert_schema_json.py",
     "generate:api": "openapi-typescript-codegen --input http://localhost:8000/api/schema/ --output ./lib/api-client --useUnionTypes"
   },
   "dependencies": {

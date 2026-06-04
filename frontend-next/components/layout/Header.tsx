@@ -43,11 +43,11 @@ export default function Header({ user, onMenuClick }: Props) {
     }, [open])
 
     return (
-        <header className="chrome-surface sticky top-0 z-40 flex h-14 flex-nowrap items-center justify-between gap-2 overflow-hidden border-b px-2 text-sm leading-none shadow-sm backdrop-blur sm:gap-3 sm:px-3">
+        <header className="sticky top-0 z-40 flex h-14 flex-nowrap items-center justify-between gap-2 overflow-visible border-b border-border bg-card/95 px-2 text-sm leading-none shadow-sm backdrop-blur sm:gap-3 sm:px-4">
             <div className="flex min-w-0 flex-1 items-center gap-2">
                 <button
                     type="button"
-                    className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-white/25 bg-white/10 text-white shadow-sm transition hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30"
+                    className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border bg-background text-foreground-2 shadow-sm transition hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/25"
                     onClick={onMenuClick}
                     aria-label={t("Mostrar ou ocultar menu lateral", "Show or hide sidebar")}
                     title={t("Mostrar ou ocultar menu lateral", "Show or hide sidebar")}
@@ -56,7 +56,7 @@ export default function Header({ user, onMenuClick }: Props) {
                 </button>
                 <Link
                     href="/"
-                    className="group flex items-center gap-2 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-white/30"
+                    className="group flex min-w-0 items-center gap-2 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring/25"
                     title={t("Ir para o dashboard", "Go to dashboard")}
                 >
                     <div
@@ -71,7 +71,7 @@ export default function Header({ user, onMenuClick }: Props) {
                             className="block h-full max-h-7 w-full max-w-7 object-contain p-1"
                         />
                     </div>
-                    <div className="hidden font-display text-sm font-bold leading-tight tracking-tight text-white min-[360px]:block">
+                    <div className="hidden min-w-0 font-display text-sm font-bold leading-tight tracking-tight text-foreground min-[360px]:block">
                         Substrato
                     </div>
                 </Link>
@@ -82,7 +82,7 @@ export default function Header({ user, onMenuClick }: Props) {
                     type="button"
                     onClick={() => void refreshNow("manual")}
                     disabled={isRefreshing}
-                    className="relative inline-flex h-9 w-9 items-center justify-center rounded-md border border-white/25 bg-white/15 text-white shadow-sm transition-colors hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent disabled:cursor-wait disabled:opacity-70"
+                    className="relative inline-flex h-9 w-9 items-center justify-center rounded-md border border-border bg-background text-foreground-2 shadow-sm transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/25 disabled:cursor-wait disabled:opacity-70"
                     aria-label={t("Atualizar dados sem recarregar", "Refresh data without reloading")}
                     title={
                         hasUnsavedInput
@@ -104,7 +104,7 @@ export default function Header({ user, onMenuClick }: Props) {
                 <button
                     type="button"
                     onClick={toggleTheme}
-                    className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-white/25 bg-white/15 text-white shadow-sm transition-colors hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
+                    className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-border bg-background text-foreground-2 shadow-sm transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/25"
                     aria-label={isDark ? t("Mudar para modo claro", "Switch to light mode") : t("Mudar para modo escuro", "Switch to dark mode")}
                     title={isDark ? t("Modo claro", "Light mode") : t("Modo escuro", "Dark mode")}
                 >
@@ -114,7 +114,7 @@ export default function Header({ user, onMenuClick }: Props) {
                 <div className="relative" ref={menuRef}>
                     <button
                         onClick={toggle}
-                        className="flex min-h-9 items-center gap-2 rounded-md text-sm leading-tight text-white/90 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30"
+                        className="flex min-h-9 items-center gap-2 rounded-md border border-transparent px-1.5 text-sm leading-tight text-foreground-2 transition-colors hover:border-border hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/25"
                     >
                         {fotoUrl ? (
                             <>
@@ -131,17 +131,17 @@ export default function Header({ user, onMenuClick }: Props) {
                             </div>
                         )}
 
-                        <span className="hidden sm:block text-white/90">{name}</span>
+                        <span className="hidden max-w-[11rem] truncate sm:block">{name}</span>
 
                         <ChevronDown size={16} />
                     </button>
 
                     {open && (
-                        <div className="absolute right-0 z-50 mt-1.5 w-56 max-w-[calc(100vw-1rem)] rounded-lg border border-white/20 bg-black/70 p-1 text-white shadow-lg backdrop-blur">
+                        <div className="absolute right-0 z-50 mt-1.5 w-56 max-w-[calc(100vw-1rem)] rounded-lg border border-border bg-card p-1 text-foreground shadow-lg">
                             <Link
                                 href="/profile"
                                 onClick={() => setOpen(false)}
-                                className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-sm text-white/90 transition-colors hover:bg-white/10 hover:text-white"
+                                className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-sm text-foreground-2 transition-colors hover:bg-muted hover:text-foreground"
                             >
                                 <User size={16} />
                                 {t("Perfil", "Profile")}
@@ -150,17 +150,17 @@ export default function Header({ user, onMenuClick }: Props) {
                             <Link
                                 href="/settings"
                                 onClick={() => setOpen(false)}
-                                className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-sm text-white/90 transition-colors hover:bg-white/10 hover:text-white"
+                                className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-sm text-foreground-2 transition-colors hover:bg-muted hover:text-foreground"
                             >
                                 <Settings size={16} />
                                 {t("Configurações", "Settings")}
                             </Link>
 
-                            <div className="my-1 border-t border-white/15" />
+                            <div className="my-1 border-t border-border" />
 
                             <button
                                 onClick={signOut}
-                                className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-sm font-semibold text-rose-100 transition-colors hover:bg-rose-500/15"
+                                className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-sm font-semibold text-rose-600 transition-colors hover:bg-rose-50 dark:text-rose-300 dark:hover:bg-rose-500/10"
                             >
                                 <LogOut size={16} />
                                 {t("Terminar sessão", "Sign out")}

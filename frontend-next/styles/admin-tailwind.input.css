@@ -82,6 +82,8 @@ body:not(.jazzmin-login-page):not(.popup) .content-wrapper {
 
 body:not(.jazzmin-login-page):not(.popup) .main-sidebar,
 body:not(.jazzmin-login-page):not(.popup) #jazzy-sidebar {
+  display: flex;
+  flex-direction: column;
   height: 100vh;
   max-height: 100vh;
   height: 100dvh;
@@ -90,14 +92,44 @@ body:not(.jazzmin-login-page):not(.popup) #jazzy-sidebar {
   overscroll-behavior: contain;
 }
 
+body:not(.jazzmin-login-page):not(.popup) .main-sidebar .brand-link,
+body:not(.jazzmin-login-page):not(.popup) #jazzy-sidebar .brand-link {
+  flex: 0 0 var(--substrato-admin-navbar-height);
+}
+
 body:not(.jazzmin-login-page):not(.popup) .main-sidebar .sidebar,
 body:not(.jazzmin-login-page):not(.popup) #jazzy-sidebar .sidebar {
-  height: calc(100vh - var(--substrato-admin-navbar-height));
-  height: calc(100dvh - var(--substrato-admin-navbar-height));
-  overflow-x: hidden;
-  overflow-y: auto;
+  flex: 1 1 auto;
+  min-height: 0;
+  height: auto;
+  max-height: calc(100vh - var(--substrato-admin-navbar-height));
+  max-height: calc(100dvh - var(--substrato-admin-navbar-height));
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
   overscroll-behavior: contain;
   scrollbar-gutter: stable;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+}
+
+body:not(.jazzmin-login-page):not(.popup) .main-sidebar .sidebar nav,
+body:not(.jazzmin-login-page):not(.popup) #jazzy-sidebar .sidebar nav,
+body:not(.jazzmin-login-page):not(.popup) .main-sidebar .nav-sidebar,
+body:not(.jazzmin-login-page):not(.popup) #jazzy-sidebar .nav-sidebar {
+  min-height: max-content;
+}
+
+body:not(.jazzmin-login-page):not(.popup) .main-sidebar .sidebar .os-host,
+body:not(.jazzmin-login-page):not(.popup) #jazzy-sidebar .sidebar .os-host,
+body:not(.jazzmin-login-page):not(.popup) .main-sidebar .sidebar .os-viewport,
+body:not(.jazzmin-login-page):not(.popup) #jazzy-sidebar .sidebar .os-viewport {
+  min-height: 0;
+  max-height: 100%;
+}
+
+body:not(.jazzmin-login-page):not(.popup) .main-sidebar .sidebar .os-viewport,
+body:not(.jazzmin-login-page):not(.popup) #jazzy-sidebar .sidebar .os-viewport {
+  overflow-y: auto !important;
 }
 
 /* Make admin denser (requested): less padding/gap */

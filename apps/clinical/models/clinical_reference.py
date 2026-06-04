@@ -4,6 +4,7 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import F, Q
 
+from configuration.utils.django_compat import check_constraint
 from core.constants.gender import Gender
 from core.models.base import CoreModel
 
@@ -112,8 +113,8 @@ class ClinicalReference(CoreModel):
 
         constraints = [
             # faixa etária válida
-            models.CheckConstraint(
-                check=(
+            check_constraint(
+                condition=(
                     Q(maximum_age_days__gte=F("minimum_age_days"))
                     | Q(minimum_age_days__isnull=True)
                     | Q(maximum_age_days__isnull=True)
@@ -121,15 +122,15 @@ class ClinicalReference(CoreModel):
                 name="ref_idade_intervalo_valido",
             ),
             # intervalo clínico válido
-            models.CheckConstraint(
-                check=(
+            check_constraint(
+                condition=(
                     Q(maximum_value__gte=F("minimum_value")) | Q(minimum_value__isnull=True) | Q(maximum_value__isnull=True)
                 ),
                 name="ref_value_intervalo_valido",
             ),
             # intervalo crítico válido
-            models.CheckConstraint(
-                check=(
+            check_constraint(
+                condition=(
                     Q(critical_high__gte=F("critical_low"))
                     | Q(critical_low__isnull=True)
                     | Q(critical_high__isnull=True)

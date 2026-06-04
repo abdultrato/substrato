@@ -43,6 +43,7 @@ import {
     Truck,
     Moon,
     Sun,
+    X,
 } from "lucide-react"
 import useTheme from "@/hooks/useTheme"
 
@@ -312,12 +313,12 @@ export default function Sidebar({ user, open = false, onClose, className }: Prop
     }, [prefetchRoute, visibleItems])
 
     const menu = (
-        <div className="chrome-surface flex h-full w-64 flex-col border-r pb-12 backdrop-blur">
-            <div className="sticky top-0 z-10 flex items-center justify-between border-b border-white/15 bg-white/[0.06] px-3 py-3 backdrop-blur">
+        <div className="flex h-full w-64 flex-col border-r border-slate-800 bg-slate-950 pb-12 text-white">
+            <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-800 bg-slate-950 px-3 py-3">
                 <Link
                     href={homeHref}
                     onClick={onClose}
-                    className="group flex items-center gap-3 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-white/30"
+                    className="group flex min-w-0 items-center gap-3 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-white/30"
                     title={t("Ir para o dashboard", "Go to dashboard")}
                 >
                     <Image
@@ -329,10 +330,10 @@ export default function Sidebar({ user, open = false, onClose, className }: Prop
                         style={{ backgroundColor: "#fff" }}
                     />
                     <div className="min-w-0">
-                        <div className="font-display text-sm font-bold tracking-tight text-white">
+                        <div className="truncate font-display text-sm font-bold tracking-tight text-white">
                             Substrato
                         </div>
-                        <div className="text-[10px] uppercase tracking-[0.16em] text-white/60">
+                        <div className="truncate text-[10px] uppercase tracking-[0.16em] text-slate-400">
                             {platformSubtitle}
                         </div>
                     </div>
@@ -340,17 +341,17 @@ export default function Sidebar({ user, open = false, onClose, className }: Prop
                 <button
                     type="button"
                     onClick={onClose}
-                    className="inline-flex h-10 w-10 items-center justify-center rounded-md text-white/70 transition-colors hover:bg-white/10 hover:text-white md:hidden"
+                    className="inline-flex h-10 w-10 items-center justify-center rounded-md text-slate-300 transition-colors hover:bg-slate-800 hover:text-white md:hidden"
                     aria-label={t("Fechar menu", "Close menu")}
                 >
-                    ✕
+                    <X size={18} />
                 </button>
             </div>
 
             <nav className="flex flex-1 flex-col gap-4 overflow-y-auto px-2 pb-6 pt-3">
                 {sectionedItems.map((section) => (
                     <div key={section.label} className="space-y-1">
-                        <div className="px-2.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-white/45">
+                        <div className="px-2.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
                             {t(section.label, section.labelEn)}
                         </div>
 
@@ -372,11 +373,11 @@ export default function Sidebar({ user, open = false, onClose, className }: Prop
                                         aria-current={active ? "page" : undefined}
                                         className={`group relative flex items-center gap-2.5 rounded-md px-2.5 py-2 text-[13px] font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 ${
                                             active
-                                                ? "bg-white/15 text-white shadow-sm before:absolute before:left-0 before:top-1/2 before:h-5 before:w-[3px] before:-translate-x-2 before:-translate-y-1/2 before:rounded-r-full before:bg-cyan-200"
-                                                : "text-white/78 hover:bg-white/10 hover:text-white"
+                                                ? "bg-slate-800 text-white shadow-sm before:absolute before:left-0 before:top-1/2 before:h-5 before:w-[3px] before:-translate-x-2 before:-translate-y-1/2 before:rounded-r-full before:bg-sky-300"
+                                                : "text-slate-300 hover:bg-slate-900 hover:text-white"
                                         }`}
                                     >
-                                        <Icon size={16} className={active ? "text-cyan-100" : "text-white/65 group-hover:text-white"} />
+                                        <Icon size={16} className={active ? "text-sky-200" : "text-slate-400 group-hover:text-slate-200"} />
                                         <span className="truncate">{t(item.label, item.labelEn || item.label)}</span>
                                     </Link>
                                 )
@@ -386,18 +387,18 @@ export default function Sidebar({ user, open = false, onClose, className }: Prop
                 ))}
             </nav>
 
-            <div className="border-t border-white/15 p-2">
+            <div className="border-t border-slate-800 p-2">
                 <button
                     type="button"
                     onClick={toggleTheme}
-                    className="flex w-full items-center justify-between rounded-md border border-white/20 bg-white/5 px-2.5 py-2 text-xs font-semibold text-white/90 transition-colors hover:bg-white/15 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30"
+                    className="flex w-full items-center justify-between rounded-md border border-slate-800 bg-slate-900 px-2.5 py-2 text-xs font-semibold text-slate-200 transition-colors hover:bg-slate-800 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30"
                     title={isDark ? t("Modo claro", "Light mode") : t("Modo escuro", "Dark mode")}
                 >
                     <span className="flex items-center gap-2">
                         {isDark ? <Sun size={15} /> : <Moon size={15} />}
                         {t("Tema", "Theme")}
                     </span>
-                    <span className="text-[10px] uppercase tracking-wider text-white/60">
+                    <span className="text-[10px] uppercase tracking-wider text-slate-500">
                         {isDark ? t("Claro", "Light") : t("Escuro", "Dark")}
                     </span>
                 </button>

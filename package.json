@@ -1,13 +1,13 @@
 {
   "scripts": {
-    "dev": "npm --prefix frontend-next run dev",
-    "dev:frontend": "npm --prefix frontend-next run dev",
-    "dev:backend": "python -m uvicorn platform.asgi:application --host 0.0.0.0 --port 8000 --reload",
-    "dev:full": "concurrently -k -n django,next \"python -m uvicorn platform.asgi:application --host 0.0.0.0 --port 8000 --reload\" \"npm --prefix frontend-next run dev\"",
+    "dev": "npm --prefix frontend-next run dev --",
+    "dev:frontend": "npm --prefix frontend-next run dev --",
+    "dev:backend": "node scripts/run-python.js -m uvicorn platform.asgi:application --host 0.0.0.0 --port 8000 --reload",
+    "dev:full": "concurrently -k -n django,next \"node scripts/run-python.js -m uvicorn platform.asgi:application --host 0.0.0.0 --port 8000 --reload\" \"npm --prefix frontend-next run dev\"",
     "test:frontend": "npm --prefix frontend-next test -- --run",
-    "quality:phase1": "python scripts/phase1_quality_gate.py",
-    "quality:full": "python scripts/phase1_quality_gate.py --full",
-    "quality:strict": "python scripts/phase1_quality_gate.py --full --strict-ruff"
+    "quality:phase1": "node scripts/run-python.js scripts/phase1_quality_gate.py",
+    "quality:full": "node scripts/run-python.js scripts/phase1_quality_gate.py --full",
+    "quality:strict": "node scripts/run-python.js scripts/phase1_quality_gate.py --full --strict-ruff"
   },
   "dependencies": {
     "codex": "^0.2.3",

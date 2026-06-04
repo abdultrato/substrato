@@ -7,6 +7,7 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models import Q
 
+from configuration.utils.django_compat import check_constraint
 from core.constants.medical_exam.medical_exam_method import MedicalExamMethod
 from core.constants.medical_exam.medical_exam_result_type import MedicalExamResultType
 from core.mixins.model.position import ScopedPositionMixin
@@ -170,12 +171,12 @@ class MedicalExam(TenantPropagationMixin, CoreModel):
                 condition=Q(deleted=False),
                 name="unique_name_medical_exam_por_sector_nao_deleted",
             ),
-            models.CheckConstraint(
-                check=Q(turnaround_hours__gt=0),
+            check_constraint(
+                condition=Q(turnaround_hours__gt=0),
                 name="exm_turnaround_hours_positivo",
             ),
-            models.CheckConstraint(
-                check=Q(price__gte=0),
+            check_constraint(
+                condition=Q(price__gte=0),
                 name="exm_price_nao_negativo",
             ),
         ]

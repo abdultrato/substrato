@@ -4,6 +4,7 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Q
 
+from configuration.utils.django_compat import check_constraint
 from core.constants.clinical_event_type import ClinicalEventType
 from core.mixins.tenant_propagation import TenantPropagationMixin
 from core.models.base import CoreModel
@@ -82,8 +83,8 @@ class ClinicalEvent(TenantPropagationMixin, CoreModel):
         ]
 
         constraints = [  # evento deve ter pelo menos request ou result
-            models.CheckConstraint(
-                check=(Q(request__isnull=False) | Q(result__isnull=False)),
+            check_constraint(
+                condition=(Q(request__isnull=False) | Q(result__isnull=False)),
                 name="evento_clinico_deve_ter_contexto",
             )
         ]
