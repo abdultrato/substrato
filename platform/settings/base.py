@@ -8,6 +8,8 @@ from django.core.exceptions import ImproperlyConfigured
 from dotenv import load_dotenv
 from kombu import Exchange, Queue
 
+from substrato_os.domain_modules import INSTALLED_DOMAIN_APP_CONFIGS
+
 # =========================================================
 # PATH & ENV
 # =========================================================
@@ -215,48 +217,7 @@ THIRD_PARTY_APPS = [
     *(["drf_spectacular"] if _module_available("drf_spectacular") else []),
 ]
 
-LOCAL_APPS = [
-    "apps.identity.apps.IdentityConfig",
-    "apps.insurer.apps.InsurerConfig",
-    "apps.external_entities.apps.ExternalEntitiesConfig",
-    "apps.clinical.apps.ClinicalConfig",
-    "apps.dental.apps.DentalConfig",
-    "apps.veterinary.apps.VeterinaryConfig",
-    "apps.physiotherapy.apps.PhysiotherapyConfig",
-    "apps.pathology.apps.PathologyConfig",
-    "apps.radiology.apps.RadiologyConfig",
-    "apps.therapy.apps.TherapyConfig",
-    "apps.specialty_diagnostics.apps.SpecialtyDiagnosticsConfig",
-    "apps.clinical_pharmacy.apps.ClinicalPharmacyConfig",
-    "apps.credit_financing.apps.CreditFinancingConfig",
-    "apps.telemedicine.apps.TelemedicineConfig",
-    "apps.public_health.apps.PublicHealthConfig",
-    "apps.nursing.apps.NursingConfig",
-    "apps.equipment_integrations.apps.EquipmentIntegrationsConfig",
-    "apps.equipment.apps.EquipmentConfig",
-    "apps.inspections.apps.InspectionsConfig",
-    "apps.maintenance.apps.MaintenanceConfig",
-    "apps.incidents.apps.IncidentsConfig",
-    "apps.billing.apps.BillingConfig",
-    "apps.payments.apps.PaymentsConfig",
-    "apps.notifications.apps.NotificationsConfig",
-    "apps.tenants.apps.TenantsConfig",
-    "apps.pharmacy.apps.PharmacyConfig",
-    "apps.warehouse.apps.WarehouseConfig",
-    "apps.bloodbank.apps.BloodBankConfig",
-    "apps.accounting.apps.AccountingConfig",
-    "apps.reception.apps.ReceptionConfig",
-    "apps.audit_activities.apps.AuditActivitiesConfig",
-    "apps.consultations.apps.ConsultationsConfig",
-    "apps.medical_records.apps.MedicalRecordsConfig",
-    "apps.maternity.apps.MaternityConfig",
-    "apps.surgery.apps.SurgeryConfig",
-    "apps.human_resources.apps.HumanResourcesConfig",
-    "apps.monitoring.apps.MonitoringConfig",
-    "apps.ai_assistant.apps.AiAssistantConfig",
-    "apps.education.apps.EducationConfig",
-    "apps.transportation.apps.TransportationConfig",
-]
+LOCAL_APPS = list(INSTALLED_DOMAIN_APP_CONFIGS)
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
