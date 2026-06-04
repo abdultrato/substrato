@@ -88,8 +88,25 @@ body:not(.jazzmin-login-page):not(.popup) #jazzy-sidebar {
   max-height: 100vh;
   height: 100dvh;
   max-height: 100dvh;
-  overflow: hidden;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
   overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  scrollbar-width: thin !important;
+  scrollbar-color: rgba(237, 231, 255, 0.45) transparent;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+}
+
+body:not(.jazzmin-login-page):not(.popup) #jazzy-sidebar::-webkit-scrollbar,
+body:not(.jazzmin-login-page):not(.popup) .main-sidebar::-webkit-scrollbar {
+  width: 0.45rem !important;
+}
+
+body:not(.jazzmin-login-page):not(.popup) #jazzy-sidebar::-webkit-scrollbar-thumb,
+body:not(.jazzmin-login-page):not(.popup) .main-sidebar::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background-color: rgba(237, 231, 255, 0.45);
 }
 
 body:not(.jazzmin-login-page):not(.popup) .main-sidebar .brand-link,
@@ -99,17 +116,11 @@ body:not(.jazzmin-login-page):not(.popup) #jazzy-sidebar .brand-link {
 
 body:not(.jazzmin-login-page):not(.popup) .main-sidebar .sidebar,
 body:not(.jazzmin-login-page):not(.popup) #jazzy-sidebar .sidebar {
-  flex: 1 1 auto;
-  min-height: 0;
-  height: auto;
-  max-height: calc(100vh - var(--substrato-admin-navbar-height));
-  max-height: calc(100dvh - var(--substrato-admin-navbar-height));
-  overflow-x: hidden !important;
-  overflow-y: auto !important;
-  overscroll-behavior: contain;
-  scrollbar-gutter: stable;
-  -webkit-overflow-scrolling: touch;
-  touch-action: pan-y;
+  flex: 0 0 auto;
+  min-height: max-content;
+  height: auto !important;
+  max-height: none !important;
+  overflow: visible !important;
 }
 
 body:not(.jazzmin-login-page):not(.popup) .main-sidebar .sidebar nav,
@@ -121,15 +132,31 @@ body:not(.jazzmin-login-page):not(.popup) #jazzy-sidebar .nav-sidebar {
 
 body:not(.jazzmin-login-page):not(.popup) .main-sidebar .sidebar .os-host,
 body:not(.jazzmin-login-page):not(.popup) #jazzy-sidebar .sidebar .os-host,
+body:not(.jazzmin-login-page):not(.popup) .main-sidebar .sidebar.os-host,
+body:not(.jazzmin-login-page):not(.popup) #jazzy-sidebar .sidebar.os-host,
+body:not(.jazzmin-login-page):not(.popup) .main-sidebar .sidebar .os-padding,
+body:not(.jazzmin-login-page):not(.popup) #jazzy-sidebar .sidebar .os-padding,
 body:not(.jazzmin-login-page):not(.popup) .main-sidebar .sidebar .os-viewport,
 body:not(.jazzmin-login-page):not(.popup) #jazzy-sidebar .sidebar .os-viewport {
-  min-height: 0;
-  max-height: 100%;
+  position: static !important;
+  min-height: max-content;
+  height: auto !important;
+  max-height: none !important;
+  overflow: visible !important;
 }
 
-body:not(.jazzmin-login-page):not(.popup) .main-sidebar .sidebar .os-viewport,
-body:not(.jazzmin-login-page):not(.popup) #jazzy-sidebar .sidebar .os-viewport {
-  overflow-y: auto !important;
+body:not(.jazzmin-login-page):not(.popup) .main-sidebar .sidebar .os-content,
+body:not(.jazzmin-login-page):not(.popup) #jazzy-sidebar .sidebar .os-content {
+  position: static !important;
+  min-height: max-content;
+  height: auto !important;
+  max-height: none !important;
+  overflow: visible !important;
+}
+
+body:not(.jazzmin-login-page):not(.popup) .main-sidebar .sidebar .os-scrollbar,
+body:not(.jazzmin-login-page):not(.popup) #jazzy-sidebar .sidebar .os-scrollbar {
+  display: none !important;
 }
 
 /* Make admin denser (requested): less padding/gap */
@@ -292,6 +319,98 @@ body:not(.jazzmin-login-page):not(.popup) #jazzy-sidebar .sidebar .os-viewport {
 
 .card-header {
   @apply rounded-t-xl border-b border-slate-200 bg-slate-100 text-slate-800;
+}
+
+/* Dashboard cards: prevent action buttons from leaking out on reduced widths. */
+.dashboard #content,
+.dashboard #content-main,
+.dashboard #content-related,
+.dashboard #content > .row,
+.dashboard #content-main > .row,
+.dashboard #content [class*='col-'],
+.dashboard #content-main [class*='col-'],
+.dashboard .card,
+.dashboard .card-body,
+.dashboard .table {
+  min-width: 0;
+}
+
+.dashboard .card {
+  overflow: hidden;
+}
+
+.dashboard .card-body {
+  overflow-x: hidden;
+}
+
+.dashboard .card .table {
+  width: 100%;
+  table-layout: fixed;
+}
+
+.dashboard .card .table td {
+  min-width: 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+
+.dashboard .card .table td:last-child {
+  width: 9rem;
+  text-align: right;
+}
+
+.dashboard .card .btn-group.float-right {
+  float: none !important;
+}
+
+.dashboard .card .btn-group {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.25rem;
+  max-width: 100%;
+}
+
+.dashboard .card .btn-group > .btn {
+  flex: 0 1 auto;
+  max-width: 100%;
+  white-space: normal;
+}
+
+@media (max-width: 1199.98px) {
+  .dashboard #content > .row > .col-lg-9,
+  .dashboard #content > .row > .col-lg-3,
+  .dashboard #content-main > .row > .col-lg-9,
+  .dashboard #content-main > .row > .col-lg-3,
+  .dashboard #content .col-md-6,
+  .dashboard #content-main .col-md-6 {
+    flex: 0 0 100%;
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 575.98px) {
+  .dashboard .card .table tbody tr {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.25rem;
+  }
+
+  .dashboard .card .table td {
+    display: block;
+    width: 100% !important;
+    padding-right: 0.5rem;
+    padding-left: 0.5rem;
+  }
+
+  .dashboard .card .btn-group {
+    justify-content: flex-start;
+  }
+
+  .dashboard .card .btn-group > .btn {
+    flex: 1 1 6rem;
+  }
 }
 
 /* Inputs */
