@@ -16,6 +16,20 @@ CHANNELS = {
 
 
 class NotificationService:
+    def _normalize_channels(self, channels=None):
+        if not channels:
+            channels = (Notification.Channel.EMAIL, Notification.Channel.SMS)
+        elif isinstance(channels, str):
+            channels = [item.strip() for item in channels.split(",")]
+
+        normalized = []
+        for channel in channels:
+            channel_value = str(channel).strip().lower()
+            if not channel_value or channel_value in normalized:
+                continue
+            normalized.append(channel_value)
+        return tuple(normalized)
+
     def _active_channel(self, channel):
         if channel == Notification.Channel.EMAIL:
             is_active = getattr(settings, "NOTIFICACOES_EMAIL_ATIVAS", True)
@@ -144,6 +158,9 @@ class NotificationService:
         subject="Notificação",
         event_type=Notification.EventType.GENERICA,
         external_reference="",
+        channels=None,
+        email=None,
+        phone=None,
         **kwargs,
     ):
         legacy_external_reference = kwargs.pop("referencia_externa", "")
@@ -156,13 +173,28 @@ class NotificationService:
         notifications = []
 
         related_patient = patient if hasattr(patient, "_meta") else None
-        email = getattr(patient, "email", None)
-        phone = getattr(patient, "contact", None)
+        email = (
+            email
+            or kwargs.pop("recipient_email", None)
+            or kwargs.pop("destinatario_email", None)
+            or getattr(patient, "email", None)
+        )
+        phone = (
+            phone
+            or kwargs.pop("recipient_phone", None)
+            or kwargs.pop("telefone", None)
+            or kwargs.pop("contacto", None)
+            or getattr(patient, "contact", None)
+        )
+        requested_channels = self._normalize_channels(channels or kwargs.pop("canais", None))
+        seen_destinations = set()
 
-        if email:
+        if Notification.Channel.EMAIL in requested_channels and email:
+            destination_key = (Notification.Channel.EMAIL, str(email))
+            seen_destinations.add(destination_key)
             notifications.append(
                 self.send(
-                    destination=email,
+                    destination=str(email),
                     message=message,
                     channel=Notification.Channel.EMAIL,
                     subject=subject,
@@ -172,12 +204,19 @@ class NotificationService:
                 )
             )
 
-        if phone:
+        for channel in (Notification.Channel.SMS, Notification.Channel.WHATSAPP):
+            if channel not in requested_channels or not phone:
+                continue
+            destination = str(phone)
+            destination_key = (channel, destination)
+            if destination_key in seen_destinations:
+                continue
+            seen_destinations.add(destination_key)
             notifications.append(
                 self.send(
-                    destination=str(phone),
+                    destination=destination,
                     message=message,
-                    channel=Notification.Channel.SMS,
+                    channel=channel,
                     subject=subject,
                     patient=related_patient,
                     event_type=event_type,

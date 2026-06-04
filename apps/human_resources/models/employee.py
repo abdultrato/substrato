@@ -4,6 +4,7 @@ from decimal import Decimal
 
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.db.models import Sum
 from django.utils import timezone
 
 from core.models.base import CoreModel
@@ -166,9 +167,101 @@ class Employee(CoreModel):
     def salary_base(self) -> Decimal:
         return Decimal(self.nominal_salary or Decimal("0.00")).quantize(Decimal("0.01"))
 
+    def _latest_payroll(self):
+        if not self.pk:
+            return None
+        return (
+            self.folhas_payment.filter(deleted=False)
+            .order_by("-year", "-month", "-created_at")
+            .first()
+        )
+
+    def _family_allowance_value(self) -> Decimal:
+        if not self.pk:
+            return Decimal("0.00")
+        dependents_count = self.agregados_familiares.filter(deleted=False).count()
+        return (
+            Decimal(dependents_count)
+            * Decimal(self.family_allowance_per_dependent or Decimal("0.00"))
+        ).quantize(Decimal("0.01"))
+
+    def _tenure_increase_value(self) -> Decimal:
+        progression_window = int(self.minimum_progression_months or 0) or 12
+        tenure_cycles = int(self.tenure_months // progression_window)
+        return (
+            Decimal(tenure_cycles)
+            * Decimal(self.salary_increase or Decimal("0.00"))
+        ).quantize(Decimal("0.01"))
+
+    def _resolve_ordinary_hour_value(self) -> Decimal:
+        configured_value = Decimal(self.ordinary_hour_value or Decimal("0.0000"))
+        if configured_value > Decimal("0.0000"):
+            return configured_value
+        if self.base_month_hours:
+            return (self.salary_base / Decimal(self.base_month_hours)).quantize(Decimal("0.0000"))
+        return Decimal("0.0000")
+
+    def _resolve_extraordinary_hour_value(self, ordinary_hour_value: Decimal) -> Decimal:
+        configured_value = Decimal(self.extraordinary_hour_value or Decimal("0.0000"))
+        if configured_value > Decimal("0.0000"):
+            return configured_value
+        return (Decimal(ordinary_hour_value) * Decimal("1.50")).quantize(Decimal("0.0000"))
+
+    def _current_month_overtime_value(self) -> Decimal:
+        if not self.pk or not self.tenant_id:
+            return Decimal("0.00")
+
+        from .overtime import Overtime
+
+        today = timezone.localdate()
+        rows = (
+            Overtime.objects.filter(
+                tenant=self.tenant,
+                employee=self,
+                date__year=today.year,
+                date__month=today.month,
+                deleted=False,
+            )
+            .values("kind")
+            .annotate(total=Sum("hours"))
+        )
+        ordinary_hours = Decimal("0.00")
+        extraordinary_hours = Decimal("0.00")
+        for row in rows:
+            hours = Decimal(row.get("total") or Decimal("0.00"))
+            if row.get("kind") == Overtime.Kind.ORDINARY:
+                ordinary_hours += hours
+            else:
+                extraordinary_hours += hours
+
+        ordinary_hour_value = self._resolve_ordinary_hour_value()
+        extraordinary_hour_value = self._resolve_extraordinary_hour_value(ordinary_hour_value)
+        return (
+            (ordinary_hours * ordinary_hour_value)
+            + (extraordinary_hours * extraordinary_hour_value)
+        ).quantize(Decimal("0.01"))
+
+    @property
+    def salary_allowances_value(self) -> Decimal:
+        """
+        Abonos previstos no modelo para uma prévia salarial do funcionário.
+
+        Quando existe folha de pagamento, a folha continua a ser a fonte final do
+        líquido porque nela entram também descontos e fecho mensal.
+        """
+        return (
+            Decimal(self.salary_increase or Decimal("0.00"))
+            + self._tenure_increase_value()
+            + self._family_allowance_value()
+            + self._current_month_overtime_value()
+        ).quantize(Decimal("0.01"))
+
     @property
     def salary_liquido(self) -> Decimal:
-        return self.current_salary
+        payroll = self._latest_payroll()
+        if payroll:
+            return Decimal(payroll.salary_liquido or Decimal("0.00")).quantize(Decimal("0.01"))
+        return (self.salary_base + self.salary_allowances_value).quantize(Decimal("0.01"))
 
     @property
     def tenure_months(self) -> int:

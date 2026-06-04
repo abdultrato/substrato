@@ -108,10 +108,12 @@ export default function FaturaRascunhoPage() {
 
   const [loading, setLoading] = useState(true)
   const [erro, setErro] = useState<string | null>(null)
+  const [feedback, setFeedback] = useState<string | null>(null)
   const [fatura, setFatura] = useState<Row | null>(null)
   const [paciente, setPaciente] = useState<Row | null>(null)
   const [itens, setItens] = useState<FaturaItem[]>([])
   const [acaoId, setAcaoId] = useState<number | null>(null)
+  const [notificacaoEnviando, setNotificacaoEnviando] = useState(false)
   const [addingItemKey, setAddingItemKey] = useState<string | null>(null)
   const addingItemRef = useRef(false)
 
@@ -488,6 +490,7 @@ export default function FaturaRascunhoPage() {
     setAddingItemKey(actionKey)
     try {
       setErro(null)
+      setFeedback(null)
       await apiFetch("/billing/invoiceitem/", {
         method: "POST",
         body: JSON.stringify({ ...payload, fatura: faturaId }),
@@ -560,6 +563,7 @@ export default function FaturaRascunhoPage() {
     try {
       setAcaoId(faturaId)
       setErro(null)
+      setFeedback(null)
       await apiFetch(`/invoices/${faturaId}/issue/`, { method: "POST" })
       await carregarFatura()
     } catch (e: any) {
@@ -657,6 +661,7 @@ export default function FaturaRascunhoPage() {
     try {
       setAcaoId(faturaId)
       setErro(null)
+      setFeedback(null)
 
       for (const entry of lancamentos) {
         const trocoMetodoCents = trocoPorMetodo[entry.metodo] || 0
@@ -744,6 +749,24 @@ export default function FaturaRascunhoPage() {
       setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao gerar PDF do recibo."))
     }
   }, [recibo])
+
+  const sendInvoiceNotification = useCallback(async () => {
+    if (!faturaId) return
+    try {
+      setNotificacaoEnviando(true)
+      setErro(null)
+      setFeedback(null)
+      await apiFetch(`/invoices/${faturaId}/send-notification/`, {
+        method: "POST",
+        body: JSON.stringify({ channels: ["email", "whatsapp"] }),
+      })
+      setFeedback("Notificação de fatura processada para email e WhatsApp disponíveis.")
+    } catch (e: any) {
+      setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao enviar notificação da fatura."))
+    } finally {
+      setNotificacaoEnviando(false)
+    }
+  }, [faturaId])
 
   const buscarExames = useCallback(async (q: string) => {
     if (!q.trim()) {
@@ -900,6 +923,12 @@ export default function FaturaRascunhoPage() {
           </div>
         ) : null}
 
+        {feedback ? (
+          <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+            {feedback}
+          </div>
+        ) : null}
+
         <Card title="Resumo" subtitle="Fluxo: rascunho → emitir → pagar → recibo.">
           <div className="grid gap-3 md:grid-cols-3">
             <div className="rounded-lg border border-slate-100 bg-white p-3 text-sm">
@@ -952,6 +981,16 @@ export default function FaturaRascunhoPage() {
                 onClick={downloadReceiptPdf}
               >
                 <PdfActionLabel>PDF do recibo</PdfActionLabel>
+              </button>
+            ) : null}
+
+            {fatura.estado === "PAGA" ? (
+              <button
+                className="inline-flex items-center rounded-lg border border-sky-200 px-3 py-2 text-sm font-medium text-sky-700 transition hover:bg-sky-50 disabled:opacity-50"
+                onClick={sendInvoiceNotification}
+                disabled={notificacaoEnviando}
+              >
+                {notificacaoEnviando ? "Notificando..." : "Enviar notificação"}
               </button>
             ) : null}
           </div>

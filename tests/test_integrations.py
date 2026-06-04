@@ -2,6 +2,7 @@ from datetime import date, timedelta
 from decimal import Decimal
 import json
 from types import SimpleNamespace
+from uuid import uuid4
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
@@ -36,10 +37,11 @@ def _payload_list(response):
 
 
 def _tenant():
+    suffix = uuid4().hex
     return Tenant.objects.create(
-        identifier="tn-http",
+        identifier=f"tn-http-{suffix}",
         name="Tenant HTTP",
-        domain="tenant-http.local",
+        domain=f"tenant-http-{suffix}.local",
         active=True,
     )
 
@@ -799,3 +801,64 @@ def test_payroll_recalculate_exposes_month_variables_and_absence_discount_rule()
     assert payroll.gross_salary == gross_salary
     assert payroll.total_salary == expected_total_salary
     assert payroll.salary_liquido == expected_total_salary
+    assert employee.salary_liquido == expected_total_salary
+
+
+@pytest.mark.django_db
+def test_employee_salary_liquido_preview_includes_allowances_without_payroll():
+    suffix = uuid4().hex
+    tenant = Tenant.objects.create(
+        identifier=f"tn-http-salary-{suffix}",
+        name="Tenant Salary",
+        domain=f"tenant-salary-{suffix}.local",
+        active=True,
+    )
+    today = timezone.localdate()
+    profession = Profession.objects.create(
+        tenant=tenant,
+        name="Engenheiro Informático",
+        base_salary=Decimal("89000.00"),
+        ordinary_hour_value=Decimal("500.0000"),
+        extraordinary_hour_value=Decimal("750.0000"),
+        family_allowance_per_dependent=Decimal("1000.00"),
+        minimum_progression_months=120,
+    )
+    employee = Employee.objects.create(
+        tenant=tenant,
+        name="Abdul Daniel Trato",
+        profession=profession,
+        salary_increase=Decimal("2000.00"),
+        admission_date=today,
+        status=Employee.Status.ACTIVE,
+    )
+    FamilyDependent.objects.create(
+        tenant=tenant,
+        employee=employee,
+        name="Agregado Um",
+        relationship=FamilyDependent.Parentesco.FILHO,
+    )
+    FamilyDependent.objects.create(
+        tenant=tenant,
+        employee=employee,
+        name="Agregado Dois",
+        relationship=FamilyDependent.Parentesco.CONJUGE,
+    )
+    Overtime.objects.create(
+        tenant=tenant,
+        employee=employee,
+        date=today,
+        kind=Overtime.Kind.ORDINARY,
+        hours=Decimal("2.00"),
+    )
+    Overtime.objects.create(
+        tenant=tenant,
+        employee=employee,
+        date=today,
+        kind=Overtime.Kind.EXTRAORDINARY,
+        hours=Decimal("3.00"),
+    )
+
+    expected_allowances = Decimal("2000.00") + Decimal("2000.00") + Decimal("1000.00") + Decimal("2250.00")
+    assert employee.salary_base == Decimal("89000.00")
+    assert employee.salary_allowances_value == expected_allowances
+    assert employee.salary_liquido == Decimal("96250.00")

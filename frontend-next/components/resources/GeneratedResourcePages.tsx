@@ -333,6 +333,9 @@ export function GeneratedResourceDetailPage({ endpoint }: { endpoint: string }) 
   const safeRefreshToken = useSafeDataRefreshSignal()
   const [deleting, setDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
+  const [notificationBusy, setNotificationBusy] = useState<null | "invoice" | "results">(null)
+  const [notificationError, setNotificationError] = useState<string | null>(null)
+  const [notificationFeedback, setNotificationFeedback] = useState<string | null>(null)
   const ctx = useEndpointContext(endpoint)
   const basePath = stripTrailingSlash((pathname || "").replace(/\/[^/]+\/?$/, ""))
   const detailEndpoint = detailContractEndpoint(ctx.normalizedEndpoint)
@@ -365,6 +368,33 @@ export function GeneratedResourceDetailPage({ endpoint }: { endpoint: string }) 
       )
     } finally {
       setDeleting(false)
+    }
+  }
+
+  async function handleBusinessNotification(kind: "invoice" | "results") {
+    const actionPath = kind === "invoice" ? "send-notification" : "send-results-notification"
+    try {
+      setNotificationBusy(kind)
+      setDeleteError(null)
+      setNotificationError(null)
+      setNotificationFeedback(null)
+      await apiFetch(`${ctx.normalizedEndpoint}${id}/${actionPath}/`, {
+        method: "POST",
+        body: JSON.stringify({ channels: ["email", "whatsapp"] }),
+      })
+      setNotificationFeedback(
+        kind === "invoice"
+          ? t("Notificação de fatura processada.", "Invoice notification processed.")
+          : t("Notificação de resultados processada.", "Results notification processed.")
+      )
+    } catch (e: any) {
+      setNotificationError(
+        isNotFoundLikeError(e)
+          ? t("Registo não encontrado.", "Record not found.")
+          : e?.message || t("Falha ao enviar notificação.", "Failed to send notification.")
+      )
+    } finally {
+      setNotificationBusy(null)
     }
   }
 
@@ -424,6 +454,9 @@ export function GeneratedResourceDetailPage({ endpoint }: { endpoint: string }) 
   }
 
   const primary = pickPrimaryLabel(data)
+  const currentStatus = String(data?.status ?? data?.estado ?? "").toLowerCase()
+  const canNotifyPaidInvoice = ctx.normalizedEndpoint === "/billing/invoice/" && currentStatus === "paga"
+  const canNotifyValidatedResults = ctx.normalizedEndpoint === "/clinical/labrequest/" && currentStatus === "validado"
 
   return (
     <AppLayout requiredGroups={ctx.requiredGroups}>
@@ -433,6 +466,30 @@ export function GeneratedResourceDetailPage({ endpoint }: { endpoint: string }) 
           subtitle={groupContextMessage(ctx.groupKey, "detail")}
           actions={
             <div className="flex flex-wrap items-center gap-2">
+              {canNotifyPaidInvoice ? (
+                <button
+                  type="button"
+                  onClick={() => handleBusinessNotification("invoice")}
+                  disabled={notificationBusy !== null}
+                  className="inline-flex h-9 items-center rounded-md border border-sky-200 bg-sky-50 px-3 text-sm font-medium text-sky-900 shadow-sm transition-all duration-150 hover:bg-sky-100 disabled:opacity-60"
+                >
+                  {notificationBusy === "invoice"
+                    ? t("Notificando...", "Notifying...")
+                    : t("Enviar notificação", "Send notification")}
+                </button>
+              ) : null}
+              {canNotifyValidatedResults ? (
+                <button
+                  type="button"
+                  onClick={() => handleBusinessNotification("results")}
+                  disabled={notificationBusy !== null}
+                  className="inline-flex h-9 items-center rounded-md border border-sky-200 bg-sky-50 px-3 text-sm font-medium text-sky-900 shadow-sm transition-all duration-150 hover:bg-sky-100 disabled:opacity-60"
+                >
+                  {notificationBusy === "results"
+                    ? t("Notificando...", "Notifying...")
+                    : t("Enviar notificação", "Send notification")}
+                </button>
+              ) : null}
               {canEdit ? (
                 <Link
                   href={`${basePath}/${id}/edit`}
@@ -471,6 +528,18 @@ export function GeneratedResourceDetailPage({ endpoint }: { endpoint: string }) 
         {deleteError ? (
           <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
             {deleteError}
+          </div>
+        ) : null}
+
+        {notificationError ? (
+          <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            {notificationError}
+          </div>
+        ) : null}
+
+        {notificationFeedback ? (
+          <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+            {notificationFeedback}
           </div>
         ) : null}
 

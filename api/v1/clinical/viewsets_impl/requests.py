@@ -21,6 +21,7 @@ from application.clinical.handlers import (
 from apps.clinical.models.lab_request import LabRequest
 from apps.clinical.models.lab_request_item import LabRequestItem
 from apps.clinical.models.result_item import ResultItem
+from apps.notifications.use_cases import send_lab_results_notification
 from core.constants.laboratory.clinical_status import clinical_attendance_priority_case
 from domain.clinical.result_state import ResultState
 from drf_spectacular.utils import extend_schema
@@ -245,6 +246,29 @@ class LabRequestViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin,
         request_record.refresh_from_db()
         return self._result_items_response(request_record, workflow=workflow)
 
+    @action(
+        detail=True,
+        methods=["post"],
+        url_path="send-results-notification",
+        url_name="send-results-notification",
+    )
+    def send_results_notification(self, request, pk=None):
+        ensure_laboratory_result_privilege(getattr(request, "user", None))
+        request_record = self.get_object()
+        if request_record.type != request_record.Type.LABORATORY:
+            raise PermissionDenied("Esta requisição não possui resultados laboratoriais.")
+
+        try:
+            payload = send_lab_results_notification(
+                request_record,
+                payload=request.data or {},
+            )
+        except DjangoValidationError as exc:
+            if hasattr(exc, "message_dict"):
+                raise ValidationError(exc.message_dict) from exc
+            raise ValidationError(exc.messages) from exc
+        return Response(payload)
+
     def _result_items_response(self, request_record, workflow: dict | None = None):
         from apps.clinical.models.result import Result
 
@@ -339,5 +363,3 @@ class LabRequestItemViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMi
         "version",
     ]
     ordering = ["request", "position", "id"]
-
-

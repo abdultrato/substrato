@@ -260,7 +260,7 @@ export default function ResourceDetailPage() {
     const isBloodUnit =
         canonicalGroupKey === "bloodbank" &&
         resourceKey.toLocaleLowerCase() === "unit"
-    const normalizedEndpoint = (found?.resource.endpoint || "").toLowerCase()
+    const normalizedEndpoint = ensureTrailingSlash(found?.resource.endpoint || "").toLowerCase()
     const isIdentityUserResource =
         normalizedEndpoint === "/identity/user/" || normalizedEndpoint === "/identidade/user/"
     const canManageCurrentRecord =
@@ -270,6 +270,9 @@ export default function ResourceDetailPage() {
             groups: Array.isArray(data?.group_names) ? data.group_names : [],
         })
     const invoiceId = data?.fatura_id ?? data?.invoice_id ?? data?.invoice?.id ?? null
+    const currentStatus = String(data?.status ?? data?.estado ?? "").toLowerCase()
+    const isPaidInvoice = normalizedEndpoint === "/billing/invoice/" && currentStatus === "paga"
+    const isValidatedLabRequest = normalizedEndpoint === "/clinical/labrequest/" && currentStatus === "validado"
 
     const createInvoice = useCallback(async () => {
         if (!found || !canCreateSurgeryInvoice) return
@@ -314,6 +317,31 @@ export default function ResourceDetailPage() {
             setActiveAction(null)
         }
     }, [invoiceId, canDownloadInvoicePdf, t])
+
+    const sendBusinessNotification = useCallback(async (kind: "invoice" | "results") => {
+        if (!found) return
+        const action = kind === "invoice" ? "send-notification" : "send-results-notification"
+        const actionKey = kind === "invoice" ? "notify-invoice" : "notify-results"
+        try {
+            setActiveAction(actionKey)
+            setError(null)
+            setFeedback(null)
+            await apiFetch(recordActionEndpoint(found.resource.endpoint, id, action), {
+                method: "POST",
+                body: JSON.stringify({ channels: ["email", "whatsapp"] }),
+            })
+            setFeedback(
+                kind === "invoice"
+                    ? t("Notificação de fatura processada.", "Invoice notification processed.")
+                    : t("Notificação de resultados processada.", "Results notification processed.")
+            )
+            await reloadResource()
+        } catch (e: any) {
+            setError(isNotFoundLikeError(e) ? null : (e?.message || t("Falha ao enviar notificação.", "Failed to send notification.")))
+        } finally {
+            setActiveAction(null)
+        }
+    }, [found, id, reloadResource, t])
 
     const runWarehouseDetailAction = useCallback(async (definition: DetailActionDefinition) => {
         if (!found) return
@@ -441,6 +469,30 @@ export default function ResourceDetailPage() {
                     subtitle={t("Detalhes do registo selecionado.", "Details of the selected record.")}
                     actions={
                         <div className="flex gap-3">
+                            {isPaidInvoice ? (
+                                <button
+                                    type="button"
+                                    onClick={() => void sendBusinessNotification("invoice")}
+                                    disabled={activeAction !== null}
+                                    className="inline-flex items-center rounded-lg border border-sky-200 bg-sky-50 px-3 py-1.5 text-sm font-medium text-sky-900 transition hover:bg-sky-100 disabled:opacity-60"
+                                >
+                                    {activeAction === "notify-invoice"
+                                        ? t("Notificando...", "Notifying...")
+                                        : t("Enviar notificação", "Send notification")}
+                                </button>
+                            ) : null}
+                            {isValidatedLabRequest ? (
+                                <button
+                                    type="button"
+                                    onClick={() => void sendBusinessNotification("results")}
+                                    disabled={activeAction !== null}
+                                    className="inline-flex items-center rounded-lg border border-sky-200 bg-sky-50 px-3 py-1.5 text-sm font-medium text-sky-900 transition hover:bg-sky-100 disabled:opacity-60"
+                                >
+                                    {activeAction === "notify-results"
+                                        ? t("Notificando...", "Notifying...")
+                                        : t("Enviar notificação", "Send notification")}
+                                </button>
+                            ) : null}
                             {isSurgery ? (
                                 invoiceId && canDownloadInvoicePdf ? (
                                     <button
@@ -626,4 +678,3 @@ export default function ResourceDetailPage() {
         </AppLayout>
     )
 }
-

@@ -22,6 +22,7 @@ from application.billing.handlers import handle_confirm_pending_invoice_payment,
 from apps.billing.models.invoice import Invoice
 from apps.billing.models.invoice_history import InvoiceHistory
 from apps.billing.models.invoice_items import InvoiceItem
+from apps.notifications.use_cases import send_paid_invoice_notification
 from infrastructure.cache import CacheService
 from services.reports.async_exports import create_export_job
 from tasks.export_jobs import run_export_job
@@ -494,6 +495,24 @@ class InvoiceViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
             ),
         )
         return Response(self.get_serializer(invoice).data)
+
+    @action(
+        detail=True,
+        methods=["post"],
+        url_path="send-notification",
+        url_name="send-notification",
+    )
+    def send_notification(self, request, pk=None):
+        try:
+            payload = send_paid_invoice_notification(
+                self.get_object(),
+                payload=request.data or {},
+            )
+        except DjangoValidationError as exc:
+            if hasattr(exc, "message_dict"):
+                raise ValidationError(exc.message_dict) from exc
+            raise ValidationError(exc.messages) from exc
+        return Response(payload)
 
     @action(detail=True, methods=["get"])
     def pdf(self, request, pk=None):

@@ -4,7 +4,7 @@ import { isNotFoundLikeError } from "@/lib/errors/api-error"
 import Link from "next/link"
 import { useParams, useRouter } from "next/navigation"
 import { useEffect, useMemo, useState } from "react"
-import { FlaskConical, Loader2 } from "lucide-react"
+import { Bell, FlaskConical, Loader2 } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
 import PageHeader from "@/components/ui/PageHeader"
@@ -76,11 +76,12 @@ export default function LaboratoryRequestResultsPage() {
   const { hasUnsavedInput } = useSafeDataRefresh()
 
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [requestRecord, setRequestRecord] = useState<LaboratoryResultItemsResponse["request"] | null>(null)
   const [items, setItems] = useState<LaboratoryResultItem[]>([])
   const [draft, setDraft] = useState<Record<string, string>>({})
-  const [busyAll, setBusyAll] = useState<null | "start" | "save" | "validate" | "disregard">(null)
+  const [busyAll, setBusyAll] = useState<null | "start" | "save" | "validate" | "disregard" | "notify">(null)
   const [busyRow, setBusyRowState] = useState<Record<string, boolean>>({})
   const [examDisregardName, setExamDisregardName] = useState<string | null>(null)
   const [examDisregardReason, setExamDisregardReason] = useState("")
@@ -104,6 +105,7 @@ export default function LaboratoryRequestResultsPage() {
     try {
       setLoading(true)
       setErrorMessage(null)
+      setFeedbackMessage(null)
 
       const response = await apiFetch<LaboratoryResultItemsResponse>(`/requests/${requestId}/result-items/`, {
         clientCache: safeRefreshToken === 0,
@@ -169,6 +171,7 @@ export default function LaboratoryRequestResultsPage() {
         item.status === "aguardando_validacao" ||
         (item.status === "desconsiderado" && !item.disregard_validation_date)
     )
+  const canNotifyResults = requestRecord?.status === "validado"
   const groupedItems = useMemo(() => {
     const map = new Map<string, LaboratoryResultItem[]>()
     for (const item of items) {
@@ -288,6 +291,7 @@ export default function LaboratoryRequestResultsPage() {
     try {
       setBusyAll("validate")
       setErrorMessage(null)
+      setFeedbackMessage(null)
 
       const response = await apiFetch<LaboratoryResultItemsResponse>(`/requests/${requestId}/validate-results/`, {
         method: "POST",
@@ -298,6 +302,24 @@ export default function LaboratoryRequestResultsPage() {
       }
     } catch (error: any) {
       setErrorMessage(isNotFoundLikeError(error) ? null : (error?.message || "Falha ao validar resultados."))
+    } finally {
+      setBusyAll(null)
+    }
+  }
+
+  async function sendResultsNotification() {
+    if (!requestId || Number.isNaN(requestId)) return
+    try {
+      setBusyAll("notify")
+      setErrorMessage(null)
+      setFeedbackMessage(null)
+      await apiFetch(`/requests/${requestId}/send-results-notification/`, {
+        method: "POST",
+        body: JSON.stringify({ channels: ["email", "whatsapp"] }),
+      })
+      setFeedbackMessage("Notificação de resultados processada para email e WhatsApp disponíveis.")
+    } catch (error: any) {
+      setErrorMessage(isNotFoundLikeError(error) ? null : (error?.message || "Falha ao enviar notificação de resultados."))
     } finally {
       setBusyAll(null)
     }
@@ -339,6 +361,18 @@ export default function LaboratoryRequestResultsPage() {
                 Validar requisição
               </button>
 
+              {canNotifyResults ? (
+                <button
+                  type="button"
+                  onClick={sendResultsNotification}
+                  disabled={busyAll !== null}
+                  className="inline-flex items-center gap-2 rounded-xl border border-sky-200 bg-sky-50 px-3 py-2 text-sm font-medium text-sky-900 shadow-sm transition hover:bg-sky-100 disabled:opacity-50"
+                >
+                  {busyAll === "notify" ? <Loader2 className="animate-spin" size={16} /> : <Bell size={16} />}
+                  Enviar notificação
+                </button>
+              ) : null}
+
             </div>
           }
         />
@@ -346,6 +380,12 @@ export default function LaboratoryRequestResultsPage() {
         {errorMessage ? (
           <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
             {errorMessage}
+          </div>
+        ) : null}
+
+        {feedbackMessage ? (
+          <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+            {feedbackMessage}
           </div>
         ) : null}
 

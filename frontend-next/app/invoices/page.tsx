@@ -56,8 +56,10 @@ export default function FaturasPage() {
   const podeCriar = userHasAnyGroup(user, [GROUPS.ADMIN, GROUPS.RECEPCAO])
   const [faturas, setFaturas] = useState<FaturaRow[]>([])
   const [erro, setErro] = useState<string | null>(null)
+  const [feedback, setFeedback] = useState<string | null>(null)
   const [carregando, setCarregando] = useState(true)
   const [acaoId, setAcaoId] = useState<number | null>(null)
+  const [notificacaoId, setNotificacaoId] = useState<number | null>(null)
   const [itens, setItens] = useState<FaturaItem[]>([])
   const [itensFaturaId, setItensFaturaId] = useState<number | null>(null)
   const [carregandoItens, setCarregandoItens] = useState(false)
@@ -152,6 +154,8 @@ export default function FaturasPage() {
       return
     }
     try {
+      setErro(null)
+      setFeedback(null)
       setAcaoId(id)
       await apiFetch(`/invoices/${id}/issue/`, { method: "POST" })
       await carregar()
@@ -169,6 +173,7 @@ export default function FaturasPage() {
     }
     try {
       setErro(null)
+      setFeedback(null)
       setAcaoId(id)
       await apiFetch(`/invoices/${id}/void/`, { method: "POST" })
       await carregar()
@@ -315,6 +320,8 @@ export default function FaturasPage() {
         return
       }
       try {
+        setErro(null)
+        setFeedback(null)
         setAcaoId(id)
         await apiFetch(`/invoices/${id}/confirm-payment/`, { method: "POST" })
         await carregar()
@@ -331,6 +338,24 @@ export default function FaturasPage() {
     },
     [carregar, faturas, podeAlterar, selectedFatura, carregarPagamentosPendentes]
   )
+
+  const sendInvoiceNotification = useCallback(async (id: number) => {
+    if (!id) return
+    try {
+      setNotificacaoId(id)
+      setErro(null)
+      setFeedback(null)
+      await apiFetch(`/invoices/${id}/send-notification/`, {
+        method: "POST",
+        body: JSON.stringify({ channels: ["email", "whatsapp"] }),
+      })
+      setFeedback("Notificação de fatura processada para email e WhatsApp disponíveis.")
+    } catch (e: any) {
+      setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao enviar notificação da fatura."))
+    } finally {
+      setNotificacaoId(null)
+    }
+  }, [])
 
   const toggleIva = useCallback(
     async (item: FaturaItem) => {
@@ -401,6 +426,15 @@ export default function FaturasPage() {
             >
               Itens/IVA
             </button>
+            {f.estado === "PAGA" ? (
+              <button
+                className="inline-flex items-center rounded-lg border border-sky-200 px-3 py-1.5 text-xs font-medium text-sky-700 transition hover:bg-sky-50 disabled:opacity-50"
+                disabled={notificacaoId === f.id}
+                onClick={() => sendInvoiceNotification(f.id)}
+              >
+                {notificacaoId === f.id ? "Notificando..." : "Notificar"}
+              </button>
+            ) : null}
             {podeAlterar && f.estado === "RASC" ? (
               <ConfirmDialog
                 title="Anular fatura"
@@ -433,6 +467,8 @@ export default function FaturasPage() {
       itensFaturaId,
       detalhar,
       totalAPagar,
+      notificacaoId,
+      sendInvoiceNotification,
     ]
   )
 
@@ -511,6 +547,12 @@ export default function FaturasPage() {
         {erro && (
           <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
             {erro}
+          </div>
+        )}
+
+        {feedback && (
+          <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+            {feedback}
           </div>
         )}
 
@@ -735,15 +777,26 @@ export default function FaturasPage() {
             title={`Detalhes da fatura ${selectedFatura.id_custom || selectedFatura.id}`}
             subtitle="Revisão e confirmação de pagamento"
             actions={
-              temPagamentoPendente && selectedFatura.estado !== "PAGA" && podeAlterar ? (
-                <button
-                  className="inline-flex items-center rounded-lg border border-emerald-200 px-3 py-1 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-50 disabled:opacity-50"
-                  disabled={acaoId === selectedFatura.id}
-                  onClick={() => confirmPayment(selectedFatura.id)}
-                >
-                  Confirmar pagamento
-                </button>
-              ) : null
+              <div className="flex flex-wrap gap-2">
+                {temPagamentoPendente && selectedFatura.estado !== "PAGA" && podeAlterar ? (
+                  <button
+                    className="inline-flex items-center rounded-lg border border-emerald-200 px-3 py-1 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-50 disabled:opacity-50"
+                    disabled={acaoId === selectedFatura.id}
+                    onClick={() => confirmPayment(selectedFatura.id)}
+                  >
+                    Confirmar pagamento
+                  </button>
+                ) : null}
+                {selectedFatura.estado === "PAGA" ? (
+                  <button
+                    className="inline-flex items-center rounded-lg border border-sky-200 px-3 py-1 text-xs font-semibold text-sky-700 transition hover:bg-sky-50 disabled:opacity-50"
+                    disabled={notificacaoId === selectedFatura.id}
+                    onClick={() => sendInvoiceNotification(selectedFatura.id)}
+                  >
+                    {notificacaoId === selectedFatura.id ? "Notificando..." : "Enviar notificação"}
+                  </button>
+                ) : null}
+              </div>
             }
           >
             <div className="grid gap-3 text-sm sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">

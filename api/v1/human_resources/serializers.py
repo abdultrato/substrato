@@ -99,6 +99,10 @@ EMPLOYEE_ALIASES = {
     "salário_nominal": "nominal_salary",
     "salario_base": "nominal_salary",
     "salário_base": "nominal_salary",
+    "salario_liquido": "salary_liquido",
+    "salário_liquido": "salary_liquido",
+    "salário_líquido": "salary_liquido",
+    "abonos_salariais": "salary_allowances_value",
     "aumento_salarial": "salary_increase",
     "aumento": "salary_increase",
     "horas_base": "base_month_hours",
@@ -268,11 +272,19 @@ class ProfessionSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializ
 class EmployeeSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer):
     legacy_input_aliases = EMPLOYEE_ALIASES
     legacy_output_aliases = EMPLOYEE_ALIASES
+    salary_base = serializers.DecimalField(max_digits=12, decimal_places=2, read_only=True)
+    salary_liquido = serializers.DecimalField(max_digits=12, decimal_places=2, read_only=True)
+    salary_allowances_value = serializers.DecimalField(max_digits=12, decimal_places=2, read_only=True)
 
     class Meta:
         model = Employee
         fields = "__all__"
-        read_only_fields = CORE_READ_ONLY_FIELDS
+        read_only_fields = (
+            *CORE_READ_ONLY_FIELDS,
+            "salary_base",
+            "salary_liquido",
+            "salary_allowances_value",
+        )
 
 
 class DisciplinaryProcessSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer):
@@ -389,4 +401,3 @@ SERIALIZER_MAP = {
     "horaextra": OvertimeSerializer,
     "folhapagamento": PayrollSerializer,
 }
-

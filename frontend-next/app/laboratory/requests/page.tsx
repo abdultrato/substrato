@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { useCallback, useEffect, useMemo, useState } from "react"
-import { CheckCircle2, FlaskConical, Printer, RotateCcw, Search, Shield } from "lucide-react"
+import { Bell, CheckCircle2, FlaskConical, Printer, RotateCcw, Search, Shield } from "lucide-react"
 import { keepPreviousData, useQuery } from "@tanstack/react-query"
 
 import AppLayout from "@/components/layout/AppLayout"
@@ -88,7 +88,9 @@ export default function LaboratoryRequestsPage() {
 
   const [search, setSearch] = useState("")
   const [pdfError, setPdfError] = useState<string | null>(null)
+  const [notificationMessage, setNotificationMessage] = useState<string | null>(null)
   const [pdfLoadingId, setPdfLoadingId] = useState<number | null>(null)
+  const [notifyLoadingId, setNotifyLoadingId] = useState<number | null>(null)
   const [status, setStatus] = useState<string>("pendente")
   const [clinicalPriority, setClinicalPriority] = useState<string>("")
   const [criticalFilter, setCriticalFilter] = useState<CriticalFilter>("all")
@@ -166,6 +168,7 @@ export default function LaboratoryRequestsPage() {
     try {
       setPdfLoadingId(id)
       setPdfError(null)
+      setNotificationMessage(null)
       await openResultsPdf(id)
     } catch (e: any) {
       setPdfError(e?.message || t("Falha ao gerar PDF de resultados.", "Failed to generate results PDF."))
@@ -173,6 +176,27 @@ export default function LaboratoryRequestsPage() {
       setPdfLoadingId(null)
     }
   }, [pdfLoadingId, t])
+
+  const onNotify = useCallback(async (id: number) => {
+    if (notifyLoadingId === id) return
+    try {
+      setNotifyLoadingId(id)
+      setPdfError(null)
+      setNotificationMessage(null)
+      await apiFetch(`/requests/${id}/send-results-notification/`, {
+        method: "POST",
+        body: JSON.stringify({ channels: ["email", "whatsapp"] }),
+      })
+      setNotificationMessage(t(
+        "Notificação de resultados processada para email e WhatsApp disponíveis.",
+        "Results notification processed for available email and WhatsApp."
+      ))
+    } catch (e: any) {
+      setPdfError(e?.message || t("Falha ao enviar notificação de resultados.", "Failed to send results notification."))
+    } finally {
+      setNotifyLoadingId(null)
+    }
+  }, [notifyLoadingId, t])
 
   const columns = useMemo(
     () => [
@@ -195,6 +219,7 @@ export default function LaboratoryRequestsPage() {
           const hasRequestId = Number.isFinite(requestId) && requestId > 0
           const isValidated = String(r.status || "").toLowerCase() === "validado"
           const generatingPdf = pdfLoadingId === requestId
+          const notifying = notifyLoadingId === requestId
           return (
             <div className="flex flex-wrap gap-2">
             {r.id && !isValidated ? (
@@ -227,6 +252,18 @@ export default function LaboratoryRequestsPage() {
               </button>
             ) : null}
 
+            {hasRequestId && isValidated ? (
+              <button
+                type="button"
+                onClick={() => onNotify(requestId)}
+                disabled={notifying}
+                className="inline-flex items-center gap-2 rounded-lg border border-sky-200 bg-sky-50 px-3 py-1.5 text-xs font-medium text-sky-900 transition hover:bg-sky-100 disabled:opacity-50"
+              >
+                <Bell size={14} />
+                {notifying ? t("Notificando...", "Notifying...") : t("Notificar", "Notify")}
+              </button>
+            ) : null}
+
             {canViewAdmin ? (
               <Link
                 href={`/admin/clinical/labrequest/${r.id}/change/`}
@@ -244,7 +281,7 @@ export default function LaboratoryRequestsPage() {
         },
       },
     ],
-    [canViewAdmin, isPortuguese, onPdf, pdfLoadingId, t]
+    [canViewAdmin, isPortuguese, notifyLoadingId, onNotify, onPdf, pdfLoadingId, t]
   )
 
   return (
@@ -276,6 +313,12 @@ export default function LaboratoryRequestsPage() {
         {pdfError ? (
           <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
             {pdfError}
+          </div>
+        ) : null}
+
+        {notificationMessage ? (
+          <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+            {notificationMessage}
           </div>
         ) : null}
 
