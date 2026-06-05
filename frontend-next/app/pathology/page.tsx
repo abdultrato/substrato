@@ -1,7 +1,22 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import { Archive, ClipboardCheck, FileText, FlaskConical, Gauge, Microscope, Search } from "lucide-react"
+import {
+  Archive,
+  BrainCircuit,
+  ClipboardCheck,
+  ClipboardList,
+  CreditCard,
+  FileText,
+  FlaskConical,
+  Gauge,
+  Microscope,
+  PackageCheck,
+  PackageSearch,
+  Scissors,
+  Search,
+  ShieldCheck,
+} from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
 import WorkspaceHub from "@/components/workspace/WorkspaceHub"
@@ -19,30 +34,175 @@ const REQUIRED_GROUPS = [
   GROUPS.MEDICINA_OCUPACIONAL,
 ]
 
-const pathologyEndpoints = [
-  ["recepcao_amostras", "/pathology/recepcao_amostras/"],
-  ["macroscopia", "/pathology/macroscopia/"],
-  ["processamento", "/pathology/processamento/"],
-  ["histologia", "/pathology/histologia/"],
-  ["citologia", "/pathology/citologia/"],
-  ["imunohistoquimica", "/pathology/imunohistoquimica/"],
-  ["laudos", "/pathology/laudos/"],
-  ["arquivamento", "/pathology/arquivamento/"],
+const pathologyResources = [
+  {
+    key: "pedidos",
+    endpoint: "/pathology/pedidos/",
+    metricLabel: "Pedidos",
+    title: "Pedidos",
+    description: "Solicitação médica, prioridade, CID e procedência anatómica.",
+    href: "/pathology/requests",
+    icon: ClipboardList,
+  },
+  {
+    key: "recepcao_amostras",
+    endpoint: "/pathology/recepcao_amostras/",
+    metricLabel: "Recepção",
+    title: "Recepção de amostras",
+    description: "Recipientes, fixador, aceitação/rejeição e hora de recepção.",
+    href: "/pathology/sample-receptions",
+    icon: FlaskConical,
+  },
+  {
+    key: "acessionamento",
+    endpoint: "/pathology/acessionamento/",
+    metricLabel: "Accessioning",
+    title: "Acessionamento",
+    description: "Número PAT, sub-amostras, códigos QR/DataMatrix/RFID.",
+    href: "/pathology/accessioning",
+    icon: PackageCheck,
+  },
+  {
+    key: "macroscopia",
+    endpoint: "/pathology/macroscopia/",
+    metricLabel: "Macroscopia",
+    title: "Macroscopia",
+    description: "Peso, dimensões, margens, lesões observadas e cassetes.",
+    href: "/pathology/grossing",
+    icon: Search,
+  },
+  {
+    key: "processamento",
+    endpoint: "/pathology/processamento/",
+    metricLabel: "Processamento",
+    title: "Processamento",
+    description: "Fixação, desidratação, clarificação, parafina e equipamento.",
+    href: "/pathology/processing",
+    icon: Gauge,
+  },
+  {
+    key: "inclusao",
+    endpoint: "/pathology/inclusao/",
+    metricLabel: "Inclusão",
+    title: "Inclusão em parafina",
+    description: "Blocos, cassetes, estação de inclusão e técnico responsável.",
+    href: "/pathology/embedding",
+    icon: PackageSearch,
+  },
+  {
+    key: "microtomia",
+    endpoint: "/pathology/microtomia/",
+    metricLabel: "Microtomia",
+    title: "Microtomia",
+    description: "Espessura do corte, secções, micrótomo e lâminas produzidas.",
+    href: "/pathology/microtomy",
+    icon: Scissors,
+  },
+  {
+    key: "histologia",
+    endpoint: "/pathology/histologia/",
+    metricLabel: "Lâminas",
+    title: "Gestão de lâminas",
+    description: "Criação, estado, localização, bloco, coloração e qualidade.",
+    href: "/pathology/histology",
+    icon: Microscope,
+  },
+  {
+    key: "coloracoes",
+    endpoint: "/pathology/coloracoes/",
+    metricLabel: "Colorações",
+    title: "Colorações",
+    description: "H&E, especiais, lote de reagente, equipamento e preço.",
+    href: "/pathology/staining",
+    icon: FlaskConical,
+  },
+  {
+    key: "citologia",
+    endpoint: "/pathology/citologia/",
+    metricLabel: "Citologia",
+    title: "Citologia",
+    description: "Recepção, preparação, coloração, leitura e interpretação.",
+    href: "/pathology/cytology",
+    icon: ClipboardCheck,
+  },
+  {
+    key: "imunohistoquimica",
+    endpoint: "/pathology/imunohistoquimica/",
+    metricLabel: "IHC",
+    title: "Imunohistoquímica",
+    description: "Marcadores, clones, lote do anticorpo, equipamento e controlo.",
+    href: "/pathology/immunohistochemistry",
+    icon: FlaskConical,
+  },
+  {
+    key: "molecular",
+    endpoint: "/pathology/molecular/",
+    metricLabel: "Molecular",
+    title: "Patologia molecular",
+    description: "PCR, HPV, EGFR, KRAS, BRAF, ALK e NGS.",
+    href: "/pathology/molecular",
+    icon: BrainCircuit,
+  },
+  {
+    key: "diagnosticos",
+    endpoint: "/pathology/diagnosticos/",
+    metricLabel: "Diagnóstico",
+    title: "Diagnóstico",
+    description: "Rascunho, revisão, segunda opinião, patologia digital e IA.",
+    href: "/pathology/diagnosis",
+    icon: ClipboardCheck,
+  },
+  {
+    key: "laudos",
+    endpoint: "/pathology/laudos/",
+    metricLabel: "Laudos",
+    title: "Laudos",
+    description: "Diagnóstico, estadiamento, margens, conclusão e assinatura.",
+    href: "/pathology/reports",
+    icon: FileText,
+  },
+  {
+    key: "faturacao",
+    endpoint: "/pathology/faturacao/",
+    metricLabel: "Faturação",
+    title: "Faturação",
+    description: "Eventos faturáveis por recepção, coloração, IHC e molecular.",
+    href: "/pathology/billing",
+    icon: CreditCard,
+  },
+  {
+    key: "inventario",
+    endpoint: "/pathology/inventario/",
+    metricLabel: "Inventário",
+    title: "Inventário",
+    description: "Reagentes, materiais, lotes, quantidades e custos consumidos.",
+    href: "/pathology/inventory",
+    icon: PackageCheck,
+  },
+  {
+    key: "controlo_qualidade",
+    endpoint: "/pathology/controlo_qualidade/",
+    metricLabel: "Qualidade",
+    title: "Controlo de qualidade",
+    description: "TAT, rejeição, retrabalho, falhas e concordância diagnóstica.",
+    href: "/pathology/quality-control",
+    icon: ShieldCheck,
+  },
+  {
+    key: "arquivamento",
+    endpoint: "/pathology/arquivamento/",
+    metricLabel: "Arquivo",
+    title: "Arquivamento",
+    description: "Blocos, lâminas, fotos, laudos, localização e retenção.",
+    href: "/pathology/archives",
+    icon: Archive,
+  },
 ] as const
 
-type MetricKey = (typeof pathologyEndpoints)[number][0]
+type MetricKey = (typeof pathologyResources)[number]["key"]
 type Metrics = Record<MetricKey, number>
 
-const emptyMetrics: Metrics = {
-  recepcao_amostras: 0,
-  macroscopia: 0,
-  processamento: 0,
-  histologia: 0,
-  citologia: 0,
-  imunohistoquimica: 0,
-  laudos: 0,
-  arquivamento: 0,
-}
+const emptyMetrics = Object.fromEntries(pathologyResources.map((resource) => [resource.key, 0])) as Metrics
 
 export default function PathologyPage() {
   const { t } = useLanguage()
@@ -60,13 +220,13 @@ export default function PathologyPage() {
         setError(null)
 
         const responses = await Promise.all(
-          pathologyEndpoints.map(([, endpoint]) => apiFetch<any>(endpoint, { clientCache: safeRefreshToken === 0 }))
+          pathologyResources.map((resource) => apiFetch<any>(resource.endpoint, { clientCache: safeRefreshToken === 0 }))
         )
 
         if (!mounted) return
         const nextMetrics = { ...emptyMetrics }
-        pathologyEndpoints.forEach(([key], index) => {
-          nextMetrics[key] = extractTotalCount(responses[index])
+        pathologyResources.forEach((resource, index) => {
+          nextMetrics[resource.key] = extractTotalCount(responses[index])
         })
         setMetrics(nextMetrics)
       } catch (e: any) {
@@ -101,71 +261,21 @@ export default function PathologyPage() {
         <WorkspaceHub
           title="Patologia"
           subtitle={t(
-            "Rastreabilidade de amostras, macroscopia, processamento, histologia, citologia, imunohistoquímica, laudos e arquivamento.",
-            "Sample traceability, grossing, processing, histology, cytology, immunohistochemistry, reports and archiving."
+            "Fluxo completo de anatomia patológica, da requisição médica ao arquivo físico/digital e à faturação por evento.",
+            "Complete anatomic pathology flow, from medical request to physical/digital archive and event-based billing."
           )}
           adminHref="/admin/patologia/"
           secondaryCta={{ href: "/resources/pathology", label: t("Recursos técnicos", "Technical resources") }}
-          metrics={[
-            { label: "Amostras", value: metricValue || metrics.recepcao_amostras },
-            { label: "Macroscopia", value: metricValue || metrics.macroscopia },
-            { label: "Processamento", value: metricValue || metrics.processamento },
-            { label: "Histologia", value: metricValue || metrics.histologia },
-            { label: "Citologia", value: metricValue || metrics.citologia },
-            { label: "Imuno-histoquímica", value: metricValue || metrics.imunohistoquimica },
-            { label: "Laudos", value: metricValue || metrics.laudos },
-            { label: "Arquivos", value: metricValue || metrics.arquivamento },
-          ]}
-          actions={[
-            {
-              title: "Recepção de amostras",
-              description: t("Entrada, aceitação/rejeição e prioridade da amostra.", "Sample intake, acceptance/rejection and priority."),
-              href: "/pathology/sample-receptions",
-              icon: FlaskConical,
-            },
-            {
-              title: "Macroscopia",
-              description: t("Descrição macroscópica, fragmentos e cassetes.", "Gross description, fragments and cassettes."),
-              href: "/pathology/grossing",
-              icon: Search,
-            },
-            {
-              title: "Processamento",
-              description: t("Lotes, protocolos, processador e reagentes.", "Batches, protocols, processor and reagents."),
-              href: "/pathology/processing",
-              icon: Gauge,
-            },
-            {
-              title: "Histologia",
-              description: t("Lâminas, blocos, coloração e qualidade.", "Slides, blocks, stain and quality."),
-              href: "/pathology/histology",
-              icon: Microscope,
-            },
-            {
-              title: "Citologia",
-              description: t("Adequabilidade, triagem e interpretação citológica.", "Adequacy, screening and cytology interpretation."),
-              href: "/pathology/cytology",
-              icon: ClipboardCheck,
-            },
-            {
-              title: "Imunohistoquímica",
-              description: t("Marcadores, clones, resultados e controlo.", "Markers, clones, results and controls."),
-              href: "/pathology/immunohistochemistry",
-              icon: FlaskConical,
-            },
-            {
-              title: "Laudos",
-              description: t("Diagnóstico, conclusão, assinatura e entrega.", "Diagnosis, conclusion, signature and delivery."),
-              href: "/pathology/reports",
-              icon: FileText,
-            },
-            {
-              title: "Arquivamento",
-              description: t("Blocos, lâminas, localização e retenção.", "Blocks, slides, location and retention."),
-              href: "/pathology/archives",
-              icon: Archive,
-            },
-          ]}
+          metrics={pathologyResources.map((resource) => ({
+            label: resource.metricLabel,
+            value: metricValue || metrics[resource.key],
+          }))}
+          actions={pathologyResources.map((resource) => ({
+            title: resource.title,
+            description: resource.description,
+            href: resource.href,
+            icon: resource.icon,
+          }))}
         />
       </div>
     </AppLayout>
