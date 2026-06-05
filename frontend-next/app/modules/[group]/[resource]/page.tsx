@@ -11,7 +11,7 @@ import { useLanguage } from "@/hooks/useLanguage"
 import { useModulesCatalog } from "@/hooks/useModulesCatalog"
 import { findModuleResource } from "@/lib/modules"
 import { routeParamToString } from "@/lib/routeParams"
-import { GROUPS } from "@/lib/rbac"
+import { requiredGroupsForResourceGroup } from "@/lib/resourcesAccess"
 
 export default function ModuloRecursoPage() {
     const params = useParams()
@@ -21,9 +21,7 @@ export default function ModuloRecursoPage() {
     const { t, tr } = useLanguage()
     const { modules } = useModulesCatalog("neutral")
     const found = findModuleResource(groupKey, resourceKey, modules)
-    const allGroups = Object.values(GROUPS)
-    const requiredGroups =
-        found?.group.key === "equipamentos" ? allGroups : [GROUPS.ADMIN, GROUPS.LABORATORIO]
+    const requiredGroups = found ? requiredGroupsForResourceGroup(found.group.key) : undefined
 
     if (loading) return null
 

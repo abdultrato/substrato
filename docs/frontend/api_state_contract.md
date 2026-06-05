@@ -51,6 +51,7 @@ Responsabilidades:
 - Resolver `$ref`, `allOf`, `oneOf` e `anyOf`.
 - Mapear tipos OpenAPI para campos de formulário.
 - Extrair labels de enum quando disponíveis.
+- Incluir todos os campos graváveis declarados no request body em `submitFields`.
 - Marcar campos internos/readonly como não submetíveis.
 - Bloquear campos de tenant, auditoria, soft delete e versionamento.
 
@@ -69,6 +70,12 @@ Não usar `AutoForm` sozinho quando:
 - O fluxo altera stock, pagamento, factura, resultado clínico ou avaliação académica.
 - A página precisa mostrar contexto operacional antes de guardar.
 - Há permissões por campo ou regras de negócio complexas.
+
+Regras de contrato:
+
+- `schema.generated.json` é a fonte de verdade para campos que o backend aceita ou exige.
+- `esconderCampos` só pode remover campos opcionais ou internos; campos obrigatórios e graváveis devem permanecer visíveis e entrar no payload.
+- Endpoints de ação com payload próprio, como ações educacionais em `lib/resourceActions.ts`, devem ter UI/validação própria e testes específicos em vez de depender do CRUD genérico.
 
 ## Cliente gerado
 

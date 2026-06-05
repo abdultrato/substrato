@@ -1,6 +1,6 @@
 # Catálogo de Rotas do Frontend
 
-Actualizado: 2026-05-25
+Actualizado: 2026-06-05
 
 O frontend usa Next.js App Router em `frontend-next/app/`. Existem centenas de páginas, misturando workspaces manuais, páginas operacionais específicas e CRUD gerado a partir do catálogo/backend.
 
@@ -48,7 +48,7 @@ O frontend usa Next.js App Router em `frontend-next/app/`. Existem centenas de p
 | `medical-records` | 3 | Alias amigável de registos médicos. |
 | `medical_records` | 8 | Registos médicos canónicos. |
 | `medicine` | 3 | Workspace médico. |
-| `modules` | 3 | Catálogo/navegação de módulos. |
+| `modules` | 3 | Catálogo/navegação de domínios e módulos técnicos. |
 | `monitoring` | 11 | Erros, cloud control, export jobs e monitorização. |
 | `notifications` | 14 | Notificações, templates e logs. |
 | `nursing` | 63 | Enfermagem, procedimentos, enfermarias, internamentos e sinais vitais. |
@@ -106,6 +106,23 @@ Alguns módulos usam `new`, outros `novo` ou páginas específicas. Ao criar rot
 ### Recursos genéricos
 
 `app/resources/` e `components/resources/GeneratedResourcePages.tsx` suportam navegação e CRUD baseados no catálogo de recursos. Usar quando o recurso segue CRUD padrão e não precisa de UX operacional própria.
+
+### Catálogo por domínios
+
+`app/modules/` mostra a organização lógica em `lib/domainModules.ts`, alinhada com o catálogo backend de domínios. A navegação por domínio não move nem renomeia os apps técnicos do frontend; cada módulo lógico aponta para recursos reais em `lib/modules.ts` e para endpoints existentes no OpenAPI.
+
+Domínios expostos:
+
+- `clinical`: pacientes, consultas, prontuário, odontologia, cirurgia, maternidade, especialidades e patologia.
+- `diagnostics`: laboratório, radiologia, banco de sangue, diagnósticos especializados e farmácia clínica.
+- `hospitalization`: emergência, internamento, cuidados intensivos e bloco operatório.
+- `care`: enfermagem, fisioterapia, terapias e lacunas planejadas de nutrição/psicologia/serviços sociais.
+- `operations`: inventário, compras, farmácia, equipamentos, manutenção, inspeções, incidentes e transporte.
+- `administration`: finanças, faturação, pagamentos, seguros, crédito, RH e payroll.
+- `platform`: tenants, identidade, utilizadores, permissões, auditoria, notificações, integrações e documentos planejados.
+- `analytics` e `public_health`: monitorização/relatórios e saúde pública.
+
+Regra: adicionar módulo lógico primeiro em `lib/domainModules.ts` e mapear para `groupKey/resourceKey` já presente em `lib/modules.ts`; criar rota nova apenas quando o recurso exigir UX própria.
 
 ### Aliases amigáveis
 

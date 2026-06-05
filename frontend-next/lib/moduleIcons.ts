@@ -40,11 +40,14 @@ import {
 } from "lucide-react"
 
 const MODULE_ICON_BY_KEY: Record<string, LucideIcon> = {
+  administration: Briefcase,
   accounting: Calculator,
   ai_assistant: Bot,
+  analytics: Activity,
   audit: Activity,
   billing: FileText,
   bloodbank: Droplet,
+  care: HeartPulse,
   clinical: Stethoscope,
   clinical_pharmacy: Pill,
   consultations: ClipboardList,
@@ -66,8 +69,12 @@ const MODULE_ICON_BY_KEY: Record<string, LucideIcon> = {
   nursing: HeartPulse,
   payments: CreditCard,
   physiotherapy: Activity,
+  platform: ShieldCheck,
   public_health: Syringe,
   radiology: Microscope,
+  diagnostics: Microscope,
+  hospitalization: HeartPulse,
+  operations: PackageSearch,
   specialty_diagnostics: HeartPulse,
   therapy: HeartPulse,
   pharmacy: Pill,

@@ -7,6 +7,13 @@ import {
   findModuleResource,
   mergeModules,
 } from "@/lib/modules"
+import {
+  DOMAIN_MODULE_KEYS_BY_DOMAIN,
+  DOMAIN_MODULES,
+  domainModuleDefinitionFor,
+  domainModuleDefinitionsForDomain,
+  primaryHrefForDomainModule,
+} from "@/lib/domainModules"
 
 describe("modules catalog discovery", () => {
   it("reuses static labels/keys for known endpoints", () => {
@@ -255,5 +262,114 @@ describe("modules catalog discovery", () => {
     )
 
     expect(invalid).toEqual([])
+  })
+
+  it("exposes the backend domain organization in the frontend catalog", () => {
+    expect(Object.keys(DOMAIN_MODULE_KEYS_BY_DOMAIN)).toEqual(
+      expect.arrayContaining([
+        "clinical",
+        "diagnostics",
+        "hospitalization",
+        "care",
+        "operations",
+        "administration",
+        "platform",
+        "analytics",
+        "public_health",
+      ])
+    )
+
+    expect(DOMAIN_MODULE_KEYS_BY_DOMAIN.clinical).toEqual(
+      expect.arrayContaining([
+        "clinical.patients",
+        "clinical.dentistry",
+        "clinical.surgery",
+        "clinical.pediatrics",
+        "clinical.cardiology",
+        "clinical.pathology",
+      ])
+    )
+    expect(DOMAIN_MODULE_KEYS_BY_DOMAIN.diagnostics).toEqual(
+      expect.arrayContaining([
+        "diagnostics.laboratory",
+        "diagnostics.radiology",
+        "diagnostics.blood_bank",
+      ])
+    )
+    expect(DOMAIN_MODULE_KEYS_BY_DOMAIN.hospitalization).toEqual(
+      expect.arrayContaining([
+        "hospitalization.emergency",
+        "hospitalization.inpatient_care",
+        "hospitalization.intensive_care",
+        "hospitalization.operating_room",
+      ])
+    )
+  })
+
+  it("maps requested domain aliases to real frontend resources or planned modules", () => {
+    const expected: Record<string, string | null> = {
+      identity: "/modules/identity/usuario",
+      tenants: "/modules/tenants/inquilino",
+      users: "/modules/identity/usuario",
+      permissions: "/modules/identity/perfilprofissional",
+      patients: "/modules/clinical/paciente",
+      appointments: "/modules/consultations/consulta",
+      encounters: "/modules/consultations/consulta",
+      electronic_health_records: "/modules/medical_records/registro",
+      dentistry: "/modules/dental",
+      surgery: "/modules/surgery",
+      pediatrics: "/modules/consultations/especialidade",
+      gynecology: "/modules/maternity/gestacao",
+      obstetrics: "/modules/maternity/gestacao",
+      cardiology: "/modules/specialty_diagnostics/order",
+      orthopedics: "/modules/consultations/especialidade",
+      ophthalmology: "/modules/specialty_diagnostics/order",
+      dermatology: "/modules/telemedicine/async_case",
+      neurology: "/modules/specialty_diagnostics/order",
+      oncology: "/modules/consultations/especialidade",
+      pathology: "/modules/pathology",
+      laboratory: "/modules/clinical/requisicaoanalise",
+      radiology: "/modules/radiology",
+      blood_bank: "/modules/bloodbank",
+      emergency: "/modules/reception/checkin",
+      inpatient_care: "/modules/nursing/ward_admission",
+      intensive_care: "/modules/nursing/ward_admission",
+      operating_room: "/modules/surgery/centro_cirurgico",
+      nursing: "/modules/nursing",
+      nutrition: null,
+      psychology: null,
+      physiotherapy: "/modules/physiotherapy",
+      social_services: null,
+      inventory: "/modules/warehouse/stock_level",
+      procurement: "/modules/warehouse/purchase_order",
+      pharmacy: "/modules/pharmacy",
+      finance: "/modules/accounting",
+      billing: "/modules/billing",
+      insurance: "/modules/insurer",
+      human_resources: "/modules/human_resources/funcionario",
+      payroll: "/modules/human_resources/folhapagamento",
+      analytics: "/modules/monitoring",
+      reporting: "/modules/monitoring/export_job",
+      auditing: "/modules/audit/atividade",
+      notifications: "/modules/notifications/notification",
+      documents: null,
+      integrations: "/modules/equipment_integrations/equipment",
+      public_health: "/modules/public_health",
+    }
+
+    for (const [lookup, href] of Object.entries(expected)) {
+      const definition = domainModuleDefinitionFor(lookup)
+      expect(definition, lookup).toBeDefined()
+      expect(primaryHrefForDomainModule(definition!, MODULES)).toBe(href)
+    }
+  })
+
+  it("keeps planned domain modules separated from active modules", () => {
+    const allCare = domainModuleDefinitionsForDomain("care")
+    const activeCare = domainModuleDefinitionsForDomain("care", { includePlanned: false })
+
+    expect(allCare.map((definition) => definition.key)).toContain("care.nutrition")
+    expect(activeCare.map((definition) => definition.key)).not.toContain("care.nutrition")
+    expect(DOMAIN_MODULES.find((definition) => definition.key === "clinical.cardiology")?.status).toBe("partial")
   })
 })

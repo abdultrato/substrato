@@ -686,7 +686,8 @@ function visibleFormFields(formSpec: RuntimeFormSpec | null, config?: ResourceFo
   const esconder = new Set(config?.esconderCampos || [])
   let fields = formSpec.fields.filter((f) => {
     if (f.readOnly || isForcedReadOnlyFormField(f.name)) return false
-    if (esconder.has(f.name)) return false
+    const requiredWritable = f.required && !f.readOnly && !isForcedReadOnlyFormField(f.name)
+    if (esconder.has(f.name) && !requiredWritable) return false
     return true
   })
 

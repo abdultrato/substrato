@@ -7,13 +7,14 @@ import PageHeader from "@/components/ui/PageHeader"
 import useAuthGuard from "@/hooks/useAuthGuard"
 import { useLanguage } from "@/hooks/useLanguage"
 import { useModulesCatalog } from "@/hooks/useModulesCatalog"
+import { DOMAIN_GROUPS, domainModuleDefinitionsForDomain } from "@/lib/domainModules"
 import { getModuleIcon } from "@/lib/moduleIcons"
 import { GROUPS } from "@/lib/rbac"
 
 export default function ModulosPage() {
   const { loading } = useAuthGuard()
   const { t, tr } = useLanguage()
-  const { modules, isFetching, isError } = useModulesCatalog("neutral")
+  const { isFetching, isError } = useModulesCatalog("neutral")
   if (loading) return null
 
   return (
@@ -21,7 +22,7 @@ export default function ModulosPage() {
       <div className="space-y-6">
         <PageHeader
           title={t("Módulos", "Modules")}
-          subtitle={t("Acesso rápido a todos os apps disponíveis no sistema.", "Quick access to all available apps in the system.")}
+          subtitle={t("Organização por domínios conectada aos recursos expostos pelo backend.", "Domain organization connected to backend-exposed resources.")}
         />
 
         {isFetching ? (
@@ -40,12 +41,13 @@ export default function ModulosPage() {
         ) : null}
 
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {modules.map((m) => {
-            const ModuleIcon = getModuleIcon(m.key)
+          {DOMAIN_GROUPS.map((domain) => {
+            const ModuleIcon = getModuleIcon(domain.key)
+            const moduleCount = domainModuleDefinitionsForDomain(domain.key).length
             return (
               <Link
-                key={m.key}
-                href={`/modules/${m.key}`}
+                key={domain.key}
+                href={`/modules/${domain.key}`}
                 className="rounded-2xl border border-border bg-card px-5 py-4 shadow-sm transition-colors hover:bg-muted/40"
               >
                 <div className="flex items-start gap-3">
@@ -53,10 +55,11 @@ export default function ModulosPage() {
                     <ModuleIcon className="h-5 w-5" />
                   </div>
                   <div className="min-w-0">
-                    <div className="text-sm font-semibold text-foreground">{tr(m.label)}</div>
+                    <div className="text-sm font-semibold text-foreground">{tr(domain.label)}</div>
                     <div className="mt-1 text-xs text-muted-foreground">
-                      {t(`${m.resources.length} recursos`, `${m.resources.length} resources`)}
+                      {t(`${moduleCount} módulos`, `${moduleCount} modules`)}
                     </div>
+                    <div className="mt-2 text-xs leading-5 text-muted-foreground">{tr(domain.description)}</div>
                   </div>
                 </div>
               </Link>
