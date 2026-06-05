@@ -201,7 +201,7 @@ class Migration(migrations.Migration):
         ),
         migrations.AddConstraint(
             model_name='ledgerline',
-            constraint=models.CheckConstraint(condition=models.Q(('value__gt', 0)), name='ledgerline_value_positivo'),
+            constraint=models.CheckConstraint(check=models.Q(('value__gt', 0)), name='ledgerline_value_positivo'),
         ),
         migrations.AddIndex(
             model_name='ledgerentry',
