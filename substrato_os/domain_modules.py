@@ -27,6 +27,7 @@ class DomainModuleDefinition:
     app_config: str | None = None
     implementation_path: str | None = None
     dependencies: tuple[str, ...] = ()
+    extends: tuple[str, ...] = ()
     aliases: tuple[str, ...] = ()
     status: ModuleImplementationStatus = ModuleImplementationStatus.IMPLEMENTED
     version: str = "1.0.0"
@@ -34,20 +35,25 @@ class DomainModuleDefinition:
     def __post_init__(self) -> None:
         if not MODULE_KEY_PATTERN.fullmatch(self.key):
             raise ValueError(f"Invalid module key: {self.key}")
-        for dependency in self.dependencies:
-            if not MODULE_KEY_PATTERN.fullmatch(dependency):
-                raise ValueError(f"Invalid dependency key for {self.key}: {dependency}")
+        for relation_name, module_keys in (("dependency", self.dependencies), ("extension", self.extends)):
+            for module_key in module_keys:
+                if not MODULE_KEY_PATTERN.fullmatch(module_key):
+                    raise ValueError(f"Invalid {relation_name} key for {self.key}: {module_key}")
 
     @property
     def is_active(self) -> bool:
         return self.status in ACTIVE_MODULE_STATUSES
+
+    @property
+    def runtime_dependencies(self) -> tuple[str, ...]:
+        return _flatten_unique((self.extends, self.dependencies))
 
     def to_manifest(self) -> ModuleManifest:
         return ModuleManifest(
             key=self.key,
             version=self.version,
             description=self.description,
-            dependencies=self.dependencies,
+            dependencies=self.runtime_dependencies,
             permissions=(f"{self.key}:read", f"{self.key}:write"),
         )
 
@@ -110,25 +116,34 @@ DOMAIN_APP_GROUPS: dict[str, tuple[str, ...]] = {
     ),
     "clinical": (
         "apps.clinical.apps.ClinicalConfig",
-        "apps.dental.apps.DentalConfig",
-        "apps.veterinary.apps.VeterinaryConfig",
-        "apps.physiotherapy.apps.PhysiotherapyConfig",
-        "apps.therapy.apps.TherapyConfig",
-        "apps.telemedicine.apps.TelemedicineConfig",
-        "apps.public_health.apps.PublicHealthConfig",
-        "apps.nursing.apps.NursingConfig",
-        "apps.reception.apps.ReceptionConfig",
         "apps.consultations.apps.ConsultationsConfig",
         "apps.medical_records.apps.MedicalRecordsConfig",
+        "apps.dental.apps.DentalConfig",
         "apps.maternity.apps.MaternityConfig",
         "apps.surgery.apps.SurgeryConfig",
+        "apps.pathology.apps.PathologyConfig",
+        "apps.specialty_diagnostics.apps.SpecialtyDiagnosticsConfig",
+        "apps.telemedicine.apps.TelemedicineConfig",
+        "apps.veterinary.apps.VeterinaryConfig",
     ),
     "diagnostics": (
+        "apps.clinical.apps.ClinicalConfig",
         "apps.pathology.apps.PathologyConfig",
         "apps.radiology.apps.RadiologyConfig",
         "apps.specialty_diagnostics.apps.SpecialtyDiagnosticsConfig",
         "apps.clinical_pharmacy.apps.ClinicalPharmacyConfig",
         "apps.bloodbank.apps.BloodBankConfig",
+    ),
+    "hospitalization": (
+        "apps.reception.apps.ReceptionConfig",
+        "apps.nursing.apps.NursingConfig",
+        "apps.surgery.apps.SurgeryConfig",
+        "apps.telemedicine.apps.TelemedicineConfig",
+    ),
+    "care": (
+        "apps.nursing.apps.NursingConfig",
+        "apps.physiotherapy.apps.PhysiotherapyConfig",
+        "apps.therapy.apps.TherapyConfig",
     ),
     "administration": (
         "apps.insurer.apps.InsurerConfig",
@@ -146,6 +161,12 @@ DOMAIN_APP_GROUPS: dict[str, tuple[str, ...]] = {
         "apps.pharmacy.apps.PharmacyConfig",
         "apps.warehouse.apps.WarehouseConfig",
         "apps.transportation.apps.TransportationConfig",
+    ),
+    "analytics": (
+        "apps.monitoring.apps.MonitoringConfig",
+    ),
+    "public_health": (
+        "apps.public_health.apps.PublicHealthConfig",
     ),
 }
 
@@ -293,58 +314,91 @@ DOMAIN_MODULES = (
     DomainModuleDefinition(
         key="clinical.pediatrics",
         domain="clinical",
-        description="Pediatric care workflows.",
+        app_config="apps.consultations.apps.ConsultationsConfig",
+        implementation_path="apps.consultations.models.consultation_specialty",
+        description="Pediatric care workflows configured through consultation specialties and EHR entries.",
         dependencies=("clinical.patients",),
+        extends=("clinical.appointments", "clinical.electronic_health_records"),
         aliases=("pediatrics",),
-        status=ModuleImplementationStatus.PLANNED,
+        status=ModuleImplementationStatus.PARTIAL,
     ),
     DomainModuleDefinition(
         key="clinical.cardiology",
         domain="clinical",
-        description="Cardiology specialty workflows.",
+        app_config="apps.consultations.apps.ConsultationsConfig",
+        implementation_path="apps.specialty_diagnostics.models.DiagnosticSpecialty.CARDIOLOGY",
+        description="Cardiology workflows composed from consultation specialties, EHR entries and specialty diagnostics.",
         dependencies=("clinical.patients",),
+        extends=(
+            "clinical.appointments",
+            "clinical.electronic_health_records",
+            "diagnostics.specialty_diagnostics",
+        ),
         aliases=("cardiology",),
-        status=ModuleImplementationStatus.PLANNED,
+        status=ModuleImplementationStatus.PARTIAL,
     ),
     DomainModuleDefinition(
         key="clinical.orthopedics",
         domain="clinical",
-        description="Orthopedics specialty workflows.",
+        app_config="apps.consultations.apps.ConsultationsConfig",
+        implementation_path="apps.consultations.models.consultation_specialty",
+        description="Orthopedics specialty workflows configured through consultation specialties and EHR entries.",
         dependencies=("clinical.patients",),
+        extends=("clinical.appointments", "clinical.electronic_health_records"),
         aliases=("orthopedics",),
-        status=ModuleImplementationStatus.PLANNED,
+        status=ModuleImplementationStatus.PARTIAL,
     ),
     DomainModuleDefinition(
         key="clinical.ophthalmology",
         domain="clinical",
-        description="Ophthalmology specialty workflows.",
+        app_config="apps.consultations.apps.ConsultationsConfig",
+        implementation_path="apps.specialty_diagnostics.models.DiagnosticSpecialty.OPHTHALMOLOGY",
+        description="Ophthalmology workflows composed from consultation specialties, EHR entries and specialty diagnostics.",
         dependencies=("clinical.patients",),
+        extends=(
+            "clinical.appointments",
+            "clinical.electronic_health_records",
+            "diagnostics.specialty_diagnostics",
+        ),
         aliases=("ophthalmology",),
-        status=ModuleImplementationStatus.PLANNED,
+        status=ModuleImplementationStatus.PARTIAL,
     ),
     DomainModuleDefinition(
         key="clinical.dermatology",
         domain="clinical",
-        description="Dermatology specialty workflows.",
+        app_config="apps.consultations.apps.ConsultationsConfig",
+        implementation_path="apps.telemedicine.models.StoreAndForwardCase.SpecialtyArea.DERMATOLOGY",
+        description="Dermatology workflows composed from consultation specialties, EHR entries and telemedicine reviews.",
         dependencies=("clinical.patients",),
+        extends=("clinical.appointments", "clinical.electronic_health_records", "clinical.telemedicine"),
         aliases=("dermatology",),
-        status=ModuleImplementationStatus.PLANNED,
+        status=ModuleImplementationStatus.PARTIAL,
     ),
     DomainModuleDefinition(
         key="clinical.neurology",
         domain="clinical",
-        description="Neurology specialty workflows.",
+        app_config="apps.consultations.apps.ConsultationsConfig",
+        implementation_path="apps.specialty_diagnostics.models.DiagnosticSpecialty.NEUROLOGY",
+        description="Neurology workflows composed from consultation specialties, EHR entries and specialty diagnostics.",
         dependencies=("clinical.patients",),
+        extends=(
+            "clinical.appointments",
+            "clinical.electronic_health_records",
+            "diagnostics.specialty_diagnostics",
+        ),
         aliases=("neurology",),
-        status=ModuleImplementationStatus.PLANNED,
+        status=ModuleImplementationStatus.PARTIAL,
     ),
     DomainModuleDefinition(
         key="clinical.oncology",
         domain="clinical",
-        description="Oncology specialty workflows.",
+        app_config="apps.consultations.apps.ConsultationsConfig",
+        implementation_path="apps.consultations.models.consultation_specialty",
+        description="Oncology specialty workflows configured through consultation specialties and EHR entries.",
         dependencies=("clinical.patients",),
+        extends=("clinical.appointments", "clinical.electronic_health_records"),
         aliases=("oncology",),
-        status=ModuleImplementationStatus.PLANNED,
+        status=ModuleImplementationStatus.PARTIAL,
     ),
     DomainModuleDefinition(
         key="clinical.pathology",
@@ -422,26 +476,35 @@ DOMAIN_MODULES = (
     DomainModuleDefinition(
         key="hospitalization.emergency",
         domain="hospitalization",
-        description="Emergency department admission and triage workflows.",
+        app_config="apps.reception.apps.ReceptionConfig",
+        implementation_path="apps.reception.models.reception_checkin",
+        description="Emergency department arrival and triage workflows backed by reception check-ins.",
         dependencies=("clinical.patients",),
+        extends=("clinical.encounters", "care.nursing"),
         aliases=("emergency",),
-        status=ModuleImplementationStatus.PLANNED,
+        status=ModuleImplementationStatus.PARTIAL,
     ),
     DomainModuleDefinition(
         key="hospitalization.inpatient_care",
         domain="hospitalization",
-        description="Inpatient admission, bed and care workflows.",
+        app_config="apps.nursing.apps.NursingConfig",
+        implementation_path="apps.nursing.models.ward",
+        description="Inpatient admission, bed and care workflows backed by nursing wards.",
         dependencies=("clinical.patients",),
+        extends=("care.nursing",),
         aliases=("inpatient_care",),
-        status=ModuleImplementationStatus.PLANNED,
+        status=ModuleImplementationStatus.PARTIAL,
     ),
     DomainModuleDefinition(
         key="hospitalization.intensive_care",
         domain="hospitalization",
-        description="Intensive care unit workflows.",
+        app_config="apps.nursing.apps.NursingConfig",
+        implementation_path="apps.nursing.models.ward",
+        description="Intensive care unit workflows backed by inpatient and nursing ward primitives.",
         dependencies=("clinical.patients", "hospitalization.inpatient_care"),
+        extends=("care.nursing",),
         aliases=("intensive_care",),
-        status=ModuleImplementationStatus.PLANNED,
+        status=ModuleImplementationStatus.PARTIAL,
     ),
     DomainModuleDefinition(
         key="care.nursing",
@@ -681,6 +744,10 @@ DOMAIN_APP_CONFIGS_BY_GROUP = {
 DOMAIN_APP_CONFIGS_FROM_GROUPS = _flatten_unique(DOMAIN_APP_GROUPS.values())
 DOMAIN_MODULES_BY_KEY = {definition.key: definition for definition in DOMAIN_MODULES}
 DOMAIN_MODULES_BY_LOOKUP = _index_modules_by_lookup()
+DOMAIN_MODULE_KEYS_BY_DOMAIN = {
+    domain: tuple(definition.key for definition in DOMAIN_MODULES if definition.domain == domain)
+    for domain in dict.fromkeys(definition.domain for definition in DOMAIN_MODULES)
+}
 
 
 def active_module_definitions() -> tuple[DomainModuleDefinition, ...]:
@@ -689,6 +756,14 @@ def active_module_definitions() -> tuple[DomainModuleDefinition, ...]:
 
 def planned_module_definitions() -> tuple[DomainModuleDefinition, ...]:
     return tuple(definition for definition in DOMAIN_MODULES if definition.status is ModuleImplementationStatus.PLANNED)
+
+
+def module_definitions_for_domain(domain: str, *, include_planned: bool = True) -> tuple[DomainModuleDefinition, ...]:
+    normalized_domain = _lookup_key(domain)
+    definitions = tuple(definition for definition in DOMAIN_MODULES if definition.domain == normalized_domain)
+    if include_planned:
+        return definitions
+    return tuple(definition for definition in definitions if definition.is_active)
 
 
 def module_definition_for(lookup: str) -> DomainModuleDefinition:
