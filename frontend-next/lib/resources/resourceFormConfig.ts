@@ -2388,10 +2388,16 @@ function dentalOdontogramConfig(): ResourceFormConfig {
   return {
     esconderCampos: DENTAL_INTERNAL_FIELDS,
     labels: {
+      odontogram: "Mapa odontológico",
       record: "Prontuário dentário",
       tooth_number: "Numeração dentária",
       surface: "Face",
       condition: "Condição",
+      diagnosis: "Diagnóstico",
+      severity: "Gravidade",
+      color_code: "Código de cor",
+      procedure_suggested: "Procedimento sugerido",
+      status: "Estado",
       procedure: "Procedimento relacionado",
       notes: "Observações",
     },
@@ -2402,19 +2408,33 @@ function dentalOdontogramConfig(): ResourceFormConfig {
       tooth_number: "Use a numeração dentária FDI.",
     },
     widgets: {
+      diagnosis: "textarea",
       notes: "textarea",
     },
-    ordenarCampos: ["record", "tooth_number", "surface", "condition", "procedure", "notes"],
+    ordenarCampos: [
+      "odontogram",
+      "record",
+      "tooth_number",
+      "surface",
+      "condition",
+      "severity",
+      "status",
+      "color_code",
+      "diagnosis",
+      "procedure_suggested",
+      "procedure",
+      "notes",
+    ],
     etapas: [
       {
         titulo: "Dente",
         descricao: "Numeração dentária, face e condição",
-        campos: ["record", "tooth_number", "surface", "condition"],
+        campos: ["odontogram", "record", "tooth_number", "surface", "condition"],
       },
       {
         titulo: "Procedimento",
         descricao: "Procedimento relacionado e observações",
-        campos: ["procedure", "notes"],
+        campos: ["severity", "status", "diagnosis", "procedure_suggested", "procedure", "notes"],
       },
     ],
     lembrarCampos: ["record", "surface", "condition"],
@@ -2423,34 +2443,65 @@ function dentalOdontogramConfig(): ResourceFormConfig {
 
 function dentalTreatmentPlanConfig(): ResourceFormConfig {
   return {
-    esconderCampos: [...DENTAL_INTERNAL_FIELDS, "patient", "dentist", "record", "approved_at"],
+    esconderCampos: DENTAL_INTERNAL_FIELDS,
     labels: {
+      patient: "Paciente",
+      dentist: "Dentista responsável",
+      record: "Prontuário dentário",
       title: "Plano dentário",
       status: "Estado",
+      priority: "Prioridade",
       objectives: "Objetivos",
       planned_start: "Início previsto",
       planned_end: "Fim previsto",
+      approved_at: "Aprovado em",
       estimated_total: "Total estimado",
+      discount_amount: "Desconto",
+      approved_amount: "Valor aprovado",
+      requires_initial_payment: "Exige sinal inicial",
+      initial_payment_amount: "Valor do sinal inicial",
       notes: "Observações",
     },
     hints: {
-      title: "Modelo de plano; a associação ao paciente é feita em Pacientes com Plano Dentário.",
+      title: "Plano clínico e financeiro proposto ao paciente.",
     },
     widgets: {
       objectives: "textarea",
       notes: "textarea",
     },
-    ordenarCampos: ["title", "status", "objectives", "planned_start", "planned_end", "estimated_total", "notes"],
+    ordenarCampos: [
+      "patient",
+      "dentist",
+      "record",
+      "title",
+      "status",
+      "priority",
+      "objectives",
+      "planned_start",
+      "planned_end",
+      "approved_at",
+      "estimated_total",
+      "discount_amount",
+      "approved_amount",
+      "requires_initial_payment",
+      "initial_payment_amount",
+      "notes",
+    ],
     etapas: [
       {
         titulo: "Plano",
         descricao: "Identificação do plano dentário",
-        campos: ["title", "status", "estimated_total"],
+        campos: ["patient", "dentist", "record", "title", "status", "priority"],
       },
       {
         titulo: "Vigência base",
         descricao: "Datas de referência do plano",
-        campos: ["planned_start", "planned_end"],
+        campos: ["planned_start", "planned_end", "approved_at"],
+      },
+      {
+        titulo: "Valores",
+        descricao: "Orçamento e aprovação financeira",
+        campos: ["estimated_total", "discount_amount", "approved_amount", "requires_initial_payment", "initial_payment_amount"],
       },
       {
         titulo: "Conteúdo",
@@ -2464,17 +2515,23 @@ function dentalTreatmentPlanConfig(): ResourceFormConfig {
 
 function dentalTreatmentItemConfig(): ResourceFormConfig {
   return {
-    esconderCampos: [...DENTAL_INTERNAL_FIELDS, "appointment", "completed_at"],
+    esconderCampos: DENTAL_INTERNAL_FIELDS,
     labels: {
       treatment_plan: "Plano dentário",
+      phase: "Fase do plano",
       procedure: "Procedimento",
+      appointment: "Consulta dentária",
       tooth_number: "Dente",
       surface: "Face",
       status: "Estado",
+      financial_status: "Estado financeiro",
       scheduled_date: "Data prevista",
+      completed_at: "Concluído em",
       quantity: "Quantidade",
       unit_price: "Preço unitário",
+      discount_amount: "Desconto",
       lab_required: "Requer laboratório",
+      approved_at: "Aprovado em",
       clinical_notes: "Notas clínicas",
     },
     placeholders: {
@@ -2489,31 +2546,37 @@ function dentalTreatmentItemConfig(): ResourceFormConfig {
     },
     ordenarCampos: [
       "treatment_plan",
+      "phase",
       "procedure",
+      "appointment",
       "tooth_number",
       "surface",
       "status",
+      "financial_status",
       "scheduled_date",
+      "completed_at",
       "quantity",
       "unit_price",
+      "discount_amount",
       "lab_required",
+      "approved_at",
       "clinical_notes",
     ],
     etapas: [
       {
         titulo: "Plano e procedimento",
         descricao: "Vincule o item ao plano dentário",
-        campos: ["treatment_plan", "procedure", "status"],
+        campos: ["treatment_plan", "phase", "procedure", "status", "financial_status"],
       },
       {
         titulo: "Dente e execução",
         descricao: "Detalhes do item previsto no plano",
-        campos: ["tooth_number", "surface", "scheduled_date"],
+        campos: ["appointment", "tooth_number", "surface", "scheduled_date", "completed_at", "approved_at"],
       },
       {
         titulo: "Preço e notas",
         descricao: "Quantidade, custo e observações clínicas",
-        campos: ["quantity", "unit_price", "lab_required", "clinical_notes"],
+        campos: ["quantity", "unit_price", "discount_amount", "lab_required", "clinical_notes"],
       },
     ],
     lembrarCampos: ["treatment_plan", "status"],
@@ -2557,6 +2620,466 @@ function dentalPatientTreatmentPlanConfig(): ResourceFormConfig {
     ],
     lembrarCampos: ["treatment_plan", "status"],
   }
+}
+
+function dentalWorkflowConfig(
+  labels: Record<string, string>,
+  ordenarCampos: string[],
+  textareaCampos: string[] = [],
+  lembrarCampos: string[] = []
+): ResourceFormConfig {
+  const widgets = textareaCampos.reduce<Record<string, "textarea">>((acc, field) => {
+    acc[field] = "textarea"
+    return acc
+  }, {})
+
+  return {
+    esconderCampos: DENTAL_INTERNAL_FIELDS,
+    labels,
+    widgets,
+    ordenarCampos,
+    etapas: [
+      {
+        titulo: "Dados",
+        campos: ordenarCampos,
+      },
+    ],
+    lembrarCampos,
+  }
+}
+
+function dentalConsultationConfig(): ResourceFormConfig {
+  return dentalWorkflowConfig(
+    {
+      patient: "Paciente",
+      dentist: "Dentista",
+      appointment: "Marcação dentária",
+      record: "Prontuário dentário",
+      started_at: "Início do atendimento",
+      ended_at: "Fim do atendimento",
+      status: "Estado",
+      chief_complaint: "Queixa principal",
+      present_illness_history: "História da doença atual",
+      medical_history: "Antecedentes médicos",
+      allergies: "Alergias",
+      current_medication: "Medicação em uso",
+      oral_hygiene_habits: "Hábitos de higiene oral",
+      intraoral_exam: "Exame intraoral",
+      extraoral_exam: "Exame extraoral",
+      clinical_observations: "Observações clínicas",
+      attachment_notes: "Fotografias, radiografias e documentos",
+    },
+    [
+      "patient",
+      "dentist",
+      "appointment",
+      "record",
+      "status",
+      "started_at",
+      "ended_at",
+      "chief_complaint",
+      "present_illness_history",
+      "medical_history",
+      "allergies",
+      "current_medication",
+      "oral_hygiene_habits",
+      "intraoral_exam",
+      "extraoral_exam",
+      "clinical_observations",
+      "attachment_notes",
+    ],
+    [
+      "chief_complaint",
+      "present_illness_history",
+      "medical_history",
+      "allergies",
+      "current_medication",
+      "oral_hygiene_habits",
+      "intraoral_exam",
+      "extraoral_exam",
+      "clinical_observations",
+      "attachment_notes",
+    ],
+    ["patient", "dentist"]
+  )
+}
+
+function dentalOdontogramChartConfig(): ResourceFormConfig {
+  return dentalWorkflowConfig(
+    {
+      patient: "Paciente",
+      consultation: "Atendimento dentário",
+      record: "Prontuário dentário",
+      created_by_dentist: "Criado pelo dentista",
+      charted_at: "Data do odontograma",
+      dentition_type: "Tipo de dentição",
+      status: "Estado",
+      notes: "Observações",
+    },
+    ["patient", "consultation", "record", "created_by_dentist", "charted_at", "dentition_type", "status", "notes"],
+    ["notes"],
+    ["patient", "dentition_type"]
+  )
+}
+
+function dentalDiagnosisConfig(): ResourceFormConfig {
+  return dentalWorkflowConfig(
+    {
+      patient: "Paciente",
+      consultation: "Atendimento dentário",
+      record: "Prontuário dentário",
+      odontogram_entry: "Entrada do odontograma",
+      tooth_number: "Dente relacionado",
+      code: "Código CID/interno",
+      diagnosis: "Diagnóstico",
+      severity: "Gravidade",
+      responsible_dentist: "Profissional responsável",
+      diagnosed_at: "Diagnosticado em",
+      notes: "Observações",
+    },
+    ["patient", "consultation", "record", "odontogram_entry", "tooth_number", "code", "diagnosis", "severity", "responsible_dentist", "diagnosed_at", "notes"],
+    ["notes"],
+    ["patient", "severity"]
+  )
+}
+
+function dentalTreatmentPhaseConfig(): ResourceFormConfig {
+  return dentalWorkflowConfig(
+    {
+      treatment_plan: "Plano de tratamento",
+      title: "Fase",
+      phase_type: "Tipo de fase",
+      status: "Estado",
+      planned_start: "Início previsto",
+      planned_end: "Fim previsto",
+      estimated_amount: "Valor estimado",
+      approved_amount: "Valor aprovado",
+      notes: "Observações",
+      position: "Ordem de execução",
+    },
+    ["treatment_plan", "position", "title", "phase_type", "status", "planned_start", "planned_end", "estimated_amount", "approved_amount", "notes"],
+    ["notes"],
+    ["treatment_plan", "phase_type"]
+  )
+}
+
+function dentalQuotationConfig(): ResourceFormConfig {
+  return dentalWorkflowConfig(
+    {
+      treatment_plan: "Plano de tratamento",
+      patient: "Paciente",
+      issued_by: "Emitido por",
+      status: "Estado",
+      issued_at: "Emitido em",
+      valid_until: "Válido até",
+      subtotal: "Subtotal",
+      discount_amount: "Desconto",
+      tax_amount: "IVA/Taxas",
+      total_amount: "Valor total",
+      payment_terms: "Condições de pagamento",
+      notes: "Observações",
+    },
+    ["treatment_plan", "patient", "issued_by", "status", "issued_at", "valid_until", "subtotal", "discount_amount", "tax_amount", "total_amount", "payment_terms", "notes"],
+    ["payment_terms", "notes"],
+    ["treatment_plan", "status"]
+  )
+}
+
+function dentalApprovalConfig(): ResourceFormConfig {
+  return dentalWorkflowConfig(
+    {
+      treatment_plan: "Plano de tratamento",
+      quotation: "Orçamento",
+      patient: "Paciente",
+      approved_by_name: "Quem aprovou",
+      approved_at: "Aprovado em",
+      approval_scope: "Escopo aprovado",
+      approved_amount: "Valor aprovado",
+      accepted_terms: "Termos aceites",
+      consent_signed: "Consentimento assinado",
+      consent_document_reference: "Referência do consentimento",
+      notes: "Observações",
+    },
+    ["treatment_plan", "quotation", "patient", "approved_by_name", "approved_at", "approval_scope", "approved_amount", "accepted_terms", "consent_signed", "consent_document_reference", "notes"],
+    ["accepted_terms", "notes"],
+    ["treatment_plan", "approval_scope"]
+  )
+}
+
+function dentalPaymentConfig(): ResourceFormConfig {
+  return dentalWorkflowConfig(
+    {
+      patient: "Paciente",
+      treatment_plan: "Plano de tratamento",
+      treatment_item: "Item do plano",
+      quotation: "Orçamento",
+      payment: "Pagamento financeiro",
+      payment_kind: "Tipo de pagamento",
+      status: "Estado",
+      due_date: "Vencimento",
+      paid_at: "Pago em",
+      amount_due: "Valor devido",
+      amount_paid: "Valor pago",
+      method: "Método",
+      external_reference: "Referência externa",
+      notes: "Observações",
+    },
+    ["patient", "treatment_plan", "treatment_item", "quotation", "payment", "payment_kind", "status", "due_date", "paid_at", "amount_due", "amount_paid", "method", "external_reference", "notes"],
+    ["notes"],
+    ["patient", "payment_kind", "status"]
+  )
+}
+
+function dentalProcedureExecutionConfig(): ResourceFormConfig {
+  return dentalWorkflowConfig(
+    {
+      patient: "Paciente",
+      consultation: "Atendimento dentário",
+      treatment_plan: "Plano de tratamento",
+      treatment_item: "Item do plano",
+      appointment: "Marcação dentária",
+      procedure: "Procedimento",
+      performed_by: "Profissional executor",
+      tooth_number: "Dente",
+      surface: "Face",
+      status: "Estado",
+      scheduled_at: "Agendado para",
+      started_at: "Iniciado em",
+      performed_at: "Executado em",
+      materials_used: "Materiais usados",
+      anesthesia_used: "Anestesia usada",
+      clinical_notes: "Notas clínicas",
+    },
+    ["patient", "consultation", "treatment_plan", "treatment_item", "appointment", "procedure", "performed_by", "tooth_number", "surface", "status", "scheduled_at", "started_at", "performed_at", "materials_used", "anesthesia_used", "clinical_notes"],
+    ["materials_used", "anesthesia_used", "clinical_notes"],
+    ["patient", "procedure", "status"]
+  )
+}
+
+function dentalProsthesisLabOrderConfig(): ResourceFormConfig {
+  return dentalWorkflowConfig(
+    {
+      patient: "Paciente",
+      dentist: "Dentista",
+      treatment_item: "Item do plano",
+      procedure_execution: "Procedimento executado",
+      lab_company: "Laboratório de prótese",
+      order_number: "Número da ordem",
+      prosthesis_type: "Tipo de prótese",
+      status: "Estado",
+      tooth_numbers: "Dentes",
+      shade: "Cor/Escala",
+      material: "Material",
+      impression_date: "Data da moldagem",
+      sent_at: "Enviado em",
+      received_by_lab_at: "Recebido pelo laboratório em",
+      due_date: "Previsão de entrega",
+      trial_at: "Prova em",
+      received_at: "Recebido em",
+      adjusted_at: "Ajustado em",
+      delivered_at: "Entregue em",
+      installed_at: "Instalado em",
+      lab_notes: "Notas para o laboratório",
+      cost: "Custo laboratorial",
+      patient_price: "Preço ao paciente",
+    },
+    ["patient", "dentist", "treatment_item", "procedure_execution", "lab_company", "order_number", "prosthesis_type", "status", "tooth_numbers", "shade", "material", "impression_date", "sent_at", "received_by_lab_at", "due_date", "trial_at", "received_at", "adjusted_at", "delivered_at", "installed_at", "cost", "patient_price", "lab_notes"],
+    ["lab_notes"],
+    ["patient", "prosthesis_type", "status"]
+  )
+}
+
+function dentalImagingOrderConfig(): ResourceFormConfig {
+  return dentalWorkflowConfig(
+    {
+      patient: "Paciente",
+      dentist: "Dentista solicitante",
+      consultation: "Atendimento dentário",
+      record: "Prontuário dentário",
+      treatment_item: "Item do plano",
+      procedure_execution: "Procedimento executado",
+      imaging_type: "Tipo de imagem",
+      status: "Estado",
+      requested_at: "Solicitado em",
+      scheduled_at: "Agendado para",
+      acquired_at: "Adquirido em",
+      reviewed_at: "Revisto em",
+      clinical_indication: "Indicação clínica",
+      result_summary: "Resumo do resultado",
+      image_reference: "Referência da imagem",
+      notes: "Observações",
+    },
+    ["patient", "dentist", "consultation", "record", "treatment_item", "procedure_execution", "imaging_type", "status", "requested_at", "scheduled_at", "acquired_at", "reviewed_at", "clinical_indication", "result_summary", "image_reference", "notes"],
+    ["clinical_indication", "result_summary", "notes"],
+    ["patient", "imaging_type", "status"]
+  )
+}
+
+function dentalPrescriptionConfig(): ResourceFormConfig {
+  return dentalWorkflowConfig(
+    {
+      patient: "Paciente",
+      dentist: "Dentista prescritor",
+      consultation: "Atendimento dentário",
+      record: "Prontuário dentário",
+      procedure_execution: "Procedimento executado",
+      medication_product: "Produto farmacêutico",
+      medication: "Medicamento",
+      dose: "Dose",
+      frequency: "Frequência",
+      duration: "Duração",
+      instructions: "Instruções",
+      status: "Estado",
+      prescribed_at: "Prescrito em",
+      notes: "Observações",
+    },
+    ["patient", "dentist", "consultation", "record", "procedure_execution", "medication_product", "medication", "dose", "frequency", "duration", "instructions", "status", "prescribed_at", "notes"],
+    ["instructions", "notes"],
+    ["patient", "medication", "status"]
+  )
+}
+
+function dentalFollowUpConfig(): ResourceFormConfig {
+  return dentalWorkflowConfig(
+    {
+      patient: "Paciente",
+      procedure_execution: "Procedimento executado",
+      appointment: "Marcação dentária",
+      treatment_plan: "Plano de tratamento",
+      followup_reason: "Motivo do retorno",
+      status: "Estado",
+      due_date: "Data prevista",
+      completed_at: "Concluído em",
+      findings: "Achados",
+      notes: "Observações",
+    },
+    ["patient", "procedure_execution", "appointment", "treatment_plan", "followup_reason", "status", "due_date", "completed_at", "findings", "notes"],
+    ["findings", "notes"],
+    ["patient", "status"]
+  )
+}
+
+function dentalMaterialConsumptionConfig(): ResourceFormConfig {
+  return dentalWorkflowConfig(
+    {
+      procedure_execution: "Procedimento executado",
+      product: "Produto de farmácia",
+      warehouse_item: "Item de armazém",
+      inventory_movement: "Movimento de stock",
+      material_name: "Material",
+      quantity: "Quantidade",
+      unit_cost: "Custo unitário",
+      consumed_at: "Consumido em",
+      notes: "Observações",
+    },
+    ["procedure_execution", "product", "warehouse_item", "inventory_movement", "material_name", "quantity", "unit_cost", "consumed_at", "notes"],
+    ["notes"],
+    ["procedure_execution"]
+  )
+}
+
+function dentalClinicalEvolutionConfig(): ResourceFormConfig {
+  return dentalWorkflowConfig(
+    {
+      patient: "Paciente",
+      record: "Prontuário dentário",
+      consultation: "Atendimento dentário",
+      procedure_execution: "Procedimento executado",
+      treatment_plan: "Plano de tratamento",
+      dentist: "Dentista",
+      evolved_at: "Evolução em",
+      summary: "Evolução clínica",
+      next_steps: "Próximos passos",
+      notes: "Observações",
+    },
+    ["patient", "record", "consultation", "procedure_execution", "treatment_plan", "dentist", "evolved_at", "summary", "next_steps", "notes"],
+    ["summary", "next_steps", "notes"],
+    ["patient", "dentist"]
+  )
+}
+
+function dentalDocumentConfig(): ResourceFormConfig {
+  return dentalWorkflowConfig(
+    {
+      patient: "Paciente",
+      consultation: "Atendimento dentário",
+      record: "Prontuário dentário",
+      treatment_plan: "Plano de tratamento",
+      document_type: "Tipo de documento",
+      title: "Título",
+      file_reference: "Referência do ficheiro",
+      signed: "Assinado",
+      signed_at: "Assinado em",
+      notes: "Observações",
+    },
+    ["patient", "consultation", "record", "treatment_plan", "document_type", "title", "file_reference", "signed", "signed_at", "notes"],
+    ["notes"],
+    ["patient", "document_type"]
+  )
+}
+
+function dentalAuditEventConfig(): ResourceFormConfig {
+  return dentalWorkflowConfig(
+    {
+      patient: "Paciente",
+      treatment_plan: "Plano de tratamento",
+      event_type: "Tipo de evento",
+      actor_name: "Responsável",
+      event_at: "Evento em",
+      summary: "Resumo",
+      metadata: "Metadados",
+    },
+    ["patient", "treatment_plan", "event_type", "actor_name", "event_at", "summary", "metadata"],
+    ["summary"],
+    ["event_type"]
+  )
+}
+
+function dentalBillingItemConfig(): ResourceFormConfig {
+  return dentalWorkflowConfig(
+    {
+      patient: "Paciente",
+      treatment_plan: "Plano de tratamento",
+      treatment_item: "Item do plano",
+      procedure_execution: "Procedimento executado",
+      quotation: "Orçamento",
+      invoice: "Fatura",
+      invoice_item: "Item de fatura",
+      status: "Estado",
+      description: "Descrição",
+      quantity: "Quantidade",
+      unit_price: "Preço unitário",
+      discount_amount: "Desconto",
+      tax_amount: "IVA/Taxas",
+      billable_at: "Faturável em",
+      billed_at: "Faturado em",
+      notes: "Observações",
+    },
+    ["patient", "treatment_plan", "treatment_item", "procedure_execution", "quotation", "invoice", "invoice_item", "status", "description", "quantity", "unit_price", "discount_amount", "tax_amount", "billable_at", "billed_at", "notes"],
+    ["notes"],
+    ["patient", "status"]
+  )
+}
+
+function dentalPatientPlanSummaryConfig(): ResourceFormConfig {
+  return dentalWorkflowConfig(
+    {
+      patient: "Paciente",
+      active_plan: "Plano ativo",
+      next_appointment: "Próxima consulta",
+      plan_status: "Estado do plano",
+      total_planned_amount: "Total planeado",
+      total_paid: "Total pago",
+      balance_amount: "Saldo",
+      completed_items: "Itens concluídos",
+      pending_items: "Itens pendentes",
+      generated_at: "Gerado em",
+      notes: "Observações",
+    },
+    ["patient", "active_plan", "plan_status", "total_planned_amount", "total_paid", "balance_amount", "completed_items", "pending_items", "next_appointment", "generated_at", "notes"],
+    ["notes"],
+    ["patient", "plan_status"]
+  )
 }
 
 function nursingProcedureMaterialConfig(): ResourceFormConfig {
@@ -2627,17 +3150,71 @@ export function getResourceFormConfig(
     if (r === "procedure" || ep === "/dental/procedure/") {
       return dentalProcedureConfig()
     }
+    if (r === "consultation" || ep === "/dental/consultation/") {
+      return dentalConsultationConfig()
+    }
+    if (r === "odontogram_chart" || ep === "/dental/odontogram_chart/") {
+      return dentalOdontogramChartConfig()
+    }
     if (r === "odontogram" || ep === "/dental/odontogram/") {
       return dentalOdontogramConfig()
     }
+    if (r === "diagnosis" || ep === "/dental/diagnosis/") {
+      return dentalDiagnosisConfig()
+    }
     if (r === "treatment_plan" || ep === "/dental/treatment_plan/") {
       return dentalTreatmentPlanConfig()
+    }
+    if (r === "treatment_phase" || ep === "/dental/treatment_phase/") {
+      return dentalTreatmentPhaseConfig()
     }
     if (r === "treatment_item" || ep === "/dental/treatment_item/") {
       return dentalTreatmentItemConfig()
     }
     if (r === "patient_treatment_plan" || ep === "/dental/patient_treatment_plan/") {
       return dentalPatientTreatmentPlanConfig()
+    }
+    if (r === "quotation" || ep === "/dental/quotation/") {
+      return dentalQuotationConfig()
+    }
+    if (r === "approval" || ep === "/dental/approval/") {
+      return dentalApprovalConfig()
+    }
+    if (r === "payment" || ep === "/dental/payment/") {
+      return dentalPaymentConfig()
+    }
+    if (r === "procedure_execution" || ep === "/dental/procedure_execution/") {
+      return dentalProcedureExecutionConfig()
+    }
+    if (r === "prosthesis_lab_order" || ep === "/dental/prosthesis_lab_order/") {
+      return dentalProsthesisLabOrderConfig()
+    }
+    if (r === "imaging_order" || ep === "/dental/imaging_order/") {
+      return dentalImagingOrderConfig()
+    }
+    if (r === "prescription" || ep === "/dental/prescription/") {
+      return dentalPrescriptionConfig()
+    }
+    if (r === "followup" || ep === "/dental/followup/") {
+      return dentalFollowUpConfig()
+    }
+    if (r === "material_consumption" || ep === "/dental/material_consumption/") {
+      return dentalMaterialConsumptionConfig()
+    }
+    if (r === "clinical_evolution" || ep === "/dental/clinical_evolution/") {
+      return dentalClinicalEvolutionConfig()
+    }
+    if (r === "document" || ep === "/dental/document/") {
+      return dentalDocumentConfig()
+    }
+    if (r === "audit_event" || ep === "/dental/audit_event/") {
+      return dentalAuditEventConfig()
+    }
+    if (r === "billing_item" || ep === "/dental/billing_item/") {
+      return dentalBillingItemConfig()
+    }
+    if (r === "patient_plan_summary" || ep === "/dental/patient_plan_summary/") {
+      return dentalPatientPlanSummaryConfig()
     }
     return null
   }

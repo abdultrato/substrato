@@ -105,6 +105,18 @@ describe("modules catalog discovery", () => {
     expect(saleItem?.resource.endpoint).toBe("/pharmacy/sale_item/")
   })
 
+  it("exposes complete dental workflow resources", () => {
+    const consultation = findModuleResource("dental", "consultation", MODULES)
+    const quotation = findModuleResource("dental", "quotation", MODULES)
+    const execution = findModuleResource("dental", "procedure_execution", MODULES)
+    const billingItem = findModuleResource("dental", "billing_item", MODULES)
+
+    expect(consultation?.resource.endpoint).toBe("/dental/consultation/")
+    expect(quotation?.resource.endpoint).toBe("/dental/quotation/")
+    expect(execution?.resource.endpoint).toBe("/dental/procedure_execution/")
+    expect(billingItem?.resource.endpoint).toBe("/dental/billing_item/")
+  })
+
   it("keeps bloodbank admin shortcuts available in static catalog", () => {
     const donation = findModuleResource("bloodbank", "donation", MODULES)
     const maintenance = findModuleResource("bloodbank", "storage_maintenance", MODULES)

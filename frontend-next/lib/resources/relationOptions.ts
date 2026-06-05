@@ -192,14 +192,34 @@ const ENDPOINT_FIELD_OVERRIDES: Record<string, Record<string, RelationTarget>> =
     item: { endpoint: "/warehouse/item/", labelFields: ["sku", "name", ...DEFAULT_LABEL_FIELDS] },
   },
   "/dental/odontogram/": {
+    odontogram: { endpoint: "/dental/odontogram_chart/", labelFields: ["custom_id", "patient_name", "charted_at", ...DEFAULT_LABEL_FIELDS] },
     record: { endpoint: "/dental/record/", labelFields: ["custom_id", "patient_name", ...DEFAULT_LABEL_FIELDS] },
     procedure: { endpoint: "/dental/procedure/", labelFields: ["code", "name", ...DEFAULT_LABEL_FIELDS] },
+  },
+  "/dental/consultation/": {
+    appointment: { endpoint: "/dental/appointment/", labelFields: ["custom_id", "patient_name", "scheduled_start", ...DEFAULT_LABEL_FIELDS] },
+    record: { endpoint: "/dental/record/", labelFields: ["custom_id", "patient_name", ...DEFAULT_LABEL_FIELDS] },
+  },
+  "/dental/odontogram_chart/": {
+    consultation: { endpoint: "/dental/consultation/", labelFields: ["custom_id", "patient_name", "started_at", ...DEFAULT_LABEL_FIELDS] },
+    record: { endpoint: "/dental/record/", labelFields: ["custom_id", "patient_name", ...DEFAULT_LABEL_FIELDS] },
+    created_by_dentist: { endpoint: "/human_resources/employee/", labelFields: ["name", "employee_code", ...DEFAULT_LABEL_FIELDS] },
+  },
+  "/dental/diagnosis/": {
+    consultation: { endpoint: "/dental/consultation/", labelFields: ["custom_id", "patient_name", "started_at", ...DEFAULT_LABEL_FIELDS] },
+    record: { endpoint: "/dental/record/", labelFields: ["custom_id", "patient_name", ...DEFAULT_LABEL_FIELDS] },
+    odontogram_entry: { endpoint: "/dental/odontogram/", labelFields: ["tooth_number", "condition", "patient_name", ...DEFAULT_LABEL_FIELDS] },
+    responsible_dentist: { endpoint: "/human_resources/employee/", labelFields: ["name", "employee_code", ...DEFAULT_LABEL_FIELDS] },
   },
   "/dental/treatment_plan/": {
     record: { endpoint: "/dental/record/", labelFields: ["custom_id", "patient_name", ...DEFAULT_LABEL_FIELDS] },
   },
+  "/dental/treatment_phase/": {
+    treatment_plan: { endpoint: "/dental/treatment_plan/", labelFields: ["title", ...DEFAULT_LABEL_FIELDS] },
+  },
   "/dental/treatment_item/": {
     treatment_plan: { endpoint: "/dental/treatment_plan/", labelFields: ["title", ...DEFAULT_LABEL_FIELDS] },
+    phase: { endpoint: "/dental/treatment_phase/", labelFields: ["title", "phase_type", ...DEFAULT_LABEL_FIELDS] },
     procedure: { endpoint: "/dental/procedure/", labelFields: ["code", "name", ...DEFAULT_LABEL_FIELDS] },
     appointment: { endpoint: "/dental/appointment/", labelFields: ["custom_id", "patient_name", "scheduled_start", ...DEFAULT_LABEL_FIELDS] },
   },
@@ -209,8 +229,78 @@ const ENDPOINT_FIELD_OVERRIDES: Record<string, Record<string, RelationTarget>> =
     dentist: { endpoint: "/human_resources/employee/", labelFields: ["name", "employee_code", ...DEFAULT_LABEL_FIELDS] },
     record: { endpoint: "/dental/record/", labelFields: ["custom_id", "patient_name", ...DEFAULT_LABEL_FIELDS] },
   },
+  "/dental/quotation/": {
+    treatment_plan: { endpoint: "/dental/treatment_plan/", labelFields: ["title", ...DEFAULT_LABEL_FIELDS] },
+    issued_by: { endpoint: "/human_resources/employee/", labelFields: ["name", "employee_code", ...DEFAULT_LABEL_FIELDS] },
+  },
+  "/dental/approval/": {
+    treatment_plan: { endpoint: "/dental/treatment_plan/", labelFields: ["title", ...DEFAULT_LABEL_FIELDS] },
+    quotation: { endpoint: "/dental/quotation/", labelFields: ["custom_id", "treatment_plan_title", "total_amount", ...DEFAULT_LABEL_FIELDS] },
+  },
+  "/dental/payment/": {
+    treatment_plan: { endpoint: "/dental/treatment_plan/", labelFields: ["title", ...DEFAULT_LABEL_FIELDS] },
+    treatment_item: { endpoint: "/dental/treatment_item/", labelFields: ["custom_id", "procedure_name", "treatment_plan_title", ...DEFAULT_LABEL_FIELDS] },
+    quotation: { endpoint: "/dental/quotation/", labelFields: ["custom_id", "treatment_plan_title", "total_amount", ...DEFAULT_LABEL_FIELDS] },
+  },
+  "/dental/procedure_execution/": {
+    consultation: { endpoint: "/dental/consultation/", labelFields: ["custom_id", "patient_name", "started_at", ...DEFAULT_LABEL_FIELDS] },
+    treatment_plan: { endpoint: "/dental/treatment_plan/", labelFields: ["title", ...DEFAULT_LABEL_FIELDS] },
+    treatment_item: { endpoint: "/dental/treatment_item/", labelFields: ["custom_id", "procedure_name", "treatment_plan_title", ...DEFAULT_LABEL_FIELDS] },
+    appointment: { endpoint: "/dental/appointment/", labelFields: ["custom_id", "patient_name", "scheduled_start", ...DEFAULT_LABEL_FIELDS] },
+    procedure: { endpoint: "/dental/procedure/", labelFields: ["code", "name", ...DEFAULT_LABEL_FIELDS] },
+    performed_by: { endpoint: "/human_resources/employee/", labelFields: ["name", "employee_code", ...DEFAULT_LABEL_FIELDS] },
+  },
   "/dental/prosthesis_lab_order/": {
     treatment_item: { endpoint: "/dental/treatment_item/", labelFields: ["custom_id", "procedure_name", "treatment_plan_title", ...DEFAULT_LABEL_FIELDS] },
+    procedure_execution: { endpoint: "/dental/procedure_execution/", labelFields: ["custom_id", "procedure_name", "patient_name", ...DEFAULT_LABEL_FIELDS] },
+  },
+  "/dental/imaging_order/": {
+    consultation: { endpoint: "/dental/consultation/", labelFields: ["custom_id", "patient_name", "started_at", ...DEFAULT_LABEL_FIELDS] },
+    record: { endpoint: "/dental/record/", labelFields: ["custom_id", "patient_name", ...DEFAULT_LABEL_FIELDS] },
+    treatment_item: { endpoint: "/dental/treatment_item/", labelFields: ["custom_id", "procedure_name", "treatment_plan_title", ...DEFAULT_LABEL_FIELDS] },
+    procedure_execution: { endpoint: "/dental/procedure_execution/", labelFields: ["custom_id", "procedure_name", "patient_name", ...DEFAULT_LABEL_FIELDS] },
+  },
+  "/dental/prescription/": {
+    consultation: { endpoint: "/dental/consultation/", labelFields: ["custom_id", "patient_name", "started_at", ...DEFAULT_LABEL_FIELDS] },
+    record: { endpoint: "/dental/record/", labelFields: ["custom_id", "patient_name", ...DEFAULT_LABEL_FIELDS] },
+    procedure_execution: { endpoint: "/dental/procedure_execution/", labelFields: ["custom_id", "procedure_name", "patient_name", ...DEFAULT_LABEL_FIELDS] },
+    medication_product: { endpoint: "/pharmacy/product/", labelFields: ["name", "custom_id", ...DEFAULT_LABEL_FIELDS] },
+  },
+  "/dental/followup/": {
+    procedure_execution: { endpoint: "/dental/procedure_execution/", labelFields: ["custom_id", "procedure_name", "patient_name", ...DEFAULT_LABEL_FIELDS] },
+    appointment: { endpoint: "/dental/appointment/", labelFields: ["custom_id", "patient_name", "scheduled_start", ...DEFAULT_LABEL_FIELDS] },
+    treatment_plan: { endpoint: "/dental/treatment_plan/", labelFields: ["title", ...DEFAULT_LABEL_FIELDS] },
+  },
+  "/dental/material_consumption/": {
+    procedure_execution: { endpoint: "/dental/procedure_execution/", labelFields: ["custom_id", "procedure_name", "patient_name", ...DEFAULT_LABEL_FIELDS] },
+    warehouse_item: { endpoint: "/warehouse/item/", labelFields: ["sku", "name", ...DEFAULT_LABEL_FIELDS] },
+    inventory_movement: { endpoint: "/pharmacy/inventory_movement/", labelFields: ["custom_id", "product_name", ...DEFAULT_LABEL_FIELDS] },
+  },
+  "/dental/clinical_evolution/": {
+    record: { endpoint: "/dental/record/", labelFields: ["custom_id", "patient_name", ...DEFAULT_LABEL_FIELDS] },
+    consultation: { endpoint: "/dental/consultation/", labelFields: ["custom_id", "patient_name", "started_at", ...DEFAULT_LABEL_FIELDS] },
+    procedure_execution: { endpoint: "/dental/procedure_execution/", labelFields: ["custom_id", "procedure_name", "patient_name", ...DEFAULT_LABEL_FIELDS] },
+    treatment_plan: { endpoint: "/dental/treatment_plan/", labelFields: ["title", ...DEFAULT_LABEL_FIELDS] },
+  },
+  "/dental/document/": {
+    consultation: { endpoint: "/dental/consultation/", labelFields: ["custom_id", "patient_name", "started_at", ...DEFAULT_LABEL_FIELDS] },
+    record: { endpoint: "/dental/record/", labelFields: ["custom_id", "patient_name", ...DEFAULT_LABEL_FIELDS] },
+    treatment_plan: { endpoint: "/dental/treatment_plan/", labelFields: ["title", ...DEFAULT_LABEL_FIELDS] },
+  },
+  "/dental/audit_event/": {
+    treatment_plan: { endpoint: "/dental/treatment_plan/", labelFields: ["title", ...DEFAULT_LABEL_FIELDS] },
+  },
+  "/dental/billing_item/": {
+    treatment_plan: { endpoint: "/dental/treatment_plan/", labelFields: ["title", ...DEFAULT_LABEL_FIELDS] },
+    treatment_item: { endpoint: "/dental/treatment_item/", labelFields: ["custom_id", "procedure_name", "treatment_plan_title", ...DEFAULT_LABEL_FIELDS] },
+    procedure_execution: { endpoint: "/dental/procedure_execution/", labelFields: ["custom_id", "procedure_name", "patient_name", ...DEFAULT_LABEL_FIELDS] },
+    quotation: { endpoint: "/dental/quotation/", labelFields: ["custom_id", "treatment_plan_title", "total_amount", ...DEFAULT_LABEL_FIELDS] },
+    invoice: { endpoint: "/billing/invoices/", labelFields: ["custom_id", "total", "status", ...DEFAULT_LABEL_FIELDS] },
+    invoice_item: { endpoint: "/billing/invoice-items/", labelFields: ["custom_id", "description", "unit_price", ...DEFAULT_LABEL_FIELDS] },
+  },
+  "/dental/patient_plan_summary/": {
+    active_plan: { endpoint: "/dental/treatment_plan/", labelFields: ["title", ...DEFAULT_LABEL_FIELDS] },
+    next_appointment: { endpoint: "/dental/appointment/", labelFields: ["custom_id", "patient_name", "scheduled_start", ...DEFAULT_LABEL_FIELDS] },
   },
   "/veterinary/record/": {
     appointment: { endpoint: "/veterinary/appointment/", labelFields: ["custom_id", "animal_name", "scheduled_start", ...DEFAULT_LABEL_FIELDS] },
