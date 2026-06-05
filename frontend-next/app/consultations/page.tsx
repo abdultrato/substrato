@@ -15,6 +15,7 @@ import { useLanguage } from "@/hooks/useLanguage"
 import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { apiFetch } from "@/lib/api"
 import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
+import { FileCheck2, FileText, Receipt } from "lucide-react"
 
 type Patient = { id: number; name?: string }
 type Doctor = { id: number; name?: string; profession_name?: string; role_name?: string }
@@ -58,6 +59,44 @@ type ConsultationRow = {
   invoice_status?: string
 }
 
+type InvoiceIssueMode = "draft" | "issue"
+
+type ConsultationInvoicePreviewItem = {
+  key: string
+  category: string
+  item_type: string
+  item_type_label: string
+  source: string
+  source_code?: string
+  description: string
+  quantity: string
+  unit_price: string
+  subtotal: string
+  vat_percentage: string
+  vat_amount: string
+  total: string
+  selected: boolean
+}
+
+type ConsultationInvoicePreview = {
+  consultation_id: number
+  consultation_code: string
+  patient_name: string
+  entry_date: string
+  items: ConsultationInvoicePreviewItem[]
+  subtotal: string
+  vat_amount: string
+  total: string
+}
+
+type CreateConsultationInvoiceResponse = {
+  consultation_id: number
+  invoice_id: number
+  invoice_code: string
+  invoice_status: string
+  total: string
+}
+
 function fmtDate(value: any): string {
   if (!value) return "-"
   const d = new Date(value)
@@ -83,6 +122,11 @@ export default function ConsultationsPage() {
     GROUPS.MEDICINA,
     GROUPS.MEDICINA_OCUPACIONAL,
   ])
+  const canInvoice = userHasAnyGroup(user, [
+    GROUPS.ADMIN,
+    GROUPS.RECEPCAO,
+    GROUPS.CONTABILIDADE,
+  ])
 
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [formError, setFormError] = useState<string | null>(null)
@@ -106,6 +150,14 @@ export default function ConsultationsPage() {
   const [consultationToReschedule, setConsultationToReschedule] = useState<ConsultationRow | null>(null)
   const [newScheduledFor, setNewScheduledFor] = useState("")
   const [invoicePdfId, setInvoicePdfId] = useState<number | null>(null)
+  const [invoiceReviewOpen, setInvoiceReviewOpen] = useState(false)
+  const [invoiceReviewMode, setInvoiceReviewMode] = useState<InvoiceIssueMode>("draft")
+  const [invoiceReviewRow, setInvoiceReviewRow] = useState<ConsultationRow | null>(null)
+  const [invoicePreview, setInvoicePreview] = useState<ConsultationInvoicePreview | null>(null)
+  const [selectedInvoiceItems, setSelectedInvoiceItems] = useState<Set<string>>(new Set())
+  const [invoiceReviewLoading, setInvoiceReviewLoading] = useState<number | null>(null)
+  const [invoiceReviewSubmitting, setInvoiceReviewSubmitting] = useState(false)
+  const [invoiceReviewError, setInvoiceReviewError] = useState<string | null>(null)
 
   const localizeErrorMessage = useCallback((message?: string) => {
     const raw = (message || "").trim()
@@ -299,6 +351,112 @@ export default function ConsultationsPage() {
     }
   }, [invoicePdfId, localizeErrorMessage, t])
 
+  const openInvoiceReview = useCallback(async (row: ConsultationRow, mode: InvoiceIssueMode) => {
+    if (!canInvoice) return
+    if (invoiceReviewLoading === row.id) return
+    try {
+      setInvoiceReviewLoading(row.id)
+      setInvoiceReviewError(null)
+      setInvoiceReviewMode(mode)
+      setInvoiceReviewRow(row)
+      const preview = await apiFetch<ConsultationInvoicePreview>(`/consultations/${row.id}/invoice-preview/`, {
+        clientCache: false,
+      })
+      const initiallySelected = new Set(
+        (preview.items || [])
+          .filter((item) => item.selected !== false)
+          .map((item) => item.key)
+      )
+      setInvoicePreview(preview)
+      setSelectedInvoiceItems(initiallySelected)
+      setInvoiceReviewOpen(true)
+    } catch (e: any) {
+      setErrorMessage(localizeErrorMessage(e?.message) || t("Falha ao preparar a fatura.", "Failed to prepare invoice."))
+    } finally {
+      setInvoiceReviewLoading(null)
+    }
+  }, [canInvoice, invoiceReviewLoading, localizeErrorMessage, t])
+
+  const closeInvoiceReview = useCallback(() => {
+    if (invoiceReviewSubmitting) return
+    setInvoiceReviewOpen(false)
+    setInvoiceReviewMode("draft")
+    setInvoiceReviewRow(null)
+    setInvoicePreview(null)
+    setSelectedInvoiceItems(new Set())
+    setInvoiceReviewError(null)
+  }, [invoiceReviewSubmitting])
+
+  const toggleInvoicePreviewItem = useCallback((key: string, checked: boolean) => {
+    setSelectedInvoiceItems((prev) => {
+      const next = new Set(prev)
+      if (checked) {
+        next.add(key)
+      } else {
+        next.delete(key)
+      }
+      return next
+    })
+    setInvoiceReviewError(null)
+  }, [])
+
+  const invoiceReviewTotals = useMemo(() => {
+    const selected = invoicePreview?.items.filter((item) => selectedInvoiceItems.has(item.key)) || []
+    const sum = (field: "subtotal" | "vat_amount" | "total") =>
+      selected.reduce((acc, item) => acc + Number.parseFloat(String(item[field] || "0")), 0).toFixed(2)
+    return {
+      count: selected.length,
+      subtotal: sum("subtotal"),
+      vat_amount: sum("vat_amount"),
+      total: sum("total"),
+    }
+  }, [invoicePreview?.items, selectedInvoiceItems])
+
+  const confirmInvoiceReview = useCallback(async () => {
+    if (!invoiceReviewRow?.id) return
+    const selectedItems = Array.from(selectedInvoiceItems)
+    if (!selectedItems.length) {
+      setInvoiceReviewError(t("Selecione pelo menos um item para a fatura.", "Select at least one item for the invoice."))
+      return
+    }
+
+    setInvoiceReviewSubmitting(true)
+    setInvoiceReviewError(null)
+    try {
+      const result = await apiFetch<CreateConsultationInvoiceResponse>(`/consultations/${invoiceReviewRow.id}/create-invoice/`, {
+        method: "POST",
+        body: JSON.stringify({
+          issue: invoiceReviewMode === "issue",
+          selected_items: selectedItems,
+        }),
+      })
+      setConsultations((prev) => prev.map((row) => (
+        row.id === invoiceReviewRow.id
+          ? {
+              ...row,
+              invoice_id: result.invoice_id,
+              invoice_code: result.invoice_code,
+              invoice_status: result.invoice_status,
+            }
+          : row
+      )))
+      closeInvoiceReview()
+      await loadData()
+    } catch (e: any) {
+      setInvoiceReviewError(localizeErrorMessage(e?.message) || t("Falha ao emitir fatura.", "Failed to issue invoice."))
+    } finally {
+      setInvoiceReviewSubmitting(false)
+    }
+  }, [
+    closeInvoiceReview,
+    invoiceReviewMode,
+    invoiceReviewRow?.id,
+    loadData,
+    localizeErrorMessage,
+    selectedInvoiceItems,
+    t,
+  ])
+
   const columns = useMemo(
     () => {
       const formatScheduleType = (value?: string) => {
@@ -329,7 +487,61 @@ export default function ConsultationsPage() {
         { header: t("Preço", "Price"), render: (r: ConsultationRow) => <MoneyValue value={r.price} />, className: "text-right" },
         {
           header: t("Fatura", "Invoice"),
-          render: (r: ConsultationRow) => r.invoice_code || "—",
+          render: (r: ConsultationRow) => {
+            const hasInvoice = Boolean(r.invoice_id)
+            const canPrepareInvoice = canInvoice && r.status !== "CANCELADA" && (!r.invoice_status || r.invoice_status === "RASC")
+            const loadingReview = invoiceReviewLoading === r.id
+            return (
+              <div className="min-w-[190px] space-y-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-xs font-semibold text-gray-800">
+                    {r.invoice_code || "—"}
+                  </span>
+                  {r.invoice_status ? (
+                    <span className="rounded-md border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-[11px] font-medium text-slate-600">
+                      {r.invoice_status}
+                    </span>
+                  ) : null}
+                </div>
+
+                {canPrepareInvoice ? (
+                  <div className="flex flex-wrap gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => openInvoiceReview(r, "draft")}
+                      disabled={loadingReview}
+                      className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-2 py-1 text-[11px] font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
+                    >
+                      <FileText size={12} />
+                      {hasInvoice ? t("Rever rascunho", "Review draft") : t("Emitir rascunho", "Issue draft")}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => openInvoiceReview(r, "issue")}
+                      disabled={loadingReview}
+                      className="inline-flex items-center gap-1 rounded-md border border-emerald-200 bg-emerald-50 px-2 py-1 text-[11px] font-semibold text-emerald-800 transition hover:bg-emerald-100 disabled:opacity-50"
+                    >
+                      <Receipt size={12} />
+                      {t("Emitir original", "Issue original")}
+                    </button>
+                  </div>
+                ) : null}
+
+                {r.invoice_id ? (
+                  <button
+                    type="button"
+                    onClick={() => openConsultationInvoicePdf(Number(r.invoice_id))}
+                    disabled={invoicePdfId === Number(r.invoice_id)}
+                    className="inline-flex items-center gap-1.5 rounded-md border border-gray-200 bg-white px-2 py-1 text-[11px] font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-50"
+                  >
+                    <PdfActionLabel loading={invoicePdfId === Number(r.invoice_id)} loadingLabel={t("PDF...", "PDF...")}>
+                      {t("PDF Fatura", "Invoice PDF")}
+                    </PdfActionLabel>
+                  </button>
+                ) : null}
+              </div>
+            )
+          },
         },
         {
           header: t("Ações", "Actions"),
@@ -378,26 +590,23 @@ export default function ConsultationsPage() {
                 </ConfirmDialog>
               ) : null}
 
-            {r.invoice_id ? (
-              <button
-                type="button"
-                onClick={() => openConsultationInvoicePdf(Number(r.invoice_id))}
-                disabled={invoicePdfId === Number(r.invoice_id)}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-50"
-              >
-                <PdfActionLabel loading={invoicePdfId === Number(r.invoice_id)} loadingLabel={t("PDF...", "PDF...")}>
-                  {t("PDF Fatura", "Invoice PDF")}
-                </PdfActionLabel>
-              </button>
-            ) : (
-              <span className="text-xs text-gray-500">—</span>
-            )}
           </div>
         ),
       },
       ]
     },
-    [canWrite, cancelConsultation, completeConsultation, invoicePdfId, openConsultationInvoicePdf, openRescheduleModal, t]
+    [
+      canInvoice,
+      canWrite,
+      cancelConsultation,
+      completeConsultation,
+      invoicePdfId,
+      invoiceReviewLoading,
+      openConsultationInvoicePdf,
+      openInvoiceReview,
+      openRescheduleModal,
+      t,
+    ]
   )
 
   const scheduleTypeLabel = useMemo(() => {
@@ -692,9 +901,175 @@ export default function ConsultationsPage() {
           </div>
         </div>
       ) : null}
+
+      {invoiceReviewOpen ? (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-black/50 backdrop-blur-[1px]"
+            onClick={closeInvoiceReview}
+          />
+          <div className="relative flex max-h-[92vh] w-full max-w-6xl flex-col overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--card)] shadow-2xl">
+            <div className="border-b border-[var(--border)] px-4 py-3">
+              <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+                <div>
+                  <h3 className="text-sm font-semibold text-[var(--text)]">
+                    {invoiceReviewMode === "issue"
+                      ? t("Conferir fatura original", "Review original invoice")
+                      : t("Conferir rascunho de fatura", "Review draft invoice")}
+                  </h3>
+                  <p className="mt-1 text-xs text-[var(--gray-600)]">
+                    {t(
+                      "Confirme os itens da entrada antes de emitir. Os checkboxes permitem desfazer ou refazer qualquer seleção.",
+                      "Confirm the encounter items before issuing. Checkboxes can undo or redo any selection."
+                    )}
+                  </p>
+                </div>
+                <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
+                  <div className="font-semibold">{invoicePreview?.consultation_code || invoiceReviewRow?.custom_id || invoiceReviewRow?.id || "-"}</div>
+                  <div>{invoicePreview?.patient_name || invoiceReviewRow?.patient_name || "-"}</div>
+                </div>
+              </div>
+            </div>
+
+            <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
+              {invoiceReviewError ? (
+                <div className="mb-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+                  {invoiceReviewError}
+                </div>
+              ) : null}
+
+              <div className="mb-3 grid gap-2 text-sm md:grid-cols-4">
+                <div className="rounded-lg border border-slate-200 bg-white px-3 py-2">
+                  <div className="text-[11px] font-semibold text-slate-500">{t("Data da entrada", "Encounter date")}</div>
+                  <div className="text-slate-900">{invoicePreview?.entry_date || "-"}</div>
+                </div>
+                <div className="rounded-lg border border-slate-200 bg-white px-3 py-2">
+                  <div className="text-[11px] font-semibold text-slate-500">{t("Itens selecionados", "Selected items")}</div>
+                  <div className="text-slate-900">{invoiceReviewTotals.count}</div>
+                </div>
+                <div className="rounded-lg border border-slate-200 bg-white px-3 py-2">
+                  <div className="text-[11px] font-semibold text-slate-500">{t("IVA", "VAT")}</div>
+                  <div className="text-slate-900"><MoneyValue value={invoiceReviewTotals.vat_amount} /></div>
+                </div>
+                <div className="rounded-lg border border-slate-200 bg-white px-3 py-2">
+                  <div className="text-[11px] font-semibold text-slate-500">{t("Total", "Total")}</div>
+                  <div className="font-semibold text-slate-900"><MoneyValue value={invoiceReviewTotals.total} /></div>
+                </div>
+              </div>
+
+              {invoicePreview?.items?.length ? (
+                <div className="overflow-x-auto rounded-lg border border-slate-200">
+                  <table className="min-w-full text-sm">
+                    <thead className="bg-slate-50 text-xs font-semibold text-slate-600">
+                      <tr>
+                        <th className="w-12 px-3 py-2 text-left">{t("Incluir", "Include")}</th>
+                        <th className="px-3 py-2 text-left">{t("Categoria", "Category")}</th>
+                        <th className="px-3 py-2 text-left">{t("Origem", "Source")}</th>
+                        <th className="px-3 py-2 text-left">{t("Descrição", "Description")}</th>
+                        <th className="px-3 py-2 text-right">{t("Qtd", "Qty")}</th>
+                        <th className="px-3 py-2 text-right">{t("Preço", "Price")}</th>
+                        <th className="px-3 py-2 text-right">{t("IVA", "VAT")}</th>
+                        <th className="px-3 py-2 text-right">{t("Total", "Total")}</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-200">
+                      {invoicePreview.items.map((item) => {
+                        const checked = selectedInvoiceItems.has(item.key)
+                        return (
+                          <tr key={item.key} className={checked ? "bg-white" : "bg-slate-50 text-slate-500"}>
+                            <td className="px-3 py-2">
+                              <input
+                                type="checkbox"
+                                checked={checked}
+                                onChange={(e) => toggleInvoicePreviewItem(item.key, e.target.checked)}
+                                className="h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-2 focus:ring-slate-400"
+                                aria-label={`${t("Incluir", "Include")} ${item.description}`}
+                              />
+                            </td>
+                            <td className="px-3 py-2">
+                              <span className="rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] font-semibold text-slate-700">
+                                {item.category}
+                              </span>
+                            </td>
+                            <td className="px-3 py-2">
+                              <div className="text-slate-800">{item.source}</div>
+                              {item.source_code ? <div className="text-[11px] text-slate-500">{item.source_code}</div> : null}
+                            </td>
+                            <td className="min-w-[220px] px-3 py-2">
+                              <div className="font-medium text-slate-900">{item.description}</div>
+                              <div className="text-[11px] text-slate-500">{item.item_type_label}</div>
+                            </td>
+                            <td className="px-3 py-2 text-right">{item.quantity}</td>
+                            <td className="px-3 py-2 text-right"><MoneyValue value={item.unit_price} /></td>
+                            <td className="px-3 py-2 text-right"><MoneyValue value={item.vat_amount} /></td>
+                            <td className="px-3 py-2 text-right font-semibold"><MoneyValue value={item.total} /></td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-6 text-center text-sm text-slate-600">
+                  {t("Não há itens faturáveis para esta entrada.", "There are no billable items for this encounter.")}
+                </div>
+              )}
+            </div>
+
+            <div className="flex flex-col gap-3 border-t border-[var(--border)] px-4 py-3 md:flex-row md:items-center md:justify-between">
+              <div className="text-sm text-slate-700">
+                <span className="font-semibold">{t("Total selecionado:", "Selected total:")}</span>{" "}
+                <MoneyValue value={invoiceReviewTotals.total} />
+              </div>
+              <div className="flex flex-wrap items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedInvoiceItems(new Set(invoicePreview?.items.map((item) => item.key) || []))
+                    setInvoiceReviewError(null)
+                  }}
+                  disabled={invoiceReviewSubmitting || !invoicePreview?.items?.length}
+                  className="inline-flex items-center rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-1.5 text-xs font-medium text-[var(--gray-700)] transition hover:bg-[var(--gray-100)] disabled:opacity-60"
+                >
+                  {t("Selecionar todos", "Select all")}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedInvoiceItems(new Set())
+                    setInvoiceReviewError(null)
+                  }}
+                  disabled={invoiceReviewSubmitting || !invoicePreview?.items?.length}
+                  className="inline-flex items-center rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-1.5 text-xs font-medium text-[var(--gray-700)] transition hover:bg-[var(--gray-100)] disabled:opacity-60"
+                >
+                  {t("Limpar seleção", "Clear selection")}
+                </button>
+                <button
+                  type="button"
+                  onClick={closeInvoiceReview}
+                  disabled={invoiceReviewSubmitting}
+                  className="inline-flex items-center rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-1.5 text-xs font-medium text-[var(--gray-700)] transition hover:bg-[var(--gray-100)] disabled:opacity-60"
+                >
+                  {t("Cancelar", "Cancel")}
+                </button>
+                <button
+                  type="button"
+                  onClick={confirmInvoiceReview}
+                  disabled={invoiceReviewSubmitting || invoiceReviewTotals.count === 0}
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--primary-700)] px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-[var(--primary-800)] disabled:opacity-60"
+                >
+                  <FileCheck2 size={14} />
+                  {invoiceReviewSubmitting
+                    ? t("Emitindo...", "Issuing...")
+                    : invoiceReviewMode === "issue"
+                      ? t("Emitir original", "Issue original")
+                      : t("Emitir rascunho", "Issue draft")}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </AppLayout>
   )
 }
-
-
-

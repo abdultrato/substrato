@@ -152,6 +152,39 @@ class HolidaySerializer(serializers.ModelSerializer):
 
 class CreateConsultationInvoiceSerializer(serializers.Serializer):
     issue = serializers.BooleanField(default=True, required=False)
+    selected_items = serializers.ListField(
+        child=serializers.CharField(),
+        required=False,
+        allow_empty=True,
+    )
+
+
+class ConsultationInvoicePreviewItemSerializer(serializers.Serializer):
+    key = serializers.CharField()
+    category = serializers.CharField()
+    item_type = serializers.CharField()
+    item_type_label = serializers.CharField()
+    source = serializers.CharField()
+    source_code = serializers.CharField(allow_blank=True)
+    description = serializers.CharField()
+    quantity = serializers.CharField()
+    unit_price = serializers.CharField()
+    subtotal = serializers.CharField()
+    vat_percentage = serializers.CharField()
+    vat_amount = serializers.CharField()
+    total = serializers.CharField()
+    selected = serializers.BooleanField()
+
+
+class ConsultationInvoicePreviewSerializer(serializers.Serializer):
+    consultation_id = serializers.IntegerField()
+    consultation_code = serializers.CharField()
+    patient_name = serializers.CharField()
+    entry_date = serializers.DateField()
+    items = ConsultationInvoicePreviewItemSerializer(many=True)
+    subtotal = serializers.CharField()
+    vat_amount = serializers.CharField()
+    total = serializers.CharField()
 
 
 class CreateConsultationInvoiceResponseSerializer(serializers.Serializer):
@@ -160,6 +193,7 @@ class CreateConsultationInvoiceResponseSerializer(serializers.Serializer):
     invoice_code = serializers.CharField()
     invoice_status = serializers.CharField()
     total = serializers.CharField()
+    items = ConsultationInvoicePreviewItemSerializer(many=True, required=False)
 
 
 class ConsultationPricePreviewSerializer(serializers.Serializer):

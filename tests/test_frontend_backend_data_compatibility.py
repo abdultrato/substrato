@@ -6,10 +6,19 @@ from django.contrib.auth.models import Group
 from django.utils import timezone
 import pytest
 
+from apps.billing.models.invoice import Invoice
+from apps.billing.models.invoice_items import InvoiceItem
+from apps.clinical.models.lab_exam import LabExam
+from apps.clinical.models.lab_request import LabRequest
+from apps.clinical.models.lab_request_item import LabRequestItem
 from apps.clinical.models.patient import Patient
+from apps.clinical.models.sample import Sample
 from apps.consultations.models.consultation_specialty import ConsultationSpecialty
+from apps.consultations.models.medical_consultation import MedicalConsultation
 from apps.external_entities.models.company import Company
 from apps.tenants.models.tenant import Tenant
+from core.constants.laboratory.method import Method
+from core.constants.laboratory.sector import Sector
 
 
 def _response_data(response):
@@ -129,6 +138,75 @@ def test_consultation_price_preview_uses_english_contract(api_client):
         f"/api/v1/consultations/consultation/price/?especialidade={specialty.id}&feriado_manual=true"
     ).status_code == 400
     assert api_client.get(f"/api/v1/consultations/consultation/preco/?especialidade={specialty.id}").status_code == 404
+
+
+@pytest.mark.django_db
+def test_consultation_invoice_preview_and_selected_draft_items(api_client):
+    tenant = _tenant(identifier="tn-consults-invoice-preview", domain="consults-invoice-preview.local")
+    _authenticate_admin(tenant, api_client)
+
+    patient = Patient.objects.create(
+        tenant=tenant,
+        name="Paciente Fatura Consulta",
+        gender="Masculino",
+        address_street="Rua Fatura",
+    )
+    specialty = ConsultationSpecialty.objects.create(
+        tenant=tenant,
+        name="Estomatologia",
+        base_price=Decimal("500.00"),
+        active=True,
+        vat_percentage=Decimal("0.00"),
+    )
+    consultation = MedicalConsultation.objects.create(
+        tenant=tenant,
+        patient=patient,
+        specialty=specialty,
+        scheduled_for=timezone.now(),
+    )
+
+    sample = Sample.objects.create(
+        tenant=tenant,
+        name="Sangue",
+        bottle_type=Sample.BottleType.EDTA_TUBE,
+    )
+    exam = LabExam.objects.create(
+        tenant=tenant,
+        name="Hemograma",
+        price=Decimal("120.00"),
+        method=Method.ENZIMATICO,
+        sector=Sector.HEMATOLOGIA,
+        turnaround_hours=4,
+        sample_type=sample,
+    )
+    lab_request = LabRequest.objects.create(tenant=tenant, patient=patient)
+    LabRequestItem.objects.create(tenant=tenant, request=lab_request, exam=exam)
+
+    preview_response = api_client.get(f"/api/v1/consultations/consultation/{consultation.id}/invoice-preview/")
+    assert preview_response.status_code == 200, _response_data(preview_response)
+    preview = _response_data(preview_response)
+    keys = {item["key"] for item in preview["items"]}
+    assert f"consultation:{consultation.id}" in keys
+    assert f"exam:{exam.id}" in keys
+
+    response = api_client.post(
+        f"/api/v1/consultations/consultation/{consultation.id}/create-invoice/",
+        {
+            "issue": False,
+            "selected_items": [f"consultation:{consultation.id}"],
+        },
+        format="json",
+    )
+    assert response.status_code == 200, _response_data(response)
+    payload = _response_data(response)
+    invoice = Invoice.objects.get(pk=payload["invoice_id"])
+    items = list(invoice.items.filter(deleted=False))
+
+    assert invoice.status == Invoice.Status.DRAFT
+    assert invoice.origin == Invoice.Origin.MIXED
+    assert len(items) == 1
+    assert items[0].item_type == InvoiceItem.TipoItem.CONSULTATION
+    assert items[0].consultation_id == consultation.id
 
 
 @pytest.mark.django_db

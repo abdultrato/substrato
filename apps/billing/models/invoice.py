@@ -617,7 +617,15 @@ class Invoice(NoNameCoreModel):
         if not self.items.filter(deleted=False).exists():
             raise ValidationError("Invoice has no items.")
 
-        if self.origin == self.Origin.NURSING:
+        has_nursing_items = self.items.filter(
+            deleted=False,
+            item_type__in=[
+                "PRC",
+                "MAT",
+            ],
+        ).exists()
+
+        if self.origin == self.Origin.NURSING or has_nursing_items:
             from apps.pharmacy.models.lot import Lot
 
             billed_material_ids = list(
@@ -673,6 +681,22 @@ class Invoice(NoNameCoreModel):
             # Baixa/lança o estoque pendente antes de emitir.
             for material in pendentes:
                 material.save(alocar_estoque=True)
+
+            billed_procedure_ids = list(
+                self.items.filter(
+                    deleted=False,
+                    item_type="PRC",
+                    procedure_item__isnull=False,
+                ).values_list("procedure_item_id", flat=True)
+            )
+            if billed_procedure_ids:
+                from apps.nursing.models.procedure_item import ProcedureItem
+
+                for procedure_item in ProcedureItem.objects.filter(
+                    pk__in=billed_procedure_ids,
+                    deleted=False,
+                ):
+                    procedure_item.mark_billed()
 
         self.persist_totals()
         self.status = self.Status.ISSUED
