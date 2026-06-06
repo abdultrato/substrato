@@ -7,6 +7,7 @@ from django.core.exceptions import ValidationError  # Exceções de validação
 from django.db import models, transaction  # ORM e controle transacional
 from django.db.models import DecimalField, Sum  # Agregações numéricas
 from django.db.models.functions import Coalesce  # Substitui None por zero
+from django.utils import timezone
 
 from apps.clinical.models.lab_request import LabRequest  # Requisição de exames
 from apps.clinical.models.patient import Patient  # Paciente ligado à fatura
@@ -567,29 +568,89 @@ class Invoice(NoNameCoreModel):
                 self.persist_totals()
                 return
 
-            description = "Cirurgia"
-            nomes = []
-            with suppress(Exception):
-                nomes = list(self.surgery.procedures.values_list("name", flat=True))
-            if nomes:
-                description = f"Cirurgia: {', '.join(nomes[:3])}" + ("..." if len(nomes) > 3 else "")
-            elif getattr(self.surgery, "procedure", "").strip():
-                description = f"Cirurgia: {self.surgery.procedure.strip()}"
+            surgical_billing_items = self.surgery.billing_items.filter(
+                deleted=False,
+                billable=True,
+            ).exclude(status="CANCELLED")
 
-            price = getattr(self.surgery, "estimated_price", Decimal("0.00")) or Decimal("0.00")
-            vat_percentage = getattr(self.surgery, "vat_percentage", None)
-            applies_vat = getattr(self.surgery, "applies_vat_by_default", True)
+            if surgical_billing_items.exists():
+                for surgical_item in surgical_billing_items:
+                    InvoiceItem.objects.create(
+                        tenant=self.tenant,
+                        invoice=self,
+                        item_type=InvoiceItem.TipoItem.AJUSTE,
+                        description=surgical_item.description,
+                        quantity=surgical_item.quantity,
+                        unit_price=surgical_item.unit_price,
+                        vat_percentage=surgical_item.vat_percentage,
+                        applies_vat=surgical_item.applies_vat,
+                    )
+                    surgical_item.invoice = self
+                    surgical_item.status = surgical_item.Status.INVOICED
+                    surgical_item.billed_at = surgical_item.billed_at or timezone.now()
+                    surgical_item.save(update_fields=["invoice", "status", "billed_at"])
+            else:
+                description = "Cirurgia"
+                nomes = []
+                with suppress(Exception):
+                    nomes = list(self.surgery.procedures.values_list("name", flat=True))
+                if nomes:
+                    description = f"Cirurgia: {', '.join(nomes[:3])}" + ("..." if len(nomes) > 3 else "")
+                elif getattr(self.surgery, "procedure", "").strip():
+                    description = f"Cirurgia: {self.surgery.procedure.strip()}"
 
-            InvoiceItem.objects.create(
-                tenant=self.tenant,
-                invoice=self,
-                item_type=InvoiceItem.TipoItem.AJUSTE,
-                description=description,
-                quantity=Decimal("1.00"),
-                unit_price=price,
-                vat_percentage=vat_percentage if vat_percentage is not None else Decimal("0.00"),
-                applies_vat=applies_vat,
-            )
+                price = getattr(self.surgery, "estimated_price", Decimal("0.00")) or Decimal("0.00")
+                vat_percentage = getattr(self.surgery, "vat_percentage", None)
+                applies_vat = getattr(self.surgery, "applies_vat_by_default", True)
+
+                if price > Decimal("0.00"):
+                    InvoiceItem.objects.create(
+                        tenant=self.tenant,
+                        invoice=self,
+                        item_type=InvoiceItem.TipoItem.AJUSTE,
+                        description=description,
+                        quantity=Decimal("1.00"),
+                        unit_price=price,
+                        vat_percentage=vat_percentage if vat_percentage is not None else Decimal("0.00"),
+                        applies_vat=applies_vat,
+                    )
+
+                for procedure_item in self.surgery.procedure_items.filter(deleted=False).exclude(status="CANCELLED"):
+                    if (procedure_item.line_total or Decimal("0.00")) <= Decimal("0.00"):
+                        continue
+                    InvoiceItem.objects.create(
+                        tenant=self.tenant,
+                        invoice=self,
+                        item_type=InvoiceItem.TipoItem.AJUSTE,
+                        description=procedure_item.description,
+                        quantity=procedure_item.quantity,
+                        unit_price=procedure_item.unit_price,
+                        vat_percentage=procedure_item.vat_percentage,
+                        applies_vat=procedure_item.applies_vat,
+                    )
+
+                consumptions = self.surgery.consumptions.filter(
+                    deleted=False,
+                    billing_status__in=["BILLABLE", "PENDING"],
+                ).exclude(material_status__in=["RETURNED", "DISCARDED"])
+                for consumption in consumptions:
+                    if (consumption.line_total or Decimal("0.00")) <= Decimal("0.00"):
+                        continue
+                    material = getattr(consumption, "material", None)
+                    product = getattr(consumption, "product", None)
+                    item_description = getattr(material, "name", "") or getattr(product, "name", "") or "Consumo cirúrgico"
+                    InvoiceItem.objects.create(
+                        tenant=self.tenant,
+                        invoice=self,
+                        item_type=InvoiceItem.TipoItem.AJUSTE,
+                        description=item_description,
+                        quantity=consumption.quantity,
+                        unit_price=consumption.charged_price,
+                        vat_percentage=Decimal("16.00"),
+                        applies_vat=True,
+                    )
+                    consumption.billing_status = consumption.BillingStatus.BILLED
+                    consumption.save(update_fields=["billing_status"])
 
         self.persist_totals()
         try:

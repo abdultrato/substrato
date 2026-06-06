@@ -6,14 +6,22 @@ from apps.surgery.models import (
     LargeSurgery,
     OperatingRoom,
     OperativeReport,
+    PreoperativeAssessment,
     RecoveryRecord,
     SmallSurgery,
     Surgery,
+    SurgeryProcedureItem,
+    SurgicalAuditEvent,
+    SurgicalAuthorization,
+    SurgicalBillingItem,
     SurgicalConsumption,
+    SurgicalDocument,
     SurgicalMaterial,
     SurgicalProcedure,
+    SurgicalRequest,
     SurgicalSafetyChecklist,
     SurgicalSchedule,
+    SurgicalSpecimen,
     SurgicalTeamMember,
 )
 
@@ -25,9 +33,14 @@ class SurgeryFilter(SafeFilterSet):
         model = Surgery
         fields = [
             "patient",
+            "surgical_request",
+            "specialty",
             "surgeon",
+            "operating_room",
             "status",
             "surgery_size",
+            "priority",
+            "classification",
             "scheduled_for",
             "created_at",
         ]
@@ -51,6 +64,29 @@ class SurgicalProcedureFilter(SafeFilterSet):
         fields = ["name", "active", "created_at"]
 
 
+class SurgicalRequestFilter(SafeFilterSet):
+    class Meta:
+        model = SurgicalRequest
+        fields = [*BASE_FIELDS, "patient", "requesting_doctor", "specialty", "requested_surgery_type", "priority", "status", "created_at"]
+
+
+class PreoperativeAssessmentFilter(SafeFilterSet):
+    class Meta:
+        model = PreoperativeAssessment
+        fields = [
+            *BASE_FIELDS,
+            "patient",
+            "surgical_request",
+            "proposed_surgery",
+            "evaluator",
+            "asa_class",
+            "fit_for_surgery",
+            "consent_signed",
+            "status",
+            "assessed_at",
+        ]
+
+
 class OperatingRoomFilter(SafeFilterSet):
     class Meta:
         model = OperatingRoom
@@ -60,7 +96,18 @@ class OperatingRoomFilter(SafeFilterSet):
 class SurgicalScheduleFilter(SafeFilterSet):
     class Meta:
         model = SurgicalSchedule
-        fields = [*BASE_FIELDS, "surgery", "operating_room", "status", "priority", "scheduled_start", "scheduled_end"]
+        fields = [
+            *BASE_FIELDS,
+            "surgery",
+            "operating_room",
+            "primary_surgeon",
+            "anesthetist",
+            "status",
+            "priority",
+            "authorization_verified",
+            "scheduled_start",
+            "scheduled_end",
+        ]
 
 
 class SurgicalTeamMemberFilter(SafeFilterSet):
@@ -78,19 +125,45 @@ class AnesthesiaRecordFilter(SafeFilterSet):
 class SurgicalSafetyChecklistFilter(SafeFilterSet):
     class Meta:
         model = SurgicalSafetyChecklist
-        fields = [*BASE_FIELDS, "surgery", "completed_by", "phase", "completed_at"]
+        fields = [*BASE_FIELDS, "surgery", "completed_by", "phase", "status", "completed_at"]
 
 
 class SurgicalMaterialFilter(SafeFilterSet):
     class Meta:
         model = SurgicalMaterial
-        fields = [*BASE_FIELDS, "code", "product", "material_type", "unit", "reusable", "sterile", "active"]
+        fields = [
+            *BASE_FIELDS,
+            "code",
+            "internal_code",
+            "product",
+            "material_type",
+            "unit",
+            "implantable",
+            "sterilizable",
+            "tracks_lot",
+            "tracks_expiry",
+            "reusable",
+            "sterile",
+            "active",
+        ]
 
 
 class SurgicalConsumptionFilter(SafeFilterSet):
     class Meta:
         model = SurgicalConsumption
-        fields = [*BASE_FIELDS, "surgery", "material", "product", "consumed_by", "consumed_at", "batch_number"]
+        fields = [
+            *BASE_FIELDS,
+            "surgery",
+            "material",
+            "product",
+            "consumed_by",
+            "consumed_at",
+            "batch_number",
+            "expiry_date",
+            "material_status",
+            "billing_status",
+            "inventory_deducted",
+        ]
 
 
 class RecoveryRecordFilter(SafeFilterSet):
@@ -105,11 +178,62 @@ class OperativeReportFilter(SafeFilterSet):
         fields = [*BASE_FIELDS, "surgery", "primary_surgeon", "status", "specimen_sent_to_pathology", "signed_at"]
 
 
+class SurgeryProcedureItemFilter(SafeFilterSet):
+    class Meta:
+        model = SurgeryProcedureItem
+        fields = [*BASE_FIELDS, "surgery", "procedure", "responsible_surgeon", "status", "laterality", "started_at", "ended_at"]
+
+
+class SurgicalAuthorizationFilter(SafeFilterSet):
+    class Meta:
+        model = SurgicalAuthorization
+        fields = [
+            *BASE_FIELDS,
+            "patient",
+            "surgery",
+            "surgical_request",
+            "preoperative_assessment",
+            "status",
+            "budget_approved",
+            "initial_payment_received",
+            "insurance_authorized",
+            "consent_signed",
+            "valid_until",
+        ]
+
+
+class SurgicalBillingItemFilter(SafeFilterSet):
+    class Meta:
+        model = SurgicalBillingItem
+        fields = [*BASE_FIELDS, "surgery", "authorization", "procedure_item", "consumption", "invoice", "event_type", "billing_mode", "status", "billable"]
+
+
+class SurgicalDocumentFilter(SafeFilterSet):
+    class Meta:
+        model = SurgicalDocument
+        fields = [*BASE_FIELDS, "surgery", "surgical_request", "preoperative_assessment", "authorization", "document_type", "status", "signed_at", "expires_at"]
+
+
+class SurgicalAuditEventFilter(SafeFilterSet):
+    class Meta:
+        model = SurgicalAuditEvent
+        fields = [*BASE_FIELDS, "surgery", "surgical_request", "actor", "event_type", "occurred_at"]
+
+
+class SurgicalSpecimenFilter(SafeFilterSet):
+    class Meta:
+        model = SurgicalSpecimen
+        fields = [*BASE_FIELDS, "surgery", "patient", "responsible", "pathology_request", "specimen_type", "status", "collected_at"]
+
+
 FILTER_MAP = {
+    "pedido_cirurgico": SurgicalRequestFilter,
+    "avaliacao_pre_operatoria": PreoperativeAssessmentFilter,
     "surgery": SurgeryFilter,
     "small_surgery": SmallSurgeryFilter,
     "large_surgery": LargeSurgeryFilter,
     "surgical_procedure": SurgicalProcedureFilter,
+    "procedimentos_realizados": SurgeryProcedureItemFilter,
     "agenda_cirurgica": SurgicalScheduleFilter,
     "centro_cirurgico": OperatingRoomFilter,
     "equipa_cirurgica": SurgicalTeamMemberFilter,
@@ -119,4 +243,9 @@ FILTER_MAP = {
     "consumos": SurgicalConsumptionFilter,
     "recuperacao": RecoveryRecordFilter,
     "relatorio_operatorio": OperativeReportFilter,
+    "autorizacoes": SurgicalAuthorizationFilter,
+    "faturacao": SurgicalBillingItemFilter,
+    "documentos": SurgicalDocumentFilter,
+    "auditoria": SurgicalAuditEventFilter,
+    "amostras": SurgicalSpecimenFilter,
 }

@@ -3,7 +3,22 @@
 import { isNotFoundLikeError } from "@/lib/errors/api-error"
 import Link from "next/link"
 import { useEffect, useState } from "react"
-import { ClipboardCheck, ClipboardList, FileText, HeartPulse, PackageCheck, PackageSearch, Scissors, Settings, Users } from "lucide-react"
+import {
+    Activity,
+    ClipboardCheck,
+    ClipboardList,
+    CreditCard,
+    FileText,
+    HeartPulse,
+    Microscope,
+    PackageCheck,
+    PackageSearch,
+    Scissors,
+    Settings,
+    ShieldCheck,
+    Stethoscope,
+    Users,
+} from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
 import Card from "@/components/ui/Card"
@@ -22,11 +37,16 @@ export default function SurgeryPage() {
 
     const [loading, setLoading] = useState(true)
     const [errorMessage, setErrorMessage] = useState<string | null>(null)
+    const [requests, setRequests] = useState<number>(0)
+    const [preoperativeAssessments, setPreoperativeAssessments] = useState<number>(0)
     const [smallSurgeries, setSmallSurgeries] = useState<number>(0)
     const [largeSurgeries, setLargeSurgeries] = useState<number>(0)
     const [procedures, setProcedures] = useState<number>(0)
     const [schedules, setSchedules] = useState<number>(0)
     const [operatingRooms, setOperatingRooms] = useState<number>(0)
+    const [authorizations, setAuthorizations] = useState<number>(0)
+    const [billingItems, setBillingItems] = useState<number>(0)
+    const [specimens, setSpecimens] = useState<number>(0)
     const [operativeReports, setOperativeReports] = useState<number>(0)
 
     useEffect(() => {
@@ -36,21 +56,31 @@ export default function SurgeryPage() {
                 setLoading(true)
                 setErrorMessage(null)
 
-                const [small, large, procs, agenda, rooms, reports] = await Promise.all([
+                const [reqs, assessments, small, large, procs, agenda, rooms, auths, billing, samples, reports] = await Promise.all([
+                    apiFetch<any>("/surgery/pedido_cirurgico/", { clientCache: safeRefreshToken === 0 }),
+                    apiFetch<any>("/surgery/avaliacao_pre_operatoria/", { clientCache: safeRefreshToken === 0 }),
                     apiFetch<any>("/surgery/small_surgery/", { clientCache: safeRefreshToken === 0 }),
                     apiFetch<any>("/surgery/large_surgery/", { clientCache: safeRefreshToken === 0 }),
                     apiFetch<any>("/surgery/surgical_procedure/", { clientCache: safeRefreshToken === 0 }),
                     apiFetch<any>("/surgery/agenda_cirurgica/", { clientCache: safeRefreshToken === 0 }),
                     apiFetch<any>("/surgery/centro_cirurgico/", { clientCache: safeRefreshToken === 0 }),
+                    apiFetch<any>("/surgery/autorizacoes/", { clientCache: safeRefreshToken === 0 }),
+                    apiFetch<any>("/surgery/faturacao/", { clientCache: safeRefreshToken === 0 }),
+                    apiFetch<any>("/surgery/amostras/", { clientCache: safeRefreshToken === 0 }),
                     apiFetch<any>("/surgery/relatorio_operatorio/", { clientCache: safeRefreshToken === 0 }),
                 ])
 
                 if (!mounted) return
+                setRequests(extractTotalCount(reqs))
+                setPreoperativeAssessments(extractTotalCount(assessments))
                 setSmallSurgeries(extractTotalCount(small))
                 setLargeSurgeries(extractTotalCount(large))
                 setProcedures(extractTotalCount(procs))
                 setSchedules(extractTotalCount(agenda))
                 setOperatingRooms(extractTotalCount(rooms))
+                setAuthorizations(extractTotalCount(auths))
+                setBillingItems(extractTotalCount(billing))
+                setSpecimens(extractTotalCount(samples))
                 setOperativeReports(extractTotalCount(reports))
             } catch (e: any) {
                 if (!mounted) return
@@ -70,7 +100,7 @@ export default function SurgeryPage() {
             <div className="space-y-6">
                 <PageHeader
                     title="Cirurgia"
-                    subtitle="Agendamento e registo de cirurgias."
+                    subtitle="Orquestração do pedido cirúrgico, avaliação, sala, equipa, consumos, recuperação e faturação."
                     actions={
                         canViewAdmin ? (
                             <Link
@@ -89,16 +119,39 @@ export default function SurgeryPage() {
                     </div>
                 ) : null}
 
-                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-6">
+                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+                    <MetricCard label="Pedidos cirúrgicos" value={loading ? "..." : requests} />
+                    <MetricCard label="Avaliações pré-op." value={loading ? "..." : preoperativeAssessments} />
                     <MetricCard label="Pequenas cirurgias" value={loading ? "..." : smallSurgeries} />
                     <MetricCard label="Grandes cirurgias" value={loading ? "..." : largeSurgeries} />
                     <MetricCard label="Procedimentos (catálogo)" value={loading ? "..." : procedures} />
                     <MetricCard label="Agenda cirúrgica" value={loading ? "..." : schedules} />
                     <MetricCard label="Salas operatórias" value={loading ? "..." : operatingRooms} />
+                    <MetricCard label="Autorizações" value={loading ? "..." : authorizations} />
+                    <MetricCard label="Itens faturáveis" value={loading ? "..." : billingItems} />
+                    <MetricCard label="Amostras cirúrgicas" value={loading ? "..." : specimens} />
                     <MetricCard label="Relatórios operatórios" value={loading ? "..." : operativeReports} />
                 </div>
 
                 <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                    <ActionTile
+                        title="Pedidos cirúrgicos"
+                        description="Indicações cirúrgicas com diagnóstico, prioridade, especialidade e estado."
+                        href="/surgery/requests"
+                        icon={ClipboardList}
+                    />
+                    <ActionTile
+                        title="Avaliação pré-operatória"
+                        description="Aptidão clínica e anestésica, ASA, exames obrigatórios e consentimento."
+                        href="/surgery/preoperative-assessments"
+                        icon={Stethoscope}
+                    />
+                    <ActionTile
+                        title="Autorizações cirúrgicas"
+                        description="Orçamento, pagamento inicial, seguro, sala, equipa e consentimento."
+                        href="/surgery/authorizations"
+                        icon={ShieldCheck}
+                    />
                     <ActionTile
                         title="Pequenas cirurgias"
                         description="Listar e gerir pequenas cirurgias (CRUD)."
@@ -116,6 +169,12 @@ export default function SurgeryPage() {
                         description="Gerir catálogo de procedimentos (CRUD)."
                         href="/surgery/surgical-procedures"
                         icon={Settings}
+                    />
+                    <ActionTile
+                        title="Procedimentos realizados"
+                        description="Procedimentos efetivos dentro da cirurgia, lateralidade, ordem e cirurgião."
+                        href="/surgery/procedure-items"
+                        icon={ClipboardCheck}
                     />
                     <ActionTile
                         title="Gerenciamento (API)"
@@ -166,6 +225,18 @@ export default function SurgeryPage() {
                         icon={PackageCheck}
                     />
                     <ActionTile
+                        title="Faturação cirúrgica"
+                        description="Itens faturáveis por sala, equipa, procedimento, anestesia e consumos."
+                        href="/surgery/billing"
+                        icon={CreditCard}
+                    />
+                    <ActionTile
+                        title="Amostras cirúrgicas"
+                        description="Amostras colhidas durante cirurgia e ligação ao pedido de patologia."
+                        href="/surgery/specimens"
+                        icon={Microscope}
+                    />
+                    <ActionTile
                         title="Recuperação"
                         description="Sala de recuperação, dor, Aldrete, sinais vitais e alta."
                         href="/surgery/recovery"
@@ -177,15 +248,27 @@ export default function SurgeryPage() {
                         href="/surgery/operative-reports"
                         icon={FileText}
                     />
+                    <ActionTile
+                        title="Documentos cirúrgicos"
+                        description="Consentimentos, orçamentos, autorizações, relatórios e anexos."
+                        href="/surgery/documents"
+                        icon={FileText}
+                    />
+                    <ActionTile
+                        title="Auditoria cirúrgica"
+                        description="Rastreabilidade de estados, sala, equipa, materiais, documentos e faturação."
+                        href="/surgery/audit-events"
+                        icon={Activity}
+                    />
                 </div>
 
                 <Card
-                    title="Nota"
-                    subtitle="Fluxo operatório expandido com sala, equipa, anestesia, checklist, consumos, recuperação e relatório."
+                    title="Fluxo cirúrgico"
+                    subtitle="Indicação -> avaliação -> autorização -> agenda -> sala -> equipa -> materiais -> checklist -> anestesia -> cirurgia -> recuperação -> relatório -> faturação."
                 >
                     <div className="text-sm text-slate-700">
-                        A modelagem separa pequenas e grandes cirurgias e inclui os documentos operatórios necessários
-                        para rastrear o paciente desde a agenda até ao relatório final.
+                        O caso cirúrgico centraliza os vínculos clínicos, operacionais e financeiros, mantendo integração
+                        opcional com patologia, farmácia/stock e faturação final.
                     </div>
                 </Card>
             </div>

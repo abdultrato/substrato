@@ -3,9 +3,11 @@
 import Link from "next/link";
 import { useState } from "react";
 import {
+  Activity,
   Archive,
   Bot,
   ClipboardCheck,
+  ClipboardList,
   CreditCard,
   FileText,
   FlaskConical,
@@ -18,6 +20,8 @@ import {
   Search,
   Scissors,
   Settings,
+  ShieldCheck,
+  Stethoscope,
   TerminalSquare,
   Users,
   type LucideIcon,
@@ -239,10 +243,13 @@ const MODULES: Record<string, CrudMenuItem[]> = {
     { nome: "Atendimento de Recepção", href: "/reception/reception-checkins" },
   ],
   "surgery": [
+    { nome: "Pedidos Cirúrgicos", href: "/surgery/requests", icon: ClipboardList },
+    { nome: "Avaliações Pré-operatórias", href: "/surgery/preoperative-assessments", icon: Stethoscope },
     { nome: "Cirurgia", href: "/surgery/surgeries" },
     { nome: "Pequena Cirurgia", href: "/surgery/small-surgeries" },
     { nome: "Grande Cirurgia", href: "/surgery/large-surgeries" },
     { nome: "Procedimento Cirúrgico", href: "/surgery/surgical-procedures", icon: Settings },
+    { nome: "Procedimentos Realizados", href: "/surgery/procedure-items", icon: ClipboardCheck },
     { nome: "Agenda Cirúrgica", href: "/surgery/schedules", icon: ClipboardCheck },
     { nome: "Centro Cirúrgico", href: "/surgery/operating-rooms", icon: Scissors },
     { nome: "Equipa Cirúrgica", href: "/surgery/teams", icon: Users },
@@ -252,6 +259,11 @@ const MODULES: Record<string, CrudMenuItem[]> = {
     { nome: "Consumos Cirúrgicos", href: "/surgery/consumptions", icon: PackageCheck },
     { nome: "Recuperação", href: "/surgery/recovery", icon: HeartPulse },
     { nome: "Relatório Operatório", href: "/surgery/operative-reports", icon: FileText },
+    { nome: "Autorizações Cirúrgicas", href: "/surgery/authorizations", icon: ShieldCheck },
+    { nome: "Faturação Cirúrgica", href: "/surgery/billing", icon: CreditCard },
+    { nome: "Documentos Cirúrgicos", href: "/surgery/documents", icon: FileText },
+    { nome: "Auditoria Cirúrgica", href: "/surgery/audit-events", icon: Activity },
+    { nome: "Amostras Cirúrgicas", href: "/surgery/specimens", icon: Microscope },
   ],
   "tenants": [
     { nome: "Configuração do Cliente", href: "/tenants/tenant-configurations" },

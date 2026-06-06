@@ -14,14 +14,22 @@ from apps.surgery.models import (
     LargeSurgery,
     OperatingRoom,
     OperativeReport,
+    PreoperativeAssessment,
     RecoveryRecord,
     SmallSurgery,
     Surgery,
+    SurgeryProcedureItem,
+    SurgicalAuditEvent,
+    SurgicalAuthorization,
+    SurgicalBillingItem,
     SurgicalConsumption,
+    SurgicalDocument,
     SurgicalMaterial,
     SurgicalProcedure,
+    SurgicalRequest,
     SurgicalSafetyChecklist,
     SurgicalSchedule,
+    SurgicalSpecimen,
     SurgicalTeamMember,
 )
 
@@ -30,14 +38,22 @@ from ..filters import (
     LargeSurgeryFilter,
     OperatingRoomFilter,
     OperativeReportFilter,
+    PreoperativeAssessmentFilter,
     RecoveryRecordFilter,
     SmallSurgeryFilter,
     SurgeryFilter,
+    SurgeryProcedureItemFilter,
+    SurgicalAuditEventFilter,
+    SurgicalAuthorizationFilter,
+    SurgicalBillingItemFilter,
     SurgicalConsumptionFilter,
+    SurgicalDocumentFilter,
     SurgicalMaterialFilter,
     SurgicalProcedureFilter,
+    SurgicalRequestFilter,
     SurgicalSafetyChecklistFilter,
     SurgicalScheduleFilter,
+    SurgicalSpecimenFilter,
     SurgicalTeamMemberFilter,
 )
 from ..serializers import (
@@ -45,14 +61,22 @@ from ..serializers import (
     LargeSurgerySerializer,
     OperatingRoomSerializer,
     OperativeReportSerializer,
+    PreoperativeAssessmentSerializer,
     RecoveryRecordSerializer,
     SmallSurgerySerializer,
+    SurgeryProcedureItemSerializer,
     SurgerySerializer,
+    SurgicalAuditEventSerializer,
+    SurgicalAuthorizationSerializer,
+    SurgicalBillingItemSerializer,
     SurgicalConsumptionSerializer,
+    SurgicalDocumentSerializer,
     SurgicalMaterialSerializer,
     SurgicalProcedureSerializer,
+    SurgicalRequestSerializer,
     SurgicalSafetyChecklistSerializer,
     SurgicalScheduleSerializer,
+    SurgicalSpecimenSerializer,
     SurgicalTeamMemberSerializer,
 )
 
@@ -114,20 +138,20 @@ class BaseSurgeryViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin
 
 
 class SurgeryViewSet(BaseSurgeryViewSet):
-    queryset = Surgery.objects.select_related("patient", "surgeon").prefetch_related("procedures").all()
+    queryset = Surgery.objects.select_related("patient", "surgical_request", "specialty", "surgeon", "operating_room").prefetch_related("procedures").all()
     serializer_class = SurgerySerializer
     filterset_class = SurgeryFilter
 
 
 class SmallSurgeryViewSet(BaseSurgeryViewSet):
-    queryset = SmallSurgery.objects.select_related("patient", "surgeon").prefetch_related("procedures").all()
+    queryset = SmallSurgery.objects.select_related("patient", "surgical_request", "specialty", "surgeon", "operating_room").prefetch_related("procedures").all()
     serializer_class = SmallSurgerySerializer
     filterset_class = SmallSurgeryFilter
     fixed_surgery_size = Surgery.Size.SMALL
 
 
 class LargeSurgeryViewSet(BaseSurgeryViewSet):
-    queryset = LargeSurgery.objects.select_related("patient", "surgeon").prefetch_related("procedures").all()
+    queryset = LargeSurgery.objects.select_related("patient", "surgical_request", "specialty", "surgeon", "operating_room").prefetch_related("procedures").all()
     serializer_class = LargeSurgerySerializer
     filterset_class = LargeSurgeryFilter
     fixed_surgery_size = Surgery.Size.LARGE
@@ -141,6 +165,50 @@ class SurgicalProcedureViewSet(ValidatedSearchOrderingMixin, TenantScopedQueryse
     search_fields = ["custom_id", "name", "description"]
     ordering_fields = ["name", "active", "created_at"]
     ordering = ["name"]
+
+
+class SurgicalRequestViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
+    queryset = SurgicalRequest.objects.select_related("patient", "requesting_doctor", "specialty").all()
+    serializer_class = SurgicalRequestSerializer
+    filterset_class = SurgicalRequestFilter
+    permission_classes = [IsAuthenticated]
+    search_fields = [
+        "custom_id",
+        "patient__name",
+        "requesting_doctor__name",
+        "specialty__name",
+        "clinical_diagnosis",
+        "icd_code",
+        "requested_procedure",
+        "notes",
+    ]
+    ordering_fields = "__all__"
+    ordering = ["-created_at"]
+
+
+class PreoperativeAssessmentViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
+    queryset = PreoperativeAssessment.objects.select_related(
+        "patient",
+        "surgical_request",
+        "proposed_surgery",
+        "evaluator",
+    ).all()
+    serializer_class = PreoperativeAssessmentSerializer
+    filterset_class = PreoperativeAssessmentFilter
+    permission_classes = [IsAuthenticated]
+    search_fields = [
+        "custom_id",
+        "patient__name",
+        "surgical_request__custom_id",
+        "proposed_surgery__custom_id",
+        "evaluator__name",
+        "medical_evaluation",
+        "anesthetic_evaluation",
+        "surgical_risk",
+        "observations",
+    ]
+    ordering_fields = "__all__"
+    ordering = ["-assessed_at", "-created_at"]
 
 
 class SurgeryOperationsViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
@@ -158,10 +226,24 @@ class OperatingRoomViewSet(SurgeryOperationsViewSet):
 
 
 class SurgicalScheduleViewSet(SurgeryOperationsViewSet):
-    queryset = SurgicalSchedule.objects.select_related("surgery", "surgery__patient", "operating_room").all()
+    queryset = SurgicalSchedule.objects.select_related(
+        "surgery",
+        "surgery__patient",
+        "operating_room",
+        "primary_surgeon",
+        "anesthetist",
+    ).all()
     serializer_class = SurgicalScheduleSerializer
     filterset_class = SurgicalScheduleFilter
-    search_fields = ["custom_id", "surgery__custom_id", "surgery__patient__name", "operating_room__name", "notes"]
+    search_fields = [
+        "custom_id",
+        "surgery__custom_id",
+        "surgery__patient__name",
+        "operating_room__name",
+        "primary_surgeon__name",
+        "anesthetist__name",
+        "notes",
+    ]
     ordering = ["-scheduled_start", "-created_at"]
 
 
@@ -221,11 +303,135 @@ class OperativeReportViewSet(SurgeryOperationsViewSet):
     ordering = ["-signed_at", "-created_at"]
 
 
+class SurgeryProcedureItemViewSet(SurgeryOperationsViewSet):
+    queryset = SurgeryProcedureItem.objects.select_related(
+        "surgery",
+        "surgery__patient",
+        "procedure",
+        "responsible_surgeon",
+    ).all()
+    serializer_class = SurgeryProcedureItemSerializer
+    filterset_class = SurgeryProcedureItemFilter
+    search_fields = [
+        "custom_id",
+        "surgery__custom_id",
+        "surgery__patient__name",
+        "procedure__name",
+        "description",
+        "anatomical_region",
+        "responsible_surgeon__name",
+        "notes",
+    ]
+    ordering = ["surgery", "sequence", "id"]
+
+
+class SurgicalAuthorizationViewSet(SurgeryOperationsViewSet):
+    queryset = SurgicalAuthorization.objects.select_related(
+        "patient",
+        "surgery",
+        "surgical_request",
+        "preoperative_assessment",
+    ).all()
+    serializer_class = SurgicalAuthorizationSerializer
+    filterset_class = SurgicalAuthorizationFilter
+    search_fields = [
+        "custom_id",
+        "patient__name",
+        "surgery__custom_id",
+        "surgical_request__custom_id",
+        "notes",
+        "rejected_reason",
+    ]
+    ordering = ["-created_at"]
+
+
+class SurgicalBillingItemViewSet(SurgeryOperationsViewSet):
+    queryset = SurgicalBillingItem.objects.select_related(
+        "surgery",
+        "surgery__patient",
+        "authorization",
+        "procedure_item",
+        "consumption",
+        "invoice",
+    ).all()
+    serializer_class = SurgicalBillingItemSerializer
+    filterset_class = SurgicalBillingItemFilter
+    search_fields = [
+        "custom_id",
+        "surgery__custom_id",
+        "surgery__patient__name",
+        "description",
+        "notes",
+    ]
+    ordering = ["surgery", "event_type", "id"]
+
+
+class SurgicalDocumentViewSet(SurgeryOperationsViewSet):
+    queryset = SurgicalDocument.objects.select_related(
+        "surgery",
+        "surgical_request",
+        "preoperative_assessment",
+        "authorization",
+        "uploaded_by",
+    ).all()
+    serializer_class = SurgicalDocumentSerializer
+    filterset_class = SurgicalDocumentFilter
+    search_fields = [
+        "custom_id",
+        "title",
+        "surgery__custom_id",
+        "surgical_request__custom_id",
+        "external_reference",
+        "notes",
+    ]
+    ordering = ["-created_at"]
+
+
+class SurgicalAuditEventViewSet(SurgeryOperationsViewSet):
+    queryset = SurgicalAuditEvent.objects.select_related("surgery", "surgical_request", "actor").all()
+    serializer_class = SurgicalAuditEventSerializer
+    filterset_class = SurgicalAuditEventFilter
+    search_fields = [
+        "custom_id",
+        "action",
+        "surgery__custom_id",
+        "surgical_request__custom_id",
+        "actor__name",
+        "notes",
+    ]
+    ordering = ["-occurred_at", "-created_at"]
+
+
+class SurgicalSpecimenViewSet(SurgeryOperationsViewSet):
+    queryset = SurgicalSpecimen.objects.select_related(
+        "surgery",
+        "surgery__patient",
+        "patient",
+        "responsible",
+        "pathology_request",
+    ).all()
+    serializer_class = SurgicalSpecimenSerializer
+    filterset_class = SurgicalSpecimenFilter
+    search_fields = [
+        "custom_id",
+        "surgery__custom_id",
+        "patient__name",
+        "specimen_type",
+        "anatomical_site",
+        "fixative",
+        "notes",
+    ]
+    ordering = ["-collected_at", "-created_at"]
+
+
 VIEWSET_MAP = {
+    "pedido_cirurgico": SurgicalRequestViewSet,
+    "avaliacao_pre_operatoria": PreoperativeAssessmentViewSet,
     "surgery": SurgeryViewSet,
     "small_surgery": SmallSurgeryViewSet,
     "large_surgery": LargeSurgeryViewSet,
     "surgical_procedure": SurgicalProcedureViewSet,
+    "procedimentos_realizados": SurgeryProcedureItemViewSet,
     "agenda_cirurgica": SurgicalScheduleViewSet,
     "centro_cirurgico": OperatingRoomViewSet,
     "equipa_cirurgica": SurgicalTeamMemberViewSet,
@@ -235,6 +441,11 @@ VIEWSET_MAP = {
     "consumos": SurgicalConsumptionViewSet,
     "recuperacao": RecoveryRecordViewSet,
     "relatorio_operatorio": OperativeReportViewSet,
+    "autorizacoes": SurgicalAuthorizationViewSet,
+    "faturacao": SurgicalBillingItemViewSet,
+    "documentos": SurgicalDocumentViewSet,
+    "auditoria": SurgicalAuditEventViewSet,
+    "amostras": SurgicalSpecimenViewSet,
 }
 
 __all__ = [
@@ -244,14 +455,22 @@ __all__ = [
     "LargeSurgeryViewSet",
     "OperatingRoomViewSet",
     "OperativeReportViewSet",
+    "PreoperativeAssessmentViewSet",
     "RecoveryRecordViewSet",
     "SmallSurgeryViewSet",
     "SurgeryOperationsViewSet",
+    "SurgeryProcedureItemViewSet",
     "SurgeryViewSet",
+    "SurgicalAuditEventViewSet",
+    "SurgicalAuthorizationViewSet",
+    "SurgicalBillingItemViewSet",
     "SurgicalConsumptionViewSet",
+    "SurgicalDocumentViewSet",
     "SurgicalMaterialViewSet",
     "SurgicalProcedureViewSet",
+    "SurgicalRequestViewSet",
     "SurgicalSafetyChecklistViewSet",
     "SurgicalScheduleViewSet",
+    "SurgicalSpecimenViewSet",
     "SurgicalTeamMemberViewSet",
 ]
