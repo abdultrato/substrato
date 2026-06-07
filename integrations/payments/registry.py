@@ -5,6 +5,7 @@ from importlib import import_module
 from django.conf import settings
 
 _GATEWAY_IMPORTS = {
+    "sandbox": ("integrations.payments.sandbox", "SandboxGateway"),
     "mpesa": ("integrations.payments.mpesa", "MpesaGateway"),
     "emola": ("integrations.payments.emola", "EmolaGateway"),
     "mkesh": ("integrations.payments.mkesh", "MKeshGateway"),
@@ -20,7 +21,7 @@ def _load_gateway_class(name: str):
 
 
 def get_gateway(name: str | None = None):
-    name = name or getattr(settings, "PAYMENT_GATEWAY", "mpesa")
+    name = name or getattr(settings, "PAYMENT_GATEWAY", "sandbox")
 
     if name not in _GATEWAY_IMPORTS:
         raise ValueError(f"Gateway desconhecido: {name}")

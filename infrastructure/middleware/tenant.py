@@ -111,6 +111,9 @@ class TenantMiddleware:
             if not tenant:
                 if (
                     request.path.startswith("/api/v1/equipment_integrations/equipment/")
+                    # Onboarding é pré-tenant (signup), cross-tenant (webhook de
+                    # gateway) ou público (planos): não pode exigir tenant resolvido.
+                    or request.path.startswith("/api/v1/onboarding/")
                     or request.path in self.TENANT_OPTIONAL_PATHS
                 ):
                     return self.get_response(request)

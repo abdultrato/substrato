@@ -153,6 +153,10 @@ AI_ASSISTANT_ENABLED = get_env("AI_ASSISTANT_ENABLED", "true").lower() in (
 )
 AI_PROVIDER = get_env("AI_PROVIDER", "local")
 AI_MODEL = get_env("AI_MODEL", "")
+# Provedor Claude real (opcional): AI_PROVIDER=anthropic + ANTHROPIC_API_KEY.
+# Sem ambos, a IA usa o provedor local determinístico (default seguro).
+ANTHROPIC_API_KEY = get_env("ANTHROPIC_API_KEY", "")
+AI_MAX_TOKENS = int(get_env("AI_MAX_TOKENS", "1500"))
 AI_TIMEOUT_SECONDS = int(get_env("AI_TIMEOUT_SECONDS", "30"))
 AI_MAX_INPUT_TOKENS = int(get_env("AI_MAX_INPUT_TOKENS", "12000"))
 AI_MAX_OUTPUT_TOKENS = int(get_env("AI_MAX_OUTPUT_TOKENS", "1200"))
@@ -1532,8 +1536,34 @@ CELERY_TASK_ROUTES = {
         "queue": "operations",
         "routing_key": "operations",
     },
+    "apps.tenants.tasks.run_subscription_billing_cycle": {
+        "queue": "billing",
+        "routing_key": "billing",
+    },
 }
 CELERY_IMPORTS = ("tasks.tasks",)
+
+# Cobrança recorrente de assinaturas (idempotente; pode correr de hora a hora).
+CELERY_BEAT_SCHEDULE = {
+    "subscription-billing-cycle": {
+        "task": "apps.tenants.tasks.run_subscription_billing_cycle",
+        "schedule": 60 * 60,  # segundos
+        "options": {"queue": "billing", "routing_key": "billing"},
+    },
+}
+
+# =====================================================================
+# BILLING / ASSINATURAS (cobrança da plataforma ao tenant)
+# =====================================================================
+# Gateway ativo. "sandbox" (default) é determinístico e não faz rede — ideal
+# para dev/teste. M-Pesa/eMola/Stripe plugam no mesmo registry com credenciais.
+PAYMENT_GATEWAY = get_env("PAYMENT_GATEWAY", "sandbox")
+# Em testes, força o resultado do sandbox: "succeed" | "fail" | "pending".
+PAYMENT_SANDBOX_FORCE = get_env("PAYMENT_SANDBOX_FORCE", "")
+# Dias de trial no signup self-service.
+SUBSCRIPTION_TRIAL_DAYS = get_env_int("SUBSCRIPTION_TRIAL_DAYS", 14)
+# Tentativas de cobrança falhadas seguidas antes de suspender o tenant (dunning).
+SUBSCRIPTION_MAX_FAILED_CHARGES = get_env_int("SUBSCRIPTION_MAX_FAILED_CHARGES", 3)
 
 # Execução previsível: tarefas longas não devem travar workers indefinidamente.
 CELERY_TASK_TRACK_STARTED = True

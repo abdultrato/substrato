@@ -238,13 +238,14 @@ export default function EmployeesListPage() {
                   <th className="px-4 py-3 font-semibold text-foreground-2 whitespace-nowrap">Admissão</th>
                   <th className="px-4 py-3 font-semibold text-foreground-2 text-right whitespace-nowrap">Sal. líquido</th>
                   <th className="px-4 py-3 font-semibold text-foreground-2">Contacto</th>
+                  <th className="px-4 py-3"></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
                 {loading ? (
                   Array.from({ length: 6 }).map((_, i) => (
                     <tr key={i} className="animate-pulse">
-                      {Array.from({ length: 8 }).map((_, j) => (
+                      {Array.from({ length: 9 }).map((_, j) => (
                         <td key={j} className="px-4 py-3">
                           <div className="h-4 rounded bg-muted w-full" />
                         </td>
@@ -253,30 +254,33 @@ export default function EmployeesListPage() {
                   ))
                 ) : employees.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="px-4 py-12 text-center text-muted-foreground">
+                    <td colSpan={9} className="px-4 py-12 text-center text-muted-foreground">
                       {hasFilters
                         ? "Nenhum funcionário corresponde aos filtros aplicados."
                         : "Ainda não existem funcionários registados."}
                     </td>
                   </tr>
                 ) : (
-                  employees.map((emp) => (
-                    <tr key={emp.id} className="hover:bg-muted/30 transition-colors">
-                      <td className="px-4 py-3 whitespace-nowrap">
+                  employees.map((emp) => {
+                    const href = `/human_resources/employees/${emp.id}`
+                    return (
+                    <tr
+                      key={emp.id}
+                      className="hover:bg-primary/5 cursor-pointer transition-colors"
+                      onClick={() => window.location.href = href}
+                    >
+                      <td className="px-4 py-3 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                         <Link
-                          href={`/human_resources/employees/${emp.id}`}
-                          className="font-mono text-xs font-semibold text-foreground hover:text-primary transition-colors"
+                          href={href}
+                          className="font-mono text-xs font-semibold text-primary hover:underline"
                         >
                           {emp.custom_id || `#${emp.id}`}
                         </Link>
                       </td>
                       <td className="px-4 py-3 min-w-[180px]">
-                        <Link
-                          href={`/human_resources/employees/${emp.id}`}
-                          className="font-medium text-foreground hover:text-primary transition-colors"
-                        >
+                        <span className="font-medium text-foreground">
                           {emp.name || "—"}
-                        </Link>
+                        </span>
                       </td>
                       <td className="px-4 py-3 text-foreground-2 min-w-[130px]">
                         {emp.role_name ?? "—"}
@@ -296,8 +300,17 @@ export default function EmployeesListPage() {
                       <td className="px-4 py-3 text-foreground-2 min-w-[130px] text-sm">
                         {emp.phone || emp.email || "—"}
                       </td>
+                      <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                        <Link
+                          href={href}
+                          className="inline-flex items-center rounded-lg border border-border bg-background px-2.5 py-1 text-xs font-medium text-foreground-2 transition hover:bg-muted hover:text-foreground whitespace-nowrap"
+                        >
+                          Ver ficha →
+                        </Link>
+                      </td>
                     </tr>
-                  ))
+                    )
+                  })
                 )}
               </tbody>
             </table>

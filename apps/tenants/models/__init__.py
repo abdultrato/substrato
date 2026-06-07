@@ -1,11 +1,15 @@
 from .configuration import TenantConfiguration
 from .feature_flags import TenantFeatureFlag
 from .subscription import TenantSubscription
+from .subscription_charge import SubscriptionCharge
+from .subscription_invoice import SubscriptionInvoice
 from .subscription_plan import SubscriptionPlan
 from .tenant import Tenant
 from .tenant_usage import TenantUsage
 
 __all__ = [
+    "SubscriptionCharge",
+    "SubscriptionInvoice",
     "SubscriptionPlan",
     "Tenant",
     "TenantConfiguration",

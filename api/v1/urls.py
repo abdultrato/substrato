@@ -17,6 +17,7 @@ register_routes(router)
 
 urlpatterns = [
     path("auth/", include("api.v1.auth.urls")),
+    path("onboarding/", include("api.v1.onboarding.urls")),
     path("ai/", include("api.v1.ai.urls")),
     re_path(r"^dashboard/stats/?$", DashboardStatsView.as_view(), name="dashboard-stats"),
     re_path(

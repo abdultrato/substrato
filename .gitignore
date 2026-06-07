@@ -251,3 +251,13 @@ apps/education/legacy_schoolar/.env.*
 apps/education/legacy_schoolar/frontend/.env
 apps/education/legacy_schoolar/frontend/.env.*
 !apps/education/legacy_schoolar/frontend/.env.example
+
+# Process output e artefatos locais que não devem ser versionados
+nohup.out
+*.outbox.sqlite3
+substrato_os_outbox.sqlite3
+
+# Documentos pessoais (não pertencem ao repositório corporativo)
+cv-lab*.pdf
+Logistic-Certificate.pdf
+graducao.png

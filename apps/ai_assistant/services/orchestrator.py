@@ -34,7 +34,8 @@ from apps.ai_assistant.tools.crud import PrepareCrudOperationTool
 from .audit import AiAuditLogger
 from .greetings import build_greeting_response
 from .investigation import AiInvestigationBuilder
-from .llm_gateway import LocalLlmGateway
+from .llm_gateway import LocalLlmGateway  # noqa: F401  (compatibilidade)
+from .llm_provider import get_llm_gateway
 from .natural_bridge import build_natural_bridge
 from .policy import AiPolicyError, AiPolicyGuard
 from .proactive_guidance import build_proactive_guidance, merge_recommended_questions
@@ -51,7 +52,7 @@ class AiOrchestrator:
         self.audit = AiAuditLogger()
         self.policy = AiPolicyGuard()
         self.registry = AiToolRegistry()
-        self.gateway = LocalLlmGateway()
+        self.gateway = get_llm_gateway()
         self.investigations = AiInvestigationBuilder()
         self.intent_router = AiIntentRouter()
 
