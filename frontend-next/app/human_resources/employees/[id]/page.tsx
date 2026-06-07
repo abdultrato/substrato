@@ -3,10 +3,10 @@
 import { Suspense } from "react";
 import { GeneratedResourceDetailPage } from "@/components/resources/GeneratedResourcePages";
 
-export default function EmployeesDetailPage() {
+export default function FuncionarioDetailPage() {
   return (
     <Suspense fallback={<div className="p-4 text-sm text-[var(--gray-500)]">Carregando...</div>}>
-      <GeneratedResourceDetailPage endpoint="/human_resources/employees/" />
+      <GeneratedResourceDetailPage endpoint="/human_resources/employee/" />
     </Suspense>
   );
 }

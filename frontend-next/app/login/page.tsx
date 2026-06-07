@@ -1,297 +1,330 @@
 "use client";
 
-import { useState } from "react";
-import { login } from "@/lib/auth";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import useAuthGuard from "@/hooks/useAuthGuard";
-import { getDefaultWorkspaceHref } from "@/lib/rbac";
-import useAuth from "@/hooks/useAuth";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { login } from "@/lib/auth";
 import { apiFetch } from "@/lib/api";
-import { Eye, EyeOff } from "lucide-react";
-import { useEffect } from "react";
+import useAuthGuard from "@/hooks/useAuthGuard";
+import useAuth from "@/hooks/useAuth";
 import { useLanguage } from "@/hooks/useLanguage";
+import { getDefaultWorkspaceHref } from "@/lib/rbac";
 
-export default function LoginPage () {
-    useAuthGuard( { requireAuth: false } )
-    const { t } = useLanguage()
+type View = "login" | "reset_request" | "reset_confirm";
 
+function PasswordInput({
+    id,
+    name,
+    placeholder,
+    value,
+    onChange,
+    autoComplete,
+}: {
+    id: string;
+    name: string;
+    placeholder: string;
+    value: string;
+    onChange: (v: string) => void;
+    autoComplete?: string;
+}) {
+    const [show, setShow] = useState(false);
+    const { t } = useLanguage();
+    return (
+        <div className="relative">
+            <input
+                id={id}
+                name={name}
+                type={show ? "text" : "password"}
+                placeholder={placeholder}
+                value={value}
+                onChange={(e) => onChange(e.target.value)}
+                autoComplete={autoComplete}
+                className="login-input pr-10"
+            />
+            <button
+                type="button"
+                onClick={() => setShow((v) => !v)}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                aria-label={show ? t("Ocultar", "Hide") : t("Mostrar", "Show")}
+            >
+                {show ? <EyeOff size={15} /> : <Eye size={15} />}
+            </button>
+        </div>
+    );
+}
+
+export default function LoginPage() {
+    useAuthGuard({ requireAuth: false });
+    const { t } = useLanguage();
     const router = useRouter();
-    const { signIn } = useAuth()
-    const [view, setView] = useState<"login" | "reset_request" | "reset_confirm">( "login" )
-    const [user, setUser] = useState( "" );
-    const [pass, setPass] = useState( "" );
-    const [error, setError] = useState( "" );
-    const [showPass, setShowPass] = useState( false )
+    const { signIn } = useAuth();
 
-    const [resetId, setResetId] = useState( "" )
-    const [resetToken, setResetToken] = useState( "" )
-    const [resetPass, setResetPass] = useState( "" )
-    const [resetPass2, setResetPass2] = useState( "" )
-    const [resetInfo, setResetInfo] = useState( "" )
-    const [showResetPass, setShowResetPass] = useState( false )
-    const [showResetPass2, setShowResetPass2] = useState( false )
+    const [view, setView] = useState<View>("login");
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState("");
+    const [info, setInfo] = useState("");
 
-    /**
-     * Pré-carrega as rotas protegidas mais acessadas para que,
-     * depois do login, a navegação seja imediata (evita o tempo
-     * de compilação/carregamento inicial do app router).
-     */
+    const [user, setUser] = useState("");
+    const [pass, setPass] = useState("");
+
+    const [resetId, setResetId] = useState("");
+    const [resetToken, setResetToken] = useState("");
+    const [resetPass, setResetPass] = useState("");
+    const [resetPass2, setResetPass2] = useState("");
+
     useEffect(() => {
-        router.prefetch( "/" )
-        router.prefetch( "/workspaces" )
-        router.prefetch( "/patients" )
-        router.prefetch( "/laboratory/requests" )
-        router.prefetch( "/education" )
-        router.prefetch( "/education/student" )
-        router.prefetch( "/healthcare" )
-    }, [router])
+        router.prefetch("/");
+        router.prefetch("/workspaces");
+        router.prefetch("/patients");
+    }, [router]);
 
-    async function handleSubmit ( e: any ) {
+    function switchView(next: View) {
+        setError("");
+        setInfo("");
+        setView(next);
+    }
+
+    async function handleLogin(e: React.FormEvent) {
         e.preventDefault();
-        setError( "" );
-
+        setError("");
+        setLoading(true);
         try {
-            const sessionUser = await login( user, pass );
-            if ( !sessionUser ) {
-                setError( t("Falha ao obter sessão. Tente novamente.", "Failed to retrieve session. Please try again.") )
-                return
+            const sessionUser = await login(user, pass);
+            if (!sessionUser) {
+                setError(t("Falha ao obter sessão. Tente novamente.", "Failed to retrieve session."));
+                return;
             }
-            signIn( sessionUser )
+            signIn(sessionUser);
             const next =
                 typeof window !== "undefined"
-                    ? new URLSearchParams( window.location.search ).get( "next" )
-                    : null
-            router.push( next || getDefaultWorkspaceHref( sessionUser ) );
-        } catch (e) {
-            setError( e instanceof Error ? e.message : t("Utilizador ou palavra-passe inválidos", "Invalid user or password") );
+                    ? new URLSearchParams(window.location.search).get("next")
+                    : null;
+            router.push(next || getDefaultWorkspaceHref(sessionUser));
+        } catch (err) {
+            setError(err instanceof Error ? err.message : t("Utilizador ou palavra-passe inválidos.", "Invalid credentials."));
+        } finally {
+            setLoading(false);
         }
     }
 
-    async function handleResetRequest ( e: any ) {
-        e.preventDefault()
-        setError( "" )
-        setResetInfo( "" )
-
-        const v = resetId.trim()
-        if ( !v ) {
-            setError( t("Informe e-mail, telefone ou utilizador.", "Provide e-mail, phone or username.") )
-            return
+    async function handleResetRequest(e: React.FormEvent) {
+        e.preventDefault();
+        setError("");
+        setInfo("");
+        const v = resetId.trim();
+        if (!v) {
+            setError(t("Informe e-mail, telefone ou utilizador.", "Provide e-mail, phone or username."));
+            return;
         }
+        const payload: Record<string, string> = {};
+        if (v.includes("@")) payload.email = v;
+        else if (/^[+0-9\s-]{6,}$/.test(v)) payload.telefone = v.replace(/\s+/g, "");
+        else payload.username = v;
 
-        const payload: any = {}
-        if ( v.includes( "@" ) ) payload.email = v
-        else if ( /^[+0-9\\s-]{6,}$/.test( v ) ) payload.telefone = v.replace( /\\s+/g, "" )
-        else payload.username = v
-
+        setLoading(true);
         try {
-            const res = await apiFetch<{ detail?: string }>( "/auth/password-reset/request/", {
+            const res = await apiFetch<{ detail?: string }>("/auth/password-reset/request/", {
                 method: "POST",
-                body: JSON.stringify( payload ),
-            } )
-            setResetInfo( res?.detail || t("Se o utilizador existir, enviaremos instruções.", "If the user exists, we will send instructions.") )
-            setView( "reset_confirm" )
-        } catch (e) {
-            setError( e instanceof Error ? e.message : t("Falha ao solicitar reposição de palavra-passe.", "Failed to request password reset.") )
+                body: JSON.stringify(payload),
+            });
+            setInfo(res?.detail || t("Se o utilizador existir, enviaremos instruções.", "If the user exists, we'll send instructions."));
+            setView("reset_confirm");
+        } catch (err) {
+            setError(err instanceof Error ? err.message : t("Falha ao solicitar reposição.", "Reset request failed."));
+        } finally {
+            setLoading(false);
         }
     }
 
-    async function handleResetConfirm ( e: any ) {
-        e.preventDefault()
-        setError( "" )
-        setResetInfo( "" )
+    async function handleResetConfirm(e: React.FormEvent) {
+        e.preventDefault();
+        setError("");
+        if (!resetToken.trim()) { setError(t("Informe o código recebido.", "Provide the received code.")); return; }
+        if (!resetPass) { setError(t("Informe a nova palavra-passe.", "Provide the new password.")); return; }
+        if (resetPass !== resetPass2) { setError(t("As palavras-passe não coincidem.", "Passwords do not match.")); return; }
 
-        if ( !resetToken.trim() ) {
-            setError( t("Informe o código recebido.", "Provide the received code.") )
-            return
-        }
-        if ( !resetPass ) {
-            setError( t("Informe a nova palavra-passe.", "Provide the new password.") )
-            return
-        }
-        if ( resetPass !== resetPass2 ) {
-            setError( t("A confirmação da palavra-passe não coincide.", "Password confirmation does not match.") )
-            return
-        }
-
+        setLoading(true);
         try {
-            await apiFetch( "/auth/password-reset/confirm/", {
+            await apiFetch("/auth/password-reset/confirm/", {
                 method: "POST",
-                body: JSON.stringify( { token: resetToken.trim(), new_password: resetPass } ),
-            } )
-            setResetInfo( t("Palavra-passe reposta com sucesso. Já pode entrar.", "Password reset successful. You can sign in now.") )
-            setView( "login" )
-            setResetId( "" )
-            setResetToken( "" )
-            setResetPass( "" )
-            setResetPass2( "" )
-        } catch (e) {
-            setError( e instanceof Error ? e.message : t("Falha ao repor a palavra-passe.", "Failed to reset password.") )
+                body: JSON.stringify({ token: resetToken.trim(), new_password: resetPass }),
+            });
+            setInfo(t("Palavra-passe reposta. Já pode entrar.", "Password reset. You can sign in now."));
+            setResetId(""); setResetToken(""); setResetPass(""); setResetPass2("");
+            setView("login");
+        } catch (err) {
+            setError(err instanceof Error ? err.message : t("Falha ao repor a palavra-passe.", "Failed to reset password."));
+        } finally {
+            setLoading(false);
         }
     }
 
     return (
-        <div className="login-wrapper">
-                <div className="login-card">
-                    <div className="login-image">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src="/static/img/logo.png" alt={t("Logo do Substrato", "Substrato logo")} />
-                    </div>
+        <div className="min-h-screen grid place-items-center px-4 py-12 bg-gradient-to-b from-background to-muted/40">
+            <div className="w-full max-w-sm">
 
-                <div className="login-form">
-                    <h1 className="login-title">Substrato</h1>
-                    <p className="login-subtitle">{t("Sistema Unificado de Base Sustentável", "Unified Sustainable Base System")}</p>
+                {/* Brand */}
+                <div className="mb-6 text-center">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                        src="/static/img/logo.png"
+                        alt="Substrato"
+                        className="mx-auto mb-4 h-14 w-14 rounded-xl object-contain bg-white p-1.5 shadow-sm border border-border"
+                    />
+                    <h1 className="text-xl font-semibold tracking-tight text-foreground">Substrato</h1>
+                    <p className="mt-0.5 text-xs text-muted-foreground">
+                        {t("Sistema Unificado de Base Sustentável", "Unified Sustainable Base System")}
+                    </p>
+                </div>
 
-                    {error && <div className="login-error">{error}</div>}
-                    {resetInfo && (
-                        <div className="mb-3 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-200">
-                            {resetInfo}
+                {/* Card */}
+                <div className="rounded-2xl border border-border bg-card shadow-md px-6 py-7">
+
+                    {/* Feedback */}
+                    {error && (
+                        <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-200">
+                            {error}
+                        </div>
+                    )}
+                    {info && (
+                        <div className="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-200">
+                            {info}
                         </div>
                     )}
 
-                    {view === "login" ? (
+                    {view === "login" && (
                         <>
-                            <form onSubmit={handleSubmit}>
+                            <p className="mb-4 text-sm font-medium text-foreground">
+                                {t("Iniciar sessão", "Sign in")}
+                            </p>
+                            <form onSubmit={handleLogin} className="flex flex-col gap-3">
                                 <input
-                                    className="login-input"
                                     id="utilizador"
                                     name="utilizador"
                                     autoComplete="username"
                                     placeholder={t("Utilizador", "Username")}
                                     value={user}
-                                    onChange={e => setUser( e.target.value )}
-                                />
-
-                                <div className="flex items-center gap-2">
-                                    <input
-                                        className="login-input flex-1"
-                                        id="palavra-passe"
-                                        name="palavra_passe"
-                                        type={showPass ? "text" : "password"}
-                                        placeholder={t("Palavra-passe", "Password")}
-                                        value={pass}
-                                        onChange={e => setPass( e.target.value )}
-                                        autoComplete="current-password"
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowPass( (v) => !v )}
-                                        className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-background text-muted-foreground shadow-sm transition hover:text-foreground"
-                                        aria-label={showPass ? t("Ocultar palavra-passe", "Hide password") : t("Mostrar palavra-passe", "Show password")}
-                                    >
-                                        {showPass ? <EyeOff size={14} /> : <Eye size={14} />}
-                                    </button>
-                                </div>
-
-                                <button>{t("Entrar", "Sign in")}</button>
-                            </form>
-
-                            <button
-                                type="button"
-                                className="mt-3 text-xs font-semibold text-[var(--gray-700)] hover:text-[var(--hover-accent)]"
-                                onClick={() => {
-                                    setError( "" )
-                                    setResetInfo( "" )
-                                    setView( "reset_request" )
-                                }}
-                            >
-                                {t("Esqueci a palavra-passe", "Forgot password")}
-                            </button>
-                        </>
-                    ) : view === "reset_request" ? (
-                        <>
-                            <form onSubmit={handleResetRequest}>
-                                <input
+                                    onChange={(e) => setUser(e.target.value)}
                                     className="login-input"
+                                />
+                                <PasswordInput
+                                    id="palavra-passe"
+                                    name="palavra_passe"
+                                    placeholder={t("Palavra-passe", "Password")}
+                                    value={pass}
+                                    onChange={setPass}
+                                    autoComplete="current-password"
+                                />
+                                <button
+                                    type="submit"
+                                    disabled={loading}
+                                    className="mt-1 inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 disabled:opacity-60"
+                                >
+                                    {loading && <Loader2 size={14} className="animate-spin" />}
+                                    {t("Entrar", "Sign in")}
+                                </button>
+                            </form>
+                            <div className="mt-4 text-center">
+                                <button
+                                    type="button"
+                                    onClick={() => switchView("reset_request")}
+                                    className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                                >
+                                    {t("Esqueci a palavra-passe", "Forgot password")}
+                                </button>
+                            </div>
+                        </>
+                    )}
+
+                    {view === "reset_request" && (
+                        <>
+                            <p className="mb-1 text-sm font-medium text-foreground">
+                                {t("Recuperar acesso", "Recover access")}
+                            </p>
+                            <p className="mb-4 text-xs text-muted-foreground">
+                                {t("Introduza o e-mail, telefone ou nome de utilizador associado à conta.", "Enter the e-mail, phone or username linked to the account.")}
+                            </p>
+                            <form onSubmit={handleResetRequest} className="flex flex-col gap-3">
+                                <input
                                     id="identificador-reposicao"
                                     name="identificador_reposicao"
                                     placeholder={t("E-mail, telefone ou utilizador", "E-mail, phone or username")}
                                     value={resetId}
-                                    onChange={e => setResetId( e.target.value )}
-                                />
-
-                                <button>{t("Enviar código", "Send code")}</button>
-                            </form>
-
-                            <button
-                                type="button"
-                                className="mt-3 text-xs font-semibold text-[var(--gray-700)] hover:text-[var(--hover-accent)]"
-                                onClick={() => {
-                                    setError( "" )
-                                    setResetInfo( "" )
-                                    setView( "login" )
-                                }}
-                            >
-                                {t("Voltar ao login", "Back to login")}
-                            </button>
-                        </>
-                    ) : (
-                        <>
-                            <form onSubmit={handleResetConfirm}>
-                                <input
+                                    onChange={(e) => setResetId(e.target.value)}
                                     className="login-input"
+                                />
+                                <button
+                                    type="submit"
+                                    disabled={loading}
+                                    className="mt-1 inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 disabled:opacity-60"
+                                >
+                                    {loading && <Loader2 size={14} className="animate-spin" />}
+                                    {t("Enviar código", "Send code")}
+                                </button>
+                            </form>
+                            <div className="mt-4 text-center">
+                                <button
+                                    type="button"
+                                    onClick={() => switchView("login")}
+                                    className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                                >
+                                    ← {t("Voltar ao login", "Back to login")}
+                                </button>
+                            </div>
+                        </>
+                    )}
+
+                    {view === "reset_confirm" && (
+                        <>
+                            <p className="mb-1 text-sm font-medium text-foreground">
+                                {t("Nova palavra-passe", "New password")}
+                            </p>
+                            <p className="mb-4 text-xs text-muted-foreground">
+                                {t("Introduza o código recebido e defina a nova palavra-passe.", "Enter the received code and set a new password.")}
+                            </p>
+                            <form onSubmit={handleResetConfirm} className="flex flex-col gap-3">
+                                <input
                                     id="codigo-reposicao"
                                     name="codigo_reposicao"
                                     placeholder={t("Código recebido", "Received code")}
                                     value={resetToken}
-                                    onChange={e => setResetToken( e.target.value )}
+                                    onChange={(e) => setResetToken(e.target.value)}
+                                    className="login-input"
                                 />
-
-                                <div className="flex items-center gap-2">
-                                    <input
-                                        className="login-input flex-1"
-                                        id="nova-palavra-passe"
-                                        name="nova_palavra_passe"
-                                        type={showResetPass ? "text" : "password"}
-                                        placeholder={t("Nova palavra-passe", "New password")}
-                                        value={resetPass}
-                                        onChange={e => setResetPass( e.target.value )}
-                                        autoComplete="new-password"
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowResetPass( (v) => !v )}
-                                        className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-background text-muted-foreground shadow-sm transition hover:text-foreground"
-                                        aria-label={showResetPass ? t("Ocultar palavra-passe", "Hide password") : t("Mostrar palavra-passe", "Show password")}
-                                    >
-                                        {showResetPass ? <EyeOff size={14} /> : <Eye size={14} />}
-                                    </button>
-                                </div>
-
-                                <div className="flex items-center gap-2">
-                                    <input
-                                        className="login-input flex-1"
-                                        id="confirmacao-nova-palavra-passe"
-                                        name="confirmacao_nova_palavra_passe"
-                                        type={showResetPass2 ? "text" : "password"}
-                                        placeholder={t("Confirmar nova palavra-passe", "Confirm new password")}
-                                        value={resetPass2}
-                                        onChange={e => setResetPass2( e.target.value )}
-                                        autoComplete="new-password"
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowResetPass2( (v) => !v )}
-                                        className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-background text-muted-foreground shadow-sm transition hover:text-foreground"
-                                        aria-label={showResetPass2 ? t("Ocultar palavra-passe", "Hide password") : t("Mostrar palavra-passe", "Show password")}
-                                    >
-                                        {showResetPass2 ? <EyeOff size={14} /> : <Eye size={14} />}
-                                    </button>
-                                </div>
-
-                                <button>{t("Repor palavra-passe", "Reset password")}</button>
+                                <PasswordInput
+                                    id="nova-palavra-passe"
+                                    name="nova_palavra_passe"
+                                    placeholder={t("Nova palavra-passe", "New password")}
+                                    value={resetPass}
+                                    onChange={setResetPass}
+                                    autoComplete="new-password"
+                                />
+                                <PasswordInput
+                                    id="confirmar-palavra-passe"
+                                    name="confirmar_palavra_passe"
+                                    placeholder={t("Confirmar palavra-passe", "Confirm password")}
+                                    value={resetPass2}
+                                    onChange={setResetPass2}
+                                    autoComplete="new-password"
+                                />
+                                <button
+                                    type="submit"
+                                    disabled={loading}
+                                    className="mt-1 inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 disabled:opacity-60"
+                                >
+                                    {loading && <Loader2 size={14} className="animate-spin" />}
+                                    {t("Repor palavra-passe", "Reset password")}
+                                </button>
                             </form>
-
-                            <button
-                                type="button"
-                                className="mt-3 text-xs font-semibold text-[var(--gray-700)] hover:text-[var(--hover-accent)]"
-                                onClick={() => {
-                                    setError( "" )
-                                    setResetInfo( "" )
-                                    setView( "login" )
-                                }}
-                            >
-                                {t("Voltar ao login", "Back to login")}
-                            </button>
+                            <div className="mt-4 text-center">
+                                <button
+                                    type="button"
+                                    onClick={() => switchView("login")}
+                                    className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                                >
+                                    ← {t("Voltar ao login", "Back to login")}
+                                </button>
+                            </div>
                         </>
                     )}
                 </div>

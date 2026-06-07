@@ -109,12 +109,10 @@ function objectFallbackRows(raw: any): Row[] {
 }
 
 const TECHNICAL_NOISE_FIELDS = new Set([
-  "deleted",
-  "deletado",
-  "deleted_at",
-  "deletado_em",
-  "deleted_by",
-  "deletado_por",
+  // Apenas soft-delete — estes não têm valor de negócio em nenhuma listagem
+  "deleted", "deletado",
+  "deleted_at", "deletado_em",
+  "deleted_by", "deletado_por",
 ])
 
 const CODE_FIELDS = new Set(["custom_id", "id_custom", "codigo", "código", "code"])

@@ -3137,6 +3137,1439 @@ function nursingProcedureMaterialConfig(): ResourceFormConfig {
   }
 }
 
+// ─── Human Resources ────────────────────────────────────────────────────────
+
+const HR_INTERNAL_FIELDS = [
+  // Campos de auditoria e infra — nunca mostrar
+  "id", "created_at", "updated_at", "deleted", "deleted_at",
+  "version", "created_by", "updated_by", "deleted_by", "tenant",
+]
+const HR_COMPUTED_FIELDS = [
+  // Propriedades calculadas — somente leitura, não editáveis
+  "employee_name", "role_name", "profession_name", "approved_by_name",
+  "salary_base", "salary_liquido", "salary_allowances_value", "current_salary",
+  "tenure_months", "has_open_disciplinary_process", "can_progress_salary", "can_change_career",
+  "remaining_days",
+]
+
+function hrEmployeeConfig(): ResourceFormConfig {
+  return {
+    esconderCampos: [...HR_INTERNAL_FIELDS, ...HR_COMPUTED_FIELDS],
+    labels: {
+      name: "Nome completo", role: "Cargo", profession: "Profissão",
+      gender: "Género", date_of_birth: "Data de nascimento",
+      nationality: "Nacionalidade", marital_status: "Estado civil",
+      address: "Morada", document_type: "Tipo de documento",
+      document_number: "Número do documento", nuit: "NUIT",
+      inss_number: "Número INSS", email: "E-mail", phone: "Telefone",
+      emergency_contact_name: "Contacto de emergência (nome)",
+      emergency_contact_phone: "Contacto de emergência (telefone)",
+      admission_date: "Data de admissão", status: "Estado",
+      nib: "NIB / Conta bancária", payment_method: "Método de pagamento",
+      nominal_salary: "Salário nominal", salary_increase: "Aumento salarial",
+      base_month_hours: "Horas base (mês)",
+      ordinary_hour_value: "Valor hora ordinária",
+      extraordinary_hour_value: "Valor hora extraordinária",
+      minimum_progression_months: "Meses mínimos para progressão",
+      minimum_career_change_months: "Meses mínimos para mudança de carreira",
+      family_allowance_per_dependent: "Subsídio por agregado familiar",
+    },
+    widgets: { address: "textarea" },
+    ordenarCampos: [
+      "name", "gender", "date_of_birth", "nationality", "marital_status",
+      "document_type", "document_number", "nuit", "inss_number",
+      "email", "phone", "address",
+      "emergency_contact_name", "emergency_contact_phone",
+      "role", "profession", "admission_date", "status",
+      "nib", "payment_method",
+      "nominal_salary", "salary_increase", "base_month_hours",
+      "ordinary_hour_value", "extraordinary_hour_value",
+      "minimum_progression_months", "minimum_career_change_months",
+      "family_allowance_per_dependent",
+    ],
+    etapas: [
+      { titulo: "Dados pessoais", campos: ["name", "gender", "date_of_birth", "nationality", "marital_status"] },
+      { titulo: "Documentos e contacto", campos: ["document_type", "document_number", "nuit", "inss_number", "email", "phone", "address"] },
+      { titulo: "Emergência", campos: ["emergency_contact_name", "emergency_contact_phone"] },
+      { titulo: "Dados laborais", campos: ["role", "profession", "admission_date", "status"] },
+      { titulo: "Pagamento", campos: ["nib", "payment_method", "nominal_salary", "salary_increase", "base_month_hours"] },
+      { titulo: "Horas e progressão", campos: ["ordinary_hour_value", "extraordinary_hour_value", "minimum_progression_months", "minimum_career_change_months", "family_allowance_per_dependent"] },
+    ],
+    lembrarCampos: ["role", "profession", "payment_method", "nationality"],
+  }
+}
+
+function hrJobTitleConfig(): ResourceFormConfig {
+  return {
+    esconderCampos: [...HR_INTERNAL_FIELDS, ...HR_COMPUTED_FIELDS],
+    labels: {
+      name: "Título do cargo", description: "Descrição",
+      is_doctor: "É médico", hierarchy_level: "Nível hierárquico",
+      reports_to: "Reporta a", salary_grade: "Nível salarial",
+      responsibilities: "Responsabilidades", status: "Estado",
+    },
+    widgets: { description: "textarea", responsibilities: "textarea" },
+    ordenarCampos: ["name", "hierarchy_level", "reports_to", "salary_grade", "is_doctor", "status", "description", "responsibilities"],
+    etapas: [
+      { titulo: "Identificação", campos: ["name", "hierarchy_level", "reports_to", "salary_grade", "is_doctor", "status"] },
+      { titulo: "Descrição", campos: ["description", "responsibilities"] },
+    ],
+    lembrarCampos: ["status"],
+  }
+}
+
+function hrProfessionConfig(): ResourceFormConfig {
+  return {
+    esconderCampos: [...HR_INTERNAL_FIELDS, ...HR_COMPUTED_FIELDS],
+    labels: {
+      name: "Nome da profissão", description: "Descrição",
+      professional_category: "Categoria profissional",
+      requires_license: "Requer licença profissional",
+      license_authority: "Entidade emissora da licença",
+      base_salary: "Salário base", ordinary_hour_value: "Valor hora ordinária",
+      extraordinary_hour_value: "Valor hora extraordinária",
+      minimum_progression_months: "Meses mínimos para progressão",
+      minimum_career_change_months: "Meses mínimos para mudança de carreira",
+      family_allowance_per_dependent: "Subsídio por agregado familiar",
+      active: "Ativa",
+    },
+    widgets: { description: "textarea" },
+    ordenarCampos: ["name", "professional_category", "requires_license", "license_authority", "active", "description", "base_salary", "ordinary_hour_value", "extraordinary_hour_value", "minimum_progression_months", "minimum_career_change_months", "family_allowance_per_dependent"],
+    etapas: [
+      { titulo: "Identificação", campos: ["name", "professional_category", "requires_license", "license_authority", "active", "description"] },
+      { titulo: "Regras salariais", campos: ["base_salary", "ordinary_hour_value", "extraordinary_hour_value"] },
+      { titulo: "Progressão e benefícios", campos: ["minimum_progression_months", "minimum_career_change_months", "family_allowance_per_dependent"] },
+    ],
+    lembrarCampos: ["professional_category", "requires_license"],
+  }
+}
+
+function hrFamilyDependentConfig(): ResourceFormConfig {
+  return {
+    esconderCampos: [...HR_INTERNAL_FIELDS, ...HR_COMPUTED_FIELDS],
+    labels: {
+      employee: "Funcionário", name: "Nome completo", relationship: "Grau de parentesco",
+      gender: "Género", birth_date: "Data de nascimento",
+      document_number: "Número do documento", phone: "Telefone",
+      lives_with_employee: "Vive com o funcionário",
+      is_dependent: "É dependente", is_emergency_contact: "É contacto de emergência",
+      benefit_eligible: "Elegível para benefícios", notes: "Observações",
+    },
+    widgets: { notes: "textarea" },
+    ordenarCampos: ["employee", "name", "relationship", "gender", "birth_date", "document_number", "phone", "lives_with_employee", "is_dependent", "is_emergency_contact", "benefit_eligible", "notes"],
+    etapas: [
+      { titulo: "Identificação", campos: ["employee", "name", "relationship", "gender", "birth_date", "document_number", "phone"] },
+      { titulo: "Vínculo e benefícios", campos: ["lives_with_employee", "is_dependent", "is_emergency_contact", "benefit_eligible"] },
+      { titulo: "Observações", campos: ["notes"] },
+    ],
+    lembrarCampos: ["relationship"],
+  }
+}
+
+function hrWorkScheduleConfig(): ResourceFormConfig {
+  return {
+    esconderCampos: [...HR_INTERNAL_FIELDS, ...HR_COMPUTED_FIELDS],
+    labels: {
+      employee: "Funcionário", weekday: "Dia da semana",
+      start_time: "Hora de início", end_time: "Hora de fim",
+      schedule_type: "Tipo de horário", shift_name: "Nome do turno",
+      effective_from: "Vigente a partir de", effective_until: "Vigente até",
+      active: "Ativo",
+    },
+    ordenarCampos: ["employee", "schedule_type", "shift_name", "weekday", "start_time", "end_time", "effective_from", "effective_until", "active"],
+    etapas: [
+      { titulo: "Funcionário e tipo", campos: ["employee", "schedule_type", "shift_name"] },
+      { titulo: "Horário", campos: ["weekday", "start_time", "end_time"] },
+      { titulo: "Vigência", campos: ["effective_from", "effective_until", "active"] },
+    ],
+    lembrarCampos: ["schedule_type", "employee"],
+  }
+}
+
+function hrAbsenceConfig(): ResourceFormConfig {
+  return {
+    esconderCampos: [...HR_INTERNAL_FIELDS, ...HR_COMPUTED_FIELDS],
+    labels: {
+      employee: "Funcionário", date: "Data (legado)", absence_type: "Tipo de falta",
+      start_date: "Data de início", end_date: "Data de fim",
+      reason: "Motivo", status: "Estado",
+      deduct_from_salary: "Descontar do salário",
+      deduct_from_vacation: "Descontar das férias",
+      document_attached: "Documento anexado",
+    },
+    ordenarCampos: ["employee", "absence_type", "date", "start_date", "end_date", "reason", "status", "deduct_from_salary", "deduct_from_vacation", "document_attached"],
+    etapas: [
+      { titulo: "Falta", campos: ["employee", "absence_type", "date", "start_date", "end_date"] },
+      { titulo: "Detalhe", campos: ["reason", "status", "document_attached"] },
+      { titulo: "Descontos", campos: ["deduct_from_salary", "deduct_from_vacation"] },
+    ],
+    lembrarCampos: ["absence_type", "deduct_from_salary"],
+  }
+}
+
+function hrVacationConfig(): ResourceFormConfig {
+  return {
+    esconderCampos: [...HR_INTERNAL_FIELDS, ...HR_COMPUTED_FIELDS, "total_days", "approved_at"],
+    labels: {
+      employee: "Funcionário", vacation_year: "Ano de férias",
+      start_date: "Data de início", end_date: "Data de fim",
+      status: "Estado", approved_by: "Aprovado por", notes: "Observações",
+    },
+    widgets: { notes: "textarea" },
+    ordenarCampos: ["employee", "vacation_year", "start_date", "end_date", "status", "approved_by", "notes"],
+    etapas: [
+      { titulo: "Pedido", campos: ["employee", "vacation_year", "start_date", "end_date"] },
+      { titulo: "Aprovação", campos: ["status", "approved_by"] },
+      { titulo: "Observações", campos: ["notes"] },
+    ],
+    lembrarCampos: ["employee", "vacation_year"],
+  }
+}
+
+function hrOvertimeConfig(): ResourceFormConfig {
+  return {
+    esconderCampos: [...HR_INTERNAL_FIELDS, ...HR_COMPUTED_FIELDS, "approved_at"],
+    labels: {
+      employee: "Funcionário", date: "Data", kind: "Tipo de hora",
+      overtime_type: "Classificação", hours: "Horas",
+      multiplier: "Multiplicador", amount: "Valor calculado",
+      status: "Estado", approved_by: "Aprovado por", notes: "Observações",
+    },
+    ordenarCampos: ["employee", "date", "kind", "overtime_type", "hours", "multiplier", "amount", "status", "approved_by", "notes"],
+    etapas: [
+      { titulo: "Registo", campos: ["employee", "date", "kind", "overtime_type", "hours", "multiplier"] },
+      { titulo: "Aprovação", campos: ["status", "approved_by", "amount"] },
+      { titulo: "Observações", campos: ["notes"] },
+    ],
+    lembrarCampos: ["employee", "kind", "overtime_type"],
+  }
+}
+
+function hrDisciplinaryConfig(): ResourceFormConfig {
+  return {
+    esconderCampos: [...HR_INTERNAL_FIELDS, ...HR_COMPUTED_FIELDS, "resolved_at"],
+    labels: {
+      employee: "Funcionário", incident_date: "Data do incidente",
+      incident_type: "Tipo de incidente", reported_by: "Reportado por",
+      severity: "Gravidade", description: "Descrição",
+      hearing_date: "Data da audiência", decision: "Decisão",
+      action_taken: "Ação aplicada", sanction: "Sanção",
+      status: "Estado", notes: "Observações",
+    },
+    widgets: { description: "textarea", decision: "textarea", action_taken: "textarea", notes: "textarea" },
+    ordenarCampos: ["employee", "incident_date", "incident_type", "reported_by", "severity", "description", "hearing_date", "decision", "action_taken", "sanction", "status", "notes"],
+    etapas: [
+      { titulo: "Incidente", campos: ["employee", "incident_date", "incident_type", "reported_by", "severity", "description"] },
+      { titulo: "Audiência e decisão", campos: ["hearing_date", "decision", "action_taken", "sanction"] },
+      { titulo: "Estado e notas", campos: ["status", "notes"] },
+    ],
+    lembrarCampos: ["severity"],
+  }
+}
+
+function hrAttendanceConfig(): ResourceFormConfig {
+  return {
+    esconderCampos: [...HR_INTERNAL_FIELDS, ...HR_COMPUTED_FIELDS],
+    labels: {
+      employee: "Funcionário", date: "Data", clock_in: "Entrada",
+      clock_out: "Saída", expected_start: "Entrada prevista",
+      expected_end: "Saída prevista", late_minutes: "Minutos de atraso",
+      early_leave_minutes: "Minutos de saída antecipada",
+      worked_hours: "Horas trabalhadas", status: "Estado", notes: "Observações",
+    },
+    widgets: { notes: "textarea" },
+    ordenarCampos: ["employee", "date", "status", "clock_in", "clock_out", "expected_start", "expected_end", "late_minutes", "early_leave_minutes", "worked_hours", "notes"],
+    etapas: [
+      { titulo: "Registo", campos: ["employee", "date", "status"] },
+      { titulo: "Horas", campos: ["clock_in", "clock_out", "expected_start", "expected_end"] },
+      { titulo: "Indicadores", campos: ["late_minutes", "early_leave_minutes", "worked_hours", "notes"] },
+    ],
+    lembrarCampos: ["employee"],
+  }
+}
+
+function hrLeavePermissionConfig(): ResourceFormConfig {
+  return {
+    esconderCampos: [...HR_INTERNAL_FIELDS, ...HR_COMPUTED_FIELDS],
+    labels: {
+      employee: "Funcionário", permission_date: "Data da dispensa",
+      start_time: "Hora de saída", end_time: "Hora de retorno",
+      reason: "Motivo", approved_by: "Aprovado por",
+      paid_permission: "Dispensa remunerada",
+      deduct_from_hours: "Descontar das horas trabalhadas",
+      status: "Estado",
+    },
+    widgets: { reason: "textarea" },
+    ordenarCampos: ["employee", "permission_date", "start_time", "end_time", "reason", "paid_permission", "deduct_from_hours", "status", "approved_by"],
+    etapas: [
+      { titulo: "Pedido", campos: ["employee", "permission_date", "start_time", "end_time", "reason"] },
+      { titulo: "Regras e aprovação", campos: ["paid_permission", "deduct_from_hours", "status", "approved_by"] },
+    ],
+    lembrarCampos: ["paid_permission", "employee"],
+  }
+}
+
+function hrVacationBalanceConfig(): ResourceFormConfig {
+  return {
+    esconderCampos: [...HR_INTERNAL_FIELDS, ...HR_COMPUTED_FIELDS],
+    labels: {
+      employee: "Funcionário", year: "Ano",
+      entitled_days: "Dias com direito", used_days: "Dias utilizados",
+      pending_days: "Dias pendentes", remaining_days: "Dias restantes",
+      carried_over_days: "Dias transitados do ano anterior",
+    },
+    somenteLeituraCampos: ["remaining_days"],
+    ordenarCampos: ["employee", "year", "entitled_days", "carried_over_days", "used_days", "pending_days", "remaining_days"],
+    etapas: [
+      { titulo: "Funcionário e ano", campos: ["employee", "year"] },
+      { titulo: "Saldo", campos: ["entitled_days", "carried_over_days", "used_days", "pending_days", "remaining_days"] },
+    ],
+    lembrarCampos: ["employee", "year"],
+  }
+}
+
+function hrContractConfig(): ResourceFormConfig {
+  return {
+    esconderCampos: [...HR_INTERNAL_FIELDS, ...HR_COMPUTED_FIELDS],
+    labels: {
+      employee: "Funcionário", contract_type: "Tipo de contrato",
+      start_date: "Data de início", end_date: "Data de fim",
+      salary: "Salário contratual", notes: "Observações", status: "Estado",
+    },
+    widgets: { notes: "textarea" },
+    ordenarCampos: ["employee", "contract_type", "start_date", "end_date", "salary", "status", "notes"],
+    etapas: [
+      { titulo: "Contrato", campos: ["employee", "contract_type", "start_date", "end_date"] },
+      { titulo: "Remuneração e estado", campos: ["salary", "status"] },
+      { titulo: "Observações", campos: ["notes"] },
+    ],
+    lembrarCampos: ["contract_type"],
+  }
+}
+
+function hrEmployeeDocumentConfig(): ResourceFormConfig {
+  return {
+    esconderCampos: [...HR_INTERNAL_FIELDS, ...HR_COMPUTED_FIELDS],
+    labels: {
+      employee: "Funcionário", document_type: "Tipo de documento",
+      title: "Título", file: "Ficheiro", notes: "Observações", status: "Estado",
+    },
+    widgets: { notes: "textarea" },
+    ordenarCampos: ["employee", "document_type", "title", "file", "status", "notes"],
+    etapas: [
+      { titulo: "Documento", campos: ["employee", "document_type", "title", "file"] },
+      { titulo: "Estado e notas", campos: ["status", "notes"] },
+    ],
+    lembrarCampos: ["document_type"],
+  }
+}
+
+function hrSalaryHistoryConfig(): ResourceFormConfig {
+  return {
+    esconderCampos: [...HR_INTERNAL_FIELDS, ...HR_COMPUTED_FIELDS],
+    labels: {
+      employee: "Funcionário", amount: "Valor do salário",
+      effective_from: "Vigente a partir de", effective_until: "Vigente até",
+      is_current: "Salário atual", reason: "Motivo da alteração",
+    },
+    widgets: { reason: "textarea" },
+    ordenarCampos: ["employee", "amount", "effective_from", "effective_until", "is_current", "reason"],
+    etapas: [
+      { titulo: "Salário", campos: ["employee", "amount", "effective_from", "effective_until", "is_current"] },
+      { titulo: "Motivo", campos: ["reason"] },
+    ],
+    lembrarCampos: ["employee"],
+  }
+}
+
+function hrPayrollRunConfig(): ResourceFormConfig {
+  return {
+    esconderCampos: [...HR_INTERNAL_FIELDS, ...HR_COMPUTED_FIELDS],
+    labels: {
+      payroll_period: "Período (AAAA-MM)", start_date: "Data de início",
+      end_date: "Data de fim", approved_by: "Aprovado por",
+      total_gross: "Total bruto", total_deductions: "Total de descontos",
+      total_net: "Total líquido", status: "Estado", notes: "Observações",
+    },
+    somenteLeituraCampos: ["total_gross", "total_deductions", "total_net"],
+    placeholders: { payroll_period: "Ex.: 2026-06" },
+    widgets: { notes: "textarea" },
+    ordenarCampos: ["payroll_period", "start_date", "end_date", "status", "approved_by", "total_gross", "total_deductions", "total_net", "notes"],
+    etapas: [
+      { titulo: "Período", campos: ["payroll_period", "start_date", "end_date", "status"] },
+      { titulo: "Totais", campos: ["approved_by", "total_gross", "total_deductions", "total_net"] },
+      { titulo: "Observações", campos: ["notes"] },
+    ],
+  }
+}
+
+function hrPayrollItemConfig(): ResourceFormConfig {
+  return {
+    esconderCampos: [...HR_INTERNAL_FIELDS, ...HR_COMPUTED_FIELDS],
+    labels: {
+      payroll_run: "Folha de pagamento", employee: "Funcionário",
+      base_salary: "Salário base", overtime_amount: "Horas extras",
+      allowances: "Subsídios", bonuses: "Bónus",
+      absence_deductions: "Descontos por faltas",
+      other_deductions: "Outros descontos",
+      gross_pay: "Salário bruto", net_pay: "Salário líquido",
+      status: "Estado", notes: "Observações",
+    },
+    somenteLeituraCampos: ["gross_pay", "net_pay"],
+    widgets: { notes: "textarea" },
+    ordenarCampos: ["payroll_run", "employee", "base_salary", "overtime_amount", "allowances", "bonuses", "absence_deductions", "other_deductions", "gross_pay", "net_pay", "status", "notes"],
+    etapas: [
+      { titulo: "Funcionário", campos: ["payroll_run", "employee"] },
+      { titulo: "Vencimentos", campos: ["base_salary", "overtime_amount", "allowances", "bonuses"] },
+      { titulo: "Descontos", campos: ["absence_deductions", "other_deductions"] },
+      { titulo: "Totais e estado", campos: ["gross_pay", "net_pay", "status", "notes"] },
+    ],
+    lembrarCampos: ["payroll_run"],
+  }
+}
+
+function hrTerminationConfig(): ResourceFormConfig {
+  return {
+    esconderCampos: [...HR_INTERNAL_FIELDS, ...HR_COMPUTED_FIELDS],
+    labels: {
+      employee: "Funcionário", date: "Data do desligamento",
+      type: "Tipo de desligamento", reason: "Motivo",
+    },
+    widgets: { reason: "textarea" },
+    ordenarCampos: ["employee", "date", "type", "reason"],
+    etapas: [
+      { titulo: "Desligamento", campos: ["employee", "date", "type"] },
+      { titulo: "Motivo", campos: ["reason"] },
+    ],
+    lembrarCampos: ["type"],
+  }
+}
+
+// ─── Surgery ────────────────────────────────────────────────────────────────
+
+const SURGERY_INTERNAL_FIELDS = [
+  "id", "created_at", "updated_at", "custom_id", "deleted", "deleted_at",
+  "version", "created_by", "updated_by", "deleted_by", "tenant",
+]
+
+const SURGERY_COMPUTED_FIELDS = [
+  "patient_name", "surgeon_name", "specialty_name", "operating_room_name",
+  "procedure_names", "surgical_request_code", "invoice_id", "invoice_code",
+  "invoice_status", "requesting_doctor_name", "surgery_code",
+  "primary_surgeon_name", "anesthetist_name", "employee_name",
+  "material_name", "procedure_name", "responsible_surgeon_name",
+  "responsible_name", "nurse_name", "primary_surgeon_name",
+  "completed_by_name", "consumed_by_name", "authorization_code",
+  "patient_name_display",
+]
+
+function surgeryRequestConfig(): ResourceFormConfig {
+  return {
+    esconderCampos: [...SURGERY_INTERNAL_FIELDS, ...SURGERY_COMPUTED_FIELDS, "reviewed_at", "converted_at"],
+    labels: {
+      patient: "Paciente",
+      requesting_doctor: "Médico solicitante",
+      specialty: "Especialidade cirúrgica",
+      clinical_diagnosis: "Diagnóstico clínico",
+      icd_code: "Código CID/ICD",
+      requested_surgery_type: "Tipo de cirurgia solicitada",
+      requested_procedure: "Procedimento solicitado",
+      priority: "Prioridade",
+      justification: "Justificação clínica",
+      status: "Estado",
+      notes: "Observações",
+    },
+    placeholders: {
+      icd_code: "Ex.: K40.9, C18.2",
+      requested_procedure: "Ex.: Herniorrafia inguinal bilateral",
+      clinical_diagnosis: "Resumo do diagnóstico clínico...",
+    },
+    widgets: {
+      clinical_diagnosis: "textarea",
+      justification: "textarea",
+      notes: "textarea",
+    },
+    ordenarCampos: [
+      "patient", "requesting_doctor", "specialty",
+      "clinical_diagnosis", "icd_code", "requested_surgery_type",
+      "requested_procedure", "priority", "justification", "status", "notes",
+    ],
+    etapas: [
+      {
+        titulo: "Identificação",
+        descricao: "Paciente, médico e especialidade",
+        campos: ["patient", "requesting_doctor", "specialty"],
+      },
+      {
+        titulo: "Diagnóstico",
+        descricao: "Diagnóstico clínico, CID e procedimento",
+        campos: ["clinical_diagnosis", "icd_code", "requested_surgery_type", "requested_procedure"],
+      },
+      {
+        titulo: "Prioridade e justificação",
+        descricao: "Urgência e motivo clínico",
+        campos: ["priority", "justification", "status"],
+      },
+      {
+        titulo: "Observações",
+        campos: ["notes"],
+      },
+    ],
+    lembrarCampos: ["requesting_doctor", "specialty", "priority", "requested_surgery_type"],
+  }
+}
+
+function surgeryPreoperativeConfig(): ResourceFormConfig {
+  return {
+    esconderCampos: [...SURGERY_INTERNAL_FIELDS, ...SURGERY_COMPUTED_FIELDS, "assessed_at"],
+    labels: {
+      patient: "Paciente",
+      surgical_request: "Pedido cirúrgico",
+      proposed_surgery: "Cirurgia proposta",
+      evaluator: "Avaliador",
+      medical_evaluation: "Avaliação médica",
+      anesthetic_evaluation: "Avaliação anestésica",
+      asa_class: "Classificação ASA",
+      surgical_risk: "Risco cirúrgico",
+      required_exams: "Exames necessários",
+      exam_results_reviewed: "Exames revistos",
+      fit_for_surgery: "Apto para cirurgia",
+      consent_signed: "Consentimento assinado",
+      status: "Estado",
+      observations: "Observações clínicas",
+    },
+    widgets: {
+      medical_evaluation: "textarea",
+      anesthetic_evaluation: "textarea",
+      observations: "textarea",
+    },
+    ordenarCampos: [
+      "patient", "surgical_request", "proposed_surgery", "evaluator",
+      "asa_class", "surgical_risk", "medical_evaluation", "anesthetic_evaluation",
+      "required_exams", "exam_results_reviewed", "fit_for_surgery", "consent_signed",
+      "status", "observations",
+    ],
+    etapas: [
+      {
+        titulo: "Identificação",
+        descricao: "Paciente, pedido e avaliador",
+        campos: ["patient", "surgical_request", "proposed_surgery", "evaluator"],
+      },
+      {
+        titulo: "Avaliação clínica",
+        descricao: "Avaliação médica e anestésica",
+        campos: ["asa_class", "surgical_risk", "medical_evaluation", "anesthetic_evaluation"],
+      },
+      {
+        titulo: "Exames e aptidão",
+        descricao: "Exames obrigatórios, consentimento e aptidão",
+        campos: ["required_exams", "exam_results_reviewed", "fit_for_surgery", "consent_signed", "status"],
+      },
+      {
+        titulo: "Observações",
+        campos: ["observations"],
+      },
+    ],
+    lembrarCampos: ["evaluator", "asa_class"],
+  }
+}
+
+function surgeryMainConfig(): ResourceFormConfig {
+  return {
+    esconderCampos: [
+      ...SURGERY_INTERNAL_FIELDS, ...SURGERY_COMPUTED_FIELDS,
+      "started_at", "ended_at", "completed_at", "canceled_at",
+    ],
+    labels: {
+      patient: "Paciente",
+      surgical_request: "Pedido cirúrgico",
+      specialty: "Especialidade",
+      surgeon: "Cirurgião",
+      operating_room: "Sala operatória",
+      procedures: "Procedimentos do catálogo",
+      procedure: "Procedimento (texto livre)",
+      description: "Descrição",
+      preoperative_diagnosis: "Diagnóstico pré-operatório",
+      postoperative_diagnosis: "Diagnóstico pós-operatório",
+      estimated_price: "Preço estimado",
+      vat_percentage: "IVA (%)",
+      applies_vat_by_default: "Aplicar IVA por padrão",
+      scheduled_for: "Agendada para",
+      status: "Estado",
+      surgery_size: "Porte",
+      priority: "Prioridade",
+      classification: "Classificação",
+    },
+    placeholders: {
+      procedure: "Descreva o procedimento se não estiver no catálogo",
+    },
+    widgets: {
+      description: "textarea",
+      preoperative_diagnosis: "textarea",
+      postoperative_diagnosis: "textarea",
+    },
+    ordenarCampos: [
+      "patient", "surgical_request", "specialty", "surgeon", "operating_room",
+      "surgery_size", "priority", "classification",
+      "procedures", "procedure",
+      "preoperative_diagnosis", "postoperative_diagnosis", "description",
+      "scheduled_for", "estimated_price", "vat_percentage", "applies_vat_by_default", "status",
+    ],
+    etapas: [
+      {
+        titulo: "Identificação",
+        descricao: "Paciente, pedido e especialidade",
+        campos: ["patient", "surgical_request", "specialty"],
+      },
+      {
+        titulo: "Equipa e sala",
+        descricao: "Cirurgião e sala operatória",
+        campos: ["surgeon", "operating_room"],
+      },
+      {
+        titulo: "Classificação",
+        descricao: "Porte, prioridade e classificação",
+        campos: ["surgery_size", "priority", "classification"],
+      },
+      {
+        titulo: "Procedimento",
+        descricao: "Catálogo de procedimentos ou texto livre",
+        campos: ["procedures", "procedure", "preoperative_diagnosis", "postoperative_diagnosis", "description"],
+      },
+      {
+        titulo: "Agendamento e faturação",
+        descricao: "Data, preço e estado",
+        campos: ["scheduled_for", "estimated_price", "vat_percentage", "applies_vat_by_default", "status"],
+      },
+    ],
+    lembrarCampos: ["surgeon", "operating_room", "specialty", "vat_percentage"],
+  }
+}
+
+function surgerySmallConfig(): ResourceFormConfig {
+  return {
+    ...surgeryMainConfig(),
+    esconderCampos: [
+      ...SURGERY_INTERNAL_FIELDS, ...SURGERY_COMPUTED_FIELDS,
+      "surgery_size", "started_at", "ended_at", "completed_at", "canceled_at",
+    ],
+  }
+}
+
+function surgeryLargeConfig(): ResourceFormConfig {
+  return {
+    ...surgeryMainConfig(),
+    esconderCampos: [
+      ...SURGERY_INTERNAL_FIELDS, ...SURGERY_COMPUTED_FIELDS,
+      "surgery_size", "started_at", "ended_at", "completed_at", "canceled_at",
+    ],
+  }
+}
+
+function surgeryCatalogProcedureConfig(): ResourceFormConfig {
+  return {
+    esconderCampos: [...SURGERY_INTERNAL_FIELDS, ...SURGERY_COMPUTED_FIELDS],
+    labels: {
+      name: "Nome do procedimento",
+      description: "Descrição",
+      base_price: "Preço base",
+      vat_percentage: "IVA (%)",
+      applies_vat_by_default: "Aplicar IVA por padrão",
+      active: "Ativo",
+    },
+    widgets: { description: "textarea" },
+    ordenarCampos: ["name", "description", "base_price", "vat_percentage", "applies_vat_by_default", "active"],
+    etapas: [
+      {
+        titulo: "Identificação",
+        descricao: "Nome e descrição do procedimento",
+        campos: ["name", "description"],
+      },
+      {
+        titulo: "Preço e estado",
+        campos: ["base_price", "vat_percentage", "applies_vat_by_default", "active"],
+      },
+    ],
+    lembrarCampos: ["vat_percentage", "applies_vat_by_default"],
+  }
+}
+
+function surgeryScheduleConfig(): ResourceFormConfig {
+  return {
+    esconderCampos: [
+      ...SURGERY_INTERNAL_FIELDS, ...SURGERY_COMPUTED_FIELDS,
+      "patient_checked_in_at",
+    ],
+    labels: {
+      surgery: "Cirurgia",
+      operating_room: "Centro cirúrgico / Sala",
+      primary_surgeon: "Cirurgião principal",
+      anesthetist: "Anestesista",
+      scheduled_start: "Início previsto",
+      scheduled_end: "Fim previsto",
+      status: "Estado",
+      priority: "Prioridade",
+      authorization_verified: "Autorização/pagamento verificado",
+      cancellation_reason: "Motivo de cancelamento",
+      notes: "Observações",
+    },
+    widgets: {
+      cancellation_reason: "textarea",
+      notes: "textarea",
+    },
+    ordenarCampos: [
+      "surgery", "operating_room", "primary_surgeon", "anesthetist",
+      "scheduled_start", "scheduled_end",
+      "priority", "status", "authorization_verified",
+      "cancellation_reason", "notes",
+    ],
+    etapas: [
+      {
+        titulo: "Cirurgia e sala",
+        descricao: "Cirurgia, sala operatória e equipa",
+        campos: ["surgery", "operating_room", "primary_surgeon", "anesthetist"],
+      },
+      {
+        titulo: "Horário",
+        descricao: "Data/hora de início e fim previstos",
+        campos: ["scheduled_start", "scheduled_end"],
+      },
+      {
+        titulo: "Estado e confirmação",
+        campos: ["priority", "status", "authorization_verified"],
+      },
+      {
+        titulo: "Notas",
+        campos: ["cancellation_reason", "notes"],
+      },
+    ],
+    lembrarCampos: ["operating_room", "primary_surgeon", "anesthetist", "priority"],
+  }
+}
+
+function surgeryOperatingRoomConfig(): ResourceFormConfig {
+  return {
+    esconderCampos: [...SURGERY_INTERNAL_FIELDS, ...SURGERY_COMPUTED_FIELDS],
+    labels: {
+      name: "Nome da sala",
+      code: "Código",
+      room_type: "Tipo de sala",
+      status: "Estado",
+      location: "Localização",
+      capacity: "Capacidade (nº de pacientes)",
+      sterile: "Esterilizada",
+      equipment_notes: "Equipamentos disponíveis",
+      working_hours: "Horário de funcionamento",
+      cleaning_class: "Classe de limpeza",
+      blocked_reason: "Motivo de bloqueio",
+      notes: "Observações",
+    },
+    widgets: {
+      equipment_notes: "textarea",
+      blocked_reason: "textarea",
+      notes: "textarea",
+    },
+    ordenarCampos: [
+      "name", "code", "room_type", "status", "location",
+      "capacity", "sterile", "cleaning_class",
+      "equipment_notes", "working_hours", "blocked_reason", "notes",
+    ],
+    etapas: [
+      {
+        titulo: "Identificação",
+        descricao: "Nome, código e tipo de sala",
+        campos: ["name", "code", "room_type", "location"],
+      },
+      {
+        titulo: "Capacidade e esterilização",
+        campos: ["capacity", "sterile", "cleaning_class", "status"],
+      },
+      {
+        titulo: "Equipamentos",
+        descricao: "Equipamentos disponíveis e horário",
+        campos: ["equipment_notes", "working_hours"],
+      },
+      {
+        titulo: "Bloqueio e notas",
+        campos: ["blocked_reason", "notes"],
+      },
+    ],
+    lembrarCampos: ["room_type", "sterile", "cleaning_class"],
+  }
+}
+
+function surgeryTeamMemberConfig(): ResourceFormConfig {
+  return {
+    esconderCampos: [
+      ...SURGERY_INTERNAL_FIELDS, ...SURGERY_COMPUTED_FIELDS,
+      "signed_at", "signature_reference",
+    ],
+    labels: {
+      surgery: "Cirurgia",
+      employee: "Profissional",
+      role: "Função na cirurgia",
+      lead: "Responsável principal",
+      present: "Presente",
+      entry_at: "Entrada em sala",
+      exit_at: "Saída de sala",
+      responsibility: "Responsabilidade",
+      notes: "Observações",
+    },
+    widgets: {
+      responsibility: "textarea",
+      notes: "textarea",
+    },
+    ordenarCampos: [
+      "surgery", "employee", "role", "lead", "present",
+      "entry_at", "exit_at",
+      "responsibility", "notes",
+    ],
+    etapas: [
+      {
+        titulo: "Cirurgia e profissional",
+        campos: ["surgery", "employee", "role"],
+      },
+      {
+        titulo: "Presença",
+        campos: ["lead", "present", "entry_at", "exit_at"],
+      },
+      {
+        titulo: "Responsabilidade e notas",
+        campos: ["responsibility", "notes"],
+      },
+    ],
+    lembrarCampos: ["role"],
+  }
+}
+
+function surgeryAnesthesiaConfig(): ResourceFormConfig {
+  return {
+    esconderCampos: [
+      ...SURGERY_INTERNAL_FIELDS, ...SURGERY_COMPUTED_FIELDS,
+    ],
+    labels: {
+      surgery: "Cirurgia",
+      anesthetist: "Anestesista",
+      anesthesia_type: "Tipo de anestesia",
+      asa_class: "Classificação ASA",
+      status: "Estado",
+      induction_at: "Indução em",
+      started_at: "Início da anestesia",
+      ended_at: "Fim da anestesia",
+      airway_management: "Gestão da via aérea",
+      medications: "Fármacos administrados",
+      fluids: "Fluidos administrados",
+      vital_signs: "Sinais vitais",
+      adverse_events: "Eventos adversos",
+      recovery_handoff: "Passagem para recuperação",
+      complications: "Complicações",
+      notes: "Observações",
+    },
+    widgets: {
+      airway_management: "textarea",
+      recovery_handoff: "textarea",
+      complications: "textarea",
+      notes: "textarea",
+    },
+    ordenarCampos: [
+      "surgery", "anesthetist", "anesthesia_type", "asa_class", "status",
+      "induction_at", "started_at", "ended_at",
+      "airway_management",
+      "medications", "fluids", "vital_signs", "adverse_events",
+      "recovery_handoff", "complications", "notes",
+    ],
+    etapas: [
+      {
+        titulo: "Identificação",
+        descricao: "Cirurgia, anestesista e tipo",
+        campos: ["surgery", "anesthetist", "anesthesia_type", "asa_class", "status"],
+      },
+      {
+        titulo: "Tempos",
+        descricao: "Indução, início e fim da anestesia",
+        campos: ["induction_at", "started_at", "ended_at"],
+      },
+      {
+        titulo: "Técnica",
+        descricao: "Via aérea, fármacos e fluidos",
+        campos: ["airway_management", "medications", "fluids"],
+      },
+      {
+        titulo: "Monitorização",
+        descricao: "Sinais vitais e eventos adversos",
+        campos: ["vital_signs", "adverse_events"],
+      },
+      {
+        titulo: "Recuperação e notas",
+        campos: ["recovery_handoff", "complications", "notes"],
+      },
+    ],
+    lembrarCampos: ["anesthetist", "anesthesia_type", "asa_class"],
+  }
+}
+
+function surgerySafetyChecklistConfig(): ResourceFormConfig {
+  return {
+    esconderCampos: [
+      ...SURGERY_INTERNAL_FIELDS, ...SURGERY_COMPUTED_FIELDS,
+      "completed_at",
+    ],
+    labels: {
+      surgery: "Cirurgia",
+      completed_by: "Preenchido por",
+      phase: "Fase do checklist",
+      status: "Estado",
+      patient_identity_confirmed: "Identidade do paciente confirmada",
+      procedure_confirmed: "Procedimento confirmado",
+      site_marked: "Local cirúrgico marcado",
+      consent_confirmed: "Consentimento confirmado",
+      anesthesia_safety_checked: "Segurança anestésica verificada",
+      antibiotic_prophylaxis: "Profilaxia antibiótica efetuada",
+      instrument_count_confirmed: "Contagem de instrumentos confirmada",
+      specimens_labeled: "Amostras devidamente identificadas",
+      override_reason: "Motivo de sobrescrita",
+      notes: "Observações",
+    },
+    widgets: {
+      override_reason: "textarea",
+      notes: "textarea",
+    },
+    ordenarCampos: [
+      "surgery", "completed_by", "phase", "status",
+      "patient_identity_confirmed", "procedure_confirmed", "site_marked",
+      "consent_confirmed", "anesthesia_safety_checked", "antibiotic_prophylaxis",
+      "instrument_count_confirmed", "specimens_labeled",
+      "override_reason", "notes",
+    ],
+    etapas: [
+      {
+        titulo: "Identificação",
+        descricao: "Cirurgia, responsável e fase",
+        campos: ["surgery", "completed_by", "phase", "status"],
+      },
+      {
+        titulo: "Verificações de segurança",
+        descricao: "Confirmações obrigatórias antes da cirurgia",
+        campos: [
+          "patient_identity_confirmed", "procedure_confirmed", "site_marked",
+          "consent_confirmed", "anesthesia_safety_checked", "antibiotic_prophylaxis",
+          "instrument_count_confirmed", "specimens_labeled",
+        ],
+      },
+      {
+        titulo: "Notas e sobrescrita",
+        campos: ["override_reason", "notes"],
+      },
+    ],
+    lembrarCampos: ["completed_by", "phase"],
+  }
+}
+
+function surgeryMaterialConfig(): ResourceFormConfig {
+  return {
+    esconderCampos: [...SURGERY_INTERNAL_FIELDS, ...SURGERY_COMPUTED_FIELDS],
+    labels: {
+      name: "Nome do material",
+      code: "Código",
+      product: "Produto de farmácia/stock",
+      material_type: "Tipo de material",
+      unit: "Unidade de medida",
+      internal_code: "Código interno",
+      cost_price: "Preço de custo",
+      sale_price: "Preço de venda",
+      batch_number: "Lote padrão",
+      expiry_date: "Validade padrão",
+      implantable: "Implantável",
+      sterilizable: "Esterilizável",
+      tracks_lot: "Controla lote",
+      tracks_expiry: "Controla validade",
+      reusable: "Reutilizável",
+      sterile: "Estéril",
+      active: "Ativo",
+      notes: "Observações",
+    },
+    widgets: { notes: "textarea" },
+    ordenarCampos: [
+      "name", "code", "internal_code", "material_type", "unit", "product",
+      "cost_price", "sale_price",
+      "batch_number", "expiry_date",
+      "implantable", "sterilizable", "reusable", "sterile",
+      "tracks_lot", "tracks_expiry", "active",
+      "notes",
+    ],
+    etapas: [
+      {
+        titulo: "Identificação",
+        descricao: "Nome, código e tipo de material",
+        campos: ["name", "code", "internal_code", "material_type", "unit", "product"],
+      },
+      {
+        titulo: "Preços",
+        campos: ["cost_price", "sale_price"],
+      },
+      {
+        titulo: "Lote e rastreabilidade",
+        campos: ["batch_number", "expiry_date", "tracks_lot", "tracks_expiry"],
+      },
+      {
+        titulo: "Propriedades",
+        campos: ["implantable", "sterilizable", "reusable", "sterile", "active"],
+      },
+      {
+        titulo: "Observações",
+        campos: ["notes"],
+      },
+    ],
+    lembrarCampos: ["material_type", "unit", "sterile"],
+  }
+}
+
+function surgeryConsumptionConfig(): ResourceFormConfig {
+  return {
+    esconderCampos: [...SURGERY_INTERNAL_FIELDS, ...SURGERY_COMPUTED_FIELDS],
+    labels: {
+      surgery: "Cirurgia",
+      material: "Material cirúrgico",
+      product: "Produto (farmácia/stock)",
+      consumed_by: "Registado por",
+      quantity: "Quantidade",
+      unit_cost: "Custo unitário",
+      charged_price: "Preço cobrado",
+      consumed_at: "Consumido em",
+      batch_number: "Lote",
+      expiry_date: "Validade",
+      material_status: "Estado do material",
+      billing_status: "Estado de faturação",
+      inventory_deducted: "Stock já baixado",
+      returned_quantity: "Quantidade devolvida",
+      notes: "Observações",
+    },
+    widgets: { notes: "textarea" },
+    ordenarCampos: [
+      "surgery", "material", "product", "consumed_by",
+      "quantity", "returned_quantity",
+      "unit_cost", "charged_price",
+      "consumed_at", "batch_number", "expiry_date",
+      "material_status", "billing_status", "inventory_deducted",
+      "notes",
+    ],
+    etapas: [
+      {
+        titulo: "Cirurgia e material",
+        campos: ["surgery", "material", "product", "consumed_by"],
+      },
+      {
+        titulo: "Quantidades e preços",
+        campos: ["quantity", "returned_quantity", "unit_cost", "charged_price"],
+      },
+      {
+        titulo: "Rastreabilidade",
+        campos: ["consumed_at", "batch_number", "expiry_date"],
+      },
+      {
+        titulo: "Estado",
+        campos: ["material_status", "billing_status", "inventory_deducted", "notes"],
+      },
+    ],
+    lembrarCampos: ["consumed_by"],
+  }
+}
+
+function surgeryRecoveryConfig(): ResourceFormConfig {
+  return {
+    esconderCampos: [...SURGERY_INTERNAL_FIELDS, ...SURGERY_COMPUTED_FIELDS],
+    labels: {
+      surgery: "Cirurgia",
+      nurse: "Enfermeiro",
+      admitted_at: "Admitido em",
+      discharged_at: "Alta em",
+      status: "Estado",
+      consciousness_level: "Nível de consciência",
+      pain_score: "Dor (0-10)",
+      aldrete_score: "Índice de Aldrete (0-10)",
+      vital_signs: "Sinais vitais",
+      nausea_vomiting: "Náuseas / vómitos",
+      bleeding: "Sangramento",
+      complications: "Complicações",
+      destination: "Destino após alta",
+      notes: "Observações",
+    },
+    hints: {
+      aldrete_score: "Score de alta da RPA: 0 = não apto, 10 = alta imediata.",
+      pain_score: "Escala numérica de dor: 0 = sem dor, 10 = dor máxima.",
+    },
+    widgets: {
+      complications: "textarea",
+      notes: "textarea",
+    },
+    ordenarCampos: [
+      "surgery", "nurse", "status",
+      "admitted_at", "discharged_at",
+      "consciousness_level", "pain_score", "aldrete_score",
+      "nausea_vomiting", "bleeding", "vital_signs",
+      "complications", "destination", "notes",
+    ],
+    etapas: [
+      {
+        titulo: "Admissão",
+        descricao: "Cirurgia, enfermeiro e estado",
+        campos: ["surgery", "nurse", "status", "admitted_at", "discharged_at"],
+      },
+      {
+        titulo: "Avaliação clínica",
+        descricao: "Sinais vitais e scores de avaliação",
+        campos: ["consciousness_level", "pain_score", "aldrete_score", "vital_signs"],
+      },
+      {
+        titulo: "Intercorrências",
+        campos: ["nausea_vomiting", "bleeding", "complications"],
+      },
+      {
+        titulo: "Alta",
+        campos: ["destination", "notes"],
+      },
+    ],
+    lembrarCampos: ["nurse"],
+  }
+}
+
+function surgeryOperativeReportConfig(): ResourceFormConfig {
+  return {
+    esconderCampos: [
+      ...SURGERY_INTERNAL_FIELDS, ...SURGERY_COMPUTED_FIELDS,
+      "signed_at", "digitally_signed", "digital_signature_reference",
+    ],
+    labels: {
+      surgery: "Cirurgia",
+      primary_surgeon: "Cirurgião principal",
+      status: "Estado",
+      preoperative_diagnosis: "Diagnóstico pré-operatório",
+      postoperative_diagnosis: "Diagnóstico pós-operatório",
+      procedure_performed: "Procedimento realizado",
+      findings: "Achados operatórios",
+      technique: "Técnica cirúrgica",
+      complications: "Complicações",
+      estimated_blood_loss_ml: "Perda sanguínea estimada (ml)",
+      specimens: "Amostras colhidas",
+      drains: "Drenos colocados",
+      implants: "Implantes utilizados",
+      final_patient_condition: "Condição final do paciente",
+      postoperative_plan: "Plano pós-operatório",
+      specimen_sent_to_pathology: "Amostra enviada à patologia",
+      pathology_accession_number: "N.º de requisição de patologia",
+      started_at: "Início da cirurgia",
+      ended_at: "Fim da cirurgia",
+      notes: "Notas adicionais",
+    },
+    widgets: {
+      preoperative_diagnosis: "textarea",
+      postoperative_diagnosis: "textarea",
+      procedure_performed: "textarea",
+      findings: "textarea",
+      technique: "textarea",
+      complications: "textarea",
+      final_patient_condition: "textarea",
+      postoperative_plan: "textarea",
+      specimens: "textarea",
+      notes: "textarea",
+    },
+    ordenarCampos: [
+      "surgery", "primary_surgeon", "status",
+      "started_at", "ended_at",
+      "preoperative_diagnosis", "postoperative_diagnosis",
+      "procedure_performed", "findings", "technique",
+      "estimated_blood_loss_ml", "complications",
+      "specimens", "drains", "implants",
+      "specimen_sent_to_pathology", "pathology_accession_number",
+      "final_patient_condition", "postoperative_plan", "notes",
+    ],
+    etapas: [
+      {
+        titulo: "Identificação",
+        campos: ["surgery", "primary_surgeon", "status", "started_at", "ended_at"],
+      },
+      {
+        titulo: "Diagnóstico",
+        campos: ["preoperative_diagnosis", "postoperative_diagnosis"],
+      },
+      {
+        titulo: "Procedimento e técnica",
+        campos: ["procedure_performed", "findings", "technique"],
+      },
+      {
+        titulo: "Intercorrências e perdas",
+        campos: ["complications", "estimated_blood_loss_ml"],
+      },
+      {
+        titulo: "Material e patologia",
+        campos: ["specimens", "drains", "implants", "specimen_sent_to_pathology", "pathology_accession_number"],
+      },
+      {
+        titulo: "Plano pós-operatório",
+        campos: ["final_patient_condition", "postoperative_plan", "notes"],
+      },
+    ],
+    lembrarCampos: ["primary_surgeon"],
+  }
+}
+
+function surgeryProcedureItemConfig(): ResourceFormConfig {
+  return {
+    esconderCampos: [...SURGERY_INTERNAL_FIELDS, ...SURGERY_COMPUTED_FIELDS],
+    labels: {
+      surgery: "Cirurgia",
+      procedure: "Procedimento do catálogo",
+      description: "Descrição",
+      anatomical_region: "Região anatómica",
+      laterality: "Lateralidade",
+      sequence: "Ordem de execução",
+      responsible_surgeon: "Cirurgião responsável",
+      status: "Estado",
+      quantity: "Quantidade",
+      unit_price: "Preço unitário",
+      vat_percentage: "IVA (%)",
+      notes: "Observações",
+    },
+    widgets: { notes: "textarea" },
+    ordenarCampos: [
+      "surgery", "procedure", "description",
+      "sequence", "anatomical_region", "laterality",
+      "responsible_surgeon", "status",
+      "quantity", "unit_price", "vat_percentage",
+      "notes",
+    ],
+    etapas: [
+      {
+        titulo: "Cirurgia e procedimento",
+        campos: ["surgery", "procedure", "description"],
+      },
+      {
+        titulo: "Localização e cirurgião",
+        campos: ["sequence", "anatomical_region", "laterality", "responsible_surgeon", "status"],
+      },
+      {
+        titulo: "Faturação",
+        campos: ["quantity", "unit_price", "vat_percentage"],
+      },
+      {
+        titulo: "Observações",
+        campos: ["notes"],
+      },
+    ],
+    lembrarCampos: ["responsible_surgeon", "vat_percentage"],
+  }
+}
+
+function surgeryAuthorizationConfig(): ResourceFormConfig {
+  return {
+    esconderCampos: [
+      ...SURGERY_INTERNAL_FIELDS, ...SURGERY_COMPUTED_FIELDS,
+      "approved_at",
+    ],
+    labels: {
+      patient: "Paciente",
+      surgery: "Cirurgia",
+      surgical_request: "Pedido cirúrgico",
+      preoperative_assessment: "Avaliação pré-operatória",
+      status: "Estado",
+      quotation_amount: "Valor orçamentado",
+      approved_amount: "Valor aprovado",
+      initial_payment_amount: "Pagamento inicial",
+      budget_approved: "Orçamento aprovado",
+      initial_payment_received: "Pagamento inicial recebido",
+      insurance_authorized: "Seguro autorizou",
+      special_materials_approved: "Materiais especiais aprovados",
+      room_available: "Sala disponível",
+      team_available: "Equipa disponível",
+      preoperative_assessment_completed: "Avaliação pré-op. concluída",
+      consent_signed: "Consentimento assinado",
+      valid_until: "Válida até",
+      rejected_reason: "Motivo de rejeição",
+      notes: "Observações",
+    },
+    widgets: {
+      rejected_reason: "textarea",
+      notes: "textarea",
+    },
+    ordenarCampos: [
+      "patient", "surgery", "surgical_request", "preoperative_assessment",
+      "status", "valid_until",
+      "quotation_amount", "approved_amount", "initial_payment_amount",
+      "budget_approved", "initial_payment_received", "insurance_authorized",
+      "special_materials_approved",
+      "room_available", "team_available",
+      "preoperative_assessment_completed", "consent_signed",
+      "rejected_reason", "notes",
+    ],
+    etapas: [
+      {
+        titulo: "Identificação",
+        descricao: "Paciente, cirurgia e pedido",
+        campos: ["patient", "surgery", "surgical_request", "preoperative_assessment"],
+      },
+      {
+        titulo: "Valores",
+        descricao: "Orçamento e pagamento",
+        campos: ["status", "valid_until", "quotation_amount", "approved_amount", "initial_payment_amount"],
+      },
+      {
+        titulo: "Confirmações financeiras",
+        campos: ["budget_approved", "initial_payment_received", "insurance_authorized", "special_materials_approved"],
+      },
+      {
+        titulo: "Confirmações operacionais",
+        campos: ["room_available", "team_available", "preoperative_assessment_completed", "consent_signed"],
+      },
+      {
+        titulo: "Rejeição e notas",
+        campos: ["rejected_reason", "notes"],
+      },
+    ],
+    lembrarCampos: ["status"],
+  }
+}
+
+function surgeryBillingItemConfig(): ResourceFormConfig {
+  return {
+    esconderCampos: [...SURGERY_INTERNAL_FIELDS, ...SURGERY_COMPUTED_FIELDS],
+    labels: {
+      surgery: "Cirurgia",
+      authorization: "Autorização",
+      event_type: "Tipo de evento",
+      billing_mode: "Modo de faturação",
+      description: "Descrição",
+      quantity: "Quantidade",
+      unit_price: "Preço unitário",
+      vat_percentage: "IVA (%)",
+      discount_amount: "Desconto",
+      status: "Estado",
+      invoiced_at: "Faturado em",
+      notes: "Observações",
+    },
+    widgets: { notes: "textarea" },
+    ordenarCampos: [
+      "surgery", "authorization", "event_type", "billing_mode",
+      "description", "quantity", "unit_price", "vat_percentage", "discount_amount",
+      "status", "invoiced_at", "notes",
+    ],
+    etapas: [
+      {
+        titulo: "Cirurgia e autorização",
+        campos: ["surgery", "authorization"],
+      },
+      {
+        titulo: "Tipo de evento",
+        campos: ["event_type", "billing_mode", "description"],
+      },
+      {
+        titulo: "Valores",
+        campos: ["quantity", "unit_price", "vat_percentage", "discount_amount"],
+      },
+      {
+        titulo: "Estado",
+        campos: ["status", "invoiced_at", "notes"],
+      },
+    ],
+    lembrarCampos: ["billing_mode", "vat_percentage"],
+  }
+}
+
+function surgerySpecimenConfig(): ResourceFormConfig {
+  return {
+    esconderCampos: [...SURGERY_INTERNAL_FIELDS, ...SURGERY_COMPUTED_FIELDS],
+    labels: {
+      surgery: "Cirurgia",
+      patient: "Paciente",
+      specimen_type: "Tipo de amostra",
+      anatomical_site: "Local anatómico",
+      collected_at: "Colhida em",
+      fixative: "Fixador usado",
+      responsible: "Responsável",
+      pathology_request: "Pedido de patologia",
+      status: "Estado",
+      notes: "Observações",
+    },
+    placeholders: {
+      specimen_type: "Ex.: Fragmento tecidular, Cisto, Pólipo",
+      anatomical_site: "Ex.: Intestino delgado, Vesícula biliar",
+      fixative: "Ex.: Formol a 10%",
+    },
+    widgets: { notes: "textarea" },
+    ordenarCampos: [
+      "surgery", "patient", "specimen_type", "anatomical_site",
+      "collected_at", "fixative", "responsible", "pathology_request",
+      "status", "notes",
+    ],
+    etapas: [
+      {
+        titulo: "Identificação",
+        campos: ["surgery", "patient", "specimen_type", "anatomical_site"],
+      },
+      {
+        titulo: "Colheita",
+        campos: ["collected_at", "fixative", "responsible"],
+      },
+      {
+        titulo: "Patologia e estado",
+        campos: ["pathology_request", "status", "notes"],
+      },
+    ],
+    lembrarCampos: ["responsible", "fixative"],
+  }
+}
+
+function surgeryDocumentConfig(): ResourceFormConfig {
+  return {
+    esconderCampos: [...SURGERY_INTERNAL_FIELDS, ...SURGERY_COMPUTED_FIELDS],
+    labels: {
+      surgery: "Cirurgia",
+      document_type: "Tipo de documento",
+      title: "Título",
+      file: "Ficheiro",
+      notes: "Observações",
+      status: "Estado",
+    },
+    widgets: { notes: "textarea" },
+    ordenarCampos: ["surgery", "document_type", "title", "file", "status", "notes"],
+    etapas: [
+      {
+        titulo: "Documento",
+        campos: ["surgery", "document_type", "title", "file"],
+      },
+      {
+        titulo: "Estado e notas",
+        campos: ["status", "notes"],
+      },
+    ],
+    lembrarCampos: ["document_type"],
+  }
+}
+
+function surgeryAuditEventConfig(): ResourceFormConfig {
+  return {
+    esconderCampos: [...SURGERY_INTERNAL_FIELDS, ...SURGERY_COMPUTED_FIELDS],
+    somenteLeituraCampos: [
+      "surgery", "event_type", "previous_status", "new_status",
+      "actor", "description", "metadata",
+    ],
+    labels: {
+      surgery: "Cirurgia",
+      event_type: "Tipo de evento",
+      previous_status: "Estado anterior",
+      new_status: "Novo estado",
+      actor: "Utilizador",
+      description: "Descrição",
+      metadata: "Metadados",
+      notes: "Notas",
+    },
+    widgets: { notes: "textarea" },
+    ordenarCampos: [
+      "surgery", "event_type", "previous_status", "new_status",
+      "actor", "description", "metadata", "notes",
+    ],
+  }
+}
+
 export function getResourceFormConfig(
   groupKey: string,
   resourceKey: string,
@@ -3145,6 +4578,95 @@ export function getResourceFormConfig(
   const g = canonicalModuleGroupKey(groupKey)
   const r = String(resourceKey || "").toLowerCase()
   const ep = normalizeEndpoint(endpoint)
+
+  if (g === "human_resources" || g === "recursos_humanos") {
+    if (r === "employee" || ep === "/human_resources/employee/") return hrEmployeeConfig()
+    if (r === "role" || ep === "/human_resources/role/") return hrJobTitleConfig()
+    if (r === "profissao" || ep === "/human_resources/profissao/") return hrProfessionConfig()
+    if (r === "agregadofamiliar" || ep === "/human_resources/agregadofamiliar/") return hrFamilyDependentConfig()
+    if (r === "horario" || ep === "/human_resources/horario/") return hrWorkScheduleConfig()
+    if (r === "falta" || ep === "/human_resources/falta/") return hrAbsenceConfig()
+    if (r === "ferias" || ep === "/human_resources/ferias/") return hrVacationConfig()
+    if (r === "horaextra" || ep === "/human_resources/horaextra/") return hrOvertimeConfig()
+    if (r === "processodisciplinar" || ep === "/human_resources/processodisciplinar/") return hrDisciplinaryConfig()
+    if (r === "dispensa" || ep === "/human_resources/dispensa/") return hrTerminationConfig()
+    if (r === "assiduidade" || ep === "/human_resources/assiduidade/") return hrAttendanceConfig()
+    if (r === "licenca" || ep === "/human_resources/licenca/") return hrLeavePermissionConfig()
+    if (r === "saldo_ferias" || ep === "/human_resources/saldo_ferias/") return hrVacationBalanceConfig()
+    if (r === "contrato" || ep === "/human_resources/contrato/") return hrContractConfig()
+    if (r === "documento_funcionario" || ep === "/human_resources/documento_funcionario/") return hrEmployeeDocumentConfig()
+    if (r === "historico_salarial" || ep === "/human_resources/historico_salarial/") return hrSalaryHistoryConfig()
+    if (r === "folha_run" || ep === "/human_resources/folha_run/") return hrPayrollRunConfig()
+    if (r === "folha_item" || ep === "/human_resources/folha_item/") return hrPayrollItemConfig()
+    return null
+  }
+
+  if (g === "surgery" || g === "cirurgia") {
+    if (r === "pedido_cirurgico" || ep === "/surgery/pedido_cirurgico/") {
+      return surgeryRequestConfig()
+    }
+    if (r === "avaliacao_pre_operatoria" || ep === "/surgery/avaliacao_pre_operatoria/") {
+      return surgeryPreoperativeConfig()
+    }
+    if (r === "surgery" || ep === "/surgery/surgery/") {
+      return surgeryMainConfig()
+    }
+    if (r === "small_surgery" || ep === "/surgery/small_surgery/") {
+      return surgerySmallConfig()
+    }
+    if (r === "large_surgery" || ep === "/surgery/large_surgery/") {
+      return surgeryLargeConfig()
+    }
+    if (r === "surgical_procedure" || ep === "/surgery/surgical_procedure/") {
+      return surgeryCatalogProcedureConfig()
+    }
+    if (r === "agenda_cirurgica" || ep === "/surgery/agenda_cirurgica/") {
+      return surgeryScheduleConfig()
+    }
+    if (r === "centro_cirurgico" || ep === "/surgery/centro_cirurgico/") {
+      return surgeryOperatingRoomConfig()
+    }
+    if (r === "equipa_cirurgica" || ep === "/surgery/equipa_cirurgica/") {
+      return surgeryTeamMemberConfig()
+    }
+    if (r === "anestesia" || ep === "/surgery/anestesia/") {
+      return surgeryAnesthesiaConfig()
+    }
+    if (r === "checklist_seguranca" || ep === "/surgery/checklist_seguranca/") {
+      return surgerySafetyChecklistConfig()
+    }
+    if (r === "materiais" || ep === "/surgery/materiais/") {
+      return surgeryMaterialConfig()
+    }
+    if (r === "consumos" || ep === "/surgery/consumos/") {
+      return surgeryConsumptionConfig()
+    }
+    if (r === "recuperacao" || ep === "/surgery/recuperacao/") {
+      return surgeryRecoveryConfig()
+    }
+    if (r === "relatorio_operatorio" || ep === "/surgery/relatorio_operatorio/") {
+      return surgeryOperativeReportConfig()
+    }
+    if (r === "procedimentos_realizados" || ep === "/surgery/procedimentos_realizados/") {
+      return surgeryProcedureItemConfig()
+    }
+    if (r === "autorizacoes" || ep === "/surgery/autorizacoes/") {
+      return surgeryAuthorizationConfig()
+    }
+    if (r === "faturacao" || ep === "/surgery/faturacao/") {
+      return surgeryBillingItemConfig()
+    }
+    if (r === "amostras" || ep === "/surgery/amostras/") {
+      return surgerySpecimenConfig()
+    }
+    if (r === "documentos" || ep === "/surgery/documentos/") {
+      return surgeryDocumentConfig()
+    }
+    if (r === "auditoria" || ep === "/surgery/auditoria/") {
+      return surgeryAuditEventConfig()
+    }
+    return null
+  }
 
   if (g === "dental") {
     if (r === "procedure" || ep === "/dental/procedure/") {

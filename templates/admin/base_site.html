@@ -1,6 +1,38 @@
 {% extends "admin/base.html" %}
 {% load i18n %}
 
+{% block extrastyle %}
+  {{ block.super }}
+  <style>
+    /* Fix dropdown menus being clipped by AdminLTE overflow on fixed-navbar layout */
+    .main-header.navbar {
+      z-index: 1055 !important;
+      overflow: visible !important;
+    }
+    .main-header .navbar-nav {
+      overflow: visible !important;
+    }
+    .main-header .nav-item.dropdown {
+      overflow: visible !important;
+    }
+    #jazzy-usermenu,
+    #jazzy-languagemenu,
+    .main-header .dropdown-menu {
+      z-index: 1060 !important;
+      position: absolute !important;
+    }
+    /* Wrapper overflow-x:hidden clips absolute dropdowns — allow Y overflow */
+    .wrapper {
+      overflow-x: clip !important;
+      overflow-y: visible !important;
+    }
+    /* Hover trigger as fallback — open menu on hover if click is broken */
+    .main-header .nav-item.dropdown:hover > .dropdown-menu {
+      display: block !important;
+    }
+  </style>
+{% endblock %}
+
 {% block usertools %}
   {{ block.super }}
   {% get_current_language as LANGUAGE_CODE %}
@@ -15,7 +47,7 @@
     {% else %}
       <input type="hidden" name="language" value="pt">
       <button type="submit" class="button" style="min-height: 30px; padding: 4px 10px;">
-        chenge to portuguese
+        Mudar para Português
       </button>
     {% endif %}
   </form>

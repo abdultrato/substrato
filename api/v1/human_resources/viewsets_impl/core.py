@@ -5,40 +5,63 @@ from rest_framework.viewsets import ModelViewSet  # CRUD base DRF
 
 from api.v1.viewset_mixins import TenantScopedQuerysetMixin, ValidatedSearchOrderingMixin
 from apps.human_resources.models.absence import Absence
+from apps.human_resources.models.attendance import PresenceRecord as AttendanceRecord
+from apps.human_resources.models.contract import Contract
 from apps.human_resources.models.disciplinary_process import DisciplinaryProcess
 from apps.human_resources.models.employee import Employee
+from apps.human_resources.models.employee_document import EmployeeDocument
 from apps.human_resources.models.family_dependent import FamilyDependent
 from apps.human_resources.models.job_title import JobTitle
+from apps.human_resources.models.leave_permission import LeavePermission
 from apps.human_resources.models.overtime import Overtime
 from apps.human_resources.models.payroll import Payroll
+from apps.human_resources.models.payroll_run import PayrollItem, PayrollRun
 from apps.human_resources.models.profession import Profession
+from apps.human_resources.models.salary_history import SalaryHistory
 from apps.human_resources.models.termination import Termination
 from apps.human_resources.models.vacation import Vacation
+from apps.human_resources.models.vacation_balance import VacationBalance
 from apps.human_resources.models.work_schedule import WorkSchedule
 
 from ..filters import (
     AbsenceFilter,
+    AttendanceRecordFilter,
+    ContractFilter,
     DisciplinaryProcessFilter,
+    EmployeeDocumentFilter,
     EmployeeFilter,
     FamilyDependentFilter,
     JobTitleFilter,
+    LeavePermissionFilter,
     OvertimeFilter,
     PayrollFilter,
+    PayrollItemFilter,
+    PayrollRunFilter,
     ProfessionFilter,
+    SalaryHistoryFilter,
     TerminationFilter,
+    VacationBalanceFilter,
     VacationFilter,
     WorkScheduleFilter,
 )
 from ..serializers import (
     AbsenceSerializer,
+    AttendanceRecordSerializer,
+    ContractSerializer,
     DisciplinaryProcessSerializer,
+    EmployeeDocumentSerializer,
     EmployeeSerializer,
     FamilyDependentSerializer,
     JobTitleSerializer,
+    LeavePermissionSerializer,
     OvertimeSerializer,
+    PayrollItemSerializer,
+    PayrollRunSerializer,
     PayrollSerializer,
     ProfessionSerializer,
+    SalaryHistorySerializer,
     TerminationSerializer,
+    VacationBalanceSerializer,
     VacationSerializer,
     WorkScheduleSerializer,
 )
@@ -138,6 +161,22 @@ class VacationViewSet(TenantScopedModelViewSet):
     ordering_fields = ["start_date", "status", "created_at"]
     ordering = ["-start_date", "-created_at"]
 
+    @action(detail=True, methods=["post"], url_path="approve", url_name="approve")
+    def approve(self, request, pk=None):
+        vacation = self.get_object()
+        if vacation.status != Vacation.Status.APPROVED:
+            vacation.status = Vacation.Status.APPROVED
+            vacation.save(update_fields=["status"])
+        return Response(self.get_serializer(vacation).data)
+
+    @action(detail=True, methods=["post"], url_path="reject", url_name="reject")
+    def reject(self, request, pk=None):
+        vacation = self.get_object()
+        if vacation.status != Vacation.Status.REJECTED:
+            vacation.status = Vacation.Status.REJECTED
+            vacation.save(update_fields=["status"])
+        return Response(self.get_serializer(vacation).data)
+
 
 class TerminationViewSet(TenantScopedModelViewSet):
     queryset = Termination.objects.select_related("employee").all()
@@ -153,6 +192,22 @@ class OvertimeViewSet(TenantScopedModelViewSet):
     filterset_class = OvertimeFilter
     ordering_fields = ["date", "kind", "created_at"]
     ordering = ["-date", "-created_at"]
+
+    @action(detail=True, methods=["post"], url_path="approve", url_name="approve")
+    def approve(self, request, pk=None):
+        overtime = self.get_object()
+        if overtime.status != Overtime.Status.APPROVED:
+            overtime.status = Overtime.Status.APPROVED
+            overtime.save(update_fields=["status"])
+        return Response(self.get_serializer(overtime).data)
+
+    @action(detail=True, methods=["post"], url_path="reject", url_name="reject")
+    def reject(self, request, pk=None):
+        overtime = self.get_object()
+        if overtime.status != Overtime.Status.REJECTED:
+            overtime.status = Overtime.Status.REJECTED
+            overtime.save(update_fields=["status"])
+        return Response(self.get_serializer(overtime).data)
 
 
 class DisciplinaryProcessViewSet(TenantScopedModelViewSet):
@@ -171,6 +226,118 @@ class PayrollViewSet(TenantScopedModelViewSet):
     ordering = ["-year", "-month", "-created_at"]
 
 
+class AttendanceRecordViewSet(TenantScopedModelViewSet):
+    queryset = AttendanceRecord.objects.select_related("employee").all()
+    serializer_class = AttendanceRecordSerializer
+    filterset_class = AttendanceRecordFilter
+    search_fields = ["custom_id", "employee__name"]
+    ordering_fields = ["date", "status", "created_at"]
+    ordering = ["-date", "-created_at"]
+
+
+class LeavePermissionViewSet(TenantScopedModelViewSet):
+    queryset = LeavePermission.objects.select_related("employee", "approved_by").all()
+    serializer_class = LeavePermissionSerializer
+    filterset_class = LeavePermissionFilter
+    search_fields = ["custom_id", "employee__name"]
+    ordering_fields = ["permission_date", "status", "created_at"]
+    ordering = ["-permission_date", "-created_at"]
+
+    @action(detail=True, methods=["post"], url_path="approve", url_name="approve")
+    def approve(self, request, pk=None):
+        leave = self.get_object()
+        if leave.status != LeavePermission.Status.APPROVED:
+            leave.status = LeavePermission.Status.APPROVED
+            leave.save(update_fields=["status"])
+        return Response(self.get_serializer(leave).data)
+
+    @action(detail=True, methods=["post"], url_path="reject", url_name="reject")
+    def reject(self, request, pk=None):
+        leave = self.get_object()
+        if leave.status != LeavePermission.Status.REJECTED:
+            leave.status = LeavePermission.Status.REJECTED
+            leave.save(update_fields=["status"])
+        return Response(self.get_serializer(leave).data)
+
+
+class VacationBalanceViewSet(TenantScopedModelViewSet):
+    queryset = VacationBalance.objects.select_related("employee").all()
+    serializer_class = VacationBalanceSerializer
+    filterset_class = VacationBalanceFilter
+    search_fields = ["custom_id", "employee__name"]
+    ordering_fields = ["year", "employee", "created_at"]
+    ordering = ["-year", "employee"]
+
+
+class ContractViewSet(TenantScopedModelViewSet):
+    queryset = Contract.objects.select_related("employee").all()
+    serializer_class = ContractSerializer
+    filterset_class = ContractFilter
+    search_fields = ["custom_id", "employee__name"]
+    ordering_fields = ["start_date", "contract_type", "status", "created_at"]
+    ordering = ["-start_date", "-created_at"]
+
+
+class EmployeeDocumentViewSet(TenantScopedModelViewSet):
+    queryset = EmployeeDocument.objects.select_related("employee").all()
+    serializer_class = EmployeeDocumentSerializer
+    filterset_class = EmployeeDocumentFilter
+    search_fields = ["custom_id", "title", "employee__name"]
+    ordering_fields = ["document_type", "status", "created_at"]
+    ordering = ["employee", "document_type", "title"]
+
+
+class SalaryHistoryViewSet(TenantScopedModelViewSet):
+    queryset = SalaryHistory.objects.select_related("employee").all()
+    serializer_class = SalaryHistorySerializer
+    filterset_class = SalaryHistoryFilter
+    search_fields = ["custom_id", "employee__name"]
+    ordering_fields = ["effective_from", "is_current", "created_at"]
+    ordering = ["-effective_from", "-created_at"]
+
+
+class PayrollRunViewSet(TenantScopedModelViewSet):
+    queryset = PayrollRun.objects.select_related("approved_by").all()
+    serializer_class = PayrollRunSerializer
+    filterset_class = PayrollRunFilter
+    search_fields = ["custom_id", "payroll_period"]
+    ordering_fields = ["payroll_period", "status", "created_at"]
+    ordering = ["-payroll_period", "-created_at"]
+
+    @action(detail=True, methods=["post"], url_path="calculate", url_name="calculate")
+    def calculate(self, request, pk=None):
+        payroll_run = self.get_object()
+        payroll_run.recalculate_totals()
+        payroll_run.status = PayrollRun.Status.CALCULATED
+        payroll_run.save(update_fields=["total_gross", "total_deductions", "total_net", "status"])
+        return Response(self.get_serializer(payroll_run).data)
+
+    @action(detail=True, methods=["post"], url_path="approve", url_name="approve")
+    def approve(self, request, pk=None):
+        payroll_run = self.get_object()
+        if payroll_run.status != PayrollRun.Status.APPROVED:
+            payroll_run.status = PayrollRun.Status.APPROVED
+            payroll_run.save(update_fields=["status"])
+        return Response(self.get_serializer(payroll_run).data)
+
+    @action(detail=True, methods=["post"], url_path="mark-paid", url_name="mark_paid")
+    def mark_paid(self, request, pk=None):
+        payroll_run = self.get_object()
+        if payroll_run.status != PayrollRun.Status.PAID:
+            payroll_run.status = PayrollRun.Status.PAID
+            payroll_run.save(update_fields=["status"])
+        return Response(self.get_serializer(payroll_run).data)
+
+
+class PayrollItemViewSet(TenantScopedModelViewSet):
+    queryset = PayrollItem.objects.select_related("payroll_run", "employee").all()
+    serializer_class = PayrollItemSerializer
+    filterset_class = PayrollItemFilter
+    search_fields = ["custom_id", "employee__name", "payroll_run__payroll_period"]
+    ordering_fields = ["payroll_run", "employee", "status", "created_at"]
+    ordering = ["payroll_run", "employee"]
+
+
 VIEWSET_MAP = {
     "role": JobTitleViewSet,
     "profissao": ProfessionViewSet,
@@ -183,19 +350,35 @@ VIEWSET_MAP = {
     "dispensa": TerminationViewSet,
     "horaextra": OvertimeViewSet,
     "folhapagamento": PayrollViewSet,
+    "assiduidade": AttendanceRecordViewSet,
+    "licenca": LeavePermissionViewSet,
+    "saldo_ferias": VacationBalanceViewSet,
+    "contrato": ContractViewSet,
+    "documento_funcionario": EmployeeDocumentViewSet,
+    "historico_salarial": SalaryHistoryViewSet,
+    "folha_run": PayrollRunViewSet,
+    "folha_item": PayrollItemViewSet,
 }
 
 __all__ = [
     "VIEWSET_MAP",
     "AbsenceViewSet",
+    "AttendanceRecordViewSet",
+    "ContractViewSet",
     "DisciplinaryProcessViewSet",
+    "EmployeeDocumentViewSet",
     "EmployeeViewSet",
     "FamilyDependentViewSet",
     "JobTitleViewSet",
+    "LeavePermissionViewSet",
     "OvertimeViewSet",
+    "PayrollItemViewSet",
+    "PayrollRunViewSet",
     "PayrollViewSet",
     "ProfessionViewSet",
+    "SalaryHistoryViewSet",
     "TerminationViewSet",
+    "VacationBalanceViewSet",
     "VacationViewSet",
     "WorkScheduleViewSet",
 ]
