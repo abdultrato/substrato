@@ -68,6 +68,7 @@ INSTALLED_DOMAIN_APP_CONFIGS = (
     "apps.physiotherapy.apps.PhysiotherapyConfig",
     "apps.pathology.apps.PathologyConfig",
     "apps.radiology.apps.RadiologyConfig",
+    "apps.clinical_laboratory.apps.ClinicalLaboratoryConfig",
     "apps.therapy.apps.TherapyConfig",
     "apps.specialty_diagnostics.apps.SpecialtyDiagnosticsConfig",
     "apps.clinical_pharmacy.apps.ClinicalPharmacyConfig",
@@ -128,6 +129,7 @@ DOMAIN_APP_GROUPS: dict[str, tuple[str, ...]] = {
     ),
     "diagnostics": (
         "apps.clinical.apps.ClinicalConfig",
+        "apps.clinical_laboratory.apps.ClinicalLaboratoryConfig",
         "apps.pathology.apps.PathologyConfig",
         "apps.radiology.apps.RadiologyConfig",
         "apps.specialty_diagnostics.apps.SpecialtyDiagnosticsConfig",
@@ -427,10 +429,11 @@ DOMAIN_MODULES = (
     DomainModuleDefinition(
         key="diagnostics.laboratory",
         domain="diagnostics",
-        app_config="apps.clinical.apps.ClinicalConfig",
-        description="Laboratory exams, requests, samples and results.",
+        app_config="apps.clinical_laboratory.apps.ClinicalLaboratoryConfig",
+        description="Clinical laboratory (LIS): catalog, orders, collection, samples, "
+                    "reception, results, technical/clinical validation, reports and critical results.",
         dependencies=("clinical.patients",),
-        aliases=("laboratory", "lab"),
+        aliases=("laboratory", "lab", "clinical_laboratory"),
     ),
     DomainModuleDefinition(
         key="diagnostics.radiology",
