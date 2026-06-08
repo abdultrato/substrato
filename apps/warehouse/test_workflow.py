@@ -7,7 +7,17 @@ import pytest
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 
-from apps.warehouse.models import Warehouse, WarehouseItem, WarehouseLot, WarehouseStatus
+from apps.warehouse.models import (
+    DocumentStatus,
+    GoodsReceipt,
+    PurchaseOrder,
+    PurchaseOrderLine,
+    StorageLocation,
+    Warehouse,
+    WarehouseItem,
+    WarehouseLot,
+    WarehouseStatus,
+)
 from apps.tenants.models.tenant import Tenant
 
 
@@ -84,3 +94,61 @@ def test_warehouse_activate_deactivate():
 
     wh.activate()
     assert wh.status == WarehouseStatus.ACTIVE
+
+
+# --------------------------------------------------------------------------- #
+# Logística Empresarial — ciclo da Ordem de Compra (§14.13)
+# --------------------------------------------------------------------------- #
+def _purchase_order(tenant):
+    return PurchaseOrder.objects.create(
+        tenant=tenant, order_number=f"PO-{uuid4().hex[:6]}", supplier_name="Fornecedor X"
+    )
+
+
+@pytest.mark.django_db
+def test_purchase_order_post_requires_lines_then_issues():
+    tenant = _tenant()
+    po = _purchase_order(tenant)
+    assert po.status == DocumentStatus.DRAFT
+    # Sem itens não pode ser emitido.
+    with pytest.raises(ValidationError):
+        po.post()
+
+    PurchaseOrderLine.objects.create(
+        tenant=tenant, purchase_order=po, item=_item(tenant), ordered_quantity="10"
+    )
+    po.post()
+    assert po.status == DocumentStatus.POSTED
+    # Emitir de novo falha.
+    with pytest.raises(ValidationError):
+        po.post()
+
+
+@pytest.mark.django_db
+def test_purchase_order_cancel_and_block_when_received():
+    tenant = _tenant()
+    po = _purchase_order(tenant)
+    PurchaseOrderLine.objects.create(
+        tenant=tenant, purchase_order=po, item=_item(tenant), ordered_quantity="5"
+    )
+    po.post()
+
+    wh = Warehouse.objects.create(tenant=tenant, name="Central", code=f"W-{uuid4().hex[:5]}")
+    loc = StorageLocation.objects.create(tenant=tenant, warehouse=wh, name="Doca", code=f"L-{uuid4().hex[:5]}")
+    GoodsReceipt.objects.create(
+        tenant=tenant, receipt_number=f"GR-{uuid4().hex[:6]}", purchase_order=po,
+        warehouse=wh, default_location=loc, status=DocumentStatus.POSTED,
+    )
+    # Recebimento lançado bloqueia o cancelamento.
+    with pytest.raises(ValidationError):
+        po.cancel()
+
+
+@pytest.mark.django_db
+def test_purchase_order_cancel_in_draft():
+    tenant = _tenant()
+    po = _purchase_order(tenant)
+    po.cancel()
+    assert po.status == DocumentStatus.CANCELLED
+    with pytest.raises(ValidationError):
+        po.cancel()

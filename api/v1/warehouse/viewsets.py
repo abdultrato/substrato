@@ -388,11 +388,20 @@ class ReplenishmentSuggestionViewSet(WarehouseModelViewSet):
     search_fields = ("custom_id", "plan__plan_number", "item__sku", "item__name")
 
 
-class PurchaseOrderViewSet(WarehouseModelViewSet):
+class PurchaseOrderViewSet(PostDocumentMixin, WarehouseModelViewSet):
     queryset = PurchaseOrder.objects.all()
     serializer_class = PurchaseOrderSerializer
     filterset_class = PurchaseOrderFilter
     search_fields = ("custom_id", "order_number", "supplier_name", "supplier_document")
+
+    @action(detail=True, methods=["post"], url_path="cancel", url_name="cancel")
+    def cancel_order(self, request, pk=None):
+        order = self.get_object()
+        try:
+            order = order.cancel()
+        except DjangoValidationError as exc:
+            raise _as_drf_error(exc) from exc
+        return Response(self.get_serializer(order).data)
 
 
 class PurchaseOrderLineViewSet(WarehouseModelViewSet):

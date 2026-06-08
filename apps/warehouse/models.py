@@ -1901,6 +1901,32 @@ class PurchaseOrder(CoreModel):
     def __str__(self) -> str:
         return f"{self.order_number} - {self.supplier_name}"
 
+    # ------------------------------------------------------------------ #
+    # Ciclo de vida do pedido de compra (§14.13) — emitir ao fornecedor
+    # e cancelar (preservando a integridade dos recebimentos).
+    # ------------------------------------------------------------------ #
+    def post(self):
+        """Aprova e emite o pedido ao fornecedor (rascunho → lançado)."""
+        if self.status == DocumentStatus.CANCELLED:
+            raise ValidationError("Pedido cancelado não pode ser emitido.")
+        if self.status == DocumentStatus.POSTED:
+            raise ValidationError("Pedido já emitido.")
+        if not self.lines.exists():
+            raise ValidationError("O pedido de compra precisa de pelo menos um item.")
+        self.status = DocumentStatus.POSTED
+        self.save()
+        return self
+
+    def cancel(self):
+        """Cancela o pedido — bloqueado se já houver recebimento lançado."""
+        if self.status == DocumentStatus.CANCELLED:
+            raise ValidationError("Pedido já cancelado.")
+        if self.receipts.filter(status=DocumentStatus.POSTED).exists():
+            raise ValidationError("Não é possível cancelar um pedido com recebimentos lançados.")
+        self.status = DocumentStatus.CANCELLED
+        self.save()
+        return self
+
 
 class PurchaseOrderLine(NoNameCoreModel):
     prefix = "POL"
