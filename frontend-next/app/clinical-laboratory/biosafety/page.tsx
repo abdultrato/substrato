@@ -31,8 +31,7 @@ const ITEMS = [
 
 export default function BiosafetyHubPage() {
   return (
-    <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.LABORATORIO]}>
-      <LabNav />
+    <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.LABORATORIO]} subNav={<LabNav />}>
       <main className="p-6 max-w-6xl mx-auto">
       <header className="mb-8 flex items-start gap-3">
         <div className="rounded-xl bg-red-50 p-3 text-red-600"><ShieldCheck size={26} /></div>

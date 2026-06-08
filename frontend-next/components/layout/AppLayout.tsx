@@ -31,6 +31,7 @@ interface Props {
     requiredGroups?: string[]
     rightAside?: ReactNode
     rightAsideWidth?: string
+    subNav?: ReactNode
 }
 
 export default function AppLayout ( {
@@ -38,6 +39,7 @@ export default function AppLayout ( {
     requiredGroups,
     rightAside,
     rightAsideWidth = "20rem",
+    subNav,
 }: Props ) {
     const sidebarDesktopWidth = "16rem"
     const { loading } = useAuthGuard()
@@ -296,6 +298,8 @@ export default function AppLayout ( {
 
             <div className="flex min-h-0 min-w-0 flex-1 flex-col">
                 <Header user={user} onMenuClick={handleMenuClick} />
+
+                {subNav}
 
                 <main className="substrato-app-surface min-w-0 flex-1 overflow-x-hidden overflow-y-auto bg-background px-3 py-4 pb-[calc(5rem+env(safe-area-inset-bottom))] sm:px-4 md:px-6 md:py-5 md:pb-14">
                     <div className="page-transition">

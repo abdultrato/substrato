@@ -33,8 +33,8 @@ function isActive(pathname: string, href: string): boolean {
 export default function LabNav() {
   const pathname = usePathname() || "";
   return (
-    <nav className="sticky top-0 z-10 -mx-1 mb-2 border-b border-slate-200 bg-white/90 backdrop-blur">
-      <div className="flex gap-1 overflow-x-auto px-2 py-2 text-sm no-scrollbar">
+    <nav className="sticky top-14 z-30 shrink-0 border-b border-slate-200 bg-background">
+      <div className="flex flex-wrap gap-1 px-3 py-1.5 text-xs sm:px-4 md:px-6">
         {TABS.map((tab) => {
           const active = isActive(pathname, tab.href);
           return (
@@ -42,7 +42,7 @@ export default function LabNav() {
               key={tab.href}
               href={tab.href}
               className={
-                "whitespace-nowrap rounded-full px-3 py-1.5 font-medium transition-colors " +
+                "whitespace-nowrap rounded-full px-2.5 py-1 font-medium transition-colors " +
                 (active
                   ? "bg-indigo-600 text-white"
                   : "text-slate-600 hover:bg-slate-100 hover:text-slate-900")
