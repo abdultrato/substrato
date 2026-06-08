@@ -1,13 +1,19 @@
 from datetime import timedelta
 
+from django.apps import apps as django_apps
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db.models import Q
 from django.utils import timezone
 from drf_spectacular.utils import extend_schema
+from rest_framework import status as http_status
+from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError as DRFValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet, ViewSet
 
 from api.v1.viewset_mixins import TenantScopedQuerysetMixin, ValidatedSearchOrderingMixin
+from apps.public_health.services import PublicHealthWorkflowService
 from apps.public_health.models import (
     AdverseEventFollowingImmunization,
     ImmunizationRecord,
@@ -37,6 +43,26 @@ from .serializers import (
     VaccineLotSerializer,
     VaccineProductSerializer,
 )
+
+
+def _as_drf_error(exc: DjangoValidationError) -> DRFValidationError:
+    detail = getattr(exc, "message_dict", None) or getattr(exc, "messages", None) or [str(exc)]
+    return DRFValidationError(detail)
+
+
+def _resolve(label: str, model_name: str, pk, tenant):
+    if pk in (None, "", 0):
+        return None
+    model = django_apps.get_model(label, model_name)
+    instance = model.objects.filter(pk=pk).first()
+    if instance is None:
+        raise DRFValidationError(f"{model_name} {pk} não encontrado.")
+    if tenant is not None:
+        req = getattr(tenant, "id", None)
+        inst = getattr(instance, "tenant_id", None)
+        if inst is not None and req is not None and inst != req:
+            raise DRFValidationError(f"{model_name} pertence a outro tenant.")
+    return instance
 
 
 class PublicHealthModelViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
@@ -234,6 +260,24 @@ class VaccineProductViewSet(PublicHealthModelViewSet):
     search_fields = ["custom_id", "name", "code", "official_code", "disease", "manufacturer", "notes"]
     ordering = ["name", "disease"]
 
+    @action(detail=True, methods=["post"], url_path="ativar", url_name="ativar")
+    def ativar(self, request, pk=None):
+        obj = self.get_object()
+        try:
+            PublicHealthWorkflowService.activate_vaccine(obj)
+        except DjangoValidationError as exc:
+            raise _as_drf_error(exc)
+        return Response(self.get_serializer(obj).data)
+
+    @action(detail=True, methods=["post"], url_path="inativar", url_name="inativar")
+    def inativar(self, request, pk=None):
+        obj = self.get_object()
+        try:
+            PublicHealthWorkflowService.deactivate_vaccine(obj)
+        except DjangoValidationError as exc:
+            raise _as_drf_error(exc)
+        return Response(self.get_serializer(obj).data)
+
 
 class VaccineLotViewSet(PublicHealthModelViewSet):
     queryset = VaccineLot.objects.select_related("vaccine").all()
@@ -241,6 +285,42 @@ class VaccineLotViewSet(PublicHealthModelViewSet):
     filterset_class = VaccineLotFilter
     search_fields = ["custom_id", "vaccine__name", "lot_number", "official_batch_code", "storage_location", "notes"]
     ordering = ["expiration_date", "vaccine", "lot_number"]
+
+    @action(detail=True, methods=["post"], url_path="ativar", url_name="ativar")
+    def ativar(self, request, pk=None):
+        obj = self.get_object()
+        try:
+            PublicHealthWorkflowService.activate_lot(obj)
+        except DjangoValidationError as exc:
+            raise _as_drf_error(exc)
+        return Response(self.get_serializer(obj).data)
+
+    @action(detail=True, methods=["post"], url_path="bloquear", url_name="bloquear")
+    def bloquear(self, request, pk=None):
+        obj = self.get_object()
+        try:
+            PublicHealthWorkflowService.block_lot(obj, reason=request.data.get("reason", ""))
+        except DjangoValidationError as exc:
+            raise _as_drf_error(exc)
+        return Response(self.get_serializer(obj).data)
+
+    @action(detail=True, methods=["post"], url_path="liberar", url_name="liberar")
+    def liberar(self, request, pk=None):
+        obj = self.get_object()
+        try:
+            PublicHealthWorkflowService.release_lot(obj)
+        except DjangoValidationError as exc:
+            raise _as_drf_error(exc)
+        return Response(self.get_serializer(obj).data)
+
+    @action(detail=True, methods=["post"], url_path="recolher", url_name="recolher")
+    def recolher(self, request, pk=None):
+        obj = self.get_object()
+        try:
+            PublicHealthWorkflowService.recall_lot(obj, reason=request.data.get("reason", ""))
+        except DjangoValidationError as exc:
+            raise _as_drf_error(exc)
+        return Response(self.get_serializer(obj).data)
 
 
 class VaccinationCampaignViewSet(PublicHealthModelViewSet):
@@ -262,6 +342,42 @@ class VaccinationCampaignViewSet(PublicHealthModelViewSet):
         "notes",
     ]
     ordering = ["-start_date", "name"]
+
+    @action(detail=True, methods=["post"], url_path="ativar", url_name="ativar")
+    def ativar(self, request, pk=None):
+        obj = self.get_object()
+        try:
+            PublicHealthWorkflowService.activate_campaign(obj)
+        except DjangoValidationError as exc:
+            raise _as_drf_error(exc)
+        return Response(self.get_serializer(obj).data)
+
+    @action(detail=True, methods=["post"], url_path="suspender", url_name="suspender")
+    def suspender(self, request, pk=None):
+        obj = self.get_object()
+        try:
+            PublicHealthWorkflowService.pause_campaign(obj, reason=request.data.get("reason", ""))
+        except DjangoValidationError as exc:
+            raise _as_drf_error(exc)
+        return Response(self.get_serializer(obj).data)
+
+    @action(detail=True, methods=["post"], url_path="encerrar", url_name="encerrar")
+    def encerrar(self, request, pk=None):
+        obj = self.get_object()
+        try:
+            PublicHealthWorkflowService.complete_campaign(obj)
+        except DjangoValidationError as exc:
+            raise _as_drf_error(exc)
+        return Response(self.get_serializer(obj).data)
+
+    @action(detail=True, methods=["post"], url_path="cancelar", url_name="cancelar")
+    def cancelar(self, request, pk=None):
+        obj = self.get_object()
+        try:
+            PublicHealthWorkflowService.cancel_campaign(obj, reason=request.data.get("reason", ""))
+        except DjangoValidationError as exc:
+            raise _as_drf_error(exc)
+        return Response(self.get_serializer(obj).data)
 
 
 class VaccinationCampaignTargetViewSet(PublicHealthModelViewSet):
@@ -295,6 +411,42 @@ class ImmunizationRecordViewSet(PublicHealthModelViewSet):
     ]
     ordering = ["-administered_at", "-created_at"]
 
+    @action(detail=False, methods=["post"], url_path="registar", url_name="registar")
+    def registar(self, request):
+        tenant = getattr(request, "tenant", None)
+        patient = _resolve("clinical", "Patient", request.data.get("patient"), tenant)
+        lot = _resolve("saude_publica", "VaccineLot", request.data.get("lot"), tenant)
+        if patient is None or lot is None:
+            raise DRFValidationError({"patient": "Paciente e lote são obrigatórios."})
+        campaign = _resolve("saude_publica", "VaccinationCampaign", request.data.get("campaign"), tenant)
+        target = _resolve("saude_publica", "VaccinationCampaignTarget", request.data.get("target_group"), tenant)
+        administered_by = _resolve("recursos_humanos", "Employee", request.data.get("administered_by"), tenant)
+        try:
+            record = PublicHealthWorkflowService.register_immunization(
+                patient=patient,
+                lot=lot,
+                campaign=campaign,
+                target_group=target,
+                administered_by=administered_by,
+                dose_number=int(request.data.get("dose_number", 1) or 1),
+                route=request.data.get("route") or ImmunizationRecord.Route.IM,
+                source=request.data.get("source") or ImmunizationRecord.Source.ROUTINE,
+                body_site=request.data.get("body_site", ""),
+                allow_duplicate=bool(request.data.get("allow_duplicate", False)),
+            )
+        except DjangoValidationError as exc:
+            raise _as_drf_error(exc)
+        return Response(self.get_serializer(record).data, status=http_status.HTTP_201_CREATED)
+
+    @action(detail=True, methods=["post"], url_path="cancelar", url_name="cancelar")
+    def cancelar(self, request, pk=None):
+        record = self.get_object()
+        try:
+            PublicHealthWorkflowService.cancel_immunization(record, reason=request.data.get("reason", ""))
+        except DjangoValidationError as exc:
+            raise _as_drf_error(exc)
+        return Response(self.get_serializer(record).data)
+
 
 class AdverseEventFollowingImmunizationViewSet(PublicHealthModelViewSet):
     queryset = AdverseEventFollowingImmunization.objects.select_related(
@@ -321,6 +473,56 @@ class AdverseEventFollowingImmunizationViewSet(PublicHealthModelViewSet):
     ]
     ordering = ["-reported_at", "-created_at"]
 
+    @action(detail=True, methods=["post"], url_path="classificar", url_name="classificar")
+    def classificar(self, request, pk=None):
+        obj = self.get_object()
+        tenant = getattr(request, "tenant", None)
+        try:
+            PublicHealthWorkflowService.classify_adverse_event(
+                obj,
+                severity=request.data.get("severity"),
+                investigated_by=_resolve("recursos_humanos", "Employee", request.data.get("investigated_by"), tenant),
+            )
+        except DjangoValidationError as exc:
+            raise _as_drf_error(exc)
+        return Response(self.get_serializer(obj).data)
+
+    @action(detail=True, methods=["post"], url_path="encerrar", url_name="encerrar")
+    def encerrar(self, request, pk=None):
+        obj = self.get_object()
+        try:
+            PublicHealthWorkflowService.resolve_adverse_event(
+                obj,
+                outcome=request.data.get("outcome", AdverseEventFollowingImmunization.Outcome.UNKNOWN),
+                causality_assessment=request.data.get("causality_assessment", ""),
+            )
+        except DjangoValidationError as exc:
+            raise _as_drf_error(exc)
+        return Response(self.get_serializer(obj).data)
+
+    @action(detail=True, methods=["post"], url_path="descartar", url_name="descartar")
+    def descartar(self, request, pk=None):
+        obj = self.get_object()
+        try:
+            PublicHealthWorkflowService.discard_adverse_event(obj, reason=request.data.get("reason", ""))
+        except DjangoValidationError as exc:
+            raise _as_drf_error(exc)
+        return Response(self.get_serializer(obj).data)
+
+    @action(detail=True, methods=["post"], url_path="gerar-notificacao", url_name="gerar-notificacao")
+    def gerar_notificacao(self, request, pk=None):
+        obj = self.get_object()
+        try:
+            notification = PublicHealthWorkflowService.generate_aefi_notification(
+                obj, official_system=request.data.get("official_system") or PublicHealthNotification.OfficialSystem.CUSTOM
+            )
+        except DjangoValidationError as exc:
+            raise _as_drf_error(exc)
+        return Response(
+            PublicHealthNotificationSerializer(notification, context=self.get_serializer_context()).data,
+            status=http_status.HTTP_201_CREATED,
+        )
+
 
 class PublicHealthNotificationViewSet(PublicHealthModelViewSet):
     queryset = PublicHealthNotification.objects.select_related(
@@ -332,6 +534,38 @@ class PublicHealthNotificationViewSet(PublicHealthModelViewSet):
     filterset_class = PublicHealthNotificationFilter
     search_fields = ["custom_id", "external_reference", "error_message", "notes"]
     ordering = ["-created_at"]
+
+    @action(detail=True, methods=["post"], url_path="enviar", url_name="enviar")
+    def enviar(self, request, pk=None):
+        obj = self.get_object()
+        try:
+            PublicHealthWorkflowService.send_notification(obj, external_reference=request.data.get("external_reference", ""))
+        except DjangoValidationError as exc:
+            raise _as_drf_error(exc)
+        return Response(self.get_serializer(obj).data)
+
+    @action(detail=True, methods=["post"], url_path="responder", url_name="responder")
+    def responder(self, request, pk=None):
+        obj = self.get_object()
+        try:
+            PublicHealthWorkflowService.acknowledge_notification(
+                obj,
+                accepted=bool(request.data.get("accepted", True)),
+                external_reference=request.data.get("external_reference", ""),
+                error_message=request.data.get("error_message", ""),
+            )
+        except DjangoValidationError as exc:
+            raise _as_drf_error(exc)
+        return Response(self.get_serializer(obj).data)
+
+    @action(detail=True, methods=["post"], url_path="reprocessar", url_name="reprocessar")
+    def reprocessar(self, request, pk=None):
+        obj = self.get_object()
+        try:
+            PublicHealthWorkflowService.retry_notification(obj)
+        except DjangoValidationError as exc:
+            raise _as_drf_error(exc)
+        return Response(self.get_serializer(obj).data)
 
 
 VIEWSET_MAP = {
