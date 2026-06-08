@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/useAuth"
 import useTheme from "@/hooks/useTheme"
 import { useLanguage } from "@/hooks/useLanguage"
 import { useSafeDataRefresh } from "@/hooks/useSafeDataRefresh"
+import { LOGO_SRC } from "@/lib/brand"
 import { AlignJustify, ChevronDown, LogOut, Moon, RefreshCw, Settings, Sun, User } from "lucide-react"
 
 interface Props {
@@ -60,13 +61,12 @@ export default function Header({ user, onMenuClick }: Props) {
                     title={t("Ir para o dashboard", "Go to dashboard")}
                 >
                     <div
-                        className="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-md shadow-sm transition-transform group-hover:scale-105"
+                        className="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-md transition-transform group-hover:scale-105"
                         aria-hidden
-                        style={{ backgroundColor: "#fff" }}
                     >
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
-                            src="/static/img/logo.png"
+                            src={LOGO_SRC}
                             alt="Substrato"
                             className="block h-full max-h-7 w-full max-w-7 object-contain p-1"
                         />

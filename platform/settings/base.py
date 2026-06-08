@@ -236,7 +236,7 @@ JAZZMIN_SETTINGS = {
     "site_header": "Substrato",
     "site_brand": "Substrato",
     "site_logo": "img/logo.png",
-    "site_logo_classes": "img-circle elevation-3 p-1 bg-white",
+    "site_logo_classes": "p-1",
     "welcome_sign": "Bem-vindo ao Substrato",
     "copyright": f"Substrato · {SYSTEM_VERSION_DISPLAY}",
     # CSS customizado (gerado via Tailwind; ver `frontend-next/styles/admin-tailwind.input.css`)

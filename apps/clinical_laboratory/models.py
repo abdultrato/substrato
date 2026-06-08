@@ -1,4 +1,4 @@
-"""Laboratório Clínico (LIS) — fluxo completo pré-analítico → analítico → pós-analítico.
+"""Laboratório Clínico — fluxo completo pré-analítico → analítico → pós-analítico.
 
 Modelo de dados rastreável: catálogo → pedido → colheita → amostra → recepção/
 rejeição → resultado → validação técnica/clínica → laudo → comunicação de
@@ -51,7 +51,7 @@ class LabPriority(models.TextChoices):
 class LabSector(CoreModel):
     """Sector técnico do laboratório (Hematologia, Bioquímica, ...)."""
 
-    prefix = "LSEC"
+    prefix = "LC"
 
     code = models.CharField("Código", db_column="code", max_length=20, db_index=True)
     active = models.BooleanField("Ativo", db_column="active", default=True, db_index=True)

@@ -8,7 +8,7 @@
 <style>
   /* Neutralize Jazzmin/AdminLTE login-box wrapper */
   body.jazzmin-login-page {
-    background: linear-gradient(135deg, #f0eeff 0%, #f7f6fb 50%, #eef2ff 100%) !important;
+    background: linear-gradient(135deg, #f4f2fb 0%, #f7f6fb 50%, #eef2ff 100%) !important;
     min-height: 100vh;
     display: flex !important;
     align-items: center !important;
@@ -17,179 +17,139 @@
     box-sizing: border-box;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   }
-  .login-box {
+  .login-box, .register-box {
     width: 100% !important;
-    max-width: 400px !important;
+    max-width: 760px !important;
     margin: 0 auto !important;
     padding: 0 !important;
     background: transparent !important;
     box-shadow: none !important;
     float: none !important;
   }
-  /* hide Jazzmin's built-in logo block (we render our own) */
   .login-box .login-logo { display: none !important; }
 
-  /* ── brand ── */
-  .sl-brand {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    margin-bottom: 1.5rem;
-    gap: 0.4rem;
-  }
-  .sl-logo {
-    width: 56px;
-    height: 56px;
-    border-radius: 14px;
+  /* ── card: logo aside + form ── */
+  .sl-shell {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
     background: #fff;
-    border: 1px solid #e2e0f0;
-    box-shadow: 0 2px 8px rgba(80,40,160,.10);
-    padding: 8px;
-    object-fit: contain;
-    display: block;
-  }
-  .sl-site-name {
-    font-size: 1.15rem;
-    font-weight: 700;
-    color: #1e1b2e;
-    letter-spacing: -0.02em;
-    margin: 0;
-  }
-  .sl-site-sub {
-    font-size: 0.73rem;
-    color: #6b7280;
-    margin: 0;
-    text-align: center;
+    border: 1px solid #e7e3f5;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 24px 64px rgba(76, 29, 149, .16);
   }
 
-  /* ── card ── */
-  .sl-card {
-    background: #fff;
-    border: 1px solid #e5e1f5;
+  /* ── brand aside (left on desktop) ── */
+  .sl-aside {
+    position: relative;
+    overflow: hidden;
+    padding: 2.5rem;
+    color: #fff;
+    background: linear-gradient(135deg, #6d28d9 0%, #5b21b6 55%, #3730a3 100%);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 400px;
+  }
+  .sl-aside::before,
+  .sl-aside::after {
+    content: "";
+    position: absolute;
+    border-radius: 9999px;
+    filter: blur(60px);
+    pointer-events: none;
+  }
+  .sl-aside::before { width: 240px; height: 240px; top: -80px; left: -60px; background: #d946ef; opacity: .28; }
+  .sl-aside::after  { width: 280px; height: 280px; bottom: -90px; right: -70px; background: #6366f1; opacity: .32; }
+
+  .sl-aside-inner { position: relative; }
+  .sl-logo-chip {
+    width: 64px; height: 64px;
+    display: flex; align-items: center; justify-content: center;
     border-radius: 18px;
-    box-shadow: 0 4px 24px rgba(80,40,160,.08);
-    padding: 2rem 2rem 1.75rem;
+    background: rgba(255,255,255,.12);
+    border: 1px solid rgba(255,255,255,.22);
   }
-  .sl-card-title {
-    font-size: 0.875rem;
-    font-weight: 600;
-    color: #1e1b2e;
-    margin: 0 0 1.25rem;
+  .sl-logo { width: 44px; height: 44px; object-fit: contain; display: block; }
+  .sl-brand-name { margin: 1.25rem 0 0; font-size: 1.5rem; font-weight: 700; letter-spacing: -0.01em; }
+  .sl-tagline { margin: .6rem 0 0; max-width: 15rem; font-size: .85rem; line-height: 1.55; color: rgba(237,233,254,.82); }
+
+  /* ── form side ── */
+  .sl-main { padding: 2.5rem 2.25rem; background: #fff; display: flex; flex-direction: column; justify-content: center; }
+
+  /* mobile brand (above form; shown only when aside collapses) */
+  .sl-mobile-brand { display: none; }
+  .sl-mobile-chip {
+    width: 56px; height: 56px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 16px; background: #f3effe; border: 1px solid #e4d9fb;
   }
+  .sl-mobile-chip img { width: 38px; height: 38px; object-fit: contain; display: block; }
+  .sl-mobile-name { margin: .6rem 0 0; font-size: 1rem; font-weight: 700; color: #1e1b2e; }
+
+  .sl-admin-tag {
+    display: inline-flex; align-items: center; gap: .4rem;
+    align-self: flex-start;
+    font-size: .66rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+    color: #6d28d9; background: #f3effe; border: 1px solid #e4d9fb;
+    padding: .25rem .6rem; border-radius: 999px; margin-bottom: 1rem;
+  }
+  .sl-title { font-size: 1.35rem; font-weight: 700; color: #1e1b2e; letter-spacing: -0.01em; margin: 0; }
+  .sl-title-sub { font-size: .85rem; color: #6b7280; margin: .35rem 0 1.5rem; }
 
   /* ── alerts ── */
-  .sl-alert {
-    border-radius: 10px;
-    padding: 0.6rem 0.85rem;
-    font-size: 0.8rem;
-    margin-bottom: 1rem;
-    line-height: 1.4;
-  }
-  .sl-alert-error {
-    background: #fef2f2;
-    border: 1px solid #fecaca;
-    color: #b91c1c;
-  }
-  .sl-alert-warning {
-    background: #fffbeb;
-    border: 1px solid #fde68a;
-    color: #92400e;
-  }
+  .sl-alert { border-radius: 10px; padding: .6rem .85rem; font-size: .8rem; margin-bottom: 1rem; line-height: 1.4; }
+  .sl-alert-error { background: #fef2f2; border: 1px solid #fecaca; color: #b91c1c; }
+  .sl-alert-warning { background: #fffbeb; border: 1px solid #fde68a; color: #92400e; }
 
   /* ── fields ── */
-  .sl-fields {
-    display: flex;
-    flex-direction: column;
-    gap: 0.85rem;
-  }
-  .sl-field {
-    display: flex;
-    flex-direction: column;
-    gap: 0.3rem;
-  }
-  .sl-label {
-    font-size: 0.73rem;
-    font-weight: 600;
-    color: #374151;
-    letter-spacing: 0.01em;
-  }
+  .sl-fields { display: flex; flex-direction: column; gap: .95rem; }
+  .sl-field { display: flex; flex-direction: column; gap: .3rem; }
+  .sl-label { font-size: .73rem; font-weight: 600; color: #374151; letter-spacing: .01em; }
   .sl-input {
-    width: 100%;
-    padding: 0.55rem 0.75rem;
-    font-size: 0.875rem;
-    border: 1.5px solid #d1d5db;
-    border-radius: 10px;
-    background: #fafafa;
-    color: #1e1b2e;
-    outline: none;
+    width: 100%; padding: .6rem .8rem; font-size: .875rem;
+    border: 1.5px solid #d8d5e4; border-radius: 10px;
+    background: #fbfaff; color: #1e1b2e; outline: none;
     transition: border-color .15s, box-shadow .15s, background .15s;
-    box-sizing: border-box;
-    appearance: none;
+    box-sizing: border-box; appearance: none;
   }
-  .sl-input:focus {
-    border-color: #7c3aed;
-    background: #fff;
-    box-shadow: 0 0 0 3px rgba(124,58,237,.12);
-  }
+  .sl-input:focus { border-color: #7c3aed; background: #fff; box-shadow: 0 0 0 3px rgba(124,58,237,.14); }
   .sl-input::placeholder { color: #9ca3af; }
 
-  /* ── reset link ── */
-  .sl-reset {
-    text-align: right;
-    margin-top: -0.2rem;
-  }
-  .sl-reset a {
-    font-size: 0.72rem;
-    color: #7c3aed;
-    text-decoration: none;
-  }
+  .sl-reset { text-align: right; margin-top: -.25rem; }
+  .sl-reset a { font-size: .72rem; color: #7c3aed; text-decoration: none; }
   .sl-reset a:hover { text-decoration: underline; }
 
-  /* ── submit ── */
   .sl-submit {
-    width: 100%;
-    padding: 0.6rem 1rem;
-    margin-top: 0.25rem;
-    font-size: 0.875rem;
-    font-weight: 600;
-    color: #fff;
+    width: 100%; padding: .65rem 1rem; margin-top: .3rem;
+    font-size: .875rem; font-weight: 600; color: #fff;
     background: linear-gradient(135deg, #7c3aed, #6d28d9);
-    border: none;
-    border-radius: 10px;
-    cursor: pointer;
+    border: none; border-radius: 10px; cursor: pointer;
     transition: opacity .15s, transform .1s;
-    box-shadow: 0 2px 8px rgba(109,40,217,.28);
-    letter-spacing: 0.01em;
+    box-shadow: 0 4px 14px rgba(109,40,217,.3); letter-spacing: .01em;
   }
-  .sl-submit:hover { opacity: .91; transform: translateY(-1px); }
+  .sl-submit:hover { opacity: .92; transform: translateY(-1px); }
   .sl-submit:active { transform: translateY(0); }
 
-  /* ── language pill (fixed corner) ── */
-  .sl-lang {
-    position: fixed;
-    top: 14px;
-    right: 14px;
-    z-index: 9999;
-  }
+  /* ── language pill ── */
+  .sl-lang { position: fixed; top: 14px; right: 14px; z-index: 9999; }
   .sl-lang button {
-    font-size: 0.72rem;
-    padding: 0.28rem 0.65rem;
-    border-radius: 999px;
-    border: 1px solid #d1d5db;
-    background: #fff;
-    color: #374151;
-    cursor: pointer;
-    transition: background .15s;
-    box-shadow: 0 1px 4px rgba(0,0,0,.06);
+    font-size: .72rem; padding: .28rem .65rem; border-radius: 999px;
+    border: 1px solid #d8d5e4; background: #fff; color: #4b5563; cursor: pointer;
+    transition: background .15s; box-shadow: 0 1px 4px rgba(0,0,0,.06);
   }
   .sl-lang button:hover { background: #f3f4f6; }
 
-  /* ── footer ── */
-  .sl-footer {
-    text-align: center;
-    margin-top: 1.25rem;
-    font-size: 0.68rem;
-    color: #9ca3af;
+  /* ── responsive: collapse to single column, logo above the form ── */
+  @media (max-width: 760px) {
+    .login-box, .register-box { max-width: 420px !important; }
+    .sl-shell { grid-template-columns: 1fr; }
+    .sl-aside { display: none; }
+    .sl-main { padding: 2rem 1.6rem; }
+    .sl-mobile-brand {
+      display: flex; flex-direction: column; align-items: center;
+      text-align: center; margin-bottom: 1.25rem;
+    }
   }
 </style>
 {% endblock %}
@@ -209,74 +169,92 @@
   {% endif %}
 </form>
 
-{# Brand #}
-<div class="sl-brand">
-  <img src="{% static jazzmin_settings.site_logo %}" alt="{{ jazzmin_settings.site_header }}" class="sl-logo" />
-  <p class="sl-site-name">{{ jazzmin_settings.site_header }}</p>
-  <p class="sl-site-sub">
-    {% if LANGUAGE_CODE|slice:":2" == "pt" %}Sistema Unificado de Base Sustentável
-    {% else %}Unified Sustainable Base System{% endif %}
-  </p>
-</div>
+<div class="sl-shell">
 
-{# Card #}
-<div class="sl-card">
-  <p class="sl-card-title">
-    {% if LANGUAGE_CODE|slice:":2" == "pt" %}Iniciar sessão{% else %}Sign in{% endif %}
-  </p>
-
-  {% if user.is_authenticated %}
-    <div class="sl-alert sl-alert-warning">
-      {% blocktrans trimmed %}
-        You are authenticated as {{ username }}, but are not authorized to access this page.
-      {% endblocktrans %}
+  {# ── Brand aside (left on desktop) ── #}
+  <aside class="sl-aside">
+    <div class="sl-aside-inner">
+      <span class="sl-logo-chip">
+        <img src="{% static jazzmin_settings.site_logo %}" alt="{{ jazzmin_settings.site_header }}" class="sl-logo" />
+      </span>
+      <p class="sl-brand-name">{{ jazzmin_settings.site_header }}</p>
+      <p class="sl-tagline">
+        {% if LANGUAGE_CODE|slice:":2" == "pt" %}A base para crescer.{% else %}The foundation to grow.{% endif %}
+      </p>
     </div>
-  {% endif %}
+  </aside>
 
-  {% if form.errors %}
-    <div class="sl-alert sl-alert-error">
-      {% if form.non_field_errors %}
-        {% for error in form.non_field_errors %}{{ error }}{% endfor %}
-      {% else %}
-        {% if LANGUAGE_CODE|slice:":2" == "pt" %}Utilizador ou palavra-passe inválidos.
-        {% else %}Invalid username or password.{% endif %}
-      {% endif %}
-    </div>
-  {% endif %}
+  {# ── Form side ── #}
+  <div class="sl-main">
 
-  <form action="{{ app_path }}" method="post" class="sl-fields">
-    {% csrf_token %}
-
-    <div class="sl-field">
-      <label class="sl-label" for="id_username">{{ form.username.label }}</label>
-      <input
-        id="id_username" class="sl-input" type="text" name="username"
-        autocomplete="username" value="{{ form.username.value|default_if_none:'' }}"
-        placeholder="{{ form.username.label }}" autofocus required
-      />
+    {# Mobile brand — above the form on small screens #}
+    <div class="sl-mobile-brand">
+      <span class="sl-mobile-chip">
+        <img src="{% static jazzmin_settings.site_logo %}" alt="{{ jazzmin_settings.site_header }}" />
+      </span>
+      <p class="sl-mobile-name">{{ jazzmin_settings.site_header }}</p>
     </div>
 
-    <div class="sl-field">
-      <label class="sl-label" for="id_password">{{ form.password.label }}</label>
-      <input
-        id="id_password" class="sl-input" type="password" name="password"
-        autocomplete="current-password" placeholder="{{ form.password.label }}" required
-      />
-    </div>
+    <span class="sl-admin-tag">{% if LANGUAGE_CODE|slice:":2" == "pt" %}Administração{% else %}Administration{% endif %}</span>
+    <h1 class="sl-title">
+      {% if LANGUAGE_CODE|slice:":2" == "pt" %}Iniciar sessão{% else %}Sign in{% endif %}
+    </h1>
+    <p class="sl-title-sub">
+      {% if LANGUAGE_CODE|slice:":2" == "pt" %}Aceda ao painel de administração.{% else %}Access the administration panel.{% endif %}
+    </p>
 
-    {% url 'admin_password_reset' as password_reset_url %}
-    {% if password_reset_url %}
-      <div class="sl-reset">
-        <a href="{{ password_reset_url }}">{% trans 'Forgot password?' %}</a>
+    {% if user.is_authenticated %}
+      <div class="sl-alert sl-alert-warning">
+        {% blocktrans trimmed %}
+          You are authenticated as {{ username }}, but are not authorized to access this page.
+        {% endblocktrans %}
       </div>
     {% endif %}
 
-    <button type="submit" class="sl-submit">
-      {% if LANGUAGE_CODE|slice:":2" == "pt" %}Entrar{% else %}Sign in{% endif %}
-    </button>
-  </form>
-</div>
+    {% if form.errors %}
+      <div class="sl-alert sl-alert-error">
+        {% if form.non_field_errors %}
+          {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+        {% else %}
+          {% if LANGUAGE_CODE|slice:":2" == "pt" %}Utilizador ou palavra-passe inválidos.
+          {% else %}Invalid username or password.{% endif %}
+        {% endif %}
+      </div>
+    {% endif %}
 
-<p class="sl-footer">Substrato &copy; {% now "Y" %}</p>
+    <form action="{{ app_path }}" method="post" class="sl-fields">
+      {% csrf_token %}
+
+      <div class="sl-field">
+        <label class="sl-label" for="id_username">{{ form.username.label }}</label>
+        <input
+          id="id_username" class="sl-input" type="text" name="username"
+          autocomplete="username" value="{{ form.username.value|default_if_none:'' }}"
+          placeholder="{{ form.username.label }}" autofocus required
+        />
+      </div>
+
+      <div class="sl-field">
+        <label class="sl-label" for="id_password">{{ form.password.label }}</label>
+        <input
+          id="id_password" class="sl-input" type="password" name="password"
+          autocomplete="current-password" placeholder="{{ form.password.label }}" required
+        />
+      </div>
+
+      {% url 'admin_password_reset' as password_reset_url %}
+      {% if password_reset_url %}
+        <div class="sl-reset">
+          <a href="{{ password_reset_url }}">{% trans 'Forgot password?' %}</a>
+        </div>
+      {% endif %}
+
+      <button type="submit" class="sl-submit">
+        {% if LANGUAGE_CODE|slice:":2" == "pt" %}Entrar{% else %}Sign in{% endif %}
+      </button>
+    </form>
+  </div>
+
+</div>
 
 {% endblock %}

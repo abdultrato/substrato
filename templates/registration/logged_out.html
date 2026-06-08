@@ -1,0 +1,138 @@
+{% extends "registration/base.html" %}
+{% load i18n static jazzmin %}
+{% get_jazzmin_settings request as jazzmin_settings %}
+{% get_current_language as LANGUAGE_CODE %}
+
+{% block extrastyle %}
+{{ block.super }}
+<style>
+  /* Neutralize Jazzmin/AdminLTE login-box wrapper */
+  body.jazzmin-login-page {
+    background: linear-gradient(135deg, #f4f2fb 0%, #f7f6fb 50%, #eef2ff 100%) !important;
+    min-height: 100vh;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 1.5rem !important;
+    box-sizing: border-box;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+  .login-box, .register-box {
+    width: 100% !important;
+    max-width: 420px !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    float: none !important;
+  }
+  .login-box .login-logo { display: none !important; }
+
+  /* ── card ── */
+  .sl-card {
+    position: relative;
+    overflow: hidden;
+    background: #fff;
+    border: 1px solid #e7e3f5;
+    border-radius: 20px;
+    box-shadow: 0 24px 64px rgba(76, 29, 149, .14);
+    padding: 2.5rem 2rem 2rem;
+    text-align: center;
+  }
+  .sl-card::before {
+    content: "";
+    position: absolute; inset: 0 0 auto 0; height: 120px;
+    background: radial-gradient(120% 100% at 50% 0%, rgba(124,58,237,.14), transparent 70%);
+    pointer-events: none;
+  }
+
+  /* ── brand mark — adaptive translucent backdrop ── */
+  .sl-logo-chip {
+    position: relative;
+    width: 64px; height: 64px; margin: 0 auto 1.1rem;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 18px;
+    background: linear-gradient(135deg, #f3effe, #ede9fe);
+    border: 1px solid #e4d9fb;
+  }
+  .sl-logo { width: 44px; height: 44px; object-fit: contain; display: block; }
+
+  .sl-check {
+    position: relative;
+    display: inline-flex; align-items: center; gap: .4rem;
+    font-size: .72rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+    color: #047857; background: #ecfdf5; border: 1px solid #a7f3d0;
+    padding: .25rem .65rem; border-radius: 999px; margin-bottom: .9rem;
+  }
+  .sl-title { position: relative; font-size: 1.35rem; font-weight: 700; color: #1e1b2e; letter-spacing: -0.01em; margin: 0; }
+  .sl-msg { position: relative; font-size: .88rem; color: #6b7280; line-height: 1.55; margin: .55rem 0 1.6rem; }
+
+  .sl-btn {
+    position: relative;
+    display: inline-flex; align-items: center; justify-content: center; gap: .45rem;
+    width: 100%; padding: .68rem 1rem;
+    font-size: .875rem; font-weight: 600; color: #fff; text-decoration: none;
+    background: linear-gradient(135deg, #7c3aed, #6d28d9);
+    border: none; border-radius: 11px; cursor: pointer;
+    transition: opacity .15s, transform .1s;
+    box-shadow: 0 4px 14px rgba(109,40,217,.3); letter-spacing: .01em;
+  }
+  .sl-btn:hover { opacity: .92; transform: translateY(-1px); color: #fff; }
+  .sl-btn:active { transform: translateY(0); }
+
+  .sl-foot { text-align: center; margin-top: 1.25rem; font-size: .68rem; color: #9ca3af; }
+
+  /* ── language pill ── */
+  .sl-lang { position: fixed; top: 14px; right: 14px; z-index: 9999; }
+  .sl-lang button {
+    font-size: .72rem; padding: .28rem .65rem; border-radius: 999px;
+    border: 1px solid #d8d5e4; background: #fff; color: #4b5563; cursor: pointer;
+    transition: background .15s; box-shadow: 0 1px 4px rgba(0,0,0,.06);
+  }
+  .sl-lang button:hover { background: #f3f4f6; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+{# Language switcher #}
+<form action="{% url 'set_language' %}" method="post" class="sl-lang">
+  {% csrf_token %}
+  <input type="hidden" name="next" value="{{ request.get_full_path }}">
+  {% if LANGUAGE_CODE|slice:":2" == "pt" %}
+    <input type="hidden" name="language" value="en">
+    <button type="submit">EN</button>
+  {% else %}
+    <input type="hidden" name="language" value="pt">
+    <button type="submit">PT</button>
+  {% endif %}
+</form>
+
+<div class="sl-card">
+  <div class="sl-logo-chip">
+    <img src="{% static 'img/logo.png' %}" alt="{{ jazzmin_settings.site_header }}" class="sl-logo" />
+  </div>
+
+  <span class="sl-check">
+    &#10003; {% if LANGUAGE_CODE|slice:":2" == "pt" %}Sessão terminada{% else %}Signed out{% endif %}
+  </span>
+
+  <h1 class="sl-title">
+    {% if LANGUAGE_CODE|slice:":2" == "pt" %}Sessão terminada com segurança{% else %}You've been signed out{% endif %}
+  </h1>
+  <p class="sl-msg">
+    {% if LANGUAGE_CODE|slice:":2" == "pt" %}
+      Obrigado pela sua visita. A sua sessão no Substrato foi encerrada em segurança.
+    {% else %}
+      Thanks for your visit. Your Substrato session has been securely closed.
+    {% endif %}
+  </p>
+
+  <a class="sl-btn" href="{% url 'admin:index' %}">
+    {% if LANGUAGE_CODE|slice:":2" == "pt" %}Entrar novamente{% else %}Log in again{% endif %}
+  </a>
+</div>
+
+<p class="sl-foot">Substrato &copy; {% now "Y" %}</p>
+
+{% endblock %}

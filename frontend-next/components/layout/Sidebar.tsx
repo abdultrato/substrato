@@ -46,6 +46,7 @@ import {
     X,
 } from "lucide-react"
 import useTheme from "@/hooks/useTheme"
+import { LOGO_SRC } from "@/lib/brand"
 
 interface Props {
     user: SessionUser | null
@@ -315,27 +316,26 @@ export default function Sidebar({ user, open = false, onClose, className }: Prop
     }, [prefetchRoute, visibleItems])
 
     const menu = (
-        <div className="flex h-full w-64 flex-col border-r border-slate-800 bg-slate-950 pb-12 text-white">
-            <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-800 bg-slate-950 px-3 py-3">
+        <div className="flex h-full w-64 flex-col border-r border-border bg-card pb-12 text-foreground">
+            <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-card px-3 py-3">
                 <Link
                     href={homeHref}
                     onClick={onClose}
-                    className="group flex min-w-0 items-center gap-3 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-white/30"
+                    className="group flex min-w-0 items-center gap-3 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
                     title={t("Ir para o dashboard", "Go to dashboard")}
                 >
                     <Image
-                        src="/static/img/logo.png"
+                        src={LOGO_SRC}
                         alt="Substrato"
                         width={36}
                         height={36}
-                        className="h-9 w-9 rounded-md object-contain p-1 shadow-sm transition-transform group-hover:scale-105"
-                        style={{ backgroundColor: "#fff" }}
+                        className="h-9 w-9 rounded-md object-contain p-1 transition-transform group-hover:scale-105"
                     />
                     <div className="min-w-0">
-                        <div className="truncate font-display text-sm font-bold tracking-tight text-white">
+                        <div className="truncate font-display text-sm font-bold tracking-tight text-foreground">
                             Substrato
                         </div>
-                        <div className="truncate text-[10px] uppercase tracking-[0.16em] text-slate-400">
+                        <div className="truncate text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
                             {platformSubtitle}
                         </div>
                     </div>
@@ -343,7 +343,7 @@ export default function Sidebar({ user, open = false, onClose, className }: Prop
                 <button
                     type="button"
                     onClick={onClose}
-                    className="inline-flex h-10 w-10 items-center justify-center rounded-md text-slate-300 transition-colors hover:bg-slate-800 hover:text-white md:hidden"
+                    className="inline-flex h-10 w-10 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground md:hidden"
                     aria-label={t("Fechar menu", "Close menu")}
                 >
                     <X size={18} />
@@ -353,7 +353,7 @@ export default function Sidebar({ user, open = false, onClose, className }: Prop
             <nav className="flex flex-1 flex-col gap-4 overflow-y-auto px-2 pb-6 pt-3">
                 {sectionedItems.map((section) => (
                     <div key={section.label} className="space-y-1">
-                        <div className="px-2.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                        <div className="px-2.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                             {t(section.label, section.labelEn)}
                         </div>
 
@@ -373,13 +373,13 @@ export default function Sidebar({ user, open = false, onClose, className }: Prop
                                         onTouchStart={() => prefetchRoute(item.href)}
                                         title={t(item.desc || "", item.descEn || item.desc || "")}
                                         aria-current={active ? "page" : undefined}
-                                        className={`group relative flex items-center gap-2.5 rounded-md px-2.5 py-2 text-[13px] font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 ${
+                                        className={`group relative flex items-center gap-2.5 rounded-md px-2.5 py-2 text-[13px] font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 ${
                                             active
-                                                ? "bg-slate-800 text-white shadow-sm before:absolute before:left-0 before:top-1/2 before:h-5 before:w-[3px] before:-translate-x-2 before:-translate-y-1/2 before:rounded-r-full before:bg-sky-300"
-                                                : "text-slate-300 hover:bg-slate-900 hover:text-white"
+                                                ? "bg-muted text-foreground shadow-sm before:absolute before:left-0 before:top-1/2 before:h-5 before:w-[3px] before:-translate-x-2 before:-translate-y-1/2 before:rounded-r-full before:bg-primary"
+                                                : "text-muted-foreground hover:bg-muted hover:text-foreground"
                                         }`}
                                     >
-                                        <Icon size={16} className={active ? "text-sky-200" : "text-slate-400 group-hover:text-slate-200"} />
+                                        <Icon size={16} className={active ? "text-primary" : "text-muted-foreground group-hover:text-foreground"} />
                                         <span className="truncate">{t(item.label, item.labelEn || item.label)}</span>
                                     </Link>
                                 )
@@ -389,18 +389,18 @@ export default function Sidebar({ user, open = false, onClose, className }: Prop
                 ))}
             </nav>
 
-            <div className="border-t border-slate-800 p-2">
+            <div className="border-t border-border p-2">
                 <button
                     type="button"
                     onClick={toggleTheme}
-                    className="flex w-full items-center justify-between rounded-md border border-slate-800 bg-slate-900 px-2.5 py-2 text-xs font-semibold text-slate-200 transition-colors hover:bg-slate-800 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30"
+                    className="flex w-full items-center justify-between rounded-md border border-border bg-muted px-2.5 py-2 text-xs font-semibold text-foreground transition-colors hover:bg-muted-2 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
                     title={isDark ? t("Modo claro", "Light mode") : t("Modo escuro", "Dark mode")}
                 >
                     <span className="flex items-center gap-2">
                         {isDark ? <Sun size={15} /> : <Moon size={15} />}
                         {t("Tema", "Theme")}
                     </span>
-                    <span className="text-[10px] uppercase tracking-wider text-slate-500">
+                    <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
                         {isDark ? t("Claro", "Light") : t("Escuro", "Dark")}
                     </span>
                 </button>
