@@ -1,7 +1,14 @@
+from django.apps import apps as django_apps
+from django.core.exceptions import ValidationError as DjangoValidationError
+from rest_framework import status as http_status
+from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError as DRFValidationError
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
 from api.v1.viewset_mixins import TenantScopedQuerysetMixin, ValidatedSearchOrderingMixin
+from apps.pathology.services import PathologyWorkflowService
 from apps.pathology.models import (
     PathologyAccession,
     PathologyArchive,
@@ -65,6 +72,30 @@ from .serializers import (
 )
 
 
+def _as_drf_error(exc: DjangoValidationError) -> DRFValidationError:
+    detail = getattr(exc, "message_dict", None) or getattr(exc, "messages", None) or [str(exc)]
+    return DRFValidationError(detail)
+
+
+def _resolve_instance(label: str, model_name: str, pk, tenant):
+    if pk in (None, "", 0):
+        return None
+    model = django_apps.get_model(label, model_name)
+    instance = model.objects.filter(pk=pk).first()
+    if instance is None:
+        raise DRFValidationError(f"{model_name} {pk} não encontrado.")
+    if tenant is not None:
+        req_tenant_id = getattr(tenant, "id", None)
+        inst_tenant_id = getattr(instance, "tenant_id", None)
+        if inst_tenant_id is not None and req_tenant_id is not None and inst_tenant_id != req_tenant_id:
+            raise DRFValidationError(f"{model_name} pertence a outro tenant.")
+    return instance
+
+
+def _employee(request):
+    return _resolve_instance("recursos_humanos", "Employee", request.data.get("employee"), getattr(request, "tenant", None))
+
+
 class PathologyModelViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
     permission_classes = [IsAuthenticated]
     ordering_fields = "__all__"
@@ -87,6 +118,24 @@ class PathologyRequestViewSet(PathologyModelViewSet):
     ]
     ordering = ["-requested_at", "-created_at"]
 
+    @action(detail=True, methods=["post"], url_path="cancelar", url_name="cancelar")
+    def cancelar(self, request, pk=None):
+        obj = self.get_object()
+        try:
+            PathologyWorkflowService.cancel_request(obj, reason=request.data.get("reason", ""))
+        except DjangoValidationError as exc:
+            raise _as_drf_error(exc)
+        return Response(self.get_serializer(obj).data)
+
+    @action(detail=True, methods=["post"], url_path="rejeitar", url_name="rejeitar")
+    def rejeitar(self, request, pk=None):
+        obj = self.get_object()
+        try:
+            PathologyWorkflowService.cancel_request(obj, reason=request.data.get("reason", ""), label="Rejeição")
+        except DjangoValidationError as exc:
+            raise _as_drf_error(exc)
+        return Response(self.get_serializer(obj).data)
+
 
 class PathologySampleReceptionViewSet(PathologyModelViewSet):
     queryset = PathologySampleReception.objects.select_related(
@@ -96,6 +145,42 @@ class PathologySampleReceptionViewSet(PathologyModelViewSet):
     filterset_class = PathologySampleReceptionFilter
     search_fields = ["custom_id", "accession_number", "patient__name", "anatomical_site", "clinical_history", "notes"]
     ordering = ["-received_at", "-created_at"]
+
+    @action(detail=True, methods=["post"], url_path="aceitar", url_name="aceitar")
+    def aceitar(self, request, pk=None):
+        sample = self.get_object()
+        try:
+            PathologyWorkflowService.accept_sample(
+                sample, restriction=request.data.get("restriction", ""), received_by=_employee(request)
+            )
+        except DjangoValidationError as exc:
+            raise _as_drf_error(exc)
+        return Response(self.get_serializer(sample).data)
+
+    @action(detail=True, methods=["post"], url_path="rejeitar", url_name="rejeitar")
+    def rejeitar(self, request, pk=None):
+        sample = self.get_object()
+        try:
+            PathologyWorkflowService.reject_sample(sample, reason=request.data.get("reason", ""))
+        except DjangoValidationError as exc:
+            raise _as_drf_error(exc)
+        return Response(self.get_serializer(sample).data)
+
+    @action(detail=True, methods=["post"], url_path="acessionar", url_name="acessionar")
+    def acessionar(self, request, pk=None):
+        sample = self.get_object()
+        try:
+            accession = PathologyWorkflowService.generate_accession(
+                sample,
+                accessioned_by=_employee(request),
+                sub_sample_code=request.data.get("sub_sample_code", "A"),
+            )
+        except DjangoValidationError as exc:
+            raise _as_drf_error(exc)
+        return Response(
+            PathologyAccessionSerializer(accession, context=self.get_serializer_context()).data,
+            status=http_status.HTTP_201_CREATED,
+        )
 
 
 class PathologyAccessionViewSet(PathologyModelViewSet):
@@ -128,6 +213,15 @@ class PathologyGrossExaminationViewSet(PathologyModelViewSet):
     ]
     ordering = ["-performed_at", "-created_at"]
 
+    @action(detail=True, methods=["post"], url_path="finalizar", url_name="finalizar")
+    def finalizar(self, request, pk=None):
+        obj = self.get_object()
+        try:
+            PathologyWorkflowService.finalize_gross(obj, gross_description=request.data.get("gross_description"))
+        except DjangoValidationError as exc:
+            raise _as_drf_error(exc)
+        return Response(self.get_serializer(obj).data)
+
 
 class PathologyProcessingViewSet(PathologyModelViewSet):
     queryset = PathologyProcessing.objects.select_related("sample", "sample__patient", "processor").all()
@@ -143,6 +237,33 @@ class PathologyProcessingViewSet(PathologyModelViewSet):
         "notes",
     ]
     ordering = ["-started_at", "-created_at"]
+
+    @action(detail=True, methods=["post"], url_path="iniciar", url_name="iniciar")
+    def iniciar(self, request, pk=None):
+        obj = self.get_object()
+        try:
+            PathologyWorkflowService.start_processing(obj)
+        except DjangoValidationError as exc:
+            raise _as_drf_error(exc)
+        return Response(self.get_serializer(obj).data)
+
+    @action(detail=True, methods=["post"], url_path="concluir", url_name="concluir")
+    def concluir(self, request, pk=None):
+        obj = self.get_object()
+        try:
+            PathologyWorkflowService.complete_processing(obj)
+        except DjangoValidationError as exc:
+            raise _as_drf_error(exc)
+        return Response(self.get_serializer(obj).data)
+
+    @action(detail=True, methods=["post"], url_path="falhar", url_name="falhar")
+    def falhar(self, request, pk=None):
+        obj = self.get_object()
+        try:
+            PathologyWorkflowService.fail_processing(obj, reason=request.data.get("reason", ""))
+        except DjangoValidationError as exc:
+            raise _as_drf_error(exc)
+        return Response(self.get_serializer(obj).data)
 
 
 class PathologyEmbeddingViewSet(PathologyModelViewSet):
@@ -161,6 +282,15 @@ class PathologyEmbeddingViewSet(PathologyModelViewSet):
     ]
     ordering = ["-embedded_at", "block_number"]
 
+    @action(detail=True, methods=["post"], url_path="incluir", url_name="incluir")
+    def incluir(self, request, pk=None):
+        obj = self.get_object()
+        try:
+            PathologyWorkflowService.mark_embedded(obj)
+        except DjangoValidationError as exc:
+            raise _as_drf_error(exc)
+        return Response(self.get_serializer(obj).data)
+
 
 class PathologyMicrotomyViewSet(PathologyModelViewSet):
     queryset = PathologyMicrotomy.objects.select_related(
@@ -177,6 +307,33 @@ class PathologyMicrotomyViewSet(PathologyModelViewSet):
         "notes",
     ]
     ordering = ["-cut_at", "-created_at"]
+
+    @action(detail=True, methods=["post"], url_path="cortar", url_name="cortar")
+    def cortar(self, request, pk=None):
+        obj = self.get_object()
+        try:
+            PathologyWorkflowService.mark_cut(obj)
+        except DjangoValidationError as exc:
+            raise _as_drf_error(exc)
+        return Response(self.get_serializer(obj).data)
+
+    @action(detail=True, methods=["post"], url_path="produzir-lamina", url_name="produzir-lamina")
+    def produzir_lamina(self, request, pk=None):
+        obj = self.get_object()
+        try:
+            slide = PathologyWorkflowService.produce_slide(
+                obj,
+                slide_number=request.data.get("slide_number", ""),
+                stain=request.data.get("stain", "H&E"),
+                prepared_by=_employee(request),
+                block_number=request.data.get("block_number", ""),
+            )
+        except DjangoValidationError as exc:
+            raise _as_drf_error(exc)
+        return Response(
+            PathologyHistologySlideSerializer(slide, context=self.get_serializer_context()).data,
+            status=http_status.HTTP_201_CREATED,
+        )
 
 
 class PathologyHistologySlideViewSet(PathologyModelViewSet):
@@ -198,6 +355,24 @@ class PathologyHistologySlideViewSet(PathologyModelViewSet):
     ]
     ordering = ["-prepared_at", "slide_number"]
 
+    @action(detail=True, methods=["post"], url_path="pronta", url_name="pronta")
+    def pronta(self, request, pk=None):
+        obj = self.get_object()
+        try:
+            PathologyWorkflowService.mark_slide_ready(obj)
+        except DjangoValidationError as exc:
+            raise _as_drf_error(exc)
+        return Response(self.get_serializer(obj).data)
+
+    @action(detail=True, methods=["post"], url_path="perdida", url_name="perdida")
+    def perdida(self, request, pk=None):
+        obj = self.get_object()
+        try:
+            PathologyWorkflowService.mark_slide_lost(obj, reason=request.data.get("reason", ""))
+        except DjangoValidationError as exc:
+            raise _as_drf_error(exc)
+        return Response(self.get_serializer(obj).data)
+
 
 class PathologyStainingViewSet(PathologyModelViewSet):
     queryset = PathologyStaining.objects.select_related(
@@ -216,6 +391,24 @@ class PathologyStainingViewSet(PathologyModelViewSet):
         "notes",
     ]
     ordering = ["-performed_at", "stain_name"]
+
+    @action(detail=True, methods=["post"], url_path="concluir", url_name="concluir")
+    def concluir(self, request, pk=None):
+        obj = self.get_object()
+        try:
+            PathologyWorkflowService.complete_staining(obj)
+        except DjangoValidationError as exc:
+            raise _as_drf_error(exc)
+        return Response(self.get_serializer(obj).data)
+
+    @action(detail=True, methods=["post"], url_path="repetir", url_name="repetir")
+    def repetir(self, request, pk=None):
+        obj = self.get_object()
+        try:
+            PathologyWorkflowService.repeat_staining(obj, reason=request.data.get("reason", ""))
+        except DjangoValidationError as exc:
+            raise _as_drf_error(exc)
+        return Response(self.get_serializer(obj).data)
 
 
 class PathologyCytologyCaseViewSet(PathologyModelViewSet):
@@ -291,6 +484,19 @@ class PathologyDiagnosisReviewViewSet(PathologyModelViewSet):
     ]
     ordering = ["-reviewed_at", "-created_at"]
 
+    @action(detail=True, methods=["post"], url_path="finalizar", url_name="finalizar")
+    def finalizar(self, request, pk=None):
+        obj = self.get_object()
+        try:
+            PathologyWorkflowService.finalize_diagnosis(
+                obj,
+                diagnosis_text=request.data.get("diagnosis"),
+                comments=request.data.get("comments"),
+            )
+        except DjangoValidationError as exc:
+            raise _as_drf_error(exc)
+        return Response(self.get_serializer(obj).data)
+
 
 class PathologyReportViewSet(PathologyModelViewSet):
     queryset = PathologyReport.objects.select_related("sample", "sample__patient", "pathologist").all()
@@ -306,6 +512,40 @@ class PathologyReportViewSet(PathologyModelViewSet):
         "icd_code",
     ]
     ordering = ["-signed_at", "-created_at"]
+
+    @action(detail=True, methods=["post"], url_path="assinar", url_name="assinar")
+    def assinar(self, request, pk=None):
+        obj = self.get_object()
+        try:
+            PathologyWorkflowService.sign_report(
+                obj,
+                diagnosis=request.data.get("diagnosis"),
+                conclusion=request.data.get("conclusion"),
+                pathologist=_employee(request),
+            )
+        except DjangoValidationError as exc:
+            raise _as_drf_error(exc)
+        return Response(self.get_serializer(obj).data)
+
+    @action(detail=True, methods=["post"], url_path="liberar", url_name="liberar")
+    def liberar(self, request, pk=None):
+        obj = self.get_object()
+        try:
+            PathologyWorkflowService.release_report(
+                obj, generate_base_billing=bool(request.data.get("generate_base_billing", False))
+            )
+        except DjangoValidationError as exc:
+            raise _as_drf_error(exc)
+        return Response(self.get_serializer(obj).data)
+
+    @action(detail=True, methods=["post"], url_path="retificar", url_name="retificar")
+    def retificar(self, request, pk=None):
+        obj = self.get_object()
+        try:
+            PathologyWorkflowService.amend_report(obj, reason=request.data.get("reason", ""))
+        except DjangoValidationError as exc:
+            raise _as_drf_error(exc)
+        return Response(self.get_serializer(obj).data)
 
 
 class PathologyBillingEventViewSet(PathologyModelViewSet):
@@ -323,6 +563,16 @@ class PathologyBillingEventViewSet(PathologyModelViewSet):
         "notes",
     ]
     ordering = ["-created_at"]
+
+    @action(detail=True, methods=["post"], url_path="faturar", url_name="faturar")
+    def faturar(self, request, pk=None):
+        obj = self.get_object()
+        invoice = _resolve_instance("faturamento", "Invoice", request.data.get("invoice"), getattr(request, "tenant", None))
+        try:
+            PathologyWorkflowService.mark_billing_billed(obj, invoice=invoice)
+        except DjangoValidationError as exc:
+            raise _as_drf_error(exc)
+        return Response(self.get_serializer(obj).data)
 
 
 class PathologyInventoryUsageViewSet(PathologyModelViewSet):
@@ -373,6 +623,24 @@ class PathologyArchiveViewSet(PathologyModelViewSet):
         "notes",
     ]
     ordering = ["-archived_at", "location"]
+
+    @action(detail=True, methods=["post"], url_path="emprestar", url_name="emprestar")
+    def emprestar(self, request, pk=None):
+        obj = self.get_object()
+        try:
+            PathologyWorkflowService.borrow_archive(obj, reason=request.data.get("reason", ""))
+        except DjangoValidationError as exc:
+            raise _as_drf_error(exc)
+        return Response(self.get_serializer(obj).data)
+
+    @action(detail=True, methods=["post"], url_path="devolver", url_name="devolver")
+    def devolver(self, request, pk=None):
+        obj = self.get_object()
+        try:
+            PathologyWorkflowService.return_archive(obj)
+        except DjangoValidationError as exc:
+            raise _as_drf_error(exc)
+        return Response(self.get_serializer(obj).data)
 
 
 VIEWSET_MAP = {
