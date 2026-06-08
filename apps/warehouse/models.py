@@ -110,6 +110,18 @@ class Warehouse(CoreModel):
     def __str__(self) -> str:
         return f"{self.code} - {self.name}"
 
+    def activate(self):
+        """Reativa o armazém para movimentações (§13.9)."""
+        self.status = WarehouseStatus.ACTIVE
+        self.save()
+        return self
+
+    def deactivate(self):
+        """Inativa o armazém — bloqueia novas movimentações (§13.9)."""
+        self.status = WarehouseStatus.INACTIVE
+        self.save()
+        return self
+
 
 class StorageLocation(CoreModel):
     class LocationType(models.TextChoices):
@@ -344,6 +356,36 @@ class WarehouseLot(NoNameCoreModel):
 
     def __str__(self) -> str:
         return f"{self.item.sku} / {self.lot_number}"
+
+    # ------------------------------------------------------------------ #
+    # Ciclo de vida do lote (§13.11) — a alocação de pedidos já só
+    # considera lotes AVAILABLE, por isso bloquear/quarentenar exclui o uso.
+    # ------------------------------------------------------------------ #
+    def quarantine(self):
+        if self.status == self.LotStatus.EXPIRED:
+            raise ValidationError("Lote vencido não pode mudar de estado.")
+        self.status = self.LotStatus.QUARANTINE
+        self.save()
+        return self
+
+    def block(self):
+        if self.status == self.LotStatus.EXPIRED:
+            raise ValidationError("Lote vencido não pode mudar de estado.")
+        self.status = self.LotStatus.BLOCKED
+        self.save()
+        return self
+
+    def release(self):
+        if self.expired:
+            raise ValidationError("Lote vencido não pode ser liberado.")
+        self.status = self.LotStatus.AVAILABLE
+        self.save()
+        return self
+
+    def mark_expired(self):
+        self.status = self.LotStatus.EXPIRED
+        self.save()
+        return self
 
 
 class StockLevel(NoNameCoreModel):

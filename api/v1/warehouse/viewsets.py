@@ -164,6 +164,24 @@ class WarehouseViewSet(WarehouseModelViewSet):
     search_fields = ("custom_id", "code", "name", "address")
     ordering = ["name"]
 
+    @action(detail=True, methods=["post"], url_path="activate", url_name="activate")
+    def activate(self, request, pk=None):
+        warehouse = self.get_object()
+        try:
+            warehouse = warehouse.activate()
+        except DjangoValidationError as exc:
+            raise _as_drf_error(exc) from exc
+        return Response(self.get_serializer(warehouse).data)
+
+    @action(detail=True, methods=["post"], url_path="deactivate", url_name="deactivate")
+    def deactivate(self, request, pk=None):
+        warehouse = self.get_object()
+        try:
+            warehouse = warehouse.deactivate()
+        except DjangoValidationError as exc:
+            raise _as_drf_error(exc) from exc
+        return Response(self.get_serializer(warehouse).data)
+
 
 class StorageLocationViewSet(WarehouseModelViewSet):
     queryset = StorageLocation.objects.select_related("warehouse", "parent")
@@ -195,6 +213,42 @@ class WarehouseLotViewSet(WarehouseModelViewSet):
     filterset_class = WarehouseLotFilter
     search_fields = ("custom_id", "item__sku", "item__name", "lot_number")
     ordering = ["expiration_date", "lot_number"]
+
+    @action(detail=True, methods=["post"], url_path="block", url_name="block")
+    def block(self, request, pk=None):
+        lot = self.get_object()
+        try:
+            lot = lot.block()
+        except DjangoValidationError as exc:
+            raise _as_drf_error(exc) from exc
+        return Response(self.get_serializer(lot).data)
+
+    @action(detail=True, methods=["post"], url_path="quarantine", url_name="quarantine")
+    def quarantine(self, request, pk=None):
+        lot = self.get_object()
+        try:
+            lot = lot.quarantine()
+        except DjangoValidationError as exc:
+            raise _as_drf_error(exc) from exc
+        return Response(self.get_serializer(lot).data)
+
+    @action(detail=True, methods=["post"], url_path="release", url_name="release")
+    def release(self, request, pk=None):
+        lot = self.get_object()
+        try:
+            lot = lot.release()
+        except DjangoValidationError as exc:
+            raise _as_drf_error(exc) from exc
+        return Response(self.get_serializer(lot).data)
+
+    @action(detail=True, methods=["post"], url_path="mark-expired", url_name="mark-expired")
+    def mark_expired(self, request, pk=None):
+        lot = self.get_object()
+        try:
+            lot = lot.mark_expired()
+        except DjangoValidationError as exc:
+            raise _as_drf_error(exc) from exc
+        return Response(self.get_serializer(lot).data)
 
 
 class StockLevelViewSet(WarehouseModelViewSet):
