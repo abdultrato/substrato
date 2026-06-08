@@ -1,15 +1,18 @@
 """ViewSets da API v1 para recursos de Enfermagem."""
 
+from django.apps import apps as django_apps
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.http import HttpResponse
 from rest_framework import serializers, status
 from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError as DRFValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet, ViewSet
 
 from api.utils.async_exports import queue_export_if_requested
 from api.v1.viewset_mixins import TenantScopedQuerysetMixin, ValidatedSearchOrderingMixin
+from apps.nursing.services import WardAdmissionWorkflowService
 from apps.nursing.models import (
     NursingEvolution,
     NursingPrescription,
@@ -60,6 +63,26 @@ from ..serializers import (
     WardBedSerializer,
     WardSerializer,
 )
+
+
+def _ward_as_drf_error(exc: DjangoValidationError) -> DRFValidationError:
+    detail = getattr(exc, "message_dict", None) or getattr(exc, "messages", None) or [str(exc)]
+    return DRFValidationError(detail)
+
+
+def _ward_resolve(label: str, model_name: str, pk, tenant):
+    if pk in (None, "", 0):
+        return None
+    model = django_apps.get_model(label, model_name)
+    instance = model.objects.filter(pk=pk).first()
+    if instance is None:
+        raise DRFValidationError(f"{model_name} {pk} não encontrado.")
+    if tenant is not None:
+        req = getattr(tenant, "id", None)
+        inst = getattr(instance, "tenant_id", None)
+        if inst is not None and req is not None and inst != req:
+            raise DRFValidationError(f"{model_name} pertence a outro tenant.")
+    return instance
 
 
 class TenantScopedModelViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
@@ -560,6 +583,24 @@ class WardViewSet(TenantScopedModelViewSet):
     ordering_fields = ["name", "created_at", "updated_at"]
     ordering = ["name"]
 
+    @action(detail=True, methods=["post"], url_path="ativar", url_name="ativar")
+    def ativar(self, request, pk=None):
+        ward = self.get_object()
+        try:
+            WardAdmissionWorkflowService.activate_ward(ward)
+        except DjangoValidationError as exc:
+            raise _ward_as_drf_error(exc)
+        return Response(self.get_serializer(ward).data)
+
+    @action(detail=True, methods=["post"], url_path="inativar", url_name="inativar")
+    def inativar(self, request, pk=None):
+        ward = self.get_object()
+        try:
+            WardAdmissionWorkflowService.deactivate_ward(ward)
+        except DjangoValidationError as exc:
+            raise _ward_as_drf_error(exc)
+        return Response(self.get_serializer(ward).data)
+
 
 class WardBedViewSet(TenantScopedModelViewSet):
     queryset = WardBed.objects.select_related("ward").all()
@@ -569,6 +610,24 @@ class WardBedViewSet(TenantScopedModelViewSet):
     search_fields = ["custom_id", "number", "ward__name"]
     ordering_fields = ["ward", "number", "created_at", "updated_at"]
     ordering = ["ward", "number", "-created_at"]
+
+    @action(detail=True, methods=["post"], url_path="marcar-disponivel", url_name="marcar-disponivel")
+    def marcar_disponivel(self, request, pk=None):
+        bed = self.get_object()
+        try:
+            WardAdmissionWorkflowService.activate_bed(bed)
+        except DjangoValidationError as exc:
+            raise _ward_as_drf_error(exc)
+        return Response(self.get_serializer(bed).data)
+
+    @action(detail=True, methods=["post"], url_path="bloquear", url_name="bloquear")
+    def bloquear(self, request, pk=None):
+        bed = self.get_object()
+        try:
+            WardAdmissionWorkflowService.block_bed(bed)
+        except DjangoValidationError as exc:
+            raise _ward_as_drf_error(exc)
+        return Response(self.get_serializer(bed).data)
 
 
 class WardAdmissionViewSet(TenantScopedModelViewSet):
@@ -599,6 +658,59 @@ class WardAdmissionViewSet(TenantScopedModelViewSet):
         "created_at",
     ]
     ordering = ["-admission_date", "-created_at"]
+
+    @action(detail=False, methods=["post"], url_path="internar", url_name="internar")
+    def internar(self, request):
+        tenant = getattr(request, "tenant", None)
+        bed = _ward_resolve("enfermagem", "WardBed", request.data.get("bed"), tenant)
+        patient = _ward_resolve("clinical", "Patient", request.data.get("patient"), tenant)
+        if bed is None or patient is None:
+            raise DRFValidationError({"bed": "Cama e paciente são obrigatórios."})
+        try:
+            admission = WardAdmissionWorkflowService.admit_patient(
+                bed=bed,
+                patient=patient,
+                expected_discharge_date=request.data.get("expected_discharge_date") or None,
+                estimated_observation_hours=request.data.get("estimated_observation_hours") or None,
+                notes=request.data.get("notes", ""),
+            )
+        except DjangoValidationError as exc:
+            raise _ward_as_drf_error(exc)
+        return Response(self.get_serializer(admission).data, status=status.HTTP_201_CREATED)
+
+    @action(detail=True, methods=["post"], url_path="transferir", url_name="transferir")
+    def transferir(self, request, pk=None):
+        admission = self.get_object()
+        new_bed = _ward_resolve("enfermagem", "WardBed", request.data.get("new_bed"), getattr(request, "tenant", None))
+        if new_bed is None:
+            raise DRFValidationError({"new_bed": "Cama de destino é obrigatória."})
+        try:
+            new_admission = WardAdmissionWorkflowService.transfer_patient(
+                admission, new_bed=new_bed, reason=request.data.get("reason", "")
+            )
+        except DjangoValidationError as exc:
+            raise _ward_as_drf_error(exc)
+        return Response(self.get_serializer(new_admission).data, status=status.HTTP_201_CREATED)
+
+    @action(detail=True, methods=["post"], url_path="alta", url_name="alta")
+    def alta(self, request, pk=None):
+        admission = self.get_object()
+        try:
+            WardAdmissionWorkflowService.discharge_patient(
+                admission, condition=request.data.get("condition", ""), notes=request.data.get("notes", "")
+            )
+        except DjangoValidationError as exc:
+            raise _ward_as_drf_error(exc)
+        return Response(self.get_serializer(admission).data)
+
+    @action(detail=True, methods=["post"], url_path="registrar-obito", url_name="registrar-obito")
+    def registrar_obito(self, request, pk=None):
+        admission = self.get_object()
+        try:
+            WardAdmissionWorkflowService.register_death(admission, notes=request.data.get("notes", ""))
+        except DjangoValidationError as exc:
+            raise _ward_as_drf_error(exc)
+        return Response(self.get_serializer(admission).data)
 
 
 class WardDashboardViewSet(ValidatedSearchOrderingMixin, ViewSet):
