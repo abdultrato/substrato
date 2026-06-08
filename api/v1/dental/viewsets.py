@@ -1,11 +1,16 @@
+from django.apps import apps as django_apps
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db.models import Q
 from django.utils import timezone
+from rest_framework import status as http_status
 from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError as DRFValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
 from api.v1.viewset_mixins import TenantScopedQuerysetMixin, ValidatedSearchOrderingMixin
+from apps.dental.services import DentalWorkflowService
 from apps.dental.models import (
     DentalAppointment,
     DentalApproval,
@@ -103,6 +108,34 @@ def _filter_patient_plan_validity(queryset, validity: str):
     return queryset
 
 
+def _as_drf_error(exc: DjangoValidationError) -> DRFValidationError:
+    detail = getattr(exc, "message_dict", None) or getattr(exc, "messages", None) or [str(exc)]
+    return DRFValidationError(detail)
+
+
+def _actor_name(request) -> str:
+    user = getattr(request, "user", None)
+    if user is None or not getattr(user, "is_authenticated", False):
+        return ""
+    full_name = user.get_full_name() if hasattr(user, "get_full_name") else ""
+    return (full_name or getattr(user, "username", "") or "").strip()
+
+
+def _resolve_instance(label: str, model_name: str, pk, tenant):
+    if pk in (None, "", 0):
+        return None
+    model = django_apps.get_model(label, model_name)
+    instance = model.objects.filter(pk=pk).first()
+    if instance is None:
+        raise DRFValidationError(f"{model_name} {pk} não encontrado.")
+    if tenant is not None:
+        req_tenant_id = getattr(tenant, "id", None)
+        inst_tenant_id = getattr(instance, "tenant_id", None)
+        if inst_tenant_id is not None and req_tenant_id is not None and inst_tenant_id != req_tenant_id:
+            raise DRFValidationError(f"{model_name} pertence a outro tenant.")
+    return instance
+
+
 class DentalProcedureViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
     queryset = DentalProcedure.objects.all()
     serializer_class = DentalProcedureSerializer
@@ -130,6 +163,63 @@ class DentalAppointmentViewSet(ValidatedSearchOrderingMixin, TenantScopedQueryse
     ordering_fields = ["scheduled_start", "scheduled_end", "status", "patient", "dentist", "created_at"]
     ordering = ["-scheduled_start", "-created_at"]
 
+    @action(detail=True, methods=["post"], url_path="confirmar", url_name="confirmar")
+    def confirmar(self, request, pk=None):
+        appointment = self.get_object()
+        try:
+            DentalWorkflowService.confirm_appointment(appointment, actor_name=_actor_name(request))
+        except DjangoValidationError as exc:
+            raise _as_drf_error(exc)
+        return Response(self.get_serializer(appointment).data)
+
+    @action(detail=True, methods=["post"], url_path="iniciar-atendimento", url_name="iniciar-atendimento")
+    def iniciar_atendimento(self, request, pk=None):
+        appointment = self.get_object()
+        tenant = getattr(request, "tenant", None)
+        dentist = _resolve_instance("recursos_humanos", "Employee", request.data.get("dentist"), tenant)
+        try:
+            consultation = DentalWorkflowService.start_consultation(
+                appointment,
+                dentist=dentist,
+                chief_complaint=request.data.get("chief_complaint", ""),
+                actor_name=_actor_name(request),
+            )
+        except DjangoValidationError as exc:
+            raise _as_drf_error(exc)
+        return Response(
+            DentalConsultationSerializer(consultation, context=self.get_serializer_context()).data,
+            status=http_status.HTTP_201_CREATED,
+        )
+
+    @action(detail=True, methods=["post"], url_path="finalizar", url_name="finalizar")
+    def finalizar(self, request, pk=None):
+        appointment = self.get_object()
+        try:
+            DentalWorkflowService.finalize_appointment(appointment, actor_name=_actor_name(request))
+        except DjangoValidationError as exc:
+            raise _as_drf_error(exc)
+        return Response(self.get_serializer(appointment).data)
+
+    @action(detail=True, methods=["post"], url_path="cancelar", url_name="cancelar")
+    def cancelar(self, request, pk=None):
+        appointment = self.get_object()
+        try:
+            DentalWorkflowService.cancel_appointment(
+                appointment, reason=request.data.get("reason", ""), actor_name=_actor_name(request)
+            )
+        except DjangoValidationError as exc:
+            raise _as_drf_error(exc)
+        return Response(self.get_serializer(appointment).data)
+
+    @action(detail=True, methods=["post"], url_path="faltou", url_name="faltou")
+    def faltou(self, request, pk=None):
+        appointment = self.get_object()
+        try:
+            DentalWorkflowService.mark_no_show(appointment, actor_name=_actor_name(request))
+        except DjangoValidationError as exc:
+            raise _as_drf_error(exc)
+        return Response(self.get_serializer(appointment).data)
+
 
 class DentalRecordViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
     queryset = (
@@ -154,6 +244,29 @@ class DentalRecordViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixi
     ordering_fields = ["opened_at", "closed_at", "status", "patient", "dentist", "created_at"]
     ordering = ["-opened_at", "-created_at"]
 
+    @action(detail=True, methods=["post"], url_path="registar-odontograma", url_name="registar-odontograma")
+    def registar_odontograma(self, request, pk=None):
+        record = self.get_object()
+        data = request.data
+        try:
+            entry = DentalWorkflowService.record_odontogram_entry(
+                record,
+                tooth_number=data.get("tooth_number", ""),
+                surface=data.get("surface") or DentalOdontogramEntry.Surface.WHOLE,
+                condition=data.get("condition") or DentalOdontogramEntry.Condition.HEALTHY,
+                status=data.get("status") or DentalOdontogramEntry.Status.OBSERVED,
+                severity=data.get("severity", ""),
+                diagnosis=data.get("diagnosis", ""),
+                notes=data.get("notes", ""),
+                actor_name=_actor_name(request),
+            )
+        except DjangoValidationError as exc:
+            raise _as_drf_error(exc)
+        return Response(
+            DentalOdontogramEntrySerializer(entry, context=self.get_serializer_context()).data,
+            status=http_status.HTTP_201_CREATED,
+        )
+
 
 class DentalConsultationViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
     queryset = DentalConsultation.objects.select_related("patient", "dentist", "appointment", "record").all()
@@ -171,6 +284,15 @@ class DentalConsultationViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerys
     ]
     ordering_fields = ["started_at", "ended_at", "status", "patient", "dentist", "created_at"]
     ordering = ["-started_at", "-created_at"]
+
+    @action(detail=True, methods=["post"], url_path="finalizar", url_name="finalizar")
+    def finalizar(self, request, pk=None):
+        consultation = self.get_object()
+        try:
+            DentalWorkflowService.complete_consultation(consultation, actor_name=_actor_name(request))
+        except DjangoValidationError as exc:
+            raise _as_drf_error(exc)
+        return Response(self.get_serializer(consultation).data)
 
 
 class DentalOdontogramViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
@@ -256,6 +378,57 @@ class DentalTreatmentPlanViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
     ]
     ordering = ["-created_at"]
 
+    @action(detail=True, methods=["post"], url_path="apresentar", url_name="apresentar")
+    def apresentar(self, request, pk=None):
+        plan = self.get_object()
+        try:
+            DentalWorkflowService.propose_plan(plan, actor_name=_actor_name(request))
+        except DjangoValidationError as exc:
+            raise _as_drf_error(exc)
+        return Response(self.get_serializer(plan).data)
+
+    @action(detail=True, methods=["post"], url_path="gerar-orcamento", url_name="gerar-orcamento")
+    def gerar_orcamento(self, request, pk=None):
+        plan = self.get_object()
+        tenant = getattr(request, "tenant", None)
+        issued_by = _resolve_instance("recursos_humanos", "Employee", request.data.get("issued_by"), tenant)
+        try:
+            quotation = DentalWorkflowService.generate_quotation(
+                plan,
+                valid_until=request.data.get("valid_until") or None,
+                discount_amount=request.data.get("discount_amount", "0"),
+                tax_amount=request.data.get("tax_amount", "0"),
+                issued_by=issued_by,
+                payment_terms=request.data.get("payment_terms", ""),
+                actor_name=_actor_name(request),
+            )
+        except DjangoValidationError as exc:
+            raise _as_drf_error(exc)
+        return Response(
+            DentalQuotationSerializer(quotation, context=self.get_serializer_context()).data,
+            status=http_status.HTTP_201_CREATED,
+        )
+
+    @action(detail=True, methods=["post"], url_path="concluir", url_name="concluir")
+    def concluir(self, request, pk=None):
+        plan = self.get_object()
+        try:
+            DentalWorkflowService.complete_plan(plan, actor_name=_actor_name(request))
+        except DjangoValidationError as exc:
+            raise _as_drf_error(exc)
+        return Response(self.get_serializer(plan).data)
+
+    @action(detail=True, methods=["post"], url_path="cancelar", url_name="cancelar")
+    def cancelar(self, request, pk=None):
+        plan = self.get_object()
+        try:
+            DentalWorkflowService.cancel_plan(
+                plan, reason=request.data.get("reason", ""), actor_name=_actor_name(request)
+            )
+        except DjangoValidationError as exc:
+            raise _as_drf_error(exc)
+        return Response(self.get_serializer(plan).data)
+
 
 class DentalTreatmentPhaseViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
     queryset = DentalTreatmentPhase.objects.select_related("treatment_plan").all()
@@ -304,6 +477,38 @@ class DentalTreatmentPlanItemViewSet(ValidatedSearchOrderingMixin, TenantScopedQ
         "created_at",
     ]
     ordering = ["treatment_plan", "position", "id"]
+
+    @action(detail=True, methods=["post"], url_path="executar", url_name="executar")
+    def executar(self, request, pk=None):
+        item = self.get_object()
+        tenant = getattr(request, "tenant", None)
+        performed_by = _resolve_instance(
+            "recursos_humanos", "Employee", request.data.get("performed_by"), tenant
+        ) or item.treatment_plan.dentist
+        consultation = _resolve_instance(
+            "odontologia", "DentalConsultation", request.data.get("consultation"), tenant
+        )
+        try:
+            execution = DentalWorkflowService.execute_procedure(
+                treatment_item=item,
+                performed_by=performed_by,
+                consultation=consultation,
+                tooth_number=request.data.get("tooth_number", ""),
+                surface=request.data.get("surface", ""),
+                materials=request.data.get("materials") or [],
+                anesthesia_used=request.data.get("anesthesia_used", ""),
+                clinical_notes=request.data.get("clinical_notes", ""),
+                evolution_summary=request.data.get("evolution_summary", ""),
+                update_odontogram=bool(request.data.get("update_odontogram", True)),
+                generate_billing=bool(request.data.get("generate_billing", True)),
+                actor_name=_actor_name(request),
+            )
+        except DjangoValidationError as exc:
+            raise _as_drf_error(exc)
+        return Response(
+            DentalProcedureExecutionSerializer(execution, context=self.get_serializer_context()).data,
+            status=http_status.HTTP_201_CREATED,
+        )
 
 
 class DentalPatientTreatmentPlanViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
@@ -374,6 +579,36 @@ class DentalQuotationViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetM
     ordering_fields = ["issued_at", "valid_until", "status", "subtotal", "total_amount", "created_at"]
     ordering = ["-issued_at", "-created_at"]
 
+    @action(detail=True, methods=["post"], url_path="aprovar", url_name="aprovar")
+    def aprovar(self, request, pk=None):
+        quotation = self.get_object()
+        try:
+            approval = DentalWorkflowService.approve_quotation(
+                quotation,
+                approved_by_name=request.data.get("approved_by_name", ""),
+                approval_scope=request.data.get("approval_scope") or DentalApproval.Scope.FULL_PLAN,
+                consent_signed=bool(request.data.get("consent_signed", False)),
+                consent_document_reference=request.data.get("consent_document_reference", ""),
+                actor_name=_actor_name(request),
+            )
+        except DjangoValidationError as exc:
+            raise _as_drf_error(exc)
+        return Response(
+            DentalApprovalSerializer(approval, context=self.get_serializer_context()).data,
+            status=http_status.HTTP_201_CREATED,
+        )
+
+    @action(detail=True, methods=["post"], url_path="rejeitar", url_name="rejeitar")
+    def rejeitar(self, request, pk=None):
+        quotation = self.get_object()
+        try:
+            DentalWorkflowService.reject_quotation(
+                quotation, reason=request.data.get("reason", ""), actor_name=_actor_name(request)
+            )
+        except DjangoValidationError as exc:
+            raise _as_drf_error(exc)
+        return Response(self.get_serializer(quotation).data)
+
 
 class DentalApprovalViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
     queryset = DentalApproval.objects.select_related("treatment_plan", "quotation", "patient").all()
@@ -414,6 +649,33 @@ class DentalPaymentViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMix
     ordering_fields = ["due_date", "paid_at", "payment_kind", "status", "amount_due", "amount_paid", "created_at"]
     ordering = ["-due_date", "-created_at"]
 
+    @action(detail=False, methods=["post"], url_path="registar", url_name="registar")
+    def registar(self, request):
+        tenant = getattr(request, "tenant", None)
+        patient = _resolve_instance("clinical", "Patient", request.data.get("patient"), tenant)
+        if patient is None:
+            raise DRFValidationError({"patient": "Paciente é obrigatório."})
+        plan = _resolve_instance("odontologia", "DentalTreatmentPlan", request.data.get("treatment_plan"), tenant)
+        item = _resolve_instance("odontologia", "DentalTreatmentPlanItem", request.data.get("treatment_item"), tenant)
+        quotation = _resolve_instance("odontologia", "DentalQuotation", request.data.get("quotation"), tenant)
+        try:
+            payment = DentalWorkflowService.register_payment(
+                patient=patient,
+                amount=request.data.get("amount", "0"),
+                amount_due=request.data.get("amount_due"),
+                treatment_plan=plan,
+                treatment_item=item,
+                quotation=quotation,
+                payment_kind=request.data.get("payment_kind") or DentalPayment.PaymentKind.DEPOSIT,
+                method=request.data.get("method", ""),
+                external_reference=request.data.get("external_reference", ""),
+                due_date=request.data.get("due_date") or None,
+                actor_name=_actor_name(request),
+            )
+        except DjangoValidationError as exc:
+            raise _as_drf_error(exc)
+        return Response(self.get_serializer(payment).data, status=http_status.HTTP_201_CREATED)
+
 
 class DentalProcedureExecutionViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
     queryset = DentalProcedureExecution.objects.select_related(
@@ -439,6 +701,17 @@ class DentalProcedureExecutionViewSet(ValidatedSearchOrderingMixin, TenantScoped
     ]
     ordering_fields = ["scheduled_at", "started_at", "performed_at", "status", "patient", "procedure", "created_at"]
     ordering = ["-performed_at", "-scheduled_at", "-created_at"]
+
+    @action(detail=True, methods=["post"], url_path="estornar", url_name="estornar")
+    def estornar(self, request, pk=None):
+        execution = self.get_object()
+        try:
+            DentalWorkflowService.refund_procedure(
+                execution, reason=request.data.get("reason", ""), actor_name=_actor_name(request)
+            )
+        except DjangoValidationError as exc:
+            raise _as_drf_error(exc)
+        return Response(self.get_serializer(execution).data)
 
 
 class DentalProsthesisLabOrderViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
