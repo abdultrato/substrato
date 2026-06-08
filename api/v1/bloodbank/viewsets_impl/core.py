@@ -19,6 +19,7 @@ from apps.bloodbank.models.blood_bank import (
     BloodTransfusion,
     BloodUnit,
 )
+from apps.bloodbank.services.donation_workflow import BloodDonationWorkflowService
 from apps.clinical.models.patient import Patient
 
 from ..filters import (
@@ -43,6 +44,11 @@ class TenantScopedModelViewSet(ValidatedSearchOrderingMixin, TenantScopedQueryse
     permission_classes = [IsAuthenticated]
 
 
+def _donation_as_drf_error(exc: DjangoValidationError) -> ValidationError:
+    detail = getattr(exc, "message_dict", None) or getattr(exc, "messages", None) or [str(exc)]
+    return ValidationError(detail)
+
+
 class BloodDonationViewSet(TenantScopedModelViewSet):
     queryset = BloodDonation.objects.select_related("donor", "collected_by").all()
     serializer_class = BloodDonationSerializer
@@ -50,6 +56,34 @@ class BloodDonationViewSet(TenantScopedModelViewSet):
     search_fields = ["custom_id", "bag_identifier", "donor__name"]
     ordering_fields = ["collected_at", "processed_at", "status", "screening_status", "created_at"]
     ordering = ["-collected_at", "-created_at"]
+
+    def _run(self, request, fn, **kwargs):
+        donation = self.get_object()
+        try:
+            fn(donation, **kwargs)
+        except DjangoValidationError as exc:
+            raise _donation_as_drf_error(exc)
+        return Response(self.get_serializer(donation).data)
+
+    @action(detail=True, methods=["post"], url_path="start-screening", url_name="start-screening")
+    def start_screening(self, request, pk=None):
+        return self._run(request, BloodDonationWorkflowService.start_screening)
+
+    @action(detail=True, methods=["post"], url_path="approve-screening", url_name="approve-screening")
+    def approve_screening(self, request, pk=None):
+        return self._run(request, BloodDonationWorkflowService.approve_screening)
+
+    @action(detail=True, methods=["post"], url_path="reject-screening", url_name="reject-screening")
+    def reject_screening(self, request, pk=None):
+        return self._run(request, BloodDonationWorkflowService.reject_screening, reason=request.data.get("reason", ""))
+
+    @action(detail=True, methods=["post"], url_path="complete-collection", url_name="complete-collection")
+    def complete_collection(self, request, pk=None):
+        return self._run(request, BloodDonationWorkflowService.complete_collection)
+
+    @action(detail=True, methods=["post"], url_path="cancel", url_name="cancel")
+    def cancel(self, request, pk=None):
+        return self._run(request, BloodDonationWorkflowService.cancel, reason=request.data.get("reason", ""))
 
 
 class BloodStorageViewSet(TenantScopedModelViewSet):
