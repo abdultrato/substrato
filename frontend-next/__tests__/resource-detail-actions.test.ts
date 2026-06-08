@@ -44,7 +44,6 @@ describe("resource detail actions", () => {
   it("keeps critical user flows away from native browser dialogs", () => {
     const criticalFiles = [
       "app/consultations/page.tsx",
-      "app/laboratory/requests/page.tsx",
       "app/invoices/page.tsx",
       "app/invoices/draft/[id]/page.tsx",
       "app/resources/[group]/[resource]/[id]/page.tsx",
@@ -97,10 +96,6 @@ describe("resource detail actions", () => {
     expect(invoiceDraft).toContain("addingItemKey")
     expect(invoiceDraft).toContain("addItemButtonDisabled")
     expect(invoiceDraft).toContain("Adicionando...")
-
-    const labRequests = readFrontendFile("app/laboratory/requests/page.tsx")
-    expect(labRequests).toContain("pdfLoadingId")
-    expect(labRequests).toContain("disabled={generatingPdf}")
 
     const consultations = readFrontendFile("app/consultations/page.tsx")
     expect(consultations).toContain("invoicePdfId")

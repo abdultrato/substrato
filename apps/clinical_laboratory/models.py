@@ -680,3 +680,254 @@ class CriticalResultNotification(NoNameCoreModel):
 
     def __str__(self) -> str:
         return f"Crítico {self.result_id} → {self.notified_professional or '—'}"
+
+
+# =====================================================================
+# SECTORES ESPECIALIZADOS
+# =====================================================================
+# Microbiologia: cultura → isolado → antibiograma.
+class MicrobiologyCulture(NoNameCoreModel):
+    """Cultura microbiológica a partir de uma amostra."""
+
+    prefix = "LCUL"
+
+    class CultureType(models.TextChoices):
+        AEROBIC = "AEROBIA", "Aeróbia"
+        ANAEROBIC = "ANAEROBIA", "Anaeróbia"
+        FUNGAL = "FUNGICA", "Fúngica (micológica)"
+        MYCOBACTERIAL = "MICOBACTERIA", "Micobacteriana (TB)"
+        BLOOD = "HEMOCULTURA", "Hemocultura"
+        URINE = "UROCULTURA", "Urocultura"
+        OTHER = "OUTRA", "Outra"
+
+    class Status(models.TextChoices):
+        SETUP = "MONTADA", "Montada"
+        INCUBATING = "INCUBACAO", "Em incubação"
+        GROWTH = "CRESCIMENTO", "Crescimento detetado"
+        NO_GROWTH = "SEM_CRESCIMENTO", "Sem crescimento"
+        COMPLETED = "CONCLUIDA", "Concluída"
+
+    order_item = models.ForeignKey(LabOrderItem, db_column="order_item_id", verbose_name="Item do pedido",
+                                   on_delete=models.CASCADE, related_name="cultures")
+    sample = models.ForeignKey(LabSample, db_column="sample_id", verbose_name="Amostra",
+                               on_delete=models.SET_NULL, related_name="cultures", null=True, blank=True)
+    culture_type = models.CharField("Tipo de cultura", db_column="culture_type", max_length=14,
+                                    choices=CultureType.choices, default=CultureType.AEROBIC)
+    specimen = models.CharField("Espécime", db_column="specimen", max_length=120, blank=True, default="")
+    status = models.CharField("Estado", max_length=16, choices=Status.choices,
+                              default=Status.SETUP, db_index=True)
+    incubation_started_at = models.DateTimeField("Incubação iniciada em", db_column="incubation_started_at",
+                                                 null=True, blank=True)
+    read_at = models.DateTimeField("Leitura em", db_column="read_at", null=True, blank=True)
+    performed_by = models.ForeignKey(USER, db_column="performed_by_id", verbose_name="Executado por",
+                                     on_delete=models.PROTECT, related_name="+", null=True, blank=True)
+    notes = models.TextField("Observações", db_column="notes", blank=True, default="")
+
+    class Meta:
+        db_table = "laboratorio_cultura"
+        verbose_name = "Cultura microbiológica"
+        verbose_name_plural = "Culturas microbiológicas"
+        ordering = ["-created_at"]
+        indexes = [models.Index(fields=["tenant", "status"])]
+
+    def __str__(self) -> str:
+        return f"{self.get_culture_type_display()} ({self.get_status_display()})"
+
+
+class MicrobiologyIsolate(NoNameCoreModel):
+    """Microrganismo isolado a partir de uma cultura."""
+
+    prefix = "LISO"
+
+    culture = models.ForeignKey(MicrobiologyCulture, db_column="culture_id", verbose_name="Cultura",
+                                on_delete=models.CASCADE, related_name="isolates")
+    organism_name = models.CharField("Microrganismo", db_column="organism_name", max_length=160)
+    gram_stain = models.CharField("Coloração de Gram", db_column="gram_stain", max_length=60, blank=True, default="")
+    quantity = models.CharField("Quantidade/contagem", db_column="quantity", max_length=60, blank=True, default="")
+    is_significant = models.BooleanField("Significativo", db_column="is_significant", default=True)
+    notes = models.TextField("Observações", db_column="notes", blank=True, default="")
+
+    class Meta:
+        db_table = "laboratorio_isolado"
+        verbose_name = "Isolado microbiológico"
+        verbose_name_plural = "Isolados microbiológicos"
+        ordering = ["-created_at"]
+        indexes = [models.Index(fields=["tenant", "culture"])]
+
+    def __str__(self) -> str:
+        return self.organism_name
+
+
+class AntibioticSusceptibility(NoNameCoreModel):
+    """Antibiograma: sensibilidade de um isolado a um antibiótico (S/I/R)."""
+
+    prefix = "LAST"
+
+    class Method(models.TextChoices):
+        DISK = "DISCO", "Difusão em disco (Kirby-Bauer)"
+        MIC = "CIM", "CIM (concentração inibitória mínima)"
+        ETEST = "ETEST", "E-test"
+        AUTOMATED = "AUTOMATIZADO", "Automatizado"
+
+    class Result(models.TextChoices):
+        SUSCEPTIBLE = "SENSIVEL", "Sensível (S)"
+        INTERMEDIATE = "INTERMEDIO", "Intermédio (I)"
+        RESISTANT = "RESISTENTE", "Resistente (R)"
+
+    isolate = models.ForeignKey(MicrobiologyIsolate, db_column="isolate_id", verbose_name="Isolado",
+                                on_delete=models.CASCADE, related_name="susceptibilities")
+    antibiotic = models.CharField("Antibiótico", db_column="antibiotic", max_length=120)
+    method = models.CharField("Método", db_column="method", max_length=14,
+                              choices=Method.choices, default=Method.DISK)
+    result = models.CharField("Resultado", db_column="result", max_length=12, choices=Result.choices)
+    zone_mm = models.PositiveIntegerField("Halo (mm)", db_column="zone_mm", null=True, blank=True)
+    mic_value = models.CharField("Valor CIM", db_column="mic_value", max_length=40, blank=True, default="")
+
+    class Meta:
+        db_table = "laboratorio_antibiograma"
+        verbose_name = "Antibiograma"
+        verbose_name_plural = "Antibiogramas"
+        ordering = ["antibiotic"]
+        indexes = [models.Index(fields=["tenant", "isolate"])]
+
+    def __str__(self) -> str:
+        return f"{self.antibiotic}: {self.get_result_display()}"
+
+
+class MolecularResult(NoNameCoreModel):
+    """Resultado de biologia molecular (PCR, carga viral, GeneXpert MTB/RIF, ...)."""
+
+    prefix = "LMOL"
+
+    class Assay(models.TextChoices):
+        GENEXPERT_MTB_RIF = "GENEXPERT_MTB_RIF", "GeneXpert MTB/RIF"
+        TB_PCR = "TB_PCR", "PCR TB"
+        HIV_VIRAL_LOAD = "CV_HIV", "Carga viral HIV"
+        HEPATITIS_VIRAL_LOAD = "CV_HEPATITE", "Carga viral hepatite"
+        HPV_DNA = "HPV_DNA", "HPV DNA"
+        COVID_PCR = "COVID_PCR", "PCR COVID-19"
+        PCR_GENERIC = "PCR", "PCR (genérico)"
+        OTHER = "OUTRO", "Outro"
+
+    class Detection(models.TextChoices):
+        DETECTED = "DETETADO", "Detetado"
+        NOT_DETECTED = "NAO_DETETADO", "Não detetado"
+        INDETERMINATE = "INDETERMINADO", "Indeterminado"
+        INVALID = "INVALIDO", "Inválido"
+
+    class RifResistance(models.TextChoices):
+        NOT_APPLICABLE = "NA", "N/A"
+        SENSITIVE = "SENSIVEL", "Sensível à rifampicina"
+        RESISTANT = "RESISTENTE", "Resistente à rifampicina"
+        INDETERMINATE = "INDETERMINADO", "Indeterminado"
+
+    order_item = models.ForeignKey(LabOrderItem, db_column="order_item_id", verbose_name="Item do pedido",
+                                   on_delete=models.CASCADE, related_name="molecular_results")
+    sample = models.ForeignKey(LabSample, db_column="sample_id", verbose_name="Amostra",
+                               on_delete=models.SET_NULL, related_name="molecular_results", null=True, blank=True)
+    assay = models.CharField("Ensaio", db_column="assay", max_length=20, choices=Assay.choices,
+                             default=Assay.PCR_GENERIC, db_index=True)
+    detection = models.CharField("Deteção", db_column="detection", max_length=14,
+                                 choices=Detection.choices, default=Detection.NOT_DETECTED, db_index=True)
+    rif_resistance = models.CharField("Resistência à rifampicina (GeneXpert)", db_column="rif_resistance",
+                                      max_length=14, choices=RifResistance.choices,
+                                      default=RifResistance.NOT_APPLICABLE)
+    quantitative_value = models.DecimalField("Valor quantitativo (ex.: cópias/mL)", db_column="quantitative_value",
+                                             max_digits=20, decimal_places=2, null=True, blank=True)
+    unit = models.CharField("Unidade", db_column="unit", max_length=30, blank=True, default="")
+    ct_value = models.DecimalField("Ct", db_column="ct_value", max_digits=6, decimal_places=2,
+                                   null=True, blank=True)
+    instrument = models.CharField("Instrumento", db_column="instrument", max_length=120, blank=True, default="")
+    performed_by = models.ForeignKey(USER, db_column="performed_by_id", verbose_name="Executado por",
+                                     on_delete=models.PROTECT, related_name="+", null=True, blank=True)
+    performed_at = models.DateTimeField("Executado em", db_column="performed_at", null=True, blank=True)
+    notes = models.TextField("Interpretação", db_column="notes", blank=True, default="")
+
+    class Meta:
+        db_table = "laboratorio_molecular"
+        verbose_name = "Resultado molecular"
+        verbose_name_plural = "Resultados moleculares"
+        ordering = ["-created_at"]
+        indexes = [models.Index(fields=["tenant", "assay", "detection"])]
+
+    def __str__(self) -> str:
+        base = f"{self.get_assay_display()}: {self.get_detection_display()}"
+        if self.assay == self.Assay.GENEXPERT_MTB_RIF and self.detection == self.Detection.DETECTED:
+            base += f" / {self.get_rif_resistance_display()}"
+        return base
+
+
+class AcidFastSmear(NoNameCoreModel):
+    """Baciloscopia (pesquisa de BAAR) — microscopia de esfregaço para TB."""
+
+    prefix = "LAFB"
+
+    class Stain(models.TextChoices):
+        ZIEHL_NEELSEN = "ZN", "Ziehl-Neelsen"
+        AURAMINE = "AURAMINA", "Auramina (fluorescência)"
+
+    class Grade(models.TextChoices):
+        NEGATIVE = "NEGATIVO", "Negativo"
+        SCANTY = "RARO", "Raros bacilos (escasso)"
+        ONE_PLUS = "1+", "1+"
+        TWO_PLUS = "2+", "2+"
+        THREE_PLUS = "3+", "3+"
+
+    order_item = models.ForeignKey(LabOrderItem, db_column="order_item_id", verbose_name="Item do pedido",
+                                   on_delete=models.CASCADE, related_name="afb_smears")
+    sample = models.ForeignKey(LabSample, db_column="sample_id", verbose_name="Amostra",
+                               on_delete=models.SET_NULL, related_name="afb_smears", null=True, blank=True)
+    stain = models.CharField("Coloração", db_column="stain", max_length=10,
+                             choices=Stain.choices, default=Stain.ZIEHL_NEELSEN)
+    grade = models.CharField("Resultado (gradação)", db_column="grade", max_length=10,
+                             choices=Grade.choices, default=Grade.NEGATIVE, db_index=True)
+    afb_count = models.CharField("Contagem de BAAR", db_column="afb_count", max_length=60, blank=True, default="")
+    serial_number = models.PositiveSmallIntegerField("Amostra seriada (1ª/2ª/3ª)", db_column="serial_number",
+                                                     null=True, blank=True)
+    performed_by = models.ForeignKey(USER, db_column="performed_by_id", verbose_name="Executado por",
+                                     on_delete=models.PROTECT, related_name="+", null=True, blank=True)
+    performed_at = models.DateTimeField("Executado em", db_column="performed_at", null=True, blank=True)
+    notes = models.TextField("Observações", db_column="notes", blank=True, default="")
+
+    class Meta:
+        db_table = "laboratorio_baciloscopia"
+        verbose_name = "Baciloscopia (BAAR)"
+        verbose_name_plural = "Baciloscopias (BAAR)"
+        ordering = ["-created_at"]
+        indexes = [models.Index(fields=["tenant", "grade"])]
+
+    @property
+    def is_positive(self) -> bool:
+        return self.grade != self.Grade.NEGATIVE
+
+    def __str__(self) -> str:
+        return f"BAAR {self.get_stain_display()}: {self.get_grade_display()}"
+
+
+# =====================================================================
+# BLOCOS: Gestão da Qualidade + Biossegurança (re-exportados para registo)
+# =====================================================================
+from .models_quality import (  # noqa: E402,F401
+    AuditFinding,
+    CompetencyAssessment,
+    CorrectiveAction,
+    CustomerComplaint,
+    InternalAudit,
+    LabRiskAssessment,
+    ManagementReview,
+    Nonconformity,
+    QualityDocument,
+    QualityIndicator,
+    StaffTrainingRecord,
+)
+from .models_biosafety import (  # noqa: E402,F401
+    BiologicalHazard,
+    BiosafetyInspection,
+    DecontaminationRecord,
+    ExposureIncident,
+    PPEDistribution,
+    PPEItem,
+    SpillResponseRecord,
+    VaccinationRecord,
+    WasteRecord,
+)

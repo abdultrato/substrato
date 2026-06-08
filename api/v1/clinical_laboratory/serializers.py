@@ -3,7 +3,12 @@
 from rest_framework import serializers
 
 from apps.clinical_laboratory.models import (
+    AcidFastSmear,
+    AntibioticSusceptibility,
     CriticalResultNotification,
+    MicrobiologyCulture,
+    MicrobiologyIsolate,
+    MolecularResult,
     LabOrder,
     LabOrderItem,
     LabReport,
@@ -17,6 +22,26 @@ from apps.clinical_laboratory.models import (
     SampleCollection,
     SampleReception,
     SampleRejection,
+    QualityDocument,
+    Nonconformity,
+    CorrectiveAction,
+    InternalAudit,
+    AuditFinding,
+    QualityIndicator,
+    StaffTrainingRecord,
+    CompetencyAssessment,
+    CustomerComplaint,
+    LabRiskAssessment,
+    ManagementReview,
+    BiologicalHazard,
+    ExposureIncident,
+    PPEItem,
+    PPEDistribution,
+    WasteRecord,
+    DecontaminationRecord,
+    SpillResponseRecord,
+    VaccinationRecord,
+    BiosafetyInspection,
 )
 
 CORE_READ_ONLY_FIELDS = [
@@ -87,3 +112,106 @@ class LabReportSerializer(serializers.ModelSerializer):
 
 class CriticalResultNotificationSerializer(serializers.ModelSerializer):
     Meta = _meta(CriticalResultNotification)
+
+
+# --- sectores especializados ---
+class MicrobiologyCultureSerializer(serializers.ModelSerializer):
+    Meta = _meta(MicrobiologyCulture)
+
+
+class MicrobiologyIsolateSerializer(serializers.ModelSerializer):
+    Meta = _meta(MicrobiologyIsolate)
+
+
+class AntibioticSusceptibilitySerializer(serializers.ModelSerializer):
+    Meta = _meta(AntibioticSusceptibility)
+
+
+class MolecularResultSerializer(serializers.ModelSerializer):
+    Meta = _meta(MolecularResult)
+
+
+class AcidFastSmearSerializer(serializers.ModelSerializer):
+    Meta = _meta(AcidFastSmear)
+
+
+# --- Gestão da Qualidade ---
+class QualityDocumentSerializer(serializers.ModelSerializer):
+    Meta = _meta(QualityDocument)
+
+
+class NonconformitySerializer(serializers.ModelSerializer):
+    Meta = _meta(Nonconformity)
+
+
+class CorrectiveActionSerializer(serializers.ModelSerializer):
+    Meta = _meta(CorrectiveAction)
+
+
+class InternalAuditSerializer(serializers.ModelSerializer):
+    Meta = _meta(InternalAudit)
+
+
+class AuditFindingSerializer(serializers.ModelSerializer):
+    Meta = _meta(AuditFinding)
+
+
+class QualityIndicatorSerializer(serializers.ModelSerializer):
+    Meta = _meta(QualityIndicator)
+
+
+class StaffTrainingRecordSerializer(serializers.ModelSerializer):
+    Meta = _meta(StaffTrainingRecord)
+
+
+class CompetencyAssessmentSerializer(serializers.ModelSerializer):
+    Meta = _meta(CompetencyAssessment)
+
+
+class CustomerComplaintSerializer(serializers.ModelSerializer):
+    Meta = _meta(CustomerComplaint)
+
+
+class LabRiskAssessmentSerializer(serializers.ModelSerializer):
+    Meta = _meta(LabRiskAssessment)
+
+
+class ManagementReviewSerializer(serializers.ModelSerializer):
+    Meta = _meta(ManagementReview)
+
+
+# --- Biossegurança ---
+class BiologicalHazardSerializer(serializers.ModelSerializer):
+    Meta = _meta(BiologicalHazard)
+
+
+class ExposureIncidentSerializer(serializers.ModelSerializer):
+    Meta = _meta(ExposureIncident)
+
+
+class PPEItemSerializer(serializers.ModelSerializer):
+    Meta = _meta(PPEItem)
+
+
+class PPEDistributionSerializer(serializers.ModelSerializer):
+    Meta = _meta(PPEDistribution)
+
+
+class WasteRecordSerializer(serializers.ModelSerializer):
+    Meta = _meta(WasteRecord)
+
+
+class DecontaminationRecordSerializer(serializers.ModelSerializer):
+    Meta = _meta(DecontaminationRecord)
+
+
+class SpillResponseRecordSerializer(serializers.ModelSerializer):
+    Meta = _meta(SpillResponseRecord)
+
+
+class VaccinationRecordSerializer(serializers.ModelSerializer):
+    Meta = _meta(VaccinationRecord)
+
+
+class BiosafetyInspectionSerializer(serializers.ModelSerializer):
+    Meta = _meta(BiosafetyInspection)

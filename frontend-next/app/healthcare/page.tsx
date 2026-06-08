@@ -113,7 +113,7 @@ export default function HealthcarePage() {
             {
               title: "Laboratório",
               description: t("Registo e validação de resultados.", "Result registration and validation."),
-              href: "/laboratory",
+              href: "/clinical-laboratory",
               icon: FlaskConical,
             },
           ]}

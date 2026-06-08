@@ -138,7 +138,7 @@ export default function DashboardPage() {
                             title="Exames Hoje"
                             value={stats.exams_today}
                             icon={FlaskConical}
-                            href="/laboratory/requests"
+                            href="/clinical-laboratory/orders"
                         />
 
                         <StatCard

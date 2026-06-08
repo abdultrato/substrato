@@ -166,8 +166,8 @@ export const WORKSPACES: WorkspaceDef[] = [
   {
     key: "laboratory",
     label: "Laboratório",
-    href: "/laboratory",
-    description: "Lançamento, validação e emissão de resultados.",
+    href: "/clinical-laboratory",
+    description: "LIS: pedidos, colheita, resultados e laudos.",
     anyOfGroups: [GROUPS.ADMIN, GROUPS.LABORATORIO],
   },
   {
