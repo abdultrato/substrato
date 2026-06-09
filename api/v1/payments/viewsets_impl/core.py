@@ -11,15 +11,19 @@ from rest_framework.viewsets import ModelViewSet
 from api.utils.async_exports import queue_export_if_requested
 from api.v1.viewset_mixins import TenantScopedQuerysetMixin, ValidatedSearchOrderingMixin
 from application.payments.commands import (
+    CancelPaymentCommand,
     ConfirmPaymentCommand,
     ConfirmReconciliationCommand,
+    FailPaymentCommand,
     ReconcileTransactionCommand,
     RefundPaymentCommand,
     VerifyPaymentCommand,
 )
 from application.payments.handlers import (
+    handle_cancel_payment,
     handle_confirm_payment,
     handle_confirm_reconciliation,
+    handle_fail_payment,
     handle_reconcile_transaction,
     handle_refund_payment,
     handle_verify_payment,
@@ -88,6 +92,28 @@ class PaymentViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
         payment = self._execute_command(
             handle_refund_payment,
             RefundPaymentCommand(
+                payment=self.get_object(),
+                idempotent=True,
+            ),
+        )
+        return Response(self.get_serializer(payment).data)
+
+    @action(detail=True, methods=["post"], url_path="cancel", url_name="cancel")
+    def cancel(self, request, pk=None):
+        payment = self._execute_command(
+            handle_cancel_payment,
+            CancelPaymentCommand(
+                payment=self.get_object(),
+                idempotent=True,
+            ),
+        )
+        return Response(self.get_serializer(payment).data)
+
+    @action(detail=True, methods=["post"], url_path="fail", url_name="fail")
+    def fail(self, request, pk=None):
+        payment = self._execute_command(
+            handle_fail_payment,
+            FailPaymentCommand(
                 payment=self.get_object(),
                 idempotent=True,
             ),

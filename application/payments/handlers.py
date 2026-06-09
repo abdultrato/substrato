@@ -7,8 +7,10 @@ from apps.payments.models.transaction import Transaction
 from integrations.payments.registry import get_gateway
 
 from .commands import (
+    CancelPaymentCommand,
     ConfirmPaymentCommand,
     ConfirmReconciliationCommand,
+    FailPaymentCommand,
     ReconcileTransactionCommand,
     RefundPaymentCommand,
     StartPaymentCommand,
@@ -106,6 +108,26 @@ def handle_refund_payment(command: RefundPaymentCommand):
         return payment
 
     payment.refund()
+    payment.refresh_from_db()
+    return payment
+
+
+def handle_cancel_payment(command: CancelPaymentCommand):
+    payment = command.payment
+    if command.idempotent and payment.status == payment.Status.CANCELED:
+        return payment
+
+    payment.cancel()
+    payment.refresh_from_db()
+    return payment
+
+
+def handle_fail_payment(command: FailPaymentCommand):
+    payment = command.payment
+    if command.idempotent and payment.status == payment.Status.FAILED:
+        return payment
+
+    payment.fail()
     payment.refresh_from_db()
     return payment
 

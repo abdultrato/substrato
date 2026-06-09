@@ -46,6 +46,18 @@ class RefundPaymentCommand:
 
 
 @dataclass(frozen=True, slots=True)
+class CancelPaymentCommand:
+    payment: Payment
+    idempotent: bool = True
+
+
+@dataclass(frozen=True, slots=True)
+class FailPaymentCommand:
+    payment: Payment
+    idempotent: bool = True
+
+
+@dataclass(frozen=True, slots=True)
 class ConfirmReconciliationCommand:
     reconciliation: Reconciliation
     idempotent: bool = True
