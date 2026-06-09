@@ -133,3 +133,30 @@ class MedicalRecordEntry(NoNameCoreModel):
 
     def __str__(self) -> str:
         return self.custom_id or f"Cardex {self.pk}"
+
+    # ------------------------------------------------------------------ #
+    # Ciclo de vida do registo (§21.15) — finalizado é imutável; correção
+    # deve ser por retificação/adendo (não suportado neste MVP de campos).
+    # ------------------------------------------------------------------ #
+    def finalize(self):
+        """Finaliza o registo (rascunho → finalizado)."""
+        if self.status != self.Status.DRAFT:
+            raise ValidationError("Apenas registos em rascunho podem ser finalizados.")
+        if not (self.symptoms or self.diagnosis or self.medical_report or "").strip():
+            raise ValidationError("Registo sem conteúdo clínico (sintomas/diagnóstico/relatório).")
+        if not self.care_end_at:
+            self.care_end_at = timezone.now()
+        self.status = self.Status.FINALIZED
+        self.save()
+        return self
+
+    def cancel(self, *, reason: str = ""):
+        """Cancela o registo (preserva o conteúdo; motivo opcional no relatório)."""
+        if self.status == self.Status.CANCELED:
+            raise ValidationError("Registo já cancelado.")
+        self.status = self.Status.CANCELED
+        if reason:
+            mark = f"[Cancelado] {reason}"
+            self.medical_report = f"{self.medical_report}\n{mark}".strip() if self.medical_report else mark
+        self.save()
+        return self
