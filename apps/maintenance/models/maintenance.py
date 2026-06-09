@@ -107,6 +107,18 @@ class Maintenance(TenantPropagationMixin, NoNameCoreModel):
     def performed(self) -> bool:
         return bool(self.performed_date)  # Conveniência para UI/serializers
 
+    def mark_performed(self, performed_date=None):
+        """Marca a manutenção como executada (§38: agendada → executada).
+
+        O save() propaga para a ocorrência ligada (resolve, limpa manutenção
+        pendente e regista a conclusão) e sincroniza o flag do equipamento.
+        """
+        if self.performed_date:
+            raise ValidationError("Manutenção já foi executada.")
+        self.performed_date = performed_date or timezone.localdate()
+        self.save(update_fields=["performed_date"])
+        return self
+
     def clean(self):
         super().clean()
 

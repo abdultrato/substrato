@@ -113,6 +113,16 @@ class MaintenanceViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin
     ]
     ordering = ["-scheduled_date", "-created_at"]
 
+    @action(detail=True, methods=["post"], url_path="realizar", url_name="realizar")
+    def realizar(self, request, pk=None):
+        maintenance = self.get_object()
+        performed_date = request.data.get("performed_date") or None
+        try:
+            maintenance.mark_performed(performed_date=performed_date)
+        except DjangoValidationError as exc:
+            raise _as_drf_error(exc)
+        return Response(self.get_serializer(maintenance).data)
+
     @action(detail=False, methods=["get"], url_path="pending-requests")
     def pending_requests(self, request):
         queryset = (
