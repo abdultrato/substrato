@@ -69,6 +69,18 @@ class LabSector(CoreModel):
     def __str__(self) -> str:
         return self.name or self.code
 
+    def activate(self):
+        """Reativa o sector técnico no catálogo do laboratório."""
+        self.active = True
+        self.save(update_fields=["active", "updated_at"])
+        return self
+
+    def deactivate(self):
+        """Suspende o sector — deixa de receber novas requisições/bancadas."""
+        self.active = False
+        self.save(update_fields=["active", "updated_at"])
+        return self
+
 
 class LabTest(CoreModel):
     """Exame laboratorial no catálogo (técnico + financeiro)."""

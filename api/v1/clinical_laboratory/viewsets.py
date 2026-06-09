@@ -107,13 +107,6 @@ from .serializers import (
 )
 
 
-class LabSectorViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
-    queryset = LabSector.objects.all()
-    serializer_class = LabSectorSerializer
-    search_fields = ["custom_id", "code", "name"]
-    ordering_fields = ["code", "name", "active", "created_at"]
-
-
 class _CatalogActivationMixin:
     """Acções comuns de ativar/inativar para itens de catálogo (`active`)."""
 
@@ -128,6 +121,13 @@ class _CatalogActivationMixin:
         obj = self.get_object()
         obj.deactivate()
         return Response(self.get_serializer(obj).data)
+
+
+class LabSectorViewSet(_CatalogActivationMixin, ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
+    queryset = LabSector.objects.all()
+    serializer_class = LabSectorSerializer
+    search_fields = ["custom_id", "code", "name"]
+    ordering_fields = ["code", "name", "active", "created_at"]
 
 
 class LabTestViewSet(_CatalogActivationMixin, ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):

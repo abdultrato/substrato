@@ -7,6 +7,7 @@ import { useQuery } from "@tanstack/react-query"
 
 import AppLayout from "@/components/layout/AppLayout"
 import AutoForm from "@/components/form/AutoForm"
+import ResourceDetailActionsPanel from "@/components/resources/ResourceDetailActionsPanel"
 import ResourceDetailsCard from "@/components/resources/ResourceDetailsCard"
 import ResourceListPage from "@/components/resources/ResourceListPage"
 import PageHeader from "@/components/ui/PageHeader"
@@ -344,7 +345,7 @@ export function GeneratedResourceDetailPage({ endpoint }: { endpoint: string }) 
   const canDelete = hasOpenApiMethod(detailEndpoint, "delete")
   const resourceLabel = tr(ctx.resourceLabel)
 
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading, error, refetch } = useQuery({
     queryKey: ["generated-resource-detail", ctx.normalizedEndpoint, id, safeRefreshToken],
     queryFn: async () =>
       await apiFetch<Record<string, any>>(`${ctx.normalizedEndpoint}${id}/`, {
@@ -541,6 +542,15 @@ export function GeneratedResourceDetailPage({ endpoint }: { endpoint: string }) 
           <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
             {notificationFeedback}
           </div>
+        ) : null}
+
+        {data ? (
+          <ResourceDetailActionsPanel
+            endpoint={ctx.normalizedEndpoint}
+            id={id}
+            resourceLabel={resourceLabel}
+            onCompleted={() => void refetch()}
+          />
         ) : null}
 
         {data ? (
