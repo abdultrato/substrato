@@ -151,5 +151,14 @@ class TransactionalOutboxEvent(models.Model):
         )
 
     def requeue(self) -> None:
+        """Recoloca o evento na fila para nova tentativa (recuperação manual de dead-letter, §34).
+
+        Reinicia o orçamento de tentativas e torna o evento imediatamente elegível
+        para o dispatcher (que só processa PENDING/FAILED), de modo que um evento em
+        dead-letter possa ser reprocessado depois de corrigida a causa raiz.
+        """
         self.status = self.Status.PENDING
-        self.save(update_fields=["status", "updated_at"])
+        self.attempts = 0
+        self.available_at = timezone.now()
+        self.last_error = ""
+        self.save(update_fields=["status", "attempts", "available_at", "last_error", "updated_at"])
