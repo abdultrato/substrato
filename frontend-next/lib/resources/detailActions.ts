@@ -483,12 +483,160 @@ const MATERNITY_DETAIL_ACTIONS: Record<string, DetailActionDefinition[]> = {
   ],
 }
 
+// Campos opcionais reutilizados (o backend lê via request.data.get(x, default)).
+const reasonField: DetailActionField = {
+  name: "reason",
+  labelPt: "Motivo (opcional)",
+  labelEn: "Reason (optional)",
+  type: "textarea",
+}
+const notesField: DetailActionField = {
+  name: "notes",
+  labelPt: "Notas (opcional)",
+  labelEn: "Notes (optional)",
+  type: "textarea",
+}
+
+// ── Radiologia ───────────────────────────────────────────────────────────────
+const RADIOLOGY_DETAIL_ACTIONS: Record<string, DetailActionDefinition[]> = {
+  "/radiology/equipment/": [
+    { key: "radiology.equipment.marcar-disponivel", action: "marcar-disponivel", labelPt: "Marcar disponível", labelEn: "Mark available", successPt: "Equipamento disponível.", successEn: "Equipment available.", tone: "primary" },
+    { key: "radiology.equipment.marcar-manutencao", action: "marcar-manutencao", labelPt: "Marcar em manutenção", labelEn: "Mark under maintenance", successPt: "Equipamento em manutenção.", successEn: "Equipment under maintenance.", fields: [notesField] },
+  ],
+  "/radiology/study/": [
+    { key: "radiology.study.agendar", action: "agendar", labelPt: "Agendar estudo", labelEn: "Schedule study", successPt: "Estudo agendado.", successEn: "Study scheduled.", tone: "primary", fields: [{ name: "scheduled_at", labelPt: "Data/hora (opcional)", labelEn: "Date/time (optional)", type: "datetime-local" }] },
+    { key: "radiology.study.iniciar", action: "iniciar", labelPt: "Iniciar aquisição", labelEn: "Start acquisition", successPt: "Aquisição iniciada.", successEn: "Acquisition started.", tone: "primary" },
+    { key: "radiology.study.marcar-adquirido", action: "marcar-adquirido", labelPt: "Marcar adquirido", labelEn: "Mark acquired", successPt: "Estudo adquirido.", successEn: "Study acquired.", tone: "primary", fields: [{ name: "image_count", labelPt: "Nº de imagens (opcional)", labelEn: "Image count (optional)", type: "number" }] },
+    { key: "radiology.study.cancelar", action: "cancelar", labelPt: "Cancelar estudo", labelEn: "Cancel study", successPt: "Estudo cancelado.", successEn: "Study cancelled.", tone: "danger", confirm: true, fields: [reasonField] },
+  ],
+  "/radiology/report/": [
+    { key: "radiology.report.assinar", action: "assinar", labelPt: "Assinar laudo", labelEn: "Sign report", successPt: "Laudo assinado.", successEn: "Report signed.", tone: "primary" },
+    { key: "radiology.report.liberar", action: "liberar", labelPt: "Liberar laudo", labelEn: "Release report", successPt: "Laudo liberado.", successEn: "Report released.", tone: "primary" },
+    { key: "radiology.report.comunicar-critico", action: "comunicar-critico", labelPt: "Comunicar resultado crítico", labelEn: "Communicate critical result", successPt: "Resultado crítico comunicado.", successEn: "Critical result communicated.", fields: [{ name: "communication", labelPt: "Comunicação", labelEn: "Communication", type: "textarea" }] },
+    { key: "radiology.report.retificar", action: "retificar", labelPt: "Retificar laudo", labelEn: "Amend report", successPt: "Laudo retificado.", successEn: "Report amended.", confirm: true, fields: [reasonField] },
+  ],
+  "/radiology/pacs_event/": [
+    { key: "radiology.pacs_event.reprocessar", action: "reprocessar", labelPt: "Reprocessar evento", labelEn: "Reprocess event", successPt: "Evento reprocessado.", successEn: "Event reprocessed.", tone: "primary" },
+  ],
+}
+
+// ── Diagnósticos especializados ──────────────────────────────────────────────
+const SPECIALTY_DIAGNOSTICS_DETAIL_ACTIONS: Record<string, DetailActionDefinition[]> = {
+  "/specialty_diagnostics/equipment/": [
+    { key: "specialty_diagnostics.equipment.marcar-disponivel", action: "marcar-disponivel", labelPt: "Marcar disponível", labelEn: "Mark available", successPt: "Equipamento disponível.", successEn: "Equipment available.", tone: "primary" },
+    { key: "specialty_diagnostics.equipment.marcar-manutencao", action: "marcar-manutencao", labelPt: "Marcar em manutenção", labelEn: "Mark under maintenance", successPt: "Equipamento em manutenção.", successEn: "Equipment under maintenance.", fields: [notesField] },
+  ],
+  "/specialty_diagnostics/order/": [
+    { key: "specialty_diagnostics.order.agendar", action: "agendar", labelPt: "Agendar", labelEn: "Schedule", successPt: "Exame agendado.", successEn: "Order scheduled.", tone: "primary", fields: [{ name: "scheduled_at", labelPt: "Data/hora (opcional)", labelEn: "Date/time (optional)", type: "datetime-local" }] },
+    { key: "specialty_diagnostics.order.iniciar", action: "iniciar", labelPt: "Iniciar exame", labelEn: "Start exam", successPt: "Exame iniciado.", successEn: "Exam started.", tone: "primary" },
+    { key: "specialty_diagnostics.order.finalizar-execucao", action: "finalizar-execucao", labelPt: "Finalizar execução", labelEn: "Finish execution", successPt: "Execução finalizada.", successEn: "Execution finished.", tone: "primary" },
+    { key: "specialty_diagnostics.order.cancelar", action: "cancelar", labelPt: "Cancelar exame", labelEn: "Cancel order", successPt: "Exame cancelado.", successEn: "Order cancelled.", tone: "danger", confirm: true, fields: [reasonField] },
+  ],
+  "/specialty_diagnostics/report/": [
+    { key: "specialty_diagnostics.report.assinar", action: "assinar", labelPt: "Assinar laudo", labelEn: "Sign report", successPt: "Laudo assinado.", successEn: "Report signed.", tone: "primary" },
+    { key: "specialty_diagnostics.report.liberar", action: "liberar", labelPt: "Liberar laudo", labelEn: "Release report", successPt: "Laudo liberado.", successEn: "Report released.", tone: "primary" },
+    { key: "specialty_diagnostics.report.comunicar-critico", action: "comunicar-critico", labelPt: "Comunicar resultado crítico", labelEn: "Communicate critical result", successPt: "Resultado crítico comunicado.", successEn: "Critical result communicated.", fields: [{ name: "communication", labelPt: "Comunicação", labelEn: "Communication", type: "textarea" }] },
+    { key: "specialty_diagnostics.report.retificar", action: "retificar", labelPt: "Retificar laudo", labelEn: "Amend report", successPt: "Laudo retificado.", successEn: "Report amended.", confirm: true, fields: [reasonField] },
+  ],
+  "/specialty_diagnostics/integration_event/": [
+    { key: "specialty_diagnostics.integration_event.reprocessar", action: "reprocessar", labelPt: "Reprocessar evento", labelEn: "Reprocess event", successPt: "Evento reprocessado.", successEn: "Event reprocessed.", tone: "primary" },
+  ],
+}
+
+// ── Anatomia Patológica ──────────────────────────────────────────────────────
+const PATHOLOGY_DETAIL_ACTIONS: Record<string, DetailActionDefinition[]> = {
+  "/pathology/pedidos/": [
+    { key: "pathology.pedidos.cancelar", action: "cancelar", labelPt: "Cancelar pedido", labelEn: "Cancel request", successPt: "Pedido cancelado.", successEn: "Request cancelled.", tone: "danger", confirm: true, fields: [reasonField] },
+    { key: "pathology.pedidos.rejeitar", action: "rejeitar", labelPt: "Rejeitar pedido", labelEn: "Reject request", successPt: "Pedido rejeitado.", successEn: "Request rejected.", tone: "danger", confirm: true, fields: [reasonField] },
+  ],
+  "/pathology/recepcao_amostras/": [
+    { key: "pathology.recepcao.aceitar", action: "aceitar", labelPt: "Aceitar amostra", labelEn: "Accept sample", successPt: "Amostra aceite.", successEn: "Sample accepted.", tone: "primary", fields: [{ name: "restriction", labelPt: "Restrição (opcional)", labelEn: "Restriction (optional)", type: "text" }] },
+    { key: "pathology.recepcao.rejeitar", action: "rejeitar", labelPt: "Rejeitar amostra", labelEn: "Reject sample", successPt: "Amostra rejeitada.", successEn: "Sample rejected.", tone: "danger", confirm: true, fields: [reasonField] },
+    { key: "pathology.recepcao.acessionar", action: "acessionar", labelPt: "Acessionar", labelEn: "Accession", successPt: "Amostra acessionada.", successEn: "Sample accessioned.", tone: "primary", fields: [{ name: "sub_sample_code", labelPt: "Código da sub-amostra", labelEn: "Sub-sample code", type: "text", placeholder: "A" }] },
+  ],
+  "/pathology/macroscopia/": [
+    { key: "pathology.macroscopia.finalizar", action: "finalizar", labelPt: "Finalizar macroscopia", labelEn: "Finalize grossing", successPt: "Macroscopia finalizada.", successEn: "Grossing finalized.", tone: "primary", fields: [{ name: "gross_description", labelPt: "Descrição macroscópica (opcional)", labelEn: "Gross description (optional)", type: "textarea" }] },
+  ],
+  "/pathology/processamento/": [
+    { key: "pathology.processamento.iniciar", action: "iniciar", labelPt: "Iniciar processamento", labelEn: "Start processing", successPt: "Processamento iniciado.", successEn: "Processing started.", tone: "primary" },
+    { key: "pathology.processamento.concluir", action: "concluir", labelPt: "Concluir processamento", labelEn: "Complete processing", successPt: "Processamento concluído.", successEn: "Processing completed.", tone: "primary" },
+    { key: "pathology.processamento.falhar", action: "falhar", labelPt: "Marcar falha", labelEn: "Mark failed", successPt: "Processamento marcado como falha.", successEn: "Processing marked failed.", tone: "danger", confirm: true, fields: [reasonField] },
+  ],
+  "/pathology/inclusao/": [
+    { key: "pathology.inclusao.incluir", action: "incluir", labelPt: "Incluir em bloco", labelEn: "Embed", successPt: "Inclusão registada.", successEn: "Embedding recorded.", tone: "primary" },
+  ],
+  "/pathology/microtomia/": [
+    { key: "pathology.microtomia.cortar", action: "cortar", labelPt: "Cortar", labelEn: "Cut", successPt: "Corte registado.", successEn: "Cut recorded.", tone: "primary" },
+    { key: "pathology.microtomia.produzir-lamina", action: "produzir-lamina", labelPt: "Produzir lâmina", labelEn: "Produce slide", successPt: "Lâmina produzida.", successEn: "Slide produced.", tone: "primary", fields: [{ name: "slide_number", labelPt: "Nº da lâmina (opcional)", labelEn: "Slide number (optional)", type: "text" }, { name: "stain", labelPt: "Coloração", labelEn: "Stain", type: "text", placeholder: "H&E" }] },
+  ],
+  "/pathology/histologia/": [
+    { key: "pathology.histologia.pronta", action: "pronta", labelPt: "Marcar pronta", labelEn: "Mark ready", successPt: "Lâmina pronta.", successEn: "Slide ready.", tone: "primary" },
+    { key: "pathology.histologia.perdida", action: "perdida", labelPt: "Marcar perdida", labelEn: "Mark lost", successPt: "Lâmina marcada como perdida.", successEn: "Slide marked lost.", tone: "danger", confirm: true, fields: [reasonField] },
+  ],
+  "/pathology/coloracoes/": [
+    { key: "pathology.coloracoes.concluir", action: "concluir", labelPt: "Concluir coloração", labelEn: "Complete staining", successPt: "Coloração concluída.", successEn: "Staining completed.", tone: "primary" },
+    { key: "pathology.coloracoes.repetir", action: "repetir", labelPt: "Repetir coloração", labelEn: "Repeat staining", successPt: "Coloração marcada para repetição.", successEn: "Staining set to repeat.", fields: [reasonField] },
+  ],
+  "/pathology/diagnosticos/": [
+    { key: "pathology.diagnosticos.finalizar", action: "finalizar", labelPt: "Finalizar diagnóstico", labelEn: "Finalize diagnosis", successPt: "Diagnóstico finalizado.", successEn: "Diagnosis finalized.", tone: "primary", fields: [{ name: "diagnosis", labelPt: "Diagnóstico (opcional)", labelEn: "Diagnosis (optional)", type: "textarea" }, { name: "comments", labelPt: "Comentários", labelEn: "Comments", type: "textarea" }] },
+  ],
+  "/pathology/laudos/": [
+    { key: "pathology.laudos.assinar", action: "assinar", labelPt: "Assinar laudo", labelEn: "Sign report", successPt: "Laudo assinado.", successEn: "Report signed.", tone: "primary" },
+    { key: "pathology.laudos.liberar", action: "liberar", labelPt: "Liberar laudo", labelEn: "Release report", successPt: "Laudo liberado.", successEn: "Report released.", tone: "primary", fields: [{ name: "generate_base_billing", labelPt: "Gerar faturação base", labelEn: "Generate base billing", type: "checkbox", defaultValue: false }] },
+    { key: "pathology.laudos.retificar", action: "retificar", labelPt: "Retificar laudo", labelEn: "Amend report", successPt: "Laudo retificado.", successEn: "Report amended.", confirm: true, fields: [reasonField] },
+  ],
+  "/pathology/faturacao/": [
+    { key: "pathology.faturacao.faturar", action: "faturar", labelPt: "Faturar", labelEn: "Invoice", successPt: "Faturação registada.", successEn: "Billing recorded.", tone: "primary" },
+  ],
+  "/pathology/arquivamento/": [
+    { key: "pathology.arquivamento.emprestar", action: "emprestar", labelPt: "Emprestar", labelEn: "Lend", successPt: "Empréstimo registado.", successEn: "Loan recorded.", fields: [reasonField] },
+    { key: "pathology.arquivamento.devolver", action: "devolver", labelPt: "Devolver", labelEn: "Return", successPt: "Devolução registada.", successEn: "Return recorded.", tone: "primary" },
+  ],
+}
+
+// ── Enfermagem ───────────────────────────────────────────────────────────────
+const NURSING_DETAIL_ACTIONS: Record<string, DetailActionDefinition[]> = {
+  "/nursing/procedure_item/": [
+    { key: "nursing.procedure_item.execute", action: "execute", labelPt: "Executar", labelEn: "Execute", successPt: "Procedimento executado.", successEn: "Procedure executed.", tone: "primary" },
+    { key: "nursing.procedure_item.complete", action: "complete", labelPt: "Concluir", labelEn: "Complete", successPt: "Procedimento concluído.", successEn: "Procedure completed.", tone: "primary" },
+    { key: "nursing.procedure_item.mark-not-completed", action: "mark-not-completed", labelPt: "Marcar não concluído", labelEn: "Mark not completed", successPt: "Procedimento marcado como não concluído.", successEn: "Procedure marked not completed." },
+    { key: "nursing.procedure_item.mark-billed", action: "mark-billed", labelPt: "Marcar faturado", labelEn: "Mark billed", successPt: "Procedimento marcado como faturado.", successEn: "Procedure marked billed." },
+  ],
+  "/nursing/ward/": [
+    { key: "nursing.ward.ativar", action: "ativar", labelPt: "Ativar enfermaria", labelEn: "Activate ward", successPt: "Enfermaria ativada.", successEn: "Ward activated.", tone: "primary" },
+    { key: "nursing.ward.inativar", action: "inativar", labelPt: "Inativar enfermaria", labelEn: "Deactivate ward", successPt: "Enfermaria inativada.", successEn: "Ward deactivated.", confirm: true },
+  ],
+  "/nursing/ward_admission/": [
+    { key: "nursing.ward_admission.alta", action: "alta", labelPt: "Dar alta", labelEn: "Discharge", successPt: "Alta registada.", successEn: "Discharge registered.", tone: "primary", fields: [{ name: "condition", labelPt: "Condição na alta (opcional)", labelEn: "Discharge condition (optional)", type: "text" }, notesField] },
+    { key: "nursing.ward_admission.registrar-obito", action: "registrar-obito", labelPt: "Registar óbito", labelEn: "Register death", successPt: "Óbito registado.", successEn: "Death registered.", tone: "danger", confirm: true, fields: [notesField] },
+  ],
+  "/nursing/ward_bed/": [
+    { key: "nursing.ward_bed.marcar-disponivel", action: "marcar-disponivel", labelPt: "Marcar disponível", labelEn: "Mark available", successPt: "Cama disponível.", successEn: "Bed available.", tone: "primary" },
+    { key: "nursing.ward_bed.bloquear", action: "bloquear", labelPt: "Bloquear cama", labelEn: "Block bed", successPt: "Cama bloqueada.", successEn: "Bed blocked.", confirm: true },
+  ],
+}
+
+// ── Cirurgia (pedido cirúrgico; create-invoice fica no mecanismo /resources) ──
+const SURGERY_DETAIL_ACTIONS: Record<string, DetailActionDefinition[]> = {
+  "/surgery/pedido_cirurgico/": [
+    { key: "surgery.pedido_cirurgico.submeter", action: "submeter", labelPt: "Submeter pedido", labelEn: "Submit request", successPt: "Pedido submetido.", successEn: "Request submitted.", tone: "primary" },
+    { key: "surgery.pedido_cirurgico.aprovar", action: "aprovar", labelPt: "Aprovar pedido", labelEn: "Approve request", successPt: "Pedido aprovado.", successEn: "Request approved.", tone: "primary" },
+    { key: "surgery.pedido_cirurgico.rejeitar", action: "rejeitar", labelPt: "Rejeitar pedido", labelEn: "Reject request", successPt: "Pedido rejeitado.", successEn: "Request rejected.", tone: "danger", confirm: true, fields: [reasonField] },
+    { key: "surgery.pedido_cirurgico.cancelar", action: "cancelar", labelPt: "Cancelar pedido", labelEn: "Cancel request", successPt: "Pedido cancelado.", successEn: "Request cancelled.", tone: "danger", confirm: true, fields: [reasonField] },
+  ],
+}
+
 // Registry global por endpoint-pai (normalizado). Cada módulo contribui o seu mapa.
 export const RESOURCE_DETAIL_ACTIONS: Record<string, DetailActionDefinition[]> = {
   ...CLINICAL_LABORATORY_DETAIL_ACTIONS,
   ...CONSULTATIONS_DETAIL_ACTIONS,
   ...MEDICAL_RECORDS_DETAIL_ACTIONS,
   ...MATERNITY_DETAIL_ACTIONS,
+  ...RADIOLOGY_DETAIL_ACTIONS,
+  ...SPECIALTY_DIAGNOSTICS_DETAIL_ACTIONS,
+  ...PATHOLOGY_DETAIL_ACTIONS,
+  ...NURSING_DETAIL_ACTIONS,
+  ...SURGERY_DETAIL_ACTIONS,
 }
 
 /** Ações declaradas para um endpoint, sem filtro de contrato. */
