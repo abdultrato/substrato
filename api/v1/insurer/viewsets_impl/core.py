@@ -1,4 +1,8 @@
+from django.core.exceptions import ValidationError as DjangoValidationError
+from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError as DRFValidationError
 from rest_framework.permissions import IsAuthenticated  # Protege endpoints
+from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet  # CRUD base DRF
 
 from api.v1.viewset_mixins import TenantScopedQuerysetMixin, ValidatedSearchOrderingMixin
@@ -14,6 +18,11 @@ from ..serializers import (
     ProcedureAuthorizationSerializer,
     TenantCoveragePlanSerializer,
 )
+
+
+def _as_drf_error(exc: DjangoValidationError) -> DRFValidationError:
+    detail = getattr(exc, "message_dict", None) or getattr(exc, "messages", None) or [str(exc)]
+    return DRFValidationError(detail)
 
 
 class ProcedureAuthorizationViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
@@ -42,6 +51,24 @@ class ProcedureAuthorizationViewSet(ValidatedSearchOrderingMixin, TenantScopedQu
         "response_date",
     ]
     ordering = ["-created_at"]
+
+    @action(detail=True, methods=["post"], url_path="aprovar", url_name="aprovar")
+    def aprovar(self, request, pk=None):
+        auth = self.get_object()
+        try:
+            auth.approve(authorization_code=request.data.get("authorization_code", ""))
+        except DjangoValidationError as exc:
+            raise _as_drf_error(exc)
+        return Response(self.get_serializer(auth).data)
+
+    @action(detail=True, methods=["post"], url_path="negar", url_name="negar")
+    def negar(self, request, pk=None):
+        auth = self.get_object()
+        try:
+            auth.deny(reason=request.data.get("reason", ""))
+        except DjangoValidationError as exc:
+            raise _as_drf_error(exc)
+        return Response(self.get_serializer(auth).data)
 
 
 class CoveragePlanViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):

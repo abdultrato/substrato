@@ -1,3 +1,4 @@
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils import timezone
 
@@ -83,6 +84,29 @@ class ProcedureAuthorization(DescriptionMixin, OrderMixin, CoreModel):
         self.authorization_code = authorization_code
         self.response_date = timezone.now()
         self.save(update_fields=["status", "authorization_code", "response_date"])
+
+    # ------------------------------------------------------------------ #
+    # Decisão da autorização (§25.21) — só pendentes podem ser respondidas
+    # ------------------------------------------------------------------ #
+    def approve(self, *, authorization_code: str = ""):
+        """Aprova a autorização e regista o código devolvido pela seguradora."""
+        if self.status != self.Status.PENDENTE:
+            raise ValidationError("Apenas autorizações pendentes podem ser respondidas.")
+        self.mark_response(self.Status.APROVADA, authorization_code or None)
+        return self
+
+    def deny(self, *, reason: str = ""):
+        """Nega a autorização (motivo opcional anexado à descrição)."""
+        if self.status != self.Status.PENDENTE:
+            raise ValidationError("Apenas autorizações pendentes podem ser respondidas.")
+        self.status = self.Status.NEGADA
+        self.response_date = timezone.now()
+        fields = ["status", "response_date"]
+        if reason:
+            self.description = f"{self.description or ''}\n[Negada] {reason}".strip()
+            fields.append("description")
+        self.save(update_fields=fields)
+        return self
 
     def __str__(self) -> str:
         return self.custom_id or f"Autorizacao {self.pk}"
