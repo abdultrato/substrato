@@ -415,10 +415,80 @@ const CONSULTATIONS_DETAIL_ACTIONS: Record<string, DetailActionDefinition[]> = {
   ],
 }
 
+// ── Processo clínico / Prontuário ────────────────────────────────────────────
+const MEDICAL_RECORDS_DETAIL_ACTIONS: Record<string, DetailActionDefinition[]> = {
+  "/medical_records/record/": [
+    {
+      key: "medical_records.record.finalizar",
+      action: "finalizar",
+      labelPt: "Finalizar registo",
+      labelEn: "Finalize record",
+      successPt: "Registo finalizado.",
+      successEn: "Record finalized.",
+      tone: "primary",
+    },
+    {
+      key: "medical_records.record.cancelar",
+      action: "cancelar",
+      labelPt: "Cancelar registo",
+      labelEn: "Cancel record",
+      successPt: "Registo cancelado.",
+      successEn: "Record cancelled.",
+      tone: "danger",
+      confirm: true,
+      fields: [
+        { name: "reason", labelPt: "Motivo (opcional)", labelEn: "Reason (optional)", type: "textarea" },
+      ],
+    },
+  ],
+}
+
+// ── Maternidade ──────────────────────────────────────────────────────────────
+const MATERNITY_DETAIL_ACTIONS: Record<string, DetailActionDefinition[]> = {
+  "/maternity/gestacao/": [
+    {
+      key: "maternity.gestacao.registar_parto",
+      action: "registar-parto",
+      labelPt: "Registar parto",
+      labelEn: "Register delivery",
+      successPt: "Parto registado.",
+      successEn: "Delivery registered.",
+      tone: "primary",
+      fields: [
+        { name: "cesarean", labelPt: "Cesariana", labelEn: "Cesarean", type: "checkbox", defaultValue: false },
+      ],
+    },
+    {
+      key: "maternity.gestacao.encerrar",
+      action: "encerrar",
+      labelPt: "Encerrar gestação",
+      labelEn: "Close pregnancy",
+      successPt: "Gestação encerrada.",
+      successEn: "Pregnancy closed.",
+      confirm: true,
+    },
+    {
+      key: "maternity.gestacao.cancelar",
+      action: "cancelar",
+      labelPt: "Cancelar gestação",
+      labelEn: "Cancel pregnancy",
+      successPt: "Gestação cancelada.",
+      successEn: "Pregnancy cancelled.",
+      tone: "danger",
+      confirm: true,
+      fields: [
+        { name: "reason", labelPt: "Motivo (opcional)", labelEn: "Reason (optional)", type: "textarea" },
+      ],
+    },
+  ],
+}
+
 // Registry global por endpoint-pai (normalizado). Cada módulo contribui o seu mapa.
 export const RESOURCE_DETAIL_ACTIONS: Record<string, DetailActionDefinition[]> = {
   ...CLINICAL_LABORATORY_DETAIL_ACTIONS,
   ...CONSULTATIONS_DETAIL_ACTIONS,
+  ...MEDICAL_RECORDS_DETAIL_ACTIONS,
+  ...MATERNITY_DETAIL_ACTIONS,
 }
 
 /** Ações declaradas para um endpoint, sem filtro de contrato. */
