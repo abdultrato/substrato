@@ -1,4 +1,6 @@
+from django.core.exceptions import ValidationError
 from django.db import models
+from django.utils import timezone
 
 
 class Notification(models.Model):
@@ -102,3 +104,27 @@ class Notification(models.Model):
 
     def __str__(self):
         return f"{self.get_channel_display()} → {self.recipient}"
+
+    # ------------------------------------------------------------------ #
+    # Registo do desfecho da entrega (§26.13) — complementa o
+    # NotificationService.send() que faz a chamada real ao gateway.
+    # ------------------------------------------------------------------ #
+    def mark_sent(self, *, external_reference: str = ""):
+        """Marca a notificação como enviada/entregue."""
+        if self.sent:
+            raise ValidationError("Notificação já foi enviada.")
+        self.sent = True
+        self.sent_at = timezone.now()
+        self.send_error = ""
+        if external_reference:
+            self.external_reference = external_reference
+        self.save(update_fields=["sent", "sent_at", "send_error", "external_reference"])
+        return self
+
+    def mark_failed(self, *, error: str = ""):
+        """Regista falha de entrega (mantém a notificação por reenviar)."""
+        if self.sent:
+            raise ValidationError("Notificação já enviada não pode ser marcada como falha.")
+        self.send_error = error or "Falha de entrega."
+        self.save(update_fields=["send_error"])
+        return self
