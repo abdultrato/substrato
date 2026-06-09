@@ -4,8 +4,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from infrastructure.task_queue import enqueue_task
 from services.reports.async_exports import create_export_job
-from tasks.export_jobs import run_export_job
 
 
 class ExportPatientsCSV(APIView):
@@ -52,8 +52,14 @@ class ExportPatientsCSV(APIView):
             content_disposition="attachment",
         )
 
-        # Enqueue na fila Celery
-        run_export_job.delay(job_state["id"])
+        # Enqueue na fila Celery (com fallback síncrono se o broker estiver indisponível)
+        enqueue_task(
+            "tasks.export_jobs.run_export_job",
+            task_kwargs={"job_id": job_state["id"]},
+            queue="exports",
+            tenant_id=tenant.id,
+            fail_silently=True,
+        )
 
         # Retornar 202 Accepted com informações do job
         return Response(

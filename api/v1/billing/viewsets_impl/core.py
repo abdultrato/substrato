@@ -24,8 +24,8 @@ from apps.billing.models.invoice_history import InvoiceHistory
 from apps.billing.models.invoice_items import InvoiceItem
 from apps.notifications.use_cases import send_paid_invoice_notification
 from infrastructure.cache import CacheService
+from infrastructure.task_queue import enqueue_task
 from services.reports.async_exports import create_export_job
-from tasks.export_jobs import run_export_job
 
 from ..filters import InvoiceFilter, InvoiceHistoryFilter, InvoiceItemFilter
 from ..serializers import InvoiceHistorySerializer, InvoiceItemSerializer, InvoiceSerializer
@@ -534,7 +534,15 @@ class InvoiceViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
             content_disposition="inline",
         )
 
-        run_export_job.delay(job_state["id"])
+        # Usa o abstractor com fallback síncrono: se o broker Celery estiver
+        # indisponível, gera o PDF inline (job fica pronto) em vez de devolver 500.
+        enqueue_task(
+            "tasks.export_jobs.run_export_job",
+            task_kwargs={"job_id": job_state["id"]},
+            queue="exports",
+            tenant_id=tenant.id if tenant else None,
+            fail_silently=True,
+        )
 
         return Response(
             {
