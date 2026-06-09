@@ -626,6 +626,132 @@ const SURGERY_DETAIL_ACTIONS: Record<string, DetailActionDefinition[]> = {
   ],
 }
 
+// ── Telemedicina ─────────────────────────────────────────────────────────────
+const TELEMEDICINE_DETAIL_ACTIONS: Record<string, DetailActionDefinition[]> = {
+  "/telemedicine/waiting_room/": [
+    { key: "telemedicine.waiting_room.iniciar-triagem", action: "iniciar-triagem", labelPt: "Iniciar triagem", labelEn: "Start triage", successPt: "Triagem iniciada.", successEn: "Triage started.", tone: "primary" },
+    { key: "telemedicine.waiting_room.marcar-pronto", action: "marcar-pronto", labelPt: "Marcar pronto", labelEn: "Mark ready", successPt: "Paciente pronto.", successEn: "Patient ready.", tone: "primary", fields: [{ name: "triage_notes", labelPt: "Notas de triagem (opcional)", labelEn: "Triage notes (optional)", type: "textarea" }] },
+    { key: "telemedicine.waiting_room.iniciar-chamada", action: "iniciar-chamada", labelPt: "Iniciar chamada", labelEn: "Start call", successPt: "Chamada iniciada.", successEn: "Call started.", tone: "primary", fields: [{ name: "video_room_url", labelPt: "URL da sala (opcional)", labelEn: "Room URL (optional)", type: "text" }] },
+    { key: "telemedicine.waiting_room.concluir", action: "concluir", labelPt: "Concluir atendimento", labelEn: "Complete", successPt: "Atendimento concluído.", successEn: "Visit completed.", tone: "primary" },
+    { key: "telemedicine.waiting_room.faltou", action: "faltou", labelPt: "Marcar falta", labelEn: "Mark no-show", successPt: "Falta registada.", successEn: "No-show registered.", fields: [notesField] },
+    { key: "telemedicine.waiting_room.cancelar", action: "cancelar", labelPt: "Cancelar", labelEn: "Cancel", successPt: "Entrada cancelada.", successEn: "Entry cancelled.", tone: "danger", confirm: true, fields: [reasonField] },
+  ],
+  "/telemedicine/device/": [
+    { key: "telemedicine.device.ativar", action: "ativar", labelPt: "Ativar dispositivo", labelEn: "Activate device", successPt: "Dispositivo ativado.", successEn: "Device activated.", tone: "primary", fields: [{ name: "paired_at", labelPt: "Emparelhado em (opcional)", labelEn: "Paired at (optional)", type: "datetime-local" }] },
+    { key: "telemedicine.device.pausar", action: "pausar", labelPt: "Pausar", labelEn: "Pause", successPt: "Dispositivo pausado.", successEn: "Device paused.", fields: [notesField] },
+    { key: "telemedicine.device.marcar-perdido", action: "marcar-perdido", labelPt: "Marcar perdido", labelEn: "Mark lost", successPt: "Dispositivo marcado como perdido.", successEn: "Device marked lost.", tone: "danger", confirm: true, fields: [notesField] },
+    { key: "telemedicine.device.retirar", action: "retirar", labelPt: "Retirar de uso", labelEn: "Retire", successPt: "Dispositivo retirado.", successEn: "Device retired.", confirm: true, fields: [notesField] },
+  ],
+  "/telemedicine/async_case/": [
+    { key: "telemedicine.async_case.triar", action: "triar", labelPt: "Triar caso", labelEn: "Triage case", successPt: "Caso triado.", successEn: "Case triaged.", tone: "primary" },
+    { key: "telemedicine.async_case.iniciar-revisao", action: "iniciar-revisao", labelPt: "Iniciar revisão", labelEn: "Start review", successPt: "Revisão iniciada.", successEn: "Review started.", tone: "primary" },
+    { key: "telemedicine.async_case.pedir-informacao", action: "pedir-informacao", labelPt: "Pedir informação", labelEn: "Request info", successPt: "Pedido de informação enviado.", successEn: "Information requested.", fields: [{ name: "message", labelPt: "Mensagem", labelEn: "Message", type: "textarea" }] },
+    { key: "telemedicine.async_case.concluir", action: "concluir", labelPt: "Concluir caso", labelEn: "Complete case", successPt: "Caso concluído.", successEn: "Case completed.", tone: "primary", fields: [{ name: "findings", labelPt: "Achados (opcional)", labelEn: "Findings (optional)", type: "textarea" }, { name: "recommendation", labelPt: "Recomendação (opcional)", labelEn: "Recommendation (optional)", type: "textarea" }] },
+    { key: "telemedicine.async_case.cancelar", action: "cancelar", labelPt: "Cancelar caso", labelEn: "Cancel case", successPt: "Caso cancelado.", successEn: "Case cancelled.", tone: "danger", confirm: true, fields: [reasonField] },
+  ],
+  "/telemedicine/program/": [
+    { key: "telemedicine.program.ativar", action: "ativar", labelPt: "Ativar programa", labelEn: "Activate program", successPt: "Programa ativado.", successEn: "Program activated.", tone: "primary" },
+    { key: "telemedicine.program.pausar", action: "pausar", labelPt: "Pausar programa", labelEn: "Pause program", successPt: "Programa pausado.", successEn: "Program paused.", fields: [reasonField] },
+    { key: "telemedicine.program.registar-revisao", action: "registar-revisao", labelPt: "Registar revisão", labelEn: "Record review", successPt: "Revisão registada.", successEn: "Review recorded.", fields: [{ name: "next_review_date", labelPt: "Próxima revisão (opcional)", labelEn: "Next review (optional)", type: "date" }] },
+    { key: "telemedicine.program.concluir", action: "concluir", labelPt: "Concluir programa", labelEn: "Complete program", successPt: "Programa concluído.", successEn: "Program completed.", tone: "primary", fields: [{ name: "end_date", labelPt: "Data de fim (opcional)", labelEn: "End date (optional)", type: "date" }] },
+    { key: "telemedicine.program.cancelar", action: "cancelar", labelPt: "Cancelar programa", labelEn: "Cancel program", successPt: "Programa cancelado.", successEn: "Program cancelled.", tone: "danger", confirm: true, fields: [reasonField] },
+  ],
+  "/telemedicine/alert/": [
+    { key: "telemedicine.alert.reconhecer", action: "reconhecer", labelPt: "Reconhecer", labelEn: "Acknowledge", successPt: "Alerta reconhecido.", successEn: "Alert acknowledged.", tone: "primary" },
+    { key: "telemedicine.alert.escalar", action: "escalar", labelPt: "Escalar", labelEn: "Escalate", successPt: "Alerta escalado.", successEn: "Alert escalated.", fields: [notesField] },
+    { key: "telemedicine.alert.resolver", action: "resolver", labelPt: "Resolver", labelEn: "Resolve", successPt: "Alerta resolvido.", successEn: "Alert resolved.", tone: "primary", fields: [{ name: "action_taken", labelPt: "Ação tomada (opcional)", labelEn: "Action taken (optional)", type: "textarea" }] },
+    { key: "telemedicine.alert.descartar", action: "descartar", labelPt: "Descartar", labelEn: "Dismiss", successPt: "Alerta descartado.", successEn: "Alert dismissed.", fields: [reasonField] },
+  ],
+  "/telemedicine/vital_reading/": [
+    { key: "telemedicine.vital_reading.gerar-alerta", action: "gerar-alerta", labelPt: "Gerar alerta", labelEn: "Raise alert", successPt: "Alerta gerado.", successEn: "Alert raised.", fields: [{ name: "severity", labelPt: "Severidade (opcional)", labelEn: "Severity (optional)", type: "text" }, { name: "message", labelPt: "Mensagem (opcional)", labelEn: "Message (optional)", type: "textarea" }] },
+  ],
+}
+
+// ── Veterinária ──────────────────────────────────────────────────────────────
+const VETERINARY_DETAIL_ACTIONS: Record<string, DetailActionDefinition[]> = {
+  "/veterinary/appointment/": [
+    { key: "veterinary.appointment.confirmar", action: "confirmar", labelPt: "Confirmar", labelEn: "Confirm", successPt: "Consulta confirmada.", successEn: "Appointment confirmed.", tone: "primary" },
+    { key: "veterinary.appointment.iniciar-atendimento", action: "iniciar-atendimento", labelPt: "Iniciar atendimento", labelEn: "Start visit", successPt: "Atendimento iniciado.", successEn: "Visit started.", tone: "primary", fields: [{ name: "anamnesis", labelPt: "Anamnese (opcional)", labelEn: "Anamnesis (optional)", type: "textarea" }] },
+    { key: "veterinary.appointment.finalizar", action: "finalizar", labelPt: "Finalizar", labelEn: "Finalize", successPt: "Atendimento finalizado.", successEn: "Visit finalized.", tone: "primary" },
+    { key: "veterinary.appointment.faltou", action: "faltou", labelPt: "Marcar falta", labelEn: "Mark no-show", successPt: "Falta registada.", successEn: "No-show registered." },
+    { key: "veterinary.appointment.cancelar", action: "cancelar", labelPt: "Cancelar", labelEn: "Cancel", successPt: "Consulta cancelada.", successEn: "Appointment cancelled.", tone: "danger", confirm: true, fields: [reasonField] },
+  ],
+  "/veterinary/vaccination/": [
+    { key: "veterinary.vaccination.aplicar", action: "aplicar", labelPt: "Aplicar vacina", labelEn: "Administer vaccine", successPt: "Vacina aplicada.", successEn: "Vaccine administered.", tone: "primary", fields: [{ name: "lot_number", labelPt: "Lote (opcional)", labelEn: "Lot (optional)", type: "text" }] },
+    { key: "veterinary.vaccination.reacao-adversa", action: "reacao-adversa", labelPt: "Registar reação adversa", labelEn: "Register adverse reaction", successPt: "Reação adversa registada.", successEn: "Adverse reaction registered.", tone: "danger", fields: [{ name: "description", labelPt: "Descrição", labelEn: "Description", type: "textarea" }] },
+    { key: "veterinary.vaccination.cancelar", action: "cancelar", labelPt: "Cancelar", labelEn: "Cancel", successPt: "Vacinação cancelada.", successEn: "Vaccination cancelled.", tone: "danger", confirm: true, fields: [reasonField] },
+  ],
+  "/veterinary/lab_request/": [
+    { key: "veterinary.lab_request.colher-amostra", action: "colher-amostra", labelPt: "Colher amostra", labelEn: "Collect sample", successPt: "Amostra colhida.", successEn: "Sample collected.", tone: "primary", fields: [{ name: "sample_identifier", labelPt: "Identificador da amostra (opcional)", labelEn: "Sample identifier (optional)", type: "text" }] },
+    { key: "veterinary.lab_request.processar", action: "processar", labelPt: "Processar", labelEn: "Process", successPt: "Pedido em processamento.", successEn: "Request processing.", tone: "primary" },
+    { key: "veterinary.lab_request.cancelar", action: "cancelar", labelPt: "Cancelar", labelEn: "Cancel", successPt: "Pedido cancelado.", successEn: "Request cancelled.", tone: "danger", confirm: true, fields: [reasonField] },
+  ],
+  "/veterinary/lab_request_item/": [
+    { key: "veterinary.lab_request_item.registrar-resultado", action: "registrar-resultado", labelPt: "Registar resultado", labelEn: "Record result", successPt: "Resultado registado.", successEn: "Result recorded.", tone: "primary", fields: [{ name: "result_value", labelPt: "Valor (opcional)", labelEn: "Value (optional)", type: "text" }, { name: "result_summary", labelPt: "Resumo (opcional)", labelEn: "Summary (optional)", type: "textarea" }] },
+  ],
+  "/veterinary/prescription/": [
+    { key: "veterinary.prescription.emitir", action: "emitir", labelPt: "Emitir prescrição", labelEn: "Issue prescription", successPt: "Prescrição emitida.", successEn: "Prescription issued.", tone: "primary" },
+    { key: "veterinary.prescription.concluir", action: "concluir", labelPt: "Concluir", labelEn: "Complete", successPt: "Prescrição concluída.", successEn: "Prescription completed.", tone: "primary" },
+    { key: "veterinary.prescription.cancelar", action: "cancelar", labelPt: "Cancelar", labelEn: "Cancel", successPt: "Prescrição cancelada.", successEn: "Prescription cancelled.", tone: "danger", confirm: true, fields: [reasonField] },
+  ],
+  "/veterinary/admission/": [
+    { key: "veterinary.admission.alta", action: "alta", labelPt: "Dar alta", labelEn: "Discharge", successPt: "Alta registada.", successEn: "Discharge registered.", tone: "primary", fields: [{ name: "condition", labelPt: "Condição (opcional)", labelEn: "Condition (optional)", type: "text" }, { name: "summary", labelPt: "Resumo (opcional)", labelEn: "Summary (optional)", type: "textarea" }] },
+    { key: "veterinary.admission.registrar-evolucao", action: "registrar-evolucao", labelPt: "Registar evolução", labelEn: "Record progress", successPt: "Evolução registada.", successEn: "Progress recorded.", fields: [{ name: "text", labelPt: "Evolução", labelEn: "Progress note", type: "textarea" }] },
+    { key: "veterinary.admission.transferir", action: "transferir", labelPt: "Transferir", labelEn: "Transfer", successPt: "Transferência registada.", successEn: "Transfer recorded.", fields: [{ name: "destination", labelPt: "Destino (opcional)", labelEn: "Destination (optional)", type: "text" }, reasonField] },
+    { key: "veterinary.admission.registrar-obito", action: "registrar-obito", labelPt: "Registar óbito", labelEn: "Register death", successPt: "Óbito registado.", successEn: "Death registered.", tone: "danger", confirm: true, fields: [notesField] },
+  ],
+}
+
+// ── Fisioterapia ─────────────────────────────────────────────────────────────
+const PHYSIOTHERAPY_DETAIL_ACTIONS: Record<string, DetailActionDefinition[]> = {
+  "/physiotherapy/device/": [
+    { key: "physiotherapy.device.marcar-disponivel", action: "marcar-disponivel", labelPt: "Marcar disponível", labelEn: "Mark available", successPt: "Aparelho disponível.", successEn: "Device available.", tone: "primary" },
+    { key: "physiotherapy.device.marcar-manutencao", action: "marcar-manutencao", labelPt: "Marcar em manutenção", labelEn: "Mark under maintenance", successPt: "Aparelho em manutenção.", successEn: "Device under maintenance.", fields: [notesField] },
+  ],
+  "/physiotherapy/assessment/": [
+    { key: "physiotherapy.assessment.finalizar", action: "finalizar", labelPt: "Finalizar avaliação", labelEn: "Finalize assessment", successPt: "Avaliação finalizada.", successEn: "Assessment finalized.", tone: "primary" },
+    { key: "physiotherapy.assessment.cancelar", action: "cancelar", labelPt: "Cancelar", labelEn: "Cancel", successPt: "Avaliação cancelada.", successEn: "Assessment cancelled.", tone: "danger", confirm: true, fields: [reasonField] },
+  ],
+  "/physiotherapy/treatment_plan/": [
+    { key: "physiotherapy.treatment_plan.aprovar", action: "aprovar", labelPt: "Aprovar plano", labelEn: "Approve plan", successPt: "Plano aprovado.", successEn: "Plan approved.", tone: "primary" },
+    { key: "physiotherapy.treatment_plan.agendar-sessao", action: "agendar-sessao", labelPt: "Agendar sessão", labelEn: "Schedule session", successPt: "Sessão agendada.", successEn: "Session scheduled.", fields: [{ name: "scheduled_at", labelPt: "Data/hora (opcional)", labelEn: "Date/time (optional)", type: "datetime-local" }] },
+    { key: "physiotherapy.treatment_plan.suspender", action: "suspender", labelPt: "Suspender", labelEn: "Suspend", successPt: "Plano suspenso.", successEn: "Plan suspended.", fields: [reasonField] },
+    { key: "physiotherapy.treatment_plan.retomar", action: "retomar", labelPt: "Retomar", labelEn: "Resume", successPt: "Plano retomado.", successEn: "Plan resumed.", tone: "primary" },
+    { key: "physiotherapy.treatment_plan.alta", action: "alta", labelPt: "Dar alta", labelEn: "Discharge", successPt: "Alta registada.", successEn: "Discharge registered.", tone: "primary", fields: [{ name: "summary", labelPt: "Resumo (opcional)", labelEn: "Summary (optional)", type: "textarea" }, { name: "recommendations", labelPt: "Recomendações (opcional)", labelEn: "Recommendations (optional)", type: "textarea" }] },
+    { key: "physiotherapy.treatment_plan.concluir", action: "concluir", labelPt: "Concluir", labelEn: "Complete", successPt: "Plano concluído.", successEn: "Plan completed.", tone: "primary" },
+    { key: "physiotherapy.treatment_plan.cancelar", action: "cancelar", labelPt: "Cancelar", labelEn: "Cancel", successPt: "Plano cancelado.", successEn: "Plan cancelled.", tone: "danger", confirm: true, fields: [reasonField] },
+  ],
+  "/physiotherapy/session/": [
+    { key: "physiotherapy.session.iniciar", action: "iniciar", labelPt: "Iniciar sessão", labelEn: "Start session", successPt: "Sessão iniciada.", successEn: "Session started.", tone: "primary" },
+    { key: "physiotherapy.session.finalizar", action: "finalizar", labelPt: "Finalizar sessão", labelEn: "Finish session", successPt: "Sessão finalizada.", successEn: "Session finished.", tone: "primary" },
+    { key: "physiotherapy.session.faltou", action: "faltou", labelPt: "Marcar falta", labelEn: "Mark no-show", successPt: "Falta registada.", successEn: "No-show registered." },
+    { key: "physiotherapy.session.cancelar", action: "cancelar", labelPt: "Cancelar", labelEn: "Cancel", successPt: "Sessão cancelada.", successEn: "Session cancelled.", tone: "danger", confirm: true, fields: [reasonField] },
+  ],
+}
+
+// ── Farmácia Clínica ─────────────────────────────────────────────────────────
+const CLINICAL_PHARMACY_DETAIL_ACTIONS: Record<string, DetailActionDefinition[]> = {
+  "/clinical_pharmacy/preparation/": [
+    { key: "clinical_pharmacy.preparation.validar", action: "validar", labelPt: "Validar preparação", labelEn: "Validate preparation", successPt: "Preparação validada.", successEn: "Preparation validated.", tone: "primary", fields: [{ name: "compatibility_ok", labelPt: "Compatibilidade OK", labelEn: "Compatibility OK", type: "checkbox", defaultValue: true }] },
+    { key: "clinical_pharmacy.preparation.preparar", action: "preparar", labelPt: "Preparar", labelEn: "Prepare", successPt: "Preparação realizada.", successEn: "Preparation done.", tone: "primary", fields: [{ name: "sterility_ok", labelPt: "Esterilidade OK", labelEn: "Sterility OK", type: "checkbox", defaultValue: true }] },
+    { key: "clinical_pharmacy.preparation.liberar", action: "liberar", labelPt: "Liberar", labelEn: "Release", successPt: "Preparação liberada.", successEn: "Preparation released.", tone: "primary" },
+    { key: "clinical_pharmacy.preparation.administrar", action: "administrar", labelPt: "Administrar", labelEn: "Administer", successPt: "Preparação administrada.", successEn: "Preparation administered.", tone: "primary" },
+    { key: "clinical_pharmacy.preparation.cancelar", action: "cancelar", labelPt: "Cancelar", labelEn: "Cancel", successPt: "Preparação cancelada.", successEn: "Preparation cancelled.", tone: "danger", confirm: true, fields: [reasonField] },
+    { key: "clinical_pharmacy.preparation.descartar", action: "descartar", labelPt: "Descartar", labelEn: "Discard", successPt: "Preparação descartada.", successEn: "Preparation discarded.", tone: "danger", confirm: true, fields: [reasonField] },
+  ],
+  "/clinical_pharmacy/interaction_check/": [
+    { key: "clinical_pharmacy.interaction_check.resolver", action: "resolver", labelPt: "Resolver", labelEn: "Resolve", successPt: "Interação resolvida.", successEn: "Interaction resolved.", tone: "primary", fields: [{ name: "action_taken", labelPt: "Ação tomada (opcional)", labelEn: "Action taken (optional)", type: "textarea" }, { name: "clear", labelPt: "Marcar como sem risco", labelEn: "Mark as cleared", type: "checkbox", defaultValue: false }] },
+    { key: "clinical_pharmacy.interaction_check.aceitar-com-justificativa", action: "aceitar-com-justificativa", labelPt: "Aceitar com justificativa", labelEn: "Accept with override", successPt: "Interação aceite com justificativa.", successEn: "Interaction accepted.", fields: [{ name: "override_reason", labelPt: "Justificativa", labelEn: "Override reason", type: "textarea" }] },
+  ],
+  "/clinical_pharmacy/controlled_movement/": [
+    { key: "clinical_pharmacy.controlled_movement.estornar", action: "estornar", labelPt: "Estornar movimento", labelEn: "Reverse movement", successPt: "Movimento estornado.", successEn: "Movement reversed.", tone: "danger", confirm: true, fields: [reasonField] },
+  ],
+  "/clinical_pharmacy/antibiotic_review/": [
+    { key: "clinical_pharmacy.antibiotic_review.emitir-recomendacao", action: "emitir-recomendacao", labelPt: "Emitir recomendação", labelEn: "Issue recommendation", successPt: "Recomendação emitida.", successEn: "Recommendation issued.", tone: "primary", fields: [{ name: "recommendation", labelPt: "Recomendação (opcional)", labelEn: "Recommendation (optional)", type: "textarea" }] },
+    { key: "clinical_pharmacy.antibiotic_review.implementar", action: "implementar", labelPt: "Implementar", labelEn: "Implement", successPt: "Recomendação implementada.", successEn: "Recommendation implemented.", tone: "primary", fields: [{ name: "action_taken", labelPt: "Ação tomada (opcional)", labelEn: "Action taken (optional)", type: "textarea" }] },
+  ],
+}
+
 // Registry global por endpoint-pai (normalizado). Cada módulo contribui o seu mapa.
 export const RESOURCE_DETAIL_ACTIONS: Record<string, DetailActionDefinition[]> = {
   ...CLINICAL_LABORATORY_DETAIL_ACTIONS,
@@ -637,6 +763,10 @@ export const RESOURCE_DETAIL_ACTIONS: Record<string, DetailActionDefinition[]> =
   ...PATHOLOGY_DETAIL_ACTIONS,
   ...NURSING_DETAIL_ACTIONS,
   ...SURGERY_DETAIL_ACTIONS,
+  ...TELEMEDICINE_DETAIL_ACTIONS,
+  ...VETERINARY_DETAIL_ACTIONS,
+  ...PHYSIOTHERAPY_DETAIL_ACTIONS,
+  ...CLINICAL_PHARMACY_DETAIL_ACTIONS,
 }
 
 /** Ações declaradas para um endpoint, sem filtro de contrato. */
