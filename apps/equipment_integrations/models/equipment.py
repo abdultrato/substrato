@@ -183,3 +183,15 @@ class IntegrationEquipment(CoreModel):
         self.save(update_fields=["last_seen_at", "updated_at"])
 
     marcar_comunicacao = mark_seen
+
+    def activate(self):
+        """Ativa o equipamento para integração (§28.6)."""
+        self.active = True
+        self.save(update_fields=["active", "updated_at"])
+        return self
+
+    def deactivate(self):
+        """Suspende/inativa o equipamento — deixa de processar mensagens de produção."""
+        self.active = False
+        self.save(update_fields=["active", "updated_at"])
+        return self

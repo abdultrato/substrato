@@ -1,4 +1,8 @@
+from django.core.exceptions import ValidationError as DjangoValidationError
+from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError as DRFValidationError
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
 from api.v1.viewset_mixins import TenantScopedQuerysetMixin, ValidatedSearchOrderingMixin
@@ -35,6 +39,11 @@ from .serializers import (
 )
 
 
+def _as_drf_error(exc: DjangoValidationError) -> DRFValidationError:
+    detail = getattr(exc, "message_dict", None) or getattr(exc, "messages", None) or [str(exc)]
+    return DRFValidationError(detail)
+
+
 class TenantScopedIntegrationViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
     permission_classes = [IsAuthenticated]
 
@@ -68,6 +77,24 @@ class IntegrationEquipmentViewSet(TenantScopedIntegrationViewSet):
     ]
     ordering = ["name", "-created_at"]
 
+    @action(detail=True, methods=["post"], url_path="ativar", url_name="ativar")
+    def ativar(self, request, pk=None):
+        equipment = self.get_object()
+        try:
+            equipment.activate()
+        except DjangoValidationError as exc:
+            raise _as_drf_error(exc)
+        return Response(self.get_serializer(equipment).data)
+
+    @action(detail=True, methods=["post"], url_path="inativar", url_name="inativar")
+    def inativar(self, request, pk=None):
+        equipment = self.get_object()
+        try:
+            equipment.deactivate()
+        except DjangoValidationError as exc:
+            raise _as_drf_error(exc)
+        return Response(self.get_serializer(equipment).data)
+
 
 class IntegrationCredentialViewSet(TenantScopedIntegrationViewSet):
     queryset = IntegrationCredential.objects.select_related("equipment").all()
@@ -94,6 +121,24 @@ class IntegrationOrderViewSet(TenantScopedIntegrationViewSet):
     search_fields = ["custom_id", "equipment__name", "equipment__serial_number", "request__custom_id", "request__patient__name"]
     ordering_fields = ["status", "created_at", "updated_at"]
     ordering = ["-created_at"]
+
+    @action(detail=True, methods=["post"], url_path="enviar", url_name="enviar")
+    def enviar(self, request, pk=None):
+        order = self.get_object()
+        try:
+            order.mark_sent()
+        except DjangoValidationError as exc:
+            raise _as_drf_error(exc)
+        return Response(self.get_serializer(order).data)
+
+    @action(detail=True, methods=["post"], url_path="cancelar", url_name="cancelar")
+    def cancelar(self, request, pk=None):
+        order = self.get_object()
+        try:
+            order.cancel(reason=request.data.get("reason", ""))
+        except DjangoValidationError as exc:
+            raise _as_drf_error(exc)
+        return Response(self.get_serializer(order).data)
 
 
 class IntegrationOrderItemViewSet(TenantScopedIntegrationViewSet):

@@ -81,6 +81,29 @@ class IntegrationOrder(NoNameCoreModel):
     def __str__(self) -> str:
         return f"{self.custom_id} - {self.equipment}"
 
+    # ------------------------------------------------------------------ #
+    # Ciclo de vida da ordem (§28.11) — transições manuais; o status de
+    # execução/conclusão é actualizado pela ingestão de resultados.
+    # ------------------------------------------------------------------ #
+    def mark_sent(self):
+        """Marca a ordem como enviada ao equipamento (pendente → enviada)."""
+        if self.status != self.Status.PENDING:
+            raise ValidationError("Apenas ordens pendentes podem ser enviadas.")
+        self.status = self.Status.SENT
+        self.save(update_fields=["status", "updated_at"])
+        return self
+
+    def cancel(self, *, reason: str = ""):
+        """Cancela a ordem (não aplicável a ordens concluídas/canceladas)."""
+        if self.status in {self.Status.DONE, self.Status.CANCELED}:
+            raise ValidationError("Ordem concluída/cancelada não pode ser cancelada.")
+        self.status = self.Status.CANCELED
+        if reason:
+            mark = f"[Cancelamento] {reason}"
+            self.observation = f"{self.observation}\n{mark}".strip() if self.observation else mark
+        self.save(update_fields=["status", "observation", "updated_at"])
+        return self
+
 
 class IntegrationOrderItem(ScopedPositionMixin, NoNameCoreModel):
     prefix = "ORDIT"
