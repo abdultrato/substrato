@@ -13,6 +13,7 @@ from .commands import (
     FailPaymentCommand,
     ReconcileTransactionCommand,
     RefundPaymentCommand,
+    ReopenReconciliationCommand,
     StartPaymentCommand,
     VerifyPaymentCommand,
 )
@@ -138,6 +139,16 @@ def handle_confirm_reconciliation(command: ConfirmReconciliationCommand):
         return reconciliation
 
     reconciliation.confirm()
+    reconciliation.refresh_from_db()
+    return reconciliation
+
+
+def handle_reopen_reconciliation(command: ReopenReconciliationCommand):
+    reconciliation = command.reconciliation
+    if command.idempotent and not reconciliation.confirmed:
+        return reconciliation
+
+    reconciliation.reopen()
     reconciliation.refresh_from_db()
     return reconciliation
 

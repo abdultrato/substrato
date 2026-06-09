@@ -61,3 +61,9 @@ class FailPaymentCommand:
 class ConfirmReconciliationCommand:
     reconciliation: Reconciliation
     idempotent: bool = True
+
+
+@dataclass(frozen=True, slots=True)
+class ReopenReconciliationCommand:
+    reconciliation: Reconciliation
+    idempotent: bool = True

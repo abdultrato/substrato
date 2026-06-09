@@ -17,6 +17,7 @@ from application.payments.commands import (
     FailPaymentCommand,
     ReconcileTransactionCommand,
     RefundPaymentCommand,
+    ReopenReconciliationCommand,
     VerifyPaymentCommand,
 )
 from application.payments.handlers import (
@@ -26,6 +27,7 @@ from application.payments.handlers import (
     handle_fail_payment,
     handle_reconcile_transaction,
     handle_refund_payment,
+    handle_reopen_reconciliation,
     handle_verify_payment,
 )
 from apps.payments.models.payment import Payment
@@ -188,6 +190,17 @@ class ReconciliationViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMi
         )
         return Response(self.get_serializer(reconciliation).data)
 
+    @action(detail=True, methods=["post"], url_path="reopen", url_name="reopen")
+    def reopen(self, request, pk=None):
+        reconciliation = self._execute_command(
+            handle_reopen_reconciliation,
+            ReopenReconciliationCommand(
+                reconciliation=self.get_object(),
+                idempotent=True,
+            ),
+        )
+        return Response(self.get_serializer(reconciliation).data)
+
 
 class TransactionViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
     queryset = Transaction.objects.all()
@@ -291,6 +304,22 @@ class TransactionViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin
     @action(detail=True, methods=["post"], url_path="reconciliar", url_name="reconciliar")
     def reconciliar(self, request, pk=None):
         return self.reconcile(request, pk=pk)
+
+    @action(detail=True, methods=["post"], url_path="unreconcile", url_name="unreconcile")
+    def unreconcile(self, request, pk=None):
+        transaction = self.get_object()
+        reconciliation = Reconciliation.objects.filter(transaction=transaction).first()
+        if reconciliation is None:
+            raise ValidationError("Transação não possui conciliação para reabrir.")
+        self._execute_command(
+            handle_reopen_reconciliation,
+            ReopenReconciliationCommand(
+                reconciliation=reconciliation,
+                idempotent=True,
+            ),
+        )
+        transaction.refresh_from_db()
+        return Response(self.get_serializer(transaction).data)
 
 
 VIEWSET_MAP = {

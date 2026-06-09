@@ -1,3 +1,4 @@
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils import timezone
 
@@ -36,6 +37,14 @@ class Reconciliation(models.Model):
     def confirm(self):
         self.confirmed = True
         self.confirmation_date = timezone.now()
+        self.save(update_fields=["confirmed", "confirmation_date"])
+
+    def reopen(self):
+        """Reabre a conciliação (contrapartida de confirm) para nova conferência."""
+        if not self.confirmed:
+            raise ValidationError("Conciliação já está pendente.")
+        self.confirmed = False
+        self.confirmation_date = None
         self.save(update_fields=["confirmed", "confirmation_date"])
 
     def __str__(self) -> str:
