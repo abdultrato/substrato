@@ -35,146 +35,6 @@ function recordActionEndpoint(endpoint: string, id: string, action: string) {
     return `${ensureTrailingSlash(endpoint)}${id}/${action}/`
 }
 
-type DetailActionDefinition = {
-    key: string
-    action: string
-    labelPt: string
-    labelEn: string
-    successPt: string
-    successEn: string
-    tone?: "primary" | "default"
-}
-
-const WAREHOUSE_DETAIL_ACTIONS: Record<string, DetailActionDefinition[]> = {
-    sales_order: [
-        {
-            key: "warehouse.sales_order.confirm",
-            action: "confirm",
-            labelPt: "Confirmar",
-            labelEn: "Confirm",
-            successPt: "Pedido confirmado.",
-            successEn: "Order confirmed.",
-        },
-        {
-            key: "warehouse.sales_order.allocate",
-            action: "allocate",
-            labelPt: "Reservar estoque",
-            labelEn: "Allocate stock",
-            successPt: "Estoque reservado.",
-            successEn: "Stock allocated.",
-            tone: "primary",
-        },
-        {
-            key: "warehouse.sales_order.pick",
-            action: "create-pick-list",
-            labelPt: "Gerar separação",
-            labelEn: "Create pick list",
-            successPt: "Lista de separação criada.",
-            successEn: "Pick list created.",
-        },
-        {
-            key: "warehouse.sales_order.ship",
-            action: "ship",
-            labelPt: "Expedir",
-            labelEn: "Ship",
-            successPt: "Expedição criada.",
-            successEn: "Shipment created.",
-            tone: "primary",
-        },
-    ],
-    stock_reservation: [
-        {
-            key: "warehouse.stock_reservation.release",
-            action: "release",
-            labelPt: "Liberar reserva",
-            labelEn: "Release reservation",
-            successPt: "Reserva liberada.",
-            successEn: "Reservation released.",
-        },
-    ],
-    pick_list: [
-        {
-            key: "warehouse.pick_list.complete",
-            action: "complete",
-            labelPt: "Concluir separação",
-            labelEn: "Complete picking",
-            successPt: "Separação concluída.",
-            successEn: "Picking completed.",
-            tone: "primary",
-        },
-    ],
-    shipment: [
-        {
-            key: "warehouse.shipment.ship",
-            action: "ship",
-            labelPt: "Baixar expedição",
-            labelEn: "Post shipment",
-            successPt: "Expedição lançada.",
-            successEn: "Shipment posted.",
-            tone: "primary",
-        },
-    ],
-    replenishment_plan: [
-        {
-            key: "warehouse.replenishment_plan.generate",
-            action: "generate",
-            labelPt: "Gerar sugestões",
-            labelEn: "Generate suggestions",
-            successPt: "Sugestões geradas.",
-            successEn: "Suggestions generated.",
-        },
-        {
-            key: "warehouse.replenishment_plan.purchase",
-            action: "create-purchase-order",
-            labelPt: "Criar compra",
-            labelEn: "Create purchase",
-            successPt: "Pedido de compra criado.",
-            successEn: "Purchase order created.",
-            tone: "primary",
-        },
-    ],
-    goods_receipt: [
-        {
-            key: "warehouse.goods_receipt.post",
-            action: "post",
-            labelPt: "Lançar recebimento",
-            labelEn: "Post receipt",
-            successPt: "Recebimento lançado.",
-            successEn: "Receipt posted.",
-            tone: "primary",
-        },
-    ],
-    stock_transfer: [
-        {
-            key: "warehouse.stock_transfer.post",
-            action: "post",
-            labelPt: "Lançar transferência",
-            labelEn: "Post transfer",
-            successPt: "Transferência lançada.",
-            successEn: "Transfer posted.",
-            tone: "primary",
-        },
-    ],
-    cycle_count: [
-        {
-            key: "warehouse.cycle_count.post",
-            action: "post",
-            labelPt: "Lançar inventário",
-            labelEn: "Post count",
-            successPt: "Inventário lançado.",
-            successEn: "Cycle count posted.",
-            tone: "primary",
-        },
-    ],
-}
-
-function warehouseActionButtonClass(tone?: DetailActionDefinition["tone"]) {
-    if (tone === "primary") {
-        return "inline-flex h-9 items-center rounded-md bg-[var(--primary-600)] px-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[var(--primary-700)] disabled:opacity-60"
-    }
-    return "inline-flex h-9 items-center rounded-md border border-[var(--border)] bg-white px-3 text-sm font-medium text-[var(--gray-700)] shadow-sm transition hover:bg-[var(--gray-50)] disabled:opacity-60"
-}
-
 export default function ResourceDetailPage() {
     const params = useParams()
     const groupKey = routeParamToString((params as any)?.group)
@@ -214,12 +74,6 @@ export default function ResourceDetailPage() {
         ? hasOpenApiMethod(detailActionContractEndpoint(found.resource.endpoint, "create-invoice"), "post")
         : false
     const canDownloadInvoicePdf = hasOpenApiMethod("/billing/invoice/{id}/pdf/", "get")
-    const warehouseDetailActions =
-        found && canonicalGroupKey === "warehouse"
-            ? (WAREHOUSE_DETAIL_ACTIONS[resourceKey.toLocaleLowerCase()] || []).filter((definition) =>
-                hasOpenApiMethod(detailActionContractEndpoint(found.resource.endpoint, definition.action), "post")
-            )
-            : []
 
     const reloadResource = useCallback(async () => {
         if (!found || !canReadDetail) {
@@ -344,24 +198,6 @@ export default function ResourceDetailPage() {
         }
     }, [found, id, reloadResource, t])
 
-    const runWarehouseDetailAction = useCallback(async (definition: DetailActionDefinition) => {
-        if (!found) return
-        try {
-            setActiveAction(definition.key)
-            setError(null)
-            setFeedback(null)
-            await apiFetch(recordActionEndpoint(found.resource.endpoint, id, definition.action), {
-                method: "POST",
-                body: JSON.stringify({}),
-            })
-            setFeedback(t(definition.successPt, definition.successEn))
-            await reloadResource()
-        } catch (e: any) {
-            setError(isNotFoundLikeError(e) ? null : (e?.message || t("Falha ao executar operação WMS.", "Failed to run WMS operation.")))
-        } finally {
-            setActiveAction(null)
-        }
-    }, [found, id, reloadResource, t])
 
     function parseRecipientId(value: string) {
         const parsed = Number(value)
@@ -565,36 +401,6 @@ export default function ResourceDetailPage() {
                         {feedback}
                     </div>
                 )}
-
-                {warehouseDetailActions.length ? (
-                    <section className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-4 shadow-sm">
-                        <div className="flex flex-wrap items-center justify-between gap-3">
-                            <div>
-                                <h2 className="text-sm font-semibold text-[var(--text)]">
-                                    {t("Operação WMS", "WMS operation")}
-                                </h2>
-                                <p className="mt-1 text-xs text-[var(--gray-600)]">
-                                    {t("Comandos disponíveis para este documento.", "Commands available for this document.")}
-                                </p>
-                            </div>
-                            <div className="flex flex-wrap gap-2">
-                                {warehouseDetailActions.map((definition) => (
-                                    <button
-                                        key={definition.key}
-                                        type="button"
-                                        onClick={() => void runWarehouseDetailAction(definition)}
-                                        disabled={activeAction !== null}
-                                        className={warehouseActionButtonClass(definition.tone)}
-                                    >
-                                        {activeAction === definition.key
-                                            ? t("A executar...", "Running...")
-                                            : t(definition.labelPt, definition.labelEn)}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-                    </section>
-                ) : null}
 
                 {isBloodUnit && (canReserveUnit || canReleaseUnit || canTransfuseUnit) ? (
                     <section className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-4 shadow-sm">

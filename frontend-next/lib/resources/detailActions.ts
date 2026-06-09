@@ -997,8 +997,57 @@ const PHARMACY_DETAIL_ACTIONS: Record<string, DetailActionDefinition[]> = {
   ],
 }
 
+// ── Armazém / WMS (migrado do mecanismo antigo em /resources) ────────────────
+const WAREHOUSE_DETAIL_ACTIONS: Record<string, DetailActionDefinition[]> = {
+  "/warehouse/sales_order/": [
+    { key: "warehouse.sales_order.confirm", action: "confirm", labelPt: "Confirmar", labelEn: "Confirm", successPt: "Pedido confirmado.", successEn: "Order confirmed.", tone: "primary" },
+    { key: "warehouse.sales_order.allocate", action: "allocate", labelPt: "Reservar estoque", labelEn: "Allocate stock", successPt: "Estoque reservado.", successEn: "Stock allocated.", tone: "primary" },
+    { key: "warehouse.sales_order.create-pick-list", action: "create-pick-list", labelPt: "Gerar separação", labelEn: "Create pick list", successPt: "Lista de separação criada.", successEn: "Pick list created." },
+    { key: "warehouse.sales_order.ship", action: "ship", labelPt: "Expedir", labelEn: "Ship", successPt: "Expedição criada.", successEn: "Shipment created.", tone: "primary" },
+    { key: "warehouse.sales_order.cancel", action: "cancel", labelPt: "Cancelar pedido", labelEn: "Cancel order", successPt: "Pedido cancelado.", successEn: "Order cancelled.", tone: "danger", confirm: true, fields: [reasonField] },
+  ],
+  "/warehouse/warehouse/": [
+    { key: "warehouse.warehouse.activate", action: "activate", labelPt: "Ativar armazém", labelEn: "Activate warehouse", successPt: "Armazém ativado.", successEn: "Warehouse activated.", tone: "primary" },
+    { key: "warehouse.warehouse.deactivate", action: "deactivate", labelPt: "Inativar armazém", labelEn: "Deactivate warehouse", successPt: "Armazém inativado.", successEn: "Warehouse deactivated.", confirm: true },
+  ],
+  "/warehouse/lot/": [
+    { key: "warehouse.lot.release", action: "release", labelPt: "Liberar lote", labelEn: "Release lot", successPt: "Lote liberado.", successEn: "Lot released.", tone: "primary" },
+    { key: "warehouse.lot.quarantine", action: "quarantine", labelPt: "Pôr em quarentena", labelEn: "Quarantine", successPt: "Lote em quarentena.", successEn: "Lot quarantined.", fields: [reasonField] },
+    { key: "warehouse.lot.block", action: "block", labelPt: "Bloquear lote", labelEn: "Block lot", successPt: "Lote bloqueado.", successEn: "Lot blocked.", confirm: true, fields: [reasonField] },
+    { key: "warehouse.lot.mark-expired", action: "mark-expired", labelPt: "Marcar expirado", labelEn: "Mark expired", successPt: "Lote marcado como expirado.", successEn: "Lot marked expired.", tone: "danger", confirm: true },
+  ],
+  "/warehouse/goods_receipt/": [
+    { key: "warehouse.goods_receipt.post", action: "post", labelPt: "Lançar recebimento", labelEn: "Post receipt", successPt: "Recebimento lançado.", successEn: "Receipt posted.", tone: "primary" },
+  ],
+  "/warehouse/stock_reservation/": [
+    { key: "warehouse.stock_reservation.release", action: "release", labelPt: "Liberar reserva", labelEn: "Release reservation", successPt: "Reserva liberada.", successEn: "Reservation released." },
+  ],
+  "/warehouse/pick_list/": [
+    { key: "warehouse.pick_list.complete", action: "complete", labelPt: "Concluir separação", labelEn: "Complete picking", successPt: "Separação concluída.", successEn: "Picking completed.", tone: "primary" },
+  ],
+  "/warehouse/shipment/": [
+    { key: "warehouse.shipment.ship", action: "ship", labelPt: "Expedir", labelEn: "Ship", successPt: "Expedição enviada.", successEn: "Shipment shipped.", tone: "primary" },
+    { key: "warehouse.shipment.post", action: "post", labelPt: "Lançar expedição", labelEn: "Post shipment", successPt: "Expedição lançada.", successEn: "Shipment posted.", tone: "primary" },
+  ],
+  "/warehouse/replenishment_plan/": [
+    { key: "warehouse.replenishment_plan.generate", action: "generate", labelPt: "Gerar sugestões", labelEn: "Generate suggestions", successPt: "Sugestões geradas.", successEn: "Suggestions generated." },
+    { key: "warehouse.replenishment_plan.create-purchase-order", action: "create-purchase-order", labelPt: "Criar compra", labelEn: "Create purchase", successPt: "Pedido de compra criado.", successEn: "Purchase order created.", tone: "primary" },
+  ],
+  "/warehouse/purchase_order/": [
+    { key: "warehouse.purchase_order.post", action: "post", labelPt: "Lançar compra", labelEn: "Post purchase", successPt: "Compra lançada.", successEn: "Purchase posted.", tone: "primary" },
+    { key: "warehouse.purchase_order.cancel", action: "cancel", labelPt: "Cancelar compra", labelEn: "Cancel purchase", successPt: "Compra cancelada.", successEn: "Purchase cancelled.", tone: "danger", confirm: true, fields: [reasonField] },
+  ],
+  "/warehouse/stock_transfer/": [
+    { key: "warehouse.stock_transfer.post", action: "post", labelPt: "Lançar transferência", labelEn: "Post transfer", successPt: "Transferência lançada.", successEn: "Transfer posted.", tone: "primary" },
+  ],
+  "/warehouse/cycle_count/": [
+    { key: "warehouse.cycle_count.post", action: "post", labelPt: "Lançar inventário", labelEn: "Post count", successPt: "Inventário lançado.", successEn: "Cycle count posted.", tone: "primary" },
+  ],
+}
+
 // Registry global por endpoint-pai (normalizado). Cada módulo contribui o seu mapa.
 export const RESOURCE_DETAIL_ACTIONS: Record<string, DetailActionDefinition[]> = {
+  ...WAREHOUSE_DETAIL_ACTIONS,
   ...CLINICAL_LABORATORY_DETAIL_ACTIONS,
   ...CONSULTATIONS_DETAIL_ACTIONS,
   ...MEDICAL_RECORDS_DETAIL_ACTIONS,
