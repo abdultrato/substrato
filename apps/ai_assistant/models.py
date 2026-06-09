@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.db import models
 
 from core.models.base import NoNameCoreModel
@@ -440,6 +441,27 @@ class AiKnowledgeEntry(NoNameCoreModel):
 
     def __str__(self) -> str:
         return f"{self.title} [{self.status}]"
+
+    # ------------------------------------------------------------------ #
+    # Ciclo de governança da base de conhecimento (§31.8/§31.30).
+    # Só entradas ACTIVE são recuperadas pelo vector_store (RAG), por isso
+    # estas transições controlam o que a IA pode usar como contexto.
+    # ------------------------------------------------------------------ #
+    def activate(self):
+        """Publica a entrada (rascunho/arquivada → activa) para inclusão no RAG."""
+        if self.status == self.Status.ACTIVE:
+            raise ValidationError("Entrada de conhecimento já está activa.")
+        self.status = self.Status.ACTIVE
+        self.save(update_fields=["status", "updated_at"])
+        return self
+
+    def archive(self):
+        """Arquiva a entrada — deixa de ser recuperada pela IA (remove do RAG)."""
+        if self.status == self.Status.ARCHIVED:
+            raise ValidationError("Entrada de conhecimento já está arquivada.")
+        self.status = self.Status.ARCHIVED
+        self.save(update_fields=["status", "updated_at"])
+        return self
 
 
 class AiPolicyEvent(NoNameCoreModel):
