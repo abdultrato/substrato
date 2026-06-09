@@ -114,7 +114,7 @@ export default function EmployeesListPage() {
         page,
         pageSize: PAGE_SIZE,
         query,
-        clientCache: false,
+        clientCache: safeRefreshToken === 0,
       })
 
       setEmployees(items)
