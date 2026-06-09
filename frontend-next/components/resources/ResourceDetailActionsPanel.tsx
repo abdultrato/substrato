@@ -40,6 +40,12 @@ function coerceFieldValue(field: DetailActionField, raw: FieldValue): unknown {
     const parsed = Number(raw)
     return Number.isFinite(parsed) ? parsed : 0
   }
+  if (field.type === "datetime-local") {
+    const value = String(raw ?? "").trim()
+    if (!value) return ""
+    const parsed = new Date(value)
+    return Number.isNaN(parsed.getTime()) ? value : parsed.toISOString()
+  }
   return String(raw ?? "").trim()
 }
 
@@ -164,7 +170,11 @@ export default function ResourceDetailActionsPanel({
           />
         ) : (
           <input
-            type={field.type === "number" ? "number" : "text"}
+            type={
+              field.type === "number" || field.type === "date" || field.type === "datetime-local"
+                ? field.type
+                : "text"
+            }
             value={String(value ?? "")}
             placeholder={field.placeholder}
             onChange={(event) => setValue(action, field, event.target.value)}

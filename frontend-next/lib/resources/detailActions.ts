@@ -11,7 +11,14 @@
 
 import { hasOpenApiMethod } from "@/lib/openapi/writeContract"
 
-export type DetailActionFieldType = "text" | "textarea" | "select" | "checkbox" | "number"
+export type DetailActionFieldType =
+  | "text"
+  | "textarea"
+  | "select"
+  | "checkbox"
+  | "number"
+  | "date"
+  | "datetime-local"
 
 export type DetailActionFieldOption = { value: string; label: string }
 
@@ -319,9 +326,99 @@ const CLINICAL_LABORATORY_DETAIL_ACTIONS: Record<string, DetailActionDefinition[
   ],
 }
 
+// ── Consultas ────────────────────────────────────────────────────────────────
+const CONSULTATIONS_DETAIL_ACTIONS: Record<string, DetailActionDefinition[]> = {
+  "/consultations/consultation/": [
+    {
+      key: "consultations.consultation.complete",
+      action: "complete",
+      labelPt: "Concluir consulta",
+      labelEn: "Complete consultation",
+      successPt: "Consulta concluída.",
+      successEn: "Consultation completed.",
+      tone: "primary",
+    },
+    {
+      key: "consultations.consultation.reschedule",
+      action: "reschedule",
+      labelPt: "Reagendar",
+      labelEn: "Reschedule",
+      successPt: "Consulta reagendada.",
+      successEn: "Consultation rescheduled.",
+      fields: [
+        {
+          name: "scheduled_for",
+          labelPt: "Nova data/hora",
+          labelEn: "New date/time",
+          type: "datetime-local",
+          required: true,
+        },
+      ],
+    },
+    {
+      key: "consultations.consultation.create_invoice",
+      action: "create-invoice",
+      labelPt: "Criar fatura",
+      labelEn: "Create invoice",
+      descriptionPt: "Gera a fatura da consulta a partir dos itens faturáveis.",
+      descriptionEn: "Generates the consultation invoice from billable items.",
+      successPt: "Fatura criada.",
+      successEn: "Invoice created.",
+      fields: [
+        {
+          name: "issue",
+          labelPt: "Emitir já (não deixar em rascunho)",
+          labelEn: "Issue now (not draft)",
+          type: "checkbox",
+          defaultValue: true,
+        },
+      ],
+    },
+    {
+      key: "consultations.consultation.cancel",
+      action: "cancel",
+      labelPt: "Cancelar consulta",
+      labelEn: "Cancel consultation",
+      successPt: "Consulta cancelada.",
+      successEn: "Consultation cancelled.",
+      tone: "danger",
+      confirm: true,
+      fields: [
+        {
+          name: "reason",
+          labelPt: "Motivo (opcional)",
+          labelEn: "Reason (optional)",
+          type: "textarea",
+        },
+      ],
+    },
+  ],
+  "/consultations/specialty/": [
+    {
+      key: "consultations.specialty.ativar",
+      action: "ativar",
+      labelPt: "Ativar especialidade",
+      labelEn: "Activate specialty",
+      successPt: "Especialidade ativada.",
+      successEn: "Specialty activated.",
+      tone: "primary",
+    },
+    {
+      key: "consultations.specialty.inativar",
+      action: "inativar",
+      labelPt: "Inativar especialidade",
+      labelEn: "Deactivate specialty",
+      successPt: "Especialidade inativada.",
+      successEn: "Specialty deactivated.",
+      confirm: true,
+    },
+  ],
+}
+
 // Registry global por endpoint-pai (normalizado). Cada módulo contribui o seu mapa.
 export const RESOURCE_DETAIL_ACTIONS: Record<string, DetailActionDefinition[]> = {
   ...CLINICAL_LABORATORY_DETAIL_ACTIONS,
+  ...CONSULTATIONS_DETAIL_ACTIONS,
 }
 
 /** Ações declaradas para um endpoint, sem filtro de contrato. */
