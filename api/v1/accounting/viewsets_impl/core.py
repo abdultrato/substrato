@@ -1,6 +1,9 @@
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
+from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
 from api.v1.viewset_mixins import ValidatedSearchOrderingMixin
@@ -21,6 +24,11 @@ from ..serializers import (
     LedgerEntrySerializer,
     LedgerMovementSerializer,
 )
+
+
+def _as_drf_error(exc: DjangoValidationError) -> ValidationError:
+    detail = getattr(exc, "message_dict", None) or getattr(exc, "messages", None) or [str(exc)]
+    return ValidationError(detail)
 
 
 class TenantOwnedViewSet(ValidatedSearchOrderingMixin, ModelViewSet):
@@ -89,6 +97,24 @@ class LedgerEntryViewSet(TenantOwnedViewSet):
         "updated_at",
     ]
     ordering = ["-created_at"]
+
+    @action(detail=True, methods=["post"], url_path="confirm", url_name="confirm")
+    def confirm(self, request, pk=None):
+        entry = self.get_object()
+        try:
+            entry.confirm()
+        except DjangoValidationError as exc:
+            raise _as_drf_error(exc)
+        return Response(self.get_serializer(entry).data)
+
+    @action(detail=True, methods=["post"], url_path="reopen", url_name="reopen")
+    def reopen(self, request, pk=None):
+        entry = self.get_object()
+        try:
+            entry.unconfirm()
+        except DjangoValidationError as exc:
+            raise _as_drf_error(exc)
+        return Response(self.get_serializer(entry).data)
 
 
 class LedgerMovementViewSet(TenantOwnedViewSet):

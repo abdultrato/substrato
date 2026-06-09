@@ -1,5 +1,8 @@
 """Modelos legados de lançamento contábil (para compatibilidade)."""
 
+from decimal import Decimal
+
+from django.core.exceptions import ValidationError  # Erros de domínio
 from django.db import models  # ORM
 from django.utils import timezone  # Datas
 
@@ -54,3 +57,28 @@ class LegacyEntry(CoreModel):
     def __str__(self) -> str:
         """Retorna identificação legível."""
         return self.name or self.external_reference or f"Lancamento {self.pk}"
+
+    def confirm(self):
+        """Posta o lançamento validando a partida dobrada (§18.9)."""
+        if self.confirmed:
+            raise ValidationError("Lançamento já confirmado.")
+        movimentos = list(self.movimentos.all())
+        if len(movimentos) < 2:
+            raise ValidationError("Lançamento precisa de pelo menos dois movimentos (débito e crédito).")
+        total_debit = sum((m.debit or Decimal("0.00")) for m in movimentos)
+        total_credit = sum((m.credit or Decimal("0.00")) for m in movimentos)
+        if total_debit != total_credit:
+            raise ValidationError("Partida dobrada: total de débitos deve igualar o total de créditos.")
+        if total_debit <= Decimal("0.00"):
+            raise ValidationError("Lançamento sem valor.")
+        self.confirmed = True
+        self.save(update_fields=["confirmed", "updated_at"])
+        return self
+
+    def unconfirm(self):
+        """Reabre um lançamento confirmado para correção."""
+        if not self.confirmed:
+            raise ValidationError("Lançamento já está aberto.")
+        self.confirmed = False
+        self.save(update_fields=["confirmed", "updated_at"])
+        return self
