@@ -5,9 +5,23 @@ Seguem o padrão do projeto: ValidatedSearchOrderingMixin + TenantScopedQueryset
 (register_routes força RBACPermission).
 """
 
+from django.core.exceptions import ValidationError as DjangoValidationError
+from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError as DRFValidationError
+from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
 from api.v1.viewset_mixins import TenantScopedQuerysetMixin, ValidatedSearchOrderingMixin
+
+
+def _as_drf_error(exc: DjangoValidationError) -> DRFValidationError:
+    detail = getattr(exc, "message_dict", None) or getattr(exc, "messages", None) or [str(exc)]
+    return DRFValidationError(detail)
+
+
+def _current_user(request):
+    user = getattr(request, "user", None)
+    return user if (user is not None and getattr(user, "is_authenticated", False)) else None
 from apps.clinical_laboratory.models import (
     AcidFastSmear,
     AntibioticSusceptibility,
@@ -120,6 +134,24 @@ class LabOrderViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, M
     search_fields = ["custom_id", "origin", "diagnosis", "clinical_indication"]
     ordering_fields = ["requested_at", "status", "priority", "payment_status", "created_at"]
 
+    @action(detail=True, methods=["post"], url_path="autorizar", url_name="autorizar")
+    def autorizar(self, request, pk=None):
+        order = self.get_object()
+        try:
+            order.authorize()
+        except DjangoValidationError as exc:
+            raise _as_drf_error(exc)
+        return Response(self.get_serializer(order).data)
+
+    @action(detail=True, methods=["post"], url_path="cancelar", url_name="cancelar")
+    def cancelar(self, request, pk=None):
+        order = self.get_object()
+        try:
+            order.cancel()
+        except DjangoValidationError as exc:
+            raise _as_drf_error(exc)
+        return Response(self.get_serializer(order).data)
+
 
 class LabOrderItemViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
     queryset = LabOrderItem.objects.select_related("order", "test").all()
@@ -140,6 +172,33 @@ class LabSampleViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, 
     serializer_class = LabSampleSerializer
     search_fields = ["custom_id", "barcode", "storage_location"]
     ordering_fields = ["status", "received_at", "collected_at", "created_at"]
+
+    @action(detail=True, methods=["post"], url_path="receber", url_name="receber")
+    def receber(self, request, pk=None):
+        sample = self.get_object()
+        try:
+            sample.receive()
+        except DjangoValidationError as exc:
+            raise _as_drf_error(exc)
+        return Response(self.get_serializer(sample).data)
+
+    @action(detail=True, methods=["post"], url_path="aceitar", url_name="aceitar")
+    def aceitar(self, request, pk=None):
+        sample = self.get_object()
+        try:
+            sample.accept()
+        except DjangoValidationError as exc:
+            raise _as_drf_error(exc)
+        return Response(self.get_serializer(sample).data)
+
+    @action(detail=True, methods=["post"], url_path="rejeitar", url_name="rejeitar")
+    def rejeitar(self, request, pk=None):
+        sample = self.get_object()
+        try:
+            sample.reject()
+        except DjangoValidationError as exc:
+            raise _as_drf_error(exc)
+        return Response(self.get_serializer(sample).data)
 
 
 class SampleReceptionViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
@@ -169,6 +228,24 @@ class LabResultViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, 
     search_fields = ["custom_id", "value", "unit", "method", "equipment"]
     ordering_fields = ["status", "flag", "performed_at", "created_at"]
 
+    @action(detail=True, methods=["post"], url_path="inserir-resultado", url_name="inserir-resultado")
+    def inserir_resultado(self, request, pk=None):
+        result = self.get_object()
+        try:
+            result.enter_result(value=request.data.get("value", ""), by=_current_user(request))
+        except DjangoValidationError as exc:
+            raise _as_drf_error(exc)
+        return Response(self.get_serializer(result).data)
+
+    @action(detail=True, methods=["post"], url_path="validar", url_name="validar")
+    def validar(self, request, pk=None):
+        result = self.get_object()
+        try:
+            result.mark_validated()
+        except DjangoValidationError as exc:
+            raise _as_drf_error(exc)
+        return Response(self.get_serializer(result).data)
+
 
 class ResultValidationViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
     queryset = ResultValidation.objects.select_related("result", "validated_by").all()
@@ -176,12 +253,39 @@ class ResultValidationViewSet(ValidatedSearchOrderingMixin, TenantScopedQueryset
     search_fields = ["custom_id", "notes"]
     ordering_fields = ["validation_type", "status", "validated_at", "created_at"]
 
+    @action(detail=True, methods=["post"], url_path="aprovar", url_name="aprovar")
+    def aprovar(self, request, pk=None):
+        validation = self.get_object()
+        try:
+            validation.approve(by=_current_user(request))
+        except DjangoValidationError as exc:
+            raise _as_drf_error(exc)
+        return Response(self.get_serializer(validation).data)
+
 
 class LabReportViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
     queryset = LabReport.objects.select_related("order", "patient", "signed_by").all()
     serializer_class = LabReportSerializer
     search_fields = ["custom_id", "report_number"]
     ordering_fields = ["status", "issued_at", "delivered_at", "created_at"]
+
+    @action(detail=True, methods=["post"], url_path="assinar", url_name="assinar")
+    def assinar(self, request, pk=None):
+        report = self.get_object()
+        try:
+            report.sign(by=_current_user(request))
+        except DjangoValidationError as exc:
+            raise _as_drf_error(exc)
+        return Response(self.get_serializer(report).data)
+
+    @action(detail=True, methods=["post"], url_path="entregar", url_name="entregar")
+    def entregar(self, request, pk=None):
+        report = self.get_object()
+        try:
+            report.deliver(channel=request.data.get("channel", ""))
+        except DjangoValidationError as exc:
+            raise _as_drf_error(exc)
+        return Response(self.get_serializer(report).data)
 
 
 class CriticalResultNotificationViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
