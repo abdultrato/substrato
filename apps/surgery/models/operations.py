@@ -110,6 +110,48 @@ class SurgicalRequest(NoNameCoreModel):
     def __str__(self) -> str:
         return self.custom_id or f"Pedido cirúrgico {self.pk}"
 
+    # ------------------------------------------------------------------ #
+    # Ciclo de vida do pedido cirúrgico (§23.30)
+    # ------------------------------------------------------------------ #
+    def submit(self):
+        """Submete o pedido (rascunho → solicitado)."""
+        if self.status != self.Status.DRAFT:
+            raise ValidationError("Apenas pedidos em rascunho podem ser submetidos.")
+        self.status = self.Status.REQUESTED
+        self.save()
+        return self
+
+    def approve(self):
+        """Aprova/autoriza o pedido."""
+        if self.status not in {self.Status.REQUESTED, self.Status.UNDER_REVIEW}:
+            raise ValidationError("Apenas pedidos solicitados/em revisão podem ser aprovados.")
+        self.status = self.Status.APPROVED
+        self.save()
+        return self
+
+    def reject(self, *, reason: str = ""):
+        """Rejeita o pedido (exige justificação)."""
+        if self.status not in {self.Status.REQUESTED, self.Status.UNDER_REVIEW}:
+            raise ValidationError("Apenas pedidos solicitados/em revisão podem ser rejeitados.")
+        justification = reason or self.justification
+        if not (justification or "").strip():
+            raise ValidationError({"justification": "Informe a justificação da rejeição."})
+        self.justification = justification
+        self.status = self.Status.REJECTED
+        self.save()
+        return self
+
+    def cancel(self, *, reason: str = ""):
+        """Cancela o pedido (não aplicável a pedidos já encerrados)."""
+        if self.status in {self.Status.REJECTED, self.Status.CANCELLED, self.Status.CONVERTED}:
+            raise ValidationError("Pedido já encerrado (rejeitado/cancelado/convertido).")
+        self.status = self.Status.CANCELLED
+        if reason:
+            mark = f"[Cancelamento] {reason}"
+            self.notes = f"{self.notes}\n{mark}".strip() if self.notes else mark
+        self.save()
+        return self
+
 
 class PreoperativeAssessment(NoNameCoreModel):
     class Status(models.TextChoices):

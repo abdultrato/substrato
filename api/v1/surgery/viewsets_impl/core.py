@@ -1,5 +1,6 @@
 """ViewSets da API v1 para cirurgias, bloco operatório e catálogo cirúrgico."""
 
+from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
@@ -167,6 +168,11 @@ class SurgicalProcedureViewSet(ValidatedSearchOrderingMixin, TenantScopedQueryse
     ordering = ["name"]
 
 
+def _surgery_as_drf_error(exc: DjangoValidationError) -> ValidationError:
+    detail = getattr(exc, "message_dict", None) or getattr(exc, "messages", None) or [str(exc)]
+    return ValidationError(detail)
+
+
 class SurgicalRequestViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
     queryset = SurgicalRequest.objects.select_related("patient", "requesting_doctor", "specialty").all()
     serializer_class = SurgicalRequestSerializer
@@ -184,6 +190,30 @@ class SurgicalRequestViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetM
     ]
     ordering_fields = "__all__"
     ordering = ["-created_at"]
+
+    def _run(self, request, method, **kwargs):
+        obj = self.get_object()
+        try:
+            getattr(obj, method)(**kwargs)
+        except DjangoValidationError as exc:
+            raise _surgery_as_drf_error(exc)
+        return Response(self.get_serializer(obj).data)
+
+    @action(detail=True, methods=["post"], url_path="submeter", url_name="submeter")
+    def submeter(self, request, pk=None):
+        return self._run(request, "submit")
+
+    @action(detail=True, methods=["post"], url_path="aprovar", url_name="aprovar")
+    def aprovar(self, request, pk=None):
+        return self._run(request, "approve")
+
+    @action(detail=True, methods=["post"], url_path="rejeitar", url_name="rejeitar")
+    def rejeitar(self, request, pk=None):
+        return self._run(request, "reject", reason=request.data.get("reason", ""))
+
+    @action(detail=True, methods=["post"], url_path="cancelar", url_name="cancelar")
+    def cancelar(self, request, pk=None):
+        return self._run(request, "cancel", reason=request.data.get("reason", ""))
 
 
 class PreoperativeAssessmentViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
