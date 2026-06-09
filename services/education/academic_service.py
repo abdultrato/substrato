@@ -74,6 +74,46 @@ class AcademicService:
 
     @staticmethod
     @transaction.atomic
+    def complete_enrollment(*, enrollment: Enrollment) -> Enrollment:
+        if enrollment.status != Enrollment.Status.ACTIVE:
+            raise ValidationError({"status": "Only active enrollments can be completed."})
+        enrollment.status = Enrollment.Status.COMPLETED
+        if not enrollment.closed_on:
+            enrollment.closed_on = timezone.localdate()
+        enrollment.full_clean()
+        enrollment.save()
+        return enrollment
+
+    @staticmethod
+    @transaction.atomic
+    def cancel_enrollment(*, enrollment: Enrollment) -> Enrollment:
+        if enrollment.status in {Enrollment.Status.COMPLETED, Enrollment.Status.CANCELLED}:
+            raise ValidationError({"status": "Completed or cancelled enrollments cannot be cancelled."})
+        enrollment.status = Enrollment.Status.CANCELLED
+        if not enrollment.closed_on:
+            enrollment.closed_on = timezone.localdate()
+        enrollment.full_clean()
+        enrollment.save()
+        return enrollment
+
+    @staticmethod
+    @transaction.atomic
+    def activate_course(*, course: Course) -> Course:
+        course.status = Course.Status.ACTIVE
+        course.full_clean()
+        course.save()
+        return course
+
+    @staticmethod
+    @transaction.atomic
+    def archive_course(*, course: Course) -> Course:
+        course.status = Course.Status.ARCHIVED
+        course.full_clean()
+        course.save()
+        return course
+
+    @staticmethod
+    @transaction.atomic
     def record_attendance(*, attendance: AttendanceRecord) -> AttendanceRecord:
         attendance.full_clean()
         attendance.save()

@@ -154,6 +154,16 @@ class CourseViewSet(TenantScopedEducationViewSet):
                 return qs.filter(classrooms__enrollments__student__user=user).distinct()
         return qs
 
+    @action(detail=True, methods=["post"], url_path="activate")
+    def activate(self, request, pk=None):
+        course = AcademicService.activate_course(course=self.get_object())
+        return Response(self.get_serializer(course).data)
+
+    @action(detail=True, methods=["post"], url_path="archive")
+    def archive(self, request, pk=None):
+        course = AcademicService.archive_course(course=self.get_object())
+        return Response(self.get_serializer(course).data)
+
 
 class ClassroomViewSet(TenantScopedEducationViewSet):
     queryset = Classroom.objects.select_related("course", "homeroom_teacher", "homeroom_teacher__user").all()
@@ -206,6 +216,21 @@ class EnrollmentViewSet(TenantScopedEducationViewSet):
         is_active = enrollment.status == Enrollment.Status.ACTIVE
         if not was_active and is_active:
             AcademicService.activate_enrollment(enrollment=enrollment)
+
+    @action(detail=True, methods=["post"], url_path="activate")
+    def activate(self, request, pk=None):
+        enrollment = AcademicService.activate_enrollment(enrollment=self.get_object())
+        return Response(self.get_serializer(enrollment).data)
+
+    @action(detail=True, methods=["post"], url_path="complete")
+    def complete(self, request, pk=None):
+        enrollment = AcademicService.complete_enrollment(enrollment=self.get_object())
+        return Response(self.get_serializer(enrollment).data)
+
+    @action(detail=True, methods=["post"], url_path="cancel")
+    def cancel(self, request, pk=None):
+        enrollment = AcademicService.cancel_enrollment(enrollment=self.get_object())
+        return Response(self.get_serializer(enrollment).data)
 
 
 class AttendanceRecordViewSet(TenantScopedEducationViewSet):
