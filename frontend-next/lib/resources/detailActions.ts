@@ -1045,9 +1045,108 @@ const WAREHOUSE_DETAIL_ACTIONS: Record<string, DetailActionDefinition[]> = {
   ],
 }
 
+// ── Recursos Humanos (aliases EN activate/deactivate omitidos a favor de PT) ──
+const HUMAN_RESOURCES_DETAIL_ACTIONS: Record<string, DetailActionDefinition[]> = {
+  "/human_resources/employee/": [
+    { key: "human_resources.employee.ativar", action: "ativar", labelPt: "Ativar funcionário", labelEn: "Activate employee", successPt: "Funcionário ativado.", successEn: "Employee activated.", tone: "primary" },
+    { key: "human_resources.employee.desativar", action: "desativar", labelPt: "Desativar funcionário", labelEn: "Deactivate employee", successPt: "Funcionário desativado.", successEn: "Employee deactivated.", confirm: true },
+  ],
+  "/human_resources/falta/": [
+    { key: "human_resources.falta.justificar", action: "justificar", labelPt: "Justificar falta", labelEn: "Justify absence", successPt: "Justificação submetida.", successEn: "Justification submitted.", fields: [{ name: "reason", labelPt: "Motivo", labelEn: "Reason", type: "textarea" }] },
+    { key: "human_resources.falta.aprovar-justificativa", action: "aprovar-justificativa", labelPt: "Aprovar justificação", labelEn: "Approve justification", successPt: "Justificação aprovada.", successEn: "Justification approved.", tone: "primary" },
+    { key: "human_resources.falta.rejeitar-justificativa", action: "rejeitar-justificativa", labelPt: "Rejeitar justificação", labelEn: "Reject justification", successPt: "Justificação rejeitada.", successEn: "Justification rejected.", tone: "danger", confirm: true },
+  ],
+  "/human_resources/ferias/": [
+    { key: "human_resources.ferias.approve", action: "approve", labelPt: "Aprovar férias", labelEn: "Approve leave", successPt: "Férias aprovadas.", successEn: "Leave approved.", tone: "primary" },
+    { key: "human_resources.ferias.reject", action: "reject", labelPt: "Rejeitar férias", labelEn: "Reject leave", successPt: "Férias rejeitadas.", successEn: "Leave rejected.", tone: "danger", confirm: true },
+  ],
+  "/human_resources/horaextra/": [
+    { key: "human_resources.horaextra.approve", action: "approve", labelPt: "Aprovar hora extra", labelEn: "Approve overtime", successPt: "Hora extra aprovada.", successEn: "Overtime approved.", tone: "primary" },
+    { key: "human_resources.horaextra.reject", action: "reject", labelPt: "Rejeitar hora extra", labelEn: "Reject overtime", successPt: "Hora extra rejeitada.", successEn: "Overtime rejected.", tone: "danger", confirm: true },
+  ],
+  "/human_resources/licenca/": [
+    { key: "human_resources.licenca.approve", action: "approve", labelPt: "Aprovar licença", labelEn: "Approve leave", successPt: "Licença aprovada.", successEn: "Leave approved.", tone: "primary" },
+    { key: "human_resources.licenca.reject", action: "reject", labelPt: "Rejeitar licença", labelEn: "Reject leave", successPt: "Licença rejeitada.", successEn: "Leave rejected.", tone: "danger", confirm: true },
+  ],
+  "/human_resources/folha_run/": [
+    { key: "human_resources.folha_run.calculate", action: "calculate", labelPt: "Calcular folha", labelEn: "Calculate payroll", successPt: "Folha calculada.", successEn: "Payroll calculated.", tone: "primary" },
+    { key: "human_resources.folha_run.approve", action: "approve", labelPt: "Aprovar folha", labelEn: "Approve payroll", successPt: "Folha aprovada.", successEn: "Payroll approved.", tone: "primary" },
+    { key: "human_resources.folha_run.mark-paid", action: "mark-paid", labelPt: "Marcar como paga", labelEn: "Mark paid", successPt: "Folha marcada como paga.", successEn: "Payroll marked paid.", tone: "primary" },
+  ],
+}
+
+// ── Receção (link-*/register-payment dependem de FK/valor → diferidos) ─────────
+const RECEPTION_DETAIL_ACTIONS: Record<string, DetailActionDefinition[]> = {
+  "/reception/checkin/": [
+    { key: "reception.checkin.start-care", action: "start-care", labelPt: "Iniciar atendimento", labelEn: "Start care", successPt: "Atendimento iniciado.", successEn: "Care started.", tone: "primary" },
+    { key: "reception.checkin.create-request", action: "create-request", labelPt: "Criar requisição", labelEn: "Create request", successPt: "Requisição criada.", successEn: "Request created." },
+    { key: "reception.checkin.create-invoice", action: "create-invoice", labelPt: "Criar fatura", labelEn: "Create invoice", successPt: "Fatura criada.", successEn: "Invoice created." },
+    { key: "reception.checkin.complete", action: "complete", labelPt: "Concluir", labelEn: "Complete", successPt: "Check-in concluído.", successEn: "Check-in completed.", tone: "primary" },
+    { key: "reception.checkin.cancel", action: "cancel", labelPt: "Cancelar", labelEn: "Cancel", successPt: "Check-in cancelado.", successEn: "Check-in cancelled.", tone: "danger", confirm: true, fields: [reasonField] },
+  ],
+}
+
+// ── Clínico (core) — send-results-notification já tratado em GeneratedResourceDetailPage ──
+const CLINICAL_DETAIL_ACTIONS: Record<string, DetailActionDefinition[]> = {
+  "/clinical/labrequest/": [
+    { key: "clinical.labrequest.validate-results", action: "validate-results", labelPt: "Validar resultados", labelEn: "Validate results", successPt: "Resultados validados.", successEn: "Results validated.", tone: "primary" },
+    { key: "clinical.labrequest.disregard-empty-results", action: "disregard-empty-results", labelPt: "Desconsiderar vazios", labelEn: "Disregard empty results", successPt: "Resultados vazios desconsiderados.", successEn: "Empty results disregarded." },
+  ],
+  "/clinical/resultitem/": [
+    { key: "clinical.resultitem.start-analysis", action: "start-analysis", labelPt: "Iniciar análise", labelEn: "Start analysis", successPt: "Análise iniciada.", successEn: "Analysis started.", tone: "primary" },
+    { key: "clinical.resultitem.save-result", action: "save-result", labelPt: "Guardar resultado", labelEn: "Save result", successPt: "Resultado guardado.", successEn: "Result saved.", tone: "primary", fields: [{ name: "value", labelPt: "Valor", labelEn: "Value", type: "text" }] },
+    { key: "clinical.resultitem.validate-result", action: "validate-result", labelPt: "Validar resultado", labelEn: "Validate result", successPt: "Resultado validado.", successEn: "Result validated.", tone: "primary" },
+    { key: "clinical.resultitem.disregard-result", action: "disregard-result", labelPt: "Desconsiderar", labelEn: "Disregard result", successPt: "Resultado desconsiderado.", successEn: "Result disregarded.", confirm: true },
+  ],
+}
+
+// ── Educação ─────────────────────────────────────────────────────────────────
+const EDUCATION_DETAIL_ACTIONS: Record<string, DetailActionDefinition[]> = {
+  "/education/course/": [
+    { key: "education.course.activate", action: "activate", labelPt: "Ativar curso", labelEn: "Activate course", successPt: "Curso ativado.", successEn: "Course activated.", tone: "primary" },
+    { key: "education.course.archive", action: "archive", labelPt: "Arquivar curso", labelEn: "Archive course", successPt: "Curso arquivado.", successEn: "Course archived.", confirm: true },
+  ],
+  "/education/enrollment/": [
+    { key: "education.enrollment.activate", action: "activate", labelPt: "Ativar matrícula", labelEn: "Activate enrollment", successPt: "Matrícula ativada.", successEn: "Enrollment activated.", tone: "primary" },
+    { key: "education.enrollment.complete", action: "complete", labelPt: "Concluir matrícula", labelEn: "Complete enrollment", successPt: "Matrícula concluída.", successEn: "Enrollment completed.", tone: "primary" },
+    { key: "education.enrollment.cancel", action: "cancel", labelPt: "Cancelar matrícula", labelEn: "Cancel enrollment", successPt: "Matrícula cancelada.", successEn: "Enrollment cancelled.", tone: "danger", confirm: true, fields: [reasonField] },
+  ],
+}
+
+// ── Identidade (aliases EN omitidos a favor de PT) ────────────────────────────
+const IDENTITY_DETAIL_ACTIONS: Record<string, DetailActionDefinition[]> = {
+  "/identity/user/": [
+    { key: "identity.user.ativar", action: "ativar", labelPt: "Ativar utilizador", labelEn: "Activate user", successPt: "Utilizador ativado.", successEn: "User activated.", tone: "primary" },
+    { key: "identity.user.desativar", action: "desativar", labelPt: "Desativar utilizador", labelEn: "Deactivate user", successPt: "Utilizador desativado.", successEn: "User deactivated.", confirm: true },
+  ],
+}
+
+// ── Entidades externas ───────────────────────────────────────────────────────
+const EXTERNAL_ENTITIES_DETAIL_ACTIONS: Record<string, DetailActionDefinition[]> = {
+  "/external_entities/empresa/": [
+    { key: "external_entities.empresa.ativar", action: "ativar", labelPt: "Ativar empresa", labelEn: "Activate company", successPt: "Empresa ativada.", successEn: "Company activated.", tone: "primary" },
+    { key: "external_entities.empresa.inativar", action: "inativar", labelPt: "Inativar empresa", labelEn: "Deactivate company", successPt: "Empresa inativada.", successEn: "Company deactivated.", confirm: true },
+  ],
+}
+
+// ── Notificações ─────────────────────────────────────────────────────────────
+const NOTIFICATIONS_DETAIL_ACTIONS: Record<string, DetailActionDefinition[]> = {
+  "/notifications/notification/": [
+    { key: "notifications.notification.marcar-enviada", action: "marcar-enviada", labelPt: "Marcar como enviada", labelEn: "Mark sent", successPt: "Notificação marcada como enviada.", successEn: "Notification marked sent.", tone: "primary", fields: [{ name: "external_reference", labelPt: "Referência externa (opcional)", labelEn: "External reference (optional)", type: "text" }] },
+    { key: "notifications.notification.marcar-falha", action: "marcar-falha", labelPt: "Marcar falha", labelEn: "Mark failed", successPt: "Notificação marcada como falha.", successEn: "Notification marked failed.", tone: "danger", fields: [{ name: "error", labelPt: "Erro (opcional)", labelEn: "Error (optional)", type: "text" }] },
+  ],
+}
+
 // Registry global por endpoint-pai (normalizado). Cada módulo contribui o seu mapa.
 export const RESOURCE_DETAIL_ACTIONS: Record<string, DetailActionDefinition[]> = {
   ...WAREHOUSE_DETAIL_ACTIONS,
+  ...HUMAN_RESOURCES_DETAIL_ACTIONS,
+  ...RECEPTION_DETAIL_ACTIONS,
+  ...CLINICAL_DETAIL_ACTIONS,
+  ...EDUCATION_DETAIL_ACTIONS,
+  ...IDENTITY_DETAIL_ACTIONS,
+  ...EXTERNAL_ENTITIES_DETAIL_ACTIONS,
+  ...NOTIFICATIONS_DETAIL_ACTIONS,
   ...CLINICAL_LABORATORY_DETAIL_ACTIONS,
   ...CONSULTATIONS_DETAIL_ACTIONS,
   ...MEDICAL_RECORDS_DETAIL_ACTIONS,
