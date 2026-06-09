@@ -337,6 +337,15 @@ class QualityDocumentViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetM
     search_fields = ["custom_id", "code", "title"]
     ordering_fields = ["code", "status", "document_type", "review_date", "created_at"]
 
+    @action(detail=True, methods=["post"], url_path="aprovar", url_name="aprovar")
+    def aprovar(self, request, pk=None):
+        document = self.get_object()
+        try:
+            document.approve(by=_current_user(request))
+        except DjangoValidationError as exc:
+            raise _as_drf_error(exc)
+        return Response(self.get_serializer(document).data)
+
 
 class NonconformityViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
     queryset = Nonconformity.objects.select_related("sector").all()
@@ -344,12 +353,51 @@ class NonconformityViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMix
     search_fields = ["custom_id", "code", "description", "source_ref"]
     ordering_fields = ["detected_at", "severity", "status", "created_at"]
 
+    @action(detail=True, methods=["post"], url_path="encerrar", url_name="encerrar")
+    def encerrar(self, request, pk=None):
+        nc = self.get_object()
+        try:
+            nc.close()
+        except DjangoValidationError as exc:
+            raise _as_drf_error(exc)
+        return Response(self.get_serializer(nc).data)
+
 
 class CorrectiveActionViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
     queryset = CorrectiveAction.objects.select_related("nonconformity").all()
     serializer_class = CorrectiveActionSerializer
     search_fields = ["custom_id", "description"]
     ordering_fields = ["due_date", "status", "action_type", "created_at"]
+
+    @action(detail=True, methods=["post"], url_path="concluir", url_name="concluir")
+    def concluir(self, request, pk=None):
+        capa = self.get_object()
+        try:
+            capa.complete()
+        except DjangoValidationError as exc:
+            raise _as_drf_error(exc)
+        return Response(self.get_serializer(capa).data)
+
+    @action(detail=True, methods=["post"], url_path="verificar", url_name="verificar")
+    def verificar(self, request, pk=None):
+        capa = self.get_object()
+        effective = request.data.get("effective", True)
+        if isinstance(effective, str):
+            effective = effective.strip().lower() not in ("false", "0", "nao", "não", "no")
+        try:
+            capa.verify(effective=bool(effective), notes=request.data.get("notes", ""))
+        except DjangoValidationError as exc:
+            raise _as_drf_error(exc)
+        return Response(self.get_serializer(capa).data)
+
+    @action(detail=True, methods=["post"], url_path="fechar", url_name="fechar")
+    def fechar(self, request, pk=None):
+        capa = self.get_object()
+        try:
+            capa.close()
+        except DjangoValidationError as exc:
+            raise _as_drf_error(exc)
+        return Response(self.get_serializer(capa).data)
 
 
 class InternalAuditViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):

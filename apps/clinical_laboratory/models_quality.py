@@ -11,6 +11,7 @@ falha de QC, reclamação, achado de auditoria ou incidente de exposição.
 from decimal import Decimal
 
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils import timezone
 
@@ -189,6 +190,36 @@ class CorrectiveAction(NoNameCoreModel):
         today = today or timezone.localdate()
         terminal = (self.Status.COMPLETED, self.Status.VERIFIED, self.Status.CLOSED)
         return bool(self.due_date and self.due_date < today and self.status not in terminal)
+
+    # ------------------------------------------------------------------ #
+    # Ciclo CAPA (§40.25): planeada → concluída → verificada/ineficaz → fechada
+    # ------------------------------------------------------------------ #
+    def complete(self):
+        """Marca a ação como concluída (à espera de verificação de eficácia)."""
+        if self.status in (self.Status.VERIFIED, self.Status.CLOSED):
+            raise ValidationError("Ação já verificada/fechada não pode ser reconcluída.")
+        self.status = self.Status.COMPLETED
+        self.completion_date = self.completion_date or timezone.localdate()
+        self.save(update_fields=["status", "completion_date"])
+        return self
+
+    def verify(self, *, effective: bool = True, notes: str = ""):
+        """Verifica a eficácia da ação concluída (§40.18/§40.25)."""
+        if self.status != self.Status.COMPLETED:
+            raise ValidationError("Só ações concluídas podem ter a eficácia verificada.")
+        self.status = self.Status.VERIFIED if effective else self.Status.INEFFECTIVE
+        if notes:
+            self.effectiveness_check = notes
+        self.save(update_fields=["status", "effectiveness_check"])
+        return self
+
+    def close(self):
+        """Fecha a ação (após verificada eficaz, ou administrativamente)."""
+        if self.status == self.Status.CLOSED:
+            raise ValidationError("Ação já está fechada.")
+        self.status = self.Status.CLOSED
+        self.save(update_fields=["status"])
+        return self
 
     def __str__(self) -> str:
         return f"{self.get_action_type_display()} ({self.get_status_display()})"
