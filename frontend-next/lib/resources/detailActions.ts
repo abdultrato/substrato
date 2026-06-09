@@ -851,6 +851,152 @@ const PUBLIC_HEALTH_DETAIL_ACTIONS: Record<string, DetailActionDefinition[]> = {
   ],
 }
 
+// ── Faturação ────────────────────────────────────────────────────────────────
+// (send-notification já é tratado de forma dedicada em GeneratedResourceDetailPage)
+const BILLING_DETAIL_ACTIONS: Record<string, DetailActionDefinition[]> = {
+  "/billing/invoice/": [
+    { key: "billing.invoice.issue", action: "issue", labelPt: "Emitir fatura", labelEn: "Issue invoice", successPt: "Fatura emitida.", successEn: "Invoice issued.", tone: "primary" },
+    { key: "billing.invoice.confirm-payment", action: "confirm-payment", labelPt: "Confirmar pagamento", labelEn: "Confirm payment", successPt: "Pagamento confirmado.", successEn: "Payment confirmed.", tone: "primary" },
+    { key: "billing.invoice.void", action: "void", labelPt: "Anular fatura", labelEn: "Void invoice", successPt: "Fatura anulada.", successEn: "Invoice voided.", tone: "danger", confirm: true, fields: [reasonField] },
+  ],
+}
+
+// ── Pagamentos ───────────────────────────────────────────────────────────────
+// (aliases EN reconcile/verify omitidos a favor de reconciliar/verificar PT)
+const PAYMENTS_DETAIL_ACTIONS: Record<string, DetailActionDefinition[]> = {
+  "/payments/payment/": [
+    { key: "payments.payment.confirm", action: "confirm", labelPt: "Confirmar", labelEn: "Confirm", successPt: "Pagamento confirmado.", successEn: "Payment confirmed.", tone: "primary" },
+    { key: "payments.payment.refund", action: "refund", labelPt: "Reembolsar", labelEn: "Refund", successPt: "Pagamento reembolsado.", successEn: "Payment refunded.", tone: "danger", confirm: true, fields: [reasonField] },
+    { key: "payments.payment.cancel", action: "cancel", labelPt: "Cancelar", labelEn: "Cancel", successPt: "Pagamento cancelado.", successEn: "Payment cancelled.", tone: "danger", confirm: true, fields: [reasonField] },
+    { key: "payments.payment.fail", action: "fail", labelPt: "Marcar falha", labelEn: "Mark failed", successPt: "Pagamento marcado como falha.", successEn: "Payment marked failed.", tone: "danger", fields: [reasonField] },
+  ],
+  "/payments/reconciliation/": [
+    { key: "payments.reconciliation.confirm", action: "confirm", labelPt: "Confirmar conciliação", labelEn: "Confirm reconciliation", successPt: "Conciliação confirmada.", successEn: "Reconciliation confirmed.", tone: "primary" },
+    { key: "payments.reconciliation.reopen", action: "reopen", labelPt: "Reabrir", labelEn: "Reopen", successPt: "Conciliação reaberta.", successEn: "Reconciliation reopened." },
+  ],
+  "/payments/transaction/": [
+    { key: "payments.transaction.verificar", action: "verificar", labelPt: "Verificar", labelEn: "Verify", successPt: "Transação verificada.", successEn: "Transaction verified.", tone: "primary" },
+    { key: "payments.transaction.reconciliar", action: "reconciliar", labelPt: "Conciliar", labelEn: "Reconcile", successPt: "Transação conciliada.", successEn: "Transaction reconciled.", tone: "primary" },
+    { key: "payments.transaction.unreconcile", action: "unreconcile", labelPt: "Desconciliar", labelEn: "Unreconcile", successPt: "Conciliação desfeita.", successEn: "Reconciliation undone.", confirm: true },
+  ],
+}
+
+// ── Contabilidade ────────────────────────────────────────────────────────────
+const ACCOUNTING_DETAIL_ACTIONS: Record<string, DetailActionDefinition[]> = {
+  "/accounting/entry/": [
+    { key: "accounting.entry.confirm", action: "confirm", labelPt: "Confirmar lançamento", labelEn: "Confirm entry", successPt: "Lançamento confirmado.", successEn: "Entry confirmed.", tone: "primary" },
+    { key: "accounting.entry.reopen", action: "reopen", labelPt: "Reabrir", labelEn: "Reopen", successPt: "Lançamento reaberto.", successEn: "Entry reopened.", confirm: true },
+  ],
+}
+
+// ── Seguradora ───────────────────────────────────────────────────────────────
+const INSURER_DETAIL_ACTIONS: Record<string, DetailActionDefinition[]> = {
+  "/insurer/procedure_authorization/": [
+    { key: "insurer.procedure_authorization.aprovar", action: "aprovar", labelPt: "Aprovar autorização", labelEn: "Approve authorization", successPt: "Autorização aprovada.", successEn: "Authorization approved.", tone: "primary", fields: [{ name: "authorization_code", labelPt: "Código de autorização (opcional)", labelEn: "Authorization code (optional)", type: "text" }] },
+    { key: "insurer.procedure_authorization.negar", action: "negar", labelPt: "Negar autorização", labelEn: "Deny authorization", successPt: "Autorização negada.", successEn: "Authorization denied.", tone: "danger", confirm: true, fields: [reasonField] },
+  ],
+}
+
+// ── Manutenção ───────────────────────────────────────────────────────────────
+const MAINTENANCE_DETAIL_ACTIONS: Record<string, DetailActionDefinition[]> = {
+  "/maintenance/maintenance/": [
+    { key: "maintenance.maintenance.realizar", action: "realizar", labelPt: "Marcar como realizada", labelEn: "Mark performed", successPt: "Manutenção realizada.", successEn: "Maintenance performed.", tone: "primary", fields: [{ name: "performed_date", labelPt: "Data de execução (opcional)", labelEn: "Performed date (optional)", type: "date" }] },
+  ],
+}
+
+// ── Equipamentos ─────────────────────────────────────────────────────────────
+const EQUIPMENT_DETAIL_ACTIONS: Record<string, DetailActionDefinition[]> = {
+  "/equipment/equipment/": [
+    { key: "equipment.equipment.ativar", action: "ativar", labelPt: "Ativar equipamento", labelEn: "Activate equipment", successPt: "Equipamento ativado.", successEn: "Equipment activated.", tone: "primary" },
+    { key: "equipment.equipment.inativar", action: "inativar", labelPt: "Inativar equipamento", labelEn: "Deactivate equipment", successPt: "Equipamento inativado.", successEn: "Equipment deactivated.", confirm: true },
+  ],
+  "/equipment/incident/": [
+    { key: "equipment.incident.resolver", action: "resolver", labelPt: "Resolver ocorrência", labelEn: "Resolve incident", successPt: "Ocorrência resolvida.", successEn: "Incident resolved.", tone: "primary" },
+    { key: "equipment.incident.reabrir", action: "reabrir", labelPt: "Reabrir ocorrência", labelEn: "Reopen incident", successPt: "Ocorrência reaberta.", successEn: "Incident reopened.", fields: [reasonField] },
+    { key: "equipment.incident.perform-maintenance", action: "perform-maintenance", labelPt: "Registar manutenção", labelEn: "Perform maintenance", successPt: "Manutenção registada.", successEn: "Maintenance performed.", tone: "primary" },
+  ],
+}
+
+// ── Integrações de equipamentos ──────────────────────────────────────────────
+const EQUIPMENT_INTEGRATIONS_DETAIL_ACTIONS: Record<string, DetailActionDefinition[]> = {
+  "/equipment_integrations/equipment/": [
+    { key: "equipment_integrations.equipment.ativar", action: "ativar", labelPt: "Ativar", labelEn: "Activate", successPt: "Equipamento ativado.", successEn: "Equipment activated.", tone: "primary" },
+    { key: "equipment_integrations.equipment.inativar", action: "inativar", labelPt: "Inativar", labelEn: "Deactivate", successPt: "Equipamento inativado.", successEn: "Equipment deactivated.", confirm: true },
+  ],
+  "/equipment_integrations/order/": [
+    { key: "equipment_integrations.order.enviar", action: "enviar", labelPt: "Enviar ordem", labelEn: "Send order", successPt: "Ordem enviada.", successEn: "Order sent.", tone: "primary" },
+    { key: "equipment_integrations.order.cancelar", action: "cancelar", labelPt: "Cancelar ordem", labelEn: "Cancel order", successPt: "Ordem cancelada.", successEn: "Order cancelled.", tone: "danger", confirm: true, fields: [reasonField] },
+  ],
+}
+
+// ── Créditos & Financiamento ─────────────────────────────────────────────────
+const CREDIT_FINANCING_DETAIL_ACTIONS: Record<string, DetailActionDefinition[]> = {
+  "/credit_financing/consortium/": [
+    { key: "credit_financing.consortium.ativar", action: "ativar", labelPt: "Ativar consórcio", labelEn: "Activate consortium", successPt: "Consórcio ativado.", successEn: "Consortium activated.", tone: "primary" },
+    { key: "credit_financing.consortium.contemplar", action: "contemplar", labelPt: "Contemplar", labelEn: "Award", successPt: "Consórcio contemplado.", successEn: "Consortium awarded.", tone: "primary", fields: [{ name: "awarded_at", labelPt: "Data de contemplação (opcional)", labelEn: "Awarded at (optional)", type: "date" }] },
+    { key: "credit_financing.consortium.encerrar", action: "encerrar", labelPt: "Encerrar", labelEn: "Close", successPt: "Consórcio encerrado.", successEn: "Consortium closed.", confirm: true },
+    { key: "credit_financing.consortium.cancelar", action: "cancelar", labelPt: "Cancelar", labelEn: "Cancel", successPt: "Consórcio cancelado.", successEn: "Consortium cancelled.", tone: "danger", confirm: true, fields: [reasonField] },
+  ],
+  "/credit_financing/procedure_financing/": [
+    { key: "credit_financing.procedure_financing.analisar", action: "analisar", labelPt: "Analisar", labelEn: "Analyze", successPt: "Financiamento em análise.", successEn: "Financing under analysis.", tone: "primary", fields: [{ name: "risk_rating", labelPt: "Classificação de risco (opcional)", labelEn: "Risk rating (optional)", type: "text" }] },
+    { key: "credit_financing.procedure_financing.aprovar", action: "aprovar", labelPt: "Aprovar", labelEn: "Approve", successPt: "Financiamento aprovado.", successEn: "Financing approved.", tone: "primary", fields: [{ name: "approval_reference", labelPt: "Referência de aprovação (opcional)", labelEn: "Approval reference (optional)", type: "text" }, { name: "first_due_date", labelPt: "Primeiro vencimento (opcional)", labelEn: "First due date (optional)", type: "date" }] },
+    { key: "credit_financing.procedure_financing.rejeitar", action: "rejeitar", labelPt: "Rejeitar", labelEn: "Reject", successPt: "Financiamento rejeitado.", successEn: "Financing rejected.", tone: "danger", confirm: true, fields: [reasonField] },
+    { key: "credit_financing.procedure_financing.cancelar", action: "cancelar", labelPt: "Cancelar", labelEn: "Cancel", successPt: "Financiamento cancelado.", successEn: "Financing cancelled.", tone: "danger", confirm: true, fields: [reasonField] },
+  ],
+  "/credit_financing/installment/": [
+    { key: "credit_financing.installment.pagar", action: "pagar", labelPt: "Pagar prestação", labelEn: "Pay installment", successPt: "Prestação paga.", successEn: "Installment paid.", tone: "primary", fields: [{ name: "amount", labelPt: "Montante (opcional)", labelEn: "Amount (optional)", type: "number" }] },
+    { key: "credit_financing.installment.aplicar-multa", action: "aplicar-multa", labelPt: "Aplicar multa", labelEn: "Apply penalty", successPt: "Multa aplicada.", successEn: "Penalty applied.", fields: [{ name: "fee_amount", labelPt: "Multa", labelEn: "Fee", type: "number" }, { name: "interest_amount", labelPt: "Juros", labelEn: "Interest", type: "number" }] },
+    { key: "credit_financing.installment.perdoar", action: "perdoar", labelPt: "Perdoar", labelEn: "Waive", successPt: "Prestação perdoada.", successEn: "Installment waived.", confirm: true, fields: [reasonField] },
+    { key: "credit_financing.installment.estornar", action: "estornar", labelPt: "Estornar", labelEn: "Reverse", successPt: "Pagamento estornado.", successEn: "Payment reversed.", tone: "danger", confirm: true, fields: [reasonField] },
+  ],
+  "/credit_financing/reimbursement_claim/": [
+    { key: "credit_financing.reimbursement_claim.aprovar", action: "aprovar", labelPt: "Aprovar reembolso", labelEn: "Approve claim", successPt: "Reembolso aprovado.", successEn: "Claim approved.", tone: "primary", fields: [{ name: "approved_amount", labelPt: "Montante aprovado (opcional)", labelEn: "Approved amount (optional)", type: "number" }] },
+    { key: "credit_financing.reimbursement_claim.rejeitar", action: "rejeitar", labelPt: "Rejeitar", labelEn: "Reject", successPt: "Reembolso rejeitado.", successEn: "Claim rejected.", tone: "danger", confirm: true, fields: [reasonField] },
+    { key: "credit_financing.reimbursement_claim.registrar-reembolso", action: "registrar-reembolso", labelPt: "Registar reembolso", labelEn: "Register reimbursement", successPt: "Reembolso registado.", successEn: "Reimbursement registered.", tone: "primary", fields: [{ name: "amount", labelPt: "Montante (opcional)", labelEn: "Amount (optional)", type: "number" }] },
+  ],
+  "/credit_financing/student_funding/": [
+    { key: "credit_financing.student_funding.aprovar", action: "aprovar", labelPt: "Aprovar financiamento", labelEn: "Approve funding", successPt: "Financiamento aprovado.", successEn: "Funding approved.", tone: "primary", fields: [{ name: "approval_reference", labelPt: "Referência (opcional)", labelEn: "Reference (optional)", type: "text" }] },
+    { key: "credit_financing.student_funding.suspender", action: "suspender", labelPt: "Suspender", labelEn: "Suspend", successPt: "Financiamento suspenso.", successEn: "Funding suspended.", fields: [reasonField] },
+    { key: "credit_financing.student_funding.revogar", action: "revogar", labelPt: "Revogar", labelEn: "Revoke", successPt: "Financiamento revogado.", successEn: "Funding revoked.", tone: "danger", confirm: true, fields: [reasonField] },
+  ],
+}
+
+// ── Transportes ──────────────────────────────────────────────────────────────
+const TRANSPORTATION_DETAIL_ACTIONS: Record<string, DetailActionDefinition[]> = {
+  "/transportation/vehicle/": [
+    { key: "transportation.vehicle.marcar-disponivel", action: "marcar-disponivel", labelPt: "Marcar disponível", labelEn: "Mark available", successPt: "Veículo disponível.", successEn: "Vehicle available.", tone: "primary" },
+    { key: "transportation.vehicle.marcar-avariado", action: "marcar-avariado", labelPt: "Marcar avariado", labelEn: "Mark broken down", successPt: "Veículo em manutenção.", successEn: "Vehicle under maintenance.", fields: [reasonField] },
+    { key: "transportation.vehicle.inativar", action: "inativar", labelPt: "Inativar", labelEn: "Deactivate", successPt: "Veículo inativado.", successEn: "Vehicle deactivated.", confirm: true },
+  ],
+  "/transportation/driver/": [
+    { key: "transportation.driver.ativar", action: "ativar", labelPt: "Ativar motorista", labelEn: "Activate driver", successPt: "Motorista ativado.", successEn: "Driver activated.", tone: "primary" },
+    { key: "transportation.driver.suspender", action: "suspender", labelPt: "Suspender", labelEn: "Suspend", successPt: "Motorista suspenso.", successEn: "Driver suspended.", fields: [reasonField] },
+  ],
+  "/transportation/route/": [
+    { key: "transportation.route.ativar", action: "ativar", labelPt: "Ativar rota", labelEn: "Activate route", successPt: "Rota ativada.", successEn: "Route activated.", tone: "primary" },
+    { key: "transportation.route.optimize", action: "optimize", labelPt: "Otimizar rota", labelEn: "Optimize route", successPt: "Rota otimizada.", successEn: "Route optimized.", fields: [{ name: "average_speed_kmh", labelPt: "Velocidade média (km/h)", labelEn: "Average speed (km/h)", type: "number" }] },
+    { key: "transportation.route.cancelar", action: "cancelar", labelPt: "Cancelar rota", labelEn: "Cancel route", successPt: "Rota cancelada.", successEn: "Route cancelled.", tone: "danger", confirm: true, fields: [reasonField] },
+  ],
+  "/transportation/trip/": [
+    { key: "transportation.trip.aprovar", action: "aprovar", labelPt: "Aprovar viagem", labelEn: "Approve trip", successPt: "Viagem aprovada.", successEn: "Trip approved.", tone: "primary" },
+    { key: "transportation.trip.iniciar", action: "iniciar", labelPt: "Iniciar viagem", labelEn: "Start trip", successPt: "Viagem iniciada.", successEn: "Trip started.", tone: "primary", fields: [{ name: "odometer_start_km", labelPt: "Odómetro inicial (km)", labelEn: "Start odometer (km)", type: "number" }] },
+    { key: "transportation.trip.finalizar", action: "finalizar", labelPt: "Finalizar viagem", labelEn: "Finish trip", successPt: "Viagem finalizada.", successEn: "Trip finished.", tone: "primary", fields: [{ name: "odometer_end_km", labelPt: "Odómetro final (km)", labelEn: "End odometer (km)", type: "number" }] },
+    { key: "transportation.trip.cancelar", action: "cancelar", labelPt: "Cancelar viagem", labelEn: "Cancel trip", successPt: "Viagem cancelada.", successEn: "Trip cancelled.", tone: "danger", confirm: true, fields: [reasonField] },
+  ],
+  "/transportation/maintenance_order/": [
+    { key: "transportation.maintenance_order.iniciar", action: "iniciar", labelPt: "Iniciar manutenção", labelEn: "Start maintenance", successPt: "Manutenção iniciada.", successEn: "Maintenance started.", tone: "primary" },
+    { key: "transportation.maintenance_order.concluir", action: "concluir", labelPt: "Concluir manutenção", labelEn: "Complete maintenance", successPt: "Manutenção concluída.", successEn: "Maintenance completed.", tone: "primary" },
+    { key: "transportation.maintenance_order.cancelar", action: "cancelar", labelPt: "Cancelar", labelEn: "Cancel", successPt: "Manutenção cancelada.", successEn: "Maintenance cancelled.", tone: "danger", confirm: true, fields: [reasonField] },
+  ],
+}
+
+// ── Farmácia (material_requisition; fulfill é payload de array → diferido) ─────
+const PHARMACY_DETAIL_ACTIONS: Record<string, DetailActionDefinition[]> = {
+  "/pharmacy/material_requisition/": [
+    { key: "pharmacy.material_requisition.archive", action: "archive", labelPt: "Arquivar requisição", labelEn: "Archive requisition", successPt: "Requisição arquivada.", successEn: "Requisition archived.", confirm: true, fields: [reasonField] },
+  ],
+}
+
 // Registry global por endpoint-pai (normalizado). Cada módulo contribui o seu mapa.
 export const RESOURCE_DETAIL_ACTIONS: Record<string, DetailActionDefinition[]> = {
   ...CLINICAL_LABORATORY_DETAIL_ACTIONS,
@@ -869,6 +1015,16 @@ export const RESOURCE_DETAIL_ACTIONS: Record<string, DetailActionDefinition[]> =
   ...DENTAL_DETAIL_ACTIONS,
   ...THERAPY_DETAIL_ACTIONS,
   ...PUBLIC_HEALTH_DETAIL_ACTIONS,
+  ...BILLING_DETAIL_ACTIONS,
+  ...PAYMENTS_DETAIL_ACTIONS,
+  ...ACCOUNTING_DETAIL_ACTIONS,
+  ...INSURER_DETAIL_ACTIONS,
+  ...MAINTENANCE_DETAIL_ACTIONS,
+  ...EQUIPMENT_DETAIL_ACTIONS,
+  ...EQUIPMENT_INTEGRATIONS_DETAIL_ACTIONS,
+  ...CREDIT_FINANCING_DETAIL_ACTIONS,
+  ...TRANSPORTATION_DETAIL_ACTIONS,
+  ...PHARMACY_DETAIL_ACTIONS,
 }
 
 /** Ações declaradas para um endpoint, sem filtro de contrato. */
