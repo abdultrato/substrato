@@ -2,9 +2,11 @@ from __future__ import annotations
 
 import pytest
 
+from decimal import Decimal
+
 from django.core.exceptions import ValidationError
 
-from apps.clinical_laboratory.models import LabOrder, LabReport
+from apps.clinical_laboratory.models import LabOrder, LabReport, LabSector, LabTest, LabTestPanel
 from apps.clinical_laboratory.models_quality import CorrectiveAction
 from apps.clinical.models.patient import Patient
 from apps.tenants.models.tenant import Tenant
@@ -14,6 +16,8 @@ from api.v1.clinical_laboratory.viewsets import (
     LabReportViewSet,
     LabResultViewSet,
     LabSampleViewSet,
+    LabTestPanelViewSet,
+    LabTestViewSet,
     NonconformityViewSet,
     QualityDocumentViewSet,
     ResultValidationViewSet,
@@ -38,6 +42,33 @@ def test_quality_capa_actions_are_wired():
     assert {"aprovar"} <= _action_paths(QualityDocumentViewSet)
     assert {"encerrar"} <= _action_paths(NonconformityViewSet)
     assert {"concluir", "verificar", "fechar"} <= _action_paths(CorrectiveActionViewSet)
+
+
+def test_lab_catalog_activation_actions_are_wired():
+    # Catálogo de serviços/exames (§41.6/§41.23): ativar/inativar.
+    assert {"ativar", "inativar"} <= _action_paths(LabTestViewSet)
+    assert {"ativar", "inativar"} <= _action_paths(LabTestPanelViewSet)
+
+
+@pytest.mark.django_db
+def test_lab_catalog_activate_deactivate():
+    tenant = Tenant.objects.create(identifier="lab-cat", name="LAB-CAT")
+    sector = LabSector.objects.create(tenant=tenant, name="Bioquímica", code="BIO")
+    test = LabTest.objects.create(tenant=tenant, name="Glicose", code="GLI", sector=sector,
+                                  price=Decimal("150.00"))
+    panel = LabTestPanel.objects.create(tenant=tenant, name="Perfil lipídico", code="LIP")
+
+    assert test.active is True
+    test.deactivate()
+    test.refresh_from_db()
+    assert test.active is False
+    test.activate()
+    test.refresh_from_db()
+    assert test.active is True
+
+    panel.deactivate()
+    panel.refresh_from_db()
+    assert panel.active is False
 
 
 @pytest.mark.django_db

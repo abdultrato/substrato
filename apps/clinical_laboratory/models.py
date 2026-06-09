@@ -105,6 +105,18 @@ class LabTest(CoreModel):
     def __str__(self) -> str:
         return f"{self.code} - {self.name}" if self.name else self.code
 
+    def activate(self):
+        """Disponibiliza o exame no catálogo (§41.6/§39.8)."""
+        self.active = True
+        self.save(update_fields=["active", "updated_at"])
+        return self
+
+    def deactivate(self):
+        """Suspende o exame — deixa de poder ser solicitado/faturado."""
+        self.active = False
+        self.save(update_fields=["active", "updated_at"])
+        return self
+
 
 class LabTestPanel(CoreModel):
     """Painel/pacote de exames (hemograma, perfil lipídico, pré-operatório, ...)."""
@@ -127,6 +139,18 @@ class LabTestPanel(CoreModel):
 
     def __str__(self) -> str:
         return self.name or self.code
+
+    def activate(self):
+        """Disponibiliza o painel/pacote no catálogo (§41.23)."""
+        self.active = True
+        self.save(update_fields=["active", "updated_at"])
+        return self
+
+    def deactivate(self):
+        """Suspende o painel/pacote — deixa de poder ser solicitado/faturado."""
+        self.active = False
+        self.save(update_fields=["active", "updated_at"])
+        return self
 
 
 # =====================================================================

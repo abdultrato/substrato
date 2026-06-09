@@ -114,14 +114,30 @@ class LabSectorViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, 
     ordering_fields = ["code", "name", "active", "created_at"]
 
 
-class LabTestViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
+class _CatalogActivationMixin:
+    """Acções comuns de ativar/inativar para itens de catálogo (`active`)."""
+
+    @action(detail=True, methods=["post"], url_path="ativar", url_name="ativar")
+    def ativar(self, request, pk=None):
+        obj = self.get_object()
+        obj.activate()
+        return Response(self.get_serializer(obj).data)
+
+    @action(detail=True, methods=["post"], url_path="inativar", url_name="inativar")
+    def inativar(self, request, pk=None):
+        obj = self.get_object()
+        obj.deactivate()
+        return Response(self.get_serializer(obj).data)
+
+
+class LabTestViewSet(_CatalogActivationMixin, ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
     queryset = LabTest.objects.select_related("sector").all()
     serializer_class = LabTestSerializer
     search_fields = ["custom_id", "code", "name", "method", "unit"]
     ordering_fields = ["code", "name", "price", "turnaround_hours", "active", "created_at"]
 
 
-class LabTestPanelViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
+class LabTestPanelViewSet(_CatalogActivationMixin, ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
     queryset = LabTestPanel.objects.select_related("sector").all()
     serializer_class = LabTestPanelSerializer
     search_fields = ["custom_id", "code", "name"]
