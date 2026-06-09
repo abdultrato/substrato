@@ -117,6 +117,18 @@ class Equipment(CoreModel):
     def __str__(self) -> str:
         return self.name or f"Equipamento {self.pk}"
 
+    def activate(self):
+        """Reativa o equipamento para uso operacional (§36.23)."""
+        self.active = True
+        self.save(update_fields=["active", "updated_at"])
+        return self
+
+    def deactivate(self):
+        """Suspende/desativa o equipamento — deixa de estar disponível para uso."""
+        self.active = False
+        self.save(update_fields=["active", "updated_at"])
+        return self
+
     def last_inspection(self):
         if not self.pk:
             return None

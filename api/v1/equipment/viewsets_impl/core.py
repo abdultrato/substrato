@@ -47,6 +47,18 @@ class EquipmentViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, 
     ]
     ordering = ["name"]
 
+    @action(detail=True, methods=["post"], url_path="ativar", url_name="ativar")
+    def ativar(self, request, pk=None):
+        equipment = self.get_object()
+        equipment.activate()
+        return Response(self.get_serializer(equipment).data)
+
+    @action(detail=True, methods=["post"], url_path="inativar", url_name="inativar")
+    def inativar(self, request, pk=None):
+        equipment = self.get_object()
+        equipment.deactivate()
+        return Response(self.get_serializer(equipment).data)
+
 
 class DailyInspectionViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
     queryset = DailyInspection.objects.select_related("equipment")
