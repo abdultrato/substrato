@@ -154,3 +154,38 @@ class Pregnancy(NoNameCoreModel):
 
     def __str__(self) -> str:
         return self.custom_id or f"Gestação {self.pk}"
+
+    # ------------------------------------------------------------------ #
+    # Ciclo de vida da gestação (§22.40)
+    # ------------------------------------------------------------------ #
+    def register_delivery(self, *, cesarean: bool = False):
+        """Regista o parto (acompanhamento → parto) e atualiza o histórico obstétrico."""
+        if self.status != self.Status.FOLLOW_UP:
+            raise ValidationError("Apenas gestações em acompanhamento podem registar parto.")
+        self.status = self.Status.DELIVERY
+        self.total_deliveries += 1
+        if cesarean:
+            self.cesareans += 1
+        else:
+            self.normal_deliveries += 1
+        self.save()
+        return self
+
+    def close(self):
+        """Encerra a gestação."""
+        if self.status in {self.Status.CLOSED, self.Status.CANCELED}:
+            raise ValidationError("Gestação já encerrada/cancelada.")
+        self.status = self.Status.CLOSED
+        self.save()
+        return self
+
+    def cancel(self, *, reason: str = ""):
+        """Cancela a gestação (motivo opcional nas observações)."""
+        if self.status in {self.Status.CLOSED, self.Status.CANCELED}:
+            raise ValidationError("Gestação já encerrada/cancelada.")
+        self.status = self.Status.CANCELED
+        if reason:
+            mark = f"[Cancelamento] {reason}"
+            self.notes = f"{self.notes}\n{mark}".strip() if self.notes else mark
+        self.save()
+        return self
