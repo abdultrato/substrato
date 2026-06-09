@@ -24,8 +24,6 @@ from apps.billing.models.invoice_history import InvoiceHistory
 from apps.billing.models.invoice_items import InvoiceItem
 from apps.notifications.use_cases import send_paid_invoice_notification
 from infrastructure.cache import CacheService
-from infrastructure.task_queue import enqueue_task
-from services.reports.async_exports import create_export_job
 
 from ..filters import InvoiceFilter, InvoiceHistoryFilter, InvoiceItemFilter
 from ..serializers import InvoiceHistorySerializer, InvoiceItemSerializer, InvoiceSerializer
@@ -516,45 +514,29 @@ class InvoiceViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
 
     @action(detail=True, methods=["get"])
     def pdf(self, request, pk=None):
-        """Gera PDF de fatura (assíncrono)."""
+        """Gera o PDF da fatura.
+
+        Mesmo padrão dos restantes documentos (recibo, resultados, procedimento,
+        históricos): síncrono por defeito — devolve o PDF inline para o frontend
+        fazer apiFetch(blob) + window.open — e assíncrono apenas com ?async=true.
+        """
         invoice = self.get_object()
-        tenant = getattr(request, "tenant", None)
-        user = getattr(request, "user", None)
 
-        payload = {
-            "invoice_id": invoice.id,
-            "tenant_id": tenant.id if tenant else None,
-        }
-
-        job_state = create_export_job(
+        queued = queue_export_if_requested(
+            request,
             export_key="invoice_pdf",
-            payload=payload,
-            tenant_id=tenant.id if tenant else None,
-            user_id=user.id if user else None,
+            payload={"invoice_id": invoice.id},
             content_disposition="inline",
         )
+        if queued is not None:
+            return queued
 
-        # Usa o abstractor com fallback síncrono: se o broker Celery estiver
-        # indisponível, gera o PDF inline (job fica pronto) em vez de devolver 500.
-        enqueue_task(
-            "tasks.export_jobs.run_export_job",
-            task_kwargs={"job_id": job_state["id"]},
-            queue="exports",
-            tenant_id=tenant.id if tenant else None,
-            fail_silently=True,
-        )
+        from tasks.generate_pdf.invoice_pdf_generator import generate_invoice_pdf
 
-        return Response(
-            {
-                "job_id": job_state["id"],
-                "status": "queued",
-                "export_key": "invoice_pdf",
-                "created_at": job_state["created_at"],
-                "status_url": f"/api/v1/monitoring/export_job/{job_state['id']}/",
-                "download_url": f"/api/v1/monitoring/export_job/{job_state['id']}/download/",
-            },
-            status=202,
-        )
+        pdf_bytes, filename = generate_invoice_pdf(invoice, request=request)
+        response = HttpResponse(pdf_bytes, content_type="application/pdf")
+        response["Content-Disposition"] = f'inline; filename="{filename}"'
+        return response
 
     @action(detail=False, methods=["get"], url_path="billing-history", url_name="billing-history")
     def billing_history(self, request):

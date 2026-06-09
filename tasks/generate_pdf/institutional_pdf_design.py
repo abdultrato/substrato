@@ -282,6 +282,35 @@ def draw_institutional_barcode(canvas_obj, doc, x, y, max_width) -> None:
     except Exception as err:
         logger.warning("Falha ao desenhar código de barras institucional.", exc_info=err)
 
+
+def draw_institutional_corner_barcode(canvas_obj, doc) -> None:
+    """Desenha o código de barras (Code128) no quadrante inferior direito,
+    encostado/transbordando pela margem da página.
+
+    Fica vertical (rotacionado 90°) na faixa da margem direita, a sangrar
+    pelo fundo — fora do corpo do documento e do rodapé (que é alinhado à
+    direita até PDF_MARGIN)."""
+    value = getattr(doc, "barcode_value", None)
+    payload = _sanitize_institutional_barcode(value)
+    if not payload:
+        return
+
+    page_w, _page_h = doc.pagesize
+    try:
+        bar = code128.Code128(payload, barHeight=0.40 * cm, barWidth=0.28)
+        bar.humanReadable = False
+
+        canvas_obj.saveState()
+        # Origem encostada à borda direita; rotação 90° faz o comprimento do
+        # código correr para cima e a altura entrar na faixa da margem direita.
+        # ty negativo => transborda pelo fundo da página.
+        canvas_obj.translate(page_w - 0.05 * cm, -0.40 * cm)
+        canvas_obj.rotate(90)
+        bar.drawOn(canvas_obj, 0, 0)
+        canvas_obj.restoreState()
+    except Exception as err:
+        logger.warning("Falha ao desenhar código de barras de canto.", exc_info=err)
+
 # =========================================================
 # HEADER INSTITUCIONAL PADRÃO
 # =========================================================
@@ -350,17 +379,8 @@ def draw_institutional_header(canvas_obj, doc):
             qr_y = page_h - 0.25 * cm - qr_size
             canvas_obj.drawImage(qr, qr_x, qr_y, qr_size, qr_size, mask="auto")
 
-    # Código de barras (Code128) com dados essenciais do patient/documento
-    if hasattr(doc, "barcode_value") and doc.barcode_value:
-        right_limit = (qr_x - 0.2 * cm) if qr_x is not None else (page_w - right_margin)
-        max_w = max(1 * cm, right_limit - text_x)
-        draw_institutional_barcode(
-            canvas_obj,
-            doc,
-            x=text_x,
-            y=(y_line + 0.15 * cm),
-            max_width=max_w,
-        )
+    # (Código de barras removido do header: o QR já fornece verificação
+    # máquina-legível e o header de 2cm não o acomoda sem sobrepor o texto.)
 
     canvas_obj.setStrokeColor(colors.darkblue)
     canvas_obj.setLineWidth(1)
@@ -590,6 +610,7 @@ def institutional_draw_line_full_width(canvas_obj, doc):
 
 def institutional_on_page(canvas_obj, doc, user=None):
     draw_institutional_header(canvas_obj, doc)
+    draw_institutional_corner_barcode(canvas_obj, doc)
     if _should_draw_institutional_signatures(doc):
         draw_institutional_signatures(canvas_obj, doc, user)
 
@@ -1031,17 +1052,7 @@ def draw_institutional_header_improved(canvas_obj, doc, header_config: dict):
             qr_y = page_h - 0.25 * cm - qr_size
             canvas_obj.drawImage(qr, qr_x, qr_y, qr_size, qr_size, mask="auto")
 
-    # Código de barras (Code128) com dados essenciais do patient/documento
-    if hasattr(doc, "barcode_value") and doc.barcode_value:
-        right_limit = (qr_x - 0.2 * cm) if qr_x is not None else (page_w - right_margin)
-        max_w = max(1 * cm, right_limit - text_x)
-        draw_institutional_barcode(
-            canvas_obj,
-            doc,
-            x=text_x,
-            y=(y_line + 0.15 * cm),
-            max_width=max_w,
-        )
+    # (Código de barras removido do header: ver nota em draw_institutional_header.)
 
     canvas_obj.restoreState()
 
@@ -1232,6 +1243,7 @@ def institutional_draw_line_full_width_improved(canvas_obj, doc):
 
 def improved_institutional_on_page(canvas_obj, doc, user=None):
     draw_institutional_header_improved(canvas_obj, doc, getattr(doc, "header_config", None))
+    draw_institutional_corner_barcode(canvas_obj, doc)
     if _should_draw_institutional_signatures(doc):
         draw_institutional_signatures_improved(canvas_obj, doc, user)
 
