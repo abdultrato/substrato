@@ -95,3 +95,15 @@ class Company(CoreModel):
 
     def __str__(self) -> str:
         return self.name or f"Empresa {self.pk}"  # Fallback legível no admin
+
+    def activate(self):
+        """Reativa a entidade para uso em novas operações (§24.6)."""
+        self.active = True
+        self.save(update_fields=["active", "updated_at"])
+        return self
+
+    def deactivate(self):
+        """Inativa a entidade — deixa de ser usada em novas operações (§24.6)."""
+        self.active = False
+        self.save(update_fields=["active", "updated_at"])
+        return self
