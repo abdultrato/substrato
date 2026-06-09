@@ -160,6 +160,37 @@ class Incident(TenantPropagationMixin, NoNameCoreModel):
         for equipment_id in {item for item in equipment_ids if item}:
             sync_equipment_maintenance_flag(equipment_id)
 
+    # ------------------------------------------------------------------ #
+    # Ciclo de resolução da ocorrência (§37.16 avaria RESOLVIDA / §37.31).
+    # O save() limpa requires_maintenance e propaga ao equipamento.
+    # ------------------------------------------------------------------ #
+    def resolve(self):
+        """Marca a ocorrência como resolvida (limpa a manutenção pendente)."""
+        if self.resolved:
+            raise ValidationError("Ocorrência já está resolvida.")
+        self.resolved = True
+        fields = ["resolved"]
+        if self.equipment_id and not self.maintenance_completed_at:
+            self.maintenance_completed_at = timezone.now()
+            fields.append("maintenance_completed_at")
+        self.save(update_fields=fields)
+        return self
+
+    def reopen(self, *, reason: str = ""):
+        """Reabre uma ocorrência resolvida (§37.31), reativando a manutenção se houver equipamento."""
+        if not self.resolved:
+            raise ValidationError("Apenas ocorrências resolvidas podem ser reabertas.")
+        self.resolved = False
+        self.maintenance_completed_at = None
+        fields = ["resolved", "maintenance_completed_at"]
+        if reason:
+            existing = (self.post_incident_actions or "").strip()
+            mark = f"[Reabertura] {reason}"
+            self.post_incident_actions = f"{existing}\n{mark}".strip() if existing else mark
+            fields.append("post_incident_actions")
+        self.save(update_fields=fields)
+        return self
+
 
 def sync_equipment_maintenance_flag(equipment_id: int) -> None:
     from apps.equipment.models.equipment import Equipment

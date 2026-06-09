@@ -1,12 +1,19 @@
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
 from django.utils import timezone
 from rest_framework import status
 from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError as DRFValidationError
 from rest_framework.permissions import IsAuthenticated  # Protege endpoints
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet  # CRUD base DRF
 
 from api.v1.viewset_mixins import TenantScopedQuerysetMixin, ValidatedSearchOrderingMixin
+
+
+def _as_drf_error(exc: DjangoValidationError) -> DRFValidationError:
+    detail = getattr(exc, "message_dict", None) or getattr(exc, "messages", None) or [str(exc)]
+    return DRFValidationError(detail)
 from apps.equipment.models.equipment import Equipment
 from apps.incidents.models.incident import Incident
 from apps.inspections.models.daily_inspection import DailyInspection
@@ -151,6 +158,24 @@ class IncidentViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, M
         "updated_at",
     ]
     ordering = ["-date", "-created_at"]
+
+    @action(detail=True, methods=["post"], url_path="resolver", url_name="resolver")
+    def resolver(self, request, pk=None):
+        incident = self.get_object()
+        try:
+            incident.resolve()
+        except DjangoValidationError as exc:
+            raise _as_drf_error(exc)
+        return Response(self.get_serializer(incident).data)
+
+    @action(detail=True, methods=["post"], url_path="reabrir", url_name="reabrir")
+    def reabrir(self, request, pk=None):
+        incident = self.get_object()
+        try:
+            incident.reopen(reason=request.data.get("reason", ""))
+        except DjangoValidationError as exc:
+            raise _as_drf_error(exc)
+        return Response(self.get_serializer(incident).data)
 
     @action(detail=True, methods=["post"], url_path="perform-maintenance")
     def perform_maintenance(self, request, pk=None):
