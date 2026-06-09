@@ -1,6 +1,7 @@
 from datetime import datetime, time, timedelta
 from decimal import Decimal
 
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
 from django.db.models import Q
 from django.http import HttpResponse
@@ -63,6 +64,11 @@ class DoctorsViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Re
         return qs.filter(role__is_doctor=True, status="ATIVO").distinct()
 
 
+def _specialty_as_drf_error(exc: DjangoValidationError) -> ValidationError:
+    detail = getattr(exc, "message_dict", None) or getattr(exc, "messages", None) or [str(exc)]
+    return ValidationError(detail)
+
+
 class TenantScopedModelViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
     permission_classes = [IsAuthenticated]
 
@@ -74,6 +80,24 @@ class ConsultationSpecialtyViewSet(TenantScopedModelViewSet):
     search_fields = ["custom_id", "name"]
     ordering_fields = ["name", "base_price", "created_at"]
     ordering = ["name"]
+
+    @action(detail=True, methods=["post"], url_path="ativar", url_name="ativar")
+    def ativar(self, request, pk=None):
+        specialty = self.get_object()
+        try:
+            specialty.activate()
+        except DjangoValidationError as exc:
+            raise _specialty_as_drf_error(exc)
+        return Response(self.get_serializer(specialty).data)
+
+    @action(detail=True, methods=["post"], url_path="inativar", url_name="inativar")
+    def inativar(self, request, pk=None):
+        specialty = self.get_object()
+        try:
+            specialty.deactivate()
+        except DjangoValidationError as exc:
+            raise _specialty_as_drf_error(exc)
+        return Response(self.get_serializer(specialty).data)
 
 
 class HolidayViewSet(TenantScopedModelViewSet):

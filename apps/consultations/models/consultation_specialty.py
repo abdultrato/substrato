@@ -75,3 +75,15 @@ class ConsultationSpecialty(CoreModel):
     def __str__(self) -> str:
         return self.name
 
+    def activate(self):
+        """Reativa a especialidade para novos agendamentos (§19.5)."""
+        self.active = True
+        self.save(update_fields=["active", "updated_at"])
+        return self
+
+    def deactivate(self):
+        """Inativa a especialidade — deixa de ser oferecida em novas consultas."""
+        self.active = False
+        self.save(update_fields=["active", "updated_at"])
+        return self
+
