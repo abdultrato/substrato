@@ -135,3 +135,32 @@ class Absence(NoNameCoreModel):
             self.justified = False
         self.full_clean()
         return super().save(*args, **kwargs)
+
+    # ------------------------------------------------------------------ #
+    # Ciclo de justificação da falta (§29.16)
+    # ------------------------------------------------------------------ #
+    def submit_justification(self, *, reason: str = ""):
+        """Funcionário submete justificação (registada → pendente de justificação)."""
+        if self.status not in {self.Status.REPORTED, self.Status.PENDING_JUSTIFICATION}:
+            raise ValidationError("Apenas faltas registadas podem ser justificadas.")
+        if reason:
+            self.reason = reason
+        self.status = self.Status.PENDING_JUSTIFICATION
+        self.save()
+        return self
+
+    def approve_justification(self):
+        """Gestor aprova a justificação (pendente → justificada)."""
+        if self.status != self.Status.PENDING_JUSTIFICATION:
+            raise ValidationError("Apenas faltas pendentes de justificação podem ser aprovadas.")
+        self.status = self.Status.JUSTIFIED  # save() sincroniza justified=True
+        self.save()
+        return self
+
+    def reject_justification(self):
+        """Gestor rejeita a justificação (pendente → injustificada)."""
+        if self.status != self.Status.PENDING_JUSTIFICATION:
+            raise ValidationError("Apenas faltas pendentes de justificação podem ser rejeitadas.")
+        self.status = self.Status.UNJUSTIFIED  # save() sincroniza justified=False
+        self.save()
+        return self

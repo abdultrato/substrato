@@ -1,4 +1,6 @@
+from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import IsAuthenticated  # Restringe acesso
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet  # CRUD base DRF
@@ -152,6 +154,33 @@ class AbsenceViewSet(TenantScopedModelViewSet):
     filterset_class = AbsenceFilter
     ordering_fields = ["date", "created_at"]
     ordering = ["-date", "-created_at"]
+
+    @action(detail=True, methods=["post"], url_path="justificar", url_name="justificar")
+    def justificar(self, request, pk=None):
+        absence = self.get_object()
+        try:
+            absence.submit_justification(reason=request.data.get("reason", ""))
+        except DjangoValidationError as exc:
+            raise ValidationError(getattr(exc, "messages", None) or [str(exc)])
+        return Response(self.get_serializer(absence).data)
+
+    @action(detail=True, methods=["post"], url_path="aprovar-justificativa", url_name="aprovar-justificativa")
+    def aprovar_justificativa(self, request, pk=None):
+        absence = self.get_object()
+        try:
+            absence.approve_justification()
+        except DjangoValidationError as exc:
+            raise ValidationError(getattr(exc, "messages", None) or [str(exc)])
+        return Response(self.get_serializer(absence).data)
+
+    @action(detail=True, methods=["post"], url_path="rejeitar-justificativa", url_name="rejeitar-justificativa")
+    def rejeitar_justificativa(self, request, pk=None):
+        absence = self.get_object()
+        try:
+            absence.reject_justification()
+        except DjangoValidationError as exc:
+            raise ValidationError(getattr(exc, "messages", None) or [str(exc)])
+        return Response(self.get_serializer(absence).data)
 
 
 class VacationViewSet(TenantScopedModelViewSet):
