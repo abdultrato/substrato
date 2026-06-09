@@ -9,6 +9,7 @@ import AppLayout from "@/components/layout/AppLayout"
 import PageHeader from "@/components/ui/PageHeader"
 import PdfActionLabel from "@/components/ui/PdfActionLabel"
 import ConfirmDialog from "@/components/ui/ConfirmDialog"
+import ResourceDetailActionsPanel from "@/components/resources/ResourceDetailActionsPanel"
 import ResourceDetailsCard from "@/components/resources/ResourceDetailsCard"
 import { useAuth } from "@/hooks/useAuth"
 import useAuthGuard from "@/hooks/useAuthGuard"
@@ -668,7 +669,15 @@ export default function ResourceDetailPage() {
                 {loadingData ? (
                     <div className="text-sm text-[var(--gray-500)]">{t("Carregando...", "Loading...")}</div>
                 ) : data ? (
-                    <ResourceDetailsCard endpoint={found.resource.endpoint} data={data} />
+                    <>
+                        <ResourceDetailActionsPanel
+                            endpoint={found.resource.endpoint}
+                            id={id}
+                            resourceLabel={tr(found.resource.label)}
+                            onCompleted={() => { reloadResource().catch(() => { }) }}
+                        />
+                        <ResourceDetailsCard endpoint={found.resource.endpoint} data={data} />
+                    </>
                 ) : (
                     <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
                         {t("Registo não encontrado.", "Record not found.")}

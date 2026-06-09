@@ -752,6 +752,105 @@ const CLINICAL_PHARMACY_DETAIL_ACTIONS: Record<string, DetailActionDefinition[]>
   ],
 }
 
+// ── Medicina Dentária ────────────────────────────────────────────────────────
+const DENTAL_DETAIL_ACTIONS: Record<string, DetailActionDefinition[]> = {
+  "/dental/appointment/": [
+    { key: "dental.appointment.confirmar", action: "confirmar", labelPt: "Confirmar", labelEn: "Confirm", successPt: "Consulta confirmada.", successEn: "Appointment confirmed.", tone: "primary" },
+    { key: "dental.appointment.iniciar-atendimento", action: "iniciar-atendimento", labelPt: "Iniciar atendimento", labelEn: "Start visit", successPt: "Atendimento iniciado.", successEn: "Visit started.", tone: "primary", fields: [{ name: "chief_complaint", labelPt: "Queixa principal (opcional)", labelEn: "Chief complaint (optional)", type: "textarea" }] },
+    { key: "dental.appointment.finalizar", action: "finalizar", labelPt: "Finalizar", labelEn: "Finalize", successPt: "Atendimento finalizado.", successEn: "Visit finalized.", tone: "primary" },
+    { key: "dental.appointment.faltou", action: "faltou", labelPt: "Marcar falta", labelEn: "Mark no-show", successPt: "Falta registada.", successEn: "No-show registered." },
+    { key: "dental.appointment.cancelar", action: "cancelar", labelPt: "Cancelar", labelEn: "Cancel", successPt: "Consulta cancelada.", successEn: "Appointment cancelled.", tone: "danger", confirm: true, fields: [reasonField] },
+  ],
+  "/dental/consultation/": [
+    { key: "dental.consultation.finalizar", action: "finalizar", labelPt: "Finalizar consulta", labelEn: "Finalize consultation", successPt: "Consulta finalizada.", successEn: "Consultation finalized.", tone: "primary" },
+  ],
+  "/dental/procedure_execution/": [
+    { key: "dental.procedure_execution.estornar", action: "estornar", labelPt: "Estornar execução", labelEn: "Reverse execution", successPt: "Execução estornada.", successEn: "Execution reversed.", tone: "danger", confirm: true, fields: [reasonField] },
+  ],
+  "/dental/quotation/": [
+    { key: "dental.quotation.aprovar", action: "aprovar", labelPt: "Aprovar orçamento", labelEn: "Approve quotation", successPt: "Orçamento aprovado.", successEn: "Quotation approved.", tone: "primary", fields: [{ name: "approved_by_name", labelPt: "Aprovado por (opcional)", labelEn: "Approved by (optional)", type: "text" }] },
+    { key: "dental.quotation.rejeitar", action: "rejeitar", labelPt: "Rejeitar orçamento", labelEn: "Reject quotation", successPt: "Orçamento rejeitado.", successEn: "Quotation rejected.", tone: "danger", confirm: true, fields: [reasonField] },
+  ],
+  "/dental/treatment_item/": [
+    { key: "dental.treatment_item.executar", action: "executar", labelPt: "Executar procedimento", labelEn: "Execute procedure", successPt: "Procedimento executado.", successEn: "Procedure executed.", tone: "primary", fields: [{ name: "tooth_number", labelPt: "Dente (opcional)", labelEn: "Tooth (optional)", type: "text" }, { name: "surface", labelPt: "Face (opcional)", labelEn: "Surface (optional)", type: "text" }, { name: "clinical_notes", labelPt: "Notas clínicas (opcional)", labelEn: "Clinical notes (optional)", type: "textarea" }] },
+  ],
+  "/dental/treatment_plan/": [
+    { key: "dental.treatment_plan.apresentar", action: "apresentar", labelPt: "Apresentar plano", labelEn: "Present plan", successPt: "Plano apresentado.", successEn: "Plan presented.", tone: "primary" },
+    { key: "dental.treatment_plan.gerar-orcamento", action: "gerar-orcamento", labelPt: "Gerar orçamento", labelEn: "Generate quotation", successPt: "Orçamento gerado.", successEn: "Quotation generated.", tone: "primary", fields: [{ name: "valid_until", labelPt: "Válido até (opcional)", labelEn: "Valid until (optional)", type: "date" }, { name: "payment_terms", labelPt: "Condições de pagamento (opcional)", labelEn: "Payment terms (optional)", type: "text" }] },
+    { key: "dental.treatment_plan.concluir", action: "concluir", labelPt: "Concluir plano", labelEn: "Complete plan", successPt: "Plano concluído.", successEn: "Plan completed.", tone: "primary" },
+    { key: "dental.treatment_plan.cancelar", action: "cancelar", labelPt: "Cancelar plano", labelEn: "Cancel plan", successPt: "Plano cancelado.", successEn: "Plan cancelled.", tone: "danger", confirm: true, fields: [reasonField] },
+  ],
+}
+
+// ── Terapias (sem páginas bespoke; aflora via /resources após Fase 0) ─────────
+const THERAPY_DETAIL_ACTIONS: Record<string, DetailActionDefinition[]> = {
+  "/therapy/resource/": [
+    { key: "therapy.resource.ativar", action: "ativar", labelPt: "Ativar recurso", labelEn: "Activate resource", successPt: "Recurso ativado.", successEn: "Resource activated.", tone: "primary" },
+    { key: "therapy.resource.inativar", action: "inativar", labelPt: "Inativar recurso", labelEn: "Deactivate resource", successPt: "Recurso inativado.", successEn: "Resource deactivated.", confirm: true },
+    { key: "therapy.resource.marcar-manutencao", action: "marcar-manutencao", labelPt: "Marcar em manutenção", labelEn: "Mark under maintenance", successPt: "Recurso em manutenção.", successEn: "Resource under maintenance.", fields: [notesField] },
+  ],
+  "/therapy/evaluation/": [
+    { key: "therapy.evaluation.finalizar", action: "finalizar", labelPt: "Finalizar avaliação", labelEn: "Finalize evaluation", successPt: "Avaliação finalizada.", successEn: "Evaluation finalized.", tone: "primary" },
+    { key: "therapy.evaluation.cancelar", action: "cancelar", labelPt: "Cancelar", labelEn: "Cancel", successPt: "Avaliação cancelada.", successEn: "Evaluation cancelled.", tone: "danger", confirm: true, fields: [reasonField] },
+  ],
+  "/therapy/treatment_plan/": [
+    { key: "therapy.treatment_plan.aprovar", action: "aprovar", labelPt: "Aprovar plano", labelEn: "Approve plan", successPt: "Plano aprovado.", successEn: "Plan approved.", tone: "primary" },
+    { key: "therapy.treatment_plan.agendar-sessao", action: "agendar-sessao", labelPt: "Agendar sessão", labelEn: "Schedule session", successPt: "Sessão agendada.", successEn: "Session scheduled.", fields: [{ name: "scheduled_at", labelPt: "Data/hora (opcional)", labelEn: "Date/time (optional)", type: "datetime-local" }] },
+    { key: "therapy.treatment_plan.suspender", action: "suspender", labelPt: "Suspender", labelEn: "Suspend", successPt: "Plano suspenso.", successEn: "Plan suspended.", fields: [reasonField] },
+    { key: "therapy.treatment_plan.retomar", action: "retomar", labelPt: "Retomar", labelEn: "Resume", successPt: "Plano retomado.", successEn: "Plan resumed.", tone: "primary" },
+    { key: "therapy.treatment_plan.alta", action: "alta", labelPt: "Dar alta", labelEn: "Discharge", successPt: "Alta registada.", successEn: "Discharge registered.", tone: "primary", fields: [{ name: "summary", labelPt: "Resumo (opcional)", labelEn: "Summary (optional)", type: "textarea" }, { name: "recommendations", labelPt: "Recomendações (opcional)", labelEn: "Recommendations (optional)", type: "textarea" }] },
+    { key: "therapy.treatment_plan.cancelar", action: "cancelar", labelPt: "Cancelar plano", labelEn: "Cancel plan", successPt: "Plano cancelado.", successEn: "Plan cancelled.", tone: "danger", confirm: true, fields: [reasonField] },
+  ],
+  "/therapy/goal/": [
+    { key: "therapy.goal.atualizar-progresso", action: "atualizar-progresso", labelPt: "Atualizar progresso", labelEn: "Update progress", successPt: "Progresso atualizado.", successEn: "Progress updated.", fields: [{ name: "current_score", labelPt: "Pontuação atual", labelEn: "Current score", type: "number" }] },
+    { key: "therapy.goal.marcar-alcancado", action: "marcar-alcancado", labelPt: "Marcar alcançado", labelEn: "Mark achieved", successPt: "Objetivo alcançado.", successEn: "Goal achieved.", tone: "primary", fields: [{ name: "current_score", labelPt: "Pontuação (opcional)", labelEn: "Score (optional)", type: "number" }] },
+    { key: "therapy.goal.suspender", action: "suspender", labelPt: "Suspender", labelEn: "Suspend", successPt: "Objetivo suspenso.", successEn: "Goal suspended.", fields: [reasonField] },
+  ],
+  "/therapy/session/": [
+    { key: "therapy.session.iniciar", action: "iniciar", labelPt: "Iniciar sessão", labelEn: "Start session", successPt: "Sessão iniciada.", successEn: "Session started.", tone: "primary" },
+    { key: "therapy.session.finalizar", action: "finalizar", labelPt: "Finalizar sessão", labelEn: "Finish session", successPt: "Sessão finalizada.", successEn: "Session finished.", tone: "primary" },
+    { key: "therapy.session.faltou", action: "faltou", labelPt: "Marcar falta", labelEn: "Mark no-show", successPt: "Falta registada.", successEn: "No-show registered." },
+    { key: "therapy.session.cancelar", action: "cancelar", labelPt: "Cancelar sessão", labelEn: "Cancel session", successPt: "Sessão cancelada.", successEn: "Session cancelled.", tone: "danger", confirm: true, fields: [reasonField] },
+  ],
+  "/therapy/prescription_link/": [
+    { key: "therapy.prescription_link.encerrar", action: "encerrar", labelPt: "Encerrar vínculo", labelEn: "Close link", successPt: "Vínculo encerrado.", successEn: "Link closed.", confirm: true, fields: [reasonField] },
+  ],
+}
+
+// ── Saúde Pública ────────────────────────────────────────────────────────────
+const PUBLIC_HEALTH_DETAIL_ACTIONS: Record<string, DetailActionDefinition[]> = {
+  "/public_health/vaccine/": [
+    { key: "public_health.vaccine.ativar", action: "ativar", labelPt: "Ativar vacina", labelEn: "Activate vaccine", successPt: "Vacina ativada.", successEn: "Vaccine activated.", tone: "primary" },
+    { key: "public_health.vaccine.inativar", action: "inativar", labelPt: "Inativar vacina", labelEn: "Deactivate vaccine", successPt: "Vacina inativada.", successEn: "Vaccine deactivated.", confirm: true },
+  ],
+  "/public_health/lot/": [
+    { key: "public_health.lot.ativar", action: "ativar", labelPt: "Ativar lote", labelEn: "Activate lot", successPt: "Lote ativado.", successEn: "Lot activated.", tone: "primary" },
+    { key: "public_health.lot.liberar", action: "liberar", labelPt: "Liberar lote", labelEn: "Release lot", successPt: "Lote liberado.", successEn: "Lot released.", tone: "primary" },
+    { key: "public_health.lot.bloquear", action: "bloquear", labelPt: "Bloquear lote", labelEn: "Block lot", successPt: "Lote bloqueado.", successEn: "Lot blocked.", confirm: true, fields: [reasonField] },
+    { key: "public_health.lot.recolher", action: "recolher", labelPt: "Recolher lote", labelEn: "Recall lot", successPt: "Lote recolhido.", successEn: "Lot recalled.", tone: "danger", confirm: true, fields: [reasonField] },
+  ],
+  "/public_health/campaign/": [
+    { key: "public_health.campaign.ativar", action: "ativar", labelPt: "Ativar campanha", labelEn: "Activate campaign", successPt: "Campanha ativada.", successEn: "Campaign activated.", tone: "primary" },
+    { key: "public_health.campaign.suspender", action: "suspender", labelPt: "Suspender", labelEn: "Suspend", successPt: "Campanha suspensa.", successEn: "Campaign suspended.", fields: [reasonField] },
+    { key: "public_health.campaign.encerrar", action: "encerrar", labelPt: "Encerrar", labelEn: "Close", successPt: "Campanha encerrada.", successEn: "Campaign closed.", confirm: true },
+    { key: "public_health.campaign.cancelar", action: "cancelar", labelPt: "Cancelar", labelEn: "Cancel", successPt: "Campanha cancelada.", successEn: "Campaign cancelled.", tone: "danger", confirm: true, fields: [reasonField] },
+  ],
+  "/public_health/immunization/": [
+    { key: "public_health.immunization.cancelar", action: "cancelar", labelPt: "Cancelar imunização", labelEn: "Cancel immunization", successPt: "Imunização cancelada.", successEn: "Immunization cancelled.", tone: "danger", confirm: true, fields: [reasonField] },
+  ],
+  "/public_health/adverse_event/": [
+    { key: "public_health.adverse_event.classificar", action: "classificar", labelPt: "Classificar", labelEn: "Classify", successPt: "Evento classificado.", successEn: "Event classified.", tone: "primary", fields: [{ name: "severity", labelPt: "Severidade (opcional)", labelEn: "Severity (optional)", type: "text" }] },
+    { key: "public_health.adverse_event.gerar-notificacao", action: "gerar-notificacao", labelPt: "Gerar notificação", labelEn: "Generate notification", successPt: "Notificação gerada.", successEn: "Notification generated.", tone: "primary" },
+    { key: "public_health.adverse_event.encerrar", action: "encerrar", labelPt: "Encerrar", labelEn: "Close", successPt: "Evento encerrado.", successEn: "Event closed.", confirm: true, fields: [{ name: "causality_assessment", labelPt: "Avaliação de causalidade (opcional)", labelEn: "Causality assessment (optional)", type: "textarea" }] },
+    { key: "public_health.adverse_event.descartar", action: "descartar", labelPt: "Descartar", labelEn: "Discard", successPt: "Evento descartado.", successEn: "Event discarded.", tone: "danger", confirm: true, fields: [reasonField] },
+  ],
+  "/public_health/notification/": [
+    { key: "public_health.notification.enviar", action: "enviar", labelPt: "Enviar notificação", labelEn: "Send notification", successPt: "Notificação enviada.", successEn: "Notification sent.", tone: "primary", fields: [{ name: "external_reference", labelPt: "Referência externa (opcional)", labelEn: "External reference (optional)", type: "text" }] },
+    { key: "public_health.notification.responder", action: "responder", labelPt: "Registar resposta", labelEn: "Record response", successPt: "Resposta registada.", successEn: "Response recorded.", fields: [{ name: "accepted", labelPt: "Aceite", labelEn: "Accepted", type: "checkbox", defaultValue: true }, { name: "external_reference", labelPt: "Referência externa (opcional)", labelEn: "External reference (optional)", type: "text" }] },
+    { key: "public_health.notification.reprocessar", action: "reprocessar", labelPt: "Reprocessar", labelEn: "Reprocess", successPt: "Notificação reprocessada.", successEn: "Notification reprocessed.", tone: "primary" },
+  ],
+}
+
 // Registry global por endpoint-pai (normalizado). Cada módulo contribui o seu mapa.
 export const RESOURCE_DETAIL_ACTIONS: Record<string, DetailActionDefinition[]> = {
   ...CLINICAL_LABORATORY_DETAIL_ACTIONS,
@@ -767,6 +866,9 @@ export const RESOURCE_DETAIL_ACTIONS: Record<string, DetailActionDefinition[]> =
   ...VETERINARY_DETAIL_ACTIONS,
   ...PHYSIOTHERAPY_DETAIL_ACTIONS,
   ...CLINICAL_PHARMACY_DETAIL_ACTIONS,
+  ...DENTAL_DETAIL_ACTIONS,
+  ...THERAPY_DETAIL_ACTIONS,
+  ...PUBLIC_HEALTH_DETAIL_ACTIONS,
 }
 
 /** Ações declaradas para um endpoint, sem filtro de contrato. */

@@ -7,6 +7,7 @@ import { type ReactNode, useEffect, useMemo, useState } from "react"
 
 import AppLayout from "@/components/layout/AppLayout"
 import AutoForm from "@/components/form/AutoForm"
+import ResourceDetailActionsPanel from "@/components/resources/ResourceDetailActionsPanel"
 import ResourceDetailsCard from "@/components/resources/ResourceDetailsCard"
 import Badge from "@/components/ui/Badge"
 import ConfirmDialog from "@/components/ui/ConfirmDialog"
@@ -556,6 +557,7 @@ export function PublicHealthDetailPage({ resourceKey }: { resourceKey: PublicHea
   const [loadingData, setLoadingData] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [deleting, setDeleting] = useState(false)
+  const [reloadToken, setReloadToken] = useState(0)
   const detailEndpoint = `${config.endpoint}${encodeURIComponent(id)}/`
   const detailContract = `${config.endpoint.replace(/\/$/, "")}/{id}/`
   const canEdit = hasWriteContract(detailContract, "put")
@@ -587,7 +589,7 @@ export function PublicHealthDetailPage({ resourceKey }: { resourceKey: PublicHea
     return () => {
       mounted = false
     }
-  }, [detailEndpoint, id, t])
+  }, [detailEndpoint, id, t, reloadToken])
 
   async function handleDelete() {
     setDeleting(true)
@@ -651,7 +653,15 @@ export function PublicHealthDetailPage({ resourceKey }: { resourceKey: PublicHea
         {loadingData ? (
           <div className="text-sm text-muted-foreground">{t("Carregando...", "Loading...")}</div>
         ) : data ? (
-          <ResourceDetailsCard endpoint={config.endpoint} data={data} />
+          <>
+            <ResourceDetailActionsPanel
+              endpoint={config.endpoint}
+              id={id}
+              resourceLabel={config.singular}
+              onCompleted={() => setReloadToken((value) => value + 1)}
+            />
+            <ResourceDetailsCard endpoint={config.endpoint} data={data} />
+          </>
         ) : null}
       </div>
     </AppLayout>
