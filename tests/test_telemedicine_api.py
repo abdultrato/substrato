@@ -334,3 +334,82 @@ def test_telemedicine_api_exposes_waiting_room_devices_readings_programs_async_c
     waiting_list_response = api_client.get("/api/v1/telemedicine/waiting_room/?status=READY")
     assert waiting_list_response.status_code == 200
     assert len(_items(waiting_list_response)) == 1
+
+
+@pytest.mark.django_db
+def test_telemedicine_workflow_actions_are_routed(api_client):
+    tenant = _tenant()
+    patient = _patient(tenant)
+    clinician = _employee(tenant)
+    _authenticate_admin(tenant, api_client)
+
+    # Sala virtual: ciclo triagem → pronto → chamada → conclusão.
+    entry = TelemedicineWaitingRoomEntry.objects.create(
+        tenant=tenant,
+        patient=patient,
+        status=TelemedicineWaitingRoomEntry.Status.CHECKED_IN,
+        chief_complaint="Cefaleia",
+    )
+    triage_response = api_client.post(f"/api/v1/telemedicine/waiting_room/{entry.id}/iniciar-triagem/")
+    assert triage_response.status_code == 200
+    assert _response_data(triage_response)["status"] == "TRIAGE"
+
+    ready_response = api_client.post(
+        f"/api/v1/telemedicine/waiting_room/{entry.id}/marcar-pronto/",
+        {"device_check_passed": True, "consent_confirmed": True},
+        format="json",
+    )
+    assert ready_response.status_code == 200
+    assert _response_data(ready_response)["status"] == "READY"
+
+    call_response = api_client.post(
+        f"/api/v1/telemedicine/waiting_room/{entry.id}/iniciar-chamada/",
+        {"clinician": clinician.id},
+        format="json",
+    )
+    assert call_response.status_code == 200
+    assert _response_data(call_response)["status"] == "IN_CALL"
+
+    complete_response = api_client.post(f"/api/v1/telemedicine/waiting_room/{entry.id}/concluir/")
+    assert complete_response.status_code == 200
+    assert _response_data(complete_response)["status"] == "COMPLETED"
+
+    # Leitura crítica → gerar alerta acionável.
+    device = RemoteMonitoringDevice.objects.create(
+        tenant=tenant,
+        patient=patient,
+        device_type=RemoteMonitoringDevice.DeviceType.BLOOD_PRESSURE,
+        status=RemoteMonitoringDevice.Status.ACTIVE,
+        paired_at=timezone.now(),
+        serial_number="BP-ROUTE-1",
+    )
+    reading = RemoteVitalReading.objects.create(
+        tenant=tenant,
+        patient=patient,
+        device=device,
+        systolic_bp=188,
+        diastolic_bp=124,
+    )
+    alert_response = api_client.post(
+        f"/api/v1/telemedicine/vital_reading/{reading.id}/gerar-alerta/",
+        {"recommended_action": "Contactar paciente"},
+        format="json",
+    )
+    assert alert_response.status_code == 201
+    alert_id = _response_data(alert_response)["id"]
+
+    ack_response = api_client.post(
+        f"/api/v1/telemedicine/alert/{alert_id}/reconhecer/",
+        {"actor": clinician.id},
+        format="json",
+    )
+    assert ack_response.status_code == 200
+    assert _response_data(ack_response)["status"] == "ACKNOWLEDGED"
+
+    resolve_response = api_client.post(
+        f"/api/v1/telemedicine/alert/{alert_id}/resolver/",
+        {"actor": clinician.id, "action_taken": "Paciente orientado a ir ao serviço"},
+        format="json",
+    )
+    assert resolve_response.status_code == 200
+    assert _response_data(resolve_response)["status"] == "RESOLVED"
