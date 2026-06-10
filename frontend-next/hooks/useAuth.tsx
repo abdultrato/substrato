@@ -14,6 +14,7 @@ import {
     setSessionUser,
 } from "@/lib/session"
 import { fetchCurrentUser } from "@/lib/auth"
+import { useIdleSession } from "@/hooks/useIdleSession"
 
 interface AuthContextType {
     user: SessionUser | null
@@ -80,6 +81,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         logout()
         setUser(null)
     }, [])
+
+    // Sessão por atividade: renova enquanto há interação real; termina (com
+    // aviso) após 30 min de inatividade real e redireciona para o login.
+    useIdleSession({
+        enabled: !!user,
+        onTimeout: () => {
+            signOut()
+            if (typeof window !== "undefined") {
+                const next = encodeURIComponent(window.location.pathname + window.location.search)
+                window.location.href = `/login?reason=idle&next=${next}`
+            }
+        },
+    })
 
     const contextValue: AuthContextType = {
         user,

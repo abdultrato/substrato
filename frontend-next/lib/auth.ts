@@ -90,6 +90,24 @@ export async function fetchCurrentUser() {
   return apiFetch("/auth/user/")
 }
 
+/**
+ * Renova a sessão (desliza a janela de 30 min). O backend rotaciona o refresh
+ * token e atualiza os cookies HttpOnly + a sessão server-side. Best-effort.
+ */
+export async function refreshSession(): Promise<boolean> {
+  try {
+    const res = await fetch(apiUrl("/api/v1/auth/refresh/"), {
+      method: "POST",
+      credentials: "include",
+      headers: { "Accept-Language": toBackendLanguage(getCurrentLanguage()) },
+      cache: "no-store",
+    })
+    return res.ok
+  } catch {
+    return false
+  }
+}
+
 export function getUser() {
   return getSessionUser()
 }
