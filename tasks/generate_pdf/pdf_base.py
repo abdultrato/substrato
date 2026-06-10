@@ -166,9 +166,12 @@ def _safe_image_reader(path: str):
 
     try:
         with Image.open(path) as img:
-            img = img.convert("RGB")
+            # Preserva transparência (PNG/RGBA) — não achatar para JPEG, que
+            # introduziria fundo opaco (preto) no logo.
+            if img.mode != "RGBA":
+                img = img.convert("RGBA")
             buf = io.BytesIO()
-            img.save(buf, format="JPEG", quality=85, optimize=True)
+            img.save(buf, format="PNG", optimize=True)
             buf.seek(0)
             return ImageReader(buf)
     except Exception as err:
@@ -313,6 +316,26 @@ def draw_barcode(canvas_obj, doc, x, y, max_width) -> None:
         logger.warning("Falha ao desenhar código de barras.", exc_info=err)
 
 
+def draw_corner_barcode(canvas_obj, doc) -> None:
+    """Código de barras vertical no quadrante inferior direito, encostado/
+    transbordando pela margem da página (fora do corpo e do rodapé)."""
+    value = getattr(doc, "barcode_value", None)
+    payload = _sanitize_barcode(value)
+    if not payload:
+        return
+    page_w, _page_h = doc.pagesize
+    try:
+        bar = code128.Code128(payload, barHeight=0.40 * cm, barWidth=0.28)
+        bar.humanReadable = False
+        canvas_obj.saveState()
+        canvas_obj.translate(page_w - 0.05 * cm, -0.40 * cm)
+        canvas_obj.rotate(90)
+        bar.drawOn(canvas_obj, 0, 0)
+        canvas_obj.restoreState()
+    except Exception as err:
+        logger.warning("Falha ao desenhar código de barras de canto.", exc_info=err)
+
+
 # =========================================================
 # HEADER INSTITUCIONAL (IDENTIDADE PRESERVADA)
 # =========================================================
@@ -329,9 +352,11 @@ def draw_header(canvas_obj, doc):
 
     logo = _safe_image_reader(LOGO_PATH)
 
-    logo_w, logo_h = 3.0 * cm, 2.5 * cm
+    # Logo enquadrado na banda do header (sem transbordar o topo) e sem fundo
+    # opaco (leitor mantém alpha + mask="auto").
+    logo_w, logo_h = 2.4 * cm, 1.5 * cm
     logo_x = left_margin
-    logo_y = page_h - top_margin + 0.9 * cm - HEADER_VERTICAL_INSET
+    logo_y = page_h - 0.25 * cm - logo_h
 
     if logo:
         canvas_obj.drawImage(
@@ -341,54 +366,44 @@ def draw_header(canvas_obj, doc):
             width=logo_w,
             height=logo_h,
             preserveAspectRatio=True,
+            anchor="nw",
             mask="auto",
         )
     else:
         canvas_obj.setFont(FONT, PDF_BODY_FONT_SIZE)
-        canvas_obj.drawString(logo_x, logo_y + 1.2 * cm, "LOGO INDISPONÍVEL")
+        canvas_obj.drawString(logo_x, logo_y + 0.6 * cm, "LOGO INDISPONÍVEL")
 
     text_x = logo_x + logo_w + 0.4 * cm
-    text_top_y = logo_y + logo_h - 0.2 * cm
+    text_top_y = page_h - 0.62 * cm
 
     canvas_obj.setFont(FONT_BOLD, PDF_TITLE_FONT_SIZE)
     canvas_obj.drawString(text_x, text_top_y, "CLÍNICA DE DIAGNÓSTICOS E SAÚDE")
 
     canvas_obj.setFont(FONT, PDF_BODY_FONT_SIZE)
-    canvas_obj.drawString(text_x, text_top_y - 0.65 * cm, "Laboratório de Análises Clínicas")
+    canvas_obj.drawString(text_x, text_top_y - 0.48 * cm, "Laboratório de Análises Clínicas")
 
     canvas_obj.setFont(FONT, PDF_BODY_FONT_SIZE)
-    canvas_obj.drawString(text_x, text_top_y - 1.10 * cm, "Pemba - Cabo Delgado, Moçambique")
+    canvas_obj.drawString(text_x, text_top_y - 0.88 * cm, "Pemba - Cabo Delgado, Moçambique")
 
     canvas_obj.drawString(
         text_x,
-        text_top_y - 1.45 * cm,
+        text_top_y - 1.24 * cm,
         "Tel/WhatsApp: +258 84 777 8476 | Email: substratosys@gmail.com",
     )
 
-    # linha inferior (limite do header)
-    y_line = logo_y - 0.15 * cm
+    # linha inferior (limite inferior da banda do header)
+    y_line = page_h - top_margin + 0.05 * cm
 
-    # QR Code topo direito
-    qr_x = None
+    # QR Code topo direito (enquadrado na banda do header)
     if hasattr(doc, "qr_url") and doc.qr_url:
         qr = generate_qr_code(doc.qr_url)
         if qr:
-            qr_size = 2.2 * cm
+            qr_size = 1.7 * cm
             qr_x = page_w - right_margin - qr_size
-            qr_y = logo_y + 0.2 * cm
-            canvas_obj.drawImage(qr, qr_x, qr_y, qr_size, qr_size)
+            qr_y = page_h - 0.25 * cm - qr_size
+            canvas_obj.drawImage(qr, qr_x, qr_y, qr_size, qr_size, mask="auto")
 
-    # Código de barras (Code128) com dados essenciais do patient/documento
-    if hasattr(doc, "barcode_value") and doc.barcode_value:
-        right_limit = (qr_x - 0.2 * cm) if qr_x is not None else (page_w - right_margin)
-        max_w = max(1 * cm, right_limit - text_x)
-        draw_barcode(
-            canvas_obj,
-            doc,
-            x=text_x,
-            y=(y_line + 0.15 * cm),
-            max_width=max_w,
-        )
+    # (Código de barras movido para o canto inferior direito — ver on_page.)
 
     canvas_obj.setStrokeColor(colors.darkblue)
     canvas_obj.setLineWidth(1)
@@ -444,6 +459,7 @@ def _should_draw_signatures(doc) -> bool:
 
 def on_page(canvas_obj, doc, user=None):
     draw_header(canvas_obj, doc)
+    draw_corner_barcode(canvas_obj, doc)
     if _should_draw_signatures(doc):
         draw_signatures(canvas_obj, doc, user)
 

@@ -9,7 +9,7 @@ from rest_framework import status
 from rest_framework.response import Response
 
 from infrastructure.task_queue import enqueue_task
-from services.reports.async_exports import create_export_job, mark_export_job_failed
+from services.reports.async_exports import create_export_job, get_export_job_state, mark_export_job_failed
 
 logger = logging.getLogger(__name__)
 
@@ -72,13 +72,17 @@ def enqueue_export_job_response(
 
     job_id = state["id"]
 
+    # fail_silently=True: se o broker Celery estiver indisponível, o export é
+    # executado INLINE (o job fica "ready" e o download_url passa a servir o PDF)
+    # em vez de ficar preso em "queued" ou devolver 503. Com broker disponível,
+    # continua assíncrono normal.
     try:
         enqueue_task(
             "tasks.export_jobs.run_export_job",
             task_kwargs={"job_id": job_id},
             queue="exports",
             tenant_id=getattr(tenant, "id", None),
-            fail_silently=False,
+            fail_silently=True,
         )
     except Exception:
         logger.exception("Falha ao enfileirar export job", extra={"job_id": job_id, "export_key": export_key})
@@ -86,7 +90,9 @@ def enqueue_export_job_response(
         payload = _serialize_job_for_response(request, state | {"status": "failed", "error": "Falha ao enfileirar."})
         return Response(payload, status=status.HTTP_503_SERVICE_UNAVAILABLE)
 
-    return Response(_serialize_job_for_response(request, state), status=status.HTTP_202_ACCEPTED)
+    # Relê o estado: se correu inline, já estará "ready" (download imediato).
+    final_state = get_export_job_state(job_id) or state
+    return Response(_serialize_job_for_response(request, final_state), status=status.HTTP_202_ACCEPTED)
 
 
 def queue_export_if_requested(
