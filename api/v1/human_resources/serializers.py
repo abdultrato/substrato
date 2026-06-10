@@ -432,6 +432,10 @@ class JobTitleSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer
 
 class ProfessionSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer):
     legacy_input_aliases = PROFESSION_ALIASES
+    # Valor hora ordinária/extraordinária: exibir e aceitar apenas 2 casas
+    # decimais (o modelo guarda 4 por precisão, mas a UI mostra "125,00").
+    ordinary_hour_value = serializers.DecimalField(max_digits=12, decimal_places=2, required=False)
+    extraordinary_hour_value = serializers.DecimalField(max_digits=12, decimal_places=2, required=False)
 
     class Meta:
         model = Profession
@@ -443,6 +447,8 @@ class EmployeeSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer
     legacy_input_aliases = EMPLOYEE_ALIASES
     role_name = serializers.CharField(source="role.name", read_only=True, default=None)
     profession_name = serializers.CharField(source="profession.name", read_only=True, default=None)
+    ordinary_hour_value = serializers.DecimalField(max_digits=12, decimal_places=2, required=False)
+    extraordinary_hour_value = serializers.DecimalField(max_digits=12, decimal_places=2, required=False)
     salary_base = serializers.DecimalField(max_digits=12, decimal_places=2, read_only=True)
     salary_liquido = serializers.DecimalField(max_digits=12, decimal_places=2, read_only=True)
     salary_allowances_value = serializers.DecimalField(max_digits=12, decimal_places=2, read_only=True)
