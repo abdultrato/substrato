@@ -217,6 +217,33 @@ def generate_qr_code(url: str):
         return None
 
 
+def _doc_code_payload(doc) -> str:
+    """Conteúdo do QR: URL de verificação (`qr_url`) se existir, senão o mesmo
+    valor identificador do código de barras (`barcode_value`)."""
+    return str(getattr(doc, "qr_url", None) or getattr(doc, "barcode_value", None) or "").strip()
+
+
+def draw_overflow_qr(canvas_obj, doc) -> None:
+    """QR Code no quadrante superior direito, quase a transbordar a borda da
+    página. Padrão de identificação aplicável a todos os PDFs do Substrato."""
+    payload = _doc_code_payload(doc)
+    if not payload:
+        return
+    qr = generate_qr_code(payload)
+    if not qr:
+        return
+    try:
+        page_w, page_h = doc.pagesize
+        size = PDF_CORNER_QR_SIZE
+        x = page_w - size - PDF_CORNER_BLEED_INSET
+        y = page_h - size - PDF_CORNER_BLEED_INSET
+        canvas_obj.saveState()
+        canvas_obj.drawImage(qr, x, y, size, size, mask="auto")
+        canvas_obj.restoreState()
+    except Exception as err:
+        logger.warning("Falha ao desenhar QR Code de canto.", exc_info=err)
+
+
 # =========================================================
 # TEXTO FINAL
 # =========================================================
@@ -411,13 +438,9 @@ def draw_header(canvas_obj, doc):
     y_line = page_h - top_margin + 0.05 * cm
 
     # QR Code no quadrante superior direito, quase a transbordar pela borda.
-    if hasattr(doc, "qr_url") and doc.qr_url:
-        qr = generate_qr_code(doc.qr_url)
-        if qr:
-            qr_size = PDF_CORNER_QR_SIZE
-            qr_x = page_w - qr_size - PDF_CORNER_BLEED_INSET
-            qr_y = page_h - qr_size - PDF_CORNER_BLEED_INSET
-            canvas_obj.drawImage(qr, qr_x, qr_y, qr_size, qr_size, mask="auto")
+    # Renderiza a partir de qr_url ou, em fallback, do mesmo identificador do
+    # código de barras — garantindo QR em todos os PDFs.
+    draw_overflow_qr(canvas_obj, doc)
 
     # Código de barras fica no canto inferior direito — ver on_page.
 

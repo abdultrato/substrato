@@ -24,6 +24,8 @@ from .pdf_base import (
     PDF_MARGIN,
     PDF_TITLE_FONT_SIZE,
     PDF_TITLE_LEADING,
+    draw_corner_barcode,
+    draw_overflow_qr,
 )
 
 MAX_ROWS = 40
@@ -195,7 +197,15 @@ def generate_generic_app_pdf(
     )
     elements.append(table)
 
-    doc.build(elements)
+    # QR (canto superior direito) e código de barras vertical (canto inferior
+    # direito) em todos os PDFs do Substrato, mesmo nos genéricos por modelo.
+    doc.barcode_value = f"{resolved_app}|{model_name}|{_format_value(getattr(obj, 'pk', None))}"
+
+    def _corner_marks(canvas_obj, doc_ref):
+        draw_overflow_qr(canvas_obj, doc_ref)
+        draw_corner_barcode(canvas_obj, doc_ref)
+
+    doc.build(elements, onFirstPage=_corner_marks, onLaterPages=_corner_marks)
     buffer.seek(0)
     filename = _build_filename(resolved_app, model_name, getattr(obj, "pk", None))
     return buffer.getvalue(), filename

@@ -182,6 +182,39 @@ def generate_institutional_qr_code(url: str):
         logger.warning("Erro ao gerar QR Code institucional.", exc_info=err)
         return None
 
+
+# QR (canto superior direito) e código de barras (canto inferior direito,
+# vertical) ficam "quase a transbordar" a borda em todos os PDFs do Substrato.
+INST_CORNER_BLEED_INSET = 0.03 * cm
+INST_CORNER_QR_SIZE = 1.85 * cm
+
+
+def _institutional_code_payload(doc) -> str:
+    """Conteúdo do QR: URL de verificação (`qr_url`) se existir, senão o mesmo
+    valor identificador do código de barras (`barcode_value`)."""
+    return str(getattr(doc, "qr_url", None) or getattr(doc, "barcode_value", None) or "").strip()
+
+
+def draw_institutional_overflow_qr(canvas_obj, doc) -> None:
+    """QR Code no quadrante superior direito, quase a transbordar a borda da
+    página. Aplicável a todos os PDFs institucionais do Substrato."""
+    payload = _institutional_code_payload(doc)
+    if not payload:
+        return
+    qr = generate_institutional_qr_code(payload)
+    if not qr:
+        return
+    try:
+        page_w, page_h = doc.pagesize
+        size = INST_CORNER_QR_SIZE
+        x = page_w - size - INST_CORNER_BLEED_INSET
+        y = page_h - size - INST_CORNER_BLEED_INSET
+        canvas_obj.saveState()
+        canvas_obj.drawImage(qr, x, y, size, size, mask="auto")
+        canvas_obj.restoreState()
+    except Exception as err:
+        logger.warning("Falha ao desenhar QR Code institucional de canto.", exc_info=err)
+
 # =========================================================
 # TEXTO FINAL PADRÃO
 # =========================================================
@@ -302,9 +335,9 @@ def draw_institutional_corner_barcode(canvas_obj, doc) -> None:
 
         canvas_obj.saveState()
         # Origem encostada à borda direita; rotação 90° faz o comprimento do
-        # código correr para cima e a altura entrar na faixa da margem direita.
-        # ty negativo => transborda pelo fundo da página.
-        canvas_obj.translate(page_w - 0.05 * cm, -0.40 * cm)
+        # código correr para cima e a altura entrar na faixa da margem direita,
+        # quase a transbordar a borda (mesmo padrão do pdf_base).
+        canvas_obj.translate(page_w - INST_CORNER_BLEED_INSET, INST_CORNER_BLEED_INSET)
         canvas_obj.rotate(90)
         bar.drawOn(canvas_obj, 0, 0)
         canvas_obj.restoreState()
@@ -369,18 +402,10 @@ def draw_institutional_header(canvas_obj, doc):
     # linha inferior (limite inferior da banda do header)
     y_line = page_h - top_margin + 0.05 * cm
 
-    # QR Code topo direito (enquadrado na banda do header)
-    qr_x = None
-    if hasattr(doc, "qr_url") and doc.qr_url:
-        qr = generate_institutional_qr_code(doc.qr_url)
-        if qr:
-            qr_size = 1.7 * cm
-            qr_x = page_w - right_margin - qr_size
-            qr_y = page_h - 0.25 * cm - qr_size
-            canvas_obj.drawImage(qr, qr_x, qr_y, qr_size, qr_size, mask="auto")
+    # QR Code no canto superior direito, quase a transbordar (todos os PDFs).
+    draw_institutional_overflow_qr(canvas_obj, doc)
 
-    # (Código de barras removido do header: o QR já fornece verificação
-    # máquina-legível e o header de 2cm não o acomoda sem sobrepor o texto.)
+    # (Código de barras no canto inferior direito — ver institutional_on_page.)
 
     canvas_obj.setStrokeColor(colors.darkblue)
     canvas_obj.setLineWidth(1)
@@ -1042,15 +1067,8 @@ def draw_institutional_header_improved(canvas_obj, doc, header_config: dict):
     canvas_obj.setLineWidth(1.5)
     canvas_obj.line(left_margin, y_line, page_w - right_margin, y_line)
 
-    # QR Code topo direito (enquadrado na banda do header)
-    qr_x = None
-    if hasattr(doc, "qr_url") and doc.qr_url:
-        qr = generate_institutional_qr_code(doc.qr_url)
-        if qr:
-            qr_size = 1.7 * cm
-            qr_x = page_w - right_margin - qr_size
-            qr_y = page_h - 0.25 * cm - qr_size
-            canvas_obj.drawImage(qr, qr_x, qr_y, qr_size, qr_size, mask="auto")
+    # QR Code no canto superior direito, quase a transbordar (todos os PDFs).
+    draw_institutional_overflow_qr(canvas_obj, doc)
 
     # (Código de barras removido do header: ver nota em draw_institutional_header.)
 

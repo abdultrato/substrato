@@ -29,6 +29,7 @@ from .institutional_pdf_design import (
     institutional_bold_text as bold_text,
     FONT_BOLD_INST as FONT_IMPROVED_BOLD,
     build_institutional_header_config as build_personalized_header,
+    draw_institutional_corner_barcode as draw_corner_barcode,
     draw_institutional_header_improved as draw_header_improved,
     institutional_a5_margins as A5Margins,
     institutional_document_type as DocumentType,
@@ -275,10 +276,12 @@ def generate_results_pdf(request, apenas_validados=True) -> tuple[bytes, str]:
         elements,
         onFirstPage=lambda c, d: (
             draw_header_improved(c, d, header_config),
+            draw_corner_barcode(c, d),
             draw_line_full_width(c, d),
         ),
         onLaterPages=lambda c, d: (
             draw_header_improved(c, d, header_config),
+            draw_corner_barcode(c, d),
             draw_line_full_width(c, d),
         ),
         canvasmaker=NumberedCanvas,
