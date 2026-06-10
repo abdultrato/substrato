@@ -14,8 +14,50 @@ Esta matriz deve ser usada durante testes manuais, revisão de PRs e ciclos de b
 | `parcial` | Endpoint existe e aparece no frontend, mas ainda falta detalhe, acção, validação, filtro ou fluxo completo. |
 | `corrigir` | Endpoint existe, mas a exposição no frontend está errada ou incompleta. |
 | `crítico` | Endpoint/domínio necessário para operação real ainda não está exposto ou não está utilizável no frontend. |
-| `validar` | Precisa de testagem manual para confirmar comportamento real. |
+| `backend exposto / frontend validar` | ViewSet/rota existem no backend, mas ainda é necessário confirmar tela, menu, listagem, detalhe e acções no frontend. |
 | `não aplicável` | Operação não deve existir isoladamente no frontend por regra de negócio. |
+
+---
+
+## Resultado da varredura estática
+
+Varredura feita a partir dos ficheiros de roteamento e ViewSets, sem executar ambiente local.
+
+### Achados principais
+
+1. O backend registra rotas por domínio em `api/v1/routing/routes.py`, usando o padrão:
+
+```text
+/api/v1/<domínio>/<recurso>/
+```
+
+2. O domínio `clinical_laboratory` está registrado no roteador central.
+
+3. O backend de Laboratório Clínico já contém ViewSets para:
+
+- setores;
+- exames;
+- painéis;
+- pedidos/requisições;
+- itens de pedido;
+- colheitas;
+- amostras;
+- recepção de amostras;
+- rejeições;
+- listas de trabalho;
+- resultados;
+- validações;
+- laudos;
+- microbiologia;
+- antibiograma;
+- biologia molecular;
+- baciloscopia;
+- gestão da qualidade;
+- biossegurança.
+
+4. A lacuna mais provável não é ausência de backend, mas sim **exposição, organização e validação no frontend**.
+
+5. O catálogo de recursos da IA/assistente ainda mostra recursos antigos de `clinical-*` para requisições, exames, resultados e amostras, mas não evidencia no trecho analisado os recursos novos de `clinical_laboratory-*`. Isso deve ser tratado como lacuna de descoberta/catálogo, não necessariamente de API.
 
 ---
 
@@ -43,45 +85,57 @@ Esta matriz deve ser usada durante testes manuais, revisão de PRs e ciclos de b
 
 ## Matriz principal
 
-| Domínio | Endpoint/Recurso | Listagem | Detalhe | Criar | Editar | Ações | Status | Observações |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Laboratório | setores do laboratório | sim | sim | sim | sim | não | validar | Deve aparecer como cadastro/estrutura laboratorial. |
-| Laboratório | exames laboratoriais | sim | sim | sim | sim | sim | validar | Deve permitir busca alfabética e filtro ao digitar. |
-| Laboratório | painéis de exames | sim | sim | sim | sim | sim | validar | Painel deve permitir composição de múltiplos exames. |
-| Laboratório | pedidos/requisições laboratoriais | sim | sim | sim | sim | sim | parcial | Deve ser o recurso principal visível no frontend. |
-| Laboratório | itens dos pedidos/requisições | segunda camada | sim | não isolado | não isolado | sim | corrigir | Itens devem aparecer vinculados ao pedido, não como lista independente. |
-| Laboratório | colheitas | sim | sim | sim | sim | sim | crítico | Deve ser exposto no frontend para fluxo real de amostras. |
-| Laboratório | amostras | sim | sim | sim | sim | sim | crítico | Deve mostrar estado, tipo, origem, pedido e rastreabilidade. |
-| Laboratório | recepção de amostras | sim | sim | sim | sim | sim | crítico | Deve permitir confirmar chegada/recebimento de amostras. |
-| Laboratório | rejeições de amostras | sim | sim | sim | sim | sim | crítico | Deve registrar motivo, responsável e data/hora. |
-| Laboratório | listas de trabalho | sim | sim | sim | sim | sim | crítico | Deve organizar exames por setor, equipamento, prioridade e estado. |
-| Laboratório | resultados | sim | sim | sim | sim | sim | crítico | Deve permitir lançamento e visualização estruturada. |
-| Laboratório | validações de resultados | sim | sim | não isolado | não isolado | sim | crítico | Validação deve estar vinculada ao resultado/laudo e perfil autorizado. |
-| Laboratório | laudos | sim | sim | sim | sim | sim | crítico | Deve permitir pré-visualização, emissão, impressão/exportação e assinatura quando aplicável. |
-| Laboratório | resultados clínicos | sim | sim | sim | sim | sim | crítico | Deve estar ligado ao paciente, pedido, exame e histórico. |
-| Microbiologia | culturas isoladas | sim | sim | sim | sim | sim | crítico | Deve aparecer no fluxo de microbiologia, ligado à amostra/resultado. |
-| Microbiologia | antibiograma | sim | sim | sim | sim | sim | crítico | Deve permitir registo estruturado de sensibilidade/resistência. |
-| Biologia Molecular | exames de biologia molecular | sim | sim | sim | sim | sim | crítico | Deve ter fluxo próprio quando aplicável. |
-| Baciloscopia | baciloscopia | sim | sim | sim | sim | sim | crítico | Deve suportar registo e validação laboratorial. |
-| Qualidade | gestão de qualidade | não | não | não | não | não | crítico | Nenhum endpoint/API exposto no frontend segundo observação actual. |
-| Qualidade | não conformidades | não | não | não | não | não | crítico | Deve existir listagem, detalhe, criação, acções correctivas e estado. |
-| Qualidade | controlo interno da qualidade | não | não | não | não | não | crítico | Necessário para laboratório clínico real. |
-| Qualidade | controlo externo da qualidade | não | não | não | não | não | crítico | Deve suportar programas externos, resultados e avaliação. |
-| Qualidade | auditorias internas | não | não | não | não | não | crítico | Deve ter planos, achados, acções e responsáveis. |
-| Biossegurança | biossegurança | não | não | não | não | não | crítico | Nenhum endpoint/API exposto no frontend segundo observação actual. |
-| Biossegurança | incidentes de biossegurança | não | não | não | não | não | crítico | Deve permitir notificação, classificação, investigação e encerramento. |
-| Biossegurança | exposições ocupacionais | não | não | não | não | não | crítico | Deve suportar registo controlado e confidencial. |
-| Biossegurança | EPIs e conformidade | não | não | não | não | não | crítico | Deve suportar controlo operacional e auditoria. |
-| Workplaces | workplaces/áreas de trabalho | não | não | não | não | não | crítico | Deve expor áreas operacionais por domínio e perfil. |
-| Farmácia | produtos | sim | sim | sim | sim | sim | validar | Confirmar consistência de listagem e detalhe. |
-| Farmácia | lotes | sim | sim | sim | sim | sim | corrigir | Há erro reportado no frontend em lotes. Testar listagem, detalhe e criação. |
-| Farmácia | movimentos de estoque | sim | sim | sim | sim | sim | validar | Confirmar filtros por produto, lote, data e tipo. |
-| Recepção | pacientes | sim | sim | sim | sim | sim | corrigir | Deve listar e ver detalhes no mesmo padrão das consultas. |
-| Recepção | requisição de exames pela recepção | sim | sim | sim | sim | sim | corrigir | Deve permitir selecionar exames por busca filtrável e adicionar médico solicitante. |
-| Recepção | exames não laboratoriais | sim | sim | sim | sim | sim | corrigir | Campo de tipo de exame deve ser ocultado quando não aplicável. |
-| Faturamento | faturas | sim | sim | sim | sim | sim | corrigir | Houve erro de conexão/servidor ao gerar PDF de fatura. |
-| Pagamentos | pagamentos | sim | sim | sim | sim | sim | validar | Confirmar integração com faturas e recibos. |
-| Autenticação | sessão activa | não aplicável | não aplicável | não aplicável | não aplicável | sim | corrigir | Sessão não deve terminar antes de 30 minutos de inatividade real. Atividade na página deve manter sessão viva. |
+| Domínio | Endpoint/Recurso | Backend | Listagem | Detalhe | Criar | Editar | Ações | Status | Observações |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Laboratório | setores do laboratório | exposto | sim | sim | sim | sim | ativar/inativar | backend exposto / frontend validar | ViewSet `sector`. Deve aparecer como cadastro/estrutura laboratorial. |
+| Laboratório | exames laboratoriais | exposto | sim | sim | sim | sim | ativar/inativar | backend exposto / frontend validar | ViewSet `test`. Deve permitir busca alfabética e filtro ao digitar. |
+| Laboratório | painéis de exames | exposto | sim | sim | sim | sim | ativar/inativar | backend exposto / frontend validar | ViewSet `panel`. Painel deve permitir composição de múltiplos exames. |
+| Laboratório | pedidos/requisições laboratoriais | exposto | sim | sim | sim | sim | autorizar/cancelar | parcial | ViewSet `order`. Deve ser o recurso principal visível no frontend. |
+| Laboratório | itens dos pedidos/requisições | exposto | segunda camada | sim | não isolado | não isolado | sim | corrigir | ViewSet `order_item`. Itens devem aparecer vinculados ao pedido, não como lista independente. |
+| Laboratório | colheitas | exposto | sim | sim | sim | sim | sim | backend exposto / frontend validar | ViewSet `collection`. Deve ser exposto no frontend para fluxo real de amostras. |
+| Laboratório | amostras | exposto | sim | sim | sim | sim | receber/aceitar/rejeitar | backend exposto / frontend validar | ViewSet `sample`. Deve mostrar estado, tipo, origem, pedido e rastreabilidade. |
+| Laboratório | recepção de amostras | exposto | sim | sim | sim | sim | sim | backend exposto / frontend validar | ViewSet `reception`. Deve permitir confirmar chegada/recebimento de amostras. |
+| Laboratório | rejeições de amostras | exposto | sim | sim | sim | sim | sim | backend exposto / frontend validar | ViewSet `rejection`. Deve registrar motivo, responsável e data/hora. |
+| Laboratório | listas de trabalho | exposto | sim | sim | sim | sim | sim | backend exposto / frontend validar | ViewSet `worklist`. Deve organizar exames por setor, equipamento, prioridade e estado. |
+| Laboratório | resultados | exposto | sim | sim | sim | sim | inserir-resultado/validar | backend exposto / frontend validar | ViewSet `result`. Deve permitir lançamento e visualização estruturada. |
+| Laboratório | validações de resultados | exposto | sim | sim | não isolado | não isolado | aprovar | backend exposto / frontend validar | ViewSet `validation`. Validação deve estar vinculada ao resultado/laudo e perfil autorizado. |
+| Laboratório | laudos | exposto | sim | sim | sim | sim | assinar/entregar | backend exposto / frontend validar | ViewSet `report`. Deve permitir pré-visualização, emissão, impressão/exportação e assinatura quando aplicável. |
+| Laboratório | notificações de resultado crítico | exposto | sim | sim | sim | sim | sim | backend exposto / frontend validar | ViewSet `critical_notification`. Deve ser visível para supervisão clínica/laboratorial. |
+| Microbiologia | culturas | exposto | sim | sim | sim | sim | sim | backend exposto / frontend validar | ViewSet `culture`. Deve aparecer no fluxo de microbiologia, ligado à amostra/resultado. |
+| Microbiologia | isolados | exposto | sim | sim | sim | sim | sim | backend exposto / frontend validar | ViewSet `isolate`. Deve ficar vinculado à cultura. |
+| Microbiologia | antibiograma | exposto | sim | sim | sim | sim | sim | backend exposto / frontend validar | ViewSet `antibiogram`. Deve permitir registo estruturado de sensibilidade/resistência. |
+| Biologia Molecular | resultados moleculares | exposto | sim | sim | sim | sim | sim | backend exposto / frontend validar | ViewSet `molecular_result`. Deve ter fluxo próprio quando aplicável. |
+| Baciloscopia | baciloscopia | exposto | sim | sim | sim | sim | sim | backend exposto / frontend validar | ViewSet `afb_smear`. Deve suportar registo e validação laboratorial. |
+| Qualidade | documentos da qualidade | exposto | sim | sim | sim | sim | aprovar | backend exposto / frontend validar | ViewSet `quality_document`. A lacuna provável é menu/tela frontend. |
+| Qualidade | não conformidades | exposto | sim | sim | sim | sim | encerrar | backend exposto / frontend validar | ViewSet `nonconformity`. Deve existir listagem, detalhe, criação, acções correctivas e estado. |
+| Qualidade | acções correctivas | exposto | sim | sim | sim | sim | concluir/verificar/fechar | backend exposto / frontend validar | ViewSet `corrective_action`. Deve suportar CAPA. |
+| Qualidade | auditorias internas | exposto | sim | sim | sim | sim | sim | backend exposto / frontend validar | ViewSet `internal_audit`. Deve ter planos, achados, acções e responsáveis. |
+| Qualidade | achados de auditoria | exposto | sim | sim | sim | sim | sim | backend exposto / frontend validar | ViewSet `audit_finding`. Deve ficar vinculado à auditoria. |
+| Qualidade | indicadores de qualidade | exposto | sim | sim | sim | sim | sim | backend exposto / frontend validar | ViewSet `quality_indicator`. Necessário para dashboard de qualidade. |
+| Qualidade | formação da equipa | exposto | sim | sim | sim | sim | sim | backend exposto / frontend validar | ViewSet `training_record`. Necessário para competência e conformidade. |
+| Qualidade | avaliação de competência | exposto | sim | sim | sim | sim | sim | backend exposto / frontend validar | ViewSet `competency`. Deve ligar equipa, área e teste quando aplicável. |
+| Qualidade | reclamações | exposto | sim | sim | sim | sim | sim | backend exposto / frontend validar | ViewSet `complaint`. Pode gerar não conformidade. |
+| Qualidade | avaliação de risco | exposto | sim | sim | sim | sim | sim | backend exposto / frontend validar | ViewSet `risk_assessment`. Importante para laboratório e biossegurança. |
+| Qualidade | revisão pela gestão | exposto | sim | sim | sim | sim | sim | backend exposto / frontend validar | ViewSet `management_review`. Necessário para gestão da qualidade. |
+| Biossegurança | perigos biológicos | exposto | sim | sim | sim | sim | sim | backend exposto / frontend validar | ViewSet `hazard`. Deve expor catálogo de perigos. |
+| Biossegurança | incidentes de exposição | exposto | sim | sim | sim | sim | sim | backend exposto / frontend validar | ViewSet `exposure_incident`. Deve permitir notificação, classificação, investigação e encerramento. |
+| Biossegurança | EPIs | exposto | sim | sim | sim | sim | sim | backend exposto / frontend validar | ViewSet `ppe`. Deve suportar controlo operacional. |
+| Biossegurança | distribuição de EPIs | exposto | sim | sim | sim | sim | sim | backend exposto / frontend validar | ViewSet `ppe_distribution`. Deve manter vínculo com equipa/departamento. |
+| Biossegurança | resíduos | exposto | sim | sim | sim | sim | sim | backend exposto / frontend validar | ViewSet `waste`. Deve rastrear geração e estado. |
+| Biossegurança | descontaminação | exposto | sim | sim | sim | sim | sim | backend exposto / frontend validar | ViewSet `decontamination`. Deve registar área/equipamento/produto. |
+| Biossegurança | derrames/spill response | exposto | sim | sim | sim | sim | sim | backend exposto / frontend validar | ViewSet `spill`. Deve ficar vinculado a incidente quando aplicável. |
+| Biossegurança | vacinação ocupacional | exposto | sim | sim | sim | sim | sim | backend exposto / frontend validar | ViewSet `vaccination`. Dados sensíveis exigem RBAC restrito. |
+| Biossegurança | inspeções de biossegurança | exposto | sim | sim | sim | sim | sim | backend exposto / frontend validar | ViewSet `biosafety_inspection`. Deve gerar achados/não conformidades quando aplicável. |
+| Workplaces | workplaces/áreas de trabalho | não confirmado | não | não | não | não | não | crítico | Não confirmado na varredura estática feita por aqui. Verificar se deve ser domínio próprio, feature flag ou agrupamento de menus. |
+| Farmácia | produtos | exposto | sim | sim | sim | sim | sim | validar | Confirmar consistência de listagem e detalhe. |
+| Farmácia | lotes | exposto | sim | sim | sim | sim | sim | corrigir | Há erro reportado no frontend em lotes. Testar listagem, detalhe e criação. |
+| Farmácia | movimentos de estoque | exposto | sim | sim | sim | sim | sim | validar | Confirmar filtros por produto, lote, data e tipo. |
+| Recepção | pacientes | exposto | sim | sim | sim | sim | sim | corrigir | Deve listar e ver detalhes no mesmo padrão das consultas. |
+| Recepção | requisição de exames pela recepção | exposto/parcial | sim | sim | sim | sim | sim | corrigir | Deve permitir selecionar exames por busca filtrável e adicionar médico solicitante. |
+| Recepção | exames não laboratoriais | a validar | sim | sim | sim | sim | sim | corrigir | Campo de tipo de exame deve ser ocultado quando não aplicável. |
+| Faturamento | faturas | exposto | sim | sim | sim | sim | sim | corrigir | Houve erro de conexão/servidor ao gerar PDF de fatura. |
+| Pagamentos | pagamentos | exposto | sim | sim | sim | sim | sim | validar | Confirmar integração com faturas e recibos. |
+| Autenticação | sessão activa | exposto/parcial | não aplicável | não aplicável | não aplicável | não aplicável | sim | corrigir | Sessão não deve terminar antes de 30 minutos de inatividade real. Atividade na página deve manter sessão viva. |
 
 ---
 
@@ -132,6 +186,14 @@ Para cada linha da matriz:
 - [ ] Erros de rede aparecem de forma compreensível no frontend.
 - [ ] Lotes de farmácia carregam sem falha.
 
+### 6. Verificar lacunas de frontend após backend confirmado
+
+- [ ] Criar menu/submenu para Qualidade dentro de Laboratório.
+- [ ] Criar menu/submenu para Biossegurança dentro de Laboratório.
+- [ ] Confirmar se `clinical_laboratory-*` aparece no catálogo de recursos usado por IA/AutoForm/registry.
+- [ ] Confirmar se recursos antigos `clinical-*` não estão competindo com recursos novos `clinical_laboratory-*`.
+- [ ] Confirmar se itens de requisição e itens de fatura aparecem apenas como segunda camada.
+
 ---
 
 ## Critérios mínimos para considerar uma área como `ok`
@@ -176,3 +238,4 @@ Uma área só deve ser marcada como `ok` quando cumprir todos os pontos abaixo:
 ## Histórico
 
 - Criado para organizar a exposição dos endpoints da API no frontend durante a fase de estabilização beta do Substrato.
+- Actualizado após varredura estática: Qualidade e Biossegurança possuem ViewSets no backend; a lacuna principal passa a ser validação/exposição no frontend.
