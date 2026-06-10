@@ -13,7 +13,7 @@ type Props = {
 }
 
 function systemVersionLabel(): string {
-  return (process.env.NEXT_PUBLIC_SYSTEM_VERSION_LABEL || "beta").trim()
+  return (process.env.NEXT_PUBLIC_SYSTEM_VERSION_LABEL || "").trim()
 }
 
 function currentYear(): number {
@@ -23,7 +23,9 @@ function currentYear(): number {
 export default function Footer({ leftOffset = "16rem", rightOffset = "0px" }: Props) {
   const { t } = useLanguage()
   const version = useMemo(() => systemVersionLabel(), [])
-  const versionText = version ? `${t("Versão", "Version")} ${version}` : t("Versão", "Version")
+  const versionText = version
+    ? `${t("Versão", "Version")} ${version}`
+    : t("Em desenvolvimento", "In development")
   const year = useMemo(() => currentYear(), [])
 
   return (
