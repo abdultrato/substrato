@@ -50,8 +50,9 @@ const PHASES: Phase[] = [
     title: "Pedido",
     hint: "Solicitação e autorização dos exames.",
     items: [
-      { href: "/clinical-laboratory/orders", label: "Pedidos", desc: "Pedidos laboratoriais por paciente", icon: ClipboardList },
-      { href: "/clinical-laboratory/order-items", label: "Itens do pedido", desc: "Exames individuais de cada pedido", icon: FileText },
+      // Itens do pedido são segunda camada: aparecem dentro do detalhe do pedido,
+      // não como lista solta (ver FRONTEND_EXPOSURE_BACKLOG.md / readiness).
+      { href: "/clinical-laboratory/orders", label: "Pedidos", desc: "Pedidos laboratoriais e respetivos exames", icon: ClipboardList },
     ],
   },
   {

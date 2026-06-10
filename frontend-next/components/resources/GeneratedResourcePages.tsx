@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { useMemo, useState } from "react"
+import { useMemo, useState, type ReactNode } from "react"
 import { useParams, usePathname, useRouter } from "next/navigation"
 import { useQuery } from "@tanstack/react-query"
 
@@ -324,7 +324,14 @@ export function GeneratedResourceCreatePage({ endpoint }: { endpoint: string }) 
   )
 }
 
-export function GeneratedResourceDetailPage({ endpoint }: { endpoint: string }) {
+export function GeneratedResourceDetailPage({
+  endpoint,
+  children,
+}: {
+  endpoint: string
+  /** Secções de segunda camada renderizadas dentro do detalhe (ex.: itens do pedido). */
+  children?: ReactNode
+}) {
   useAuthGuard()
   const { t, tr } = useLanguage()
   const router = useRouter()
@@ -560,6 +567,8 @@ export function GeneratedResourceDetailPage({ endpoint }: { endpoint: string }) 
             {t("Registo não encontrado.", "Record not found.")}
           </div>
         )}
+
+        {data ? children : null}
       </div>
     </AppLayout>
   )

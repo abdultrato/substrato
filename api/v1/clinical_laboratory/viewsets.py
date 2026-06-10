@@ -172,6 +172,9 @@ class LabOrderViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, M
 class LabOrderItemViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
     queryset = LabOrderItem.objects.select_related("order", "test").all()
     serializer_class = LabOrderItemSerializer
+    # Itens são "segunda camada": o frontend lista-os filtrados pelo pedido
+    # (`?order=<id>`) dentro do detalhe da requisição, nunca como lista solta.
+    filterset_fields = ["order", "status"]
     search_fields = ["custom_id"]
     ordering_fields = ["status", "price", "created_at"]
 

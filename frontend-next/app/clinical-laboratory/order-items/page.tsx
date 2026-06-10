@@ -1,11 +1,8 @@
-"use client";
-import { Suspense } from "react";
-import { GeneratedResourceListPage } from "@/components/resources/GeneratedResourcePages";
+import { redirect } from "next/navigation";
 
-export default function LabOrderItemsPage() {
-  return (
-    <Suspense fallback={<div className="p-4 text-sm text-[var(--gray-500)]">Carregando...</div>}>
-      <GeneratedResourceListPage endpoint="/clinical_laboratory/order_item/" />
-    </Suspense>
-  );
+// Itens do pedido são segunda camada e aparecem dentro do detalhe da requisição.
+// Esta rota deixou de ser uma lista solta — redireciona para os Pedidos.
+// Ver FRONTEND_EXPOSURE_BACKLOG.md / readiness/clinical_laboratory.md.
+export default function LabOrderItemsRedirectPage() {
+  redirect("/clinical-laboratory/orders");
 }
