@@ -15,6 +15,7 @@ from reportlab.platypus import HRFlowable, Paragraph, SimpleDocTemplate, Spacer,
 from apps.pharmacy.models.product import Product
 
 from .institutional_pdf_design import (
+    FONT_BOLD_INST,
     ImprovedInstitutionalNumberedCanvas as NumberedCanvas,
     append_fim,
     institutional_cell_paragraph as cell_paragraph,
@@ -88,7 +89,7 @@ def _append_table(
     col_widths: list[float] | None = None,
     sector_color=colors.HexColor("#D32F2F"),
 ):
-    section_style = section_style_improved(color=sector_color, name="ProcedureSection")
+    section_style = institutional_section_style(color=sector_color, name="ProcedureSection")
     elements.append(Paragraph(title, section_style))
     elements.append(Spacer(1, A5Margins.ROW_SPACING))
 
@@ -103,7 +104,7 @@ def _append_table(
     table.setStyle(
         TableStyle(
             [
-                ("FONTNAME", (0, 0), (-1, 0), FONT_IMPROVED_BOLD),
+                ("FONTNAME", (0, 0), (-1, 0), FONT_BOLD_INST),
                 ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#f1f5f9")),
                 ("GRID", (0, 0), (-1, -1), 0.25, colors.lightgrey),
                 ("VALIGN", (0, 0), (-1, -1), "TOP"),
@@ -151,7 +152,7 @@ def generate_procedure_pdf(procedure, request=None) -> tuple[bytes, str]:
     tenant = getattr(procedure.patient, "tenant", None) if procedure.patient else None
     tenant_name = getattr(tenant, "name", "SERVIÇO DE ENFERMAGEM")
 
-    header_config = build_institutional_header_config(
+    header_config = build_personalized_header(
         doc_type=DocumentType.NURSING_PROCEDURE,
         tenant_name=tenant_name,
         logo_path=os.path.join(settings.BASE_DIR, "static", "img", "logo.png"),
@@ -178,19 +179,19 @@ def generate_procedure_pdf(procedure, request=None) -> tuple[bytes, str]:
     professionals_text = ", ".join(professionals) if professionals else "Sem profissional associado"
 
     left_lines = [
-        f"{institutional_bold_text('Procedimento')}: {_text(procedure.custom_id, default=str(procedure.pk))}",
-        f"{institutional_bold_text('Paciente')}: {_text(patient.name)}",
-        f"{institutional_bold_text('Data de realização')}: {_dt(procedure.performed_date)}",
-        f"{institutional_bold_text('Fluxo')}: {_text(getattr(procedure, 'get_workflow_status_display', lambda: '')() or procedure.workflow_status)}",
-        f"{institutional_bold_text('Faturação')}: {_text(getattr(procedure, 'get_billing_status_display', lambda: '')() or procedure.billing_status)}",
-        f"{institutional_bold_text('Profissionais')}: {_text(professionals_text)}",
+        f"{bold_text('Procedimento')}: {_text(procedure.custom_id, default=str(procedure.pk))}",
+        f"{bold_text('Paciente')}: {_text(patient.name)}",
+        f"{bold_text('Data de realização')}: {_dt(procedure.performed_date)}",
+        f"{bold_text('Fluxo')}: {_text(getattr(procedure, 'get_workflow_status_display', lambda: '')() or procedure.workflow_status)}",
+        f"{bold_text('Faturação')}: {_text(getattr(procedure, 'get_billing_status_display', lambda: '')() or procedure.billing_status)}",
+        f"{bold_text('Profissionais')}: {_text(professionals_text)}",
     ]
     right_lines = [
-        f"{institutional_bold_text('Executado em')}: {_dt(procedure.executed_at)}",
-        f"{institutional_bold_text('Concluído em')}: {_dt(procedure.completed_at)}",
-        f"{institutional_bold_text('Faturado em')}: {_dt(procedure.billed_at)}",
-        f"{institutional_bold_text('Emitido por')}: {institutional_user_identity_improved(user_documento)}",
-        f"{institutional_bold_text('Gerado em')}: {_dt(timezone.now())}",
+        f"{bold_text('Executado em')}: {_dt(procedure.executed_at)}",
+        f"{bold_text('Concluído em')}: {_dt(procedure.completed_at)}",
+        f"{bold_text('Faturado em')}: {_dt(procedure.billed_at)}",
+        f"{bold_text('Emitido por')}: {institutional_user_identity(user_documento)}",
+        f"{bold_text('Gerado em')}: {_dt(timezone.now())}",
     ]
     story.append(
         montar_bloco_identificacao(
@@ -203,7 +204,7 @@ def generate_procedure_pdf(procedure, request=None) -> tuple[bytes, str]:
 
     if (procedure.notes or "").strip():
         story.append(Paragraph(
-            f"{institutional_bold_text('Observações')}: {_text(procedure.notes)}",
+            f"{bold_text('Observações')}: {_text(procedure.notes)}",
             institutional_section_style(color=header_config["sector_color"], name="ProcedureNotes")
         ))
         story.append(Spacer(1, A5Margins.ROW_SPACING))
@@ -380,11 +381,11 @@ def generate_procedure_pdf(procedure, request=None) -> tuple[bytes, str]:
         story,
         onFirstPage=lambda c, d: (
             on_page(c, d, user_documento),
-            institutional_draw_line_full_width_improved(c, d),
+            draw_line_full_width(c, d),
         ),
         onLaterPages=lambda c, d: (
             on_page(c, d, user_documento),
-            institutional_draw_line_full_width_improved(c, d),
+            draw_line_full_width(c, d),
         ),
         canvasmaker=NumberedCanvas,
     )
