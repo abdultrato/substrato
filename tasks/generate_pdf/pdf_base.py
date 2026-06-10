@@ -3,7 +3,8 @@ PDF Base Engine — Clinical Enterprise Grade
 
 ✔ Layout A5 professional
 ✔ Header institucional em todas páginas
-✔ QR Code verificável (topo direito)
+✔ QR Code verificável no quadrante superior direito quase a transbordar
+✔ Código de barras vertical no quadrante inferior direito quase a transbordar
 ✔ Assinaturas configuráveis por documento
 ✔ Compressão e otimização
 ✔ Fallback seguro para logo
@@ -51,6 +52,13 @@ PDF_BODY_FONT_SIZE = 10
 PDF_TITLE_FONT_SIZE = 11
 PDF_BODY_LEADING = 12
 PDF_TITLE_LEADING = 13
+
+# Elementos máquina-legíveis nas extremidades da página.
+# Mantêm-se fora da área útil do texto para não comprometer o layout.
+PDF_CORNER_BLEED_INSET = 0.03 * cm
+PDF_CORNER_QR_SIZE = 1.85 * cm
+PDF_CORNER_BARCODE_HEIGHT = 0.40 * cm
+PDF_CORNER_BARCODE_WIDTH = 0.28
 
 # =========================================================
 # FONTES
@@ -317,18 +325,26 @@ def draw_barcode(canvas_obj, doc, x, y, max_width) -> None:
 
 
 def draw_corner_barcode(canvas_obj, doc) -> None:
-    """Código de barras vertical no quadrante inferior direito, encostado/
-    transbordando pela margem da página (fora do corpo e do rodapé)."""
+    """Código de barras vertical no quadrante inferior direito, quase a
+    transbordar pela margem direita e inferior da página.
+
+    A origem fica colada ao canto inferior direito; a rotação de 90° faz o
+    comprimento subir pela lateral direita sem ocupar o corpo do documento.
+    """
     value = getattr(doc, "barcode_value", None)
     payload = _sanitize_barcode(value)
     if not payload:
         return
     page_w, _page_h = doc.pagesize
     try:
-        bar = code128.Code128(payload, barHeight=0.40 * cm, barWidth=0.28)
+        bar = code128.Code128(
+            payload,
+            barHeight=PDF_CORNER_BARCODE_HEIGHT,
+            barWidth=PDF_CORNER_BARCODE_WIDTH,
+        )
         bar.humanReadable = False
         canvas_obj.saveState()
-        canvas_obj.translate(page_w - 0.05 * cm, -0.40 * cm)
+        canvas_obj.translate(page_w - PDF_CORNER_BLEED_INSET, PDF_CORNER_BLEED_INSET)
         canvas_obj.rotate(90)
         bar.drawOn(canvas_obj, 0, 0)
         canvas_obj.restoreState()
@@ -394,16 +410,16 @@ def draw_header(canvas_obj, doc):
     # linha inferior (limite inferior da banda do header)
     y_line = page_h - top_margin + 0.05 * cm
 
-    # QR Code topo direito (enquadrado na banda do header)
+    # QR Code no quadrante superior direito, quase a transbordar pela borda.
     if hasattr(doc, "qr_url") and doc.qr_url:
         qr = generate_qr_code(doc.qr_url)
         if qr:
-            qr_size = 1.7 * cm
-            qr_x = page_w - right_margin - qr_size
-            qr_y = page_h - 0.25 * cm - qr_size
+            qr_size = PDF_CORNER_QR_SIZE
+            qr_x = page_w - qr_size - PDF_CORNER_BLEED_INSET
+            qr_y = page_h - qr_size - PDF_CORNER_BLEED_INSET
             canvas_obj.drawImage(qr, qr_x, qr_y, qr_size, qr_size, mask="auto")
 
-    # (Código de barras movido para o canto inferior direito — ver on_page.)
+    # Código de barras fica no canto inferior direito — ver on_page.
 
     canvas_obj.setStrokeColor(colors.darkblue)
     canvas_obj.setLineWidth(1)
