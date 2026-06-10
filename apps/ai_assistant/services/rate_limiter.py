@@ -52,8 +52,8 @@ class RateLimitBackend(ABC):
     """Abstract rate limit backend."""
 
     @abstractmethod
-    def is_allowed(self, key: str) -> bool:
-        """Check if request is allowed."""
+    def is_allowed(self, key: str, config: "RateLimitConfig | None" = None) -> bool:
+        """Check if request is allowed (optionally with a per-call config override)."""
         pass
 
     @abstractmethod
@@ -75,8 +75,9 @@ class SlidingWindowBackend(RateLimitBackend):
         self._windows: dict[str, list[float]] = {}
         self._cleanup_at = time.time() + config.cleanup_interval
 
-    def is_allowed(self, key: str) -> bool:
+    def is_allowed(self, key: str, config: RateLimitConfig | None = None) -> bool:
         """Check using sliding window."""
+        cfg = config or self.config
         now = time.time()
         self._cleanup_old_entries()
 
@@ -84,12 +85,12 @@ class SlidingWindowBackend(RateLimitBackend):
             self._windows[key] = [now]
             return True
 
-        window_start = now - self.config.window_seconds
+        window_start = now - cfg.window_seconds
 
         # Remove entries outside the sliding window
         self._windows[key] = [ts for ts in self._windows[key] if ts > window_start]
 
-        if len(self._windows[key]) < self.config.limit:
+        if len(self._windows[key]) < cfg.limit:
             self._windows[key].append(now)
             return True
 
@@ -147,20 +148,21 @@ class TokenBucketBackend(RateLimitBackend):
         self.config = config
         self._buckets: dict[str, dict[str, float]] = {}
 
-    def is_allowed(self, key: str) -> bool:
+    def is_allowed(self, key: str, config: RateLimitConfig | None = None) -> bool:
         """Check using token bucket."""
+        cfg = config or self.config
         now = time.time()
 
         if key not in self._buckets:
-            self._buckets[key] = {"tokens": self.config.limit, "last_refill": now}
+            self._buckets[key] = {"tokens": cfg.limit, "last_refill": now}
 
         bucket = self._buckets[key]
         time_passed = now - bucket["last_refill"]
 
         # Calculate token refill rate
-        refill_rate = self.config.limit / self.config.window_seconds
+        refill_rate = cfg.limit / cfg.window_seconds
         tokens_to_add = time_passed * refill_rate
-        bucket["tokens"] = min(self.config.limit, bucket["tokens"] + tokens_to_add)
+        bucket["tokens"] = min(cfg.limit, bucket["tokens"] + tokens_to_add)
         bucket["last_refill"] = now
 
         if bucket["tokens"] >= 1:
@@ -217,7 +219,7 @@ class AiRateLimiter:
         """Check if operation is allowed."""
         cfg = config or self.default_config
         try:
-            return self._backend.is_allowed(key)
+            return self._backend.is_allowed(key, config=cfg)
         except Exception as e:
             logger.error(f"Rate limiter error for key {key}: {e}")
             # On error, allow the request (fail open)
