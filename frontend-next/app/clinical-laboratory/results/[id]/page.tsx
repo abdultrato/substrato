@@ -1,11 +1,14 @@
 "use client";
 import { Suspense } from "react";
 import { GeneratedResourceDetailPage } from "@/components/resources/GeneratedResourcePages";
+import ResultValidationsSection from "@/components/clinical-laboratory/ResultValidationsSection";
 
 export default function Page() {
   return (
     <Suspense fallback={<div className="p-4 text-sm text-[var(--gray-500)]">Carregando...</div>}>
-      <GeneratedResourceDetailPage endpoint="/clinical_laboratory/result/" />
+      <GeneratedResourceDetailPage endpoint="/clinical_laboratory/result/">
+        <ResultValidationsSection />
+      </GeneratedResourceDetailPage>
     </Suspense>
   );
 }

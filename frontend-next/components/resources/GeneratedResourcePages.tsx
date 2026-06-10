@@ -211,13 +211,20 @@ function useEndpointContext(endpoint: string): EndpointContext {
   return useMemo(() => buildEndpointContext(modules, endpoint), [endpoint, modules])
 }
 
-export function GeneratedResourceListPage({ endpoint }: { endpoint: string }) {
+export function GeneratedResourceListPage({
+  endpoint,
+  allowCreate = true,
+}: {
+  endpoint: string
+  /** Quando false, oculta a criação isolada (ex.: fila de validações criada em contexto). */
+  allowCreate?: boolean
+}) {
   const ctx = useEndpointContext(endpoint)
   const { t, tr } = useLanguage()
   const pathname = usePathname()
   const basePath = stripTrailingSlash(pathname || "")
   const canList = hasOpenApiMethod(ctx.normalizedEndpoint, "get")
-  const canCreate = hasOpenApiMethod(ctx.normalizedEndpoint, "post")
+  const canCreate = allowCreate && hasOpenApiMethod(ctx.normalizedEndpoint, "post")
   const groupLabel = tr(ctx.groupLabel)
   const resourceLabel = tr(ctx.resourceLabel)
 
@@ -257,7 +264,14 @@ export function GeneratedResourceListPage({ endpoint }: { endpoint: string }) {
   )
 }
 
-export function GeneratedResourceCreatePage({ endpoint }: { endpoint: string }) {
+export function GeneratedResourceCreatePage({
+  endpoint,
+  initialValues,
+}: {
+  endpoint: string
+  /** Valores iniciais (ex.: pré-selecionar o resultado ao criar uma validação em contexto). */
+  initialValues?: Record<string, any>
+}) {
   useAuthGuard()
   const { t, tr, language } = useLanguage()
   const router = useRouter()
@@ -308,6 +322,7 @@ export function GeneratedResourceCreatePage({ endpoint }: { endpoint: string }) 
         <AutoForm
           endpoint={ctx.normalizedEndpoint}
           method="post"
+          initialValues={initialValues}
           submitLabel={createActionLabel}
           config={getResourceFormConfig(ctx.groupKey, ctx.resourceKey, ctx.normalizedEndpoint)}
           onSuccess={(data) => {

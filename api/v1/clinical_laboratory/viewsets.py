@@ -269,6 +269,10 @@ class LabResultViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, 
 class ResultValidationViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
     queryset = ResultValidation.objects.select_related("result", "validated_by").all()
     serializer_class = ResultValidationSerializer
+    # Validação é vinculada ao resultado: o frontend lista-as filtradas por
+    # `?result=<id>` no detalhe do resultado e cria-as em contexto, não como
+    # recurso solto. Ver FRONTEND_API_EXPOSURE_MATRIX.md / readiness.
+    filterset_fields = ["result", "status", "validation_type"]
     search_fields = ["custom_id", "notes"]
     ordering_fields = ["validation_type", "status", "validated_at", "created_at"]
 
