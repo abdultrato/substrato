@@ -779,6 +779,119 @@ def test_material_requisition_clinical_pharmacy_requests_from_pharmacy(api_clien
 
 
 @pytest.mark.django_db
+def test_material_requisition_by_product_fulfills_fefo_across_lots(api_client):
+    """Requisição por produto (sem escolher lote): o avio resolve lotes FEFO."""
+    tenant = Tenant.objects.create(
+        identifier="tn-reqfar-prod",
+        name="Tenant ReqFar Produto",
+        domain="tenant-reqfar-prod.local",
+        active=True,
+    )
+    User = get_user_model()
+    grp_recep, _ = Group.objects.get_or_create(name="Recepcionista")
+    grp_ph, _ = Group.objects.get_or_create(name="Técnico de Farmácia")
+
+    requester = User.objects.create_user(
+        username="recep_prod",
+        email="recep-prod@example.com",
+        password="testpass123",
+        tenant=tenant,
+    )
+    requester.is_staff = True
+    requester.save(update_fields=["is_staff"])
+    requester.groups.add(grp_recep)
+
+    pharmacist = User.objects.create_user(
+        username="ph_prod",
+        email="ph-prod@example.com",
+        password="testpass123",
+        tenant=tenant,
+    )
+    pharmacist.is_staff = True
+    pharmacist.save(update_fields=["is_staff"])
+    pharmacist.groups.add(grp_ph)
+
+    prod = _product(tenant)
+    lot_early = Lot.objects.create(
+        tenant=tenant,
+        product=prod,
+        lot_number="LPRODA",
+        expiration_date=timezone.localdate() + timedelta(days=10),
+        initial_quantity=4,
+        sale_price=prod.sale_price,
+    )
+    lot_late = Lot.objects.create(
+        tenant=tenant,
+        product=prod,
+        lot_number="LPRODB",
+        expiration_date=timezone.localdate() + timedelta(days=90),
+        initial_quantity=10,
+        sale_price=prod.sale_price,
+    )
+
+    api_client.defaults["HTTP_HOST"] = tenant.domain
+    api_client.force_authenticate(user=requester)
+    create_resp = api_client.post(
+        "/api/v1/pharmacy/material_requisition/",
+        {"items_input": [{"product": prod.id, "requested_quantity": 6}]},
+        format="json",
+    )
+    assert create_resp.status_code == 201, create_resp.data
+    item_data = create_resp.data["items"][0]
+    assert item_data["available_quantity"] == 14
+    assert item_data["product_name"] == prod.name
+
+    api_client.force_authenticate(user=pharmacist)
+    fulfill_resp = api_client.post(
+        f"/api/v1/pharmacy/material_requisition/{create_resp.data['id']}/fulfill/",
+        {"items": [{"id": item_data["id"], "quantity": 6}]},
+        format="json",
+    )
+    assert fulfill_resp.status_code == 200, fulfill_resp.data
+    assert fulfill_resp.data["status"] == MaterialRequisitionStatus.FULFILLED
+
+    # FEFO: esgota o lote que vence primeiro (4) e tira o restante (2) do seguinte.
+    assert lot_early.balance() == 0
+    assert lot_late.balance() == 8
+
+
+@pytest.mark.django_db
+def test_material_requisition_by_product_allows_zero_stock_request(api_client):
+    """Produto sem lotes/saldo pode ser requisitado; fica pendente até reposição."""
+    tenant = Tenant.objects.create(
+        identifier="tn-reqfar-zero",
+        name="Tenant ReqFar Zero",
+        domain="tenant-reqfar-zero.local",
+        active=True,
+    )
+    User = get_user_model()
+    grp_recep, _ = Group.objects.get_or_create(name="Recepcionista")
+
+    requester = User.objects.create_user(
+        username="recep_zero",
+        email="recep-zero@example.com",
+        password="testpass123",
+        tenant=tenant,
+    )
+    requester.is_staff = True
+    requester.save(update_fields=["is_staff"])
+    requester.groups.add(grp_recep)
+
+    prod = _product(tenant)
+
+    api_client.defaults["HTTP_HOST"] = tenant.domain
+    api_client.force_authenticate(user=requester)
+    create_resp = api_client.post(
+        "/api/v1/pharmacy/material_requisition/",
+        {"items_input": [{"product": prod.id, "requested_quantity": 5}]},
+        format="json",
+    )
+    assert create_resp.status_code == 201, create_resp.data
+    assert create_resp.data["status"] == MaterialRequisitionStatus.PENDING
+    assert create_resp.data["items"][0]["available_quantity"] == 0
+
+
+@pytest.mark.django_db
 def test_material_requisition_fulfill_returns_clear_insufficient_stock_error(api_client):
     tenant = Tenant.objects.create(
         identifier="tn-reqfar-stock",

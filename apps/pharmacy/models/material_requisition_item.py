@@ -31,6 +31,18 @@ class MaterialRequisitionItem(ScopedPositionMixin, NoNameCoreModel):
         blank=True,
     )
 
+    product = models.ForeignKey(
+        "farmacia.Product",
+        db_column="product_id",
+        verbose_name="Produto",
+        on_delete=models.PROTECT,
+        related_name="material_request_items",
+        db_index=True,
+        null=True,
+        blank=True,
+        help_text="Requisição por produto: o avio resolve os lotes FEFO automaticamente.",
+    )
+
     warehouse_item = models.ForeignKey(
         "warehouse.WarehouseItem",
         db_column="warehouse_item_id",
@@ -79,11 +91,20 @@ class MaterialRequisitionItem(ScopedPositionMixin, NoNameCoreModel):
         try:
             if self.lot_id:
                 return int(self.lot.balance())
+            if self.product_id:
+                return int(self.product_available())
             if self.warehouse_item_id:
                 return int(self.warehouse_item_available())
         except Exception:
             return 0
         return 0
+
+    def product_available(self) -> int:
+        """Saldo disponível do produto somando os lotes FEFO (não vencidos, saldo > 0)."""
+        from apps.pharmacy.models.lot import Lot
+
+        lots = Lot.available(self.product).filter(tenant_id=self.tenant_id)
+        return sum(int(lot.saldo or 0) for lot in lots)
 
     def warehouse_item_available(self) -> int:
         """Saldo disponível (físico - reservado) do item de armazém em todas as localizações."""
@@ -113,11 +134,17 @@ class MaterialRequisitionItem(ScopedPositionMixin, NoNameCoreModel):
         if self.requisition_id and self.tenant_id and self.requisition.tenant_id != self.tenant_id:
             raise ValidationError("Inquilino do item difere da requisição.")
 
-        if bool(self.lot_id) == bool(self.warehouse_item_id):
-            raise ValidationError("Informe exatamente um: lote da farmácia ou item de armazém.")
+        targets = [bool(self.lot_id), bool(self.product_id), bool(self.warehouse_item_id)]
+        if sum(targets) != 1:
+            raise ValidationError(
+                "Informe exatamente um: lote da farmácia, produto da farmácia ou item de armazém."
+            )
 
         if self.lot_id and self.tenant_id and self.lot.tenant_id != self.tenant_id:
             raise ValidationError("Inquilino do item difere do lote.")
+
+        if self.product_id and self.tenant_id and self.product.tenant_id != self.tenant_id:
+            raise ValidationError("Inquilino do item difere do produto.")
 
         if self.warehouse_item_id and self.tenant_id and self.warehouse_item.tenant_id != self.tenant_id:
             raise ValidationError("Inquilino do item difere do item de armazém.")

@@ -9,7 +9,7 @@ import PageHeader from "@/components/ui/PageHeader"
 import Card from "@/components/ui/Card"
 import useAuthGuard from "@/hooks/useAuthGuard"
 import { useSafeDataRefresh, useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
-import { apiFetch, apiFetchAll, extractResults } from "@/lib/api"
+import { apiFetch, apiFetchAll } from "@/lib/api"
 import { MATERIAL_REQUISITION_PAGE_GROUPS } from "@/lib/material-requisition-rbac"
 
 type LotDisponivel = {
@@ -19,6 +19,12 @@ type LotDisponivel = {
   lot_number?: string
   expiration_date?: string
   saldo?: number
+}
+
+type PharmacyProduct = {
+  id: number
+  name?: string
+  custom_id?: string
 }
 
 type WarehouseStockRow = {
@@ -36,7 +42,7 @@ type ProductStockRow = {
 }
 
 type DraftItem = {
-  lotId: number | null
+  productId: number | null
   warehouseItemId: number | null
   requestedQuantity: number
 }
@@ -64,12 +70,7 @@ const SOURCE_PHARMACY = "PHA"
 const SOURCE_WAREHOUSE = "WHS"
 
 function emptyItem(): DraftItem {
-  return { lotId: null, warehouseItemId: null, requestedQuantity: 1 }
-}
-
-function formatLotLabel(l: LotDisponivel) {
-  const saldo = typeof l.saldo === "number" ? l.saldo : Number(l.saldo || 0)
-  return `${l.product_name || "Produto"} — Lote ${l.lot_number || l.id} (disp.: ${saldo})`
+  return { productId: null, warehouseItemId: null, requestedQuantity: 1 }
 }
 
 function formatWarehouseItemLabel(item: WarehouseStockRow) {
@@ -85,7 +86,7 @@ export default function CriarRequisicaoMateriaisPage() {
 
   const requiredGroups = useMemo(() => [...MATERIAL_REQUISITION_PAGE_GROUPS], [])
 
-  const [lots, setLots] = useState<LotDisponivel[]>([])
+  const [products, setProducts] = useState<PharmacyProduct[]>([])
   const [stockLots, setStockLots] = useState<LotDisponivel[]>([])
   const [warehouseStock, setWarehouseStock] = useState<WarehouseStockRow[]>([])
   const [loadingLots, setLoadingLots] = useState(true)
@@ -127,10 +128,10 @@ export default function CriarRequisicaoMateriaisPage() {
         const needsWarehouse =
           requesterContextRes?.is_admin || sectors.some((s) => s.source === SOURCE_WAREHOUSE)
 
-        const [availableRes, allLotsRes, warehouseRes] = await Promise.all([
+        const [productsRes, allLotsRes, warehouseRes] = await Promise.all([
           needsPharmacy
-            ? apiFetch<any>("/pharmacy/lot/available/", { clientCache: safeRefreshToken === 0 })
-            : Promise.resolve(null),
+            ? apiFetchAll<PharmacyProduct>("/pharmacy/product/", { pageSize: 200, maxPages: 25 })
+            : Promise.resolve([]),
           needsPharmacy
             ? apiFetchAll<LotDisponivel>("/pharmacy/lot/", { pageSize: 200, maxPages: 25 })
             : Promise.resolve([]),
@@ -141,7 +142,7 @@ export default function CriarRequisicaoMateriaisPage() {
             : Promise.resolve([]),
         ])
         if (!mounted) return
-        setLots(availableRes ? extractResults<LotDisponivel>(availableRes) : [])
+        setProducts(Array.isArray(productsRes) ? productsRes : [])
         setStockLots(Array.isArray(allLotsRes) ? allLotsRes : [])
         setWarehouseStock(Array.isArray(warehouseRes) ? warehouseRes : [])
       } catch (e: any) {
@@ -157,11 +158,24 @@ export default function CriarRequisicaoMateriaisPage() {
     }
   }, [hasUnsavedInput, safeRefreshToken])
 
-  const lotById = useMemo(() => new Map(lots.map((l) => [l.id, l])), [lots])
   const warehouseItemById = useMemo(
     () => new Map(warehouseStock.map((item) => [item.id, item])),
     [warehouseStock]
   )
+
+  // Saldo real por produto, agregado a partir dos lotes.
+  const stockByProductId = useMemo(() => {
+    const totals = new Map<number, number>()
+    for (const lot of stockLots) {
+      if (!lot.product) continue
+      const stock = Number(lot.saldo || 0)
+      if (stock <= 0) continue
+      totals.set(lot.product, (totals.get(lot.product) || 0) + stock)
+    }
+    return totals
+  }, [stockLots])
+
+  const productById = useMemo(() => new Map(products.map((p) => [p.id, p])), [products])
 
   const productStocks = useMemo<ProductStockRow[]>(() => {
     if (isWarehouseSource) {
@@ -175,32 +189,15 @@ export default function CriarRequisicaoMateriaisPage() {
         .sort((a, b) => a.productName.localeCompare(b.productName, undefined, { sensitivity: "base" }))
     }
 
-    const source = stockLots.length ? stockLots : lots
-    const byProduct = new Map<string, ProductStockRow>()
-    for (const lot of source) {
-      const stock = Number(lot.saldo || 0)
-      if (stock <= 0) continue
-
-      const rawKey = lot.product ? String(lot.product) : String(lot.product_name || "").trim().toLowerCase()
-      const key = rawKey || `lot-${lot.id}`
-      const name = (lot.product_name || "Produto sem nome").trim()
-
-      const prev = byProduct.get(key)
-      if (prev) {
-        prev.totalStock += stock
-      } else {
-        byProduct.set(key, {
-          key,
-          productName: name,
-          totalStock: stock,
-        })
-      }
-    }
-
-    return Array.from(byProduct.values()).sort((a, b) =>
-      a.productName.localeCompare(b.productName, undefined, { sensitivity: "base" })
-    )
-  }, [isWarehouseSource, lots, stockLots, warehouseStock])
+    // Catálogo real da farmácia: mostra todos os produtos, mesmo sem saldo.
+    return products
+      .map((product) => ({
+        key: String(product.id),
+        productName: (product.name || product.custom_id || "Produto sem nome").trim(),
+        totalStock: stockByProductId.get(product.id) || 0,
+      }))
+      .sort((a, b) => a.productName.localeCompare(b.productName, undefined, { sensitivity: "base" }))
+  }, [isWarehouseSource, products, stockByProductId, warehouseStock])
 
   const filteredProductStocks = useMemo(() => {
     const q = productQuery.trim().toLowerCase()
@@ -208,7 +205,7 @@ export default function CriarRequisicaoMateriaisPage() {
     return productStocks.filter((item) => item.productName.toLowerCase().includes(q))
   }, [productQuery, productStocks])
 
-  const hasSelectableStock = isWarehouseSource ? warehouseStock.length > 0 : lots.length > 0
+  const hasSelectableStock = isWarehouseSource ? warehouseStock.length > 0 : products.length > 0
 
   function updateItem(idx: number, patch: Partial<DraftItem>) {
     setItems((prev) => prev.map((it, i) => (i === idx ? { ...it, ...patch } : it)))
@@ -244,15 +241,15 @@ export default function CriarRequisicaoMateriaisPage() {
       .map((it) =>
         isWarehouseSource
           ? { warehouse_item: it.warehouseItemId, requested_quantity: it.requestedQuantity }
-          : { lot: it.lotId, requested_quantity: it.requestedQuantity }
+          : { product: it.productId, requested_quantity: it.requestedQuantity }
       )
-      .filter((x: any) => !!(x.lot || x.warehouse_item) && Number(x.requested_quantity) > 0)
+      .filter((x: any) => !!(x.product || x.warehouse_item) && Number(x.requested_quantity) > 0)
 
     if (!payloadItems.length) {
       setError(
         isWarehouseSource
           ? "Adicione pelo menos 1 item (item de armazém + quantidade)."
-          : "Adicione pelo menos 1 item (lote + quantidade)."
+          : "Adicione pelo menos 1 item (produto + quantidade)."
       )
       return
     }
@@ -361,8 +358,8 @@ export default function CriarRequisicaoMateriaisPage() {
         </Card>
 
         <Card
-          title={isWarehouseSource ? "Produtos em estoque no armazém" : "Produtos em estoque na farmácia"}
-          subtitle="Estoque atual agregado por produto (saldo real)."
+          title={isWarehouseSource ? "Produtos em estoque no armazém" : "Produtos da farmácia"}
+          subtitle="Saldo real agregado por produto (a partir dos lotes)."
         >
           {loadingLots ? (
             <div className="text-sm text-[var(--gray-600)]">Carregando produtos…</div>
@@ -405,7 +402,7 @@ export default function CriarRequisicaoMateriaisPage() {
             <div className="text-sm text-[var(--gray-600)]">
               {isWarehouseSource
                 ? "Nenhum item com saldo disponível no armazém."
-                : "Nenhum produto com saldo em estoque na farmácia."}
+                : "Nenhum produto registado na farmácia."}
             </div>
           )}
         </Card>
@@ -415,7 +412,7 @@ export default function CriarRequisicaoMateriaisPage() {
           subtitle={
             isWarehouseSource
               ? "Selecione o item de armazém e informe a quantidade desejada."
-              : "Selecione o produto/lote e informe a quantidade desejada."
+              : "Selecione o produto e informe a quantidade desejada."
           }
         >
           {loadingLots ? (
@@ -423,11 +420,11 @@ export default function CriarRequisicaoMateriaisPage() {
           ) : hasSelectableStock ? (
             <div className="space-y-3">
               {items.map((it, idx) => {
-                const lot = !isWarehouseSource && it.lotId ? lotById.get(it.lotId) : null
+                const product = !isWarehouseSource && it.productId ? productById.get(it.productId) : null
                 const warehouseItem =
                   isWarehouseSource && it.warehouseItemId ? warehouseItemById.get(it.warehouseItemId) : null
-                const available = lot
-                  ? Number(lot.saldo || 0)
+                const available = product
+                  ? stockByProductId.get(product.id) || 0
                   : warehouseItem
                     ? Number(warehouseItem.available || 0)
                     : null
@@ -435,7 +432,7 @@ export default function CriarRequisicaoMateriaisPage() {
                   <div key={idx} className="grid gap-3 md:grid-cols-12">
                     <div className="md:col-span-8">
                       <label className="block text-sm font-medium text-[var(--gray-700)]">
-                        {isWarehouseSource ? "Item de armazém" : "Lote / Produto"}
+                        {isWarehouseSource ? "Item de armazém" : "Produto"}
                       </label>
                       {isWarehouseSource ? (
                         <select
@@ -444,7 +441,7 @@ export default function CriarRequisicaoMateriaisPage() {
                           onChange={(e) =>
                             updateItem(idx, {
                               warehouseItemId: e.target.value ? Number(e.target.value) : null,
-                              lotId: null,
+                              productId: null,
                             })
                           }
                           disabled={submitting}
@@ -459,26 +456,26 @@ export default function CriarRequisicaoMateriaisPage() {
                       ) : (
                         <select
                           className="mt-1 w-full rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-sm"
-                          value={it.lotId ?? ""}
+                          value={it.productId ?? ""}
                           onChange={(e) =>
                             updateItem(idx, {
-                              lotId: e.target.value ? Number(e.target.value) : null,
+                              productId: e.target.value ? Number(e.target.value) : null,
                               warehouseItemId: null,
                             })
                           }
                           disabled={submitting}
                         >
                           <option value="">Selecione…</option>
-                          {lots.map((l) => (
-                            <option key={l.id} value={l.id}>
-                              {formatLotLabel(l)}
+                          {products.map((p) => (
+                            <option key={p.id} value={p.id}>
+                              {`${p.name || p.custom_id || `Produto ${p.id}`} (disp.: ${stockByProductId.get(p.id) || 0})`}
                             </option>
                           ))}
                         </select>
                       )}
-                      {lot?.expiration_date ? (
-                        <div className="mt-1 text-xs text-[var(--gray-500)]">
-                          Validade: {String(lot.expiration_date)}
+                      {product && (stockByProductId.get(product.id) || 0) <= 0 ? (
+                        <div className="mt-1 text-xs text-amber-700">
+                          Sem saldo em estoque: a requisição ficará pendente até a farmácia repor.
                         </div>
                       ) : null}
                     </div>
@@ -540,7 +537,7 @@ export default function CriarRequisicaoMateriaisPage() {
             <div className="text-sm text-[var(--gray-600)]">
               {isWarehouseSource
                 ? "Nenhum item de armazém disponível para requisição no momento."
-                : "Nenhum lote disponível para requisição no momento."}
+                : "Nenhum produto registado na farmácia para requisição."}
             </div>
           )}
         </Card>

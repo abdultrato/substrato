@@ -889,6 +889,42 @@ def _issue_warehouse_stock(item, qty: int, *, reference_document: str) -> None:
         )
 
 
+def _issue_pharmacy_product_stock(item, qty: int) -> None:
+    """
+    Baixa `qty` unidades do produto da farmácia em modo FEFO, criando movimentos
+    de saída (origem REQ) nos lotes com saldo até cobrir a quantidade.
+    """
+    remaining = int(qty)
+    lots = Lot.available(item.product).filter(tenant_id=item.tenant_id)
+    for lot in lots:
+        if remaining <= 0:
+            break
+        balance = int(lot.saldo if lot.saldo is not None else lot.balance())
+        take = min(remaining, balance)
+        if take <= 0:
+            continue
+
+        InventoryMovement.objects.create(
+            tenant=item.tenant,
+            lot=lot,
+            type="SAI",
+            origin="REQ",
+            quantity=take,
+            material_request_item=item,
+        )
+        remaining -= take
+
+    if remaining > 0:
+        raise ValidationError(
+            {
+                "quantity": (
+                    f"Estoque da farmácia insuficiente para o item {item.id}; "
+                    f"faltam {remaining} unidade(s)."
+                )
+            }
+        )
+
+
 def _requesting_department_from_user(user) -> str:
     try:
         return getattr(getattr(user, "perfil_professional", None), "department", "") or ""
@@ -898,7 +934,7 @@ def _requesting_department_from_user(user) -> str:
 
 class MaterialRequisitionViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
     queryset = MaterialRequisition.objects.prefetch_related(
-        "items", "items__lot", "items__lot__product"
+        "items", "items__lot", "items__lot__product", "items__product", "items__warehouse_item"
     ).select_related(
         "created_by",
         "fulfilled_by",
@@ -1068,15 +1104,20 @@ class MaterialRequisitionViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
 
         items_input = serializer.validated_data.get("items_input") or []
         for idx, item in enumerate(items_input):
-            has_lot = bool(item.get("lot"))
+            has_pharmacy_target = bool(item.get("lot")) or bool(item.get("product"))
             has_warehouse_item = bool(item.get("warehouse_item"))
             if source == RequisitionSource.WAREHOUSE and not has_warehouse_item:
                 raise ValidationError(
                     {"items_input": f"Item {idx + 1}: requisições da farmácia ao armazém usam itens de armazém."}
                 )
-            if source == RequisitionSource.PHARMACY and not has_lot:
+            if source == RequisitionSource.PHARMACY and not has_pharmacy_target:
                 raise ValidationError(
-                    {"items_input": f"Item {idx + 1}: requisições à farmácia usam lotes do estoque da farmácia."}
+                    {
+                        "items_input": (
+                            f"Item {idx + 1}: requisições à farmácia usam produtos ou lotes "
+                            "do estoque da farmácia."
+                        )
+                    }
                 )
 
         serializer.save(
@@ -1112,7 +1153,7 @@ class MaterialRequisitionViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
             raise ValidationError({"items": "Itens inválidos."})
 
         with transaction.atomic():
-            for item in requisition.items.select_related("lot", "warehouse_item").all():
+            for item in requisition.items.select_related("lot", "product", "warehouse_item").all():
                 it = by_id.get(item.id)
                 if not it:
                     continue
@@ -1153,6 +1194,8 @@ class MaterialRequisitionViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
                         quantity=qty,
                         material_request_item=item,
                     )
+                elif item.product_id:
+                    _issue_pharmacy_product_stock(item, qty)
                 else:
                     _issue_warehouse_stock(
                         item,

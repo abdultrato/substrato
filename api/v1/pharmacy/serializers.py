@@ -310,7 +310,7 @@ class MaterialRequisitionItemWriteSerializer(LegacyAliasSerializerMixin, seriali
 
     class Meta:
         model = MaterialRequisitionItem
-        fields = ("position", "lot", "warehouse_item", "requested_quantity", "notes")
+        fields = ("position", "lot", "product", "warehouse_item", "requested_quantity", "notes")
 
 
 class MaterialRequisitionItemSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer):
@@ -333,6 +333,8 @@ class MaterialRequisitionItemSerializer(LegacyAliasSerializerMixin, serializers.
     def get_product_name(self, obj):
         if obj.lot_id:
             return getattr(getattr(obj.lot, "product", None), "name", None)
+        if obj.product_id:
+            return getattr(obj.product, "name", None)
         if obj.warehouse_item_id:
             return getattr(obj.warehouse_item, "name", None)
         return None
@@ -403,14 +405,16 @@ class MaterialRequisitionSerializer(LegacyAliasSerializerMixin, serializers.Mode
 
         for idx, item in enumerate(items):
             lot = item.get("lot")
+            product = item.get("product")
             warehouse_item = item.get("warehouse_item")
-            if bool(lot) == bool(warehouse_item):
+            provided = [x for x in (lot, product, warehouse_item) if x]
+            if len(provided) != 1:
                 raise serializers.ValidationError(
-                    f"Item {idx + 1}: informe exatamente um — lote da farmácia ou item de armazém."
+                    f"Item {idx + 1}: informe exatamente um — lote, produto ou item de armazém."
                 )
 
-            target = lot or warehouse_item
-            target_label = "lote" if lot else "item de armazém"
+            target = provided[0]
+            target_label = "lote" if lot else ("produto" if product else "item de armazém")
 
             if getattr(target, "deleted", False):
                 raise serializers.ValidationError(
