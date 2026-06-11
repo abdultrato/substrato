@@ -5,6 +5,35 @@
 
 ---
 
+## Atualização de implementação — 2026-06-11
+
+A leitura original abaixo foi útil como baseline, mas subestimava a cobertura real porque só contava páginas declaradas com `GeneratedResource*`. O frontend também expõe recursos por rotas dedicadas, `ResourceListPage` direto e registry dinâmico.
+
+Estado corrigido nesta revisão:
+
+| Frente | Estado atual | Evidência no frontend |
+|--------|--------------|----------------------|
+| Dental — 17 sub-recursos sem página | Resolvido | `frontend-next/app/dental/resourceRegistry.ts` cobre os 17 endpoints e `frontend-next/app/dental/[resourceSlug]/` fornece listagem, criação, detalhe e edição. |
+| Public health — 8 endpoints | Resolvido | 7 recursos possuem páginas dedicadas completas em `frontend-next/app/public-health/*`; `/public_health/dashboard/` está exposto em `/public-health/dashboard/` e agora também no catálogo `MODULES`. |
+| Warehouse — 15 recursos/linhas | Resolvido | Todos os 15 recursos apontados possuem `page.tsx`, `new`, detalhe e `edit` em `frontend-next/app/warehouse/*`. |
+| Páginas frontend sem backend | Corrigido | Os 3 endpoints `/ai/assistant/*/` ficam como APIs customizadas válidas; os 15 endpoints sem contrato OpenAPI foram redirecionados para superfícies ativas no `next.config.js`. |
+
+Guardrail acrescentado:
+
+- `frontend-next/__tests__/frontend-coverage-report-regressions.test.ts` fixa as lacunas deste relatório para evitar regressão.
+- `frontend-next/__tests__/modules-catalog.test.ts` agora valida que o catálogo estático também inclui `/public_health/dashboard/`.
+
+Práticas saudáveis adicionais incorporadas:
+
+- Distinguir CRUD isolado de segunda camada operacional. Exemplo: linhas e itens podem existir como endpoint, mas a navegação principal deve preservar o contexto do documento/pedido quando a regra de negócio exigir.
+- Manter recursos agregados como dashboard em página dedicada, não como formulário genérico.
+- Tratar páginas geradas sem contrato de backend com redirect explícito, evitando 404 silencioso.
+- Cobrir a fisiologia do sistema com testes de catálogo e rotas, não apenas com relatório Markdown estático.
+
+As seções abaixo permanecem como histórico da varredura original.
+
+---
+
 ## Resumo executivo
 
 | Métrica | Valor |

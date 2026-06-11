@@ -235,6 +235,24 @@ describe("modules catalog discovery", () => {
     expect(endpoints).toContain("/dashboard/analytics/")
     expect(endpoints).toContain("/human_resources/profissao/")
     expect(endpoints).toContain("/nursing/ward_dashboard/")
+    expect(endpoints).toContain("/public_health/dashboard/")
+  })
+
+  it("exposes the complete public health endpoint set in the static catalog", () => {
+    const endpoints = new Set(MODULES.flatMap((group) => group.resources.map((resource) => resource.endpoint)))
+
+    expect(Array.from(endpoints)).toEqual(
+      expect.arrayContaining([
+        "/public_health/vaccine/",
+        "/public_health/lot/",
+        "/public_health/campaign/",
+        "/public_health/target/",
+        "/public_health/immunization/",
+        "/public_health/adverse_event/",
+        "/public_health/notification/",
+        "/public_health/dashboard/",
+      ])
+    )
   })
 
   it("does not expose known misleading legacy API routes in the static catalog", () => {

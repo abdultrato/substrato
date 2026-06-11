@@ -76,7 +76,7 @@ const MODULES_BASE: ModuleGroup[] = [
     key: "clinical",
     label: "Área Clínica",
     resources: [
-      { key: "paciente", label: "Paciente", endpoint: "/clinical/patient/", adminListHref: "/admin/clinico/patient/" },
+      { key: "paciente", label: "Pacientes", endpoint: "/clinical/patient/", adminListHref: "/admin/clinico/patient/" },
       { key: "exame", label: "Exame", endpoint: "/clinical/exam/", adminListHref: "/admin/clinico/labexam/" },
       { key: "examemedico", label: "Exame Médico", endpoint: "/clinical/medicalexam/", adminListHref: "/admin/clinico/medicalexam/" },
       { key: "examecampo", label: "Campo de Exame", endpoint: "/clinical/examfield/", adminListHref: "/admin/clinico/labexamfield/" },
@@ -134,6 +134,7 @@ const MODULES_BASE: ModuleGroup[] = [
       { key: "immunization", label: "Registos de Imunização", endpoint: "/public_health/immunization/", adminListHref: "/admin/saude_publica/immunizationrecord/" },
       { key: "adverse_event", label: "Eventos Adversos AEFI", endpoint: "/public_health/adverse_event/", adminListHref: "/admin/saude_publica/adverseeventfollowingimmunization/" },
       { key: "notification", label: "Notificações Oficiais", endpoint: "/public_health/notification/", adminListHref: "/admin/saude_publica/publichealthnotification/" },
+      { key: "dashboard", label: "Dashboard de Saúde Pública", endpoint: "/public_health/dashboard/" },
     ],
   },
   {

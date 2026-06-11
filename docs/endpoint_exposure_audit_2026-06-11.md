@@ -2,6 +2,15 @@
 
 Data da varredura: 2026-06-11
 
+Atualizacao metodologica posterior em 2026-06-11:
+- A varredura original abaixo conta paginas dedicadas principalmente por endpoint literal em `GeneratedResourceListPage`.
+- Para evitar falso positivo, a cobertura atual tambem deve considerar:
+  - rotas dedicadas de `public-health` baseadas em `PublicHealthListPage`;
+  - `ResourceListPage` direto para endpoints agregados como `/public_health/dashboard/`;
+  - registry dinamico de odontologia em `frontend-next/app/dental/resourceRegistry.ts`;
+  - redirects explicitos em `frontend-next/next.config.js` para paginas geradas sem contrato OpenAPI.
+- Esses pontos agora estao protegidos por `frontend-next/__tests__/frontend-coverage-report-regressions.test.ts`.
+
 Atualizacao de implementacao em 2026-06-11:
 - Foram criadas paginas dedicadas para os 26 endpoints que continuavam sem rota propria apos considerar aliases e rotas dinamicas existentes.
 - Foram criadas mais 107 subpaginas CRUD (`new`, detalhe e/ou edicao) para listas dedicadas que ja existiam, mas ainda nao tinham todas as paginas suportadas pelo OpenAPI.
