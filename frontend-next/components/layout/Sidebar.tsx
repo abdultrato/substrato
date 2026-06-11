@@ -322,7 +322,7 @@ export default function Sidebar({ user, open = false, onClose, className }: Prop
     }, [prefetchRoute, visibleItems])
 
     const menu = (
-        <div className="flex h-full w-64 flex-col overflow-hidden border-r border-border bg-card/95 pb-12 text-foreground shadow-none backdrop-blur transition-[width,box-shadow,background-color] duration-200 ease-out supports-[backdrop-filter]:bg-card/85 md:w-16 md:shadow-md md:group-hover/sidebar:w-72 md:group-hover/sidebar:shadow-xl md:group-hover/sidebar:shadow-slate-950/10 md:group-focus-within/sidebar:w-72 md:group-focus-within/sidebar:shadow-xl md:dark:shadow-black/30">
+        <div className="flex h-full w-full flex-col overflow-hidden border-r border-border bg-card/95 pb-12 text-foreground shadow-none backdrop-blur transition-[box-shadow,background-color] duration-200 ease-out supports-[backdrop-filter]:bg-card/85 md:shadow-md md:group-hover/sidebar:shadow-xl md:group-hover/sidebar:shadow-slate-950/10 md:group-focus-within/sidebar:shadow-xl md:dark:shadow-black/30">
             <div className="sticky top-0 z-10 flex min-h-16 items-center justify-center border-b border-border/80 bg-card/95 px-3 py-3 backdrop-blur transition-colors supports-[backdrop-filter]:bg-card/85 md:group-hover/sidebar:justify-between md:group-focus-within/sidebar:justify-between">
                 <Link
                     href={homeHref}
@@ -340,7 +340,7 @@ export default function Sidebar({ user, open = false, onClose, className }: Prop
                             backgroundPosition: "center",
                         }}
                     />
-                    <div className="min-w-0 overflow-hidden transition-all duration-200 md:w-0 md:opacity-0 md:group-hover/sidebar:w-auto md:group-hover/sidebar:opacity-100 md:group-focus-within/sidebar:w-auto md:group-focus-within/sidebar:opacity-100">
+                    <div className="min-w-0 overflow-hidden transition-all duration-200 md:max-w-0 md:opacity-0 md:group-hover/sidebar:max-w-44 md:group-hover/sidebar:opacity-100 md:group-focus-within/sidebar:max-w-44 md:group-focus-within/sidebar:opacity-100">
                         <div className="truncate font-display text-sm font-bold tracking-tight text-foreground">
                             Substrato
                         </div>
@@ -359,7 +359,7 @@ export default function Sidebar({ user, open = false, onClose, className }: Prop
                 </button>
             </div>
 
-            <nav className="flex flex-1 flex-col gap-3 overflow-y-auto overflow-x-hidden px-2 pb-6 pt-3">
+            <nav className="flex flex-1 flex-col gap-3 overflow-y-auto overflow-x-hidden overscroll-contain px-2 pb-6 pt-3 [scrollbar-gutter:stable]">
                 {sectionedItems.map((section) => (
                     <div key={section.label} className="space-y-1">
                         <div className="h-5 overflow-hidden px-2.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground opacity-100 transition-all duration-200 md:h-2 md:opacity-0 md:group-hover/sidebar:h-5 md:group-hover/sidebar:opacity-100 md:group-focus-within/sidebar:h-5 md:group-focus-within/sidebar:opacity-100">
@@ -407,7 +407,7 @@ export default function Sidebar({ user, open = false, onClose, className }: Prop
                                                 }}
                                             />
                                         )}
-                                        <span className="truncate opacity-100 transition-all duration-200 md:max-w-0 md:-translate-x-1 md:opacity-0 md:group-hover/sidebar:max-w-48 md:group-hover/sidebar:translate-x-0 md:group-hover/sidebar:opacity-100 md:group-focus-within/sidebar:max-w-48 md:group-focus-within/sidebar:translate-x-0 md:group-focus-within/sidebar:opacity-100">
+                                        <span className="truncate opacity-100 transition-all duration-200 md:max-w-0 md:-translate-x-1 md:opacity-0 md:group-hover/sidebar:max-w-[13rem] md:group-hover/sidebar:translate-x-0 md:group-hover/sidebar:opacity-100 md:group-focus-within/sidebar:max-w-[13rem] md:group-focus-within/sidebar:translate-x-0 md:group-focus-within/sidebar:opacity-100">
                                             {t(item.label, item.labelEn || item.label)}
                                         </span>
                                     </Link>
@@ -427,11 +427,11 @@ export default function Sidebar({ user, open = false, onClose, className }: Prop
                 >
                     <span className="flex min-w-0 items-center gap-2">
                         {isDark ? <Sun size={15} /> : <Moon size={15} />}
-                        <span className="truncate md:hidden md:group-hover/sidebar:inline md:group-focus-within/sidebar:inline">
+                        <span className="truncate transition-all duration-200 md:max-w-0 md:opacity-0 md:group-hover/sidebar:max-w-24 md:group-hover/sidebar:opacity-100 md:group-focus-within/sidebar:max-w-24 md:group-focus-within/sidebar:opacity-100">
                             {t("Tema", "Theme")}
                         </span>
                     </span>
-                    <span className="text-[10px] uppercase tracking-wider text-muted-foreground md:hidden md:group-hover/sidebar:inline md:group-focus-within/sidebar:inline">
+                    <span className="text-[10px] uppercase tracking-wider text-muted-foreground transition-all duration-200 md:max-w-0 md:overflow-hidden md:opacity-0 md:group-hover/sidebar:max-w-20 md:group-hover/sidebar:opacity-100 md:group-focus-within/sidebar:max-w-20 md:group-focus-within/sidebar:opacity-100">
                         {isDark ? t("Claro", "Light") : t("Escuro", "Dark")}
                     </span>
                 </button>
@@ -441,7 +441,7 @@ export default function Sidebar({ user, open = false, onClose, className }: Prop
 
     return (
         <>
-            <aside className={`group/sidebar hidden md:z-50 md:flex md:w-16 md:shrink-0 md:overflow-visible ${className || ""}`}>{menu}</aside>
+            <aside className={`group/sidebar hidden md:z-50 md:flex md:w-16 md:shrink-0 md:overflow-hidden md:transition-[width] md:duration-200 md:ease-out md:hover:w-72 md:focus-within:w-72 ${className || ""}`}>{menu}</aside>
 
             <div className={`fixed inset-0 z-50 pointer-events-none md:hidden ${open ? "" : ""}`}>
                 <div

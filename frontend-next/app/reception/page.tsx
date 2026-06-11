@@ -197,7 +197,7 @@ export default function RecepcaoPage() {
                         podeVerAdmin ? (
                             <Link
                                 href="/admin/"
-                                className="inline-flex items-center rounded-lg border border-gray-200 px-3 py-1.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
+                                className="inline-flex items-center rounded-lg border border-border bg-card px-3 py-1.5 text-sm font-medium text-foreground-2 transition hover:bg-muted hover:text-foreground"
                             >
                                 Abrir admin
                             </Link>
@@ -230,14 +230,15 @@ export default function RecepcaoPage() {
                                 <Link
                                     key={sector.href}
                                     href={sector.href}
-                                    className="group relative flex min-h-[100px] flex-col justify-end overflow-hidden rounded-2xl border border-slate-200 bg-gradient-to-br from-white to-slate-50 p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md"
+                                    className="group relative flex min-h-[100px] flex-col justify-end overflow-hidden rounded-lg border border-border bg-card p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/40 hover:bg-muted/40 hover:shadow-md"
                                 >
                                     <span
                                         aria-hidden
                                         className="pointer-events-none absolute inset-0"
                                         style={{
-                                            background: "#1e293b",
-                                            opacity: 0.09,
+                                            background: "currentColor",
+                                            color: "hsl(var(--muted-foreground-hsl))",
+                                            opacity: 0.13,
                                             WebkitMaskImage: `url("${iconUrl}")`,
                                             WebkitMaskRepeat: "no-repeat",
                                             WebkitMaskSize: "52%",
@@ -248,7 +249,7 @@ export default function RecepcaoPage() {
                                             maskPosition: "center 30%",
                                         }}
                                     />
-                                    <p className="relative text-sm font-semibold text-slate-900">{sector.title}</p>
+                                    <p className="relative text-sm font-semibold text-foreground">{sector.title}</p>
                                 </Link>
                             )
                         })}
@@ -261,16 +262,16 @@ export default function RecepcaoPage() {
                         subtitle="Pacientes que passaram pela recepção hoje."
                     >
                         {carregando ? (
-                            <div className="text-sm text-gray-500">Carregando fila...</div>
+                            <div className="text-sm text-muted-foreground">Carregando fila...</div>
                         ) : workspace.queue.length === 0 ? (
-                            <div className="text-sm text-gray-500">
+                            <div className="text-sm text-muted-foreground">
                                 Nenhum check-in aberto hoje. A recepção já pode começar a registrar entradas.
                             </div>
                         ) : (
                             <div className="overflow-x-auto">
                                 <table className="min-w-full text-sm">
                                     <thead>
-                                        <tr className="border-b text-left text-gray-500">
+                                        <tr className="border-b border-border text-left text-muted-foreground">
                                             <th className="pb-2 pr-4 font-medium">Paciente</th>
                                             <th className="pb-2 pr-4 font-medium">Prioridade</th>
                                             <th className="pb-2 pr-4 font-medium">Estado</th>
@@ -280,17 +281,17 @@ export default function RecepcaoPage() {
                                     </thead>
                                     <tbody>
                                         {workspace.queue.map((item) => (
-                                            <tr key={item.id} className="border-b last:border-b-0">
+                                            <tr key={item.id} className="border-b border-border last:border-b-0">
                                                 <td className="py-2 pr-4">
-                                                    <div className="font-medium text-gray-900">{item.patient_name}</div>
-                                                    <div className="text-xs text-gray-500">{item.patient_code}</div>
+                                                    <div className="font-medium text-foreground">{item.patient_name}</div>
+                                                    <div className="text-xs text-muted-foreground">{item.patient_code}</div>
                                                 </td>
-                                                <td className="py-2 pr-4 text-gray-700">{item.priority}</td>
-                                                <td className="py-2 pr-4 text-gray-700">{item.status}</td>
-                                                <td className="py-2 pr-4 text-gray-700">
+                                                <td className="py-2 pr-4 text-foreground-2">{item.priority}</td>
+                                                <td className="py-2 pr-4 text-foreground-2">{item.status}</td>
+                                                <td className="py-2 pr-4 text-foreground-2">
                                                     {item.request_code || "Pendente"}
                                                 </td>
-                                                <td className="py-2 text-gray-700">
+                                                <td className="py-2 text-foreground-2">
                                                     {item.invoice_code || "Pendente"}
                                                 </td>
                                             </tr>
@@ -325,14 +326,14 @@ export default function RecepcaoPage() {
                                         <Link
                                             key={atalho.href}
                                             href={atalho.href}
-                                            className="flex items-center gap-3 rounded-xl border border-gray-200 px-3 py-2.5 transition hover:border-gray-300 hover:bg-gray-50"
+                                            className="flex items-center gap-3 rounded-lg border border-border bg-card px-3 py-2.5 transition hover:border-primary/40 hover:bg-muted/40"
                                         >
                                             <span
                                                 aria-hidden
-                                                className="pointer-events-none relative h-8 w-8 shrink-0 rounded-lg bg-gray-100"
+                                                className="pointer-events-none relative h-8 w-8 shrink-0 rounded-lg bg-muted"
                                             >
                                                 <span
-                                                    className="absolute inset-[6px] text-gray-600"
+                                                    className="absolute inset-[6px] text-muted-foreground"
                                                     style={{
                                                         backgroundColor: "currentColor",
                                                         WebkitMaskImage: `url("${iconUrl}")`,
@@ -346,7 +347,7 @@ export default function RecepcaoPage() {
                                                     }}
                                                 />
                                             </span>
-                                            <span className="text-sm font-medium text-gray-900">{atalho.title}</span>
+                                            <span className="text-sm font-medium text-foreground">{atalho.title}</span>
                                         </Link>
                                     )
                                 })}
@@ -408,13 +409,14 @@ function ResumoCard({
 }) {
     const iconUrl = lucideToDataUrl(Icon)
     return (
-        <div className="relative overflow-hidden rounded-2xl border border-gray-200 bg-white px-4 py-3 shadow-sm">
+        <div className="relative overflow-hidden rounded-lg border border-border bg-card px-4 py-3 shadow-sm">
             <span
                 aria-hidden
                 className="pointer-events-none absolute right-3 top-1/2 h-12 w-12 -translate-y-1/2"
                 style={{
-                    background: "#374151",
-                    opacity: 0.07,
+                    background: "currentColor",
+                    color: "hsl(var(--muted-foreground-hsl))",
+                    opacity: 0.11,
                     WebkitMaskImage: `url("${iconUrl}")`,
                     WebkitMaskRepeat: "no-repeat",
                     WebkitMaskSize: "contain",
@@ -425,8 +427,8 @@ function ResumoCard({
                     maskPosition: "center",
                 }}
             />
-            <div className="text-sm text-gray-500">{title}</div>
-            <div className="mt-1 text-2xl font-semibold text-gray-900">{value}</div>
+            <div className="text-sm text-muted-foreground">{title}</div>
+            <div className="mt-1 text-2xl font-semibold text-foreground">{value}</div>
         </div>
     )
 }
@@ -439,9 +441,9 @@ function IndicadorLinha({
     value: number | string
 }) {
     return (
-        <div className="flex items-center justify-between rounded-lg bg-gray-50 px-3 py-1.5">
-            <span className="text-gray-600">{label}</span>
-            <span className="font-medium text-gray-900">{value}</span>
+        <div className="flex items-center justify-between rounded-lg bg-muted px-3 py-1.5">
+            <span className="text-muted-foreground">{label}</span>
+            <span className="font-medium text-foreground">{value}</span>
         </div>
     )
 }

@@ -222,7 +222,7 @@ export default function AppLayout ( {
                 <div className="flex min-h-0 min-w-0 flex-1 flex-col">
                     <Header user={user} onMenuClick={handleMenuClick} />
 
-                <main className="substrato-app-surface min-w-0 flex-1 overflow-x-hidden overflow-y-auto bg-background px-3 py-4 pb-[calc(5rem+env(safe-area-inset-bottom))] sm:px-4 md:px-6 md:py-5 md:pb-14">
+                <main className="substrato-app-surface min-w-0 flex-1 overflow-x-hidden bg-background px-3 py-4 pb-[calc(5rem+env(safe-area-inset-bottom))] sm:px-4 md:px-6 md:py-5 md:pb-14">
                         <div className="page-transition">
                             <AutoTranslateTree>
                                 <AccessDenied
@@ -268,7 +268,7 @@ export default function AppLayout ( {
     }
 
     return (
-        <div className="substrato-mobile-dvh flex min-h-screen bg-background flex-col md:h-screen md:flex-row">
+        <div className="substrato-mobile-dvh flex min-h-screen bg-background flex-col md:flex-row">
             <Sidebar
                 user={user}
                 open={navOpen}
@@ -281,7 +281,7 @@ export default function AppLayout ( {
 
                 {subNav}
 
-                <main className="substrato-app-surface min-w-0 flex-1 overflow-x-hidden overflow-y-auto bg-background px-3 py-4 pb-[calc(5rem+env(safe-area-inset-bottom))] sm:px-4 md:px-6 md:py-5 md:pb-14">
+                <main className="substrato-app-surface min-w-0 flex-1 overflow-x-hidden bg-background px-3 py-4 pb-[calc(5rem+env(safe-area-inset-bottom))] sm:px-4 md:px-6 md:py-5 md:pb-14">
                     <div className="page-transition">
                         <AutoTranslateTree>{children}</AutoTranslateTree>
                     </div>
