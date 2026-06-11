@@ -15933,16 +15933,68 @@
                   "label": "g/dl"
                 },
                 {
+                  "value": "g/L",
+                  "label": "g/L"
+                },
+                {
                   "value": "mg/dl",
                   "label": "mg/dl"
+                },
+                {
+                  "value": "mg/L",
+                  "label": "mg/L"
+                },
+                {
+                  "value": "mg/24h",
+                  "label": "mg/24h"
+                },
+                {
+                  "value": "\u00b5g/dL",
+                  "label": "\u00b5g/dL"
+                },
+                {
+                  "value": "\u00b5g/L",
+                  "label": "\u00b5g/L"
+                },
+                {
+                  "value": "\u00b5g/mL",
+                  "label": "\u00b5g/mL"
+                },
+                {
+                  "value": "ng/mL",
+                  "label": "ng/mL"
+                },
+                {
+                  "value": "ng/dL",
+                  "label": "ng/dL"
+                },
+                {
+                  "value": "pg/mL",
+                  "label": "pg/mL"
                 },
                 {
                   "value": "mmol/l",
                   "label": "mmol/l"
                 },
                 {
+                  "value": "mmol/mol",
+                  "label": "mmol/mol"
+                },
+                {
                   "value": "\u00b5mol/l",
                   "label": "\u00b5mol/l"
+                },
+                {
+                  "value": "nmol/L",
+                  "label": "nmol/L"
+                },
+                {
+                  "value": "pmol/L",
+                  "label": "pmol/L"
+                },
+                {
+                  "value": "mEq/L",
+                  "label": "mEq/L"
                 },
                 {
                   "value": "cel/mm3",
@@ -15965,6 +16017,26 @@
                   "label": "u/l"
                 },
                 {
+                  "value": "U/mL",
+                  "label": "U/mL"
+                },
+                {
+                  "value": "UI/L",
+                  "label": "UI/L"
+                },
+                {
+                  "value": "UI/mL",
+                  "label": "UI/mL"
+                },
+                {
+                  "value": "mUI/L",
+                  "label": "mUI/L"
+                },
+                {
+                  "value": "kU/L",
+                  "label": "kU/L"
+                },
+                {
                   "value": "p/\u00b5L",
                   "label": "p/\u00b5L"
                 },
@@ -15975,10 +16047,38 @@
                 {
                   "value": "fl",
                   "label": "fl"
+                },
+                {
+                  "value": "mm/h",
+                  "label": "mm/h"
+                },
+                {
+                  "value": "mmHg",
+                  "label": "mmHg"
+                },
+                {
+                  "value": "mOsm/kg",
+                  "label": "mOsm/kg"
+                },
+                {
+                  "value": "s",
+                  "label": "s"
+                },
+                {
+                  "value": "INR",
+                  "label": "INR"
+                },
+                {
+                  "value": "raz\u00e3o/\u00edndice",
+                  "label": "raz\u00e3o/\u00edndice"
+                },
+                {
+                  "value": "sem unidade",
+                  "label": "sem unidade"
                 }
               ],
               "choices_groups": [],
-              "choices_count": 12
+              "choices_count": 37
             },
             {
               "name": "updated_at",

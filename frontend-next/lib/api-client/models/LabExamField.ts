@@ -19,7 +19,7 @@ export type LabExamField = {
     /**
      * Unidade de medida do parâmetro (ex: mg/dL, g/L)
      */
-    unit?: 'g/dl' | 'mg/dl' | 'mmol/l' | 'µmol/l' | 'cel/mm3' | 'x10³/µl' | 'x10⁶/µL' | '%' | 'u/l' | 'p/µL' | 'ph' | 'fl';
+    unit?: 'g/dl' | 'g/L' | 'mg/dl' | 'mg/L' | 'mg/24h' | 'µg/dL' | 'µg/L' | 'µg/mL' | 'ng/mL' | 'ng/dL' | 'pg/mL' | 'mmol/l' | 'mmol/mol' | 'µmol/l' | 'nmol/L' | 'pmol/L' | 'mEq/L' | 'cel/mm3' | 'x10³/µl' | 'x10⁶/µL' | '%' | 'u/l' | 'U/mL' | 'UI/L' | 'UI/mL' | 'mUI/L' | 'kU/L' | 'p/µL' | 'ph' | 'fl' | 'mm/h' | 'mmHg' | 'mOsm/kg' | 's' | 'INR' | 'razão/índice' | 'sem unidade';
     reference_min?: string | null;
     reference_max?: string | null;
     critical_min?: string | null;
