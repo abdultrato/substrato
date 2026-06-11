@@ -55,7 +55,7 @@ interface Props {
     className?: string
 }
 
-interface NavItem {
+export interface NavItem {
     href: string
     label: string
     labelEn?: string
@@ -65,7 +65,7 @@ interface NavItem {
     descEn?: string
 }
 
-interface NavSection {
+export interface NavSection {
     label: string
     labelEn: string
     hrefs: string[]
@@ -79,7 +79,7 @@ const PRIORITY_PREFETCH_LIMIT = 5
 /**
  * Definição dos menus com RBAC
  */
-const NAV_ITEMS: NavItem[] = [
+export const NAV_ITEMS: NavItem[] = [
     { href: "/workspaces", label: "Áreas de trabalho", labelEn: "Workspaces", icon: Layers, desc: "Escolha entre Saúde, Educação e Transportes e Logística", descEn: "Choose between Healthcare, Education, and Transport & Logistics", groups: [GROUPS.ADMIN] },
     { href: "/", label: "Painel", labelEn: "Dashboard", icon: ClipboardList, desc: "Visão geral e indicadores", descEn: "Overview and indicators", groups: [GROUPS.ADMIN, GROUPS.CONTABILIDADE] },
     { href: "/healthcare", label: "Saúde", labelEn: "Healthcare", icon: Stethoscope, desc: "Hub clínico unificado", descEn: "Unified clinical hub", groups: [GROUPS.ADMIN, GROUPS.RECEPCAO, GROUPS.LABORATORIO, GROUPS.ENFERMAGEM, GROUPS.MEDICINA, GROUPS.MEDICINA_OCUPACIONAL, GROUPS.FARMACIA, GROUPS.FARMACIA_CLINICA, GROUPS.TELEMEDICINA, GROUPS.SAUDE_PUBLICA, GROUPS.FISIOTERAPIA, GROUPS.RADIOLOGIA, GROUPS.CARDIOLOGIA, GROUPS.NEUROLOGIA, GROUPS.OFTALMOLOGIA, GROUPS.TERAPIA_OCUPACIONAL, GROUPS.FONOAUDIOLOGIA] },
@@ -134,7 +134,7 @@ const NAV_ITEMS: NavItem[] = [
     { href: "/admin", label: "Administração", labelEn: "Administration", icon: Shield, desc: "Painel administrativo", descEn: "Administrative panel", groups: [GROUPS.ADMIN] },
 ]
 
-const NAV_SECTIONS: NavSection[] = [
+export const NAV_SECTIONS: NavSection[] = [
     {
         label: "Início",
         labelEn: "Home",
@@ -431,11 +431,11 @@ export default function Sidebar({ user, open = false, onClose, className }: Prop
                 ))}
             </nav>
 
-            <div className="border-t border-border/80 p-2">
+            <div className="flex h-10 items-center border-t border-border/80 px-2 py-1">
                 <button
                     type="button"
                     onClick={toggleTheme}
-                    className="flex w-full items-center justify-center gap-2 rounded-md border border-border bg-muted px-2.5 py-2 text-xs font-semibold text-foreground transition-colors hover:bg-muted-2 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 md:h-10 md:px-0 md:group-hover/sidebar:justify-between md:group-hover/sidebar:px-2.5 md:group-focus-within/sidebar:justify-between md:group-focus-within/sidebar:px-2.5"
+                    className="flex h-8 w-full items-center justify-center gap-2 rounded-md border border-border bg-muted px-2.5 text-xs font-semibold text-foreground transition-colors hover:bg-muted-2 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 md:px-0 md:group-hover/sidebar:justify-between md:group-hover/sidebar:px-2.5 md:group-focus-within/sidebar:justify-between md:group-focus-within/sidebar:px-2.5"
                     title={isDark ? t("Modo claro", "Light mode") : t("Modo escuro", "Dark mode")}
                 >
                     <span className="flex min-w-0 items-center gap-2">
