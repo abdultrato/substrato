@@ -12,7 +12,38 @@ class RequestingSector(models.TextChoices):
     RECEPCAO = "REC", "Recepção"
     MEDICINA = "MED", "Medicina"
     MEDICINA_OCUPACIONAL = "MOC", "Medicina Ocupacional"
+    FARMACIA = "FAR", "Farmácia"
+    FARMACIA_CLINICA = "FCL", "Farmácia Clínica"
+    ODONTOLOGIA = "ODO", "Odontologia"
+    VETERINARIA = "VET", "Medicina Veterinária"
+    FISIOTERAPIA = "FIS", "Fisioterapia"
+    RADIOLOGIA = "RAD", "Radiologia"
+    CARDIOLOGIA = "CAR", "Cardiologia"
+    NEUROLOGIA = "NEU", "Neurologia"
+    OFTALMOLOGIA = "OFT", "Oftalmologia"
+    TERAPIA_OCUPACIONAL = "TOC", "Terapia Ocupacional"
+    FONOAUDIOLOGIA = "FON", "Fonoaudiologia"
+    TELEMEDICINA = "TLM", "Telemedicina"
+    SAUDE_PUBLICA = "SPU", "Saúde Pública"
+    CREDITO_FINANCIAMENTO = "CRF", "Créditos e Financiamento"
+    LOGISTICA = "LOG", "Logística"
+    MANUTENCAO = "MAN", "Manutenção"
+    CONTABILIDADE = "CON", "Contabilidade"
+    RECURSOS_HUMANOS = "RHU", "Recursos Humanos"
+    EDUCACAO = "EDU", "Educação"
     OUTROS = "OUT", "Outros setores"
+
+
+class RequisitionSource(models.TextChoices):
+    PHARMACY = "PHA", "Estoque da farmácia"
+    WAREHOUSE = "WHS", "Armazém central"
+
+
+def source_for_sector(sector: str | None) -> str:
+    """A farmácia abastece-se no armazém; os demais setores abastecem-se na farmácia."""
+    if sector == RequestingSector.FARMACIA:
+        return RequisitionSource.WAREHOUSE
+    return RequisitionSource.PHARMACY
 
 
 class MaterialRequisitionStatus(models.TextChoices):
@@ -24,9 +55,10 @@ class MaterialRequisitionStatus(models.TextChoices):
 
 class MaterialRequisition(NoNameCoreModel):
     """
-    Requisição interna de materiais (multi-setor) para a farmácia.
+    Requisição interna de materiais (multi-setor).
 
-    - Criada por Laboratório / Enfermagem / Recepção
+    - Setores clínicos (incl. Farmácia Clínica) requisitam à Farmácia (source=PHA)
+    - A Farmácia requisita insumos ao Armazém central (source=WHS)
     - Aviada (total/parcial) pela Farmácia
     - Pode ser arquivada quando não é possível atender no momento
     """
@@ -38,6 +70,15 @@ class MaterialRequisition(NoNameCoreModel):
         verbose_name="Setor solicitante",
         max_length=3,
         choices=RequestingSector.choices,
+        db_index=True,
+    )
+
+    source = models.CharField(
+        db_column="source",
+        verbose_name="Fonte de abastecimento",
+        max_length=3,
+        choices=RequisitionSource.choices,
+        default=RequisitionSource.PHARMACY,
         db_index=True,
     )
 

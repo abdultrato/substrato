@@ -36,10 +36,24 @@ GROUPS = {
     "STUDENT_EN": "Student",
     "MEDICINA": "Médico",
     "FARMACIA": "Técnico de Farmácia",
+    "FARMACIA_CLINICA": "Farmácia Clínica",
     "MANUTENCAO": "Manutenção",
     "MEDICINA_OCUPACIONAL": "Medicina Ocupacional",
     "CONTABILIDADE": "Contabilidade",
     "RECURSOS_HUMANOS": "Gestor de RH",
+    "ODONTOLOGIA": "Odontologia",
+    "VETERINARIA": "Medicina Veterinária",
+    "FISIOTERAPIA": "Fisioterapia",
+    "RADIOLOGIA": "Radiologia",
+    "CARDIOLOGIA": "Cardiologia",
+    "NEUROLOGIA": "Neurologia",
+    "OFTALMOLOGIA": "Oftalmologia",
+    "TERAPIA_OCUPACIONAL": "Terapia Ocupacional",
+    "FONOAUDIOLOGIA": "Fonoaudiologia",
+    "TELEMEDICINA": "Telemedicina",
+    "SAUDE_PUBLICA": "Saúde Pública",
+    "CREDITO_FINANCIAMENTO": "Créditos e Financiamento",
+    "LOGISTICA": "Gestor de Logística",
 }
 
 
@@ -118,6 +132,13 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
         "pharmacy-sale_item": pharmacy_crud_methods,
         "pharmacy-material_requisition": pharmacy_crud_methods,
         "pharmacy-material_requisition_item": pharmacy_crud_methods,
+    }
+    # Logística interna: setores solicitantes consultam lotes e criam/acompanham
+    # requisições de materiais à farmácia.
+    pharmacy_requisition_requester = {
+        "pharmacy-lot": SAFE_METHODS,
+        "pharmacy-material_requisition": SAFE_METHODS | WRITE_METHODS,
+        "pharmacy-material_requisition_item": SAFE_METHODS,
     }
     warehouse_resources = (
         "cycle_count",
@@ -528,18 +549,22 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
         g["PROFESSOR"]: {
             **education_manage,
             **identity_user_hierarchy_manage,
+            **pharmacy_requisition_requester,
         },
         g["DIRETOR_ESCOLA"]: {
             **education_manage,
             **identity_user_hierarchy_manage,
+            **pharmacy_requisition_requester,
         },
         g["DIRETOR_ADJUNTO_PEDAGOGICO"]: {
             **education_manage,
             **identity_user_hierarchy_manage,
+            **pharmacy_requisition_requester,
         },
         g["TEACHER"]: {
             **education_manage,
             **identity_user_hierarchy_manage,
+            **pharmacy_requisition_requester,
         },
         g["ESTUDANTE"]: education_student_activity,
         g["ENCARREGADO_EDUCACAO"]: education_read,
@@ -555,6 +580,31 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
             # (Opcional) consultar patient para vinculos operacionais
             "clinico-patient": SAFE_METHODS,
             "clinical-patient": SAFE_METHODS,
+        },
+        g["FARMACIA_CLINICA"]: {
+            # Farmácia clínica consulta o catálogo/lotes e requisita insumos à farmácia.
+            **pharmacy_requisition_requester,
+            "pharmacy-product": SAFE_METHODS,
+            # (Opcional) consultar patient para vínculos operacionais
+            "clinico-patient": SAFE_METHODS,
+            "clinical-patient": SAFE_METHODS,
+        },
+        # Setores assistenciais e de suporte: acesso mínimo para requisitar materiais.
+        g["ODONTOLOGIA"]: {**pharmacy_requisition_requester},
+        g["VETERINARIA"]: {**pharmacy_requisition_requester},
+        g["FISIOTERAPIA"]: {**pharmacy_requisition_requester},
+        g["RADIOLOGIA"]: {**pharmacy_requisition_requester},
+        g["CARDIOLOGIA"]: {**pharmacy_requisition_requester},
+        g["NEUROLOGIA"]: {**pharmacy_requisition_requester},
+        g["OFTALMOLOGIA"]: {**pharmacy_requisition_requester},
+        g["TERAPIA_OCUPACIONAL"]: {**pharmacy_requisition_requester},
+        g["FONOAUDIOLOGIA"]: {**pharmacy_requisition_requester},
+        g["TELEMEDICINA"]: {**pharmacy_requisition_requester},
+        g["SAUDE_PUBLICA"]: {**pharmacy_requisition_requester},
+        g["CREDITO_FINANCIAMENTO"]: {**pharmacy_requisition_requester},
+        g["LOGISTICA"]: {
+            **pharmacy_requisition_requester,
+            **warehouse_crud,
         },
         g["MANUTENCAO"]: {
             # SGE (somente leitura)

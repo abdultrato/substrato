@@ -12,7 +12,11 @@ import pytest
 from apps.clinical.models.patient import Patient
 from apps.pharmacy.models.inventory_movement import InventoryMovement, MovementOrigin, MovementType
 from apps.pharmacy.models.lot import Lot
-from apps.pharmacy.models.material_requisition import MaterialRequisitionStatus, RequestingSector
+from apps.pharmacy.models.material_requisition import (
+    MaterialRequisitionStatus,
+    RequestingSector,
+    RequisitionSource,
+)
 from apps.pharmacy.models.product import Product
 from apps.pharmacy.models.product_category import ProductCategory
 from apps.pharmacy.models.sale import Sale
@@ -534,8 +538,14 @@ def test_material_requisition_requester_context_prefills_non_admin_sector(api_cl
     assert context_resp.data["can_create"] is True
     assert context_resp.data["requester_sector"] == RequestingSector.RECEPCAO
     assert context_resp.data["requester_sector_label"] == "Recepção"
+    assert context_resp.data["requester_source"] == RequisitionSource.PHARMACY
     assert context_resp.data["available_sectors"] == [
-        {"value": RequestingSector.RECEPCAO, "label": "Recepção"},
+        {
+            "value": RequestingSector.RECEPCAO,
+            "label": "Recepção",
+            "source": RequisitionSource.PHARMACY,
+            "source_label": "Estoque da farmácia",
+        },
     ]
 
 
@@ -629,8 +639,19 @@ def test_material_requisition_admin_can_select_requester_sector(api_client):
     assert create_resp.data["sector"] == RequestingSector.ENFERMAGEM
 
 
+def _warehouse_stock(tenant, *, sku="INS-001", name="Insumo Y", quantity=20):
+    """Cria item de armazém com saldo disponível numa localização."""
+    from apps.warehouse.models import StockLevel, StorageLocation, Warehouse, WarehouseItem
+
+    warehouse = Warehouse.objects.create(tenant=tenant, name="Armazém Central", code="WH1")
+    location = StorageLocation.objects.create(tenant=tenant, name="Posição A", warehouse=warehouse, code="A1")
+    item = WarehouseItem.objects.create(tenant=tenant, name=name, sku=sku)
+    StockLevel.adjust(tenant=tenant, item=item, location=location, quantity_delta=Decimal(quantity))
+    return item
+
+
 @pytest.mark.django_db
-def test_material_requisition_pharmacy_profile_cannot_create(api_client):
+def test_material_requisition_pharmacy_profile_requests_from_warehouse(api_client):
     tenant = Tenant.objects.create(
         identifier="tn-reqfar-ph",
         name="Tenant ReqFar Pharmacy",
@@ -659,16 +680,102 @@ def test_material_requisition_pharmacy_profile_cannot_create(api_client):
         initial_quantity=15,
         sale_price=prod.sale_price,
     )
+    wh_item = _warehouse_stock(tenant, quantity=20)
 
     api_client.defaults["HTTP_HOST"] = tenant.domain
     api_client.force_authenticate(user=pharmacist)
-    create_resp = api_client.post(
+
+    context_resp = api_client.get("/api/v1/pharmacy/material_requisition/requester-context/")
+    assert context_resp.status_code == 200, context_resp.data
+    assert context_resp.data["requester_sector"] == RequestingSector.FARMACIA
+    assert context_resp.data["requester_source"] == RequisitionSource.WAREHOUSE
+
+    stock_resp = api_client.get("/api/v1/pharmacy/material_requisition/warehouse-stock/")
+    assert stock_resp.status_code == 200, stock_resp.data
+    assert [(row["id"], row["available"]) for row in stock_resp.data] == [(wh_item.id, 20.0)]
+
+    # Farmácia não pode requisitar lotes da própria farmácia.
+    bad_resp = api_client.post(
         "/api/v1/pharmacy/material_requisition/",
         {"items_input": [{"lot": lot.id, "requested_quantity": 2}]},
         format="json",
     )
-    assert create_resp.status_code == 400
-    assert "não pode criar requisição" in str(create_resp.data).lower()
+    assert bad_resp.status_code == 400
+    assert "armazém" in str(bad_resp.data).lower()
+
+    create_resp = api_client.post(
+        "/api/v1/pharmacy/material_requisition/",
+        {"items_input": [{"warehouse_item": wh_item.id, "requested_quantity": 8}]},
+        format="json",
+    )
+    assert create_resp.status_code == 201, create_resp.data
+    assert create_resp.data["sector"] == RequestingSector.FARMACIA
+    assert create_resp.data["source"] == RequisitionSource.WAREHOUSE
+    assert create_resp.data["items"][0]["available_quantity"] == 20
+    req_id = create_resp.data["id"]
+
+    fulfill_resp = api_client.post(
+        f"/api/v1/pharmacy/material_requisition/{req_id}/fulfill/",
+        {"items": [{"id": create_resp.data["items"][0]["id"], "quantity": 8}]},
+        format="json",
+    )
+    assert fulfill_resp.status_code == 200, fulfill_resp.data
+    assert fulfill_resp.data["status"] == MaterialRequisitionStatus.FULFILLED
+
+    from apps.warehouse.models import StockLevel
+
+    remaining = StockLevel.objects.filter(tenant=tenant, item=wh_item).first()
+    assert remaining is not None
+    assert remaining.quantity == Decimal("12")
+
+
+@pytest.mark.django_db
+def test_material_requisition_clinical_pharmacy_requests_from_pharmacy(api_client):
+    tenant = Tenant.objects.create(
+        identifier="tn-reqfar-fcl",
+        name="Tenant ReqFar Clinical Pharmacy",
+        domain="tenant-reqfar-fcl.local",
+        active=True,
+    )
+    User = get_user_model()
+    grp_fcl, _ = Group.objects.get_or_create(name="Farmácia Clínica")
+
+    requester = User.objects.create_user(
+        username="fcl_user",
+        email="fcl-user@example.com",
+        password="testpass123",
+        tenant=tenant,
+    )
+    requester.is_staff = True
+    requester.save(update_fields=["is_staff"])
+    requester.groups.add(grp_fcl)
+
+    prod = _product(tenant)
+    lot = Lot.objects.create(
+        tenant=tenant,
+        product=prod,
+        lot_number="LREQFCL1",
+        expiration_date=timezone.localdate() + timedelta(days=50),
+        initial_quantity=15,
+        sale_price=prod.sale_price,
+    )
+
+    api_client.defaults["HTTP_HOST"] = tenant.domain
+    api_client.force_authenticate(user=requester)
+
+    context_resp = api_client.get("/api/v1/pharmacy/material_requisition/requester-context/")
+    assert context_resp.status_code == 200, context_resp.data
+    assert context_resp.data["requester_sector"] == RequestingSector.FARMACIA_CLINICA
+    assert context_resp.data["requester_source"] == RequisitionSource.PHARMACY
+
+    create_resp = api_client.post(
+        "/api/v1/pharmacy/material_requisition/",
+        {"items_input": [{"lot": lot.id, "requested_quantity": 3}]},
+        format="json",
+    )
+    assert create_resp.status_code == 201, create_resp.data
+    assert create_resp.data["sector"] == RequestingSector.FARMACIA_CLINICA
+    assert create_resp.data["source"] == RequisitionSource.PHARMACY
 
 
 @pytest.mark.django_db

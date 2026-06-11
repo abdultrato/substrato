@@ -27,6 +27,19 @@ class MaterialRequisitionItem(ScopedPositionMixin, NoNameCoreModel):
         on_delete=models.PROTECT,
         related_name="material_request_items",
         db_index=True,
+        null=True,
+        blank=True,
+    )
+
+    warehouse_item = models.ForeignKey(
+        "warehouse.WarehouseItem",
+        db_column="warehouse_item_id",
+        verbose_name="Item de armazém",
+        on_delete=models.PROTECT,
+        related_name="pharmacy_request_items",
+        db_index=True,
+        null=True,
+        blank=True,
     )
 
     requested_quantity = models.PositiveIntegerField(
@@ -64,9 +77,35 @@ class MaterialRequisitionItem(ScopedPositionMixin, NoNameCoreModel):
     @property
     def available_quantity(self) -> int:
         try:
-            return int(self.lot.balance())
+            if self.lot_id:
+                return int(self.lot.balance())
+            if self.warehouse_item_id:
+                return int(self.warehouse_item_available())
         except Exception:
             return 0
+        return 0
+
+    def warehouse_item_available(self) -> int:
+        """Saldo disponível (físico - reservado) do item de armazém em todas as localizações."""
+        from django.db.models import Sum
+
+        from apps.warehouse.models import ReservationStatus, StockLevel, StockReservation
+
+        physical = (
+            StockLevel.objects.filter(tenant_id=self.tenant_id, item_id=self.warehouse_item_id).aggregate(
+                total=Sum("quantity")
+            )["total"]
+            or 0
+        )
+        reserved = (
+            StockReservation.objects.filter(
+                tenant_id=self.tenant_id,
+                item_id=self.warehouse_item_id,
+                status=ReservationStatus.ACTIVE,
+            ).aggregate(total=Sum("quantity"))["total"]
+            or 0
+        )
+        return max(int(physical) - int(reserved), 0)
 
     def clean(self):
         super().clean()
@@ -74,8 +113,14 @@ class MaterialRequisitionItem(ScopedPositionMixin, NoNameCoreModel):
         if self.requisition_id and self.tenant_id and self.requisition.tenant_id != self.tenant_id:
             raise ValidationError("Inquilino do item difere da requisição.")
 
+        if bool(self.lot_id) == bool(self.warehouse_item_id):
+            raise ValidationError("Informe exatamente um: lote da farmácia ou item de armazém.")
+
         if self.lot_id and self.tenant_id and self.lot.tenant_id != self.tenant_id:
             raise ValidationError("Inquilino do item difere do lote.")
+
+        if self.warehouse_item_id and self.tenant_id and self.warehouse_item.tenant_id != self.tenant_id:
+            raise ValidationError("Inquilino do item difere do item de armazém.")
 
         if self.supplied_quantity and self.requested_quantity and self.supplied_quantity > self.requested_quantity:
             raise ValidationError("Quantidade aviada não pode ser maior que a solicitada.")

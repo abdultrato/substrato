@@ -11,15 +11,21 @@ import useAuthGuard from "@/hooks/useAuthGuard"
 import { useAuth } from "@/hooks/useAuth"
 import { useSafeDataRefresh, useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { apiFetch } from "@/lib/api"
-import { isMaterialRequisitionPharmacyUser } from "@/lib/material-requisition-rbac"
-import { GROUPS } from "@/lib/rbac"
+import {
+  MATERIAL_REQUISITION_PAGE_GROUPS,
+  isMaterialRequisitionPharmacyUser,
+  materialRequisitionSectorLabel,
+} from "@/lib/material-requisition-rbac"
 
 type ReqItem = {
   id: number
-  lot: number
+  lot: number | null
+  warehouse_item?: number | null
+  warehouse_item_sku?: string | null
+  warehouse_item_name?: string | null
   product_name?: string
-  lot_number?: string
-  lot_expiration_date?: string
+  lot_number?: string | null
+  lot_expiration_date?: string | null
   requested_quantity: number
   supplied_quantity: number
   available_quantity?: number
@@ -31,6 +37,9 @@ type Requisition = {
   created_at?: string
   status?: string
   sector?: string
+  sector_label?: string
+  source?: string
+  source_label?: string
   requested_by_department?: string
   created_by_name?: string
   hold_reason?: string | null
@@ -59,25 +68,6 @@ function statusLabel(s?: string) {
   }
 }
 
-function sectorLabel(s?: string) {
-  switch (s) {
-    case "LAB":
-      return "Laboratório"
-    case "ENF":
-      return "Enfermagem"
-    case "REC":
-      return "Recepção"
-    case "MED":
-      return "Medicina"
-    case "MOC":
-      return "Medicina Ocupacional"
-    case "OUT":
-      return "Outros setores"
-    default:
-      return s || "—"
-  }
-}
-
 export default function MaterialRequisitionDetailPage() {
   useAuthGuard()
   const params = useParams()
@@ -86,21 +76,7 @@ export default function MaterialRequisitionDetailPage() {
   const safeRefreshToken = useSafeDataRefreshSignal()
   const { hasUnsavedInput } = useSafeDataRefresh()
 
-  const requiredGroups = useMemo(
-    () => [
-      GROUPS.ADMIN,
-      GROUPS.FARMACIA,
-      GROUPS.LABORATORIO,
-      GROUPS.ENFERMAGEM,
-      GROUPS.RECEPCAO,
-      GROUPS.MEDICINA,
-      GROUPS.MEDICINA_OCUPACIONAL,
-      GROUPS.CONTABILIDADE,
-      GROUPS.MANUTENCAO,
-      GROUPS.RECURSOS_HUMANOS,
-    ],
-    []
-  )
+  const requiredGroups = useMemo(() => [...MATERIAL_REQUISITION_PAGE_GROUPS], [])
   const isPharmacy = isMaterialRequisitionPharmacyUser(user)
 
   const id = String((params as any)?.id || "")
@@ -219,7 +195,15 @@ export default function MaterialRequisitionDetailPage() {
               </div>
               <div>
                 <div className="text-[var(--gray-500)]">Setor solicitante</div>
-                <div className="font-semibold text-[var(--text)]">{sectorLabel(data.sector)}</div>
+                <div className="font-semibold text-[var(--text)]">
+                  {data.sector_label || materialRequisitionSectorLabel(data.sector)}
+                </div>
+              </div>
+              <div>
+                <div className="text-[var(--gray-500)]">Fonte de abastecimento</div>
+                <div className="font-semibold text-[var(--text)]">
+                  {data.source_label || (data.source === "WHS" ? "Armazém central" : "Estoque da farmácia")}
+                </div>
               </div>
               <div>
                 <div className="text-[var(--gray-500)]">Solicitante</div>
@@ -250,7 +234,7 @@ export default function MaterialRequisitionDetailPage() {
                 <thead className="text-left text-[var(--gray-600)]">
                   <tr>
                     <th className="py-2 pr-3">Produto</th>
-                    <th className="py-2 pr-3">Lote</th>
+                    <th className="py-2 pr-3">Lote / SKU</th>
                     <th className="py-2 pr-3">Solicitado</th>
                     <th className="py-2 pr-3">Disponível</th>
                     <th className="py-2 pr-3">Aviado</th>
@@ -264,9 +248,9 @@ export default function MaterialRequisitionDetailPage() {
                     const remaining = Math.max(0, Number(it.requested_quantity) - Number(it.supplied_quantity || 0))
                     return (
                       <tr key={it.id} className="border-t border-[var(--border)]">
-                        <td className="py-2 pr-3">{it.product_name || "—"}</td>
+                        <td className="py-2 pr-3">{it.product_name || it.warehouse_item_name || "—"}</td>
                         <td className="py-2 pr-3">
-                          {it.lot_number || it.lot}
+                          {it.lot ? it.lot_number || it.lot : it.warehouse_item_sku || "—"}
                           {it.lot_expiration_date ? (
                             <div className="text-xs text-[var(--gray-500)]">Val: {String(it.lot_expiration_date)}</div>
                           ) : null}

@@ -13,10 +13,11 @@ import useDebounce from "@/hooks/useDebounce"
 import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { ApiListMeta, apiFetchList } from "@/lib/api"
 import {
+  MATERIAL_REQUISITION_PAGE_GROUPS,
   canCreateMaterialRequisition,
   isMaterialRequisitionPharmacyUser,
+  materialRequisitionSectorLabel,
 } from "@/lib/material-requisition-rbac"
-import { GROUPS } from "@/lib/rbac"
 
 type MaterialRequisition = {
   id: number
@@ -24,6 +25,9 @@ type MaterialRequisition = {
   created_at?: string
   status?: string
   sector?: string
+  sector_label?: string
+  source?: string
+  source_label?: string
   requested_by_department?: string
   created_by_name?: string
 }
@@ -52,25 +56,6 @@ function statusLabel(s?: string) {
   }
 }
 
-function sectorLabel(s?: string) {
-  switch (s) {
-    case "LAB":
-      return "Laboratório"
-    case "ENF":
-      return "Enfermagem"
-    case "REC":
-      return "Recepção"
-    case "MED":
-      return "Medicina"
-    case "MOC":
-      return "Medicina Ocupacional"
-    case "OUT":
-      return "Outros setores"
-    default:
-      return s || "—"
-  }
-}
-
 export default function RequisicoesMateriaisPage() {
   useAuthGuard()
   const { user } = useAuth()
@@ -78,21 +63,7 @@ export default function RequisicoesMateriaisPage() {
 
   const isPharmacy = isMaterialRequisitionPharmacyUser(user)
   const canCreate = canCreateMaterialRequisition(user)
-  const requiredGroups = useMemo(
-    () => [
-      GROUPS.ADMIN,
-      GROUPS.FARMACIA,
-      GROUPS.LABORATORIO,
-      GROUPS.ENFERMAGEM,
-      GROUPS.RECEPCAO,
-      GROUPS.MEDICINA,
-      GROUPS.MEDICINA_OCUPACIONAL,
-      GROUPS.CONTABILIDADE,
-      GROUPS.MANUTENCAO,
-      GROUPS.RECURSOS_HUMANOS,
-    ],
-    []
-  )
+  const requiredGroups = useMemo(() => [...MATERIAL_REQUISITION_PAGE_GROUPS], [])
 
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(50)
@@ -225,6 +196,7 @@ export default function RequisicoesMateriaisPage() {
                     <th className="py-2 pr-3">Data/hora</th>
                     <th className="py-2 pr-3">Solicitante</th>
                     <th className="py-2 pr-3">Setor</th>
+                    <th className="py-2 pr-3">Fonte</th>
                     <th className="py-2 pr-3">Departamento</th>
                     <th className="py-2 pr-3">Estado</th>
                   </tr>
@@ -242,7 +214,10 @@ export default function RequisicoesMateriaisPage() {
                       </td>
                       <td className="py-2 pr-3">{formatDt(r.created_at)}</td>
                       <td className="py-2 pr-3">{r.created_by_name || "—"}</td>
-                      <td className="py-2 pr-3">{sectorLabel(r.sector)}</td>
+                      <td className="py-2 pr-3">{r.sector_label || materialRequisitionSectorLabel(r.sector)}</td>
+                      <td className="py-2 pr-3">
+                        {r.source_label || (r.source === "WHS" ? "Armazém central" : "Estoque da farmácia")}
+                      </td>
                       <td className="py-2 pr-3">{r.requested_by_department || "—"}</td>
                       <td className="py-2 pr-3">{statusLabel(r.status)}</td>
                     </tr>

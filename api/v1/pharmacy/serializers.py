@@ -310,7 +310,7 @@ class MaterialRequisitionItemWriteSerializer(LegacyAliasSerializerMixin, seriali
 
     class Meta:
         model = MaterialRequisitionItem
-        fields = ("position", "lot", "requested_quantity", "notes")
+        fields = ("position", "lot", "warehouse_item", "requested_quantity", "notes")
 
 
 class MaterialRequisitionItemSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer):
@@ -318,15 +318,24 @@ class MaterialRequisitionItemSerializer(LegacyAliasSerializerMixin, serializers.
     legacy_output_aliases = MATERIAL_REQUISITION_ITEM_ALIASES
 
     available_quantity = serializers.SerializerMethodField()
-    product_name = serializers.CharField(source="lot.product.name", read_only=True)
-    lot_number = serializers.CharField(source="lot.lot_number", read_only=True)
-    lot_expiration_date = serializers.DateField(source="lot.expiration_date", read_only=True)
+    product_name = serializers.SerializerMethodField()
+    lot_number = serializers.CharField(source="lot.lot_number", read_only=True, default=None)
+    lot_expiration_date = serializers.DateField(source="lot.expiration_date", read_only=True, default=None)
+    warehouse_item_sku = serializers.CharField(source="warehouse_item.sku", read_only=True, default=None)
+    warehouse_item_name = serializers.CharField(source="warehouse_item.name", read_only=True, default=None)
 
     def get_available_quantity(self, obj):
         try:
-            return int(obj.lot.balance())
+            return int(obj.available_quantity)
         except Exception:
             return 0
+
+    def get_product_name(self, obj):
+        if obj.lot_id:
+            return getattr(getattr(obj.lot, "product", None), "name", None)
+        if obj.warehouse_item_id:
+            return getattr(obj.warehouse_item, "name", None)
+        return None
 
     class Meta:
         model = MaterialRequisitionItem
@@ -358,6 +367,13 @@ class MaterialRequisitionSerializer(LegacyAliasSerializerMixin, serializers.Mode
     created_by_name = serializers.SerializerMethodField()
     sector_label = serializers.SerializerMethodField()
     status_label = serializers.SerializerMethodField()
+    source_label = serializers.SerializerMethodField()
+
+    def get_source_label(self, obj):
+        try:
+            return obj.get_source_display()
+        except Exception:
+            return getattr(obj, "source", None)
 
     def get_created_by_name(self, obj):
         u = getattr(obj, "created_by", None)
@@ -387,17 +403,25 @@ class MaterialRequisitionSerializer(LegacyAliasSerializerMixin, serializers.Mode
 
         for idx, item in enumerate(items):
             lot = item.get("lot")
-            if not lot:
-                raise serializers.ValidationError(f"Item {idx + 1}: lote obrigatório.")
-
-            if getattr(lot, "deleted", False):
+            warehouse_item = item.get("warehouse_item")
+            if bool(lot) == bool(warehouse_item):
                 raise serializers.ValidationError(
-                    f"Item {idx + 1}: o lote selecionado está indisponível."
+                    f"Item {idx + 1}: informe exatamente um — lote da farmácia ou item de armazém."
                 )
 
-            if request_tenant is not None and getattr(lot, "tenant_id", None) != getattr(request_tenant, "id", None):
+            target = lot or warehouse_item
+            target_label = "lote" if lot else "item de armazém"
+
+            if getattr(target, "deleted", False):
                 raise serializers.ValidationError(
-                    f"Item {idx + 1}: o lote não pertence ao tenant atual."
+                    f"Item {idx + 1}: o {target_label} selecionado está indisponível."
+                )
+
+            if request_tenant is not None and getattr(target, "tenant_id", None) != getattr(
+                request_tenant, "id", None
+            ):
+                raise serializers.ValidationError(
+                    f"Item {idx + 1}: o {target_label} não pertence ao tenant atual."
                 )
 
         return items
@@ -417,6 +441,7 @@ class MaterialRequisitionSerializer(LegacyAliasSerializerMixin, serializers.Mode
             "deleted_by",
             "version",
             "status",
+            "source",
             "requested_by_department",
             "hold_reason",
             "fulfilled_at",

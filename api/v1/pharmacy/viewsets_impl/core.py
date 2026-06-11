@@ -1,7 +1,8 @@
 from datetime import datetime
+from decimal import Decimal
 
 from django.db import transaction
-from django.db.models import Count, Q, Sum
+from django.db.models import Count, F, Q, Sum
 from django.http import HttpResponse
 from django.utils import timezone
 from rest_framework.decorators import action
@@ -14,7 +15,13 @@ from api.utils.async_exports import queue_export_if_requested
 from api.v1.viewset_mixins import TenantScopedQuerysetMixin, ValidatedSearchOrderingMixin
 from apps.pharmacy.models.inventory_movement import InventoryMovement
 from apps.pharmacy.models.lot import Lot
-from apps.pharmacy.models.material_requisition import MaterialRequisition, MaterialRequisitionStatus, RequestingSector
+from apps.pharmacy.models.material_requisition import (
+    MaterialRequisition,
+    MaterialRequisitionStatus,
+    RequestingSector,
+    RequisitionSource,
+    source_for_sector,
+)
 from apps.pharmacy.models.material_requisition_item import MaterialRequisitionItem
 from apps.pharmacy.models.product import Product
 from apps.pharmacy.models.sale import Sale
@@ -768,20 +775,46 @@ def _is_admin_user(user) -> bool:
     return _normalize(RBAC_GROUPS["ADMIN"]) in groups
 
 
+# Mapa grupo RBAC → setor solicitante. Ordem = precedência para utilizadores
+# com múltiplos perfis (farmácia primeiro: é quem se abastece no armazém).
+_GROUP_SECTOR_MAP: tuple[tuple[str, str], ...] = (
+    ("FARMACIA", RequestingSector.FARMACIA),
+    ("FARMACIA_CLINICA", RequestingSector.FARMACIA_CLINICA),
+    ("LABORATORIO", RequestingSector.LABORATORIO),
+    ("ENFERMAGEM", RequestingSector.ENFERMAGEM),
+    ("RECEPCAO", RequestingSector.RECEPCAO),
+    ("MEDICINA", RequestingSector.MEDICINA),
+    ("MEDICINA_OCUPACIONAL", RequestingSector.MEDICINA_OCUPACIONAL),
+    ("ODONTOLOGIA", RequestingSector.ODONTOLOGIA),
+    ("VETERINARIA", RequestingSector.VETERINARIA),
+    ("FISIOTERAPIA", RequestingSector.FISIOTERAPIA),
+    ("RADIOLOGIA", RequestingSector.RADIOLOGIA),
+    ("CARDIOLOGIA", RequestingSector.CARDIOLOGIA),
+    ("NEUROLOGIA", RequestingSector.NEUROLOGIA),
+    ("OFTALMOLOGIA", RequestingSector.OFTALMOLOGIA),
+    ("TERAPIA_OCUPACIONAL", RequestingSector.TERAPIA_OCUPACIONAL),
+    ("FONOAUDIOLOGIA", RequestingSector.FONOAUDIOLOGIA),
+    ("TELEMEDICINA", RequestingSector.TELEMEDICINA),
+    ("SAUDE_PUBLICA", RequestingSector.SAUDE_PUBLICA),
+    ("CREDITO_FINANCIAMENTO", RequestingSector.CREDITO_FINANCIAMENTO),
+    ("LOGISTICA", RequestingSector.LOGISTICA),
+    ("MANUTENCAO", RequestingSector.MANUTENCAO),
+    ("CONTABILIDADE", RequestingSector.CONTABILIDADE),
+    ("RECURSOS_HUMANOS", RequestingSector.RECURSOS_HUMANOS),
+    ("PROFESSOR", RequestingSector.EDUCACAO),
+    ("DIRETOR_ESCOLA", RequestingSector.EDUCACAO),
+    ("DIRETOR_ADJUNTO_PEDAGOGICO", RequestingSector.EDUCACAO),
+    ("TEACHER", RequestingSector.EDUCACAO),
+)
+
+
 def _requester_sectors_from_user(user) -> set[str]:
     groups = _user_groups(user)
-    sectors: set[str] = set()
-    if _normalize(RBAC_GROUPS["LABORATORIO"]) in groups:
-        sectors.add(RequestingSector.LABORATORIO)
-    if _normalize(RBAC_GROUPS["ENFERMAGEM"]) in groups:
-        sectors.add(RequestingSector.ENFERMAGEM)
-    if _normalize(RBAC_GROUPS["RECEPCAO"]) in groups:
-        sectors.add(RequestingSector.RECEPCAO)
-    if _normalize(RBAC_GROUPS["MEDICINA"]) in groups:
-        sectors.add(RequestingSector.MEDICINA)
-    if _normalize(RBAC_GROUPS["MEDICINA_OCUPACIONAL"]) in groups:
-        sectors.add(RequestingSector.MEDICINA_OCUPACIONAL)
-    return sectors
+    return {
+        sector
+        for group_key, sector in _GROUP_SECTOR_MAP
+        if _normalize(RBAC_GROUPS[group_key]) in groups
+    }
 
 
 def _has_non_pharmacy_group(user) -> bool:
@@ -798,20 +831,62 @@ def _has_non_pharmacy_group(user) -> bool:
 
 def _infer_sector_from_user(user) -> str | None:
     sectors = _requester_sectors_from_user(user)
-    # Ordem de precedência para utilizadores com múltiplos perfis.
-    order = [
-        RequestingSector.LABORATORIO,
-        RequestingSector.ENFERMAGEM,
-        RequestingSector.RECEPCAO,
-        RequestingSector.MEDICINA,
-        RequestingSector.MEDICINA_OCUPACIONAL,
-    ]
-    for sector in order:
+    for _group_key, sector in _GROUP_SECTOR_MAP:
         if sector in sectors:
             return sector
     if _has_non_pharmacy_group(user):
         return RequestingSector.OUTROS
     return None
+
+
+def _issue_warehouse_stock(item, qty: int, *, reference_document: str) -> None:
+    """
+    Baixa `qty` unidades do item de armazém em modo FEFO, criando movimentos WMS
+    de saída (que ajustam o StockLevel automaticamente ao serem lançados).
+    """
+    from apps.warehouse.models import StockLevel, StockMovement
+
+    remaining = Decimal(qty)
+    levels = (
+        StockLevel.objects.select_for_update()
+        .filter(tenant_id=item.tenant_id, item_id=item.warehouse_item_id, quantity__gt=0)
+        .select_related("lot", "location")
+        .order_by(F("lot__expiration_date").asc(nulls_last=True), "id")
+    )
+    for level in levels:
+        if remaining <= 0:
+            break
+        available = StockLevel.available_quantity_for(
+            tenant=item.tenant,
+            item=item.warehouse_item,
+            location=level.location,
+            lot=level.lot,
+        )
+        take = min(remaining, Decimal(available))
+        if take <= 0:
+            continue
+
+        StockMovement.objects.create(
+            tenant=item.tenant,
+            item=item.warehouse_item,
+            lot=level.lot,
+            source_location=level.location,
+            movement_type=StockMovement.MovementType.ISSUE,
+            quantity=take,
+            reference_document=reference_document,
+            reason="Requisição de materiais (farmácia)",
+        )
+        remaining -= take
+
+    if remaining > 0:
+        raise ValidationError(
+            {
+                "quantity": (
+                    f"Estoque de armazém insuficiente para o item {item.id}; "
+                    f"faltam {remaining} unidade(s)."
+                )
+            }
+        )
 
 
 def _requesting_department_from_user(user) -> str:
@@ -881,13 +956,25 @@ class MaterialRequisitionViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
         sector_labels = dict(RequestingSector.choices)
         requester_sector_label = sector_labels.get(requester_sector, requester_sector or "")
         requested_by_department = _requesting_department_from_user(user)
+        source_labels = dict(RequisitionSource.choices)
+
+        def sector_option(code: str, label: str) -> dict:
+            source = source_for_sector(code)
+            return {
+                "value": code,
+                "label": label,
+                "source": source,
+                "source_label": source_labels.get(source, source),
+            }
 
         if is_admin:
-            available_sectors = [{"value": code, "label": label} for code, label in RequestingSector.choices]
+            available_sectors = [sector_option(code, label) for code, label in RequestingSector.choices]
         elif requester_sector:
-            available_sectors = [{"value": requester_sector, "label": requester_sector_label}]
+            available_sectors = [sector_option(requester_sector, requester_sector_label)]
         else:
             available_sectors = []
+
+        requester_source = source_for_sector(requester_sector) if requester_sector else None
 
         return Response(
             {
@@ -896,10 +983,65 @@ class MaterialRequisitionViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
                 "sector_locked": not is_admin,
                 "requester_sector": requester_sector,
                 "requester_sector_label": requester_sector_label,
+                "requester_source": requester_source,
+                "requester_source_label": source_labels.get(requester_source, "") if requester_source else "",
                 "requested_by_department": requested_by_department,
                 "available_sectors": available_sectors,
             }
         )
+
+    @action(detail=False, methods=["get"], url_path="warehouse-stock", url_name="warehouse-stock")
+    def warehouse_stock(self, request):
+        """
+        Estoque disponível no armazém central, agregado por item (físico - reservado).
+        Usado pela farmácia para requisitar insumos ao armazém.
+        """
+        from apps.warehouse.models import ReservationStatus, StockLevel, StockReservation
+
+        user = getattr(request, "user", None)
+        if not _is_pharmacy_user(user):
+            raise ValidationError("Apenas Farmácia pode consultar o estoque do armazém para requisição.")
+
+        tenant = getattr(request, "tenant", None)
+        physical_qs = StockLevel.objects.filter(deleted=False, quantity__gt=0)
+        reserved_qs = StockReservation.objects.filter(deleted=False, status=ReservationStatus.ACTIVE)
+        if tenant is not None:
+            physical_qs = physical_qs.filter(tenant=tenant)
+            reserved_qs = reserved_qs.filter(tenant=tenant)
+
+        search = (request.query_params.get("search") or "").strip()
+        if search:
+            physical_qs = physical_qs.filter(Q(item__name__icontains=search) | Q(item__sku__icontains=search))
+
+        physical = physical_qs.values(
+            "item",
+            "item__sku",
+            "item__name",
+            "item__unit_of_measure",
+        ).annotate(total=Sum("quantity"))
+
+        reserved_by_item = {
+            row["item"]: row["total"] or 0
+            for row in reserved_qs.values("item").annotate(total=Sum("quantity"))
+        }
+
+        rows = []
+        for row in physical:
+            available = Decimal(row["total"] or 0) - Decimal(reserved_by_item.get(row["item"], 0))
+            if available <= 0:
+                continue
+            rows.append(
+                {
+                    "id": row["item"],
+                    "sku": row["item__sku"],
+                    "name": row["item__name"],
+                    "unit_of_measure": row["item__unit_of_measure"],
+                    "available": float(available),
+                }
+            )
+
+        rows.sort(key=lambda r: (r["name"] or "").lower())
+        return Response(rows)
 
     def perform_create(self, serializer):
         user = getattr(self.request, "user", None)
@@ -922,9 +1064,24 @@ class MaterialRequisitionViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
                 raise ValidationError({"sector": "Setor solicitante inválido para o utilizador atual."})
 
         department = _requesting_department_from_user(user)
+        source = source_for_sector(sector)
+
+        items_input = serializer.validated_data.get("items_input") or []
+        for idx, item in enumerate(items_input):
+            has_lot = bool(item.get("lot"))
+            has_warehouse_item = bool(item.get("warehouse_item"))
+            if source == RequisitionSource.WAREHOUSE and not has_warehouse_item:
+                raise ValidationError(
+                    {"items_input": f"Item {idx + 1}: requisições da farmácia ao armazém usam itens de armazém."}
+                )
+            if source == RequisitionSource.PHARMACY and not has_lot:
+                raise ValidationError(
+                    {"items_input": f"Item {idx + 1}: requisições à farmácia usam lotes do estoque da farmácia."}
+                )
 
         serializer.save(
             sector=sector,
+            source=source,
             requested_by_department=department,
             status=MaterialRequisitionStatus.PENDING,
         )
@@ -955,7 +1112,7 @@ class MaterialRequisitionViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
             raise ValidationError({"items": "Itens inválidos."})
 
         with transaction.atomic():
-            for item in requisition.items.select_related("lot").all():
+            for item in requisition.items.select_related("lot", "warehouse_item").all():
                 it = by_id.get(item.id)
                 if not it:
                     continue
@@ -973,9 +1130,10 @@ class MaterialRequisitionViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
                 if qty <= 0:
                     continue
 
-                available = int(item.lot.balance())
                 if qty > remaining:
                     raise ValidationError({"quantity": f"Quantidade maior que o solicitado (item {item.id})."})
+
+                available = item.available_quantity
                 if qty > available:
                     raise ValidationError(
                         {
@@ -986,14 +1144,21 @@ class MaterialRequisitionViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
                         }
                     )
 
-                InventoryMovement.objects.create(
-                    tenant=item.tenant,
-                    lot=item.lot,
-                    type="SAI",
-                    origin="REQ",
-                    quantity=qty,
-                    material_request_item=item,
-                )
+                if item.lot_id:
+                    InventoryMovement.objects.create(
+                        tenant=item.tenant,
+                        lot=item.lot,
+                        type="SAI",
+                        origin="REQ",
+                        quantity=qty,
+                        material_request_item=item,
+                    )
+                else:
+                    _issue_warehouse_stock(
+                        item,
+                        qty,
+                        reference_document=requisition.custom_id or f"REQFAR-{requisition.id}",
+                    )
 
                 item.supplied_quantity = int(item.supplied_quantity or 0) + qty
                 item.save(update_fields=["supplied_quantity", "updated_at", "updated_by"])
