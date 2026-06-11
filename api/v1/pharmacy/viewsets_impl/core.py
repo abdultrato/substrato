@@ -366,17 +366,32 @@ class ProductViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
         return parsed
 
     def _base_requisition_items(self, request):
+        from django.db.models.functions import Coalesce
+
         date_from = _parse_query_date(request.query_params.get("date_from"), field_name="date_from")
         date_to = _parse_query_date(request.query_params.get("date_to"), field_name="date_to")
 
-        qs = MaterialRequisitionItem.objects.filter(
-            deleted=False,
-            requisition__deleted=False,
-            lot__deleted=False,
-            lot__product__deleted=False,
-        ).select_related(
-            "lot__product",
-            "requisition",
+        # Itens por lote OU por produto (avio FEFO); itens de armazém ficam fora
+        # dos relatórios de consumo da farmácia.
+        qs = (
+            MaterialRequisitionItem.objects.filter(
+                deleted=False,
+                requisition__deleted=False,
+            )
+            .filter(Q(lot__isnull=True) | Q(lot__deleted=False, lot__product__deleted=False))
+            .filter(Q(product__isnull=True) | Q(product__deleted=False))
+            .exclude(lot__isnull=True, product__isnull=True)
+            .select_related(
+                "lot__product",
+                "product",
+                "requisition",
+            )
+            .annotate(
+                product_ref_id=Coalesce("lot__product_id", "product_id"),
+                product_ref_custom_id=Coalesce("lot__product__custom_id", "product__custom_id"),
+                product_ref_name=Coalesce("lot__product__name", "product__name"),
+                product_ref_type=Coalesce("lot__product__type", "product__type"),
+            )
         )
         tenant = getattr(request, "tenant", None)
         if tenant is not None:
@@ -409,14 +424,20 @@ class ProductViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
                 max_value=999999999,
                 default=0,
             )
-            qs = qs.filter(lot__product_id=product_id)
+            qs = qs.filter(product_ref_id=product_id)
+
+        product_name = (
+            request.query_params.get("product_name") or request.query_params.get("nome_produto") or ""
+        ).strip()
+        if product_name:
+            qs = qs.filter(product_ref_name__icontains=product_name)
 
         grouped = (
             qs.values(
-                "lot__product_id",
-                "lot__product__custom_id",
-                "lot__product__name",
-                "lot__product__type",
+                "product_ref_id",
+                "product_ref_custom_id",
+                "product_ref_name",
+                "product_ref_type",
             )
             .annotate(
                 requested_quantity=Sum("requested_quantity"),
@@ -424,15 +445,15 @@ class ProductViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
                 requisitions_count=Count("requisition", distinct=True),
                 items_count=Count("id"),
             )
-            .order_by("lot__product__name")
+            .order_by("product_ref_name")
         )
 
         rows = [
             {
-                "product_id": row.get("lot__product_id"),
-                "product_code": row.get("lot__product__custom_id") or row.get("lot__product_id"),
-                "product_name": row.get("lot__product__name") or "—",
-                "product_type": self._product_type_label(row.get("lot__product__type")),
+                "product_id": row.get("product_ref_id"),
+                "product_code": row.get("product_ref_custom_id") or row.get("product_ref_id"),
+                "product_name": row.get("product_ref_name") or "—",
+                "product_type": self._product_type_label(row.get("product_ref_type")),
                 "requested_quantity": int(row.get("requested_quantity") or 0),
                 "supplied_quantity": int(row.get("supplied_quantity") or 0),
                 "requisitions_count": int(row.get("requisitions_count") or 0),
@@ -455,6 +476,7 @@ class ProductViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
                 "date_from": date_from.isoformat() if date_from else None,
                 "date_to": date_to.isoformat() if date_to else None,
                 "product_id": product_id,
+                "product_name": product_name or None,
             },
             "summary": summary,
             "rows": rows,
@@ -493,17 +515,17 @@ class ProductViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
 
         grouped = (
             qs.values(
-                "lot__product_id",
-                "lot__product__custom_id",
-                "lot__product__name",
-                "lot__product__type",
+                "product_ref_id",
+                "product_ref_custom_id",
+                "product_ref_name",
+                "product_ref_type",
             )
             .annotate(
                 requested_quantity=Sum("requested_quantity"),
                 supplied_quantity=Sum("supplied_quantity"),
                 requisitions_count=Count("requisition", distinct=True),
             )
-            .order_by("-requested_quantity", "lot__product__name")[:limit]
+            .order_by("-requested_quantity", "product_ref_name")[:limit]
         )
 
         rows = []
@@ -511,10 +533,10 @@ class ProductViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
             rows.append(
                 {
                     "rank": idx,
-                    "product_id": row.get("lot__product_id"),
-                    "product_code": row.get("lot__product__custom_id") or row.get("lot__product_id"),
-                    "product_name": row.get("lot__product__name") or "—",
-                    "product_type": self._product_type_label(row.get("lot__product__type")),
+                    "product_id": row.get("product_ref_id"),
+                    "product_code": row.get("product_ref_custom_id") or row.get("product_ref_id"),
+                    "product_name": row.get("product_ref_name") or "—",
+                    "product_type": self._product_type_label(row.get("product_ref_type")),
                     "requested_quantity": int(row.get("requested_quantity") or 0),
                     "supplied_quantity": int(row.get("supplied_quantity") or 0),
                     "requisitions_count": int(row.get("requisitions_count") or 0),
@@ -571,17 +593,17 @@ class ProductViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
 
         grouped = (
             qs.values(
-                "lot__product_id",
-                "lot__product__custom_id",
-                "lot__product__name",
-                "lot__product__type",
+                "product_ref_id",
+                "product_ref_custom_id",
+                "product_ref_name",
+                "product_ref_type",
             )
             .annotate(
                 requested_quantity=Sum("requested_quantity"),
                 supplied_quantity=Sum("supplied_quantity"),
                 requisitions_count=Count("requisition", distinct=True),
             )
-            .order_by("requested_quantity", "lot__product__name")[:limit]
+            .order_by("requested_quantity", "product_ref_name")[:limit]
         )
 
         rows = []
@@ -589,10 +611,10 @@ class ProductViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
             rows.append(
                 {
                     "rank": idx,
-                    "product_id": row.get("lot__product_id"),
-                    "product_code": row.get("lot__product__custom_id") or row.get("lot__product_id"),
-                    "product_name": row.get("lot__product__name") or "—",
-                    "product_type": self._product_type_label(row.get("lot__product__type")),
+                    "product_id": row.get("product_ref_id"),
+                    "product_code": row.get("product_ref_custom_id") or row.get("product_ref_id"),
+                    "product_name": row.get("product_ref_name") or "—",
+                    "product_type": self._product_type_label(row.get("product_ref_type")),
                     "requested_quantity": int(row.get("requested_quantity") or 0),
                     "supplied_quantity": int(row.get("supplied_quantity") or 0),
                     "requisitions_count": int(row.get("requisitions_count") or 0),
@@ -639,20 +661,36 @@ class ProductViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
             raise ValidationError("Apenas Farmácia pode emitir relatório de setores por produto.")
 
         raw_product_id = request.query_params.get("product_id") or request.query_params.get("produto")
-        product_id = self._parse_int_param(
-            raw_product_id,
-            field_name="product_id",
-            min_value=1,
-            max_value=999999999,
-            default=0,
-        )
+        product_name = (
+            request.query_params.get("product_name") or request.query_params.get("nome_produto") or ""
+        ).strip()
 
-        product = self.get_queryset().filter(deleted=False, pk=product_id).first()
-        if not product:
-            raise ValidationError({"product_id": "Produto não encontrado no tenant."})
+        if raw_product_id not in (None, ""):
+            product_id = self._parse_int_param(
+                raw_product_id,
+                field_name="product_id",
+                min_value=1,
+                max_value=999999999,
+                default=0,
+            )
+            product = self.get_queryset().filter(deleted=False, pk=product_id).first()
+            if not product:
+                raise ValidationError({"product_id": "Produto não encontrado no tenant."})
+        elif product_name:
+            product = (
+                self.get_queryset()
+                .filter(deleted=False, name__icontains=product_name)
+                .order_by("name", "id")
+                .first()
+            )
+            if not product:
+                raise ValidationError({"product_name": "Nenhum produto encontrado com esse nome."})
+            product_id = product.pk
+        else:
+            raise ValidationError({"product_id": "Informe o ID ou o nome do produto."})
 
         qs, date_from, date_to = self._base_requisition_items(request)
-        qs = qs.filter(lot__product_id=product_id)
+        qs = qs.filter(product_ref_id=product_id)
 
         grouped = (
             qs.values("requisition__sector", "requisition__requested_by_department")

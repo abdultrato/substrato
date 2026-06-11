@@ -1068,3 +1068,17 @@ def test_pharmacy_product_report_pdf_endpoints(api_client):
     assert sectors_resp.status_code == 200
     assert "application/pdf" in sectors_resp["Content-Type"]
     assert len(sectors_resp.content) > 0
+
+    # Filtro por nome do produto (alternativa ao ID).
+    consumo_nome_resp = api_client.get("/api/v1/pharmacy/product/consumption/pdf/?product_name=Medicamento Y")
+    assert consumo_nome_resp.status_code == 200
+    assert "application/pdf" in consumo_nome_resp["Content-Type"]
+    assert len(consumo_nome_resp.content) > 0
+
+    sectors_nome_resp = api_client.get("/api/v1/pharmacy/product/request-sectors/pdf/?product_name=Medicamento X")
+    assert sectors_nome_resp.status_code == 200
+    assert "application/pdf" in sectors_nome_resp["Content-Type"]
+    assert len(sectors_nome_resp.content) > 0
+
+    sectors_missing_resp = api_client.get("/api/v1/pharmacy/product/request-sectors/pdf/")
+    assert sectors_missing_resp.status_code == 400

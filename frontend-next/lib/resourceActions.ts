@@ -471,6 +471,12 @@ export const RESOURCE_ACTIONS: ResourceActionDefinition[] = [
     fields: [
       ...dateRangeFields,
       { name: "product_id", label: "ID do produto", type: "number", min: 1 },
+      {
+        name: "product_name",
+        label: "Nome do produto",
+        type: "text",
+        placeholder: "Filtra por nome (contém)",
+      },
     ],
   },
   {
@@ -518,7 +524,13 @@ export const RESOURCE_ACTIONS: ResourceActionDefinition[] = [
     dedicatedHref: "/pharmacy/movements",
     fields: [
       ...dateRangeFields,
-      { name: "product_id", label: "ID do produto", type: "number", required: true, min: 1 },
+      { name: "product_id", label: "ID do produto", type: "number", min: 1 },
+      {
+        name: "product_name",
+        label: "Nome do produto",
+        type: "text",
+        placeholder: "Alternativa ao ID (primeiro produto que contém o nome)",
+      },
     ],
   },
 ]
