@@ -48,10 +48,10 @@ export default function Header({ user, onMenuClick }: Props) {
             <div className="flex min-w-0 flex-1 items-center gap-2">
                 <button
                     type="button"
-                    className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border bg-background text-foreground-2 shadow-sm transition hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/25"
+                    className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border bg-background text-foreground-2 shadow-sm transition hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/25 md:hidden"
                     onClick={onMenuClick}
-                    aria-label={t("Mostrar ou ocultar menu lateral", "Show or hide sidebar")}
-                    title={t("Mostrar ou ocultar menu lateral", "Show or hide sidebar")}
+                    aria-label={t("Abrir menu lateral", "Open sidebar")}
+                    title={t("Abrir menu lateral", "Open sidebar")}
                 >
                     <AlignJustify size={18} />
                 </button>

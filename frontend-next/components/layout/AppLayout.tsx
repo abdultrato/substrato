@@ -41,7 +41,7 @@ export default function AppLayout ( {
     rightAsideWidth = "20rem",
     subNav,
 }: Props ) {
-    const sidebarDesktopWidth = "16rem"
+    const sidebarDesktopWidth = "4rem"
     const { loading } = useAuthGuard()
     const { user } = useAuth()
     const { t } = useLanguage()
@@ -49,10 +49,9 @@ export default function AppLayout ( {
     const router = useRouter()
     const activeScope = useWorkspaceScope()
     const [navOpen, setNavOpen] = useState( false )
-    const [desktopSidebarVisible, setDesktopSidebarVisible] = useState( true )
     const [accessResolutionReady, setAccessResolutionReady] = useState( true )
     const [showRestrictionNotice, setShowRestrictionNotice] = useState( false )
-    const footerLeftOffset = desktopSidebarVisible ? sidebarDesktopWidth : "0px"
+    const footerLeftOffset = sidebarDesktopWidth
     const mustRedirectByScope =
         isOperationalScope(activeScope) &&
         (pathname === "/" || !isPathAllowedForScope(pathname, activeScope))
@@ -179,27 +178,8 @@ export default function AppLayout ( {
         }
     }, [navOpen] )
 
-    useEffect( () => {
-        if ( typeof window === "undefined" ) return
-        const stored = window.localStorage.getItem( "substrato.desktopSidebarVisible" )
-        if ( stored === null ) return
-        setDesktopSidebarVisible( stored === "1" )
-    }, [] )
-
-    useEffect( () => {
-        if ( typeof window === "undefined" ) return
-        window.localStorage.setItem(
-            "substrato.desktopSidebarVisible",
-            desktopSidebarVisible ? "1" : "0",
-        )
-    }, [desktopSidebarVisible] )
-
     function handleMenuClick () {
-        if ( typeof window !== "undefined" && window.innerWidth < 768 ) {
-            setNavOpen( true )
-            return
-        }
-        setDesktopSidebarVisible( ( prev ) => !prev )
+        setNavOpen( true )
     }
 
     if ( loading ) {
@@ -236,7 +216,7 @@ export default function AppLayout ( {
                     user={user}
                     open={navOpen}
                     onClose={() => setNavOpen( false )}
-                    className={desktopSidebarVisible ? "" : "md:hidden"}
+                    className="md:sticky md:top-0 md:h-screen"
                 />
 
                 <div className="flex min-h-0 min-w-0 flex-1 flex-col">
@@ -293,7 +273,7 @@ export default function AppLayout ( {
                 user={user}
                 open={navOpen}
                 onClose={() => setNavOpen( false )}
-                className={`overflow-y-auto md:sticky md:top-0 md:h-screen ${desktopSidebarVisible ? "" : "md:hidden"}`}
+                className="md:sticky md:top-0 md:h-screen"
             />
 
             <div className="flex min-h-0 min-w-0 flex-1 flex-col">

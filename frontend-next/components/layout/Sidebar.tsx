@@ -322,17 +322,17 @@ export default function Sidebar({ user, open = false, onClose, className }: Prop
     }, [prefetchRoute, visibleItems])
 
     const menu = (
-        <div className="flex h-full w-64 flex-col border-r border-border bg-card pb-12 text-foreground">
-            <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-card px-3 py-3">
+        <div className="flex h-full w-64 flex-col overflow-hidden border-r border-border bg-card/95 pb-12 text-foreground shadow-none backdrop-blur transition-[width,box-shadow,background-color] duration-200 ease-out supports-[backdrop-filter]:bg-card/85 md:w-16 md:shadow-md md:group-hover/sidebar:w-72 md:group-hover/sidebar:shadow-xl md:group-hover/sidebar:shadow-slate-950/10 md:group-focus-within/sidebar:w-72 md:group-focus-within/sidebar:shadow-xl md:dark:shadow-black/30">
+            <div className="sticky top-0 z-10 flex min-h-16 items-center justify-center border-b border-border/80 bg-card/95 px-3 py-3 backdrop-blur transition-colors supports-[backdrop-filter]:bg-card/85 md:group-hover/sidebar:justify-between md:group-focus-within/sidebar:justify-between">
                 <Link
                     href={homeHref}
                     onClick={onClose}
-                    className="group flex min-w-0 items-center gap-3 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+                    className="group flex min-w-0 items-center justify-center gap-3 rounded-md outline-none transition-all focus-visible:ring-2 focus-visible:ring-ring/40 md:w-full md:group-hover/sidebar:justify-start md:group-focus-within/sidebar:justify-start"
                     title={t("Ir para o dashboard", "Go to dashboard")}
                 >
                     <span
                         aria-hidden
-                        className="h-9 w-9 shrink-0 rounded-md bg-muted transition-transform group-hover:scale-105"
+                        className="h-9 w-9 shrink-0 rounded-md bg-muted shadow-sm ring-1 ring-border/60 transition-transform group-hover:scale-105"
                         style={{
                             backgroundImage: `url(${LOGO_SRC})`,
                             backgroundRepeat: "no-repeat",
@@ -340,7 +340,7 @@ export default function Sidebar({ user, open = false, onClose, className }: Prop
                             backgroundPosition: "center",
                         }}
                     />
-                    <div className="min-w-0">
+                    <div className="min-w-0 overflow-hidden transition-all duration-200 md:w-0 md:opacity-0 md:group-hover/sidebar:w-auto md:group-hover/sidebar:opacity-100 md:group-focus-within/sidebar:w-auto md:group-focus-within/sidebar:opacity-100">
                         <div className="truncate font-display text-sm font-bold tracking-tight text-foreground">
                             Substrato
                         </div>
@@ -359,10 +359,10 @@ export default function Sidebar({ user, open = false, onClose, className }: Prop
                 </button>
             </div>
 
-            <nav className="flex flex-1 flex-col gap-4 overflow-y-auto px-2 pb-6 pt-3">
+            <nav className="flex flex-1 flex-col gap-3 overflow-y-auto overflow-x-hidden px-2 pb-6 pt-3">
                 {sectionedItems.map((section) => (
                     <div key={section.label} className="space-y-1">
-                        <div className="px-2.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                        <div className="h-5 overflow-hidden px-2.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground opacity-100 transition-all duration-200 md:h-2 md:opacity-0 md:group-hover/sidebar:h-5 md:group-hover/sidebar:opacity-100 md:group-focus-within/sidebar:h-5 md:group-focus-within/sidebar:opacity-100">
                             {t(section.label, section.labelEn)}
                         </div>
 
@@ -382,9 +382,9 @@ export default function Sidebar({ user, open = false, onClose, className }: Prop
                                         onTouchStart={() => prefetchRoute(item.href)}
                                         title={t(item.desc || "", item.descEn || item.desc || "")}
                                         aria-current={active ? "page" : undefined}
-                                        className={`group relative flex items-center rounded-md pl-9 pr-2.5 py-2 text-[13px] font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 ${
+                                        className={`group/item relative flex min-h-10 items-center rounded-md py-2 pl-9 pr-2.5 text-[13px] font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 ${
                                             active
-                                                ? "bg-muted text-foreground shadow-sm before:absolute before:left-0 before:top-1/2 before:h-5 before:w-[3px] before:-translate-x-2 before:-translate-y-1/2 before:rounded-r-full before:bg-primary"
+                                                ? "bg-primary-soft text-foreground shadow-sm before:absolute before:left-0 before:top-1/2 before:h-5 before:w-[3px] before:-translate-x-2 before:-translate-y-1/2 before:rounded-r-full before:bg-primary"
                                                 : "text-muted-foreground hover:bg-muted hover:text-foreground"
                                         }`}
                                     >
@@ -392,7 +392,7 @@ export default function Sidebar({ user, open = false, onClose, className }: Prop
                                             <span
                                                 aria-hidden
                                                 className={`pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 ${
-                                                    active ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
+                                                    active ? "text-primary" : "text-muted-foreground group-hover/item:text-foreground"
                                                 }`}
                                                 style={{
                                                     backgroundColor: "currentColor",
@@ -407,7 +407,9 @@ export default function Sidebar({ user, open = false, onClose, className }: Prop
                                                 }}
                                             />
                                         )}
-                                        <span className="truncate">{t(item.label, item.labelEn || item.label)}</span>
+                                        <span className="truncate opacity-100 transition-all duration-200 md:max-w-0 md:-translate-x-1 md:opacity-0 md:group-hover/sidebar:max-w-48 md:group-hover/sidebar:translate-x-0 md:group-hover/sidebar:opacity-100 md:group-focus-within/sidebar:max-w-48 md:group-focus-within/sidebar:translate-x-0 md:group-focus-within/sidebar:opacity-100">
+                                            {t(item.label, item.labelEn || item.label)}
+                                        </span>
                                     </Link>
                                 )
                             })}
@@ -416,18 +418,20 @@ export default function Sidebar({ user, open = false, onClose, className }: Prop
                 ))}
             </nav>
 
-            <div className="border-t border-border p-2">
+            <div className="border-t border-border/80 p-2">
                 <button
                     type="button"
                     onClick={toggleTheme}
-                    className="flex w-full items-center justify-between rounded-md border border-border bg-muted px-2.5 py-2 text-xs font-semibold text-foreground transition-colors hover:bg-muted-2 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+                    className="flex w-full items-center justify-center gap-2 rounded-md border border-border bg-muted px-2.5 py-2 text-xs font-semibold text-foreground transition-colors hover:bg-muted-2 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 md:h-10 md:px-0 md:group-hover/sidebar:justify-between md:group-hover/sidebar:px-2.5 md:group-focus-within/sidebar:justify-between md:group-focus-within/sidebar:px-2.5"
                     title={isDark ? t("Modo claro", "Light mode") : t("Modo escuro", "Dark mode")}
                 >
-                    <span className="flex items-center gap-2">
+                    <span className="flex min-w-0 items-center gap-2">
                         {isDark ? <Sun size={15} /> : <Moon size={15} />}
-                        {t("Tema", "Theme")}
+                        <span className="truncate md:hidden md:group-hover/sidebar:inline md:group-focus-within/sidebar:inline">
+                            {t("Tema", "Theme")}
+                        </span>
                     </span>
-                    <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                    <span className="text-[10px] uppercase tracking-wider text-muted-foreground md:hidden md:group-hover/sidebar:inline md:group-focus-within/sidebar:inline">
                         {isDark ? t("Claro", "Light") : t("Escuro", "Dark")}
                     </span>
                 </button>
@@ -437,7 +441,7 @@ export default function Sidebar({ user, open = false, onClose, className }: Prop
 
     return (
         <>
-            <aside className={`hidden md:flex ${className || ""}`}>{menu}</aside>
+            <aside className={`group/sidebar hidden md:z-50 md:flex md:w-16 md:shrink-0 md:overflow-visible ${className || ""}`}>{menu}</aside>
 
             <div className={`fixed inset-0 z-50 pointer-events-none md:hidden ${open ? "" : ""}`}>
                 <div
