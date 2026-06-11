@@ -227,3 +227,5 @@ Estas páginas apontam para endpoints que **não existem no router Django** e re
 6. `monitoring/cloud_control`, `monitoring/export_job`, `monitoring/telemetry` — operacionais
 7. `identity/passwordresettoken` — interno
 8. `nursing/ward_dashboard`, `dashboard/analytics` — agregados de leitura
+
+precisa criar tais 17 subrecursos sem frontend em frontend, criar todos os endpoints de public health e expor eles ao frontend, criar crud completo para  warehouse em todas as paginas, e as 18 paginas do frontend que apontam para endpoints inexistentes em backend precisa corrigir o frontend

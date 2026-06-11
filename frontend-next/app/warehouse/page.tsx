@@ -153,15 +153,30 @@ function recordDetail(row: WarehouseRow, fields: string[]): string {
 }
 
 const WAREHOUSE_RESOURCE_ROUTES: Record<string, string> = {
+  cycle_count: "cycle-counts",
+  cycle_count_line: "cycle-count-lines",
   replenishment_plan: "replenishment-plans",
+  replenishment_suggestion: "replenishment-suggestions",
   purchase_order: "purchase-orders",
+  purchase_order_line: "purchase-order-lines",
   goods_receipt: "goods-receipts",
+  goods_receipt_line: "goods-receipt-lines",
   sales_order: "sales-orders",
+  sales_order_line: "sales-order-lines",
+  item: "items",
+  item_category: "item-categories",
+  lot: "lots",
   stock_reservation: "stock-reservations",
   pick_list: "pick-lists",
+  pick_list_line: "pick-list-lines",
   shipment: "shipments",
+  shipment_line: "shipment-lines",
+  stock_movement: "stock-movements",
   stock_transfer: "stock-transfers",
+  stock_transfer_line: "stock-transfer-lines",
   stock_level: "stock-levels",
+  storage_location: "storage-locations",
+  warehouse: "warehouses",
 }
 
 function recordHref(resource: string, row: WarehouseRow): string {
