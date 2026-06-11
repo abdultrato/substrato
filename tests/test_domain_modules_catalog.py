@@ -65,7 +65,7 @@ def test_requested_health_modules_resolve_to_existing_apps_or_planned_gaps() -> 
         "neurology": "apps.consultations.apps.ConsultationsConfig",
         "oncology": "apps.consultations.apps.ConsultationsConfig",
         "pathology": "apps.pathology.apps.PathologyConfig",
-        "laboratory": "apps.clinical.apps.ClinicalConfig",
+        "laboratory": "apps.clinical_laboratory.apps.ClinicalLaboratoryConfig",
         "radiology": "apps.radiology.apps.RadiologyConfig",
         "pharmacy": "apps.pharmacy.apps.PharmacyConfig",
         "blood_bank": "apps.bloodbank.apps.BloodBankConfig",

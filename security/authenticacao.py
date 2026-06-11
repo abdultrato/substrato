@@ -5,6 +5,8 @@ from django.core.cache import cache
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
+from infrastructure.context.request_user import set_current_user
+
 SESSION_CACHE_PREFIX = "auth:sid:"
 
 
@@ -57,6 +59,10 @@ class JWTAuth(JWTAuthentication):
                 cache.touch(key, timeout=_session_timeout_seconds())
             except Exception:
                 cache.set(key, session_id, timeout=_session_timeout_seconds())
+
+            # A autenticação DRF corre na view, depois do middleware ter posto o
+            # ContextVar a None; registamos aqui apenas a sessão já validada.
+            set_current_user(user)
 
         return result
 """Fluxos auxiliares de autenticação/autorização fora do DRF padrão."""

@@ -105,9 +105,13 @@ def test_surgery_viewset_map_exposes_segmented_resources():
     expected = {"surgery", "small_surgery", "large_surgery", "surgical_procedure"}
     legacy = {"pequenacirurgia", "grandecirurgia", "procedimentocirurgico"}
 
-    assert set(VIEWSET_MAP) == expected
-    assert set(SERIALIZER_MAP) == expected
-    assert set(FILTER_MAP) == expected
+    # O módulo de cirurgia foi expandido com mais recursos (agenda, materiais,
+    # faturação, etc.); aqui garantimos que os recursos segmentados continuam
+    # expostos em todos os mapas e que os nomes legados não reaparecem.
+    assert expected <= set(VIEWSET_MAP)
+    assert expected <= set(SERIALIZER_MAP)
+    assert expected <= set(FILTER_MAP)
+    assert set(VIEWSET_MAP) == set(SERIALIZER_MAP) == set(FILTER_MAP)
     assert not (set(VIEWSET_MAP) & legacy)
 
 

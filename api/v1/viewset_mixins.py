@@ -181,6 +181,18 @@ class TenantScopedQuerysetMixin:
 
     tenant_field_name = "tenant"
 
+    def initial(self, request, *args, **kwargs):
+        # A autenticação do DRF corre aqui (perform_authentication), depois do
+        # middleware ter posto o utilizador-corrente a None. Registamos o
+        # utilizador autenticado (inclui force_authenticate em testes) para que a
+        # auditoria created_by/updated_by funcione em escritas via API.
+        super().initial(request, *args, **kwargs)
+        user = getattr(request, "user", None)
+        if user is not None and getattr(user, "is_authenticated", False):
+            from infrastructure.context.request_user import set_current_user
+
+            set_current_user(getattr(user, "_wrapped", user))
+
     def _get_request_tenant(self):
         return getattr(getattr(self, "request", None), "tenant", None)
 
