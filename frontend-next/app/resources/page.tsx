@@ -41,7 +41,7 @@ const MODULE_LABEL_EN_BY_KEY: Record<string, string> = {
 }
 
 const MODULE_LABEL_PT_BY_KEY: Record<string, string> = {
-  clinical: "Clínica",
+  clinical: "Área Clínica",
   reception: "Recepção",
   equipment: "Equipamentos",
   entities: "Entidades",

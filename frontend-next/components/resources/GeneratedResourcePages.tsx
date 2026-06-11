@@ -20,6 +20,7 @@ import { apiFetch } from "@/lib/api"
 import { educationResourceUiFromEndpoint, normalizeEducationEndpoint } from "@/lib/education/ui"
 import { isNotFoundLikeError } from "@/lib/errors/api-error"
 import { canonicalModuleGroupKey, type ModuleGroup, type ModuleResource } from "@/lib/modules"
+import { canonicalCollectionPath } from "@/lib/openapi/endpointResolver"
 import { hasOpenApiMethod, hasWriteContract } from "@/lib/openapi/writeContract"
 import { routeParamToString } from "@/lib/routeParams"
 import { requiredGroupsForResourceGroup } from "@/lib/resourcesAccess"
@@ -79,7 +80,9 @@ function findByEndpoint(
 function buildEndpointContext(modules: ModuleGroup[], endpoint: string): EndpointContext {
   const routeEndpoint = normalizeEndpoint(endpoint)
   const normalizedEndpoint = normalizeEducationEndpoint(routeEndpoint)
-  const match = findByEndpoint(modules, normalizedEndpoint)
+  // Try canonical path first (handles hyphenated routes like /clinical/lab-requests/ → /clinical/labrequest/)
+  const canonicalEndpoint = canonicalCollectionPath(normalizedEndpoint)
+  const match = findByEndpoint(modules, canonicalEndpoint) || findByEndpoint(modules, normalizedEndpoint)
 
   if (match) {
     const groupKey = canonicalModuleGroupKey(match.group.key)
