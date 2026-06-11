@@ -449,7 +449,6 @@ export default function EducationStudentPage() {
       <div className="space-y-6">
         <PageHeader
           title="Área do Estudante"
-          subtitle="Contexto académico do utilizador autenticado."
           actions={
             <Link
               href="/education"

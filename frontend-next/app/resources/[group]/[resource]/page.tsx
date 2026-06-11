@@ -75,7 +75,6 @@ export default function RecursosRecursoPage() {
     return (
         <ResourceListPage
             title={`${tr(found.group.label)} / ${tr(found.resource.label)}`}
-            subtitle={t("Registos disponíveis no recurso selecionado.", "Available records in the selected resource.")}
             endpoint={found.resource.endpoint}
             adminListHref={found.resource.adminListHref}
             createHref={canCreate ? `${basePath}/new` : undefined}

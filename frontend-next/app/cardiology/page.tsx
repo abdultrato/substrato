@@ -5,7 +5,6 @@ export default function CardiologyPage() {
     <SpecialtyDiagnosticsHubPage
       specialty="CARDIOLOGY"
       title="Substrato Cardiologia"
-      subtitle="Ecocardiograma, teste ergométrico, Holter, medições e laudos cardiológicos."
       resourceBasePath="/cardiology"
       requiredGroups={SPECIALTY_DIAGNOSTICS_GROUPS}
     />

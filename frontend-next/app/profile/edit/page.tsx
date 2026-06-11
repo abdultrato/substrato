@@ -133,7 +133,6 @@ export default function EditarPerfilPage () {
             <div className="space-y-4 pb-24 md:pb-4">
                 <PageHeader
                     title="Editar perfil"
-                    subtitle="Atualize o seu nome, contactos e foto de perfil."
                     actions={
                         <Link
                             href="/profile"

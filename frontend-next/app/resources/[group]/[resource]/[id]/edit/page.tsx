@@ -126,7 +126,6 @@ export default function EditarRecursoPage() {
             <div className="mx-auto w-full max-w-5xl space-y-6">
                 <PageHeader
                     title={`${t("Editar", "Edit")} ${tr(found.resource.label)} — ${id}`}
-                    subtitle={t("Atualize os dados do registo selecionado.", "Update the selected record data.")}
                     actions={
                         <Link
                             href={`${basePath}/${id}`}

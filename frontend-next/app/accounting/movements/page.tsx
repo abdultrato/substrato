@@ -98,7 +98,6 @@ export default function ContabilidadeMovimentosPage() {
       <div className="space-y-6">
         <PageHeader
           title="Movimentos"
-          subtitle="Movimentos financeiros e auditoria."
           actions={
             <div className="flex flex-wrap items-center gap-2">
               <Link

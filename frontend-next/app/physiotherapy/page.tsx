@@ -86,10 +86,6 @@ export default function PhysiotherapyPage() {
 
         <WorkspaceHub
           title="Fisioterapia"
-          subtitle={t(
-            "Avaliação funcional, planos de tratamento, acompanhamento de evolução e gestão de aparelhos.",
-            "Functional assessment, treatment plans, progress monitoring and device management."
-          )}
           adminHref="/admin/fisioterapia/"
           secondaryCta={{ href: "/physiotherapy/assessments", label: t("Recursos de Fisioterapia", "Physiotherapy resources") }}
           metrics={[

@@ -193,7 +193,6 @@ export default function RecepcaoPage() {
             <div className="space-y-6">
                 <PageHeader
                     title="Recepção"
-                    subtitle="Área de trabalho do balcão para entrada, triagem administrativa e encaminhamento financeiro."
                     actions={
                         podeVerAdmin ? (
                             <Link

@@ -69,10 +69,6 @@ export default function EducationResourceListPage() {
   return (
     <ResourceListPage
       title={`Educação / ${tr(found.resource.label)}`}
-      subtitle={t(
-        "Listagem operacional do recurso selecionado.",
-        "Operational listing of the selected resource."
-      )}
       endpoint={found.resource.endpoint}
       adminListHref={found.resource.adminListHref}
       createHref={canCreate ? `${basePath}/new` : undefined}

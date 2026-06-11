@@ -110,7 +110,6 @@ export default function EducationResourceDetailPage() {
       <div className="space-y-4">
         <PageHeader
           title={`${tr(found.resource.label)} #${id}`}
-          subtitle={t("Visualização do registo.", "Record details view.")}
           actions={
             <div className="flex flex-wrap items-center gap-1">
               {canEdit ? (

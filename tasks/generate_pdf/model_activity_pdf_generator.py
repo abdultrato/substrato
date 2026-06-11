@@ -128,7 +128,6 @@ def generate_model_activity_pdf(payload: dict, request=None) -> tuple[bytes, str
     section_style = document_section_style("ModelReportSection")
     generated_at = timezone.localtime().strftime("%d/%m/%Y às %H:%M")
 
-    endpoint = _text(model_info.get("endpoint"))
     search_filter = _text(filters.get("search"), default="Nenhum")
     status_filter = _text(filters.get("status"), default="Todos")
 
@@ -142,7 +141,6 @@ def generate_model_activity_pdf(payload: dict, request=None) -> tuple[bytes, str
                 f"{bold('Modulo')}: {_text(model_info.get('group_label'))}",
                 f"{bold('Recurso')}: {_text(model_info.get('resource_label'))}",
                 f"{bold('Modelo')}: {_text(model_info.get('model_verbose_name_plural'))}",
-                f"{bold('Endpoint')}: {endpoint}",
                 f"{bold('Janela')}: {_text(period.get('start'))} -> {_text(period.get('end'))}",
             ],
             right_lines=[

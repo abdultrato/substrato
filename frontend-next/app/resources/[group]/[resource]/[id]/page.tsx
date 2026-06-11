@@ -303,7 +303,6 @@ export default function ResourceDetailPage() {
             <div className="space-y-6">
                 <PageHeader
                     title={`${tr(found.resource.label)} — ${id}`}
-                    subtitle={t("Detalhes do registo selecionado.", "Details of the selected record.")}
                     actions={
                         <div className="flex gap-3">
                             {isPaidInvoice ? (

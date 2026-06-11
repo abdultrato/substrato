@@ -24,7 +24,6 @@ export default function MonitoringCloudControlCreatePage() {
       <div className="mx-auto w-full max-w-5xl space-y-4">
         <PageHeader
           title="Novo cloud control"
-          subtitle="Registe um comando de controle de infraestrutura e volte para a listagem operacional."
           actions={
             <Link
               href={LIST_HREF}

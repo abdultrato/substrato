@@ -98,7 +98,6 @@ export default function ContabilidadeLancamentosPage() {
       <div className="space-y-6">
         <PageHeader
           title="Lançamentos"
-          subtitle="Lançamentos contabilísticos e histórico."
           actions={
             <div className="flex flex-wrap items-center gap-2">
               <Link

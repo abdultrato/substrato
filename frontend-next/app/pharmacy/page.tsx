@@ -79,7 +79,6 @@ export default function FarmaciaPage() {
       <div className="space-y-6">
         <PageHeader
           title="Farmácia"
-          subtitle="Almoxarifado: produtos, lotes e movimentos de estoque."
           actions={
             podeVerAdmin ? (
               <Link

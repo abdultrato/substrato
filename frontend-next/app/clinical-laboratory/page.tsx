@@ -129,11 +129,6 @@ export default function ClinicalLaboratoryHubPage() {
         </div>
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Laboratório Clínico (LIS)</h1>
-          <p className="mt-1 text-sm text-slate-500 max-w-2xl">
-            Sector completo: do pedido e colheita (pré-analítico), passando pelo
-            processamento e validação (analítico), até ao laudo e comunicação de
-            resultados críticos (pós-analítico). Rastreável, faturável e auditável.
-          </p>
         </div>
       </header>
 

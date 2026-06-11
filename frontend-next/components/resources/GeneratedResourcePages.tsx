@@ -125,70 +125,6 @@ function detailContractEndpoint(endpoint: string): string {
   return `${normalizeEndpoint(endpoint).replace(/\/$/, "")}/{id}/`
 }
 
-function groupContextMessage(groupKey: string, action: "list" | "new" | "detail" | "edit"): string {
-  const canonical = canonicalModuleGroupKey(groupKey)
-  const byGroup: Record<string, Record<string, string>> = {
-    clinical: {
-      list: "Monitorize o ciclo clínico com foco em consistência de dados e rastreabilidade.",
-      new: "Registe dados clínicos com validação completa antes de submeter.",
-      detail: "Consulte o registo clínico completo com os campos de negócio do backend.",
-      edit: "Atualize apenas os dados clínicos necessários e preserve o histórico.",
-    },
-    laboratory: {
-      list: "Acompanhe requisições, amostras e resultados com fluxo operacional claro.",
-      new: "Preencha os dados laboratoriais obrigatórios para manter integridade do processo.",
-      detail: "Verifique a estrutura laboratorial do registo antes de qualquer ação.",
-      edit: "Ajuste informações laboratoriais mantendo compatibilidade com o contrato da API.",
-    },
-    nursing: {
-      list: "Visualize evoluções, sinais vitais e procedimentos com leitura rápida.",
-      new: "Registe dados assistenciais completos para continuidade do cuidado.",
-      detail: "Consulte o contexto assistencial e os estados associados ao registo.",
-      edit: "Edite o plano assistencial com consistência entre frontend e backend.",
-    },
-    bloodbank: {
-      list: "Controle doações, unidades e movimentos com estados operacionais explícitos.",
-      new: "Registe o fluxo hemoterápico com todos os campos exigidos pelo backend.",
-      detail: "Analise o estado da unidade e o contexto transfusional do registo.",
-      edit: "Atualize dados do banco de sangue sem perder coerência de estado.",
-    },
-    pharmacy: {
-      list: "Gerencie stock, lotes e saídas com visão operacional objetiva.",
-      new: "Registe dados farmacêuticos com validações de negócio já no formulário.",
-      detail: "Consulte o item farmacêutico com todos os atributos relevantes do backend.",
-      edit: "Ajuste registos farmacêuticos mantendo consistência com regras de estoque.",
-    },
-    accounting: {
-      list: "Acompanhe lançamentos e conciliações com leitura financeira objetiva.",
-      new: "Crie registos contabilísticos com campos completos e sem ambiguidade.",
-      detail: "Consulte o registo financeiro com foco em auditoria e reconciliação.",
-      edit: "Atualize dados contabilísticos com rastreabilidade e precisão.",
-    },
-    education: {
-      list: "Acompanhe turmas, avaliações e progresso com estrutura pedagógica clara.",
-      new: "Registe informação académica com completude para fluxo escolar.",
-      detail: "Consulte dados pedagógicos com leitura contextual por disciplina.",
-      edit: "Atualize o registo académico preservando regras de progressão.",
-    },
-    warehouse: {
-      list: "Acompanhe compras, estoque, reservas, separação e expedições com leitura operacional clara.",
-      new: "Registe dados de armazém com campos completos para manter o fluxo ERP/WMS consistente.",
-      detail: "Consulte o registo de armazém com rastreabilidade de item, lote, localização e estado.",
-      edit: "Atualize o registo mantendo coerência entre estoque, pedidos, reservas e movimentos.",
-    },
-  }
-
-  return (
-    byGroup[canonical]?.[action] ||
-    {
-      list: "Visualize os registos com contexto de negócio e filtros úteis.",
-      new: "Preencha os campos necessários para criar um novo registo.",
-      detail: "Consulte o registo completo com os dados esperados pela API.",
-      edit: "Atualize o registo mantendo compatibilidade com o backend.",
-    }[action]
-  )
-}
-
 function pickPrimaryLabel(data: Record<string, any> | null | undefined): string {
   if (!data || typeof data !== "object") return ""
   const candidates = [
@@ -255,7 +191,6 @@ export function GeneratedResourceListPage({
   return (
     <ResourceListPage
       title={`${groupLabel} / ${resourceLabel}`}
-      subtitle={groupContextMessage(ctx.groupKey, "list")}
       endpoint={ctx.normalizedEndpoint}
       groupLabel={groupLabel}
       resourceLabel={resourceLabel}
@@ -311,7 +246,6 @@ export function GeneratedResourceCreatePage({
       <div className="mx-auto w-full max-w-5xl space-y-4">
         <PageHeader
           title={createActionLabel}
-          subtitle={groupContextMessage(ctx.groupKey, "new")}
           actions={
             <Link
               href={basePath}
@@ -463,7 +397,6 @@ export function GeneratedResourceDetailPage({
         <div className="mx-auto w-full max-w-5xl space-y-4">
           <PageHeader
             title={`${resourceLabel} #${id}`}
-            subtitle={groupContextMessage(ctx.groupKey, "detail")}
             actions={
               <Link
                 href={basePath}
@@ -489,7 +422,6 @@ export function GeneratedResourceDetailPage({
       <div className="mx-auto w-full max-w-5xl space-y-4">
         <PageHeader
           title={primary ? primary : `${resourceLabel} #${id}`}
-          subtitle={groupContextMessage(ctx.groupKey, "detail")}
           actions={
             <div className="flex flex-wrap items-center gap-2">
               {canNotifyPaidInvoice ? (
@@ -655,7 +587,6 @@ export function GeneratedResourceEditPage({ endpoint }: { endpoint: string }) {
         <div className="mx-auto w-full max-w-5xl space-y-4">
           <PageHeader
             title={`${t("Editar", "Edit")} ${resourceLabel}`}
-            subtitle={groupContextMessage(ctx.groupKey, "edit")}
             actions={
               <Link
                 href={detailPath}
@@ -676,7 +607,6 @@ export function GeneratedResourceEditPage({ endpoint }: { endpoint: string }) {
       <div className="mx-auto w-full max-w-5xl space-y-4">
         <PageHeader
           title={`${t("Editar", "Edit")} ${resourceLabel}`}
-          subtitle={groupContextMessage(ctx.groupKey, "edit")}
           actions={
             <Link
               href={detailPath}

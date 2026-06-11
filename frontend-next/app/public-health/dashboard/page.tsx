@@ -10,7 +10,6 @@ export default function PublicHealthDashboardListPage() {
     <Suspense fallback={<div className="p-4 text-sm text-[var(--gray-500)]">Carregando...</div>}>
       <ResourceListPage
         title="Saude publica / Dashboard"
-        subtitle="Indicadores de vigilancia e imunizacao expostos pela API de saude publica."
         endpoint="/public_health/dashboard/"
         groupLabel="Saude publica"
         resourceLabel="Dashboard"

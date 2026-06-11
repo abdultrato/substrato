@@ -77,10 +77,6 @@ export default function ClinicalPharmacyHubPage() {
 
         <WorkspaceHub
           title="Farmácia Clínica"
-          subtitle={t(
-            "Preparação de quimioterápicos e TPN, terapia IV, interações, controlados e antibiotic stewardship.",
-            "Chemotherapy and TPN preparation, IV therapy, interactions, controlled drugs and antibiotic stewardship."
-          )}
           adminHref="/admin/farmacia_clinica/"
           secondaryCta={{ href: "/clinical-pharmacy/preparations", label: t("Recursos de Farmácia Clínica", "Clinical Pharmacy resources") }}
           metrics={[

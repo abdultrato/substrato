@@ -5,7 +5,6 @@ export default function OccupationalTherapyPage() {
     <TherapyHubPage
       discipline="OCCUPATIONAL_THERAPY"
       title="Substrato Terapia Ocupacional"
-      subtitle="Avaliações funcionais, atividades da vida diária, adaptação laboral, planos individualizados e evolução terapêutica."
       resourceBasePath="/occupational-therapy"
       requiredGroups={THERAPY_GROUPS}
     />

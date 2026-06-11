@@ -10,7 +10,6 @@ export default function MonitoringCloudControlListPage() {
     <Suspense fallback={<div className="p-4 text-sm text-[var(--gray-500)]">Carregando...</div>}>
       <ResourceListPage
         title="Monitoramento / Cloud control"
-        subtitle="Comandos e estados de controle de infraestrutura operacional."
         endpoint="/monitoring/cloud_control/"
         groupLabel="Monitoramento"
         resourceLabel="Cloud control"

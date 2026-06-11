@@ -118,7 +118,6 @@ export default function EducationResourceEditPage() {
       <div className="mx-auto w-full max-w-5xl space-y-4">
         <PageHeader
           title={`${t("Editar", "Edit")} ${tr(found.resource.label)} #${id}`}
-          subtitle={t("Edição do registo selecionado.", "Edit selected record.")}
           actions={
             <Link href={`${basePath}/${id}`} className="text-xs text-[var(--gray-700)] no-underline hover:underline">
               {t("Voltar", "Back")}

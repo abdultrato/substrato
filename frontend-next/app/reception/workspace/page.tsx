@@ -10,7 +10,6 @@ export default function ReceptionWorkspaceListPage() {
     <Suspense fallback={<div className="p-4 text-sm text-[var(--gray-500)]">Carregando...</div>}>
       <ResourceListPage
         title="Recepcao / Workspace"
-        subtitle="Estado operacional da recepcao exposto pelo contrato dedicado do backend."
         endpoint="/reception/workspace/"
         groupLabel="Recepcao"
         resourceLabel="Workspace"

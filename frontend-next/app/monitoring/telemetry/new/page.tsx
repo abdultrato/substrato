@@ -24,7 +24,6 @@ export default function MonitoringTelemetryCreatePage() {
       <div className="mx-auto w-full max-w-5xl space-y-4">
         <PageHeader
           title="Nova telemetria"
-          subtitle="Registe um evento tecnico e volte para a listagem operacional."
           actions={
             <Link
               href={LIST_HREF}

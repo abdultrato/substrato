@@ -108,7 +108,6 @@ export default function RecibosPage() {
       <div className="space-y-6">
         <PageHeader
           title="Recibos"
-          subtitle="Consultas e auditoria de pagamentos."
           actions={null}
         />
 

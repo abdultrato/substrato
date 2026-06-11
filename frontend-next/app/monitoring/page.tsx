@@ -126,7 +126,6 @@ export default function MonitoramentoPage() {
             <div className="space-y-6">
                 <PageHeader
                     title="Monitorização"
-                    subtitle="Acompanhe erros e o estado do sistema."
                     actions={
                         <Link
                             href="/admin/monitoring/systemerror/"

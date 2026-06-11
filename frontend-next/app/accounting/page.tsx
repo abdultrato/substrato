@@ -66,7 +66,6 @@ export default function ContabilidadePage() {
       <div className="space-y-6">
         <PageHeader
           title="Contabilidade"
-          subtitle="Gestão financeira: contas, lançamentos, movimentos e conciliações."
           actions={
             podeVerAdmin ? (
               <Link
@@ -145,16 +144,6 @@ export default function ContabilidadePage() {
             icon={ClipboardList}
           />
         </div>
-
-        <Card
-          title="Regra de ouro"
-          subtitle="Contabilidade deve enxergar tudo que é feito na recepção, mas não alterar."
-        >
-          <div className="text-sm text-slate-700">
-            Nesta fase, garantimos isso no frontend ao separar rotas e não expor botões de criação/edição para recepção dentro de contabilidade.
-            Para segurança real, o backend deve também negar permissões de escrita para esses grupos.
-          </div>
-        </Card>
       </div>
     </AppLayout>
   )

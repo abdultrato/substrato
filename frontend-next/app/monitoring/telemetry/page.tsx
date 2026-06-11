@@ -10,7 +10,6 @@ export default function MonitoringTelemetryListPage() {
     <Suspense fallback={<div className="p-4 text-sm text-[var(--gray-500)]">Carregando...</div>}>
       <ResourceListPage
         title="Monitoramento / Telemetria"
-        subtitle="Eventos e medidas tecnicas capturados pela API de observabilidade."
         endpoint="/monitoring/telemetry/"
         groupLabel="Monitoramento"
         resourceLabel="Telemetria"

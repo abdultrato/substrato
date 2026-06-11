@@ -700,7 +700,6 @@ export default function EstatisticasPage() {
       <div className="space-y-6">
         <PageHeader
           title="Estatísticas Estratégicas"
-          subtitle="Centro analítico com exploração de performance clínica, financeira e cobertura operacional por módulos."
           actions={
             <div className="flex flex-wrap items-center gap-2">
               <div className="inline-flex overflow-hidden rounded-lg border border-[var(--border)] bg-[var(--card)]">

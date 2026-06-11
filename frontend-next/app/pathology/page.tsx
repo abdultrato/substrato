@@ -260,10 +260,6 @@ export default function PathologyPage() {
 
         <WorkspaceHub
           title="Patologia"
-          subtitle={t(
-            "Fluxo completo de anatomia patológica, da requisição médica ao arquivo físico/digital e à faturação por evento.",
-            "Complete anatomic pathology flow, from medical request to physical/digital archive and event-based billing."
-          )}
           adminHref="/admin/patologia/"
           secondaryCta={{ href: "/resources/pathology", label: t("Recursos técnicos", "Technical resources") }}
           metrics={pathologyResources.map((resource) => ({

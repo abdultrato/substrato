@@ -86,10 +86,6 @@ export default function TransportationPage() {
 
         <WorkspaceHub
           title="Substrato Transporte"
-          subtitle={t(
-            "Gestão de frota, motoristas, rastreamento, combustível, manutenção preventiva e rotas.",
-            "Fleet, driver, tracking, fuel, preventive maintenance and route management."
-          )}
           adminHref="/admin/transportation/"
           secondaryCta={{ href: "/transportation/vehicles", label: t("Recursos de Transporte", "Transportation resources") }}
           metrics={[

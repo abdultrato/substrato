@@ -294,10 +294,6 @@ export default function MonitoringCommandCenterPage() {
       <div className="space-y-6">
         <PageHeader
           title={t("Centro de comando operacional", "Operational Command Center")}
-          subtitle={t(
-            "Observabilidade ativa com alertas automáticos, SLO por módulo e rastreio operacional centralizado.",
-            "Active observability with automatic alerts, module-level SLO and centralized operational tracking."
-          )}
           actions={
             <div className="flex flex-wrap items-center gap-2">
               <label className="flex items-center gap-2 text-sm text-[var(--gray-700)]">

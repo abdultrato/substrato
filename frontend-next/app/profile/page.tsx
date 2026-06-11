@@ -68,7 +68,6 @@ export default function PerfilPage () {
             <div className="space-y-4">
                 <PageHeader
                     title="Perfil"
-                    subtitle="Informações da conta, contacto e foto de perfil."
                     actions={
                         <Link
                             href="/profile/edit"

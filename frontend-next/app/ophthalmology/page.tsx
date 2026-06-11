@@ -5,7 +5,6 @@ export default function OphthalmologyPage() {
     <SpecialtyDiagnosticsHubPage
       specialty="OPHTHALMOLOGY"
       title="Substrato Oftalmologia"
-      subtitle="Campo visual, topografia corneal, OCT, medições e laudos oftalmológicos."
       resourceBasePath="/ophthalmology"
       requiredGroups={SPECIALTY_DIAGNOSTICS_GROUPS}
     />

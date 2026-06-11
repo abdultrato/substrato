@@ -243,7 +243,6 @@ const EXACT_EN_TO_PT: Record<string, string> = {
   "Name": "Nome",
   "Status": "Estado",
   "Created at": "Criado em",
-  "Technical resource:": "Recurso técnico:",
   "Submodules": "Submódulos",
   "No submodules available.": "Sem submódulos disponíveis.",
   "Could not sync with backend now. Showing local catalog.": "Falha ao sincronizar com o backend agora. A mostrar catálogo local.",

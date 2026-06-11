@@ -79,10 +79,6 @@ export default function HealthcarePage() {
 
         <WorkspaceHub
           title="Substrato Saúde"
-          subtitle={t(
-            "Domínio clínico com padrão visual unificado para equipas assistenciais.",
-            "Clinical domain with the same visual standard as Education."
-          )}
           adminHref="/admin/"
           secondaryCta={{ href: "/patients", label: t("Abrir pacientes", "Open Patients") }}
           metrics={[

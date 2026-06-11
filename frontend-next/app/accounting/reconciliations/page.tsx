@@ -85,7 +85,6 @@ export default function ContabilidadeConciliacoesPage() {
       <div className="space-y-6">
         <PageHeader
           title="Conciliações"
-          subtitle="Conciliação financeira e auditoria."
           actions={
             <div className="flex flex-wrap items-center gap-2">
               <Link

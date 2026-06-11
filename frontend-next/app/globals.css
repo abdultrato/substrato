@@ -12,7 +12,10 @@
   html {
     font-family: var(--font-sans);
     font-size: 16px;
-    scroll-behavior: smooth;
+    /* Sem scroll-behavior: smooth na raiz: no Chrome, com scroll aninhado
+       (main overflow-y-auto), a roda do rato reinicia a animação suave a
+       cada tick e a página deixa de rolar. Smooth fica para scrolls
+       programáticos via behavior: "smooth" pontual. */
     text-rendering: optimizeLegibility;
     -webkit-text-size-adjust: 100%;
   }

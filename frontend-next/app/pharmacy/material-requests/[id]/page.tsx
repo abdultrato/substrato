@@ -188,7 +188,6 @@ export default function MaterialRequisitionDetailPage() {
       <div className="space-y-6">
         <PageHeader
           title={`Requisição ${data?.custom_id || id}`}
-          subtitle="Requisição interna de materiais à farmácia."
           actions={
             <Link
               href="/pharmacy/material-requests"

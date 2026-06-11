@@ -124,10 +124,6 @@ export default function DentalPage() {
 
         <WorkspaceHub
           title="Odontologia"
-          subtitle={t(
-            "Fluxo especializado para agenda, consulta, odontograma, plano, orçamento, pagamento, execução e acompanhamento.",
-            "Specialized flow for scheduling, consultation, odontogram, plan, quotation, payment, execution and follow-up."
-          )}
           adminHref="/admin/odontologia/"
           secondaryCta={{ href: "/dental/appointments", label: t("Recursos de Odontologia", "Dental resources") }}
           metrics={[

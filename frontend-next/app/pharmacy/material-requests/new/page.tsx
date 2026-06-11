@@ -206,7 +206,6 @@ export default function CriarRequisicaoMateriaisPage() {
       <div className="space-y-6">
         <PageHeader
           title="Criar requisição de materiais"
-          subtitle="Informe o material e a quantidade para solicitar ao setor da farmácia."
           actions={
             <Link
               href="/pharmacy/material-requests"

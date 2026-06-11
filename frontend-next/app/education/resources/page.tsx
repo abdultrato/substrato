@@ -29,10 +29,6 @@ export default function EducationResourcesPage() {
       <div className="space-y-4">
         <PageHeader
           title={t("Educação • Recursos", "Education • Resources")}
-          subtitle={t(
-            "Todas as telas de consumo frontend para recursos de Educação.",
-            "All frontend consumption screens for Education resources."
-          )}
           actions={
             <Link
               href="/education"

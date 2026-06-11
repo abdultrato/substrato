@@ -243,7 +243,6 @@ export default function FarmaciaMovimentosPage() {
       <div className="space-y-6">
         <PageHeader
           title="Movimentos de estoque"
-          subtitle="Auditoria de entradas/saídas/ajustes."
           actions={
             <div className="flex flex-wrap items-center gap-2">
               <Link

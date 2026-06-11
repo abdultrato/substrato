@@ -80,7 +80,6 @@ export default function RecursosPage() {
       <div className="space-y-6">
         <PageHeader
           title={t("Recursos do sistema", "System resources")}
-          subtitle={t("Navegue pelos módulos disponíveis no sistema.", "Browse available modules in the system.")}
         />
 
         {isFetching ? (

@@ -40,11 +40,6 @@ export default function QualityManagementHubPage() {
         <div className="rounded-xl bg-amber-50 p-3 text-amber-600"><CalendarCheck2 size={26} /></div>
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Gestão da Qualidade</h1>
-          <p className="mt-1 text-sm text-slate-500 max-w-2xl">
-            Sistema de gestão da qualidade do laboratório: documentos, não conformidades,
-            CAPA, auditorias, indicadores, formação, competências, reclamações, riscos e
-            revisões pela gestão.
-          </p>
         </div>
       </header>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">

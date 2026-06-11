@@ -301,7 +301,6 @@ export default function EducationDirectoriaPage() {
       <div className="space-y-4">
         <PageHeader
           title="Área da Directoria"
-          subtitle="Visão integral da escola: professores, estudantes, inscrições e execução de trabalhos."
           actions={
             <Link
               href="/education"

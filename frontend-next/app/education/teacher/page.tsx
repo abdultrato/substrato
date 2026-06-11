@@ -978,7 +978,6 @@ export default function EducationTeacherAreaPage() {
       <div className="space-y-4">
         <PageHeader
           title="Área do Professor"
-          subtitle="Turmas lecionadas, estudantes e contexto académico por disciplina."
           actions={
             <Link
               href="/education"

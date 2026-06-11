@@ -523,7 +523,6 @@ export default function FaturasPage() {
       <div className="space-y-6">
         <PageHeader
           title="Faturas"
-          subtitle="Emita, acompanhe pagamentos, gere PDFs e reveja o histórico de faturação."
           actions={
             <div className="flex flex-wrap items-center gap-2">
               {podeCriar ? (
@@ -560,7 +559,6 @@ export default function FaturasPage() {
 
         <Card
           title="Relatórios de faturamento por utilizador"
-          subtitle="Gere PDF diário, mensal, trimestral, semestral e anual por utilizador; e diário, mensal, anual no modo geral."
         >
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-6">
             <div className="space-y-1">

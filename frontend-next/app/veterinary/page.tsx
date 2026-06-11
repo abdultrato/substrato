@@ -82,10 +82,6 @@ export default function VeterinaryPage() {
 
         <WorkspaceHub
           title="Veterinária"
-          subtitle={t(
-            "Fluxo veterinário para animais, vacinação, laboratório, internamento e prescrição.",
-            "Veterinary flow for animals, vaccination, laboratory, admission and prescription."
-          )}
           adminHref="/admin/veterinaria/"
           secondaryCta={{ href: "/veterinary/animals", label: t("Recursos de Veterinária", "Veterinary resources") }}
           metrics={[

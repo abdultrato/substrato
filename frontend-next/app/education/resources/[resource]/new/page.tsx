@@ -88,10 +88,6 @@ export default function EducationResourceCreatePage() {
       <div className="mx-auto w-full max-w-5xl space-y-4">
         <PageHeader
           title={createActionLabel}
-          subtitle={t(
-            "Criação de registo em Educação.",
-            "Create a new Education record."
-          )}
           actions={
             <Link href={basePath} className="text-xs text-[var(--gray-700)] no-underline hover:underline">
               {t("Voltar", "Back")}

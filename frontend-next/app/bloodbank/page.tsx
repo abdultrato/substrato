@@ -75,7 +75,6 @@ export default function BloodBankPage() {
       <div className="mx-auto w-full max-w-6xl space-y-6">
         <PageHeader
           title="Banco de Sangue"
-          subtitle="Doações, unidades, transfusões, armazenamentos e manutenções."
           actions={
             canViewAdmin ? (
               <Link

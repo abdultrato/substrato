@@ -128,10 +128,6 @@ export default function EducationPage() {
 
         <WorkspaceHub
           title="Substrato Educação"
-          subtitle={t(
-            "Domínio académico no mesmo desenho operacional da plataforma.",
-            "Academic domain within the same operational design as healthcare."
-          )}
           adminHref="/admin/education/"
           secondaryCta={{ href: "/education/resources", label: t("Recursos de Educação", "Education resources") }}
           metrics={[
@@ -141,21 +137,6 @@ export default function EducationPage() {
             { label: "Matrículas", value: metricValue || enrollments },
           ]}
           actions={resourceActions}
-          noteTitle={t("Governança da migração", "Migration governance")}
-          notes={[
-            t(
-              "Identidade e autenticação permanecem centralizadas no Substrato.",
-              "Identity and authentication remain centralized in Substrato."
-            ),
-            t(
-              "Todas as telas de Educação para frontend estão disponíveis em /education/resources.",
-              "All Education frontend screens are available under /education/resources."
-            ),
-            t(
-              "Fluxos críticos de Educação já executam no domínio novo sem dependência operacional do legado.",
-              "Critical Education flows now run on the new domain without operational legacy dependency."
-            ),
-          ]}
         />
       </div>
     </AppLayout>

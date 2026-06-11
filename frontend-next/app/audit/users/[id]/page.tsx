@@ -156,7 +156,6 @@ export default function AuditoriaUsuarioDetalhePage() {
       <div className="space-y-6">
         <PageHeader
           title={`Atividade de ${nome}`}
-          subtitle="Histórico recente de pedidos."
         />
 
         {erro ? (

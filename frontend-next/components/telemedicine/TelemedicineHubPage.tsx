@@ -77,10 +77,6 @@ export default function TelemedicineHubPage() {
 
         <WorkspaceHub
           title="Substrato Telemedicina"
-          subtitle={t(
-            "Sala de espera virtual, triagem preliminar, dispositivos remotos, consulta assíncrona e monitoramento de doenças crónicas.",
-            "Virtual waiting room, preliminary triage, remote devices, asynchronous consultation and chronic disease monitoring."
-          )}
           adminHref="/admin/telemedicina/"
           secondaryCta={{ href: "/telemedicine/waiting-room", label: t("Recursos de Telemedicina", "Telemedicine resources") }}
           metrics={[

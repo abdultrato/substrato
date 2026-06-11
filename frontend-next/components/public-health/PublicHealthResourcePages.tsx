@@ -57,10 +57,6 @@ type PublicHealthResourceConfig = {
   title: string
   singular: string
   primaryHeader: string
-  description: string
-  createHint: string
-  detailHint: string
-  editHint: string
   searchPlaceholder: string
   filterLabel?: string
   filterQueryField?: string
@@ -88,10 +84,6 @@ const RESOURCE_CONFIGS: Record<PublicHealthResourceKey, PublicHealthResourceConf
     title: "Vacinas",
     singular: "Vacina",
     primaryHeader: "Vacina",
-    description: "Produtos vacinais, doenças alvo, doses requeridas, reforços e cadeia fria.",
-    createHint: "Registe a vacina com código, doença alvo, regra de doses e faixa etária aplicável.",
-    detailHint: "Consulte a ficha vacinal e os parâmetros de cadeia fria usados nos lotes.",
-    editHint: "Atualize os dados da vacina mantendo códigos oficiais e regras de reforço consistentes.",
     searchPlaceholder: "Pesquisar por vacina, doença, fabricante, código ou código oficial",
     filterLabel: "Atividade",
     filterQueryField: "active",
@@ -117,10 +109,6 @@ const RESOURCE_CONFIGS: Record<PublicHealthResourceKey, PublicHealthResourceConf
     title: "Lotes de Vacina",
     singular: "Lote de vacina",
     primaryHeader: "Lote",
-    description: "Validade, doses disponíveis, quarentena, recolha e quebra de cadeia fria.",
-    createHint: "Registe o lote com validade, stock recebido e temperatura para rastreabilidade.",
-    detailHint: "Consulte stock, validade e estado da cadeia fria do lote selecionado.",
-    editHint: "Atualize o lote sem perder coerência entre doses recebidas, disponíveis e reservadas.",
     searchPlaceholder: "Pesquisar por lote, vacina, local de armazenamento ou código oficial",
     filterLabel: "Estado",
     filterQueryField: "status",
@@ -151,10 +139,6 @@ const RESOURCE_CONFIGS: Record<PublicHealthResourceKey, PublicHealthResourceConf
     title: "Campanhas de Vacinação",
     singular: "Campanha de vacinação",
     primaryHeader: "Campanha",
-    description: "Campanhas por região, população alvo, metas de doses e integração oficial.",
-    createHint: "Crie a campanha vinculando vacina, responsável, região e metas operacionais.",
-    detailHint: "Acompanhe cobertura, metas e vínculo oficial da campanha selecionada.",
-    editHint: "Atualize a campanha mantendo datas, estado e metas coerentes.",
     searchPlaceholder: "Pesquisar por campanha, vacina, região, responsável ou código oficial",
     filterLabel: "Estado",
     filterQueryField: "status",
@@ -183,10 +167,6 @@ const RESOURCE_CONFIGS: Record<PublicHealthResourceKey, PublicHealthResourceConf
     title: "Metas por Região",
     singular: "Meta por região",
     primaryHeader: "Região",
-    description: "População alvo, distrito, faixa etária, doses planeadas e cobertura.",
-    createHint: "Defina a meta regional com campanha, distrito, faixa etária e doses previstas.",
-    detailHint: "Consulte a cobertura regional e o vínculo com a campanha.",
-    editHint: "Atualize a meta mantendo o total aplicado compatível com o plano.",
     searchPlaceholder: "Pesquisar por campanha, região, distrito ou código",
     primary: (row) => [row.region, row.district].filter(Boolean).join(" / ") || firstText(row, ["custom_id", "id"]),
     columns: [
@@ -206,10 +186,6 @@ const RESOURCE_CONFIGS: Record<PublicHealthResourceKey, PublicHealthResourceConf
     title: "Registos de Imunização",
     singular: "Registo de imunização",
     primaryHeader: "Paciente",
-    description: "Histórico vacinal, lote rastreável, dose aplicada e próxima data de reforço.",
-    createHint: "Registe a dose aplicada com paciente, lote, campanha, profissional e próxima dose.",
-    detailHint: "Consulte a imunização com rastreabilidade por paciente, vacina e lote.",
-    editHint: "Atualize o registo preservando a rastreabilidade da dose aplicada.",
     searchPlaceholder: "Pesquisar por paciente, vacina, lote, campanha ou notificação oficial",
     filterLabel: "Estado",
     filterQueryField: "status",
@@ -238,10 +214,6 @@ const RESOURCE_CONFIGS: Record<PublicHealthResourceKey, PublicHealthResourceConf
     title: "Eventos Adversos AEFI",
     singular: "Evento adverso AEFI",
     primaryHeader: "Paciente",
-    description: "AEFI, gravidade, investigação, sintomas, desfecho e causalidade.",
-    createHint: "Registe o AEFI a partir do registo de imunização e detalhe sintomas e gravidade.",
-    detailHint: "Consulte investigação, gravidade, desfecho e notificação oficial do AEFI.",
-    editHint: "Atualize a investigação mantendo paciente, vacina e lote coerentes com a imunização.",
     searchPlaceholder: "Pesquisar por paciente, vacina, lote, sintomas ou notificação oficial",
     filterLabel: "Estado",
     filterQueryField: "status",
@@ -270,10 +242,6 @@ const RESOURCE_CONFIGS: Record<PublicHealthResourceKey, PublicHealthResourceConf
     title: "Notificações Oficiais",
     singular: "Notificação oficial",
     primaryHeader: "Referência",
-    description: "Integração e-SUS, SIPNI, DHIS2 ou sistemas oficiais customizados.",
-    createHint: "Crie a notificação oficial vinculando imunização, AEFI ou cobertura de campanha.",
-    detailHint: "Consulte payload, resposta, tentativas e estado da integração oficial.",
-    editHint: "Atualize estado, resposta e próxima tentativa mantendo o vínculo clínico.",
     searchPlaceholder: "Pesquisar por referência externa, erro, sistema ou código",
     filterLabel: "Estado",
     filterQueryField: "status",
@@ -386,7 +354,6 @@ export function PublicHealthListPage({ resourceKey }: { resourceKey: PublicHealt
       <div className="mx-auto w-full max-w-6xl space-y-4">
         <PageHeader
           title={config.title}
-          subtitle={config.description}
           actions={
             <div className="flex flex-wrap items-center gap-2">
               {createAvailable ? (
@@ -521,7 +488,7 @@ export function PublicHealthCreatePage({ resourceKey }: { resourceKey: PublicHea
       <div className="mx-auto w-full max-w-5xl space-y-4">
         <PageHeader
           title={createAvailable ? createLabel : t("Criação indisponível", "Creation unavailable")}
-          subtitle={createAvailable ? config.createHint : t("Este recurso não expõe criação no contrato atual.", "This resource does not expose creation in the current contract.")}
+          subtitle={createAvailable ? undefined : t("Este recurso não expõe criação no contrato atual.", "This resource does not expose creation in the current contract.")}
           actions={<BackToListLink config={config} />}
         />
 
@@ -611,7 +578,6 @@ export function PublicHealthDetailPage({ resourceKey }: { resourceKey: PublicHea
       <div className="mx-auto w-full max-w-5xl space-y-4">
         <PageHeader
           title={title}
-          subtitle={config.detailHint}
           actions={
             <div className="flex flex-wrap items-center gap-2">
               {canEdit ? (
@@ -715,7 +681,7 @@ export function PublicHealthEditPage({ resourceKey }: { resourceKey: PublicHealt
       <div className="mx-auto w-full max-w-5xl space-y-4">
         <PageHeader
           title={`${t("Editar", "Edit")} ${config.singular}`}
-          subtitle={canUpdate ? config.editHint : t("Este recurso não expõe edição no contrato atual.", "This resource does not expose editing in the current contract.")}
+          subtitle={canUpdate ? undefined : t("Este recurso não expõe edição no contrato atual.", "This resource does not expose editing in the current contract.")}
           actions={
             <Link
               href={`/public-health/${config.segment}/${encodeURIComponent(id)}`}

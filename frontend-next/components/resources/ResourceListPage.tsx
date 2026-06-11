@@ -498,7 +498,7 @@ export default function ResourceListPage({
       <div className="mx-auto w-full max-w-6xl space-y-3">
         <PageHeader
           title={title}
-          subtitle={subtitle || t("Registos disponíveis no módulo selecionado.", "Available records in the selected module.")}
+          subtitle={subtitle}
           actions={
             <>
               {createHref ? (

@@ -294,7 +294,6 @@ export default function MonitoringErrorsPage() {
       <div className="space-y-6">
         <PageHeader
           title="Estatísticas de Erros"
-          subtitle="Telemetria de falhas do frontend/backend e eventos operacionais monitorados."
           actions={
             <div className="flex flex-wrap items-center gap-2">
               <label className="flex items-center gap-2 text-sm text-[var(--gray-700)]">

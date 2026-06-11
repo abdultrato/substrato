@@ -661,10 +661,6 @@ export default function ConsultationsPage() {
       <div className="space-y-6">
         <PageHeader
           title={t("Consultas", "Consultations")}
-          subtitle={t(
-            "Marcação, registo e faturamento de consultas médicas.",
-            "Scheduling, recording, and billing for medical consultations."
-          )}
         />
 
         {errorMessage ? (

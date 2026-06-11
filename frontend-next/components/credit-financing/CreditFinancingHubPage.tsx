@@ -74,10 +74,6 @@ export default function CreditFinancingHubPage() {
 
         <WorkspaceHub
           title="Créditos e Financiamento"
-          subtitle={t(
-            "Consórcios de saúde, financiamento de procedimentos, reembolsos, glosas e bolsas estudantis.",
-            "Health consortiums, procedure financing, reimbursements, denials and student funding."
-          )}
           adminHref="/admin/creditos_financiamento/"
           secondaryCta={{ href: "/credit-financing/consortiums", label: t("Recursos de Crédito", "Credit resources") }}
           metrics={[

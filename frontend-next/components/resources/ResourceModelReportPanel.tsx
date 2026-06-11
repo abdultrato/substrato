@@ -311,9 +311,6 @@ export default function ResourceModelReportPanel({
             {t("Estado:", "Status:")} {(statusFilter || "").trim()}
           </span>
         ) : null}
-        <span className="rounded-md border border-[var(--border)] bg-white px-2 py-0.5 text-[var(--gray-700)]">
-          {t("Recurso técnico:", "Technical resource:")} {canonicalEndpoint}
-        </span>
       </div>
 
       {jobStatus ? (

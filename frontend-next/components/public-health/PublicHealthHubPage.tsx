@@ -175,10 +175,6 @@ export default function PublicHealthHubPage() {
 
         <WorkspaceHub
           title="Saúde Pública"
-          subtitle={t(
-            "Gestão de vacinas, lotes, reforços, campanhas por região, eventos adversos pós-vacinação e notificações oficiais.",
-            "Management of vaccines, lots, boosters, regional campaigns, adverse events following immunization and official notifications."
-          )}
           adminHref="/admin/saude_publica/"
           secondaryCta={{ href: "/public-health/vaccines", label: t("Recursos de Saúde Pública", "Public health resources") }}
           metrics={[

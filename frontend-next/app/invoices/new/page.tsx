@@ -125,7 +125,6 @@ export default function CriarFaturaPage() {
       <div className="space-y-6">
         <PageHeader
           title="Criar fatura"
-          subtitle="Selecione o paciente para criar uma fatura em rascunho."
         />
 
         <Card title="Pesquisar paciente" subtitle="Digite pelo menos 2 caracteres para buscar.">

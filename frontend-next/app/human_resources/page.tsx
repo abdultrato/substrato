@@ -89,7 +89,6 @@ export default function HumanResourcesPage() {
       <div className="space-y-6">
         <PageHeader
           title="Recursos Humanos"
-          subtitle="Gestão do ciclo de vida do trabalhador: admissão, horário, assiduidade, férias, remuneração e histórico laboral."
           actions={
             canViewAdmin ? (
               <Link

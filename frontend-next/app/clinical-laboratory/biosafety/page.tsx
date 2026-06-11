@@ -37,10 +37,6 @@ export default function BiosafetyHubPage() {
         <div className="rounded-xl bg-red-50 p-3 text-red-600"><ShieldCheck size={26} /></div>
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Biossegurança</h1>
-          <p className="mt-1 text-sm text-slate-500 max-w-2xl">
-            Segurança biológica e ocupacional: perigos, exposições, EPIs, resíduos,
-            descontaminação, derrames, vacinação e inspeções.
-          </p>
         </div>
       </header>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">

@@ -24,7 +24,7 @@ type WorkspaceAction = {
 
 type WorkspaceHubProps = {
   title: string
-  subtitle: string
+  subtitle?: string
   adminHref: string
   secondaryCta?: { href: string; label: string }
   metrics: WorkspaceMetric[]

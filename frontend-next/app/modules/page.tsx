@@ -22,7 +22,6 @@ export default function ModulosPage() {
       <div className="space-y-6">
         <PageHeader
           title={t("Módulos", "Modules")}
-          subtitle={t("Organização por domínios conectada aos recursos expostos pelo backend.", "Domain organization connected to backend-exposed resources.")}
         />
 
         {isFetching ? (

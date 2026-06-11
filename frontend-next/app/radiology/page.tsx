@@ -90,10 +90,6 @@ export default function RadiologyPage() {
 
         <WorkspaceHub
           title="Substrato Radiologia"
-          subtitle={t(
-            "Raio-X, ultrassom, tomografia, ressonância, laudos e integração PACS.",
-            "X-ray, ultrasound, CT, MRI, reports and PACS integration."
-          )}
           adminHref="/admin/radiologia/"
           secondaryCta={{ href: "/radiology/studies", label: t("Recursos de Radiologia", "Radiology resources") }}
           metrics={[

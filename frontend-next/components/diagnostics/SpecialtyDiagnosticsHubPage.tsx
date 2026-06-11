@@ -14,7 +14,6 @@ import { GROUPS } from "@/lib/rbac"
 type SpecialtyDiagnosticsHubPageProps = {
   specialty: "CARDIOLOGY" | "NEUROLOGY" | "OPHTHALMOLOGY"
   title: string
-  subtitle: string
   resourceBasePath: "/cardiology" | "/neurology" | "/ophthalmology"
   requiredGroups: string[]
 }
@@ -22,7 +21,6 @@ type SpecialtyDiagnosticsHubPageProps = {
 export default function SpecialtyDiagnosticsHubPage({
   specialty,
   title,
-  subtitle,
   resourceBasePath,
   requiredGroups,
 }: SpecialtyDiagnosticsHubPageProps) {
@@ -92,7 +90,6 @@ export default function SpecialtyDiagnosticsHubPage({
 
         <WorkspaceHub
           title={title}
-          subtitle={subtitle}
           adminHref="/admin/diagnosticos/"
           secondaryCta={{ href: `${resourceBasePath}/exams`, label: t("Recursos de Diagnóstico", "Diagnostic resources") }}
           metrics={[

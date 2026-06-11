@@ -504,10 +504,6 @@ export default function WarehousePage() {
       <div className="space-y-6">
         <PageHeader
           title={t("ERP e WMS", "ERP & WMS")}
-          subtitle={t(
-            "Controle empresarial de compras, estoque, reservas, separação, expedição e inventário.",
-            "Controle empresarial de compras, estoque, reservas, separação, expedição e inventário."
-          )}
           actions={
             <div className="flex flex-wrap items-center gap-2">
               <Link

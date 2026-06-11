@@ -14,7 +14,6 @@ import { GROUPS } from "@/lib/rbac"
 type TherapyHubPageProps = {
   discipline: "OCCUPATIONAL_THERAPY" | "SPECIALIZED_PHYSIOTHERAPY"
   title: string
-  subtitle: string
   resourceBasePath: "/occupational-therapy" | "/physical-therapy"
   requiredGroups: string[]
 }
@@ -22,7 +21,6 @@ type TherapyHubPageProps = {
 export default function TherapyHubPage({
   discipline,
   title,
-  subtitle,
   resourceBasePath,
   requiredGroups,
 }: TherapyHubPageProps) {
@@ -95,7 +93,6 @@ export default function TherapyHubPage({
 
         <WorkspaceHub
           title={title}
-          subtitle={subtitle}
           adminHref="/admin/terapias/"
           secondaryCta={{ href: `${resourceBasePath}/resources`, label: t("Recursos de Terapias", "Therapy resources") }}
           metrics={[

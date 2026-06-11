@@ -129,7 +129,6 @@ export default function AuditoriaUsuariosPage() {
       <div className="space-y-6">
         <PageHeader
           title="Histórico de atividades"
-          subtitle="Utilizadores e ações recentes."
           actions={
             <input
               value={q}
