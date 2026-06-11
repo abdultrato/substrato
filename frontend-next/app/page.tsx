@@ -15,6 +15,7 @@ import {
     UserPlus,
     CalendarClock,
 } from "lucide-react"
+import { lucideToDataUrl } from "@/lib/icon-svg"
 
 interface DashboardStats {
     patients: number
@@ -211,22 +212,43 @@ export default function DashboardPage() {
 
                     <CardSection title="Atalhos">
                         <div className="grid gap-1.5 text-sm">
-                            {quickLinks.map((link) => (
-                                <Link
-                                    key={link.href}
-                                    href={link.href}
-                                    title={link.desc}
-                                    className="group flex items-center justify-between gap-3 rounded-md border border-border bg-card px-3 py-2 shadow-sm transition-colors hover:border-primary/40 hover:bg-muted"
-                                >
-                                    <div className="flex items-center gap-2">
-                                        <link.icon size={16} className="text-muted-foreground group-hover:text-primary transition-colors" />
-                                        <span className="font-medium text-foreground">{link.label}</span>
-                                    </div>
-                                    <span className="text-[11px] text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100">
-                                        {link.desc}
-                                    </span>
-                                </Link>
-                            ))}
+                            {quickLinks.map((link) => {
+                                const iconUrl = lucideToDataUrl(link.icon)
+                                return (
+                                    <Link
+                                        key={link.href}
+                                        href={link.href}
+                                        title={link.desc}
+                                        className="group flex items-center justify-between gap-3 rounded-md border border-border bg-card px-3 py-2 shadow-sm transition-colors hover:border-primary/40 hover:bg-muted"
+                                    >
+                                        <div className="flex items-center gap-2">
+                                            <span
+                                                aria-hidden
+                                                className="pointer-events-none relative h-7 w-7 shrink-0 rounded-lg bg-gray-100"
+                                            >
+                                                <span
+                                                    className="absolute inset-[5px] text-gray-600 group-hover:text-primary transition-colors"
+                                                    style={{
+                                                        backgroundColor: "currentColor",
+                                                        WebkitMaskImage: `url("${iconUrl}")`,
+                                                        WebkitMaskRepeat: "no-repeat",
+                                                        WebkitMaskSize: "contain",
+                                                        WebkitMaskPosition: "center",
+                                                        maskImage: `url("${iconUrl}")`,
+                                                        maskRepeat: "no-repeat",
+                                                        maskSize: "contain",
+                                                        maskPosition: "center",
+                                                    }}
+                                                />
+                                            </span>
+                                            <span className="font-medium text-foreground">{link.label}</span>
+                                        </div>
+                                        <span className="text-[11px] text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100">
+                                            {link.desc}
+                                        </span>
+                                    </Link>
+                                )
+                            })}
                         </div>
                     </CardSection>
                 </div>
@@ -247,7 +269,7 @@ function normalizeDashboardStats(raw: any): DashboardStats {
 function StatCard({
     title,
     value,
-    icon: Icon,
+    icon,
     href,
 }: {
     title: string
@@ -255,16 +277,27 @@ function StatCard({
     icon: any
     href?: string
 }) {
+    const iconUrl = lucideToDataUrl(icon)
     const content = (
-        <div className="flex items-center justify-between rounded-lg border border-border bg-card p-4 shadow-sm transition-colors hover:bg-muted/40">
-            <div>
-                <p className="text-sm text-muted-foreground">{title}</p>
-                <p className="mt-1 font-display text-2xl font-semibold text-foreground">{value}</p>
-            </div>
-
-            <div className="rounded-md border border-border bg-primary-soft p-3 text-primary shadow-sm">
-                <Icon size={22} />
-            </div>
+        <div className="relative overflow-hidden rounded-lg border border-border bg-card p-4 shadow-sm transition-colors hover:bg-muted/40">
+            <span
+                aria-hidden
+                className="pointer-events-none absolute right-3 top-1/2 h-12 w-12 -translate-y-1/2"
+                style={{
+                    background: "#374151",
+                    opacity: 0.08,
+                    WebkitMaskImage: `url("${iconUrl}")`,
+                    WebkitMaskRepeat: "no-repeat",
+                    WebkitMaskSize: "contain",
+                    WebkitMaskPosition: "center",
+                    maskImage: `url("${iconUrl}")`,
+                    maskRepeat: "no-repeat",
+                    maskSize: "contain",
+                    maskPosition: "center",
+                }}
+            />
+            <p className="text-sm text-muted-foreground">{title}</p>
+            <p className="mt-1 font-display text-2xl font-semibold text-foreground">{value}</p>
         </div>
     )
 

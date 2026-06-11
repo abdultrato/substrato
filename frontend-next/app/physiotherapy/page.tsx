@@ -103,43 +103,36 @@ export default function PhysiotherapyPage() {
           actions={[
             {
               title: "Avaliações funcionais",
-              description: t("Dor, mobilidade, força, equilíbrio e limitações.", "Pain, mobility, strength, balance and limitations."),
               href: "/physiotherapy/assessments",
               icon: ClipboardCheck,
             },
             {
               title: "Planos de tratamento",
-              description: t("Objetivos, frequência, sessões e ligação à prescrição médica.", "Goals, frequency, sessions and medical prescription link."),
               href: "/physiotherapy/treatment-plans",
               icon: ClipboardList,
             },
             {
               title: "Intervenções",
-              description: t("Exercícios, terapia manual, eletroterapia e instruções.", "Exercises, manual therapy, electrotherapy and instructions."),
               href: "/physiotherapy/interventions",
               icon: Activity,
             },
             {
               title: "Sessões",
-              description: t("Execução do plano, dor antes/depois e resposta do paciente.", "Plan execution, before/after pain and patient response."),
               href: "/physiotherapy/sessions",
               icon: HeartPulse,
             },
             {
               title: "Evoluções",
-              description: t("Tendência, pontuação funcional e recomendações.", "Trend, functional score and recommendations."),
               href: "/physiotherapy/progress-notes",
               icon: FileText,
             },
             {
               title: "Aparelhos",
-              description: t("Equipamentos, manutenção, localização e disponibilidade.", "Devices, maintenance, location and availability."),
               href: "/physiotherapy/devices",
               icon: Wrench,
             },
             {
               title: "Uso de aparelhos",
-              description: t("Configurações, duração e resultado por sessão.", "Settings, duration and outcome by session."),
               href: "/physiotherapy/device-usages",
               icon: Stethoscope,
             },

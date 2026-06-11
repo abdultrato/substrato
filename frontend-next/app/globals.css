@@ -97,7 +97,9 @@
 
     --gray-900: hsl(var(--foreground-hsl));
     --gray-700: hsl(var(--foreground-2-hsl));
+    --gray-600: hsl(215 16% 38%);
     --gray-500: hsl(var(--muted-foreground-hsl));
+    --gray-400: hsl(215 14% 62%);
     --gray-300: hsl(var(--border-hsl));
     --gray-200: hsl(var(--muted-2-hsl));
     --gray-100: hsl(var(--muted-hsl));
@@ -127,6 +129,16 @@
     --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.32);
     --shadow-md: 0 12px 30px rgba(0, 0, 0, 0.36);
     --shadow-lg: 0 24px 70px rgba(0, 0, 0, 0.42);
+
+    /* Dark mode gray aliases */
+    --gray-900: hsl(var(--foreground-hsl));
+    --gray-700: hsl(var(--foreground-2-hsl));
+    --gray-600: hsl(215 18% 60%);
+    --gray-500: hsl(var(--muted-foreground-hsl));
+    --gray-400: hsl(215 16% 48%);
+    --gray-300: hsl(var(--border-hsl));
+    --gray-200: hsl(var(--muted-2-hsl));
+    --gray-100: hsl(var(--muted-hsl));
   }
 
   html,

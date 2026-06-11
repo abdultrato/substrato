@@ -1,6 +1,5 @@
 "use client"
 
-import Image from "next/image"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { useCallback, useEffect, useMemo } from "react"
@@ -47,6 +46,7 @@ import {
 } from "lucide-react"
 import useTheme from "@/hooks/useTheme"
 import { LOGO_SRC } from "@/lib/brand"
+import { lucideToDataUrl } from "@/lib/icon-svg"
 
 interface Props {
     user: SessionUser | null
@@ -195,6 +195,12 @@ const NAV_SECTIONS: NavSection[] = [
     },
 ]
 
+// Pre-compute SVG data URIs for all nav icons once at module load.
+// Each icon becomes a CSS mask-image — no SVG node rendered in the DOM.
+const NAV_ICON_URLS = new Map<string, string>(
+    NAV_ITEMS.map(item => [item.href, lucideToDataUrl(item.icon)])
+)
+
 export default function Sidebar({ user, open = false, onClose, className }: Props) {
     const pathname = usePathname()
     const router = useRouter()
@@ -324,12 +330,15 @@ export default function Sidebar({ user, open = false, onClose, className }: Prop
                     className="group flex min-w-0 items-center gap-3 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
                     title={t("Ir para o dashboard", "Go to dashboard")}
                 >
-                    <Image
-                        src={LOGO_SRC}
-                        alt="Substrato"
-                        width={36}
-                        height={36}
-                        className="h-9 w-9 rounded-md object-contain p-1 transition-transform group-hover:scale-105"
+                    <span
+                        aria-hidden
+                        className="h-9 w-9 shrink-0 rounded-md bg-muted transition-transform group-hover:scale-105"
+                        style={{
+                            backgroundImage: `url(${LOGO_SRC})`,
+                            backgroundRepeat: "no-repeat",
+                            backgroundSize: "80%",
+                            backgroundPosition: "center",
+                        }}
                     />
                     <div className="min-w-0">
                         <div className="truncate font-display text-sm font-bold tracking-tight text-foreground">
@@ -359,8 +368,8 @@ export default function Sidebar({ user, open = false, onClose, className }: Prop
 
                         <div className="space-y-0.5">
                             {section.items.map((item) => {
-                                const Icon = item.icon
                                 const active = pathname === item.href || (item.href !== "/" && pathname?.startsWith(item.href + "/"))
+                                const iconUrl = NAV_ICON_URLS.get(item.href) ?? ""
 
                                 return (
                                     <Link
@@ -373,13 +382,31 @@ export default function Sidebar({ user, open = false, onClose, className }: Prop
                                         onTouchStart={() => prefetchRoute(item.href)}
                                         title={t(item.desc || "", item.descEn || item.desc || "")}
                                         aria-current={active ? "page" : undefined}
-                                        className={`group relative flex items-center gap-2.5 rounded-md px-2.5 py-2 text-[13px] font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 ${
+                                        className={`group relative flex items-center rounded-md pl-9 pr-2.5 py-2 text-[13px] font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 ${
                                             active
                                                 ? "bg-muted text-foreground shadow-sm before:absolute before:left-0 before:top-1/2 before:h-5 before:w-[3px] before:-translate-x-2 before:-translate-y-1/2 before:rounded-r-full before:bg-primary"
                                                 : "text-muted-foreground hover:bg-muted hover:text-foreground"
                                         }`}
                                     >
-                                        <Icon size={16} className={active ? "text-primary" : "text-muted-foreground group-hover:text-foreground"} />
+                                        {iconUrl && (
+                                            <span
+                                                aria-hidden
+                                                className={`pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 ${
+                                                    active ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
+                                                }`}
+                                                style={{
+                                                    backgroundColor: "currentColor",
+                                                    WebkitMaskImage: `url("${iconUrl}")`,
+                                                    WebkitMaskSize: "contain",
+                                                    WebkitMaskRepeat: "no-repeat",
+                                                    WebkitMaskPosition: "center",
+                                                    maskImage: `url("${iconUrl}")`,
+                                                    maskSize: "contain",
+                                                    maskRepeat: "no-repeat",
+                                                    maskPosition: "center",
+                                                }}
+                                            />
+                                        )}
                                         <span className="truncate">{t(item.label, item.labelEn || item.label)}</span>
                                     </Link>
                                 )

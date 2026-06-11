@@ -75,7 +75,7 @@ export default function ResourceModelReportPanel({
   statusFilter?: string
 }) {
   const { t } = useLanguage()
-  const mountedRef = useRef(true)
+  const mountedRef = useRef(false)
   const [mode, setMode] = useState<ReportMode>("complete")
   const [limit, setLimit] = useState<number>(200)
   const [dateFrom, setDateFrom] = useState<string>(() => toIsoDate(shiftDays(new Date(), -29)))
@@ -86,6 +86,7 @@ export default function ResourceModelReportPanel({
   const [error, setError] = useState<string>("")
 
   useEffect(() => {
+    mountedRef.current = true
     return () => {
       mountedRef.current = false
     }
@@ -182,7 +183,9 @@ export default function ResourceModelReportPanel({
       setJobStatus("ready")
       setFeedback(t("Relatório gerado e transferido.", "Report generated and downloaded."))
     } catch (err: any) {
+      if (!mountedRef.current) return
       setJobStatus("failed")
+      setFeedback("")
       setError(err?.message || t("Falha ao gerar relatório.", "Failed to generate report."))
     } finally {
       if (mountedRef.current) setRunning(false)

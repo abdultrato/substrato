@@ -22,6 +22,7 @@ import {
 import AppLayout from "@/components/layout/AppLayout";
 import { GROUPS } from "@/lib/rbac";
 import LabNav from "@/components/clinical-laboratory/LabNav";
+import { lucideToDataUrl } from "@/lib/icon-svg";
 
 type Section = {
   href: string;
@@ -108,8 +109,23 @@ export default function ClinicalLaboratoryHubPage() {
     <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.LABORATORIO]} subNav={<LabNav />}>
       <main className="p-6 max-w-6xl mx-auto">
       <header className="mb-8 flex items-start gap-3">
-        <div className="rounded-xl bg-indigo-50 p-3 text-indigo-600">
-          <FlaskConical size={26} />
+        <div className="relative rounded-xl bg-indigo-50 p-3 w-[52px] h-[52px] shrink-0">
+          <span
+            aria-hidden
+            className="pointer-events-none absolute inset-0 rounded-xl"
+            style={{
+              background: "#4f46e5",
+              opacity: 0.55,
+              WebkitMaskImage: `url("${lucideToDataUrl(FlaskConical)}")`,
+              WebkitMaskRepeat: "no-repeat",
+              WebkitMaskSize: "52%",
+              WebkitMaskPosition: "center",
+              maskImage: `url("${lucideToDataUrl(FlaskConical)}")`,
+              maskRepeat: "no-repeat",
+              maskSize: "52%",
+              maskPosition: "center",
+            }}
+          />
         </div>
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Laboratório Clínico (LIS)</h1>
@@ -131,23 +147,38 @@ export default function ClinicalLaboratoryHubPage() {
               <span className="text-xs text-slate-400">{phase.hint}</span>
             </div>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {phase.items.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className="group flex items-start gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-colors hover:border-indigo-300 hover:bg-indigo-50/40"
-                >
-                  <span className="mt-0.5 text-indigo-600">
-                    <item.icon size={20} />
-                  </span>
-                  <span>
+              {phase.items.map((item) => {
+                const iconUrl = lucideToDataUrl(item.icon);
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className="group flex items-start gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-colors hover:border-indigo-300 hover:bg-indigo-50/40"
+                  >
+                    <span className="mt-0.5 relative shrink-0 w-6 h-6 rounded-md bg-gray-100">
+                      <span
+                        aria-hidden
+                        className="pointer-events-none absolute inset-0 rounded-md"
+                        style={{
+                          background: "#4f46e5",
+                          opacity: 0.7,
+                          WebkitMaskImage: `url("${iconUrl}")`,
+                          WebkitMaskRepeat: "no-repeat",
+                          WebkitMaskSize: "65%",
+                          WebkitMaskPosition: "center",
+                          maskImage: `url("${iconUrl}")`,
+                          maskRepeat: "no-repeat",
+                          maskSize: "65%",
+                          maskPosition: "center",
+                        }}
+                      />
+                    </span>
                     <span className="block text-sm font-medium text-slate-900 group-hover:text-indigo-700">
                       {item.label}
                     </span>
-                    <span className="block text-xs text-slate-500">{item.desc}</span>
-                  </span>
-                </Link>
-              ))}
+                  </Link>
+                );
+              })}
             </div>
           </section>
         ))}

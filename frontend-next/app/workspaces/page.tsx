@@ -21,6 +21,7 @@ import {
   type LucideIcon,
 } from "lucide-react"
 
+import { lucideToDataUrl } from "@/lib/icon-svg"
 import AppLayout from "@/components/layout/AppLayout"
 import PageHeader from "@/components/ui/PageHeader"
 import { useAuth } from "@/hooks/useAuth"
@@ -551,25 +552,33 @@ export default function WorkspacesPage() {
 
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
               {visibleDepartments.map((department) => {
-                const Icon = department.icon
+                const iconUrl = lucideToDataUrl(department.icon)
                 return (
                   <Link
                     key={department.key}
                     href={department.href}
                     onClick={() => storeScope(department.scope)}
-                    className="group block rounded-lg border border-border bg-card p-5 shadow-sm transition-colors hover:border-primary/35 hover:bg-muted/50"
+                    className="group relative flex min-h-[100px] flex-col justify-end overflow-hidden rounded-lg border border-border bg-card p-5 shadow-sm transition-colors hover:border-primary/35 hover:bg-muted/50"
                   >
-                    <div className="flex items-start gap-3">
-                      <div className="rounded-md border border-border bg-primary-soft p-2.5 text-primary">
-                        <Icon size={20} />
-                      </div>
-                      <div className="space-y-1">
-                        <div className="font-display text-lg font-semibold text-foreground">
-                          {department.title}
-                        </div>
-                        <p className="text-sm text-muted-foreground">{department.description}</p>
-                      </div>
-                    </div>
+                    <span
+                      aria-hidden
+                      className="pointer-events-none absolute inset-0"
+                      style={{
+                        background: "#1e293b",
+                        opacity: 0.09,
+                        WebkitMaskImage: `url("${iconUrl}")`,
+                        WebkitMaskRepeat: "no-repeat",
+                        WebkitMaskSize: "52%",
+                        WebkitMaskPosition: "center 30%",
+                        maskImage: `url("${iconUrl}")`,
+                        maskRepeat: "no-repeat",
+                        maskSize: "52%",
+                        maskPosition: "center 30%",
+                      }}
+                    />
+                    <p className="relative font-display text-lg font-semibold text-foreground">
+                      {department.title}
+                    </p>
                   </Link>
                 )
               })}
@@ -578,7 +587,7 @@ export default function WorkspacesPage() {
         ) : (
           <div className="grid gap-4 md:grid-cols-3">
             {visibleLayers.map((layer) => {
-              const Icon = layer.icon
+              const iconUrl = lucideToDataUrl(layer.icon)
               return (
                 <button
                   key={layer.key}
@@ -588,17 +597,25 @@ export default function WorkspacesPage() {
                     if (layer.key === "education") writeStoredWorkspaceScope("education")
                     setSelectedLayerKey(layer.key)
                   }}
-                  className="group block h-full rounded-lg border border-border bg-card p-5 text-left shadow-sm transition-colors hover:border-primary/35 hover:bg-muted/50"
+                  className="group relative flex min-h-[100px] h-full flex-col justify-end overflow-hidden rounded-lg border border-border bg-card p-5 text-left shadow-sm transition-colors hover:border-primary/35 hover:bg-muted/50"
                 >
-                  <div className="flex items-start gap-3">
-                    <div className="rounded-md border border-border bg-primary-soft p-2.5 text-primary">
-                      <Icon size={20} />
-                    </div>
-                    <div className="min-w-0 space-y-2">
-                      <div className="font-display text-lg font-semibold text-foreground">{layer.title}</div>
-                      <p className="text-sm text-muted-foreground">{layer.description}</p>
-                    </div>
-                  </div>
+                  <span
+                    aria-hidden
+                    className="pointer-events-none absolute inset-0"
+                    style={{
+                      background: "#1e293b",
+                      opacity: 0.09,
+                      WebkitMaskImage: `url("${iconUrl}")`,
+                      WebkitMaskRepeat: "no-repeat",
+                      WebkitMaskSize: "52%",
+                      WebkitMaskPosition: "center 30%",
+                      maskImage: `url("${iconUrl}")`,
+                      maskRepeat: "no-repeat",
+                      maskSize: "52%",
+                      maskPosition: "center 30%",
+                    }}
+                  />
+                  <p className="relative font-display text-lg font-semibold text-foreground">{layer.title}</p>
                 </button>
               )
             })}

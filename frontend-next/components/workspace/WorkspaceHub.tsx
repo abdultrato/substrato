@@ -17,7 +17,7 @@ type WorkspaceMetric = {
 
 type WorkspaceAction = {
   title: string
-  description: string
+  description?: string
   href: string
   icon: LucideIcon
 }

@@ -62,13 +62,15 @@ export default function MobileSidebar({ open, onClose }: Props) {
                                 key={item.href}
                                 href={item.href}
                                 onClick={onClose}
-                                className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition
+                                className={`relative flex items-center pl-10 pr-3 py-2 rounded-lg text-sm transition
                   ${active
                                         ? "bg-blue-50 text-blue-700"
                                         : "text-gray-600 hover:bg-gray-100"}
                 `}
                             >
-                                <Icon size={18} />
+                                <span aria-hidden className="pointer-events-none absolute left-3 top-1/2 flex h-[18px] w-[18px] -translate-y-1/2 items-center justify-center">
+                                    <Icon size={18} />
+                                </span>
                                 {item.label}
                             </Link>
                         )

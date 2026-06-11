@@ -97,7 +97,7 @@ export default function AuditoriaUsuarioDetalhePage() {
         setErro(null)
 
         const [u, acts] = await Promise.all([
-          apiFetch<any>(`/audit/users/${encodeURIComponent(userId)}/`, { clientCache: safeRefreshToken === 0 }),
+          apiFetch<any>(`/audit/usuarios/${encodeURIComponent(userId)}/`, { clientCache: safeRefreshToken === 0 }),
           apiFetch<any>(`/audit/atividade/?user=${encodeURIComponent(userId)}`, { clientCache: safeRefreshToken === 0 }),
         ])
 
@@ -178,6 +178,5 @@ export default function AuditoriaUsuarioDetalhePage() {
     </AppLayout>
   )
 }
-
 
 

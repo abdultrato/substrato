@@ -272,7 +272,7 @@ export default function PathologyPage() {
           }))}
           actions={pathologyResources.map((resource) => ({
             title: resource.title,
-            description: resource.description,
+            description: "",
             href: resource.href,
             icon: resource.icon,
           }))}

@@ -80,25 +80,21 @@ export default function MaternidadePage() {
                 <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                     <ActionTile
                         title="Gestações"
-                        description="Lista e gestão de gestações (CRUD)."
                         href="/maternity/pregnancies"
                         icon={Baby}
                     />
                     <ActionTile
                         title="Criar gestação"
-                        description="Criar um registo de gestação para um paciente."
                         href="/maternity/pregnancies/new"
                         icon={PlusCircle}
                     />
                     <ActionTile
                         title="CRUD (API)"
-                        description="Acesso direto ao CRUD genérico deste módulo."
                         href="/maternity/pregnancies"
                         icon={ClipboardList}
                     />
                     <ActionTile
                         title="Criar requisição de materiais"
-                        description="Solicitar consumíveis à farmácia para rotinas da maternidade."
                         href="/pharmacy/material-requests/new"
                         icon={PackageSearch}
                     />

@@ -194,30 +194,50 @@ export default function LoginPage() {
                         <div className="absolute -left-16 -top-20 h-64 w-64 rounded-full bg-fuchsia-500/25 blur-3xl" />
                         <div className="absolute -bottom-20 -right-12 h-72 w-72 rounded-full bg-indigo-400/20 blur-3xl" />
                         <div className="absolute inset-0 opacity-[0.07] [background-image:radial-gradient(circle_at_1px_1px,#fff_1px,transparent_0)] [background-size:22px_22px]" />
+                        <div
+                            className="absolute inset-0 opacity-[0.12]"
+                            style={{
+                                backgroundImage: `url(${LOGO_SRC})`,
+                                backgroundRepeat: "no-repeat",
+                                backgroundSize: "60%",
+                                backgroundPosition: "center",
+                                filter: "brightness(0) invert(1)",
+                            }}
+                        />
                     </div>
-                    <div className="relative flex flex-col items-start gap-5">
-                        <span className="grid h-16 w-16 place-items-center rounded-2xl bg-white/10 ring-1 ring-white/20 backdrop-blur">
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img src={LOGO_SRC} alt="Substrato" className="h-11 w-11 object-contain" />
-                        </span>
-                        <div>
-                            <p className="text-2xl font-semibold tracking-tight">Substrato</p>
-                            <p className="mt-2 max-w-[15rem] text-sm leading-relaxed text-violet-100/80">
-                                {t("A base para crescer.", "The foundation to grow.")}
-                            </p>
-                        </div>
+                    <div className="relative flex flex-col items-start gap-3">
+                        <p className="text-2xl font-semibold tracking-tight">Substrato</p>
+                        <p className="max-w-[15rem] text-sm leading-relaxed text-violet-100/80">
+                            {t("A base para crescer.", "The foundation to grow.")}
+                        </p>
                     </div>
                 </aside>
 
                 {/* Form panel */}
                 <div className="p-7 sm:p-9">
-                    {/* Mobile brand — above the form on small screens */}
-                    <div className="mb-6 flex flex-col items-center text-center lg:hidden">
-                        <span className="grid h-14 w-14 place-items-center rounded-2xl bg-violet-600/10 ring-1 ring-violet-600/15">
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img src={LOGO_SRC} alt="Substrato" className="h-10 w-10 object-contain" />
-                        </span>
-                        <p className="mt-3 text-base font-semibold tracking-tight text-foreground">Substrato</p>
+                    {/* Mobile brand — full-width banner matching the aside, hidden on lg+ */}
+                    <div className="relative -mx-7 -mt-7 mb-6 overflow-hidden bg-gradient-to-br from-violet-700 via-violet-800 to-indigo-900 px-7 py-8 text-white sm:-mx-9 sm:-mt-9 sm:px-9 lg:hidden">
+                        <div aria-hidden className="pointer-events-none absolute inset-0">
+                            <div className="absolute -left-10 -top-12 h-48 w-48 rounded-full bg-fuchsia-500/25 blur-3xl" />
+                            <div className="absolute -bottom-12 -right-8 h-52 w-52 rounded-full bg-indigo-400/20 blur-3xl" />
+                            <div className="absolute inset-0 opacity-[0.07] [background-image:radial-gradient(circle_at_1px_1px,#fff_1px,transparent_0)] [background-size:22px_22px]" />
+                            <div
+                                className="absolute inset-0 opacity-[0.12]"
+                                style={{
+                                    backgroundImage: `url(${LOGO_SRC})`,
+                                    backgroundRepeat: "no-repeat",
+                                    backgroundSize: "38%",
+                                    backgroundPosition: "center",
+                                    filter: "brightness(0) invert(1)",
+                                }}
+                            />
+                        </div>
+                        <div className="relative flex flex-col items-start gap-2">
+                            <p className="text-xl font-semibold tracking-tight">Substrato</p>
+                            <p className="text-sm text-violet-100/80">
+                                {t("A base para crescer.", "The foundation to grow.")}
+                            </p>
+                        </div>
                     </div>
 
                     {/* Heading */}
