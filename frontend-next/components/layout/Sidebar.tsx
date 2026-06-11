@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { useCallback, useEffect, useMemo } from "react"
+import { useCallback, useEffect, useMemo, type CSSProperties } from "react"
 import { SessionUser } from "@/lib/session"
 import { getDefaultWorkspaceHref, GROUPS, userHasAnyGroup } from "@/lib/rbac"
 import { useLanguage } from "@/hooks/useLanguage"
@@ -257,6 +257,19 @@ export default function Sidebar({ user, open = false, onClose, className }: Prop
                 ? t("Plataforma clínica", "Clinical platform")
                 : t("Plataforma operacional", "Operational platform")
 
+    const expandedSidebarWidth = useMemo(() => {
+        const longestLabel = visibleItems.reduce((longest, item) => {
+            const label = t(item.label, item.labelEn || item.label)
+            return Math.max(longest, Array.from(label).length)
+        }, 0)
+        const widthRem = Math.min(15.5, Math.max(11.25, longestLabel * 0.46 + 4.5))
+        return `${widthRem.toFixed(2)}rem`
+    }, [t, visibleItems])
+
+    const sidebarStyle = {
+        "--sidebar-open-width": expandedSidebarWidth,
+    } as CSSProperties
+
     const prefetchRoute = useCallback((href: string) => {
         if (!href || SESSION_PREFETCHED_ROUTES.has(href)) return
         SESSION_PREFETCHED_ROUTES.add(href)
@@ -340,7 +353,7 @@ export default function Sidebar({ user, open = false, onClose, className }: Prop
                             backgroundPosition: "center",
                         }}
                     />
-                    <div className="min-w-0 overflow-hidden transition-all duration-200 md:max-w-0 md:opacity-0 md:group-hover/sidebar:max-w-44 md:group-hover/sidebar:opacity-100 md:group-focus-within/sidebar:max-w-44 md:group-focus-within/sidebar:opacity-100">
+                    <div className="min-w-0 overflow-hidden transition-all duration-200 md:max-w-0 md:opacity-0 md:group-hover/sidebar:max-w-[calc(var(--sidebar-open-width)-4rem)] md:group-hover/sidebar:opacity-100 md:group-focus-within/sidebar:max-w-[calc(var(--sidebar-open-width)-4rem)] md:group-focus-within/sidebar:opacity-100">
                         <div className="truncate font-display text-sm font-bold tracking-tight text-foreground">
                             Substrato
                         </div>
@@ -359,7 +372,7 @@ export default function Sidebar({ user, open = false, onClose, className }: Prop
                 </button>
             </div>
 
-            <nav className="flex flex-1 flex-col gap-3 overflow-y-auto overflow-x-hidden overscroll-contain px-2 pb-6 pt-3 [scrollbar-gutter:stable]">
+            <nav className="flex flex-1 flex-col gap-3 overflow-y-auto overflow-x-hidden overscroll-contain px-2 pb-6 pt-3">
                 {sectionedItems.map((section) => (
                     <div key={section.label} className="space-y-1">
                         <div className="h-5 overflow-hidden px-2.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground opacity-100 transition-all duration-200 md:h-2 md:opacity-0 md:group-hover/sidebar:h-5 md:group-hover/sidebar:opacity-100 md:group-focus-within/sidebar:h-5 md:group-focus-within/sidebar:opacity-100">
@@ -407,7 +420,7 @@ export default function Sidebar({ user, open = false, onClose, className }: Prop
                                                 }}
                                             />
                                         )}
-                                        <span className="truncate opacity-100 transition-all duration-200 md:max-w-0 md:-translate-x-1 md:opacity-0 md:group-hover/sidebar:max-w-[13rem] md:group-hover/sidebar:translate-x-0 md:group-hover/sidebar:opacity-100 md:group-focus-within/sidebar:max-w-[13rem] md:group-focus-within/sidebar:translate-x-0 md:group-focus-within/sidebar:opacity-100">
+                                        <span className="truncate opacity-100 transition-all duration-200 md:max-w-0 md:-translate-x-1 md:opacity-0 md:group-hover/sidebar:max-w-[calc(var(--sidebar-open-width)-3.5rem)] md:group-hover/sidebar:translate-x-0 md:group-hover/sidebar:opacity-100 md:group-focus-within/sidebar:max-w-[calc(var(--sidebar-open-width)-3.5rem)] md:group-focus-within/sidebar:translate-x-0 md:group-focus-within/sidebar:opacity-100">
                                             {t(item.label, item.labelEn || item.label)}
                                         </span>
                                     </Link>
@@ -441,7 +454,12 @@ export default function Sidebar({ user, open = false, onClose, className }: Prop
 
     return (
         <>
-            <aside className={`group/sidebar hidden md:z-50 md:flex md:w-16 md:shrink-0 md:overflow-hidden md:transition-[width] md:duration-200 md:ease-out md:hover:w-72 md:focus-within:w-72 ${className || ""}`}>{menu}</aside>
+            <aside
+                className={`group/sidebar hidden md:z-50 md:flex md:w-16 md:shrink-0 md:overflow-hidden md:transition-[width] md:duration-200 md:ease-out md:hover:w-[var(--sidebar-open-width)] md:focus-within:w-[var(--sidebar-open-width)] ${className || ""}`}
+                style={sidebarStyle}
+            >
+                {menu}
+            </aside>
 
             <div className={`fixed inset-0 z-50 pointer-events-none md:hidden ${open ? "" : ""}`}>
                 <div

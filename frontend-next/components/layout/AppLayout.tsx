@@ -1,6 +1,6 @@
 "use client"
 
-import { ReactNode, useEffect, useMemo, useState } from "react"
+import { ReactNode, useEffect, useMemo, useState, type CSSProperties } from "react"
 import { usePathname, useRouter } from "next/navigation"
 import { useAuth } from "@/hooks/useAuth"
 import useAuthGuard from "@/hooks/useAuthGuard"
@@ -52,6 +52,9 @@ export default function AppLayout ( {
     const [accessResolutionReady, setAccessResolutionReady] = useState( true )
     const [showRestrictionNotice, setShowRestrictionNotice] = useState( false )
     const footerLeftOffset = sidebarDesktopWidth
+    const contentFrameStyle = {
+        "--layout-right": rightAside ? rightAsideWidth : "0px",
+    } as CSSProperties
     const mustRedirectByScope =
         isOperationalScope(activeScope) &&
         (pathname === "/" || !isPathAllowedForScope(pathname, activeScope))
@@ -211,18 +214,21 @@ export default function AppLayout ( {
 
     if (hasAccessRestriction && showRestrictionNotice) {
         return (
-            <div className="flex min-h-screen flex-col md:flex-row">
+            <div className="substrato-mobile-dvh min-h-screen bg-background">
                 <Sidebar
                     user={user}
                     open={navOpen}
                     onClose={() => setNavOpen( false )}
-                    className="md:sticky md:top-0 md:h-screen"
+                    className="md:fixed md:left-0 md:top-0 md:h-screen"
                 />
 
-                <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+                <div
+                    className="min-w-0 md:ml-16 md:mr-[var(--layout-right)]"
+                    style={contentFrameStyle}
+                >
                     <Header user={user} onMenuClick={handleMenuClick} />
 
-                <main className="substrato-app-surface min-w-0 flex-1 overflow-x-hidden bg-background px-3 py-4 pb-[calc(5rem+env(safe-area-inset-bottom))] sm:px-4 md:px-6 md:py-5 md:pb-14">
+                    <main className="substrato-app-surface min-w-0 overflow-x-hidden bg-background px-3 py-4 pb-[calc(5rem+env(safe-area-inset-bottom))] sm:px-4 md:px-6 md:py-5 md:pb-14">
                         <div className="page-transition">
                             <AutoTranslateTree>
                                 <AccessDenied
@@ -252,7 +258,7 @@ export default function AppLayout ( {
 
                 {rightAside ? (
                     <aside
-                        className="hidden flex-col border-l border-border bg-card/70 backdrop-blur supports-[backdrop-filter]:bg-card/60 md:flex"
+                        className="hidden h-screen flex-col overflow-y-auto border-l border-border bg-card/70 backdrop-blur supports-[backdrop-filter]:bg-card/60 md:fixed md:right-0 md:top-0 md:flex"
                         style={{ width: rightAsideWidth }}
                     >
                         <AutoTranslateTree>{rightAside}</AutoTranslateTree>
@@ -268,20 +274,23 @@ export default function AppLayout ( {
     }
 
     return (
-        <div className="substrato-mobile-dvh flex min-h-screen bg-background flex-col md:flex-row">
+        <div className="substrato-mobile-dvh min-h-screen bg-background">
             <Sidebar
                 user={user}
                 open={navOpen}
                 onClose={() => setNavOpen( false )}
-                className="md:sticky md:top-0 md:h-screen"
+                className="md:fixed md:left-0 md:top-0 md:h-screen"
             />
 
-            <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+            <div
+                className="min-w-0 md:ml-16 md:mr-[var(--layout-right)]"
+                style={contentFrameStyle}
+            >
                 <Header user={user} onMenuClick={handleMenuClick} />
 
                 {subNav}
 
-                <main className="substrato-app-surface min-w-0 flex-1 overflow-x-hidden bg-background px-3 py-4 pb-[calc(5rem+env(safe-area-inset-bottom))] sm:px-4 md:px-6 md:py-5 md:pb-14">
+                <main className="substrato-app-surface min-w-0 overflow-x-hidden bg-background px-3 py-4 pb-[calc(5rem+env(safe-area-inset-bottom))] sm:px-4 md:px-6 md:py-5 md:pb-14">
                     <div className="page-transition">
                         <AutoTranslateTree>{children}</AutoTranslateTree>
                     </div>
@@ -290,7 +299,7 @@ export default function AppLayout ( {
 
             {rightAside ? (
                 <aside
-                    className="hidden h-screen flex-col overflow-y-auto border-l border-border bg-card/70 backdrop-blur supports-[backdrop-filter]:bg-card/60 md:sticky md:top-0 md:flex"
+                    className="hidden h-screen flex-col overflow-y-auto border-l border-border bg-card/70 backdrop-blur supports-[backdrop-filter]:bg-card/60 md:fixed md:right-0 md:top-0 md:flex"
                     style={{ width: rightAsideWidth }}
                 >
                     <AutoTranslateTree>{rightAside}</AutoTranslateTree>
