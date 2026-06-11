@@ -398,7 +398,7 @@ def draw_header(canvas_obj, doc):
     # Logo enquadrado na banda do header (sem transbordar o topo) e sem fundo
     # opaco (leitor mantém alpha + mask="auto").
     logo_w, logo_h = 2.4 * cm, 1.5 * cm
-    logo_x = left_margin
+    logo_x = left_margin + 0.1 * cm
     logo_y = page_h - 0.25 * cm - logo_h
 
     if logo:
@@ -416,7 +416,7 @@ def draw_header(canvas_obj, doc):
         canvas_obj.setFont(FONT, PDF_BODY_FONT_SIZE)
         canvas_obj.drawString(logo_x, logo_y + 0.6 * cm, "LOGO INDISPONÍVEL")
 
-    text_x = logo_x + logo_w + 0.4 * cm
+    text_x = logo_x + logo_w + 0.1 * cm
     text_top_y = page_h - 0.62 * cm
 
     canvas_obj.setFont(FONT_BOLD, PDF_TITLE_FONT_SIZE)

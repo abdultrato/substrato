@@ -63,29 +63,29 @@
   .sl-aside::after  { width: 280px; height: 280px; bottom: -90px; right: -70px; background: #6366f1; opacity: .32; }
 
   .sl-aside-inner { position: relative; }
-  .sl-logo-chip {
-    width: 64px; height: 64px;
-    display: flex; align-items: center; justify-content: center;
-    border-radius: 18px;
-    background: rgba(255,255,255,.12);
-    border: 1px solid rgba(255,255,255,.22);
+  .sl-aside-logo-bg {
+    position: absolute; inset: 0;
+    background-repeat: no-repeat; background-size: 60%; background-position: center;
+    filter: brightness(0) invert(1); opacity: .12; pointer-events: none;
   }
-  .sl-logo { width: 44px; height: 44px; object-fit: contain; display: block; }
-  .sl-brand-name { margin: 1.25rem 0 0; font-size: 1.5rem; font-weight: 700; letter-spacing: -0.01em; }
+  .sl-brand-name { margin: 0; font-size: 1.5rem; font-weight: 700; letter-spacing: -0.01em; }
   .sl-tagline { margin: .6rem 0 0; max-width: 15rem; font-size: .85rem; line-height: 1.55; color: rgba(237,233,254,.82); }
 
   /* ── form side ── */
   .sl-main { padding: 2.5rem 2.25rem; background: #fff; display: flex; flex-direction: column; justify-content: center; }
 
   /* mobile brand (above form; shown only when aside collapses) */
-  .sl-mobile-brand { display: none; }
-  .sl-mobile-chip {
-    width: 56px; height: 56px;
-    display: flex; align-items: center; justify-content: center;
-    border-radius: 16px; background: #f3effe; border: 1px solid #e4d9fb;
+  .sl-mobile-brand { display: none; position: relative; overflow: hidden; }
+  .sl-mobile-logo-bg {
+    position: absolute; inset: 0;
+    background-repeat: no-repeat; background-size: 38%; background-position: center;
+    filter: brightness(0) invert(1); opacity: .12; pointer-events: none;
   }
-  .sl-mobile-chip img { width: 38px; height: 38px; object-fit: contain; display: block; }
-  .sl-mobile-name { margin: .6rem 0 0; font-size: 1rem; font-weight: 700; color: #1e1b2e; }
+  .sl-mobile-dots {
+    position: absolute; inset: 0;
+    background-image: radial-gradient(circle at 1px 1px, #fff 1px, transparent 0);
+    background-size: 22px 22px; opacity: .07; pointer-events: none;
+  }
 
   .sl-admin-tag {
     display: inline-flex; align-items: center; gap: .4rem;
@@ -147,8 +147,23 @@
     .sl-aside { display: none; }
     .sl-main { padding: 2rem 1.6rem; }
     .sl-mobile-brand {
-      display: flex; flex-direction: column; align-items: center;
-      text-align: center; margin-bottom: 1.25rem;
+      display: flex; flex-direction: column; align-items: flex-start;
+      margin: -2rem -1.6rem 1.25rem;
+      padding: 2rem 1.6rem;
+      background: linear-gradient(135deg, #6d28d9 0%, #5b21b6 55%, #3730a3 100%);
+      color: #fff;
+    }
+    .sl-mobile-brand::before {
+      content: ""; position: absolute;
+      width: 180px; height: 180px; top: -60px; left: -40px;
+      background: #d946ef; opacity: .28;
+      border-radius: 9999px; filter: blur(60px); pointer-events: none;
+    }
+    .sl-mobile-brand::after {
+      content: ""; position: absolute;
+      width: 200px; height: 200px; bottom: -70px; right: -50px;
+      background: #6366f1; opacity: .32;
+      border-radius: 9999px; filter: blur(60px); pointer-events: none;
     }
   }
 </style>
@@ -173,10 +188,8 @@
 
   {# ── Brand aside (left on desktop) ── #}
   <aside class="sl-aside">
+    <div class="sl-aside-logo-bg" style="background-image: url('{% static jazzmin_settings.site_logo %}')"></div>
     <div class="sl-aside-inner">
-      <span class="sl-logo-chip">
-        <img src="{% static jazzmin_settings.site_logo %}" alt="{{ jazzmin_settings.site_header }}" class="sl-logo" />
-      </span>
       <p class="sl-brand-name">{{ jazzmin_settings.site_header }}</p>
       <p class="sl-tagline">
         {% if LANGUAGE_CODE|slice:":2" == "pt" %}A base para crescer.{% else %}The foundation to grow.{% endif %}
@@ -187,12 +200,16 @@
   {# ── Form side ── #}
   <div class="sl-main">
 
-    {# Mobile brand — above the form on small screens #}
+    {# Mobile brand — full-width banner matching the aside, on small screens #}
     <div class="sl-mobile-brand">
-      <span class="sl-mobile-chip">
-        <img src="{% static jazzmin_settings.site_logo %}" alt="{{ jazzmin_settings.site_header }}" />
-      </span>
-      <p class="sl-mobile-name">{{ jazzmin_settings.site_header }}</p>
+      <div class="sl-mobile-logo-bg" style="background-image: url('{% static jazzmin_settings.site_logo %}')"></div>
+      <div class="sl-mobile-dots"></div>
+      <div class="sl-aside-inner">
+        <p class="sl-brand-name">{{ jazzmin_settings.site_header }}</p>
+        <p class="sl-tagline">
+          {% if LANGUAGE_CODE|slice:":2" == "pt" %}A base para crescer.{% else %}The foundation to grow.{% endif %}
+        </p>
+      </div>
     </div>
 
     <span class="sl-admin-tag">{% if LANGUAGE_CODE|slice:":2" == "pt" %}Administração{% else %}Administration{% endif %}</span>

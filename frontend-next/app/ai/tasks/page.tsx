@@ -4,6 +4,8 @@ import Link from "next/link"
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { ArrowLeft, ClipboardCheck, ExternalLink, RefreshCcw, Search } from "lucide-react"
 
+import { lucideToDataUrl } from "@/lib/icon-svg"
+
 import AppLayout from "@/components/layout/AppLayout"
 import AiTaskPanel, { type AiOperationalTask } from "@/components/ai/AiTaskPanel"
 import Badge from "@/components/ui/Badge"
@@ -234,7 +236,23 @@ export default function AiOperationalTasksPage() {
                   <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 font-semibold text-foreground">
-                        <ClipboardCheck size={17} />
+                        <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-gray-100 dark:bg-slate-800">
+                          <span
+                            aria-hidden
+                            className="block h-4 w-4"
+                            style={{
+                              background: "currentColor",
+                              WebkitMaskImage: `url("${lucideToDataUrl(ClipboardCheck)}")`,
+                              WebkitMaskRepeat: "no-repeat",
+                              WebkitMaskSize: "contain",
+                              WebkitMaskPosition: "center",
+                              maskImage: `url("${lucideToDataUrl(ClipboardCheck)}")`,
+                              maskRepeat: "no-repeat",
+                              maskSize: "contain",
+                              maskPosition: "center",
+                            }}
+                          />
+                        </span>
                         {task.title}
                       </div>
                       <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{task.description}</p>

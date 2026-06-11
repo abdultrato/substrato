@@ -382,7 +382,7 @@ def draw_header_improved(canvas_obj, doc, header_config: dict):
             logger.warning("Falha ao desenhar logo: %s", e)
 
     # Texto do cabeçalho (dinâmico por setor)
-    text_x = logo_x + logo_w + 0.4 * cm
+    text_x = logo_x + logo_w + 0.1 * cm
     text_top_y = logo_y + logo_h - 0.25 * cm
 
     sector_color = header_config.get("sector_color", colors.HexColor("#1976D2"))

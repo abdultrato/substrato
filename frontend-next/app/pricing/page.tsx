@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Check, Loader2 } from "lucide-react";
+import { lucideToDataUrl } from "@/lib/icon-svg";
 import { fetchPublicPlans, type PublicPlan } from "@/lib/onboarding";
 
 function formatPrice(value: string) {
@@ -22,6 +23,8 @@ export default function PricingPage() {
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
   }, []);
+
+  const checkUrl = lucideToDataUrl(Check);
 
   return (
     <main className="min-h-screen bg-slate-50 px-4 py-16">
@@ -61,24 +64,88 @@ export default function PricingPage() {
                 </div>
                 <ul className="mt-6 space-y-2 text-sm text-slate-600 flex-1">
                   <li className="flex items-center gap-2">
-                    <Check size={16} className="text-emerald-600" />
+                    <span className="inline-flex h-5 w-5 shrink-0 rounded bg-emerald-50 relative">
+                      <span
+                        aria-hidden
+                        className="pointer-events-none absolute inset-0"
+                        style={{
+                          background: "#059669",
+                          WebkitMaskImage: `url("${checkUrl}")`,
+                          WebkitMaskRepeat: "no-repeat",
+                          WebkitMaskSize: "70%",
+                          WebkitMaskPosition: "center",
+                          maskImage: `url("${checkUrl}")`,
+                          maskRepeat: "no-repeat",
+                          maskSize: "70%",
+                          maskPosition: "center",
+                        }}
+                      />
+                    </span>
                     Até {plan.user_limit} utilizador(es)
                   </li>
                   {plan.monthly_request_limit > 0 && (
                     <li className="flex items-center gap-2">
-                      <Check size={16} className="text-emerald-600" />
+                      <span className="inline-flex h-5 w-5 shrink-0 rounded bg-emerald-50 relative">
+                        <span
+                          aria-hidden
+                          className="pointer-events-none absolute inset-0"
+                          style={{
+                            background: "#059669",
+                            WebkitMaskImage: `url("${checkUrl}")`,
+                            WebkitMaskRepeat: "no-repeat",
+                            WebkitMaskSize: "70%",
+                            WebkitMaskPosition: "center",
+                            maskImage: `url("${checkUrl}")`,
+                            maskRepeat: "no-repeat",
+                            maskSize: "70%",
+                            maskPosition: "center",
+                          }}
+                        />
+                      </span>
                       {plan.monthly_request_limit.toLocaleString("pt-MZ")} req/mês
                     </li>
                   )}
                   {plan.priority_support && (
                     <li className="flex items-center gap-2">
-                      <Check size={16} className="text-emerald-600" />
+                      <span className="inline-flex h-5 w-5 shrink-0 rounded bg-emerald-50 relative">
+                        <span
+                          aria-hidden
+                          className="pointer-events-none absolute inset-0"
+                          style={{
+                            background: "#059669",
+                            WebkitMaskImage: `url("${checkUrl}")`,
+                            WebkitMaskRepeat: "no-repeat",
+                            WebkitMaskSize: "70%",
+                            WebkitMaskPosition: "center",
+                            maskImage: `url("${checkUrl}")`,
+                            maskRepeat: "no-repeat",
+                            maskSize: "70%",
+                            maskPosition: "center",
+                          }}
+                        />
+                      </span>
                       Suporte prioritário
                     </li>
                   )}
                   {plan.allows_multi_unit && (
                     <li className="flex items-center gap-2">
-                      <Check size={16} className="text-emerald-600" />
+                      <span className="inline-flex h-5 w-5 shrink-0 rounded bg-emerald-50 relative">
+                        <span
+                          aria-hidden
+                          className="pointer-events-none absolute inset-0"
+                          style={{
+                            background: "#059669",
+                            WebkitMaskImage: `url("${checkUrl}")`,
+                            WebkitMaskRepeat: "no-repeat",
+                            WebkitMaskSize: "70%",
+                            WebkitMaskPosition: "center",
+                            maskImage: `url("${checkUrl}")`,
+                            maskRepeat: "no-repeat",
+                            maskSize: "70%",
+                            maskPosition: "center",
+                          }}
+                        />
+                      </span>
                       Multiunidade
                     </li>
                   )}

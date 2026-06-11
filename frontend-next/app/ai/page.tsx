@@ -25,6 +25,7 @@ import {
   UserPlus,
 } from "lucide-react"
 
+import { lucideToDataUrl } from "@/lib/icon-svg"
 import AppLayout from "@/components/layout/AppLayout"
 import AiActionPanel, { type AiSuggestedAction } from "@/components/ai/AiActionPanel"
 import AiEvidencePanel, { type AiSource } from "@/components/ai/AiEvidencePanel"
@@ -1369,26 +1370,71 @@ export default function AiOperationalPage() {
             </div>
 
             <div className="grid gap-2 sm:grid-cols-3 lg:grid-cols-1">
-              <div className="rounded-2xl border border-white/10 bg-white/10 p-3">
-                <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-white/60">
-                  <Lock size={14} />
+              <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/10 p-3">
+                <span
+                  aria-hidden
+                  className="pointer-events-none absolute inset-y-0 right-2 w-10"
+                  style={{
+                    background: "#ffffff",
+                    opacity: 0.08,
+                    WebkitMaskImage: `url("${lucideToDataUrl(Lock)}")`,
+                    WebkitMaskRepeat: "no-repeat",
+                    WebkitMaskSize: "contain",
+                    WebkitMaskPosition: "center",
+                    maskImage: `url("${lucideToDataUrl(Lock)}")`,
+                    maskRepeat: "no-repeat",
+                    maskSize: "contain",
+                    maskPosition: "center",
+                  }}
+                />
+                <div className="relative text-xs font-semibold uppercase tracking-wide text-white/60">
                   Cliente
                 </div>
-                <div className="mt-1 text-sm font-semibold">{t("Escopo actual", "Current scope")}</div>
+                <div className="relative mt-1 text-sm font-semibold">{t("Escopo actual", "Current scope")}</div>
               </div>
-              <div className="rounded-2xl border border-white/10 bg-white/10 p-3">
-                <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-white/60">
-                  <TerminalSquare size={14} />
+              <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/10 p-3">
+                <span
+                  aria-hidden
+                  className="pointer-events-none absolute inset-y-0 right-2 w-10"
+                  style={{
+                    background: "#ffffff",
+                    opacity: 0.08,
+                    WebkitMaskImage: `url("${lucideToDataUrl(TerminalSquare)}")`,
+                    WebkitMaskRepeat: "no-repeat",
+                    WebkitMaskSize: "contain",
+                    WebkitMaskPosition: "center",
+                    maskImage: `url("${lucideToDataUrl(TerminalSquare)}")`,
+                    maskRepeat: "no-repeat",
+                    maskSize: "contain",
+                    maskPosition: "center",
+                  }}
+                />
+                <div className="relative text-xs font-semibold uppercase tracking-wide text-white/60">
                   Gateway
                 </div>
-                <div className="mt-1 text-sm font-semibold">local</div>
+                <div className="relative mt-1 text-sm font-semibold">local</div>
               </div>
-              <div className="rounded-2xl border border-white/10 bg-white/10 p-3">
-                <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-white/60">
-                  <Sparkles size={14} />
+              <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/10 p-3">
+                <span
+                  aria-hidden
+                  className="pointer-events-none absolute inset-y-0 right-2 w-10"
+                  style={{
+                    background: "#ffffff",
+                    opacity: 0.08,
+                    WebkitMaskImage: `url("${lucideToDataUrl(Sparkles)}")`,
+                    WebkitMaskRepeat: "no-repeat",
+                    WebkitMaskSize: "contain",
+                    WebkitMaskPosition: "center",
+                    maskImage: `url("${lucideToDataUrl(Sparkles)}")`,
+                    maskRepeat: "no-repeat",
+                    maskSize: "contain",
+                    maskPosition: "center",
+                  }}
+                />
+                <div className="relative text-xs font-semibold uppercase tracking-wide text-white/60">
                   {t("Fluxo seguro", "Secure flow")}
                 </div>
-                <div className="mt-1 text-sm font-semibold">{t("CRUD + RBAC", "CRUD + RBAC")}</div>
+                <div className="relative mt-1 text-sm font-semibold">{t("CRUD + RBAC", "CRUD + RBAC")}</div>
               </div>
             </div>
           </div>
@@ -1397,16 +1443,26 @@ export default function AiOperationalPage() {
         <Card title={t("Conversa operacional", "Operational conversation")}>
           <div className="mb-4 grid gap-3 md:grid-cols-2 xl:grid-cols-6">
             {promptGroups.map((group) => {
-              const Icon = group.icon
+              const iconUrl = lucideToDataUrl(group.icon)
               return (
-                <div key={group.title} className="rounded-2xl border border-border bg-background/70 p-3">
-                  <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-                    <span className="rounded-xl bg-primary/10 p-1.5 text-primary">
-                      <Icon size={16} />
-                    </span>
-                    {group.title}
-                  </div>
-                  <p className="mt-1 min-h-[2rem] text-xs leading-relaxed text-muted-foreground">{group.description}</p>
+                <div key={group.title} className="relative overflow-hidden rounded-2xl border border-border bg-background/70 p-3">
+                  <span
+                    aria-hidden
+                    className="pointer-events-none absolute inset-0"
+                    style={{
+                      background: "#1e293b",
+                      opacity: 0.09,
+                      WebkitMaskImage: `url("${iconUrl}")`,
+                      WebkitMaskRepeat: "no-repeat",
+                      WebkitMaskSize: "52%",
+                      WebkitMaskPosition: "center 30%",
+                      maskImage: `url("${iconUrl}")`,
+                      maskRepeat: "no-repeat",
+                      maskSize: "52%",
+                      maskPosition: "center 30%",
+                    }}
+                  />
+                  <p className="relative text-sm font-semibold text-foreground">{group.title}</p>
                   <div className="mt-3 space-y-1.5">
                     {group.prompts.map((prompt) => (
                       <button
@@ -1429,9 +1485,24 @@ export default function AiOperationalPage() {
               {!messages.length ? (
                 <div className="rounded-2xl border border-dashed border-border bg-muted/30 p-5">
                   <div className="flex items-start gap-3">
-                    <div className="rounded-2xl bg-primary/10 p-2 text-primary">
-                      <Bot size={22} />
-                    </div>
+                    <span className="relative inline-flex h-10 w-10 shrink-0 rounded-2xl bg-gray-100 dark:bg-primary/10">
+                      <span
+                        aria-hidden
+                        className="pointer-events-none absolute inset-0 rounded-2xl"
+                        style={{
+                          background: "var(--color-primary, #6366f1)",
+                          opacity: 0.55,
+                          WebkitMaskImage: `url("${lucideToDataUrl(Bot)}")`,
+                          WebkitMaskRepeat: "no-repeat",
+                          WebkitMaskSize: "60%",
+                          WebkitMaskPosition: "center",
+                          maskImage: `url("${lucideToDataUrl(Bot)}")`,
+                          maskRepeat: "no-repeat",
+                          maskSize: "60%",
+                          maskPosition: "center",
+                        }}
+                      />
+                    </span>
                     <div>
                       <div className="font-semibold text-foreground">
                         {t("Comece por uma pergunta operacional.", "Start with an operational question.")}

@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react"
 import { CheckCircle2, ClipboardList, RefreshCcw, Wrench } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
+import { lucideToDataUrl } from "@/lib/icon-svg"
 import DataTable from "@/components/ui/DataTable"
 import PageHeader from "@/components/ui/PageHeader"
 import useAuthGuard from "@/hooks/useAuthGuard"
@@ -216,7 +217,21 @@ export default function MaintenanceMaintenancesPage() {
 
         <section className="space-y-3">
           <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-            <ClipboardList size={16} />
+            <span
+              aria-hidden
+              className="inline-block h-4 w-4 shrink-0"
+              style={{
+                background: "currentColor",
+                WebkitMaskImage: `url("${lucideToDataUrl(ClipboardList)}")`,
+                WebkitMaskRepeat: "no-repeat",
+                WebkitMaskSize: "contain",
+                WebkitMaskPosition: "center",
+                maskImage: `url("${lucideToDataUrl(ClipboardList)}")`,
+                maskRepeat: "no-repeat",
+                maskSize: "contain",
+                maskPosition: "center",
+              }}
+            />
             {t("Pedidos vindos de ocorrências", "Requests from incidents")}
           </div>
 
@@ -284,7 +299,21 @@ export default function MaintenanceMaintenancesPage() {
         {selectedContext ? (
           <section className="rounded-xl border border-border bg-card p-4 shadow-sm">
             <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-foreground">
-              <CheckCircle2 size={16} />
+              <span
+                aria-hidden
+                className="inline-block h-4 w-4 shrink-0"
+                style={{
+                  background: "currentColor",
+                  WebkitMaskImage: `url("${lucideToDataUrl(CheckCircle2)}")`,
+                  WebkitMaskRepeat: "no-repeat",
+                  WebkitMaskSize: "contain",
+                  WebkitMaskPosition: "center",
+                  maskImage: `url("${lucideToDataUrl(CheckCircle2)}")`,
+                  maskRepeat: "no-repeat",
+                  maskSize: "contain",
+                  maskPosition: "center",
+                }}
+              />
               {t("Execução da manutenção", "Maintenance execution")} · {code(selectedContext)}
             </div>
 
@@ -400,7 +429,21 @@ export default function MaintenanceMaintenancesPage() {
 
         <section className="space-y-3">
           <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-            <Wrench size={16} />
+            <span
+              aria-hidden
+              className="inline-block h-4 w-4 shrink-0"
+              style={{
+                background: "currentColor",
+                WebkitMaskImage: `url("${lucideToDataUrl(Wrench)}")`,
+                WebkitMaskRepeat: "no-repeat",
+                WebkitMaskSize: "contain",
+                WebkitMaskPosition: "center",
+                maskImage: `url("${lucideToDataUrl(Wrench)}")`,
+                maskRepeat: "no-repeat",
+                maskSize: "contain",
+                maskPosition: "center",
+              }}
+            />
             {t("Manutenções recentes", "Recent maintenances")}
           </div>
           <DataTable<MaintenanceRow>

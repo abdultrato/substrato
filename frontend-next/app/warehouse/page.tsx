@@ -19,6 +19,8 @@ import {
   Truck,
 } from "lucide-react"
 
+import { lucideToDataUrl } from "@/lib/icon-svg"
+
 import AppLayout from "@/components/layout/AppLayout"
 import ActionTile from "@/components/ui/ActionTile"
 import Card from "@/components/ui/Card"
@@ -549,7 +551,21 @@ export default function WarehousePage() {
               </p>
             </div>
             <div className="inline-flex items-center gap-2 rounded-md border border-border bg-card px-2.5 py-1.5 text-xs text-muted-foreground">
-              <Clock3 size={13} />
+              <span
+                aria-hidden
+                className="pointer-events-none inline-block h-[13px] w-[13px] shrink-0"
+                style={{
+                  backgroundColor: "currentColor",
+                  WebkitMaskImage: `url("${lucideToDataUrl(Clock3)}")`,
+                  WebkitMaskRepeat: "no-repeat",
+                  WebkitMaskSize: "contain",
+                  WebkitMaskPosition: "center",
+                  maskImage: `url("${lucideToDataUrl(Clock3)}")`,
+                  maskRepeat: "no-repeat",
+                  maskSize: "contain",
+                  maskPosition: "center",
+                }}
+              />
               {loading ? "A sincronizar..." : "Dados recentes do tenant atual"}
             </div>
           </div>

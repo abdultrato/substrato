@@ -18,6 +18,7 @@ import {
     PackageSearch,
 } from "lucide-react"
 
+import { lucideToDataUrl } from "@/lib/icon-svg"
 import AppLayout from "@/components/layout/AppLayout"
 import Card from "@/components/ui/Card"
 import PageHeader from "@/components/ui/PageHeader"
@@ -222,34 +223,33 @@ export default function RecepcaoPage() {
                     />
                 </div>
 
-                <Card
-                    title="Marcação por sector"
-                    subtitle="A recepção inicia a marcação e o registo fica vinculado ao módulo operacional correto."
-                >
+                <Card title="Marcação por sector">
                     <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
                         {marcacoesPorSector.map((sector) => {
-                            const Icon = sector.icon
-
+                            const iconUrl = lucideToDataUrl(sector.icon)
                             return (
                                 <Link
                                     key={sector.href}
                                     href={sector.href}
-                                    className="group flex min-h-[150px] flex-col justify-between rounded-2xl border border-slate-200 bg-gradient-to-br from-white to-slate-50 p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md"
+                                    className="group relative flex min-h-[100px] flex-col justify-end overflow-hidden rounded-2xl border border-slate-200 bg-gradient-to-br from-white to-slate-50 p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md"
                                 >
-                                    <div>
-                                        <div className="mb-3 inline-flex rounded-xl bg-slate-900 p-2 text-white shadow-sm">
-                                            <Icon size={19} />
-                                        </div>
-                                        <div className="text-sm font-semibold text-slate-950">
-                                            {sector.title}
-                                        </div>
-                                        <div className="mt-1 text-xs leading-5 text-slate-600">
-                                            {sector.description}
-                                        </div>
-                                    </div>
-                                    <div className="mt-4 text-xs font-semibold text-slate-900 transition group-hover:translate-x-0.5">
-                                        Marcar na recepção
-                                    </div>
+                                    <span
+                                        aria-hidden
+                                        className="pointer-events-none absolute inset-0"
+                                        style={{
+                                            background: "#1e293b",
+                                            opacity: 0.09,
+                                            WebkitMaskImage: `url("${iconUrl}")`,
+                                            WebkitMaskRepeat: "no-repeat",
+                                            WebkitMaskSize: "52%",
+                                            WebkitMaskPosition: "center 30%",
+                                            maskImage: `url("${iconUrl}")`,
+                                            maskRepeat: "no-repeat",
+                                            maskSize: "52%",
+                                            maskPosition: "center 30%",
+                                        }}
+                                    />
+                                    <p className="relative text-sm font-semibold text-slate-900">{sector.title}</p>
                                 </Link>
                             )
                         })}
@@ -321,26 +321,33 @@ export default function RecepcaoPage() {
                         >
                             <div className="space-y-3">
                                 {atalhos.map((atalho) => {
-                                    const Icon = atalho.icon
-
+                                    const iconUrl = lucideToDataUrl(atalho.icon)
                                     return (
                                         <Link
                                             key={atalho.href}
                                             href={atalho.href}
-                                            className="flex items-start gap-3 rounded-xl border border-gray-200 px-3 py-2 transition hover:border-gray-300 hover:bg-gray-50"
+                                            className="flex items-center gap-3 rounded-xl border border-gray-200 px-3 py-2.5 transition hover:border-gray-300 hover:bg-gray-50"
                                         >
-                                            <div className="rounded-lg bg-gray-100 p-2 text-gray-700">
-                                                <Icon size={18} />
-                                            </div>
-
-                                            <div>
-                                                <div className="text-sm font-medium text-gray-900">
-                                                    {atalho.title}
-                                                </div>
-                                                <div className="mt-1 text-xs text-gray-500">
-                                                    {atalho.description}
-                                                </div>
-                                            </div>
+                                            <span
+                                                aria-hidden
+                                                className="pointer-events-none relative h-8 w-8 shrink-0 rounded-lg bg-gray-100"
+                                            >
+                                                <span
+                                                    className="absolute inset-[6px] text-gray-600"
+                                                    style={{
+                                                        backgroundColor: "currentColor",
+                                                        WebkitMaskImage: `url("${iconUrl}")`,
+                                                        WebkitMaskRepeat: "no-repeat",
+                                                        WebkitMaskSize: "contain",
+                                                        WebkitMaskPosition: "center",
+                                                        maskImage: `url("${iconUrl}")`,
+                                                        maskRepeat: "no-repeat",
+                                                        maskSize: "contain",
+                                                        maskPosition: "center",
+                                                    }}
+                                                />
+                                            </span>
+                                            <span className="text-sm font-medium text-gray-900">{atalho.title}</span>
                                         </Link>
                                     )
                                 })}
@@ -400,18 +407,27 @@ function ResumoCard({
     value: number | string | React.ReactNode
     icon: typeof Users
 }) {
+    const iconUrl = lucideToDataUrl(Icon)
     return (
-        <div className="rounded-2xl border border-gray-200 bg-white px-4 py-3 shadow-sm">
-            <div className="flex items-center justify-between">
-                <div>
-                    <div className="text-sm text-gray-500">{title}</div>
-                    <div className="mt-1 text-2xl font-semibold text-gray-900">{value}</div>
-                </div>
-
-                <div className="rounded-xl bg-gray-100 p-2 text-gray-700">
-                    <Icon size={20} />
-                </div>
-            </div>
+        <div className="relative overflow-hidden rounded-2xl border border-gray-200 bg-white px-4 py-3 shadow-sm">
+            <span
+                aria-hidden
+                className="pointer-events-none absolute right-3 top-1/2 h-12 w-12 -translate-y-1/2"
+                style={{
+                    background: "#374151",
+                    opacity: 0.07,
+                    WebkitMaskImage: `url("${iconUrl}")`,
+                    WebkitMaskRepeat: "no-repeat",
+                    WebkitMaskSize: "contain",
+                    WebkitMaskPosition: "center",
+                    maskImage: `url("${iconUrl}")`,
+                    maskRepeat: "no-repeat",
+                    maskSize: "contain",
+                    maskPosition: "center",
+                }}
+            />
+            <div className="text-sm text-gray-500">{title}</div>
+            <div className="mt-1 text-2xl font-semibold text-gray-900">{value}</div>
         </div>
     )
 }

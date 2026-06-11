@@ -31,31 +31,13 @@ export default function BloodBankPage() {
 
   if (loading) return null
 
-  const tiles: Record<string, { icon: LucideIcon; description: string }> = {
-    donation: {
-      icon: Droplet,
-      description: "Registrar e acompanhar doacoes e triagem.",
-    },
-    unit: {
-      icon: Layers,
-      description: "Controle de bolsas e hemocomponentes por estado.",
-    },
-    transfusion: {
-      icon: HeartPulse,
-      description: "Registros de transfusoes e pacientes receptores.",
-    },
-    storage: {
-      icon: Package,
-      description: "Geladeiras, freezers e locais de armazenamento.",
-    },
-    stock_movement: {
-      icon: ArrowLeftRight,
-      description: "Entradas, saidas, reservas e transferencias.",
-    },
-    storage_maintenance: {
-      icon: Settings,
-      description: "Agendar e registrar manutencoes dos armazenamentos.",
-    },
+  const tiles: Record<string, { icon: LucideIcon }> = {
+    donation: { icon: Droplet },
+    unit: { icon: Layers },
+    transfusion: { icon: HeartPulse },
+    storage: { icon: Package },
+    stock_movement: { icon: ArrowLeftRight },
+    storage_maintenance: { icon: Settings },
   }
 
   const eventCreateLinks = [
@@ -113,7 +95,6 @@ export default function BloodBankPage() {
               <ActionTile
                 key={resource.key}
                 title={resource.label}
-                description={tiles[resource.key]?.description || "Abrir lista e criar novos registros."}
                 href={resourceRoutes[resource.key] || "/bloodbank"}
                 icon={tiles[resource.key]?.icon || Droplet}
               />
