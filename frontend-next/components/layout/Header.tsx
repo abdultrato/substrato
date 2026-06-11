@@ -9,7 +9,6 @@ import useTheme from "@/hooks/useTheme"
 import { useLanguage } from "@/hooks/useLanguage"
 import { useSafeDataRefresh } from "@/hooks/useSafeDataRefresh"
 import { useWorkspaceScope } from "@/hooks/useWorkspaceScope"
-import { LOGO_SRC } from "@/lib/brand"
 import { userHasAnyGroup } from "@/lib/rbac"
 import { AlignJustify, ChevronDown, ChevronLeft, ChevronRight, LogOut, Moon, RefreshCw, Settings, Sun, User } from "lucide-react"
 import { NAV_ITEMS, NAV_SECTIONS, type NavItem } from "@/components/layout/Sidebar"
@@ -147,11 +146,14 @@ export default function Header({ user, onMenuClick }: Props) {
                             className="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-md transition-transform group-hover:scale-105"
                             aria-hidden
                         >
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img
-                                src={LOGO_SRC}
-                                alt="Substrato"
-                                className="block h-full max-h-7 w-full max-w-7 object-contain p-1"
+                            <span
+                                className="block h-full w-full"
+                                style={{
+                                    backgroundImage: "var(--substrato-logo-url)",
+                                    backgroundRepeat: "no-repeat",
+                                    backgroundSize: "80%",
+                                    backgroundPosition: "center",
+                                }}
                             />
                         </div>
                         <div className="hidden min-w-0 font-display text-sm font-bold leading-tight tracking-tight text-foreground min-[360px]:block">

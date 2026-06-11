@@ -9,7 +9,7 @@ import useAuthGuard from "@/hooks/useAuthGuard";
 import useAuth from "@/hooks/useAuth";
 import { useLanguage } from "@/hooks/useLanguage";
 import { getDefaultWorkspaceHref } from "@/lib/rbac";
-import { LOGO_SRC } from "@/lib/brand";
+import { LOGO_DARK_SRC } from "@/lib/brand";
 
 type View = "login" | "reset_request" | "reset_confirm";
 
@@ -197,11 +197,10 @@ export default function LoginPage() {
                         <div
                             className="absolute inset-0 opacity-[0.12]"
                             style={{
-                                backgroundImage: `url(${LOGO_SRC})`,
+                                backgroundImage: `url(${LOGO_DARK_SRC})`,
                                 backgroundRepeat: "no-repeat",
                                 backgroundSize: "60%",
                                 backgroundPosition: "center",
-                                filter: "brightness(0) invert(1)",
                             }}
                         />
                     </div>
@@ -224,11 +223,10 @@ export default function LoginPage() {
                             <div
                                 className="absolute inset-0 opacity-[0.12]"
                                 style={{
-                                    backgroundImage: `url(${LOGO_SRC})`,
+                                    backgroundImage: `url(${LOGO_DARK_SRC})`,
                                     backgroundRepeat: "no-repeat",
                                     backgroundSize: "38%",
                                     backgroundPosition: "center",
-                                    filter: "brightness(0) invert(1)",
                                 }}
                             />
                         </div>

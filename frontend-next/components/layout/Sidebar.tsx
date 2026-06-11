@@ -45,7 +45,6 @@ import {
     X,
 } from "lucide-react"
 import useTheme from "@/hooks/useTheme"
-import { LOGO_SRC } from "@/lib/brand"
 import { lucideToDataUrl } from "@/lib/icon-svg"
 
 interface Props {
@@ -335,8 +334,9 @@ export default function Sidebar({ user, open = false, onClose, className }: Prop
     }, [prefetchRoute, visibleItems])
 
     const menu = (
-        <div className="flex h-full w-full flex-col overflow-hidden border-r border-border bg-card/95 pb-12 text-foreground shadow-none backdrop-blur transition-[box-shadow,background-color] duration-200 ease-out supports-[backdrop-filter]:bg-card/85 md:shadow-md md:group-hover/sidebar:shadow-xl md:group-hover/sidebar:shadow-slate-950/10 md:group-focus-within/sidebar:shadow-xl md:dark:shadow-black/30">
-            <div className="sticky top-0 z-10 flex min-h-16 items-center justify-center border-b border-border/80 bg-card/95 px-3 py-3 backdrop-blur transition-colors supports-[backdrop-filter]:bg-card/85 md:group-hover/sidebar:justify-between md:group-focus-within/sidebar:justify-between">
+        <div className="flex h-full w-full flex-col overflow-hidden border-r border-border bg-card/95 text-foreground shadow-none backdrop-blur transition-[box-shadow,background-color] duration-200 ease-out supports-[backdrop-filter]:bg-card/85 md:shadow-md md:group-hover/sidebar:shadow-xl md:group-hover/sidebar:shadow-slate-950/10 md:group-focus-within/sidebar:shadow-xl md:dark:shadow-black/30">
+            {/* Mesma altura do header principal (h-14) para as bordas alinharem. */}
+            <div className="sticky top-0 z-10 flex h-14 min-h-14 shrink-0 items-center justify-center border-b border-border/80 bg-card/95 px-3 py-2 backdrop-blur transition-colors supports-[backdrop-filter]:bg-card/85 md:group-hover/sidebar:justify-between md:group-focus-within/sidebar:justify-between">
                 <Link
                     href={homeHref}
                     onClick={onClose}
@@ -347,7 +347,7 @@ export default function Sidebar({ user, open = false, onClose, className }: Prop
                         aria-hidden
                         className="h-9 w-9 shrink-0 rounded-md bg-muted shadow-sm ring-1 ring-border/60 transition-transform group-hover:scale-105"
                         style={{
-                            backgroundImage: `url(${LOGO_SRC})`,
+                            backgroundImage: "var(--substrato-logo-url)",
                             backgroundRepeat: "no-repeat",
                             backgroundSize: "80%",
                             backgroundPosition: "center",

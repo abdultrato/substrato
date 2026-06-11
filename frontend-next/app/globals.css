@@ -34,7 +34,9 @@
 
   :root {
     color-scheme: light;
-    --substrato-logo-url: url("/static/img/logo.png");
+    /* Marca tematizada: preta no claro, branca no escuro (ver .dark).
+       Manter o `?v=` em sincronia com LOGO_VERSION em lib/brand.ts. */
+    --substrato-logo-url: url("/static/img/logo-preta.png?v=4");
     --substrato-ink-hsl: 222 47% 8%;
     --substrato-root-hsl: 224 36% 14%;
     --substrato-violet-hsl: 258 61% 39%;
@@ -110,6 +112,7 @@
 
   .dark {
     color-scheme: dark;
+    --substrato-logo-url: url("/static/img/logo-branca.png?v=4");
 
     --background-hsl: 222 34% 8%;
     --foreground-hsl: 210 40% 96%;
