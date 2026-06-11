@@ -8,6 +8,8 @@ re-executada com segurança.
 from __future__ import annotations
 
 from decimal import Decimal
+import re
+import unicodedata
 
 from .models import LabSector, LabTest, LabTestPanel, SampleType
 
@@ -89,7 +91,141 @@ PANELS: tuple[tuple, ...] = (
 )
 
 
-def seed_catalog(tenant) -> dict:
+LEGACY_SECTOR_MAP: dict[str, tuple[str, str]] = {
+    "Hematologia": ("HEM", "Hematologia"),
+    "Bioquimica": ("BIO", "Bioquímica Clínica"),
+    "Microbiologia": ("MIC", "Microbiologia"),
+    "Imunologia": ("IMU", "Imunologia"),
+    "Serologia": ("SER", "Serologia"),
+    "Parasitologia": ("PAR", "Parasitologia"),
+    "BiologiaMolecular": ("MOL", "Biologia Molecular"),
+    "Toxicologia": ("TOX", "Toxicologia"),
+    "Hormonios": ("END", "Endocrinologia"),
+    "MarcadoresTumorais": ("TUM", "Marcadores Tumorais"),
+    "Coagulacao": ("COA", "Coagulação"),
+    "Urinalise": ("URI", "Uroanálise"),
+    "LiquidosCorporais": ("LIQ", "Líquidos Corporais"),
+    "Gasometria": ("GAS", "Gasometria"),
+    "NutricaoClinica": ("NUT", "Nutrição Clínica"),
+    "Micologia": ("MYC", "Micologia"),
+    "Virologia": ("VIR", "Virologia"),
+    "Bacteriologia": ("BAC", "Bacteriologia"),
+    "BancoSangue": ("BSG", "Banco de Sangue"),
+    "ImunoHematologia": ("IHM", "Imuno-hematologia"),
+    "Triagem": ("TRI", "Triagem Laboratorial"),
+    "RecepcaoAmostras": ("REC", "Recepção de Amostras"),
+    "ControleQualidade": ("CQ", "Controle de Qualidade"),
+    "Pesquisa": ("PES", "Pesquisa Laboratorial"),
+    "Outro": ("OUT", "Outro"),
+}
+
+
+def _ascii_key(value: str) -> str:
+    normalized = unicodedata.normalize("NFKD", str(value or ""))
+    return "".join(ch for ch in normalized if not unicodedata.combining(ch)).casefold()
+
+
+def _legacy_sector(raw_sector: str) -> tuple[str, str]:
+    raw = str(raw_sector or "").strip() or "Outro"
+    mapped = LEGACY_SECTOR_MAP.get(raw)
+    if mapped:
+        return mapped
+
+    code = re.sub(r"[^A-Za-z0-9]+", "", raw.upper())[:12] or "OUT"
+    return f"LEG{code}"[:20], raw
+
+
+def _legacy_sample_type(sample) -> str:
+    name = _ascii_key(getattr(sample, "name", ""))
+    if "urina" in name:
+        return SampleType.URINE
+    if "fez" in name or "fezes" in name:
+        return SampleType.STOOL
+    if "escarro" in name:
+        return SampleType.SPUTUM
+    if "liquor" in name or "lcr" in name:
+        return SampleType.CSF
+    if "plasma" in name:
+        return SampleType.PLASMA
+    if "swab" in name or "zaragatoa" in name or "secrecao" in name:
+        return SampleType.SWAB
+    if "esperma" in name or "semen" in name:
+        return SampleType.SEMEN
+    if "medula" in name:
+        return SampleType.BONE_MARROW
+    if "liquido" in name:
+        return SampleType.BODY_FLUID
+    if "sangue" in name:
+        return SampleType.WHOLE_BLOOD
+    if "soro" in name:
+        return SampleType.SERUM
+    return SampleType.OTHER
+
+
+def _legacy_code(legacy_exam) -> str:
+    custom_id = str(getattr(legacy_exam, "custom_id", "") or "").strip()
+    if custom_id and len(custom_id) <= 30:
+        return custom_id
+    return f"LEG-{legacy_exam.pk}"
+
+
+def sync_legacy_lab_exams(tenant=None) -> dict:
+    """Copia exames do catálogo legado ``clinical.LabExam`` para o LIS.
+
+    O novo módulo de Laboratório Clínico usa ``LabTest``. Esta sincronização
+    mantém o catálogo novo idempotente sem apagar nem mover os exames legados.
+    """
+    from apps.clinical.models.lab_exam import LabExam
+
+    queryset = LabExam.objects.select_related("tenant", "sample_type").all()
+    if tenant is not None:
+        queryset = queryset.filter(tenant=tenant)
+
+    stats = {"legacy_tests": 0, "legacy_skipped": 0, "legacy_sectors": 0}
+    for legacy_exam in queryset.order_by("tenant_id", "sector", "name", "id"):
+        if not legacy_exam.tenant_id or not (legacy_exam.name or "").strip():
+            stats["legacy_skipped"] += 1
+            continue
+
+        sector_code, sector_name = _legacy_sector(getattr(legacy_exam, "sector", ""))
+        sector, sector_created = LabSector.objects.get_or_create(
+            tenant=legacy_exam.tenant,
+            code=sector_code,
+            defaults={"name": sector_name},
+        )
+        stats["legacy_sectors"] += int(sector_created)
+
+        code = _legacy_code(legacy_exam)
+        if LabTest.objects.filter(tenant=legacy_exam.tenant, code=code, deleted=False).exists():
+            stats["legacy_skipped"] += 1
+            continue
+        if LabTest.objects.filter(tenant=legacy_exam.tenant, name__iexact=legacy_exam.name, deleted=False).exists():
+            stats["legacy_skipped"] += 1
+            continue
+
+        custom_id = f"LTST-LEG-{legacy_exam.tenant_id}-{legacy_exam.id}"
+        if LabTest.all_objects.filter(custom_id=custom_id).exists():
+            custom_id = None
+
+        LabTest.objects.create(
+            tenant=legacy_exam.tenant,
+            custom_id=custom_id,
+            code=code,
+            name=legacy_exam.name,
+            sector=sector,
+            sample_type=_legacy_sample_type(getattr(legacy_exam, "sample_type", None)),
+            method=str(getattr(legacy_exam, "method", "") or "")[:120],
+            price=getattr(legacy_exam, "price", Decimal("0.00")) or Decimal("0.00"),
+            turnaround_hours=getattr(legacy_exam, "turnaround_hours", None) or 24,
+            requires_fasting=bool(getattr(getattr(legacy_exam, "sample_type", None), "fasting_required", False)),
+            active=True,
+        )
+        stats["legacy_tests"] += 1
+
+    return stats
+
+
+def seed_catalog(tenant, *, include_legacy: bool = True) -> dict:
     """Cria sectores, exames e painéis padrão para um tenant. Idempotente."""
     sectors: dict[str, LabSector] = {}
     created = {"sectors": 0, "tests": 0, "panels": 0}
@@ -128,5 +264,8 @@ def seed_catalog(tenant) -> dict:
         if was_created:
             panel.tests.set([tests[c] for c in test_codes if c in tests])
         created["panels"] += int(was_created)
+
+    if include_legacy:
+        created.update(sync_legacy_lab_exams(tenant))
 
     return created
