@@ -119,3 +119,32 @@ def test_aposentar_demitir_expulsar():
     EmployeeWorkflowService.aposentar(emp3, reason="Idade legal")
     emp3.refresh_from_db()
     assert emp3.status == Employee.Status.RETIRED
+
+
+@pytest.mark.django_db
+def test_documentos_rh_pdf():
+    from tasks.generate_pdf.hr_document_pdf_generator import (
+        generate_hr_document_pdf,
+        validate_hr_document_for_employee,
+    )
+
+    tenant = _tenant()
+    mulher = _employee(tenant, name="Maria Jose", gender=Employee.Gender.FEMALE)
+    homem = _employee(tenant, name="Joao Pedro", gender=Employee.Gender.MALE)
+
+    for tipo in ("guia_marcha_ferias", "guia_marcha_dispensa", "licenca_doenca"):
+        pdf, filename = generate_hr_document_pdf(homem, tipo, start_date=date(2026, 7, 1), end_date=date(2026, 7, 30))
+        assert pdf[:4] == b"%PDF"
+        assert tipo in filename
+
+    pdf, _ = generate_hr_document_pdf(mulher, "licenca_maternidade")
+    assert pdf[:4] == b"%PDF"
+    pdf, _ = generate_hr_document_pdf(homem, "licenca_paternidade")
+    assert pdf[:4] == b"%PDF"
+
+    with pytest.raises(ValidationError):
+        validate_hr_document_for_employee(homem, "licenca_maternidade")
+    with pytest.raises(ValidationError):
+        validate_hr_document_for_employee(mulher, "licenca_paternidade")
+    with pytest.raises(ValidationError):
+        validate_hr_document_for_employee(homem, "tipo_invalido")

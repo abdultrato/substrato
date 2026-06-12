@@ -713,6 +713,7 @@ class InstitutionalDocumentType:
     PATIENT_HISTORY = "patient_history"
     ANALYTICS = "analytics"
     REQUEST = "request"
+    HR_DOCUMENT = "hr_document"
 
     SECTOR_HEADERS = {
         LABORATORY_RESULT: {
@@ -774,6 +775,12 @@ class InstitutionalDocumentType:
             "subtitle": "Pedido de Análises",
             "color": colors.HexColor("#455A64"),  # Cinza Azulado
             "icon_char": "📝",
+        },
+        HR_DOCUMENT: {
+            "title": "DEPARTAMENTO DE RECURSOS HUMANOS",
+            "subtitle": "Documento de Recursos Humanos",
+            "color": colors.HexColor("#5D4037"),  # Castanho RH
+            "icon_char": "👤",
         },
     }
 

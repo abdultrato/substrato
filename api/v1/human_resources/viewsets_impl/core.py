@@ -202,6 +202,38 @@ class EmployeeViewSet(TenantScopedModelViewSet):
         data = request.data or {}
         return self._workflow(request, "expulsar", reason=data.get("reason") or "")
 
+    @action(detail=True, methods=["get"], url_path="documento", url_name="documento")
+    def documento(self, request, pk=None):
+        """Documento institucional de RH (guias de marcha e licenças) em PDF.
+
+        Parâmetros: ?tipo=guia_marcha_ferias|guia_marcha_dispensa|
+        licenca_maternidade|licenca_paternidade|licenca_doenca
+        Opcionais: ?inicio=YYYY-MM-DD&fim=YYYY-MM-DD&observacoes=...
+        """
+        from django.http import HttpResponse
+        from django.utils.dateparse import parse_date
+
+        from tasks.generate_pdf.hr_document_pdf_generator import generate_hr_document_pdf
+
+        employee = self.get_object()
+        params = request.query_params
+        try:
+            pdf_bytes, filename = generate_hr_document_pdf(
+                employee,
+                (params.get("tipo") or "").strip(),
+                start_date=parse_date(params.get("inicio") or ""),
+                end_date=parse_date(params.get("fim") or ""),
+                notes=params.get("observacoes") or "",
+                request=request,
+            )
+        except DjangoValidationError as err:
+            raise ValidationError(
+                getattr(err, "message_dict", None) or getattr(err, "messages", None) or str(err)
+            ) from err
+        resp = HttpResponse(pdf_bytes, content_type="application/pdf")
+        resp["Content-Disposition"] = f'inline; filename="{filename}"'
+        return resp
+
     @action(detail=True, methods=["post"], url_path="deactivate", url_name="deactivate")
     def deactivate_en(self, request, pk=None):
         return self.deactivate(request, pk=pk)

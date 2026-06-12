@@ -90,6 +90,36 @@ export default function EmployeeDetailPage() {
       .catch(() => setRoles([]))
   }, [panel, roles.length])
 
+  const [docDates, setDocDates] = useState<{ inicio: string; fim: string }>({ inicio: "", fim: "" })
+  const [docBusy, setDocBusy] = useState<string | null>(null)
+
+  async function imprimirDocumento(tipo: string) {
+    setDocBusy(tipo)
+    setActionError(null)
+    try {
+      const params = new URLSearchParams({ tipo })
+      if (docDates.inicio) params.set("inicio", docDates.inicio)
+      if (docDates.fim) params.set("fim", docDates.fim)
+      const blob = await apiFetch<Blob>(`/human_resources/employee/${id}/documento/?${params.toString()}`, {
+        responseType: "blob",
+      })
+      const url = URL.createObjectURL(blob)
+      const surname = String(emp?.name || "").trim().split(/\s+/).pop() || "funcionario"
+      const anchor = document.createElement("a")
+      anchor.href = url
+      anchor.download = `${tipo}_${emp?.custom_id || id}_${surname}.pdf`
+      document.body.appendChild(anchor)
+      anchor.click()
+      anchor.remove()
+      window.open(url, "_blank", "noopener")
+      window.setTimeout(() => URL.revokeObjectURL(url), 60000)
+    } catch (e: any) {
+      setActionError(e?.message ?? "Falha ao gerar o documento.")
+    } finally {
+      setDocBusy(null)
+    }
+  }
+
   function abrirPainel(nome: string) {
     setPanel((current) => (current === nome ? null : nome))
     setForm({})
@@ -304,6 +334,38 @@ export default function EmployeeDetailPage() {
             ) : null}
           </div>
         ) : null}
+
+        {/* Documentos de RH imprimíveis (padrão institucional do sistema) */}
+        <div className="space-y-3 rounded-2xl border border-border bg-card p-4 shadow-sm">
+          <div className="text-sm font-semibold text-foreground">Documentos</div>
+          <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+            Período (para guias e licenças):
+            <input type="date" className="rounded-md border border-border bg-background px-2 py-1.5 text-xs" value={docDates.inicio} onChange={(e) => setDocDates((d) => ({ ...d, inicio: e.target.value }))} />
+            até
+            <input type="date" className="rounded-md border border-border bg-background px-2 py-1.5 text-xs" value={docDates.fim} onChange={(e) => setDocDates((d) => ({ ...d, fim: e.target.value }))} />
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {[
+              ["guia_marcha_ferias", "Guia de marcha — Férias", true],
+              ["guia_marcha_dispensa", "Guia de marcha — Dispensa", true],
+              ["licenca_maternidade", "Licença de maternidade", emp.gender === "F"],
+              ["licenca_paternidade", "Licença de paternidade", emp.gender === "M"],
+              ["licenca_doenca", "Licença por doença", true],
+            ]
+              .filter(([, , visible]) => visible)
+              .map(([tipo, label]) => (
+                <button
+                  key={tipo as string}
+                  type="button"
+                  disabled={docBusy !== null}
+                  onClick={() => imprimirDocumento(tipo as string)}
+                  className="rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-semibold text-foreground-2 transition hover:text-foreground disabled:opacity-60"
+                >
+                  {docBusy === tipo ? "Gerando..." : `Imprimir ${label}`}
+                </button>
+              ))}
+          </div>
+        </div>
 
         <div className="grid gap-5 lg:grid-cols-2">
 
