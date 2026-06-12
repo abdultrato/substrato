@@ -28,12 +28,19 @@ def generate_request_label_pdf(lab_request) -> tuple[bytes, str]:
 
     # Nome+data numa linha acima do código de barras; número por baixo.
     # Tudo alinhado à esquerda, na mesma coluna onde começa o código de barras.
-    barcode = code128.Code128(code, barHeight=13 * mm, barWidth=0.24 * mm, humanReadable=False)
-    x = max((LABEL_WIDTH - barcode.width) / 2, 1 * mm)
+    # quiet=0: sem margem interna do barcode — as barras começam exatamente
+    # em `x`, alinhadas com o texto (a etiqueta já tem margem branca própria).
+    x = 2 * mm
+    available_width = LABEL_WIDTH - 2 * x
+    bar_width = 0.24 * mm
+    barcode = code128.Code128(code, barHeight=13 * mm, barWidth=bar_width, humanReadable=False, quiet=0)
+    if barcode.width > available_width:
+        bar_width = bar_width * available_width / barcode.width
+        barcode = code128.Code128(code, barHeight=13 * mm, barWidth=bar_width, humanReadable=False, quiet=0)
 
     header = f"{patient_name}  ·  {when_text}" if when_text else patient_name
     font_size = 9
-    while font_size > 6 and pdf.stringWidth(header, "Helvetica-Bold", font_size) > LABEL_WIDTH - x - 1 * mm:
+    while font_size > 6 and pdf.stringWidth(header, "Helvetica-Bold", font_size) > available_width:
         font_size -= 0.5
     pdf.setFont("Helvetica-Bold", font_size)
     pdf.drawString(x, 21.5 * mm, header)
