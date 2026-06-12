@@ -309,7 +309,7 @@ export default function RecepcaoPage() {
                         >
                             <div className="space-y-3 text-sm">
                                 <IndicadorLinha label="Pacientes novos" value={workspace.summary.new_patients} href="/patients" />
-                                <IndicadorLinha label="Requisições pendentes" value={workspace.summary.pending_requests} href="/requests?status=pendente" />
+                                <IndicadorLinha label="Requisições pendentes" value={workspace.summary.pending_requests} href="/requests/pendentes" />
                                 <IndicadorLinha label="Faturas em aberto" value={workspace.summary.open_invoices} href="/billing/invoices?status=EMIT" />
                                 <IndicadorLinha label="Recibos gerados hoje" value={workspace.summary.receipts_generated_today} href="/payments/receipts" />
                             </div>

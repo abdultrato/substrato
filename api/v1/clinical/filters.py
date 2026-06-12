@@ -187,6 +187,10 @@ class PatientFilter(SafeFilterSet):
 
 
 class LabRequestFilter(SafeFilterSet):
+    # Fluxo de colheita: ?validada=true|false e ?colhida=true|false
+    validada = django_filters.BooleanFilter(field_name="validated_at", lookup_expr="isnull", exclude=True)
+    colhida = django_filters.BooleanFilter(field_name="collected_at", lookup_expr="isnull", exclude=True)
+
     legacy_filter_aliases = {
         "analista": "analyst",
         "estado": "status",

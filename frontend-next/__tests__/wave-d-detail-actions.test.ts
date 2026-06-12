@@ -17,7 +17,7 @@ const EXPECTED: Record<string, string[]> = {
   "/human_resources/licenca/": ["approve", "reject"],
   "/human_resources/folha_run/": ["calculate", "approve", "mark-paid"],
   "/reception/checkin/": ["start-care", "create-request", "create-invoice", "complete", "cancel"],
-  "/clinical/labrequest/": ["validate-results", "disregard-empty-results"],
+  "/clinical/labrequest/": ["validar", "registar-colheita", "iniciar-processamento", "validate-results", "disregard-empty-results"],
   "/clinical/resultitem/": ["start-analysis", "save-result", "validate-result", "disregard-result"],
   "/education/course/": ["activate", "archive"],
   "/education/enrollment/": ["activate", "complete", "cancel"],

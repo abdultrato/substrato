@@ -130,3 +130,42 @@ def test_profile_rejected_on_medical_exam_request():
     )
     assert not serializer.is_valid()
     assert "occupational_profile" in serializer.errors
+
+
+@pytest.mark.django_db
+def test_collection_workflow_validar_colher_processar():
+    from domain.clinical.result_state import ResultState
+    from tasks.generate_pdf.request_label_pdf_generator import generate_request_label_pdf
+
+    tenant = _tenant()
+    patient = _patient(tenant)
+    exam = _exam(tenant, "Hemograma")
+
+    from apps.clinical.models.lab_request import LabRequest
+
+    request = LabRequest.objects.create(tenant=tenant, patient=patient)
+    request.add_exam(exam)
+
+    # colheita antes da validação é rejeitada
+    import pytest as _pytest
+    from django.core.exceptions import ValidationError as DjangoValidationError
+
+    with _pytest.raises(DjangoValidationError):
+        request.registar_colheita()
+
+    request.validar()
+    assert request.validated_at is not None
+
+    with _pytest.raises(DjangoValidationError):
+        request.validar()  # idempotência: segunda validação falha
+
+    request.registar_colheita()
+    assert request.collected_at is not None
+
+    pdf_bytes, filename = generate_request_label_pdf(request)
+    assert pdf_bytes[:4] == b"%PDF"
+    assert request.custom_id in filename
+
+    request.iniciar_processamento()
+    request.refresh_from_db()
+    assert request.status == ResultState.IN_ANALYSIS

@@ -71,6 +71,7 @@ def execute(tenant):
     pending_requests = LabRequest.objects.filter(
         tenant=tenant,
         status=ResultState.PENDING,
+        validated_at__isnull=True,
     ).count()
 
     open_invoices = Invoice.objects.filter(

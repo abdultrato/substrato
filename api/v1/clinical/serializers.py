@@ -936,6 +936,7 @@ class LabRequestSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializ
     patient_code = serializers.CharField(source="patient.custom_id", read_only=True)
     occupational_profile_name = serializers.CharField(source="occupational_profile.name", read_only=True)
     requesting_physician_name = serializers.CharField(source="requesting_physician.name", read_only=True)
+    patient_age = serializers.SerializerMethodField()
     requesting_company_name = serializers.CharField(source="requesting_company.name", read_only=True)
     external_executing_company_name = serializers.CharField(source="external_executing_company.name", read_only=True)
 
@@ -991,6 +992,11 @@ class LabRequestSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializ
             "external_executing_company_name",
             "occupational_profile_name",
             "requesting_physician_name",
+            "patient_age",
+            "validated_at",
+            "validated_by",
+            "collected_at",
+            "collected_by",
             "items",
             "sample_details",
             "collection_guidance",
@@ -1066,6 +1072,12 @@ class LabRequestSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializ
 
     def get_collection_guidance(self, obj):
         return obj.build_collection_guidance()
+
+    def get_patient_age(self, obj):
+        try:
+            return obj.patient.idade()
+        except Exception:
+            return ""
 
     def create(self, validated_date):
         # `exams` (LAB) é ManyToMany com `through`. `medical_exams` (MED) é derivado dos itens.

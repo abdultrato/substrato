@@ -172,6 +172,42 @@ class LabRequest(NoNameCoreModel):
         help_text="Perfil ocupacional cujos exames são adicionados à requisição.",
     )
 
+    validated_at = models.DateTimeField(
+        db_column="validated_at",
+        null=True,
+        blank=True,
+        verbose_name="Validada em",
+        help_text="Momento em que a requisição foi validada para colheita.",
+    )
+
+    validated_by = models.ForeignKey(
+        User,
+        db_column="validated_by_id",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="+",
+        verbose_name="Validada por",
+    )
+
+    collected_at = models.DateTimeField(
+        db_column="collected_at",
+        null=True,
+        blank=True,
+        verbose_name="Colheita em",
+        help_text="Momento em que a colheita das amostras foi registada.",
+    )
+
+    collected_by = models.ForeignKey(
+        User,
+        db_column="collected_by_id",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="+",
+        verbose_name="Colheita por",
+    )
+
     has_critical_result = models.BooleanField(
 
         db_column="has_critical_result",
@@ -280,6 +316,50 @@ class LabRequest(NoNameCoreModel):
                 return item
             except IntegrityError as err:
                 raise ValidationError("Exame médico já adicionado à requisição.") from err
+
+    # =====================================================
+    # FLUXO DE COLHEITA (validação -> colheita -> laboratório)
+    # =====================================================
+
+    def validar(self, user=None):
+        """Receção/laboratório valida a requisição para seguir para colheita."""
+        from django.utils import timezone
+
+        if self.status != ResultState.PENDING:
+            raise ValidationError("Apenas requisições pendentes podem ser validadas.")
+        if self.validated_at:
+            raise ValidationError("Requisição já foi validada.")
+
+        self.validated_at = timezone.now()
+        self.validated_by = user if getattr(user, "pk", None) else None
+        self.save(update_fields=["validated_at", "validated_by", "updated_at"])
+        return self
+
+    def registar_colheita(self, user=None):
+        """Enfermagem regista a colheita; a requisição segue para o laboratório."""
+        from django.utils import timezone
+
+        if not self.validated_at:
+            raise ValidationError("A requisição precisa de ser validada antes da colheita.")
+        if self.collected_at:
+            raise ValidationError("Colheita já registada para esta requisição.")
+
+        self.collected_at = timezone.now()
+        self.collected_by = user if getattr(user, "pk", None) else None
+        self.save(update_fields=["collected_at", "collected_by", "updated_at"])
+        return self
+
+    def iniciar_processamento(self, user=None):
+        """Laboratório inicia o processamento (status passa a em análise)."""
+        if not self.collected_at:
+            raise ValidationError("A colheita precisa de ser registada antes do processamento.")
+
+        if user is not None and getattr(user, "pk", None) and not self.analyst_id:
+            self.analyst = user
+            self.save(update_fields=["analyst", "updated_at"])
+
+        self.transicionar(ResultState.IN_ANALYSIS)
+        return self
 
     # =====================================================
     # TRANSIÇÃO DE ESTADO

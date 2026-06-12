@@ -254,6 +254,8 @@ const COMMON_LABELS: LabelsByField = {
   external_executing_company: "Empresa executora externa",
   external_executing_company_name: "Nome da empresa executora externa",
   has_critical_result: "Possui resultado crítico",
+  validated_at: "Validada em",
+  patient_age: "Idade do paciente",
   bottle_type: "Tipo de frasco",
   bottle_type_display: "Tipo de frasco",
   cap_color: "Cor da tampa",

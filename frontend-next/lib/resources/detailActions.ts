@@ -1095,6 +1095,36 @@ const RECEPTION_DETAIL_ACTIONS: Record<string, DetailActionDefinition[]> = {
 // ── Clínico (core) — send-results-notification já tratado em GeneratedResourceDetailPage ──
 const CLINICAL_DETAIL_ACTIONS: Record<string, DetailActionDefinition[]> = {
   "/clinical/labrequest/": [
+    {
+      key: "clinical.labrequest.validar",
+      action: "validar",
+      labelPt: "Validar requisição",
+      labelEn: "Validate request",
+      successPt: "Requisição validada — disponível para colheita.",
+      successEn: "Request validated — ready for collection.",
+      tone: "primary",
+      visibleWhen: (record) => record?.status === "pendente" && !record?.validated_at,
+    },
+    {
+      key: "clinical.labrequest.registar-colheita",
+      action: "registar-colheita",
+      labelPt: "Registar colheita",
+      labelEn: "Record collection",
+      successPt: "Colheita registada — requisição enviada ao laboratório.",
+      successEn: "Collection recorded — request sent to the laboratory.",
+      tone: "primary",
+      visibleWhen: (record) => !!record?.validated_at && !record?.collected_at,
+    },
+    {
+      key: "clinical.labrequest.iniciar-processamento",
+      action: "iniciar-processamento",
+      labelPt: "Iniciar processamento",
+      labelEn: "Start processing",
+      successPt: "Processamento iniciado.",
+      successEn: "Processing started.",
+      tone: "primary",
+      visibleWhen: (record) => !!record?.collected_at && record?.status === "pendente",
+    },
     { key: "clinical.labrequest.validate-results", action: "validate-results", labelPt: "Validar resultados", labelEn: "Validate results", successPt: "Resultados validados.", successEn: "Results validated.", tone: "primary" },
     { key: "clinical.labrequest.disregard-empty-results", action: "disregard-empty-results", labelPt: "Desconsiderar vazios", labelEn: "Disregard empty results", successPt: "Resultados vazios desconsiderados.", successEn: "Empty results disregarded." },
   ],
