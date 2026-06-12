@@ -60,12 +60,47 @@ def _meta(model):
     })
 
 
+def _sector_payload(sector):
+    if sector is None:
+        return None
+    return {
+        "id": sector.id,
+        "name": sector.name,
+        "code": sector.code,
+    }
+
+
+def _distinct_sectors_from_tests(tests):
+    sectors = []
+    seen = set()
+    for test in tests:
+        sector = getattr(test, "sector", None)
+        if sector is None or sector.id in seen:
+            continue
+        seen.add(sector.id)
+        sectors.append(_sector_payload(sector))
+    return sectors
+
+
+def _related_queryset(obj, related_name, *select_related):
+    manager = getattr(obj, related_name)
+    if related_name in getattr(obj, "_prefetched_objects_cache", {}):
+        return manager.all()
+    return manager.select_related(*select_related).all()
+
+
 class LabSectorSerializer(serializers.ModelSerializer):
     Meta = _meta(LabSector)
 
 
 class LabTestSerializer(serializers.ModelSerializer):
-    Meta = _meta(LabTest)
+    sector_name = serializers.CharField(source="sector.name", read_only=True)
+    sector_code = serializers.CharField(source="sector.code", read_only=True)
+
+    class Meta:
+        model = LabTest
+        fields = "__all__"
+        read_only_fields = CORE_READ_ONLY_FIELDS + ["sector_name", "sector_code"]
 
 
 class LabTestPanelSerializer(serializers.ModelSerializer):
@@ -75,10 +110,15 @@ class LabTestPanelSerializer(serializers.ModelSerializer):
     cada gravação a partir do M2M ``tests``.
     """
 
+    sectors = serializers.SerializerMethodField()
+
     class Meta:
         model = LabTestPanel
         fields = "__all__"
-        read_only_fields = CORE_READ_ONLY_FIELDS + ["package_price"]
+        read_only_fields = CORE_READ_ONLY_FIELDS + ["package_price", "sectors"]
+
+    def get_sectors(self, obj):
+        return _distinct_sectors_from_tests(_related_queryset(obj, "tests", "sector"))
 
     @staticmethod
     def _sync_package_price(instance):
@@ -99,11 +139,43 @@ class LabTestPanelSerializer(serializers.ModelSerializer):
 
 
 class LabOrderSerializer(serializers.ModelSerializer):
-    Meta = _meta(LabOrder)
+    sectors = serializers.SerializerMethodField()
+
+    class Meta:
+        model = LabOrder
+        fields = "__all__"
+        read_only_fields = CORE_READ_ONLY_FIELDS + ["sectors"]
+
+    def get_sectors(self, obj):
+        tests = [
+            item.test
+            for item in _related_queryset(obj, "items", "test__sector")
+            if getattr(item, "test", None) is not None
+        ]
+        return _distinct_sectors_from_tests(tests)
 
 
 class LabOrderItemSerializer(serializers.ModelSerializer):
-    Meta = _meta(LabOrderItem)
+    test_name = serializers.CharField(source="test.name", read_only=True)
+    test_code = serializers.CharField(source="test.code", read_only=True)
+    sector = serializers.SerializerMethodField()
+    sector_name = serializers.CharField(source="test.sector.name", read_only=True)
+    sector_code = serializers.CharField(source="test.sector.code", read_only=True)
+
+    class Meta:
+        model = LabOrderItem
+        fields = "__all__"
+        read_only_fields = CORE_READ_ONLY_FIELDS + [
+            "test_name",
+            "test_code",
+            "sector",
+            "sector_name",
+            "sector_code",
+        ]
+
+    def get_sector(self, obj):
+        sector = getattr(getattr(obj, "test", None), "sector", None)
+        return sector.id if sector is not None else None
 
 
 class SampleCollectionSerializer(serializers.ModelSerializer):

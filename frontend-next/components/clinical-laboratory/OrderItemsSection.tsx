@@ -15,6 +15,12 @@ type Row = Record<string, any>
 const ORDER_ITEM_ENDPOINT = "/clinical_laboratory/order_item/"
 const TEST_ENDPOINT = "/clinical_laboratory/test/"
 
+type TestMeta = {
+  label: string
+  sectorName?: string
+  sectorCode?: string
+}
+
 function pickCode(row: Row): string {
   return String(row?.custom_id || row?.id_custom || row?.codigo || row?.code || row?.id || "-")
 }
@@ -57,13 +63,19 @@ export default function OrderItemsSection() {
     enabled: !!orderId,
   })
 
-  const testNameById = useMemo(() => {
-    const map = new Map<string, string>()
+  const testMetaById = useMemo(() => {
+    const map = new Map<string, TestMeta>()
     for (const test of testsQuery.data?.items ?? []) {
       const key = String(test?.id ?? "")
       if (!key) continue
       const label = String(test?.name || test?.nome || test?.code || test?.custom_id || "").trim()
-      if (label) map.set(key, label)
+      if (label) {
+        map.set(key, {
+          label,
+          sectorName: String(test?.sector_name || "").trim() || undefined,
+          sectorCode: String(test?.sector_code || "").trim() || undefined,
+        })
+      }
     }
     return map
   }, [testsQuery.data])
@@ -81,9 +93,20 @@ export default function OrderItemsSection() {
         header: t("Exame", "Test"),
         render: (row: Row) => {
           const testKey = String(row?.test ?? "")
-          return testNameById.get(testKey) || (testKey ? `#${testKey}` : "-")
+          return row?.test_name || testMetaById.get(testKey)?.label || (testKey ? `#${testKey}` : "-")
         },
         className: "min-w-[200px]",
+      },
+      {
+        header: t("Sector", "Sector"),
+        render: (row: Row) => {
+          const testKey = String(row?.test ?? "")
+          const meta = testMetaById.get(testKey)
+          const sector = String(row?.sector_name || meta?.sectorName || "").trim()
+          const code = String(row?.sector_code || meta?.sectorCode || "").trim()
+          return sector || code || "-"
+        },
+        className: "min-w-[160px]",
       },
       {
         header: t("Estado", "Status"),
@@ -99,7 +122,7 @@ export default function OrderItemsSection() {
         className: "whitespace-nowrap text-right min-w-[100px]",
       },
     ],
-    [t, tr, testNameById]
+    [t, tr, testMetaById]
   )
 
   return (

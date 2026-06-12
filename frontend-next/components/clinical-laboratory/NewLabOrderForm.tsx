@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Loader2 } from "lucide-react"
 
@@ -47,6 +47,21 @@ const PRIORITY_OPTIONS = [
   { value: "AGENDADO", label: "Agendado" },
 ]
 
+type LabTestDetail = {
+  id?: number
+  name?: string
+  code?: string
+  sector?: number | string | null
+  sector_name?: string | null
+  sector_code?: string | null
+}
+
+type SectorChip = {
+  key: string
+  name: string
+  code?: string
+}
+
 function FieldLabel({ children, required }: { children: React.ReactNode; required?: boolean }) {
   return (
     <span className="text-xs font-semibold uppercase tracking-wide text-[var(--gray-600)]">
@@ -54,6 +69,25 @@ function FieldLabel({ children, required }: { children: React.ReactNode; require
       {required ? " *" : ""}
     </span>
   )
+}
+
+function normalizeTestId(value: any): number | null {
+  const id = Number(value)
+  return Number.isFinite(id) ? id : null
+}
+
+function sectorChipFromTest(test?: LabTestDetail | null): SectorChip | null {
+  if (!test) return null
+  const sectorId = test.sector !== null && test.sector !== undefined ? String(test.sector) : ""
+  const code = String(test.sector_code || "").trim()
+  const name = String(test.sector_name || "").trim()
+  const key = sectorId || code || name
+  if (!key) return null
+  return {
+    key,
+    name: name || code || `#${key}`,
+    code: code || undefined,
+  }
 }
 
 export default function NewLabOrderForm() {
@@ -69,11 +103,67 @@ export default function NewLabOrderForm() {
   // Rótulos conhecidos dos exames (para os chips mostrarem nome, não #id),
   // semeados a partir dos exames que vêm de um perfil ocupacional.
   const [testOptions, setTestOptions] = useState<RelationOption[]>([])
+  const [testDetailsById, setTestDetailsById] = useState<Record<string, LabTestDetail>>({})
   const [priority, setPriority] = useState("ROTINA")
   const [indication, setIndication] = useState("")
   const [loadingProfile, setLoadingProfile] = useState(false)
+  const [loadingTestSectors, setLoadingTestSectors] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const missingTestIds = tests.filter((id) => !testDetailsById[String(id)])
+    if (!missingTestIds.length) {
+      setLoadingTestSectors(false)
+      return
+    }
+
+    let active = true
+    setLoadingTestSectors(true)
+
+    async function loadSelectedTests() {
+      const rows = await Promise.all(
+        missingTestIds.map(async (id) => {
+          try {
+            return await apiFetch<LabTestDetail>(`${TEST_TARGET.endpoint}${id}/`, {
+              clientCache: safeRefreshToken === 0,
+              clientCacheTtlMs: 60000,
+            })
+          } catch {
+            return null
+          }
+        })
+      )
+
+      if (!active) return
+      setTestDetailsById((current) => {
+        const next = { ...current }
+        rows.forEach((row, index) => {
+          const id = normalizeTestId(row?.id) ?? missingTestIds[index]
+          if (id) next[String(id)] = row || { id }
+        })
+        return next
+      })
+      setLoadingTestSectors(false)
+    }
+
+    loadSelectedTests().catch(() => {
+      if (active) setLoadingTestSectors(false)
+    })
+
+    return () => {
+      active = false
+    }
+  }, [safeRefreshToken, testDetailsById, tests])
+
+  const sectorChips = useMemo(() => {
+    const byKey = new Map<string, SectorChip>()
+    for (const testId of tests) {
+      const chip = sectorChipFromTest(testDetailsById[String(testId)])
+      if (chip && !byKey.has(chip.key)) byKey.set(chip.key, chip)
+    }
+    return Array.from(byKey.values())
+  }, [testDetailsById, tests])
 
   // Ao escolher o perfil ocupacional, junta automaticamente os exames do perfil
   // à seleção (sem duplicar) — item §4.
@@ -95,17 +185,30 @@ export default function NewLabOrderForm() {
       const resolved = await Promise.all(
         profileTests.map(async (id) => {
           try {
-            const row = await apiFetch<Record<string, any>>(`${TEST_TARGET.endpoint}${id}/`, {
+            const row = await apiFetch<LabTestDetail>(`${TEST_TARGET.endpoint}${id}/`, {
               clientCache: safeRefreshToken === 0,
               clientCacheTtlMs: 60000,
             })
-            return relationOptionFromRow(row, TEST_TARGET)
+            return row
           } catch {
             return null
           }
         })
       )
-      const options = resolved.filter(Boolean) as RelationOption[]
+      const rows = resolved.filter(Boolean) as LabTestDetail[]
+      const options = rows
+        .map((row) => relationOptionFromRow(row as Record<string, any>, TEST_TARGET))
+        .filter(Boolean) as RelationOption[]
+      if (rows.length) {
+        setTestDetailsById((current) => {
+          const next = { ...current }
+          for (const row of rows) {
+            const id = normalizeTestId(row.id)
+            if (id) next[String(id)] = row
+          }
+          return next
+        })
+      }
       if (options.length) {
         setTestOptions((current) => {
           const byValue = new Map(current.map((option) => [option.value, option]))
@@ -249,6 +352,30 @@ export default function NewLabOrderForm() {
               placeholder={t("Pesquisar e adicionar exames...", "Search and add tests...")}
             />
           </label>
+
+          <div className="grid gap-1" data-form-field="sectors">
+            <FieldLabel>{t("Sectores", "Sectors")}</FieldLabel>
+            <div className="min-h-11 rounded-md border border-[var(--border)] bg-[var(--gray-50)] px-3 py-2">
+              {sectorChips.length ? (
+                <div className="flex flex-wrap gap-1.5">
+                  {sectorChips.map((sector) => (
+                    <span
+                      key={sector.key}
+                      className="inline-flex min-h-7 items-center rounded-md border border-[var(--border)] bg-[var(--card)] px-2.5 text-xs font-medium text-[var(--text)]"
+                    >
+                      {sector.name}
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <span className="text-sm text-[var(--gray-500)]">
+                  {loadingTestSectors
+                    ? t("A calcular sectores...", "Calculating sectors...")
+                    : t("—", "—")}
+                </span>
+              )}
+            </div>
+          </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="grid gap-1">

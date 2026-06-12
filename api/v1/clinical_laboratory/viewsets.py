@@ -138,14 +138,17 @@ class LabTestViewSet(_CatalogActivationMixin, ValidatedSearchOrderingMixin, Tena
 
 
 class LabTestPanelViewSet(_CatalogActivationMixin, ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
-    queryset = LabTestPanel.objects.select_related("sector").all()
+    queryset = LabTestPanel.objects.select_related("sector").prefetch_related("tests__sector").all()
     serializer_class = LabTestPanelSerializer
     search_fields = ["custom_id", "code", "name"]
     ordering_fields = ["code", "name", "package_price", "active", "created_at"]
 
 
 class LabOrderViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
-    queryset = LabOrder.objects.select_related("patient", "requesting_physician").all()
+    queryset = LabOrder.objects.select_related(
+        "patient",
+        "requesting_physician",
+    ).prefetch_related("items__test__sector").all()
     serializer_class = LabOrderSerializer
     search_fields = ["custom_id", "origin", "diagnosis", "clinical_indication"]
     ordering_fields = ["requested_at", "status", "priority", "payment_status", "created_at"]
@@ -170,7 +173,7 @@ class LabOrderViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, M
 
 
 class LabOrderItemViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
-    queryset = LabOrderItem.objects.select_related("order", "test").all()
+    queryset = LabOrderItem.objects.select_related("order", "test", "test__sector").all()
     serializer_class = LabOrderItemSerializer
     # Itens são "segunda camada": o frontend lista-os filtrados pelo pedido
     # (`?order=<id>`) dentro do detalhe da requisição, nunca como lista solta.
