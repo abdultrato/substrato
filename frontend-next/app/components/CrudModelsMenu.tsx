@@ -70,6 +70,7 @@ const MODULES: Record<string, CrudMenuItem[]> = {
     { nome: "Paciente", href: "/clinical/patients" },
     { nome: "Amostra", href: "/clinical/samples" },
     { nome: "Requisição Laboratorial", href: "/clinical/lab-requests" },
+    { nome: "Perfil Ocupacional (Bandeja de Exames)", href: "/clinical/occupational-profiles" },
     { nome: "Campo de Exame Laboratorial", href: "/clinical/lab-exam-fields" },
     { nome: "Resultado", href: "/clinical/results" },
     { nome: "Item de Resultado", href: "/clinical/result-items" },

@@ -19,6 +19,7 @@ from .lab_exam_field import LabExamField
 from .lab_request import LabRequest
 from .lab_request_item import LabRequestItem
 from .medical_exam import MedicalExam, MedicalExamField
+from .occupational_profile import OccupationalExamProfile
 from .medical_result_file import MedicalResultFile
 from .patient import Patient
 from .result import Result
@@ -36,6 +37,7 @@ __all__ = [
     "MedicalExam",
     "MedicalExamField",
     "MedicalResultFile",
+    "OccupationalExamProfile",
     "Patient",
     "Result",
     "ResultItem",

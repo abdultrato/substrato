@@ -1,6 +1,7 @@
 from .exams import LabExamViewSet, MedicalExamViewSet, SampleViewSet
 from .fields import LabExamFieldViewSet, MedicalExamFieldViewSet
 from .medical_results import MedicalResultFileViewSet
+from .occupational_profiles import OccupationalExamProfileViewSet
 from .patients import PatientViewSet
 from .requests import LabRequestItemViewSet, LabRequestViewSet
 from .results import ResultItemViewSet
@@ -13,6 +14,7 @@ VIEWSET_MAP = {
     "medicalexam": MedicalExamViewSet,
     "medicalexamfield": MedicalExamFieldViewSet,
     "medicalresultfile": MedicalResultFileViewSet,
+    "occupational_profile": OccupationalExamProfileViewSet,
     "patient": PatientViewSet,
     "resultitem": ResultItemViewSet,
     "sample": SampleViewSet,
@@ -27,6 +29,7 @@ __all__ = [
     "MedicalExamFieldViewSet",
     "MedicalExamViewSet",
     "MedicalResultFileViewSet",
+    "OccupationalExamProfileViewSet",
     "PatientViewSet",
     "ResultItemViewSet",
     "SampleViewSet",

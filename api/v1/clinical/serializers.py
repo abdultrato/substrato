@@ -14,6 +14,7 @@ from apps.clinical.models.lab_exam_field import LabExamField
 from apps.clinical.models.lab_request import LabRequest
 from apps.clinical.models.lab_request_item import LabRequestItem
 from apps.clinical.models.medical_exam import MedicalExam, MedicalExamField
+from apps.clinical.models.occupational_profile import OccupationalExamProfile
 from apps.clinical.models.medical_result_file import (
     MedicalResultFile,
     validate_medical_file_for_type,
@@ -806,6 +807,25 @@ class MedicalExamFieldSerializer(LegacyAliasSerializerMixin, serializers.ModelSe
         read_only_fields = CORE_READ_ONLY_FIELDS
 
 
+class OccupationalExamProfileSerializer(serializers.ModelSerializer):
+    """Perfil ocupacional: bandeja de exames por profissão (medicina do trabalho)."""
+
+    exams = serializers.PrimaryKeyRelatedField(
+        many=True,
+        queryset=LabExam.objects.all(),
+        required=False,
+    )
+    exam_names = serializers.SerializerMethodField()
+
+    class Meta:
+        model = OccupationalExamProfile
+        fields = "__all__"
+        read_only_fields = [*CORE_READ_ONLY_FIELDS, "exam_names"]
+
+    def get_exam_names(self, obj):
+        return [exam.name for exam in obj.exams.all()]
+
+
 class LabRequestSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer):
     """
     Serializer para requisições (por sector).
@@ -909,6 +929,7 @@ class LabRequestSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializ
 
     patient_name = serializers.CharField(source="patient.name", read_only=True)
     patient_code = serializers.CharField(source="patient.custom_id", read_only=True)
+    occupational_profile_name = serializers.CharField(source="occupational_profile.name", read_only=True)
     requesting_company_name = serializers.CharField(source="requesting_company.name", read_only=True)
     external_executing_company_name = serializers.CharField(source="external_executing_company.name", read_only=True)
 
@@ -962,6 +983,7 @@ class LabRequestSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializ
             "patient_code",
             "requesting_company_name",
             "external_executing_company_name",
+            "occupational_profile_name",
             "items",
             "sample_details",
             "collection_guidance",
@@ -986,6 +1008,10 @@ class LabRequestSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializ
 
         exams = attrs.get("exams", None)
         medical_exams = attrs.get("medical_exams", None)
+        occupational_profile = attrs.get(
+            "occupational_profile",
+            getattr(self.instance, "occupational_profile", None),
+        )
         requesting_company = attrs.get("requesting_company", None)
         external_executing_company = attrs.get("external_executing_company", None)
 
@@ -1003,6 +1029,14 @@ class LabRequestSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializ
             ):
                 raise serializers.ValidationError({field_name: "Empresa fora do escopo do tenant."})
 
+        # Perfil ocupacional só faz sentido em requisições laboratoriais.
+        if occupational_profile is not None:
+            if type != LabRequest.Type.LABORATORY:
+                raise serializers.ValidationError(
+                    {"occupational_profile": "Perfil ocupacional só se aplica a requisições laboratoriais."}
+                )
+            attrs["is_occupational"] = True
+
         # Regra: requisição por sector, sem mistura.
         if type == LabRequest.Type.LABORATORY:
             if medical_exams:
@@ -1015,7 +1049,8 @@ class LabRequestSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializ
 
         # No create: exigir pelo menos um item.
         if self.instance is None:
-            if type == LabRequest.Type.LABORATORY and not exams:
+            profile_has_exams = occupational_profile is not None and occupational_profile.exams.exists()
+            if type == LabRequest.Type.LABORATORY and not exams and not profile_has_exams:
                 raise serializers.ValidationError({"exams": "Informe ao menos um exam laboratorial."})
             if type == LabRequest.Type.MEDICAL_EXAM and not medical_exams:
                 raise serializers.ValidationError({"medical_exams": "Informe ao menos um exam médico."})
@@ -1044,6 +1079,11 @@ class LabRequestSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializ
         request = LabRequest.objects.create(**validated_date)
 
         if type == LabRequest.Type.LABORATORY:
+            # Exames do perfil ocupacional somam-se aos escolhidos manualmente.
+            profile = validated_date.get("occupational_profile")
+            if profile is not None:
+                seen = {exam.id for exam in exams}
+                exams = list(exams) + [exam for exam in profile.exams.all() if exam.id not in seen]
             for exam in exams:
                 request.add_exam(exam)
         elif type == LabRequest.Type.MEDICAL_EXAM:
@@ -1068,6 +1108,9 @@ class LabRequestSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializ
                 raise serializers.ValidationError({"medical_exams": "Requisição LAB não aceita exams médicos."})
             if exams is not None:
                 desejados = {e.id for e in exams}
+                if instance.occupational_profile_id:
+                    # Exames da bandeja do perfil ocupacional somam-se aos escolhidos.
+                    desejados |= set(instance.occupational_profile.exams.values_list("id", flat=True))
                 atuais = set(instance.items.filter(exam__isnull=False).values_list("exam_id", flat=True))
 
                 remover = atuais - desejados

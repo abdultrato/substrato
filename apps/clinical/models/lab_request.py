@@ -142,6 +142,25 @@ class LabRequest(NoNameCoreModel):
 
     )
 
+    is_occupational = models.BooleanField(
+        db_column="is_occupational",
+        default=False,
+        db_index=True,
+        verbose_name="Requisição de exames ocupacionais",
+        help_text="Indica que a requisição se destina a medicina ocupacional.",
+    )
+
+    occupational_profile = models.ForeignKey(
+        "clinical.OccupationalExamProfile",
+        db_column="occupational_profile_id",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="lab_requests",
+        verbose_name="Perfil profissional (bandeja de exames)",
+        help_text="Perfil ocupacional cujos exames são adicionados à requisição.",
+    )
+
     has_critical_result = models.BooleanField(
 
         db_column="has_critical_result",

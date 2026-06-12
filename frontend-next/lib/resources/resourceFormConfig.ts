@@ -13,6 +13,9 @@ export type AutoFormStep = {
 
 export type ResourceFormConfig = {
   esconderCampos?: string[]
+  /** Visibilidade condicional: o campo (chave) só aparece quando o campo
+   *  controlador tiver o valor indicado (ex.: checkbox marcado). */
+  mostrarSe?: Record<string, { campo: string; igualA?: any }>
   somenteLeituraCampos?: string[]
   ordenarCampos?: string[]
   labels?: Record<string, string>
@@ -4570,6 +4573,64 @@ function surgeryAuditEventConfig(): ResourceFormConfig {
   }
 }
 
+function clinicalLabRequestConfig(): ResourceFormConfig {
+  return {
+    ordenarCampos: [
+      "patient",
+      "type",
+      "exams",
+      "is_occupational",
+      "occupational_profile",
+      "medical_exams",
+      "clinical_status",
+      "status",
+      "requesting_company",
+      "external_executing_company",
+      "analyst",
+    ],
+    labels: {
+      patient: "Paciente",
+      type: "Tipo",
+      exams: "Exames",
+      medical_exams: "Exames médicos",
+      is_occupational: "Requisição de exames ocupacionais",
+      occupational_profile: "Perfil profissional (bandeja de exames)",
+      clinical_status: "Estado clínico",
+      status: "Estado",
+      requesting_company: "Empresa solicitante",
+      external_executing_company: "Empresa executora externa",
+      analyst: "Analista",
+    },
+    placeholders: {
+      exams: "Pesquisar exames e adicionar por clique...",
+      occupational_profile: "Pesquisar perfil profissional...",
+    },
+    hints: {
+      exams: "Pesquise e clique para adicionar cada exame necessário.",
+      occupational_profile:
+        "Os exames da bandeja do perfil somam-se aos exames selecionados.",
+    },
+    mostrarSe: {
+      occupational_profile: { campo: "is_occupational", igualA: true },
+    },
+  }
+}
+
+function clinicalOccupationalProfileConfig(): ResourceFormConfig {
+  return {
+    labels: {
+      name: "Nome do perfil",
+      profession: "Profissão",
+      description: "Descrição",
+      active: "Ativo",
+      exams: "Exames da bandeja",
+    },
+    placeholders: {
+      exams: "Pesquisar exames e adicionar por clique...",
+    },
+  }
+}
+
 export function getResourceFormConfig(
   groupKey: string,
   resourceKey: string,
@@ -4578,6 +4639,12 @@ export function getResourceFormConfig(
   const g = canonicalModuleGroupKey(groupKey)
   const r = String(resourceKey || "").toLowerCase()
   const ep = normalizeEndpoint(endpoint)
+
+  if (g === "clinical" || g === "clinico" || g === "clínico") {
+    if (r === "labrequest" || ep === "/clinical/labrequest/") return clinicalLabRequestConfig()
+    if (r === "occupational_profile" || ep === "/clinical/occupational_profile/") return clinicalOccupationalProfileConfig()
+    return null
+  }
 
   if (g === "human_resources" || g === "recursos_humanos") {
     if (r === "employee" || ep === "/human_resources/employee/") return hrEmployeeConfig()

@@ -67,6 +67,7 @@ const RESOURCE_LABEL_PT_BY_KEY: Record<string, string> = {
   afb_smear: "Baciloscopias (BAAR)",
   antibiogram: "Antibiogramas",
   audit_finding: "Constatações de Auditoria",
+  occupational_profile: "Perfis Ocupacionais (Bandejas de Exames)",
   biosafety_inspection: "Inspeções de Biossegurança",
   collection: "Colheitas",
   competency: "Competências",

@@ -936,6 +936,17 @@ function visibleFormFields(formSpec: RuntimeFormSpec | null, config?: ResourceFo
   return fields
 }
 
+function conditionVisible(
+  fieldName: string,
+  values: Record<string, any>,
+  config?: ResourceFormConfig | null
+): boolean {
+  const rule = config?.mostrarSe?.[fieldName]
+  if (!rule) return true
+  const expected = rule.igualA === undefined ? true : rule.igualA
+  return values[rule.campo] === expected
+}
+
 function safeFieldSelector(fieldName: string): string {
   return fieldName.replace(/\\/g, "\\\\").replace(/"/g, '\\"')
 }
@@ -1336,7 +1347,12 @@ export default function AutoForm({
     setMessage(null)
     setErrors({})
     try {
-      const missing = activeSubmitFields.filter((field) => field.required && !hasRequiredValue(values[field.name]))
+      const missing = activeSubmitFields.filter(
+        (field) =>
+          field.required &&
+          conditionVisible(field.name, values, config) &&
+          !hasRequiredValue(values[field.name])
+      )
       if (missing.length) {
         setHasAttemptedSubmit(true)
         const errs: Record<string, string> = {}
@@ -1349,7 +1365,10 @@ export default function AutoForm({
         )
         return
       }
-      const parsed = schema.parse(values)
+      const parsed: Record<string, any> = schema.parse(values)
+      for (const key of Object.keys(parsed)) {
+        if (!conditionVisible(key, values, config)) delete parsed[key]
+      }
       const res = await apiFetch(endpoint, {
         method: effectiveMethod.toUpperCase(),
         body: JSON.stringify(parsed),
@@ -1434,15 +1453,18 @@ export default function AutoForm({
   const stepFields = stepNames
     ? stepNames.map((n) => visibleByName.get(n)).filter(Boolean) as FormField[]
     : visibleFields
-  const fieldsToRender = stepNames
+  const fieldsToRender = (stepNames
     ? [
         ...stepFields,
         ...unassignedRequiredFields.filter((field) => !stepFields.some((current) => current.name === field.name)),
       ]
     : visibleFields
+  ).filter((field) => conditionVisible(field.name, values, config))
   const somenteLeitura = new Set(config?.somenteLeituraCampos || [])
   const requiredFields = activeSubmitFields.filter((field) => field.required)
-  const missingRequiredFields = requiredFields.filter((field) => !hasRequiredValue(values[field.name]))
+  const missingRequiredFields = requiredFields.filter(
+    (field) => conditionVisible(field.name, values, config) && !hasRequiredValue(values[field.name])
+  )
   const submitDisabled = submitting
 
   return (

@@ -94,6 +94,11 @@ const RELATION_TARGETS: Record<string, RelationTarget> = {
   enrollment: { endpoint: "/education/enrollment/", labelFields: ["custom_id", "student", "classroom", ...DEFAULT_LABEL_FIELDS] },
   equipment: { endpoint: "/equipment/equipment/", labelFields: ["name", "serial_number", ...DEFAULT_LABEL_FIELDS] },
   exam: { endpoint: "/clinical/exam/", labelFields: ["name", "code", ...DEFAULT_LABEL_FIELDS] },
+  // M2M `exams` das requisições laboratoriais — multi-seleção por pesquisa.
+  exams: { endpoint: "/clinical/exam/", labelFields: ["name", "code", ...DEFAULT_LABEL_FIELDS] },
+  medical_exams: { endpoint: "/clinical/medicalexam/", labelFields: ["name", "code", ...DEFAULT_LABEL_FIELDS] },
+  // Bandeja de exames do perfil profissional (medicina ocupacional).
+  occupational_profile: { endpoint: "/clinical/occupational_profile/", labelFields: ["name", "profession", ...DEFAULT_LABEL_FIELDS] },
   examination: { endpoint: "/education/examination/", labelFields: ["title", "custom_id", ...DEFAULT_LABEL_FIELDS] },
   examination_attempt: { endpoint: "/education/examination_attempt/", labelFields: ["custom_id", "id", ...DEFAULT_LABEL_FIELDS] },
   financier_company: { endpoint: "/external_entities/empresa/", labelFields: ["name", "nuit", ...DEFAULT_LABEL_FIELDS] },
