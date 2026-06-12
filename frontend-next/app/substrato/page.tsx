@@ -96,7 +96,7 @@ function StatusPill({ status }: { status: DomainModuleStatus }) {
 export default function SubstratoAboutPage() {
   return (
     <AutoTranslateTree>
-      <main className="min-h-screen bg-background text-foreground">
+      <main className="min-h-screen text-foreground">
         <section className="border-b border-border bg-card">
           <div className="mx-auto grid max-w-7xl gap-8 px-4 py-8 sm:px-6 lg:grid-cols-[1.05fr_0.95fr] lg:px-8 lg:py-10">
             <div className="flex min-w-0 flex-col justify-between gap-6">

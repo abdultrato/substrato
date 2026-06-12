@@ -8,7 +8,14 @@
 <style>
   /* Neutralize Jazzmin/AdminLTE login-box wrapper */
   body.jazzmin-login-page {
-    background: linear-gradient(135deg, #f4f2fb 0%, #f7f6fb 50%, #eef2ff 100%) !important;
+    /* Gradiente translúcido sobre a marca d'água da logo (mesmo padrão do
+       frontend): o véu deixa a logo a ~8% de visibilidade. */
+    background-color: #f7f6fb !important;
+    background-image:
+      linear-gradient(135deg, rgba(244,242,251,.92) 0%, rgba(247,246,251,.9) 50%, rgba(238,242,255,.92) 100%),
+      url('{% static "img/logo-preta.png" %}') !important;
+    background-repeat: no-repeat, space !important;
+    background-size: cover, 96px auto !important;
     min-height: 100vh;
     display: flex !important;
     align-items: center !important;
@@ -32,10 +39,16 @@
   .sl-card {
     position: relative;
     overflow: hidden;
-    background: #fff;
+    /* Marca d'água dentro do cartão, com véu branco para manter o contraste. */
+    background-color: #fff;
+    background-image:
+      linear-gradient(rgba(255,255,255,.94), rgba(255,255,255,.94)),
+      url('{% static "img/logo-preta.png" %}');
+    background-repeat: repeat, space;
+    background-size: auto, 96px auto;
     border: 1px solid #e7e3f5;
     border-radius: 20px;
-    box-shadow: 0 24px 64px rgba(76, 29, 149, .14);
+    box-shadow: 0 8px 20px -8px rgba(76, 29, 149, .1), 0 24px 64px -12px rgba(76, 29, 149, .16);
     padding: 2.5rem 2rem 2rem;
     text-align: center;
   }

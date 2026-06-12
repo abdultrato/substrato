@@ -45,14 +45,30 @@ a:hover {
 -------------------------------- */
 :root {
   color-scheme: light;
+  /* Marca tematizada (igual ao frontend): preta no claro, branca no escuro.
+     Manter o `?v=` em sincronia com LOGO_VERSION em lib/brand.ts. */
+  --substrato-logo-url: url('/static/img/logo-preta.png?v=4');
 }
 
+/* Marca d'água: logo repetida homogeneamente no fundo (mesmo padrão do
+   .substrato-brand-canvas do frontend). O véu (mesma cor do fundo com
+   alpha 0.94) deixa a logo a ~6% de visibilidade. */
 body {
   @apply bg-slate-50 text-slate-900;
+  background-image:
+    linear-gradient(rgba(248, 250, 252, 0.94), rgba(248, 250, 252, 0.94)),
+    var(--substrato-logo-url);
+  background-repeat: repeat, space;
+  background-size: auto, 96px auto;
 }
 
 .content-wrapper {
   @apply bg-slate-50;
+  background-image:
+    linear-gradient(rgba(248, 250, 252, 0.94), rgba(248, 250, 252, 0.94)),
+    var(--substrato-logo-url);
+  background-repeat: repeat, space;
+  background-size: auto, 96px auto;
 }
 
 /* Independent scroll regions: main content and lateral navigation. */
@@ -615,11 +631,22 @@ p.help {
 -------------------------------- */
 body.dark-mode {
   color-scheme: dark;
+  --substrato-logo-url: url('/static/img/logo-branca.png?v=4');
   @apply bg-slate-950 text-slate-100;
+  background-image:
+    linear-gradient(rgba(2, 6, 23, 0.94), rgba(2, 6, 23, 0.94)),
+    var(--substrato-logo-url);
+  background-repeat: repeat, space;
+  background-size: auto, 96px auto;
 }
 
 body.dark-mode .content-wrapper {
   @apply bg-slate-950;
+  background-image:
+    linear-gradient(rgba(2, 6, 23, 0.94), rgba(2, 6, 23, 0.94)),
+    var(--substrato-logo-url);
+  background-repeat: repeat, space;
+  background-size: auto, 96px auto;
 }
 
 /* ------------------------------

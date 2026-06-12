@@ -27,7 +27,7 @@ export default function PricingPage() {
   const checkUrl = lucideToDataUrl(Check);
 
   return (
-    <main className="min-h-screen bg-slate-50 px-4 py-16">
+    <main className="min-h-screen px-4 py-16">
       <div className="mx-auto max-w-5xl">
         <div className="text-center mb-12">
           <h1 className="text-3xl font-bold text-slate-900">Planos do Substrato</h1>

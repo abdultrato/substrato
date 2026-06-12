@@ -172,7 +172,8 @@ export default function LoginPage() {
                 : { title: t("Nova palavra-passe", "New password"), sub: t("Introduza o código recebido e defina a nova palavra-passe.", "Enter the received code and set a new password.") };
 
     return (
-        <div className="relative grid min-h-screen w-full place-items-center bg-gradient-to-br from-violet-50 via-background to-indigo-50 px-4 py-10 text-foreground dark:from-background dark:via-background dark:to-background">
+        <div className="relative grid min-h-screen w-full place-items-center bg-gradient-to-br from-violet-50/60 via-transparent to-indigo-50/60 px-4 py-10 text-foreground dark:from-transparent dark:via-transparent dark:to-transparent">
+            {/* Gradiente translúcido: deixa a marca d'água do body (substrato-brand-canvas) visível. */}
 
             {/* language toggle */}
             <button
@@ -186,7 +187,7 @@ export default function LoginPage() {
             </button>
 
             {/* ─── Centered card ─── */}
-            <div className="w-full max-w-md overflow-hidden rounded-2xl border border-border bg-card shadow-xl lg:grid lg:max-w-3xl lg:grid-cols-2">
+            <div className="substrato-brand-card w-full max-w-md overflow-hidden rounded-2xl border border-border shadow-xl lg:grid lg:max-w-3xl lg:grid-cols-2">
 
                 {/* Brand panel — left on lg+, hidden on small (mobile shows it above the form) */}
                 <aside className="relative hidden overflow-hidden bg-gradient-to-br from-violet-700 via-violet-800 to-indigo-900 p-10 text-white lg:flex lg:flex-col lg:justify-center">

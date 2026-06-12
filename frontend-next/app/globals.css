@@ -83,9 +83,24 @@
     --radius-lg: 10px;
     --radius-xl: 12px;
 
-    --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.05);
-    --shadow-md: 0 8px 24px rgba(15, 23, 42, 0.08);
-    --shadow-lg: 0 16px 42px rgba(15, 23, 42, 0.12);
+    /* Sombras modernas em camadas: contacto (curta, mais opaca) + ambiente
+       (longa, difusa, com spread negativo para não "vazar" das bordas). */
+    --shadow-sm:
+      0 1px 2px rgba(15, 23, 42, 0.05),
+      0 2px 8px -2px rgba(15, 23, 42, 0.06);
+    --shadow-md:
+      0 2px 4px rgba(15, 23, 42, 0.04),
+      0 8px 20px -6px rgba(15, 23, 42, 0.09);
+    --shadow-lg:
+      0 4px 10px rgba(15, 23, 42, 0.05),
+      0 20px 48px -12px rgba(15, 23, 42, 0.14);
+    --shadow-xl:
+      0 8px 16px -6px rgba(15, 23, 42, 0.07),
+      0 32px 72px -16px rgba(15, 23, 42, 0.18);
+    /* Campos de formulário: leve inset de profundidade + sombra de contacto. */
+    --shadow-input:
+      inset 0 1px 2px rgba(15, 23, 42, 0.04),
+      0 1px 2px rgba(15, 23, 42, 0.05);
 
     /* Legacy aliases (used across the app) */
     --bg: hsl(var(--background-hsl));
@@ -132,9 +147,21 @@
     --primary-soft-hsl: 214 38% 18%;
     --primary-foreground-hsl: 0 0% 100%;
 
-    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.32);
-    --shadow-md: 0 12px 30px rgba(0, 0, 0, 0.36);
-    --shadow-lg: 0 24px 70px rgba(0, 0, 0, 0.42);
+    --shadow-sm:
+      0 1px 2px rgba(0, 0, 0, 0.32),
+      0 2px 8px -2px rgba(0, 0, 0, 0.36);
+    --shadow-md:
+      0 2px 4px rgba(0, 0, 0, 0.32),
+      0 10px 24px -6px rgba(0, 0, 0, 0.42);
+    --shadow-lg:
+      0 4px 10px rgba(0, 0, 0, 0.36),
+      0 24px 64px -12px rgba(0, 0, 0, 0.5);
+    --shadow-xl:
+      0 8px 18px -6px rgba(0, 0, 0, 0.42),
+      0 40px 96px -16px rgba(0, 0, 0, 0.58);
+    --shadow-input:
+      inset 0 1px 2px rgba(0, 0, 0, 0.4),
+      0 1px 2px rgba(0, 0, 0, 0.32);
 
     /* Dark mode gray aliases */
     --gray-900: hsl(var(--foreground-hsl));
@@ -151,6 +178,14 @@
   body {
     min-height: 100%;
     width: 100%;
+  }
+
+  /* Apenas no html: com overflow-x não-visível também no body, o body vira
+     um scroll container próprio (overflow-y computa para auto) e o
+     overscroll-behavior-y: none nele bloqueia o encadeamento da roda do
+     rato para o viewport — a página deixa de rolar. O html sozinho já
+     clipa o transbordo horizontal. */
+  html {
     overflow-x: hidden;
     overscroll-behavior-y: none;
   }
@@ -180,7 +215,42 @@
   .substrato-brand-canvas,
   .substrato-app-surface {
     position: relative;
+  }
+
+  /* Marca d'água: logo tematizada repetida homogeneamente no fundo de
+     todas as páginas (preta no claro, branca no escuro, via
+     --substrato-logo-url). Pintada apenas no body: o background do body
+     propaga para o canvas, por isso cobre o viewport inteiro mesmo com
+     pouco conteúdo. As superfícies internas (wrapper do AppLayout, main)
+     ficam transparentes para não tapar o padrão. O véu da 1ª camada
+     (mesma cor do fundo com alpha) deixa a logo a ~6% de visibilidade;
+     ajustar o alpha para mais/menos contraste e o background-size para a
+     densidade. */
+  .substrato-brand-canvas {
     background-color: hsl(var(--background-hsl));
+    background-image:
+      linear-gradient(
+        hsl(var(--background-hsl) / 0.94),
+        hsl(var(--background-hsl) / 0.94)
+      ),
+      var(--substrato-logo-url);
+    background-repeat: repeat, space;
+    background-size: auto, 96px auto;
+  }
+
+  /* Variante para superfícies de cartão (ex.: cartão do formulário de
+     login): mesma marca d'água, mas com véu na cor do cartão para manter
+     o contraste dos campos. */
+  .substrato-brand-card {
+    background-color: hsl(var(--card-hsl));
+    background-image:
+      linear-gradient(
+        hsl(var(--card-hsl) / 0.94),
+        hsl(var(--card-hsl) / 0.94)
+      ),
+      var(--substrato-logo-url);
+    background-repeat: repeat, space;
+    background-size: auto, 96px auto;
   }
 
   h1,
@@ -253,6 +323,13 @@
     box-shadow: 0 0 0 3px hsl(var(--ring-hsl) / 0.18);
   }
 
+  /* Campos de formulário sem utilitário de sombra: aplica a sombra base
+     moderna. Especificidade ~0 (:where) para qualquer classe sobrepor. */
+  input:where(:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="color"]):not([type="submit"]):not([type="button"]):not([type="reset"])),
+  :where(select, textarea) {
+    box-shadow: var(--shadow-input);
+  }
+
   abbr[title] {
     text-decoration: underline dotted;
     cursor: help;
@@ -296,7 +373,7 @@
   .page-box:hover,
   .table-container:hover,
   .info-grid > div:hover {
-    box-shadow: var(--shadow-sm);
+    box-shadow: var(--shadow-md);
     transform: none;
   }
 

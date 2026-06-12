@@ -8,7 +8,14 @@
 <style>
   /* Neutralize Jazzmin/AdminLTE login-box wrapper */
   body.jazzmin-login-page {
-    background: linear-gradient(135deg, #f4f2fb 0%, #f7f6fb 50%, #eef2ff 100%) !important;
+    /* Gradiente translúcido sobre a marca d'água da logo (mesmo padrão do
+       frontend): o véu deixa a logo a ~8% de visibilidade. */
+    background-color: #f7f6fb !important;
+    background-image:
+      linear-gradient(135deg, rgba(244,242,251,.92) 0%, rgba(247,246,251,.9) 50%, rgba(238,242,255,.92) 100%),
+      url('{% static "img/logo-preta.png" %}') !important;
+    background-repeat: no-repeat, space !important;
+    background-size: cover, 96px auto !important;
     min-height: 100vh;
     display: flex !important;
     align-items: center !important;
@@ -36,7 +43,7 @@
     border: 1px solid #e7e3f5;
     border-radius: 20px;
     overflow: hidden;
-    box-shadow: 0 24px 64px rgba(76, 29, 149, .16);
+    box-shadow: 0 8px 20px -8px rgba(76, 29, 149, .12), 0 24px 64px -12px rgba(76, 29, 149, .18);
   }
 
   /* ── brand aside (left on desktop) ── */
@@ -72,7 +79,17 @@
   .sl-tagline { margin: .6rem 0 0; max-width: 15rem; font-size: .85rem; line-height: 1.55; color: rgba(237,233,254,.82); }
 
   /* ── form side ── */
-  .sl-main { padding: 2.5rem 2.25rem; background: #fff; display: flex; flex-direction: column; justify-content: center; }
+  .sl-main {
+    padding: 2.5rem 2.25rem;
+    display: flex; flex-direction: column; justify-content: center;
+    /* Marca d'água dentro do formulário, com véu branco para manter o contraste. */
+    background-color: #fff;
+    background-image:
+      linear-gradient(rgba(255,255,255,.94), rgba(255,255,255,.94)),
+      url('{% static "img/logo-preta.png" %}');
+    background-repeat: repeat, space;
+    background-size: auto, 96px auto;
+  }
 
   /* mobile brand (above form; shown only when aside collapses) */
   .sl-mobile-brand { display: none; position: relative; overflow: hidden; }
@@ -110,10 +127,11 @@
     width: 100%; padding: .6rem .8rem; font-size: .875rem;
     border: 1.5px solid #d8d5e4; border-radius: 10px;
     background: #fbfaff; color: #1e1b2e; outline: none;
+    box-shadow: inset 0 1px 2px rgba(30,27,46,.04), 0 1px 2px rgba(30,27,46,.05);
     transition: border-color .15s, box-shadow .15s, background .15s;
     box-sizing: border-box; appearance: none;
   }
-  .sl-input:focus { border-color: #7c3aed; background: #fff; box-shadow: 0 0 0 3px rgba(124,58,237,.14); }
+  .sl-input:focus { border-color: #7c3aed; background: #fff; box-shadow: inset 0 1px 2px rgba(30,27,46,.04), 0 0 0 3px rgba(124,58,237,.14); }
   .sl-input::placeholder { color: #9ca3af; }
 
   .sl-reset { text-align: right; margin-top: -.25rem; }
