@@ -3,6 +3,7 @@
 from django.conf import settings
 from django.db import migrations, models
 import django.db.models.deletion
+from configuration.utils.django_compat import check_constraint
 
 
 class Migration(migrations.Migration):
@@ -201,7 +202,7 @@ class Migration(migrations.Migration):
         ),
         migrations.AddConstraint(
             model_name='ledgerline',
-            constraint=models.CheckConstraint(check=models.Q(('value__gt', 0)), name='ledgerline_value_positivo'),
+            constraint=check_constraint(condition=models.Q(('value__gt', 0)), name='ledgerline_value_positivo'),
         ),
         migrations.AddIndex(
             model_name='ledgerentry',
