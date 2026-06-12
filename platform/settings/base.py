@@ -241,6 +241,8 @@ JAZZMIN_SETTINGS = {
     "copyright": f"Substrato · {SYSTEM_VERSION_DISPLAY}",
     # CSS customizado (gerado via Tailwind; ver `frontend-next/styles/admin-tailwind.input.css`)
     "custom_css": "admin/css/substrato-admin-tailwind.css",
+    # JS customizado: setas de rolagem nas regiões roláveis do admin.
+    "custom_js": "admin/js/substrato-scroll-arrows.js",
     # Ícones por app/model (Font Awesome 5 Free; chaves são lower-case).
     "icons": {
         # Django built-ins

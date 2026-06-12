@@ -4,6 +4,7 @@ import { Suspense } from "react"
 import { QueryClientProvider } from "@tanstack/react-query"
 import { queryClient } from "@/lib/queryClient"
 import ToastContainer from "@/components/ui/ToastContainer"
+import ScrollArrowsManager from "@/components/ui/ScrollArrowsManager"
 import RequestActivityIndicator from "@/components/ui/RequestActivityIndicator"
 import NavigationWarmup from "@/components/navigation/NavigationWarmup"
 import NavigationClickFeedback from "@/components/navigation/NavigationClickFeedback"
@@ -27,6 +28,7 @@ export default function Providers ( { children }: { children: React.ReactNode } 
                         {children}
                         <RequestActivityIndicator />
                         <ToastContainer />
+                        <ScrollArrowsManager />
                     </AutoTranslateTree>
                 </SafeDataRefreshProvider>
             </QueryClientProvider>

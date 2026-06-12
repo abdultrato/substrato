@@ -30,6 +30,7 @@ export default function Footer({ leftOffset = "16rem", rightOffset = "0px" }: Pr
 
   return (
     <footer
+      data-substrato-fixed-footer
       className="fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-card/95 text-xs text-muted-foreground shadow-sm backdrop-blur md:left-[var(--layout-left)] md:right-[var(--layout-right)]"
       style={
         {
