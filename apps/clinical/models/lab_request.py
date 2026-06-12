@@ -142,6 +142,17 @@ class LabRequest(NoNameCoreModel):
 
     )
 
+    requesting_physician = models.ForeignKey(
+        "recursos_humanos.Employee",
+        db_column="requesting_physician_id",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="requested_lab_requests",
+        verbose_name="Médico solicitante",
+        help_text="Médico que solicitou os exames.",
+    )
+
     is_occupational = models.BooleanField(
         db_column="is_occupational",
         default=False,

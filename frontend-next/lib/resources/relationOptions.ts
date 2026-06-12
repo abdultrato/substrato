@@ -141,6 +141,10 @@ const RELATION_TARGETS: Record<string, RelationTarget> = {
   requisition: { endpoint: "/pharmacy/material_requisition/", labelFields: ["custom_id", "sector", ...DEFAULT_LABEL_FIELDS] },
   requisicao: { endpoint: "/pharmacy/material_requisition/", labelFields: ["custom_id", "sector", ...DEFAULT_LABEL_FIELDS] },
   requesting_doctor: { endpoint: "/human_resources/employee/", labelFields: ["name", "employee_code", ...DEFAULT_LABEL_FIELDS] },
+  // Medico solicitante das requisicoes laboratoriais - apenas funcionarios
+  // com papel de medico ativos (endpoint dedicado de medicos).
+  requesting_physician: { endpoint: "/consultations/doctors/", labelFields: ["name", "profession_name", ...DEFAULT_LABEL_FIELDS] },
+  requesting_company: { endpoint: "/external_entities/empresa/", labelFields: ["name", "nuit", ...DEFAULT_LABEL_FIELDS] },
   requested_by: { endpoint: "/human_resources/employee/", labelFields: ["name", "employee_code", ...DEFAULT_LABEL_FIELDS] },
   reported_by: { endpoint: "/human_resources/employee/", labelFields: ["name", "employee_code", ...DEFAULT_LABEL_FIELDS] },
   resolved_by: { endpoint: "/human_resources/employee/", labelFields: ["name", "employee_code", ...DEFAULT_LABEL_FIELDS] },

@@ -4575,35 +4575,40 @@ function surgeryAuditEventConfig(): ResourceFormConfig {
 
 function clinicalLabRequestConfig(): ResourceFormConfig {
   return {
+    // Campos geridos pelo fluxo/admin, nao editaveis no frontend:
+    // - status muda automaticamente com o estagio da requisicao
+    // - external_executing_company e preenchida na transferencia entre tenants
+    // - type e LAB por omissao nesta pagina; analyst e atribuido no laboratorio
+    esconderCampos: [
+      "type",
+      "analyst",
+      "status",
+      "external_executing_company",
+      "medical_exams",
+    ],
     ordenarCampos: [
       "patient",
-      "type",
+      "requesting_physician",
       "exams",
       "is_occupational",
       "occupational_profile",
-      "medical_exams",
-      "clinical_status",
-      "status",
       "requesting_company",
-      "external_executing_company",
-      "analyst",
+      "clinical_status",
     ],
     labels: {
       patient: "Paciente",
-      type: "Tipo",
-      exams: "Exames",
-      medical_exams: "Exames médicos",
+      requesting_physician: "Médico solicitante",
+      exams: "Exames solicitados",
       is_occupational: "Requisição de exames ocupacionais",
       occupational_profile: "Perfil profissional (bandeja de exames)",
       clinical_status: "Estado clínico",
-      status: "Estado",
       requesting_company: "Empresa solicitante",
-      external_executing_company: "Empresa executora externa",
-      analyst: "Analista",
     },
     placeholders: {
       exams: "Pesquisar exames e adicionar por clique...",
       occupational_profile: "Pesquisar perfil profissional...",
+      requesting_physician: "Pesquisar médico...",
+      requesting_company: "Pesquisar empresa...",
     },
     hints: {
       exams: "Pesquise e clique para adicionar cada exame necessário.",

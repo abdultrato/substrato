@@ -888,6 +888,8 @@ class LabRequestSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializ
         "empresa_executora_externa": "external_executing_company",
         "empresa_externa": "external_executing_company",
         "analista": "analyst",
+        "medico_solicitante": "requesting_physician",
+        "médico_solicitante": "requesting_physician",
         "responsavel_analise": "analyst",
         "responsável_análise": "analyst",
         "exame": "exams",
@@ -930,6 +932,7 @@ class LabRequestSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializ
     patient_name = serializers.CharField(source="patient.name", read_only=True)
     patient_code = serializers.CharField(source="patient.custom_id", read_only=True)
     occupational_profile_name = serializers.CharField(source="occupational_profile.name", read_only=True)
+    requesting_physician_name = serializers.CharField(source="requesting_physician.name", read_only=True)
     requesting_company_name = serializers.CharField(source="requesting_company.name", read_only=True)
     external_executing_company_name = serializers.CharField(source="external_executing_company.name", read_only=True)
 
@@ -984,6 +987,7 @@ class LabRequestSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializ
             "requesting_company_name",
             "external_executing_company_name",
             "occupational_profile_name",
+            "requesting_physician_name",
             "items",
             "sample_details",
             "collection_guidance",
