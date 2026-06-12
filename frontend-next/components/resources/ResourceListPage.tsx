@@ -334,7 +334,8 @@ export default function ResourceListPage({
   const [search, setSearch] = useState("")
   const [statusFilter, setStatusFilter] = useState("")
   const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState(50)
+  // Máximo de 20 itens por página em todas as listas do frontend.
+  const [pageSize, setPageSize] = useState(20)
   const [data, setData] = useState<Row[]>([])
   const [totalItems, setTotalItems] = useState(0)
   const [totalPages, setTotalPages] = useState(1)
@@ -376,7 +377,7 @@ export default function ResourceListPage({
 
   useEffect(() => {
     setPage(1)
-  }, [requestUrl, pageSize])
+  }, [requestUrl, pageSize, statusFilter])
 
   useEffect(() => {
     let mounted = true
@@ -387,6 +388,7 @@ export default function ResourceListPage({
         const res = await apiFetchList<Row>(requestUrl, {
           page,
           pageSize,
+          clientPaginate: true,
           clientCache: safeRefreshToken === 0,
         })
         if (!mounted) return
@@ -434,6 +436,21 @@ export default function ResourceListPage({
       })
     )
   }, [filteredData, isIdentityUserResource, user])
+
+  // Paginação a 20/página. Quando o backend não pagina (devolve a coleção
+  // inteira), fatiamos no cliente pela janela da página atual; quando o
+  // backend devolve uma página parcial, respeitamos a meta do servidor.
+  const serverPaginated = totalItems > data.length
+  const pagedVisibleData = useMemo(() => {
+    if (serverPaginated) return visibleData
+    const start = (page - 1) * pageSize
+    return visibleData.slice(start, start + pageSize)
+  }, [serverPaginated, visibleData, page, pageSize])
+  const effectiveTotal = serverPaginated ? totalItems : visibleData.length
+  const effectiveTotalPages = useMemo(
+    () => (serverPaginated ? totalPages : Math.max(1, Math.ceil(visibleData.length / pageSize))),
+    [serverPaginated, totalPages, visibleData.length, pageSize]
+  )
 
   const columns = useMemo(
     () => {
@@ -592,24 +609,22 @@ export default function ResourceListPage({
                 onChange={(e) => setPageSize(Number(e.target.value))}
                 className="w-full rounded-md border border-[var(--border)] bg-white px-3 py-2 text-sm text-[var(--text)] shadow-sm transition-colors duration-150 hover:border-[var(--primary-400)] focus:border-[var(--primary-500)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-100)]"
               >
+                <option value={10}>10</option>
                 <option value={20}>20</option>
-                <option value={50}>50</option>
-                <option value={100}>100</option>
-                <option value={200}>200</option>
               </select>
             </label>
           </div>
 
           <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-[var(--gray-600)]">
             <span>
-              {t("Total:", "Total:")} {totalItems} · {t("Na página:", "On page:")} {visibleData.length}
+              {t("Total:", "Total:")} {effectiveTotal} · {t("Na página:", "On page:")} {pagedVisibleData.length}
             </span>
             <button
               type="button"
               onClick={() => {
                 setSearch("")
                 setStatusFilter("")
-                setPageSize(50)
+                setPageSize(20)
                 setPage(1)
               }}
               className="inline-flex h-8 items-center gap-1 rounded-md border border-[var(--border)] bg-[var(--card)] px-2.5 font-semibold text-[var(--gray-700)] shadow-sm transition-all duration-150 hover:border-[var(--primary-300)] hover:bg-[var(--gray-100)] hover:text-[var(--text)]"
@@ -626,14 +641,14 @@ export default function ResourceListPage({
           <>
             <DataTable<Row>
               columns={columns as any}
-              data={visibleData}
+              data={pagedVisibleData}
               emptyMessage={t("Nenhum registo encontrado.", "No record found.")}
               searchable={false}
             />
             <div className="mt-2 text-xs text-[var(--gray-600)]">
-              {t("Página", "Page")} {page} {t("de", "of")} {totalPages}
+              {t("Página", "Page")} {page} {t("de", "of")} {effectiveTotalPages}
             </div>
-            <Pagination page={page} totalPages={totalPages} onChange={setPage} />
+            <Pagination page={page} totalPages={effectiveTotalPages} onChange={setPage} />
           </>
         )}
       </div>

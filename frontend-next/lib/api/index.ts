@@ -669,9 +669,17 @@ export async function apiFetchList<T = any>(
     page?: number
     pageSize?: number
     query?: Record<string, string | number | boolean | null | undefined>
+    /**
+     * Quando o backend devolve a coleção inteira (sem paginação no servidor),
+     * fatia para a janela da página pedida (no máximo `pageSize` itens) e
+     * preenche a meta (total/totalPages) a partir do tamanho real. Opt-in:
+     * só usar em listas com UI de paginação — NÃO em chamadas que carregam
+     * muitas opções para dropdowns/seleções.
+     */
+    clientPaginate?: boolean
   } & ApiFetchOptions = {}
 ): Promise<{ items: T[]; meta: ApiListMeta; raw: any }> {
-  const { page, pageSize, query, ...fetchOptions } = opts
+  const { page, pageSize, query, clientPaginate, ...fetchOptions } = opts
   const cleanedUrl = String(url || "")
     .replace(/\{page\}/g, "")
     .replace(/\{search\}/g, "")
@@ -687,11 +695,31 @@ export async function apiFetchList<T = any>(
       : cleanedUrl
 
   const raw = await apiFetch<any>(urlWithPagingOrQuery, fetchOptions)
-  return {
-    items: extractResults<T>(raw),
-    meta: extractListMeta(raw),
-    raw,
+  const items = extractResults<T>(raw)
+  const meta = extractListMeta(raw)
+
+  if (clientPaginate && pageSize && pageSize > 0) {
+    const total = typeof meta.total === "number" ? meta.total : items.length
+    // O servidor já paginou se devolveu menos itens do que o total.
+    const serverPaginated = total > items.length
+    if (!serverPaginated) {
+      const currentPage = page && page > 0 ? page : 1
+      const start = (currentPage - 1) * pageSize
+      return {
+        items: items.slice(start, start + pageSize),
+        meta: {
+          ...meta,
+          total: items.length,
+          page: currentPage,
+          perPage: pageSize,
+          totalPages: Math.max(1, Math.ceil(items.length / pageSize)),
+        },
+        raw,
+      }
+    }
   }
+
+  return { items, meta, raw }
 }
 
 export async function apiFetchAll<T = any>(

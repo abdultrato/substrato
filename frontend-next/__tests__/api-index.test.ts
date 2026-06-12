@@ -313,6 +313,28 @@ describe("API facade contract", () => {
     expect(response.meta.totalPages).toBe(1)
   })
 
+  it("fatia a pagina no cliente quando o endpoint devolve a colecao inteira", async () => {
+    ;(global.fetch as any).mockResolvedValueOnce(
+      new Response(JSON.stringify(Array.from({ length: 25 }, (_, index) => ({ id: index + 1 }))), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      })
+    )
+
+    const response = await apiFetchList<{ id: number }>("/clinical_laboratory/test/", {
+      page: 2,
+      pageSize: 10,
+      clientPaginate: true,
+    })
+
+    expect((global.fetch as any).mock.calls[0][0]).toBe("/api/v1/clinical_laboratory/test/?page=2&page_size=10")
+    expect(response.items.map((item) => item.id)).toEqual([11, 12, 13, 14, 15, 16, 17, 18, 19, 20])
+    expect(response.meta.total).toBe(25)
+    expect(response.meta.page).toBe(2)
+    expect(response.meta.perPage).toBe(10)
+    expect(response.meta.totalPages).toBe(3)
+  })
+
   it("emite eventos de atividade durante a requisicao", async () => {
     const events: string[] = []
     const unsubscribe = subscribeRequestActivity((event) => {
