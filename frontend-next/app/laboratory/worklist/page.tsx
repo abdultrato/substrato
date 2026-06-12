@@ -98,6 +98,55 @@ export default function LabWorklistPage() {
     }
   }
 
+  async function gravarTodos(requestId: number) {
+    const items = (itemsByRequest[requestId] || []).filter(
+      (item) =>
+        item.status !== "validado" &&
+        item.status !== "desconsiderado" &&
+        String(values[item.id] ?? "").trim() !== ""
+    )
+    if (!items.length) {
+      setError("Preencha pelo menos um resultado para gravar.")
+      return
+    }
+    setBusyItem(-requestId)
+    setError(null)
+    try {
+      for (const item of items) {
+        await apiFetch(`/clinical/resultitem/${item.id}/save-result/`, {
+          method: "POST",
+          body: JSON.stringify({ result_value: values[item.id] ?? "" }),
+        })
+      }
+      await loadItems(requestId)
+    } catch (e: any) {
+      setError(e?.message || "Falha ao gravar os resultados.")
+      await loadItems(requestId).catch(() => {})
+    } finally {
+      setBusyItem(null)
+    }
+  }
+
+  async function desconsiderar(requestId: number, item: ResultItem) {
+    const reason = window.prompt(
+      `Desconsiderar "${item.exam_field_name}" — indique o motivo (opcional):`
+    )
+    if (reason === null) return
+    setBusyItem(item.id)
+    setError(null)
+    try {
+      await apiFetch(`/clinical/resultitem/${item.id}/disregard-result/`, {
+        method: "POST",
+        body: JSON.stringify({ reason: reason || "" }),
+      })
+      await loadItems(requestId)
+    } catch (e: any) {
+      setError(e?.message || "Falha ao desconsiderar o campo.")
+    } finally {
+      setBusyItem(null)
+    }
+  }
+
   async function validar(requestId: number, item: ResultItem) {
     setBusyItem(item.id)
     setError(null)
@@ -158,12 +207,25 @@ export default function LabWorklistPage() {
 
                   {openId === row.id ? (
                     <div className="space-y-2 border-t border-[var(--border)] px-4 py-3">
+                      {items.length > 0 && !allValidated ? (
+                        <div className="flex justify-end">
+                          <button
+                            type="button"
+                            onClick={() => gravarTodos(row.id)}
+                            disabled={busyItem !== null}
+                            className="inline-flex h-9 items-center rounded-md border border-[var(--primary-300)] bg-[var(--primary-600)]/10 px-3 text-xs font-semibold text-[var(--primary-700)] transition hover:bg-[var(--primary-600)]/20 disabled:opacity-60"
+                          >
+                            Gravar todos os resultados
+                          </button>
+                        </div>
+                      ) : null}
                       {items.length === 0 ? (
                         <div className="text-sm text-[var(--gray-500)]">Carregando itens...</div>
                       ) : (
                         items.map((item) => {
                           const saved = item.status === "aguardando_validacao"
                           const validated = item.status === "validado"
+                          const disregarded = item.status === "desconsiderado"
                           return (
                             <div
                               key={item.id}
@@ -183,13 +245,20 @@ export default function LabWorklistPage() {
                               <div className="flex shrink-0 items-center gap-2">
                                 <input
                                   type="text"
-                                  value={values[item.id] ?? ""}
+                                  value={disregarded ? "" : values[item.id] ?? ""}
                                   onChange={(e) => setValues((prev) => ({ ...prev, [item.id]: e.target.value }))}
-                                  disabled={validated}
-                                  placeholder="Resultado"
+                                  disabled={validated || disregarded}
+                                  placeholder={disregarded ? "—" : "Resultado"}
                                   className="h-9 w-36 rounded-md border border-[var(--border)] bg-[var(--card)] px-2 text-sm disabled:bg-[var(--gray-100)]"
                                 />
-                                {validated ? (
+                                {disregarded ? (
+                                  <span
+                                    className="inline-flex items-center rounded-full bg-slate-200 px-2.5 py-1 text-xs font-semibold text-slate-700"
+                                    title={item.disregard_reason || undefined}
+                                  >
+                                    Desconsiderado
+                                  </span>
+                                ) : validated ? (
                                   <span className="inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-800">
                                     Validado
                                   </span>
@@ -203,14 +272,25 @@ export default function LabWorklistPage() {
                                     Validar
                                   </button>
                                 ) : (
-                                  <button
-                                    type="button"
-                                    onClick={() => gravar(row.id, item)}
-                                    disabled={busyItem === item.id}
-                                    className="inline-flex h-9 items-center rounded-md bg-[var(--primary-600)] px-3 text-xs font-semibold text-white transition hover:bg-[var(--primary-700)] disabled:opacity-60"
-                                  >
-                                    Gravar
-                                  </button>
+                                  <>
+                                    <button
+                                      type="button"
+                                      onClick={() => gravar(row.id, item)}
+                                      disabled={busyItem === item.id}
+                                      className="inline-flex h-9 items-center rounded-md bg-[var(--primary-600)] px-3 text-xs font-semibold text-white transition hover:bg-[var(--primary-700)] disabled:opacity-60"
+                                    >
+                                      Gravar
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => desconsiderar(row.id, item)}
+                                      disabled={busyItem === item.id}
+                                      title="Campo sem valor gravado deixa de contar e não consta no PDF"
+                                      className="inline-flex h-9 items-center rounded-md border border-slate-300 bg-slate-50 px-3 text-xs font-medium text-slate-700 transition hover:bg-slate-100 disabled:opacity-60"
+                                    >
+                                      Desconsiderar
+                                    </button>
+                                  </>
                                 )}
                               </div>
                             </div>
