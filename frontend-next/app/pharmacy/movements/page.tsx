@@ -32,7 +32,7 @@ export default function FarmaciaMovimentosPage() {
   const [loading, setLoading] = useState(true)
   const [data, setData] = useState<MovimentoRow[]>([])
   const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState(50)
+  const [pageSize, setPageSize] = useState(20)
   const [totalItems, setTotalItems] = useState(0)
   const [totalPages, setTotalPages] = useState(1)
   const [dateFrom, setDateFrom] = useState("")
@@ -53,6 +53,7 @@ export default function FarmaciaMovimentosPage() {
         const { items, meta } = await apiFetchList<MovimentoRow>("/pharmacy/inventory_movement/", {
           page,
           pageSize,
+          clientPaginate: true,
           clientCache: safeRefreshToken === 0,
           timeoutMs: 5000,
           retryOnTimeout: 0,
@@ -288,8 +289,6 @@ export default function FarmaciaMovimentosPage() {
               className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm"
             >
               <option value={20}>20</option>
-              <option value={50}>50</option>
-              <option value={100}>100</option>
             </select>
           </label>
         </div>

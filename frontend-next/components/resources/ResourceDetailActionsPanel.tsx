@@ -9,6 +9,7 @@ import { apiFetch } from "@/lib/api"
 import { isNotFoundLikeError } from "@/lib/errors/api-error"
 import {
   getAvailableDetailActions,
+  isDetailActionVisibleForRecord,
   normalizeDetailEndpoint,
   recordActionEndpoint,
   type DetailActionDefinition,
@@ -16,7 +17,8 @@ import {
 } from "@/lib/resources/detailActions"
 
 type FieldValue = string | boolean | number
-type ActionState = { loading?: boolean; feedback?: string; error?: string }
+type ActionState = { loading?: boolean }
+type PanelNotice = { kind: "ok" | "error"; text: string }
 
 function buttonClass(tone?: DetailActionDefinition["tone"]): string {
   if (tone === "primary") {
@@ -53,17 +55,28 @@ export default function ResourceDetailActionsPanel({
   endpoint,
   id,
   resourceLabel,
+  record,
   onCompleted,
 }: {
   endpoint: string
   id: string
   resourceLabel: string
+  record?: Record<string, unknown> | null
   onCompleted?: () => void
 }) {
   const { t, language } = useLanguage()
-  const actions = useMemo(() => getAvailableDetailActions(endpoint), [endpoint])
+  const allActions = useMemo(() => getAvailableDetailActions(endpoint), [endpoint])
+  // Esconde a ação não aplicável ao estado atual (ex.: ativar/inativar
+  // alternam num único botão consoante o registo esteja ativo ou não).
+  const actions = useMemo(
+    () => allActions.filter((action) => isDetailActionVisibleForRecord(action, record)),
+    [allActions, record]
+  )
   const [valuesByAction, setValuesByAction] = useState<Record<string, Record<string, FieldValue>>>({})
   const [stateByAction, setStateByAction] = useState<Record<string, ActionState>>({})
+  // Aviso ao nível do painel: persiste mesmo quando o cartão da ação
+  // executada desaparece (porque o botão alternou para o oposto).
+  const [notice, setNotice] = useState<PanelNotice | null>(null)
 
   if (!actions.length || !id) return null
 
@@ -89,7 +102,8 @@ export default function ResourceDetailActionsPanel({
   }
 
   async function runAction(action: DetailActionDefinition) {
-    patchState(action, { loading: true, error: "", feedback: "" })
+    patchState(action, { loading: true })
+    setNotice(null)
     try {
       const body: Record<string, unknown> = {}
       for (const field of action.fields || []) {
@@ -110,12 +124,14 @@ export default function ResourceDetailActionsPanel({
         clientCache: false,
       })
 
-      patchState(action, { loading: false, feedback: isPt ? action.successPt : action.successEn })
+      patchState(action, { loading: false })
+      setNotice({ kind: "ok", text: isPt ? action.successPt : action.successEn })
       onCompleted?.()
     } catch (error: any) {
-      patchState(action, {
-        loading: false,
-        error: isNotFoundLikeError(error)
+      patchState(action, { loading: false })
+      setNotice({
+        kind: "error",
+        text: isNotFoundLikeError(error)
           ? t("Registo não encontrado.", "Record not found.")
           : error?.message || t("Falha ao executar ação.", "Failed to run action."),
       })
@@ -201,6 +217,19 @@ export default function ResourceDetailActionsPanel({
         </div>
       </div>
 
+      {notice ? (
+        notice.kind === "ok" ? (
+          <div className="mt-3 inline-flex items-center gap-1 rounded-md border border-emerald-200 bg-emerald-50 px-2.5 py-1.5 text-xs text-emerald-800">
+            <CheckCircle2 size={13} />
+            {notice.text}
+          </div>
+        ) : (
+          <div className="mt-3 rounded-md border border-rose-200 bg-rose-50 px-2.5 py-1.5 text-xs text-rose-800">
+            {notice.text}
+          </div>
+        )
+      ) : null}
+
       <div className="mt-3 grid gap-3">
         {actions.map((action) => {
           const state = stateByAction[action.key] || {}
@@ -251,19 +280,6 @@ export default function ResourceDetailActionsPanel({
                   </button>
                 )}
               </div>
-
-              {state.feedback ? (
-                <div className="mt-2 inline-flex items-center gap-1 rounded-md border border-emerald-200 bg-emerald-50 px-2.5 py-1.5 text-xs text-emerald-800">
-                  <CheckCircle2 size={13} />
-                  {state.feedback}
-                </div>
-              ) : null}
-
-              {state.error ? (
-                <div className="mt-2 rounded-md border border-rose-200 bg-rose-50 px-2.5 py-1.5 text-xs text-rose-800">
-                  {state.error}
-                </div>
-              ) : null}
             </div>
           )
         })}

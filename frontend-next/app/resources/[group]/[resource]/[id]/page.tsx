@@ -479,6 +479,7 @@ export default function ResourceDetailPage() {
                             endpoint={found.resource.endpoint}
                             id={id}
                             resourceLabel={tr(found.resource.label)}
+                            record={data}
                             onCompleted={() => { reloadResource().catch(() => { }) }}
                         />
                         <ResourceDetailsCard endpoint={found.resource.endpoint} data={data} />

@@ -153,33 +153,28 @@ export default function ResourceDetailsCard({
         }),
     [data, showReceptionCheckinAudit]
   )
-  const relationLookups = useMemo(
-    () =>
-      entries
-        .map(([fieldName, value]) => {
-          const id = relationIdFromScalar(value)
-          if (!id) return null
-          const target = relationTargetForField(fieldName, endpoint)
-          if (!target) return null
-          return {
-            key: `${fieldName}:${id}`,
-            id,
-            target,
-          }
-        })
-        .filter(Boolean) as Array<{ key: string; id: string; target: RelationTarget }>,
-    [entries, endpoint]
-  )
+  const relationLookups = useMemo(() => {
+    const out: Array<{ key: string; id: string; target: RelationTarget }> = []
+    for (const [fieldName, value] of entries) {
+      const target = relationTargetForField(fieldName, endpoint)
+      if (!target) continue
+      // Suporta tanto FK escalar (ex.: sector=40) como M2M/array de FKs
+      // (ex.: painel.tests=[11,12]) — resolve cada ID para o seu nome.
+      const items = Array.isArray(value) ? value : [value]
+      for (const item of items) {
+        const id = relationIdFromScalar(item)
+        if (id) out.push({ key: `${fieldName}:${id}`, id, target })
+      }
+    }
+    return out
+  }, [entries, endpoint])
 
   useEffect(() => {
     let mounted = true
 
-    async function loadRelationLabels() {
-      if (!relationLookups.length) {
-        setRelationLabels({})
-        return
-      }
+    if (!relationLookups.length) return
 
+    async function loadRelationLabels() {
       const loaded: Record<string, string> = {}
       await Promise.all(
         relationLookups.map(async ({ key, id, target }) => {
@@ -196,11 +191,15 @@ export default function ResourceDetailsCard({
         })
       )
 
-      if (mounted) setRelationLabels(loaded)
+      // Merge em vez de substituir: não apaga rótulos já resolvidos quando o
+      // efeito volta a correr (ex.: refresh em segundo plano).
+      if (mounted && Object.keys(loaded).length) {
+        setRelationLabels((current) => ({ ...current, ...loaded }))
+      }
     }
 
     loadRelationLabels().catch(() => {
-      if (mounted) setRelationLabels({})
+      // Mantém os rótulos já resolvidos mesmo se uma resolução falhar.
     })
 
     return () => {
@@ -208,11 +207,32 @@ export default function ResourceDetailsCard({
     }
   }, [relationLookups, safeRefreshToken])
 
+  // Valor a apresentar: resolve FKs (escalar e M2M/array) para nomes legíveis,
+  // caindo para a formatação genérica quando não há relação ou ainda não foi
+  // carregada.
+  function renderEntryValue(fieldName: string, value: any): string {
+    if (Array.isArray(value) && value.length) {
+      const target = relationTargetForField(fieldName, endpoint)
+      if (target) {
+        const MAX = 12
+        const labels = value.slice(0, MAX).map((item) => {
+          const id = relationIdFromScalar(item)
+          const resolved = id ? relationLabels[`${fieldName}:${id}`] : undefined
+          return resolved || fmtValue(fieldName, item, tr, endpoint)
+        })
+        if (value.length > MAX) labels.push(`+${value.length - MAX} ${tr("itens")}`)
+        return labels.join(", ")
+      }
+    }
+    const resolvedLabel = relationLabels[relationLookupKey(fieldName, value) || ""]
+    return resolvedLabel || fmtValue(fieldName, value, tr, endpoint)
+  }
+
   return (
     <div className="rounded-lg border border-border bg-card shadow-sm">
       <div className="grid gap-0 divide-y divide-border">
         {entries.map(([k, v]) => {
-          const resolvedLabel = relationLabels[relationLookupKey(k, v) || ""]
+          const displayValue = renderEntryValue(k, v)
           return (
             <div key={k} className="grid grid-cols-1 gap-1 px-4 py-3 transition-colors duration-150 hover:bg-[var(--gray-50)] md:grid-cols-3 md:gap-3">
               <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -220,7 +240,7 @@ export default function ResourceDetailsCard({
               </div>
               <div className="md:col-span-2">
                 <div className="whitespace-pre-wrap text-sm text-foreground">
-                  {resolvedLabel || fmtValue(k, v, tr, endpoint)}
+                  {displayValue}
                 </div>
               </div>
             </div>

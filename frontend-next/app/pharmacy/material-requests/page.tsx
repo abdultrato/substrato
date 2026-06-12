@@ -66,7 +66,7 @@ export default function RequisicoesMateriaisPage() {
   const requiredGroups = useMemo(() => [...MATERIAL_REQUISITION_PAGE_GROUPS], [])
 
   const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState(50)
+  const [pageSize, setPageSize] = useState(20)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [data, setData] = useState<ListResponse | null>(null)
@@ -90,6 +90,7 @@ export default function RequisicoesMateriaisPage() {
         const res = await apiFetchList<MaterialRequisition>(url, {
           page,
           pageSize,
+          clientPaginate: true,
           clientCache: safeRefreshToken === 0,
         })
         if (!mounted) return
@@ -177,8 +178,6 @@ export default function RequisicoesMateriaisPage() {
                 className="rounded-lg border border-[var(--border)] bg-[var(--card)] px-2 py-1"
               >
                 <option value={20}>20</option>
-                <option value={50}>50</option>
-                <option value={100}>100</option>
               </select>
             </label>
           </div>

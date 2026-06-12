@@ -142,6 +142,14 @@ const RELATION_TARGETS: Record<string, RelationTarget> = {
   reviewer: { endpoint: "/human_resources/employee/", labelFields: ["name", "employee_code", ...DEFAULT_LABEL_FIELDS] },
   role: { endpoint: "/human_resources/role/", labelFields: ["name", "code", ...DEFAULT_LABEL_FIELDS] },
   sale: { endpoint: "/pharmacy/sale/", labelFields: ["custom_id", "id", ...DEFAULT_LABEL_FIELDS] },
+  // Todos os FKs `sector` do backend apontam para o catálogo de sectores do
+  // laboratório (LabSector). Em módulos onde `sector` é uma string (ex.:
+  // farmácia), o valor não é numérico e a resolução nem é tentada.
+  sector: { endpoint: "/clinical_laboratory/sector/", labelFields: ["name", "code", ...DEFAULT_LABEL_FIELDS] },
+  // Exames do catálogo do laboratório (ex.: M2M `tests` dos painéis e
+  // worklists). Resolve IDs para "Nome - Código".
+  test: { endpoint: "/clinical_laboratory/test/", labelFields: ["name", "code", ...DEFAULT_LABEL_FIELDS] },
+  tests: { endpoint: "/clinical_laboratory/test/", labelFields: ["name", "code", ...DEFAULT_LABEL_FIELDS] },
   sale_item: { endpoint: "/pharmacy/sale_item/", labelFields: ["custom_id", "product_name", ...DEFAULT_LABEL_FIELDS] },
   sales_order: { endpoint: "/warehouse/sales_order/", labelFields: ["order_number", "custom_id", ...DEFAULT_LABEL_FIELDS] },
   schedule_item: { endpoint: "/education/discipline_schedule/", labelFields: ["title", "scheduled_date", ...DEFAULT_LABEL_FIELDS] },

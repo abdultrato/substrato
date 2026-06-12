@@ -506,6 +506,7 @@ export function GeneratedResourceDetailPage({
             endpoint={ctx.normalizedEndpoint}
             id={id}
             resourceLabel={resourceLabel}
+            record={data}
             onCompleted={() => void refetch()}
           />
         ) : null}

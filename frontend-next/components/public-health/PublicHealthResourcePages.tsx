@@ -272,7 +272,8 @@ export function PublicHealthListPage({ resourceKey }: { resourceKey: PublicHealt
   const [search, setSearch] = useState("")
   const [filterValue, setFilterValue] = useState("")
   const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState(50)
+  // Máximo de 20 itens por página em todas as listas do frontend.
+  const [pageSize, setPageSize] = useState(20)
   const [rows, setRows] = useState<Row[]>([])
   const [totalItems, setTotalItems] = useState(0)
   const [totalPages, setTotalPages] = useState(1)
@@ -328,6 +329,19 @@ export function PublicHealthListPage({ resourceKey }: { resourceKey: PublicHealt
       mounted = false
     }
   }, [config, debouncedSearch, filterValue, page, pageSize, safeRefreshToken, t])
+
+  // Paginação a 20/página: quando o backend devolve a coleção inteira,
+  // fatiamos no cliente; quando devolve página parcial, usamos a meta.
+  const serverPaginated = totalItems > rows.length
+  const pagedRows = useMemo(() => {
+    if (serverPaginated) return rows
+    const start = (page - 1) * pageSize
+    return rows.slice(start, start + pageSize)
+  }, [serverPaginated, rows, page, pageSize])
+  const effectiveTotal = serverPaginated ? totalItems : rows.length
+  const effectiveTotalPages = serverPaginated
+    ? totalPages
+    : Math.max(1, Math.ceil(rows.length / pageSize))
 
   const columns = useMemo(
     () => [
@@ -426,24 +440,22 @@ export function PublicHealthListPage({ resourceKey }: { resourceKey: PublicHealt
                 onChange={(event) => setPageSize(Number(event.target.value))}
                 className="h-9 w-full rounded-md border border-border bg-background px-3 text-sm text-foreground shadow-sm outline-none focus-visible:border-ring"
               >
+                <option value={10}>10</option>
                 <option value={20}>20</option>
-                <option value={50}>50</option>
-                <option value={100}>100</option>
-                <option value={200}>200</option>
               </select>
             </label>
           </div>
 
           <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
             <span>
-              {t("Total:", "Total:")} {totalItems} · {t("Nesta página:", "On this page:")} {rows.length}
+              {t("Total:", "Total:")} {effectiveTotal} · {t("Nesta página:", "On this page:")} {pagedRows.length}
             </span>
             <button
               type="button"
               onClick={() => {
                 setSearch("")
                 setFilterValue("")
-                setPageSize(50)
+                setPageSize(20)
                 setPage(1)
               }}
               className="inline-flex h-8 items-center gap-1 rounded-md border border-border bg-card px-2.5 font-semibold text-foreground-2 shadow-sm transition hover:bg-muted"
@@ -460,14 +472,14 @@ export function PublicHealthListPage({ resourceKey }: { resourceKey: PublicHealt
           <>
             <DataTable<Row>
               columns={columns}
-              data={rows}
+              data={pagedRows}
               emptyMessage={t("Nenhum registo encontrado.", "No record found.")}
               searchable={false}
             />
             <div className="text-xs text-muted-foreground">
-              {t("Página", "Page")} {page} {t("de", "of")} {totalPages}
+              {t("Página", "Page")} {page} {t("de", "of")} {effectiveTotalPages}
             </div>
-            <Pagination page={page} totalPages={totalPages} onChange={setPage} />
+            <Pagination page={page} totalPages={effectiveTotalPages} onChange={setPage} />
           </>
         )}
       </div>
@@ -624,6 +636,7 @@ export function PublicHealthDetailPage({ resourceKey }: { resourceKey: PublicHea
               endpoint={config.endpoint}
               id={id}
               resourceLabel={config.singular}
+              record={data}
               onCompleted={() => setReloadToken((value) => value + 1)}
             />
             <ResourceDetailsCard endpoint={config.endpoint} data={data} />

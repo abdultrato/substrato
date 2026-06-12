@@ -50,6 +50,12 @@ export type DetailActionDefinition = {
   confirm?: boolean
   /** Campos recolhidos e enviados como corpo JSON do POST. */
   fields?: DetailActionField[]
+  /**
+   * Só mostra a ação quando o registo satisfaz esta condição. Se omitido,
+   * as ações de ativar/inativar alternam automaticamente pelo estado do
+   * registo (ver `isDetailActionVisibleForRecord`).
+   */
+  visibleWhen?: (record: Record<string, unknown>) => boolean
 }
 
 export function normalizeDetailEndpoint(endpoint: string): string {
@@ -1186,4 +1192,46 @@ export function getAvailableDetailActions(endpoint: string): DetailActionDefinit
   return getDeclaredDetailActions(key).filter((definition) =>
     hasOpenApiMethod(detailActionContractEndpoint(key, definition.action), "post")
   )
+}
+
+const ACTIVATE_ACTION_NAMES = new Set(["ativar", "activate", "reactivate", "reativar"])
+const DEACTIVATE_ACTION_NAMES = new Set(["inativar", "desativar", "deactivate", "inactivate"])
+
+/**
+ * Lê o estado "ativo" de um registo a partir dos campos booleanos/estado mais
+ * comuns no backend. Devolve `null` quando não há sinal claro — nesse caso as
+ * ações não são escondidas.
+ */
+export function recordActiveState(record: Record<string, unknown> | null | undefined): boolean | null {
+  if (!record) return null
+  const booleanFields = ["active", "ativo", "ativa", "is_active", "enabled", "habilitado", "habilitada"]
+  for (const field of booleanFields) {
+    const value = record[field]
+    if (typeof value === "boolean") return value
+  }
+  const status = String(record.status ?? record.estado ?? "").trim().toLowerCase()
+  if (status) {
+    if (["ativo", "ativa", "ativado", "ativada", "active", "enabled"].includes(status)) return true
+    if (["inativo", "inativa", "inativado", "inativada", "inactive", "disabled", "desativado", "desativada"].includes(status)) {
+      return false
+    }
+  }
+  return null
+}
+
+/**
+ * Decide se uma ação deve aparecer para o registo atual. Respeita `visibleWhen`
+ * quando definido; caso contrário, alterna ativar/inativar pelo estado do
+ * registo, para que só apareça a ação aplicável (um único botão que troca).
+ */
+export function isDetailActionVisibleForRecord(
+  action: DetailActionDefinition,
+  record: Record<string, unknown> | null | undefined
+): boolean {
+  if (action.visibleWhen) return action.visibleWhen(record || {})
+  const active = recordActiveState(record)
+  if (active === null) return true
+  if (ACTIVATE_ACTION_NAMES.has(action.action)) return !active
+  if (DEACTIVATE_ACTION_NAMES.has(action.action)) return active
+  return true
 }

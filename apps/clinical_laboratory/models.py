@@ -131,9 +131,18 @@ class LabTest(CoreModel):
 
 
 class LabTestPanel(CoreModel):
-    """Painel/pacote de exames (hemograma, perfil lipídico, pré-operatório, ...)."""
+    """Painel/pacote de exames (hemograma, perfil lipídico, pré-operatório, ...).
+
+    Também representa perfis ocupacionais (saúde no trabalho): um perfil é um
+    painel com ``profile_type=OCCUPATIONAL`` e a função/tipo de trabalho em
+    ``occupation``, agrupando os exames do catálogo exigidos para essa função.
+    """
 
     prefix = "LPAN"
+
+    class ProfileType(models.TextChoices):
+        STANDARD = "standard", "Painel padrão"
+        OCCUPATIONAL = "occupational", "Perfil ocupacional"
 
     code = models.CharField("Código", db_column="code", max_length=30, db_index=True)
     sector = models.ForeignKey(LabSector, db_column="sector_id", verbose_name="Sector",
@@ -141,6 +150,11 @@ class LabTestPanel(CoreModel):
     tests = models.ManyToManyField(LabTest, db_table="laboratorio_painel_exames",
                                    verbose_name="Exames incluídos", related_name="panels", blank=True)
     package_price = MoneyField("Preço do pacote", default=Decimal("0.00"))
+    profile_type = models.CharField("Tipo de perfil", db_column="profile_type", max_length=20,
+                                    choices=ProfileType.choices, default=ProfileType.STANDARD,
+                                    db_index=True)
+    occupation = models.CharField("Função / tipo de trabalho", db_column="occupation",
+                                  max_length=120, blank=True, default="")
     active = models.BooleanField("Ativo", db_column="active", default=True, db_index=True)
 
     class Meta:

@@ -322,6 +322,22 @@ body:not(.jazzmin-login-page):not(.popup) #jazzy-sidebar .sidebar .os-scrollbar 
   @apply rounded-xl border border-slate-200 bg-white shadow-sm;
 }
 
+/* Marca d'água dentro das superfícies internas do admin (módulos, cards,
+   painéis): véu branco sobre a logo repetida, para o padrão aparecer
+   também por trás do conteúdo, não só no fundo da página. */
+.module,
+.card,
+.inline-group,
+.inline-related,
+.dashboard #content-main,
+.dashboard #content-related {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.95)),
+    var(--substrato-logo-url);
+  background-repeat: repeat, space;
+  background-size: auto, 84px auto;
+}
+
 .module h2,
 .module caption,
 .inline-group h2 {
@@ -863,6 +879,20 @@ body.dark-mode .inline-related,
 body.dark-mode .dashboard #content-main,
 body.dark-mode .dashboard #content-related {
   @apply border-slate-800 bg-slate-900;
+}
+
+/* Véu escuro sobre a logo branca nas superfícies internas (modo escuro). */
+body.dark-mode .module,
+body.dark-mode .card,
+body.dark-mode .inline-group,
+body.dark-mode .inline-related,
+body.dark-mode .dashboard #content-main,
+body.dark-mode .dashboard #content-related {
+  background-image:
+    linear-gradient(rgba(15, 23, 42, 0.95), rgba(15, 23, 42, 0.95)),
+    var(--substrato-logo-url);
+  background-repeat: repeat, space;
+  background-size: auto, 84px auto;
 }
 
 body.dark-mode .module h2,

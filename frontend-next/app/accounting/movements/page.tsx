@@ -30,7 +30,7 @@ export default function ContabilidadeMovimentosPage() {
   const [loading, setLoading] = useState(true)
   const [data, setData] = useState<MovimentoRow[]>([])
   const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState(50)
+  const [pageSize, setPageSize] = useState(20)
   const [totalItems, setTotalItems] = useState(0)
   const [totalPages, setTotalPages] = useState(1)
   const safeRefreshToken = useSafeDataRefreshSignal()
@@ -43,7 +43,7 @@ export default function ContabilidadeMovimentosPage() {
         setErro(null)
         const { items, meta } = await apiFetchList<MovimentoRow>(
           "/accounting/movement/",
-          { page, pageSize, clientCache: safeRefreshToken === 0 }
+          { page, pageSize, clientPaginate: true, clientCache: safeRefreshToken === 0 }
         )
         const total = meta.total ?? items.length
         const computedTotalPages =
@@ -143,8 +143,6 @@ export default function ContabilidadeMovimentosPage() {
               className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm"
             >
               <option value={20}>20</option>
-              <option value={50}>50</option>
-              <option value={100}>100</option>
             </select>
           </label>
         </div>

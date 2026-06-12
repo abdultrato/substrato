@@ -91,6 +91,27 @@ PANELS: tuple[tuple, ...] = (
 )
 
 
+# Perfis ocupacionais (saúde no trabalho): cada perfil agrupa os exames de
+# laboratório de rastreio por tipo de trabalho. SUGESTÃO inicial composta a
+# partir do catálogo existente — rever/ajustar conforme a regulação aplicável
+# e o protocolo da instituição (não constitui validação clínica).
+# (code, name, occupation, [test_codes], package_price)
+OCCUPATIONAL_PROFILES: tuple[tuple, ...] = (
+    ("POCC-ADM", "Perfil Ocupacional — Admissional Geral", "Admissional geral",
+     ["HEMOG", "GLI", "URINA2", "RPR", "HIV"], "700.00"),
+    ("POCC-COND", "Perfil Ocupacional — Motorista/Condutor", "Motorista / condutor",
+     ["HEMOG", "GLI", "COLT", "TRIG", "CREA", "URINA2"], "950.00"),
+    ("POCC-ALIM", "Perfil Ocupacional — Manipulador de Alimentos", "Manipulador de alimentos",
+     ["HEMOG", "EPF", "URINA2", "UROC", "HBSAG"], "850.00"),
+    ("POCC-QUIM", "Perfil Ocupacional — Exposição a Químicos/Solventes", "Exposição a químicos/solventes",
+     ["HEMOG", "ALT", "AST", "UREA", "CREA", "URINA2"], "1000.00"),
+    ("POCC-ALT", "Perfil Ocupacional — Trabalho em Altura", "Trabalho em altura",
+     ["HEMOG", "GLI", "URINA2"], "600.00"),
+    ("POCC-SAUDE", "Perfil Ocupacional — Profissionais de Saúde", "Profissionais de saúde",
+     ["HEMOG", "HBSAG", "HIV", "RPR", "BAAR"], "1100.00"),
+)
+
+
 LEGACY_SECTOR_MAP: dict[str, tuple[str, str]] = {
     "Hematologia": ("HEM", "Hematologia"),
     "Bioquimica": ("BIO", "Bioquímica Clínica"),
@@ -264,6 +285,21 @@ def seed_catalog(tenant, *, include_legacy: bool = True) -> dict:
         if was_created:
             panel.tests.set([tests[c] for c in test_codes if c in tests])
         created["panels"] += int(was_created)
+
+    created["occupational_profiles"] = 0
+    for code, name, occupation, test_codes, price in OCCUPATIONAL_PROFILES:
+        profile, was_created = LabTestPanel.objects.get_or_create(
+            tenant=tenant, code=code,
+            defaults={
+                "name": name,
+                "package_price": Decimal(price),
+                "profile_type": LabTestPanel.ProfileType.OCCUPATIONAL,
+                "occupation": occupation,
+            },
+        )
+        if was_created:
+            profile.tests.set([tests[c] for c in test_codes if c in tests])
+        created["occupational_profiles"] += int(was_created)
 
     if include_legacy:
         created.update(sync_legacy_lab_exams(tenant))

@@ -133,7 +133,7 @@ export default function MonitoringErrorsPage() {
 
   const [days, setDays] = useState(7)
   const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState(50)
+  const [pageSize, setPageSize] = useState(20)
   const [totalItems, setTotalItems] = useState(0)
   const [totalPages, setTotalPages] = useState(1)
 
@@ -148,6 +148,7 @@ export default function MonitoringErrorsPage() {
         const { items, meta } = await apiFetchList<ErrorRow>("/monitoring/error/", {
           page,
           pageSize,
+          clientPaginate: true,
           clientCache: false,
         })
 
@@ -462,8 +463,6 @@ export default function MonitoringErrorsPage() {
               className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-800 shadow-sm"
             >
               <option value={20}>20</option>
-              <option value={50}>50</option>
-              <option value={100}>100</option>
             </select>
           </label>
         </div>
