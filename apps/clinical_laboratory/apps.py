@@ -6,3 +6,6 @@ class ClinicalLaboratoryConfig(AppConfig):
     name = "apps.clinical_laboratory"  # Caminho da app
     label = "laboratorio"  # Label curto para DB/migrations
     verbose_name = "Laboratório Clínico"  # Nome exibido no admin
+
+    def ready(self):
+        from . import signals  # noqa: F401
