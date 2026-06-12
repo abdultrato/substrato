@@ -1,3 +1,4 @@
+from decimal import Decimal
 from uuid import uuid4
 
 import pytest
@@ -27,8 +28,8 @@ def _sector(tenant, *, code: str, name: str):
     return LabSector.objects.create(tenant=tenant, code=code, name=name)
 
 
-def _test(tenant, *, code: str, name: str, sector: LabSector):
-    return LabTest.objects.create(tenant=tenant, code=code, name=name, sector=sector)
+def _test(tenant, *, code: str, name: str, sector: LabSector, price=Decimal("0.00")):
+    return LabTest.objects.create(tenant=tenant, code=code, name=name, sector=sector, price=price)
 
 
 @pytest.mark.django_db
@@ -69,3 +70,21 @@ def test_lab_order_and_panel_expose_distinct_sectors_from_selected_tests():
     assert item_payload["test_code"] == "RPR"
     assert item_payload["sector"] == serologia.id
     assert item_payload["sector_name"] == "Serologia"
+
+
+@pytest.mark.django_db
+def test_lab_order_item_serializer_inherits_price_and_sample_type_from_test():
+    tenant = _tenant()
+    bioquimica = _sector(tenant, code="BIO", name="Bioquímica")
+    glicose = _test(tenant, code="GLI", name="Glicose", sector=bioquimica, price=Decimal("275.50"))
+    patient = Patient.objects.create(tenant=tenant, name="Paciente com preço herdado")
+    order = LabOrder.objects.create(tenant=tenant, patient=patient)
+
+    serializer = LabOrderItemSerializer(data={"order": order.id, "test": glicose.id})
+
+    assert serializer.is_valid(), serializer.errors
+    item = serializer.save(tenant=tenant)
+
+    assert item.price == Decimal("275.50")
+    assert item.sample_type == glicose.sample_type
+    assert LabOrderItemSerializer(item).data["price"] == "275.50"
