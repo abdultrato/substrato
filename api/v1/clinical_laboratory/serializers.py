@@ -177,6 +177,33 @@ class LabOrderItemSerializer(serializers.ModelSerializer):
         sector = getattr(getattr(obj, "test", None), "sector", None)
         return sector.id if sector is not None else None
 
+    @staticmethod
+    def _sync_test_defaults(instance):
+        test = getattr(instance, "test", None)
+        if test is None:
+            return
+
+        updates = []
+        if instance.price != test.price:
+            instance.price = test.price
+            updates.append("price")
+        if instance.sample_type != test.sample_type:
+            instance.sample_type = test.sample_type
+            updates.append("sample_type")
+
+        if updates:
+            instance.save(update_fields=updates + ["updated_at"])
+
+    def create(self, validated_data):
+        instance = super().create(validated_data)
+        self._sync_test_defaults(instance)
+        return instance
+
+    def update(self, instance, validated_data):
+        instance = super().update(instance, validated_data)
+        self._sync_test_defaults(instance)
+        return instance
+
 
 class SampleCollectionSerializer(serializers.ModelSerializer):
     Meta = _meta(SampleCollection)

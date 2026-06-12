@@ -16,7 +16,7 @@ def inherit_order_item_catalog_fields(sender, instance: LabOrderItem, **kwargs):
     if test is None:
         return
 
-    if not instance.sample_type:
+    if instance.sample_type != test.sample_type:
         instance.sample_type = test.sample_type
 
     if instance.price in (None, Decimal("0.00")):
