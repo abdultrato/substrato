@@ -30,6 +30,7 @@ export default function LabWorklistPage() {
   const [itemsByRequest, setItemsByRequest] = useState<Record<number, ResultItem[]>>({})
   const [values, setValues] = useState<Record<number, string>>({})
   const [busyItem, setBusyItem] = useState<number | null>(null)
+  const [checked, setChecked] = useState<Record<number, boolean>>({})
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -127,6 +128,27 @@ export default function LabWorklistPage() {
     }
   }
 
+  async function validarLote(requestId: number, items: ResultItem[]) {
+    if (!items.length) {
+      setError("Não há resultados gravados para validar.")
+      return
+    }
+    setBusyItem(-requestId)
+    setError(null)
+    try {
+      for (const item of items) {
+        await apiFetch(`/clinical/resultitem/${item.id}/validate-result/`, { method: "POST" })
+      }
+      setChecked({})
+      await loadItems(requestId)
+    } catch (e: any) {
+      setError(e?.message || "Falha ao validar os resultados.")
+      await loadItems(requestId).catch(() => {})
+    } finally {
+      setBusyItem(null)
+    }
+  }
+
   async function desconsiderar(requestId: number, item: ResultItem) {
     const reason = window.prompt(
       `Desconsiderar "${item.exam_field_name}" — indique o motivo (opcional):`
@@ -207,18 +229,67 @@ export default function LabWorklistPage() {
 
                   {openId === row.id ? (
                     <div className="space-y-2 border-t border-[var(--border)] px-4 py-3">
-                      {items.length > 0 && !allValidated ? (
-                        <div className="flex justify-end">
-                          <button
-                            type="button"
-                            onClick={() => gravarTodos(row.id)}
-                            disabled={busyItem !== null}
-                            className="inline-flex h-9 items-center rounded-md border border-[var(--primary-300)] bg-[var(--primary-600)]/10 px-3 text-xs font-semibold text-[var(--primary-700)] transition hover:bg-[var(--primary-600)]/20 disabled:opacity-60"
-                          >
-                            Gravar todos os resultados
-                          </button>
-                        </div>
-                      ) : null}
+                      {items.length > 0 && !allValidated ? (() => {
+                        const porGravar = items.filter(
+                          (item) =>
+                            item.status !== "validado" &&
+                            item.status !== "desconsiderado" &&
+                            item.status !== "aguardando_validacao"
+                        )
+                        const validaveis = items.filter((item) => item.status === "aguardando_validacao")
+                        const marcados = validaveis.filter((item) => checked[item.id])
+                        const todosMarcados = validaveis.length > 0 && marcados.length === validaveis.length
+                        return (
+                          <div className="flex flex-wrap items-center justify-end gap-2">
+                            {validaveis.length ? (
+                              <label className="mr-auto flex items-center gap-2 text-xs font-medium text-[var(--gray-700)]">
+                                <input
+                                  type="checkbox"
+                                  checked={todosMarcados}
+                                  onChange={(e) =>
+                                    setChecked((prev) => {
+                                      const next = { ...prev }
+                                      for (const item of validaveis) next[item.id] = e.target.checked
+                                      return next
+                                    })
+                                  }
+                                />
+                                Marcar todos ({marcados.length}/{validaveis.length})
+                              </label>
+                            ) : null}
+                            {porGravar.length ? (
+                              <button
+                                type="button"
+                                onClick={() => gravarTodos(row.id)}
+                                disabled={busyItem !== null}
+                                className="inline-flex h-9 items-center rounded-md border border-[var(--primary-300)] bg-[var(--primary-600)]/10 px-3 text-xs font-semibold text-[var(--primary-700)] transition hover:bg-[var(--primary-600)]/20 disabled:opacity-60"
+                              >
+                                Gravar todos os resultados
+                              </button>
+                            ) : null}
+                            {validaveis.length ? (
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={() => validarLote(row.id, validaveis)}
+                                  disabled={busyItem !== null}
+                                  className="inline-flex h-9 items-center rounded-md bg-emerald-600 px-3 text-xs font-semibold text-white transition hover:bg-emerald-500 disabled:opacity-60"
+                                >
+                                  Validar todos
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => validarLote(row.id, marcados)}
+                                  disabled={busyItem !== null || marcados.length === 0}
+                                  className="inline-flex h-9 items-center rounded-md border border-emerald-300 bg-emerald-50 px-3 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-100 disabled:opacity-60"
+                                >
+                                  Validar marcados ({marcados.length})
+                                </button>
+                              </>
+                            ) : null}
+                          </div>
+                        )
+                      })() : null}
                       {items.length === 0 ? (
                         <div className="text-sm text-[var(--gray-500)]">Carregando itens...</div>
                       ) : (
@@ -263,14 +334,25 @@ export default function LabWorklistPage() {
                                     Validado
                                   </span>
                                 ) : saved ? (
-                                  <button
-                                    type="button"
-                                    onClick={() => validar(row.id, item)}
-                                    disabled={busyItem === item.id}
-                                    className="inline-flex h-9 items-center rounded-md bg-emerald-600 px-3 text-xs font-semibold text-white transition hover:bg-emerald-500 disabled:opacity-60"
-                                  >
-                                    Validar
-                                  </button>
+                                  <>
+                                    <input
+                                      type="checkbox"
+                                      aria-label="Marcar para validação"
+                                      checked={!!checked[item.id]}
+                                      onChange={(e) =>
+                                        setChecked((prev) => ({ ...prev, [item.id]: e.target.checked }))
+                                      }
+                                      className="h-4 w-4"
+                                    />
+                                    <button
+                                      type="button"
+                                      onClick={() => validar(row.id, item)}
+                                      disabled={busyItem === item.id}
+                                      className="inline-flex h-9 items-center rounded-md bg-emerald-600 px-3 text-xs font-semibold text-white transition hover:bg-emerald-500 disabled:opacity-60"
+                                    >
+                                      Validar
+                                    </button>
+                                  </>
                                 ) : (
                                   <>
                                     <button
