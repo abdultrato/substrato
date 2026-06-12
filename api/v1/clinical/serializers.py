@@ -851,6 +851,8 @@ class LabRequestSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializ
     collection_guidance = serializers.SerializerMethodField()
 
     class SampleSummarySerializer(serializers.ModelSerializer):
+        bottle_type_display = serializers.CharField(source="get_bottle_type_display", read_only=True)
+
         class Meta:
             model = Sample
             fields = [
@@ -858,6 +860,7 @@ class LabRequestSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializ
                 "custom_id",
                 "name",
                 "bottle_type",
+                "bottle_type_display",
                 "cap_color",
                 "minimum_volume_ml",
                 "fasting_required",

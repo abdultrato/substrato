@@ -5,11 +5,16 @@ import { useMemo } from "react"
 import { useLanguage } from "@/hooks/useLanguage"
 import { useRelationLabels } from "@/hooks/useRelationLabels"
 import { fieldLabel, isInternalField } from "@/lib/ui/fieldLabels"
+import { canonicalCollectionPath } from "@/lib/openapi/endpointResolver"
 
 function readableObjectLabel(value: Record<string, any>): string {
   const candidates = [
     "full_name",
     "display_name",
+    // Itens de requisição/guia de colheita: mostrar o nome do exame.
+    "exam_name",
+    "medical_exam_name",
+    "sample_name",
     "name",
     "nome",
     "username",
@@ -63,6 +68,58 @@ function normalizeEndpointPath(value: string): string {
   return prefixed.replace(/\/+$/, "") + "/"
 }
 
+// Amostra com o frasco herdado dos exames: "Nome — Tubo EDTA (vol. mín. 2 ml)".
+function sampleDetailLabel(value: Record<string, any>): string {
+  const name = String(value?.name || value?.nome || "").trim()
+  const bottle = String(value?.bottle_type_display || value?.bottle_type || "").trim()
+  const volume = String(value?.minimum_volume_ml ?? "").trim()
+  const fasting = value?.fasting_required
+    ? ` — jejum ${Number(value?.fasting_hours || 0) > 0 ? `${value.fasting_hours}h` : "obrigatório"}`
+    : ""
+  const parts = [name || readableObjectLabel(value)]
+  if (bottle) parts.push(`— ${bottle}`)
+  if (volume && Number(volume) > 0) parts.push(`(vol. mín. ${volume} ml)`)
+  return parts.join(" ") + fasting
+}
+
+// Aliases legados e campos redundantes que não devem poluir o detalhe.
+const HIDDEN_DETAIL_FIELDS_BY_ENDPOINT: Record<string, Set<string>> = {
+  "/clinical/labrequest/": new Set([
+    // aliases legados (duplicam campos canónicos)
+    "id_custom",
+    "paciente_nome",
+    "paciente_codigo",
+    "paciente_código",
+    "empresa_solicitante_nome",
+    "empresa_executora_externa_nome",
+    "tipo",
+    "estado",
+    "status_clinico",
+    "estado_clinico",
+    "estado_clínico",
+    "prioridade",
+    "possui_resultado_critico",
+    "possui_resultado_crítico",
+    "exames",
+    "exames_laboratoriais",
+    "exames_medicos",
+    "exames_médicos",
+    "exams_medicos",
+    "itens",
+    "guia_coleta",
+    "guia_colheita",
+    // redundantes: o FK correspondente já é resolvido para o nome
+    "patient_name",
+    "patient_code",
+    "requesting_company_name",
+    "external_executing_company_name",
+    "occupational_profile_name",
+    "requesting_physician_name",
+    // IDs crus de amostras (sample_details já mostra os detalhes)
+    "samples",
+  ]),
+}
+
 const RECEPTION_CHECKIN_VISIBLE_INTERNAL_FIELDS = new Set([
   "id",
   "custom_id",
@@ -100,6 +157,9 @@ function fmtValue(
       if (item && typeof item === "object") {
         if (key === "requested_tests") return requestedTestLabel(item as Record<string, any>)
         if (key === "tenant") return institutionLabel(item as Record<string, any>)
+        if (key === "sample_details" || key === "sample_options") {
+          return sampleDetailLabel(item as Record<string, any>)
+        }
         const label = readableObjectLabel(item as Record<string, any>)
         return label || `${tr("Item")} ${index + 1}`
       }
@@ -142,6 +202,7 @@ export default function ResourceDetailsCard({
 }) {
   const { tr } = useLanguage()
   const showReceptionCheckinAudit = normalizeEndpointPath(endpoint) === "/reception/checkin/"
+  const hiddenDetailFields = HIDDEN_DETAIL_FIELDS_BY_ENDPOINT[canonicalCollectionPath(endpoint)]
   const entries = useMemo(
     () =>
       Object.entries(data || {})
@@ -149,8 +210,9 @@ export default function ResourceDetailsCard({
         .filter(([k]) => {
           if (showReceptionCheckinAudit) return k !== "deleted_by"
           return k !== "tenant" && k !== "created_by" && k !== "updated_by" && k !== "deleted_by"
-        }),
-    [data, showReceptionCheckinAudit]
+        })
+        .filter(([k]) => !hiddenDetailFields?.has(k)),
+    [data, showReceptionCheckinAudit, hiddenDetailFields]
   )
   // Resolve FKs escalares e M2M/array (ex.: sector, painel.tests) para nomes.
   // Passa apenas os campos visíveis para não buscar relações ocultas.
