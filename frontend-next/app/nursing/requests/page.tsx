@@ -9,10 +9,17 @@ import Pagination from "@/components/ui/Pagination"
 import PageHeader from "@/components/ui/PageHeader"
 import useDebounce from "@/hooks/useDebounce"
 import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
-import { apiFetchList } from "@/lib/api"
+import { apiFetch, apiFetchList } from "@/lib/api"
 import { GROUPS } from "@/lib/rbac"
 
 type RequestRow = Record<string, any>
+
+async function abrirEtiqueta(id: number) {
+  const blob = await apiFetch<Blob>(`/clinical/labrequest/${id}/etiqueta/`, { responseType: "blob" })
+  const url = URL.createObjectURL(blob)
+  window.open(url, "_blank", "noopener")
+  window.setTimeout(() => URL.revokeObjectURL(url), 60000)
+}
 
 const STATUS_OPTIONS = [
   { value: "", label: "Todos" },
@@ -34,6 +41,8 @@ export default function NursingRequestsPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [data, setData] = useState<RequestRow[]>([])
+  const [busyId, setBusyId] = useState<number | null>(null)
+  const [reloadTick, setReloadTick] = useState(0)
   const debouncedSearch = useDebounce(search, 300)
 
   useEffect(() => {
@@ -78,7 +87,21 @@ export default function NursingRequestsPage() {
     return () => {
       mounted = false
     }
-  }, [debouncedSearch, status, page, pageSize, safeRefreshToken])
+  }, [debouncedSearch, status, page, pageSize, safeRefreshToken, reloadTick])
+
+  async function fazerColheita(row: RequestRow) {
+    setBusyId(row.id)
+    setErrorMessage(null)
+    try {
+      await apiFetch(`/clinical/labrequest/${row.id}/registar-colheita/`, { method: "POST" })
+      await abrirEtiqueta(row.id)
+      setReloadTick((tick) => tick + 1)
+    } catch (e: any) {
+      setErrorMessage(e?.message || "Falha ao registar a colheita.")
+    } finally {
+      setBusyId(null)
+    }
+  }
 
   const columns = useMemo(
     () => [
@@ -86,6 +109,44 @@ export default function NursingRequestsPage() {
       { header: "Paciente", render: (r: RequestRow) => r.patient_name || r.patient || "-" },
       { header: "Prioridade", render: (r: RequestRow) => r.clinical_status || "-" },
       { header: "Crítico", render: (r: RequestRow) => (r.has_critical_result ? "SIM" : "—") },
+      {
+        header: "Colheita",
+        render: (r: RequestRow) => {
+          if (r.collected_at) {
+            return (
+              <div className="space-y-1">
+                <span className="inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-semibold text-emerald-800">
+                  Colhida
+                </span>
+                <button
+                  type="button"
+                  onClick={() => abrirEtiqueta(r.id).catch(() => setErrorMessage("Falha ao gerar a etiqueta."))}
+                  className="block rounded-md border border-slate-200 bg-white px-2 py-1 text-[11px] font-medium text-slate-700 shadow-sm transition hover:bg-slate-50"
+                >
+                  Reimprimir etiqueta
+                </button>
+              </div>
+            )
+          }
+          if (!r.validated_at) {
+            return (
+              <span className="inline-flex items-center rounded-full bg-amber-100 px-2.5 py-1 text-[11px] font-semibold text-amber-800">
+                Aguarda validação
+              </span>
+            )
+          }
+          return (
+            <button
+              type="button"
+              onClick={() => fazerColheita(r)}
+              disabled={busyId === r.id}
+              className="inline-flex items-center rounded-md bg-[var(--primary-600)] px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-[var(--primary-700)] disabled:opacity-60"
+            >
+              {busyId === r.id ? "Registando..." : "Fazer colheita"}
+            </button>
+          )
+        },
+      },
       {
         header: "Guia de coleta",
         render: (r: RequestRow) => {
@@ -123,7 +184,8 @@ export default function NursingRequestsPage() {
         },
       },
     ],
-    []
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [busyId]
   )
 
   return (
