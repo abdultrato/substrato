@@ -56,6 +56,8 @@ const LONG_TEXT_FIELDS = new Set([
 const EMPTY_RELATION_OPTIONS: RelationOption[] = []
 
 const RUNTIME_READONLY_FIELDS = new Set([
+  // Calculado no backend (soma dos preços dos exames do painel) — nunca editável.
+  "package_price",
   "id",
   "id_custom",
   "tenant",
