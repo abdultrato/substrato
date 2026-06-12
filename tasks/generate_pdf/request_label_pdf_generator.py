@@ -26,22 +26,22 @@ def generate_request_label_pdf(lab_request) -> tuple[bytes, str]:
     when = lab_request.collected_at or lab_request.validated_at or lab_request.created_at
     when_text = when.strftime("%d/%m/%Y %H:%M") if when else ""
 
-    # Nome e data numa só linha, logo acima do código de barras;
-    # por baixo do código de barras só o número.
-    header = f"{patient_name}  ·  {when_text}" if when_text else patient_name
-    font_size = 9
-    pdf.setFont("Helvetica-Bold", font_size)
-    while font_size > 6 and pdf.stringWidth(header, "Helvetica-Bold", font_size) > LABEL_WIDTH - 4 * mm:
-        font_size -= 0.5
-    pdf.setFont("Helvetica-Bold", font_size)
-    pdf.drawCentredString(LABEL_WIDTH / 2, 21.5 * mm, header)
-
+    # Nome+data numa linha acima do código de barras; número por baixo.
+    # Tudo alinhado à esquerda, na mesma coluna onde começa o código de barras.
     barcode = code128.Code128(code, barHeight=13 * mm, barWidth=0.24 * mm, humanReadable=False)
     x = max((LABEL_WIDTH - barcode.width) / 2, 1 * mm)
+
+    header = f"{patient_name}  ·  {when_text}" if when_text else patient_name
+    font_size = 9
+    while font_size > 6 and pdf.stringWidth(header, "Helvetica-Bold", font_size) > LABEL_WIDTH - x - 1 * mm:
+        font_size -= 0.5
+    pdf.setFont("Helvetica-Bold", font_size)
+    pdf.drawString(x, 21.5 * mm, header)
+
     barcode.drawOn(pdf, x, 6.5 * mm)
 
     pdf.setFont("Helvetica-Bold", 9)
-    pdf.drawCentredString(LABEL_WIDTH / 2, 2.2 * mm, code)
+    pdf.drawString(x, 2.2 * mm, code)
 
     pdf.showPage()
     pdf.save()
