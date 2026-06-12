@@ -135,6 +135,32 @@ class LabRequestViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin,
         request_record.refresh_from_db()
         return Response(LabRequestSerializer(request_record, context={"request": request}).data)
 
+    @action(detail=True, methods=["post"], url_path="repetir-colheita", url_name="repetir-colheita")
+    def repetir_colheita(self, request, pk=None):
+        """Enfermagem repete a colheita das amostras rejeitadas na receção."""
+        request_record = self.get_object()
+        try:
+            request_record.repetir_colheita(user=getattr(request, "user", None))
+        except DjangoValidationError as err:
+            raise ValidationError(getattr(err, "message_dict", None) or getattr(err, "messages", None) or str(err)) from err
+        return Response(LabRequestSerializer(request_record, context={"request": request}).data)
+
+    @action(detail=True, methods=["post"], url_path="transferir-analise", url_name="transferir-analise")
+    def transferir_analise(self, request, pk=None):
+        """Transfere a execução das análises para uma empresa/unidade externa."""
+        request_record = self.get_object()
+        company_id = (request.data or {}).get("external_executing_company")
+        company = None
+        if company_id:
+            from apps.external_entities.models import Company
+
+            company = Company.objects.filter(pk=company_id).first()
+        try:
+            request_record.transferir_analise(company, user=getattr(request, "user", None))
+        except DjangoValidationError as err:
+            raise ValidationError(getattr(err, "message_dict", None) or getattr(err, "messages", None) or str(err)) from err
+        return Response(LabRequestSerializer(request_record, context={"request": request}).data)
+
     @action(detail=True, methods=["get"], url_path="etiqueta", url_name="etiqueta")
     def etiqueta(self, request, pk=None):
         """Etiqueta PDF (60x30 mm) com código de barras para impressora de etiquetas."""
@@ -376,6 +402,31 @@ class LabRequestViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin,
 )
 class LabRequestItemViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
     """Viewset for request items."""
+
+    @action(detail=True, methods=["post"], url_path="receber-amostra", url_name="receber-amostra")
+    def receber_amostra(self, request, pk=None):
+        """Receção de amostras: marca a amostra do exame como recebida."""
+        item = self.get_object()
+        try:
+            item.receber_amostra(user=getattr(request, "user", None))
+        except DjangoValidationError as err:
+            raise ValidationError(getattr(err, "message_dict", None) or getattr(err, "messages", None) or str(err)) from err
+        return Response(LabRequestItemSerializer(item, context={"request": request}).data)
+
+    @action(detail=True, methods=["post"], url_path="rejeitar-amostra", url_name="rejeitar-amostra")
+    def rejeitar_amostra(self, request, pk=None):
+        """Receção de amostras: rejeita a amostra (motivos do catálogo + nota)."""
+        from apps.clinical.models.sample_rejection import SampleRejectionReason
+
+        item = self.get_object()
+        payload = request.data or {}
+        reason_ids = payload.get("rejection_reasons") or payload.get("reasons") or []
+        reasons = list(SampleRejectionReason.objects.filter(pk__in=reason_ids))
+        try:
+            item.rejeitar_amostra(reasons, note=payload.get("note") or payload.get("rejection_note") or "", user=getattr(request, "user", None))
+        except DjangoValidationError as err:
+            raise ValidationError(getattr(err, "message_dict", None) or getattr(err, "messages", None) or str(err)) from err
+        return Response(LabRequestItemSerializer(item, context={"request": request}).data)
 
     queryset = LabRequestItem.objects.all()
     serializer_class = LabRequestItemSerializer

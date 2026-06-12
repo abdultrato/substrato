@@ -89,6 +89,20 @@ export default function NursingRequestsPage() {
     }
   }, [debouncedSearch, status, page, pageSize, safeRefreshToken, reloadTick])
 
+  async function repetirColheita(row: RequestRow) {
+    setBusyId(row.id)
+    setErrorMessage(null)
+    try {
+      await apiFetch(`/clinical/labrequest/${row.id}/repetir-colheita/`, { method: "POST" })
+      await abrirEtiqueta(row.id)
+      setReloadTick((tick) => tick + 1)
+    } catch (e: any) {
+      setErrorMessage(e?.message || "Falha ao repetir a colheita.")
+    } finally {
+      setBusyId(null)
+    }
+  }
+
   async function fazerColheita(row: RequestRow) {
     setBusyId(row.id)
     setErrorMessage(null)
@@ -112,6 +126,32 @@ export default function NursingRequestsPage() {
       {
         header: "Colheita",
         render: (r: RequestRow) => {
+          const rejectedItems = (Array.isArray(r.items) ? r.items : []).filter(
+            (item: any) => item.sample_status === "rejeitada"
+          )
+          if (rejectedItems.length) {
+            return (
+              <div className="space-y-1">
+                <span className="inline-flex items-center rounded-full bg-rose-100 px-2.5 py-1 text-[11px] font-semibold text-rose-800">
+                  Amostra rejeitada na receção
+                </span>
+                {rejectedItems.map((item: any) => (
+                  <div key={item.id} className="text-[11px] text-rose-700">
+                    {item.exam_name}: {(item.rejection_reason_names || []).join(", ")}
+                    {item.rejection_note ? ` — ${item.rejection_note}` : ""}
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => repetirColheita(r)}
+                  disabled={busyId === r.id}
+                  className="inline-flex items-center rounded-md bg-rose-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-rose-500 disabled:opacity-60"
+                >
+                  {busyId === r.id ? "Registando..." : "Repetir colheita"}
+                </button>
+              </div>
+            )
+          }
           if (r.collected_at) {
             return (
               <div className="space-y-1">

@@ -166,6 +166,81 @@ def test_collection_workflow_validar_colher_processar():
     assert pdf_bytes[:4] == b"%PDF"
     assert request.custom_id in filename
 
+    # receção de amostras antes do processamento
+    for item in request.items.all():
+        item.receber_amostra()
+
     request.iniciar_processamento()
     request.refresh_from_db()
     assert request.status == ResultState.IN_ANALYSIS
+
+
+@pytest.mark.django_db
+def test_sample_reception_flow_reject_and_receive():
+    from django.core.exceptions import ValidationError as DjangoValidationError
+    from apps.clinical.models.lab_request import LabRequest
+    from apps.clinical.models.lab_request_item import LabRequestItem
+    from apps.clinical.models.sample_rejection import SampleRejectionReason
+    from domain.clinical.result_state import ResultState
+
+    tenant = _tenant()
+    patient = _patient(tenant)
+    exam_a = _exam(tenant, "Hemograma")
+    exam_b = _exam(tenant, "Glicemia")
+
+    request = LabRequest.objects.create(tenant=tenant, patient=patient)
+    request.add_exam(exam_a)
+    request.add_exam(exam_b)
+    request.validar()
+    request.registar_colheita()
+
+    reason = SampleRejectionReason.objects.create(
+        tenant=tenant, code=SampleRejectionReason.Code.INSUFFICIENT_VOLUME, name="Volume insuficiente"
+    )
+
+    item_a, item_b = list(request.items.order_by("id"))
+
+    # processamento bloqueado enquanto as amostras não forem todas recebidas
+    with pytest.raises(DjangoValidationError):
+        request.iniciar_processamento()
+
+    item_a.receber_amostra()
+    item_b.rejeitar_amostra([reason], note="Tubo com 0,5 ml")
+    item_b.refresh_from_db()
+    assert item_b.sample_status == LabRequestItem.SampleStatus.REJECTED
+    assert list(item_b.rejection_reasons.all()) == [reason]
+
+    with pytest.raises(DjangoValidationError):
+        request.iniciar_processamento()  # ainda há rejeitada
+
+    # enfermagem repete a colheita -> item volta a aguardar
+    request.repetir_colheita()
+    item_b.refresh_from_db()
+    assert item_b.sample_status == LabRequestItem.SampleStatus.AWAITING
+
+    item_b.receber_amostra()
+    assert request.amostras_conferidas() is True
+
+    request.iniciar_processamento()
+    request.refresh_from_db()
+    assert request.status == ResultState.IN_ANALYSIS
+
+
+@pytest.mark.django_db
+def test_transferir_analise_sets_external_company():
+    from apps.clinical.models.lab_request import LabRequest
+    from apps.external_entities.models import Company
+
+    tenant = _tenant()
+    patient = _patient(tenant)
+    exam = _exam(tenant, "Hemograma")
+
+    request = LabRequest.objects.create(tenant=tenant, patient=patient)
+    request.add_exam(exam)
+    request.validar()
+    request.registar_colheita()
+
+    company = Company.objects.create(tenant=tenant, name="Lab Externo XYZ")
+    request.transferir_analise(company)
+    request.refresh_from_db()
+    assert request.external_executing_company_id == company.id

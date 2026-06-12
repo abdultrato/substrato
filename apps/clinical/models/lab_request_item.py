@@ -52,6 +52,63 @@ class LabRequestItem(TenantPropagationMixin, ScopedPositionMixin, NoNameCoreMode
         verbose_name="Exame médico",
     )
 
+    class SampleStatus(models.TextChoices):
+        AWAITING = "aguardando", "Aguardando receção"
+        RECEIVED = "recebida", "Amostra recebida"
+        REJECTED = "rejeitada", "Amostra rejeitada"
+
+    sample_status = models.CharField(
+        db_column="sample_status",
+        max_length=20,
+        choices=SampleStatus.choices,
+        default=SampleStatus.AWAITING,
+        db_index=True,
+        verbose_name="Estado da amostra",
+    )
+
+    rejection_reasons = models.ManyToManyField(
+        "clinical.SampleRejectionReason",
+        blank=True,
+        related_name="rejected_items",
+        verbose_name="Motivos de rejeição",
+    )
+
+    rejection_note = models.TextField(
+        db_column="rejection_note",
+        blank=True,
+        default="",
+        verbose_name="Observação da rejeição",
+    )
+
+    sample_received_at = models.DateTimeField(
+        db_column="sample_received_at",
+        null=True,
+        blank=True,
+        verbose_name="Amostra recebida em",
+    )
+
+    def receber_amostra(self, user=None):
+        from django.utils import timezone
+
+        if self.sample_status == self.SampleStatus.RECEIVED:
+            raise ValidationError("Amostra já marcada como recebida.")
+        self.sample_status = self.SampleStatus.RECEIVED
+        self.sample_received_at = timezone.now()
+        self.rejection_note = ""
+        self.save(update_fields=["sample_status", "sample_received_at", "rejection_note", "updated_at"])
+        self.rejection_reasons.clear()
+        return self
+
+    def rejeitar_amostra(self, reasons, note="", user=None):
+        if not reasons:
+            raise ValidationError("Indique pelo menos um motivo de rejeição.")
+        self.sample_status = self.SampleStatus.REJECTED
+        self.sample_received_at = None
+        self.rejection_note = note or ""
+        self.save(update_fields=["sample_status", "sample_received_at", "rejection_note", "updated_at"])
+        self.rejection_reasons.set(reasons)
+        return self
+
     class Meta:
         db_table = "clinico_requisicaoitem"
         ordering = ["request", "position", "id"]

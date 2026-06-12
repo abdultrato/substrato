@@ -5,6 +5,7 @@ from .occupational_profiles import OccupationalExamProfileViewSet
 from .patients import PatientViewSet
 from .requests import LabRequestItemViewSet, LabRequestViewSet
 from .results import ResultItemViewSet
+from .sample_rejection import SampleRejectionReasonViewSet
 
 VIEWSET_MAP = {
     "exam": LabExamViewSet,
@@ -18,6 +19,7 @@ VIEWSET_MAP = {
     "patient": PatientViewSet,
     "resultitem": ResultItemViewSet,
     "sample": SampleViewSet,
+    "sample_rejection_reason": SampleRejectionReasonViewSet,
 }
 
 __all__ = [
@@ -33,4 +35,5 @@ __all__ = [
     "PatientViewSet",
     "ResultItemViewSet",
     "SampleViewSet",
+    "SampleRejectionReasonViewSet",
 ]

@@ -349,10 +349,53 @@ class LabRequest(NoNameCoreModel):
         self.save(update_fields=["collected_at", "collected_by", "updated_at"])
         return self
 
+    def amostras_conferidas(self) -> bool:
+        """True quando todos os itens LAB têm amostra recebida na receção."""
+        items = self.items.filter(deleted=False, exam__isnull=False)
+        if not items.exists():
+            return False
+        from .lab_request_item import LabRequestItem
+
+        return not items.exclude(sample_status=LabRequestItem.SampleStatus.RECEIVED).exists()
+
+    def repetir_colheita(self, user=None):
+        """Enfermagem repete a colheita dos itens com amostra rejeitada."""
+        from django.utils import timezone
+
+        from .lab_request_item import LabRequestItem
+
+        rejected = self.items.filter(deleted=False, sample_status=LabRequestItem.SampleStatus.REJECTED)
+        if not rejected.exists():
+            raise ValidationError("Não há amostras rejeitadas para repetir a colheita.")
+
+        for item in rejected:
+            item.sample_status = LabRequestItem.SampleStatus.AWAITING
+            item.save(update_fields=["sample_status", "updated_at"])
+
+        self.collected_at = timezone.now()
+        self.collected_by = user if getattr(user, "pk", None) else None
+        self.save(update_fields=["collected_at", "collected_by", "updated_at"])
+        return self
+
+    def transferir_analise(self, company, user=None):
+        """Transfere a execução das análises para uma empresa/unidade externa."""
+        if company is None:
+            raise ValidationError("Indique a empresa executora externa de destino.")
+        if not self.collected_at:
+            raise ValidationError("A colheita precisa de estar registada antes da transferência.")
+        if self.status != ResultState.PENDING:
+            raise ValidationError("Apenas requisições pendentes podem ser transferidas.")
+
+        self.external_executing_company = company
+        self.save(update_fields=["external_executing_company", "updated_at"])
+        return self
+
     def iniciar_processamento(self, user=None):
         """Laboratório inicia o processamento (status passa a em análise)."""
         if not self.collected_at:
             raise ValidationError("A colheita precisa de ser registada antes do processamento.")
+        if self.type == self.Type.LABORATORY and not self.amostras_conferidas():
+            raise ValidationError("Todas as amostras precisam de ser recebidas na receção de amostras.")
 
         if user is not None and getattr(user, "pk", None) and not self.analyst_id:
             self.analyst = user

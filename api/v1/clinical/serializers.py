@@ -22,6 +22,7 @@ from apps.clinical.models.medical_result_file import (
 from apps.clinical.models.patient import Patient
 from apps.clinical.models.result_item import ResultItem
 from apps.clinical.models.sample import Sample
+from apps.clinical.models.sample_rejection import SampleRejectionReason
 from core.constants.provenance import Provenance
 
 CORE_READ_ONLY_FIELDS = [
@@ -826,6 +827,13 @@ class OccupationalExamProfileSerializer(serializers.ModelSerializer):
         return [exam.name for exam in obj.exams.all()]
 
 
+class SampleRejectionReasonSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SampleRejectionReason
+        fields = "__all__"
+        read_only_fields = CORE_READ_ONLY_FIELDS
+
+
 class LabRequestSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer):
     """
     Serializer para requisições (por sector).
@@ -944,6 +952,11 @@ class LabRequestSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializ
         exam_name = serializers.CharField(source="exam.name", read_only=True)
         medical_exam_name = serializers.CharField(source="medical_exam.name", read_only=True)
         sample_options = serializers.SerializerMethodField()
+        sample_status_display = serializers.CharField(source="get_sample_status_display", read_only=True)
+        rejection_reason_names = serializers.SerializerMethodField()
+
+        def get_rejection_reason_names(self, obj):
+            return [reason.name for reason in obj.rejection_reasons.all()]
 
         def get_sample_options(self, obj):
             exam = getattr(obj, "exam", None)
@@ -977,6 +990,11 @@ class LabRequestSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializ
                 "medical_exam",
                 "medical_exam_name",
                 "sample_options",
+                "sample_status",
+                "sample_status_display",
+                "rejection_reason_names",
+                "rejection_note",
+                "sample_received_at",
             ]
 
     items = LabRequestItemSummarySerializer(many=True, read_only=True)

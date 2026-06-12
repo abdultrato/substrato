@@ -190,6 +190,35 @@ class LabRequestFilter(SafeFilterSet):
     # Fluxo de colheita: ?validada=true|false e ?colhida=true|false
     validada = django_filters.BooleanFilter(field_name="validated_at", lookup_expr="isnull", exclude=True)
     colhida = django_filters.BooleanFilter(field_name="collected_at", lookup_expr="isnull", exclude=True)
+    # Fila do laboratório: ?fase=rececao_amostras|pedidos|trabalho|recolheita
+    fase = django_filters.CharFilter(method="filter_fase")
+
+    def filter_fase(self, queryset, name, value):
+        from apps.clinical.models.lab_request_item import LabRequestItem
+        from domain.clinical.result_state import ResultState
+
+        fase = (value or "").strip().lower()
+        awaiting = LabRequestItem.SampleStatus.AWAITING
+        rejected = LabRequestItem.SampleStatus.REJECTED
+
+        if fase in {"rececao_amostras", "recepcao_amostras"}:
+            return (
+                queryset.filter(status=ResultState.PENDING, collected_at__isnull=False)
+                .filter(items__deleted=False, items__sample_status=awaiting)
+                .distinct()
+            )
+        if fase == "pedidos":
+            return (
+                queryset.filter(status=ResultState.PENDING, collected_at__isnull=False)
+                .exclude(items__deleted=False, items__sample_status__in=[awaiting, rejected])
+                .filter(items__deleted=False, items__exam__isnull=False)
+                .distinct()
+            )
+        if fase == "trabalho":
+            return queryset.filter(status=ResultState.IN_ANALYSIS)
+        if fase in {"recolheita", "repetir_colheita"}:
+            return queryset.filter(items__deleted=False, items__sample_status=rejected).distinct()
+        return queryset
 
     legacy_filter_aliases = {
         "analista": "analyst",
