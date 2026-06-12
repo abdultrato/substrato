@@ -1,7 +1,6 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { createElement } from "react";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type LucideFC = React.FC<any>;
 
 const _cache = new Map<string, string>();

@@ -43,10 +43,10 @@ export default function Modal ( {
             />
 
             <div
-                className={`relative w-full ${widths[width]} rounded-2xl border border-border bg-card shadow-lg animate-scale-in`}
+                className={`relative flex max-h-[calc(100dvh-2rem)] w-full ${widths[width]} flex-col rounded-2xl border border-border bg-card shadow-lg animate-scale-in`}
             >
                 {( title || onClose ) && (
-                    <div className="flex items-center justify-between border-b border-border px-4 py-2">
+                    <div className="flex shrink-0 items-center justify-between border-b border-border px-4 py-2">
                         {title && (
                             <h3 className="text-sm font-semibold text-foreground">
                                 {title}
@@ -62,7 +62,7 @@ export default function Modal ( {
                     </div>
                 )}
 
-                <div className="p-4">{children}</div>
+                <div className="min-h-0 flex-1 overflow-y-auto p-4">{children}</div>
             </div>
         </div>
     )
