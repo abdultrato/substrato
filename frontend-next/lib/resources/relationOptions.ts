@@ -150,6 +150,9 @@ const RELATION_TARGETS: Record<string, RelationTarget> = {
   resolved_by: { endpoint: "/human_resources/employee/", labelFields: ["name", "employee_code", ...DEFAULT_LABEL_FIELDS] },
   reviewer: { endpoint: "/human_resources/employee/", labelFields: ["name", "employee_code", ...DEFAULT_LABEL_FIELDS] },
   role: { endpoint: "/human_resources/role/", labelFields: ["name", "code", ...DEFAULT_LABEL_FIELDS] },
+  // Profissão do funcionário — pesquisa por nome (catálogo de profissões RH).
+  profession: { endpoint: "/human_resources/profissao/", labelFields: ["name", "code", ...DEFAULT_LABEL_FIELDS] },
+  profissao: { endpoint: "/human_resources/profissao/", labelFields: ["name", "code", ...DEFAULT_LABEL_FIELDS] },
   sale: { endpoint: "/pharmacy/sale/", labelFields: ["custom_id", "id", ...DEFAULT_LABEL_FIELDS] },
   // Todos os FKs `sector` do backend apontam para o catálogo de sectores do
   // laboratório (LabSector). Em módulos onde `sector` é uma string (ex.:
