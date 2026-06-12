@@ -26,17 +26,18 @@ def generate_request_label_pdf(lab_request) -> tuple[bytes, str]:
     when = lab_request.collected_at or lab_request.validated_at or lab_request.created_at
     when_text = when.strftime("%d/%m/%Y %H:%M") if when else ""
 
-    pdf.setFont("Helvetica-Bold", 8)
-    pdf.drawCentredString(LABEL_WIDTH / 2, LABEL_HEIGHT - 6 * mm, patient_name)
-    pdf.setFont("Helvetica", 6.5)
-    pdf.drawCentredString(LABEL_WIDTH / 2, LABEL_HEIGHT - 9.5 * mm, f"{code}  ·  {when_text}")
+    # Topo: nome (destaque) e data; por baixo do código de barras só o número.
+    pdf.setFont("Helvetica-Bold", 10)
+    pdf.drawCentredString(LABEL_WIDTH / 2, LABEL_HEIGHT - 5.5 * mm, patient_name)
+    pdf.setFont("Helvetica", 8)
+    pdf.drawCentredString(LABEL_WIDTH / 2, LABEL_HEIGHT - 9.5 * mm, when_text)
 
     barcode = code128.Code128(code, barHeight=11 * mm, barWidth=0.24 * mm, humanReadable=False)
     x = max((LABEL_WIDTH - barcode.width) / 2, 1 * mm)
-    barcode.drawOn(pdf, x, 5 * mm)
+    barcode.drawOn(pdf, x, 6.5 * mm)
 
-    pdf.setFont("Helvetica", 6)
-    pdf.drawCentredString(LABEL_WIDTH / 2, 1.8 * mm, code)
+    pdf.setFont("Helvetica-Bold", 9)
+    pdf.drawCentredString(LABEL_WIDTH / 2, 2.2 * mm, code)
 
     pdf.showPage()
     pdf.save()
