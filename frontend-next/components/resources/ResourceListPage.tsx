@@ -175,6 +175,11 @@ function summarizeObject(value: Record<string, any>): string {
     "username",
     "id",
   ]
+  const name = value?.name ?? value?.nome
+  const code = value?.code ?? value?.codigo ?? value?.código ?? value?.custom_id ?? value?.id_custom
+  if (name && code) {
+    return String(name)
+  }
   const parts: string[] = []
   for (const key of labelKeys) {
     const raw = value?.[key]
