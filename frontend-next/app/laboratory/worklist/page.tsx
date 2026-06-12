@@ -316,9 +316,9 @@ export default function LabWorklistPage() {
                                     <span className="text-[var(--gray-500)]"> ({item.exam_field_unit})</span>
                                   ) : null}
                                 </div>
-                                {item.exam_field_reference ? (
-                                  <div className="text-xs text-[var(--gray-500)]">Referência: {item.exam_field_reference}</div>
-                                ) : null}
+                                <div className="text-xs text-[var(--gray-500)]">
+                                  Referência: {String(item.exam_field_reference || "").trim() || "S/R — sem referência"}
+                                </div>
                               </div>
                               <div className="flex shrink-0 items-center gap-2">
                                 <input
