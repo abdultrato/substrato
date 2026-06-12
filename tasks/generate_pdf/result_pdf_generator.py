@@ -290,7 +290,8 @@ def generate_results_pdf(request, apenas_validados=True) -> tuple[bytes, str]:
     pdf_bytes = buffer.getvalue()
     buffer.close()
 
-    filename = f"{request.custom_id}_{request.patient.name}.pdf"
+    surname = (request.patient.name or "").strip().split()[-1] if (request.patient.name or "").strip() else "paciente"
+    filename = f"{request.custom_id}_{surname}.pdf"
 
     return pdf_bytes, filename
 

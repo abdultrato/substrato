@@ -13,9 +13,16 @@ import { GROUPS } from "@/lib/rbac"
 type Row = Record<string, any>
 type ResultItem = Record<string, any>
 
-async function abrirResultadoPdf(requestId: number) {
+async function abrirResultadoPdf(requestId: number, customId?: string, patientName?: string) {
   const blob = await apiFetch<Blob>(`/clinical/labrequest/${requestId}/results-pdf/`, { responseType: "blob" })
   const url = URL.createObjectURL(blob)
+  const surname = String(patientName || "").trim().split(/\s+/).pop() || "paciente"
+  const anchor = document.createElement("a")
+  anchor.href = url
+  anchor.download = `${customId || requestId}_${surname}.pdf`
+  document.body.appendChild(anchor)
+  anchor.click()
+  anchor.remove()
   window.open(url, "_blank", "noopener")
   window.setTimeout(() => URL.revokeObjectURL(url), 60000)
 }
@@ -384,7 +391,7 @@ export default function LabWorklistPage() {
                         <div className="pt-1">
                           <button
                             type="button"
-                            onClick={() => abrirResultadoPdf(row.id).catch(() => setError("Falha ao gerar o PDF de resultados."))}
+                            onClick={() => abrirResultadoPdf(row.id, row.custom_id, row.patient_name).catch(() => setError("Falha ao gerar o PDF de resultados."))}
                             className="inline-flex h-9 items-center rounded-md bg-sky-600 px-3 text-xs font-semibold text-white transition hover:bg-sky-500"
                           >
                             Gerar resultado PDF
