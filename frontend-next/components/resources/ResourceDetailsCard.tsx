@@ -35,6 +35,17 @@ function readableObjectLabel(value: Record<string, any>): string {
   return ""
 }
 
+function requestedTestLabel(value: Record<string, any>): string {
+  const candidates = ["test_name", "name", "nome", "title", "description", "descricao"]
+  for (const key of candidates) {
+    const candidate = value[key]
+    if (candidate !== null && candidate !== undefined && String(candidate).trim()) {
+      return String(candidate).trim()
+    }
+  }
+  return readableObjectLabel(value)
+}
+
 function normalizeEndpointPath(value: string): string {
   const clean = String(value || "").split("?")[0].split("#")[0].trim()
   const prefixed = clean.startsWith("/") ? clean : `/${clean}`
@@ -76,6 +87,7 @@ function fmtValue(
     const visible = value.slice(0, 5)
     const lines = visible.map((item, index) => {
       if (item && typeof item === "object") {
+        if (key === "requested_tests") return requestedTestLabel(item as Record<string, any>)
         const label = readableObjectLabel(item as Record<string, any>)
         return label || `${tr("Item")} ${index + 1}`
       }
