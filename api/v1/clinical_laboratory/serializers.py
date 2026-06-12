@@ -140,11 +140,12 @@ class LabTestPanelSerializer(serializers.ModelSerializer):
 
 class LabOrderSerializer(serializers.ModelSerializer):
     sectors = serializers.SerializerMethodField()
+    requested_tests = serializers.SerializerMethodField()
 
     class Meta:
         model = LabOrder
         fields = "__all__"
-        read_only_fields = CORE_READ_ONLY_FIELDS + ["sectors"]
+        read_only_fields = CORE_READ_ONLY_FIELDS + ["sectors", "requested_tests"]
 
     def get_sectors(self, obj):
         tests = [
@@ -153,6 +154,28 @@ class LabOrderSerializer(serializers.ModelSerializer):
             if getattr(item, "test", None) is not None
         ]
         return _distinct_sectors_from_tests(tests)
+
+    def get_requested_tests(self, obj):
+        items = _related_queryset(obj, "items", "test__sector")
+        payload = []
+        for item in items:
+            test = getattr(item, "test", None)
+            if test is None:
+                continue
+            sector = getattr(test, "sector", None)
+            payload.append({
+                "id": item.id,
+                "code": item.custom_id,
+                "test_id": test.id,
+                "test_name": test.name,
+                "test_code": test.code,
+                "sector": sector.id if sector is not None else None,
+                "sector_name": getattr(sector, "name", None),
+                "sector_code": getattr(sector, "code", None),
+                "price": item.price,
+                "status": item.status,
+            })
+        return payload
 
 
 class LabOrderItemSerializer(serializers.ModelSerializer):
