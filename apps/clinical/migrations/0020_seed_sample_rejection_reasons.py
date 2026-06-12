@@ -16,7 +16,7 @@ CHOICES = [
 
 def seed_reasons(apps, schema_editor):
     SampleRejectionReason = apps.get_model("clinical", "SampleRejectionReason")
-    Tenant = apps.get_model("tenants", "Tenant")
+    Tenant = apps.get_model("inquilinos", "Tenant")
 
     for tenant in Tenant.objects.all():
         for code, name in CHOICES:
@@ -36,6 +36,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ("clinical", "0019_labrequestitem_rejection_note_and_more"),
+        ("inquilinos", "0001_initial"),
     ]
 
     operations = [
