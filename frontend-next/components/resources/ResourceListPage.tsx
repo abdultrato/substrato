@@ -160,6 +160,10 @@ function rowHasMeaningfulValue(rows: Row[], key: string): boolean {
 }
 
 function summarizeObject(value: Record<string, any>): string {
+  const testName = value?.test_name || value?.name || value?.nome
+  if (testName && (value?.test_code || value?.code || value?.custom_id || value?.id_custom)) {
+    return String(testName)
+  }
   const labelKeys = [
     "name",
     "nome",
@@ -204,7 +208,12 @@ function formatListValue(key: string, value: any): string {
     const rendered = value
       .slice(0, 4)
       .map((item) => {
-        if (item && typeof item === "object") return summarizeObject(item)
+        if (item && typeof item === "object") {
+          if (key === "requested_tests") {
+            return String(item?.test_name || item?.name || item?.nome || "-")
+          }
+          return summarizeObject(item)
+        }
         return String(item)
       })
       .filter(Boolean)
