@@ -28,6 +28,9 @@ export type FormField = {
     | "datetime"
     | "select"
     | "array-string"
+    // M2M / array de FKs (ex.: painel.tests) — renderizado como seletor de
+    // múltiplos (pesquisar + adicionar/remover).
+    | "array-relation"
   enumValues?: string[]
   enumLabels?: string[]
 }
@@ -117,6 +120,9 @@ function mapType(prop: any): FormField["type"] {
   if (t === "integer") return "integer"
   if (t === "number") return "number"
   if (t === "array" && prop.items?.type === "string") return "array-string"
+  if (t === "array" && (prop.items?.type === "integer" || prop.items?.type === "number")) {
+    return "array-relation"
+  }
   if (t === "string") {
     if (prop.enum?.length) return "select"
     if (prop.format === "date") return "date"

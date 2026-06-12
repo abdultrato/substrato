@@ -87,11 +87,20 @@ function isForcedReadOnlyFormField(name: string): boolean {
 
 function shouldUseRelationField(field: FormField, endpoint: string): boolean {
   if (!relationTargetForField(field.name, endpoint)) return false
-  return field.type === "integer" || field.type === "number" || field.type === "select"
+  return (
+    field.type === "integer" ||
+    field.type === "number" ||
+    field.type === "select" ||
+    field.type === "array-relation"
+  )
 }
 
 function normalizeRuntimeRelationField(field: FormField, endpoint: string): FormField {
   if (!shouldUseRelationField(field, endpoint)) return field
+  // M2M permanece array-relation (seletor de múltiplos); FK escalar vira integer.
+  if (field.type === "array-relation") {
+    return { ...field, enumValues: undefined, enumLabels: undefined }
+  }
   return {
     ...field,
     type: "integer",
@@ -345,6 +354,203 @@ function SearchableRelationSelect({
   )
 }
 
+function SearchableMultiSelect({
+  fieldName,
+  value,
+  onChange,
+  target,
+  initialOptions,
+  readOnly,
+  error,
+  placeholder,
+  safeRefreshToken,
+}: {
+  fieldName: string
+  value: any
+  onChange: (v: number[]) => void
+  target: RelationTarget
+  initialOptions?: RelationOption[]
+  readOnly?: boolean
+  error?: string
+  placeholder?: string
+  safeRefreshToken?: number
+}) {
+  const selectedIds = useMemo(
+    () => (Array.isArray(value) ? value.map((v) => String(v)).filter(Boolean) : []),
+    [value]
+  )
+  const [query, setQuery] = useState("")
+  const [open, setOpen] = useState(false)
+  const [results, setResults] = useState<RelationOption[]>(EMPTY_RELATION_OPTIONS)
+  const [searching, setSearching] = useState(false)
+  const [labelById, setLabelById] = useState<Record<string, string>>({})
+  const listboxId = useId()
+  const debouncedQuery = useDebounce(query.trim(), 250)
+  const disabled = !!readOnly
+
+  // Semeia rótulos a partir das opções iniciais (modo edição).
+  useEffect(() => {
+    if (!initialOptions?.length) return
+    setLabelById((current) => {
+      const next = { ...current }
+      for (const option of initialOptions) {
+        if (!next[option.value]) next[option.value] = option.label
+      }
+      return next
+    })
+  }, [initialOptions])
+
+  useEffect(() => {
+    if (!open) return
+    let active = true
+    async function searchRelationOptions() {
+      const searchText = debouncedQuery.trim()
+      setSearching(true)
+      try {
+        const { items } = await apiFetchList<Record<string, any>>(target.endpoint, {
+          page: 1,
+          pageSize: 25,
+          query: searchText ? { search: searchText } : undefined,
+          clientCache: safeRefreshToken === 0,
+          clientCacheTtlMs: 30000,
+        })
+        if (active) {
+          const options = relationOptionsFromRows(items, target)
+          setResults(options)
+          setLabelById((current) => {
+            const next = { ...current }
+            for (const option of options) next[option.value] = option.label
+            return next
+          })
+        }
+      } catch {
+        if (active) setResults([])
+      } finally {
+        if (active) setSearching(false)
+      }
+    }
+    searchRelationOptions().catch(() => {
+      if (active) setSearching(false)
+    })
+    return () => {
+      active = false
+    }
+  }, [debouncedQuery, open, safeRefreshToken, target])
+
+  const available = useMemo(
+    () => uniqueRelationOptions(results).filter((option) => !selectedIds.includes(option.value)).slice(0, 25),
+    [results, selectedIds]
+  )
+
+  function addOption(option: RelationOption) {
+    setLabelById((current) => ({ ...current, [option.value]: option.label }))
+    if (!selectedIds.includes(option.value)) {
+      onChange([...selectedIds, option.value].map(Number))
+    }
+    setQuery("")
+  }
+
+  function removeId(id: string) {
+    onChange(selectedIds.filter((selected) => selected !== id).map(Number))
+  }
+
+  const common =
+    "min-h-11 w-full rounded-md border bg-[var(--card)] px-3 py-2 text-base leading-tight text-[var(--text)] shadow-sm transition-colors duration-150 placeholder:text-[var(--gray-400)] hover:border-[var(--primary-400)] focus:border-[var(--primary-500)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-100)] disabled:cursor-not-allowed disabled:bg-[var(--gray-100)] disabled:text-[var(--gray-500)] sm:text-sm"
+  const stateClass = error
+    ? "border-red-300 focus:border-red-500 focus:ring-red-100"
+    : "border-[var(--border)]"
+  const showEmptyState = open && !searching && available.length === 0
+
+  return (
+    <div>
+      {selectedIds.length ? (
+        <div className="mb-2 flex flex-wrap gap-1.5">
+          {selectedIds.map((id) => (
+            <span
+              key={`${fieldName}-chip-${id}`}
+              className="inline-flex items-center gap-1 rounded-full border border-[var(--primary-300)] bg-[var(--primary-300)]/30 px-2.5 py-1 text-xs font-medium text-[var(--text)]"
+            >
+              {labelById[id] || `#${id}`}
+              {!disabled ? (
+                <button
+                  type="button"
+                  aria-label={`Remover ${labelById[id] || id}`}
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => removeId(id)}
+                  className="inline-flex h-4 w-4 items-center justify-center rounded-full text-[var(--gray-600)] transition hover:bg-[var(--gray-200)] hover:text-[var(--text)]"
+                >
+                  <X className="h-3 w-3" aria-hidden="true" />
+                </button>
+              ) : null}
+            </span>
+          ))}
+        </div>
+      ) : null}
+
+      <div className="relative">
+        <Search
+          aria-hidden="true"
+          className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--gray-400)]"
+        />
+        <input
+          type="text"
+          role="combobox"
+          aria-autocomplete="list"
+          aria-controls={listboxId}
+          aria-expanded={open}
+          aria-invalid={!!error}
+          value={query}
+          onChange={(e) => {
+            setQuery(e.target.value)
+            setOpen(true)
+          }}
+          onFocus={() => setOpen(true)}
+          onBlur={() => window.setTimeout(() => setOpen(false), 150)}
+          onKeyDown={(e) => {
+            if (e.key === "Escape") setOpen(false)
+          }}
+          className={`${common} ${stateClass} pl-9`}
+          placeholder={placeholder || "Pesquisar e adicionar..."}
+          disabled={disabled}
+        />
+        {open && !disabled ? (
+          <div
+            id={listboxId}
+            role="listbox"
+            className="absolute z-30 mt-1 max-h-72 w-full overflow-auto rounded-md border border-[var(--border)] bg-[var(--card)] py-1 text-sm shadow-lg"
+          >
+            {searching ? (
+              <div className="flex items-center gap-2 px-3 py-2 text-[var(--gray-600)]">
+                <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                A pesquisar...
+              </div>
+            ) : null}
+            {!searching &&
+              available.map((option) => (
+                <button
+                  key={`${fieldName}-opt-${option.value}`}
+                  type="button"
+                  role="option"
+                  aria-selected={false}
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => addOption(option)}
+                  className="block w-full px-3 py-2 text-left text-[var(--text)] transition hover:bg-[var(--gray-100)] focus:bg-[var(--gray-100)] focus:outline-none"
+                >
+                  {option.label}
+                </button>
+              ))}
+            {showEmptyState ? (
+              <div className="px-3 py-2 text-[var(--gray-500)]">
+                {debouncedQuery ? "Nenhum registo encontrado." : "Digite para pesquisar."}
+              </div>
+            ) : null}
+          </div>
+        ) : null}
+      </div>
+    </div>
+  )
+}
+
 function fieldToZod(field: FormField): z.ZodTypeAny {
   const required = field.required
   let base: z.ZodTypeAny
@@ -375,6 +581,11 @@ function fieldToZod(field: FormField): z.ZodTypeAny {
       break
     case "array-string":
       base = required ? z.array(z.string()).min(1, "Informe pelo menos um valor") : z.array(z.string())
+      break
+    case "array-relation":
+      base = required
+        ? z.array(z.number()).min(1, "Selecione pelo menos um")
+        : z.array(z.number())
       break
     default:
       base = required ? z.string().trim().min(1, "Campo obrigatório") : z.string()
@@ -408,6 +619,21 @@ function renderInput(
   const widget = opts?.widget
 
   if (opts?.relationTarget) {
+    if (field.type === "array-relation") {
+      return (
+        <SearchableMultiSelect
+          fieldName={field.name}
+          value={value}
+          onChange={onChange}
+          target={opts.relationTarget}
+          initialOptions={opts.relationOptions}
+          readOnly={disabled}
+          error={error}
+          placeholder={placeholder}
+          safeRefreshToken={opts.safeRefreshToken}
+        />
+      )
+    }
     return (
       <SearchableRelationSelect
         fieldName={field.name}
@@ -589,8 +815,10 @@ function buildFallbackSpecFromOptions(metadata: any, method: Method, endpoint: s
 
     const rawType = String(desc.type || "")
     const relationTarget = relationTargetForField(name, endpoint)
-    const type =
-      relationTarget && (metadataLooksLikeRelation(rawType) || enumValues.length)
+    const isMultipleRelation = relationTarget != null && desc.multiple === true
+    const type: FormField["type"] = isMultipleRelation
+      ? "array-relation"
+      : relationTarget && (metadataLooksLikeRelation(rawType) || enumValues.length)
         ? "integer"
         : enumValues.length
           ? "select"

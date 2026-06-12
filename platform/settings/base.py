@@ -1432,6 +1432,9 @@ REST_FRAMEWORK = {
         else "rest_framework.schemas.openapi.AutoSchema"
     ),
     "EXCEPTION_HANDLER": "api.v1.exceptions.custom_exception_handler",
+    # Sinaliza M2M (`multiple: true`) no OPTIONS para o frontend gerar
+    # seletores de múltiplos (pesquisar + adicionar/remover).
+    "DEFAULT_METADATA_CLASS": "api.core.metadata.SubstratoMetadata",
     # Habilita escopos de throttling; usamos para login.
     "DEFAULT_THROTTLE_CLASSES": [
         "rest_framework.throttling.ScopedRateThrottle",
