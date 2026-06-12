@@ -1,4 +1,5 @@
 import { canonicalModuleGroupKey } from "@/lib/modules"
+import { canonicalCollectionPath } from "@/lib/openapi/endpointResolver"
 import {
   educationResourceKeyFromEndpoint,
   normalizeEducationEndpoint,
@@ -4646,8 +4647,20 @@ export function getResourceFormConfig(
   const ep = normalizeEndpoint(endpoint)
 
   if (g === "clinical" || g === "clinico" || g === "clínico") {
-    if (r === "labrequest" || ep === "/clinical/labrequest/") return clinicalLabRequestConfig()
-    if (r === "occupational_profile" || ep === "/clinical/occupational_profile/") return clinicalOccupationalProfileConfig()
+    // As rotas usam aliases com hífen (ex.: /clinical/lab-requests/);
+    // canonicaliza antes de comparar com o endpoint canónico.
+    const epc = canonicalCollectionPath(ep)
+    const rc = r.replace(/[-_]/g, "")
+    if (rc === "labrequest" || rc === "labrequests" || epc === "/clinical/labrequest/") {
+      return clinicalLabRequestConfig()
+    }
+    if (
+      rc === "occupationalprofile" ||
+      rc === "occupationalprofiles" ||
+      epc === "/clinical/occupational_profile/"
+    ) {
+      return clinicalOccupationalProfileConfig()
+    }
     return null
   }
 
