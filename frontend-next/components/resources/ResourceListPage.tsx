@@ -14,12 +14,14 @@ import useAuthGuard from "@/hooks/useAuthGuard"
 import { useAuth } from "@/hooks/useAuth"
 import { useLanguage } from "@/hooks/useLanguage"
 import useDebounce from "@/hooks/useDebounce"
+import { useRelationLabels } from "@/hooks/useRelationLabels"
 import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { apiFetchList } from "@/lib/api"
 import { buildListFields, type FormField } from "@/lib/openapi/formBuilder"
 import { fieldLabel } from "@/lib/ui/fieldLabels"
 import { canManageUserByHierarchy, GROUPS, userHasAnyGroup } from "@/lib/rbac"
 import { createResourceActionLabel } from "@/lib/resources/createLabels"
+import { relationTargetForField } from "@/lib/resources/relationOptions"
 
 type Row = Record<string, any>
 
@@ -452,6 +454,9 @@ export default function ResourceListPage({
     [serverPaginated, totalPages, visibleData.length, pageSize]
   )
 
+  // Resolve FKs (sector, exames, etc.) para nomes nas colunas da página atual.
+  const { resolve: resolveRelation } = useRelationLabels(normalizedEndpoint, pagedVisibleData)
+
   const columns = useMemo(
     () => {
       const codeCell = (row: Row) => {
@@ -491,7 +496,12 @@ export default function ResourceListPage({
           header: labelByField.get(key) || fieldLabel({ endpoint: normalizedEndpoint, name: key }),
           render: (row: Row) => {
             if (isCodeColumn) return codeCell(row)
-            const formatted = formatListValue(key, row?.[key])
+            // Se a coluna é uma FK (escalar ou M2M), mostra o nome resolvido;
+            // senão, a formatação genérica.
+            const hasRelation = !!relationTargetForField(key, normalizedEndpoint)
+            const formatted = hasRelation
+              ? resolveRelation(key, row?.[key], (value) => formatListValue(key, value))
+              : formatListValue(key, row?.[key])
             if (formatted.length > 120) {
               return (
                 <span title={formatted} className="block max-w-[340px] truncate">
@@ -505,7 +515,7 @@ export default function ResourceListPage({
         }
       })
     },
-    [isIdentityUserResource, listFields, normalizedEndpoint, rowHref, t, user, visibleData]
+    [isIdentityUserResource, listFields, normalizedEndpoint, resolveRelation, rowHref, t, user, visibleData]
   )
 
   if (loading) return null

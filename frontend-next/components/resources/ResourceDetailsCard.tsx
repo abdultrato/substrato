@@ -1,15 +1,9 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useMemo } from "react"
 
 import { useLanguage } from "@/hooks/useLanguage"
-import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
-import { apiFetch } from "@/lib/api"
-import {
-  relationOptionFromRow,
-  relationTargetForField,
-  type RelationTarget,
-} from "@/lib/resources/relationOptions"
+import { useRelationLabels } from "@/hooks/useRelationLabels"
 import { fieldLabel, isInternalField } from "@/lib/ui/fieldLabels"
 
 function readableObjectLabel(value: Record<string, any>): string {
@@ -39,23 +33,6 @@ function readableObjectLabel(value: Record<string, any>): string {
   }
 
   return ""
-}
-
-function relationIdFromScalar(value: any): string | null {
-  if (typeof value === "number") return Number.isFinite(value) ? String(value) : null
-  if (typeof value !== "string") return null
-  const text = value.trim()
-  return /^\d+$/.test(text) ? text : null
-}
-
-function relationLookupKey(fieldName: string, value: any): string | null {
-  const id = relationIdFromScalar(value)
-  return id ? `${fieldName}:${id}` : null
-}
-
-function relationDetailEndpoint(target: RelationTarget, id: string): string {
-  const base = target.endpoint.split("?")[0].replace(/\/?$/, "/")
-  return `${base}${encodeURIComponent(id)}/`
 }
 
 function normalizeEndpointPath(value: string): string {
@@ -140,8 +117,6 @@ export default function ResourceDetailsCard({
   data: Record<string, any>
 }) {
   const { tr } = useLanguage()
-  const safeRefreshToken = useSafeDataRefreshSignal()
-  const [relationLabels, setRelationLabels] = useState<Record<string, string>>({})
   const showReceptionCheckinAudit = normalizeEndpointPath(endpoint) === "/reception/checkin/"
   const entries = useMemo(
     () =>
@@ -153,79 +128,15 @@ export default function ResourceDetailsCard({
         }),
     [data, showReceptionCheckinAudit]
   )
-  const relationLookups = useMemo(() => {
-    const out: Array<{ key: string; id: string; target: RelationTarget }> = []
-    for (const [fieldName, value] of entries) {
-      const target = relationTargetForField(fieldName, endpoint)
-      if (!target) continue
-      // Suporta tanto FK escalar (ex.: sector=40) como M2M/array de FKs
-      // (ex.: painel.tests=[11,12]) — resolve cada ID para o seu nome.
-      const items = Array.isArray(value) ? value : [value]
-      for (const item of items) {
-        const id = relationIdFromScalar(item)
-        if (id) out.push({ key: `${fieldName}:${id}`, id, target })
-      }
-    }
-    return out
-  }, [entries, endpoint])
+  // Resolve FKs escalares e M2M/array (ex.: sector, painel.tests) para nomes.
+  // Passa apenas os campos visíveis para não buscar relações ocultas.
+  const visibleRecord = useMemo(() => Object.fromEntries(entries), [entries])
+  const { resolve } = useRelationLabels(endpoint, useMemo(() => [visibleRecord], [visibleRecord]))
 
-  useEffect(() => {
-    let mounted = true
-
-    if (!relationLookups.length) return
-
-    async function loadRelationLabels() {
-      const loaded: Record<string, string> = {}
-      await Promise.all(
-        relationLookups.map(async ({ key, id, target }) => {
-          try {
-            const row = await apiFetch<Record<string, any>>(relationDetailEndpoint(target, id), {
-              clientCache: safeRefreshToken === 0,
-              clientCacheTtlMs: 60000,
-            })
-            const option = relationOptionFromRow(row, target)
-            if (option) loaded[key] = option.label
-          } catch {
-            // Keep the original scalar visible when the relation endpoint is unavailable.
-          }
-        })
-      )
-
-      // Merge em vez de substituir: não apaga rótulos já resolvidos quando o
-      // efeito volta a correr (ex.: refresh em segundo plano).
-      if (mounted && Object.keys(loaded).length) {
-        setRelationLabels((current) => ({ ...current, ...loaded }))
-      }
-    }
-
-    loadRelationLabels().catch(() => {
-      // Mantém os rótulos já resolvidos mesmo se uma resolução falhar.
-    })
-
-    return () => {
-      mounted = false
-    }
-  }, [relationLookups, safeRefreshToken])
-
-  // Valor a apresentar: resolve FKs (escalar e M2M/array) para nomes legíveis,
-  // caindo para a formatação genérica quando não há relação ou ainda não foi
-  // carregada.
   function renderEntryValue(fieldName: string, value: any): string {
-    if (Array.isArray(value) && value.length) {
-      const target = relationTargetForField(fieldName, endpoint)
-      if (target) {
-        const MAX = 12
-        const labels = value.slice(0, MAX).map((item) => {
-          const id = relationIdFromScalar(item)
-          const resolved = id ? relationLabels[`${fieldName}:${id}`] : undefined
-          return resolved || fmtValue(fieldName, item, tr, endpoint)
-        })
-        if (value.length > MAX) labels.push(`+${value.length - MAX} ${tr("itens")}`)
-        return labels.join(", ")
-      }
-    }
-    const resolvedLabel = relationLabels[relationLookupKey(fieldName, value) || ""]
-    return resolvedLabel || fmtValue(fieldName, value, tr, endpoint)
+    return resolve(fieldName, value, (item) => fmtValue(fieldName, item, tr, endpoint), {
+      more: (count) => `+${count} ${tr("itens")}`,
+    })
   }
 
   return (
