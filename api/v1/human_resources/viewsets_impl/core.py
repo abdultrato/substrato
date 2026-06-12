@@ -122,6 +122,86 @@ class EmployeeViewSet(TenantScopedModelViewSet):
         employee = self.get_object()
         return self._set_employee_status(employee, Employee.Status.ACTIVE)
 
+    def _workflow(self, request, fn, **kwargs):
+        from apps.human_resources.services.employee_workflow import EmployeeWorkflowService
+
+        employee = self.get_object()
+        try:
+            result = getattr(EmployeeWorkflowService, fn)(employee, user=getattr(request, "user", None), **kwargs)
+        except DjangoValidationError as err:
+            raise ValidationError(
+                getattr(err, "message_dict", None) or getattr(err, "messages", None) or str(err)
+            ) from err
+        employee.refresh_from_db()
+        payload = self.get_serializer(employee).data
+        if fn == "iniciar_processo_disciplinar":
+            payload = {"employee": payload, "disciplinary_process_id": result.id, "disciplinary_process_code": result.custom_id}
+        return Response(payload)
+
+    @action(detail=True, methods=["post"], url_path="iniciar-processo-disciplinar", url_name="iniciar-processo-disciplinar")
+    def iniciar_processo_disciplinar(self, request, pk=None):
+        """Abre um processo disciplinar (incidente, gravidade e descrição)."""
+        data = request.data or {}
+        return self._workflow(
+            request,
+            "iniciar_processo_disciplinar",
+            incident_type=data.get("incident_type") or "",
+            severity=data.get("severity") or "",
+            description=data.get("description") or "",
+            incident_date=data.get("incident_date") or None,
+            reported_by=data.get("reported_by") or "",
+        )
+
+    @action(detail=True, methods=["post"], url_path="promover", url_name="promover")
+    def promover(self, request, pk=None):
+        """Promove para novo cargo (exige antiguidade e sem processo aberto)."""
+        from apps.human_resources.models.job_title import JobTitle
+
+        data = request.data or {}
+        role = JobTitle.objects.filter(pk=data.get("role")).first() if data.get("role") else None
+        return self._workflow(
+            request,
+            "promover",
+            role=role,
+            salary_increase=data.get("salary_increase"),
+            reason=data.get("reason") or "",
+        )
+
+    @action(detail=True, methods=["post"], url_path="dar-aumento", url_name="dar-aumento")
+    def dar_aumento(self, request, pk=None):
+        """Aumento salarial (progressão) com registo no histórico salarial."""
+        data = request.data or {}
+        return self._workflow(request, "dar_aumento", amount=data.get("amount"), reason=data.get("reason") or "")
+
+    @action(detail=True, methods=["post"], url_path="revisao-salarial", url_name="revisao-salarial")
+    def revisao_salarial(self, request, pk=None):
+        """Revisão salarial (pode reduzir); motivo obrigatório; vai ao histórico."""
+        data = request.data or {}
+        return self._workflow(
+            request,
+            "revisao_salarial",
+            nominal_salary=data.get("nominal_salary"),
+            reason=data.get("reason") or "",
+        )
+
+    @action(detail=True, methods=["post"], url_path="aposentar", url_name="aposentar")
+    def aposentar(self, request, pk=None):
+        """Reforma o funcionário (gera registo de desligamento)."""
+        data = request.data or {}
+        return self._workflow(request, "aposentar", date=data.get("date") or None, reason=data.get("reason") or "")
+
+    @action(detail=True, methods=["post"], url_path="demitir", url_name="demitir")
+    def demitir(self, request, pk=None):
+        """Demite o funcionário (motivo obrigatório; gera desligamento)."""
+        data = request.data or {}
+        return self._workflow(request, "demitir", reason=data.get("reason") or "", date=data.get("date") or None)
+
+    @action(detail=True, methods=["post"], url_path="expulsar", url_name="expulsar")
+    def expulsar(self, request, pk=None):
+        """Despedimento por justa causa (exige processo disciplinar concluído)."""
+        data = request.data or {}
+        return self._workflow(request, "expulsar", reason=data.get("reason") or "")
+
     @action(detail=True, methods=["post"], url_path="deactivate", url_name="deactivate")
     def deactivate_en(self, request, pk=None):
         return self.deactivate(request, pk=pk)

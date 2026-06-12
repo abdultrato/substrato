@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
-import { ArrowLeft, Edit, Trash2 } from "lucide-react"
+import { ArrowLeft, Edit } from "lucide-react"
 import AppLayout from "@/components/layout/AppLayout"
 import Card from "@/components/ui/Card"
 import { apiFetch } from "@/lib/api"
@@ -66,7 +66,6 @@ export default function EmployeeDetailPage() {
   const [emp, setEmp] = useState<Employee | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [deleting, setDeleting] = useState(false)
 
   useEffect(() => {
     if (!id) return
@@ -77,15 +76,46 @@ export default function EmployeeDetailPage() {
       .finally(() => setLoading(false))
   }, [id])
 
-  async function handleDelete() {
-    if (!confirm("Tem a certeza que deseja eliminar este funcionário?")) return
-    setDeleting(true)
+  const [panel, setPanel] = useState<string | null>(null)
+  const [busy, setBusy] = useState(false)
+  const [feedback, setFeedback] = useState<string | null>(null)
+  const [actionError, setActionError] = useState<string | null>(null)
+  const [form, setForm] = useState<Record<string, string>>({})
+  const [roles, setRoles] = useState<Array<{ id: number; name: string }>>([])
+
+  useEffect(() => {
+    if (panel !== "promover" || roles.length) return
+    apiFetch<any>(`/human_resources/role/?page_size=100`)
+      .then((res) => setRoles(Array.isArray(res?.results) ? res.results : Array.isArray(res) ? res : []))
+      .catch(() => setRoles([]))
+  }, [panel, roles.length])
+
+  function abrirPainel(nome: string) {
+    setPanel((current) => (current === nome ? null : nome))
+    setForm({})
+    setActionError(null)
+    setFeedback(null)
+  }
+
+  async function executar(action: string, body: Record<string, any>, successMessage: string, confirmText?: string) {
+    if (confirmText && !confirm(confirmText)) return
+    setBusy(true)
+    setActionError(null)
+    setFeedback(null)
     try {
-      await apiFetch(`/human_resources/employee/${id}/`, { method: "DELETE" })
-      router.push("/human_resources/employees")
+      await apiFetch(`/human_resources/employee/${id}/${action}/`, {
+        method: "POST",
+        body: JSON.stringify(body),
+      })
+      const updated = await apiFetch<Employee>(`/human_resources/employee/${id}/`, { clientCache: false })
+      setEmp(updated)
+      setPanel(null)
+      setForm({})
+      setFeedback(successMessage)
     } catch (e: any) {
-      alert(e?.message ?? "Erro ao eliminar funcionário.")
-      setDeleting(false)
+      setActionError(e?.message ?? "Falha ao executar a ação.")
+    } finally {
+      setBusy(false)
     }
   }
 
@@ -142,15 +172,138 @@ export default function EmployeeDetailPage() {
             >
               <Edit size={14} /> Editar
             </Link>
-            <button
-              onClick={handleDelete}
-              disabled={deleting}
-              className="inline-flex items-center gap-2 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-medium text-rose-700 transition hover:bg-rose-100 disabled:opacity-50"
-            >
-              <Trash2 size={14} /> Eliminar
-            </button>
           </div>
         </div>
+
+        {/* Ações de RH (fluxos reais: nunca eliminar o funcionário) */}
+        <div className="flex flex-wrap gap-2">
+          {[
+            ["disciplinar", "Iniciar processo disciplinar"],
+            ["promover", "Promover"],
+            ["aumento", "Dar aumento salarial"],
+            ["revisao", "Revisão salarial"],
+            ["aposentar", "Aposentar"],
+            ["demitir", "Demitir"],
+            ["expulsar", "Expulsar (justa causa)"],
+          ].map(([key, label]) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => abrirPainel(key)}
+              className={`rounded-lg border px-3 py-1.5 text-xs font-semibold transition ${
+                panel === key
+                  ? "border-[var(--primary-500)] bg-[var(--primary-600)] text-white"
+                  : ["demitir", "expulsar"].includes(key)
+                    ? "border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100"
+                    : "border-border bg-background text-foreground-2 hover:text-foreground"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
+        {feedback ? (
+          <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm text-emerald-800">{feedback}</div>
+        ) : null}
+        {actionError ? (
+          <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm text-amber-800">{actionError}</div>
+        ) : null}
+
+        {panel ? (
+          <div className="space-y-3 rounded-2xl border border-border bg-card p-4 shadow-sm">
+            {panel === "disciplinar" ? (
+              <>
+                <div className="text-sm font-semibold text-foreground">Iniciar processo disciplinar</div>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <input className="rounded-md border border-border bg-background px-2 py-1.5 text-sm" placeholder="Tipo de incidente (ex.: falta injustificada)" value={form.incident_type || ""} onChange={(e) => setForm((f) => ({ ...f, incident_type: e.target.value }))} />
+                  <select className="rounded-md border border-border bg-background px-2 py-1.5 text-sm" value={form.severity || "MODERADA"} onChange={(e) => setForm((f) => ({ ...f, severity: e.target.value }))}>
+                    <option value="LEVE">Leve</option>
+                    <option value="MODERADA">Moderada</option>
+                    <option value="GRAVE">Grave</option>
+                    <option value="GRAVISSIMA">Gravíssima</option>
+                  </select>
+                  <input type="date" className="rounded-md border border-border bg-background px-2 py-1.5 text-sm" value={form.incident_date || ""} onChange={(e) => setForm((f) => ({ ...f, incident_date: e.target.value }))} />
+                </div>
+                <textarea className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm" rows={3} placeholder="Descrição do incidente (obrigatório)" value={form.description || ""} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} />
+                <button type="button" disabled={busy} onClick={() => executar("iniciar-processo-disciplinar", { incident_type: form.incident_type, severity: form.severity || "MODERADA", description: form.description, incident_date: form.incident_date || undefined }, "Processo disciplinar aberto. Promoções e aumentos ficam bloqueados até ao encerramento.")} className="rounded-lg bg-[var(--primary-600)] px-3 py-2 text-xs font-semibold text-white transition hover:bg-[var(--primary-700)] disabled:opacity-60">Abrir processo</button>
+              </>
+            ) : null}
+
+            {panel === "promover" ? (
+              <>
+                <div className="text-sm font-semibold text-foreground">Promover funcionário</div>
+                <div className="text-xs text-muted-foreground">Exige antiguidade mínima de mudança de carreira e ausência de processo disciplinar aberto. O aumento associado soma-se ao salário e fica no histórico salarial.</div>
+                <div className="grid gap-2 sm:grid-cols-3">
+                  <select className="rounded-md border border-border bg-background px-2 py-1.5 text-sm" value={form.role || ""} onChange={(e) => setForm((f) => ({ ...f, role: e.target.value }))}>
+                    <option value="">Novo cargo...</option>
+                    {roles.map((r) => (
+                      <option key={r.id} value={r.id}>{r.name}</option>
+                    ))}
+                  </select>
+                  <input type="number" min="0" className="rounded-md border border-border bg-background px-2 py-1.5 text-sm" placeholder="Aumento associado (opcional)" value={form.salary_increase || ""} onChange={(e) => setForm((f) => ({ ...f, salary_increase: e.target.value }))} />
+                  <input className="rounded-md border border-border bg-background px-2 py-1.5 text-sm" placeholder="Motivo (opcional)" value={form.reason || ""} onChange={(e) => setForm((f) => ({ ...f, reason: e.target.value }))} />
+                </div>
+                <button type="button" disabled={busy} onClick={() => executar("promover", { role: form.role ? Number(form.role) : null, salary_increase: form.salary_increase || undefined, reason: form.reason }, "Funcionário promovido com registo no histórico salarial.")} className="rounded-lg bg-[var(--primary-600)] px-3 py-2 text-xs font-semibold text-white transition hover:bg-[var(--primary-700)] disabled:opacity-60">Promover</button>
+              </>
+            ) : null}
+
+            {panel === "aumento" ? (
+              <>
+                <div className="text-sm font-semibold text-foreground">Dar aumento salarial</div>
+                <div className="text-xs text-muted-foreground">Exige antiguidade mínima de progressão e ausência de processo disciplinar aberto; registado no histórico salarial.</div>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <input type="number" min="0" className="rounded-md border border-border bg-background px-2 py-1.5 text-sm" placeholder="Valor do aumento" value={form.amount || ""} onChange={(e) => setForm((f) => ({ ...f, amount: e.target.value }))} />
+                  <input className="rounded-md border border-border bg-background px-2 py-1.5 text-sm" placeholder="Motivo (ex.: mérito anual)" value={form.reason || ""} onChange={(e) => setForm((f) => ({ ...f, reason: e.target.value }))} />
+                </div>
+                <button type="button" disabled={busy} onClick={() => executar("dar-aumento", { amount: form.amount, reason: form.reason }, "Aumento aplicado e registado no histórico salarial.")} className="rounded-lg bg-[var(--primary-600)] px-3 py-2 text-xs font-semibold text-white transition hover:bg-[var(--primary-700)] disabled:opacity-60">Aplicar aumento</button>
+              </>
+            ) : null}
+
+            {panel === "revisao" ? (
+              <>
+                <div className="text-sm font-semibold text-foreground">Revisão salarial</div>
+                <div className="text-xs text-muted-foreground">Fixa um novo salário nominal (pode reduzir) e zera aumentos acumulados. Motivo obrigatório; tudo fica no histórico salarial.</div>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <input type="number" min="0" className="rounded-md border border-border bg-background px-2 py-1.5 text-sm" placeholder="Novo salário nominal" value={form.nominal_salary || ""} onChange={(e) => setForm((f) => ({ ...f, nominal_salary: e.target.value }))} />
+                  <input className="rounded-md border border-border bg-background px-2 py-1.5 text-sm" placeholder="Motivo (obrigatório)" value={form.reason || ""} onChange={(e) => setForm((f) => ({ ...f, reason: e.target.value }))} />
+                </div>
+                <button type="button" disabled={busy} onClick={() => executar("revisao-salarial", { nominal_salary: form.nominal_salary, reason: form.reason }, "Revisão salarial aplicada e registada no histórico.", "Confirmar a revisão salarial? Esta operação substitui o salário de referência.")} className="rounded-lg bg-[var(--primary-600)] px-3 py-2 text-xs font-semibold text-white transition hover:bg-[var(--primary-700)] disabled:opacity-60">Aplicar revisão</button>
+              </>
+            ) : null}
+
+            {panel === "aposentar" ? (
+              <>
+                <div className="text-sm font-semibold text-foreground">Aposentar funcionário</div>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <input type="date" className="rounded-md border border-border bg-background px-2 py-1.5 text-sm" value={form.date || ""} onChange={(e) => setForm((f) => ({ ...f, date: e.target.value }))} />
+                  <input className="rounded-md border border-border bg-background px-2 py-1.5 text-sm" placeholder="Motivo (opcional)" value={form.reason || ""} onChange={(e) => setForm((f) => ({ ...f, reason: e.target.value }))} />
+                </div>
+                <button type="button" disabled={busy} onClick={() => executar("aposentar", { date: form.date || undefined, reason: form.reason }, "Funcionário reformado; desligamento registado.", "Confirmar a aposentação deste funcionário?")} className="rounded-lg bg-[var(--primary-600)] px-3 py-2 text-xs font-semibold text-white transition hover:bg-[var(--primary-700)] disabled:opacity-60">Aposentar</button>
+              </>
+            ) : null}
+
+            {panel === "demitir" ? (
+              <>
+                <div className="text-sm font-semibold text-foreground">Demitir funcionário</div>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <input className="rounded-md border border-border bg-background px-2 py-1.5 text-sm" placeholder="Motivo (obrigatório)" value={form.reason || ""} onChange={(e) => setForm((f) => ({ ...f, reason: e.target.value }))} />
+                  <input type="date" className="rounded-md border border-border bg-background px-2 py-1.5 text-sm" value={form.date || ""} onChange={(e) => setForm((f) => ({ ...f, date: e.target.value }))} />
+                </div>
+                <button type="button" disabled={busy} onClick={() => executar("demitir", { reason: form.reason, date: form.date || undefined }, "Funcionário demitido; desligamento registado.", "Confirmar a demissão deste funcionário?")} className="rounded-lg bg-rose-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-rose-500 disabled:opacity-60">Demitir</button>
+              </>
+            ) : null}
+
+            {panel === "expulsar" ? (
+              <>
+                <div className="text-sm font-semibold text-foreground">Expulsar (despedimento por justa causa)</div>
+                <div className="text-xs text-rose-700">Exige processo disciplinar concluído com sanção de despedimento — sem ele, a operação é recusada.</div>
+                <input className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm" placeholder="Motivo / referência do processo" value={form.reason || ""} onChange={(e) => setForm((f) => ({ ...f, reason: e.target.value }))} />
+                <button type="button" disabled={busy} onClick={() => executar("expulsar", { reason: form.reason }, "Funcionário expulso por justa causa; desligamento registado.", "Confirmar a expulsão por justa causa?")} className="rounded-lg bg-rose-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-rose-500 disabled:opacity-60">Expulsar</button>
+              </>
+            ) : null}
+          </div>
+        ) : null}
 
         <div className="grid gap-5 lg:grid-cols-2">
 
