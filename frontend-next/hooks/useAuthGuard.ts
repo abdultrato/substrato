@@ -29,7 +29,8 @@ export default function useAuthGuard ( options: Options = {} ) {
 
         // página privada sem login
         if ( requireAuth && !authenticated ) {
-            router.replace( `${redirectTo}?next=${pathname}` )
+            const search = typeof window !== "undefined" ? window.location.search : ""
+            router.replace( `${redirectTo}?next=${encodeURIComponent( `${pathname}${search}` )}` )
             return
         }
 

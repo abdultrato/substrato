@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { useMemo, useState, type ReactNode } from "react"
-import { useParams, usePathname, useRouter } from "next/navigation"
+import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation"
 import { useQuery } from "@tanstack/react-query"
 
 import AppLayout from "@/components/layout/AppLayout"
@@ -161,8 +161,20 @@ export function GeneratedResourceListPage({
   const ctx = useEndpointContext(endpoint)
   const { t, tr } = useLanguage()
   const pathname = usePathname()
+  const searchParams = useSearchParams()
   const basePath = stripTrailingSlash(pathname || "")
   const canList = hasOpenApiMethod(ctx.normalizedEndpoint, "get")
+  // Encaminha filtros vindos da URL da página (ex.: /requests?status=pendente)
+  // para a API de listagem; parâmetros de controlo da própria lista ficam fora.
+  const listEndpoint = useMemo(() => {
+    const params = new URLSearchParams()
+    searchParams?.forEach((value, key) => {
+      if (["page", "page_size", "search", "ordering"].includes(key)) return
+      if (value) params.set(key, value)
+    })
+    const qs = params.toString()
+    return qs ? `${ctx.normalizedEndpoint}?${qs}` : ctx.normalizedEndpoint
+  }, [ctx.normalizedEndpoint, searchParams])
   const canCreate = allowCreate && hasOpenApiMethod(ctx.normalizedEndpoint, "post")
   const groupLabel = tr(ctx.groupLabel)
   const resourceLabel = tr(ctx.resourceLabel)
@@ -191,7 +203,7 @@ export function GeneratedResourceListPage({
   return (
     <ResourceListPage
       title={`${groupLabel} / ${resourceLabel}`}
-      endpoint={ctx.normalizedEndpoint}
+      endpoint={listEndpoint}
       groupLabel={groupLabel}
       resourceLabel={resourceLabel}
       adminListHref={ctx.adminListHref}

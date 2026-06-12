@@ -9,6 +9,7 @@ import useAuthGuard from "@/hooks/useAuthGuard";
 import useAuth from "@/hooks/useAuth";
 import { useLanguage } from "@/hooks/useLanguage";
 import { getDefaultWorkspaceHref } from "@/lib/rbac";
+import { getLastVisitedPath, isSafeInternalPath } from "@/lib/lastVisited";
 import { LOGO_DARK_SRC } from "@/lib/brand";
 
 type View = "login" | "reset_request" | "reset_confirm";
@@ -100,10 +101,12 @@ export default function LoginPage() {
                 return;
             }
             signIn(sessionUser);
-            const next =
+            const rawNext =
                 typeof window !== "undefined"
                     ? new URLSearchParams(window.location.search).get("next")
                     : null;
+            // Retoma a última página: ?next= (expiração/guard) ou registo local.
+            const next = isSafeInternalPath(rawNext) ? rawNext : getLastVisitedPath();
             router.push(next || getDefaultWorkspaceHref(sessionUser));
         } catch (err) {
             setError(err instanceof Error ? err.message : t("Utilizador ou palavra-passe inválidos.", "Invalid credentials."));

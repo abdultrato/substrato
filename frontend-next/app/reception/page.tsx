@@ -308,10 +308,10 @@ export default function RecepcaoPage() {
                             subtitle="Pendências que impactam diretamente o balcão."
                         >
                             <div className="space-y-3 text-sm">
-                                <IndicadorLinha label="Pacientes novos" value={workspace.summary.new_patients} />
-                                <IndicadorLinha label="Requisições pendentes" value={workspace.summary.pending_requests} />
-                                <IndicadorLinha label="Faturas em aberto" value={workspace.summary.open_invoices} />
-                                <IndicadorLinha label="Recibos gerados hoje" value={workspace.summary.receipts_generated_today} />
+                                <IndicadorLinha label="Pacientes novos" value={workspace.summary.new_patients} href="/patients" />
+                                <IndicadorLinha label="Requisições pendentes" value={workspace.summary.pending_requests} href="/requests?status=pendente" />
+                                <IndicadorLinha label="Faturas em aberto" value={workspace.summary.open_invoices} href="/billing/invoices?status=EMIT" />
+                                <IndicadorLinha label="Recibos gerados hoje" value={workspace.summary.receipts_generated_today} href="/payments/receipts" />
                             </div>
                         </Card>
 
@@ -436,14 +436,32 @@ function ResumoCard({
 function IndicadorLinha({
     label,
     value,
+    href,
 }: {
     label: string
     value: number | string
+    href?: string
 }) {
-    return (
-        <div className="flex items-center justify-between rounded-lg bg-muted px-3 py-1.5">
+    const content = (
+        <>
             <span className="text-muted-foreground">{label}</span>
             <span className="font-medium text-foreground">{value}</span>
+        </>
+    )
+    if (href) {
+        return (
+            <Link
+                href={href}
+                className="flex items-center justify-between rounded-lg bg-muted px-3 py-1.5 transition-colors hover:bg-[var(--gray-200)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-100)]"
+                title="Abrir listagem correspondente"
+            >
+                {content}
+            </Link>
+        )
+    }
+    return (
+        <div className="flex items-center justify-between rounded-lg bg-muted px-3 py-1.5">
+            {content}
         </div>
     )
 }

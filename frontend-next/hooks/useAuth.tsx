@@ -13,8 +13,10 @@ import {
     SessionUser,
     setSessionUser,
 } from "@/lib/session"
+import { usePathname } from "next/navigation"
 import { fetchCurrentUser } from "@/lib/auth"
 import { useIdleSession } from "@/hooks/useIdleSession"
+import { rememberLastVisitedPath } from "@/lib/lastVisited"
 
 interface AuthContextType {
     user: SessionUser | null
@@ -36,6 +38,14 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [user, setUser] = useState<SessionUser | null>(null)
     const [loading, setLoading] = useState(true)
+    const pathname = usePathname()
+
+    // Memoriza a última página visitada para retomar após fim de sessão.
+    useEffect(() => {
+        if (!user || !pathname) return
+        const search = typeof window !== "undefined" ? window.location.search : ""
+        rememberLastVisitedPath(`${pathname}${search}`)
+    }, [user, pathname])
 
     const refreshUser = useCallback(async () => {
         try {
