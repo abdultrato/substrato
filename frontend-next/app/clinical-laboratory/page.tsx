@@ -44,7 +44,8 @@ const PHASES: Phase[] = [
     items: [
       { href: "/laboratory/sample-reception", label: "Receção de amostras", desc: "Conferência e aceitação/rejeição das amostras colhidas", icon: PackageCheck },
       { href: "/laboratory/pedidos", label: "Pedidos", desc: "Amostras conferidas: iniciar processamento ou transferir", icon: ClipboardList },
-      { href: "/laboratory/worklist", label: "Listas de trabalho", desc: "Inserir, gravar e validar resultados; gerar PDF", icon: Beaker },
+      { href: "/laboratory/worklist", label: "Listas de trabalho", desc: "Inserir, gravar e validar resultados", icon: Beaker },
+      { href: "/laboratory/laudos", label: "Laudos", desc: "Requisições validadas: laudo PDF e notificação", icon: FileCheck2 },
     ],
   },
   {

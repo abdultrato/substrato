@@ -388,7 +388,13 @@ export default function LabWorklistPage() {
                       )}
 
                       {allValidated ? (
-                        <div className="pt-1">
+                        <div className="flex items-center gap-2 pt-1">
+                          <Link
+                            href="/laboratory/laudos"
+                            className="inline-flex h-9 items-center rounded-md border border-emerald-300 bg-emerald-50 px-3 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-100"
+                          >
+                            Ver em Laudos
+                          </Link>
                           <button
                             type="button"
                             onClick={() => abrirResultadoPdf(row.id, row.custom_id, row.patient_name).catch(() => setError("Falha ao gerar o PDF de resultados."))}

@@ -220,6 +220,8 @@ class LabRequestFilter(SafeFilterSet):
             return queryset.filter(
                 status__in=[ResultState.IN_ANALYSIS, ResultState.AWAITING_VALIDATION]
             )
+        if fase == "laudos":
+            return queryset.filter(status=ResultState.VALIDATED)
         if fase in {"recolheita", "repetir_colheita"}:
             return queryset.filter(items__deleted=False, items__sample_status=rejected).distinct()
         return queryset
