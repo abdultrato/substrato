@@ -210,6 +210,9 @@ class LabOrder(NoNameCoreModel):
     requesting_physician = models.ForeignKey(USER, db_column="requesting_physician_id",
                                              verbose_name="Médico solicitante", on_delete=models.PROTECT,
                                              related_name="+", null=True, blank=True)
+    requesting_company = models.ForeignKey("entidades.Company", db_column="requesting_company_id",
+                                           verbose_name="Companhia solicitante", on_delete=models.PROTECT,
+                                           related_name="+", null=True, blank=True)
     origin = models.CharField("Origem", db_column="origin", max_length=40, blank=True, default="",
                               help_text="Consulta, urgência, internamento, cirurgia, externo, etc.")
     priority = models.CharField("Prioridade", db_column="priority", max_length=10,

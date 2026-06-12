@@ -160,7 +160,7 @@ function fallbackSelectedRelationOption(value: any, target: RelationTarget): Rel
   }
 }
 
-function SearchableRelationSelect({
+export function SearchableRelationSelect({
   fieldName,
   value,
   onChange,
@@ -354,7 +354,7 @@ function SearchableRelationSelect({
   )
 }
 
-function SearchableMultiSelect({
+export function SearchableMultiSelect({
   fieldName,
   value,
   onChange,
