@@ -215,7 +215,11 @@ class LabRequestFilter(SafeFilterSet):
                 .distinct()
             )
         if fase == "trabalho":
-            return queryset.filter(status=ResultState.IN_ANALYSIS)
+            # Em processamento OU com resultados gravados a aguardar validação —
+            # a requisição só sai da lista de trabalho depois de validada.
+            return queryset.filter(
+                status__in=[ResultState.IN_ANALYSIS, ResultState.AWAITING_VALIDATION]
+            )
         if fase in {"recolheita", "repetir_colheita"}:
             return queryset.filter(items__deleted=False, items__sample_status=rejected).distinct()
         return queryset

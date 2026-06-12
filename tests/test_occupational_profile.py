@@ -244,3 +244,28 @@ def test_transferir_analise_sets_external_company():
     request.transferir_analise(company)
     request.refresh_from_db()
     assert request.external_executing_company_id == company.id
+
+
+@pytest.mark.django_db
+def test_fase_trabalho_inclui_aguardando_validacao():
+    from api.v1.clinical.filters import LabRequestFilter
+    from apps.clinical.models.lab_request import LabRequest
+    from domain.clinical.result_state import ResultState
+
+    tenant = _tenant()
+    patient = _patient(tenant)
+    exam = _exam(tenant, "Hemograma")
+
+    request = LabRequest.objects.create(tenant=tenant, patient=patient)
+    request.add_exam(exam)
+    request.validar()
+    request.registar_colheita()
+    for item in request.items.all():
+        item.receber_amostra()
+    request.iniciar_processamento()
+
+    # simula "gravar todos": status avança para aguardando_validacao
+    request.apply_status(ResultState.AWAITING_VALIDATION)
+
+    qs = LabRequestFilter().filter_fase(LabRequest.objects.all(), "fase", "trabalho")
+    assert request.id in set(qs.values_list("id", flat=True))
