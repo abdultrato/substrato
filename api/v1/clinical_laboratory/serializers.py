@@ -1,5 +1,7 @@
 """Serializers da API do Laboratório Clínico (LIS)."""
 
+from decimal import Decimal
+
 from rest_framework import serializers
 
 from apps.clinical_laboratory.models import (
@@ -67,7 +69,33 @@ class LabTestSerializer(serializers.ModelSerializer):
 
 
 class LabTestPanelSerializer(serializers.ModelSerializer):
-    Meta = _meta(LabTestPanel)
+    """O preço do pacote é derivado: soma dos preços dos exames incluídos.
+
+    Por isso ``package_price`` é só-leitura no formulário; é recalculado a
+    cada gravação a partir do M2M ``tests``.
+    """
+
+    class Meta:
+        model = LabTestPanel
+        fields = "__all__"
+        read_only_fields = CORE_READ_ONLY_FIELDS + ["package_price"]
+
+    @staticmethod
+    def _sync_package_price(instance):
+        total = sum((test.price for test in instance.tests.all()), Decimal("0.00"))
+        if instance.package_price != total:
+            instance.package_price = total
+            instance.save(update_fields=["package_price", "updated_at"])
+
+    def create(self, validated_data):
+        instance = super().create(validated_data)
+        self._sync_package_price(instance)
+        return instance
+
+    def update(self, instance, validated_data):
+        instance = super().update(instance, validated_data)
+        self._sync_package_price(instance)
+        return instance
 
 
 class LabOrderSerializer(serializers.ModelSerializer):

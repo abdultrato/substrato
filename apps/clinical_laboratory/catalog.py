@@ -246,6 +246,14 @@ def sync_legacy_lab_exams(tenant=None) -> dict:
     return stats
 
 
+def _sync_panel_price(panel) -> None:
+    """Preço do pacote = soma dos preços dos exames incluídos."""
+    total = sum((test.price for test in panel.tests.all()), Decimal("0.00"))
+    if panel.package_price != total:
+        panel.package_price = total
+        panel.save(update_fields=["package_price", "updated_at"])
+
+
 def seed_catalog(tenant, *, include_legacy: bool = True) -> dict:
     """Cria sectores, exames e painéis padrão para um tenant. Idempotente."""
     sectors: dict[str, LabSector] = {}
@@ -284,6 +292,7 @@ def seed_catalog(tenant, *, include_legacy: bool = True) -> dict:
         )
         if was_created:
             panel.tests.set([tests[c] for c in test_codes if c in tests])
+            _sync_panel_price(panel)
         created["panels"] += int(was_created)
 
     created["occupational_profiles"] = 0
@@ -292,13 +301,13 @@ def seed_catalog(tenant, *, include_legacy: bool = True) -> dict:
             tenant=tenant, code=code,
             defaults={
                 "name": name,
-                "package_price": Decimal(price),
                 "profile_type": LabTestPanel.ProfileType.OCCUPATIONAL,
                 "occupation": occupation,
             },
         )
         if was_created:
             profile.tests.set([tests[c] for c in test_codes if c in tests])
+            _sync_panel_price(profile)
         created["occupational_profiles"] += int(was_created)
 
     if include_legacy:
