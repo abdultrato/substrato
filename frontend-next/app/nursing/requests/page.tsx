@@ -133,7 +133,7 @@ export default function NursingRequestsPage() {
             return (
               <div className="space-y-1">
                 <span className="inline-flex items-center rounded-full bg-rose-100 px-2.5 py-1 text-[11px] font-semibold text-rose-800">
-                  Amostra rejeitada na receção
+                  Amostra rejeitada — não respeita os critérios de qualidade
                 </span>
                 {rejectedItems.map((item: any) => (
                   <div key={item.id} className="text-[11px] text-rose-700">
