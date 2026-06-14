@@ -217,10 +217,13 @@ def generate_results_pdf(request, apenas_validados=True) -> tuple[bytes, str]:
                 if not value:
                     raw_value = getattr(r, "result_value", None)
                     value = "-" if raw_value is None else str(raw_value)
+                # `reference` (propriedade do campo) devolve o intervalo formatado
+                # ou None. Não usar a relação reversa `referencias`: é um
+                # RelatedManager cujo str() vira "clinical.ClinicalReference.None"
+                # e vazava para o PDF.
                 reference_value = (
                     getattr(campo, "reference", None)
                     or getattr(campo, "referencia", None)
-                    or getattr(campo, "referencias", None)
                     or "-"
                 )
 

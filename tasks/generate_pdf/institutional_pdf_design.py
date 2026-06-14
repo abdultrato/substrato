@@ -47,9 +47,9 @@ logger = logging.getLogger("pdf.institutional")
 PAGE_SIZE = A5
 PDF_MARGIN = 0.5 * cm          # Margem mínima: 0.5cm
 PDF_HEADER_TOP_MARGIN = 2.0 * cm  # Header mínimo: 2cm
-PDF_BOTTOM_MARGIN = 0.5 * cm  # Footer mínimo: 0.5cm
-PDF_BODY_FONT_SIZE = 10       # Corpo: 10pt
-PDF_TITLE_FONT_SIZE = 11      # Títulos e destaques: 11pt bold
+PDF_BOTTOM_MARGIN = 1.5 * cm  # Reserva faixa de rodapé (assinaturas + linha + texto de página)
+PDF_BODY_FONT_SIZE = 9        # Corpo: 9pt (reduzido 1pt globalmente)
+PDF_TITLE_FONT_SIZE = 10      # Títulos e destaques: 10pt bold (reduzido 1pt globalmente)
 PDF_BODY_LEADING = 12
 PDF_TITLE_LEADING = 13
 
@@ -233,7 +233,7 @@ def append_fim_institucional(elements):
     )
 
     elements.append(Spacer(1, 0.35 * cm))
-    elements.append(Paragraph("Fim", style))
+    elements.append(Paragraph("Sem mais informação", style))
 
 # =========================================================
 # CANVAS INSTITUCIONAL COM NUMERAÇÃO + COMPRESSÃO
@@ -256,9 +256,12 @@ class InstitutionalNumberedCanvas(rl_canvas.Canvas):
         total = len(self._saved_page_states)
         now = timezone.localtime().strftime("%d/%m/%Y às %H:%M")
 
-        for state in self._saved_page_states:
+        last_index = total - 1
+        for index, state in enumerate(self._saved_page_states):
             self.__dict__.update(state)
             self._draw_institutional_footer(total, now)
+            if index == last_index:
+                _draw_deferred_signatures(self)
             rl_canvas.Canvas.showPage(self)
 
         rl_canvas.Canvas.save(self)
@@ -272,11 +275,15 @@ class InstitutionalNumberedCanvas(rl_canvas.Canvas):
         except Exception:
             self.setFont("Helvetica", PDF_BODY_FONT_SIZE)
 
-        footer = f"Gerado em {now_str} | Página {self._pageNumber}/{total_pages}"
+        # Rodapé inferior, em faixa própria abaixo das assinaturas.
+        # "Gerado em" à esquerda e "Página X/Y" à direita evitam o bloco de
+        # assinaturas (centrado) e o código de barras vertical do canto.
+        footer_y = 0.40 * cm
+        self.drawString(PDF_MARGIN, footer_y, f"Gerado em {now_str}")
         self.drawRightString(
             page_w - PDF_MARGIN,
-            0.7 * cm,
-            footer,
+            footer_y,
+            f"Página {self._pageNumber}/{total_pages}",
         )
 
 # =========================================================
@@ -317,28 +324,36 @@ def draw_institutional_barcode(canvas_obj, doc, x, y, max_width) -> None:
 
 
 def draw_institutional_corner_barcode(canvas_obj, doc) -> None:
-    """Desenha o código de barras (Code128) no quadrante inferior direito,
-    encostado/transbordando pela margem da página.
+    """Desenha o código de barras (Code128) vertical nos cantos da página,
+    encostado/transbordando pelas margens — fora do corpo do documento.
 
-    Fica vertical (rotacionado 90°) na faixa da margem direita, a sangrar
-    pelo fundo — fora do corpo do documento e do rodapé (que é alinhado à
-    direita até PDF_MARGIN)."""
+    São dois carimbos:
+    - canto inferior direito: rotação 90° faz o comprimento correr para cima
+      pela faixa da margem direita, a sangrar pelo fundo;
+    - canto superior esquerdo: rotação -90° faz o comprimento correr para baixo
+      pela faixa da margem esquerda, quase a transbordar verticalmente o topo.
+    """
     value = getattr(doc, "barcode_value", None)
     payload = _sanitize_institutional_barcode(value)
     if not payload:
         return
 
-    page_w, _page_h = doc.pagesize
+    page_w, page_h = doc.pagesize
     try:
         bar = code128.Code128(payload, barHeight=0.40 * cm, barWidth=0.28)
         bar.humanReadable = False
 
+        # Canto inferior direito (sobe pela margem direita).
         canvas_obj.saveState()
-        # Origem encostada à borda direita; rotação 90° faz o comprimento do
-        # código correr para cima e a altura entrar na faixa da margem direita,
-        # quase a transbordar a borda (mesmo padrão do pdf_base).
         canvas_obj.translate(page_w - INST_CORNER_BLEED_INSET, INST_CORNER_BLEED_INSET)
         canvas_obj.rotate(90)
+        bar.drawOn(canvas_obj, 0, 0)
+        canvas_obj.restoreState()
+
+        # Canto superior esquerdo (desce pela margem esquerda a partir do topo).
+        canvas_obj.saveState()
+        canvas_obj.translate(INST_CORNER_BLEED_INSET, page_h - INST_CORNER_BLEED_INSET)
+        canvas_obj.rotate(-90)
         bar.drawOn(canvas_obj, 0, 0)
         canvas_obj.restoreState()
     except Exception as err:
@@ -425,7 +440,10 @@ def draw_institutional_signatures(canvas_obj, doc, user=None):
     right_margin = getattr(doc, "rightMargin", PDF_MARGIN)
     bottom_margin = getattr(doc, "bottomMargin", PDF_BOTTOM_MARGIN)
 
-    y = max(0.9 * cm, bottom_margin - 0.6 * cm)
+    # Faixa de assinaturas: linhas e rótulos posicionados acima do texto de
+    # página (rodapé inferior) para não se sobreporem.
+    base = max(bottom_margin, 1.45 * cm)
+    y = base - 0.30 * cm
 
     width_total = page_w - (left_margin + right_margin)
     gap = 1.2 * cm
@@ -441,8 +459,10 @@ def draw_institutional_signatures(canvas_obj, doc, user=None):
     name = institutional_user_identity(user)
 
     canvas_obj.setFont(FONT_INST, PDF_BODY_FONT_SIZE)
-    canvas_obj.drawCentredString(x1 + width_line / 2, y - 9, f"Assinatura de {name}")
-    canvas_obj.drawCentredString(x2 + width_line / 2, y - 9, "Assinatura do Paciente/Responsável")
+    # 0.1cm extra de respiro entre a linha e o nome (0.25 + 0.10).
+    label_y = y - 0.35 * cm
+    canvas_obj.drawCentredString(x1 + width_line / 2, label_y, f"Assinatura de {name}")
+    canvas_obj.drawCentredString(x2 + width_line / 2, label_y, "Assinatura do Paciente/Responsável")
 
     canvas_obj.restoreState()
 
@@ -453,6 +473,19 @@ def draw_institutional_signatures(canvas_obj, doc, user=None):
 def _should_draw_institutional_signatures(doc) -> bool:
     """Define se o documento atual deve exibir assinaturas no rodapé."""
     return bool(getattr(doc, "include_signatures", False))
+
+def _request_institutional_signatures(canvas_obj, doc, user, draw_fn):
+    """Regista o pedido de assinaturas no canvas. O desenho efetivo é diferido
+    para a última página do documento (ver *NumberedCanvas.save)."""
+    if _should_draw_institutional_signatures(doc):
+        canvas_obj._signature_ctx = (draw_fn, doc, user)
+
+def _draw_deferred_signatures(canvas_obj):
+    """Desenha as assinaturas registadas — chamado apenas na última página."""
+    ctx = getattr(canvas_obj, "_signature_ctx", None)
+    if ctx:
+        draw_fn, sig_doc, sig_user = ctx
+        draw_fn(canvas_obj, sig_doc, sig_user)
 
 def user_name_inst(user):
     if not user:
@@ -584,23 +617,27 @@ def institutional_cell_style(name="CellInst"):
     )
 
 def institutional_cell_paragraph(text, is_bold=False):
-    style = institutional_bold_style("CellBold") if is_bold else institutional_cell_style("CellNormal")
+    # NB: institutional_cell_style é redefinido mais abaixo com a assinatura
+    # (is_bold, name); por isso passamos os argumentos por nome para que o
+    # negrito seja respeitado (texto normal quando is_bold=False).
+    style = institutional_cell_style(is_bold=is_bold, name="CellBold" if is_bold else "CellNormal")
     return Paragraph("" if text is None else str(text), style)
 
 # =========================================================
 # BLOCO DE IDENTIFICAÇÃO INSTITUCIONAL
 # =========================================================
 
-def institutional_montar_bloco_identificacao(usable_width, left_lines, right_lines):
+def institutional_montar_bloco_identificacao(usable_width, left_lines, right_lines, left_ratio=0.62):
     style_left = institutional_info_left_style("DocLeft")
     style_right = institutional_info_right_style("DocRight")
 
     left_para = Paragraph("<br/>".join(left_lines), style_left)
     right_para = Paragraph("<br/>".join(right_lines), style_right)
 
+    left_ratio = min(max(left_ratio, 0.1), 0.9)
     table = Table(
         [[left_para, right_para]],
-        colWidths=[usable_width * 0.62, usable_width * 0.38],
+        colWidths=[usable_width * left_ratio, usable_width * (1 - left_ratio)],
     )
     table.setStyle(
         TableStyle(
@@ -621,7 +658,7 @@ def institutional_draw_line_full_width(canvas_obj, doc):
     page_w, _ = doc.pagesize
     left_margin = getattr(doc, "leftMargin", PDF_MARGIN)
     right_margin = getattr(doc, "rightMargin", PDF_MARGIN)
-    y_line = getattr(doc, "bottomMargin", PDF_BOTTOM_MARGIN) + 0.15 * cm
+    y_line = getattr(doc, "bottomMargin", PDF_BOTTOM_MARGIN) - 0.10 * cm
 
     canvas_obj.saveState()
     canvas_obj.setStrokeColor(colors.lightgrey)
@@ -636,8 +673,7 @@ def institutional_draw_line_full_width(canvas_obj, doc):
 def institutional_on_page(canvas_obj, doc, user=None):
     draw_institutional_header(canvas_obj, doc)
     draw_institutional_corner_barcode(canvas_obj, doc)
-    if _should_draw_institutional_signatures(doc):
-        draw_institutional_signatures(canvas_obj, doc, user)
+    _request_institutional_signatures(canvas_obj, doc, user, draw_institutional_signatures)
 
 # =========================================================
 # FUNÇÃO DE CRIAÇÃO DE DOCUMENTO INSTITUCIONAL PADRÃO
@@ -1095,7 +1131,10 @@ def draw_institutional_signatures_improved(canvas_obj, doc, user=None):
     right_margin = getattr(doc, "rightMargin", PDF_MARGIN)
     bottom_margin = getattr(doc, "bottomMargin", PDF_BOTTOM_MARGIN)
 
-    y = max(0.9 * cm, bottom_margin - 0.6 * cm)
+    # Faixa de assinaturas: linhas e rótulos posicionados acima do texto de
+    # página (rodapé inferior) para não se sobreporem.
+    base = max(bottom_margin, 1.45 * cm)
+    y = base - 0.30 * cm
 
     width_total = page_w - (left_margin + right_margin)
     gap = 1.2 * cm
@@ -1111,8 +1150,10 @@ def draw_institutional_signatures_improved(canvas_obj, doc, user=None):
     name = institutional_user_identity(user)
 
     canvas_obj.setFont(FONT_INST, PDF_BODY_FONT_SIZE)
-    canvas_obj.drawCentredString(x1 + width_line / 2, y - 9, f"Assinatura de {name}")
-    canvas_obj.drawCentredString(x2 + width_line / 2, y - 9, "Assinatura do Paciente/Responsável")
+    # 0.1cm extra de respiro entre a linha e o nome (0.25 + 0.10).
+    label_y = y - 0.35 * cm
+    canvas_obj.drawCentredString(x1 + width_line / 2, label_y, f"Assinatura de {name}")
+    canvas_obj.drawCentredString(x2 + width_line / 2, label_y, "Assinatura do Paciente/Responsável")
 
     canvas_obj.restoreState()
 
@@ -1221,9 +1262,12 @@ class ImprovedInstitutionalNumberedCanvas(rl_canvas.Canvas):
         total = len(self._saved_page_states)
         now = timezone.localtime().strftime("%d/%m/%Y às %H:%M")
 
-        for state in self._saved_page_states:
+        last_index = total - 1
+        for index, state in enumerate(self._saved_page_states):
             self.__dict__.update(state)
             self._draw_improved_institutional_footer(total, now)
+            if index == last_index:
+                _draw_deferred_signatures(self)
             rl_canvas.Canvas.showPage(self)
 
         rl_canvas.Canvas.save(self)
@@ -1237,11 +1281,15 @@ class ImprovedInstitutionalNumberedCanvas(rl_canvas.Canvas):
         except Exception:
             self.setFont("Helvetica", PDF_BODY_FONT_SIZE)
 
-        footer = f"Gerado em {now_str} | Página {self._pageNumber}/{total_pages}"
+        # Rodapé inferior, em faixa própria abaixo das assinaturas.
+        # "Gerado em" à esquerda e "Página X/Y" à direita evitam o bloco de
+        # assinaturas (centrado) e o código de barras vertical do canto.
+        footer_y = 0.40 * cm
+        self.drawString(PDF_MARGIN, footer_y, f"Gerado em {now_str}")
         self.drawRightString(
             page_w - PDF_MARGIN,
-            0.7 * cm,
-            footer,
+            footer_y,
+            f"Página {self._pageNumber}/{total_pages}",
         )
 
 
@@ -1253,7 +1301,7 @@ def institutional_draw_line_full_width_improved(canvas_obj, doc):
     page_w, _ = doc.pagesize
     left_margin = getattr(doc, "leftMargin", PDF_MARGIN)
     right_margin = getattr(doc, "rightMargin", PDF_MARGIN)
-    y_line = getattr(doc, "bottomMargin", PDF_BOTTOM_MARGIN) + 0.15 * cm
+    y_line = getattr(doc, "bottomMargin", PDF_BOTTOM_MARGIN) - 0.10 * cm
 
     canvas_obj.saveState()
     canvas_obj.setStrokeColor(colors.lightgrey)
@@ -1269,8 +1317,7 @@ def institutional_draw_line_full_width_improved(canvas_obj, doc):
 def improved_institutional_on_page(canvas_obj, doc, user=None):
     draw_institutional_header_improved(canvas_obj, doc, getattr(doc, "header_config", None))
     draw_institutional_corner_barcode(canvas_obj, doc)
-    if _should_draw_institutional_signatures(doc):
-        draw_institutional_signatures_improved(canvas_obj, doc, user)
+    _request_institutional_signatures(canvas_obj, doc, user, draw_institutional_signatures_improved)
 
 
 # =========================================================

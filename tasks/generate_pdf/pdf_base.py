@@ -48,8 +48,8 @@ HEADER_VERTICAL_INSET = 0.5 * cm
 PDF_MARGIN = 0.5 * cm
 PDF_HEADER_TOP_MARGIN = 2.0 * cm
 PDF_BOTTOM_MARGIN = 0.5 * cm
-PDF_BODY_FONT_SIZE = 10
-PDF_TITLE_FONT_SIZE = 11
+PDF_BODY_FONT_SIZE = 9   # reduzido 1pt globalmente
+PDF_TITLE_FONT_SIZE = 10  # reduzido 1pt globalmente
 PDF_BODY_LEADING = 12
 PDF_TITLE_LEADING = 13
 
@@ -263,7 +263,7 @@ def append_fim(elements):
     )
 
     elements.append(Spacer(1, 0.35 * cm))
-    elements.append(Paragraph("Fim", style))
+    elements.append(Paragraph("Sem mais informação", style))
 
 
 # =========================================================
@@ -288,9 +288,15 @@ class NumberedCanvas(rl_canvas.Canvas):
         total = len(self._saved_page_states)
         now = timezone.localtime().strftime("%d/%m/%Y às %H:%M")
 
-        for state in self._saved_page_states:
+        last_index = total - 1
+        for index, state in enumerate(self._saved_page_states):
             self.__dict__.update(state)
             self._draw_footer(total, now)
+            if index == last_index:
+                ctx = getattr(self, "_signature_ctx", None)
+                if ctx:
+                    draw_fn, sig_doc, sig_user = ctx
+                    draw_fn(self, sig_doc, sig_user)
             rl_canvas.Canvas.showPage(self)
 
         rl_canvas.Canvas.save(self)
@@ -352,17 +358,19 @@ def draw_barcode(canvas_obj, doc, x, y, max_width) -> None:
 
 
 def draw_corner_barcode(canvas_obj, doc) -> None:
-    """Código de barras vertical no quadrante inferior direito, quase a
-    transbordar pela margem direita e inferior da página.
+    """Código de barras vertical nos cantos da página, quase a transbordar.
 
-    A origem fica colada ao canto inferior direito; a rotação de 90° faz o
-    comprimento subir pela lateral direita sem ocupar o corpo do documento.
+    São desenhados dois carimbos verticais (fora do corpo do documento):
+    - canto inferior direito: a rotação de 90° faz o comprimento subir pela
+      lateral direita a partir do fundo;
+    - canto superior esquerdo: a rotação de -90° faz o comprimento descer pela
+      lateral esquerda a partir do topo, quase a transbordar verticalmente.
     """
     value = getattr(doc, "barcode_value", None)
     payload = _sanitize_barcode(value)
     if not payload:
         return
-    page_w, _page_h = doc.pagesize
+    page_w, page_h = doc.pagesize
     try:
         bar = code128.Code128(
             payload,
@@ -370,9 +378,18 @@ def draw_corner_barcode(canvas_obj, doc) -> None:
             barWidth=PDF_CORNER_BARCODE_WIDTH,
         )
         bar.humanReadable = False
+
+        # Canto inferior direito (sobe pela margem direita).
         canvas_obj.saveState()
         canvas_obj.translate(page_w - PDF_CORNER_BLEED_INSET, PDF_CORNER_BLEED_INSET)
         canvas_obj.rotate(90)
+        bar.drawOn(canvas_obj, 0, 0)
+        canvas_obj.restoreState()
+
+        # Canto superior esquerdo (desce pela margem esquerda a partir do topo).
+        canvas_obj.saveState()
+        canvas_obj.translate(PDF_CORNER_BLEED_INSET, page_h - PDF_CORNER_BLEED_INSET)
+        canvas_obj.rotate(-90)
         bar.drawOn(canvas_obj, 0, 0)
         canvas_obj.restoreState()
     except Exception as err:
@@ -496,11 +513,17 @@ def _should_draw_signatures(doc) -> bool:
     return bool(getattr(doc, "include_signatures", False))
 
 
+def _request_signatures(canvas_obj, doc, user=None):
+    """Regista o pedido de assinaturas no canvas. O desenho efetivo é diferido
+    para a última página do documento (ver NumberedCanvas.save)."""
+    if _should_draw_signatures(doc):
+        canvas_obj._signature_ctx = (draw_signatures, doc, user)
+
+
 def on_page(canvas_obj, doc, user=None):
     draw_header(canvas_obj, doc)
     draw_corner_barcode(canvas_obj, doc)
-    if _should_draw_signatures(doc):
-        draw_signatures(canvas_obj, doc, user)
+    _request_signatures(canvas_obj, doc, user)
 
 
 def draw_line_full_width(canvas_obj, doc):
