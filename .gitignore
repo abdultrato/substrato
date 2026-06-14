@@ -170,6 +170,12 @@ cython_debug/
 frontend-next/.next/
 frontend-next/.next-dev/
 frontend-next/node_modules/
+# RAM-backed (tmpfs) build dirs are symlinks; the trailing-slash rules above
+# only match directories, so the symlinks themselves leak into git status.
+frontend-next/node_modules
+frontend-next/.next-dev
+# On-disk backup of node_modules used to repopulate tmpfs after a reboot.
+frontend-next/node_modules.hdd-backup/
 frontend-next/package-lock.json
 frontend-next/yarn.lock
 # Local envs
