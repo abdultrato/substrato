@@ -326,6 +326,56 @@ export default function Sidebar({ user, open = false, onClose, className }: Prop
         }
     }, [prefetchRoute, visibleItems])
 
+    const renderSection = (section: { label: string; labelEn: string; items: NavItem[] }) => (
+        <div key={section.label} className="space-y-1">
+            <div className="h-5 overflow-hidden px-2.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground opacity-100 transition-all duration-200 md:h-2 md:opacity-0 md:group-hover/sidebar:h-5 md:group-hover/sidebar:opacity-100 md:group-focus-within/sidebar:h-5 md:group-focus-within/sidebar:opacity-100">
+                {t(section.label, section.labelEn)}
+            </div>
+
+            <div className="space-y-0.5">
+                {section.items.map((item) => {
+                    const active = pathname === item.href || (item.href !== "/" && pathname?.startsWith(item.href + "/"))
+                    const NavIcon = item.icon as any
+
+                    return (
+                        <Link
+                            key={item.href}
+                            href={item.href}
+                            prefetch={false}
+                            onClick={onClose}
+                            onMouseEnter={() => prefetchRoute(item.href)}
+                            onFocus={() => prefetchRoute(item.href)}
+                            onTouchStart={() => prefetchRoute(item.href)}
+                            title={t(item.desc || "", item.descEn || item.desc || "")}
+                            aria-current={active ? "page" : undefined}
+                            className={`group/item relative flex min-h-10 items-center rounded-md py-2 pl-9 pr-2.5 text-[13px] font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 ${
+                                active
+                                    ? "bg-primary-soft text-foreground shadow-sm before:absolute before:left-0 before:top-1/2 before:h-5 before:w-[3px] before:-translate-x-2 before:-translate-y-1/2 before:rounded-r-full before:bg-primary"
+                                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                            }`}
+                        >
+                            <span
+                                aria-hidden
+                                className={`pointer-events-none absolute left-2.5 top-1/2 flex h-4 w-4 -translate-y-1/2 items-center justify-center ${
+                                    active ? "text-primary" : "text-muted-foreground group-hover/item:text-foreground"
+                                }`}
+                            >
+                                <NavIcon size={16} strokeWidth={2} />
+                            </span>
+                            <span className="truncate opacity-100 transition-all duration-200 md:max-w-0 md:-translate-x-1 md:opacity-0 md:group-hover/sidebar:max-w-[calc(var(--sidebar-open-width)-3.5rem)] md:group-hover/sidebar:translate-x-0 md:group-hover/sidebar:opacity-100 md:group-focus-within/sidebar:max-w-[calc(var(--sidebar-open-width)-3.5rem)] md:group-focus-within/sidebar:translate-x-0 md:group-focus-within/sidebar:opacity-100">
+                                {t(item.label, item.labelEn || item.label)}
+                            </span>
+                        </Link>
+                    )
+                })}
+            </div>
+        </div>
+    )
+
+    // "Início" fica fixo no topo; as restantes secções scrollam logo abaixo.
+    const pinnedSection = sectionedItems[0]?.label === "Início" ? sectionedItems[0] : null
+    const scrollSections = pinnedSection ? sectionedItems.slice(1) : sectionedItems
+
     const menu = (
         <div className="flex h-full w-full flex-col overflow-hidden border-r border-border bg-card/95 text-foreground shadow-none backdrop-blur transition-[box-shadow,background-color] duration-200 ease-out supports-[backdrop-filter]:bg-card/85 md:shadow-md md:group-hover/sidebar:shadow-xl md:group-hover/sidebar:shadow-slate-950/10 md:group-focus-within/sidebar:shadow-xl md:dark:shadow-black/30">
             {/* Mesma altura do header principal (h-14) para as bordas alinharem. */}
@@ -365,52 +415,14 @@ export default function Sidebar({ user, open = false, onClose, className }: Prop
                 </button>
             </div>
 
+            {pinnedSection ? (
+                <div className="shrink-0 border-b border-border/60 px-2 pb-2 pt-3">
+                    {renderSection(pinnedSection)}
+                </div>
+            ) : null}
+
             <nav className="flex flex-1 flex-col gap-3 overflow-y-auto overflow-x-hidden overscroll-contain px-2 pb-6 pt-3">
-                {sectionedItems.map((section) => (
-                    <div key={section.label} className="space-y-1">
-                        <div className="h-5 overflow-hidden px-2.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground opacity-100 transition-all duration-200 md:h-2 md:opacity-0 md:group-hover/sidebar:h-5 md:group-hover/sidebar:opacity-100 md:group-focus-within/sidebar:h-5 md:group-focus-within/sidebar:opacity-100">
-                            {t(section.label, section.labelEn)}
-                        </div>
-
-                        <div className="space-y-0.5">
-                            {section.items.map((item) => {
-                                const active = pathname === item.href || (item.href !== "/" && pathname?.startsWith(item.href + "/"))
-                                const NavIcon = item.icon as any
-
-                                return (
-                                    <Link
-                                        key={item.href}
-                                        href={item.href}
-                                        prefetch={false}
-                                        onClick={onClose}
-                                        onMouseEnter={() => prefetchRoute(item.href)}
-                                        onFocus={() => prefetchRoute(item.href)}
-                                        onTouchStart={() => prefetchRoute(item.href)}
-                                        title={t(item.desc || "", item.descEn || item.desc || "")}
-                                        aria-current={active ? "page" : undefined}
-                                        className={`group/item relative flex min-h-10 items-center rounded-md py-2 pl-9 pr-2.5 text-[13px] font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 ${
-                                            active
-                                                ? "bg-primary-soft text-foreground shadow-sm before:absolute before:left-0 before:top-1/2 before:h-5 before:w-[3px] before:-translate-x-2 before:-translate-y-1/2 before:rounded-r-full before:bg-primary"
-                                                : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                                        }`}
-                                    >
-                                        <span
-                                            aria-hidden
-                                            className={`pointer-events-none absolute left-2.5 top-1/2 flex h-4 w-4 -translate-y-1/2 items-center justify-center ${
-                                                active ? "text-primary" : "text-muted-foreground group-hover/item:text-foreground"
-                                            }`}
-                                        >
-                                            <NavIcon size={16} strokeWidth={2} />
-                                        </span>
-                                        <span className="truncate opacity-100 transition-all duration-200 md:max-w-0 md:-translate-x-1 md:opacity-0 md:group-hover/sidebar:max-w-[calc(var(--sidebar-open-width)-3.5rem)] md:group-hover/sidebar:translate-x-0 md:group-hover/sidebar:opacity-100 md:group-focus-within/sidebar:max-w-[calc(var(--sidebar-open-width)-3.5rem)] md:group-focus-within/sidebar:translate-x-0 md:group-focus-within/sidebar:opacity-100">
-                                            {t(item.label, item.labelEn || item.label)}
-                                        </span>
-                                    </Link>
-                                )
-                            })}
-                        </div>
-                    </div>
-                ))}
+                {scrollSections.map((section) => renderSection(section))}
             </nav>
 
             <div className="flex h-10 items-center border-t border-border/80 px-2 py-1">
