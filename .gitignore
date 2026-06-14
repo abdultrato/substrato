@@ -178,6 +178,9 @@ frontend-next/.next-dev
 frontend-next/node_modules.hdd-backup/
 frontend-next/package-lock.json
 frontend-next/yarn.lock
+# Claude Code local agent/project files
+.claude/
+
 # Local envs
 .env.local
 .env.*.local
