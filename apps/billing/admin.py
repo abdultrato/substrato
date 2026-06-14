@@ -25,6 +25,28 @@ class CoreAdmin(admin.ModelAdmin):
     ordering = ("-created_at",)
 
 
+@admin.register(InvoiceItem)
+class InvoiceItemAdmin(CoreAdmin):
+    """Registo standalone de item de fatura.
+
+    Necessário para suportar ``autocomplete_fields`` que referenciam ``InvoiceItem``
+    a partir de outros apps (ex.: ``apps.dental.admin.DentalBillingItemAdmin``).
+    """
+    list_display = ("custom_id", "invoice", "item_type", "description", "quantity", "unit_price")
+    list_filter = ("item_type", "deleted")
+    search_fields = ("custom_id", "description", "invoice__custom_id")
+    raw_id_fields = (
+        "invoice",
+        "exam",
+        "medical_exam",
+        "consultation",
+        "sale_item",
+        "product",
+        "procedure_item",
+        "procedure_material",
+    )
+
+
 # =====================================================
 # FATURA ITEM INLINE
 # =====================================================

@@ -89,6 +89,7 @@ class MedicalConsultationSerializer(serializers.ModelSerializer):
             "invoice_status",
             "schedule_type",
             "price_multiplier",
+            "reschedule_count",
         )
         extra_kwargs = {
             "consultation_type": {"required": False},

@@ -5,11 +5,11 @@ import { useCallback, useEffect, useMemo, useState } from "react"
 
 import AppLayout from "@/components/layout/AppLayout"
 import Card from "@/components/ui/Card"
-import DataTable from "@/components/ui/DataTable"
 import PageHeader from "@/components/ui/PageHeader"
 import MoneyValue from "@/components/ui/MoneyValue"
 import PdfActionLabel from "@/components/ui/PdfActionLabel"
 import ConfirmDialog from "@/components/ui/ConfirmDialog"
+import SearchableSelect from "@/components/ui/SearchableSelect"
 import { useAuth } from "@/hooks/useAuth"
 import { useLanguage } from "@/hooks/useLanguage"
 import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
@@ -54,6 +54,7 @@ type ConsultationRow = {
   price_multiplier?: string | number
   manual_holiday?: boolean
   scheduled_for?: string
+  reschedule_count?: number
   invoice_id?: number | null
   invoice_code?: string
   invoice_status?: string
@@ -256,7 +257,7 @@ export default function ConsultationsPage() {
 
       await loadData()
     } catch (e: any) {
-      setFormError(localizeErrorMessage(e?.message) || t("Falha ao criar consulta.", "Failed to create consultation."))
+      setFormError(localizeErrorMessage(e?.message) || t("Falha ao marcar consulta.", "Failed to schedule consultation."))
     } finally {
       setSaving(false)
     }
@@ -457,158 +458,6 @@ export default function ConsultationsPage() {
     t,
   ])
 
-  const columns = useMemo(
-    () => {
-      const formatScheduleType = (value?: string) => {
-        if (!value) return t("Normal", "Normal")
-        if (value === "FIM_SEMANA") return t("Fim de semana", "Weekend")
-        if (value === "FORA_EXPEDIENTE") return t("Fora de expediente", "After hours")
-        if (value === "FERIADO_MANUAL") return t("Feriado", "Holiday")
-        return t("Normal", "Normal")
-      }
-
-      const formatStatus = (value?: string) => {
-        if (!value) return "-"
-        if (value === "MARCADA") return t("Marcada", "Scheduled")
-        if (value === "CONCLUIDA") return t("Concluída", "Completed")
-        if (value === "CANCELADA") return t("Cancelada", "Canceled")
-        return value
-      }
-
-      return [
-        { header: t("Código", "Code"), render: (r: ConsultationRow) => r.custom_id || r.id },
-        { header: t("Paciente", "Patient"), render: (r: ConsultationRow) => r.patient_name || "-" },
-        { header: t("Médico", "Doctor"), render: (r: ConsultationRow) => r.doctor_name || "—" },
-        { header: t("Tipo", "Type"), render: (r: ConsultationRow) => r.type || "-" },
-        { header: t("Especialidade", "Specialty"), render: (r: ConsultationRow) => r.specialty_name || r.type || "-" },
-        { header: t("Estado", "Status"), render: (r: ConsultationRow) => formatStatus(r.status) },
-        { header: t("Horário", "Schedule"), render: (r: ConsultationRow) => formatScheduleType(r.schedule_type) },
-        { header: t("Agendada", "Scheduled"), render: (r: ConsultationRow) => fmtDate(r.scheduled_for) },
-        { header: t("Preço", "Price"), render: (r: ConsultationRow) => <MoneyValue value={r.price} />, className: "text-right" },
-        {
-          header: t("Fatura", "Invoice"),
-          render: (r: ConsultationRow) => {
-            const hasInvoice = Boolean(r.invoice_id)
-            const canPrepareInvoice = canInvoice && r.status !== "CANCELADA" && (!r.invoice_status || r.invoice_status === "RASC")
-            const loadingReview = invoiceReviewLoading === r.id
-            return (
-              <div className="min-w-[190px] space-y-2">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-xs font-semibold text-gray-800">
-                    {r.invoice_code || "—"}
-                  </span>
-                  {r.invoice_status ? (
-                    <span className="rounded-md border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-[11px] font-medium text-slate-600">
-                      {r.invoice_status}
-                    </span>
-                  ) : null}
-                </div>
-
-                {canPrepareInvoice ? (
-                  <div className="flex flex-wrap gap-1.5">
-                    <button
-                      type="button"
-                      onClick={() => openInvoiceReview(r, "draft")}
-                      disabled={loadingReview}
-                      className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-2 py-1 text-[11px] font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
-                    >
-                      <FileText size={12} />
-                      {hasInvoice ? t("Rever rascunho", "Review draft") : t("Emitir rascunho", "Issue draft")}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => openInvoiceReview(r, "issue")}
-                      disabled={loadingReview}
-                      className="inline-flex items-center gap-1 rounded-md border border-emerald-200 bg-emerald-50 px-2 py-1 text-[11px] font-semibold text-emerald-800 transition hover:bg-emerald-100 disabled:opacity-50"
-                    >
-                      <Receipt size={12} />
-                      {t("Emitir original", "Issue original")}
-                    </button>
-                  </div>
-                ) : null}
-
-                {r.invoice_id ? (
-                  <button
-                    type="button"
-                    onClick={() => openConsultationInvoicePdf(Number(r.invoice_id))}
-                    disabled={invoicePdfId === Number(r.invoice_id)}
-                    className="inline-flex items-center gap-1.5 rounded-md border border-gray-200 bg-white px-2 py-1 text-[11px] font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-50"
-                  >
-                    <PdfActionLabel loading={invoicePdfId === Number(r.invoice_id)} loadingLabel={t("PDF...", "PDF...")}>
-                      {t("PDF Fatura", "Invoice PDF")}
-                    </PdfActionLabel>
-                  </button>
-                ) : null}
-              </div>
-            )
-          },
-        },
-        {
-          header: t("Ações", "Actions"),
-          render: (r: ConsultationRow) => (
-            <div className="flex flex-wrap gap-2">
-              {canWrite && r.status === "MARCADA" ? (
-                <button
-                  type="button"
-                  onClick={() => openRescheduleModal(r)}
-                  className="inline-flex items-center rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-50"
-                >
-                  {t("Remarcar", "Reschedule")}
-                </button>
-              ) : null}
-
-              {canWrite && r.status === "MARCADA" ? (
-                <ConfirmDialog
-                  title={t("Concluir consulta", "Complete consultation")}
-                  message={t("Marcar esta consulta como concluída?", "Mark this consultation as completed?")}
-                  confirmText={t("Concluir", "Complete")}
-                  danger={false}
-                  onConfirm={() => completeConsultation(r.id)}
-                >
-                  <button
-                    type="button"
-                    className="inline-flex items-center rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-50"
-                  >
-                    {t("Concluir", "Complete")}
-                  </button>
-                </ConfirmDialog>
-              ) : null}
-
-              {canWrite && r.status !== "CANCELADA" && r.status !== "CONCLUIDA" ? (
-                <ConfirmDialog
-                  title={t("Cancelar consulta", "Cancel consultation")}
-                  message={t("Cancelar esta consulta?", "Cancel this consultation?")}
-                  confirmText={t("Cancelar consulta", "Cancel consultation")}
-                  onConfirm={() => cancelConsultation(r.id)}
-                >
-                  <button
-                    type="button"
-                    className="inline-flex items-center rounded-lg border border-red-200 bg-white px-3 py-1.5 text-xs font-medium text-red-700 transition hover:bg-red-50"
-                  >
-                    {t("Cancelar", "Cancel")}
-                  </button>
-                </ConfirmDialog>
-              ) : null}
-
-          </div>
-        ),
-      },
-      ]
-    },
-    [
-      canInvoice,
-      canWrite,
-      cancelConsultation,
-      completeConsultation,
-      invoicePdfId,
-      invoiceReviewLoading,
-      openConsultationInvoicePdf,
-      openInvoiceReview,
-      openRescheduleModal,
-      t,
-    ]
-  )
-
   const scheduleTypeLabel = useMemo(() => {
     const scheduleType = pricePreview?.schedule_type
     if (!scheduleType) return t("Normal", "Normal")
@@ -617,6 +466,206 @@ export default function ConsultationsPage() {
     if (scheduleType === "FERIADO_MANUAL") return t("Feriado", "Holiday")
     return t("Normal", "Normal")
   }, [pricePreview?.schedule_type, t])
+
+  const patientOptions = useMemo(
+    () => patients.map((p) => ({ value: String(p.id), label: p.name || `${t("Paciente", "Patient")} ${p.id}` })),
+    [patients, t]
+  )
+
+  const doctorOptions = useMemo(
+    () =>
+      doctors.map((m) => ({
+        value: String(m.id),
+        label: m.name || `${t("Médico", "Doctor")} ${m.id}`,
+        hint: m.role_name || m.profession_name || undefined,
+      })),
+    [doctors, t]
+  )
+
+  const specialtyOptions = useMemo(
+    () =>
+      specialties
+        .filter((x) => x.active !== false)
+        .map((esp) => ({ value: String(esp.id), label: esp.name || `${t("Especialidade", "Specialty")} ${esp.id}` })),
+    [specialties, t]
+  )
+
+  const setScheduledNow = useCallback(() => {
+    const now = new Date()
+    now.setMinutes(now.getMinutes() - now.getTimezoneOffset())
+    setScheduledForInput(now.toISOString().slice(0, 16))
+  }, [])
+
+  const isFutureSchedule = useCallback((c: ConsultationRow) => {
+    if (!c.scheduled_for) return false
+    const ts = new Date(c.scheduled_for).getTime()
+    return !Number.isNaN(ts) && ts > Date.now()
+  }, [])
+
+  const isRescheduled = (c: ConsultationRow) => Boolean(c.reschedule_count && c.reschedule_count > 0)
+
+  // Marcada = atendimento instantâneo (sem agendamento futuro).
+  const markedConsultations = useMemo(
+    () => consultations.filter((c) => c.status === "MARCADA" && !isRescheduled(c) && !isFutureSchedule(c)),
+    [consultations, isFutureSchedule]
+  )
+  // Agendada = marcada para uma data/hora futura.
+  const scheduledConsultations = useMemo(
+    () => consultations.filter((c) => c.status === "MARCADA" && !isRescheduled(c) && isFutureSchedule(c)),
+    [consultations, isFutureSchedule]
+  )
+  // Re-agendada = consulta remarcada (reschedule_count > 0).
+  const rescheduledConsultations = useMemo(
+    () => consultations.filter((c) => c.status === "MARCADA" && isRescheduled(c)),
+    [consultations]
+  )
+  // Realizada = consulta concluída.
+  const completedConsultations = useMemo(
+    () => consultations.filter((c) => c.status === "CONCLUIDA"),
+    [consultations]
+  )
+
+  const formatScheduleTypeLabel = useCallback((value?: string) => {
+    if (value === "FIM_SEMANA") return t("Fim de semana", "Weekend")
+    if (value === "FORA_EXPEDIENTE") return t("Fora de expediente", "After hours")
+    if (value === "FERIADO_MANUAL") return t("Feriado", "Holiday")
+    return t("Normal", "Normal")
+  }, [t])
+
+  const renderConsultationCard = useCallback((r: ConsultationRow) => {
+    const canPrepareInvoice = canInvoice && r.status !== "CANCELADA" && (!r.invoice_status || r.invoice_status === "RASC")
+    const loadingReview = invoiceReviewLoading === r.id
+    return (
+      <div key={r.id} className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0">
+            <div className="truncate text-sm font-semibold text-slate-900">{r.patient_name || "-"}</div>
+            <div className="text-[11px] text-slate-500">{r.custom_id || r.id}</div>
+          </div>
+          <MoneyValue value={r.price} />
+        </div>
+
+        <div className="mt-2 space-y-0.5 text-xs text-slate-600">
+          <div>{r.specialty_name || r.type || "-"}</div>
+          <div>{r.doctor_name ? `${t("Médico", "Doctor")}: ${r.doctor_name}` : t("Sem médico", "No doctor")}</div>
+          <div>{t("Agendada", "Scheduled")}: {fmtDate(r.scheduled_for)}</div>
+          <div>{t("Horário", "Schedule")}: {formatScheduleTypeLabel(r.schedule_type)}</div>
+        </div>
+
+        <div className="mt-2 flex flex-wrap items-center gap-1.5 border-t border-slate-100 pt-2">
+          <span className="text-[11px] font-semibold text-slate-700">{r.invoice_code || t("Sem fatura", "No invoice")}</span>
+          {r.invoice_status ? (
+            <span className="rounded-md border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-[10px] font-medium text-slate-600">
+              {r.invoice_status}
+            </span>
+          ) : null}
+          {canPrepareInvoice ? (
+            <>
+              <button
+                type="button"
+                onClick={() => openInvoiceReview(r, "draft")}
+                disabled={loadingReview}
+                className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-2 py-1 text-[11px] font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
+              >
+                <FileText size={12} />
+                {r.invoice_id ? t("Rever rascunho", "Review draft") : t("Emitir rascunho", "Issue draft")}
+              </button>
+              <button
+                type="button"
+                onClick={() => openInvoiceReview(r, "issue")}
+                disabled={loadingReview}
+                className="inline-flex items-center gap-1 rounded-md border border-emerald-200 bg-emerald-50 px-2 py-1 text-[11px] font-semibold text-emerald-800 transition hover:bg-emerald-100 disabled:opacity-50"
+              >
+                <Receipt size={12} />
+                {t("Emitir original", "Issue original")}
+              </button>
+            </>
+          ) : null}
+          {r.invoice_id ? (
+            <button
+              type="button"
+              onClick={() => openConsultationInvoicePdf(Number(r.invoice_id))}
+              disabled={invoicePdfId === Number(r.invoice_id)}
+              className="inline-flex items-center gap-1.5 rounded-md border border-gray-200 bg-white px-2 py-1 text-[11px] font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-50"
+            >
+              <PdfActionLabel loading={invoicePdfId === Number(r.invoice_id)} loadingLabel={t("PDF...", "PDF...")}>
+                {t("PDF Fatura", "Invoice PDF")}
+              </PdfActionLabel>
+            </button>
+          ) : null}
+        </div>
+
+        {canWrite && (r.status === "MARCADA" || (r.status !== "CANCELADA" && r.status !== "CONCLUIDA")) ? (
+          <div className="mt-2 flex flex-wrap gap-1.5 border-t border-slate-100 pt-2">
+            {r.status === "MARCADA" ? (
+              <button
+                type="button"
+                onClick={() => openRescheduleModal(r)}
+                className="inline-flex items-center rounded-lg border border-gray-200 bg-white px-2.5 py-1 text-[11px] font-medium text-gray-700 transition hover:bg-gray-50"
+              >
+                {t("Remarcar", "Reschedule")}
+              </button>
+            ) : null}
+            {r.status === "MARCADA" ? (
+              <ConfirmDialog
+                title={t("Concluir consulta", "Complete consultation")}
+                message={t("Marcar esta consulta como concluída?", "Mark this consultation as completed?")}
+                confirmText={t("Concluir", "Complete")}
+                danger={false}
+                onConfirm={() => completeConsultation(r.id)}
+              >
+                <button
+                  type="button"
+                  className="inline-flex items-center rounded-lg border border-gray-200 bg-white px-2.5 py-1 text-[11px] font-medium text-gray-700 transition hover:bg-gray-50"
+                >
+                  {t("Concluir", "Complete")}
+                </button>
+              </ConfirmDialog>
+            ) : null}
+            <ConfirmDialog
+              title={t("Cancelar consulta", "Cancel consultation")}
+              message={t("Cancelar esta consulta?", "Cancel this consultation?")}
+              confirmText={t("Cancelar consulta", "Cancel consultation")}
+              onConfirm={() => cancelConsultation(r.id)}
+            >
+              <button
+                type="button"
+                className="inline-flex items-center rounded-lg border border-red-200 bg-white px-2.5 py-1 text-[11px] font-medium text-red-700 transition hover:bg-red-50"
+              >
+                {t("Cancelar", "Cancel")}
+              </button>
+            </ConfirmDialog>
+          </div>
+        ) : null}
+      </div>
+    )
+  }, [
+    canInvoice,
+    canWrite,
+    cancelConsultation,
+    completeConsultation,
+    formatScheduleTypeLabel,
+    invoicePdfId,
+    invoiceReviewLoading,
+    openConsultationInvoicePdf,
+    openInvoiceReview,
+    openRescheduleModal,
+    t,
+  ])
+
+  const renderConsultationColumn = useCallback((title: string, rows: ConsultationRow[]) => (
+    <Card title={`${title} (${rows.length})`} transparent>
+      {loading ? (
+        <div className="text-sm text-gray-500">{t("Carregando...", "Loading...")}</div>
+      ) : rows.length === 0 ? (
+        <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-3 py-6 text-center text-xs text-slate-500">
+          {t("Nenhuma consulta.", "No consultations.")}
+        </div>
+      ) : (
+        <div className="space-y-2">{rows.map(renderConsultationCard)}</div>
+      )}
+    </Card>
+  ), [loading, renderConsultationCard, t])
 
   useEffect(() => {
     let mounted = true
@@ -670,10 +719,7 @@ export default function ConsultationsPage() {
         ) : null}
 
         {canWrite ? (
-          <Card
-            title={t("Criar consulta", "Create consultation")}
-            subtitle={t("Crie a consulta e, se necessário, emita a fatura.", "Create the consultation and issue the invoice if needed.")}
-          >
+          <Card title={t("Marcar consulta", "Schedule consultation")} transparent>
             {formError ? (
               <div className="mb-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
                 {formError}
@@ -682,58 +728,39 @@ export default function ConsultationsPage() {
             <form onSubmit={createConsultation} className="grid gap-3 md:grid-cols-2">
               <div className="space-y-1">
                 <label className="text-xs text-gray-600">{t("Paciente", "Patient")}</label>
-                <select
+                <SearchableSelect
                   value={patientId}
-                  onChange={(e) => setPatientId(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm"
-                  required
-                >
-                  <option value="">{t("Selecione", "Select")}</option>
-                  {patients.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.name || `${t("Paciente", "Patient")} ${p.id}`}
-                    </option>
-                  ))}
-                </select>
+                  onChange={setPatientId}
+                  options={patientOptions}
+                  placeholder={t("Selecione", "Select")}
+                  searchPlaceholder={t("Pesquisar paciente...", "Search patient...")}
+                  emptyMessage={t("Nenhum paciente encontrado.", "No patient found.")}
+                />
               </div>
 
               <div className="space-y-1">
                 <label className="text-xs text-gray-600">{t("Médico (opcional)", "Doctor (optional)")}</label>
-                <select
+                <SearchableSelect
                   value={doctorId}
-                  onChange={(e) => setDoctorId(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm"
-                >
-                  <option value="">{t("Sem médico", "No doctor")}</option>
-                  {doctors.map((m) => {
-                    const detail = m.role_name || m.profession_name
-                    const label = [m.name || `${t("Médico", "Doctor")} ${m.id}`, detail].filter(Boolean).join(" · ")
-                    return (
-                      <option key={m.id} value={m.id}>
-                        {label}
-                      </option>
-                    )
-                  })}
-                </select>
+                  onChange={setDoctorId}
+                  options={doctorOptions}
+                  allowClear
+                  placeholder={t("Sem médico", "No doctor")}
+                  searchPlaceholder={t("Pesquisar médico...", "Search doctor...")}
+                  emptyMessage={t("Nenhum médico encontrado.", "No doctor found.")}
+                />
               </div>
 
               <div className="space-y-1">
                 <label className="text-xs text-gray-600">{t("Especialidade", "Specialty")}</label>
-                <select
+                <SearchableSelect
                   value={specialtyId}
-                  onChange={(e) => setSpecialtyId(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm"
-                  required
-                >
-                  <option value="">{t("Selecione", "Select")}</option>
-                  {specialties
-                    .filter((x) => x.active !== false)
-                    .map((esp) => (
-                      <option key={esp.id} value={esp.id}>
-                        {esp.name || `${t("Especialidade", "Specialty")} ${esp.id}`}
-                      </option>
-                    ))}
-                </select>
+                  onChange={setSpecialtyId}
+                  options={specialtyOptions}
+                  placeholder={t("Selecione", "Select")}
+                  searchPlaceholder={t("Pesquisar especialidade...", "Search specialty...")}
+                  emptyMessage={t("Nenhuma especialidade encontrada.", "No specialty found.")}
+                />
               </div>
 
               <div className="space-y-1">
@@ -762,41 +789,44 @@ export default function ConsultationsPage() {
                 </div>
               </div>
 
-              <div className="space-y-1">
+              <div className="space-y-1 md:col-span-2">
                 <label className="text-xs text-gray-600">{t("Agendada para (opcional)", "Scheduled for (optional)")}</label>
-                <input
-                  type="datetime-local"
-                  value={scheduledForInput}
-                  onChange={(e) => setScheduledForInput(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm"
-                />
-              </div>
-
-              <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm">
-                <input
-                  id="manualHoliday-manual"
-                  type="checkbox"
-                  checked={manualHoliday}
-                  onChange={(e) => setManualHoliday(e.target.checked)}
-                  className="h-4 w-4 rounded border-slate-300 text-slate-800 focus:ring-2 focus:ring-slate-400"
-                />
-                <div className="flex flex-col leading-tight">
-                  <label htmlFor="manualHoliday-manual" className="text-xs font-semibold text-gray-700">{t("Feriado", "Holiday")}</label>
-                  <span className="text-[11px] text-gray-500">
-                    {t(
-                      "Marca 2x o valor quando não for fim de semana/fora de expediente.",
-                      "Applies 2x pricing when it's not weekend/after hours."
-                    )}
-                  </span>
+                <div className="flex flex-wrap items-center gap-2">
+                  <input
+                    type="datetime-local"
+                    value={scheduledForInput}
+                    onChange={(e) => setScheduledForInput(e.target.value)}
+                    className="min-w-[12rem] flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm"
+                  />
+                  <button
+                    type="button"
+                    onClick={setScheduledNow}
+                    className="shrink-0 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-700 shadow-sm transition hover:bg-slate-50"
+                  >
+                    {t("Agora", "Now")}
+                  </button>
+                  <label
+                    htmlFor="manualHoliday-manual"
+                    className="inline-flex shrink-0 cursor-pointer items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm"
+                  >
+                    <input
+                      id="manualHoliday-manual"
+                      type="checkbox"
+                      checked={manualHoliday}
+                      onChange={(e) => setManualHoliday(e.target.checked)}
+                      className="h-4 w-4 rounded border-slate-300 text-slate-800 focus:ring-2 focus:ring-slate-400"
+                    />
+                    <span className="text-xs font-semibold text-gray-700">{t("Feriado", "Holiday")}</span>
+                  </label>
                 </div>
               </div>
 
-              <div className="flex items-end">
+              <div className="flex justify-start md:col-span-2">
                 <button
                   disabled={saving}
                   className="inline-flex items-center rounded-xl bg-gray-900 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-black disabled:opacity-60"
                 >
-                  {saving ? t("Salvando...", "Saving...") : t("Criar consulta", "Create consultation")}
+                  {saving ? t("A marcar...", "Scheduling...") : t("Marcar consulta", "Schedule consultation")}
                 </button>
               </div>
             </form>
@@ -812,17 +842,12 @@ export default function ConsultationsPage() {
           </Card>
         )}
 
-        <Card title={t("Lista de consultas", "Consultations list")} subtitle={t("Consultas do tenant atual.", "Consultations for the current tenant.")}>
-          {loading ? (
-            <div className="text-sm text-gray-500">{t("Carregando...", "Loading...")}</div>
-          ) : (
-            <DataTable<ConsultationRow>
-              columns={columns as any}
-              data={consultations}
-              emptyMessage={t("Nenhuma consulta encontrada.", "No consultations found.")}
-            />
-          )}
-        </Card>
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          {renderConsultationColumn(t("Consultas Marcadas", "Marked (walk-in)"), markedConsultations)}
+          {renderConsultationColumn(t("Consultas Agendadas", "Scheduled"), scheduledConsultations)}
+          {renderConsultationColumn(t("Consultas Re-Agendadas", "Rescheduled"), rescheduledConsultations)}
+          {renderConsultationColumn(t("Consultas Realizadas", "Completed"), completedConsultations)}
+        </div>
       </div>
 
       {rescheduleModalOpen ? (

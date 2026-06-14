@@ -14,6 +14,9 @@
   var EDGE_GAP = 8;
   var THRESHOLD = 4;
   var CHROME_GAP = 8;
+  // Pressionar e segurar: tempo até iniciar a rolagem contínua e velocidade (px/frame).
+  var HOLD_DELAY = 500;
+  var CONTINUOUS_STEP = 10;
   var STYLE_ID = "substrato-scroll-arrows-style";
   var HIDDEN_ATTR = "data-substrato-scrollbars-hidden";
   var GLYPH = { left: "‹", right: "›", up: "↑", down: "↓" };
@@ -97,9 +100,15 @@
         btn.style.opacity = "0.82";
         btn.style.transform = "scale(1)";
       });
-      btn.addEventListener("click", function (event) {
-        event.preventDefault();
-        event.stopPropagation();
+      // Toque/clique curto: avança uma "página". Pressionar e segurar (>0.5s):
+      // rola levemente de forma contínua na direção da seta até soltar ou chegar ao fim.
+      var axis = dir === "left" || dir === "right" ? "x" : "y";
+      var sign = dir === "left" || dir === "up" ? -1 : 1;
+      var holdTimer = 0;
+      var rafScroll = 0;
+      var didContinuous = false;
+
+      function pageStep() {
         var stepX = Math.max(80, Math.round(target.clientWidth * 0.8));
         var stepY = Math.max(80, Math.round(target.clientHeight * 0.8));
         var opt = { behavior: "smooth" };
@@ -108,6 +117,53 @@
         else if (dir === "up") opt.top = -stepY;
         else opt.top = stepY;
         target.scrollBy(opt);
+      }
+
+      function continuousTick() {
+        var before = axis === "x" ? target.scrollLeft : target.scrollTop;
+        if (axis === "x") target.scrollLeft = before + sign * CONTINUOUS_STEP;
+        else target.scrollTop = before + sign * CONTINUOUS_STEP;
+        var after = axis === "x" ? target.scrollLeft : target.scrollTop;
+        if (after === before) {
+          rafScroll = 0;
+          return;
+        }
+        rafScroll = window.requestAnimationFrame(continuousTick);
+      }
+
+      function endPress() {
+        if (holdTimer) {
+          clearTimeout(holdTimer);
+          holdTimer = 0;
+        }
+        if (rafScroll) {
+          window.cancelAnimationFrame(rafScroll);
+          rafScroll = 0;
+        }
+      }
+
+      btn.addEventListener("pointerdown", function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+        didContinuous = false;
+        try { btn.setPointerCapture(event.pointerId); } catch (e) {}
+        holdTimer = setTimeout(function () {
+          holdTimer = 0;
+          didContinuous = true;
+          if (!rafScroll) rafScroll = window.requestAnimationFrame(continuousTick);
+        }, HOLD_DELAY);
+      });
+      btn.addEventListener("pointerup", endPress);
+      btn.addEventListener("pointercancel", endPress);
+      btn.addEventListener("pointerleave", endPress);
+      btn.addEventListener("click", function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+        if (didContinuous) {
+          didContinuous = false;
+          return;
+        }
+        pageStep();
       });
       overlay.appendChild(btn);
       return btn;

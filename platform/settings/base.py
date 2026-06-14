@@ -1455,8 +1455,16 @@ SESSION_SAVE_EVERY_REQUEST = True
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 AUTH_COOKIE_SESSION_ONLY = get_env_bool("AUTH_COOKIE_SESSION_ONLY", True)
 
+# O access token tem de expirar bem antes do refresh. Caso contrário, a renovação
+# reativa (disparada pelo 401 no frontend) acontece no mesmo instante em que o
+# refresh também expira, a renovação falha e o utilizador ativo é desconectado.
+# O refresh define a janela de inatividade (idle timeout); o access é curto e é
+# rotacionado a cada renovação enquanto houver atividade (ver SessionTokenRefreshSerializer).
+ACCESS_TOKEN_LIFETIME_MINUTES = get_env_int("ACCESS_TOKEN_LIFETIME_MINUTES", 5)
+ACCESS_TOKEN_LIFETIME_SECONDS = max(1, min(ACCESS_TOKEN_LIFETIME_MINUTES, SESSION_IDLE_TIMEOUT_MINUTES)) * 60
+
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(seconds=SESSION_IDLE_TIMEOUT_SECONDS),
+    "ACCESS_TOKEN_LIFETIME": timedelta(seconds=ACCESS_TOKEN_LIFETIME_SECONDS),
     "REFRESH_TOKEN_LIFETIME": timedelta(seconds=SESSION_IDLE_TIMEOUT_SECONDS),
     "AUTH_HEADER_TYPES": ("Bearer",),
 }

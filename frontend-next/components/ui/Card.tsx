@@ -8,6 +8,7 @@ interface Props {
     subtitle?: string
     actions?: ReactNode
     children: ReactNode
+    transparent?: boolean
 }
 
 export default function Card ( {
@@ -15,11 +16,12 @@ export default function Card ( {
     subtitle,
     actions,
     children,
+    transparent = false,
 }: Props ) {
     const { tr } = useLanguage()
 
     return (
-        <div className="rounded-lg border border-border bg-card shadow-sm">
+        <div className={`rounded-lg border border-border ${transparent ? "bg-transparent" : "bg-card shadow-sm"}`}>
             {( title || actions ) && (
                 <div className="flex items-start justify-between gap-3 border-b border-border px-4 py-3">
                     <div>

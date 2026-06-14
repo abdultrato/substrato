@@ -22,6 +22,9 @@ type SafeViewport = {
 const ARROW_SIZE = 28
 const EDGE_GAP = 8
 const SCROLL_THRESHOLD = 4
+// Pressionar e segurar: tempo até iniciar a rolagem contínua e a velocidade (px/frame).
+const HOLD_DELAY = 500
+const CONTINUOUS_STEP = 10
 const CHROME_GAP = 8
 const OVERLAY_Z = 2147483000
 const STYLE_ID = "substrato-scroll-arrows-style"
@@ -121,9 +124,16 @@ export function initScrollArrows(opts: {
       btn.style.opacity = "0.82"
       btn.style.transform = "scale(1)"
     })
-    btn.addEventListener("click", (event) => {
-      event.preventDefault()
-      event.stopPropagation()
+
+    // Toque/clique curto: avança uma "página". Pressionar e segurar (>0.5s):
+    // rola levemente de forma contínua na direção da seta até soltar ou chegar ao fim.
+    const axis: "x" | "y" = dir === "left" || dir === "right" ? "x" : "y"
+    const sign = dir === "left" || dir === "up" ? -1 : 1
+    let holdTimer: ReturnType<typeof setTimeout> | 0 = 0
+    let rafScroll = 0
+    let didContinuous = false
+
+    function pageStep() {
       const stepX = Math.max(80, Math.round(target.clientWidth * 0.8))
       const stepY = Math.max(80, Math.round(target.clientHeight * 0.8))
       const delta =
@@ -135,6 +145,59 @@ export function initScrollArrows(opts: {
               ? { top: -stepY }
               : { top: stepY }
       target.scrollBy({ ...delta, behavior: "smooth" })
+    }
+
+    function continuousTick() {
+      const before = axis === "x" ? target.scrollLeft : target.scrollTop
+      if (axis === "x") target.scrollLeft = before + sign * CONTINUOUS_STEP
+      else target.scrollTop = before + sign * CONTINUOUS_STEP
+      const after = axis === "x" ? target.scrollLeft : target.scrollTop
+      // Chegou ao fim (não houve movimento): para.
+      if (after === before) {
+        rafScroll = 0
+        return
+      }
+      rafScroll = win.requestAnimationFrame(continuousTick)
+    }
+
+    function endPress() {
+      if (holdTimer) {
+        clearTimeout(holdTimer)
+        holdTimer = 0
+      }
+      if (rafScroll) {
+        win.cancelAnimationFrame(rafScroll)
+        rafScroll = 0
+      }
+    }
+
+    btn.addEventListener("pointerdown", (event) => {
+      event.preventDefault()
+      event.stopPropagation()
+      didContinuous = false
+      try {
+        btn.setPointerCapture(event.pointerId)
+      } catch {
+        // ignore
+      }
+      holdTimer = setTimeout(() => {
+        holdTimer = 0
+        didContinuous = true
+        if (!rafScroll) rafScroll = win.requestAnimationFrame(continuousTick)
+      }, HOLD_DELAY)
+    })
+    btn.addEventListener("pointerup", endPress)
+    btn.addEventListener("pointercancel", endPress)
+    btn.addEventListener("pointerleave", endPress)
+    btn.addEventListener("click", (event) => {
+      event.preventDefault()
+      event.stopPropagation()
+      // Se a rolagem contínua já tratou o gesto, não dá o salto de página extra.
+      if (didContinuous) {
+        didContinuous = false
+        return
+      }
+      pageStep()
     })
     overlay.appendChild(btn)
     return btn
@@ -218,7 +281,11 @@ export function initScrollArrows(opts: {
     const winW = win.innerWidth
     const winH = win.innerHeight
     const safeViewport = getSafeViewport()
-    const targets = Array.from(doc.querySelectorAll(opts.selector))
+    // Exclui regiões que gerem as próprias setas (ex.: o nav do sidebar, que tem
+    // setas internas para não colapsar ao passar o cursor por cima delas).
+    const targets = Array.from(doc.querySelectorAll(opts.selector)).filter(
+      (el) => !el.closest("[data-no-scroll-arrows]")
+    )
     const present = new Set(targets)
 
     // Limpa botões de alvos que saíram do DOM.

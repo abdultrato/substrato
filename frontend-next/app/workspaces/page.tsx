@@ -532,10 +532,7 @@ export default function WorkspacesPage() {
           subtitle={
             selectedLayer
               ? t("Escolha o departamento para continuar.", "Choose the department to continue.")
-              : t(
-                  "Escolha primeiro a área principal; os departamentos aparecem no passo seguinte.",
-                  "Choose the main area first; departments appear in the next step."
-                )
+              : undefined
           }
         />
 

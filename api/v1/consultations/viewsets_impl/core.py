@@ -808,7 +808,8 @@ class MedicalConsultationViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
         payload.is_valid(raise_exception=True)
 
         consultation.scheduled_for = payload.validated_data["scheduled_for"]
-        consultation.save(update_fields=["scheduled_for"])
+        consultation.reschedule_count = (consultation.reschedule_count or 0) + 1
+        consultation.save(update_fields=["scheduled_for", "reschedule_count"])
 
         return Response(
             MedicalConsultationSerializer(consultation).data,

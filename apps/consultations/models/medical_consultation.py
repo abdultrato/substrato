@@ -140,6 +140,13 @@ class MedicalConsultation(NoNameCoreModel):
         help_text="Marque se a date for feriado mesmo não sendo fim de semana.",
     )
 
+    reschedule_count = models.PositiveIntegerField(
+        "Nº de reagendamentos",
+        db_column="reschedule_count",
+        default=0,
+        help_text="Quantas vezes a consulta foi remarcada.",
+    )
+
     completed_at = models.DateTimeField("Concluída em",
 
         db_column="completed_at",

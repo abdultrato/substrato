@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { useCallback, useEffect, useMemo, type CSSProperties } from "react"
+import { useCallback, useEffect, useMemo, useRef, type CSSProperties } from "react"
 import { SessionUser } from "@/lib/session"
 import { getDefaultWorkspaceHref, GROUPS, userHasAnyGroup } from "@/lib/rbac"
 import { useLanguage } from "@/hooks/useLanguage"
@@ -45,6 +45,7 @@ import {
     X,
 } from "lucide-react"
 import useTheme from "@/hooks/useTheme"
+import NavScrollArrows from "@/components/layout/NavScrollArrows"
 
 interface Props {
     user: SessionUser | null
@@ -200,6 +201,8 @@ export default function Sidebar({ user, open = false, onClose, className }: Prop
     const { t } = useLanguage()
     const activeScope = useWorkspaceScope()
     const homeHref = useMemo(() => getDefaultWorkspaceHref(user), [user])
+    const desktopNavRef = useRef<HTMLElement | null>(null)
+    const mobileNavRef = useRef<HTMLElement | null>(null)
 
     const hasAccess = useCallback((item: NavItem) => {
         if (!item.groups) return true
@@ -376,7 +379,7 @@ export default function Sidebar({ user, open = false, onClose, className }: Prop
     const pinnedSection = sectionedItems[0]?.label === "Início" ? sectionedItems[0] : null
     const scrollSections = pinnedSection ? sectionedItems.slice(1) : sectionedItems
 
-    const menu = (
+    const renderMenu = (navRef: React.RefObject<HTMLElement | null>) => (
         <div className="flex h-full w-full flex-col overflow-hidden border-r border-border bg-card/95 text-foreground shadow-none backdrop-blur transition-[box-shadow,background-color] duration-200 ease-out supports-[backdrop-filter]:bg-card/85 md:shadow-md md:group-hover/sidebar:shadow-xl md:group-hover/sidebar:shadow-slate-950/10 md:group-focus-within/sidebar:shadow-xl md:dark:shadow-black/30">
             {/* Mesma altura do header principal (h-14) para as bordas alinharem. */}
             <div className="sticky top-0 z-10 flex h-14 min-h-14 shrink-0 items-center justify-center border-b border-border/80 bg-card/95 px-3 py-2 backdrop-blur transition-colors supports-[backdrop-filter]:bg-card/85 md:group-hover/sidebar:justify-between md:group-focus-within/sidebar:justify-between">
@@ -421,9 +424,16 @@ export default function Sidebar({ user, open = false, onClose, className }: Prop
                 </div>
             ) : null}
 
-            <nav className="flex flex-1 flex-col gap-3 overflow-y-auto overflow-x-hidden overscroll-contain px-2 pb-6 pt-3">
-                {scrollSections.map((section) => renderSection(section))}
-            </nav>
+            <div className="relative flex min-h-0 flex-1 flex-col">
+                <nav
+                    ref={navRef}
+                    data-no-scroll-arrows
+                    className="flex flex-1 flex-col gap-3 overflow-y-auto overflow-x-hidden overscroll-contain px-2 pb-6 pt-3"
+                >
+                    {scrollSections.map((section) => renderSection(section))}
+                </nav>
+                <NavScrollArrows targetRef={navRef} />
+            </div>
 
             <div className="flex h-10 items-center border-t border-border/80 px-2 py-1">
                 <button
@@ -452,7 +462,7 @@ export default function Sidebar({ user, open = false, onClose, className }: Prop
                 className={`group/sidebar hidden md:z-50 md:flex md:w-16 md:shrink-0 md:overflow-hidden md:transition-[width] md:duration-200 md:ease-out md:hover:w-[var(--sidebar-open-width)] md:focus-within:w-[var(--sidebar-open-width)] ${className || ""}`}
                 style={sidebarStyle}
             >
-                {menu}
+                {renderMenu(desktopNavRef)}
             </aside>
 
             <div className={`fixed inset-0 z-50 pointer-events-none md:hidden ${open ? "" : ""}`}>
@@ -463,7 +473,7 @@ export default function Sidebar({ user, open = false, onClose, className }: Prop
                 <div
                     className={`pointer-events-auto absolute inset-y-0 left-0 w-72 max-w-[92vw] shadow-2xl transition-transform duration-200 ${open ? "translate-x-0" : "-translate-x-full"}`}
                 >
-                    {menu}
+                    {renderMenu(mobileNavRef)}
                 </div>
             </div>
         </>
