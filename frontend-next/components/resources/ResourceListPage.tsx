@@ -22,6 +22,7 @@ import { fieldLabel } from "@/lib/ui/fieldLabels"
 import { canManageUserByHierarchy, GROUPS, userHasAnyGroup } from "@/lib/rbac"
 import { createResourceActionLabel } from "@/lib/resources/createLabels"
 import { relationTargetForField } from "@/lib/resources/relationOptions"
+import { getListColumnConfig } from "@/lib/resources/listColumnConfig"
 
 type Row = Record<string, any>
 
@@ -491,12 +492,17 @@ export default function ResourceListPage({
         )
       }
 
+      const columnConfig = getListColumnConfig(normalizedEndpoint)
       const labelByField = new Map(listFields.map((field) => [field.name, field.label] as const))
-      const keys = buildDetailedColumnKeys(visibleData, listFields)
+      let keys = buildDetailedColumnKeys(visibleData, listFields)
+      if (columnConfig?.hidden?.size) {
+        const hidden = columnConfig.hidden
+        keys = keys.filter((key) => !hidden.has(key.toLowerCase()))
+      }
       if (!keys.length) {
         return [
           {
-            header: t("Código", "Code"),
+            header: columnConfig?.codeHeader || t("Código", "Code"),
             render: codeCell,
           },
         ]
@@ -507,7 +513,11 @@ export default function ResourceListPage({
         const normalized = key.toLowerCase()
         const isCodeColumn = CODE_FIELDS.has(normalized) || (normalized === "id" && !hasDedicatedCodeColumn)
         return {
-          header: labelByField.get(key) || fieldLabel({ endpoint: normalizedEndpoint, name: key }),
+          header:
+            (isCodeColumn && columnConfig?.codeHeader) ||
+            columnConfig?.labels?.[normalized] ||
+            labelByField.get(key) ||
+            fieldLabel({ endpoint: normalizedEndpoint, name: key }),
           render: (row: Row) => {
             if (isCodeColumn) return codeCell(row)
             // Se a coluna é uma FK (escalar ou M2M), mostra o nome resolvido;
