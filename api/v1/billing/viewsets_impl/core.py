@@ -5,6 +5,7 @@ import json
 
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError as DjangoValidationError
+from django.db import transaction
 from django.db.models import Count, Q, Sum
 from django.db.models.functions import Coalesce
 from django.http import HttpResponse
@@ -22,6 +23,7 @@ from application.billing.handlers import handle_confirm_pending_invoice_payment,
 from apps.billing.models.invoice import Invoice
 from apps.billing.models.invoice_history import InvoiceHistory
 from apps.billing.models.invoice_items import InvoiceItem
+from apps.clinical.models.lab_request import LabRequest
 from apps.notifications.use_cases import send_paid_invoice_notification
 from infrastructure.cache import CacheService
 
@@ -477,6 +479,94 @@ class InvoiceViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
             except Exception:
                 pass
         return Response(self.get_serializer(invoice).data)
+
+    @action(
+        detail=False,
+        methods=["get"],
+        url_path="pending-requisitions",
+        url_name="pending-requisitions",
+    )
+    def pending_requisitions(self, request):
+        """Requisições clínicas ainda sem fatura (rascunho por iniciar).
+
+        Alimenta a secção "Faturas por criar": assim que a receção/médico cria
+        uma requisição, esta aparece aqui automaticamente, sem ser preciso
+        criar a fatura explicitamente.
+        """
+        tenant = self._get_request_tenant()
+        queryset = (
+            LabRequest.objects.filter(invoice__isnull=True, deleted=False)
+            .select_related("patient", "requesting_physician")
+            .prefetch_related("items")
+            .order_by("-created_at")
+        )
+        if tenant is not None:
+            queryset = queryset.filter(tenant=tenant)
+
+        data = []
+        for req in queryset[:200]:
+            itens = [item for item in req.items.all() if not getattr(item, "deleted", False)]
+            physician = getattr(req, "requesting_physician", None)
+            data.append(
+                {
+                    "id": req.id,
+                    "id_custom": req.custom_id,
+                    "paciente": getattr(req.patient, "name", None),
+                    "paciente_id": req.patient_id,
+                    "tipo": req.type,
+                    "tipo_display": req.get_type_display(),
+                    "estado": req.status,
+                    "num_exames": len(itens),
+                    "medico": getattr(physician, "name", None) if physician else None,
+                    "created_at": req.created_at,
+                }
+            )
+        return Response(data)
+
+    @action(
+        detail=False,
+        methods=["post"],
+        url_path="start-billing",
+        url_name="start-billing",
+    )
+    def start_billing(self, request):
+        """Inicia a faturação de uma requisição: cria o rascunho e sincroniza os itens.
+
+        Idempotente: se a requisição já tiver fatura, devolve a existente.
+        """
+        req_id = request.data.get("request") or request.data.get("requisicao") or request.data.get("request_id")
+        if not req_id:
+            raise ValidationError({"request": "Requisição é obrigatória."})
+
+        tenant = self._get_request_tenant()
+        req_queryset = LabRequest.objects.filter(pk=req_id, deleted=False).select_related("patient")
+        if tenant is not None:
+            req_queryset = req_queryset.filter(tenant=tenant)
+        lab_request = req_queryset.first()
+        if lab_request is None:
+            raise ValidationError({"request": "Requisição não encontrada."})
+
+        existing = Invoice.objects.filter(request=lab_request).first()
+        if existing is not None:
+            return Response(self.get_serializer(existing).data)
+
+        try:
+            with transaction.atomic():
+                invoice = Invoice(
+                    tenant=lab_request.tenant or tenant,
+                    origin=Invoice.Origin.CLINICAL,
+                    request=lab_request,
+                    patient=lab_request.patient,
+                    status=Invoice.Status.DRAFT,
+                )
+                invoice.save()
+                invoice.sync_items_from_origin()
+        except DjangoValidationError as exc:
+            if hasattr(exc, "message_dict"):
+                raise ValidationError(exc.message_dict) from exc
+            raise ValidationError(exc.messages) from exc
+
+        return Response(self.get_serializer(invoice).data, status=201)
 
     @action(
         detail=True,

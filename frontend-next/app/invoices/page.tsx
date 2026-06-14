@@ -2,6 +2,7 @@
 
 import { isNotFoundLikeError } from "@/lib/errors/api-error"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { useCallback, useEffect, useMemo, useState } from "react"
 
 import AppLayout from "@/components/layout/AppLayout"
@@ -37,6 +38,17 @@ type UserOption = {
   displayName: string
 }
 
+type RequisicaoPendente = {
+  id: number
+  id_custom?: string
+  paciente?: string | null
+  tipo?: string
+  tipo_display?: string
+  estado?: string
+  num_exames?: number
+  medico?: string | null
+}
+
 const ITEM_TYPE_ORDER = ["EXM", "EXA", "AJU", "PRC", "MAT", "FAR"] as const
 
 const ITEM_TYPE_LABELS: Record<string, string> = {
@@ -49,6 +61,7 @@ const ITEM_TYPE_LABELS: Record<string, string> = {
 }
 
 export default function FaturasPage() {
+  const router = useRouter()
   const { loading } = useAuthGuard()
   const { user } = useAuth()
   const safeRefreshToken = useSafeDataRefreshSignal()
@@ -91,6 +104,9 @@ export default function FaturasPage() {
   >(null)
   const [reportUsersLoading, setReportUsersLoading] = useState(false)
   const [reportUsersError, setReportUsersError] = useState<string | null>(null)
+  const [requisicoes, setRequisicoes] = useState<RequisicaoPendente[]>([])
+  const [carregandoRequisicoes, setCarregandoRequisicoes] = useState(true)
+  const [acaoRequisicaoId, setAcaoRequisicaoId] = useState<number | null>(null)
 
   const podeAlterar = userHasAnyGroup(user, [GROUPS.ADMIN, GROUPS.RECEPCAO])
   const rascunhos = useMemo(() => faturas.filter((f) => f.estado === "RASC"), [faturas])
@@ -116,6 +132,55 @@ export default function FaturasPage() {
   useEffect(() => {
     carregar()
   }, [carregar])
+
+  const carregarRequisicoes = useCallback(async () => {
+    try {
+      setCarregandoRequisicoes(true)
+      const res = await apiFetch<any>("/invoices/pending-requisitions/", {
+        clientCache: safeRefreshToken === 0,
+      })
+      const items = res && (res as any).results ? (res as any).results : res
+      setRequisicoes(Array.isArray(items) ? items : [])
+    } catch (e: any) {
+      if (!isNotFoundLikeError(e)) {
+        setRequisicoes([])
+      }
+    } finally {
+      setCarregandoRequisicoes(false)
+    }
+  }, [safeRefreshToken])
+
+  useEffect(() => {
+    carregarRequisicoes()
+  }, [carregarRequisicoes])
+
+  const iniciarFaturacao = useCallback(
+    async (requisicaoId: number) => {
+      if (!podeAlterar) {
+        setErro("Sem permissão para iniciar faturação.")
+        return
+      }
+      try {
+        setErro(null)
+        setFeedback(null)
+        setAcaoRequisicaoId(requisicaoId)
+        const fatura = await apiFetch<any>("/invoices/start-billing/", {
+          method: "POST",
+          body: JSON.stringify({ request: requisicaoId }),
+        })
+        await carregarRequisicoes()
+        await carregar()
+        if (fatura?.id) {
+          router.push(`/invoices/draft/${fatura.id}`)
+        }
+      } catch (e: any) {
+        setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao iniciar faturação."))
+      } finally {
+        setAcaoRequisicaoId(null)
+      }
+    },
+    [carregar, carregarRequisicoes, podeAlterar, router]
+  )
 
   const carregarUtilizadores = useCallback(async () => {
     try {
@@ -741,31 +806,86 @@ export default function FaturasPage() {
           <div className="space-y-4">
             <Card
               title="Faturas por criar"
-              subtitle="Rascunhos aguardando emissão."
+              subtitle="Requisições por faturar e rascunhos aguardando emissão."
             >
-              {rascunhos.length === 0 ? (
-                <div className="text-sm text-gray-500">Nenhum rascunho encontrado.</div>
-              ) : (
-                <div className="space-y-2">
-                  {rascunhos.map((f) => (
-                    <div
-                      key={f.id}
-                      className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-slate-100 bg-white px-3 py-2 text-sm"
-                    >
-                      <div className="text-gray-700">
-                        <div className="font-semibold">{f.id_custom || `Fatura ${f.id}`}</div>
-                        <div className="text-xs text-gray-500">Paciente: {f.paciente || "-"}</div>
-                      </div>
-                      <Link
-                        href={`/invoices/draft/${f.id}`}
-                        className="inline-flex items-center rounded-lg border border-emerald-200 px-3 py-1.5 text-xs font-medium text-emerald-700 transition hover:bg-emerald-50"
-                      >
-                        {podeAlterar ? "Editar" : "Ver"}
-                      </Link>
+              <div className="space-y-6">
+                <div className="space-y-3">
+                  <div className="text-xs font-semibold uppercase text-muted-foreground">
+                    Requisições por faturar
+                  </div>
+                  {carregandoRequisicoes ? (
+                    <div className="text-sm text-gray-500">Carregando requisições...</div>
+                  ) : requisicoes.length === 0 ? (
+                    <div className="text-sm text-gray-500">Nenhuma requisição por faturar.</div>
+                  ) : (
+                    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                      {requisicoes.map((r) => (
+                        <div
+                          key={r.id}
+                          className="flex min-h-[160px] flex-col justify-between rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition hover:shadow"
+                        >
+                          <div>
+                            <div className="font-semibold text-gray-800">
+                              {r.id_custom || `REQ ${r.id}`}
+                            </div>
+                            <div className="mt-1 text-sm text-gray-600">{r.paciente || "Paciente não identificado"}</div>
+                            <div className="mt-2 flex flex-wrap gap-1">
+                              <span className="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600">
+                                {r.tipo_display || r.tipo || "Requisição"}
+                              </span>
+                              <span className="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600">
+                                {(r.num_exames ?? 0)} {r.num_exames === 1 ? "exame" : "exames"}
+                              </span>
+                            </div>
+                            {r.medico ? (
+                              <div className="mt-1 text-xs text-gray-400">Médico: {r.medico}</div>
+                            ) : null}
+                          </div>
+                          {podeAlterar ? (
+                            <button
+                              type="button"
+                              onClick={() => iniciarFaturacao(r.id)}
+                              disabled={acaoRequisicaoId === r.id}
+                              className="mt-3 inline-flex items-center justify-center rounded-lg bg-[var(--primary-600)] px-3 py-2 text-xs font-semibold text-white transition hover:bg-[var(--primary-700)] disabled:opacity-50"
+                            >
+                              {acaoRequisicaoId === r.id ? "Iniciando..." : "Iniciar faturação"}
+                            </button>
+                          ) : null}
+                        </div>
+                      ))}
                     </div>
-                  ))}
+                  )}
                 </div>
-              )}
+
+                <div className="space-y-2">
+                  <div className="text-xs font-semibold uppercase text-muted-foreground">
+                    Rascunhos aguardando emissão
+                  </div>
+                  {rascunhos.length === 0 ? (
+                    <div className="text-sm text-gray-500">Nenhum rascunho encontrado.</div>
+                  ) : (
+                    <div className="space-y-2">
+                      {rascunhos.map((f) => (
+                        <div
+                          key={f.id}
+                          className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-slate-100 bg-white px-3 py-2 text-sm"
+                        >
+                          <div className="text-gray-700">
+                            <div className="font-semibold">{f.id_custom || `Fatura ${f.id}`}</div>
+                            <div className="text-xs text-gray-500">Paciente: {f.paciente || "-"}</div>
+                          </div>
+                          <Link
+                            href={`/invoices/draft/${f.id}`}
+                            className="inline-flex items-center rounded-lg border border-emerald-200 px-3 py-1.5 text-xs font-medium text-emerald-700 transition hover:bg-emerald-50"
+                          >
+                            {podeAlterar ? "Editar" : "Ver"}
+                          </Link>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
             </Card>
 
             <DataTable<FaturaRow> columns={columns as any} data={faturas} />

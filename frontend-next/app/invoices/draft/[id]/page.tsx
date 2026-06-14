@@ -8,7 +8,7 @@ import AppLayout from "@/components/layout/AppLayout"
 import PageHeader from "@/components/ui/PageHeader"
 import Card from "@/components/ui/Card"
 import DataTable from "@/components/ui/DataTable"
-import SearchInput from "@/components/ui/SearchInput"
+import CatalogSearchSelect, { type CatalogOption } from "@/components/ui/CatalogSearchSelect"
 import SelectInput from "@/components/ui/SelectInput"
 import TextAreaInput from "@/components/ui/TextAreaInput"
 import TextInput from "@/components/ui/TextInput"
@@ -131,11 +131,6 @@ export default function FaturaRascunhoPage() {
   const [examesMedicos, setExamesMedicos] = useState<Row[]>([])
   const [produtos, setProdutos] = useState<Row[]>([])
 
-  const [searchExame, setSearchExame] = useState<Row[]>([])
-  const [searchExameMedico, setSearchExameMedico] = useState<Row[]>([])
-  const [searchProcedimentoCatalogo, setSearchProcedimentoCatalogo] = useState<Row[]>([])
-  const [searchProcedimentoCirurgico, setSearchProcedimentoCirurgico] = useState<Row[]>([])
-  const [searchProduto, setSearchProduto] = useState<Row[]>([])
 
   const [pagamentoMetodosSelecionados, setPagamentoMetodosSelecionados] = useState<MetodoPagamento[]>([])
   const [pagamentoValoresPorMetodo, setPagamentoValoresPorMetodo] = useState<Record<MetodoPagamento, string>>({
@@ -149,6 +144,7 @@ export default function FaturaRascunhoPage() {
     OUT: "",
   })
   const [recibo, setRecibo] = useState<Row | null>(null)
+  const [pagamentos, setPagamentos] = useState<Row[]>([])
   const [seguradoras, setSeguradoras] = useState<Row[]>([])
   const [planos, setPlanos] = useState<Row[]>([])
   const [pagamentoSeguradora, setPagamentoSeguradora] = useState("")
@@ -330,6 +326,17 @@ export default function FaturaRascunhoPage() {
     }
   }, [safeRefreshToken])
 
+  const carregarPagamentos = useCallback(async (fatId: number) => {
+    try {
+      const res = await apiFetch<any>(`/payments/payment/?fatura=${fatId}&status=CON`, {
+        clientCache: safeRefreshToken === 0,
+      })
+      setPagamentos(listFrom(res))
+    } catch {
+      setPagamentos([])
+    }
+  }, [safeRefreshToken])
+
   const carregarCatalogos = useCallback(async () => {
     try {
       const [exs, exsMed, prods] = await Promise.all([
@@ -452,6 +459,7 @@ export default function FaturaRascunhoPage() {
 
       await carregarItens(faturaId)
       await carregarRecibo(faturaId)
+      await carregarPagamentos(faturaId)
       if (podeEditar) {
         await carregarCatalogos()
       }
@@ -465,6 +473,7 @@ export default function FaturaRascunhoPage() {
     carregarCatalogos,
     carregarItens,
     carregarRecibo,
+    carregarPagamentos,
     carregarRecursosPaciente,
     faturaId,
     podeEditar,
@@ -768,70 +777,64 @@ export default function FaturaRascunhoPage() {
     }
   }, [faturaId])
 
-  const buscarExames = useCallback(async (q: string) => {
-    if (!q.trim()) {
-      setSearchExame([])
-      return
+  const precoHint = useCallback((...valores: unknown[]): string | undefined => {
+    for (const valor of valores) {
+      if (valor === undefined || valor === null || valor === "") continue
+      const numero = Number(valor)
+      if (!Number.isNaN(numero)) return `${numero.toLocaleString()} MZN`
     }
-    try {
-      const res = await apiFetch<any>(`/exams/?search=${encodeURIComponent(q)}`)
-      setSearchExame(listFrom(res))
-    } catch {
-      setSearchExame([])
-    }
+    return undefined
   }, [])
 
-  const buscarExamesMedicos = useCallback(async (q: string) => {
-    if (!q.trim()) {
-      setSearchExameMedico([])
-      return
-    }
-    try {
-      const res = await apiFetch<any>(`/clinical/medicalexam/?search=${encodeURIComponent(q)}`)
-      setSearchExameMedico(listFrom(res))
-    } catch {
-      setSearchExameMedico([])
-    }
-  }, [])
+  const buscarExames = useCallback(async (q: string): Promise<CatalogOption[]> => {
+    const res = await apiFetch<any>(`/exams/?search=${encodeURIComponent(q)}`)
+    return listFrom(res).map((e) => ({
+      key: e.id,
+      label: e.nome || e.id_custom || `Exame ${e.id}`,
+      hint: precoHint(e.preco, e.preco_unitario, e.price),
+      raw: e,
+    }))
+  }, [precoHint])
 
-  const buscarProcedimentosCatalogo = useCallback(async (q: string) => {
-    if (!q.trim()) {
-      setSearchProcedimentoCatalogo([])
-      return
-    }
-    try {
-      const res = await apiFetch<any>(`/nursing/procedure_catalog/?search=${encodeURIComponent(q)}`)
-      setSearchProcedimentoCatalogo(listFrom(res))
-    } catch {
-      setSearchProcedimentoCatalogo([])
-    }
-  }, [])
+  const buscarExamesMedicos = useCallback(async (q: string): Promise<CatalogOption[]> => {
+    const res = await apiFetch<any>(`/clinical/medicalexam/?search=${encodeURIComponent(q)}`)
+    return listFrom(res).map((e) => ({
+      key: e.id,
+      label: e.nome || e.id_custom || `Exame ${e.id}`,
+      hint: precoHint(e.preco, e.preco_unitario, e.price),
+      raw: e,
+    }))
+  }, [precoHint])
 
-  const buscarProcedimentosCirurgicos = useCallback(async (q: string) => {
-    if (!q.trim()) {
-      setSearchProcedimentoCirurgico([])
-      return
-    }
-    try {
-      const res = await apiFetch<any>(`/surgery/surgical_procedure/?search=${encodeURIComponent(q)}`)
-      setSearchProcedimentoCirurgico(listFrom(res))
-    } catch {
-      setSearchProcedimentoCirurgico([])
-    }
-  }, [])
+  const buscarProcedimentosCatalogo = useCallback(async (q: string): Promise<CatalogOption[]> => {
+    const res = await apiFetch<any>(`/nursing/procedure_catalog/?search=${encodeURIComponent(q)}`)
+    return listFrom(res).map((p) => ({
+      key: p.id,
+      label: p.nome || p.id_custom || `Procedimento ${p.id}`,
+      hint: precoHint(p.preco_padrao, p.preco),
+      raw: p,
+    }))
+  }, [precoHint])
 
-  const buscarProdutos = useCallback(async (q: string) => {
-    if (!q.trim()) {
-      setSearchProduto([])
-      return
-    }
-    try {
-      const res = await apiFetch<any>(`/pharmacy/product/?search=${encodeURIComponent(q)}`)
-      setSearchProduto(listFrom(res))
-    } catch {
-      setSearchProduto([])
-    }
-  }, [])
+  const buscarProcedimentosCirurgicos = useCallback(async (q: string): Promise<CatalogOption[]> => {
+    const res = await apiFetch<any>(`/surgery/surgical_procedure/?search=${encodeURIComponent(q)}`)
+    return listFrom(res).map((p) => ({
+      key: p.id,
+      label: p.nome || p.id_custom || `Cirurgia ${p.id}`,
+      hint: precoHint(p.preco_base, p.preco),
+      raw: p,
+    }))
+  }, [precoHint])
+
+  const buscarProdutos = useCallback(async (q: string): Promise<CatalogOption[]> => {
+    const res = await apiFetch<any>(`/pharmacy/product/?search=${encodeURIComponent(q)}`)
+    return listFrom(res).map((p) => ({
+      key: p.id,
+      label: p.nome || p.id_custom || `Produto ${p.id}`,
+      hint: precoHint(p.preco_venda, p.preco),
+      raw: p,
+    }))
+  }, [precoHint])
 
   const itensCols = useMemo(
     () => [
@@ -1007,8 +1010,58 @@ export default function FaturaRascunhoPage() {
           )}
         </Card>
 
-        <Card title="Registrar pagamento" subtitle="Disponível após emissão da fatura.">
-          {fatura.estado !== "EMIT" ? (
+        <Card
+          title={fatura.estado === "PAGA" ? "Fatura paga" : "Registrar pagamento"}
+          subtitle={fatura.estado === "PAGA" ? "Imprima a fatura e o recibo." : "Disponível após emissão da fatura."}
+        >
+          {fatura.estado === "PAGA" ? (
+            <div className="space-y-4">
+              <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800">
+                Fatura totalmente quitada.
+              </div>
+
+              {pagamentos.length > 0 ? (
+                <div className="space-y-2">
+                  <div className="text-xs font-semibold uppercase text-muted-foreground">Pagamentos</div>
+                  <div className="overflow-hidden rounded-lg border border-border">
+                    <table className="min-w-full text-sm">
+                      <tbody className="divide-y divide-border">
+                        {pagamentos.map((p) => (
+                          <tr key={p.id}>
+                            <td className="px-3 py-2 text-gray-700">
+                              {metodosLabelByValue.get((p.metodo ?? p.method) as MetodoPagamento) || p.metodo || p.method || "-"}
+                            </td>
+                            <td className="px-3 py-2 text-right font-medium text-gray-900">
+                              <MoneyValue value={p.valor ?? p.value} />
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              ) : null}
+
+              <div className="flex flex-wrap gap-2">
+                <button
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--primary-600)] px-3 py-2 text-sm font-semibold text-white transition hover:bg-[var(--primary-700)]"
+                  onClick={downloadInvoicePdf}
+                >
+                  <PdfActionLabel>Imprimir fatura</PdfActionLabel>
+                </button>
+                {recibo ? (
+                  <button
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700"
+                    onClick={downloadReceiptPdf}
+                  >
+                    <PdfActionLabel>Imprimir recibo</PdfActionLabel>
+                  </button>
+                ) : (
+                  <span className="self-center text-xs text-gray-500">Recibo a ser gerado.</span>
+                )}
+              </div>
+            </div>
+          ) : fatura.estado !== "EMIT" ? (
             <div className="text-sm text-gray-500">Emita a fatura para liberar o pagamento.</div>
           ) : !podePagar ? (
             <div className="text-sm text-gray-500">Sem permissão para registrar pagamento.</div>
@@ -1350,25 +1403,22 @@ export default function FaturaRascunhoPage() {
                 <div className="text-sm text-gray-500">Sem consultas.</div>
               ) : (
                 <div className="space-y-2">
-                  {consultas.map((c) => (
-                    <div key={c.id} className="flex items-center justify-between gap-2 rounded-lg border border-slate-100 bg-white p-3 text-sm">
-                      <div className="text-gray-700">{c.tipo || c.id_custom || `Consulta ${c.id}`}</div>
-                      <button
-                        className="inline-flex items-center rounded-lg border border-emerald-200 px-2.5 py-1 text-xs font-medium text-emerald-700 transition hover:bg-emerald-50 disabled:opacity-50"
-                        onClick={() => adicionarItem({
-                          tipo_item: "AJU",
-                          descricao: `Consulta: ${c.tipo || c.id_custom || c.id}`,
-                          quantidade: 1,
-                          preco_unitario: c.preco || 0,
-                          iva_percentual: c.iva_percentual,
-                          aplica_iva: true,
-                        }, `patient-consultation-${c.id}`)}
-                        disabled={addItemButtonDisabled}
-                      >
-                        {addItemButtonLabel(`patient-consultation-${c.id}`)}
-                      </button>
-                    </div>
-                  ))}
+                  {consultas.map((c) => {
+                    const nomeConsulta =
+                      c.type || c.specialty_name || c.custom_id || `Consulta ${c.id}`
+                    return (
+                      <div key={c.id} className="flex items-center justify-between gap-2 rounded-lg border border-slate-100 bg-white p-3 text-sm">
+                        <div className="text-gray-700">{nomeConsulta}</div>
+                        <button
+                          className="inline-flex items-center rounded-lg border border-emerald-200 px-2.5 py-1 text-xs font-medium text-emerald-700 transition hover:bg-emerald-50 disabled:opacity-50"
+                          onClick={() => adicionarItem({ tipo_item: "CON", consultation: c.id }, `patient-consultation-${c.id}`)}
+                          disabled={addItemButtonDisabled}
+                        >
+                          {addItemButtonLabel(`patient-consultation-${c.id}`)}
+                        </button>
+                      </div>
+                    )
+                  })}
                 </div>
               )}
             </div>
@@ -1383,118 +1433,82 @@ export default function FaturaRascunhoPage() {
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <div className="text-sm font-semibold text-gray-800">Exames laboratoriais</div>
-              <SearchInput placeholder="Pesquisar exames" onSearch={buscarExames} />
-              <div className="space-y-2">
-                {searchExame.map((e) => (
-                  <div key={e.id} className="flex items-center justify-between gap-2 rounded-lg border border-slate-100 bg-white px-3 py-2 text-sm">
-                    <div className="text-gray-700">{e.nome || e.id_custom || `Exame ${e.id}`}</div>
-                    <button
-                      className="inline-flex items-center rounded-lg border border-emerald-200 px-2.5 py-1 text-xs font-medium text-emerald-700 transition hover:bg-emerald-50 disabled:opacity-50"
-                      onClick={() => adicionarItem({ tipo_item: "EXA", exame: e.id }, `catalog-exam-${e.id}`)}
-                      disabled={addItemButtonDisabled}
-                    >
-                      {addItemButtonLabel(`catalog-exam-${e.id}`)}
-                    </button>
-                  </div>
-                ))}
-              </div>
+              <CatalogSearchSelect
+                placeholder="Pesquisar exames"
+                fetcher={buscarExames}
+                disabled={addItemButtonDisabled}
+                onSelect={(opt) => adicionarItem({ tipo_item: "EXA", exame: opt.raw.id }, `catalog-exam-${opt.raw.id}`)}
+              />
             </div>
 
             <div className="space-y-2">
               <div className="text-sm font-semibold text-gray-800">Exames médicos</div>
-              <SearchInput placeholder="Pesquisar exames médicos" onSearch={buscarExamesMedicos} />
-              <div className="space-y-2">
-                {searchExameMedico.map((e) => (
-                  <div key={e.id} className="flex items-center justify-between gap-2 rounded-lg border border-slate-100 bg-white px-3 py-2 text-sm">
-                    <div className="text-gray-700">{e.nome || e.id_custom || `Exame ${e.id}`}</div>
-                    <button
-                      className="inline-flex items-center rounded-lg border border-emerald-200 px-2.5 py-1 text-xs font-medium text-emerald-700 transition hover:bg-emerald-50 disabled:opacity-50"
-                      onClick={() => adicionarItem({ tipo_item: "EXM", exame_medico: e.id }, `catalog-medical-exam-${e.id}`)}
-                      disabled={addItemButtonDisabled}
-                    >
-                      {addItemButtonLabel(`catalog-medical-exam-${e.id}`)}
-                    </button>
-                  </div>
-                ))}
-              </div>
+              <CatalogSearchSelect
+                placeholder="Pesquisar exames médicos"
+                fetcher={buscarExamesMedicos}
+                disabled={addItemButtonDisabled}
+                onSelect={(opt) => adicionarItem({ tipo_item: "EXM", exame_medico: opt.raw.id }, `catalog-medical-exam-${opt.raw.id}`)}
+              />
             </div>
 
             <div className="space-y-2">
               <div className="text-sm font-semibold text-gray-800">Procedimentos (catálogo)</div>
-              <SearchInput placeholder="Pesquisar procedimentos" onSearch={buscarProcedimentosCatalogo} />
-              <div className="space-y-2">
-                {searchProcedimentoCatalogo.map((p) => (
-                  <div key={p.id} className="flex items-center justify-between gap-2 rounded-lg border border-slate-100 bg-white px-3 py-2 text-sm">
-                    <div className="text-gray-700">{p.nome || p.id_custom || `Procedimento ${p.id}`}</div>
-                    <button
-                      className="inline-flex items-center rounded-lg border border-emerald-200 px-2.5 py-1 text-xs font-medium text-emerald-700 transition hover:bg-emerald-50 disabled:opacity-50"
-                      onClick={() => adicionarItem({
-                        tipo_item: "AJU",
-                        descricao: `Procedimento: ${p.nome || p.id_custom || p.id}`,
-                        quantidade: 1,
-                        preco_unitario: p.preco_padrao || 0,
-                        iva_percentual: p.iva_percentual,
-                        aplica_iva: p.aplica_iva_por_padrao,
-                      }, `catalog-procedure-${p.id}`)}
-                      disabled={addItemButtonDisabled}
-                    >
-                      {addItemButtonLabel(`catalog-procedure-${p.id}`)}
-                    </button>
-                  </div>
-                ))}
-              </div>
+              <CatalogSearchSelect
+                placeholder="Pesquisar procedimentos"
+                fetcher={buscarProcedimentosCatalogo}
+                disabled={addItemButtonDisabled}
+                onSelect={(opt) => {
+                  const p = opt.raw
+                  return adicionarItem({
+                    tipo_item: "AJU",
+                    descricao: `Procedimento: ${p.nome || p.id_custom || p.id}`,
+                    quantidade: 1,
+                    preco_unitario: p.preco_padrao || 0,
+                    iva_percentual: p.iva_percentual,
+                    aplica_iva: p.aplica_iva_por_padrao,
+                  }, `catalog-procedure-${p.id}`)
+                }}
+              />
             </div>
 
             <div className="space-y-2">
               <div className="text-sm font-semibold text-gray-800">Procedimentos cirúrgicos</div>
-              <SearchInput placeholder="Pesquisar cirurgias" onSearch={buscarProcedimentosCirurgicos} />
-              <div className="space-y-2">
-                {searchProcedimentoCirurgico.map((p) => (
-                  <div key={p.id} className="flex items-center justify-between gap-2 rounded-lg border border-slate-100 bg-white px-3 py-2 text-sm">
-                    <div className="text-gray-700">{p.nome || p.id_custom || `Cirurgia ${p.id}`}</div>
-                    <button
-                      className="inline-flex items-center rounded-lg border border-emerald-200 px-2.5 py-1 text-xs font-medium text-emerald-700 transition hover:bg-emerald-50 disabled:opacity-50"
-                      onClick={() => adicionarItem({
-                        tipo_item: "AJU",
-                        descricao: `Cirurgia: ${p.nome || p.id_custom || p.id}`,
-                        quantidade: 1,
-                        preco_unitario: p.preco_base || 0,
-                        iva_percentual: p.iva_percentual,
-                        aplica_iva: p.aplica_iva_por_padrao,
-                      }, `catalog-surgery-${p.id}`)}
-                      disabled={addItemButtonDisabled}
-                    >
-                      {addItemButtonLabel(`catalog-surgery-${p.id}`)}
-                    </button>
-                  </div>
-                ))}
-              </div>
+              <CatalogSearchSelect
+                placeholder="Pesquisar cirurgias"
+                fetcher={buscarProcedimentosCirurgicos}
+                disabled={addItemButtonDisabled}
+                onSelect={(opt) => {
+                  const p = opt.raw
+                  return adicionarItem({
+                    tipo_item: "AJU",
+                    descricao: `Cirurgia: ${p.nome || p.id_custom || p.id}`,
+                    quantidade: 1,
+                    preco_unitario: p.preco_base || 0,
+                    iva_percentual: p.iva_percentual,
+                    aplica_iva: p.aplica_iva_por_padrao,
+                  }, `catalog-surgery-${p.id}`)
+                }}
+              />
             </div>
 
             <div className="space-y-2">
               <div className="text-sm font-semibold text-gray-800">Medicamentos / materiais</div>
-              <SearchInput placeholder="Pesquisar produtos" onSearch={buscarProdutos} />
-              <div className="space-y-2">
-                {searchProduto.map((p) => (
-                  <div key={p.id} className="flex items-center justify-between gap-2 rounded-lg border border-slate-100 bg-white px-3 py-2 text-sm">
-                    <div className="text-gray-700">{p.nome || p.id_custom || `Produto ${p.id}`}</div>
-                    <button
-                      className="inline-flex items-center rounded-lg border border-emerald-200 px-2.5 py-1 text-xs font-medium text-emerald-700 transition hover:bg-emerald-50 disabled:opacity-50"
-                      onClick={() => adicionarItem({
-                        tipo_item: "AJU",
-                        descricao: `Produto: ${p.nome || p.id_custom || p.id}`,
-                        quantidade: 1,
-                        preco_unitario: p.preco_venda || 0,
-                        iva_percentual: p.iva_percentual,
-                        aplica_iva: p.aplica_iva_por_padrao,
-                      }, `catalog-product-${p.id}`)}
-                      disabled={addItemButtonDisabled}
-                    >
-                      {addItemButtonLabel(`catalog-product-${p.id}`)}
-                    </button>
-                  </div>
-                ))}
-              </div>
+              <CatalogSearchSelect
+                placeholder="Pesquisar produtos"
+                fetcher={buscarProdutos}
+                disabled={addItemButtonDisabled}
+                onSelect={(opt) => {
+                  const p = opt.raw
+                  return adicionarItem({
+                    tipo_item: "AJU",
+                    descricao: `Produto: ${p.nome || p.id_custom || p.id}`,
+                    quantidade: 1,
+                    preco_unitario: p.preco_venda || 0,
+                    iva_percentual: p.iva_percentual,
+                    aplica_iva: p.aplica_iva_por_padrao,
+                  }, `catalog-product-${p.id}`)
+                }}
+              />
             </div>
           </div>
           )}
