@@ -45,7 +45,6 @@ import {
     X,
 } from "lucide-react"
 import useTheme from "@/hooks/useTheme"
-import { lucideToDataUrl } from "@/lib/icon-svg"
 
 interface Props {
     user: SessionUser | null
@@ -193,12 +192,6 @@ export const NAV_SECTIONS: NavSection[] = [
         hrefs: ["/notifications", "/audit", "/monitoring", "/admin"],
     },
 ]
-
-// Pre-compute SVG data URIs for all nav icons once at module load.
-// Each icon becomes a CSS mask-image — no SVG node rendered in the DOM.
-const NAV_ICON_URLS = new Map<string, string>(
-    NAV_ITEMS.map(item => [item.href, lucideToDataUrl(item.icon)])
-)
 
 export default function Sidebar({ user, open = false, onClose, className }: Props) {
     const pathname = usePathname()
@@ -382,7 +375,7 @@ export default function Sidebar({ user, open = false, onClose, className }: Prop
                         <div className="space-y-0.5">
                             {section.items.map((item) => {
                                 const active = pathname === item.href || (item.href !== "/" && pathname?.startsWith(item.href + "/"))
-                                const iconUrl = NAV_ICON_URLS.get(item.href) ?? ""
+                                const NavIcon = item.icon as any
 
                                 return (
                                     <Link
@@ -401,25 +394,14 @@ export default function Sidebar({ user, open = false, onClose, className }: Prop
                                                 : "text-muted-foreground hover:bg-muted hover:text-foreground"
                                         }`}
                                     >
-                                        {iconUrl && (
-                                            <span
-                                                aria-hidden
-                                                className={`pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 ${
-                                                    active ? "text-primary" : "text-muted-foreground group-hover/item:text-foreground"
-                                                }`}
-                                                style={{
-                                                    backgroundColor: "currentColor",
-                                                    WebkitMaskImage: `url("${iconUrl}")`,
-                                                    WebkitMaskSize: "contain",
-                                                    WebkitMaskRepeat: "no-repeat",
-                                                    WebkitMaskPosition: "center",
-                                                    maskImage: `url("${iconUrl}")`,
-                                                    maskSize: "contain",
-                                                    maskRepeat: "no-repeat",
-                                                    maskPosition: "center",
-                                                }}
-                                            />
-                                        )}
+                                        <span
+                                            aria-hidden
+                                            className={`pointer-events-none absolute left-2.5 top-1/2 flex h-4 w-4 -translate-y-1/2 items-center justify-center ${
+                                                active ? "text-primary" : "text-muted-foreground group-hover/item:text-foreground"
+                                            }`}
+                                        >
+                                            <NavIcon size={16} strokeWidth={2} />
+                                        </span>
                                         <span className="truncate opacity-100 transition-all duration-200 md:max-w-0 md:-translate-x-1 md:opacity-0 md:group-hover/sidebar:max-w-[calc(var(--sidebar-open-width)-3.5rem)] md:group-hover/sidebar:translate-x-0 md:group-hover/sidebar:opacity-100 md:group-focus-within/sidebar:max-w-[calc(var(--sidebar-open-width)-3.5rem)] md:group-focus-within/sidebar:translate-x-0 md:group-focus-within/sidebar:opacity-100">
                                             {t(item.label, item.labelEn || item.label)}
                                         </span>

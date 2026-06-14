@@ -1,6 +1,5 @@
 import Link from "next/link"
 import { useLanguage } from "@/hooks/useLanguage"
-import { lucideToDataUrl } from "@/lib/icon-svg"
 
 export default function ActionTile({
   title,
@@ -14,7 +13,7 @@ export default function ActionTile({
   icon: any
 }) {
   const { tr } = useLanguage()
-  const iconUrl = lucideToDataUrl(icon)
+  const Icon = icon as any
 
   return (
     <Link
@@ -24,22 +23,9 @@ export default function ActionTile({
       <div className="relative flex items-start gap-3">
         <span
           aria-hidden
-          className="pointer-events-none relative h-8 w-8 shrink-0 rounded-md border border-border bg-muted shadow-sm"
+          className="pointer-events-none flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-border bg-muted text-foreground shadow-sm"
         >
-          <span
-            className="absolute inset-[6px]"
-            style={{
-              backgroundColor: "currentColor",
-              WebkitMaskImage: `url("${iconUrl}")`,
-              WebkitMaskRepeat: "no-repeat",
-              WebkitMaskSize: "contain",
-              WebkitMaskPosition: "center",
-              maskImage: `url("${iconUrl}")`,
-              maskRepeat: "no-repeat",
-              maskSize: "contain",
-              maskPosition: "center",
-            }}
-          />
+          <Icon size={16} strokeWidth={2} />
         </span>
 
         <div>
