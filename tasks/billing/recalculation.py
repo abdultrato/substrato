@@ -28,7 +28,7 @@ def recalculate_invoice_task(invoice_id: int) -> None:
 
     try:
         with transaction.atomic():
-            invoice.recalcular_totais()
+            # persist_totals() já chama recalculate_totals() internamente.
             invoice.persist_totals()
     except Exception:
         observe_async_task_duration(

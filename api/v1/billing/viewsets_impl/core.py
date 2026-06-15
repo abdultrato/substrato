@@ -11,7 +11,7 @@ from django.db.models.functions import Coalesce
 from django.http import HttpResponse
 from django.utils import timezone
 from rest_framework.decorators import action
-from rest_framework.exceptions import ValidationError
+from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
@@ -20,6 +20,7 @@ from api.utils.async_exports import queue_export_if_requested
 from api.v1.viewset_mixins import TenantScopedQuerysetMixin, ValidatedSearchOrderingMixin
 from application.billing.commands import ConfirmPendingInvoicePaymentCommand, IssueInvoiceCommand
 from application.billing.handlers import handle_confirm_pending_invoice_payment, handle_issue_invoice
+from apps.billing.models.credit_note_request import CreditNoteRequest
 from apps.billing.models.invoice import Invoice
 from apps.billing.models.invoice_history import InvoiceHistory
 from apps.billing.models.invoice_items import InvoiceItem
@@ -28,7 +29,12 @@ from apps.notifications.use_cases import send_paid_invoice_notification
 from infrastructure.cache import CacheService
 
 from ..filters import InvoiceFilter, InvoiceHistoryFilter, InvoiceItemFilter
-from ..serializers import InvoiceHistorySerializer, InvoiceItemSerializer, InvoiceSerializer
+from ..serializers import (
+    CreditNoteRequestSerializer,
+    InvoiceHistorySerializer,
+    InvoiceItemSerializer,
+    InvoiceSerializer,
+)
 
 
 class InvoiceViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
@@ -713,14 +719,81 @@ class InvoiceHistoryViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMi
     ordering = ["-created_at"]
 
 
+def user_in_accounting(user) -> bool:
+    """Apenas Contabilidade (e Administrador) decide pedidos de nota de crédito."""
+    if not user or not getattr(user, "is_authenticated", False):
+        return False
+    if getattr(user, "is_superuser", False):
+        return True
+    try:
+        from security.permissions.rbac import GROUPS as RBAC_GROUPS, _normalize
+
+        raw_groups = list(user.groups.values_list("name", flat=True))
+        user_groups = {_normalize(g) for g in raw_groups if g}
+        allowed = {
+            _normalize(RBAC_GROUPS["ADMIN"]),
+            _normalize(RBAC_GROUPS["CONTABILIDADE"]),
+        }
+        return bool(user_groups & allowed)
+    except Exception:
+        return False
+
+
+class CreditNoteRequestViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
+    """Fila de pedidos de nota de crédito tratada pelo sector da Contabilidade."""
+
+    queryset = CreditNoteRequest.objects.select_related(
+        "invoice",
+        "consultation",
+        "patient",
+        "created_by",
+        "reviewed_by",
+    ).all()
+    serializer_class = CreditNoteRequestSerializer
+    permission_classes = [IsAuthenticated]
+    filterset_fields = ["status", "invoice", "consultation"]
+    search_fields = ["custom_id", "invoice__custom_id", "patient__name", "reason"]
+    ordering_fields = ["created_at", "status", "reviewed_at"]
+    ordering = ["-created_at"]
+    http_method_names = ["get", "post", "head", "options"]
+
+    @action(detail=True, methods=["post"], url_path="approve", url_name="approve")
+    def approve(self, request, pk=None):
+        if not user_in_accounting(getattr(request, "user", None)):
+            raise PermissionDenied("Apenas a Contabilidade pode aprovar pedidos de nota de crédito.")
+        credit_note = self.get_object()
+        note = (request.data or {}).get("note", "") if isinstance(request.data, dict) else ""
+        try:
+            credit_note.approve(user=request.user, note=note)
+        except DjangoValidationError as exc:
+            detail = getattr(exc, "message_dict", None) or getattr(exc, "messages", None) or [str(exc)]
+            raise ValidationError(detail)
+        return Response(self.get_serializer(credit_note).data)
+
+    @action(detail=True, methods=["post"], url_path="reject", url_name="reject")
+    def reject(self, request, pk=None):
+        if not user_in_accounting(getattr(request, "user", None)):
+            raise PermissionDenied("Apenas a Contabilidade pode rejeitar pedidos de nota de crédito.")
+        credit_note = self.get_object()
+        note = (request.data or {}).get("note", "") if isinstance(request.data, dict) else ""
+        try:
+            credit_note.reject(user=request.user, note=note)
+        except DjangoValidationError as exc:
+            detail = getattr(exc, "message_dict", None) or getattr(exc, "messages", None) or [str(exc)]
+            raise ValidationError(detail)
+        return Response(self.get_serializer(credit_note).data)
+
+
 VIEWSET_MAP = {
     "invoice": InvoiceViewSet,
     "invoicehistory": InvoiceHistoryViewSet,
     "invoiceitem": InvoiceItemViewSet,
+    "credit-note-request": CreditNoteRequestViewSet,
 }
 
 __all__ = [
     "VIEWSET_MAP",
+    "CreditNoteRequestViewSet",
     "InvoiceHistoryViewSet",
     "InvoiceItemViewSet",
     "InvoiceViewSet",

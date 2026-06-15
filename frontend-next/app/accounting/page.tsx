@@ -25,6 +25,7 @@ export default function ContabilidadePage() {
   const [faturas, setFaturas] = useState<number>(0)
   const [recibos, setRecibos] = useState<number>(0)
   const [lancamentos, setLancamentos] = useState<number>(0)
+  const [notasCreditoPendentes, setNotasCreditoPendentes] = useState<number>(0)
 
   useEffect(() => {
     let mounted = true
@@ -33,16 +34,18 @@ export default function ContabilidadePage() {
         setLoading(true)
         setErro(null)
 
-        const [fats, recs, lancs] = await Promise.all([
+        const [fats, recs, lancs, notasCredito] = await Promise.all([
           apiFetch<any>("/invoices/", { clientCache: safeRefreshToken === 0 }),
           apiFetch<any>("/payments/receipt/", { clientCache: safeRefreshToken === 0 }),
           apiFetch<any>("/accounting/entry/", { clientCache: safeRefreshToken === 0 }),
+          apiFetch<any>("/billing/credit-note-request/?status=PEND", { clientCache: safeRefreshToken === 0 }),
         ])
 
         if (!mounted) return
         setFaturas(extractTotalCount(fats))
         setRecibos(extractTotalCount(recs))
         setLancamentos(extractTotalCount(lancs))
+        setNotasCreditoPendentes(extractTotalCount(notasCredito))
       } catch (e: any) {
         if (!mounted) return
         setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao carregar o workspace de contabilidade."))
@@ -88,7 +91,11 @@ export default function ContabilidadePage() {
           <MetricCard label="Faturas" value={loading ? "..." : faturas} />
           <MetricCard label="Recibos" value={loading ? "..." : recibos} />
           <MetricCard label="Lançamentos" value={loading ? "..." : lancamentos} />
-          <MetricCard label="Recepção" value="Somente leitura" hint="Auditoria sem alterar dados" />
+          <MetricCard
+            label="Notas de crédito (pend.)"
+            value={loading ? "..." : notasCreditoPendentes}
+            hint="Pedidos aguardando decisão"
+          />
         </div>
 
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -115,6 +122,12 @@ export default function ContabilidadePage() {
             description="Lançamentos contabilísticos."
             href="/accounting/entries"
             icon={BookOpenCheck}
+          />
+          <ActionTile
+            title="Notas de crédito"
+            description="Aprovar ou rejeitar pedidos de nota de crédito."
+            href="/accounting/credit-notes"
+            icon={ClipboardList}
           />
         </div>
 

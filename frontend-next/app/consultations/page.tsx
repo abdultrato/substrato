@@ -159,6 +159,11 @@ export default function ConsultationsPage() {
   const [invoiceReviewLoading, setInvoiceReviewLoading] = useState<number | null>(null)
   const [invoiceReviewSubmitting, setInvoiceReviewSubmitting] = useState(false)
   const [invoiceReviewError, setInvoiceReviewError] = useState<string | null>(null)
+  const [creditNoteModalOpen, setCreditNoteModalOpen] = useState(false)
+  const [creditNoteRow, setCreditNoteRow] = useState<ConsultationRow | null>(null)
+  const [creditNoteReason, setCreditNoteReason] = useState("")
+  const [creditNoteSubmitting, setCreditNoteSubmitting] = useState(false)
+  const [creditNoteError, setCreditNoteError] = useState<string | null>(null)
 
   const localizeErrorMessage = useCallback((message?: string) => {
     const raw = (message || "").trim()
@@ -338,6 +343,42 @@ export default function ConsultationsPage() {
       setRescheduling(false)
     }
   }, [loadData, consultationToReschedule?.id, localizeErrorMessage, newScheduledFor, t])
+
+  const openCreditNoteModal = useCallback((row: ConsultationRow) => {
+    setCreditNoteRow(row)
+    setCreditNoteReason("")
+    setCreditNoteError(null)
+    setCreditNoteModalOpen(true)
+  }, [])
+
+  const closeCreditNoteModal = useCallback(() => {
+    if (creditNoteSubmitting) return
+    setCreditNoteModalOpen(false)
+    setCreditNoteRow(null)
+    setCreditNoteReason("")
+    setCreditNoteError(null)
+  }, [creditNoteSubmitting])
+
+  const confirmCreditNote = useCallback(async () => {
+    if (!creditNoteRow?.id) return
+    setCreditNoteSubmitting(true)
+    setCreditNoteError(null)
+    try {
+      await apiFetch(`/consultations/${creditNoteRow.id}/request-credit-note/`, {
+        method: "POST",
+        body: JSON.stringify({ reason: creditNoteReason.trim() }),
+      })
+      setCreditNoteModalOpen(false)
+      setCreditNoteRow(null)
+      setCreditNoteReason("")
+      setErrorMessage(null)
+      await loadData()
+    } catch (e: any) {
+      setCreditNoteError(localizeErrorMessage(e?.message) || t("Falha ao solicitar nota de crédito.", "Failed to request credit note."))
+    } finally {
+      setCreditNoteSubmitting(false)
+    }
+  }, [creditNoteRow?.id, creditNoteReason, loadData, localizeErrorMessage, t])
 
   const openConsultationInvoicePdf = useCallback(async (invoiceId: number) => {
     if (invoicePdfId === invoiceId) return
@@ -534,6 +575,9 @@ export default function ConsultationsPage() {
 
   const renderConsultationCard = useCallback((r: ConsultationRow) => {
     const canPrepareInvoice = canInvoice && r.status !== "CANCELADA" && (!r.invoice_status || r.invoice_status === "RASC")
+    const invoiceIssued = r.invoice_status === "EMIT" || r.invoice_status === "PAGA"
+    // Nota de crédito: só após a fatura original (emitir original OU concluir, que emite a original).
+    const canRequestCreditNote = canWrite && (r.status === "CONCLUIDA" || invoiceIssued)
     const loadingReview = invoiceReviewLoading === r.id
     return (
       <div key={r.id} className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
@@ -593,6 +637,15 @@ export default function ConsultationsPage() {
               </PdfActionLabel>
             </button>
           ) : null}
+          {canRequestCreditNote ? (
+            <button
+              type="button"
+              onClick={() => openCreditNoteModal(r)}
+              className="inline-flex items-center gap-1 rounded-md border border-amber-200 bg-amber-50 px-2 py-1 text-[11px] font-semibold text-amber-800 transition hover:bg-amber-100"
+            >
+              {t("Solicitar nota de crédito", "Request credit note")}
+            </button>
+          ) : null}
         </div>
 
         {canWrite && (r.status === "MARCADA" || (r.status !== "CANCELADA" && r.status !== "CONCLUIDA")) ? (
@@ -648,6 +701,7 @@ export default function ConsultationsPage() {
     invoicePdfId,
     invoiceReviewLoading,
     openConsultationInvoicePdf,
+    openCreditNoteModal,
     openInvoiceReview,
     openRescheduleModal,
     t,
@@ -917,6 +971,83 @@ export default function ConsultationsPage() {
                 className="inline-flex items-center rounded-lg bg-[var(--primary-700)] px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-[var(--primary-800)] disabled:opacity-60"
               >
                 {rescheduling ? t("Atualizando...", "Updating...") : t("Atualizar data/hora", "Update date/time")}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {creditNoteModalOpen ? (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-black/50 backdrop-blur-[1px]"
+            onClick={closeCreditNoteModal}
+          />
+          <div className="relative w-full max-w-lg rounded-2xl border border-[var(--border)] bg-[var(--card)] shadow-2xl">
+            <div className="border-b border-[var(--border)] px-4 py-3">
+              <h3 className="text-sm font-semibold text-[var(--text)]">
+                {t("Solicitar nota de crédito", "Request credit note")}
+              </h3>
+              <p className="mt-1 text-xs text-[var(--gray-600)]">
+                {t(
+                  "O pedido vai para a fila da Contabilidade, que aprova ou rejeita.",
+                  "The request goes to the Accounting queue, which approves or rejects it."
+                )}
+              </p>
+            </div>
+
+            <div className="space-y-3 px-4 py-4">
+              <div className="text-xs text-[var(--gray-600)]">
+                {t("Fatura:", "Invoice:")}{" "}
+                <span className="font-semibold text-[var(--text)]">
+                  {creditNoteRow?.invoice_code || "-"}
+                </span>
+                {" · "}
+                {t("Paciente:", "Patient:")}{" "}
+                <span className="font-semibold text-[var(--text)]">
+                  {creditNoteRow?.patient_name || "-"}
+                </span>
+              </div>
+
+              <label className="space-y-1">
+                <span className="text-xs text-[var(--gray-600)]">
+                  {t("Motivo (opcional)", "Reason (optional)")}
+                </span>
+                <textarea
+                  value={creditNoteReason}
+                  onChange={(e) => {
+                    setCreditNoteReason(e.target.value)
+                    if (creditNoteError) setCreditNoteError(null)
+                  }}
+                  rows={3}
+                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm"
+                  placeholder={t("Ex.: cobrança em duplicado, valor incorreto...", "E.g.: duplicate charge, wrong amount...")}
+                  autoFocus
+                />
+              </label>
+              {creditNoteError ? (
+                <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+                  {creditNoteError}
+                </div>
+              ) : null}
+            </div>
+
+            <div className="flex items-center justify-end gap-2 border-t border-[var(--border)] px-4 py-3">
+              <button
+                type="button"
+                onClick={closeCreditNoteModal}
+                disabled={creditNoteSubmitting}
+                className="inline-flex items-center rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-1.5 text-xs font-medium text-[var(--gray-700)] transition hover:bg-[var(--gray-100)] disabled:opacity-60"
+              >
+                {t("Cancelar", "Cancel")}
+              </button>
+              <button
+                type="button"
+                onClick={confirmCreditNote}
+                disabled={creditNoteSubmitting}
+                className="inline-flex items-center rounded-lg bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-amber-700 disabled:opacity-60"
+              >
+                {creditNoteSubmitting ? t("A solicitar...", "Requesting...") : t("Solicitar", "Request")}
               </button>
             </div>
           </div>

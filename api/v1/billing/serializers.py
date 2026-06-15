@@ -4,6 +4,7 @@ from django.db import transaction
 from rest_framework import serializers
 
 from api.v1.compat import LegacyAliasSerializerMixin
+from apps.billing.models.credit_note_request import CreditNoteRequest
 from apps.billing.models.invoice import Invoice
 from apps.billing.models.invoice_history import InvoiceHistory
 from apps.billing.models.invoice_items import InvoiceItem
@@ -285,8 +286,29 @@ class InvoiceHistorySerializer(LegacyAliasSerializerMixin, serializers.ModelSeri
         read_only_fields = CORE_READ_ONLY_FIELDS
 
 
+class CreditNoteRequestSerializer(serializers.ModelSerializer):
+    invoice_code = serializers.CharField(source="invoice.custom_id", read_only=True)
+    invoice_status = serializers.CharField(source="invoice.status", read_only=True)
+    consultation_code = serializers.CharField(source="consultation.custom_id", read_only=True, default=None)
+    patient_name = serializers.CharField(source="patient.name", read_only=True, default=None)
+    status_display = serializers.CharField(source="get_status_display", read_only=True)
+    requested_by_name = serializers.CharField(source="created_by.get_full_name", read_only=True, default=None)
+    reviewed_by_name = serializers.CharField(source="reviewed_by.get_full_name", read_only=True, default=None)
+
+    class Meta:
+        model = CreditNoteRequest
+        fields = "__all__"
+        read_only_fields = CORE_READ_ONLY_FIELDS + [
+            "status",
+            "reviewed_by",
+            "reviewed_at",
+            "decision_note",
+        ]
+
+
 SERIALIZER_MAP = {
     "invoice": InvoiceSerializer,
     "faturaitem": InvoiceItemSerializer,
     "historicofatura": InvoiceHistorySerializer,
+    "pedidonotacredito": CreditNoteRequestSerializer,
 }

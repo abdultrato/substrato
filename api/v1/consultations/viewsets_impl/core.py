@@ -17,6 +17,7 @@ from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 from api.utils.async_exports import queue_export_if_requested
 from api.v1.clinical.services import build_patient_clinical_history, user_can_view_clinical_history
 from api.v1.viewset_mixins import TenantScopedQuerysetMixin, ValidatedSearchOrderingMixin
+from apps.billing.models.credit_note_request import CreditNoteRequest
 from apps.billing.models.invoice import Invoice
 from apps.billing.models.invoice_items import InvoiceItem
 from apps.clinical.models.lab_request_item import LabRequestItem
@@ -546,6 +547,46 @@ class MedicalConsultationViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
         invoice.persist_totals()
         return selected_public_items
 
+    def _issue_original_invoice_for_consultation(self, consultation: MedicalConsultation) -> Invoice:
+        """Garante a fatura ORIGINAL (emitida) da consulta com todos os itens do dia.
+
+        Usado quando se conclui a consulta: concluir implica emitir a original.
+        - Sem fatura → cria, inclui todos os itens faturáveis do dia e emite.
+        - Rascunho sem itens → preenche com todos os itens do dia e emite.
+        - Rascunho já com itens → emite tal como está (respeita a seleção feita).
+        - Já emitida/paga → mantém (já é a original).
+        """
+        invoice = self._existing_invoice_for_consultation(consultation)
+        if invoice is None:
+            invoice = Invoice(
+                tenant=consultation.tenant,
+                origin=Invoice.Origin.CONSULTATION,
+                consultation=consultation,
+                patient=consultation.patient,
+            )
+            invoice.full_clean()
+            invoice.save()
+
+        if invoice.status in {Invoice.Status.ISSUED, Invoice.Status.PAID}:
+            return invoice
+        if invoice.status == Invoice.Status.CANCELED:
+            raise ValidationError("A fatura da consulta está cancelada; não é possível emitir a original.")
+
+        if not invoice.items.filter(deleted=False).exists():
+            _, candidates = self._build_consultation_invoice_candidates(consultation)
+            all_keys = [str(candidate["key"]) for candidate in candidates]
+            if invoice.origin != Invoice.Origin.MIXED:
+                invoice.origin = Invoice.Origin.MIXED
+                invoice.save(update_fields=["origin"])
+            self._create_selected_invoice_items(
+                invoice=invoice,
+                candidates=candidates,
+                selected_items=all_keys,
+            )
+
+        invoice.issue()
+        return invoice
+
     @action(detail=True, methods=["get"], url_path="clinical-history", url_name="clinical-history")
     def clinical_history(self, request, pk=None):
         """
@@ -828,6 +869,13 @@ class MedicalConsultationViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
         if consultation.status == MedicalConsultation.Status.COMPLETED:
             raise ValidationError("Consulta concluída não pode ser cancelada.")
 
+        invoice = self._existing_invoice_for_consultation(consultation)
+        if invoice and invoice.status in {Invoice.Status.ISSUED, Invoice.Status.PAID}:
+            raise ValidationError(
+                "Consulta com fatura original emitida não pode ser cancelada. "
+                "Solicite uma nota de crédito."
+            )
+
         # Keep accepting a payload for future extensions (reason, actor, etc).
         payload = CancelConsultationSerializer(data=request.data or {})
         payload.is_valid(raise_exception=True)
@@ -857,9 +905,61 @@ class MedicalConsultationViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
         consultation.completed_at = timezone.now()
         consultation.save(update_fields=["status", "completed_at"])
 
+        # Concluir implica emitir a fatura original (com todos os itens do dia).
+        self._issue_original_invoice_for_consultation(consultation)
+
         return Response(
             MedicalConsultationSerializer(consultation).data,
             status=status.HTTP_200_OK,
+        )
+
+    @extend_schema(
+        request=None,
+        responses=None,
+    )
+    @transaction.atomic
+    @action(detail=True, methods=["post"], url_path="request-credit-note", url_name="request-credit-note")
+    def request_credit_note(self, request, pk=None):
+        """Solicita uma nota de crédito para a fatura original da consulta.
+
+        Disponível após a emissão da fatura original (manual ou via conclusão).
+        Cria um pedido na fila da Contabilidade, que aprova ou rejeita.
+        """
+        consultation = self.get_object()
+        invoice = self._existing_invoice_for_consultation(consultation)
+        if invoice is None or invoice.status not in {Invoice.Status.ISSUED, Invoice.Status.PAID}:
+            raise ValidationError(
+                "Só é possível solicitar nota de crédito após a emissão da fatura original."
+            )
+
+        if CreditNoteRequest.objects.filter(
+            invoice=invoice,
+            status=CreditNoteRequest.Status.PENDING,
+            deleted=False,
+        ).exists():
+            raise ValidationError("Já existe um pedido de nota de crédito pendente para esta fatura.")
+
+        reason = ""
+        if isinstance(request.data, dict):
+            reason = (request.data.get("reason") or "").strip()
+
+        credit_note = CreditNoteRequest(
+            tenant=consultation.tenant,
+            invoice=invoice,
+            consultation=consultation,
+            patient=consultation.patient,
+            reason=reason,
+        )
+        try:
+            credit_note.save()
+        except DjangoValidationError as exc:
+            raise _specialty_as_drf_error(exc)
+
+        from api.v1.billing.serializers import CreditNoteRequestSerializer
+
+        return Response(
+            CreditNoteRequestSerializer(credit_note).data,
+            status=status.HTTP_201_CREATED,
         )
 
 VIEWSET_MAP = {
