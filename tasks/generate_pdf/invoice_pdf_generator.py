@@ -191,6 +191,14 @@ def generate_invoice_pdf(invoice, request=None) -> tuple[bytes, str]:
         alignment=TA_LEFT,
         textColor=colors.grey,
     )
+    entity_style = ParagraphStyle(
+        "InvoiceEntity",
+        fontName=FONT_INST,
+        fontSize=max(PDF_BODY_FONT_SIZE - 1, 6),
+        leading=max(PDF_BODY_LEADING - 1, 8),
+        alignment=TA_LEFT,
+        textColor=colors.black,
+    )
     num_header_style = ParagraphStyle(
         "NumHeader",
         fontName=FONT_BOLD_INST,
@@ -418,6 +426,38 @@ def generate_invoice_pdf(invoice, request=None) -> tuple[bytes, str]:
             return "—"
 
     # ==========================
+    # IDENTIDADE FISCAL DA ENTIDADE (dados — uma vez)
+    # ==========================
+    entity_lines: list[str] = []
+    try:
+        config = getattr(getattr(invoice, "tenant", None), "configuracao", None)
+    except Exception:
+        config = None
+    if config is not None:
+        if getattr(config, "legal_name", ""):
+            entity_lines.append(f"<b>{config.legal_name}</b>")
+        ident_bits = []
+        if getattr(config, "nuit", ""):
+            ident_bits.append(f"NUIT: {config.nuit}")
+        if getattr(config, "license_number", ""):
+            ident_bits.append(f"Alvará: {config.license_number}")
+        if getattr(config, "health_unit_registration", ""):
+            ident_bits.append(f"Reg.: {config.health_unit_registration}")
+        if ident_bits:
+            entity_lines.append(" • ".join(ident_bits))
+        if getattr(config, "fiscal_address", ""):
+            entity_lines.append(str(config.fiscal_address).replace("\n", " "))
+        contact_bits = []
+        if getattr(config, "fiscal_phone", ""):
+            contact_bits.append(f"Tel: {config.fiscal_phone}")
+        if getattr(config, "fiscal_email", ""):
+            contact_bits.append(str(config.fiscal_email))
+        if contact_bits:
+            entity_lines.append(" • ".join(contact_bits))
+        if getattr(config, "technical_manager", ""):
+            entity_lines.append(f"Resp. técnico: {config.technical_manager}")
+
+    # ==========================
     # COMPOSIÇÃO DE UMA VIA (flowables novos a cada chamada)
     # ==========================
     def _compose_via(via_name: str, via_dest: str) -> list:
@@ -425,6 +465,13 @@ def generate_invoice_pdf(invoice, request=None) -> tuple[bytes, str]:
 
         # Identificação da via (Original/Duplicado/Triplicado).
         body.append(Paragraph(f"{via_name} — {via_dest}", via_style))
+
+        # Identidade fiscal/legal da entidade emissora.
+        if entity_lines:
+            for line in entity_lines:
+                body.append(Paragraph(line, entity_style))
+            body.append(Spacer(1, 0.1 * cm))
+            body.append(HRFlowable(width="100%", thickness=0.4, color=colors.grey))
 
         # Cabeçalho do documento.
         body.append(Spacer(1, 0.2 * cm))

@@ -46,6 +46,64 @@ class TenantConfiguration(NoNameCoreModel):
         default=Decimal("0.00"),
     )
 
+    # ── Identidade fiscal/legal da entidade (impressa em faturas e documentos) ──
+    legal_name = models.CharField(
+        db_column="legal_name",
+        verbose_name="Designação legal",
+        max_length=200,
+        blank=True,
+        default="",
+        help_text="Nome legal da entidade tal como registado.",
+    )
+    nuit = models.CharField(
+        db_column="nuit",
+        verbose_name="NUIT",
+        max_length=30,
+        blank=True,
+        default="",
+    )
+    fiscal_address = models.TextField(
+        db_column="fiscal_address",
+        verbose_name="Morada fiscal completa",
+        blank=True,
+        default="",
+    )
+    fiscal_phone = models.CharField(
+        db_column="fiscal_phone",
+        verbose_name="Telefone",
+        max_length=40,
+        blank=True,
+        default="",
+    )
+    fiscal_email = models.CharField(
+        db_column="fiscal_email",
+        verbose_name="E-mail",
+        max_length=120,
+        blank=True,
+        default="",
+    )
+    license_number = models.CharField(
+        db_column="license_number",
+        verbose_name="Alvará / Licença",
+        max_length=80,
+        blank=True,
+        default="",
+    )
+    health_unit_registration = models.CharField(
+        db_column="health_unit_registration",
+        verbose_name="Registo da unidade sanitária/laboratório",
+        max_length=80,
+        blank=True,
+        default="",
+    )
+    technical_manager = models.CharField(
+        db_column="technical_manager",
+        verbose_name="Responsável técnico",
+        max_length=160,
+        blank=True,
+        default="",
+    )
+
     class Meta:
         db_table = "inquilinos_configuracaoinquilino"
         verbose_name = "Configuração do Cliente"
