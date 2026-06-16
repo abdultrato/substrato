@@ -36,6 +36,7 @@ class Invoice(NoNameCoreModel):
         CONSULTATION = "CON", "Consulta"
         SURGERY = "CIR", "Cirurgia"
         MIXED = "MIX", "Mista"
+        PROFORMA = "PRO", "Proforma"
 
     origin = models.CharField(
         db_column="origin",  # Coluna
@@ -114,6 +115,26 @@ class Invoice(NoNameCoreModel):
         db_column="patient_id",
         verbose_name="Paciente",
         on_delete=models.PROTECT,  # Evita excluir paciente com fatura
+        related_name="invoices",
+        null=True,
+        blank=True,
+    )
+
+    # ── Origem comercial (fluxo Cotação → Proforma → Fatura).
+    source_quotation = models.ForeignKey(
+        "cotacoes.Quotation",
+        db_column="source_quotation_id",
+        verbose_name="Cotação de origem",
+        on_delete=models.PROTECT,
+        related_name="invoices",
+        null=True,
+        blank=True,
+    )
+    source_proforma = models.ForeignKey(
+        "cotacoes.ProformaInvoice",
+        db_column="source_proforma_id",
+        verbose_name="Proforma de origem",
+        on_delete=models.PROTECT,
         related_name="invoices",
         null=True,
         blank=True,
@@ -480,8 +501,8 @@ class Invoice(NoNameCoreModel):
         if self.status != self.Status.DRAFT:
             raise ValidationError("Only draft invoices can sync items.")
 
-        if self.origin == self.Origin.MIXED:
-            # Mixed invoices do not auto-sync items.
+        if self.origin in {self.Origin.MIXED, self.Origin.PROFORMA}:
+            # Mixed/Proforma invoices do not auto-sync items (itens copiados manualmente).
             self.persist_totals()
             return
 

@@ -1,8 +1,8 @@
-"""Serviço de domínio do módulo de Cotação.
+"""Serviço de domínio do fluxo comercial (Cotação e Proforma).
 
-Concentra cálculo financeiro, numeração sequencial, máquina de estados e
-conversão para fatura. Espelha o padrão ``*WorkflowService`` usado noutros
-módulos (ex.: ``apps.dental.services.DentalWorkflowService``).
+Concentra cálculo financeiro, numeração sequencial, máquina de estados e a
+cadeia de conversão Cotação → Proforma → Fatura. Espelha o padrão
+``*WorkflowService`` usado noutros módulos (ex.: ``apps.dental.services``).
 """
 
 from __future__ import annotations
@@ -13,27 +13,52 @@ from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils import timezone
 
-from apps.cotacoes.models import Quotation, QuotationItem, QuotationStatusHistory
+from apps.cotacoes.models import (
+    ProformaHistory,
+    ProformaInvoice,
+    ProformaItem,
+    Quotation,
+    QuotationItem,
+    QuotationStatusHistory,
+)
 
 ZERO = Decimal("0.00")
 
-# Transições permitidas da cotação (§4). Qualquer outra é bloqueada.
-ALLOWED_TRANSITIONS: dict[str, frozenset[str]] = {
-    Quotation.Status.DRAFT: frozenset({Quotation.Status.SENT, Quotation.Status.CANCELLED}),
-    Quotation.Status.SENT: frozenset(
-        {
-            Quotation.Status.ACCEPTED,
-            Quotation.Status.REJECTED,
-            Quotation.Status.EXPIRED,
-            Quotation.Status.CANCELLED,
-        }
-    ),
-    Quotation.Status.ACCEPTED: frozenset({Quotation.Status.CONVERTED, Quotation.Status.CANCELLED}),
-    Quotation.Status.REJECTED: frozenset(),
-    Quotation.Status.EXPIRED: frozenset(),
-    Quotation.Status.CONVERTED: frozenset(),
-    Quotation.Status.CANCELLED: frozenset(),
+# Máquina de estados comum a Cotação e Proforma (chaveada pelos valores de status,
+# que são idênticos nos dois enums). Qualquer transição fora daqui é bloqueada.
+_COMMERCIAL_TRANSITIONS: dict[str, frozenset[str]] = {
+    "DRAFT": frozenset({"SENT", "CANCELLED"}),
+    "SENT": frozenset({"ACCEPTED", "REJECTED", "EXPIRED", "CANCELLED"}),
+    "ACCEPTED": frozenset({"CONVERTED", "CANCELLED"}),
+    "REJECTED": frozenset(),
+    "EXPIRED": frozenset(),
+    "CONVERTED": frozenset(),
+    "CANCELLED": frozenset(),
 }
+# Alias retrocompatível.
+ALLOWED_TRANSITIONS = _COMMERCIAL_TRANSITIONS
+
+
+def next_sequence_number(tenant, prefix: str, year: int, model) -> int:
+    """Próximo número sequencial (1-based) para `{prefix}{year}-` no tenant.
+
+    Trava as linhas existentes (``select_for_update``) para evitar colisões;
+    nunca reutiliza números de documentos apagados/cancelados.
+    """
+    field = "quotation_number" if model is Quotation else "proforma_number"
+    token = f"{prefix}-{year}-"
+    existing = (
+        model.all_objects.select_for_update()
+        .filter(tenant=tenant, **{f"{field}__startswith": token})
+        .values_list(field, flat=True)
+    )
+    max_seq = 0
+    for number in existing:
+        try:
+            max_seq = max(max_seq, int(number.rsplit("-", 1)[1]))
+        except (IndexError, ValueError):
+            continue
+    return max_seq + 1
 
 
 class QuotationWorkflowService:
@@ -130,20 +155,8 @@ class QuotationWorkflowService:
         if quotation.quotation_number:
             return quotation.quotation_number
         year = (quotation.issue_date or timezone.now().date()).year
-        prefix = f"COT-{year}-"
-        # Trava as linhas do tenant/ano para evitar colisão de sequência.
-        existing = (
-            Quotation.all_objects.select_for_update()
-            .filter(tenant=quotation.tenant, quotation_number__startswith=prefix)
-            .values_list("quotation_number", flat=True)
-        )
-        max_seq = 0
-        for number in existing:
-            try:
-                max_seq = max(max_seq, int(number.rsplit("-", 1)[1]))
-            except (IndexError, ValueError):
-                continue
-        quotation.quotation_number = f"{prefix}{max_seq + 1:06d}"
+        seq = next_sequence_number(quotation.tenant, "COT", year, Quotation)
+        quotation.quotation_number = f"COT-{year}-{seq:06d}"
         quotation.save(update_fields=["quotation_number"])
         return quotation.quotation_number
 
@@ -282,53 +295,66 @@ class QuotationWorkflowService:
         )
         return copy
 
-    # ── Conversão para fatura (§22) ─────────────────────────────────────
+    # ── Conversão para proforma (Cotação → Proforma) ────────────────────
     @staticmethod
     @transaction.atomic
-    def convert_to_invoice(quotation: Quotation, *, actor_name: str = ""):
-        from apps.billing.models.invoice import Invoice
-        from apps.billing.models.invoice_items import InvoiceItem
-
+    def convert_to_proforma(quotation: Quotation, *, actor_name: str = "") -> ProformaInvoice:
         if quotation.status != Quotation.Status.ACCEPTED:
             raise ValidationError("Só é possível converter cotações aceites.")
-        if quotation.converted_invoice_id:
-            raise ValidationError("Esta cotação já foi convertida.")
+        if quotation.converted_proforma_id:
+            raise ValidationError("Esta cotação já foi convertida em proforma.")
 
-        invoice = Invoice(
+        proforma = ProformaInvoice(
             tenant=quotation.tenant,
-            origin=Invoice.Origin.MIXED,
-            status=Invoice.Status.DRAFT,
+            quotation=quotation,
+            status=ProformaInvoice.Status.DRAFT,
             patient=quotation.patient,
             fiscal_client=quotation.fiscal_client,
             fiscal_client_name=quotation.fiscal_client_name,
             fiscal_client_nuit=quotation.fiscal_client_nuit,
             fiscal_client_address=quotation.fiscal_client_address,
+            currency=quotation.currency,
+            exchange_rate=quotation.exchange_rate,
+            deposit_type=quotation.deposit_type,
+            deposit_percentage=quotation.deposit_percentage,
+            deposit_fixed_amount=quotation.deposit_fixed_amount,
+            notes=quotation.notes,
+            terms_and_conditions=quotation.terms_and_conditions,
         )
-        invoice.save()
-
+        proforma.save()
         for item in quotation.items.all():
-            InvoiceItem.objects.create(
-                invoice=invoice,
-                tenant=quotation.tenant,
-                item_type=InvoiceItem.ItemType.AJUSTE,
-                description=item.description or "Item de cotação",
+            ProformaItem.objects.create(
+                proforma=proforma,
+                tenant=proforma.tenant,
+                item_type=item.item_type,
+                description=item.description,
                 quantity=item.quantity,
                 unit_price=item.unit_price,
-                applies_vat=False,
+                discount_rate=item.discount_rate,
+                tax_rate=item.tax_rate,
             )
+        ProformaWorkflowService.recalculate_totals(proforma)
+        ProformaWorkflowService._record(
+            proforma,
+            event_type="created_from_quotation",
+            to_status=proforma.status,
+            actor_name=actor_name,
+            summary=f"Criada da cotação {quotation.quotation_number or quotation.custom_id}.",
+            metadata={"quotation_id": quotation.pk},
+        )
 
-        quotation.converted_invoice = invoice
+        quotation.converted_proforma = proforma
         quotation.converted_at = timezone.now()
-        quotation.save(update_fields=["converted_invoice", "converted_at"])
+        quotation.save(update_fields=["converted_proforma", "converted_at"])
         QuotationWorkflowService.transition(
             quotation,
             Quotation.Status.CONVERTED,
-            event_type="converted",
+            event_type="converted_to_proforma",
             actor_name=actor_name,
-            summary="Cotação convertida em fatura.",
-            metadata={"invoice_id": invoice.pk},
+            summary="Cotação convertida em proforma.",
+            metadata={"proforma_id": proforma.pk},
         )
-        return invoice
+        return proforma
 
     # ── Trilha de eventos ───────────────────────────────────────────────
     @staticmethod
@@ -345,6 +371,272 @@ class QuotationWorkflowService:
         return QuotationStatusHistory.objects.create(
             tenant=quotation.tenant,
             quotation=quotation,
+            from_status=from_status,
+            to_status=to_status,
+            event_type=event_type,
+            actor_name=actor_name or "",
+            summary=summary or "",
+            metadata=metadata or {},
+            event_at=timezone.now(),
+        )
+
+
+class ProformaWorkflowService:
+    """Operações de ciclo de vida da proforma e conversão para fatura."""
+
+    # ── Criação / edição ────────────────────────────────────────────────
+    @staticmethod
+    @transaction.atomic
+    def create_proforma(*, tenant, items=None, **fields) -> ProformaInvoice:
+        proforma = ProformaInvoice(tenant=tenant, **fields)
+        proforma.full_clean(exclude=["proforma_number"])
+        proforma.save()
+        for item in items or []:
+            ProformaWorkflowService.add_item(proforma, **item)
+        ProformaWorkflowService.recalculate_totals(proforma)
+        ProformaWorkflowService._record(
+            proforma, event_type="created", to_status=proforma.status, summary="Proforma criada."
+        )
+        return proforma
+
+    @staticmethod
+    def _assert_editable(proforma: ProformaInvoice) -> None:
+        if proforma.is_locked:
+            raise ValidationError(
+                f"Proforma em estado '{proforma.get_status_display()}' não permite alterar valores."
+            )
+
+    @staticmethod
+    @transaction.atomic
+    def add_item(proforma: ProformaInvoice, **fields) -> ProformaItem:
+        ProformaWorkflowService._assert_editable(proforma)
+        item = ProformaItem(proforma=proforma, tenant=proforma.tenant, **fields)
+        item.full_clean()
+        item.save()
+        ProformaWorkflowService.recalculate_totals(proforma)
+        return item
+
+    @staticmethod
+    @transaction.atomic
+    def update_item(item: ProformaItem, **fields) -> ProformaItem:
+        ProformaWorkflowService._assert_editable(item.proforma)
+        for key, value in fields.items():
+            setattr(item, key, value)
+        item.full_clean()
+        item.save()
+        ProformaWorkflowService.recalculate_totals(item.proforma)
+        return item
+
+    @staticmethod
+    @transaction.atomic
+    def remove_item(item: ProformaItem) -> None:
+        proforma = item.proforma
+        ProformaWorkflowService._assert_editable(proforma)
+        item.delete()
+        ProformaWorkflowService.recalculate_totals(proforma)
+
+    # ── Cálculo financeiro ──────────────────────────────────────────────
+    @staticmethod
+    @transaction.atomic
+    def recalculate_totals(proforma: ProformaInvoice) -> ProformaInvoice:
+        subtotal = ZERO
+        discount_total = ZERO
+        tax_total = ZERO
+        for item in proforma.items.all():
+            subtotal += item.gross
+            discount_total += item.discount_amount or ZERO
+            tax_total += item.tax_amount or ZERO
+        proforma.subtotal = subtotal.quantize(Decimal("0.01"))
+        proforma.discount_total = discount_total.quantize(Decimal("0.01"))
+        proforma.tax_total = tax_total.quantize(Decimal("0.01"))
+        grand = subtotal - discount_total + tax_total
+        proforma.grand_total = (grand if grand > ZERO else ZERO).quantize(Decimal("0.01"))
+        ProformaWorkflowService._apply_deposit(proforma)
+        proforma.save()
+        return proforma
+
+    @staticmethod
+    def _apply_deposit(proforma: ProformaInvoice) -> None:
+        total = proforma.grand_total or ZERO
+        if proforma.deposit_type == ProformaInvoice.DepositType.PERCENTAGE:
+            required = (total * (proforma.deposit_percentage or ZERO) / Decimal("100")).quantize(Decimal("0.01"))
+        elif proforma.deposit_type == ProformaInvoice.DepositType.FIXED:
+            required = min(proforma.deposit_fixed_amount or ZERO, total)
+        else:
+            required = ZERO
+        proforma.deposit_required = required
+        proforma.balance_due = (total - required).quantize(Decimal("0.01"))
+
+    # ── Numeração ───────────────────────────────────────────────────────
+    @staticmethod
+    @transaction.atomic
+    def generate_proforma_number(proforma: ProformaInvoice) -> str:
+        if proforma.proforma_number:
+            return proforma.proforma_number
+        year = (proforma.issue_date or timezone.now().date()).year
+        seq = next_sequence_number(proforma.tenant, "PRO", year, ProformaInvoice)
+        proforma.proforma_number = f"PRO-{year}-{seq:06d}"
+        proforma.save(update_fields=["proforma_number"])
+        return proforma.proforma_number
+
+    # ── Máquina de estados ──────────────────────────────────────────────
+    @staticmethod
+    @transaction.atomic
+    def transition(proforma: ProformaInvoice, to_status: str, *, event_type: str, actor_name: str = "", summary: str = "", metadata=None):
+        allowed = _COMMERCIAL_TRANSITIONS.get(proforma.status, frozenset())
+        if to_status not in allowed:
+            raise ValidationError(
+                f"Transição inválida: {proforma.get_status_display()} → {to_status}."
+            )
+        previous = proforma.status
+        proforma.status = to_status
+        proforma.save(update_fields=["status"])
+        ProformaWorkflowService._record(
+            proforma,
+            event_type=event_type,
+            from_status=previous,
+            to_status=to_status,
+            actor_name=actor_name,
+            summary=summary,
+            metadata=metadata,
+        )
+        return proforma
+
+    @staticmethod
+    @transaction.atomic
+    def send(proforma: ProformaInvoice, *, actor_name: str = "") -> ProformaInvoice:
+        if not proforma.items.exists():
+            raise ValidationError("Não é possível enviar uma proforma sem itens.")
+        ProformaWorkflowService.generate_proforma_number(proforma)
+        if not proforma.issue_date:
+            proforma.issue_date = timezone.now().date()
+            proforma.save(update_fields=["issue_date"])
+        proforma = ProformaWorkflowService.transition(
+            proforma, ProformaInvoice.Status.SENT, event_type="sent", actor_name=actor_name, summary="Proforma enviada."
+        )
+        proforma.sent_at = timezone.now()
+        proforma.save(update_fields=["sent_at"])
+        return proforma
+
+    @staticmethod
+    @transaction.atomic
+    def accept(proforma: ProformaInvoice, *, actor_name: str = "") -> ProformaInvoice:
+        proforma = ProformaWorkflowService.transition(
+            proforma, ProformaInvoice.Status.ACCEPTED, event_type="accepted", actor_name=actor_name, summary="Proforma aceite."
+        )
+        proforma.accepted_at = timezone.now()
+        proforma.save(update_fields=["accepted_at"])
+        return proforma
+
+    @staticmethod
+    @transaction.atomic
+    def reject(proforma: ProformaInvoice, *, reason: str = "", actor_name: str = "") -> ProformaInvoice:
+        proforma = ProformaWorkflowService.transition(
+            proforma,
+            ProformaInvoice.Status.REJECTED,
+            event_type="rejected",
+            actor_name=actor_name,
+            summary="Proforma rejeitada.",
+            metadata={"reason": reason},
+        )
+        proforma.rejected_at = timezone.now()
+        proforma.rejection_reason = reason or ""
+        proforma.save(update_fields=["rejected_at", "rejection_reason"])
+        return proforma
+
+    @staticmethod
+    @transaction.atomic
+    def cancel(proforma: ProformaInvoice, *, actor_name: str = "") -> ProformaInvoice:
+        return ProformaWorkflowService.transition(
+            proforma,
+            ProformaInvoice.Status.CANCELLED,
+            event_type="cancelled",
+            actor_name=actor_name,
+            summary="Proforma cancelada.",
+        )
+
+    @staticmethod
+    @transaction.atomic
+    def expire_overdue(*, tenant=None) -> int:
+        today = timezone.now().date()
+        qs = ProformaInvoice.objects.filter(status=ProformaInvoice.Status.SENT, expiry_date__lt=today)
+        if tenant is not None:
+            qs = qs.filter(tenant=tenant)
+        count = 0
+        for proforma in qs:
+            ProformaWorkflowService.transition(
+                proforma, ProformaInvoice.Status.EXPIRED, event_type="expired", summary="Proforma expirada automaticamente."
+            )
+            count += 1
+        return count
+
+    # ── Conversão para fatura (Proforma → Invoice emitida) ──────────────
+    @staticmethod
+    @transaction.atomic
+    def convert_to_invoice(proforma: ProformaInvoice, *, actor_name: str = ""):
+        from apps.billing.models.invoice import Invoice
+        from apps.billing.models.invoice_items import InvoiceItem
+
+        if proforma.status != ProformaInvoice.Status.ACCEPTED:
+            raise ValidationError("Só é possível converter proformas aceites.")
+        if proforma.converted_invoice_id:
+            raise ValidationError("Esta proforma já foi convertida em fatura.")
+
+        invoice = Invoice(
+            tenant=proforma.tenant,
+            origin=Invoice.Origin.PROFORMA,
+            status=Invoice.Status.DRAFT,
+            patient=proforma.patient,
+            fiscal_client=proforma.fiscal_client,
+            fiscal_client_name=proforma.fiscal_client_name,
+            fiscal_client_nuit=proforma.fiscal_client_nuit,
+            fiscal_client_address=proforma.fiscal_client_address,
+            source_proforma=proforma,
+            source_quotation=proforma.quotation,
+        )
+        invoice.save()
+
+        for item in proforma.items.all():
+            InvoiceItem.objects.create(
+                invoice=invoice,
+                tenant=proforma.tenant,
+                item_type=InvoiceItem.ItemType.AJUSTE,
+                description=item.description or "Item de proforma",
+                quantity=item.quantity,
+                unit_price=item.unit_price,
+                applies_vat=False,
+            )
+
+        invoice.issue()
+
+        proforma.converted_invoice = invoice
+        proforma.converted_at = timezone.now()
+        proforma.save(update_fields=["converted_invoice", "converted_at"])
+        ProformaWorkflowService.transition(
+            proforma,
+            ProformaInvoice.Status.CONVERTED,
+            event_type="converted_to_invoice",
+            actor_name=actor_name,
+            summary="Proforma convertida em fatura.",
+            metadata={"invoice_id": invoice.pk},
+        )
+        return invoice
+
+    # ── Trilha de eventos ───────────────────────────────────────────────
+    @staticmethod
+    def _record(
+        proforma: ProformaInvoice,
+        *,
+        event_type: str,
+        from_status: str = "",
+        to_status: str = "",
+        actor_name: str = "",
+        summary: str = "",
+        metadata=None,
+    ) -> ProformaHistory:
+        return ProformaHistory.objects.create(
+            tenant=proforma.tenant,
+            proforma=proforma,
             from_status=from_status,
             to_status=to_status,
             event_type=event_type,
