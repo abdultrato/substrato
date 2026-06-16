@@ -275,7 +275,6 @@ export default function LoginPage() {
                         <>
                             <form onSubmit={handleLogin} className="flex flex-col gap-4">
                                 <label className="flex flex-col gap-1.5">
-                                    <span className="text-xs font-medium text-foreground">{t("Utilizador", "Username")}</span>
                                     <input
                                         id="utilizador"
                                         name="utilizador"
@@ -287,11 +286,10 @@ export default function LoginPage() {
                                     />
                                 </label>
                                 <label className="flex flex-col gap-1.5">
-                                    <span className="text-xs font-medium text-foreground">{t("Palavra-passe", "Password")}</span>
                                     <PasswordInput
                                         id="palavra-passe"
                                         name="palavra_passe"
-                                        placeholder="••••••••"
+                                        placeholder={t("Palavra-passe", "Password")}
                                         value={pass}
                                         onChange={setPass}
                                         autoComplete="current-password"
