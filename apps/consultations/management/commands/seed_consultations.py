@@ -201,15 +201,68 @@ class Command(BaseCommand):
             raise CommandError("Sem pacientes disponíveis após o seed.")
         return patients
 
+    def _ensure_doctor_role_and_profession(self, tenant):
+        """Garante um Cargo (is_doctor=True) e uma Profissão "Médico" no tenant.
+
+        Sem um cargo marcado como médico, os funcionários não aparecem no
+        seletor de médico da marcação de consulta (DoctorsViewSet filtra por
+        role__is_doctor=True).
+        """
+        from apps.human_resources.models.job_title import JobTitle
+        from apps.human_resources.models.profession import Profession
+
+        role = JobTitle.objects.filter(tenant=tenant, name="Médico").order_by("pk").first()
+        if not role:
+            role = JobTitle(
+                tenant=tenant,
+                name="Médico",
+                is_doctor=True,
+                status=JobTitle.Status.ACTIVE,
+                description="Cargo clínico (médico assistente).",
+            )
+            role.save()
+        elif not role.is_doctor:
+            role.is_doctor = True
+            role.save(update_fields=["is_doctor", "updated_at"])
+
+        profession = Profession.objects.filter(tenant=tenant, name="Médico").order_by("pk").first()
+        if not profession:
+            profession = Profession(
+                tenant=tenant,
+                name="Médico",
+                professional_category="Saúde",
+                requires_license=True,
+            )
+            profession.save()
+
+        return role, profession
+
     def _ensure_doctors(self, tenant, specialties, per_specialty, rng) -> dict[int, list[Employee]]:
+        role, profession = self._ensure_doctor_role_and_profession(tenant)
         doctors_by_specialty: dict[int, list[Employee]] = {}
         created = 0
+        patched = 0
         for sp_index, specialty in enumerate(specialties):
             docs: list[Employee] = []
             for d in range(per_specialty):
                 document_number = f"{SEED_DOC_TAG}-{sp_index:02d}{d:02d}"
                 existing = Employee.all_objects.filter(tenant=tenant, document_number=document_number).first()
                 if existing:
+                    # Garante que médicos já criados ganham o cargo/profissão e
+                    # passam a aparecer no seletor de médico e em RH.
+                    fields = []
+                    if existing.role_id != role.id:
+                        existing.role = role
+                        fields.append("role")
+                    if not existing.profession_id:
+                        existing.profession = profession
+                        fields.append("profession")
+                    if existing.status != Employee.Status.ACTIVE:
+                        existing.status = Employee.Status.ACTIVE
+                        fields.append("status")
+                    if fields:
+                        existing.save(update_fields=fields + ["updated_at"])
+                        patched += 1
                     docs.append(existing)
                     continue
                 gender = rng.choice([Employee.Gender.MALE, Employee.Gender.FEMALE])
@@ -220,6 +273,8 @@ class Command(BaseCommand):
                     name=name,
                     gender=gender,
                     status=Employee.Status.ACTIVE,
+                    role=role,
+                    profession=profession,
                     document_type=Employee.DocumentType.BI,
                     document_number=document_number,
                     email=f"{document_number.lower()}@exemplo.local",
@@ -229,7 +284,7 @@ class Command(BaseCommand):
                 docs.append(emp)
                 created += 1
             doctors_by_specialty[specialty.pk] = docs
-        self.stdout.write(f"Médicos: {created} criados agora.")
+        self.stdout.write(f"Médicos: {created} criados agora, {patched} atualizados (cargo/profissão).")
         return doctors_by_specialty
 
     def _create_consultations(self, tenant, specialties, patients, doctors_by_specialty, per_specialty, rng) -> int:
