@@ -376,6 +376,48 @@ def generate_invoice_pdf(invoice, request=None) -> tuple[bytes, str]:
     iva_legal_note = _iva_legal_note(itens, value_total_iva)
 
     # ==========================
+    # PAGAMENTO / LIQUIDAÇÃO (dados — uma vez)
+    # ==========================
+    method_labels: dict = {}
+    status_labels: dict = {}
+    payments: list = []
+    receipts: list = []
+    confirmed_paid = Decimal("0.00")
+    try:
+        from apps.payments.models.payment import Payment as _Payment
+
+        method_labels = dict(_Payment.Method.choices)
+        status_labels = dict(_Payment.Status.choices)
+        if getattr(invoice, "pk", None):
+            payments = list(invoice.pagamentos.filter(deleted=False).select_related("created_by"))
+            receipts = list(invoice.recibos.all())
+            confirmed_paid = invoice.confirmed_paid_amount() or Decimal("0.00")
+    except Exception:
+        method_labels, status_labels, payments, receipts = {}, {}, [], []
+        confirmed_paid = Decimal("0.00")
+
+    outstanding = (total_com_iva or Decimal("0.00")) - (confirmed_paid or Decimal("0.00"))
+    if outstanding < Decimal("0.00"):
+        outstanding = Decimal("0.00")
+    receipt_numbers = ", ".join(
+        str(getattr(r, "number", "") or "") for r in receipts if getattr(r, "number", "")
+    ) or "—"
+
+    inv_status = getattr(invoice, "status", None)
+    if inv_status == "PAGA" or (confirmed_paid >= (total_com_iva or Decimal("0.00")) and (total_com_iva or Decimal("0.00")) > Decimal("0.00")):
+        settle_label = "PAGA / LIQUIDADA"
+    elif confirmed_paid > Decimal("0.00"):
+        settle_label = "PARCIALMENTE PAGA"
+    else:
+        settle_label = "POR LIQUIDAR"
+
+    def _fmt_dt(value):
+        try:
+            return value.strftime("%d/%m/%Y %H:%M")
+        except Exception:
+            return "—"
+
+    # ==========================
     # COMPOSIÇÃO DE UMA VIA (flowables novos a cada chamada)
     # ==========================
     def _compose_via(via_name: str, via_dest: str) -> list:
@@ -509,7 +551,88 @@ def generate_invoice_pdf(invoice, request=None) -> tuple[bytes, str]:
 
         # Nota legal do IVA.
         body.append(Paragraph(iva_legal_note, iva_note_style))
+        body.append(Spacer(1, 0.15 * cm))
+
+        # Pagamento / liquidação.
+        body.append(Paragraph("Pagamento e liquidação", style_section))
         body.append(Spacer(1, 0.1 * cm))
+        if payments:
+            pay_rows = [[
+                cell_paragraph("Data", is_bold=True),
+                cell_paragraph("Método", is_bold=True),
+                cell_paragraph("Referência", is_bold=True),
+                cell_paragraph("Operador", is_bold=True),
+                cell_paragraph("Estado", is_bold=True),
+                num_header("Valor (MZN)"),
+                num_header("Troco (MZN)"),
+            ]]
+            for pay in payments:
+                ref = getattr(pay, "external_reference", "") or getattr(pay, "authorization_number", "") or "—"
+                operador = user_name(getattr(pay, "created_by", None)) or "—"
+                pay_rows.append([
+                    cell_paragraph(_fmt_dt(getattr(pay, "paid_at", None) or getattr(pay, "created_at", None))),
+                    cell_paragraph(method_labels.get(pay.method, pay.method or "—")),
+                    cell_paragraph(str(ref)),
+                    cell_paragraph(str(operador)),
+                    cell_paragraph(status_labels.get(pay.status, pay.status or "—")),
+                    num_cell(fmt_money_plain(getattr(pay, "value", 0))),
+                    num_cell(fmt_money_plain(getattr(pay, "change_amount", 0))),
+                ])
+            pay_table = Table(
+                pay_rows,
+                colWidths=[
+                    usable_width * 0.16,
+                    usable_width * 0.14,
+                    usable_width * 0.16,
+                    usable_width * 0.18,
+                    usable_width * 0.12,
+                    usable_width * 0.12,
+                    usable_width * 0.12,
+                ],
+                repeatRows=1,
+            )
+            pay_table.setStyle(
+                TableStyle(
+                    [
+                        ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                        ("ALIGN", (5, 1), (-1, -1), "RIGHT"),
+                        ("LEFTPADDING", (0, 0), (-1, -1), 2),
+                        ("RIGHTPADDING", (0, 0), (-1, -1), 2),
+                        ("TOPPADDING", (0, 0), (-1, -1), 0),
+                        ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+                        ("TOPPADDING", (0, 1), (-1, 1), 0.1 * cm),
+                        ("LINEABOVE", (0, 0), (-1, 0), 0.6, colors.darkblue),
+                        ("LINEBELOW", (0, 0), (-1, 0), 0.6, colors.darkblue),
+                        ("LINEBELOW", (0, 1), (-1, -1), 0.3, colors.grey),
+                    ]
+                )
+            )
+            body.append(pay_table)
+            body.append(Spacer(1, 0.1 * cm))
+        else:
+            body.append(cell_paragraph("Sem pagamentos registados."))
+            body.append(Spacer(1, 0.1 * cm))
+
+        liquidacao_rows = [
+            [cell_paragraph("Total pago (confirmado):"), num_cell(fmt_money(confirmed_paid))],
+            [cell_paragraph("Em dívida:"), num_cell(fmt_money(outstanding))],
+            [cell_paragraph("Estado de liquidação:"), cell_paragraph(settle_label)],
+            [cell_paragraph("Recibo(s):"), cell_paragraph(receipt_numbers)],
+        ]
+        liquidacao_table = Table(liquidacao_rows, colWidths=[usable_width * 0.60, usable_width * 0.40])
+        liquidacao_table.setStyle(
+            TableStyle(
+                [
+                    ("ALIGN", (0, 0), (0, -1), "LEFT"),
+                    ("ALIGN", (1, 0), (1, -1), "RIGHT"),
+                    ("LEFTPADDING", (0, 0), (-1, -1), 2),
+                    ("RIGHTPADDING", (0, 0), (-1, -1), 2),
+                    ("LINEBELOW", (0, 0), (-1, -2), 0.3, colors.grey),
+                ]
+            )
+        )
+        body.append(liquidacao_table)
+        body.append(Spacer(1, 0.15 * cm))
 
         # Termina a via.
         append_fim(body)
