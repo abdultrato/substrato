@@ -836,6 +836,30 @@ export default function FaturaRascunhoPage() {
     }))
   }, [precoHint])
 
+  const buscarEmpresas = useCallback(async (q: string): Promise<CatalogOption[]> => {
+    const res = await apiFetch<any>(`/companies/?search=${encodeURIComponent(q)}`)
+    return listFrom(res).map((c) => ({
+      key: c.id,
+      label: c.nome || c.name || c.id_custom || `Entidade ${c.id}`,
+      hint: c.nuit ? `NUIT: ${c.nuit}` : undefined,
+      raw: c,
+    }))
+  }, [])
+
+  const definirClienteFiscal = useCallback(async (companyId: number | null) => {
+    if (!faturaId || !faturaRascunho) return
+    try {
+      setErro(null)
+      const body = companyId
+        ? { fiscal_client: companyId }
+        : { fiscal_client: null, fiscal_client_name: "", fiscal_client_nuit: "", fiscal_client_address: "" }
+      await apiFetch(`/invoices/${faturaId}/`, { method: "PATCH", body: JSON.stringify(body) })
+      await carregarFatura()
+    } catch (e: any) {
+      setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao definir cliente fiscal."))
+    }
+  }, [carregarFatura, faturaId, faturaRascunho])
+
   const itensCols = useMemo(
     () => [
       { header: "Descrição", render: (i: FaturaItem) => i.descricao || `Item ${i.id}` },
@@ -996,6 +1020,39 @@ export default function FaturaRascunhoPage() {
                 {notificacaoEnviando ? "Notificando..." : "Enviar notificação"}
               </button>
             ) : null}
+          </div>
+        </Card>
+
+        <Card title="Cliente fiscal" subtitle="Quem paga (pode ser empresa, seguradora, escola, ONG ou hospital). Por omissão, o paciente.">
+          <div className="space-y-2">
+            <div className="text-sm text-gray-700">
+              <span className="font-semibold">Atual:</span>{" "}
+              {fatura?.fiscal_client_name
+                ? `${fatura.fiscal_client_name}${fatura.fiscal_client_nuit ? ` · NUIT: ${fatura.fiscal_client_nuit}` : ""}`
+                : `Paciente${paciente?.nome || paciente?.name ? ` (${paciente?.nome || paciente?.name})` : ""}`}
+            </div>
+            {faturaRascunho && podeEditar ? (
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="min-w-[16rem] flex-1">
+                  <CatalogSearchSelect
+                    placeholder="Pesquisar entidade (empresa/seguradora/escola/ONG/hospital)"
+                    fetcher={buscarEmpresas}
+                    onSelect={(opt) => definirClienteFiscal(Number(opt.raw.id))}
+                  />
+                </div>
+                {fatura?.fiscal_client_name ? (
+                  <button
+                    type="button"
+                    onClick={() => definirClienteFiscal(null)}
+                    className="inline-flex items-center rounded-lg border border-gray-200 px-3 py-2 text-xs font-medium text-gray-700 transition hover:bg-gray-50"
+                  >
+                    Repor paciente
+                  </button>
+                ) : null}
+              </div>
+            ) : (
+              <div className="text-xs text-gray-500">O cliente fiscal só pode ser alterado enquanto a fatura estiver em rascunho.</div>
+            )}
           </div>
         </Card>
 

@@ -458,6 +458,22 @@ def generate_invoice_pdf(invoice, request=None) -> tuple[bytes, str]:
             entity_lines.append(f"Resp. técnico: {config.technical_manager}")
 
     # ==========================
+    # CLIENTE FISCAL / QUEM PAGA (dados — uma vez)
+    # ==========================
+    try:
+        fiscal_client = invoice.fiscal_client_details()
+    except Exception:
+        fiscal_client = {"kind": "none", "name": "—", "nuit": "", "address": ""}
+    fc_is_entity = fiscal_client.get("kind") == "entity"
+    fc_nuit_label = "NUIT" if fc_is_entity else "NUIT/Doc"
+    fc_bits = [f"<b>Faturar a:</b> {fiscal_client.get('name') or '—'}"]
+    if fiscal_client.get("nuit"):
+        fc_bits.append(f"{fc_nuit_label}: {fiscal_client['nuit']}")
+    if fiscal_client.get("address"):
+        fc_bits.append(str(fiscal_client["address"]).replace("\n", " "))
+    fc_line = " • ".join(fc_bits)
+
+    # ==========================
     # COMPOSIÇÃO DE UMA VIA (flowables novos a cada chamada)
     # ==========================
     def _compose_via(via_name: str, via_dest: str) -> list:
@@ -489,7 +505,11 @@ def generate_invoice_pdf(invoice, request=None) -> tuple[bytes, str]:
         )
         body.append(Spacer(1, 0.15 * cm))
         body.append(HRFlowable(width="100%", thickness=0.6, color=colors.darkblue))
-        body.append(Spacer(1, 0.15 * cm))
+        body.append(Spacer(1, 0.1 * cm))
+
+        # Cliente fiscal (quem paga) — pode diferir do paciente.
+        body.append(Paragraph(fc_line, entity_style))
+        body.append(Spacer(1, 0.12 * cm))
 
         def _append_item_section(label, section_items):
             body.append(Paragraph(label, style_section))

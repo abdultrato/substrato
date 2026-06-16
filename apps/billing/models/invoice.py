@@ -119,6 +119,39 @@ class Invoice(NoNameCoreModel):
         blank=True,
     )
 
+    # ── Cliente fiscal (quem paga) — pode ser empresa/seguradora/escola/ONG/
+    # hospital, distinto do paciente. Por omissão, o paciente é o cliente fiscal.
+    fiscal_client = models.ForeignKey(
+        "entidades.Company",
+        db_column="fiscal_client_id",
+        verbose_name="Cliente fiscal (entidade)",
+        on_delete=models.PROTECT,
+        related_name="invoices_as_fiscal_client",
+        null=True,
+        blank=True,
+        db_index=True,
+    )
+    fiscal_client_name = models.CharField(
+        "Cliente fiscal (nome)",
+        db_column="fiscal_client_name",
+        max_length=200,
+        blank=True,
+        default="",
+    )
+    fiscal_client_nuit = models.CharField(
+        "Cliente fiscal (NUIT)",
+        db_column="fiscal_client_nuit",
+        max_length=30,
+        blank=True,
+        default="",
+    )
+    fiscal_client_address = models.TextField(
+        "Cliente fiscal (morada)",
+        db_column="fiscal_client_address",
+        blank=True,
+        default="",
+    )
+
     subtotal = models.DecimalField(  # Soma sem impostos
         verbose_name="Total sem IVA",
         max_digits=12,
@@ -787,6 +820,53 @@ class Invoice(NoNameCoreModel):
             original = Invoice.all_objects.get(pk=self.pk)
             if original.status != self.Status.DRAFT:
                 raise ValidationError("Fatura já emitida não pode ser alterada.")
+
+    def save(self, *args, **kwargs):
+        # Congela os dados fiscais do cliente (entidade) na fatura.
+        if self.fiscal_client_id and not (self.fiscal_client_name or "").strip():
+            company = self.fiscal_client
+            self.fiscal_client_name = getattr(company, "name", "") or ""
+            self.fiscal_client_nuit = getattr(company, "nuit", "") or ""
+            self.fiscal_client_address = getattr(company, "headquarters_address", "") or ""
+            update_fields = kwargs.get("update_fields")
+            if update_fields is not None:
+                kwargs["update_fields"] = list(
+                    set(update_fields) | {"fiscal_client_name", "fiscal_client_nuit", "fiscal_client_address"}
+                )
+        return super().save(*args, **kwargs)
+
+    def fiscal_client_details(self) -> dict:
+        """Resolve o cliente fiscal (quem paga). Por omissão, o paciente."""
+        name = (self.fiscal_client_name or "").strip()
+        nuit = (self.fiscal_client_nuit or "").strip()
+        address = (self.fiscal_client_address or "").strip()
+
+        if not name and self.fiscal_client_id:
+            company = self.fiscal_client
+            name = (getattr(company, "name", "") or "").strip()
+            nuit = (getattr(company, "nuit", "") or "").strip()
+            address = (getattr(company, "headquarters_address", "") or "").strip()
+
+        if name:
+            return {"kind": "entity", "name": name, "nuit": nuit, "address": address}
+
+        patient = self.patient if self.patient_id else None
+        if patient:
+            parts = [
+                getattr(patient, "address_street", ""),
+                getattr(patient, "address_neighborhood", ""),
+                getattr(patient, "address_city", ""),
+                getattr(patient, "address_province", ""),
+            ]
+            patient_address = ", ".join(str(p) for p in parts if p)
+            doc = f"{getattr(patient, 'document_type', '') or ''} {getattr(patient, 'document_number', '') or ''}".strip()
+            return {
+                "kind": "patient",
+                "name": getattr(patient, "name", "") or "",
+                "nuit": doc,
+                "address": patient_address,
+            }
+        return {"kind": "none", "name": "—", "nuit": "", "address": ""}
 
     def __str__(self):
         if self.patient_id:
