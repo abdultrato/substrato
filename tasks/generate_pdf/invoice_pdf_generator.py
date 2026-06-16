@@ -245,51 +245,22 @@ def generate_invoice_pdf(invoice, request=None) -> tuple[bytes, str]:
     # ==========================
     # BLOCOS DE IDENTIFICAÇÃO (dados — uma vez)
     # ==========================
-    if patient:
-        idade = getattr(patient, "idade", None)
-        idade_txt = idade() if callable(idade) else "—"
-
-        left_lines = [
-            f"Paciente: {getattr(patient, 'name', '—')}",
-            f"Idade: {idade_txt}  -  Gênero: {getattr(patient, 'gender', '—') or '—'}",
-            f"Documento: {getattr(patient, 'document_type', '—') or '—'}  {getattr(patient, 'document_number', '—') or '—'}",
-            f"Contacto: {getattr(patient, 'contact', '—') or '—'}",
-        ]
-
-        if getattr(patient, "email", None):
-            left_lines.append(f"E-mail: {patient.email or '—'}")
-
-        if getattr(patient, "provenance", None):
-            left_lines.append(f"Proveniência: {getattr(patient, 'provenance', '—') or '—'}")
-
-        origin_company = getattr(patient, "origin_company", None)
-        requesting_company = getattr(request, "requesting_company", None) if request else None
-        empresa_executora = getattr(request, "external_executing_company", None) if request else None
-        if requesting_company:
-            left_lines.append(f"Empresa solicitante: {getattr(requesting_company, 'name', '—')}")
-        elif origin_company:
-            left_lines.append(f"Empresa: {getattr(origin_company, 'name', '—')}")
-        if empresa_executora:
-            left_lines.append(f"Executora externa: {getattr(empresa_executora, 'name', '—')}")
-    else:
-        left_lines = ["Paciente: —"]
+    # Paciente: apenas o nome (os dados detalhados do pagante vão no bloco fiscal
+    # e na secção de pagamento/liquidação).
+    patient_name = (getattr(patient, "name", "") or "—") if patient else "—"
+    id_left_lines = [f"<b>Paciente:</b> {patient_name}"]
 
     professional_group = user_primary_group(user_documento)
     professional_name = user_name(user_documento)
     date_request = _format_request_date(request)
 
-    right_lines = [
+    id_right_lines = [
         f"Data: {date_request}",
         f"{professional_group}: {professional_name}",
         f"Estado: {getattr(invoice, 'status', '—')}",
     ]
     if link_invoice:
-        right_lines.append(f"Link: <a href='{link_invoice}' color='blue'>{link_invoice}</a>")
-
-    id_lines = left_lines + right_lines
-    half = (len(id_lines) + 1) // 2
-    id_left_lines = id_lines[:half]
-    id_right_lines = id_lines[half:]
+        id_right_lines.append(f"Link: <a href='{link_invoice}' color='blue'>{link_invoice}</a>")
 
     # ==========================
     # ITENS (dados — uma vez)
@@ -482,7 +453,8 @@ def generate_invoice_pdf(invoice, request=None) -> tuple[bytes, str]:
         fiscal_client = {"kind": "none", "name": "—", "nuit": "", "address": ""}
     fc_is_entity = fiscal_client.get("kind") == "entity"
     fc_nuit_label = "NUIT" if fc_is_entity else "NUIT/Doc"
-    fc_bits = [f"<b>Faturar a:</b> {fiscal_client.get('name') or '—'}"]
+    fc_kind_label = "Pagante (entidade)" if fc_is_entity else "Pagante"
+    fc_bits = [f"<b>{fc_kind_label}:</b> {fiscal_client.get('name') or '—'}"]
     if fiscal_client.get("nuit"):
         fc_bits.append(f"{fc_nuit_label}: {fiscal_client['nuit']}")
     if fiscal_client.get("address"):
@@ -636,8 +608,8 @@ def generate_invoice_pdf(invoice, request=None) -> tuple[bytes, str]:
         body.append(Paragraph(iva_legal_note, iva_note_style))
         body.append(Spacer(1, 0.15 * cm))
 
-        # Pagamento / liquidação.
-        body.append(Paragraph("Pagamento e liquidação", style_section))
+        # Pagamento / liquidação (detalhe do pagante: todos os métodos usados).
+        body.append(Paragraph("Pagamentos e liquidação do pagante", style_section))
         body.append(Spacer(1, 0.1 * cm))
         if payments:
             pay_rows = [[
