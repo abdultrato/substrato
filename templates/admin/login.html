@@ -44,6 +44,9 @@
     border-radius: 20px;
     overflow: hidden;
     box-shadow: 0 8px 20px -8px rgba(76, 29, 149, .12), 0 24px 64px -12px rgba(76, 29, 149, .18);
+    /* scale uniforme: reduz altura e largura na mesma proporção exata. */
+    transform: scale(.9);
+    transform-origin: center;
   }
 
   /* ── brand aside (left on desktop) ── */
@@ -111,8 +114,8 @@
     color: #6d28d9; background: #f3effe; border: 1px solid #e4d9fb;
     padding: .25rem .6rem; border-radius: 999px; margin-bottom: 1rem;
   }
-  .sl-title { font-size: 1.35rem; font-weight: 700; color: #1e1b2e; letter-spacing: -0.01em; margin: 0; }
-  .sl-title-sub { font-size: .85rem; color: #6b7280; margin: .35rem 0 1.5rem; }
+  .sl-title { font-size: 1.35rem; font-weight: 700; color: #1e1b2e; letter-spacing: -0.01em; margin: 0 0 1.5rem; }
+  .sl-hl { color: #7c3aed; }
 
   /* ── alerts ── */
   .sl-alert { border-radius: 10px; padding: .6rem .85rem; font-size: .8rem; margin-bottom: 1rem; line-height: 1.4; }
@@ -232,11 +235,8 @@
 
     <span class="sl-admin-tag">{% if LANGUAGE_CODE|slice:":2" == "pt" %}Administração{% else %}Administration{% endif %}</span>
     <h1 class="sl-title">
-      {% if LANGUAGE_CODE|slice:":2" == "pt" %}Iniciar sessão{% else %}Sign in{% endif %}
+      {% if LANGUAGE_CODE|slice:":2" == "pt" %}Iniciar <span class="sl-hl">sessão</span>{% else %}Sign <span class="sl-hl">in</span>{% endif %}
     </h1>
-    <p class="sl-title-sub">
-      {% if LANGUAGE_CODE|slice:":2" == "pt" %}Aceda ao painel de administração.{% else %}Access the administration panel.{% endif %}
-    </p>
 
     {% if user.is_authenticated %}
       <div class="sl-alert sl-alert-warning">
@@ -261,19 +261,18 @@
       {% csrf_token %}
 
       <div class="sl-field">
-        <label class="sl-label" for="id_username">{{ form.username.label }}</label>
         <input
           id="id_username" class="sl-input" type="text" name="username"
           autocomplete="username" value="{{ form.username.value|default_if_none:'' }}"
-          placeholder="{{ form.username.label }}" autofocus required
+          placeholder="{% if LANGUAGE_CODE|slice:':2' == 'pt' %}Usuário{% else %}Username{% endif %}" autofocus required
         />
       </div>
 
       <div class="sl-field">
-        <label class="sl-label" for="id_password">{{ form.password.label }}</label>
         <input
           id="id_password" class="sl-input" type="password" name="password"
-          autocomplete="current-password" placeholder="{{ form.password.label }}" required
+          autocomplete="current-password"
+          placeholder="{% if LANGUAGE_CODE|slice:':2' == 'pt' %}Palavra-passe{% else %}Password{% endif %}" required
         />
       </div>
 
