@@ -169,6 +169,22 @@ def generate_invoice_pdf(invoice, request=None) -> tuple[bytes, str]:
     except Exception:
         doc.barcode_value = None
 
+    # QR aponta para a página pública de validação (hash + estado + dados mínimos).
+    try:
+        if not getattr(invoice, "verification_hash", "") and getattr(invoice, "pk", None):
+            invoice.ensure_verification_hash()
+            type(invoice).all_objects.filter(pk=invoice.pk).update(verification_hash=invoice.verification_hash)
+        verification_path = invoice.verification_path()
+        if request is not None:
+            doc.qr_url = request.build_absolute_uri(verification_path)
+        else:
+            from django.conf import settings as _settings
+
+            base = (getattr(_settings, "PUBLIC_BASE_URL", "") or getattr(_settings, "SITE_URL", "") or "").rstrip("/")
+            doc.qr_url = (base + verification_path) if base else verification_path
+    except Exception:
+        pass
+
     # ==========================
     # ESTILOS (uma vez)
     # ==========================

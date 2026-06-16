@@ -196,6 +196,16 @@ class Invoice(NoNameCoreModel):
         db_index=True,
     )
 
+    # Hash de verificação (usado no QR/validação pública da fatura).
+    verification_hash = models.CharField(
+        db_column="verification_hash",
+        verbose_name="Hash de verificação",
+        max_length=64,
+        blank=True,
+        default="",
+        db_index=True,
+    )
+
     class Meta:
         db_table = "faturamento_fatura"
         verbose_name = "Fatura"
@@ -794,7 +804,8 @@ class Invoice(NoNameCoreModel):
 
         self.persist_totals()
         self.status = self.Status.ISSUED
-        self.save(update_fields=["status", "subtotal", "vat_amount", "total", "patient_amount"])
+        self.ensure_verification_hash()
+        self.save(update_fields=["status", "subtotal", "vat_amount", "total", "patient_amount", "verification_hash"])
         try:
             linhas = [
                 f"Origem: {self.get_origin_display()}",
@@ -834,6 +845,32 @@ class Invoice(NoNameCoreModel):
                     set(update_fields) | {"fiscal_client_name", "fiscal_client_nuit", "fiscal_client_address"}
                 )
         return super().save(*args, **kwargs)
+
+    def _compute_verification_hash(self) -> str:
+        import hashlib
+
+        from django.conf import settings
+
+        base = "|".join(
+            [
+                str(self.custom_id or self.pk or ""),
+                str(self.tenant_id or ""),
+                str(self.total or "0"),
+                getattr(self.created_at, "isoformat", lambda: "")() if self.created_at else "",
+                getattr(settings, "SECRET_KEY", ""),
+            ]
+        )
+        return hashlib.sha256(base.encode("utf-8")).hexdigest()[:32]
+
+    def ensure_verification_hash(self) -> str:
+        if not self.verification_hash:
+            self.verification_hash = self._compute_verification_hash()
+        return self.verification_hash
+
+    def verification_path(self) -> str:
+        """Caminho público de validação (relativo)."""
+        code = self.verification_hash or self.ensure_verification_hash()
+        return f"/v/fatura/{code}/"
 
     def fiscal_client_details(self) -> dict:
         """Resolve o cliente fiscal (quem paga). Por omissão, o paciente."""

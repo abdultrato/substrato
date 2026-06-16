@@ -13,6 +13,7 @@ from django.views.generic import RedirectView
 from django.views.static import serve as django_static_serve
 from rest_framework.permissions import AllowAny
 
+from apps.billing.public_views import verify_invoice
 from core.admin_autoregister import register_unregistered_local_models
 
 if find_spec("django_prometheus"):
@@ -118,6 +119,8 @@ urlpatterns = [
     # API
     path("api/", include("api.urls")),
     path("pdf/", include("tasks.generate_pdf.urls")),
+    # Validação pública de fatura (apontada pelo QR do documento).
+    path("v/fatura/<str:code>/", verify_invoice, name="invoice_verify"),
 ]
 
 if SpectacularAPIView is not None:
