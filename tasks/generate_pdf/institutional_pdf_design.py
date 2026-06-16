@@ -399,20 +399,21 @@ def draw_institutional_header(canvas_obj, doc):
     text_x = logo_x + logo_w + 0.1 * cm
     text_top_y = page_h - 0.62 * cm
 
-    canvas_obj.setFont(FONT_BOLD_INST, PDF_TITLE_FONT_SIZE)
-    canvas_obj.drawString(text_x, text_top_y, "CLÍNICA DE DIAGNÓSTICOS E SAÚDE")
-
-    canvas_obj.setFont(FONT_INST, PDF_BODY_FONT_SIZE)
-    canvas_obj.drawString(text_x, text_top_y - 0.48 * cm, "Laboratório de Análises Clínicas")
-
-    canvas_obj.setFont(FONT_INST, PDF_BODY_FONT_SIZE)
-    canvas_obj.drawString(text_x, text_top_y - 0.88 * cm, "Pemba - Cabo Delgado, Moçambique")
-
-    canvas_obj.drawString(
-        text_x,
-        text_top_y - 1.24 * cm,
+    # Cabeçalho sobrescritível: se o documento definir `header_title`/`header_lines`
+    # (ex.: identidade fiscal da entidade na fatura), usa-os; senão, os defaults.
+    header_title = getattr(doc, "header_title", None) or "CLÍNICA DE DIAGNÓSTICOS E SAÚDE"
+    header_lines = getattr(doc, "header_lines", None) or [
+        "Laboratório de Análises Clínicas",
+        "Pemba - Cabo Delgado, Moçambique",
         "Tel/WhatsApp: +258 84 777 8476 | Email: substratosys@gmail.com",
-    )
+    ]
+
+    canvas_obj.setFont(FONT_BOLD_INST, PDF_TITLE_FONT_SIZE)
+    canvas_obj.drawString(text_x, text_top_y, str(header_title).upper())
+
+    canvas_obj.setFont(FONT_INST, PDF_BODY_FONT_SIZE)
+    for idx, line in enumerate(header_lines[:3]):
+        canvas_obj.drawString(text_x, text_top_y - (0.48 + idx * 0.40) * cm, str(line))
 
     # linha inferior (limite inferior da banda do header)
     y_line = page_h - top_margin + 0.05 * cm

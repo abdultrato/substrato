@@ -413,16 +413,15 @@ def generate_invoice_pdf(invoice, request=None) -> tuple[bytes, str]:
             return "—"
 
     # ==========================
-    # IDENTIDADE FISCAL DA ENTIDADE (dados — uma vez)
+    # IDENTIDADE FISCAL DA ENTIDADE → CABEÇALHO (letterhead)
     # ==========================
-    entity_lines: list[str] = []
+    # Os dados fiscais da entidade são impressos no cabeçalho do documento,
+    # sobrescrevendo o cabeçalho institucional por defeito.
     try:
         config = getattr(getattr(invoice, "tenant", None), "configuracao", None)
     except Exception:
         config = None
     if config is not None:
-        if getattr(config, "legal_name", ""):
-            entity_lines.append(f"<b>{config.legal_name}</b>")
         ident_bits = []
         if getattr(config, "nuit", ""):
             ident_bits.append(f"NUIT: {config.nuit}")
@@ -430,19 +429,29 @@ def generate_invoice_pdf(invoice, request=None) -> tuple[bytes, str]:
             ident_bits.append(f"Alvará: {config.license_number}")
         if getattr(config, "health_unit_registration", ""):
             ident_bits.append(f"Reg.: {config.health_unit_registration}")
-        if ident_bits:
-            entity_lines.append(" • ".join(ident_bits))
-        if getattr(config, "fiscal_address", ""):
-            entity_lines.append(str(config.fiscal_address).replace("\n", " "))
+
         contact_bits = []
         if getattr(config, "fiscal_phone", ""):
             contact_bits.append(f"Tel: {config.fiscal_phone}")
         if getattr(config, "fiscal_email", ""):
             contact_bits.append(str(config.fiscal_email))
-        if contact_bits:
-            entity_lines.append(" • ".join(contact_bits))
         if getattr(config, "technical_manager", ""):
-            entity_lines.append(f"Resp. técnico: {config.technical_manager}")
+            contact_bits.append(f"Resp. téc.: {config.technical_manager}")
+
+        header_sublines = []
+        if ident_bits:
+            header_sublines.append(" • ".join(ident_bits))
+        if getattr(config, "fiscal_address", ""):
+            header_sublines.append(str(config.fiscal_address).replace("\n", " "))
+        if contact_bits:
+            header_sublines.append(" • ".join(contact_bits))
+
+        header_title = (getattr(config, "legal_name", "") or getattr(getattr(invoice, "tenant", None), "name", "") or "").strip()
+        if header_title or header_sublines:
+            if header_title:
+                doc.header_title = header_title
+            if header_sublines:
+                doc.header_lines = header_sublines[:3]
 
     # ==========================
     # CLIENTE FISCAL / QUEM PAGA (dados — uma vez)
@@ -469,13 +478,6 @@ def generate_invoice_pdf(invoice, request=None) -> tuple[bytes, str]:
 
         # Identificação da via (Original/Duplicado/Triplicado).
         body.append(Paragraph(f"{via_name} — {via_dest}", via_style))
-
-        # Identidade fiscal/legal da entidade emissora.
-        if entity_lines:
-            for line in entity_lines:
-                body.append(Paragraph(line, entity_style))
-            body.append(Spacer(1, 0.1 * cm))
-            body.append(HRFlowable(width="100%", thickness=0.4, color=colors.grey))
 
         # Cabeçalho do documento.
         body.append(Spacer(1, 0.2 * cm))
