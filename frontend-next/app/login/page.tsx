@@ -280,7 +280,7 @@ export default function LoginPage() {
                                         id="utilizador"
                                         name="utilizador"
                                         autoComplete="username"
-                                        placeholder={t("O seu usuário", "Your username")}
+                                        placeholder={t("Usuário", "Username")}
                                         value={user}
                                         onChange={(e) => setUser(e.target.value)}
                                         className={INPUT_CLASS}
