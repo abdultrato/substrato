@@ -696,6 +696,11 @@ class MedicalConsultationViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
         except Exception:
             currency = "MZN"
 
+        price_final = consultation.price or Decimal("0.00")
+        vat_percentage = specialty.vat_percentage if specialty.vat_percentage is not None else Decimal("0.00")
+        vat_amount = (price_final * (vat_percentage / Decimal("100.00"))).quantize(Decimal("0.01"))
+        price_with_vat = (price_final + vat_amount).quantize(Decimal("0.01"))
+
         payload = {
             "specialty": specialty.id,
             "specialty_name": specialty.name,
@@ -704,7 +709,10 @@ class MedicalConsultationViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
             "is_holiday": bool(consultation._is_holiday()),
             "schedule_type": consultation.schedule_type,
             "price_multiplier": str(consultation.price_multiplier or Decimal("1.00")),
-            "price_final": str(consultation.price or Decimal("0.00")),
+            "price_final": str(price_final),
+            "vat_percentage": str(vat_percentage),
+            "vat_amount": str(vat_amount),
+            "price_with_vat": str(price_with_vat),
             "currency": currency,
         }
         return Response(payload, status=status.HTTP_200_OK)

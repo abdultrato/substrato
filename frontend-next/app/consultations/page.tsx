@@ -35,6 +35,9 @@ type PricePreview = {
   schedule_type?: string
   price_multiplier?: string
   price_final?: string
+  vat_percentage?: string
+  vat_amount?: string
+  price_with_vat?: string
   currency?: string
 }
 
@@ -132,6 +135,9 @@ export default function ConsultationsPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [formError, setFormError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+  // "Relógio" que avança periodicamente para reclassificar consultas cujo
+  // horário entra na janela de 30 min (sem precisar recarregar a página).
+  const [nowTick, setNowTick] = useState(() => Date.now())
 
   const [consultations, setConsultations] = useState<ConsultationRow[]>([])
   const [patients, setPatients] = useState<Patient[]>([])
@@ -216,6 +222,13 @@ export default function ConsultationsPage() {
       mounted = false
     }
   }, [loadData, localizeErrorMessage, t])
+
+  // Avança o relógio a cada 30s para reavaliar a janela dos 30 min e mover
+  // consultas de "Agendada/Re-Agendada" para "Marcadas" quando a hora chega.
+  useEffect(() => {
+    const id = setInterval(() => setNowTick(Date.now()), 30 * 1000)
+    return () => clearInterval(id)
+  }, [])
 
   async function createConsultation(e: any) {
     e.preventDefault()
@@ -499,15 +512,6 @@ export default function ConsultationsPage() {
     t,
   ])
 
-  const scheduleTypeLabel = useMemo(() => {
-    const scheduleType = pricePreview?.schedule_type
-    if (!scheduleType) return t("Normal", "Normal")
-    if (scheduleType === "FIM_SEMANA") return t("Fim de semana", "Weekend")
-    if (scheduleType === "FORA_EXPEDIENTE") return t("Fora de expediente", "After hours")
-    if (scheduleType === "FERIADO_MANUAL") return t("Feriado", "Holiday")
-    return t("Normal", "Normal")
-  }, [pricePreview?.schedule_type, t])
-
   const patientOptions = useMemo(
     () => patients.map((p) => ({ value: String(p.id), label: p.name || `${t("Paciente", "Patient")} ${p.id}` })),
     [patients, t]
@@ -537,28 +541,34 @@ export default function ConsultationsPage() {
     setScheduledForInput(now.toISOString().slice(0, 16))
   }, [])
 
-  const isFutureSchedule = useCallback((c: ConsultationRow) => {
-    if (!c.scheduled_for) return false
+  // Quando faltam <= 30 min para o atendimento (ou já passou da hora), a consulta
+  // deixa de estar "agendada/re-agendada" e passa para "marcadas".
+  const DUE_SOON_MS = 30 * 60 * 1000
+
+  const isDueSoon = useCallback((c: ConsultationRow) => {
+    if (!c.scheduled_for) return true // sem hora = atendimento imediato (marcada)
     const ts = new Date(c.scheduled_for).getTime()
-    return !Number.isNaN(ts) && ts > Date.now()
-  }, [])
+    if (Number.isNaN(ts)) return true
+    return ts <= nowTick + DUE_SOON_MS
+  }, [nowTick])
 
   const isRescheduled = (c: ConsultationRow) => Boolean(c.reschedule_count && c.reschedule_count > 0)
 
-  // Marcada = atendimento instantâneo (sem agendamento futuro).
+  // Marcada = atendimento imediato OU já dentro da janela de 30 min (inclui
+  // agendadas/re-agendadas cujo horário está a chegar).
   const markedConsultations = useMemo(
-    () => consultations.filter((c) => c.status === "MARCADA" && !isRescheduled(c) && !isFutureSchedule(c)),
-    [consultations, isFutureSchedule]
+    () => consultations.filter((c) => c.status === "MARCADA" && isDueSoon(c)),
+    [consultations, isDueSoon]
   )
-  // Agendada = marcada para uma data/hora futura.
+  // Agendada = marcada para data/hora futura (a mais de 30 min) e não remarcada.
   const scheduledConsultations = useMemo(
-    () => consultations.filter((c) => c.status === "MARCADA" && !isRescheduled(c) && isFutureSchedule(c)),
-    [consultations, isFutureSchedule]
+    () => consultations.filter((c) => c.status === "MARCADA" && !isRescheduled(c) && !isDueSoon(c)),
+    [consultations, isDueSoon]
   )
-  // Re-agendada = consulta remarcada (reschedule_count > 0).
+  // Re-agendada = remarcada e ainda a mais de 30 min do atendimento.
   const rescheduledConsultations = useMemo(
-    () => consultations.filter((c) => c.status === "MARCADA" && isRescheduled(c)),
-    [consultations]
+    () => consultations.filter((c) => c.status === "MARCADA" && isRescheduled(c) && !isDueSoon(c)),
+    [consultations, isDueSoon]
   )
   // Realizada = consulta concluída.
   const completedConsultations = useMemo(
@@ -604,12 +614,12 @@ export default function ConsultationsPage() {
             </span>
           ) : null}
           {canPrepareInvoice ? (
-            <>
+            <div className="flex w-full gap-1.5">
               <button
                 type="button"
                 onClick={() => openInvoiceReview(r, "draft")}
                 disabled={loadingReview}
-                className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-2 py-1 text-[11px] font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
+                className="flex flex-1 items-center justify-center gap-1 whitespace-nowrap rounded-md border border-slate-200 bg-white px-2 py-1 text-[11px] font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
               >
                 <FileText size={12} />
                 {r.invoice_id ? t("Rever rascunho", "Review draft") : t("Emitir rascunho", "Issue draft")}
@@ -618,12 +628,12 @@ export default function ConsultationsPage() {
                 type="button"
                 onClick={() => openInvoiceReview(r, "issue")}
                 disabled={loadingReview}
-                className="inline-flex items-center gap-1 rounded-md border border-emerald-200 bg-emerald-50 px-2 py-1 text-[11px] font-semibold text-emerald-800 transition hover:bg-emerald-100 disabled:opacity-50"
+                className="flex flex-1 items-center justify-center gap-1 whitespace-nowrap rounded-md border border-emerald-200 bg-emerald-50 px-2 py-1 text-[11px] font-semibold text-emerald-800 transition hover:bg-emerald-100 disabled:opacity-50"
               >
                 <Receipt size={12} />
                 {t("Emitir original", "Issue original")}
               </button>
-            </>
+            </div>
           ) : null}
           {r.invoice_id ? (
             <button
@@ -819,23 +829,17 @@ export default function ConsultationsPage() {
 
               <div className="space-y-1">
                 <label className="text-xs text-gray-600">
-                  {t("Preço", "Price")} {pricePreview?.currency ? `(${pricePreview.currency})` : "(MZN)"}
+                  {t("Preço c/ IVA", "Price incl. VAT")} {pricePreview?.currency ? `(${pricePreview.currency})` : "(MZN)"}
                 </label>
                 <div className="flex items-center gap-3">
                   <input
-                    value={pricePreview?.price_final || ""}
+                    value={pricePreview?.price_with_vat || ""}
                     readOnly
                     className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 shadow-sm"
                     placeholder={specialtyId ? t("Calculando...", "Calculating...") : t("Selecione uma especialidade", "Select a specialty")}
                   />
 
                   <div className="flex flex-col items-start">
-                    <span className="inline-flex items-center rounded-xl border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-gray-700">
-                      {scheduleTypeLabel}
-                    </span>
-                    {pricePreview?.price_multiplier ? (
-                      <span className="text-[11px] text-gray-500">x{pricePreview.price_multiplier}</span>
-                    ) : null}
                     {pricePreview?.manual_holiday ? (
                       <span className="text-[11px] text-amber-700">{t("Feriado marcado", "Holiday marked")}</span>
                     ) : null}

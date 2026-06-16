@@ -206,6 +206,9 @@ class ConsultationPricePreviewSerializer(serializers.Serializer):
     schedule_type = serializers.CharField()
     price_multiplier = serializers.CharField()
     price_final = serializers.CharField()
+    vat_percentage = serializers.CharField()
+    vat_amount = serializers.CharField()
+    price_with_vat = serializers.CharField()
     currency = serializers.CharField()
 
 
