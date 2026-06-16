@@ -190,7 +190,9 @@ export default function LoginPage() {
             </button>
 
             {/* ─── Centered card ─── */}
-            <div className="substrato-brand-card w-full max-w-md overflow-hidden rounded-2xl border border-border shadow-xl lg:grid lg:max-w-3xl lg:grid-cols-2">
+            {/* scale uniforme: reduz altura e largura na mesma proporção exata,
+                preservando toda a estrutura/comportamento do formulário. */}
+            <div className="substrato-brand-card w-full max-w-md origin-center scale-90 overflow-hidden rounded-2xl border border-border shadow-xl lg:grid lg:max-w-3xl lg:grid-cols-2">
 
                 {/* Brand panel — left on lg+, hidden on small (mobile shows it above the form) */}
                 <aside className="relative hidden overflow-hidden bg-gradient-to-br from-violet-700 via-violet-800 to-indigo-900 p-10 text-white lg:flex lg:flex-col lg:justify-center">
@@ -244,8 +246,17 @@ export default function LoginPage() {
 
                     {/* Heading */}
                     <div className="mb-6">
-                        <h1 className="text-xl font-semibold tracking-tight text-foreground">{heading.title}</h1>
-                        <p className="mt-1 text-sm text-muted-foreground">{heading.sub}</p>
+                        {view === "login" ? (
+                            <h1 className="text-xl font-semibold tracking-tight text-foreground">
+                                {t("Iniciar", "Sign")}{" "}
+                                <span className="text-violet-600 dark:text-violet-400">{t("sessão", "in")}</span>
+                            </h1>
+                        ) : (
+                            <>
+                                <h1 className="text-xl font-semibold tracking-tight text-foreground">{heading.title}</h1>
+                                <p className="mt-1 text-sm text-muted-foreground">{heading.sub}</p>
+                            </>
+                        )}
                     </div>
 
                     {/* Feedback */}
