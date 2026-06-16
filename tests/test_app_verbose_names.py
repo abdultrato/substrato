@@ -10,6 +10,7 @@ EXPECTED_VERBOSE_NAMES = {
     "apps.clinical_laboratory": "Laboratório Clínico",
     "apps.clinical_pharmacy": "Farmácia Clínica e Terapia IV",
     "apps.consultations": "Consultas Médicas",
+    "apps.cotacoes": "Cotações",
     "apps.credit_financing": "Créditos e Financiamento",
     "apps.dental": "Odontologia",
     "apps.education": "Educação",
