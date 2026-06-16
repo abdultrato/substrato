@@ -56,6 +56,71 @@ GROUPS = {
     "LOGISTICA": "Gestor de Logística",
 }
 
+# Abreviaturas curtas por grupo (ex.: assinatura no rodapé de documentos:
+# "Ass. Admin:", "Ass. Rec:"). Chaveadas pela chave do grupo em GROUPS.
+GROUP_ABBREVIATIONS = {
+    "ADMIN": "Admin",
+    "RECEPCAO": "Rec",
+    "LABORATORIO": "Lab",
+    "ENFERMAGEM": "Enf",
+    "PROFESSOR": "Prof",
+    "DIRETOR_ESCOLA": "Dir. Esc.",
+    "DIRETOR_ADJUNTO_PEDAGOGICO": "Dir. Adj.",
+    "ENCARREGADO_EDUCACAO": "Enc. Educ.",
+    "TEACHER": "Teach",
+    "ESTUDANTE": "Est",
+    "STUDENT_EN": "Std",
+    "MEDICINA": "Méd",
+    "FARMACIA": "Farm",
+    "FARMACIA_CLINICA": "Farm. Cl.",
+    "MANUTENCAO": "Manut",
+    "MEDICINA_OCUPACIONAL": "Med. Oc.",
+    "CONTABILIDADE": "Cont",
+    "RECURSOS_HUMANOS": "RH",
+    "ODONTOLOGIA": "Odont",
+    "VETERINARIA": "Vet",
+    "FISIOTERAPIA": "Fisio",
+    "RADIOLOGIA": "Rad",
+    "CARDIOLOGIA": "Card",
+    "NEUROLOGIA": "Neuro",
+    "OFTALMOLOGIA": "Oftal",
+    "TERAPIA_OCUPACIONAL": "T. Oc.",
+    "FONOAUDIOLOGIA": "Fono",
+    "TELEMEDICINA": "Telem",
+    "SAUDE_PUBLICA": "S. Pub.",
+    "CREDITO_FINANCIAMENTO": "Créd",
+    "LOGISTICA": "Log",
+}
+
+# Abreviatura indexada pelo nome de exibição normalizado do grupo.
+GROUP_ABBREVIATIONS_BY_NAME = {
+    _normalize(GROUPS[key]): abbr for key, abbr in GROUP_ABBREVIATIONS.items() if key in GROUPS
+}
+
+
+def group_abbreviation(group_name: str) -> str:
+    """Devolve a abreviatura de um grupo a partir do seu nome de exibição."""
+    if not group_name:
+        return ""
+    return GROUP_ABBREVIATIONS_BY_NAME.get(_normalize(group_name), str(group_name).strip())
+
+
+def user_group_abbreviation(user) -> str:
+    """Abreviatura do grupo principal do utilizador (ex.: 'Admin', 'Rec')."""
+    if not user:
+        return ""
+    if getattr(user, "is_superuser", False):
+        return GROUP_ABBREVIATIONS["ADMIN"]
+    try:
+        names = list(user.groups.values_list("name", flat=True))
+    except Exception:
+        names = []
+    for name in names:
+        abbr = GROUP_ABBREVIATIONS_BY_NAME.get(_normalize(name))
+        if abbr:
+            return abbr
+    return group_abbreviation(names[0]) if names else ""
+
 
 def _policy() -> dict[str, dict[str, frozenset[str]]]:
     # Keys for groups are normalized to be resilient to old date without accents.

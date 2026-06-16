@@ -472,6 +472,65 @@ export function userGroups(user: SessionUser | null): string[] {
   return base
 }
 
+// Abreviaturas curtas por grupo (ex.: "Ass. Admin:", "Ass. Rec:"). Espelha o
+// backend (security/permissions/rbac.py: GROUP_ABBREVIATIONS).
+const GROUP_ABBREVIATIONS_BY_KEY: Record<string, string> = {
+  ADMIN: "Admin",
+  RECEPCAO: "Rec",
+  LABORATORIO: "Lab",
+  ENFERMAGEM: "Enf",
+  PROFESSOR: "Prof",
+  DIRETOR_ESCOLA: "Dir. Esc.",
+  DIRETOR_ADJUNTO_PEDAGOGICO: "Dir. Adj.",
+  ENCARREGADO_EDUCACAO: "Enc. Educ.",
+  STUDENT: "Est",
+  ESTUDANTE: "Est",
+  MEDICINA: "Méd",
+  FARMACIA: "Farm",
+  FARMACIA_CLINICA: "Farm. Cl.",
+  MANUTENCAO: "Manut",
+  MEDICINA_OCUPACIONAL: "Med. Oc.",
+  CONTABILIDADE: "Cont",
+  RECURSOS_HUMANOS: "RH",
+  ODONTOLOGIA: "Odont",
+  VETERINARIA: "Vet",
+  FISIOTERAPIA: "Fisio",
+  RADIOLOGIA: "Rad",
+  CARDIOLOGIA: "Card",
+  NEUROLOGIA: "Neuro",
+  OFTALMOLOGIA: "Oftal",
+  TERAPIA_OCUPACIONAL: "T. Oc.",
+  FONOAUDIOLOGIA: "Fono",
+  TELEMEDICINA: "Telem",
+  SAUDE_PUBLICA: "S. Pub.",
+  CREDITO_FINANCIAMENTO: "Créd",
+  LOGISTICA: "Log",
+}
+
+const GROUP_ABBREVIATIONS_BY_NAME: Record<string, string> = Object.fromEntries(
+  Object.entries(GROUP_ABBREVIATIONS_BY_KEY)
+    .filter(([key]) => (GROUPS as Record<string, string>)[key])
+    .map(([key, abbr]) => [normalizeGroupName((GROUPS as Record<string, string>)[key]), abbr])
+)
+
+/** Abreviatura de um grupo a partir do seu nome de exibição. */
+export function groupAbbreviation(name?: string | null): string {
+  if (!name) return ""
+  return GROUP_ABBREVIATIONS_BY_NAME[normalizeGroupName(name)] || String(name).trim()
+}
+
+/** Abreviatura do grupo principal do utilizador (ex.: "Admin", "Rec"). */
+export function userGroupAbbreviation(user: SessionUser | null): string {
+  if (!user) return ""
+  if (user.is_superuser) return GROUP_ABBREVIATIONS_BY_KEY.ADMIN
+  for (const g of userGroups(user)) {
+    const abbr = GROUP_ABBREVIATIONS_BY_NAME[normalizeGroupName(g)]
+    if (abbr) return abbr
+  }
+  const first = userGroups(user)[0]
+  return first ? groupAbbreviation(first) : ""
+}
+
 function expandRequired(required: string[]): string[] {
   const expanded: string[] = []
   required.forEach((g) => {

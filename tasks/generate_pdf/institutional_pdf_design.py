@@ -457,12 +457,19 @@ def draw_institutional_signatures(canvas_obj, doc, user=None):
     canvas_obj.line(x1, y, x1 + width_line, y)
     canvas_obj.line(x2, y, x2 + width_line, y)
 
-    name = institutional_user_identity(user)
+    try:
+        from security.permissions.rbac import group_abbreviation as _group_abbr
+
+        abbr = _group_abbr(user_primary_group_inst(user))
+    except Exception:
+        abbr = ""
+    person = user_name_inst(user)
+    signer_label = f"Ass. {abbr}: {person}" if abbr else f"Assinatura de {person}"
 
     canvas_obj.setFont(FONT_INST, PDF_BODY_FONT_SIZE)
     # 0.1cm extra de respiro entre a linha e o nome (0.25 + 0.10).
     label_y = y - 0.35 * cm
-    canvas_obj.drawCentredString(x1 + width_line / 2, label_y, f"Assinatura de {name}")
+    canvas_obj.drawCentredString(x1 + width_line / 2, label_y, signer_label)
     canvas_obj.drawCentredString(x2 + width_line / 2, label_y, "Assinatura do Paciente/Responsável")
 
     canvas_obj.restoreState()
@@ -1148,12 +1155,19 @@ def draw_institutional_signatures_improved(canvas_obj, doc, user=None):
     canvas_obj.line(x1, y, x1 + width_line, y)
     canvas_obj.line(x2, y, x2 + width_line, y)
 
-    name = institutional_user_identity(user)
+    try:
+        from security.permissions.rbac import group_abbreviation as _group_abbr
+
+        abbr = _group_abbr(user_primary_group_inst(user))
+    except Exception:
+        abbr = ""
+    person = user_name_inst(user)
+    signer_label = f"Ass. {abbr}: {person}" if abbr else f"Assinatura de {person}"
 
     canvas_obj.setFont(FONT_INST, PDF_BODY_FONT_SIZE)
     # 0.1cm extra de respiro entre a linha e o nome (0.25 + 0.10).
     label_y = y - 0.35 * cm
-    canvas_obj.drawCentredString(x1 + width_line / 2, label_y, f"Assinatura de {name}")
+    canvas_obj.drawCentredString(x1 + width_line / 2, label_y, signer_label)
     canvas_obj.drawCentredString(x2 + width_line / 2, label_y, "Assinatura do Paciente/Responsável")
 
     canvas_obj.restoreState()
