@@ -6,6 +6,7 @@ from api.v1.clinical.viewsets import VIEWSET_MAP as CLINICAL_VIEWSET_MAP
 from api.v1.clinical_laboratory.viewsets import VIEWSET_MAP as CLINICAL_LABORATORY_VIEWSET_MAP
 from api.v1.clinical_pharmacy.viewsets import VIEWSET_MAP as CLINICAL_PHARMACY_VIEWSET_MAP
 from api.v1.consultations.viewsets import VIEWSET_MAP as CONSULTATIONS_VIEWSET_MAP
+from api.v1.cotacoes.viewsets import VIEWSET_MAP as COTACOES_VIEWSET_MAP
 from api.v1.credit_financing.viewsets import VIEWSET_MAP as CREDIT_FINANCING_VIEWSET_MAP
 from api.v1.dashboard.viewsets import VIEWSET_MAP as DASHBOARD_VIEWSET_MAP
 from api.v1.dental.viewsets import VIEWSET_MAP as DENTAL_VIEWSET_MAP
@@ -60,6 +61,7 @@ VIEWSET_GROUPS = {
     "radiology": RADIOLOGY_VIEWSET_MAP,
     "warehouse": WAREHOUSE_VIEWSET_MAP,
     "billing": BILLING_VIEWSET_MAP,
+    "cotacoes": COTACOES_VIEWSET_MAP,
     "bloodbank": BLOODBANK_VIEWSET_MAP,
     "identity": IDENTITY_VIEWSET_MAP,
     "tenants": TENANTS_VIEWSET_MAP,
