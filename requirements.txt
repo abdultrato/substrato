@@ -1,4 +1,5 @@
 anthropic>=0.40.0  # Opcional: provedor Claude real da IA (AI_PROVIDER=anthropic). Import lazy.
+pyserial==3.5
 asgiref==3.11.0
 attrs==25.4.0
 cffi==2.0.0

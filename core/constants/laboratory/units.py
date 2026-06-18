@@ -32,6 +32,7 @@ class DefaultUnit(models.TextChoices):
     P_UL = "p/µL", "p/µL"
     PH = "ph", "ph"
     FL = "fl", "fl"
+    PG = "pg", "pg"
     MM_H = "mm/h", "mm/h"
     # Parasitologia
     OVOS_G = "ovos/g", "ovos/g"
