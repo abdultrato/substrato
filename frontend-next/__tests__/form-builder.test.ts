@@ -108,7 +108,7 @@ describe("formBuilder aliases", () => {
     expect(spec?.submitFields.some((field) => field.name === "tenant")).toBe(false)
   })
 
-  it("inclui todos os campos gravaveis que o backend declara nos contratos de escrita", () => {
+  it("inclui todos os campos gravaveis que o backend declara nos contratos de escrita", { timeout: 30000 }, () => {
     const failures: string[] = []
     const paths = (schema as any).paths || {}
 

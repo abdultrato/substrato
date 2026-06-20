@@ -1,5 +1,12 @@
 {
   "extends": ["next/core-web-vitals"],
+  "ignorePatterns": [
+    ".next/",
+    ".next-dev/",
+    "coverage/",
+    "node_modules/",
+    "node_modules.hdd-backup/"
+  ],
   "rules": {
     "@typescript-eslint/no-explicit-any": "off"
   }

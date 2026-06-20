@@ -41,6 +41,15 @@ function extractEndpointLiteral(content: string): string | null {
   return m?.[1] || null
 }
 
+function extractEndpointFromConstant(content: string): string | null {
+  const endpointProp = content.match(/endpoint=\{([A-Z][A-Z0-9_]*)\}/)
+  if (!endpointProp) return null
+
+  const constPattern = new RegExp(`const\\s+${endpointProp[1]}\\s*=\\s*"([^"]+)"`)
+  const constMatch = content.match(constPattern)
+  return constMatch?.[1] || null
+}
+
 function extractEndpointFromEndpointBase(content: string): string | null {
   const baseMatch = content.match(/const\s+endpointBase\s*=\s*"([^"]+)"/)
   if (!baseMatch) return null
@@ -83,6 +92,7 @@ function extractAutoFormTarget(file: string): AutoFormContractTarget | null {
 
   const endpoint =
     extractEndpointLiteral(content) ||
+    extractEndpointFromConstant(content) ||
     extractEndpointFromEndpointBase(content) ||
     extractEndpointFromEnsureTrailingSlash(content) ||
     extractEndpointTemplate(content)

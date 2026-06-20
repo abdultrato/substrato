@@ -101,6 +101,10 @@ type CreateConsultationInvoiceResponse = {
   total: string
 }
 
+// Quando faltam <= 30 min para o atendimento (ou já passou da hora), a consulta
+// deixa de estar "agendada/re-agendada" e passa para "marcadas".
+const DUE_SOON_MS = 30 * 60 * 1000
+
 function fmtDate(value: any): string {
   if (!value) return "-"
   const d = new Date(value)
@@ -540,10 +544,6 @@ export default function ConsultationsPage() {
     now.setMinutes(now.getMinutes() - now.getTimezoneOffset())
     setScheduledForInput(now.toISOString().slice(0, 16))
   }, [])
-
-  // Quando faltam <= 30 min para o atendimento (ou já passou da hora), a consulta
-  // deixa de estar "agendada/re-agendada" e passa para "marcadas".
-  const DUE_SOON_MS = 30 * 60 * 1000
 
   const isDueSoon = useCallback((c: ConsultationRow) => {
     if (!c.scheduled_for) return true // sem hora = atendimento imediato (marcada)
