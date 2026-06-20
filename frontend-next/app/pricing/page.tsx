@@ -8,7 +8,10 @@ import { fetchPublicPlans, type PublicPlan } from "@/lib/onboarding";
 
 function formatPrice(value: string) {
   const n = Number(value || 0);
-  return new Intl.NumberFormat("pt-MZ", { style: "currency", currency: "MZN" }).format(n);
+  return new Intl.NumberFormat("pt-MZ", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(n);
 }
 
 export default function PricingPage() {

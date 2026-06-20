@@ -291,6 +291,8 @@ class InvoiceViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
 
         period_key, start_dt, end_dt, period_label, period_filters = self._resolve_period(request)
         scope, target_user = self._resolve_scope_and_user(request)
+        tenant_config = getattr(getattr(request, "tenant", None), "configuracao", None)
+        currency = (getattr(tenant_config, "currency", "") or "MZN").strip().upper()
 
         limit_default = 200 if scope == "user" else 300
         limit = self._parse_int(
@@ -429,6 +431,7 @@ class InvoiceViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
                 **period_filters,
             },
             "target_user": target_user_payload,
+            "currency": currency,
             "summary": {
                 "invoice_count": int(summary_raw.get("invoice_count") or 0),
                 "subtotal": self._money(summary_raw.get("subtotal")),

@@ -332,7 +332,7 @@ def generate_procedure_pdf(procedure, request=None) -> tuple[bytes, str]:
     _append_table(
         story,
         "Resumo financeiro",
-        ["Indicador", "Valor (MZN)"],
+        ["Indicador", "Valor"],
         summary_rows,
         usable_width,
         col_widths=[usable_width * 0.70, usable_width * 0.30],

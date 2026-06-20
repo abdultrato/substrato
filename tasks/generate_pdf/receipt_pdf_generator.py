@@ -29,6 +29,19 @@ from .institutional_pdf_design import (
 
 logger = logging.getLogger(__name__)
 
+CURRENCY_NAMES = {
+    "MZN": "Metical",
+    "USD": "Dólar americano",
+    "EUR": "Euro",
+    "ZAR": "Rand",
+}
+
+
+def _currency_label(code: str | None) -> str:
+    normalized = (code or "MZN").strip().upper() or "MZN"
+    name = CURRENCY_NAMES.get(normalized, normalized)
+    return f"{name} ({normalized})"
+
 
 def _formatar_dt(value) -> str:
     """Formata data/hora para o padrão institucional dos PDFs."""
@@ -85,6 +98,8 @@ def generate_receipt_pdf(recibo, request=None) -> tuple[bytes, str]:
     invoice = getattr(recibo, "invoice", None)
     payment = getattr(recibo, "payment", None)
     patient = getattr(invoice, "patient", None) if invoice else None
+    config = getattr(getattr(invoice, "tenant", None), "configuracao", None) if invoice else None
+    currency_code = getattr(config, "currency", "") if config is not None else ""
 
     # Código de barras no header (repete em todas páginas)
     try:
@@ -155,6 +170,7 @@ def generate_receipt_pdf(recibo, request=None) -> tuple[bytes, str]:
         f"{bold('Pagamento')}: {getattr(payment, 'custom_id', getattr(payment, 'pk', '—')) if payment else '—'}",
         f"{bold('Método')}: {method_txt or '—'}",
         f"{bold('Status')}: {status_txt or '—'}",
+        f"{bold('Tipo de moeda')}: {_currency_label(currency_code)}",
         f"{bold('Pago em')}: {_formatar_dt(paid_at) if paid_at else _formatar_dt(getattr(recibo, 'created_at', None))}",
         f"{bold('Emitido por')}: {technician_texto}",
     ]
@@ -215,8 +231,8 @@ def generate_receipt_pdf(recibo, request=None) -> tuple[bytes, str]:
             [
                 cell_paragraph(description),
                 cell_paragraph(f"{qtd}".replace(".", ",")),
-                cell_paragraph(f"{price_unit:,.2f} MZN".replace(",", " ")),
-                cell_paragraph(f"{total_linha:,.2f} MZN".replace(",", " ")),
+                cell_paragraph(f"{price_unit:,.2f}".replace(",", " ")),
+                cell_paragraph(f"{total_linha:,.2f}".replace(",", " ")),
             ]
         )
 
@@ -264,9 +280,9 @@ def generate_receipt_pdf(recibo, request=None) -> tuple[bytes, str]:
         if v is None:
             return "—"
         try:
-            return f"{Decimal(str(v)):,.2f} MZN".replace(",", " ")
+            return f"{Decimal(str(v)):,.2f}".replace(",", " ")
         except Exception:
-            return f"{v} MZN"
+            return str(v)
 
     resumo = Table(
         [

@@ -18,7 +18,7 @@ function formatValue(value: Props["value"]) {
   return String(value)
 }
 
-export default function MoneyValue({ value, currency = "MZN", className = "" }: Props) {
+export default function MoneyValue({ value, currency = "", className = "" }: Props) {
   const [hidden, setHidden] = useState(false)
 
   useEffect(() => {

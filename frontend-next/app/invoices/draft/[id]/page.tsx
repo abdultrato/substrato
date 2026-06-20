@@ -809,7 +809,7 @@ export default function FaturaRascunhoPage() {
     for (const valor of valores) {
       if (valor === undefined || valor === null || valor === "") continue
       const numero = Number(valor)
-      if (!Number.isNaN(numero)) return `${numero.toLocaleString()} MZN`
+      if (!Number.isNaN(numero)) return numero.toLocaleString()
     }
     return undefined
   }, [])

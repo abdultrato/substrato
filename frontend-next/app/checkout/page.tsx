@@ -66,7 +66,7 @@ export default function CheckoutPage() {
             <ui.icon className={`mx-auto ${ui.color}`} size={40} />
             <p className={`mt-2 font-medium ${ui.color}`}>{ui.text}</p>
             <p className="mt-1 text-sm text-slate-600">
-              {Number(result.invoice.amount).toLocaleString("pt-MZ")} {result.invoice.currency}
+              {Number(result.invoice.amount).toLocaleString("pt-MZ")}
             </p>
             <button
               onClick={() => router.push("/")}

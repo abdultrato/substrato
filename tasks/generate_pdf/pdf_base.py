@@ -517,7 +517,10 @@ def _request_signatures(canvas_obj, doc, user=None):
     """Regista o pedido de assinaturas no canvas. O desenho efetivo é diferido
     para a última página do documento (ver NumberedCanvas.save)."""
     if _should_draw_signatures(doc):
-        canvas_obj._signature_ctx = (draw_signatures, doc, user)
+        try:
+            canvas_obj._signature_ctx = (draw_signatures, doc, user)
+        except AttributeError:
+            draw_signatures(canvas_obj, doc, user)
 
 
 def on_page(canvas_obj, doc, user=None):

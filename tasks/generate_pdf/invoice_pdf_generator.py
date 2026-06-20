@@ -68,6 +68,13 @@ INVOICE_VIAS = (
     ("TRIPLICADO", "Via da Contabilidade"),
 )
 
+CURRENCY_NAMES = {
+    "MZN": "Metical",
+    "USD": "Dólar americano",
+    "EUR": "Euro",
+    "ZAR": "Rand",
+}
+
 logger = logging.getLogger(__name__)
 
 
@@ -92,6 +99,12 @@ def _exam_code(exam):
 
 
 _code_exam = _exam_code
+
+
+def _currency_label(code: str | None) -> str:
+    normalized = (code or "MZN").strip().upper() or "MZN"
+    name = CURRENCY_NAMES.get(normalized, normalized)
+    return f"{name} ({normalized})"
 
 
 def _resolve_document_user(invoice, request):
@@ -321,7 +334,7 @@ def generate_invoice_pdf(invoice, request=None) -> tuple[bytes, str]:
             value = Decimal(str(value)).quantize(Decimal("0.01"))
         except Exception:
             value = Decimal("0.00")
-        return f"{value:,.2f} MZN".replace(",", " ")
+        return f"{value:,.2f}".replace(",", " ")
 
     def fmt_money_plain(value):
         try:
@@ -348,10 +361,10 @@ def generate_invoice_pdf(invoice, request=None) -> tuple[bytes, str]:
         return [
             cell_paragraph("Descrição", is_bold=True),
             num_header("Qtd"),
-            num_header("Preço (MZN)"),
+            num_header("Preço"),
             num_header("% IVA"),
-            num_header("#IVA (MZN)"),
-            num_header("Subtotal (MZN)"),
+            num_header("#IVA"),
+            num_header("Subtotal"),
         ]
 
     # ==========================
@@ -453,6 +466,19 @@ def generate_invoice_pdf(invoice, request=None) -> tuple[bytes, str]:
             if header_sublines:
                 doc.header_lines = header_sublines[:3]
 
+    currency_code = getattr(config, "currency", "") if config is not None else ""
+    currency_line_bits = [f"<b>Tipo de moeda:</b> {_currency_label(currency_code)}"]
+    if getattr(config, "nuit", ""):
+        currency_line_bits.append(f"NUIT emitente: {config.nuit}")
+    if getattr(config, "license_number", ""):
+        currency_line_bits.append(f"Alvará: {config.license_number}")
+    if getattr(config, "health_unit_registration", ""):
+        currency_line_bits.append(f"Reg. unidade: {config.health_unit_registration}")
+    verification_code = (getattr(invoice, "verification_hash", "") or "").strip()
+    if verification_code:
+        currency_line_bits.append(f"Validação: {verification_code[:12]}")
+    currency_fiscal_line = " • ".join(currency_line_bits)
+
     # ==========================
     # CLIENTE FISCAL / QUEM PAGA (dados — uma vez)
     # ==========================
@@ -499,6 +525,8 @@ def generate_invoice_pdf(invoice, request=None) -> tuple[bytes, str]:
 
         # Cliente fiscal (quem paga) — pode diferir do paciente.
         body.append(Paragraph(fc_line, entity_style))
+        body.append(Spacer(1, 0.06 * cm))
+        body.append(Paragraph(currency_fiscal_line, entity_style))
         body.append(Spacer(1, 0.12 * cm))
 
         def _append_item_section(label, section_items):
@@ -620,8 +648,8 @@ def generate_invoice_pdf(invoice, request=None) -> tuple[bytes, str]:
                 cell_paragraph("Referência", is_bold=True),
                 cell_paragraph("Operador", is_bold=True),
                 cell_paragraph("Estado", is_bold=True),
-                num_header("Valor (MZN)"),
-                num_header("Troco (MZN)"),
+                num_header("Valor"),
+                num_header("Troco"),
             ]]
             for pay in payments:
                 ref = getattr(pay, "external_reference", "") or getattr(pay, "authorization_number", "") or "—"

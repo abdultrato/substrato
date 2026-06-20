@@ -67,7 +67,7 @@ def _to_money(value) -> str:
         return "—"
     try:
         amount = float(value)
-        return f"{amount:,.2f} MZN".replace(",", " ")
+        return f"{amount:,.2f}".replace(",", " ")
     except Exception:
         return str(value)
 

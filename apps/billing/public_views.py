@@ -21,6 +21,19 @@ _STATUS_LABEL = {
     "CANC": "Cancelada",
 }
 
+_CURRENCY_NAMES = {
+    "MZN": "Metical",
+    "USD": "Dólar americano",
+    "EUR": "Euro",
+    "ZAR": "Rand",
+}
+
+
+def _currency_label(code: str | None) -> str:
+    normalized = (code or "MZN").strip().upper() or "MZN"
+    name = _CURRENCY_NAMES.get(normalized, normalized)
+    return f"{name} ({normalized})"
+
 
 def _page(title: str, body: str, status: int = 200) -> HttpResponse:
     html = f"""<!doctype html>
@@ -67,6 +80,16 @@ def verify_invoice(request, code: str):
     config = getattr(getattr(invoice, "tenant", None), "configuracao", None)
     entity_name = (getattr(config, "legal_name", "") or getattr(invoice.tenant, "name", "") or "—")
     entity_nuit = getattr(config, "nuit", "") or ""
+    currency_code = getattr(config, "currency", "") if config is not None else ""
+
+    fiscal_bits = [f"Tipo de moeda: {_currency_label(currency_code)}"]
+    if entity_nuit:
+        fiscal_bits.append(f"NUIT emitente: {entity_nuit}")
+    if getattr(config, "license_number", ""):
+        fiscal_bits.append(f"Alvará: {config.license_number}")
+    if getattr(config, "health_unit_registration", ""):
+        fiscal_bits.append(f"Reg. unidade: {config.health_unit_registration}")
+    fiscal_line = " • ".join(fiscal_bits)
 
     fc = invoice.fiscal_client_details()
     status_code = invoice.status
@@ -83,9 +106,10 @@ def verify_invoice(request, code: str):
         + f'<div class="row"><span class="k">Estado</span>'
           f'<span class="v"><span class="badge {badge_class}">{escape(status_label)}</span></span></div>'
         + row("Fatura n.º", invoice.custom_id)
+        + row("Identificação fiscal", fiscal_line)
         + row("Data", timezone.localtime(invoice.created_at).strftime("%d/%m/%Y %H:%M") if invoice.created_at else "—")
         + row("Cliente fiscal", fc.get("name"))
-        + row("Total (com IVA)", f"{invoice.total or 0} MZN")
+        + row("Total (com IVA)", invoice.total or 0)
         + "</div>"
     )
     return _page(f"Validação da fatura {invoice.custom_id}", body)

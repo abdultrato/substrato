@@ -25,6 +25,19 @@ from .pdf_base import (
     pdf_encryption,
 )
 
+CURRENCY_NAMES = {
+    "MZN": "Metical",
+    "USD": "Dólar americano",
+    "EUR": "Euro",
+    "ZAR": "Rand",
+}
+
+
+def _currency_label(code: str | None) -> str:
+    normalized = (code or "MZN").strip().upper() or "MZN"
+    name = CURRENCY_NAMES.get(normalized, normalized)
+    return f"{name} ({normalized})"
+
 
 def _val(value, default: str = "—") -> str:
     if value is None:
@@ -87,6 +100,7 @@ def generate_billing_user_history_pdf(payload: dict, request=None) -> tuple[byte
     invoices = list((payload or {}).get("invoices") or [])
     target_user = (payload or {}).get("target_user") or {}
     scope = _val((payload or {}).get("scope"), default="all")
+    currency_label = _currency_label((payload or {}).get("currency"))
 
     scope_label = "Por utilizador" if scope == "user" else "Geral (todos os utilizadores)"
     period_label = _val(period.get("label"))
@@ -108,7 +122,8 @@ def generate_billing_user_history_pdf(payload: dict, request=None) -> tuple[byte
     ]
     right_lines = [
         f"{bold('Faturas')}: {_val(summary.get('invoice_count'), default='0')}",
-        f"{bold('Total')}: {_val(summary.get('total'), default='0.00')} MZN",
+        f"{bold('Total')}: {_val(summary.get('total'), default='0.00')}",
+        f"{bold('Tipo de moeda')}: {currency_label}",
         f"{bold('Emitido por')}: {institutional_user_identity(user_documento)}",
     ]
 
@@ -131,11 +146,11 @@ def generate_billing_user_history_pdf(payload: dict, request=None) -> tuple[byte
         ["Indicador", "Valor"],
         [
             ["Faturas", _val(summary.get("invoice_count"), default="0")],
-            ["Subtotal", f"{_val(summary.get('subtotal'), default='0.00')} MZN"],
-            ["IVA", f"{_val(summary.get('vat_amount'), default='0.00')} MZN"],
-            ["Total", f"{_val(summary.get('total'), default='0.00')} MZN"],
-            ["Total pago", f"{_val(summary.get('paid_total'), default='0.00')} MZN"],
-            ["Total pendente", f"{_val(summary.get('pending_total'), default='0.00')} MZN"],
+            ["Subtotal", _val(summary.get("subtotal"), default="0.00")],
+            ["IVA", _val(summary.get("vat_amount"), default="0.00")],
+            ["Total", _val(summary.get("total"), default="0.00")],
+            ["Total pago", _val(summary.get("paid_total"), default="0.00")],
+            ["Total pendente", _val(summary.get("pending_total"), default="0.00")],
         ],
         usable_width,
         section_style,
@@ -149,9 +164,9 @@ def generate_billing_user_history_pdf(payload: dict, request=None) -> tuple[byte
             [
                 _val(row.get("display_name")),
                 _val(row.get("invoice_count"), default="0"),
-                f"{_val(row.get('total'), default='0.00')} MZN",
-                f"{_val(row.get('paid_total'), default='0.00')} MZN",
-                f"{_val(row.get('pending_total'), default='0.00')} MZN",
+                _val(row.get("total"), default="0.00"),
+                _val(row.get("paid_total"), default="0.00"),
+                _val(row.get("pending_total"), default="0.00"),
             ]
             for row in users
         ],
@@ -169,7 +184,7 @@ def generate_billing_user_history_pdf(payload: dict, request=None) -> tuple[byte
                 _val(row.get("created_by_name")),
                 _val(row.get("patient_name")),
                 _val(row.get("status")),
-                f"{_val(row.get('total'), default='0.00')} MZN",
+                _val(row.get("total"), default="0.00"),
             ]
             for row in invoices
         ],

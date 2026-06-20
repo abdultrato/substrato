@@ -851,7 +851,7 @@ export default function ConsultationsPage() {
 
               <div className="space-y-1">
                 <label className="text-xs text-gray-600">
-                  {t("Preço c/ IVA", "Price incl. VAT")} {pricePreview?.currency ? `(${pricePreview.currency})` : "(MZN)"}
+                  {t("Preço c/ IVA", "Price incl. VAT")}
                 </label>
                 <div className="flex items-center gap-3">
                   <input
