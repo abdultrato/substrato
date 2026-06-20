@@ -222,7 +222,7 @@ export default function RecepcaoPage() {
                     />
                 </div>
 
-                <Card title="Marcação por sector">
+                <Card title="Marcação por Categoria">
                     <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
                         {marcacoesPorSector.map((sector) => {
                             const iconUrl = lucideToDataUrl(sector.icon)
