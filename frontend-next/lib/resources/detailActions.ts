@@ -393,7 +393,7 @@ const CONSULTATIONS_DETAIL_ACTIONS: Record<string, DetailActionDefinition[]> = {
       successEn: "Consultation cancelled.",
       tone: "danger",
       confirm: true,
-      visibleWhen: (r) => r.status !== "CONCLUIDA" && r.status !== "CANCELADA",
+      visibleWhen: (r) => r.status !== "CONCLUIDA" && r.status !== "CANCELADA" && r.status !== "PAGA",
       fields: [
         {
           name: "reason",

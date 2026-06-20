@@ -690,7 +690,7 @@ export default function ConsultationsPage() {
           ) : null}
         </div>
 
-        {canWrite && (r.status === "MARCADA" || (r.status !== "CANCELADA" && r.status !== "CONCLUIDA")) ? (
+        {canWrite && (r.status === "MARCADA" || (r.status !== "CANCELADA" && r.status !== "CONCLUIDA" && r.status !== "PAGA")) ? (
           <div className="mt-2 flex flex-wrap gap-1.5 border-t border-slate-100 pt-2">
             <ConfirmDialog
               title={t("Cancelar consulta", "Cancel consultation")}
