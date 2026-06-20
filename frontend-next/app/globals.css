@@ -236,6 +236,7 @@
       var(--substrato-logo-url);
     background-repeat: repeat, space;
     background-size: auto, 96px auto;
+    background-attachment: fixed, fixed;
   }
 
   /* Variante para superfícies de cartão (ex.: cartão do formulário de
@@ -251,6 +252,7 @@
       var(--substrato-logo-url);
     background-repeat: repeat, space;
     background-size: auto, 96px auto;
+    background-attachment: fixed, fixed;
   }
 
   h1,
