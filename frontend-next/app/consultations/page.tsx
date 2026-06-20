@@ -915,21 +915,18 @@ export default function ConsultationsPage() {
                     />
                     <span className="text-xs font-semibold text-gray-700">{t("Feriado", "Holiday")}</span>
                   </label>
+                  <button
+                    disabled={saving}
+                    className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-[hsl(var(--primary-hsl))] px-3 py-2 text-xs font-semibold text-white shadow-sm transition-all duration-150 hover:bg-[hsl(var(--primary-hover-hsl))] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {saving ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <CalendarPlus className="h-3.5 w-3.5 shrink-0" />
+                    )}
+                    <span>{saving ? t("A marcar...", "Scheduling...") : t("Marcar consulta", "Schedule consultation")}</span>
+                  </button>
                 </div>
-              </div>
-
-              <div className="md:col-span-2">
-                <button
-                  disabled={saving}
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[hsl(var(--primary-hsl))] px-5 py-2.5 text-sm font-semibold text-white shadow-[var(--shadow-sm)] transition-all duration-150 hover:bg-[hsl(var(--primary-hover-hsl))] hover:shadow-[var(--shadow-md)] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto sm:min-w-[10rem]"
-                >
-                  {saving ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <CalendarPlus className="h-4 w-4 shrink-0" />
-                  )}
-                  <span>{saving ? t("A marcar...", "Scheduling...") : t("Marcar consulta", "Schedule consultation")}</span>
-                </button>
               </div>
             </form>
           </Card>
