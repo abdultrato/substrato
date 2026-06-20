@@ -769,7 +769,11 @@ def user_in_accounting(user) -> bool:
 
 
 class CreditNoteRequestViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
-    """Fila de pedidos de nota de crédito tratada pelo sector da Contabilidade."""
+    """Fila de pedidos de nota de crédito tratada pelo sector da Contabilidade.
+
+    Contabilidade/Admin vê todos os pedidos do tenant.
+    Outros utilizadores veem apenas os pedidos que eles próprios criaram.
+    """
 
     queryset = CreditNoteRequest.objects.select_related(
         "invoice",
@@ -785,6 +789,12 @@ class CreditNoteRequestViewSet(ValidatedSearchOrderingMixin, TenantScopedQueryse
     ordering_fields = ["created_at", "status", "reviewed_at"]
     ordering = ["-created_at"]
     http_method_names = ["get", "post", "head", "options"]
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        if not user_in_accounting(getattr(self.request, "user", None)):
+            qs = qs.filter(created_by=self.request.user)
+        return qs
 
     @action(detail=True, methods=["post"], url_path="approve", url_name="approve")
     def approve(self, request, pk=None):

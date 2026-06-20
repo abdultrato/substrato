@@ -1,7 +1,8 @@
 "use client"
 
 import { isNotFoundLikeError } from "@/lib/errors/api-error"
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
+import { CheckCircle2, XCircle } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
 import Card from "@/components/ui/Card"
@@ -26,16 +27,10 @@ type CreditNoteRow = {
   reviewed_by_name?: string | null
   decision_note?: string
   created_at?: string
+  reviewed_at?: string
 }
 
 type Decision = "approve" | "reject"
-
-const STATUS_FILTERS: { value: string; label: string }[] = [
-  { value: "PEND", label: "Pendentes" },
-  { value: "APRO", label: "Aprovadas" },
-  { value: "REJE", label: "Rejeitadas" },
-  { value: "", label: "Todas" },
-]
 
 const STATUS_STYLES: Record<string, string> = {
   PEND: "border-amber-200 bg-amber-50 text-amber-800",
@@ -51,13 +46,22 @@ function fmtDate(value: any): string {
   return d.toLocaleString()
 }
 
+async function loadCreditNotes(status: string): Promise<CreditNoteRow[]> {
+  const query = status ? `?status=${status}&ordering=-created_at` : "?ordering=-created_at"
+  const res = await apiFetch<any>(`/billing/credit-note-request/${query}`, { clientCache: false })
+  const list = (res?.results ?? res) || []
+  return Array.isArray(list) ? list : []
+}
+
 export default function CreditNotesQueuePage() {
   const safeRefreshToken = useSafeDataRefreshSignal()
 
-  const [loading, setLoading] = useState(true)
+  const [loadingPending, setLoadingPending] = useState(true)
+  const [loadingDecided, setLoadingDecided] = useState(true)
   const [erro, setErro] = useState<string | null>(null)
-  const [rows, setRows] = useState<CreditNoteRow[]>([])
-  const [statusFilter, setStatusFilter] = useState("PEND")
+  const [pendingRows, setPendingRows] = useState<CreditNoteRow[]>([])
+  const [approvedRows, setApprovedRows] = useState<CreditNoteRow[]>([])
+  const [rejectedRows, setRejectedRows] = useState<CreditNoteRow[]>([])
 
   const [decisionRow, setDecisionRow] = useState<CreditNoteRow | null>(null)
   const [decision, setDecision] = useState<Decision>("approve")
@@ -65,24 +69,28 @@ export default function CreditNotesQueuePage() {
   const [submitting, setSubmitting] = useState(false)
   const [decisionError, setDecisionError] = useState<string | null>(null)
 
-  const load = useCallback(async () => {
+  const loadAll = useCallback(async () => {
     try {
-      setLoading(true)
       setErro(null)
-      const query = statusFilter ? `?status=${statusFilter}` : ""
-      const res = await apiFetch<any>(`/billing/credit-note-request/${query}`, { clientCache: false })
-      const list = (res && res.results ? res.results : res) || []
-      setRows(Array.isArray(list) ? list : [])
+      setLoadingPending(true)
+      setLoadingDecided(true)
+      const [pending, approved, rejected] = await Promise.all([
+        loadCreditNotes("PEND"),
+        loadCreditNotes("APRO"),
+        loadCreditNotes("REJE"),
+      ])
+      setPendingRows(pending)
+      setApprovedRows(approved)
+      setRejectedRows(rejected)
     } catch (e: any) {
       setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao carregar pedidos de nota de crédito."))
     } finally {
-      setLoading(false)
+      setLoadingPending(false)
+      setLoadingDecided(false)
     }
-  }, [statusFilter])
+  }, [])
 
-  useEffect(() => {
-    load()
-  }, [load, safeRefreshToken])
+  useEffect(() => { loadAll() }, [loadAll, safeRefreshToken])
 
   const openDecision = useCallback((row: CreditNoteRow, kind: Decision) => {
     setDecisionRow(row)
@@ -109,22 +117,17 @@ export default function CreditNotesQueuePage() {
       })
       setDecisionRow(null)
       setDecisionNote("")
-      await load()
+      await loadAll()
     } catch (e: any) {
       setDecisionError(e?.message || "Falha ao registar a decisão.")
     } finally {
       setSubmitting(false)
     }
-  }, [decision, decisionNote, decisionRow?.id, load])
-
-  const emptyMessage = useMemo(
-    () => (statusFilter === "PEND" ? "Nenhum pedido pendente." : "Nenhum pedido encontrado."),
-    [statusFilter]
-  )
+  }, [decision, decisionNote, decisionRow?.id, loadAll])
 
   return (
     <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.CONTABILIDADE]}>
-      <div className="space-y-6">
+      <div className="space-y-4">
         <PageHeader title="Notas de crédito" />
 
         {erro ? (
@@ -133,107 +136,38 @@ export default function CreditNotesQueuePage() {
           </div>
         ) : null}
 
-        <Card title="Pedidos de nota de crédito" subtitle="Aprovação a cargo da Contabilidade.">
-          <div className="mb-3 flex flex-wrap gap-2">
-            {STATUS_FILTERS.map((f) => (
-              <button
-                key={f.value || "all"}
-                type="button"
-                onClick={() => setStatusFilter(f.value)}
-                className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition ${
-                  statusFilter === f.value
-                    ? "border-slate-800 bg-slate-800 text-white"
-                    : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
-                }`}
-              >
-                {f.label}
-              </button>
-            ))}
-          </div>
-
-          {loading ? (
+        {/* Fila de pendentes */}
+        <Card title="Pedidos pendentes" subtitle="A aguardar decisão da Contabilidade.">
+          {loadingPending ? (
             <div className="text-sm text-gray-500">Carregando...</div>
-          ) : rows.length === 0 ? (
+          ) : pendingRows.length === 0 ? (
             <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-3 py-6 text-center text-sm text-slate-500">
-              {emptyMessage}
+              Nenhum pedido pendente.
             </div>
           ) : (
-            <div className="overflow-x-auto rounded-lg border border-slate-200">
-              <table className="min-w-full text-sm">
-                <thead className="bg-slate-50 text-xs font-semibold text-slate-600">
-                  <tr>
-                    <th className="px-3 py-2 text-left">Pedido</th>
-                    <th className="px-3 py-2 text-left">Fatura</th>
-                    <th className="px-3 py-2 text-left">Paciente</th>
-                    <th className="px-3 py-2 text-right">Valor</th>
-                    <th className="px-3 py-2 text-left">Motivo</th>
-                    <th className="px-3 py-2 text-left">Estado</th>
-                    <th className="px-3 py-2 text-left">Solicitado</th>
-                    <th className="px-3 py-2 text-right">Ações</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-200">
-                  {rows.map((r) => (
-                    <tr key={r.id}>
-                      <td className="px-3 py-2 font-medium text-slate-900">{r.custom_id || r.id}</td>
-                      <td className="px-3 py-2 text-slate-700">
-                        <div>{r.invoice_code || "-"}</div>
-                        {r.consultation_code ? (
-                          <div className="text-[11px] text-slate-500">{r.consultation_code}</div>
-                        ) : null}
-                      </td>
-                      <td className="px-3 py-2 text-slate-700">{r.patient_name || "-"}</td>
-                      <td className="px-3 py-2 text-right font-medium text-slate-900">
-                        <MoneyValue value={r.amount} />
-                      </td>
-                      <td className="min-w-[180px] px-3 py-2 text-slate-600">{r.reason || "-"}</td>
-                      <td className="px-3 py-2">
-                        <span
-                          className={`rounded-md border px-2 py-0.5 text-[11px] font-semibold ${
-                            STATUS_STYLES[r.status || ""] || "border-slate-200 bg-slate-50 text-slate-600"
-                          }`}
-                        >
-                          {r.status_display || r.status}
-                        </span>
-                        {r.reviewed_by_name ? (
-                          <div className="mt-0.5 text-[11px] text-slate-500">por {r.reviewed_by_name}</div>
-                        ) : null}
-                      </td>
-                      <td className="px-3 py-2 text-slate-600">
-                        <div>{fmtDate(r.created_at)}</div>
-                        {r.requested_by_name ? (
-                          <div className="text-[11px] text-slate-500">{r.requested_by_name}</div>
-                        ) : null}
-                      </td>
-                      <td className="px-3 py-2 text-right">
-                        {r.status === "PEND" ? (
-                          <div className="flex justify-end gap-1.5">
-                            <button
-                              type="button"
-                              onClick={() => openDecision(r, "approve")}
-                              className="inline-flex items-center rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-800 transition hover:bg-emerald-100"
-                            >
-                              Aprovar
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => openDecision(r, "reject")}
-                              className="inline-flex items-center rounded-lg border border-red-200 bg-red-50 px-2.5 py-1 text-[11px] font-semibold text-red-700 transition hover:bg-red-100"
-                            >
-                              Rejeitar
-                            </button>
-                          </div>
-                        ) : (
-                          <span className="text-[11px] text-slate-400">—</span>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <CreditNoteTable rows={pendingRows} onDecide={openDecision} showActions />
           )}
         </Card>
+
+        {/* Aprovadas e rejeitadas */}
+        <div className="grid gap-4 lg:grid-cols-2">
+          <DecidedSection
+            title="Aprovadas"
+            icon={<CheckCircle2 size={14} className="text-emerald-600" />}
+            rows={approvedRows}
+            loading={loadingDecided}
+            emptyMsg="Nenhuma nota de crédito aprovada."
+            tone="emerald"
+          />
+          <DecidedSection
+            title="Rejeitadas"
+            icon={<XCircle size={14} className="text-red-500" />}
+            rows={rejectedRows}
+            loading={loadingDecided}
+            emptyMsg="Nenhuma nota de crédito rejeitada."
+            tone="red"
+          />
+        </div>
       </div>
 
       {decisionRow ? (
@@ -294,5 +228,146 @@ export default function CreditNotesQueuePage() {
         </div>
       ) : null}
     </AppLayout>
+  )
+}
+
+function CreditNoteTable({
+  rows,
+  onDecide,
+  showActions = false,
+}: {
+  rows: CreditNoteRow[]
+  onDecide?: (row: CreditNoteRow, kind: Decision) => void
+  showActions?: boolean
+}) {
+  return (
+    <div className="overflow-x-auto rounded-lg border border-slate-200">
+      <table className="min-w-full text-sm">
+        <thead className="bg-slate-50 text-xs font-semibold text-slate-600">
+          <tr>
+            <th className="px-3 py-2 text-left">Pedido</th>
+            <th className="px-3 py-2 text-left">Fatura</th>
+            <th className="px-3 py-2 text-left">Paciente</th>
+            <th className="px-3 py-2 text-right">Valor</th>
+            <th className="px-3 py-2 text-left">Motivo</th>
+            <th className="px-3 py-2 text-left">Solicitante</th>
+            {showActions ? <th className="px-3 py-2 text-right">Ações</th> : null}
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-slate-200">
+          {rows.map((r) => (
+            <tr key={r.id} className="hover:bg-slate-50">
+              <td className="px-3 py-2 font-medium text-slate-900">{r.custom_id || r.id}</td>
+              <td className="px-3 py-2 text-slate-700">
+                <div>{r.invoice_code || "-"}</div>
+                {r.consultation_code ? (
+                  <div className="text-[11px] text-slate-500">{r.consultation_code}</div>
+                ) : null}
+              </td>
+              <td className="px-3 py-2 text-slate-700">{r.patient_name || "-"}</td>
+              <td className="px-3 py-2 text-right font-medium text-slate-900">
+                <MoneyValue value={r.amount} />
+              </td>
+              <td className="min-w-[160px] px-3 py-2 text-slate-600">{r.reason || "-"}</td>
+              <td className="px-3 py-2 text-slate-600">
+                <div>{fmtDate(r.created_at)}</div>
+                {r.requested_by_name ? (
+                  <div className="text-[11px] text-slate-500">{r.requested_by_name}</div>
+                ) : null}
+              </td>
+              {showActions ? (
+                <td className="px-3 py-2 text-right">
+                  <div className="flex justify-end gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => onDecide?.(r, "approve")}
+                      className="inline-flex items-center rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-800 transition hover:bg-emerald-100"
+                    >
+                      Aprovar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => onDecide?.(r, "reject")}
+                      className="inline-flex items-center rounded-lg border border-red-200 bg-red-50 px-2.5 py-1 text-[11px] font-semibold text-red-700 transition hover:bg-red-100"
+                    >
+                      Rejeitar
+                    </button>
+                  </div>
+                </td>
+              ) : null}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
+function DecidedSection({
+  title,
+  icon,
+  rows,
+  loading,
+  emptyMsg,
+  tone,
+}: {
+  title: string
+  icon: React.ReactNode
+  rows: CreditNoteRow[]
+  loading: boolean
+  emptyMsg: string
+  tone: "emerald" | "red"
+}) {
+  const borderColor = tone === "emerald" ? "border-emerald-200" : "border-red-200"
+  const bgColor = tone === "emerald" ? "bg-emerald-50" : "bg-red-50"
+  const textColor = tone === "emerald" ? "text-emerald-800" : "text-red-800"
+  const subTextColor = tone === "emerald" ? "text-emerald-700" : "text-red-700"
+
+  return (
+    <section className="rounded-lg border border-[var(--border)] bg-[var(--card)] p-2 shadow-sm">
+      <div className="flex items-center gap-2 pb-2">
+        <div className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-[var(--gray-100)]">{icon}</div>
+        <p className="text-xs font-semibold text-[var(--text)]">{title}</p>
+        {!loading && rows.length > 0 ? (
+          <span className="ml-auto rounded-full bg-[var(--gray-100)] px-2 py-0.5 text-[11px] font-semibold text-[var(--gray-700)]">
+            {rows.length}
+          </span>
+        ) : null}
+      </div>
+
+      {loading ? (
+        <p className="text-[11px] text-[var(--gray-500)]">Carregando...</p>
+      ) : rows.length === 0 ? (
+        <div className="rounded-lg border border-dashed border-[var(--border)] px-3 py-4 text-center text-[11px] text-[var(--gray-500)]">
+          {emptyMsg}
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {rows.map((r) => (
+            <div key={r.id} className={`rounded-lg border ${borderColor} ${bgColor} px-3 py-2`}>
+              <div className="flex flex-wrap items-start justify-between gap-1">
+                <div>
+                  <span className={`text-xs font-semibold ${textColor}`}>{r.custom_id || `#${r.id}`}</span>
+                  <span className={`ml-1.5 text-[11px] ${subTextColor}`}>{r.invoice_code || "-"}</span>
+                  {r.patient_name ? (
+                    <span className={`ml-1.5 text-[11px] ${subTextColor}`}>· {r.patient_name}</span>
+                  ) : null}
+                </div>
+                <MoneyValue value={r.amount} className={`text-xs font-semibold ${textColor}`} />
+              </div>
+              {r.reason ? <p className={`mt-0.5 text-[11px] ${subTextColor}`}>{r.reason}</p> : null}
+              <div className={`mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] ${subTextColor}`}>
+                {r.requested_by_name ? <span>Solicitado por: <strong>{r.requested_by_name}</strong></span> : null}
+                {r.reviewed_by_name ? <span>Decidido por: <strong>{r.reviewed_by_name}</strong></span> : null}
+                {r.reviewed_at ? <span>{fmtDate(r.reviewed_at)}</span> : null}
+              </div>
+              {r.decision_note ? (
+                <p className={`mt-1 text-[11px] italic ${subTextColor}`}>"{r.decision_note}"</p>
+              ) : null}
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
   )
 }

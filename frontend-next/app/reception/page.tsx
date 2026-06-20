@@ -4,6 +4,7 @@ import Link from "next/link"
 import { useEffect, useState } from "react"
 import {
     Activity,
+    CheckCircle2,
     ClipboardList,
     CreditCard,
     FilePlus2,
@@ -16,6 +17,7 @@ import {
     UserPlus,
     Users,
     PackageSearch,
+    XCircle,
 } from "lucide-react"
 
 import { lucideToDataUrl } from "@/lib/icon-svg"
@@ -60,6 +62,29 @@ interface ReceptionWorkspace {
     date: string
     summary: ReceptionWorkspaceSummary
     queue: ReceptionQueueItem[]
+}
+
+type CreditNoteRow = {
+    id: number
+    custom_id?: string
+    invoice_code?: string
+    consultation_code?: string | null
+    patient_name?: string | null
+    amount?: string | number
+    reason?: string
+    status?: string
+    requested_by_name?: string | null
+    reviewed_by_name?: string | null
+    decision_note?: string
+    created_at?: string
+    reviewed_at?: string
+}
+
+function fmtDate(value: any): string {
+    if (!value) return "-"
+    const d = new Date(value)
+    if (Number.isNaN(d.getTime())) return String(value)
+    return d.toLocaleString()
 }
 
 const EMPTY_WORKSPACE: ReceptionWorkspace = {
@@ -165,6 +190,10 @@ export default function RecepcaoPage() {
     const [erro, setErro] = useState<string | null>(null)
     const [carregando, setCarregando] = useState(true)
 
+    const [approvedNotes, setApprovedNotes] = useState<CreditNoteRow[]>([])
+    const [rejectedNotes, setRejectedNotes] = useState<CreditNoteRow[]>([])
+    const [loadingNotes, setLoadingNotes] = useState(true)
+
     useEffect(() => {
         async function carregarWorkspace() {
             try {
@@ -183,7 +212,23 @@ export default function RecepcaoPage() {
             }
         }
 
+        async function carregarNotasCredito() {
+            try {
+                const [apro, reje] = await Promise.all([
+                    apiFetch<any>("/billing/credit-note-request/?status=APRO&ordering=-reviewed_at", { clientCache: false }),
+                    apiFetch<any>("/billing/credit-note-request/?status=REJE&ordering=-reviewed_at", { clientCache: false }),
+                ])
+                setApprovedNotes(Array.isArray(apro?.results ?? apro) ? (apro?.results ?? apro) : [])
+                setRejectedNotes(Array.isArray(reje?.results ?? reje) ? (reje?.results ?? reje) : [])
+            } catch {
+                // silently ignore — the section just stays empty
+            } finally {
+                setLoadingNotes(false)
+            }
+        }
+
         carregarWorkspace()
+        carregarNotasCredito()
     }, [safeRefreshToken])
 
     if (loading) return null
@@ -355,8 +400,97 @@ export default function RecepcaoPage() {
                         </Card>
                     </div>
                 </div>
+
+                {(loadingNotes || approvedNotes.length > 0 || rejectedNotes.length > 0) && (
+                    <div className="grid gap-4 lg:grid-cols-2">
+                        <ReceptionDecidedSection
+                            title="Notas de crédito aprovadas"
+                            icon={<CheckCircle2 size={14} className="text-emerald-600" />}
+                            rows={approvedNotes}
+                            loading={loadingNotes}
+                            emptyMsg="Nenhuma nota de crédito aprovada."
+                            tone="emerald"
+                        />
+                        <ReceptionDecidedSection
+                            title="Notas de crédito rejeitadas"
+                            icon={<XCircle size={14} className="text-red-500" />}
+                            rows={rejectedNotes}
+                            loading={loadingNotes}
+                            emptyMsg="Nenhuma nota de crédito rejeitada."
+                            tone="red"
+                        />
+                    </div>
+                )}
             </div>
         </AppLayout>
+    )
+}
+
+function ReceptionDecidedSection({
+    title,
+    icon,
+    rows,
+    loading,
+    emptyMsg,
+    tone,
+}: {
+    title: string
+    icon: React.ReactNode
+    rows: CreditNoteRow[]
+    loading: boolean
+    emptyMsg: string
+    tone: "emerald" | "red"
+}) {
+    const borderColor = tone === "emerald" ? "border-emerald-200" : "border-red-200"
+    const bgColor = tone === "emerald" ? "bg-emerald-50" : "bg-red-50"
+    const textColor = tone === "emerald" ? "text-emerald-800" : "text-red-800"
+    const subTextColor = tone === "emerald" ? "text-emerald-700" : "text-red-700"
+
+    return (
+        <section className="rounded-lg border border-border bg-card p-2 shadow-sm">
+            <div className="flex items-center gap-2 pb-2">
+                <div className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-muted">{icon}</div>
+                <p className="text-xs font-semibold text-foreground">{title}</p>
+                {!loading && rows.length > 0 && (
+                    <span className="ml-auto rounded-full bg-muted px-2 py-0.5 text-[11px] font-semibold text-foreground-2">
+                        {rows.length}
+                    </span>
+                )}
+            </div>
+
+            {loading ? (
+                <p className="text-[11px] text-muted-foreground">Carregando...</p>
+            ) : rows.length === 0 ? (
+                <div className="rounded-lg border border-dashed border-border px-3 py-4 text-center text-[11px] text-muted-foreground">
+                    {emptyMsg}
+                </div>
+            ) : (
+                <div className="space-y-2">
+                    {rows.map((r) => (
+                        <div key={r.id} className={`rounded-lg border ${borderColor} ${bgColor} px-3 py-2`}>
+                            <div className="flex flex-wrap items-start justify-between gap-1">
+                                <div>
+                                    <span className={`text-xs font-semibold ${textColor}`}>{r.custom_id || `#${r.id}`}</span>
+                                    <span className={`ml-1.5 text-[11px] ${subTextColor}`}>{r.invoice_code || "-"}</span>
+                                    {r.patient_name && (
+                                        <span className={`ml-1.5 text-[11px] ${subTextColor}`}>· {r.patient_name}</span>
+                                    )}
+                                </div>
+                                <MoneyValue value={r.amount} className={`text-xs font-semibold ${textColor}`} />
+                            </div>
+                            {r.reason && <p className={`mt-0.5 text-[11px] ${subTextColor}`}>{r.reason}</p>}
+                            <div className={`mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] ${subTextColor}`}>
+                                {r.reviewed_by_name && <span>Decidido por: <strong>{r.reviewed_by_name}</strong></span>}
+                                {r.reviewed_at && <span>{fmtDate(r.reviewed_at)}</span>}
+                            </div>
+                            {r.decision_note && (
+                                <p className={`mt-1 text-[11px] italic ${subTextColor}`}>"{r.decision_note}"</p>
+                            )}
+                        </div>
+                    ))}
+                </div>
+            )}
+        </section>
     )
 }
 

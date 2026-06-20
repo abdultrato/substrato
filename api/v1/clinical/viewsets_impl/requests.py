@@ -403,6 +403,26 @@ class LabRequestViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin,
 class LabRequestItemViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
     """Viewset for request items."""
 
+    @action(detail=True, methods=["post"], url_path="colher-amostra", url_name="colher-amostra")
+    def colher_amostra(self, request, pk=None):
+        """Enfermagem regista a colheita da amostra de um exame específico."""
+        from django.utils import timezone
+
+        item = self.get_object()
+        try:
+            item.receber_amostra(user=getattr(request, "user", None))
+        except DjangoValidationError as err:
+            raise ValidationError(getattr(err, "message_dict", None) or getattr(err, "messages", None) or str(err)) from err
+
+        # Garante que a requisição-mãe fica marcada como colhida
+        parent = item.request
+        if parent and not parent.collected_at:
+            parent.collected_at = timezone.now()
+            parent.collected_by = getattr(request, "user", None)
+            parent.save(update_fields=["collected_at", "collected_by", "updated_at"])
+
+        return Response(LabRequestItemSerializer(item, context={"request": request}).data)
+
     @action(detail=True, methods=["post"], url_path="receber-amostra", url_name="receber-amostra")
     def receber_amostra(self, request, pk=None):
         """Receção de amostras: marca a amostra do exame como recebida."""

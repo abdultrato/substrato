@@ -894,36 +894,39 @@ const COTACOES_DETAIL_ACTIONS: Record<string, DetailActionDefinition[]> = {
 
 // ── Faturação ────────────────────────────────────────────────────────────────
 // (send-notification já é tratado de forma dedicada em GeneratedResourceDetailPage)
+const INVOICE_ACTIONS: DetailActionDefinition[] = [
+  { key: "billing.invoice.issue", action: "issue", labelPt: "Emitir fatura", labelEn: "Issue invoice", successPt: "Fatura emitida.", successEn: "Invoice issued.", tone: "primary", visibleWhen: (r) => r.status === "RASC" },
+  { key: "billing.invoice.confirm-payment", action: "confirm-payment", labelPt: "Confirmar pagamento", labelEn: "Confirm payment", successPt: "Pagamento confirmado.", successEn: "Payment confirmed.", tone: "primary", visibleWhen: (r) => r.status === "EMIT" },
+  { key: "billing.invoice.void", action: "void", labelPt: "Anular fatura", labelEn: "Void invoice", successPt: "Fatura anulada.", successEn: "Invoice voided.", tone: "danger", confirm: true, visibleWhen: (r) => r.status === "RASC" || r.status === "EMIT", fields: [reasonField] },
+  {
+    key: "billing.invoice.request_credit_note",
+    action: "request-credit-note",
+    labelPt: "Solicitar nota de crédito",
+    labelEn: "Request credit note",
+    successPt: "Pedido de nota de crédito criado.",
+    successEn: "Credit note request created.",
+    visibleWhen: (r) => r.status === "PAGA",
+    pendingStateWhen: (r) => Boolean(r.has_pending_credit_note_request),
+    pendingLabelPt: "Nota de crédito solicitada",
+    pendingLabelEn: "Credit note requested",
+    fields: [{ name: "reason", labelPt: "Motivo (opcional)", labelEn: "Reason (optional)", type: "textarea" }],
+  },
+  {
+    key: "billing.invoice.cancel_credit_note_request",
+    action: "cancel-credit-note-request",
+    labelPt: "Cancelar nota de crédito solicitada",
+    labelEn: "Cancel credit note request",
+    successPt: "Pedido de nota de crédito cancelado.",
+    successEn: "Credit note request cancelled.",
+    tone: "danger",
+    confirm: true,
+    visibleWhen: (r) => r.status === "PAGA" && Boolean(r.has_pending_credit_note_request),
+  },
+]
+
 const BILLING_DETAIL_ACTIONS: Record<string, DetailActionDefinition[]> = {
-  "/billing/invoice/": [
-    { key: "billing.invoice.issue", action: "issue", labelPt: "Emitir fatura", labelEn: "Issue invoice", successPt: "Fatura emitida.", successEn: "Invoice issued.", tone: "primary", visibleWhen: (r) => r.status === "RASC" },
-    { key: "billing.invoice.confirm-payment", action: "confirm-payment", labelPt: "Confirmar pagamento", labelEn: "Confirm payment", successPt: "Pagamento confirmado.", successEn: "Payment confirmed.", tone: "primary", visibleWhen: (r) => r.status === "EMIT" },
-    { key: "billing.invoice.void", action: "void", labelPt: "Anular fatura", labelEn: "Void invoice", successPt: "Fatura anulada.", successEn: "Invoice voided.", tone: "danger", confirm: true, visibleWhen: (r) => r.status === "RASC" || r.status === "EMIT", fields: [reasonField] },
-    {
-      key: "billing.invoice.request_credit_note",
-      action: "request-credit-note",
-      labelPt: "Solicitar nota de crédito",
-      labelEn: "Request credit note",
-      successPt: "Pedido de nota de crédito criado.",
-      successEn: "Credit note request created.",
-      visibleWhen: (r) => r.status === "PAGA",
-      pendingStateWhen: (r) => Boolean(r.has_pending_credit_note_request),
-      pendingLabelPt: "Nota de crédito solicitada",
-      pendingLabelEn: "Credit note requested",
-      fields: [{ name: "reason", labelPt: "Motivo (opcional)", labelEn: "Reason (optional)", type: "textarea" }],
-    },
-    {
-      key: "billing.invoice.cancel_credit_note_request",
-      action: "cancel-credit-note-request",
-      labelPt: "Cancelar nota de crédito solicitada",
-      labelEn: "Cancel credit note request",
-      successPt: "Pedido de nota de crédito cancelado.",
-      successEn: "Credit note request cancelled.",
-      tone: "danger",
-      confirm: true,
-      visibleWhen: (r) => r.status === "PAGA" && Boolean(r.has_pending_credit_note_request),
-    },
-  ],
+  "/billing/invoice/": INVOICE_ACTIONS,
+  "/billing/invoices/": INVOICE_ACTIONS,
 }
 
 // ── Pagamentos ───────────────────────────────────────────────────────────────

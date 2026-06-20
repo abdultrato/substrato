@@ -11,7 +11,7 @@ from django.apps import apps as django_apps
 from django.utils import timezone
 from django.utils.text import slugify
 from reportlab.lib import colors
-from reportlab.lib.pagesizes import A4
+from reportlab.lib.pagesizes import A5
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import mm
 from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
@@ -138,7 +138,7 @@ def generate_generic_app_pdf(
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(
         buffer,
-        pagesize=A4,
+        pagesize=A5,
         leftMargin=PDF_MARGIN,
         rightMargin=PDF_MARGIN,
         topMargin=PDF_MARGIN,

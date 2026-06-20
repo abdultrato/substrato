@@ -1,7 +1,7 @@
 "use client"
 
 import { isNotFoundLikeError } from "@/lib/errors/api-error"
-import { useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 
 import AppLayout from "@/components/layout/AppLayout"
 import DataTable from "@/components/ui/DataTable"
@@ -41,7 +41,7 @@ export default function NursingRequestsPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [data, setData] = useState<RequestRow[]>([])
-  const [busyId, setBusyId] = useState<number | null>(null)
+  const [busyItems, setBusyItems] = useState<Set<number>>(new Set())
   const [reloadTick, setReloadTick] = useState(0)
   const debouncedSearch = useDebounce(search, 300)
 
@@ -89,33 +89,23 @@ export default function NursingRequestsPage() {
     }
   }, [debouncedSearch, status, page, pageSize, safeRefreshToken, reloadTick])
 
-  async function repetirColheita(row: RequestRow) {
-    setBusyId(row.id)
+  const colherAmostraItem = useCallback(async (row: RequestRow, item: any) => {
+    setBusyItems((prev) => new Set(prev).add(item.id))
     setErrorMessage(null)
     try {
-      await apiFetch(`/clinical/labrequest/${row.id}/repetir-colheita/`, { method: "POST" })
-      await abrirEtiqueta(row.id)
-      setReloadTick((tick) => tick + 1)
-    } catch (e: any) {
-      setErrorMessage(e?.message || "Falha ao repetir a colheita.")
-    } finally {
-      setBusyId(null)
-    }
-  }
-
-  async function fazerColheita(row: RequestRow) {
-    setBusyId(row.id)
-    setErrorMessage(null)
-    try {
-      await apiFetch(`/clinical/labrequest/${row.id}/registar-colheita/`, { method: "POST" })
+      await apiFetch(`/clinical/labrequestitem/${item.id}/colher-amostra/`, { method: "POST" })
       await abrirEtiqueta(row.id)
       setReloadTick((tick) => tick + 1)
     } catch (e: any) {
       setErrorMessage(e?.message || "Falha ao registar a colheita.")
     } finally {
-      setBusyId(null)
+      setBusyItems((prev) => {
+        const next = new Set(prev)
+        next.delete(item.id)
+        return next
+      })
     }
-  }
+  }, [])
 
   const columns = useMemo(
     () => [
@@ -124,108 +114,112 @@ export default function NursingRequestsPage() {
       { header: "Prioridade", render: (r: RequestRow) => r.clinical_status || "-" },
       { header: "Crítico", render: (r: RequestRow) => (r.has_critical_result ? "SIM" : "—") },
       {
-        header: "Colheita",
+        header: "Exames / Colheita",
         render: (r: RequestRow) => {
-          const rejectedItems = (Array.isArray(r.items) ? r.items : []).filter(
-            (item: any) => item.sample_status === "rejeitada"
-          )
-          if (rejectedItems.length) {
-            return (
-              <div className="space-y-1">
-                <span className="inline-flex items-center rounded-full bg-rose-100 px-2.5 py-1 text-[11px] font-semibold text-rose-800">
-                  Amostra rejeitada — não respeita os critérios de qualidade
+          const items: any[] = Array.isArray(r.items) ? r.items : []
+
+          if (items.length === 0) {
+            if (!r.validated_at) {
+              return (
+                <span className="inline-flex items-center rounded-full bg-amber-100 px-2.5 py-1 text-[11px] font-semibold text-amber-800">
+                  Aguarda validação
                 </span>
-                {rejectedItems.map((item: any) => (
-                  <div key={item.id} className="text-[11px] text-rose-700">
-                    {item.exam_name}: {(item.rejection_reason_names || []).join(", ")}
-                    {item.rejection_note ? ` — ${item.rejection_note}` : ""}
-                  </div>
-                ))}
-                <button
-                  type="button"
-                  onClick={() => repetirColheita(r)}
-                  disabled={busyId === r.id}
-                  className="inline-flex items-center rounded-md bg-rose-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-rose-500 disabled:opacity-60"
-                >
-                  {busyId === r.id ? "Registando..." : "Repetir colheita"}
-                </button>
-              </div>
-            )
-          }
-          if (r.collected_at) {
-            return (
-              <div className="space-y-1">
-                <span className="inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-semibold text-emerald-800">
-                  Colhida
-                </span>
-                <button
-                  type="button"
-                  onClick={() => abrirEtiqueta(r.id).catch(() => setErrorMessage("Falha ao gerar a etiqueta."))}
-                  className="block rounded-md border border-slate-200 bg-white px-2 py-1 text-[11px] font-medium text-slate-700 shadow-sm transition hover:bg-slate-50"
-                >
-                  Reimprimir etiqueta
-                </button>
-              </div>
-            )
-          }
-          if (!r.validated_at) {
-            return (
-              <span className="inline-flex items-center rounded-full bg-amber-100 px-2.5 py-1 text-[11px] font-semibold text-amber-800">
-                Aguarda validação
-              </span>
-            )
-          }
-          return (
-            <button
-              type="button"
-              onClick={() => fazerColheita(r)}
-              disabled={busyId === r.id}
-              className="inline-flex items-center rounded-md bg-[var(--primary-600)] px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-[var(--primary-700)] disabled:opacity-60"
-            >
-              {busyId === r.id ? "Registando..." : "Fazer colheita"}
-            </button>
-          )
-        },
-      },
-      {
-        header: "Guia de coleta",
-        render: (r: RequestRow) => {
-          const guidance = (r.collection_guidance || []) as Array<any>
-          if (!Array.isArray(guidance) || guidance.length === 0) {
-            return <span className="text-xs text-slate-500">Sem orientação disponível.</span>
+              )
+            }
+            return <span className="text-xs text-slate-400">Sem exames.</span>
           }
 
+          const allCollected = items.every((it) => it.sample_status === "recebida")
+
           return (
-            <div className="space-y-2">
-              {guidance.map((entry, idx) => {
-                const samples = Array.isArray(entry?.sample_options) ? entry.sample_options : []
+            <div className="space-y-1.5">
+              {items.map((item: any) => {
+                const samples: any[] = Array.isArray(item.sample_options) ? item.sample_options : []
+                const isBusy = busyItems.has(item.id)
+                const sampleStatus: string = item.sample_status || "aguardando"
+                const isRejected = sampleStatus === "rejeitada"
+                const isCollected = sampleStatus === "recebida"
+                const canCollect = r.validated_at && !isCollected
+
                 return (
-                  <div key={`${entry?.item_id || idx}`} className="rounded-lg bg-slate-50 px-2 py-1.5">
-                    <div className="text-xs font-semibold text-slate-800">
-                      {entry?.exam_name || "Exame sem nome"}
-                    </div>
-                    {samples.length ? (
-                      <div className="mt-1 space-y-1">
-                        {samples.map((sample: any, sampleIdx: number) => (
-                          <div key={`${sample?.id || sampleIdx}`} className="text-[11px] text-slate-700">
-                            {(sample?.sample_name || "Amostra")} • {(sample?.bottle_type_label || sample?.bottle_type || "Frasco não definido")} •
-                            {" "}mínimo {(sample?.minimum_volume_ml || "0")} ml
+                  <div
+                    key={item.id}
+                    className={`rounded-lg border px-2 py-1.5 ${
+                      isCollected
+                        ? "border-emerald-200 bg-emerald-50"
+                        : isRejected
+                        ? "border-rose-200 bg-rose-50"
+                        : "border-slate-200 bg-slate-50"
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0 flex-1">
+                        <div className="text-xs font-semibold text-slate-800">
+                          {item.exam_name || item.medical_exam_name || "Exame"}
+                        </div>
+                        {samples.length > 0 ? (
+                          <div className="mt-0.5 space-y-0.5">
+                            {samples.map((s: any, si: number) => (
+                              <div key={s.id ?? si} className="text-[11px] text-slate-600">
+                                {s.name || "Amostra"} · {s.bottle_type_display || s.bottle_type || "Frasco"} · mín. {s.minimum_volume_ml ?? "?"} ml
+                                {s.fasting_required ? ` · Jejum ${s.fasting_hours ?? ""}h` : ""}
+                              </div>
+                            ))}
                           </div>
-                        ))}
+                        ) : null}
+                        {isRejected && (item.rejection_reason_names?.length || item.rejection_note) ? (
+                          <div className="mt-0.5 text-[11px] text-rose-700">
+                            {(item.rejection_reason_names || []).join(", ")}
+                            {item.rejection_note ? ` — ${item.rejection_note}` : ""}
+                          </div>
+                        ) : null}
                       </div>
-                    ) : (
-                      <div className="text-[11px] text-slate-500">Sem amostras configuradas.</div>
-                    )}
+
+                      <div className="shrink-0">
+                        {isCollected ? (
+                          <span className="inline-flex items-center rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">
+                            Colhida
+                          </span>
+                        ) : !r.validated_at ? (
+                          <span className="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-700">
+                            Aguarda validação
+                          </span>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => colherAmostraItem(r, item)}
+                            disabled={isBusy || !canCollect}
+                            className={`inline-flex items-center rounded-md px-2.5 py-1 text-[11px] font-semibold text-white transition disabled:opacity-60 ${
+                              isRejected
+                                ? "bg-rose-600 hover:bg-rose-500"
+                                : "bg-[var(--primary-600)] hover:bg-[var(--primary-700)]"
+                            }`}
+                          >
+                            {isBusy ? "..." : isRejected ? "Recolher" : "Colher amostra"}
+                          </button>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 )
               })}
+
+              {(r.collected_at || allCollected) ? (
+                <button
+                  type="button"
+                  onClick={() => abrirEtiqueta(r.id).catch(() => setErrorMessage("Falha ao gerar a etiqueta."))}
+                  className="mt-0.5 block rounded-md border border-slate-200 bg-white px-2 py-1 text-[11px] font-medium text-slate-700 shadow-sm transition hover:bg-slate-50"
+                >
+                  Imprimir etiqueta
+                </button>
+              ) : null}
             </div>
           )
         },
       },
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [busyId]
+    [busyItems, colherAmostraItem]
   )
 
   return (
@@ -293,5 +287,3 @@ export default function NursingRequestsPage() {
     </AppLayout>
   )
 }
-
-
