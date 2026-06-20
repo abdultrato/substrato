@@ -1,9 +1,9 @@
 """Geração do PDF de fatura (invoice) em layout institucional A5.
 
-A fatura é emitida em TRIPLICADO (Original / Duplicado / Triplicado), à
-semelhança das instituições financeiras: três vias idênticas, cada uma com o
-seu cabeçalho institucional e identificação da via. Inclui ainda a nota legal
-do IVA (base: Código do IVA).
+Faturas emitidas são geradas em TRIPLICADO (Original / Duplicado /
+Triplicado), à semelhança das instituições financeiras. Rascunhos geram apenas
+uma via, sem identificação de Original/Duplicado/Triplicado. Inclui ainda a
+nota legal do IVA (base: Código do IVA).
 """
 
 from decimal import Decimal
@@ -499,15 +499,19 @@ def generate_invoice_pdf(invoice, request=None) -> tuple[bytes, str]:
     # ==========================
     # COMPOSIÇÃO DE UMA VIA (flowables novos a cada chamada)
     # ==========================
-    def _compose_via(via_name: str, via_dest: str) -> list:
+    is_draft_invoice = getattr(invoice, "status", None) == "RASC"
+    title_prefix = "RASCUNHO DA FATURA" if is_draft_invoice else "ORDEM DA FATURA"
+
+    def _compose_via(via_name: str | None = None, via_dest: str | None = None) -> list:
         body: list = []
 
-        # Identificação da via (Original/Duplicado/Triplicado).
-        body.append(Paragraph(f"{via_name} — {via_dest}", via_style))
+        # Identificação da via: omitida em rascunhos para não indicar ORIGINAL.
+        if via_name and via_dest:
+            body.append(Paragraph(f"{via_name} — {via_dest}", via_style))
+            body.append(Spacer(1, 0.2 * cm))
 
         # Cabeçalho do documento.
-        body.append(Spacer(1, 0.2 * cm))
-        body.append(Paragraph(f"ORDEM DA FATURA N. {getattr(invoice, 'custom_id', '—')}", style_title))
+        body.append(Paragraph(f"{title_prefix} N. {getattr(invoice, 'custom_id', '—')}", style_title))
         body.append(Spacer(1, 0.2 * cm))
 
         # Bloco de identificação.
@@ -724,19 +728,25 @@ def generate_invoice_pdf(invoice, request=None) -> tuple[bytes, str]:
         return body
 
     # ==========================
-    # MONTAGEM DAS 3 VIAS
+    # MONTAGEM DAS VIAS
     # ==========================
     story: list = []
-    for idx, (via_name, via_dest) in enumerate(INVOICE_VIAS):
-        if idx == 0:
-            # Páginas seguintes (overflow) desta via usam o template sem letterhead.
-            story.append(NextPageTemplate("later"))
-        else:
-            # Cada nova via começa numa página com letterhead completo.
-            story.append(NextPageTemplate("first"))
-            story.append(PageBreak())
-            story.append(NextPageTemplate("later"))
-        story.extend(_compose_via(via_name, via_dest))
+    if is_draft_invoice:
+        # Rascunho é uma única via; se o conteúdo transbordar, páginas de
+        # continuação não repetem a marca de Original/Duplicado/Triplicado.
+        story.append(NextPageTemplate("later"))
+        story.extend(_compose_via())
+    else:
+        for idx, (via_name, via_dest) in enumerate(INVOICE_VIAS):
+            if idx == 0:
+                # Páginas seguintes (overflow) desta via usam o template sem letterhead.
+                story.append(NextPageTemplate("later"))
+            else:
+                # Cada nova via começa numa página com letterhead completo.
+                story.append(NextPageTemplate("first"))
+                story.append(PageBreak())
+                story.append(NextPageTemplate("later"))
+            story.extend(_compose_via(via_name, via_dest))
 
     # ==========================
     # BUILD PDF A5
