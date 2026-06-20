@@ -56,6 +56,15 @@ export type DetailActionDefinition = {
    * registo (ver `isDetailActionVisibleForRecord`).
    */
   visibleWhen?: (record: Record<string, unknown>) => boolean
+  /**
+   * Quando verdadeiro, a ação já foi submetida e está pendente de resposta.
+   * Em vez do formulário/botão, mostra um badge informativo de "aguardando".
+   */
+  pendingStateWhen?: (record: Record<string, unknown>) => boolean
+  /** Rótulo exibido no badge de estado pendente (substitui labelPt). */
+  pendingLabelPt?: string
+  /** Label shown in the pending state badge (replaces labelEn). */
+  pendingLabelEn?: string
 }
 
 export function normalizeDetailEndpoint(endpoint: string): string {
@@ -363,6 +372,9 @@ const CONSULTATIONS_DETAIL_ACTIONS: Record<string, DetailActionDefinition[]> = {
       successPt: "Pedido de nota de crédito criado.",
       successEn: "Credit note request created.",
       visibleWhen: (r) => r.status === "CONCLUIDA",
+      pendingStateWhen: (r) => Boolean(r.has_pending_credit_note_request),
+      pendingLabelPt: "Nota de crédito solicitada",
+      pendingLabelEn: "Credit note requested",
       fields: [
         {
           name: "reason",

@@ -122,6 +122,7 @@ class InvoiceSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer)
     created_by_department = serializers.SerializerMethodField(method_name="get_created_by_department")
     billed_item_sectors = serializers.SerializerMethodField(method_name="get_billed_item_sectors")
     total_a_pagar = serializers.SerializerMethodField(method_name="get_total_a_pagar")
+    has_pending_credit_note_request = serializers.SerializerMethodField()
 
     @staticmethod
     def _user_display(user):
@@ -165,10 +166,17 @@ class InvoiceSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer)
     def get_total_a_pagar(self, obj):
         return self._format_money(getattr(obj, "total_a_pagar", None))
 
+    def get_has_pending_credit_note_request(self, obj: Invoice) -> bool:
+        return CreditNoteRequest.objects.filter(
+            invoice=obj,
+            status=CreditNoteRequest.Status.PENDING,
+            deleted=False,
+        ).exists()
+
     class Meta:
         model = Invoice
         fields = "__all__"
-        read_only_fields = CORE_READ_ONLY_FIELDS
+        read_only_fields = [*CORE_READ_ONLY_FIELDS, "has_pending_credit_note_request"]
 
 
 class InvoiceItemSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer):

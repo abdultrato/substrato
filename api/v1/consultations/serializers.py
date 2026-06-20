@@ -1,5 +1,6 @@
 from rest_framework import serializers
 
+from apps.billing.models.credit_note_request import CreditNoteRequest
 from apps.billing.models.invoice import Invoice
 from apps.consultations.models.consultation_specialty import ConsultationSpecialty
 from apps.consultations.models.holiday import Holiday
@@ -75,6 +76,7 @@ class MedicalConsultationSerializer(serializers.ModelSerializer):
     invoice_code = serializers.SerializerMethodField(method_name="get_invoice_code")
     invoice_status = serializers.SerializerMethodField(method_name="get_invoice_status")
     invoice_origin = serializers.SerializerMethodField(method_name="get_invoice_origin")
+    has_pending_credit_note_request = serializers.SerializerMethodField()
     legacy_input_aliases = MEDICAL_CONSULTATION_ALIASES
 
     class Meta:
@@ -89,6 +91,7 @@ class MedicalConsultationSerializer(serializers.ModelSerializer):
             "invoice_code",
             "invoice_status",
             "invoice_origin",
+            "has_pending_credit_note_request",
             "schedule_type",
             "price_multiplier",
             "reschedule_count",
@@ -124,6 +127,16 @@ class MedicalConsultationSerializer(serializers.ModelSerializer):
     def get_invoice_origin(self, obj: MedicalConsultation) -> str:
         invoice = self._get_invoice(obj)
         return getattr(invoice, "origin", "") if invoice else ""
+
+    def get_has_pending_credit_note_request(self, obj: MedicalConsultation) -> bool:
+        invoice = self._get_invoice(obj)
+        if invoice is None:
+            return False
+        return CreditNoteRequest.objects.filter(
+            invoice=invoice,
+            status=CreditNoteRequest.Status.PENDING,
+            deleted=False,
+        ).exists()
 
     def validate(self, attrs):
         attrs = super().validate(attrs)

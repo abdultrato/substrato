@@ -1,7 +1,7 @@
 "use client"
 
 import { useMemo, useState } from "react"
-import { CheckCircle2, Loader2, Workflow } from "lucide-react"
+import { CheckCircle2, Info, Loader2, Workflow } from "lucide-react"
 import ConfirmDialog from "@/components/ui/ConfirmDialog"
 import { useLanguage } from "@/hooks/useLanguage"
 import { apiFetch } from "@/lib/api"
@@ -213,6 +213,28 @@ export default function ResourceDetailActionsPanel({
             const state = stateByAction[action.key] || {}
             const description = isPt ? action.descriptionPt : action.descriptionEn
             const label = isPt ? action.labelPt : action.labelEn
+            const isPending = action.pendingStateWhen ? action.pendingStateWhen(record ?? {}) : false
+
+            if (isPending) {
+              const pendingLabel = isPt ? (action.pendingLabelPt ?? label) : (action.pendingLabelEn ?? label)
+              return (
+                <div key={action.key} className={index > 0 ? "border-t border-[var(--border)] pt-3" : undefined}>
+                  <div className="flex items-start gap-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2.5">
+                    <Info size={16} className="mt-0.5 shrink-0 text-amber-500" />
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-amber-800">{pendingLabel}</p>
+                      <p className="mt-0.5 text-xs text-amber-700">
+                        {t(
+                          "Aguardando resposta da solicitação da nota de crédito.",
+                          "Awaiting response to the credit note request."
+                        )}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )
+            }
+
             const button = <button type="button" disabled={state.loading} onClick={action.confirm ? undefined : () => void runAction(action)} className={buttonClass(action.tone)}>{state.loading ? <Loader2 size={15} className="animate-spin" /> : null}{state.loading ? t("Executando...", "Running...") : label}</button>
             return (
               <div key={action.key} className={index > 0 ? "border-t border-[var(--border)] pt-3" : undefined}>
