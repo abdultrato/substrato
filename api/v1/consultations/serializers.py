@@ -74,6 +74,7 @@ class MedicalConsultationSerializer(serializers.ModelSerializer):
     invoice_id = serializers.SerializerMethodField(method_name="get_invoice_id")
     invoice_code = serializers.SerializerMethodField(method_name="get_invoice_code")
     invoice_status = serializers.SerializerMethodField(method_name="get_invoice_status")
+    invoice_origin = serializers.SerializerMethodField(method_name="get_invoice_origin")
     legacy_input_aliases = MEDICAL_CONSULTATION_ALIASES
 
     class Meta:
@@ -87,6 +88,7 @@ class MedicalConsultationSerializer(serializers.ModelSerializer):
             "invoice_id",
             "invoice_code",
             "invoice_status",
+            "invoice_origin",
             "schedule_type",
             "price_multiplier",
             "reschedule_count",
@@ -118,6 +120,10 @@ class MedicalConsultationSerializer(serializers.ModelSerializer):
     def get_invoice_status(self, obj: MedicalConsultation) -> str:
         invoice = self._get_invoice(obj)
         return getattr(invoice, "status", "") if invoice else ""
+
+    def get_invoice_origin(self, obj: MedicalConsultation) -> str:
+        invoice = self._get_invoice(obj)
+        return getattr(invoice, "origin", "") if invoice else ""
 
     def validate(self, attrs):
         attrs = super().validate(attrs)
@@ -152,6 +158,10 @@ class HolidaySerializer(serializers.ModelSerializer):
 
 
 class CreateConsultationInvoiceSerializer(serializers.Serializer):
+    invoice_type = serializers.ChoiceField(
+        choices=("draft", "issue", "proforma"),
+        required=False,
+    )
     issue = serializers.BooleanField(default=True, required=False)
     selected_items = serializers.ListField(
         child=serializers.CharField(),
@@ -193,6 +203,7 @@ class CreateConsultationInvoiceResponseSerializer(serializers.Serializer):
     invoice_id = serializers.IntegerField()
     invoice_code = serializers.CharField()
     invoice_status = serializers.CharField()
+    invoice_origin = serializers.CharField()
     total = serializers.CharField()
     items = ConsultationInvoicePreviewItemSerializer(many=True, required=False)
 

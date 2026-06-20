@@ -61,9 +61,10 @@ type ConsultationRow = {
   invoice_id?: number | null
   invoice_code?: string
   invoice_status?: string
+  invoice_origin?: string
 }
 
-type InvoiceIssueMode = "draft" | "issue"
+type InvoiceIssueMode = "draft" | "issue" | "proforma"
 
 type ConsultationInvoicePreviewItem = {
   key: string
@@ -98,6 +99,7 @@ type CreateConsultationInvoiceResponse = {
   invoice_id: number
   invoice_code: string
   invoice_status: string
+  invoice_origin: string
   total: string
 }
 
@@ -485,6 +487,7 @@ export default function ConsultationsPage() {
       const result = await apiFetch<CreateConsultationInvoiceResponse>(`/consultations/${invoiceReviewRow.id}/create-invoice/`, {
         method: "POST",
         body: JSON.stringify({
+          invoice_type: invoiceReviewMode,
           issue: invoiceReviewMode === "issue",
           selected_items: selectedItems,
         }),
@@ -496,6 +499,7 @@ export default function ConsultationsPage() {
               invoice_id: result.invoice_id,
               invoice_code: result.invoice_code,
               invoice_status: result.invoice_status,
+              invoice_origin: result.invoice_origin,
             }
           : row
       )))
@@ -586,6 +590,7 @@ export default function ConsultationsPage() {
   const renderConsultationCard = useCallback((r: ConsultationRow) => {
     const canPrepareInvoice = canInvoice && r.status !== "CANCELADA" && (!r.invoice_status || r.invoice_status === "RASC")
     const invoiceIssued = r.invoice_status === "EMIT" || r.invoice_status === "PAGA"
+    const isProformaInvoice = r.invoice_origin === "PRO"
     // Nota de crédito: só após a fatura original (emitir original OU concluir, que emite a original).
     const canRequestCreditNote = canWrite && (r.status === "CONCLUIDA" || invoiceIssued)
     const loadingReview = invoiceReviewLoading === r.id
@@ -613,8 +618,13 @@ export default function ConsultationsPage() {
               {r.invoice_status}
             </span>
           ) : null}
+          {isProformaInvoice ? (
+            <span className="rounded-md border border-violet-200 bg-violet-50 px-1.5 py-0.5 text-[10px] font-semibold text-violet-700">
+              {t("Proforma", "Proforma")}
+            </span>
+          ) : null}
           {canPrepareInvoice ? (
-            <div className="flex w-full gap-1.5">
+            <div className="grid w-full grid-cols-1 gap-1.5 sm:grid-cols-3">
               <button
                 type="button"
                 onClick={() => openInvoiceReview(r, "draft")}
@@ -623,6 +633,15 @@ export default function ConsultationsPage() {
               >
                 <FileText size={12} />
                 {r.invoice_id ? t("Rever rascunho", "Review draft") : t("Emitir rascunho", "Issue draft")}
+              </button>
+              <button
+                type="button"
+                onClick={() => openInvoiceReview(r, "proforma")}
+                disabled={loadingReview}
+                className="flex items-center justify-center gap-1 whitespace-nowrap rounded-md border border-violet-200 bg-violet-50 px-2 py-1 text-[11px] font-semibold text-violet-800 transition hover:bg-violet-100 disabled:opacity-50"
+              >
+                <FileText size={12} />
+                {r.invoice_id && isProformaInvoice ? t("Rever proforma", "Review proforma") : t("Fatura proforma", "Proforma invoice")}
               </button>
               <button
                 type="button"
@@ -1071,12 +1090,14 @@ export default function ConsultationsPage() {
                   <h3 className="text-sm font-semibold text-[var(--text)]">
                     {invoiceReviewMode === "issue"
                       ? t("Conferir fatura original", "Review original invoice")
-                      : t("Conferir rascunho de fatura", "Review draft invoice")}
+                      : invoiceReviewMode === "proforma"
+                        ? t("Conferir fatura proforma", "Review proforma invoice")
+                        : t("Conferir rascunho de fatura", "Review draft invoice")}
                   </h3>
                   <p className="mt-1 text-xs text-[var(--gray-600)]">
                     {t(
-                      "Confirme os itens da entrada antes de emitir. Os checkboxes permitem desfazer ou refazer qualquer seleção.",
-                      "Confirm the encounter items before issuing. Checkboxes can undo or redo any selection."
+                      "Confirme os itens da entrada antes de gravar o documento. Os checkboxes permitem desfazer ou refazer qualquer seleção.",
+                      "Confirm the encounter items before saving the document. Checkboxes can undo or redo any selection."
                     )}
                   </p>
                 </div>
@@ -1216,10 +1237,12 @@ export default function ConsultationsPage() {
                 >
                   <FileCheck2 size={14} />
                   {invoiceReviewSubmitting
-                    ? t("Emitindo...", "Issuing...")
+                    ? t("A gravar...", "Saving...")
                     : invoiceReviewMode === "issue"
                       ? t("Emitir original", "Issue original")
-                      : t("Emitir rascunho", "Issue draft")}
+                      : invoiceReviewMode === "proforma"
+                        ? t("Gravar proforma", "Save proforma")
+                        : t("Emitir rascunho", "Issue draft")}
                 </button>
               </div>
             </div>

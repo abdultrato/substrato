@@ -792,7 +792,11 @@ class MedicalConsultationViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
 
         payload = CreateConsultationInvoiceSerializer(data=request.data or {})
         payload.is_valid(raise_exception=True)
-        should_issue = payload.validated_data.get("issue", True)
+        invoice_type = payload.validated_data.get("invoice_type")
+        if not invoice_type:
+            invoice_type = "issue" if payload.validated_data.get("issue", True) else "draft"
+        should_issue = invoice_type == "issue"
+        is_proforma = invoice_type == "proforma"
         selected_items = payload.validated_data.get("selected_items", None)
 
         if hasattr(consultation, "invoice") and getattr(consultation, "invoice", None):
@@ -800,7 +804,7 @@ class MedicalConsultationViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
         else:
             invoice = Invoice(
                 tenant=consultation.tenant,
-                origin=Invoice.Origin.CONSULTATION,
+                origin=Invoice.Origin.PROFORMA if is_proforma else Invoice.Origin.CONSULTATION,
                 consultation=consultation,
                 patient=consultation.patient,
             )
@@ -812,14 +816,23 @@ class MedicalConsultationViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
             raise ValidationError("A fatura vinculada já foi emitida/paga/cancelada.")
 
         selected_public_items = None
-        if selected_items is None:
+        if selected_items is None and not is_proforma:
             # Compatibilidade com o contrato anterior.
             invoice.sync_items_from_origin()
         else:
-            if invoice.origin != Invoice.Origin.MIXED:
-                invoice.origin = Invoice.Origin.MIXED
+            target_origin = Invoice.Origin.PROFORMA if is_proforma else Invoice.Origin.MIXED
+            if selected_items is None:
+                _, candidates = self._build_consultation_invoice_candidates(consultation)
+                selected_items = [
+                    str(item["key"])
+                    for item in candidates
+                    if item.get("selected") is not False
+                ]
+            else:
+                _, candidates = self._build_consultation_invoice_candidates(consultation)
+            if invoice.origin != target_origin:
+                invoice.origin = target_origin
                 invoice.save(update_fields=["origin"])
-            _, candidates = self._build_consultation_invoice_candidates(consultation)
             selected_public_items = self._create_selected_invoice_items(
                 invoice=invoice,
                 candidates=candidates,
@@ -835,6 +848,7 @@ class MedicalConsultationViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
                 "invoice_id": invoice.id,
                 "invoice_code": invoice.custom_id,
                 "invoice_status": invoice.status,
+                "invoice_origin": invoice.origin,
                 "total": str(invoice.total or Decimal("0.00")),
                 "items": selected_public_items or [],
             },

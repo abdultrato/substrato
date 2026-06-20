@@ -210,6 +210,54 @@ def test_consultation_invoice_preview_and_selected_draft_items(api_client):
 
 
 @pytest.mark.django_db
+def test_consultation_invoice_can_be_saved_as_proforma(api_client):
+    tenant = _tenant(identifier="tn-consults-proforma", domain="consults-proforma.local")
+    _authenticate_admin(tenant, api_client)
+
+    patient = Patient.objects.create(
+        tenant=tenant,
+        name="Paciente Proforma Consulta",
+        gender="Masculino",
+        address_street="Rua Proforma",
+    )
+    specialty = ConsultationSpecialty.objects.create(
+        tenant=tenant,
+        name="Clínica Proforma",
+        base_price=Decimal("350.00"),
+        active=True,
+        vat_percentage=Decimal("0.00"),
+    )
+    consultation = MedicalConsultation.objects.create(
+        tenant=tenant,
+        patient=patient,
+        specialty=specialty,
+        scheduled_for=timezone.now(),
+    )
+
+    response = api_client.post(
+        f"/api/v1/consultations/consultation/{consultation.id}/create-invoice/",
+        {
+            "invoice_type": "proforma",
+            "issue": False,
+            "selected_items": [f"consultation:{consultation.id}"],
+        },
+        format="json",
+    )
+
+    assert response.status_code == 200, _response_data(response)
+    payload = _response_data(response)
+    invoice = Invoice.objects.get(pk=payload["invoice_id"])
+    items = list(invoice.items.filter(deleted=False))
+
+    assert payload["invoice_origin"] == Invoice.Origin.PROFORMA
+    assert invoice.status == Invoice.Status.DRAFT
+    assert invoice.origin == Invoice.Origin.PROFORMA
+    assert len(items) == 1
+    assert items[0].item_type == InvoiceItem.TipoItem.CONSULTATION
+    assert items[0].consultation_id == consultation.id
+
+
+@pytest.mark.django_db
 def test_entities_accept_frontend_pt_payload_and_alias_route(api_client):
     tenant = _tenant(identifier="tn-entities-compat", domain="entities-compat.local")
     _authenticate_admin(tenant, api_client)
