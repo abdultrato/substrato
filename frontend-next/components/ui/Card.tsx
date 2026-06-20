@@ -23,7 +23,7 @@ export default function Card ( {
     return (
         <div className={`rounded-lg border border-border ${transparent ? "bg-transparent" : "bg-card shadow-sm"}`}>
             {( title || actions ) && (
-                <div className="flex items-start justify-between gap-3 border-b border-border px-4 py-3">
+                <div className="flex items-start justify-between gap-2 border-b border-border px-3 py-2">
                     <div>
                         {title && (
                             <h3 className="font-display text-sm font-semibold text-foreground">
@@ -31,7 +31,7 @@ export default function Card ( {
                             </h3>
                         )}
                         {subtitle && (
-                            <p className="mt-1 text-xs text-muted-foreground">
+                            <p className="mt-0.5 text-xs text-muted-foreground">
                                 {tr(subtitle)}
                             </p>
                         )}
@@ -41,7 +41,7 @@ export default function Card ( {
                 </div>
             )}
 
-            <div className="p-4">{children}</div>
+            <div className="p-3">{children}</div>
         </div>
     )
 }

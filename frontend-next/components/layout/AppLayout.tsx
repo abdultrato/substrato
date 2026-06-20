@@ -228,7 +228,7 @@ export default function AppLayout ( {
                 >
                     <Header user={user} onMenuClick={handleMenuClick} />
 
-                    <main className="substrato-app-surface flex-1 min-w-0 overflow-x-hidden overflow-y-auto px-3 py-4 pb-[calc(5rem+env(safe-area-inset-bottom))] sm:px-4 md:px-6 md:py-5 md:pb-14">
+                    <main className="substrato-app-surface flex-1 min-w-0 overflow-x-hidden overflow-y-auto px-2 py-2 pb-[calc(4rem+env(safe-area-inset-bottom))] sm:px-3 md:px-4 md:py-3 md:pb-12">
                         <div className="page-transition">
                             <AutoTranslateTree>
                                 <AccessDenied
@@ -290,7 +290,7 @@ export default function AppLayout ( {
 
                 {subNav}
 
-                <main className="substrato-app-surface flex-1 min-w-0 overflow-x-hidden overflow-y-auto px-3 py-4 pb-[calc(5rem+env(safe-area-inset-bottom))] sm:px-4 md:px-6 md:py-5 md:pb-14">
+                <main className="substrato-app-surface flex-1 min-w-0 overflow-x-hidden overflow-y-auto px-2 py-2 pb-[calc(4rem+env(safe-area-inset-bottom))] sm:px-3 md:px-4 md:py-3 md:pb-12">
                     <div className="page-transition">
                         <AutoTranslateTree>{children}</AutoTranslateTree>
                     </div>

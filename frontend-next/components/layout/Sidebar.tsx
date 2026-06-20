@@ -381,8 +381,8 @@ export default function Sidebar({ user, open = false, onClose, className }: Prop
 
     const renderMenu = (navRef: React.RefObject<HTMLElement | null>) => (
         <div className="flex h-full w-full flex-col overflow-hidden border-r border-border bg-card/60 text-foreground shadow-none backdrop-blur-md transition-[box-shadow,background-color] duration-200 ease-out supports-[backdrop-filter]:bg-card/50 md:shadow-md md:group-hover/sidebar:shadow-xl md:group-hover/sidebar:shadow-slate-950/10 md:group-focus-within/sidebar:shadow-xl md:dark:shadow-black/30">
-            {/* Mesma altura do header principal (h-14) para as bordas alinharem. */}
-            <div className="sticky top-0 z-10 flex h-14 min-h-14 shrink-0 items-center justify-center border-b border-border/80 bg-card/60 px-3 py-2 backdrop-blur-md transition-colors supports-[backdrop-filter]:bg-card/50 md:group-hover/sidebar:justify-between md:group-focus-within/sidebar:justify-between">
+            {/* Mesma altura do header principal (h-11) para as bordas alinharem. */}
+            <div className="sticky top-0 z-10 flex h-11 min-h-11 shrink-0 items-center justify-center border-b border-border/80 bg-card/60 px-2 py-1.5 backdrop-blur-md transition-colors supports-[backdrop-filter]:bg-card/50 md:group-hover/sidebar:justify-between md:group-focus-within/sidebar:justify-between">
                 <Link
                     href={homeHref}
                     onClick={onClose}

@@ -40,7 +40,7 @@ export default function Footer({ leftOffset = "16rem", rightOffset = "0px" }: Pr
         } as CSSProperties
       }
     >
-      <div className="flex h-10 min-w-0 items-center justify-between gap-2 px-2 sm:px-3 md:px-4">
+      <div className="flex h-8 min-w-0 items-center justify-between gap-2 px-2 sm:px-3">
         <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
           <span>© {year}</span>
           <span className="hidden sm:inline">{t("Plataforma", "Platform")}</span>

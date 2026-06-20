@@ -126,7 +126,7 @@ export default function Header({ user, onMenuClick }: Props) {
 
     return (
         <header className="sticky top-0 z-40 overflow-visible border-b border-border bg-card/95 text-sm leading-none shadow-sm backdrop-blur">
-            <div className="flex h-14 flex-nowrap items-center justify-between gap-2 px-2 sm:gap-3 sm:px-4">
+            <div className="flex h-11 flex-nowrap items-center justify-between gap-2 px-2 sm:gap-2 sm:px-3">
                 <div className="flex min-w-0 flex-1 items-center gap-2">
                     <button
                         type="button"
@@ -256,7 +256,7 @@ export default function Header({ user, onMenuClick }: Props) {
                 </div>
             </div>
 
-            <div className="flex h-10 items-center gap-1 border-t border-border/70 bg-card/90 px-1 sm:px-2">
+            <div className="flex h-8 items-center gap-0.5 border-t border-border/70 bg-card/90 px-1">
                 <button
                     type="button"
                     onClick={() => scrollHeaderNav("left")}

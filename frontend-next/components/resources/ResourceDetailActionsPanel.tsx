@@ -37,9 +37,9 @@ const CANCELLED_ORDER_STATES = new Set(["CANCELADO", "CANCELLED"])
 const INPUT_CLASS = "w-full rounded-md border border-[var(--border)] bg-white px-2.5 py-2 text-sm text-[var(--text)] shadow-sm transition-colors duration-150 placeholder:text-[var(--gray-400)] hover:border-[var(--primary-400)] focus:border-[var(--primary-500)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-100)]"
 
 function buttonClass(tone?: DetailActionDefinition["tone"]): string {
-  if (tone === "primary") return "inline-flex h-9 items-center gap-2 rounded-md bg-[var(--primary-600)] px-3 text-sm font-semibold text-white shadow-sm transition-all duration-150 hover:bg-[var(--primary-700)] hover:shadow-md disabled:cursor-not-allowed disabled:opacity-60"
-  if (tone === "danger") return "inline-flex h-9 items-center gap-2 rounded-md bg-red-600 px-3 text-sm font-semibold text-white shadow-sm transition-all duration-150 hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-60"
-  return "inline-flex h-9 items-center gap-2 rounded-md border border-[var(--border)] bg-white px-3 text-sm font-medium text-[var(--gray-700)] shadow-sm transition-all duration-150 hover:border-[var(--primary-300)] hover:bg-[var(--gray-100)] hover:text-[var(--text)] disabled:cursor-not-allowed disabled:opacity-60"
+  if (tone === "primary") return "inline-flex h-7 items-center gap-1.5 rounded-md bg-[var(--primary-600)] px-2.5 text-xs font-semibold text-white shadow-sm transition-all duration-150 hover:bg-[var(--primary-700)] hover:shadow-md disabled:cursor-not-allowed disabled:opacity-60"
+  if (tone === "danger") return "inline-flex h-7 items-center gap-1.5 rounded-md bg-red-600 px-2.5 text-xs font-semibold text-white shadow-sm transition-all duration-150 hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-60"
+  return "inline-flex h-7 items-center gap-1.5 rounded-md border border-[var(--border)] bg-white px-2.5 text-xs font-medium text-[var(--gray-700)] shadow-sm transition-all duration-150 hover:border-[var(--primary-300)] hover:bg-[var(--gray-100)] hover:text-[var(--text)] disabled:cursor-not-allowed disabled:opacity-60"
 }
 
 function normalizeState(value: unknown): string {
@@ -192,23 +192,23 @@ export default function ResourceDetailActionsPanel({
   }
 
   return (
-    <section className="rounded-lg border border-[var(--border)] bg-[var(--card)] p-3 shadow-sm">
+    <section className="rounded-lg border border-[var(--border)] bg-[var(--card)] p-2 shadow-sm">
       <div className="flex items-center gap-2">
-        <div className="inline-flex h-8 w-8 items-center justify-center rounded-md bg-[var(--gray-100)] text-[var(--primary-700)]"><Workflow size={16} /></div>
+        <div className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-[var(--gray-100)] text-[var(--primary-700)]"><Workflow size={14} /></div>
         <div>
-          <p className="text-sm font-semibold text-[var(--text)]">{t("Ações do fluxo", "Workflow actions")}</p>
-          <p className="text-xs text-[var(--gray-600)]">{resourceLabel} · {normalizeDetailEndpoint(endpoint)}{id}/</p>
+          <p className="text-xs font-semibold text-[var(--text)]">{t("Ações do fluxo", "Workflow actions")}</p>
+          <p className="text-[11px] text-[var(--gray-600)]">{resourceLabel} · {normalizeDetailEndpoint(endpoint)}{id}/</p>
         </div>
       </div>
 
       {notice ? notice.kind === "ok" ? (
-        <div className="mt-3 inline-flex items-center gap-1 rounded-md border border-emerald-200 bg-emerald-50 px-2.5 py-1.5 text-xs text-emerald-800"><CheckCircle2 size={13} />{notice.text}</div>
+        <div className="mt-2 inline-flex items-center gap-1 rounded-md border border-emerald-200 bg-emerald-50 px-2 py-1 text-xs text-emerald-800"><CheckCircle2 size={12} />{notice.text}</div>
       ) : (
-        <div className="mt-3 rounded-md border border-rose-200 bg-rose-50 px-2.5 py-1.5 text-xs text-rose-800">{notice.text}</div>
+        <div className="mt-2 rounded-md border border-rose-200 bg-rose-50 px-2 py-1 text-xs text-rose-800">{notice.text}</div>
       ) : null}
 
-      <div className="mt-3 rounded-md border border-[var(--border)] bg-white p-3 shadow-sm">
-        <div className="grid gap-3">
+      <div className="mt-2 rounded-md border border-[var(--border)] bg-white p-2 shadow-sm">
+        <div className="grid gap-2">
           {actions.map((action, index) => {
             const state = stateByAction[action.key] || {}
             const description = isPt ? action.descriptionPt : action.descriptionEn
@@ -218,12 +218,12 @@ export default function ResourceDetailActionsPanel({
             if (isPending) {
               const pendingLabel = isPt ? (action.pendingLabelPt ?? label) : (action.pendingLabelEn ?? label)
               return (
-                <div key={action.key} className={index > 0 ? "border-t border-[var(--border)] pt-3" : undefined}>
-                  <div className="flex items-start gap-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2.5">
-                    <Info size={16} className="mt-0.5 shrink-0 text-amber-500" />
+                <div key={action.key} className={index > 0 ? "border-t border-[var(--border)] pt-2" : undefined}>
+                  <div className="flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 px-2 py-1.5">
+                    <Info size={14} className="mt-0.5 shrink-0 text-amber-500" />
                     <div className="min-w-0">
-                      <p className="text-sm font-semibold text-amber-800">{pendingLabel}</p>
-                      <p className="mt-0.5 text-xs text-amber-700">
+                      <p className="text-xs font-semibold text-amber-800">{pendingLabel}</p>
+                      <p className="text-[11px] text-amber-700">
                         {t(
                           "Aguardando resposta da solicitação da nota de crédito.",
                           "Awaiting response to the credit note request."
@@ -235,12 +235,12 @@ export default function ResourceDetailActionsPanel({
               )
             }
 
-            const button = <button type="button" disabled={state.loading} onClick={action.confirm ? undefined : () => void runAction(action)} className={buttonClass(action.tone)}>{state.loading ? <Loader2 size={15} className="animate-spin" /> : null}{state.loading ? t("Executando...", "Running...") : label}</button>
+            const button = <button type="button" disabled={state.loading} onClick={action.confirm ? undefined : () => void runAction(action)} className={buttonClass(action.tone)}>{state.loading ? <Loader2 size={14} className="animate-spin" /> : null}{state.loading ? t("Executando...", "Running...") : label}</button>
             return (
-              <div key={action.key} className={index > 0 ? "border-t border-[var(--border)] pt-3" : undefined}>
-                <div className="min-w-0"><p className="text-sm font-semibold text-[var(--text)]">{label}</p>{description ? <p className="mt-0.5 text-xs text-[var(--gray-600)]">{description}</p> : null}</div>
-                {action.fields?.length ? <div className="mt-3 grid gap-2 md:grid-cols-2 xl:grid-cols-3">{action.fields.map((field) => renderField(action, field))}</div> : null}
-                <div className="mt-3 flex flex-wrap items-center gap-2">
+              <div key={action.key} className={index > 0 ? "border-t border-[var(--border)] pt-2" : undefined}>
+                <div className="min-w-0"><p className="text-xs font-semibold text-[var(--text)]">{label}</p>{description ? <p className="text-[11px] text-[var(--gray-600)]">{description}</p> : null}</div>
+                {action.fields?.length ? <div className="mt-2 grid gap-2 md:grid-cols-2 xl:grid-cols-3">{action.fields.map((field) => renderField(action, field))}</div> : null}
+                <div className="mt-2 flex flex-wrap items-center gap-1.5">
                   {action.confirm ? <ConfirmDialog title={label} message={t("Confirma esta ação? A operação respeita as regras de estado do backend.", "Confirm this action? The operation respects backend state rules.")} confirmText={label} onConfirm={() => runAction(action)} disabled={state.loading}>{button}</ConfirmDialog> : button}
                 </div>
               </div>
