@@ -15,7 +15,7 @@ import { useLanguage } from "@/hooks/useLanguage"
 import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { apiFetch } from "@/lib/api"
 import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
-import { FileCheck2, FileText, Receipt } from "lucide-react"
+import { CalendarPlus, FileCheck2, FileText, Info, Loader2, Receipt } from "lucide-react"
 
 type Patient = { id: number; name?: string }
 type Doctor = { id: number; name?: string; profession_name?: string; role_name?: string }
@@ -62,6 +62,7 @@ type ConsultationRow = {
   invoice_code?: string
   invoice_status?: string
   invoice_origin?: string
+  has_pending_credit_note_request?: boolean
 }
 
 type InvoiceIssueMode = "draft" | "issue" | "proforma"
@@ -593,7 +594,8 @@ export default function ConsultationsPage() {
     const canPrepareInvoice = canInvoice && r.status !== "CANCELADA" && !isProformaInvoice && (!r.invoice_status || r.invoice_status === "RASC")
     const canReviewProformaInvoice = canInvoice && r.status !== "CANCELADA" && isProformaInvoice && r.invoice_status === "RASC"
     // Nota de crédito: só após a fatura original (emitir original OU concluir, que emite a original).
-    const canRequestCreditNote = canWrite && (r.status === "CONCLUIDA" || invoiceIssued)
+    const hasPendingCreditNote = Boolean(r.has_pending_credit_note_request)
+    const canRequestCreditNote = canWrite && (r.status === "CONCLUIDA" || invoiceIssued) && !hasPendingCreditNote
     const loadingReview = invoiceReviewLoading === r.id
     return (
       <div key={r.id} className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
@@ -669,7 +671,15 @@ export default function ConsultationsPage() {
               </PdfActionLabel>
             </button>
           ) : null}
-          {canRequestCreditNote ? (
+          {hasPendingCreditNote ? (
+            <div className="flex w-full items-start gap-1.5 rounded-md border border-amber-200 bg-amber-50 px-2 py-1.5">
+              <Info size={12} className="mt-0.5 shrink-0 text-amber-500" />
+              <div className="min-w-0">
+                <p className="text-[11px] font-semibold text-amber-800">{t("Nota de crédito solicitada", "Credit note requested")}</p>
+                <p className="text-[10px] text-amber-700">{t("Aguardando resposta da Contabilidade.", "Awaiting Accounting response.")}</p>
+              </div>
+            </div>
+          ) : canRequestCreditNote ? (
             <button
               type="button"
               onClick={() => openCreditNoteModal(r)}
@@ -876,12 +886,17 @@ export default function ConsultationsPage() {
                 </div>
               </div>
 
-              <div className="flex justify-start md:col-span-2">
+              <div className="md:col-span-2">
                 <button
                   disabled={saving}
-                  className="inline-flex items-center rounded-xl bg-gray-900 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-black disabled:opacity-60"
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[hsl(var(--primary-hsl))] px-5 py-2.5 text-sm font-semibold text-white shadow-[var(--shadow-sm)] transition-all duration-150 hover:bg-[hsl(var(--primary-hover-hsl))] hover:shadow-[var(--shadow-md)] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto sm:min-w-[10rem]"
                 >
-                  {saving ? t("A marcar...", "Scheduling...") : t("Marcar consulta", "Schedule consultation")}
+                  {saving ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <CalendarPlus className="h-4 w-4 shrink-0" />
+                  )}
+                  <span>{saving ? t("A marcar...", "Scheduling...") : t("Marcar consulta", "Schedule consultation")}</span>
                 </button>
               </div>
             </form>
