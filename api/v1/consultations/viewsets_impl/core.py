@@ -998,6 +998,25 @@ class MedicalConsultationViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
             status=status.HTTP_201_CREATED,
         )
 
+    @transaction.atomic
+    @action(detail=True, methods=["post"], url_path="cancel-credit-note-request", url_name="cancel-credit-note-request")
+    def cancel_credit_note_request(self, request, pk=None):
+        """Cancela o pedido de nota de crédito pendente da consulta (antes de decisão da Contabilidade)."""
+        consultation = self.get_object()
+        pending = CreditNoteRequest.objects.filter(
+            consultation=consultation,
+            status=CreditNoteRequest.Status.PENDING,
+            deleted=False,
+        ).first()
+        if pending is None:
+            raise ValidationError("Não existe pedido de nota de crédito pendente para esta consulta.")
+        try:
+            pending.cancel(user=request.user)
+        except DjangoValidationError as exc:
+            raise _specialty_as_drf_error(exc)
+        from api.v1.billing.serializers import CreditNoteRequestSerializer
+        return Response(CreditNoteRequestSerializer(pending).data)
+
 VIEWSET_MAP = {
     "consultation": MedicalConsultationViewSet,
     "doctors": DoctorsViewSet,

@@ -136,5 +136,15 @@ class CreditNoteRequest(NoNameCoreModel):
         self.save(update_fields=["status", "reviewed_by", "reviewed_at", "decision_note", "updated_at"])
         return self
 
+    def cancel(self, *, user=None, note: str = ""):
+        """Cancela o pedido (quem solicitou, antes de decisão da Contabilidade)."""
+        self._ensure_pending()
+        self.status = self.Status.CANCELED
+        self.reviewed_by = user
+        self.reviewed_at = timezone.now()
+        self.decision_note = note or ""
+        self.save(update_fields=["status", "reviewed_by", "reviewed_at", "decision_note", "updated_at"])
+        return self
+
     def __str__(self) -> str:
         return f"{self.custom_id} - {getattr(self.invoice, 'custom_id', self.invoice_id)} ({self.get_status_display()})"

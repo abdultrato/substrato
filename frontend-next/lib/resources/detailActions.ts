@@ -385,6 +385,17 @@ const CONSULTATIONS_DETAIL_ACTIONS: Record<string, DetailActionDefinition[]> = {
       ],
     },
     {
+      key: "consultations.consultation.cancel_credit_note_request",
+      action: "cancel-credit-note-request",
+      labelPt: "Cancelar nota de crédito solicitada",
+      labelEn: "Cancel credit note request",
+      successPt: "Pedido de nota de crédito cancelado.",
+      successEn: "Credit note request cancelled.",
+      tone: "danger",
+      confirm: true,
+      visibleWhen: (r) => r.status === "PAGA" && Boolean(r.has_pending_credit_note_request),
+    },
+    {
       key: "consultations.consultation.cancel",
       action: "cancel",
       labelPt: "Cancelar consulta",

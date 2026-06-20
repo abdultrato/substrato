@@ -302,6 +302,20 @@ export default function ConsultationsPage() {
     }
   }, [canWrite, loadData, localizeErrorMessage, t])
 
+  const cancelCreditNoteRequest = useCallback(async (consultationId: number) => {
+    if (!canWrite) return
+    try {
+      setErrorMessage(null)
+      await apiFetch(`/consultations/${consultationId}/cancel-credit-note-request/`, {
+        method: "POST",
+        body: JSON.stringify({}),
+      })
+      await loadData()
+    } catch (e: any) {
+      setErrorMessage(localizeErrorMessage(e?.message) || t("Falha ao cancelar pedido de nota de crédito.", "Failed to cancel credit note request."))
+    }
+  }, [canWrite, loadData, localizeErrorMessage, t])
+
   const completeConsultation = useCallback(async (consultationId: number) => {
     if (!canWrite) return
     try {
@@ -706,6 +720,23 @@ export default function ConsultationsPage() {
               </button>
             </ConfirmDialog>
           </div>
+        ) : canWrite && r.status === "PAGA" && hasPendingCreditNote ? (
+          <div className="mt-2 flex flex-wrap gap-1.5 border-t border-slate-100 pt-2">
+            <ConfirmDialog
+              title={t("Cancelar nota de crédito solicitada", "Cancel credit note request")}
+              message={t("Cancelar o pedido de nota de crédito pendente?", "Cancel the pending credit note request?")}
+              confirmText={t("Cancelar pedido", "Cancel request")}
+              danger
+              onConfirm={() => cancelCreditNoteRequest(r.id)}
+            >
+              <button
+                type="button"
+                className="inline-flex items-center rounded-lg border border-red-200 bg-white px-2.5 py-1 text-[11px] font-medium text-red-700 transition hover:bg-red-50"
+              >
+                {t("Cancelar nota de crédito solicitada", "Cancel credit note request")}
+              </button>
+            </ConfirmDialog>
+          </div>
         ) : null}
       </div>
     )
@@ -713,6 +744,7 @@ export default function ConsultationsPage() {
     canInvoice,
     canWrite,
     cancelConsultation,
+    cancelCreditNoteRequest,
     completeConsultation,
     formatScheduleTypeLabel,
     invoicePdfId,
