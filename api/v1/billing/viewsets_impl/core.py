@@ -593,6 +593,32 @@ class InvoiceViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
         )
         return Response(self.get_serializer(invoice).data)
 
+    @transaction.atomic
+    @action(detail=True, methods=["post"], url_path="request-credit-note", url_name="request-credit-note")
+    def request_credit_note(self, request, pk=None):
+        invoice = self.get_object()
+        if invoice.status != Invoice.Status.PAID:
+            raise ValidationError("Apenas faturas pagas podem ter pedidos de nota de crédito.")
+        if CreditNoteRequest.objects.filter(invoice=invoice, status=CreditNoteRequest.Status.PENDING, deleted=False).exists():
+            raise ValidationError("Já existe um pedido de nota de crédito pendente para esta fatura.")
+        reason = (request.data or {}).get("reason", "") if isinstance(request.data, dict) else ""
+        credit_note = CreditNoteRequest(invoice=invoice, reason=reason or "")
+        credit_note.save()
+        return Response(CreditNoteRequestSerializer(credit_note).data, status=201)
+
+    @transaction.atomic
+    @action(detail=True, methods=["post"], url_path="cancel-credit-note-request", url_name="cancel-credit-note-request")
+    def cancel_credit_note_request(self, request, pk=None):
+        invoice = self.get_object()
+        pending = CreditNoteRequest.objects.filter(invoice=invoice, status=CreditNoteRequest.Status.PENDING, deleted=False).first()
+        if pending is None:
+            raise ValidationError("Não existe pedido de nota de crédito pendente para esta fatura.")
+        try:
+            pending.cancel(user=request.user)
+        except DjangoValidationError as exc:
+            raise ValidationError(getattr(exc, "messages", [str(exc)])) from exc
+        return Response(CreditNoteRequestSerializer(pending).data)
+
     @action(
         detail=True,
         methods=["post"],
@@ -713,7 +739,7 @@ class InvoiceItemViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin
 
 
 class InvoiceHistoryViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
-    queryset = InvoiceHistory.objects.all()
+    queryset = InvoiceHistory.objects.select_related("created_by")
     serializer_class = InvoiceHistorySerializer
     filterset_class = InvoiceHistoryFilter
     permission_classes = [IsAuthenticated]

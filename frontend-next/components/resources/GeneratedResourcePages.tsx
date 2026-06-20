@@ -4,6 +4,7 @@ import Link from "next/link"
 import { useMemo, useState, type ReactNode } from "react"
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation"
 import { useQuery } from "@tanstack/react-query"
+import { ClipboardList } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
 import AutoForm from "@/components/form/AutoForm"
@@ -531,9 +532,108 @@ export function GeneratedResourceDetailPage({
           </div>
         )}
 
+        {data && ctx.normalizedEndpoint === "/billing/invoice/" ? (
+          <InvoiceHistoryPanel invoiceId={id} />
+        ) : null}
+
         {data ? children : null}
       </div>
     </AppLayout>
+  )
+}
+
+type InvoiceHistoryEntry = {
+  id: number
+  event_type: string
+  description?: string
+  created_at?: string
+  created_by_name?: string
+}
+
+function InvoiceHistoryPanel({ invoiceId }: { invoiceId: string }) {
+  const { t, language } = useLanguage()
+  const isPt = language !== "en"
+
+  const { data, isLoading } = useQuery({
+    queryKey: ["invoice-history", invoiceId],
+    queryFn: async () =>
+      await apiFetch<{ results?: InvoiceHistoryEntry[]; count?: number } | InvoiceHistoryEntry[]>(
+        `/billing/invoicehistory/?invoice=${invoiceId}&page_size=50&ordering=created_at`,
+        { clientCache: false }
+      ),
+    enabled: !!invoiceId,
+  })
+
+  const entries: InvoiceHistoryEntry[] = Array.isArray(data)
+    ? data
+    : ((data as any)?.results ?? [])
+
+  const EVENT_LABELS: Record<string, { pt: string; en: string; color: string }> = {
+    CRIACAO: { pt: "Criação", en: "Creation", color: "bg-sky-500" },
+    EMISSAO: { pt: "Emissão", en: "Issued", color: "bg-indigo-500" },
+    PAGAMENTO: { pt: "Pagamento", en: "Payment", color: "bg-emerald-500" },
+    CANCELAMENTO: { pt: "Cancelamento", en: "Cancelled", color: "bg-red-500" },
+    SINCRONIZACAO: { pt: "Sincronização", en: "Sync", color: "bg-amber-500" },
+  }
+
+  function formatDate(iso?: string) {
+    if (!iso) return "-"
+    try {
+      return new Intl.DateTimeFormat(isPt ? "pt-PT" : "en-GB", {
+        day: "2-digit", month: "short", year: "numeric",
+        hour: "2-digit", minute: "2-digit",
+      }).format(new Date(iso))
+    } catch {
+      return iso
+    }
+  }
+
+  if (isLoading) {
+    return (
+      <section className="rounded-lg border border-[var(--border)] bg-[var(--card)] p-2 shadow-sm">
+        <div className="flex items-center gap-2">
+          <div className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-[var(--gray-100)] text-[var(--primary-700)]"><ClipboardList size={14} /></div>
+          <p className="text-xs font-semibold text-[var(--text)]">{t("Histórico da fatura", "Invoice history")}</p>
+        </div>
+        <p className="mt-2 text-[11px] text-[var(--gray-500)]">{t("Carregando...", "Loading...")}</p>
+      </section>
+    )
+  }
+
+  if (!entries.length) return null
+
+  return (
+    <section className="rounded-lg border border-[var(--border)] bg-[var(--card)] p-2 shadow-sm">
+      <div className="flex items-center gap-2">
+        <div className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-[var(--gray-100)] text-[var(--primary-700)]"><ClipboardList size={14} /></div>
+        <div>
+          <p className="text-xs font-semibold text-[var(--text)]">{t("Histórico da fatura", "Invoice history")}</p>
+          <p className="text-[11px] text-[var(--gray-600)]">{entries.length} {t("evento(s)", "event(s)")}</p>
+        </div>
+      </div>
+      <div className="mt-2 rounded-md border border-[var(--border)] bg-white p-2 shadow-sm">
+        <ol className="relative border-l border-[var(--border)] pl-4">
+          {entries.map((entry, i) => {
+            const meta = EVENT_LABELS[entry.event_type] ?? { pt: entry.event_type, en: entry.event_type, color: "bg-gray-400" }
+            return (
+              <li key={entry.id ?? i} className={i < entries.length - 1 ? "mb-3" : undefined}>
+                <span className={`absolute -left-[5px] mt-1 h-2.5 w-2.5 rounded-full ${meta.color} ring-2 ring-white`} />
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                  <span className="text-[11px] font-semibold text-[var(--text)]">{isPt ? meta.pt : meta.en}</span>
+                  {entry.created_by_name ? (
+                    <span className="text-[11px] text-[var(--gray-600)]">— {entry.created_by_name}</span>
+                  ) : null}
+                  <span className="text-[11px] text-[var(--gray-400)]">{formatDate(entry.created_at)}</span>
+                </div>
+                {entry.description ? (
+                  <p className="mt-0.5 text-[11px] text-[var(--gray-600)]">{entry.description}</p>
+                ) : null}
+              </li>
+            )
+          })}
+        </ol>
+      </div>
+    </section>
   )
 }
 

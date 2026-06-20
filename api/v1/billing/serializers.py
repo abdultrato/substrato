@@ -287,6 +287,14 @@ class InvoiceItemSerializer(LegacyAliasSerializerMixin, serializers.ModelSeriali
 class InvoiceHistorySerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer):
     legacy_input_aliases = INVOICE_HISTORY_LEGACY_ALIASES
     legacy_output_aliases = INVOICE_HISTORY_LEGACY_ALIASES
+    created_by_name = serializers.SerializerMethodField()
+
+    def get_created_by_name(self, obj):
+        user = getattr(obj, "created_by", None)
+        if not user:
+            return ""
+        full_name = (getattr(user, "get_full_name", lambda: "")() or "").strip()
+        return full_name or getattr(user, "username", "") or ""
 
     class Meta:
         model = InvoiceHistory

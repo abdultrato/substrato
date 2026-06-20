@@ -944,7 +944,7 @@ export default function ConsultationsPage() {
           </Card>
         )}
 
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {renderConsultationColumn(t("Consultas Marcadas", "Marked (walk-in)"), markedConsultations)}
           {renderConsultationColumn(t("Consultas Agendadas", "Scheduled"), scheduledConsultations)}
           {renderConsultationColumn(t("Consultas Re-Agendadas", "Rescheduled"), rescheduledConsultations)}

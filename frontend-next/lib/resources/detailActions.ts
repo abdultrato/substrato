@@ -873,6 +873,25 @@ const PUBLIC_HEALTH_DETAIL_ACTIONS: Record<string, DetailActionDefinition[]> = {
   ],
 }
 
+// ── Cotações ─────────────────────────────────────────────────────────────────
+const COTACOES_DETAIL_ACTIONS: Record<string, DetailActionDefinition[]> = {
+  "/cotacoes/quotation/": [
+    { key: "cotacoes.quotation.send", action: "send", labelPt: "Enviar cotação", labelEn: "Send quotation", successPt: "Cotação enviada.", successEn: "Quotation sent.", tone: "primary", visibleWhen: (r) => r.status === "DRAFT" },
+    { key: "cotacoes.quotation.accept", action: "accept", labelPt: "Aceitar cotação", labelEn: "Accept quotation", successPt: "Cotação aceite.", successEn: "Quotation accepted.", tone: "primary", visibleWhen: (r) => r.status === "SENT" },
+    { key: "cotacoes.quotation.reject", action: "reject", labelPt: "Rejeitar cotação", labelEn: "Reject quotation", successPt: "Cotação rejeitada.", successEn: "Quotation rejected.", tone: "danger", confirm: true, visibleWhen: (r) => r.status === "SENT", fields: [reasonField] },
+    { key: "cotacoes.quotation.convert-to-proforma", action: "convert-to-proforma", labelPt: "Converter para Proforma", labelEn: "Convert to Proforma", successPt: "Cotação convertida para proforma.", successEn: "Quotation converted to proforma.", tone: "primary", visibleWhen: (r) => r.status === "ACCEPTED" },
+    { key: "cotacoes.quotation.duplicate", action: "duplicate", labelPt: "Duplicar cotação", labelEn: "Duplicate quotation", successPt: "Cotação duplicada.", successEn: "Quotation duplicated.", visibleWhen: (r) => r.status !== "CONVERTED" && r.status !== "CANCELLED" },
+    { key: "cotacoes.quotation.cancel", action: "cancel", labelPt: "Cancelar cotação", labelEn: "Cancel quotation", successPt: "Cotação cancelada.", successEn: "Quotation cancelled.", tone: "danger", confirm: true, visibleWhen: (r) => r.status !== "CONVERTED" && r.status !== "CANCELLED", fields: [reasonField] },
+  ],
+  "/cotacoes/proforma/": [
+    { key: "cotacoes.proforma.send", action: "send", labelPt: "Enviar proforma", labelEn: "Send proforma", successPt: "Proforma enviada.", successEn: "Proforma sent.", tone: "primary", visibleWhen: (r) => r.status === "DRAFT" },
+    { key: "cotacoes.proforma.accept", action: "accept", labelPt: "Aceitar proforma", labelEn: "Accept proforma", successPt: "Proforma aceite.", successEn: "Proforma accepted.", tone: "primary", visibleWhen: (r) => r.status === "SENT" },
+    { key: "cotacoes.proforma.reject", action: "reject", labelPt: "Rejeitar proforma", labelEn: "Reject proforma", successPt: "Proforma rejeitada.", successEn: "Proforma rejected.", tone: "danger", confirm: true, visibleWhen: (r) => r.status === "SENT", fields: [reasonField] },
+    { key: "cotacoes.proforma.convert-to-invoice", action: "convert-to-invoice", labelPt: "Converter para Fatura", labelEn: "Convert to Invoice", successPt: "Proforma convertida para fatura.", successEn: "Proforma converted to invoice.", tone: "primary", visibleWhen: (r) => r.status === "ACCEPTED" },
+    { key: "cotacoes.proforma.cancel", action: "cancel", labelPt: "Cancelar proforma", labelEn: "Cancel proforma", successPt: "Proforma cancelada.", successEn: "Proforma cancelled.", tone: "danger", confirm: true, visibleWhen: (r) => r.status !== "CONVERTED" && r.status !== "CANCELLED", fields: [reasonField] },
+  ],
+}
+
 // ── Faturação ────────────────────────────────────────────────────────────────
 // (send-notification já é tratado de forma dedicada em GeneratedResourceDetailPage)
 const BILLING_DETAIL_ACTIONS: Record<string, DetailActionDefinition[]> = {
@@ -880,6 +899,30 @@ const BILLING_DETAIL_ACTIONS: Record<string, DetailActionDefinition[]> = {
     { key: "billing.invoice.issue", action: "issue", labelPt: "Emitir fatura", labelEn: "Issue invoice", successPt: "Fatura emitida.", successEn: "Invoice issued.", tone: "primary", visibleWhen: (r) => r.status === "RASC" },
     { key: "billing.invoice.confirm-payment", action: "confirm-payment", labelPt: "Confirmar pagamento", labelEn: "Confirm payment", successPt: "Pagamento confirmado.", successEn: "Payment confirmed.", tone: "primary", visibleWhen: (r) => r.status === "EMIT" },
     { key: "billing.invoice.void", action: "void", labelPt: "Anular fatura", labelEn: "Void invoice", successPt: "Fatura anulada.", successEn: "Invoice voided.", tone: "danger", confirm: true, visibleWhen: (r) => r.status === "RASC" || r.status === "EMIT", fields: [reasonField] },
+    {
+      key: "billing.invoice.request_credit_note",
+      action: "request-credit-note",
+      labelPt: "Solicitar nota de crédito",
+      labelEn: "Request credit note",
+      successPt: "Pedido de nota de crédito criado.",
+      successEn: "Credit note request created.",
+      visibleWhen: (r) => r.status === "PAGA",
+      pendingStateWhen: (r) => Boolean(r.has_pending_credit_note_request),
+      pendingLabelPt: "Nota de crédito solicitada",
+      pendingLabelEn: "Credit note requested",
+      fields: [{ name: "reason", labelPt: "Motivo (opcional)", labelEn: "Reason (optional)", type: "textarea" }],
+    },
+    {
+      key: "billing.invoice.cancel_credit_note_request",
+      action: "cancel-credit-note-request",
+      labelPt: "Cancelar nota de crédito solicitada",
+      labelEn: "Cancel credit note request",
+      successPt: "Pedido de nota de crédito cancelado.",
+      successEn: "Credit note request cancelled.",
+      tone: "danger",
+      confirm: true,
+      visibleWhen: (r) => r.status === "PAGA" && Boolean(r.has_pending_credit_note_request),
+    },
   ],
 }
 
@@ -1191,6 +1234,7 @@ const NOTIFICATIONS_DETAIL_ACTIONS: Record<string, DetailActionDefinition[]> = {
 
 // Registry global por endpoint-pai (normalizado). Cada módulo contribui o seu mapa.
 export const RESOURCE_DETAIL_ACTIONS: Record<string, DetailActionDefinition[]> = {
+  ...COTACOES_DETAIL_ACTIONS,
   ...WAREHOUSE_DETAIL_ACTIONS,
   ...HUMAN_RESOURCES_DETAIL_ACTIONS,
   ...RECEPTION_DETAIL_ACTIONS,

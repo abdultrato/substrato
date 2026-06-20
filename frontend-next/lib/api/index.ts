@@ -103,20 +103,29 @@ function rewriteUrl(url: string): string {
   return u
 }
 
+let _refreshInFlight: Promise<string | null> | null = null
+
 async function refreshAccessToken(): Promise<string | null> {
-  const res = await fetch("/api/v1/auth/refresh/", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Accept-Language": toBackendLanguage(getCurrentLanguage()),
-    },
-    credentials: "include",
+  if (_refreshInFlight) return _refreshInFlight
+  _refreshInFlight = (async () => {
+    try {
+      const res = await fetch("/api/v1/auth/refresh/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept-Language": toBackendLanguage(getCurrentLanguage()),
+        },
+        credentials: "include",
+      })
+      // Tokens são enviados em cookies HttpOnly; corpo contém apenas session_id.
+      return res.ok ? "refreshed" : null
+    } catch {
+      return null
+    }
+  })().finally(() => {
+    _refreshInFlight = null
   })
-
-  if (!res.ok) return null
-
-  // Tokens são enviados em cookies HttpOnly; corpo contém apenas session_id.
-  return "refreshed"
+  return _refreshInFlight
 }
 
 function buildHeaders(options: ApiFetchOptions): HeadersInit {
