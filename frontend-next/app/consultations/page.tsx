@@ -682,31 +682,6 @@ export default function ConsultationsPage() {
 
         {canWrite && (r.status === "MARCADA" || (r.status !== "CANCELADA" && r.status !== "CONCLUIDA")) ? (
           <div className="mt-2 flex flex-wrap gap-1.5 border-t border-slate-100 pt-2">
-            {r.status === "MARCADA" ? (
-              <button
-                type="button"
-                onClick={() => openRescheduleModal(r)}
-                className="inline-flex items-center rounded-lg border border-gray-200 bg-white px-2.5 py-1 text-[11px] font-medium text-gray-700 transition hover:bg-gray-50"
-              >
-                {t("Remarcar", "Reschedule")}
-              </button>
-            ) : null}
-            {r.status === "MARCADA" ? (
-              <ConfirmDialog
-                title={t("Concluir consulta", "Complete consultation")}
-                message={t("Marcar esta consulta como concluída?", "Mark this consultation as completed?")}
-                confirmText={t("Concluir", "Complete")}
-                danger={false}
-                onConfirm={() => completeConsultation(r.id)}
-              >
-                <button
-                  type="button"
-                  className="inline-flex items-center rounded-lg border border-gray-200 bg-white px-2.5 py-1 text-[11px] font-medium text-gray-700 transition hover:bg-gray-50"
-                >
-                  {t("Concluir", "Complete")}
-                </button>
-              </ConfirmDialog>
-            ) : null}
             <ConfirmDialog
               title={t("Cancelar consulta", "Cancel consultation")}
               message={t("Cancelar esta consulta?", "Cancel this consultation?")}

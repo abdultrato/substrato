@@ -336,32 +336,6 @@ const CLINICAL_LABORATORY_DETAIL_ACTIONS: Record<string, DetailActionDefinition[
 const CONSULTATIONS_DETAIL_ACTIONS: Record<string, DetailActionDefinition[]> = {
   "/consultations/consultation/": [
     {
-      key: "consultations.consultation.complete",
-      action: "complete",
-      labelPt: "Concluir consulta",
-      labelEn: "Complete consultation",
-      successPt: "Consulta concluída.",
-      successEn: "Consultation completed.",
-      tone: "primary",
-    },
-    {
-      key: "consultations.consultation.reschedule",
-      action: "reschedule",
-      labelPt: "Reagendar",
-      labelEn: "Reschedule",
-      successPt: "Consulta reagendada.",
-      successEn: "Consultation rescheduled.",
-      fields: [
-        {
-          name: "scheduled_for",
-          labelPt: "Nova data/hora",
-          labelEn: "New date/time",
-          type: "datetime-local",
-          required: true,
-        },
-      ],
-    },
-    {
       key: "consultations.consultation.create_invoice",
       action: "create-invoice",
       labelPt: "Criar fatura",
@@ -370,6 +344,7 @@ const CONSULTATIONS_DETAIL_ACTIONS: Record<string, DetailActionDefinition[]> = {
       descriptionEn: "Generates the consultation invoice from billable items.",
       successPt: "Fatura criada.",
       successEn: "Invoice created.",
+      visibleWhen: (r) => r.status !== "CONCLUIDA" && r.status !== "CANCELADA",
       fields: [
         {
           name: "issue",
@@ -377,6 +352,23 @@ const CONSULTATIONS_DETAIL_ACTIONS: Record<string, DetailActionDefinition[]> = {
           labelEn: "Issue now (not draft)",
           type: "checkbox",
           defaultValue: true,
+        },
+      ],
+    },
+    {
+      key: "consultations.consultation.request_credit_note",
+      action: "request-credit-note",
+      labelPt: "Solicitar nota de crédito",
+      labelEn: "Request credit note",
+      successPt: "Pedido de nota de crédito criado.",
+      successEn: "Credit note request created.",
+      visibleWhen: (r) => r.status === "CONCLUIDA",
+      fields: [
+        {
+          name: "reason",
+          labelPt: "Motivo (opcional)",
+          labelEn: "Reason (optional)",
+          type: "textarea",
         },
       ],
     },
@@ -389,6 +381,7 @@ const CONSULTATIONS_DETAIL_ACTIONS: Record<string, DetailActionDefinition[]> = {
       successEn: "Consultation cancelled.",
       tone: "danger",
       confirm: true,
+      visibleWhen: (r) => r.status !== "CONCLUIDA" && r.status !== "CANCELADA",
       fields: [
         {
           name: "reason",
@@ -861,9 +854,9 @@ const PUBLIC_HEALTH_DETAIL_ACTIONS: Record<string, DetailActionDefinition[]> = {
 // (send-notification já é tratado de forma dedicada em GeneratedResourceDetailPage)
 const BILLING_DETAIL_ACTIONS: Record<string, DetailActionDefinition[]> = {
   "/billing/invoice/": [
-    { key: "billing.invoice.issue", action: "issue", labelPt: "Emitir fatura", labelEn: "Issue invoice", successPt: "Fatura emitida.", successEn: "Invoice issued.", tone: "primary" },
-    { key: "billing.invoice.confirm-payment", action: "confirm-payment", labelPt: "Confirmar pagamento", labelEn: "Confirm payment", successPt: "Pagamento confirmado.", successEn: "Payment confirmed.", tone: "primary" },
-    { key: "billing.invoice.void", action: "void", labelPt: "Anular fatura", labelEn: "Void invoice", successPt: "Fatura anulada.", successEn: "Invoice voided.", tone: "danger", confirm: true, fields: [reasonField] },
+    { key: "billing.invoice.issue", action: "issue", labelPt: "Emitir fatura", labelEn: "Issue invoice", successPt: "Fatura emitida.", successEn: "Invoice issued.", tone: "primary", visibleWhen: (r) => r.status === "RASC" },
+    { key: "billing.invoice.confirm-payment", action: "confirm-payment", labelPt: "Confirmar pagamento", labelEn: "Confirm payment", successPt: "Pagamento confirmado.", successEn: "Payment confirmed.", tone: "primary", visibleWhen: (r) => r.status === "EMIT" },
+    { key: "billing.invoice.void", action: "void", labelPt: "Anular fatura", labelEn: "Void invoice", successPt: "Fatura anulada.", successEn: "Invoice voided.", tone: "danger", confirm: true, visibleWhen: (r) => r.status === "RASC" || r.status === "EMIT", fields: [reasonField] },
   ],
 }
 

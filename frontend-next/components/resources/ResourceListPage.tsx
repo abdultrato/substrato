@@ -499,6 +499,10 @@ export default function ResourceListPage({
         const hidden = columnConfig.hidden
         keys = keys.filter((key) => !hidden.has(key.toLowerCase()))
       }
+      if (columnConfig?.showOnly?.size) {
+        const showOnly = columnConfig.showOnly
+        keys = keys.filter((key) => showOnly.has(key.toLowerCase()))
+      }
       if (!keys.length) {
         return [
           {
@@ -520,6 +524,19 @@ export default function ResourceListPage({
             fieldLabel({ endpoint: normalizedEndpoint, name: key }),
           render: (row: Row) => {
             if (isCodeColumn) return codeCell(row)
+            if (columnConfig?.clickableColumns?.has(normalized)) {
+              const href = rowHref?.(row)
+              const label = formatListValue(key, row?.[key])
+              if (!href) return label
+              return (
+                <Link
+                  href={href}
+                  className="font-medium text-[var(--text)] transition-colors duration-150 hover:text-[var(--hover-accent)]"
+                >
+                  {label}
+                </Link>
+              )
+            }
             // Se a coluna é uma FK (escalar ou M2M), mostra o nome resolvido;
             // senão, a formatação genérica.
             const hasRelation = !!relationTargetForField(key, normalizedEndpoint)

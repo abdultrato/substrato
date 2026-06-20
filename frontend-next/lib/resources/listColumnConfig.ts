@@ -11,6 +11,10 @@ export type ListColumnConfig = {
   labels: Record<string, string>
   /** Rótulo alternativo para a coluna de código/identificador. */
   codeHeader?: string
+  /** Quando definido, só estes campos são exibidos (case-insensitive). */
+  showOnly?: Set<string>
+  /** Campos cujo célula é renderizada como link para rowHref (case-insensitive). */
+  clickableColumns?: Set<string>
 }
 
 function normalize(endpoint: string): string {
@@ -24,6 +28,8 @@ const PATIENT_ENDPOINTS = new Set(["/clinical/patient/", "/clinical/patients/", 
 
 const PATIENT_CONFIG: ListColumnConfig = {
   codeHeader: "Ordem de entrada",
+  showOnly: new Set(["nome", "name"]),
+  clickableColumns: new Set(["nome", "name"]),
   labels: {
     origin_company: "Nome da empresa de proveniência",
     address: "Endereço",
