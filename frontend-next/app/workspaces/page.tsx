@@ -526,7 +526,7 @@ export default function WorkspacesPage() {
 
   return (
     <AppLayout>
-      <div className="mx-auto w-full max-w-6xl space-y-6">
+      <div className="mx-auto w-full max-w-6xl space-y-6 px-3 sm:px-0">
         <PageHeader
           title={selectedLayer ? selectedLayer.title : t("Selecionar área de trabalho", "Select workspace")}
           subtitle={
@@ -547,7 +547,7 @@ export default function WorkspacesPage() {
               {t("Voltar às áreas principais", "Back to main areas")}
             </button>
 
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-2 sm:gap-4 xl:grid-cols-3">
               {visibleDepartments.map((department) => {
                 const iconUrl = lucideToDataUrl(department.icon)
                 return (
@@ -555,25 +555,25 @@ export default function WorkspacesPage() {
                     key={department.key}
                     href={department.href}
                     onClick={() => storeScope(department.scope)}
-                    className="group relative flex min-h-[100px] flex-col justify-end overflow-hidden rounded-lg border border-border bg-card p-5 shadow-sm transition-colors hover:border-primary/35 hover:bg-muted/50"
+                    className="group relative flex h-20 min-h-0 flex-col justify-end overflow-hidden rounded-xl border border-border/80 bg-transparent px-2.5 py-2 shadow-sm shadow-black/5 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/25 hover:shadow-md sm:h-auto sm:min-h-[148px] sm:rounded-md sm:px-5 sm:py-5"
                   >
                     <span
                       aria-hidden
-                      className="pointer-events-none absolute inset-0"
+                      className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-200 group-hover:opacity-100"
                       style={{
-                        background: "#1e293b",
-                        opacity: 0.09,
+                        background:
+                          "radial-gradient(circle at 50% 30%, rgba(59, 130, 246, 0.12), transparent 62%)",
                         WebkitMaskImage: `url("${iconUrl}")`,
                         WebkitMaskRepeat: "no-repeat",
-                        WebkitMaskSize: "52%",
-                        WebkitMaskPosition: "center 30%",
+                        WebkitMaskSize: "28%",
+                        WebkitMaskPosition: "center 23%",
                         maskImage: `url("${iconUrl}")`,
                         maskRepeat: "no-repeat",
-                        maskSize: "52%",
-                        maskPosition: "center 30%",
+                        maskSize: "28%",
+                        maskPosition: "center 23%",
                       }}
                     />
-                    <p className="relative font-display text-lg font-semibold text-foreground">
+                    <p className="relative min-w-0 font-display text-[11px] font-semibold tracking-tight text-foreground sm:text-lg">
                       {department.title}
                     </p>
                   </Link>
@@ -582,7 +582,7 @@ export default function WorkspacesPage() {
             </div>
           </div>
         ) : (
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-2 sm:gap-4 md:grid-cols-3">
             {visibleLayers.map((layer) => {
               const iconUrl = lucideToDataUrl(layer.icon)
               return (
@@ -594,25 +594,27 @@ export default function WorkspacesPage() {
                     if (layer.key === "education") writeStoredWorkspaceScope("education")
                     setSelectedLayerKey(layer.key)
                   }}
-                  className="group relative flex min-h-[100px] h-full flex-col justify-end overflow-hidden rounded-lg border border-border bg-card p-5 text-left shadow-sm transition-colors hover:border-primary/35 hover:bg-muted/50"
+                    className="group relative flex h-20 min-h-0 h-full flex-col justify-end overflow-hidden rounded-xl border border-border/80 bg-transparent px-2.5 py-2 text-left shadow-sm shadow-black/5 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/25 hover:shadow-md sm:h-auto sm:min-h-[148px] sm:rounded-md sm:px-5 sm:py-5"
                 >
                   <span
                     aria-hidden
-                    className="pointer-events-none absolute inset-0"
+                    className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-200 group-hover:opacity-100"
                     style={{
-                      background: "#1e293b",
-                      opacity: 0.09,
+                      background:
+                        "radial-gradient(circle at 50% 30%, rgba(59, 130, 246, 0.12), transparent 62%)",
                       WebkitMaskImage: `url("${iconUrl}")`,
                       WebkitMaskRepeat: "no-repeat",
-                      WebkitMaskSize: "52%",
-                      WebkitMaskPosition: "center 30%",
+                      WebkitMaskSize: "28%",
+                      WebkitMaskPosition: "center 23%",
                       maskImage: `url("${iconUrl}")`,
                       maskRepeat: "no-repeat",
-                      maskSize: "52%",
-                      maskPosition: "center 30%",
+                      maskSize: "28%",
+                      maskPosition: "center 23%",
                     }}
                   />
-                  <p className="relative font-display text-lg font-semibold text-foreground">{layer.title}</p>
+                  <p className="relative min-w-0 font-display text-[11px] font-semibold tracking-tight text-foreground sm:text-lg">
+                    {layer.title}
+                  </p>
                 </button>
               )
             })}

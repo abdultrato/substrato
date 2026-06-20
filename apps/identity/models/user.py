@@ -8,6 +8,9 @@ from core.models import CoreModel
 class IdentityUserManager(UserManager):
     def create_superuser(self, username, email=None, password=None, **extra_fields):
         # Cria superuser padrão e garante acesso administrativo completo.
+        tenant = extra_fields.get("tenant")
+        if tenant is None:
+            raise ValueError("Superuser requer tenant explícito. Passe tenant ao criar o utilizador.")
         user = super().create_superuser(username, email=email, password=password, **extra_fields)
         self._ensure_admin_access(user)
         return user
@@ -69,7 +72,7 @@ class User(AbstractUser, CoreModel):
         verbose_name="Foto de perfil",
     )
     USERNAME_FIELD = "username"
-    REQUIRED_FIELDS = ["email"]
+    REQUIRED_FIELDS = ["email", "tenant"]
     objects = IdentityUserManager()
 
     class Meta:

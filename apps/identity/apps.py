@@ -16,6 +16,15 @@ class IdentityConfig(AppConfig):
 
             aplicar_verbose_names_globais()
 
+        # django.contrib.auth comes before this app in INSTALLED_APPS, so its
+        # createsuperuser command would normally win. Force our override into the
+        # management command registry before any command is dispatched.
+        with suppress(Exception):
+            from django.core.management import get_commands
+
+            cmds = get_commands()
+            cmds["createsuperuser"] = self.name
+
         # Garante sincronização automática de flags (staff/superuser) via signals.
         with suppress(Exception):
             from . import signals  # noqa: F401
