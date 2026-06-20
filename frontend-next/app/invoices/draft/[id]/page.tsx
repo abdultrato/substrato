@@ -96,6 +96,15 @@ function centsToMoney(cents: number): string {
   return (cents / 100).toFixed(2)
 }
 
+function invoiceOrigin(row?: Row | null): string {
+  return String(row?.origin ?? row?.origem ?? row?.origem_fatura ?? "").trim()
+}
+
+function isProformaOrigin(row?: Row | null): boolean {
+  const origin = invoiceOrigin(row)
+  return origin.toUpperCase() === "PRO" || origin.toLowerCase().includes("proforma")
+}
+
 export default function FaturaRascunhoPage() {
   const params = useParams()
   const router = useRouter()
@@ -166,8 +175,9 @@ export default function FaturaRascunhoPage() {
     return map
   }, [])
 
+  const faturaProforma = isProformaOrigin(fatura)
   const faturaRascunho = fatura?.estado === "RASC"
-  const addItemButtonDisabled = !faturaRascunho || !podeEditar || addingItemKey !== null
+  const addItemButtonDisabled = !faturaRascunho || faturaProforma || !podeEditar || addingItemKey !== null
   const addItemButtonLabel = useCallback(
     (key: string) => (addingItemKey === key ? "Adicionando..." : "Adicionar"),
     [addingItemKey]
@@ -261,15 +271,17 @@ export default function FaturaRascunhoPage() {
     && !faltamDadosSeguro
   const podeEmitirFatura = faturaRascunho
     && podeEditar
+    && !faturaProforma
     && itens.length > 0
     && addingItemKey === null
     && acaoId !== faturaId
   const motivoBloqueioEmissao = useMemo(() => {
     if (!faturaRascunho || !podeEditar) return ""
+    if (faturaProforma) return "Fatura originada de proforma não deve ser emitida diretamente neste rascunho."
     if (addingItemKey !== null) return "Aguarde o item em gravação antes de emitir a fatura."
     if (itens.length === 0) return "Adicione pelo menos um item antes de emitir a fatura."
     return ""
-  }, [addingItemKey, faturaRascunho, itens.length, podeEditar])
+  }, [addingItemKey, faturaProforma, faturaRascunho, itens.length, podeEditar])
   const mensagemValidacaoPagamento = useMemo(() => {
     if (fatura?.estado !== "EMIT" || !podePagar) return ""
     if (!pagamentoMetodosSelecionados.length) return "Selecione pelo menos um método de pagamento."
@@ -495,6 +507,10 @@ export default function FaturaRascunhoPage() {
       setErro("Somente rascunhos podem receber itens.")
       return
     }
+    if (faturaProforma) {
+      setErro("Itens de fatura proforma devem ser alterados na proforma de origem.")
+      return
+    }
     addingItemRef.current = true
     setAddingItemKey(actionKey)
     try {
@@ -513,7 +529,7 @@ export default function FaturaRascunhoPage() {
       addingItemRef.current = false
       setAddingItemKey(null)
     }
-  }, [carregarItens, faturaId, faturaRascunho, podeEditar])
+  }, [carregarItens, faturaId, faturaProforma, faturaRascunho, podeEditar])
 
   const removerItem = useCallback(async (itemId: number) => {
     if (!podeEditar) {
@@ -524,6 +540,10 @@ export default function FaturaRascunhoPage() {
       setErro("Somente rascunhos podem ser alterados.")
       return
     }
+    if (faturaProforma) {
+      setErro("Itens de fatura proforma devem ser alterados na proforma de origem.")
+      return
+    }
     try {
       setErro(null)
       await apiFetch(`/billing/invoiceitem/${itemId}/`, { method: "DELETE" })
@@ -531,12 +551,16 @@ export default function FaturaRascunhoPage() {
     } catch (e: any) {
       setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao remover item."))
     }
-  }, [carregarItens, faturaId, faturaRascunho, podeEditar])
+  }, [carregarItens, faturaId, faturaProforma, faturaRascunho, podeEditar])
 
   const toggleIva = useCallback(async (item: FaturaItem) => {
     if (!item?.id) return
     if (!podeEditar) {
       setErro("Sem permissão para alterar IVA.")
+      return
+    }
+    if (faturaProforma) {
+      setErro("IVA de fatura proforma deve seguir a proforma de origem.")
       return
     }
     try {
@@ -548,7 +572,7 @@ export default function FaturaRascunhoPage() {
     } catch (e: any) {
       setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao atualizar IVA do item."))
     }
-  }, [carregarItens, faturaId, podeEditar])
+  }, [carregarItens, faturaId, faturaProforma, podeEditar])
 
   const issueInvoiceAction = useCallback(async () => {
     if (!faturaId) return
@@ -559,6 +583,10 @@ export default function FaturaRascunhoPage() {
     }
     if (!faturaRascunho) {
       setErro("Somente faturas em rascunho podem ser emitidas.")
+      return
+    }
+    if (faturaProforma) {
+      setErro("Fatura originada de proforma deve seguir o fluxo de proforma, não a emissão direta do rascunho.")
       return
     }
     if (addingItemRef.current || addingItemKey !== null) {
@@ -580,7 +608,7 @@ export default function FaturaRascunhoPage() {
     } finally {
       setAcaoId(null)
     }
-  }, [acaoId, addingItemKey, carregarFatura, faturaId, faturaRascunho, itens.length, podeEditar])
+  }, [acaoId, addingItemKey, carregarFatura, faturaId, faturaProforma, faturaRascunho, itens.length, podeEditar])
 
   const alternarMetodoPagamento = useCallback((metodo: MetodoPagamento, checked: boolean) => {
     setPagamentoMetodosSelecionados((prev) => {

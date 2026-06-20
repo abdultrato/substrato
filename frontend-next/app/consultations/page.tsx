@@ -588,9 +588,10 @@ export default function ConsultationsPage() {
   }, [t])
 
   const renderConsultationCard = useCallback((r: ConsultationRow) => {
-    const canPrepareInvoice = canInvoice && r.status !== "CANCELADA" && (!r.invoice_status || r.invoice_status === "RASC")
-    const invoiceIssued = r.invoice_status === "EMIT" || r.invoice_status === "PAGA"
     const isProformaInvoice = r.invoice_origin === "PRO"
+    const invoiceIssued = r.invoice_status === "EMIT" || r.invoice_status === "PAGA"
+    const canPrepareInvoice = canInvoice && r.status !== "CANCELADA" && !isProformaInvoice && (!r.invoice_status || r.invoice_status === "RASC")
+    const canReviewProformaInvoice = canInvoice && r.status !== "CANCELADA" && isProformaInvoice && r.invoice_status === "RASC"
     // Nota de crédito: só após a fatura original (emitir original OU concluir, que emite a original).
     const canRequestCreditNote = canWrite && (r.status === "CONCLUIDA" || invoiceIssued)
     const loadingReview = invoiceReviewLoading === r.id
@@ -624,7 +625,7 @@ export default function ConsultationsPage() {
             </span>
           ) : null}
           {canPrepareInvoice ? (
-            <div className="grid w-full grid-cols-1 gap-1.5 sm:grid-cols-3">
+            <div className="grid w-full grid-cols-1 gap-1.5 sm:grid-cols-2">
               <button
                 type="button"
                 onClick={() => openInvoiceReview(r, "draft")}
@@ -636,15 +637,6 @@ export default function ConsultationsPage() {
               </button>
               <button
                 type="button"
-                onClick={() => openInvoiceReview(r, "proforma")}
-                disabled={loadingReview}
-                className="flex items-center justify-center gap-1 whitespace-nowrap rounded-md border border-violet-200 bg-violet-50 px-2 py-1 text-[11px] font-semibold text-violet-800 transition hover:bg-violet-100 disabled:opacity-50"
-              >
-                <FileText size={12} />
-                {r.invoice_id && isProformaInvoice ? t("Rever proforma", "Review proforma") : t("Fatura proforma", "Proforma invoice")}
-              </button>
-              <button
-                type="button"
                 onClick={() => openInvoiceReview(r, "issue")}
                 disabled={loadingReview}
                 className="flex flex-1 items-center justify-center gap-1 whitespace-nowrap rounded-md border border-emerald-200 bg-emerald-50 px-2 py-1 text-[11px] font-semibold text-emerald-800 transition hover:bg-emerald-100 disabled:opacity-50"
@@ -653,6 +645,17 @@ export default function ConsultationsPage() {
                 {t("Emitir original", "Issue original")}
               </button>
             </div>
+          ) : null}
+          {canReviewProformaInvoice ? (
+            <button
+              type="button"
+              onClick={() => openInvoiceReview(r, "proforma")}
+              disabled={loadingReview}
+              className="flex w-full items-center justify-center gap-1 whitespace-nowrap rounded-md border border-violet-200 bg-violet-50 px-2 py-1 text-[11px] font-semibold text-violet-800 transition hover:bg-violet-100 disabled:opacity-50"
+            >
+              <FileText size={12} />
+              {t("Rever fatura proforma", "Review proforma invoice")}
+            </button>
           ) : null}
           {r.invoice_id ? (
             <button

@@ -210,7 +210,7 @@ def test_consultation_invoice_preview_and_selected_draft_items(api_client):
 
 
 @pytest.mark.django_db
-def test_consultation_invoice_can_be_saved_as_proforma(api_client):
+def test_consultation_invoice_only_reviews_existing_proforma_invoice(api_client):
     tenant = _tenant(identifier="tn-consults-proforma", domain="consults-proforma.local")
     _authenticate_admin(tenant, api_client)
 
@@ -234,11 +234,30 @@ def test_consultation_invoice_can_be_saved_as_proforma(api_client):
         scheduled_for=timezone.now(),
     )
 
-    response = api_client.post(
+    direct_response = api_client.post(
         f"/api/v1/consultations/consultation/{consultation.id}/create-invoice/",
         {
             "invoice_type": "proforma",
             "issue": False,
+            "selected_items": [f"consultation:{consultation.id}"],
+        },
+        format="json",
+    )
+    assert direct_response.status_code == 400
+    assert "proforma" in str(_response_data(direct_response)).lower()
+    assert not Invoice.objects.filter(consultation=consultation).exists()
+
+    linked_proforma_invoice = Invoice.objects.create(
+        tenant=tenant,
+        origin=Invoice.Origin.PROFORMA,
+        consultation=consultation,
+        patient=patient,
+    )
+
+    response = api_client.post(
+        f"/api/v1/consultations/consultation/{consultation.id}/create-invoice/",
+        {
+            "invoice_type": "proforma",
             "selected_items": [f"consultation:{consultation.id}"],
         },
         format="json",
@@ -249,6 +268,7 @@ def test_consultation_invoice_can_be_saved_as_proforma(api_client):
     invoice = Invoice.objects.get(pk=payload["invoice_id"])
     items = list(invoice.items.filter(deleted=False))
 
+    assert invoice.id == linked_proforma_invoice.id
     assert payload["invoice_origin"] == Invoice.Origin.PROFORMA
     assert invoice.status == Invoice.Status.DRAFT
     assert invoice.origin == Invoice.Origin.PROFORMA

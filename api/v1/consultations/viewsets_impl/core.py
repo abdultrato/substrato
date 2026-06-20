@@ -792,24 +792,38 @@ class MedicalConsultationViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
 
         payload = CreateConsultationInvoiceSerializer(data=request.data or {})
         payload.is_valid(raise_exception=True)
-        invoice_type = payload.validated_data.get("invoice_type")
-        if not invoice_type:
-            invoice_type = "issue" if payload.validated_data.get("issue", True) else "draft"
-        should_issue = invoice_type == "issue"
-        is_proforma = invoice_type == "proforma"
+        requested_invoice_type = payload.validated_data.get("invoice_type")
         selected_items = payload.validated_data.get("selected_items", None)
 
-        if hasattr(consultation, "invoice") and getattr(consultation, "invoice", None):
-            invoice = consultation.invoice
-        else:
+        invoice = self._existing_invoice_for_consultation(consultation)
+        if requested_invoice_type == "proforma" and (
+            invoice is None or invoice.origin != Invoice.Origin.PROFORMA
+        ):
+            raise ValidationError(
+                "Fatura proforma deve vir do fluxo Cotação → Proforma → Fatura; "
+                "a consulta só pode rever uma fatura proforma já vinculada."
+            )
+
+        if invoice is None:
             invoice = Invoice(
                 tenant=consultation.tenant,
-                origin=Invoice.Origin.PROFORMA if is_proforma else Invoice.Origin.CONSULTATION,
+                origin=Invoice.Origin.CONSULTATION,
                 consultation=consultation,
                 patient=consultation.patient,
             )
             invoice.full_clean()
             invoice.save()
+
+        invoice_type = requested_invoice_type
+        if not invoice_type:
+            invoice_type = "proforma" if invoice.origin == Invoice.Origin.PROFORMA else (
+                "issue" if payload.validated_data.get("issue", True) else "draft"
+            )
+        should_issue = invoice_type == "issue"
+        is_proforma = invoice_type == "proforma"
+
+        if invoice.origin == Invoice.Origin.PROFORMA and not is_proforma:
+            raise ValidationError("Faturas proforma vinculadas devem ser revistas no fluxo de proforma.")
 
         # Keep the draft invoice aligned with the consultation pricing.
         if invoice.status != Invoice.Status.DRAFT:

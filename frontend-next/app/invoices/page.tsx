@@ -60,6 +60,21 @@ const ITEM_TYPE_LABELS: Record<string, string> = {
   FAR: "Medicação",
 }
 
+function invoiceOrigin(row?: FaturaRow | null): string {
+  return String(row?.origin ?? row?.origem ?? row?.origem_fatura ?? "").trim()
+}
+
+function isProformaOrigin(row?: FaturaRow | null): boolean {
+  const origin = invoiceOrigin(row)
+  return origin.toUpperCase() === "PRO" || origin.toLowerCase().includes("proforma")
+}
+
+function invoiceOriginLabel(row?: FaturaRow | null): string {
+  const origin = invoiceOrigin(row)
+  if (!origin) return "-"
+  return isProformaOrigin(row) ? "Proforma" : origin
+}
+
 export default function FaturasPage() {
   const router = useRouter()
   const { loading } = useAuthGuard()
@@ -447,80 +462,95 @@ export default function FaturasPage() {
   const columns = useMemo(
     () => [
       { header: "Código", render: (f: FaturaRow) => f.id_custom || f.id },
-      { header: "Origem", render: (f: FaturaRow) => f.origem || "-" },
+      {
+        header: "Origem",
+        render: (f: FaturaRow) => (
+          isProformaOrigin(f)
+            ? (
+              <span className="inline-flex rounded-md border border-violet-200 bg-violet-50 px-2 py-0.5 text-xs font-semibold text-violet-700">
+                Proforma
+              </span>
+            )
+            : invoiceOriginLabel(f)
+        ),
+      },
       { header: "Estado", render: (f: FaturaRow) => f.estado || "-" },
       { header: "Total a pagar", render: (f: FaturaRow) => <MoneyValue value={totalAPagar(f)} /> },
       {
         header: "Ações",
-        render: (f: FaturaRow) => (
-          <div className="flex flex-wrap gap-2">
-            {f.estado === "RASC" ? (
-              <Link
-                href={`/invoices/draft/${f.id}`}
-                className="inline-flex items-center rounded-lg border border-emerald-200 px-3 py-1.5 text-xs font-medium text-emerald-700 transition hover:bg-emerald-50"
+        render: (f: FaturaRow) => {
+          const isProforma = isProformaOrigin(f)
+
+          return (
+            <div className="flex flex-wrap gap-2">
+              {f.estado === "RASC" ? (
+                <Link
+                  href={`/invoices/draft/${f.id}`}
+                  className="inline-flex items-center rounded-lg border border-emerald-200 px-3 py-1.5 text-xs font-medium text-emerald-700 transition hover:bg-emerald-50"
+                >
+                  {isProforma ? "Rever fatura proforma" : podeAlterar ? "Editar rascunho" : "Ver rascunho"}
+                </Link>
+              ) : null}
+              <button
+                className="inline-flex items-center rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-50"
+                onClick={() => detalhar(f)}
               >
-                {podeAlterar ? "Editar rascunho" : "Ver rascunho"}
-              </Link>
-            ) : null}
-            <button
-              className="inline-flex items-center rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-50"
-              onClick={() => detalhar(f)}
-            >
-              Detalhes
-            </button>
-            {podeAlterar && f.estado === "RASC" ? (
+                Detalhes
+              </button>
+              {podeAlterar && f.estado === "RASC" && !isProforma ? (
+                <button
+                  className="inline-flex items-center rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-50"
+                  disabled={acaoId === f.id}
+                  onClick={() => issueInvoiceAction(f.id)}
+                >
+                  Emitir
+                </button>
+              ) : null}
+              <button
+                className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-50"
+                disabled={acaoId === f.id}
+                onClick={() => downloadPdf(f.id)}
+              >
+                <PdfActionLabel loading={acaoId === f.id} loadingLabel="PDF...">
+                  PDF
+                </PdfActionLabel>
+              </button>
               <button
                 className="inline-flex items-center rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-50"
-                disabled={acaoId === f.id}
-                onClick={() => issueInvoiceAction(f.id)}
+                disabled={carregandoItens && itensFaturaId === f.id}
+                onClick={() => carregarItens(f.id)}
               >
-                Emitir
+                Itens/IVA
               </button>
-            ) : null}
-            <button
-              className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-50"
-              disabled={acaoId === f.id}
-              onClick={() => downloadPdf(f.id)}
-            >
-              <PdfActionLabel loading={acaoId === f.id} loadingLabel="PDF...">
-                PDF
-              </PdfActionLabel>
-            </button>
-            <button
-              className="inline-flex items-center rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-50"
-              disabled={carregandoItens && itensFaturaId === f.id}
-              onClick={() => carregarItens(f.id)}
-            >
-              Itens/IVA
-            </button>
-            {f.estado === "PAGA" ? (
-              <button
-                className="inline-flex items-center rounded-lg border border-sky-200 px-3 py-1.5 text-xs font-medium text-sky-700 transition hover:bg-sky-50 disabled:opacity-50"
-                disabled={notificacaoId === f.id}
-                onClick={() => sendInvoiceNotification(f.id)}
-              >
-                {notificacaoId === f.id ? "Notificando..." : "Notificar"}
-              </button>
-            ) : null}
-            {podeAlterar && f.estado === "RASC" ? (
-              <ConfirmDialog
-                title="Anular fatura"
-                message="Esta fatura será anulada. Confirme apenas se já revisou o rascunho."
-                confirmText="Anular"
-                onConfirm={() => voidInvoiceAction(f.id)}
-                disabled={acaoId === f.id}
-              >
+              {f.estado === "PAGA" ? (
                 <button
-                  type="button"
-                  className="inline-flex items-center rounded-lg border border-red-200 px-3 py-1.5 text-xs font-medium text-red-700 transition hover:bg-red-50 disabled:opacity-50"
+                  className="inline-flex items-center rounded-lg border border-sky-200 px-3 py-1.5 text-xs font-medium text-sky-700 transition hover:bg-sky-50 disabled:opacity-50"
+                  disabled={notificacaoId === f.id}
+                  onClick={() => sendInvoiceNotification(f.id)}
+                >
+                  {notificacaoId === f.id ? "Notificando..." : "Notificar"}
+                </button>
+              ) : null}
+              {podeAlterar && f.estado === "RASC" ? (
+                <ConfirmDialog
+                  title="Anular fatura"
+                  message="Esta fatura será anulada. Confirme apenas se já revisou o rascunho."
+                  confirmText="Anular"
+                  onConfirm={() => voidInvoiceAction(f.id)}
                   disabled={acaoId === f.id}
                 >
-                  Anular
-                </button>
-              </ConfirmDialog>
-            ) : null}
-          </div>
-        ),
+                  <button
+                    type="button"
+                    className="inline-flex items-center rounded-lg border border-red-200 px-3 py-1.5 text-xs font-medium text-red-700 transition hover:bg-red-50 disabled:opacity-50"
+                    disabled={acaoId === f.id}
+                  >
+                    Anular
+                  </button>
+                </ConfirmDialog>
+              ) : null}
+            </div>
+          )
+        },
       },
     ],
     [
