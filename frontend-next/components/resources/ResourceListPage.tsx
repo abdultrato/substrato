@@ -2,11 +2,10 @@
 
 import Link from "next/link"
 import { useEffect, useMemo, useState } from "react"
-import { Search, RotateCcw } from "lucide-react"
+import { Search, RotateCcw, BarChart2 } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
 import ResourceActionPanel from "@/components/resources/ResourceActionPanel"
-import ResourceModelReportPanel from "@/components/resources/ResourceModelReportPanel"
 import DataTable from "@/components/ui/DataTable"
 import PageHeader from "@/components/ui/PageHeader"
 import Pagination from "@/components/ui/Pagination"
@@ -598,13 +597,21 @@ export default function ResourceListPage({
           </div>
         )}
 
-        <ResourceModelReportPanel
-          endpoint={normalizedEndpoint}
-          groupLabel={resolvedGroupLabel}
-          resourceLabel={resolvedResourceLabel}
-          searchTerm={debouncedSearch}
-          statusFilter={statusFilter}
-        />
+        <div className="flex items-center justify-between rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-2.5 shadow-sm">
+          <div className="flex items-center gap-2 text-sm text-[var(--gray-700)]">
+            <BarChart2 size={15} className="text-[var(--primary-600)]" />
+            <span>{t("Relatório corporativo disponível", "Corporate report available")}</span>
+            <span className="text-[var(--gray-400)]">·</span>
+            <span className="text-xs text-[var(--gray-500)]">{resolvedGroupLabel} / {resolvedResourceLabel}</span>
+          </div>
+          <Link
+            href={`/reports?endpoint=${encodeURIComponent(normalizedEndpoint)}&group=${encodeURIComponent(resolvedGroupLabel)}&resource=${encodeURIComponent(resolvedResourceLabel)}`}
+            className="inline-flex items-center gap-1.5 rounded-md border border-[var(--primary-200)] bg-[var(--primary-50)] px-3 py-1.5 text-xs font-semibold text-[var(--primary-700)] shadow-sm transition hover:bg-[var(--primary-100)]"
+          >
+            <BarChart2 size={12} />
+            {t("Ver relatório", "View report")}
+          </Link>
+        </div>
 
         <ResourceActionPanel
           endpoint={normalizedEndpoint}

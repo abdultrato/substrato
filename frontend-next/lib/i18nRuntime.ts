@@ -786,7 +786,7 @@ const TOKEN_REPLACEMENTS_EN_TO_PT: Array<[RegExp, string]> = [
   [/\bShipments\b/gu, "Expedições"],
   [/\bShipment\b/gu, "Expedição"],
   [/\bMaterial req\.\b/gu, "Req. Materiais"],
-  [/\bOccupational med\.\b/gu, "Med. Ocupacional"],
+  [/\bOccupational Medicine\b/gu, "Medicina Ocupacional"],
   [/\bHealthcare\b/gu, "Saúde"],
   [/\bhealthcare\b/gu, "saúde"],
   [/\bWorkspace\b/gu, "Área de trabalho"],
