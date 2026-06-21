@@ -19,13 +19,17 @@ import {
   Users,
   X,
 } from "lucide-react"
-import { apiFetch } from "@/lib/api"
+import { apiFetch, apiFetchList } from "@/lib/api"
 
 type LookupItem = {
   id: number
   name: string
+  nome?: string | null
   custom_id?: string | null
   document_number?: string | null
+  nuit?: string | null
+  phone1?: string | null
+  email?: string | null
 }
 
 type DonorRole = "VOL" | "REP"
@@ -360,6 +364,7 @@ function LookupSearch({
   const [loading, setLoading] = useState(false)
   const [open, setOpen] = useState(false)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const requestSeqRef = useRef(0)
 
   useEffect(() => {
     setQuery(value.name)
@@ -371,36 +376,47 @@ function LookupSearch({
     }
   }, [])
 
+  async function loadOptions(searchText: string) {
+    const requestSeq = requestSeqRef.current + 1
+    requestSeqRef.current = requestSeq
+    setLoading(true)
+    try {
+      const { items } = await apiFetchList<LookupItem>(endpoint, {
+        page: 1,
+        pageSize: 25,
+        query: searchText ? { search: searchText } : undefined,
+        clientCache: false,
+      })
+      if (requestSeq === requestSeqRef.current) {
+        setResults(items)
+        setOpen(true)
+      }
+    } catch {
+      if (requestSeq === requestSeqRef.current) {
+        setResults([])
+        setOpen(true)
+      }
+    } finally {
+      if (requestSeq === requestSeqRef.current) setLoading(false)
+    }
+  }
+
   function search(nextQuery: string) {
     setQuery(nextQuery)
     onChange({ id: null, name: nextQuery })
     if (debounceRef.current) clearTimeout(debounceRef.current)
-    if (!nextQuery.trim()) {
-      setResults([])
-      setOpen(false)
-      return
-    }
+    setOpen(true)
     debounceRef.current = setTimeout(async () => {
-      setLoading(true)
-      try {
-        const response = await apiFetch<any>(`${endpoint}?search=${encodeURIComponent(nextQuery)}&page_size=10`)
-        const items = response?.results ?? (Array.isArray(response) ? response : [])
-        setResults(items)
-        setOpen(items.length > 0)
-      } catch {
-        setResults([])
-        setOpen(false)
-      } finally {
-        setLoading(false)
-      }
-    }, 300)
+      await loadOptions(nextQuery.trim())
+    }, 250)
   }
 
   function pick(item: LookupItem) {
-    onChange({ id: item.id, name: item.name })
-    setQuery(item.name)
+    const label = lookupItemLabel(item)
+    onChange({ id: item.id, name: label })
+    setQuery(label)
     setOpen(false)
-    setResults([])
+    setResults([item])
   }
 
   return (
@@ -412,7 +428,10 @@ function LookupSearch({
         className={inputCls}
         autoComplete="off"
         onBlur={() => setTimeout(() => setOpen(false), 150)}
-        onFocus={() => results.length > 0 && setOpen(true)}
+        onFocus={() => {
+          setOpen(true)
+          void loadOptions(query.trim())
+        }}
       />
       {loading ? <span className="absolute right-3 top-2.5 text-xs text-[var(--gray-500)]">...</span> : null}
       {open && results.length > 0 ? (
@@ -423,18 +442,27 @@ function LookupSearch({
               onMouseDown={() => pick(item)}
               className="cursor-pointer px-3 py-2 text-sm text-[var(--text)] hover:bg-[var(--gray-100)]"
             >
-              <span className="block font-medium">{item.name}</span>
-              {item.custom_id || item.document_number ? (
+              <span className="block font-medium">{lookupItemLabel(item)}</span>
+              {item.custom_id || item.document_number || item.nuit ? (
                 <span className="text-xs text-[var(--gray-500)]">
-                  {[item.custom_id, item.document_number].filter(Boolean).join(" · ")}
+                  {[item.custom_id, item.nuit, item.document_number].filter(Boolean).join(" · ")}
                 </span>
               ) : null}
             </li>
           ))}
         </ul>
       ) : null}
+      {open && !loading && query.trim() && results.length === 0 ? (
+        <div className="absolute z-50 mt-1 w-full rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-xs text-[var(--gray-500)] shadow-lg">
+          Nenhum registo encontrado.
+        </div>
+      ) : null}
     </div>
   )
+}
+
+function lookupItemLabel(item: LookupItem) {
+  return item.name || item.nome || item.custom_id || String(item.id)
 }
 
 export function PatientIntakeWizard({
