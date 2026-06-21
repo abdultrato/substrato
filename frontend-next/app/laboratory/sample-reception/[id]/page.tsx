@@ -197,7 +197,7 @@ export default function SampleReceptionDetailPage() {
                             disabled={busyItem === item.id}
                             className="inline-flex h-9 items-center justify-center rounded-md bg-[var(--primary-600)] px-3 text-xs font-semibold text-white shadow-sm transition hover:bg-[var(--primary-700)] disabled:opacity-60"
                           >
-                            Amostra recebida
+                            Confirmar receção no laboratório
                           </button>
                           <button
                             type="button"

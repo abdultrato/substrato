@@ -4,12 +4,20 @@ from __future__ import annotations
 
 from typing import Any
 
+from django.conf import settings
 from rest_framework.permissions import AllowAny
+from rest_framework.permissions import IsAdminUser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 
-class SpectacularAPIView(APIView):
+class _DynamicDocsPermissionMixin:
+    def get_permissions(self):
+        permission_class = AllowAny if getattr(settings, "API_DOCS_PUBLIC", False) else IsAdminUser
+        return [permission_class()]
+
+
+class SpectacularAPIView(_DynamicDocsPermissionMixin, APIView):
     permission_classes = [AllowAny]
 
     def get(self, request, *args: Any, **kwargs: Any):
@@ -19,7 +27,7 @@ class SpectacularAPIView(APIView):
         return Response(generator.get_schema(request=request, public=True))
 
 
-class _DocsView(APIView):
+class _DocsView(_DynamicDocsPermissionMixin, APIView):
     permission_classes = [AllowAny]
     title = "Substrato API"
     url_name = None

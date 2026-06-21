@@ -259,7 +259,7 @@ export default function RecepcaoPage() {
                     </div>
                 )}
 
-                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                <div className="grid gap-2 sm:grid-cols-2 md:grid-cols-4">
                     <ResumoCard title="Check-ins hoje" value={workspace.summary.checkins_today} icon={Users} />
                     <ResumoCard title="Na fila" value={workspace.summary.queue_size} icon={ClipboardList} />
                     <ResumoCard title="Em atendimento" value={workspace.summary.in_care} icon={UserPlus} />
@@ -270,50 +270,46 @@ export default function RecepcaoPage() {
                     />
                 </div>
 
-                <Card title="Marcação por Categoria">
-                    <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+                <div className="grid gap-6 lg:grid-cols-2">
+                    <Card title="Marcação por Categoria">
+                    <div className="flex flex-col gap-1.5">
                         {marcacoesPorSector.map((sector) => {
                             const iconUrl = lucideToDataUrl(sector.icon)
                             return (
                                 <Link
                                     key={sector.href}
                                     href={sector.href}
-                                    className="group relative flex min-h-[100px] flex-col justify-end overflow-hidden rounded-lg border border-border bg-card p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/40 hover:bg-muted/40 hover:shadow-md"
+                                    className="group flex h-9 w-full items-center gap-2 rounded-lg border border-border bg-card px-3 shadow-sm transition-colors hover:border-primary/40 hover:bg-muted/40"
                                 >
                                     <span
                                         aria-hidden
-                                        className="pointer-events-none absolute inset-0"
+                                        className="pointer-events-none relative shrink-0 h-5 w-5 rounded bg-muted"
                                         style={{
-                                            background: "currentColor",
-                                            color: "hsl(var(--muted-foreground-hsl))",
-                                            opacity: 0.13,
+                                            background: "hsl(var(--muted-foreground-hsl))",
+                                            opacity: 0.5,
                                             WebkitMaskImage: `url("${iconUrl}")`,
                                             WebkitMaskRepeat: "no-repeat",
-                                            WebkitMaskSize: "52%",
-                                            WebkitMaskPosition: "center 30%",
+                                            WebkitMaskSize: "65%",
+                                            WebkitMaskPosition: "center",
                                             maskImage: `url("${iconUrl}")`,
                                             maskRepeat: "no-repeat",
-                                            maskSize: "52%",
-                                            maskPosition: "center 30%",
+                                            maskSize: "65%",
+                                            maskPosition: "center",
                                         }}
                                     />
-                                    <p className="relative text-sm font-semibold text-foreground">{sector.title}</p>
+                                    <p className="text-sm font-medium text-foreground group-hover:text-primary">{sector.title}</p>
                                 </Link>
                             )
                         })}
                     </div>
-                </Card>
+                    </Card>
 
-                <div className="grid gap-6 xl:grid-cols-[1.3fr_0.9fr]">
-                    <Card
-                        title="Fila do dia"
-                        subtitle="Pacientes que passaram pela recepção hoje."
-                    >
+                    <Card title="Fila do dia">
                         {carregando ? (
                             <div className="text-sm text-muted-foreground">Carregando fila...</div>
                         ) : workspace.queue.length === 0 ? (
                             <div className="text-sm text-muted-foreground">
-                                Nenhum check-in aberto hoje. A recepção já pode começar a registrar entradas.
+                                Nenhum check-in aberto hoje.
                             </div>
                         ) : (
                             <div className="overflow-x-auto">
@@ -349,12 +345,11 @@ export default function RecepcaoPage() {
                             </div>
                         )}
                     </Card>
+                </div>
 
-                    <div className="space-y-6">
-                        <Card
-                            title="Indicadores operacionais"
-                            subtitle="Pendências que impactam diretamente o balcão."
-                        >
+
+                <div className="grid grid-cols-2 gap-4 items-start">
+                        <Card title="Indicadores operacionais">
                             <div className="space-y-3 text-sm">
                                 <IndicadorLinha label="Pacientes novos" value={workspace.summary.new_patients} href="/patients" />
                                 <IndicadorLinha label="Requisições pendentes" value={workspace.summary.pending_requests} href="/requests/pendentes" />
@@ -363,10 +358,7 @@ export default function RecepcaoPage() {
                             </div>
                         </Card>
 
-                        <Card
-                            title="Atalhos da recepção"
-                            subtitle="Entradas rápidas para os fluxos já existentes do sistema."
-                        >
+                        <Card title="Atalhos da recepção">
                             <div className="space-y-3">
                                 {/* Entrada de paciente — abre o wizard de registo por etapas */}
                                 <button
@@ -417,7 +409,6 @@ export default function RecepcaoPage() {
                             </div>
                         </Card>
                     </div>
-                </div>
 
                 {(loadingNotes || approvedNotes.length > 0 || rejectedNotes.length > 0) && (
                     <div className="grid gap-4 lg:grid-cols-2">
@@ -467,10 +458,10 @@ function ReceptionDecidedSection({
     emptyMsg: string
     tone: "emerald" | "red"
 }) {
-    const borderColor = tone === "emerald" ? "border-emerald-200" : "border-red-200"
-    const bgColor = tone === "emerald" ? "bg-emerald-50" : "bg-red-50"
-    const textColor = tone === "emerald" ? "text-emerald-800" : "text-red-800"
-    const subTextColor = tone === "emerald" ? "text-emerald-700" : "text-red-700"
+    const borderColor = tone === "emerald" ? "border-emerald-200 dark:border-emerald-800/50" : "border-red-200 dark:border-red-800/50"
+    const bgColor = tone === "emerald" ? "bg-emerald-50/60 dark:bg-emerald-900/15" : "bg-red-50/60 dark:bg-red-900/15"
+    const textColor = tone === "emerald" ? "text-emerald-800 dark:text-emerald-300" : "text-red-800 dark:text-red-300"
+    const subTextColor = tone === "emerald" ? "text-emerald-700 dark:text-emerald-400" : "text-red-700 dark:text-red-400"
 
     return (
         <section className="rounded-lg border border-border bg-card p-2 shadow-sm">
@@ -569,10 +560,10 @@ function ResumoCard({
 }) {
     const iconUrl = lucideToDataUrl(Icon)
     return (
-        <div className="relative overflow-hidden rounded-lg border border-border bg-card px-4 py-3 shadow-sm">
+        <div className="relative overflow-hidden rounded-lg border border-border bg-card px-3 py-2 shadow-sm">
             <span
                 aria-hidden
-                className="pointer-events-none absolute right-3 top-1/2 h-12 w-12 -translate-y-1/2"
+                className="pointer-events-none absolute right-2 top-1/2 h-9 w-9 -translate-y-1/2"
                 style={{
                     background: "currentColor",
                     color: "hsl(var(--muted-foreground-hsl))",
@@ -587,8 +578,8 @@ function ResumoCard({
                     maskPosition: "center",
                 }}
             />
-            <div className="text-sm text-muted-foreground">{title}</div>
-            <div className="mt-1 text-2xl font-semibold text-foreground">{value}</div>
+            <div className="text-xs text-muted-foreground">{title}</div>
+            <div className="text-xl font-semibold text-foreground">{value}</div>
         </div>
     )
 }

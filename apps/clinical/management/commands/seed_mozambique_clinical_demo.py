@@ -405,8 +405,11 @@ def _weekday_datetime(days_offset: int, hour: int) -> datetime:
     return timezone.make_aware(datetime.combine(base, time(hour=hour, minute=0)))
 
 
-def _first_by_custom_id(model, custom_id: str):
-    return model.all_objects.filter(custom_id=custom_id).first()
+def _first_by_custom_id(model, custom_id: str, tenant=None):
+    qs = model.all_objects.filter(custom_id=custom_id)
+    if tenant is not None:
+        qs = qs.filter(tenant=tenant)
+    return qs.first()
 
 
 class Command(BaseCommand):
@@ -523,8 +526,9 @@ class Command(BaseCommand):
 
     def _ensure_samples(self, tenant):
         samples = {}
-        for custom_id, name, bottle_type, cap_color, volume, fasting, fasting_hours, storage, anticoagulant in SAMPLE_SPECS:
-            sample = _first_by_custom_id(Sample, custom_id)
+        for base_id, name, bottle_type, cap_color, volume, fasting, fasting_hours, storage, anticoagulant in SAMPLE_SPECS:
+            custom_id = f"{base_id}-T{tenant.pk}"
+            sample = _first_by_custom_id(Sample, custom_id, tenant)
             if not sample:
                 sample = Sample(
                     tenant=tenant,
@@ -546,8 +550,10 @@ class Command(BaseCommand):
 
     def _ensure_lab_catalog(self, tenant, samples):
         exams = []
-        for exam_index, (custom_id, name, price, method, sector, sample_id, fields) in enumerate(LAB_EXAM_SPECS, start=1):
-            exam = _first_by_custom_id(LabExam, custom_id)
+        for exam_index, (base_id, name, price, method, sector, sample_base_id, fields) in enumerate(LAB_EXAM_SPECS, start=1):
+            custom_id = f"{base_id}-T{tenant.pk}"
+            sample_id = f"{sample_base_id}-T{tenant.pk}"
+            exam = _first_by_custom_id(LabExam, custom_id, tenant)
             if not exam:
                 exam = LabExam(
                     tenant=tenant,
@@ -563,8 +569,8 @@ class Command(BaseCommand):
                 )
                 exam.save()
             for position, (field_name, unit, ref_min, ref_max) in enumerate(fields, start=1):
-                field_custom_id = f"CMP-MZ-{exam_index:03d}-{position:02d}"
-                if _first_by_custom_id(LabExamField, field_custom_id):
+                field_custom_id = f"CMP-MZ-T{tenant.pk}-{exam_index:03d}-{position:02d}"
+                if _first_by_custom_id(LabExamField, field_custom_id, tenant):
                     continue
                 LabExamField(
                     tenant=tenant,
@@ -584,8 +590,9 @@ class Command(BaseCommand):
 
     def _ensure_medical_catalog(self, tenant):
         exams = []
-        for index, (custom_id, name, price, method, sector) in enumerate(MEDICAL_EXAM_SPECS, start=1):
-            exam = _first_by_custom_id(MedicalExam, custom_id)
+        for index, (base_id, name, price, method, sector) in enumerate(MEDICAL_EXAM_SPECS, start=1):
+            custom_id = f"{base_id}-T{tenant.pk}"
+            exam = _first_by_custom_id(MedicalExam, custom_id, tenant)
             if not exam:
                 exam = MedicalExam(
                     tenant=tenant,
@@ -604,8 +611,8 @@ class Command(BaseCommand):
             preferred = [MedicalExamResultType.RELATORIO_PDF, MedicalExamResultType.IMAGEM, MedicalExamResultType.VIDEO]
             field_types = [item for item in preferred if item in allowed] or allowed[:1]
             for position, field_type in enumerate(field_types, start=1):
-                field_custom_id = f"EMC-MZ-{index:03d}-{position:02d}"
-                if _first_by_custom_id(MedicalExamField, field_custom_id):
+                field_custom_id = f"EMC-MZ-T{tenant.pk}-{index:03d}-{position:02d}"
+                if _first_by_custom_id(MedicalExamField, field_custom_id, tenant):
                     continue
                 label = dict(MedicalExamResultType.choices).get(field_type, str(field_type))
                 MedicalExamField(
@@ -622,8 +629,8 @@ class Command(BaseCommand):
     def _ensure_specialties(self, tenant):
         specialties = []
         for index, (name, price, description) in enumerate(CONSULTATION_SPECIALTIES, start=1):
-            custom_id = f"ESP-MZ-{index:03d}"
-            specialty = _first_by_custom_id(ConsultationSpecialty, custom_id)
+            custom_id = f"ESP-MZ-T{tenant.pk}-{index:03d}"
+            specialty = _first_by_custom_id(ConsultationSpecialty, custom_id, tenant)
             if not specialty:
                 specialty = ConsultationSpecialty(
                     tenant=tenant,
@@ -667,14 +674,14 @@ class Command(BaseCommand):
         doctors = []
         for index, specialty in enumerate(specialties, start=1):
             for slot in range(1, 3):
-                document_number = f"{EMPLOYEE_DOC_PREFIX}-{index:03d}-{slot:02d}"
+                document_number = f"{EMPLOYEE_DOC_PREFIX}-T{tenant.pk}-{index:03d}-{slot:02d}"
                 doctor = Employee.all_objects.filter(tenant=tenant, document_number=document_number).first()
                 if not doctor:
                     gender = rng.choice([Employee.Gender.MALE, Employee.Gender.FEMALE])
                     first = rng.choice(FIRST_NAMES_M if gender == Employee.Gender.MALE else FIRST_NAMES_F)
                     doctor = Employee(
                         tenant=tenant,
-                        custom_id=f"FUN-MZ-{index:03d}-{slot:02d}",
+                        custom_id=f"FUN-MZ-T{tenant.pk}-{index:03d}-{slot:02d}",
                         name=f"Dr(a). {first} {rng.choice(SURNAMES)} {rng.choice(SURNAMES)}",
                         role=role,
                         profession=profession,
@@ -693,8 +700,9 @@ class Command(BaseCommand):
     def _ensure_patients(self, tenant, count, rng):
         patients = []
         today = timezone.localdate()
+        pat_prefix = f"{PATIENT_DOC_PREFIX}-T{tenant.pk}"
         for index in range(1, count + 1):
-            document_number = f"{PATIENT_DOC_PREFIX}-{index:05d}"
+            document_number = f"{pat_prefix}-{index:05d}"
             patient = Patient.all_objects.filter(tenant=tenant, document_number=document_number).first()
             if patient:
                 patients.append(patient)
@@ -711,7 +719,7 @@ class Command(BaseCommand):
 
             patient = Patient(
                 tenant=tenant,
-                custom_id=f"PAC-MZ-{index:05d}",
+                custom_id=f"PAC-MZ-T{tenant.pk}-{index:05d}",
                 name=name,
                 gender=gender,
                 birth_date=birth_date,
@@ -740,11 +748,11 @@ class Command(BaseCommand):
                 address_country="MZ",
                 address_complement=f"Residencia familiar no distrito de {district}.",
                 contact=f"+2588{rng.randint(2, 7)}{rng.randint(1000000, 9999999)}",
-                email=f"{_slug(first)}.{document_number.lower()}@exemplo.local",
+                email=f"{_slug(first)}.{document_number.lower()}.t{tenant.pk}@exemplo.local",
                 companion_name=f"{rng.choice(FIRST_NAMES_M + FIRST_NAMES_F)} {rng.choice(SURNAMES)}",
                 companion_relationship=rng.choice(["Conjuge", "Pai", "Mae", "Irmao(a)", "Filho(a)", "Tio(a)"]),
                 companion_contact=f"+2588{rng.randint(2, 7)}{rng.randint(1000000, 9999999)}",
-                companion_email=f"acomp.{document_number.lower()}@exemplo.local",
+                companion_email=f"acomp.{document_number.lower()}.t{tenant.pk}@exemplo.local",
                 provenance=rng.choice(CLINICAL_ORIGINS),
                 is_replacement_donor_inapt=rng.random() < 0.08,
             )
@@ -756,8 +764,8 @@ class Command(BaseCommand):
         return patients
 
     def _ensure_consultation(self, tenant, patient, index, specialties, doctors, rng):
-        custom_id = f"CONS-MZ-{index:05d}"
-        if _first_by_custom_id(MedicalConsultation, custom_id):
+        custom_id = f"CONS-MZ-T{tenant.pk}-{index:05d}"
+        if _first_by_custom_id(MedicalConsultation, custom_id, tenant):
             return None
 
         specialty = rng.choice(specialties)
@@ -791,8 +799,8 @@ class Command(BaseCommand):
         return consultation
 
     def _ensure_consultation_invoice(self, tenant, consultation, index):
-        custom_id = f"FAT-MZ-CON-{index:05d}"
-        if _first_by_custom_id(Invoice, custom_id):
+        custom_id = f"FAT-MZ-CON-T{tenant.pk}-{index:05d}"
+        if _first_by_custom_id(Invoice, custom_id, tenant):
             return 0
 
         invoice = Invoice(
@@ -813,8 +821,8 @@ class Command(BaseCommand):
         return 1
 
     def _ensure_lab_request(self, tenant, patient, index, lab_exams, rng):
-        custom_id = f"REQ-MZ-LAB-{index:05d}"
-        if _first_by_custom_id(LabRequest, custom_id):
+        custom_id = f"REQ-MZ-LAB-T{tenant.pk}-{index:05d}"
+        if _first_by_custom_id(LabRequest, custom_id, tenant):
             return None
 
         request = LabRequest(
@@ -834,8 +842,8 @@ class Command(BaseCommand):
         return request
 
     def _ensure_medical_request(self, tenant, patient, index, medical_exams, rng):
-        custom_id = f"REQ-MZ-MED-{index:05d}"
-        if _first_by_custom_id(LabRequest, custom_id):
+        custom_id = f"REQ-MZ-MED-T{tenant.pk}-{index:05d}"
+        if _first_by_custom_id(LabRequest, custom_id, tenant):
             return None
 
         request = LabRequest(
@@ -853,8 +861,8 @@ class Command(BaseCommand):
         return request
 
     def _ensure_request_invoice(self, tenant, patient, request, kind, index):
-        custom_id = f"FAT-MZ-{kind}-{index:05d}"
-        if _first_by_custom_id(Invoice, custom_id):
+        custom_id = f"FAT-MZ-{kind}-T{tenant.pk}-{index:05d}"
+        if _first_by_custom_id(Invoice, custom_id, tenant):
             return 0
 
         invoice = Invoice(

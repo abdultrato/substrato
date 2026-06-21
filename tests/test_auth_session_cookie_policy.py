@@ -1,7 +1,12 @@
 from django.test import RequestFactory
 from rest_framework.response import Response
 
-from api.v1.auth.views import COOKIE_ACCESS_NAME, COOKIE_REFRESH_NAME, _set_jwt_cookies
+from api.v1.auth.views import (
+    COOKIE_ACCESS_NAME,
+    COOKIE_REFRESH_NAME,
+    _apply_sensitive_response_headers,
+    _set_jwt_cookies,
+)
 
 
 def test_login_session_settings_expire_after_idle_and_browser_close(settings):
@@ -33,3 +38,11 @@ def test_jwt_cookies_can_use_configured_max_age_when_not_session_only(settings):
 
     assert str(response.cookies[COOKIE_ACCESS_NAME]["max-age"]) == "1800"
     assert str(response.cookies[COOKIE_REFRESH_NAME]["max-age"]) == "1800"
+
+
+def test_sensitive_auth_responses_disable_caching():
+    response = _apply_sensitive_response_headers(Response({"detail": "ok"}))
+
+    assert response["Cache-Control"] == "no-store, no-cache, must-revalidate, max-age=0"
+    assert response["Pragma"] == "no-cache"
+    assert response["Expires"] == "0"

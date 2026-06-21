@@ -68,7 +68,7 @@ export default function SampleReceptionListPage() {
           <div className="space-y-3">
             {rows.map((row) => {
               const items = Array.isArray(row.items) ? row.items : []
-              const pendentes = items.filter((item: any) => item.exam && item.sample_status === "aguardando").length
+              const pendentes = items.filter((item: any) => item.exam && item.sample_status === "coletada").length
               return (
                 <Link
                   key={row.id}

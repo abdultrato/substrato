@@ -3,6 +3,7 @@
 import { useMemo } from "react"
 
 import { useLanguage } from "@/hooks/useLanguage"
+import { getClinicalStatusLabel } from "@/lib/clinicalStatus"
 import { useRelationLabels } from "@/hooks/useRelationLabels"
 import { fieldLabel, isInternalField } from "@/lib/ui/fieldLabels"
 import { canonicalCollectionPath } from "@/lib/openapi/endpointResolver"
@@ -98,6 +99,8 @@ const HIDDEN_DETAIL_FIELDS_BY_ENDPOINT: Record<string, Set<string>> = {
     "estado_clinico",
     "estado_clínico",
     "prioridade",
+    "prioridade_display",
+    "clinical_status_display",
     "possui_resultado_critico",
     "possui_resultado_crítico",
     "exames",
@@ -143,6 +146,9 @@ function fmtValue(
 
   // ISO-ish dates
   if (typeof value === "string") {
+    if (key === "clinical_status" || key === "status_clinico") {
+      return getClinicalStatusLabel(value)
+    }
     const d = new Date(value)
     if (!Number.isNaN(d.getTime()) && /T|\d{4}-\d{2}-\d{2}/.test(value)) {
       return d.toLocaleString()

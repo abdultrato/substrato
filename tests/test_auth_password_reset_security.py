@@ -6,6 +6,21 @@ import pytest
 
 from apps.identity.models.password_reset_token import PasswordResetToken
 from apps.tenants.models.tenant import Tenant
+from api.v1.auth.views import (
+    LoginView,
+    PasswordResetConfirmView,
+    PasswordResetRequestView,
+    RefreshView,
+)
+from api.v1.onboarding.views import PaymentWebhookView, SignupView
+from security.throttling import (
+    AuthRefreshRateThrottle,
+    LoginRateThrottle,
+    PasswordResetConfirmRateThrottle,
+    PasswordResetRequestRateThrottle,
+    SignupRateThrottle,
+    WebhookRateThrottle,
+)
 
 
 def _tenant():
@@ -111,3 +126,32 @@ def test_metrics_endpoint_rejects_wrong_bearer_token(settings, api_client):
     response = api_client.get("/metrics", HTTP_AUTHORIZATION="Bearer wrong-token")
 
     assert response.status_code == 404
+
+
+def test_public_sensitive_views_use_dedicated_throttles():
+    assert LoginView.throttle_classes == [LoginRateThrottle]
+    assert RefreshView.throttle_classes == [AuthRefreshRateThrottle]
+    assert PasswordResetRequestView.throttle_classes == [PasswordResetRequestRateThrottle]
+    assert PasswordResetConfirmView.throttle_classes == [PasswordResetConfirmRateThrottle]
+    assert SignupView.throttle_classes == [SignupRateThrottle]
+    assert PaymentWebhookView.throttle_classes == [WebhookRateThrottle]
+
+
+def test_auth_and_onboarding_throttle_rates_are_explicit(settings):
+    rates = settings.REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]
+
+    assert rates["login"] == "5/min"
+    assert rates["auth_refresh"] == "30/min"
+    assert rates["password_reset_request"] == "3/hour"
+    assert rates["password_reset_confirm"] == "10/hour"
+    assert rates["signup"] == "3/hour"
+    assert rates["webhook"] == "60/min"
+
+
+@pytest.mark.django_db
+def test_api_schema_requires_admin_when_docs_are_not_public(settings, api_client):
+    settings.API_DOCS_PUBLIC = False
+
+    response = api_client.get("/api/schema/")
+
+    assert response.status_code in {401, 403}

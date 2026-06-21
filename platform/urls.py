@@ -11,7 +11,6 @@ from django.urls import include, path, re_path
 from django.views.decorators.http import require_GET
 from django.views.generic import RedirectView
 from django.views.static import serve as django_static_serve
-from rest_framework.permissions import AllowAny
 
 from apps.billing.public_views import verify_invoice
 from core.admin_autoregister import register_unregistered_local_models
@@ -125,15 +124,15 @@ urlpatterns = [
 
 if SpectacularAPIView is not None:
     urlpatterns += [
-        path("api/schema/", SpectacularAPIView.as_view(permission_classes=[AllowAny]), name="schema"),
+        path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
         path(
             "api/docs/",
-            SpectacularSwaggerView.as_view(url_name="schema", permission_classes=[AllowAny]),
+            SpectacularSwaggerView.as_view(url_name="schema"),
             name="swagger-ui",
         ),
         path(
             "api/redoc/",
-            SpectacularRedocView.as_view(url_name="schema", permission_classes=[AllowAny]),
+            SpectacularRedocView.as_view(url_name="schema"),
             name="redoc",
         ),
     ]

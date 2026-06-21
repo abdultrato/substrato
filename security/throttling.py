@@ -58,4 +58,43 @@ class LoginRateThrottle(TenantScopedThrottleMixin, AnonRateThrottle):
     """
 
     scope = "login"
-"""Componentes DRF de throttling customizado."""
+
+
+class AuthRefreshRateThrottle(TenantScopedThrottleMixin, AnonRateThrottle):
+    """
+    Limita tentativas de refresh para reduzir abuso de sessão.
+    """
+
+    scope = "auth_refresh"
+
+
+class PasswordResetRequestRateThrottle(TenantScopedThrottleMixin, AnonRateThrottle):
+    """
+    Reduz spam e enumeração via pedidos de reset.
+    """
+
+    scope = "password_reset_request"
+
+
+class PasswordResetConfirmRateThrottle(TenantScopedThrottleMixin, AnonRateThrottle):
+    """
+    Dificulta brute force de códigos de reposição.
+    """
+
+    scope = "password_reset_confirm"
+
+
+class SignupRateThrottle(TenantScopedThrottleMixin, AnonRateThrottle):
+    """
+    Limita criação pública de contas e tenants.
+    """
+
+    scope = "signup"
+
+
+class WebhookRateThrottle(TenantScopedThrottleMixin, AnonRateThrottle):
+    """
+    Absorve rajadas anormais em webhooks públicos.
+    """
+
+    scope = "webhook"

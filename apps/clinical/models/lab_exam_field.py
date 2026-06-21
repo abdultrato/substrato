@@ -15,7 +15,8 @@ class LabExamField(TenantPropagationMixin, ScopedPositionMixin, CoreModel):
     """Campo mensurado de um exame laboratorial (valor numérico, texto etc.)."""
 
     tenant_source = "exam"
-    prefix = "CMP"  # Prefixo para IDs amigáveis
+    prefix = "CMP"
+    name_preserve_case = True
 
     exam = models.ForeignKey(
 

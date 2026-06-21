@@ -335,6 +335,16 @@ class LabRequest(NoNameCoreModel):
         self.save(update_fields=["validated_at", "validated_by", "updated_at"])
         return self
 
+    def cancelar(self, user=None):
+        """Cancela uma requisição pendente antes de ir para colheita."""
+        if self.status == ResultState.CANCELED:
+            raise ValidationError("Requisição já foi cancelada.")
+        if self.validated_at:
+            raise ValidationError("Não é possível cancelar uma requisição já enviada para colheita.")
+        self.status = ResultState.CANCELED
+        self.save(update_fields=["status", "updated_at"])
+        return self
+
     def registar_colheita(self, user=None):
         """Enfermagem regista a colheita; a requisição segue para o laboratório."""
         from django.utils import timezone

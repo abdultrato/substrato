@@ -101,7 +101,8 @@ class MedicalExam(TenantPropagationMixin, CoreModel):
     """
 
     tenant_source = "patient"
-    prefix = "EXM"  # Prefixo para IDs amigáveis
+    prefix = "EXM"
+    name_preserve_case = True
 
     turnaround_hours = models.PositiveIntegerField(
 
@@ -167,9 +168,9 @@ class MedicalExam(TenantPropagationMixin, CoreModel):
         ]
         constraints = [
             models.UniqueConstraint(
-                fields=["sector", "name"],
+                fields=["tenant", "sector", "name"],
                 condition=Q(deleted=False),
-                name="unique_name_medical_exam_por_sector_nao_deleted",
+                name="unique_name_medical_exam_por_tenant_sector_nao_deleted",
             ),
             check_constraint(
                 condition=Q(turnaround_hours__gt=0),
@@ -215,6 +216,7 @@ class MedicalExam(TenantPropagationMixin, CoreModel):
 
 class MedicalExamField(TenantPropagationMixin, ScopedPositionMixin, CoreModel):
     prefix = "EMC"
+    name_preserve_case = True
 
     exam = models.ForeignKey(
 

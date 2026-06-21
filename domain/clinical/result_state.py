@@ -7,8 +7,9 @@ class ResultState:
     VALIDATED = "validado"
     REJECTED = "rejeitado"
     DISREGARDED = "desconsiderado"
+    CANCELED = "cancelado"
 
-    TERMINAL = {VALIDATED}
+    TERMINAL = {VALIDATED, CANCELED}
 
     CHOICES = [
         (PENDING, "Pendente"),
@@ -17,4 +18,5 @@ class ResultState:
         (VALIDATED, "Validado"),
         (REJECTED, "Rejeitado"),
         (DISREGARDED, "Desconsiderado"),
+        (CANCELED, "Cancelado"),
     ]

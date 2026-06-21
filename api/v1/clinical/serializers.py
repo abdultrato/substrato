@@ -928,6 +928,7 @@ class LabRequestSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializ
         "estado_clinico": "clinical_status",
         "estado_clínico": "clinical_status",
         "prioridade": "clinical_status",
+        "prioridade_display": "clinical_status_display",
         "possui_resultado_critico": "has_critical_result",
         "possui_resultado_crítico": "has_critical_result",
         "exames": "exams",
@@ -945,6 +946,7 @@ class LabRequestSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializ
     occupational_profile_name = serializers.CharField(source="occupational_profile.name", read_only=True)
     requesting_physician_name = serializers.CharField(source="requesting_physician.name", read_only=True)
     patient_age = serializers.SerializerMethodField()
+    clinical_status_display = serializers.CharField(source="get_clinical_status_display", read_only=True)
     requesting_company_name = serializers.CharField(source="requesting_company.name", read_only=True)
     external_executing_company_name = serializers.CharField(source="external_executing_company.name", read_only=True)
 
@@ -1011,6 +1013,7 @@ class LabRequestSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializ
             "occupational_profile_name",
             "requesting_physician_name",
             "patient_age",
+            "clinical_status_display",
             "validated_at",
             "validated_by",
             "collected_at",

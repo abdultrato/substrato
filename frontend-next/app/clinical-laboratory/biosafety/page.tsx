@@ -15,7 +15,6 @@ import {
 } from "lucide-react";
 import AppLayout from "@/components/layout/AppLayout";
 import { GROUPS } from "@/lib/rbac";
-import LabNav from "@/components/clinical-laboratory/LabNav";
 
 const ITEMS = [
   { href: "/clinical-laboratory/biosafety/hazards", label: "Perigos biológicos", desc: "Registo de agentes e grupos de risco", icon: Skull },
@@ -31,7 +30,7 @@ const ITEMS = [
 
 export default function BiosafetyHubPage() {
   return (
-    <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.LABORATORIO]} subNav={<LabNav />}>
+    <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.LABORATORIO]}>
       <main className="p-6 max-w-6xl mx-auto">
       <header className="mb-8 flex items-start gap-3">
         <div className="rounded-xl bg-red-50 p-3 text-red-600"><ShieldCheck size={26} /></div>

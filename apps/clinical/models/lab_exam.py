@@ -21,7 +21,8 @@ class LabExam(TenantPropagationMixin, CoreModel):
     """
 
     tenant_source = "patient"
-    prefix = "EXA"  # Prefixo para IDs amigáveis
+    prefix = "EXA"
+    name_preserve_case = True
 
     # =====================================================
     # CAMPOS
@@ -118,9 +119,9 @@ class LabExam(TenantPropagationMixin, CoreModel):
 
         constraints = [
             models.UniqueConstraint(
-                fields=["sector", "name"],
+                fields=["tenant", "sector", "name"],
                 condition=Q(deleted=False),
-                name="unique_name_exam_por_sector_nao_deleted",
+                name="unique_name_exam_por_tenant_sector_nao_deleted",
             ),
             check_constraint(
                 condition=Q(turnaround_hours__gt=0),

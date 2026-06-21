@@ -21,7 +21,6 @@ import {
 } from "lucide-react";
 import AppLayout from "@/components/layout/AppLayout";
 import { GROUPS } from "@/lib/rbac";
-import LabNav from "@/components/clinical-laboratory/LabNav";
 import { lucideToDataUrl } from "@/lib/icon-svg";
 
 type Section = {
@@ -38,16 +37,6 @@ type Phase = {
 };
 
 const PHASES: Phase[] = [
-  {
-    title: "Fluxo de requisições",
-    hint: "Receção de amostras, pedidos e resultados das requisições clínicas (REQ).",
-    items: [
-      { href: "/laboratory/sample-reception", label: "Receção de amostras", desc: "Conferência e aceitação/rejeição das amostras coletadas", icon: PackageCheck },
-      { href: "/laboratory/pedidos", label: "Pedidos", desc: "Amostras conferidas: iniciar processamento ou transferir", icon: ClipboardList },
-      { href: "/laboratory/worklist", label: "Listas de trabalho", desc: "Inserir, gravar e validar resultados", icon: Beaker },
-      { href: "/laboratory/laudos", label: "Laudos", desc: "Requisições validadas: laudo PDF e notificação", icon: FileCheck2 },
-    ],
-  },
   {
     title: "Catálogo",
     hint: "Configuração técnica e financeira do laboratório.",
@@ -116,7 +105,7 @@ const PHASES: Phase[] = [
 
 export default function ClinicalLaboratoryHubPage() {
   return (
-    <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.LABORATORIO]} subNav={<LabNav />}>
+    <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.LABORATORIO]}>
       <main className="p-6 max-w-6xl mx-auto">
       <header className="mb-8 flex items-start gap-3">
         <div className="relative rounded-xl bg-indigo-50 p-3 w-[52px] h-[52px] shrink-0">
@@ -138,32 +127,32 @@ export default function ClinicalLaboratoryHubPage() {
           />
         </div>
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Laboratório Clínico (LIS)</h1>
+          <h1 className="text-2xl font-bold text-slate-900">Laboratório Clínico</h1>
         </div>
       </header>
 
-      <div className="space-y-8">
+      <div className="space-y-5">
         {PHASES.map((phase) => (
           <section key={phase.title}>
-            <div className="mb-3 flex items-baseline gap-3">
-              <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-700">
+            <div className="mb-2 flex items-baseline gap-2">
+              <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-600">
                 {phase.title}
               </h2>
               <span className="text-xs text-slate-400">{phase.hint}</span>
             </div>
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="flex flex-wrap gap-2">
               {phase.items.map((item) => {
                 const iconUrl = lucideToDataUrl(item.icon);
                 return (
                   <Link
                     key={item.href}
                     href={item.href}
-                    className="group flex items-start gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-colors hover:border-indigo-300 hover:bg-indigo-50/40"
+                    className="group flex h-9 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 shadow-sm transition-colors hover:border-indigo-300"
                   >
-                    <span className="mt-0.5 relative shrink-0 w-6 h-6 rounded-md bg-gray-100">
+                    <span className="relative shrink-0 w-5 h-5 rounded bg-gray-100">
                       <span
                         aria-hidden
-                        className="pointer-events-none absolute inset-0 rounded-md"
+                        className="pointer-events-none absolute inset-0 rounded"
                         style={{
                           background: "#4f46e5",
                           opacity: 0.7,
@@ -178,7 +167,7 @@ export default function ClinicalLaboratoryHubPage() {
                         }}
                       />
                     </span>
-                    <span className="block text-sm font-medium text-slate-900 group-hover:text-indigo-700">
+                    <span className="text-sm font-medium text-slate-800 group-hover:text-indigo-700">
                       {item.label}
                     </span>
                   </Link>

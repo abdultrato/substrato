@@ -54,6 +54,7 @@ class LabRequestItem(TenantPropagationMixin, ScopedPositionMixin, NoNameCoreMode
 
     class SampleStatus(models.TextChoices):
         AWAITING = "aguardando", "Aguardando receção"
+        COLLECTED = "coletada", "Amostra coletada"
         RECEIVED = "recebida", "Amostra recebida"
         REJECTED = "rejeitada", "Amostra rejeitada"
 
@@ -87,6 +88,20 @@ class LabRequestItem(TenantPropagationMixin, ScopedPositionMixin, NoNameCoreMode
         verbose_name="Amostra recebida em",
     )
 
+    def colher_amostra(self, user=None, *, cascade_same_sample=False):
+        if self.sample_status == self.SampleStatus.COLLECTED:
+            raise ValidationError("Amostra já marcada como coletada.")
+        if self.sample_status == self.SampleStatus.RECEIVED:
+            raise ValidationError("Amostra já recebida pelo laboratório.")
+        self.sample_status = self.SampleStatus.COLLECTED
+        self.sample_received_at = None
+        self.rejection_note = ""
+        self.save(update_fields=["sample_status", "sample_received_at", "rejection_note", "updated_at"])
+        self.rejection_reasons.clear()
+        if cascade_same_sample:
+            self._colher_itens_da_mesma_amostra(user=user)
+        return self
+
     def receber_amostra(self, user=None, *, cascade_same_sample=False):
         from django.utils import timezone
 
@@ -100,6 +115,28 @@ class LabRequestItem(TenantPropagationMixin, ScopedPositionMixin, NoNameCoreMode
         if cascade_same_sample:
             self._receber_itens_da_mesma_amostra(user=user)
         return self
+
+    def _colher_itens_da_mesma_amostra(self, user=None):
+        """Coleta agrupada por tipo de amostra."""
+        exam = self.exam
+        primary_sample_id = getattr(exam, "sample_type_id", None) if exam else None
+        if not primary_sample_id:
+            return
+
+        pendentes = (
+            self.__class__.objects.filter(
+                request_id=self.request_id,
+                exam__isnull=False,
+                sample_status=self.SampleStatus.AWAITING,
+            )
+            .exclude(pk=self.pk)
+            .select_related("exam", "exam__sample_type")
+            .prefetch_related("exam__sample_options")
+        )
+        for item in pendentes:
+            accepted_ids = {sample.id for sample in item.exam.get_sample_options()}
+            if primary_sample_id in accepted_ids:
+                item.colher_amostra(user=user, cascade_same_sample=False)
 
     def _receber_itens_da_mesma_amostra(self, user=None):
         """Coleta agrupada por tipo de amostra.

@@ -13,6 +13,7 @@ class Sample(CoreModel):
     """Cadastro de amostras com requisitos de coleta e conservação."""
 
     prefix = "AMO"
+    name_preserve_case = True
 
     class BottleType(models.TextChoices):
         DRY_TUBE = "TUBO_SECO", "Tubo seco (soro)"

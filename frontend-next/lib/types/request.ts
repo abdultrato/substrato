@@ -51,6 +51,7 @@ export type Request = {
   items?: RequestItemSummary[]
   status?: string
   clinical_status?: string
+  clinical_status_display?: string
   has_critical_result?: boolean
   created_at?: string
   updated_at?: string
@@ -70,6 +71,8 @@ export type Request = {
   itens: RequestItemSummary[]
   estado: string
   status_clinico: string
+  clinical_status_display: string
+  prioridade_display: string
   possui_resultado_critico: boolean
   criado_em: string
   atualizado_em: string

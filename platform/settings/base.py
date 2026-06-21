@@ -1444,6 +1444,11 @@ REST_FRAMEWORK = {
     ],
     "DEFAULT_THROTTLE_RATES": {
         "login": "5/min",
+        "auth_refresh": "30/min",
+        "password_reset_request": "3/hour",
+        "password_reset_confirm": "10/hour",
+        "signup": "3/hour",
+        "webhook": "60/min",
     },
 }
 
@@ -1451,24 +1456,21 @@ REST_FRAMEWORK = {
 # JWT
 # =========================================================
 
-SESSION_IDLE_TIMEOUT_MINUTES = get_env_int("SESSION_IDLE_TIMEOUT_MINUTES", 60)
+# Expiração por inactividade desactivada temporariamente.
+# Para reactivar, restaurar os valores anteriores e definir enabled=True no useIdleSession.
+SESSION_IDLE_TIMEOUT_MINUTES = get_env_int("SESSION_IDLE_TIMEOUT_MINUTES", 60 * 24 * 365 * 10)  # 10 anos
 SESSION_IDLE_TIMEOUT_SECONDS = max(5, SESSION_IDLE_TIMEOUT_MINUTES) * 60
-SESSION_COOKIE_AGE = SESSION_IDLE_TIMEOUT_SECONDS
+SESSION_COOKIE_AGE = 60 * 60 * 24 * 365 * 10  # 10 anos
 SESSION_SAVE_EVERY_REQUEST = True
-SESSION_EXPIRE_AT_BROWSER_CLOSE = True
-AUTH_COOKIE_SESSION_ONLY = get_env_bool("AUTH_COOKIE_SESSION_ONLY", True)
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False
+AUTH_COOKIE_SESSION_ONLY = False
 
-# O access token tem de expirar bem antes do refresh. Caso contrário, a renovação
-# reativa (disparada pelo 401 no frontend) acontece no mesmo instante em que o
-# refresh também expira, a renovação falha e o utilizador ativo é desconectado.
-# O refresh define a janela de inatividade (idle timeout); o access é curto e é
-# rotacionado a cada renovação enquanto houver atividade (ver SessionTokenRefreshSerializer).
-ACCESS_TOKEN_LIFETIME_MINUTES = get_env_int("ACCESS_TOKEN_LIFETIME_MINUTES", 5)
-ACCESS_TOKEN_LIFETIME_SECONDS = max(1, min(ACCESS_TOKEN_LIFETIME_MINUTES, SESSION_IDLE_TIMEOUT_MINUTES)) * 60
+ACCESS_TOKEN_LIFETIME_MINUTES = get_env_int("ACCESS_TOKEN_LIFETIME_MINUTES", 60 * 24 * 365)  # 1 ano
+ACCESS_TOKEN_LIFETIME_SECONDS = ACCESS_TOKEN_LIFETIME_MINUTES * 60
 
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(seconds=ACCESS_TOKEN_LIFETIME_SECONDS),
-    "REFRESH_TOKEN_LIFETIME": timedelta(seconds=SESSION_IDLE_TIMEOUT_SECONDS),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=365 * 10),  # 10 anos
     "AUTH_HEADER_TYPES": ("Bearer",),
 }
 
@@ -1509,6 +1511,11 @@ CSRF_COOKIE_SECURE = not DEBUG
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
 SECURE_CROSS_ORIGIN_OPENER_POLICY = "same-origin"
+SECURE_CROSS_ORIGIN_RESOURCE_POLICY = "same-site"
+SECURE_HSTS_SECONDS = 0 if DEBUG else get_env_int("SECURE_HSTS_SECONDS", 31536000)
+SECURE_HSTS_INCLUDE_SUBDOMAINS = not DEBUG
+SECURE_HSTS_PRELOAD = not DEBUG
+API_DOCS_PUBLIC = get_env_bool("API_DOCS_PUBLIC", DEBUG)
 
 # =========================================================
 # CELERY

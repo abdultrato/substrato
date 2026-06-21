@@ -8,9 +8,11 @@ class NameMixin(models.Model):
     Standard name field.
 
     ✔ remove espaços extras
-    ✔ capitalização consistente
+    ✔ capitalização consistente (desativável com name_preserve_case = True)
     ✔ indexado para busca rápida
     """
+
+    name_preserve_case: bool = False
 
     name = models.CharField(db_column="name", max_length=120, db_index=True)
 
@@ -21,7 +23,8 @@ class NameMixin(models.Model):
         if self.name:
             self.name = self.name.strip()
             self.name = " ".join(self.name.split())
-            self.name = self.name.title()
+            if not self.name_preserve_case:
+                self.name = self.name.title()
         super().save(*args, **kwargs)
 
     def __str__(self):

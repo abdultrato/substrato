@@ -52,7 +52,7 @@ class Command(BaseCommand):
         if do_clear:
             deleted, _ = Invoice.objects.filter(
                 tenant=tenant,
-                custom_id__startswith=SEED_TAG,
+                custom_id__startswith=f"{SEED_TAG}-T{tenant.pk}-",
             ).delete()
             self.stdout.write(f"  {deleted} fatura(s) seed apagada(s).")
 
@@ -102,7 +102,7 @@ class Command(BaseCommand):
                 patient_amount=valor,
             )
             # Assign custom_id so we can find / clear seed records later.
-            invoice.custom_id = f"{SEED_TAG}-{idx:05d}"
+            invoice.custom_id = f"{SEED_TAG}-T{tenant.pk}-{idx:05d}"
             invoice.save()
 
             # Create a confirmed payment for PAID invoices.

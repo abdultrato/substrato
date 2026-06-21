@@ -88,7 +88,23 @@ class LabRequestViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin,
         return (
             super()
             .get_queryset()
-            .select_related("patient", "analyst", "requesting_company", "external_executing_company")
+            .select_related(
+                "patient",
+                "analyst",
+                "requesting_company",
+                "external_executing_company",
+                "requesting_physician",
+                "occupational_profile",
+            )
+            .prefetch_related(
+                "items",
+                "items__exam",
+                "items__exam__sample_type",
+                "items__exam__sample_options",
+                "items__medical_exam",
+                "items__rejection_reasons",
+                "samples",
+            )
             .annotate(clinical_attendance_priority=clinical_attendance_priority_case())
         )
 
@@ -103,6 +119,16 @@ class LabRequestViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin,
             raise ValidationError(str(err)) from err
         except Exception as err:
             raise ValidationError(str(err)) from err
+
+    @action(detail=True, methods=["post"], url_path="cancelar", url_name="cancelar")
+    def cancelar(self, request, pk=None):
+        """Cancela a requisição pendente (antes de ir para colheita)."""
+        request_record = self.get_object()
+        try:
+            request_record.cancelar(user=getattr(request, "user", None))
+        except DjangoValidationError as err:
+            raise ValidationError(getattr(err, "message_dict", None) or getattr(err, "messages", None) or str(err)) from err
+        return Response(LabRequestSerializer(request_record, context={"request": request}).data)
 
     @action(detail=True, methods=["post"], url_path="validar", url_name="validar")
     def validar(self, request, pk=None):
@@ -412,7 +438,7 @@ class LabRequestItemViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMi
         try:
             # Coleta agrupada: uma coleta cobre todos os exames pendentes da
             # requisição que aceitam a mesma amostra principal deste item.
-            item.receber_amostra(user=getattr(request, "user", None), cascade_same_sample=True)
+            item.colher_amostra(user=getattr(request, "user", None), cascade_same_sample=True)
         except DjangoValidationError as err:
             raise ValidationError(getattr(err, "message_dict", None) or getattr(err, "messages", None) or str(err)) from err
 

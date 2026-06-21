@@ -11,6 +11,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from apps.tenants.models.subscription_plan import SubscriptionPlan
 from apps.tenants.services.billing import BillingService
 from apps.tenants.services.onboarding import OnboardingService
+from security.throttling import SignupRateThrottle, WebhookRateThrottle
 
 from .serializers import CheckoutSerializer, PublicPlanSerializer, SignupSerializer
 
@@ -45,6 +46,7 @@ class SignupView(APIView):
 
     permission_classes = [AllowAny]
     authentication_classes = []
+    throttle_classes = [SignupRateThrottle]
 
     def post(self, request):
         serializer = SignupSerializer(data=request.data)
@@ -126,6 +128,7 @@ class PaymentWebhookView(APIView):
 
     permission_classes = [AllowAny]
     authentication_classes = []
+    throttle_classes = [WebhookRateThrottle]
 
     def post(self, request):
         secret = getattr(settings, "PAYMENT_WEBHOOK_SECRET", "")

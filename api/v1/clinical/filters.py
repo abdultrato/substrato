@@ -213,18 +213,19 @@ class LabRequestFilter(SafeFilterSet):
 
         fase = (value or "").strip().lower()
         awaiting = LabRequestItem.SampleStatus.AWAITING
+        collected = LabRequestItem.SampleStatus.COLLECTED
         rejected = LabRequestItem.SampleStatus.REJECTED
 
         if fase in {"rececao_amostras", "recepcao_amostras"}:
             return (
                 queryset.filter(status=ResultState.PENDING, collected_at__isnull=False)
-                .filter(items__deleted=False, items__sample_status=awaiting)
+                .filter(items__deleted=False, items__sample_status=collected)
                 .distinct()
             )
         if fase == "pedidos":
             return (
                 queryset.filter(status=ResultState.PENDING, collected_at__isnull=False)
-                .exclude(items__deleted=False, items__sample_status__in=[awaiting, rejected])
+                .exclude(items__deleted=False, items__sample_status__in=[awaiting, collected, rejected])
                 .filter(items__deleted=False, items__exam__isnull=False)
                 .distinct()
             )

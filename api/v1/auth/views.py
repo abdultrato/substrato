@@ -16,7 +16,6 @@ from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
-from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, TokenRefreshSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -41,6 +40,12 @@ except Exception:  # pragma: no cover - fallback for local/dev environments with
         return decorator
 
 from security.permissions.rbac import RBACPermission
+from security.throttling import (
+    AuthRefreshRateThrottle,
+    LoginRateThrottle,
+    PasswordResetConfirmRateThrottle,
+    PasswordResetRequestRateThrottle,
+)
 
 User = get_user_model()
 
@@ -116,6 +121,13 @@ def _set_jwt_cookies(response: Response, request, access: str | None = None, ref
             path=path,
             domain=domain,
         )
+
+
+def _apply_sensitive_response_headers(response: Response) -> Response:
+    response["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+    response["Pragma"] = "no-cache"
+    response["Expires"] = "0"
+    return response
 
 
 def _clear_jwt_cookies(response: Response):
@@ -378,8 +390,7 @@ def _user_me_payload(user) -> dict:
 class LoginView(TokenObtainPairView):
     permission_classes = [AllowAny]
     serializer_class = SessionTokenObtainPairSerializer
-    throttle_classes = [ScopedRateThrottle]
-    throttle_scope = "login"
+    throttle_classes = [LoginRateThrottle]
 
     def post(self, request, *args, **kwargs):
         response = super().post(request, *args, **kwargs)
@@ -389,12 +400,13 @@ class LoginView(TokenObtainPairView):
             _set_jwt_cookies(response, request, access=access, refresh=refresh)
             # Remover tokens do corpo para evitar exposição ao JS; manter session_id.
             response.data = {"session_id": response.data.get("session_id")}
-        return response
+        return _apply_sensitive_response_headers(response)
 
 
 class RefreshView(TokenRefreshView):
     permission_classes = [AllowAny]
     serializer_class = SessionTokenRefreshSerializer
+    throttle_classes = [AuthRefreshRateThrottle]
 
     def post(self, request, *args, **kwargs):
         # Se o refresh token não vier no body, tenta cookie HttpOnly.
@@ -410,7 +422,7 @@ class RefreshView(TokenRefreshView):
         if access or refresh:
             _set_jwt_cookies(response, request, access=access, refresh=refresh)
             response.data = {"session_id": response.data.get("session_id")}
-        return response
+        return _apply_sensitive_response_headers(response)
 
 
 class LogoutView(APIView):
@@ -434,7 +446,7 @@ class LogoutView(APIView):
 
         response = Response(status=status.HTTP_204_NO_CONTENT)
         _clear_jwt_cookies(response)
-        return response
+        return _apply_sensitive_response_headers(response)
 
 
 class UserView(APIView):
@@ -443,7 +455,7 @@ class UserView(APIView):
 
     @extend_schema(responses={200: UserMeSerializer})
     def get(self, request):
-        return Response(_user_me_payload(request.user))
+        return _apply_sensitive_response_headers(Response(_user_me_payload(request.user)))
 
     @extend_schema(request=UserPatchSerializer, responses={200: UserMeSerializer})
     def patch(self, request):
@@ -456,6 +468,7 @@ class UserView(APIView):
 
 class PasswordResetRequestView(APIView):
     permission_classes = [AllowAny]
+    throttle_classes = [PasswordResetRequestRateThrottle]
 
     @extend_schema(request=PasswordResetRequestSerializer, responses={200: DetailSerializer})
     def post(self, request):
@@ -473,10 +486,10 @@ class PasswordResetRequestView(APIView):
 
         # Não revelar se existe ou não.
         if not user:
-            return Response(
+            return _apply_sensitive_response_headers(Response(
                 {"detail": "Se o utilizador existir, enviaremos instruções para reposição de palavra-passe."},
                 status=status.HTTP_200_OK,
-            )
+            ))
 
         with transaction.atomic():
             PasswordResetToken.objects.filter(user=user, used=False).update(used=True)
@@ -510,14 +523,15 @@ class PasswordResetRequestView(APIView):
                 external_reference=f"password_reset:{user.pk}:{token_obj.pk}:{channel}",
             )
 
-        return Response(
+        return _apply_sensitive_response_headers(Response(
             {"detail": "Se o utilizador existir, enviaremos instruções para reposição de palavra-passe."},
             status=status.HTTP_200_OK,
-        )
+        ))
 
 
 class PasswordResetConfirmView(APIView):
     permission_classes = [AllowAny]
+    throttle_classes = [PasswordResetConfirmRateThrottle]
 
     @extend_schema(
         request=PasswordResetConfirmSerializer,
@@ -544,19 +558,25 @@ class PasswordResetConfirmView(APIView):
             None,
         )
         if not token_obj or token_obj.used:
-            return Response({"detail": "Token inválido ou já utilizado."}, status=status.HTTP_400_BAD_REQUEST)
+            return _apply_sensitive_response_headers(
+                Response({"detail": "Token inválido ou já utilizado."}, status=status.HTTP_400_BAD_REQUEST)
+            )
 
         if token_obj.created_at < _password_reset_cutoff():
-            return Response({"detail": "Token expirado."}, status=status.HTTP_400_BAD_REQUEST)
+            return _apply_sensitive_response_headers(
+                Response({"detail": "Token expirado."}, status=status.HTTP_400_BAD_REQUEST)
+            )
 
         user = token_obj.user
         try:
             validate_password(new_password, user=user)
         except DjangoValidationError as e:
             msg = " ".join(getattr(e, "messages", [])).strip() or "Palavra-passe inválida."
-            return Response({"detail": msg}, status=status.HTTP_400_BAD_REQUEST)
+            return _apply_sensitive_response_headers(Response({"detail": msg}, status=status.HTTP_400_BAD_REQUEST))
         except Exception:
-            return Response({"detail": "Palavra-passe inválida."}, status=status.HTTP_400_BAD_REQUEST)
+            return _apply_sensitive_response_headers(
+                Response({"detail": "Palavra-passe inválida."}, status=status.HTTP_400_BAD_REQUEST)
+            )
 
         with transaction.atomic():
             user.set_password(new_password)
@@ -568,7 +588,7 @@ class PasswordResetConfirmView(APIView):
             # Revoga sessões JWT ativas (idle cache) após reset de senha.
             cache.delete(_session_cache_key(user.id))
 
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        return _apply_sensitive_response_headers(Response(status=status.HTTP_204_NO_CONTENT))
 
 
 class PasswordChangeView(APIView):
@@ -590,22 +610,24 @@ class PasswordChangeView(APIView):
 
         user = request.user
         if not user.check_password(current_password):
-            return Response(
+            return _apply_sensitive_response_headers(Response(
                 {"detail": "A palavra-passe atual está incorreta."},
                 status=status.HTTP_400_BAD_REQUEST,
-            )
+            ))
 
         try:
             validate_password(new_password, user=user)
         except DjangoValidationError as e:
             msg = " ".join(getattr(e, "messages", [])).strip() or "Palavra-passe inválida."
-            return Response({"detail": msg}, status=status.HTTP_400_BAD_REQUEST)
+            return _apply_sensitive_response_headers(Response({"detail": msg}, status=status.HTTP_400_BAD_REQUEST))
         except Exception:
-            return Response({"detail": "Palavra-passe inválida."}, status=status.HTTP_400_BAD_REQUEST)
+            return _apply_sensitive_response_headers(
+                Response({"detail": "Palavra-passe inválida."}, status=status.HTTP_400_BAD_REQUEST)
+            )
 
         user.set_password(new_password)
         user.save(update_fields=["password"])
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        return _apply_sensitive_response_headers(Response(status=status.HTTP_204_NO_CONTENT))
 
 
 class LanguageSwitchView(APIView):
