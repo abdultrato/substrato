@@ -2,6 +2,7 @@
 
 import { isNotFoundLikeError } from "@/lib/errors/api-error"
 import { useCallback, useEffect, useMemo, useState } from "react"
+import { Printer } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
 import DataTable from "@/components/ui/DataTable"
@@ -145,9 +146,7 @@ export default function NursingRequestsPage() {
                   <div
                     key={item.id}
                     className={`rounded-lg border px-2 py-1.5 ${
-                      isCollected
-                        ? "border-emerald-200 bg-emerald-50"
-                        : isRejected
+                      isRejected
                         ? "border-rose-200 bg-rose-50"
                         : "border-slate-200 bg-slate-50"
                     }`}
@@ -177,9 +176,21 @@ export default function NursingRequestsPage() {
 
                       <div className="shrink-0">
                         {isCollected ? (
-                          <span className="inline-flex items-center text-[11px] font-semibold text-[var(--gray-500)]">
-                            Amostra coletada
-                          </span>
+                          <div className="flex items-center gap-2">
+                            <span className="inline-flex items-center text-[11px] font-semibold text-[var(--gray-500)]">
+                              Amostra coletada
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                abrirEtiqueta(r.id).catch(() => setErrorMessage("Falha ao gerar a etiqueta."))
+                              }
+                              className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-2 py-1 text-[11px] font-semibold text-slate-700 transition hover:bg-slate-50"
+                            >
+                              <Printer size={12} />
+                              Imprimir etiqueta
+                            </button>
+                          </div>
                         ) : !r.validated_at ? (
                           <span className="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-700">
                             Aguarda validação
