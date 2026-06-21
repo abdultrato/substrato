@@ -12,7 +12,6 @@ import {
 } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
-import Card from "@/components/ui/Card"
 import PageHeader from "@/components/ui/PageHeader"
 import MetricCard from "@/components/ui/MetricCard"
 import ActionTile from "@/components/ui/ActionTile"
@@ -135,35 +134,6 @@ export default function NursingPage() {
             icon={PackageSearch}
           />
         </div>
-
-        <Card
-          title={t("Visão do módulo", "Module overview")}
-          subtitle={t("Resumo do escopo disponível para o módulo de enfermagem.", "Summary of the available scope for the nursing module.")}
-        >
-          <div className="text-sm text-slate-700">
-            {t("Disponível:", "Available:")}
-            <ul className="mt-2 list-disc pl-5 text-sm text-slate-700">
-              <li>
-                {t("Requisições laboratoriais em ", "Laboratory requests in ")}
-                <strong>{t("Requisições", "Requests")}</strong>
-                {t(" e ", " and ")}
-                <strong>{t("Itens de requisição", "Request items")}</strong>.
-              </li>
-              <li>
-                {t("Execução de procedimentos e registos no módulo ", "Procedure execution and records in the ")}
-                <strong>{t("Enfermagem", "Nursing")}</strong>.
-              </li>
-              <li>
-                {t("Consulta de produtos/lotes em ", "Product and lot lookup in ")}
-                <strong>{t("Farmácia", "Pharmacy")}</strong>.
-              </li>
-              <li>
-                {t("Solicitações médicas em ", "Medical orders in ")}
-                <strong>{t("Medicina", "Medicine")}</strong>.
-              </li>
-            </ul>
-          </div>
-        </Card>
       </div>
     </AppLayout>
   )
