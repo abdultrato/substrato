@@ -1256,6 +1256,9 @@ def _sqlite_databases():
         "default": {
             "ENGINE": "django.db.backends.sqlite3",
             "NAME": BASE_DIR / "db.sqlite3",
+            # SQLite tem um único escritor: aguarda até 20s por um lock antes de
+            # levantar "database is locked" (apenas dev/local; produção usa Postgres).
+            "OPTIONS": {"timeout": 20},
         }
     }
 

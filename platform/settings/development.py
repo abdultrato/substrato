@@ -156,6 +156,23 @@ if DATABASES["default"]["ENGINE"].endswith("postgresql"):
     # database sessions around after each request in the Docker environment.
     DATABASES["default"]["CONN_MAX_AGE"] = int(os.getenv("DB_CONN_MAX_AGE", "0"))
 
+if DATABASES["default"]["ENGINE"].endswith("sqlite3"):
+    # SQLite em dev/local: WAL permite múltiplos leitores em paralelo com um
+    # escritor, reduzindo "database is locked" quando o frontend dispara várias
+    # chamadas concorrentes. synchronous=NORMAL é seguro com WAL e mais rápido;
+    # busy_timeout reforça a espera por locks ao nível da conexão.
+    from django.db.backends.signals import connection_created
+
+    def _set_sqlite_pragmas(sender, connection, **kwargs):
+        if connection.vendor != "sqlite":
+            return
+        with connection.cursor() as cursor:
+            cursor.execute("PRAGMA journal_mode=WAL;")
+            cursor.execute("PRAGMA synchronous=NORMAL;")
+            cursor.execute("PRAGMA busy_timeout=20000;")
+
+    connection_created.connect(_set_sqlite_pragmas, dispatch_uid="dev_sqlite_wal_pragmas")
+
 
 SECURE_SSL_REDIRECT = False
 SESSION_COOKIE_SECURE = False
