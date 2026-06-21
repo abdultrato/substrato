@@ -37,7 +37,7 @@ const EMPTY: WizardData = {
   is_organ_donor: false,
   name: "",
   birth_date: "",
-  gender: "F",
+  gender: "Femenino",
   blood_type: "UNK",
   document_type: "BI",
   document_number: "",
@@ -220,7 +220,8 @@ export function PatientIntakeWizard({ onClose, onSuccess }: { onClose: () => voi
         payload.document_type = data.document_type
         payload.document_number = data.document_number.trim()
       }
-      if (data.contact.trim()) payload.contact = data.contact.trim()
+      const contactDigits = data.contact.replace(/\D/g, "")
+      if (contactDigits.length === 9) payload.contact = contactDigits
       if (data.email.trim()) payload.email = data.email.trim()
       if (data.address.trim()) payload.address = data.address.trim()
       if (isOccupational && data.origin_company_id) payload.origin_company = data.origin_company_id
@@ -446,8 +447,8 @@ export function PatientIntakeWizard({ onClose, onSuccess }: { onClose: () => voi
 
             <Field label="Género">
               <select value={data.gender} onChange={(e) => set({ gender: e.target.value })} className={selectCls}>
-                <option value="F">Feminino</option>
-                <option value="M">Masculino</option>
+                <option value="Femenino">Feminino</option>
+                <option value="Masculino">Masculino</option>
               </select>
             </Field>
 
@@ -482,7 +483,7 @@ export function PatientIntakeWizard({ onClose, onSuccess }: { onClose: () => voi
               <input
                 value={data.contact}
                 onChange={(e) => set({ contact: e.target.value })}
-                placeholder="+258 8X XXX XXXX"
+                placeholder="8XXXXXXXX (9 dígitos)"
                 className={inputCls}
               />
             </Field>
@@ -518,7 +519,7 @@ export function PatientIntakeWizard({ onClose, onSuccess }: { onClose: () => voi
             <SummaryRow label="Proveniência" value={data.provenance} />
             {isOccupational && <SummaryRow label="Empresa" value={data.origin_company_name || "—"} />}
             {data.birth_date && <SummaryRow label="Data nasc." value={data.birth_date} />}
-            <SummaryRow label="Género" value={data.gender === "M" ? "Masculino" : "Feminino"} />
+            <SummaryRow label="Género" value={data.gender === "Masculino" ? "Masculino" : "Feminino"} />
             {data.blood_type !== "UNK" && <SummaryRow label="Tipo sanguíneo" value={data.blood_type} />}
             {data.document_number && <SummaryRow label="Documento" value={`${data.document_type} ${data.document_number}`} />}
             {data.contact && <SummaryRow label="Telefone" value={data.contact} />}
