@@ -410,7 +410,9 @@ class LabRequestItemViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMi
 
         item = self.get_object()
         try:
-            item.receber_amostra(user=getattr(request, "user", None))
+            # Coleta agrupada: uma coleta cobre todos os exames pendentes da
+            # requisição que aceitam a mesma amostra principal deste item.
+            item.receber_amostra(user=getattr(request, "user", None), cascade_same_sample=True)
         except DjangoValidationError as err:
             raise ValidationError(getattr(err, "message_dict", None) or getattr(err, "messages", None) or str(err)) from err
 
