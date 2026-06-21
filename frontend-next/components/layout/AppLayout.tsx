@@ -7,6 +7,7 @@ import useAuthGuard from "@/hooks/useAuthGuard"
 import Sidebar from "./Sidebar"
 import Header from "./Header"
 import Footer from "./Footer"
+import NursingNav from "@/components/nursing/NursingNav"
 import AccessDenied from "@/components/auth/AccessDenied"
 import AutoTranslateTree from "@/components/i18n/AutoTranslateTree"
 import { useLanguage } from "@/hooks/useLanguage"
@@ -288,7 +289,7 @@ export default function AppLayout ( {
             >
                 <Header user={user} onMenuClick={handleMenuClick} />
 
-                {subNav}
+                {subNav ?? (pathname.startsWith("/nursing") ? <NursingNav /> : null)}
 
                 <main className="substrato-app-surface flex-1 min-w-0 overflow-x-hidden overflow-y-auto px-2 py-2 pb-[calc(4rem+env(safe-area-inset-bottom))] sm:px-3 md:px-4 md:py-3 md:pb-12">
                     <div className="page-transition">
