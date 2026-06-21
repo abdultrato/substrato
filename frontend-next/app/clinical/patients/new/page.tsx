@@ -1,12 +1,27 @@
-"use client";
+"use client"
 
-import { Suspense } from "react";
-import { GeneratedResourceCreatePage } from "@/components/resources/GeneratedResourcePages";
+import { useRouter } from "next/navigation"
+import AppLayout from "@/components/layout/AppLayout"
+import { PatientIntakeWizard } from "@/components/reception/PatientIntakeWizard"
+import { GROUPS } from "@/lib/rbac"
 
-export default function CreatePatientPage() {
+const ALLOWED = [
+  GROUPS.ADMIN,
+  GROUPS.RECEPCAO,
+  GROUPS.MEDICINA,
+  GROUPS.MEDICINA_OCUPACIONAL,
+  GROUPS.LABORATORIO,
+  GROUPS.ENFERMAGEM,
+]
+
+export default function NewPatientPage() {
+  const router = useRouter()
+
   return (
-    <Suspense fallback={<div className="p-4 text-sm text-[var(--gray-500)]">Carregando...</div>}>
-      <GeneratedResourceCreatePage endpoint="/clinical/patients/" />
-    </Suspense>
-  );
+    <AppLayout requiredGroups={ALLOWED}>
+      <PatientIntakeWizard
+        onClose={() => router.push("/clinical/patients")}
+      />
+    </AppLayout>
+  )
 }
