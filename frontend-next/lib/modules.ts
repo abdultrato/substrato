@@ -69,7 +69,7 @@ const RESOURCE_LABEL_PT_BY_KEY: Record<string, string> = {
   audit_finding: "Constatações de Auditoria",
   occupational_profile: "Perfis Ocupacionais (Bandejas de Exames)",
   biosafety_inspection: "Inspeções de Biossegurança",
-  collection: "Colheitas",
+  collection: "Coletas",
   competency: "Competências",
   complaint: "Reclamações",
   corrective_action: "Ações Corretivas",

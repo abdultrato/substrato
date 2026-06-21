@@ -69,7 +69,7 @@ export default function NursingPage() {
       <div className="space-y-6">
         <PageHeader
           title={t("Enfermagem", "Nursing")}
-          subtitle={t("Execução: colheitas, procedimentos e registos.", "Execution: sample collection, procedures, and records.")}
+          subtitle={t("Execução: coletas, procedimentos e registos.", "Execution: sample collection, procedures, and records.")}
           actions={
             canViewAdmin ? (
               <Link
@@ -91,7 +91,7 @@ export default function NursingPage() {
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <MetricCard label={t("Requisições pendentes", "Pending requests")} value={loading ? "..." : pendingRequests} />
           <MetricCard label={t("Procedimentos", "Procedures")} value={loading ? "..." : procedures} />
-          <MetricCard label={t("Colheitas", "Sample collections")} value={loading ? "..." : "—"} />
+          <MetricCard label={t("Coletas", "Sample collections")} value={loading ? "..." : "—"} />
           <MetricCard
             label={t("Sinais vitais", "Vital signs")}
             value={loading ? "..." : "—"}

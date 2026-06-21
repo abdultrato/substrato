@@ -42,7 +42,7 @@ const PHASES: Phase[] = [
     title: "Fluxo de requisições",
     hint: "Receção de amostras, pedidos e resultados das requisições clínicas (REQ).",
     items: [
-      { href: "/laboratory/sample-reception", label: "Receção de amostras", desc: "Conferência e aceitação/rejeição das amostras colhidas", icon: PackageCheck },
+      { href: "/laboratory/sample-reception", label: "Receção de amostras", desc: "Conferência e aceitação/rejeição das amostras coletadas", icon: PackageCheck },
       { href: "/laboratory/pedidos", label: "Pedidos", desc: "Amostras conferidas: iniciar processamento ou transferir", icon: ClipboardList },
       { href: "/laboratory/worklist", label: "Listas de trabalho", desc: "Inserir, gravar e validar resultados", icon: Beaker },
       { href: "/laboratory/laudos", label: "Laudos", desc: "Requisições validadas: laudo PDF e notificação", icon: FileCheck2 },
@@ -68,12 +68,12 @@ const PHASES: Phase[] = [
   },
   {
     title: "Pré-analítico",
-    hint: "Colheita, identificação, recepção e triagem.",
+    hint: "Coleta, identificação, recepção e triagem.",
     items: [
-      { href: "/clinical-laboratory/collections", label: "Colheitas", desc: "Colheita da amostra do paciente", icon: Syringe },
+      { href: "/clinical-laboratory/collections", label: "Coletas", desc: "Coleta da amostra do paciente", icon: Syringe },
       { href: "/clinical-laboratory/samples", label: "Amostras", desc: "Amostras rastreáveis (código de barras)", icon: TestTubes },
       { href: "/clinical-laboratory/reception", label: "Recepção", desc: "Conferência e aceitação da amostra", icon: PackageCheck },
-      { href: "/clinical-laboratory/rejections", label: "Rejeições", desc: "Amostras inadequadas / nova colheita", icon: XCircle },
+      { href: "/clinical-laboratory/rejections", label: "Rejeições", desc: "Amostras inadequadas / nova coleta", icon: XCircle },
     ],
   },
   {

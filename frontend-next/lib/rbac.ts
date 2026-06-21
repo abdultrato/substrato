@@ -167,7 +167,7 @@ export const WORKSPACES: WorkspaceDef[] = [
     key: "laboratory",
     label: "Laboratório",
     href: "/clinical-laboratory",
-    description: "LIS: pedidos, colheita, resultados e laudos.",
+    description: "LIS: pedidos, coleta, resultados e laudos.",
     anyOfGroups: [GROUPS.ADMIN, GROUPS.LABORATORIO],
   },
   {
@@ -181,7 +181,7 @@ export const WORKSPACES: WorkspaceDef[] = [
     key: "nursing",
     label: "Enfermagem",
     href: "/nursing",
-    description: "Colheitas, procedimentos e apoio operacional.",
+    description: "Coletas, procedimentos e apoio operacional.",
     anyOfGroups: [GROUPS.ADMIN, GROUPS.ENFERMAGEM],
   },
   {

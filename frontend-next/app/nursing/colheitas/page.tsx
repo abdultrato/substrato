@@ -61,7 +61,7 @@ export default function NursingCollectionsPage() {
       )
       setRows(items)
     } catch (e: any) {
-      setError(e?.message || "Erro ao carregar colheitas pendentes.")
+      setError(e?.message || "Erro ao carregar coletas pendentes.")
     } finally {
       setLoading(false)
     }
@@ -77,12 +77,12 @@ export default function NursingCollectionsPage() {
     setFeedback(null)
     try {
       await apiFetch(`/clinical/labrequest/${row.id}/registar-colheita/`, { method: "POST" })
-      setFeedback(`Colheita de ${row.custom_id} registada — a requisição seguiu para o laboratório.`)
+      setFeedback(`Coleta de ${row.custom_id} registada — a requisição seguiu para o laboratório.`)
       setRows((prev) => prev.filter((item) => item.id !== row.id))
       // Abre logo a etiqueta com o código de barras para a impressora de etiquetas.
       await abrirEtiqueta(row.id)
     } catch (e: any) {
-      setError(e?.message || "Falha ao registar a colheita.")
+      setError(e?.message || "Falha ao registar a coleta.")
     } finally {
       setBusyId(null)
     }
@@ -92,8 +92,8 @@ export default function NursingCollectionsPage() {
     <AppLayout>
       <div className="mx-auto w-full max-w-4xl space-y-4">
         <PageHeader
-          title="Colheitas"
-          subtitle="Requisições validadas a aguardar colheita de amostras."
+          title="Coletas"
+          subtitle="Requisições validadas a aguardar coleta de amostras."
         />
 
         {feedback ? (
@@ -107,7 +107,7 @@ export default function NursingCollectionsPage() {
           <div className="text-sm text-[var(--gray-500)]">Carregando...</div>
         ) : rows.length === 0 ? (
           <div className="rounded-lg border border-[var(--border)] bg-[var(--card)] px-4 py-6 text-center text-sm text-[var(--gray-500)]">
-            Sem colheitas pendentes.
+            Sem coletas pendentes.
           </div>
         ) : (
           <div className="space-y-3">
@@ -149,7 +149,7 @@ export default function NursingCollectionsPage() {
                     disabled={busyId === row.id}
                     className="inline-flex h-10 items-center justify-center rounded-md bg-[var(--primary-600)] px-4 text-sm font-semibold text-white shadow-sm transition-all duration-150 hover:bg-[var(--primary-700)] disabled:opacity-60"
                   >
-                    {busyId === row.id ? "Registando..." : "Fazer colheita"}
+                    {busyId === row.id ? "Registando..." : "Fazer coleta"}
                   </button>
                   <button
                     type="button"

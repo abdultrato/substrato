@@ -232,7 +232,7 @@ export default function SurgeryPage() {
                     />
                     <ActionTile
                         title="Amostras cirúrgicas"
-                        description="Amostras colhidas durante cirurgia e ligação ao pedido de patologia."
+                        description="Amostras coletadas durante cirurgia e ligação ao pedido de patologia."
                         href="/surgery/specimens"
                         icon={Microscope}
                     />

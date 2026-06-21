@@ -59,7 +59,7 @@ export default function PendingRequestsPage() {
     setFeedback(null)
     try {
       await apiFetch(`/clinical/labrequest/${row.id}/validar/`, { method: "POST" })
-      setFeedback(`Requisição ${row.custom_id} validada — disponível para colheita na enfermagem.`)
+      setFeedback(`Requisição ${row.custom_id} validada — disponível para coleta na enfermagem.`)
       setRows((prev) => prev.filter((item) => item.id !== row.id))
     } catch (e: any) {
       setError(e?.message || "Falha ao validar a requisição.")
@@ -73,7 +73,7 @@ export default function PendingRequestsPage() {
       <div className="mx-auto w-full max-w-4xl space-y-4">
         <PageHeader
           title="Requisições pendentes"
-          subtitle="Valide cada requisição para a enviar para colheita."
+          subtitle="Valide cada requisição para a enviar para coleta."
           actions={
             <Link
               href="/requests"

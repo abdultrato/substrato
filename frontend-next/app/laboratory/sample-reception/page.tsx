@@ -81,7 +81,7 @@ export default function SampleReceptionListPage() {
                       {row.patient_name}
                       {row.patient_age ? <span className="text-[var(--gray-500)]"> · {row.patient_age}</span> : null}
                     </div>
-                    <div className="text-xs text-[var(--gray-500)]">Colheita: {formatDateTime(row.collected_at)}</div>
+                    <div className="text-xs text-[var(--gray-500)]">Coleta: {formatDateTime(row.collected_at)}</div>
                   </div>
                   <span className="inline-flex w-fit items-center rounded-full bg-amber-100 px-2.5 py-1 text-xs font-semibold text-amber-800">
                     {pendentes} {pendentes === 1 ? "amostra" : "amostras"} por conferir

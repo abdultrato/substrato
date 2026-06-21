@@ -9,7 +9,7 @@ type Tab = { href: string; label: string };
 const TABS: Tab[] = [
   { href: "/clinical-laboratory", label: "Painel" },
   { href: "/clinical-laboratory/orders", label: "Pedidos" },
-  { href: "/clinical-laboratory/collections", label: "Colheitas" },
+  { href: "/clinical-laboratory/collections", label: "Coletas" },
   { href: "/clinical-laboratory/samples", label: "Amostras" },
   { href: "/clinical-laboratory/reception", label: "Recepção" },
   { href: "/clinical-laboratory/worklists", label: "Listas de Trabalho" },

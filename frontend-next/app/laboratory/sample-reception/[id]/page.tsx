@@ -139,7 +139,7 @@ export default function SampleReceptionDetailPage() {
                   <span className="font-medium text-[var(--text)]">{record.patient_code}</span>
                 </div>
                 <div>
-                  <span className="text-[var(--gray-500)]">Colheita: </span>
+                  <span className="text-[var(--gray-500)]">Coleta: </span>
                   <span className="font-medium text-[var(--text)]">{formatDateTime(record.collected_at)}</span>
                 </div>
                 <div>
@@ -187,7 +187,7 @@ export default function SampleReceptionDetailPage() {
                         </span>
                       ) : item.sample_status === "rejeitada" ? (
                         <span className="inline-flex items-center rounded-full bg-rose-100 px-2.5 py-1 text-xs font-semibold text-rose-800">
-                          Aguardando nova colheita
+                          Aguardando nova coleta
                         </span>
                       ) : (
                         <>
