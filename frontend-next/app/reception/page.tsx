@@ -140,6 +140,12 @@ const atalhos = [
         href: "/pharmacy/material-requests/new",
         icon: PackageSearch,
     },
+    {
+        title: "Marcar procedimento",
+        description: "Marcar procedimento de enfermagem para um paciente (catálogo, materiais e execução).",
+        href: "/nursing/procedures/new",
+        icon: ClipboardList,
+    },
 ]
 
 const marcacoesPorSector = [
