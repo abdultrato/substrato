@@ -886,7 +886,18 @@ export function PatientIntakeWizard({
           <div className="grid gap-3 md:grid-cols-2">
             <ToggleRow
               checked={data.is_blood_donor}
-              onChange={(checked) => update({ is_blood_donor: checked })}
+              onChange={(checked) =>
+                update({
+                  is_blood_donor: checked,
+                  ...(checked
+                    ? {}
+                    : {
+                        is_replacement_donor_inapt: false,
+                        replacement_donor_inapt_at: "",
+                        replacement_donor_inapt_reason: "",
+                      }),
+                })
+              }
               icon={Droplets}
               title="Doador de sangue"
               tone="rose"
@@ -1103,70 +1114,79 @@ export function PatientIntakeWizard({
     }
 
     if (key === "clinical") {
+      const showPregnant = data.gender !== "Masculino"
+      const showReplacementInapt = data.is_blood_donor
+      const showInaptFields = showReplacementInapt && data.is_replacement_donor_inapt
       return (
         <div className="space-y-5">
           <SectionTitle icon={ShieldCheck} title="Informações clínicas e acompanhante" />
-          <div className="grid gap-3 md:grid-cols-2">
-            {data.gender !== "Masculino" ? (
-              <ToggleRow
-                checked={data.pregnant}
-                onChange={(checked) =>
-                  update({ pregnant: checked, gestational_age_weeks: checked ? data.gestational_age_weeks : "" })
-                }
-                icon={HeartHandshake}
-                title="Gestante"
-              />
-            ) : null}
-            <ToggleRow
-              checked={data.is_replacement_donor_inapt}
-              onChange={(checked) =>
-                update({
-                  is_replacement_donor_inapt: checked,
-                  replacement_donor_inapt_at: checked ? data.replacement_donor_inapt_at : "",
-                  replacement_donor_inapt_reason: checked ? data.replacement_donor_inapt_reason : "",
-                })
-              }
-              icon={AlertTriangle}
-              title="Repositor inapto"
-              tone="amber"
-            />
-          </div>
-
-          <div className="grid gap-3 sm:grid-cols-2">
-            {data.pregnant ? (
-              <Field label="Idade gestacional (semanas)" required>
-                <input
-                  type="number"
-                  min={1}
-                  value={data.gestational_age_weeks}
-                  onChange={(event) => update({ gestational_age_weeks: event.target.value })}
-                  className={inputCls}
+          {showPregnant || showReplacementInapt ? (
+            <div className="grid gap-3 md:grid-cols-2">
+              {showPregnant ? (
+                <ToggleRow
+                  checked={data.pregnant}
+                  onChange={(checked) =>
+                    update({ pregnant: checked, gestational_age_weeks: checked ? data.gestational_age_weeks : "" })
+                  }
+                  icon={HeartHandshake}
+                  title="Gestante"
                 />
-              </Field>
-            ) : null}
-            {data.is_replacement_donor_inapt ? (
-              <>
-                <Field label="Inapto desde">
+              ) : null}
+              {showReplacementInapt ? (
+                <ToggleRow
+                  checked={data.is_replacement_donor_inapt}
+                  onChange={(checked) =>
+                    update({
+                      is_replacement_donor_inapt: checked,
+                      replacement_donor_inapt_at: checked ? data.replacement_donor_inapt_at : "",
+                      replacement_donor_inapt_reason: checked ? data.replacement_donor_inapt_reason : "",
+                    })
+                  }
+                  icon={AlertTriangle}
+                  title="Repositor inapto"
+                  tone="amber"
+                />
+              ) : null}
+            </div>
+          ) : null}
+
+          {data.pregnant || showInaptFields ? (
+            <div className="grid gap-3 sm:grid-cols-2">
+              {data.pregnant ? (
+                <Field label="Idade gestacional (semanas)" required>
                   <input
-                    type="datetime-local"
-                    value={data.replacement_donor_inapt_at}
-                    onChange={(event) => update({ replacement_donor_inapt_at: event.target.value })}
+                    type="number"
+                    min={1}
+                    value={data.gestational_age_weeks}
+                    onChange={(event) => update({ gestational_age_weeks: event.target.value })}
                     className={inputCls}
                   />
                 </Field>
-                <div className="sm:col-span-2">
-                  <Field label="Motivo de inaptidão">
-                    <textarea
-                      value={data.replacement_donor_inapt_reason}
-                      onChange={(event) => update({ replacement_donor_inapt_reason: event.target.value })}
-                      rows={3}
+              ) : null}
+              {showInaptFields ? (
+                <>
+                  <Field label="Inapto desde">
+                    <input
+                      type="datetime-local"
+                      value={data.replacement_donor_inapt_at}
+                      onChange={(event) => update({ replacement_donor_inapt_at: event.target.value })}
                       className={inputCls}
                     />
                   </Field>
-                </div>
-              </>
-            ) : null}
-          </div>
+                  <div className="sm:col-span-2">
+                    <Field label="Motivo de inaptidão">
+                      <textarea
+                        value={data.replacement_donor_inapt_reason}
+                        onChange={(event) => update({ replacement_donor_inapt_reason: event.target.value })}
+                        rows={3}
+                        className={inputCls}
+                      />
+                    </Field>
+                  </div>
+                </>
+              ) : null}
+            </div>
+          ) : null}
 
           <div className="space-y-3">
             <SectionTitle icon={Users} title="Acompanhante" />
@@ -1477,7 +1497,9 @@ export function PatientIntakeWizard({
         <SummaryGroup title="Clínico e acompanhante">
           <SummaryRow label="Gestante" value={data.pregnant ? `${data.gestational_age_weeks} semanas` : "Não"} />
           <SummaryRow label="Doador de órgãos" value={data.is_organ_donor ? "Sim" : "Não"} />
-          <SummaryRow label="Repositor inapto" value={data.is_replacement_donor_inapt ? "Sim" : "Não"} />
+          {data.is_blood_donor ? (
+            <SummaryRow label="Repositor inapto" value={data.is_replacement_donor_inapt ? "Sim" : "Não"} />
+          ) : null}
           <SummaryRow label="Acompanhante" value={data.companion_name || "-"} />
           <SummaryRow label="Contacto do acompanhante" value={data.companion_contact || "-"} />
         </SummaryGroup>
