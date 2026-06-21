@@ -90,12 +90,11 @@ export default function NursingRequestsPage() {
     }
   }, [debouncedSearch, status, page, pageSize, safeRefreshToken, reloadTick])
 
-  const colherAmostraItem = useCallback(async (row: RequestRow, item: any) => {
+  const colherAmostraItem = useCallback(async (item: any) => {
     setBusyItems((prev) => new Set(prev).add(item.id))
     setErrorMessage(null)
     try {
       await apiFetch(`/clinical/labrequestitem/${item.id}/colher-amostra/`, { method: "POST" })
-      await abrirEtiqueta(row.id)
       setReloadTick((tick) => tick + 1)
     } catch (e: any) {
       setErrorMessage(e?.message || "Falha ao registar a coleta.")
@@ -198,7 +197,7 @@ export default function NursingRequestsPage() {
                         ) : (
                           <button
                             type="button"
-                            onClick={() => colherAmostraItem(r, item)}
+                            onClick={() => colherAmostraItem(item)}
                             disabled={isBusy || !canCollect}
                             className={`inline-flex items-center rounded-md px-2.5 py-1 text-[11px] font-semibold text-white transition disabled:opacity-60 ${
                               isRejected
