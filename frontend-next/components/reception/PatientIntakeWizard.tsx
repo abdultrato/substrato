@@ -15,6 +15,7 @@ import {
   Badge,
   Phone,
   ShieldCheck,
+  Stethoscope,
   UserPlus,
   Users,
   X,
@@ -37,8 +38,10 @@ type TestResult = "PEN" | "NEG" | "POS" | "INC" | "NDO"
 type DonationStatus = "REG" | "SCR" | "COM" | "CAN"
 type ScreeningStatus = "PEN" | "APR" | "REJ"
 type StepKey = "origin" | "identity" | "contact" | "clinical" | "donation" | "confirm"
+type VisitPurpose = "occupational" | "clinical" | "donor"
 
 type WizardData = {
+  visit_purpose: VisitPurpose
   provenance: string
   origin_company_id: number | null
   origin_company_name: string
@@ -107,6 +110,7 @@ type CreatedPatient = {
 }
 
 const EMPTY: WizardData = {
+  visit_purpose: "clinical",
   provenance: "Clínica Externa",
   origin_company_id: null,
   origin_company_name: "",
@@ -182,6 +186,26 @@ const PROVENANCE_OPTIONS = [
   "Outro",
 ]
 
+const CLINICAL_PROVENANCE_OPTIONS = PROVENANCE_OPTIONS.filter(
+  (option) => option !== "Medicina Ocupacional",
+)
+
+const DONOR_PROVENANCE = "Doação de Sangue"
+
+const PURPOSE_OPTIONS: Array<{
+  value: VisitPurpose
+  title: string
+  icon: typeof ClipboardList
+}> = [
+  { value: "occupational", title: "Medicina Ocupacional", icon: Building2 },
+  { value: "clinical", title: "Paciente clínico", icon: Stethoscope },
+  { value: "donor", title: "Doador de sangue", icon: Droplets },
+]
+
+function purposeLabel(purpose: VisitPurpose) {
+  return PURPOSE_OPTIONS.find((option) => option.value === purpose)?.title ?? "Paciente clínico"
+}
+
 const BLOOD_TYPE_OPTIONS = [
   { value: "UNK", label: "Não informado" },
   { value: "O+", label: "O+" },
@@ -216,7 +240,7 @@ const TEST_RESULT_OPTIONS: Array<{ value: TestResult; label: string }> = [
 ]
 
 const STEP_DEFINITIONS: Array<{ key: StepKey; label: string; icon: typeof ClipboardList }> = [
-  { key: "origin", label: "Classificação", icon: ClipboardList },
+  { key: "origin", label: "Propósito", icon: ClipboardList },
   { key: "identity", label: "Identificação", icon: Badge },
   { key: "contact", label: "Contacto e morada", icon: Home },
   { key: "clinical", label: "Clínico e acompanhante", icon: ShieldCheck },
@@ -345,6 +369,40 @@ function ToggleRow({
         {description ? <span className="text-xs text-[var(--gray-500)]">{description}</span> : null}
       </span>
     </label>
+  )
+}
+
+function PurposeCard({
+  active,
+  onSelect,
+  icon: Icon,
+  title,
+}: {
+  active: boolean
+  onSelect: () => void
+  icon: typeof ClipboardList
+  title: string
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      aria-pressed={active}
+      className={`flex items-center gap-3 rounded-lg border px-3 py-3 text-left transition ${
+        active
+          ? "border-[var(--primary-500)] bg-[var(--primary-600)] text-white shadow-sm"
+          : "border-[var(--border)] bg-[var(--card)] text-[var(--gray-700)] hover:border-[var(--primary-300)]"
+      }`}
+    >
+      <span
+        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md ${
+          active ? "bg-white/15" : "bg-[var(--gray-100)] text-[var(--primary-700)]"
+        }`}
+      >
+        <Icon size={18} />
+      </span>
+      <span className="min-w-0 text-sm font-semibold">{title}</span>
+    </button>
   )
 }
 
@@ -483,7 +541,9 @@ export function PatientIntakeWizard({
     [data.is_blood_donor],
   )
   const currentStep = steps[Math.min(step, steps.length - 1)]
-  const isOccupational = data.provenance === "Medicina Ocupacional"
+  const isOccupational = data.visit_purpose === "occupational"
+  const isDonor = data.visit_purpose === "donor"
+  const isClinical = data.visit_purpose === "clinical"
 
   useEffect(() => {
     setStep((current) => Math.min(current, steps.length - 1))
@@ -491,6 +551,38 @@ export function PatientIntakeWizard({
 
   const update = useCallback((patch: Partial<WizardData>) => {
     setData((previous) => ({ ...previous, ...patch }))
+    setError(null)
+  }, [])
+
+  const selectPurpose = useCallback((purpose: VisitPurpose) => {
+    setData((previous) => {
+      if (previous.visit_purpose === purpose) return previous
+      const next: WizardData = { ...previous, visit_purpose: purpose }
+      next.is_blood_donor = purpose === "donor"
+      if (purpose === "occupational") {
+        next.provenance = "Medicina Ocupacional"
+      } else if (purpose === "donor") {
+        next.provenance = DONOR_PROVENANCE
+      } else if (
+        previous.provenance === "Medicina Ocupacional" ||
+        previous.provenance === DONOR_PROVENANCE
+      ) {
+        next.provenance = "Clínica Externa"
+      }
+      if (purpose !== "occupational") {
+        next.origin_company_id = null
+        next.origin_company_name = ""
+      }
+      if (purpose !== "clinical") {
+        next.is_organ_donor = false
+      }
+      if (purpose !== "donor") {
+        next.is_replacement_donor_inapt = false
+        next.replacement_donor_inapt_at = ""
+        next.replacement_donor_inapt_reason = ""
+      }
+      return next
+    })
     setError(null)
   }, [])
 
@@ -851,65 +943,60 @@ export function PatientIntakeWizard({
     if (key === "origin") {
       return (
         <div className="space-y-5">
-          <SectionTitle icon={ClipboardList} title="Classificação de entrada" />
-          <div className="grid gap-3 sm:grid-cols-2">
-            <Field label="Tipo de proveniência">
-              <select
-                value={data.provenance}
-                onChange={(event) =>
-                  update({ provenance: event.target.value, origin_company_id: null, origin_company_name: "" })
+          <SectionTitle icon={ClipboardList} title="Propósito da visita" />
+          <div className="grid gap-3 sm:grid-cols-3">
+            {PURPOSE_OPTIONS.map((option) => (
+              <PurposeCard
+                key={option.value}
+                active={data.visit_purpose === option.value}
+                onSelect={() => selectPurpose(option.value)}
+                icon={option.icon}
+                title={option.title}
+              />
+            ))}
+          </div>
+
+          {isOccupational ? (
+            <Field label="Empresa de origem" required>
+              <LookupSearch
+                endpoint="/external_entities/empresa/"
+                placeholder="Pesquisar empresa"
+                value={{ id: data.origin_company_id, name: data.origin_company_name }}
+                onChange={(company) =>
+                  update({ origin_company_id: company.id, origin_company_name: company.name })
                 }
-                className={inputCls}
-              >
-                {PROVENANCE_OPTIONS.map((option) => (
-                  <option key={option} value={option}>
-                    {option}
-                  </option>
-                ))}
-              </select>
+              />
             </Field>
+          ) : null}
 
-            {isOccupational ? (
-              <Field label="Empresa de origem" required>
-                <LookupSearch
-                  endpoint="/external_entities/empresa/"
-                  placeholder="Pesquisar empresa"
-                  value={{ id: data.origin_company_id, name: data.origin_company_name }}
-                  onChange={(company) =>
-                    update({ origin_company_id: company.id, origin_company_name: company.name })
-                  }
-                />
+          {isClinical ? (
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Field label="Tipo de proveniência">
+                <select
+                  value={data.provenance}
+                  onChange={(event) => update({ provenance: event.target.value })}
+                  className={inputCls}
+                >
+                  {CLINICAL_PROVENANCE_OPTIONS.map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
               </Field>
-            ) : null}
-          </div>
-
-          <div className="grid gap-3 md:grid-cols-2">
-            <ToggleRow
-              checked={data.is_blood_donor}
-              onChange={(checked) =>
-                update({
-                  is_blood_donor: checked,
-                  ...(checked
-                    ? {}
-                    : {
-                        is_replacement_donor_inapt: false,
-                        replacement_donor_inapt_at: "",
-                        replacement_donor_inapt_reason: "",
-                      }),
-                })
-              }
-              icon={Droplets}
-              title="Doador de sangue"
-              tone="rose"
-            />
-            <ToggleRow
-              checked={data.is_organ_donor}
-              onChange={(checked) => update({ is_organ_donor: checked })}
-              icon={HeartHandshake}
-              title="Doador de órgãos"
-              tone="amber"
-            />
-          </div>
+              <div className="flex items-end">
+                <div className="w-full">
+                  <ToggleRow
+                    checked={data.is_organ_donor}
+                    onChange={(checked) => update({ is_organ_donor: checked })}
+                    icon={HeartHandshake}
+                    title="Doador de órgãos"
+                    tone="amber"
+                  />
+                </div>
+              </div>
+            </div>
+          ) : null}
         </div>
       )
     }
@@ -1461,6 +1548,7 @@ export function PatientIntakeWizard({
         <SectionTitle icon={CheckCircle2} title="Confirmação" />
         <SummaryGroup title="Paciente">
           <SummaryRow label="Nome" value={data.name || "-"} />
+          <SummaryRow label="Propósito da visita" value={purposeLabel(data.visit_purpose)} />
           <SummaryRow label="Proveniência" value={data.provenance} />
           {isOccupational ? <SummaryRow label="Empresa" value={data.origin_company_name || "-"} /> : null}
           <SummaryRow label="Nascimento" value={data.birth_date || "-"} />
@@ -1496,8 +1584,10 @@ export function PatientIntakeWizard({
         </SummaryGroup>
         <SummaryGroup title="Clínico e acompanhante">
           <SummaryRow label="Gestante" value={data.pregnant ? `${data.gestational_age_weeks} semanas` : "Não"} />
-          <SummaryRow label="Doador de órgãos" value={data.is_organ_donor ? "Sim" : "Não"} />
-          {data.is_blood_donor ? (
+          {isClinical ? (
+            <SummaryRow label="Doador de órgãos" value={data.is_organ_donor ? "Sim" : "Não"} />
+          ) : null}
+          {isDonor ? (
             <SummaryRow label="Repositor inapto" value={data.is_replacement_donor_inapt ? "Sim" : "Não"} />
           ) : null}
           <SummaryRow label="Acompanhante" value={data.companion_name || "-"} />
