@@ -1,8 +1,9 @@
-"""Mixin para códigos gerados automaticamente (UUID5)."""
+"""Mixin para códigos gerados automaticamente."""
 
-import uuid
-
+from django.db import IntegrityError
 from django.db import models
+
+from core.identity.custom_id import generate_custom_id
 
 
 class CodeMixin(models.Model):
@@ -33,12 +34,24 @@ class CodeMixin(models.Model):
 
     def generate_code(self):
         prefix = self._resolve_prefix()
-        return f"{prefix}-{uuid.uuid4().hex[:8].upper()}"
+        return generate_custom_id(prefix, self.__class__)
 
     def save(self, *args, **kwargs):
-        if not self.custom_id:
+        if self.custom_id:
+            return super().save(*args, **kwargs)
+
+        for attempt in range(5):
             self.custom_id = self.generate_code()
-        super().save(*args, **kwargs)
+            update_fields = kwargs.get("update_fields")
+            if update_fields is not None and "custom_id" not in update_fields:
+                kwargs["update_fields"] = [*update_fields, "custom_id"]
+            try:
+                return super().save(*args, **kwargs)
+            except IntegrityError:
+                self.custom_id = None
+                if attempt == 4:
+                    raise
+        return None
 
 
 CodigoMixin = CodeMixin

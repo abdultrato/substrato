@@ -1,7 +1,9 @@
 """Mixin para identifiers textuais únicos (slug/código)."""
 
+from django.db import IntegrityError
 from django.db import models
-from django.utils.timezone import now
+
+from core.identity.custom_id import generate_custom_id
 
 
 class IdentifierMixin(models.Model):
@@ -24,23 +26,24 @@ class IdentifierMixin(models.Model):
         if self.custom_id or not self.prefix:
             return
 
-        timestamp = now().strftime("%Y%m%d-%H%M")
-
-        number = self.pk or 0
-
-        self.custom_id = f"{self.prefix}-{timestamp}-{number:04d}"
+        self.custom_id = generate_custom_id(self.prefix, self.__class__)
 
     def save(self, *args, **kwargs):
-        is_creating = self._state.adding
+        if self.custom_id or not self.prefix:
+            return super().save(*args, **kwargs)
 
-        if is_creating and not self.pk:
-            super().save(*args, **kwargs)
-
+        for attempt in range(5):
             self.generate_identifier()
-
-            return super().save(update_fields=["custom_id"])
-
-        return super().save(*args, **kwargs)
+            update_fields = kwargs.get("update_fields")
+            if update_fields is not None and "custom_id" not in update_fields:
+                kwargs["update_fields"] = [*update_fields, "custom_id"]
+            try:
+                return super().save(*args, **kwargs)
+            except IntegrityError:
+                self.custom_id = None
+                if attempt == 4:
+                    raise
+        return None
 
     @property
     def id_custom(self):
