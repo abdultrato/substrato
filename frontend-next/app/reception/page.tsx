@@ -30,6 +30,7 @@ import { useAuth } from "@/hooks/useAuth"
 import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { apiFetch } from "@/lib/api"
 import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
+import { PatientIntakeWizard } from "@/components/reception/PatientIntakeWizard"
 
 interface ReceptionWorkspaceSummary {
     checkins_today: number
@@ -103,12 +104,6 @@ const EMPTY_WORKSPACE: ReceptionWorkspace = {
 }
 
 const atalhos = [
-    {
-        title: "Registrar paciente",
-        description: "Abrir o cadastro clínico e preparar o atendimento.",
-        href: "/patients",
-        icon: UserPlus,
-    },
     {
         title: "Criar requisição",
         description: "Encaminhar o paciente direto para a jornada laboratorial.",
@@ -193,6 +188,7 @@ export default function RecepcaoPage() {
     const [approvedNotes, setApprovedNotes] = useState<CreditNoteRow[]>([])
     const [rejectedNotes, setRejectedNotes] = useState<CreditNoteRow[]>([])
     const [loadingNotes, setLoadingNotes] = useState(true)
+    const [showWizard, setShowWizard] = useState(false)
 
     useEffect(() => {
         async function carregarWorkspace() {
@@ -234,6 +230,7 @@ export default function RecepcaoPage() {
     if (loading) return null
 
     return (
+        <>
         <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.RECEPCAO]}>
             <div className="space-y-6">
                 <PageHeader
@@ -365,6 +362,21 @@ export default function RecepcaoPage() {
                             subtitle="Entradas rápidas para os fluxos já existentes do sistema."
                         >
                             <div className="space-y-3">
+                                {/* Entrada de paciente — abre o wizard de registo por etapas */}
+                                <button
+                                    type="button"
+                                    onClick={() => setShowWizard(true)}
+                                    className="flex w-full items-center gap-3 rounded-lg border border-[var(--primary-200)] bg-[var(--primary-50)] px-3 py-2.5 text-left transition hover:bg-[var(--primary-100)]"
+                                >
+                                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[var(--primary-100)]">
+                                        <UserPlus size={16} className="text-[var(--primary-600)]" />
+                                    </span>
+                                    <div>
+                                        <span className="block text-sm font-semibold text-[var(--primary-700)]">Registar paciente</span>
+                                        <span className="text-xs text-[var(--primary-500)]">Fluxo de entrada com classificação e perfil</span>
+                                    </div>
+                                </button>
+
                                 {atalhos.map((atalho) => {
                                     const iconUrl = lucideToDataUrl(atalho.icon)
                                     return (
@@ -423,6 +435,14 @@ export default function RecepcaoPage() {
                 )}
             </div>
         </AppLayout>
+
+        {showWizard && (
+            <PatientIntakeWizard
+                onClose={() => setShowWizard(false)}
+                onSuccess={() => setShowWizard(false)}
+            />
+        )}
+        </>
     )
 }
 

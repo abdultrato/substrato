@@ -7,6 +7,7 @@ de negócio (transições válidas, recálculo de totais, bloqueios).
 """
 
 from django.core.exceptions import ValidationError as DjangoValidationError
+from django.http import HttpResponse
 from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.permissions import IsAuthenticated
@@ -212,6 +213,17 @@ class ProformaInvoiceViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetM
 
         invoice = _run(ProformaWorkflowService.convert_to_invoice, self.get_object(), actor_name=_actor(request))
         return Response(InvoiceSerializer(invoice, context=self.get_serializer_context()).data, status=201)
+
+    @action(detail=True, methods=["get"], url_path="pdf", url_name="pdf")
+    def pdf(self, request, pk=None):
+        """Gera o PDF A5 da fatura proforma (duplicado: Original + Arquivo)."""
+        proforma = self.get_object()
+        from tasks.generate_pdf.proforma_pdf_generator import generate_proforma_pdf
+
+        pdf_bytes, filename = generate_proforma_pdf(proforma, request=request)
+        response = HttpResponse(pdf_bytes, content_type="application/pdf")
+        response["Content-Disposition"] = f'inline; filename="{filename}"'
+        return response
 
 
 class ProformaItemViewSet(_LineItemViewSetMixin, ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):

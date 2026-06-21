@@ -3,7 +3,7 @@
 import { isNotFoundLikeError } from "@/lib/errors/api-error"
 import Link from "next/link"
 import { useEffect, useState } from "react"
-import { FilePlus2, HeartPulse, ScrollText, Pill, Users } from "lucide-react"
+import { FilePlus2, HeartPulse, ScrollText, Pill, UserPlus } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
 import PageHeader from "@/components/ui/PageHeader"
@@ -86,13 +86,25 @@ export default function MedicinaOcupacionalPage() {
           <MetricCard label="Medicação" value="—" />
         </div>
 
+        {/* Registo de pacientes centralizado na Receção */}
+        <div className="flex items-center gap-3 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3">
+          <UserPlus size={18} className="shrink-0 text-blue-600" />
+          <div className="flex-1 text-sm text-blue-800">
+            O registo de novos pacientes ocupacionais é feito na{" "}
+            <Link href="/reception" className="font-semibold underline underline-offset-2 hover:text-blue-600">
+              Receção
+            </Link>
+            {" "}— seleccione <strong>Medicina Ocupacional</strong> no fluxo de entrada de paciente.
+          </div>
+          <Link
+            href="/reception"
+            className="shrink-0 rounded-lg border border-blue-300 bg-white px-3 py-1.5 text-xs font-semibold text-blue-700 shadow-sm hover:bg-blue-50"
+          >
+            Ir para Receção
+          </Link>
+        </div>
+
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <ActionTile
-            title="Pacientes"
-            description="Registar e acompanhar pacientes de medicina ocupacional."
-            href="/patients"
-            icon={Users}
-          />
           <ActionTile
             title="Criar requisição laboratorial"
             description="Solicitar análises laboratoriais."

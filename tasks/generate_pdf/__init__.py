@@ -14,6 +14,7 @@ from .patient_history_pdf_generator import generate_patient_history_pdf
 from .patient_invoice_history_pdf_generator import generate_patient_invoice_history_pdf
 from .patient_payment_history_pdf_generator import generate_patient_payment_history_pdf
 from .pdf_admin_mixin import PDFAdminMixin, SimplePDFAdminMixin, pdf_action_content, pdf_action_link
+from .proforma_pdf_generator import generate_proforma_pdf
 from .pdf_base import (
     NumberedCanvas,
     _safe_image_reader,
@@ -77,6 +78,7 @@ __all__ = [
     "generate_billing_user_history_pdf",
     "generate_invoice_pdf",
     "generate_model_activity_pdf",
+    "generate_proforma_pdf",
     "generate_patient_history_pdf",
     "generate_patient_invoice_history_pdf",
     "generate_patient_payment_history_pdf",
@@ -112,6 +114,7 @@ capitalizar_name = capitalize_name
 invoice_pdf = invoice_pdf
 invoice_request_pdf = request_invoice_pdf
 gerar_pdf_invoice = generate_invoice_pdf
+gerar_pdf_proforma = generate_proforma_pdf
 gerar_pdf_historico_faturamento = generate_billing_user_history_pdf
 gerar_pdf_atividades = generate_activity_report_pdf
 gerar_pdf_modelo_operacional = generate_model_activity_pdf

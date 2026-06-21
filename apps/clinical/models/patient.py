@@ -264,6 +264,12 @@ class Patient(CoreModel):
         related_name="pacientes",
     )
 
+    is_organ_donor = models.BooleanField(
+        "Doador de órgãos",
+        default=False,
+        help_text="Indica se o paciente é doador de órgãos.",
+    )
+
     class Meta:
         db_table = "clinico_paciente"
         verbose_name = "Entrada"
