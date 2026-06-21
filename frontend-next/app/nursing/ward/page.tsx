@@ -3,7 +3,6 @@
 import { isNotFoundLikeError } from "@/lib/errors/api-error"
 import Link from "next/link"
 import { useEffect, useMemo, useState } from "react"
-import { BedDouble } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
 import Card from "@/components/ui/Card"
@@ -166,18 +165,6 @@ export default function WardDashboardPage() {
             <DataTable columns={columns as any} data={data?.beds || []} emptyMessage="Nenhuma cama ocupada." />
           )}
         </Card>
-
-        <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-5 shadow-sm">
-          <div className="flex items-start gap-3">
-            <div className="rounded-xl border border-[var(--border)] bg-[var(--gray-100)] p-2 text-[var(--gray-700)]">
-              <BedDouble size={18} />
-            </div>
-            <div className="text-sm text-[var(--gray-700)]">
-              Para mostrar horários automáticos de medicação por cama, o próximo passo é registrar administrações (log de doses).
-              No MVP, o campo <strong>Horário da próxima medicação</strong> pode ser preenchido pela enfermagem no internamento.
-            </div>
-          </div>
-        </div>
       </div>
     </AppLayout>
   )
