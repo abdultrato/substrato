@@ -141,19 +141,19 @@ export default function BloodBankPage() {
       key: "stock_movement",
       label: "Criar movimento de sangue",
       href: "/bloodbank/blood-stock-movements/new",
-      description: "Entrada, saida, transferencia, reserva, liberacao, descarte e ajustes.",
+      description: "Entrada, saída, transferência, reserva, liberação, descarte e ajustes.",
     },
     {
       key: "transfusion",
       label: "Criar transfusão",
       href: "/bloodbank/blood-transfusions/new",
-      description: "Solicitacao e execucao de transfusao com validacoes clinicas.",
+      description: "Solicitação e execução de transfusão com validações clínicas.",
     },
     {
       key: "storage_maintenance",
       label: "Criar manutenção",
       href: "/bloodbank/blood-storage-maintenances/new",
-      description: "Plano preventivo/corretivo e registo de execucao tecnica.",
+      description: "Plano preventivo/corretivo e registo de execução técnica.",
     },
   ]
 
@@ -242,7 +242,7 @@ export default function BloodBankPage() {
         </section>
 
         <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-          <h2 className="text-sm font-semibold text-slate-900">Criacao de Eventos</h2>
+          <h2 className="text-sm font-semibold text-slate-900">Criação de Eventos</h2>
           <p className="mt-1 text-xs text-slate-600">
             Use os atalhos abaixo para criar eventos operacionais do banco de sangue no frontend.
           </p>
