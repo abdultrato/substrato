@@ -952,8 +952,13 @@ function safeFieldSelector(fieldName: string): string {
 }
 
 function relationIdFromValue(value: any): string | null {
+  // Many-to-many (array) values are not a single related id: collapsing them
+  // with String([...]) would yield "1,2,3" and, when used to build a detail
+  // URL, request `/endpoint/1%2C2%2C3/` (404). Those fields resolve their
+  // labels through the list/multi-select instead.
+  if (Array.isArray(value)) return null
   const raw =
-    value && typeof value === "object" && !Array.isArray(value)
+    value && typeof value === "object"
       ? value.id ?? value.pk
       : value
   if (raw === undefined || raw === null || raw === "") return null
