@@ -195,7 +195,7 @@ export default function NursingRequestsPage() {
                                 : "bg-[var(--primary-600)] hover:bg-[var(--primary-700)]"
                             }`}
                           >
-                            {isBusy ? "..." : isRejected ? "Recolher" : "Colher amostra"}
+                            {isBusy ? "..." : isRejected ? "Recoletar" : "Coletar amostra"}
                           </button>
                         )}
                       </div>
