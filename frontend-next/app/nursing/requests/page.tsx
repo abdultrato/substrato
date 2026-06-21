@@ -90,18 +90,46 @@ export default function NursingRequestsPage() {
     }
   }, [debouncedSearch, status, page, pageSize, safeRefreshToken, reloadTick])
 
-  const colherAmostraItem = useCallback(async (item: any) => {
-    setBusyItems((prev) => new Set(prev).add(item.id))
+  const colherAmostraItem = useCallback(async (row: RequestRow, item: any) => {
+    // Agrupamento por tipo de amostra: a amostra coletada para este exame é a
+    // sua amostra principal (primeira opção = sample_type). Todos os outros
+    // exames pendentes que aceitam essa mesma amostra ficam cobertos pela mesma
+    // coleta e são marcados como "Amostra coletada".
+    const sampleIds: number[] = Array.isArray(item.sample_options)
+      ? item.sample_options.map((s: any) => s?.id).filter((id: any) => id != null)
+      : []
+    const primarySampleId = sampleIds[0] ?? null
+
+    const siblings: any[] =
+      primarySampleId == null
+        ? []
+        : (Array.isArray(row.items) ? row.items : []).filter(
+            (it: any) =>
+              it.id !== item.id &&
+              (it.sample_status || "aguardando") === "aguardando" &&
+              Array.isArray(it.sample_options) &&
+              it.sample_options.some((s: any) => s?.id === primarySampleId),
+          )
+
+    const targets = [item, ...siblings]
+    setBusyItems((prev) => {
+      const next = new Set(prev)
+      targets.forEach((it) => next.add(it.id))
+      return next
+    })
     setErrorMessage(null)
     try {
-      await apiFetch(`/clinical/labrequestitem/${item.id}/colher-amostra/`, { method: "POST" })
+      for (const it of targets) {
+        await apiFetch(`/clinical/labrequestitem/${it.id}/colher-amostra/`, { method: "POST" })
+      }
       setReloadTick((tick) => tick + 1)
     } catch (e: any) {
       setErrorMessage(e?.message || "Falha ao registar a coleta.")
+      setReloadTick((tick) => tick + 1)
     } finally {
       setBusyItems((prev) => {
         const next = new Set(prev)
-        next.delete(item.id)
+        targets.forEach((it) => next.delete(it.id))
         return next
       })
     }
@@ -197,7 +225,7 @@ export default function NursingRequestsPage() {
                         ) : (
                           <button
                             type="button"
-                            onClick={() => colherAmostraItem(item)}
+                            onClick={() => colherAmostraItem(r, item)}
                             disabled={isBusy || !canCollect}
                             className={`inline-flex items-center rounded-md px-2.5 py-1 text-[11px] font-semibold text-white transition disabled:opacity-60 ${
                               isRejected
