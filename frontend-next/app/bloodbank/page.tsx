@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import { useEffect, useMemo, useState } from "react"
 import {
   Droplet,
   Shield,
@@ -15,11 +16,23 @@ import {
 import AppLayout from "@/components/layout/AppLayout"
 import ActionTile from "@/components/ui/ActionTile"
 import PageHeader from "@/components/ui/PageHeader"
+import DataTable from "@/components/ui/DataTable"
+import Pagination from "@/components/ui/Pagination"
 import useAuthGuard from "@/hooks/useAuthGuard"
+import useDebounce from "@/hooks/useDebounce"
 import { useAuth } from "@/hooks/useAuth"
 import { useModulesCatalog } from "@/hooks/useModulesCatalog"
+import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
+import { apiFetchList } from "@/lib/api"
 import { findModuleGroup } from "@/lib/modules"
 import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
+
+type DonorRow = Record<string, any>
+
+function bloodTypeLabel(value: any): string {
+  const v = String(value || "").trim()
+  return !v || v === "UNK" ? "—" : v
+}
 
 export default function BloodBankPage() {
   const { loading } = useAuthGuard()
@@ -28,6 +41,89 @@ export default function BloodBankPage() {
   const canViewAdmin = userHasAnyGroup(user, [GROUPS.ADMIN])
 
   const group = findModuleGroup("bloodbank", modules)
+  const safeRefreshToken = useSafeDataRefreshSignal()
+
+  const [search, setSearch] = useState("")
+  const [page, setPage] = useState(1)
+  const pageSize = 20
+  const [totalItems, setTotalItems] = useState(0)
+  const [totalPages, setTotalPages] = useState(1)
+  const [donors, setDonors] = useState<DonorRow[]>([])
+  const [listLoading, setListLoading] = useState(true)
+  const [listErro, setListErro] = useState<string | null>(null)
+  const debouncedSearch = useDebounce(search, 300)
+
+  useEffect(() => {
+    setPage(1)
+  }, [debouncedSearch])
+
+  useEffect(() => {
+    let mounted = true
+    async function loadDonors() {
+      try {
+        setListLoading(true)
+        setListErro(null)
+        const res = await apiFetchList<DonorRow>("/clinical/patient/", {
+          page,
+          pageSize,
+          query: {
+            is_blood_donor: true,
+            ...(debouncedSearch.trim() ? { search: debouncedSearch.trim() } : {}),
+          },
+          clientCache: safeRefreshToken === 0,
+        })
+        if (!mounted) return
+        const items = Array.isArray(res?.items) ? res.items : []
+        const total = res?.meta?.total ?? items.length
+        const computedTotalPages =
+          res?.meta?.totalPages ?? (total && pageSize ? Math.max(1, Math.ceil(total / pageSize)) : 1)
+        setDonors(items)
+        setTotalItems(total || 0)
+        setTotalPages(computedTotalPages)
+        if (page > computedTotalPages) setPage(computedTotalPages)
+      } catch (e: any) {
+        if (!mounted) return
+        setListErro(e?.message || "Falha ao carregar doadores de sangue.")
+      } finally {
+        if (mounted) setListLoading(false)
+      }
+    }
+    loadDonors()
+    return () => {
+      mounted = false
+    }
+  }, [debouncedSearch, page, safeRefreshToken])
+
+  const donorColumns = useMemo(
+    () => [
+      { header: "ID", render: (r: DonorRow) => r.custom_id || r.id || "-" },
+      {
+        header: "Nome",
+        render: (r: DonorRow) => (
+          <Link
+            href={`/patients/${r.id}`}
+            className="font-medium text-[var(--primary-700)] underline-offset-2 hover:underline"
+          >
+            {r.name || "-"}
+          </Link>
+        ),
+      },
+      { header: "Tipo sanguíneo", render: (r: DonorRow) => bloodTypeLabel(r.blood_type) },
+      { header: "Contacto", render: (r: DonorRow) => r.contact || "—" },
+      {
+        header: "",
+        render: (r: DonorRow) => (
+          <Link
+            href={`/patients/${r.id}`}
+            className="inline-flex items-center rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
+          >
+            Abrir ficha
+          </Link>
+        ),
+      },
+    ],
+    []
+  )
 
   if (loading) return null
 
@@ -104,6 +200,46 @@ export default function BloodBankPage() {
             </div>
           )}
         </div>
+
+        <section className="space-y-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2 className="flex items-center gap-2 text-sm font-semibold text-slate-900">
+              <Droplet size={16} className="text-rose-500" />
+              Doadores de sangue
+            </h2>
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Pesquisar por nome ou ID"
+              className="w-64 max-w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm outline-none transition focus:border-rose-400 focus:ring-2 focus:ring-rose-200"
+            />
+          </div>
+
+          {listErro ? (
+            <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+              {listErro}
+            </div>
+          ) : null}
+
+          {listLoading ? (
+            <div className="py-6 text-center text-sm text-slate-500">Carregando...</div>
+          ) : (
+            <>
+              <DataTable<DonorRow>
+                columns={donorColumns as any}
+                data={donors}
+                emptyMessage="Nenhum doador de sangue registado."
+                searchable={false}
+              />
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="text-xs text-slate-600">
+                  Total: {totalItems} · Página {page} de {totalPages}
+                </div>
+                <Pagination page={page} totalPages={totalPages} onChange={setPage} />
+              </div>
+            </>
+          )}
+        </section>
 
         <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
           <h2 className="text-sm font-semibold text-slate-900">Criacao de Eventos</h2>

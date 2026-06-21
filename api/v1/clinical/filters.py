@@ -145,9 +145,14 @@ class MedicalExamFieldFilter(SafeFilterSet):
 
 class PatientFilter(SafeFilterSet):
     address = django_filters.CharFilter(field_name="address", lookup_expr="icontains")
+    is_blood_donor = django_filters.BooleanFilter(
+        method="filter_is_blood_donor",
+        label="É doador de sangue (possui doações registadas)",
+    )
     legacy_filter_aliases = {
         "contacto": "contact",
         "data_nascimento": "birth_date",
+        "doador_sangue": "is_blood_donor",
         "genero": "gender",
         "morada": "address",
         "nome": "name",
@@ -156,6 +161,15 @@ class PatientFilter(SafeFilterSet):
         "raca_origem": "race_origin",
         "tipo_documento": "document_type",
     }
+
+    def filter_is_blood_donor(self, queryset, name, value):
+        # "Doador" = paciente com pelo menos uma doação de sangue não eliminada.
+        if value is None:
+            return queryset
+        donors = queryset.filter(blood_donations__deleted=False)
+        if value:
+            return donors.distinct()
+        return queryset.exclude(pk__in=donors.values("pk"))
 
     class Meta:
         model = Patient
