@@ -580,6 +580,11 @@ export function PatientIntakeWizard({
         next.is_replacement_donor_inapt = false
         next.replacement_donor_inapt_at = ""
         next.replacement_donor_inapt_reason = ""
+      } else {
+        next.companion_name = ""
+        next.companion_relationship = ""
+        next.companion_contact = ""
+        next.companion_email = ""
       }
       return next
     })
@@ -609,8 +614,10 @@ export function PatientIntakeWizard({
       if (data.pregnant && !data.gestational_age_weeks.trim()) {
         return "Informe a idade gestacional quando a paciente está marcada como gestante."
       }
-      const companionEmailProblem = emailError(data.companion_email, "Email do acompanhante")
-      if (companionEmailProblem) return companionEmailProblem
+      if (!isDonor) {
+        const companionEmailProblem = emailError(data.companion_email, "Email do acompanhante")
+        if (companionEmailProblem) return companionEmailProblem
+      }
     }
 
     if (key === "donation" && data.is_blood_donor) {
@@ -884,7 +891,9 @@ export function PatientIntakeWizard({
                   >
                     {complete ? <CheckCircle2 size={15} /> : <Icon size={15} />}
                   </span>
-                  <span className="min-w-0 font-semibold">{definition.label}</span>
+                  <span className="min-w-0 font-semibold">
+                    {definition.key === "clinical" && isDonor ? "Clínico" : definition.label}
+                  </span>
                 </button>
               )
             })}
@@ -1275,40 +1284,42 @@ export function PatientIntakeWizard({
             </div>
           ) : null}
 
-          <div className="space-y-3">
-            <SectionTitle icon={Users} title="Acompanhante" />
-            <div className="grid gap-3 sm:grid-cols-2">
-              <Field label="Nome do acompanhante">
-                <input
-                  value={data.companion_name}
-                  onChange={(event) => update({ companion_name: event.target.value })}
-                  className={inputCls}
-                />
-              </Field>
-              <Field label="Parentesco">
-                <input
-                  value={data.companion_relationship}
-                  onChange={(event) => update({ companion_relationship: event.target.value })}
-                  className={inputCls}
-                />
-              </Field>
-              <Field label="Telefone do acompanhante">
-                <input
-                  value={data.companion_contact}
-                  onChange={(event) => update({ companion_contact: event.target.value })}
-                  className={inputCls}
-                />
-              </Field>
-              <Field label="Email do acompanhante">
-                <input
-                  type="email"
-                  value={data.companion_email}
-                  onChange={(event) => update({ companion_email: event.target.value })}
-                  className={inputCls}
-                />
-              </Field>
+          {!isDonor ? (
+            <div className="space-y-3">
+              <SectionTitle icon={Users} title="Acompanhante" />
+              <div className="grid gap-3 sm:grid-cols-2">
+                <Field label="Nome do acompanhante">
+                  <input
+                    value={data.companion_name}
+                    onChange={(event) => update({ companion_name: event.target.value })}
+                    className={inputCls}
+                  />
+                </Field>
+                <Field label="Parentesco">
+                  <input
+                    value={data.companion_relationship}
+                    onChange={(event) => update({ companion_relationship: event.target.value })}
+                    className={inputCls}
+                  />
+                </Field>
+                <Field label="Telefone do acompanhante">
+                  <input
+                    value={data.companion_contact}
+                    onChange={(event) => update({ companion_contact: event.target.value })}
+                    className={inputCls}
+                  />
+                </Field>
+                <Field label="Email do acompanhante">
+                  <input
+                    type="email"
+                    value={data.companion_email}
+                    onChange={(event) => update({ companion_email: event.target.value })}
+                    className={inputCls}
+                  />
+                </Field>
+              </div>
             </div>
-          </div>
+          ) : null}
         </div>
       )
     }
@@ -1582,7 +1593,7 @@ export function PatientIntakeWizard({
             }
           />
         </SummaryGroup>
-        <SummaryGroup title="Clínico e acompanhante">
+        <SummaryGroup title={isDonor ? "Clínico" : "Clínico e acompanhante"}>
           <SummaryRow label="Gestante" value={data.pregnant ? `${data.gestational_age_weeks} semanas` : "Não"} />
           {isClinical ? (
             <SummaryRow label="Doador de órgãos" value={data.is_organ_donor ? "Sim" : "Não"} />
@@ -1590,8 +1601,12 @@ export function PatientIntakeWizard({
           {isDonor ? (
             <SummaryRow label="Repositor inapto" value={data.is_replacement_donor_inapt ? "Sim" : "Não"} />
           ) : null}
-          <SummaryRow label="Acompanhante" value={data.companion_name || "-"} />
-          <SummaryRow label="Contacto do acompanhante" value={data.companion_contact || "-"} />
+          {!isDonor ? (
+            <>
+              <SummaryRow label="Acompanhante" value={data.companion_name || "-"} />
+              <SummaryRow label="Contacto do acompanhante" value={data.companion_contact || "-"} />
+            </>
+          ) : null}
         </SummaryGroup>
         {data.is_blood_donor ? (
           <SummaryGroup title="Doação de sangue">
