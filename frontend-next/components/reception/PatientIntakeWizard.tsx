@@ -14,6 +14,7 @@ import {
   Home,
   Badge,
   Phone,
+  Printer,
   ShieldCheck,
   Stethoscope,
   UserPlus,
@@ -21,6 +22,13 @@ import {
   X,
 } from "lucide-react"
 import { apiFetch, apiFetchList } from "@/lib/api"
+
+async function openBloodBagLabel(donationId: number) {
+  const blob = await apiFetch<Blob>(`/bloodbank/donation/${donationId}/etiqueta/`, { responseType: "blob" })
+  const url = URL.createObjectURL(blob)
+  window.open(url, "_blank", "noopener")
+  window.setTimeout(() => URL.revokeObjectURL(url), 60000)
+}
 
 type LookupItem = {
   id: number
@@ -75,7 +83,6 @@ type WizardData = {
   companion_relationship: string
   companion_contact: string
   companion_email: string
-  donation_bag_identifier: string
   donation_type: "WBL" | "APH"
   donation_status: DonationStatus
   screening_status: ScreeningStatus
@@ -106,6 +113,8 @@ type CreatedPatient = {
   custom_id?: string | null
   name: string
   donationCreated?: boolean
+  donationId?: number | null
+  bagIdentifier?: string | null
   warning?: string
 }
 
@@ -144,7 +153,6 @@ const EMPTY: WizardData = {
   companion_relationship: "",
   companion_contact: "",
   companion_email: "",
-  donation_bag_identifier: "",
   donation_type: "WBL",
   donation_status: "REG",
   screening_status: "PEN",
@@ -535,6 +543,7 @@ export function PatientIntakeWizard({
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [created, setCreated] = useState<CreatedPatient | null>(null)
+  const [labelError, setLabelError] = useState<string | null>(null)
 
   const steps = useMemo(
     () => STEP_DEFINITIONS.filter((definition) => definition.key !== "donation" || data.is_blood_donor),
@@ -621,7 +630,6 @@ export function PatientIntakeWizard({
     }
 
     if (key === "donation" && data.is_blood_donor) {
-      if (!data.donation_bag_identifier.trim()) return "Informe o identificador da bolsa de doação."
       if (data.donor_role === "REP" && !data.replacement_for_id) {
         return "Selecione o paciente para quem esta doação é reposição."
       }
@@ -717,7 +725,6 @@ export function PatientIntakeWizard({
     const payload: Record<string, any> = {
       donor: patientId,
       donor_role: data.donor_role,
-      bag_identifier: data.donation_bag_identifier.trim(),
       blood_type: data.blood_type,
       donation_type: data.donation_type,
       status: data.donation_status,
@@ -758,14 +765,18 @@ export function PatientIntakeWizard({
       })
 
       let donationCreated = false
+      let donationId: number | null = null
+      let bagIdentifier: string | null = null
       let warning: string | undefined
       if (data.is_blood_donor && patient?.id) {
         try {
-          await apiFetch("/bloodbank/donation/", {
+          const donation = await apiFetch<any>("/bloodbank/donation/", {
             method: "POST",
             body: JSON.stringify(buildDonationPayload(patient.id)),
           })
           donationCreated = true
+          donationId = donation?.id ?? null
+          bagIdentifier = donation?.bag_identifier ?? donation?.custom_id ?? null
         } catch (donationError: any) {
           warning = firstApiError(
             donationError,
@@ -779,6 +790,8 @@ export function PatientIntakeWizard({
         custom_id: patient.custom_id,
         name: patient.name,
         donationCreated,
+        donationId,
+        bagIdentifier,
         warning,
       })
       if (!warning) onSuccess?.(patient.id)
@@ -809,9 +822,33 @@ export function PatientIntakeWizard({
           ) : null}
 
           {created.donationCreated ? (
-            <div className="flex items-center gap-2 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-700">
-              <Droplets size={14} />
-              Doação de sangue registada.
+            <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-700">
+              <span className="flex items-center gap-2">
+                <Droplets size={14} />
+                Doação registada · Bolsa {created.bagIdentifier || "—"}
+              </span>
+              {created.donationId ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setLabelError(null)
+                    openBloodBagLabel(created.donationId!).catch(() =>
+                      setLabelError("Falha ao gerar a etiqueta da bolsa."),
+                    )
+                  }}
+                  className="inline-flex h-7 items-center gap-1.5 rounded-md border border-rose-300 bg-white px-2.5 font-semibold text-rose-700 transition hover:bg-rose-100"
+                >
+                  <Printer size={13} />
+                  Imprimir etiqueta
+                </button>
+              ) : null}
+            </div>
+          ) : null}
+
+          {labelError ? (
+            <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+              <AlertTriangle size={14} className="mt-0.5 shrink-0" />
+              <span>{labelError}</span>
             </div>
           ) : null}
 
@@ -850,6 +887,7 @@ export function PatientIntakeWizard({
                 setCreated(null)
                 setData(EMPTY)
                 setStep(0)
+                setLabelError(null)
               }}
               className="inline-flex h-9 items-center rounded-lg bg-[var(--primary-600)] px-3 text-xs font-semibold text-white transition hover:bg-[var(--primary-700)]"
             >
@@ -1329,13 +1367,6 @@ export function PatientIntakeWizard({
         <div className="space-y-5">
           <SectionTitle icon={Droplets} title="Doação de sangue" />
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            <Field label="Identificador da bolsa" required>
-              <input
-                value={data.donation_bag_identifier}
-                onChange={(event) => update({ donation_bag_identifier: event.target.value })}
-                className={inputCls}
-              />
-            </Field>
             <Field label="Tipo de doador">
               <select
                 value={data.donor_role}
@@ -1610,7 +1641,7 @@ export function PatientIntakeWizard({
         </SummaryGroup>
         {data.is_blood_donor ? (
           <SummaryGroup title="Doação de sangue">
-            <SummaryRow label="Bolsa" value={data.donation_bag_identifier || "-"} />
+            <SummaryRow label="Bolsa" value="Gerada automaticamente" />
             <SummaryRow label="Tipo" value={data.donor_role === "VOL" ? "Voluntário" : "Repositor"} />
             {data.donor_role === "REP" ? (
               <SummaryRow label="Reposição para" value={data.replacement_for_name || "-"} />

@@ -123,6 +123,9 @@ class BloodDonation(NoNameCoreModel):
         verbose_name="Identificador da bolsa",
         max_length=40,
         db_index=True,
+        blank=True,
+        default="",
+        help_text="Gerado automaticamente a partir do custom_id quando não informado.",
     )
     blood_type = models.CharField(
         db_column="blood_type",
@@ -566,7 +569,21 @@ class BloodDonation(NoNameCoreModel):
                 reason=reason,
             ).save()
 
+    def generate_identifier(self):
+        # Gera o custom_id (via IdentifierMixin) e, quando a bolsa não foi
+        # informada, usa o mesmo identificador na bolsa. Roda dentro do laço de
+        # retry do IdentifierMixin, portanto acompanha eventuais recodificações.
+        super().generate_identifier()
+        if getattr(self, "_auto_bag_identifier", False) and self.custom_id:
+            self.bag_identifier = self.custom_id
+
     def save(self, *args, **kwargs):
+        # Identificador da bolsa é gerado automaticamente a partir do custom_id
+        # quando não informado explicitamente.
+        self._auto_bag_identifier = not (self.bag_identifier or "").strip()
+        if self._auto_bag_identifier and self.custom_id:
+            self.bag_identifier = self.custom_id
+
         # Padroniza validacoes (clean()) antes de persistir.
         self.full_clean()
         result = super().save(*args, **kwargs)

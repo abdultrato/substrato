@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
+from django.http import HttpResponse
 from django.utils import timezone
 from rest_framework import serializers, status
 from rest_framework.decorators import action
@@ -84,6 +85,18 @@ class BloodDonationViewSet(TenantScopedModelViewSet):
     @action(detail=True, methods=["post"], url_path="cancel", url_name="cancel")
     def cancel(self, request, pk=None):
         return self._run(request, BloodDonationWorkflowService.cancel, reason=request.data.get("reason", ""))
+
+    @action(detail=True, methods=["get"], url_path="etiqueta", url_name="etiqueta")
+    def etiqueta(self, request, pk=None):
+        """Etiqueta PDF (60x30 mm) com código de barras da bolsa para impressora de etiquetas."""
+        donation = self.get_object()
+
+        from tasks.generate_pdf.blood_bag_label_pdf_generator import generate_blood_bag_label_pdf
+
+        pdf_bytes, filename = generate_blood_bag_label_pdf(donation)
+        resp = HttpResponse(pdf_bytes, content_type="application/pdf")
+        resp["Content-Disposition"] = f'inline; filename="{filename}"'
+        return resp
 
 
 class BloodStorageViewSet(TenantScopedModelViewSet):
