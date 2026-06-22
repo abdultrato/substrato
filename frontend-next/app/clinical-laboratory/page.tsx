@@ -108,13 +108,13 @@ export default function ClinicalLaboratoryHubPage() {
     <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.LABORATORIO]}>
       <main className="p-6 max-w-6xl mx-auto">
       <header className="mb-8 flex items-start gap-3">
-        <div className="relative rounded-xl bg-indigo-50 p-3 w-[52px] h-[52px] shrink-0">
+        <div className="relative rounded-xl bg-indigo-600 p-3 w-[52px] h-[52px] shrink-0">
           <span
             aria-hidden
             className="pointer-events-none absolute inset-0 rounded-xl"
             style={{
-              background: "#4f46e5",
-              opacity: 0.55,
+              background: "#ffffff",
+              opacity: 1,
               WebkitMaskImage: `url("${lucideToDataUrl(FlaskConical)}")`,
               WebkitMaskRepeat: "no-repeat",
               WebkitMaskSize: "52%",
@@ -149,13 +149,13 @@ export default function ClinicalLaboratoryHubPage() {
                     href={item.href}
                     className="group flex h-9 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 shadow-sm transition-colors hover:border-indigo-300"
                   >
-                    <span className="relative shrink-0 w-5 h-5 rounded bg-gray-100">
+                    <span className="relative shrink-0 w-5 h-5 rounded bg-indigo-600">
                       <span
                         aria-hidden
                         className="pointer-events-none absolute inset-0 rounded"
                         style={{
-                          background: "#4f46e5",
-                          opacity: 0.7,
+                          background: "#ffffff",
+                          opacity: 1,
                           WebkitMaskImage: `url("${iconUrl}")`,
                           WebkitMaskRepeat: "no-repeat",
                           WebkitMaskSize: "65%",
