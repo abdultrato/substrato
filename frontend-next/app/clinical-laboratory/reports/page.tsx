@@ -7,6 +7,7 @@ import AppLayout from "@/components/layout/AppLayout"
 import PageHeader from "@/components/ui/PageHeader"
 import { apiFetch, apiFetchList } from "@/lib/api"
 import { getClinicalStatusLabel } from "@/lib/clinicalStatus"
+import useDebounce from "@/hooks/useDebounce"
 import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { genderLabel } from "@/components/clinical-laboratory/ReceptionWorkflow"
 
@@ -141,13 +142,11 @@ function SearchPanel({
   onChange,
   onSearch,
   onClear,
-  loading,
 }: {
   filters: SearchFilters
   onChange: (f: SearchFilters) => void
   onSearch: () => void
   onClear: () => void
-  loading: boolean
 }) {
   function set<K extends keyof SearchFilters>(key: K, value: string) {
     onChange({ ...filters, [key]: value })
@@ -157,9 +156,9 @@ function SearchPanel({
   }
 
   return (
-    <div className="rounded-xl border border-[var(--border)] bg-transparent px-4 py-3">
-      <div className="grid grid-cols-2 gap-2 md:grid-cols-3 xl:grid-cols-4">
-        <div className="col-span-2 md:col-span-3 xl:col-span-4">
+    <div className="rounded-xl border border-[var(--border)] bg-transparent px-3 py-2">
+      <div className="grid grid-cols-2 gap-x-2 gap-y-1.5 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-7">
+        <div className="col-span-2">
           <label className={LABEL_CLS}>Pesquisa livre (código, paciente, documento, empresa…)</label>
           <input value={filters.search} onChange={(e) => set("search", e.target.value)} onKeyDown={handleKey} placeholder="Escreva qualquer termo…" className={INPUT_CLS} />
         </div>
@@ -232,12 +231,9 @@ function SearchPanel({
         </div>
       </div>
 
-      <div className="mt-3 flex items-center justify-end gap-2 border-t border-[var(--border)] pt-3">
+      <div className="mt-2 flex items-center justify-end border-t border-[var(--border)] pt-2">
         <button type="button" onClick={onClear} className="h-7 rounded border border-[var(--border)] px-3 text-xs text-[var(--gray-600)] hover:bg-[var(--gray-100)] dark:text-[var(--gray-300)]">
           Limpar
-        </button>
-        <button type="button" onClick={onSearch} disabled={loading} className="h-7 rounded bg-[var(--primary-600)] px-4 text-xs font-semibold text-white hover:bg-[var(--primary-700)] disabled:opacity-60">
-          {loading ? "A pesquisar..." : "Pesquisar"}
         </button>
       </div>
     </div>
@@ -316,6 +312,7 @@ export default function LabReportsPage() {
   const [busyId, setBusyId] = useState<number | null>(null)
   const [notifiedId, setNotifiedId] = useState<number | null>(null)
   const [filters, setFilters] = useState<SearchFilters>(EMPTY_FILTERS)
+  const debouncedFilters = useDebounce(filters, 350)
 
   const load = useCallback(async (f: SearchFilters) => {
     setLoading(true)
@@ -336,8 +333,8 @@ export default function LabReportsPage() {
   }, [])
 
   useEffect(() => {
-    load(EMPTY_FILTERS)
-  }, [load, safeRefreshToken])
+    load(debouncedFilters)
+  }, [load, debouncedFilters, safeRefreshToken])
 
   const buckets = useMemo(() => {
     const bucketer = makeBucketer()
@@ -371,7 +368,7 @@ export default function LabReportsPage() {
 
   return (
     <AppLayout>
-      <div className="mx-auto w-full max-w-[1400px] space-y-3">
+      <div className="w-full space-y-3">
         <PageHeader title="Laudos" />
 
         <SearchPanel
@@ -379,7 +376,6 @@ export default function LabReportsPage() {
           onChange={setFilters}
           onSearch={() => load(filters)}
           onClear={handleClear}
-          loading={loading}
         />
 
         {error && (
@@ -388,10 +384,10 @@ export default function LabReportsPage() {
           </div>
         )}
 
-        {loading ? (
+        {loading && rows.length === 0 ? (
           <p className="text-sm text-[var(--gray-400)]">A carregar...</p>
         ) : (
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
+          <div className={`grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4 ${loading ? "opacity-60" : ""}`}>
             {COLUMNS.map((column) => {
               const items = buckets[column.key]
               return (
