@@ -8,10 +8,12 @@ from reportlab.lib.units import cm
 from reportlab.lib.enums import TA_LEFT
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.platypus import (
+    BaseDocTemplate,
+    Frame,
     HRFlowable,
-    KeepTogether,
+    NextPageTemplate,
+    PageTemplate,
     Paragraph,
-    SimpleDocTemplate,
     Spacer,
     Table,
     TableStyle,
@@ -27,6 +29,8 @@ from .institutional_pdf_design import (
     PDF_MARGIN,
     append_fim,
     bold_inst as bold,
+    draw_institutional_corner_barcode,
+    draw_institutional_overflow_qr,
     institutional_cell_paragraph as cell_paragraph,
     institutional_section_style as document_section_style,
     institutional_title_style as document_title_style,
@@ -59,11 +63,11 @@ def _resolve_document_user(request):
 def generate_request_pdf(request) -> tuple[bytes, str]:
     """Monta e devolve o PDF da requisição de exames em bytes."""
     buffer = io.BytesIO()
-    page_width, _ = A5
+    page_width, page_height = A5
     min_margin = PDF_MARGIN
     usable_width = page_width - 2 * min_margin
 
-    doc = SimpleDocTemplate(
+    doc = BaseDocTemplate(
         buffer,
         pagesize=A5,
         leftMargin=min_margin,
@@ -208,8 +212,10 @@ def generate_request_pdf(request) -> tuple[bytes, str]:
         ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
         ("LEFTPADDING", (0, 0), (-1, -1), 4),
         ("RIGHTPADDING", (0, 0), (-1, -1), 4),
+        # Apenas linhas horizontais: traço sob o cabeçalho e sob cada linha de
+        # dados (sem GRID, logo sem linhas verticais).
         ("LINEBELOW", (0, 0), (-1, 0), 0.5, colors.HexColor("#1e3a5f")),
-        ("GRID", (0, 1), (-1, -1), 0.3, colors.HexColor("#d0d7e3")),
+        ("LINEBELOW", (0, 1), (-1, -1), 0.3, colors.HexColor("#d0d7e3")),
         ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
     ]
     for i, _ in enumerate(data_rows):
@@ -218,16 +224,58 @@ def generate_request_pdf(request) -> tuple[bytes, str]:
 
     tabela_exams = Table(table_data, colWidths=col_w, repeatRows=1)
     tabela_exams.setStyle(TableStyle(style_cmds))
-    story.append(KeepTogether(tabela_exams))
+    # Sem KeepTogether: a tabela flui a partir da 1ª página e quebra ao longo
+    # das páginas (o cabeçalho repete-se via repeatRows). Antes, o KeepTogether
+    # empurrava a tabela inteira para a 2ª página quando não cabia no espaço
+    # restante da primeira.
+    story.append(tabela_exams)
 
     append_fim(story)
 
-    doc.build(
-        story,
-        onFirstPage=lambda c, d: (on_page(c, d, user_documento), draw_line_full_width(c, d)),
-        onLaterPages=lambda c, d: (on_page(c, d, user_documento), draw_line_full_width(c, d)),
-        canvasmaker=NumberedCanvas,
+    # Página 1 com o header institucional (e o espaço da sua banda); a partir da
+    # 2ª página o header da requisição não se repete — o frame recupera esse
+    # espaço e só ficam os carimbos de canto (QR + código de barras) e o rodapé.
+    first_frame = Frame(
+        min_margin,
+        PDF_BOTTOM_MARGIN,
+        usable_width,
+        page_height - PDF_HEADER_TOP_MARGIN - PDF_BOTTOM_MARGIN,
+        id="first",
+        leftPadding=0,
+        rightPadding=0,
+        topPadding=0,
+        bottomPadding=0,
     )
+    later_frame = Frame(
+        min_margin,
+        PDF_BOTTOM_MARGIN,
+        usable_width,
+        page_height - PDF_MARGIN - PDF_BOTTOM_MARGIN,
+        id="later",
+        leftPadding=0,
+        rightPadding=0,
+        topPadding=0,
+        bottomPadding=0,
+    )
+
+    def _first_page(canvas_obj, doc_obj):
+        on_page(canvas_obj, doc_obj, user_documento)
+        draw_line_full_width(canvas_obj, doc_obj)
+
+    def _later_page(canvas_obj, doc_obj):
+        draw_institutional_overflow_qr(canvas_obj, doc_obj)
+        draw_institutional_corner_barcode(canvas_obj, doc_obj)
+        draw_line_full_width(canvas_obj, doc_obj)
+
+    doc.addPageTemplates(
+        [
+            PageTemplate(id="first", frames=[first_frame], onPage=_first_page),
+            PageTemplate(id="later", frames=[later_frame], onPage=_later_page),
+        ]
+    )
+    story.insert(0, NextPageTemplate("later"))
+
+    doc.build(story, canvasmaker=NumberedCanvas)
 
     pdf_bytes = buffer.getvalue()
     buffer.close()
