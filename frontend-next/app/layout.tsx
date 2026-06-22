@@ -2,8 +2,23 @@
 import "./globals.css";
 
 import type { Metadata, Viewport } from "next";
+import { Inter, Plus_Jakarta_Sans } from "next/font/google";
 import { AuthProvider } from "@/hooks/useAuth";
 import Providers from "./providers";
+
+// Fontes auto-hospedadas pelo Next (self-hosted) para um rendering idêntico em
+// qualquer SO (Linux/Windows/Mac) — evita o fallback para Segoe UI no Windows
+// que reflui o layout. Expostas como variáveis CSS usadas em --font-sans/-display.
+const inter = Inter({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-inter",
+});
+const plusJakarta = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-jakarta",
+});
 
 function metadataBaseUrl(): URL {
   const configured =
@@ -80,6 +95,7 @@ export default function RootLayout({
     <html
       lang="pt"
       suppressHydrationWarning
+      className={`${inter.variable} ${plusJakarta.variable}`}
     >
       <head suppressHydrationWarning>
         <script
