@@ -74,6 +74,19 @@ export function fmt(v?: string) {
   return d.toLocaleString("pt-PT", { dateStyle: "short", timeStyle: "short" })
 }
 
+export function genderLabel(value?: string): string {
+  const v = (value || "").trim().toLocaleUpperCase()
+  if (v.startsWith("M")) return "Masculino"
+  if (v.startsWith("F")) return "Feminino"
+  return ""
+}
+
+/** "Nome · idade · sexo" numa só linha (partes vazias são omitidas). */
+export function patientLine(row: LabRequest): { name: string; meta: string } {
+  const meta = [row.patient_age, genderLabel(row.patient_gender)].filter(Boolean).join(" · ")
+  return { name: row.patient_name || "", meta }
+}
+
 // ─── Rejection Panel ──────────────────────────────────────────────────────────
 
 export function RejectionPanel({

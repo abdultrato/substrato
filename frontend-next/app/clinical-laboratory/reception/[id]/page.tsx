@@ -14,6 +14,7 @@ import {
   fmt,
   ItemRow,
   labItemsOf,
+  patientLine,
   type LabRequest,
   type RejectionReason,
   type RequestItem,
@@ -152,8 +153,15 @@ export default function LabReceptionDetailPage() {
           <article className="rounded border border-[var(--border)] bg-[var(--card)] p-3 shadow-sm">
             <div className="mb-2.5 flex items-start justify-between gap-2">
               <div className="min-w-0">
-                <p className="text-sm font-semibold text-[var(--text)]">{record.patient_name}</p>
-                {record.patient_age && <p className="text-[10px] text-[var(--gray-500)]">{record.patient_age}</p>}
+                {(() => {
+                  const { name, meta } = patientLine(record)
+                  return (
+                    <p className="text-sm font-semibold text-[var(--text)]">
+                      {name}
+                      {meta ? <span className="text-[11px] font-normal text-[var(--gray-500)]"> · {meta}</span> : null}
+                    </p>
+                  )
+                })()}
               </div>
               <div className="flex shrink-0 flex-col items-end gap-1">
                 {getClinicalStatusLabel(record.clinical_status, record.clinical_status_display) && (

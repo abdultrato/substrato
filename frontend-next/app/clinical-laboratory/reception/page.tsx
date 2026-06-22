@@ -12,6 +12,7 @@ import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import {
   countsByStatus,
   fmt,
+  genderLabel,
   labItemsOf,
   type LabRequest,
 } from "@/components/clinical-laboratory/ReceptionWorkflow"
@@ -34,13 +35,6 @@ const RECEPTION_COLUMNS: ColumnConfig[] = [
   { key: "parcial", title: "Amostras Recebidas Parcialmente", header: "text-amber-700", badge: "bg-amber-100 text-amber-800", top: "border-t-2 border-t-amber-400" },
   { key: "totalmente", title: "Amostras Recebidas Totalmente", header: "text-emerald-700", badge: "bg-emerald-100 text-emerald-800", top: "border-t-2 border-t-emerald-400" },
 ]
-
-function genderLabel(value?: string): string {
-  const v = (value || "").trim().toLocaleUpperCase()
-  if (v.startsWith("M")) return "Masculino"
-  if (v.startsWith("F")) return "Feminino"
-  return ""
-}
 
 function classifyReception(row: LabRequest): ColumnKey {
   const { received, rejected, total } = countsByStatus(labItemsOf(row))
