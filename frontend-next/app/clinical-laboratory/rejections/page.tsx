@@ -150,7 +150,7 @@ export default function LabRejectionsPage() {
                               {row.request_custom_id || `REQ ${row.request}`}
                             </Link>
                             {row.exam_name ? (
-                              <span className="shrink-0 rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-700">
+                              <span className="shrink-0 rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-700 dark:bg-slate-700 dark:text-slate-100">
                                 {row.exam_name}
                               </span>
                             ) : null}
@@ -161,7 +161,7 @@ export default function LabRejectionsPage() {
                           ) : null}
 
                           {row.reasons_text ? (
-                            <div className="rounded border border-rose-200 bg-rose-50/70 px-2 py-1 text-[10px] text-rose-800">
+                            <div className="rounded border border-rose-200 bg-rose-50 px-2 py-1 text-[10px] text-rose-800 dark:border-rose-800/40 dark:bg-rose-900/20 dark:text-rose-200">
                               <span className="font-semibold">Motivo: </span>
                               {row.reasons_text}
                               {row.note ? ` — ${row.note}` : ""}
