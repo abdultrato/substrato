@@ -102,7 +102,7 @@ export default function TelemedicineHubPage() {
             },
             {
               title: "Leituras e sinais vitais",
-              description: t("Receção de medições, origem dos dados, valores críticos e payloads de integração.", "Measurement intake, data source, critical values and integration payloads."),
+              description: t("Recepção de medições, origem dos dados, valores críticos e payloads de integração.", "Measurement intake, data source, critical values and integration payloads."),
               href: "/telemedicine/vitals",
               icon: HeartPulse,
             },

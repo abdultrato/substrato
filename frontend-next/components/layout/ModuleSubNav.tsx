@@ -305,7 +305,7 @@ const MODULE_NAVS: ModuleNavConfig[] = [
             { href: "/clinical-laboratory/orders", label: "Pedidos", labelEn: "Orders" },
             { href: "/clinical-laboratory/collections", label: "Coletas", labelEn: "Collections" },
             { href: "/clinical-laboratory/samples", label: "Amostras", labelEn: "Samples" },
-            { href: "/clinical-laboratory/reception", label: "Receção", labelEn: "Reception" },
+            { href: "/clinical-laboratory/reception", label: "Recepção", labelEn: "Reception" },
             { href: "/clinical-laboratory/rejections", label: "Rejeições", labelEn: "Rejections" },
             { href: "/clinical-laboratory/worklists", label: "Listas de trabalho", labelEn: "Worklists" },
             { href: "/clinical-laboratory/results", label: "Resultados", labelEn: "Results" },

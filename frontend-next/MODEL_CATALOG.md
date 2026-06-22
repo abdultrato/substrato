@@ -3564,7 +3564,7 @@ Source of truth for frontend/backend contract alignment.
 | witness | ForeignKey | no | fk:recursos_humanos.Employee | 0 |
 
 **Choices**
-- movement_type (6): `RECEIPT`=Receção; `DISPENSE`=Dispensa; `ADMINISTER`=Administração; `RETURN`=Devolução; `WASTE`=Descarte; `ADJUSTMENT`=Ajuste
+- movement_type (6): `RECEIPT`=Recepção; `DISPENSE`=Dispensa; `ADMINISTER`=Administração; `RETURN`=Devolução; `WASTE`=Descarte; `ADJUSTMENT`=Ajuste
 - schedule (5): `SCHEDULE_I`=Lista I; `SCHEDULE_II`=Lista II; `SCHEDULE_III`=Lista III; `SCHEDULE_IV`=Lista IV; `OTHER`=Outra
 - unit (7): `MG`=mg; `G`=g; `MCG`=mcg; `ML`=ml; `L`=L; `IU`=UI; `UNIT`=unidade
 

@@ -61,7 +61,7 @@ const PHASES: Phase[] = [
     items: [
       { href: "/clinical-laboratory/collections", label: "Coletas", desc: "Coleta da amostra do paciente", icon: Syringe },
       { href: "/clinical-laboratory/samples", label: "Amostras", desc: "Amostras rastreáveis (código de barras)", icon: TestTubes },
-      { href: "/clinical-laboratory/reception", label: "Receção", desc: "Conferência e aceitação da amostra", icon: PackageCheck },
+      { href: "/clinical-laboratory/reception", label: "Recepção", desc: "Conferência e aceitação da amostra", icon: PackageCheck },
       { href: "/clinical-laboratory/rejections", label: "Rejeições", desc: "Amostras inadequadas / nova coleta", icon: XCircle },
     ],
   },

@@ -1143,7 +1143,7 @@ const HUMAN_RESOURCES_DETAIL_ACTIONS: Record<string, DetailActionDefinition[]> =
   ],
 }
 
-// ── Receção (link-*/register-payment dependem de FK/valor → diferidos) ─────────
+// ── Recepção (link-*/register-payment dependem de FK/valor → diferidos) ─────────
 const RECEPTION_DETAIL_ACTIONS: Record<string, DetailActionDefinition[]> = {
   "/reception/checkin/": [
     { key: "reception.checkin.start-care", action: "start-care", labelPt: "Iniciar atendimento", labelEn: "Start care", successPt: "Atendimento iniciado.", successEn: "Care started.", tone: "primary" },

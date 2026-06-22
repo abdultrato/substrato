@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest"
 import { hasOpenApiMethod } from "@/lib/openapi/writeContract"
 import { getAvailableDetailActions } from "@/lib/resources/detailActions"
 
-// Onda D (admin/suporte): RH, receção, clínico (core), educação, identidade,
+// Onda D (admin/suporte): RH, recepção, clínico (core), educação, identidade,
 // entidades externas, notificações.
 // Aliases EN activate/deactivate omitidos a favor de ativar/desativar PT
 // (human_resources/employee, identity/user). Deferidas: reception

@@ -36,7 +36,7 @@ export default function SampleReceptionListPage() {
       })
       setRows(items)
     } catch (e: any) {
-      setError(e?.message || "Erro ao carregar a receção de amostras.")
+      setError(e?.message || "Erro ao carregar a recepção de amostras.")
     } finally {
       setLoading(false)
     }
@@ -50,7 +50,7 @@ export default function SampleReceptionListPage() {
     <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.LABORATORIO]}>
       <div className="mx-auto w-full max-w-4xl space-y-4">
         <PageHeader
-          title="Receção de amostras"
+          title="Recepção de amostras"
           subtitle="Confira as amostras recebidas contra os exames solicitados."
         />
 
@@ -62,7 +62,7 @@ export default function SampleReceptionListPage() {
           <div className="text-sm text-[var(--gray-500)]">Carregando...</div>
         ) : rows.length === 0 ? (
           <div className="rounded-lg border border-[var(--border)] bg-[var(--card)] px-4 py-6 text-center text-sm text-[var(--gray-500)]">
-            Sem requisições a aguardar receção de amostras.
+            Sem requisições a aguardar recepção de amostras.
           </div>
         ) : (
           <div className="space-y-3">

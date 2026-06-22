@@ -165,13 +165,13 @@ export default function MedicinaOcupacionalPage() {
           <MetricCard label="Medicação" value="—" />
         </div>
 
-        {/* Registo de pacientes centralizado na Receção */}
+        {/* Registo de pacientes centralizado na Recepção */}
         <div className="flex items-center gap-3 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3">
           <UserPlus size={18} className="shrink-0 text-blue-600" />
           <div className="flex-1 text-sm text-blue-800">
             O registo de novos pacientes ocupacionais é feito na{" "}
             <Link href="/reception" className="font-semibold underline underline-offset-2 hover:text-blue-600">
-              Receção
+              Recepção
             </Link>
             {" "}— seleccione <strong>Medicina Ocupacional</strong> no fluxo de entrada de paciente.
           </div>
@@ -179,7 +179,7 @@ export default function MedicinaOcupacionalPage() {
             href="/reception"
             className="shrink-0 rounded-lg border border-blue-300 bg-white px-3 py-1.5 text-xs font-semibold text-blue-700 shadow-sm hover:bg-blue-50"
           >
-            Ir para Receção
+            Ir para Recepção
           </Link>
         </div>
 

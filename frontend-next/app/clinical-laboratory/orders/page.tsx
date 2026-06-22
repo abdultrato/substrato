@@ -222,7 +222,7 @@ export default function LabOrdersPage() {
       <div className="mx-auto w-full max-w-3xl space-y-3">
         <PageHeader
           title="Pedidos"
-          subtitle="Requisições com amostras aceites na receção — prontas para análise ou transferência."
+          subtitle="Requisições com amostras aceites na recepção — prontas para análise ou transferência."
         />
 
         {feedback && (

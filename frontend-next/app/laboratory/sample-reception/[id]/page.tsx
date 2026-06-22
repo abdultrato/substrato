@@ -107,7 +107,7 @@ export default function SampleReceptionDetailPage() {
     <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.LABORATORIO]}>
       <div className="mx-auto w-full max-w-4xl space-y-4">
         <PageHeader
-          title={record?.custom_id ? `Receção de amostras · ${record.custom_id}` : "Receção de amostras"}
+          title={record?.custom_id ? `Recepção de amostras · ${record.custom_id}` : "Recepção de amostras"}
           subtitle="Confira cada amostra recebida contra o exame solicitado."
           actions={
             <Link
@@ -197,7 +197,7 @@ export default function SampleReceptionDetailPage() {
                             disabled={busyItem === item.id}
                             className="inline-flex h-9 items-center justify-center rounded-md bg-[var(--primary-600)] px-3 text-xs font-semibold text-white shadow-sm transition hover:bg-[var(--primary-700)] disabled:opacity-60"
                           >
-                            Confirmar receção no laboratório
+                            Confirmar recepção no laboratório
                           </button>
                           <button
                             type="button"

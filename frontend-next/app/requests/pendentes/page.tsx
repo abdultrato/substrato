@@ -116,7 +116,7 @@ function EditModal({
       medical_exam: req.type === "MED" ? exam.id : undefined,
       medical_exam_name: req.type === "MED" ? exam.name : undefined,
       sample_status: "aguardando",
-      sample_status_display: "Aguardando receção",
+      sample_status_display: "Aguardando recepção",
     }
     setItems((prev) => [...prev, fakeItem])
     setSearch("")
