@@ -90,7 +90,7 @@ function ReceptionCard({ row }: { row: LabRequest }) {
         ) : null}
         {counts.pending > 0 ? (
           <span className="inline-flex items-center rounded bg-sky-100 px-1.5 py-0.5 text-[10px] font-medium text-sky-800 dark:bg-sky-900/30 dark:text-sky-300">
-            {counts.pending} por conferir
+            {counts.pending} {counts.pending === 1 ? "amostra" : "amostras"} por conferir
           </span>
         ) : null}
       </div>
