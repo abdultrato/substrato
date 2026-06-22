@@ -6,9 +6,12 @@ import os
 from django.conf import settings
 from reportlab.lib.pagesizes import A5
 from reportlab.platypus import (
+    BaseDocTemplate,
+    Frame,
     HRFlowable,
+    NextPageTemplate,
+    PageTemplate,
     Paragraph,
-    SimpleDocTemplate,
     Spacer,
     Table,
     TableStyle,
@@ -23,6 +26,7 @@ from .institutional_pdf_design import (
     institutional_draw_line_full_width_improved as draw_line_full_width,
     institutional_user_identity_improved as institutional_user_identity,
     institutional_montar_bloco_identificacao as montar_bloco_identificacao,
+    PDF_MARGIN,
     pdf_encryption,
     institutional_title_style as title_style_improved,
     institutional_section_style as section_style_improved,
@@ -61,7 +65,8 @@ def generate_results_pdf(request, apenas_validados=True) -> tuple[bytes, str]:
     # Usar margens otimizadas para A5
     usable_width = A5Margins.usable_width()
 
-    doc = SimpleDocTemplate(
+    _page_width, page_height = A5
+    doc = BaseDocTemplate(
         buffer,
         pagesize=A5,
         leftMargin=A5Margins.LEFT,
@@ -275,20 +280,49 @@ def generate_results_pdf(request, apenas_validados=True) -> tuple[bytes, str]:
     # BUILD COM CABEÇALHO PERSONALIZADO
     # =====================================
 
-    doc.build(
-        elements,
-        onFirstPage=lambda c, d: (
-            draw_header_improved(c, d, header_config),
-            draw_corner_barcode(c, d),
-            draw_line_full_width(c, d),
-        ),
-        onLaterPages=lambda c, d: (
-            draw_header_improved(c, d, header_config),
-            draw_corner_barcode(c, d),
-            draw_line_full_width(c, d),
-        ),
-        canvasmaker=NumberedCanvas,
+    # Página 1 com o header personalizado (e o espaço da sua banda); a partir da
+    # 2ª página o header não se repete — o frame recupera o espaço e ficam só o
+    # código de barras de canto e a linha de rodapé.
+    first_frame = Frame(
+        A5Margins.LEFT,
+        A5Margins.BOTTOM,
+        usable_width,
+        page_height - A5Margins.TOP - A5Margins.BOTTOM,
+        id="first",
+        leftPadding=0,
+        rightPadding=0,
+        topPadding=0,
+        bottomPadding=0,
     )
+    later_frame = Frame(
+        A5Margins.LEFT,
+        A5Margins.BOTTOM,
+        usable_width,
+        page_height - PDF_MARGIN - A5Margins.BOTTOM,
+        id="later",
+        leftPadding=0,
+        rightPadding=0,
+        topPadding=0,
+        bottomPadding=0,
+    )
+
+    def _first_page(canvas_obj, doc_obj):
+        draw_header_improved(canvas_obj, doc_obj, header_config)
+        draw_corner_barcode(canvas_obj, doc_obj)
+        draw_line_full_width(canvas_obj, doc_obj)
+
+    def _later_page(canvas_obj, doc_obj):
+        draw_corner_barcode(canvas_obj, doc_obj)
+        draw_line_full_width(canvas_obj, doc_obj)
+
+    doc.addPageTemplates(
+        [
+            PageTemplate(id="first", frames=[first_frame], onPage=_first_page),
+            PageTemplate(id="later", frames=[later_frame], onPage=_later_page),
+        ]
+    )
+    elements.insert(0, NextPageTemplate("later"))
+    doc.build(elements, canvasmaker=NumberedCanvas)
 
     pdf_bytes = buffer.getvalue()
     buffer.close()
