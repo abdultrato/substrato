@@ -22,6 +22,77 @@ type LabRequest = {
   validated_at?: string
 }
 
+// ─── Search filters ─────────────────────────────────────────────────────────
+
+type SearchFilters = {
+  search: string
+  reqNumber: string
+  patientName: string
+  docNumber: string
+  birthDate: string
+  gender: string
+  priority: string
+  type: string
+  critical: string
+  exam: string
+  physician: string
+  dateFrom: string
+  dateTo: string
+}
+
+const EMPTY_FILTERS: SearchFilters = {
+  search: "",
+  reqNumber: "",
+  patientName: "",
+  docNumber: "",
+  birthDate: "",
+  gender: "",
+  priority: "",
+  type: "",
+  critical: "",
+  exam: "",
+  physician: "",
+  dateFrom: "",
+  dateTo: "",
+}
+
+const PRIORITY_OPTIONS: [string, string][] = [
+  ["", "Todas"],
+  ["NAO_URGENTE", "Não urgente"],
+  ["NORMAL", "Normal"],
+  ["ROTINA", "Rotina"],
+  ["POUCO_URGENTE", "Pouco urgente"],
+  ["PRIORITARIO", "Prioritário"],
+  ["URGENTE", "Urgente"],
+  ["MUITO_URGENTE", "Muito urgente"],
+  ["URGENTISSIMO", "Urgentíssimo"],
+  ["EMERGENCIA", "Emergência"],
+]
+
+function isFiltersEmpty(f: SearchFilters): boolean {
+  return Object.values(f).every((v) => !v.trim())
+}
+
+function buildParams(f: SearchFilters): URLSearchParams {
+  const p = new URLSearchParams({ fase: "laudos", ordering: "-updated_at" })
+  if (f.search.trim()) p.set("search", f.search.trim())
+  if (f.reqNumber.trim()) p.set("custom_id", f.reqNumber.trim())
+  if (f.patientName.trim()) p.set("patient_name", f.patientName.trim())
+  if (f.docNumber.trim()) p.set("patient_document", f.docNumber.trim())
+  if (f.birthDate) p.set("patient_birth_date", f.birthDate)
+  if (f.gender) p.set("patient_gender", f.gender)
+  if (f.priority) p.set("clinical_status", f.priority)
+  if (f.type) p.set("type", f.type)
+  if (f.critical) p.set("has_critical_result", f.critical)
+  if (f.exam.trim()) p.set("exam", f.exam.trim())
+  if (f.physician.trim()) p.set("physician", f.physician.trim())
+  if (f.dateFrom) p.set("validated_from", f.dateFrom)
+  if (f.dateTo) p.set("validated_to", f.dateTo)
+  return p
+}
+
+// ─── Board columns ──────────────────────────────────────────────────────────
+
 type ColumnKey = "today" | "yesterday" | "month" | "older"
 
 type ColumnConfig = {
@@ -58,6 +129,122 @@ function makeBucketer() {
     return "older"
   }
 }
+
+// ─── Search panel ───────────────────────────────────────────────────────────
+
+const INPUT_CLS =
+  "h-7 w-full rounded border border-[var(--border)] bg-[var(--card)] px-2 text-xs text-[var(--text)] placeholder:text-[var(--gray-400)] focus:border-[var(--primary-400)] focus:outline-none"
+const LABEL_CLS = "block text-[10px] font-semibold uppercase tracking-wide text-[var(--gray-500)] mb-0.5"
+
+function SearchPanel({
+  filters,
+  onChange,
+  onSearch,
+  onClear,
+  loading,
+}: {
+  filters: SearchFilters
+  onChange: (f: SearchFilters) => void
+  onSearch: () => void
+  onClear: () => void
+  loading: boolean
+}) {
+  function set<K extends keyof SearchFilters>(key: K, value: string) {
+    onChange({ ...filters, [key]: value })
+  }
+  function handleKey(e: React.KeyboardEvent) {
+    if (e.key === "Enter") onSearch()
+  }
+
+  return (
+    <div className="rounded-xl border border-[var(--border)] bg-[var(--card)] px-4 py-3 shadow-sm">
+      <div className="grid grid-cols-2 gap-2 md:grid-cols-3 xl:grid-cols-4">
+        <div className="col-span-2 md:col-span-3 xl:col-span-4">
+          <label className={LABEL_CLS}>Pesquisa livre (código, paciente, documento, empresa…)</label>
+          <input value={filters.search} onChange={(e) => set("search", e.target.value)} onKeyDown={handleKey} placeholder="Escreva qualquer termo…" className={INPUT_CLS} />
+        </div>
+
+        <div>
+          <label className={LABEL_CLS}>Nº requisição</label>
+          <input value={filters.reqNumber} onChange={(e) => set("reqNumber", e.target.value)} onKeyDown={handleKey} placeholder="REQ-…" className={INPUT_CLS} />
+        </div>
+        <div>
+          <label className={LABEL_CLS}>Nome do paciente</label>
+          <input value={filters.patientName} onChange={(e) => set("patientName", e.target.value)} onKeyDown={handleKey} placeholder="ex: João, nunes…" className={INPUT_CLS} />
+        </div>
+        <div>
+          <label className={LABEL_CLS}>Nº documento</label>
+          <input value={filters.docNumber} onChange={(e) => set("docNumber", e.target.value)} onKeyDown={handleKey} placeholder="BI / passaporte" className={INPUT_CLS} />
+        </div>
+        <div>
+          <label className={LABEL_CLS}>Data de nascimento</label>
+          <input type="date" value={filters.birthDate} onChange={(e) => set("birthDate", e.target.value)} onKeyDown={handleKey} className={INPUT_CLS} />
+        </div>
+
+        <div>
+          <label className={LABEL_CLS}>Sexo</label>
+          <select value={filters.gender} onChange={(e) => set("gender", e.target.value)} className={INPUT_CLS}>
+            <option value="">Todos</option>
+            <option value="M">Masculino</option>
+            <option value="F">Feminino</option>
+          </select>
+        </div>
+        <div>
+          <label className={LABEL_CLS}>Prioridade</label>
+          <select value={filters.priority} onChange={(e) => set("priority", e.target.value)} className={INPUT_CLS}>
+            {PRIORITY_OPTIONS.map(([v, label]) => (
+              <option key={v} value={v}>{label}</option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className={LABEL_CLS}>Tipo</label>
+          <select value={filters.type} onChange={(e) => set("type", e.target.value)} className={INPUT_CLS}>
+            <option value="">Todos</option>
+            <option value="LAB">Laboratório</option>
+            <option value="MED">Médico</option>
+          </select>
+        </div>
+        <div>
+          <label className={LABEL_CLS}>Resultado crítico</label>
+          <select value={filters.critical} onChange={(e) => set("critical", e.target.value)} className={INPUT_CLS}>
+            <option value="">Todos</option>
+            <option value="true">Com resultado crítico</option>
+            <option value="false">Sem resultado crítico</option>
+          </select>
+        </div>
+
+        <div>
+          <label className={LABEL_CLS}>Exame</label>
+          <input value={filters.exam} onChange={(e) => set("exam", e.target.value)} onKeyDown={handleKey} placeholder="ex: Hemograma…" className={INPUT_CLS} />
+        </div>
+        <div>
+          <label className={LABEL_CLS}>Médico solicitante</label>
+          <input value={filters.physician} onChange={(e) => set("physician", e.target.value)} onKeyDown={handleKey} placeholder="nome do médico" className={INPUT_CLS} />
+        </div>
+        <div>
+          <label className={LABEL_CLS}>Validado — de</label>
+          <input type="date" value={filters.dateFrom} onChange={(e) => set("dateFrom", e.target.value)} onKeyDown={handleKey} className={INPUT_CLS} />
+        </div>
+        <div>
+          <label className={LABEL_CLS}>Validado — até</label>
+          <input type="date" value={filters.dateTo} onChange={(e) => set("dateTo", e.target.value)} onKeyDown={handleKey} className={INPUT_CLS} />
+        </div>
+      </div>
+
+      <div className="mt-3 flex items-center justify-end gap-2 border-t border-[var(--border)] pt-3">
+        <button type="button" onClick={onClear} className="h-7 rounded border border-[var(--border)] px-3 text-xs text-[var(--gray-600)] hover:bg-[var(--gray-100)] dark:text-[var(--gray-300)]">
+          Limpar
+        </button>
+        <button type="button" onClick={onSearch} disabled={loading} className="h-7 rounded bg-[var(--primary-600)] px-4 text-xs font-semibold text-white hover:bg-[var(--primary-700)] disabled:opacity-60">
+          {loading ? "A pesquisar..." : "Pesquisar"}
+        </button>
+      </div>
+    </div>
+  )
+}
+
+// ─── Smart card ─────────────────────────────────────────────────────────────
 
 function SmartCard({
   row,
@@ -119,6 +306,8 @@ function SmartCard({
   )
 }
 
+// ─── Page ───────────────────────────────────────────────────────────────────
+
 export default function LabReportsPage() {
   const safeRefreshToken = useSafeDataRefreshSignal()
   const [rows, setRows] = useState<LabRequest[]>([])
@@ -126,15 +315,18 @@ export default function LabReportsPage() {
   const [error, setError] = useState<string | null>(null)
   const [busyId, setBusyId] = useState<number | null>(null)
   const [notifiedId, setNotifiedId] = useState<number | null>(null)
+  const [filters, setFilters] = useState<SearchFilters>(EMPTY_FILTERS)
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (f: SearchFilters) => {
     setLoading(true)
     setError(null)
     try {
-      const { items } = await apiFetchList<LabRequest>(
-        "/clinical/labrequest/?fase=laudos&ordering=-updated_at",
-        { page: 1, pageSize: 200, clientCache: false },
-      )
+      const searching = !isFiltersEmpty(f)
+      const { items } = await apiFetchList<LabRequest>(`/clinical/labrequest/?${buildParams(f).toString()}`, {
+        page: 1,
+        pageSize: searching ? 500 : 200,
+        clientCache: false,
+      })
       setRows(items)
     } catch (e: any) {
       setError(e?.message || "Erro ao carregar laudos.")
@@ -144,7 +336,7 @@ export default function LabReportsPage() {
   }, [])
 
   useEffect(() => {
-    load()
+    load(EMPTY_FILTERS)
   }, [load, safeRefreshToken])
 
   const buckets = useMemo(() => {
@@ -172,10 +364,23 @@ export default function LabReportsPage() {
     }
   }
 
+  function handleClear() {
+    setFilters(EMPTY_FILTERS)
+    load(EMPTY_FILTERS)
+  }
+
   return (
     <AppLayout>
       <div className="mx-auto w-full max-w-[1400px] space-y-3">
         <PageHeader title="Laudos" />
+
+        <SearchPanel
+          filters={filters}
+          onChange={setFilters}
+          onSearch={() => load(filters)}
+          onClear={handleClear}
+          loading={loading}
+        />
 
         {error && (
           <div className="rounded border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-800 dark:border-red-800/40 dark:bg-red-900/15 dark:text-red-300">
@@ -198,7 +403,7 @@ export default function LabReportsPage() {
                     </span>
                   </div>
 
-                  <div className="flex-1 space-y-2 overflow-y-auto pr-1 max-h-[calc(100vh-180px)] [scrollbar-width:thin]">
+                  <div className="flex-1 space-y-2 overflow-y-auto pr-1 max-h-[calc(100vh-260px)] [scrollbar-width:thin]">
                     {items.length === 0 ? (
                       <div className="rounded-md border border-dashed border-[var(--border)] px-3 py-6 text-center text-xs text-[var(--gray-500)]">
                         Sem laudos.

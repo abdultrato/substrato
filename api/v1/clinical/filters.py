@@ -213,6 +213,32 @@ class LabRequestFilter(SafeFilterSet):
     patient_name = django_filters.CharFilter(field_name="patient__name", lookup_expr="icontains")
     patient_document = django_filters.CharFilter(field_name="patient__document_number", lookup_expr="icontains")
     patient_birth_date = django_filters.DateFilter(field_name="patient__birth_date")
+    patient_gender = django_filters.CharFilter(method="filter_patient_gender")
+    # Médico solicitante e exame (nome do exame laboratorial OU médico).
+    physician = django_filters.CharFilter(field_name="requesting_physician__name", lookup_expr="icontains")
+    exam = django_filters.CharFilter(method="filter_exam")
+
+    def filter_patient_gender(self, queryset, name, value):
+        v = (value or "").strip().upper()
+        if v.startswith("M"):
+            return queryset.filter(patient__gender__istartswith="M")
+        if v.startswith("F"):
+            return queryset.filter(patient__gender__istartswith="F")
+        return queryset
+
+    def filter_exam(self, queryset, name, value):
+        from django.db.models import Q
+
+        value = (value or "").strip()
+        if not value:
+            return queryset
+        return queryset.filter(
+            Q(items__deleted=False)
+            & (
+                Q(items__exam__name__icontains=value)
+                | Q(items__medical_exam__name__icontains=value)
+            )
+        ).distinct()
 
     def filter_fase(self, queryset, name, value):
         from apps.clinical.models.lab_request_item import LabRequestItem
