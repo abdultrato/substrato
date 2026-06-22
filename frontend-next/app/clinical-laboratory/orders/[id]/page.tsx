@@ -134,7 +134,7 @@ export default function LabOrderDetailPage() {
         ) : !record ? (
           <p className="text-sm text-[var(--gray-400)]">Pedido não encontrado.</p>
         ) : (
-          <article className="overflow-hidden rounded border border-[var(--border)] bg-[var(--card)] shadow-sm">
+          <article className="overflow-hidden rounded border border-[var(--border)] bg-transparent">
             <div className="flex items-start justify-between gap-2 px-3 pt-3">
               <div className="min-w-0">
                 <p className="text-sm font-semibold text-[var(--text)]">
@@ -168,15 +168,15 @@ export default function LabOrderDetailPage() {
                     <col className="w-[28%]" />
                   </colgroup>
                   <thead>
-                    <tr className="border-b border-[var(--border)] bg-[var(--gray-50,#f9fafb)] dark:bg-[var(--gray-900,#111)]">
+                    <tr className="border-b border-[var(--border)]">
                       <th className="px-3 py-1.5 text-left text-[10px] font-semibold uppercase tracking-wide text-[var(--gray-500)]">Código</th>
                       <th className="px-3 py-1.5 text-left text-[10px] font-semibold uppercase tracking-wide text-[var(--gray-500)]">Exame</th>
                       <th className="px-3 py-1.5 text-left text-[10px] font-semibold uppercase tracking-wide text-[var(--gray-500)]">Método</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[var(--border)]">
-                    {exams.map((item, idx) => (
-                      <tr key={item.id} className={idx % 2 === 1 ? "bg-[var(--gray-50,#f9fafb)] dark:bg-[var(--gray-900,#0d0d0d)]" : ""}>
+                    {exams.map((item) => (
+                      <tr key={item.id}>
                         <td className="truncate px-3 py-1.5 font-mono text-[10px] text-[var(--gray-500)]">{item.exam_custom_id ?? "—"}</td>
                         <td className="truncate px-3 py-1.5 font-medium text-[var(--text)]">{item.exam_name ?? item.medical_exam_name ?? "—"}</td>
                         <td className="truncate px-3 py-1.5 text-[var(--gray-500)]">{item.exam_method ?? "—"}</td>
