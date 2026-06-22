@@ -366,26 +366,43 @@ class LabRequest(NoNameCoreModel):
         não foram coletadas/recebidas e regista a colheita da requisição.
         """
         from django.db import transaction
+        from django.utils import timezone
 
         from .lab_request_item import LabRequestItem
 
         if not self.validated_at:
             raise ValidationError("A requisição precisa de ser validada antes da colheita.")
 
-        pendentes = list(
-            self.items.filter(deleted=False, exam__isnull=False).exclude(
+        pendente_ids = list(
+            self.items.filter(deleted=False, exam__isnull=False)
+            .exclude(
                 sample_status__in=[
                     LabRequestItem.SampleStatus.COLLECTED,
                     LabRequestItem.SampleStatus.RECEIVED,
                 ]
             )
+            .values_list("pk", flat=True)
         )
-        if not pendentes:
+        if not pendente_ids:
             raise ValidationError("Não há amostras pendentes de colheita.")
 
+        # Atualização em massa (não item-a-item): o save() de LabRequestItem chama
+        # full_clean() e request._sync_samples_from_items() a cada gravação, o que
+        # se torna O(n²) numa requisição com muitos exames (dezenas de segundos).
+        # A colheita só muda o estado das amostras — não altera os exames nem a
+        # composição de amostras — por isso podemos atualizar em bloco.
         with transaction.atomic():
-            for item in pendentes:
-                item.colher_amostra(user=user, cascade_same_sample=False)
+            now = timezone.now()
+            LabRequestItem.objects.filter(pk__in=pendente_ids).update(
+                sample_status=LabRequestItem.SampleStatus.COLLECTED,
+                sample_received_at=None,
+                rejection_note="",
+                updated_at=now,
+            )
+            # Limpa os motivos de rejeição das amostras recolhidas (recoleta).
+            LabRequestItem.rejection_reasons.through.objects.filter(
+                labrequestitem_id__in=pendente_ids
+            ).delete()
             if not self.collected_at:
                 self.registar_colheita(user=user)
         return self
