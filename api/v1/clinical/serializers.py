@@ -943,6 +943,7 @@ class LabRequestSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializ
 
     patient_name = serializers.CharField(source="patient.name", read_only=True)
     patient_code = serializers.CharField(source="patient.custom_id", read_only=True)
+    patient_gender = serializers.CharField(source="patient.gender", read_only=True)
     occupational_profile_name = serializers.CharField(source="occupational_profile.name", read_only=True)
     requesting_physician_name = serializers.CharField(source="requesting_physician.name", read_only=True)
     patient_age = serializers.SerializerMethodField()
@@ -1012,6 +1013,7 @@ class LabRequestSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializ
             *CORE_READ_ONLY_FIELDS,
             "patient_name",
             "patient_code",
+            "patient_gender",
             "requesting_company_name",
             "external_executing_company_name",
             "occupational_profile_name",

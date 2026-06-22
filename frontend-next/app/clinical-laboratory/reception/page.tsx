@@ -35,6 +35,13 @@ const RECEPTION_COLUMNS: ColumnConfig[] = [
   { key: "totalmente", title: "Amostras Recebidas Totalmente", header: "text-emerald-700", badge: "bg-emerald-100 text-emerald-800", top: "border-t-2 border-t-emerald-400" },
 ]
 
+function genderShort(value?: string): string {
+  const v = (value || "").trim().toLocaleUpperCase()
+  if (v.startsWith("M")) return "M"
+  if (v.startsWith("F")) return "F"
+  return ""
+}
+
 function classifyReception(row: LabRequest): ColumnKey {
   const { received, rejected, total } = countsByStatus(labItemsOf(row))
   if (total > 0 && received === total) return "totalmente"
@@ -73,7 +80,10 @@ function ReceptionCard({ row }: { row: LabRequest }) {
 
       <div className="truncate text-xs text-[var(--text)]">
         {row.patient_name}
-        {row.patient_age ? <span className="text-[10px] text-[var(--gray-500)]"> · {row.patient_age}</span> : null}
+        {(() => {
+          const meta = [row.patient_age, genderShort(row.patient_gender)].filter(Boolean).join(" · ")
+          return meta ? <span className="text-[10px] text-[var(--gray-500)]"> · {meta}</span> : null
+        })()}
       </div>
 
       <div className="flex flex-wrap gap-1 pt-0.5">

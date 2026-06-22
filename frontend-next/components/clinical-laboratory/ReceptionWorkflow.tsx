@@ -29,6 +29,7 @@ export type LabRequest = {
   custom_id?: string
   patient_name?: string
   patient_age?: string
+  patient_gender?: string
   clinical_status?: string
   clinical_status_display?: string
   type: "LAB" | "MED"
