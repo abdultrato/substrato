@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 
 import AppLayout from "@/components/layout/AppLayout"
 import PageHeader from "@/components/ui/PageHeader"
@@ -19,20 +19,102 @@ type SampleDetail = {
   fasting_hours?: number
 }
 
+type RequestItem = {
+  id: number
+  exam_name?: string
+  medical_exam_name?: string
+  sample_status?: string
+}
+
 type CollectionRequest = {
   id: number
   custom_id: string
   patient_name: string
   patient_age?: string
   validated_at?: string
+  status?: string
   sample_details?: SampleDetail[]
+  items?: RequestItem[]
 }
+
+type ColumnKey = "por_coletar" | "parcial" | "rejeitadas" | "coletadas"
+
+type ColumnConfig = {
+  key: ColumnKey
+  title: string
+  header: string
+  badge: string
+  top: string
+  action?: string
+}
+
+const COLUMNS: ColumnConfig[] = [
+  {
+    key: "por_coletar",
+    title: "Amostras por coletar",
+    header: "text-sky-700",
+    badge: "bg-sky-100 text-sky-800",
+    top: "border-t-2 border-t-sky-400",
+    action: "Fazer coleta",
+  },
+  {
+    key: "parcial",
+    title: "Amostras parcialmente coletadas",
+    header: "text-amber-700",
+    badge: "bg-amber-100 text-amber-800",
+    top: "border-t-2 border-t-amber-400",
+    action: "Concluir coleta",
+  },
+  {
+    key: "rejeitadas",
+    title: "Amostras rejeitadas",
+    header: "text-rose-700",
+    badge: "bg-rose-100 text-rose-800",
+    top: "border-t-2 border-t-rose-400",
+    action: "Registar recoleta",
+  },
+  {
+    key: "coletadas",
+    title: "Amostras coletadas",
+    header: "text-emerald-700",
+    badge: "bg-emerald-100 text-emerald-800",
+    top: "border-t-2 border-t-emerald-400",
+  },
+]
 
 function formatDateTime(value?: string): string {
   if (!value) return "-"
   const d = new Date(value)
   if (Number.isNaN(d.getTime())) return value
   return d.toLocaleString("pt-PT", { dateStyle: "short", timeStyle: "short" })
+}
+
+function normalizeStatus(value?: string): string {
+  return (value || "").trim().toLocaleLowerCase()
+}
+
+function labItemsOf(row: CollectionRequest): RequestItem[] {
+  return (row.items || []).filter((item) => normalizeStatus(item.sample_status) !== "")
+}
+
+function progressOf(row: CollectionRequest): { collected: number; total: number } {
+  const items = labItemsOf(row)
+  const collected = items.filter((item) => {
+    const status = normalizeStatus(item.sample_status)
+    return status === "coletada" || status === "recebida"
+  }).length
+  return { collected, total: items.length }
+}
+
+function classify(row: CollectionRequest): ColumnKey {
+  const items = labItemsOf(row)
+  if (items.length === 0) return "por_coletar"
+  const statuses = items.map((item) => normalizeStatus(item.sample_status))
+  if (statuses.some((status) => status === "rejeitada")) return "rejeitadas"
+  const { collected, total } = progressOf(row)
+  if (collected === total) return "coletadas"
+  if (collected > 0) return "parcial"
+  return "por_coletar"
 }
 
 async function abrirEtiqueta(id: number) {
@@ -51,19 +133,19 @@ export default function NursingCollectionsPage() {
   const [busyId, setBusyId] = useState<number | null>(null)
   const [feedback, setFeedback] = useState<string | null>(null)
 
-  const load = useCallback(async () => {
-    setLoading(true)
+  const load = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true)
     setError(null)
     try {
       const { items } = await apiFetchList<CollectionRequest>(
-        "/clinical/labrequest/?validada=true&colhida=false&type=LAB",
-        { page: 1, pageSize: 50, clientCache: false }
+        "/clinical/labrequest/?validada=true&type=LAB&status=pendente",
+        { page: 1, pageSize: 100, clientCache: false }
       )
       setRows(items)
     } catch (e: any) {
-      setError(e?.message || "Erro ao carregar coletas pendentes.")
+      setError(e?.message || "Erro ao carregar coletas.")
     } finally {
-      setLoading(false)
+      if (!silent) setLoading(false)
     }
   }, [])
 
@@ -71,16 +153,27 @@ export default function NursingCollectionsPage() {
     load()
   }, [load, safeRefreshToken])
 
+  const buckets = useMemo(() => {
+    const grouped: Record<ColumnKey, CollectionRequest[]> = {
+      por_coletar: [],
+      parcial: [],
+      rejeitadas: [],
+      coletadas: [],
+    }
+    for (const row of rows) {
+      grouped[classify(row)].push(row)
+    }
+    return grouped
+  }, [rows])
+
   async function fazerColheita(row: CollectionRequest) {
     setBusyId(row.id)
     setError(null)
     setFeedback(null)
     try {
-      await apiFetch(`/clinical/labrequest/${row.id}/registar-colheita/`, { method: "POST" })
-      setFeedback(`Coleta de ${row.custom_id} registada — a requisição seguiu para o laboratório.`)
-      setRows((prev) => prev.filter((item) => item.id !== row.id))
-      // Abre logo a etiqueta com o código de barras para a impressora de etiquetas.
-      await abrirEtiqueta(row.id)
+      await apiFetch(`/clinical/labrequest/${row.id}/colher-todas-amostras/`, { method: "POST" })
+      setFeedback(`Coleta de ${row.custom_id} registada.`)
+      await load(true)
     } catch (e: any) {
       setError(e?.message || "Falha ao registar a coleta.")
     } finally {
@@ -90,11 +183,8 @@ export default function NursingCollectionsPage() {
 
   return (
     <AppLayout>
-      <div className="mx-auto w-full max-w-4xl space-y-4">
-        <PageHeader
-          title="Coletas"
-          subtitle="Requisições validadas a aguardar coleta de amostras."
-        />
+      <div className="mx-auto w-full max-w-[1400px] space-y-4">
+        <PageHeader title="Coletas" />
 
         {feedback ? (
           <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">{feedback}</div>
@@ -105,62 +195,96 @@ export default function NursingCollectionsPage() {
 
         {loading ? (
           <div className="text-sm text-[var(--gray-500)]">Carregando...</div>
-        ) : rows.length === 0 ? (
-          <div className="rounded-lg border border-[var(--border)] bg-[var(--card)] px-4 py-6 text-center text-sm text-[var(--gray-500)]">
-            Sem coletas pendentes.
-          </div>
         ) : (
-          <div className="space-y-3">
-            {rows.map((row) => (
-              <div
-                key={row.id}
-                className="flex flex-col gap-3 rounded-lg border border-[var(--border)] bg-[var(--card)] px-4 py-3 shadow-sm sm:flex-row sm:items-start sm:justify-between"
-              >
-                <div className="space-y-1.5">
-                  <Link href={`/requests/${row.id}`} className="font-semibold text-[var(--primary-700)] hover:underline">
-                    {row.custom_id}
-                  </Link>
-                  <div className="text-sm text-[var(--text)]">
-                    {row.patient_name}
-                    {row.patient_age ? <span className="text-[var(--gray-500)]"> · {row.patient_age}</span> : null}
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
+            {COLUMNS.map((column) => {
+              const items = buckets[column.key]
+              return (
+                <section
+                  key={column.key}
+                  className={`flex flex-col gap-2 rounded-lg bg-[var(--card)]/40 p-2 ${column.top}`}
+                >
+                  <div className="flex items-center justify-between px-1 pt-1">
+                    <h2 className={`text-xs font-semibold uppercase tracking-wide ${column.header}`}>{column.title}</h2>
+                    <span className={`inline-flex min-w-5 items-center justify-center rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${column.badge}`}>
+                      {items.length}
+                    </span>
                   </div>
-                  <div className="text-xs text-[var(--gray-500)]">Validada em: {formatDateTime(row.validated_at)}</div>
-                  {row.sample_details?.length ? (
-                    <div className="flex flex-wrap gap-1.5 pt-1">
-                      {row.sample_details.map((sample) => (
-                        <span
-                          key={`${row.id}-sample-${sample.id}`}
-                          className="inline-flex items-center rounded-full border border-[var(--primary-300)] bg-[var(--primary-300)]/20 px-2.5 py-1 text-xs font-medium text-[var(--text)]"
-                          title={sample.name}
-                        >
-                          {sample.bottle_type_display || sample.bottle_type}
-                          {sample.minimum_volume_ml && Number(sample.minimum_volume_ml) > 0
-                            ? ` · ${sample.minimum_volume_ml} ml`
-                            : ""}
-                        </span>
-                      ))}
+
+                  {items.length === 0 ? (
+                    <div className="rounded-md border border-dashed border-[var(--border)] px-3 py-6 text-center text-xs text-[var(--gray-500)]">
+                      Sem requisições.
                     </div>
-                  ) : null}
-                </div>
-                <div className="flex shrink-0 flex-col items-stretch gap-2 sm:items-end">
-                  <button
-                    type="button"
-                    onClick={() => fazerColheita(row)}
-                    disabled={busyId === row.id}
-                    className="inline-flex h-10 items-center justify-center rounded-md bg-[var(--primary-600)] px-4 text-sm font-semibold text-white shadow-sm transition-all duration-150 hover:bg-[var(--primary-700)] disabled:opacity-60"
-                  >
-                    {busyId === row.id ? "Registando..." : "Fazer coleta"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => abrirEtiqueta(row.id).catch(() => setError("Falha ao gerar a etiqueta."))}
-                    className="inline-flex h-9 items-center justify-center rounded-md border border-[var(--border)] bg-[var(--card)] px-3 text-xs font-medium text-[var(--gray-700)] transition hover:bg-[var(--gray-100)]"
-                  >
-                    Imprimir etiqueta
-                  </button>
-                </div>
-              </div>
-            ))}
+                  ) : (
+                    items.map((row) => {
+                      const { collected, total } = progressOf(row)
+                      return (
+                        <div
+                          key={row.id}
+                          className="space-y-1.5 rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-2.5 shadow-sm"
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <Link
+                              href={`/nursing/requests/${row.id}`}
+                              className="text-sm font-semibold text-[var(--primary-700)] hover:underline"
+                            >
+                              {row.custom_id}
+                            </Link>
+                            {total > 0 ? (
+                              <span className="shrink-0 text-[10px] font-medium text-[var(--gray-500)]">
+                                {collected}/{total}
+                              </span>
+                            ) : null}
+                          </div>
+                          <div className="text-xs text-[var(--text)]">
+                            {row.patient_name}
+                            {row.patient_age ? <span className="text-[var(--gray-500)]"> · {row.patient_age}</span> : null}
+                          </div>
+                          <div className="text-[10px] text-[var(--gray-500)]">Validada: {formatDateTime(row.validated_at)}</div>
+
+                          {row.sample_details?.length ? (
+                            <div className="flex flex-wrap gap-1 pt-0.5">
+                              {row.sample_details.map((sample) => (
+                                <span
+                                  key={`${row.id}-sample-${sample.id}`}
+                                  className="inline-flex items-center rounded border border-[var(--primary-300)] bg-[var(--primary-300)]/20 px-1.5 py-0.5 text-[10px] font-medium text-[var(--text)]"
+                                  title={sample.name}
+                                >
+                                  {sample.bottle_type_display || sample.bottle_type}
+                                  {sample.minimum_volume_ml && Number(sample.minimum_volume_ml) > 0
+                                    ? ` · ${sample.minimum_volume_ml} ml`
+                                    : ""}
+                                </span>
+                              ))}
+                            </div>
+                          ) : null}
+
+                          <div className="flex flex-wrap items-center gap-2 pt-1">
+                            {column.action ? (
+                              <button
+                                type="button"
+                                onClick={() => fazerColheita(row)}
+                                disabled={busyId === row.id}
+                                className="inline-flex h-8 items-center justify-center rounded-md bg-[var(--primary-600)] px-3 text-xs font-semibold text-white shadow-sm transition-all duration-150 hover:bg-[var(--primary-700)] disabled:opacity-60"
+                              >
+                                {busyId === row.id ? "Registando..." : column.action}
+                              </button>
+                            ) : null}
+                            <button
+                              type="button"
+                              onClick={() => abrirEtiqueta(row.id).catch(() => setError("Falha ao gerar a etiqueta."))}
+                              className="inline-flex h-8 items-center justify-center rounded-md border border-[var(--border)] bg-[var(--card)] px-3 text-xs font-medium text-[var(--gray-700)] transition hover:bg-[var(--gray-100)]"
+                            >
+                              Etiqueta
+                            </button>
+                          </div>
+                        </div>
+                      )
+                    })
+                  )}
+                </section>
+              )
+            })}
           </div>
         )}
       </div>
