@@ -79,6 +79,7 @@ export default function NursingRequestDetailPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [busyItem, setBusyItem] = useState<number | null>(null)
+  const [busyAll, setBusyAll] = useState(false)
 
   const load = useCallback(async () => {
     if (!id) return
@@ -120,6 +121,11 @@ export default function NursingRequestDetailPage() {
     [labItems]
   )
 
+  const anyPending = useMemo(
+    () => labItems.some((item) => !isCollectedProgress(normalizeStatus(item.sample_status))),
+    [labItems]
+  )
+
   async function collectItem(item: RequestItem) {
     setBusyItem(item.id)
     setError(null)
@@ -130,6 +136,20 @@ export default function NursingRequestDetailPage() {
       setError(requestError?.message || "Falha ao registar a coleta.")
     } finally {
       setBusyItem(null)
+    }
+  }
+
+  async function collectAll() {
+    if (!record?.id) return
+    setBusyAll(true)
+    setError(null)
+    try {
+      await apiFetch(`/clinical/labrequest/${record.id}/colher-todas-amostras/`, { method: "POST" })
+      await load()
+    } catch (requestError: any) {
+      setError(requestError?.message || "Falha ao registar as coletas.")
+    } finally {
+      setBusyAll(false)
     }
   }
 
@@ -146,6 +166,16 @@ export default function NursingRequestDetailPage() {
           subtitle="Vista operacional da coleta por exame."
           actions={
             <div className="flex items-center gap-2">
+              {record?.validated_at && anyPending ? (
+                <button
+                  type="button"
+                  onClick={collectAll}
+                  disabled={busyAll}
+                  className="inline-flex h-8 items-center gap-1.5 rounded bg-primary px-3 text-xs font-semibold text-white shadow-sm transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {busyAll ? "Registando..." : "Realizar todas as coletas"}
+                </button>
+              ) : null}
               {anyCollected ? (
                 <button
                   type="button"

@@ -359,6 +359,35 @@ class LabRequest(NoNameCoreModel):
         self.save(update_fields=["collected_at", "collected_by", "updated_at"])
         return self
 
+    def colher_todas_amostras(self, user=None):
+        """Enfermagem regista a colheita de todas as amostras pendentes da requisição.
+
+        Marca como coletadas todas as amostras dos exames laboratoriais que ainda
+        não foram coletadas/recebidas e regista a colheita da requisição.
+        """
+        from .lab_request_item import LabRequestItem
+
+        if not self.validated_at:
+            raise ValidationError("A requisição precisa de ser validada antes da colheita.")
+
+        pendentes = list(
+            self.items.filter(deleted=False, exam__isnull=False).exclude(
+                sample_status__in=[
+                    LabRequestItem.SampleStatus.COLLECTED,
+                    LabRequestItem.SampleStatus.RECEIVED,
+                ]
+            )
+        )
+        if not pendentes:
+            raise ValidationError("Não há amostras pendentes de colheita.")
+
+        for item in pendentes:
+            item.colher_amostra(user=user, cascade_same_sample=False)
+
+        if not self.collected_at:
+            self.registar_colheita(user=user)
+        return self
+
     def amostras_conferidas(self) -> bool:
         """True quando todos os itens LAB têm amostra recebida na receção."""
         items = self.items.filter(deleted=False, exam__isnull=False)

@@ -150,6 +150,17 @@ class LabRequestViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin,
             raise ValidationError(getattr(err, "message_dict", None) or getattr(err, "messages", None) or str(err)) from err
         return Response(LabRequestSerializer(request_record, context={"request": request}).data)
 
+    @action(detail=True, methods=["post"], url_path="colher-todas-amostras", url_name="colher-todas-amostras")
+    def colher_todas_amostras(self, request, pk=None):
+        """Regista a colheita de todas as amostras pendentes da requisição (enfermagem)."""
+        request_record = self.get_object()
+        try:
+            request_record.colher_todas_amostras(user=getattr(request, "user", None))
+        except DjangoValidationError as err:
+            raise ValidationError(getattr(err, "message_dict", None) or getattr(err, "messages", None) or str(err)) from err
+        request_record.refresh_from_db()
+        return Response(LabRequestSerializer(request_record, context={"request": request}).data)
+
     @action(detail=True, methods=["post"], url_path="iniciar-processamento", url_name="iniciar-processamento")
     def iniciar_processamento(self, request, pk=None):
         """Laboratório inicia o processamento da requisição colhida."""
