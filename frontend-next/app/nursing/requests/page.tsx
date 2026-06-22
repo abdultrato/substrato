@@ -17,6 +17,8 @@ type RequestItem = {
   exam_name?: string
   medical_exam_name?: string
   sample_status?: string
+  rejection_reason_names?: string[]
+  rejection_note?: string
 }
 
 type RequestRow = {
@@ -78,12 +80,23 @@ function isCollectedProgress(status: string): boolean {
   return status === "coletada" || status === "recebida"
 }
 
+function rejectedItems(row: RequestRow): RequestItem[] {
+  const items = Array.isArray(row.items) ? row.items : []
+  return items.filter((item) => normalizeText(item.sample_status) === "rejeitada")
+}
+
 function classifyRequest(row: RequestRow): BucketKey {
   const items = Array.isArray(row.items) ? row.items : []
   const hasValidatedReception = Boolean(row.validated_at)
 
   if (!hasValidatedReception) {
     return "awaiting_reception_validation"
+  }
+
+  // Amostra rejeitada pelo laboratório volta a precisar de coleta (recoleta),
+  // por isso a requisição regressa à coluna de espera de coleta.
+  if (rejectedItems(row).length > 0) {
+    return "awaiting_collection"
   }
 
   const statuses = items
@@ -133,6 +146,8 @@ function statusBadge(row: RequestRow, bucket: BucketKey): StatusBadge {
 }
 
 function RequestCard({ row, bucket }: { row: RequestRow; bucket: BucketKey }) {
+  const [showReason, setShowReason] = useState(false)
+  const rejected = rejectedItems(row)
   return (
     <Link
       href={`/nursing/requests/${row.id}`}
@@ -165,7 +180,43 @@ function RequestCard({ row, bucket }: { row: RequestRow; bucket: BucketKey }) {
         </div>
       </div>
 
-      <div className="pt-2">
+      <div className="space-y-1 pt-2">
+        {rejected.length > 0 ? (
+          <div>
+            <span
+              role="button"
+              tabIndex={0}
+              onClick={(event) => {
+                event.preventDefault()
+                event.stopPropagation()
+                setShowReason((value) => !value)
+              }}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault()
+                  event.stopPropagation()
+                  setShowReason((value) => !value)
+                }
+              }}
+              className="inline-flex cursor-pointer items-center gap-1 rounded border border-rose-200 bg-rose-50 px-1.5 py-0.5 text-[9px] font-semibold text-rose-700 transition-colors hover:bg-rose-100"
+            >
+              <span className="flex h-3 w-3 shrink-0 items-center justify-center rounded-full border border-current text-[7px] font-bold leading-none">i</span>
+              Amostra Rejeitada pelo laboratório
+            </span>
+            {showReason ? (
+              <div className="mt-1 space-y-0.5 rounded border border-rose-200 bg-rose-50/70 px-1.5 py-1 text-[9px] leading-snug text-rose-800">
+                {rejected.map((item) => (
+                  <div key={item.id}>
+                    <span className="font-semibold">{item.exam_name || item.medical_exam_name || "Exame"}:</span>{" "}
+                    {(item.rejection_reason_names || []).join(", ") || "Motivo não especificado"}
+                    {item.rejection_note ? ` — ${item.rejection_note}` : ""}
+                  </div>
+                ))}
+              </div>
+            ) : null}
+          </div>
+        ) : null}
+
         {(() => {
           const { label, color } = statusBadge(row, bucket)
           return (
