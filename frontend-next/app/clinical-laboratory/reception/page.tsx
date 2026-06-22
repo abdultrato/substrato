@@ -71,8 +71,10 @@ function ReceptionCard({ row }: { row: LabRequest }) {
         ) : null}
       </div>
 
-      <div className="truncate text-xs text-[var(--text)]">{row.patient_name}</div>
-      {row.patient_age ? <div className="text-[10px] text-[var(--gray-500)]">{row.patient_age}</div> : null}
+      <div className="truncate text-xs text-[var(--text)]">
+        {row.patient_name}
+        {row.patient_age ? <span className="text-[10px] text-[var(--gray-500)]"> · {row.patient_age}</span> : null}
+      </div>
 
       <div className="flex flex-wrap gap-1 pt-0.5">
         {priority ? (
