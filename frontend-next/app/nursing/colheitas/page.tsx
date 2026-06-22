@@ -1,5 +1,6 @@
 "use client"
 
+import { AlertTriangle } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useCallback, useEffect, useMemo, useState } from "react"
 
@@ -8,6 +9,7 @@ import PageHeader from "@/components/ui/PageHeader"
 import useAuthGuard from "@/hooks/useAuthGuard"
 import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { apiFetch, apiFetchList } from "@/lib/api"
+import { getClinicalStatusLabel } from "@/lib/clinicalStatus"
 
 type SampleDetail = {
   id: number
@@ -33,8 +35,56 @@ type CollectionRequest = {
   patient_age?: string
   validated_at?: string
   status?: string
+  clinical_status?: string
+  clinical_status_display?: string
   sample_details?: SampleDetail[]
   items?: RequestItem[]
+}
+
+type CardWarning = {
+  key: string
+  label: string
+  tone: string
+}
+
+const URGENT_STATUSES = new Set([
+  "PRIORITARIO",
+  "URGENTE",
+  "MUITO_URGENTE",
+  "URGENTISSIMO",
+  "EMERGENCIA",
+])
+
+function isUrgent(row: CollectionRequest): boolean {
+  return URGENT_STATUSES.has((row.clinical_status || "").trim().toLocaleUpperCase())
+}
+
+function fastingHoursOf(row: CollectionRequest): number {
+  return (row.sample_details || [])
+    .filter((sample) => sample.fasting_required)
+    .reduce((max, sample) => Math.max(max, Number(sample.fasting_hours || 0)), 0)
+}
+
+function warningsFor(row: CollectionRequest, column: ColumnKey): CardWarning[] {
+  const warnings: CardWarning[] = []
+  const danger = "border-rose-200 bg-rose-100 text-rose-800"
+  const warn = "border-amber-200 bg-amber-100 text-amber-800"
+
+  if (isUrgent(row)) {
+    warnings.push({
+      key: "urgente",
+      label: getClinicalStatusLabel(row.clinical_status, row.clinical_status_display) || "Urgente",
+      tone: danger,
+    })
+  }
+  if (column === "rejeitadas") {
+    warnings.push({ key: "recoleta", label: "Recoleta necessária", tone: danger })
+  }
+  if ((row.sample_details || []).some((sample) => sample.fasting_required)) {
+    const hours = fastingHoursOf(row)
+    warnings.push({ key: "jejum", label: hours > 0 ? `Jejum ${hours}h` : "Jejum", tone: warn })
+  }
+  return warnings
 }
 
 type ColumnKey = "por_coletar" | "parcial" | "rejeitadas" | "coletadas"
@@ -221,6 +271,7 @@ export default function NursingCollectionsPage() {
                       items.map((row) => {
                         const { collected, total } = progressOf(row)
                         const target = `/nursing/requests/${row.id}`
+                        const warnings = warningsFor(row, column.key)
                         return (
                           <div
                             key={row.id}
@@ -233,21 +284,40 @@ export default function NursingCollectionsPage() {
                                 router.push(target)
                               }
                             }}
-                            className="flex aspect-square cursor-pointer flex-col gap-1.5 overflow-hidden rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-2.5 shadow-sm transition hover:border-[var(--primary-400)] hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-400)]"
+                            className="flex aspect-square max-h-[240px] cursor-pointer flex-col gap-1.5 overflow-hidden rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-2.5 shadow-sm transition hover:border-[var(--primary-400)] hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-400)]"
                           >
                             <div className="flex items-start justify-between gap-2">
                               <span className="text-sm font-semibold text-[var(--primary-700)]">{row.custom_id}</span>
-                              {total > 0 ? (
-                                <span className="shrink-0 text-[10px] font-medium text-[var(--gray-500)]">
-                                  {collected}/{total}
-                                </span>
-                              ) : null}
+                              <div className="flex shrink-0 items-center gap-1">
+                                {warnings.length ? (
+                                  <AlertTriangle className="h-4 w-4 text-rose-500" aria-label="Atenção" />
+                                ) : null}
+                                {total > 0 ? (
+                                  <span className="text-[10px] font-medium text-[var(--gray-500)]">
+                                    {collected}/{total}
+                                  </span>
+                                ) : null}
+                              </div>
                             </div>
                             <div className="truncate text-xs text-[var(--text)]">
                               {row.patient_name}
                               {row.patient_age ? <span className="text-[var(--gray-500)]"> · {row.patient_age}</span> : null}
                             </div>
                             <div className="text-[10px] text-[var(--gray-500)]">Validada: {formatDateTime(row.validated_at)}</div>
+
+                            {warnings.length ? (
+                              <div className="flex flex-wrap gap-1">
+                                {warnings.map((warning) => (
+                                  <span
+                                    key={`${row.id}-warn-${warning.key}`}
+                                    className={`inline-flex items-center gap-1 rounded border px-1.5 py-0.5 text-[10px] font-semibold ${warning.tone}`}
+                                  >
+                                    <AlertTriangle className="h-3 w-3" aria-hidden />
+                                    {warning.label}
+                                  </span>
+                                ))}
+                              </div>
+                            ) : null}
 
                             {row.sample_details?.length ? (
                               <div className="flex flex-1 flex-wrap content-start gap-1 overflow-hidden pt-0.5">
