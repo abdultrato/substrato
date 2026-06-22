@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import Link from "next/link"
 
 import AppLayout from "@/components/layout/AppLayout"
@@ -76,6 +76,33 @@ function fmt(v?: string) {
   const d = new Date(v)
   if (isNaN(d.getTime())) return v
   return d.toLocaleString("pt-PT", { dateStyle: "short", timeStyle: "short" })
+}
+
+// ─── Columns ──────────────────────────────────────────────────────────────────
+
+type ColumnKey = "por_conferir" | "rejeitadas" | "parcial" | "totalmente"
+
+type ColumnConfig = {
+  key: ColumnKey
+  title: string
+  header: string
+  badge: string
+  top: string
+}
+
+const RECEPTION_COLUMNS: ColumnConfig[] = [
+  { key: "por_conferir", title: "Amostras por conferir", header: "text-sky-700", badge: "bg-sky-100 text-sky-800", top: "border-t-2 border-t-sky-400" },
+  { key: "rejeitadas", title: "Amostras Rejeitadas", header: "text-rose-700", badge: "bg-rose-100 text-rose-800", top: "border-t-2 border-t-rose-400" },
+  { key: "parcial", title: "Amostras Recebidas Parcialmente", header: "text-amber-700", badge: "bg-amber-100 text-amber-800", top: "border-t-2 border-t-amber-400" },
+  { key: "totalmente", title: "Amostras Recebidas Totalmente", header: "text-emerald-700", badge: "bg-emerald-100 text-emerald-800", top: "border-t-2 border-t-emerald-400" },
+]
+
+function classifyReception(row: LabRequest): ColumnKey {
+  const { received, rejected, total } = countsByStatus(labItemsOf(row))
+  if (total > 0 && received === total) return "totalmente"
+  if (rejected > 0) return "rejeitadas"
+  if (received > 0) return "parcial"
+  return "por_conferir"
 }
 
 // ─── Rejection Panel ──────────────────────────────────────────────────────────
@@ -385,7 +412,7 @@ export default function LabReceptionPage() {
     setError(null)
     try {
       const [{ items }, { items: rsns }] = await Promise.all([
-        apiFetchList<LabRequest>("/clinical/labrequest/?fase=rececao_amostras", {
+        apiFetchList<LabRequest>("/clinical/labrequest/?type=LAB&status=pendente&colhida=true", {
           page: 1,
           pageSize: 200,
           clientCache: false,
@@ -407,6 +434,19 @@ export default function LabReceptionPage() {
   useEffect(() => {
     load()
   }, [load, safeRefreshToken])
+
+  const buckets = useMemo(() => {
+    const grouped: Record<ColumnKey, LabRequest[]> = {
+      por_conferir: [],
+      rejeitadas: [],
+      parcial: [],
+      totalmente: [],
+    }
+    for (const row of rows) {
+      grouped[classifyReception(row)].push(row)
+    }
+    return grouped
+  }, [rows])
 
   async function handleReceiveItem(item: RequestItem) {
     setBusyItem(item.id)
@@ -443,11 +483,8 @@ export default function LabReceptionPage() {
 
   return (
     <AppLayout>
-      <div className="mx-auto w-full max-w-3xl space-y-3">
-        <PageHeader
-          title="Receção de Amostras"
-          subtitle="Conferência e aceitação de amostras colhidas pela enfermagem — fluxo ISO 9001."
-        />
+      <div className="mx-auto w-full max-w-[1400px] space-y-3">
+        <PageHeader title="Recepção de Amostras" />
 
         {feedback && (
           <div className="rounded border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-800 dark:border-emerald-800/40 dark:bg-emerald-900/15 dark:text-emerald-300">
@@ -462,22 +499,43 @@ export default function LabReceptionPage() {
 
         {loading ? (
           <p className="text-sm text-[var(--gray-400)]">Carregando...</p>
-        ) : rows.length === 0 ? (
-          <p className="text-sm text-[var(--gray-400)]">
-            Sem amostras a aguardar conferência.
-          </p>
         ) : (
-          <div className="space-y-2">
-            {rows.map((row) => (
-              <RequestCard
-                key={row.id}
-                row={row}
-                reasons={reasons}
-                onReceiveItem={handleReceiveItem}
-                onRejectItem={handleRejectItem}
-                busyItem={busyItem}
-              />
-            ))}
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
+            {RECEPTION_COLUMNS.map((column) => {
+              const items = buckets[column.key]
+              return (
+                <section
+                  key={column.key}
+                  className={`flex flex-col rounded-lg bg-[var(--card)]/40 p-2 ${column.top}`}
+                >
+                  <div className="flex items-center justify-between gap-2 px-1 pb-2 pt-1">
+                    <h2 className={`text-xs font-semibold uppercase tracking-wide ${column.header}`}>{column.title}</h2>
+                    <span className={`inline-flex min-w-5 items-center justify-center rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${column.badge}`}>
+                      {items.length}
+                    </span>
+                  </div>
+
+                  <div className="flex-1 space-y-2 overflow-y-auto pr-1 max-h-[calc(100vh-200px)] [scrollbar-width:thin]">
+                    {items.length === 0 ? (
+                      <div className="rounded-md border border-dashed border-[var(--border)] px-3 py-6 text-center text-xs text-[var(--gray-500)]">
+                        Sem requisições.
+                      </div>
+                    ) : (
+                      items.map((row) => (
+                        <RequestCard
+                          key={row.id}
+                          row={row}
+                          reasons={reasons}
+                          onReceiveItem={handleReceiveItem}
+                          onRejectItem={handleRejectItem}
+                          busyItem={busyItem}
+                        />
+                      ))
+                    )}
+                  </div>
+                </section>
+              )
+            })}
           </div>
         )}
       </div>
