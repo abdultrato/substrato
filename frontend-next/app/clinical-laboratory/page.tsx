@@ -113,7 +113,7 @@ export default function ClinicalLaboratoryHubPage() {
             aria-hidden
             className="pointer-events-none absolute inset-0 rounded-xl"
             style={{
-              background: "#1e293b",
+              background: "#ffffff",
               opacity: 1,
               WebkitMaskImage: `url("${lucideToDataUrl(FlaskConical)}")`,
               WebkitMaskRepeat: "no-repeat",
@@ -154,7 +154,7 @@ export default function ClinicalLaboratoryHubPage() {
                         aria-hidden
                         className="pointer-events-none absolute inset-0 rounded"
                         style={{
-                          background: "#1e293b",
+                          background: "#ffffff",
                           opacity: 1,
                           WebkitMaskImage: `url("${iconUrl}")`,
                           WebkitMaskRepeat: "no-repeat",
