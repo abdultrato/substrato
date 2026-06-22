@@ -5,6 +5,8 @@ import io
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A5
 from reportlab.lib.units import cm
+from reportlab.lib.enums import TA_LEFT
+from reportlab.lib.styles import ParagraphStyle
 from reportlab.platypus import (
     HRFlowable,
     KeepTogether,
@@ -16,8 +18,11 @@ from reportlab.platypus import (
 )
 
 from .institutional_pdf_design import (
+    FONT_INST,
+    FONT_BOLD_INST,
     InstitutionalNumberedCanvas as NumberedCanvas,
     PDF_BOTTOM_MARGIN,
+    PDF_BODY_FONT_SIZE,
     PDF_HEADER_TOP_MARGIN,
     PDF_MARGIN,
     append_fim,
@@ -136,33 +141,83 @@ def generate_request_pdf(request) -> tuple[bytes, str]:
     story.append(HRFlowable(width="100%", thickness=0.5, color=colors.darkblue))
     story.append(Spacer(1, 0.2 * cm))
 
+    # ── Médico solicitante ────────────────────────────────────────────────────
+    physician = getattr(request, "requesting_physician", None)
+    if physician:
+        profession_name = ""
+        try:
+            profession_name = physician.profession.name if physician.profession_id else ""
+        except Exception:
+            pass
+        physician_lines = [f"{bold('Médico solicitante')}: {physician.name}"]
+        if profession_name:
+            physician_lines.append(f"{bold('Especialidade / Profissão')}: {profession_name}")
+        physician_block = montar_bloco_identificacao(
+            usable_width=usable_width,
+            left_lines=physician_lines,
+            right_lines=[],
+        )
+        story.append(physician_block)
+        story.append(Spacer(1, 0.2 * cm))
+        story.append(HRFlowable(width="100%", thickness=0.3, color=colors.HexColor("#d0d7e3")))
+        story.append(Spacer(1, 0.2 * cm))
+
     style_section = document_section_style("section_title")
     story.append(Paragraph("EXAMES REQUISITADOS", style_section))
     story.append(Spacer(1, 0.2 * cm))
 
     exams = request.exams.all()
-    exams_date = (
-        [
+
+    col_w = [usable_width * p for p in (0.20, 0.52, 0.28)]
+    header_bg = colors.HexColor("#1e3a5f")
+    zebra_bg = colors.HexColor("#f4f7fb")
+
+    _header_style = ParagraphStyle(
+        "ExamTH",
+        fontName=FONT_BOLD_INST,
+        fontSize=PDF_BODY_FONT_SIZE - 1,
+        leading=PDF_BODY_FONT_SIZE + 1,
+        textColor=colors.white,
+        alignment=TA_LEFT,
+    )
+
+    def _th(text):
+        return Paragraph(text, _header_style)
+
+    header_row = [_th("CÓDIGO"), _th("NOME DO EXAME"), _th("MÉTODO")]
+
+    if exams.exists():
+        data_rows = [
             [
-                cell_paragraph(
-                    f"{bold('Código')}: {_exam_code(e)} - {bold('Nome')}: {e.name.capitalize()} - {bold('Método')}: {e.method.capitalize()}"
-                )
+                cell_paragraph(_exam_code(e)),
+                cell_paragraph(e.name.capitalize()),
+                cell_paragraph((e.method or "—").capitalize()),
             ]
             for e in exams
         ]
-        if exams.exists()
-        else [[cell_paragraph("Nenhum exam registrado.", is_bold=True)]]
-    )
+    else:
+        data_rows = [[cell_paragraph("Nenhum exame registado.", is_bold=True), cell_paragraph(""), cell_paragraph("")]]
 
-    tabela_exams = Table(exams_date, colWidths=[usable_width])
-    tabela_exams.setStyle(
-        TableStyle(
-            [
-                ("LEFTPADDING", (0, 0), (-1, -1), 2),
-                ("RIGHTPADDING", (0, 0), (-1, -1), 2),
-            ]
-        )
-    )
+    table_data = [header_row] + data_rows
+
+    style_cmds = [
+        ("BACKGROUND", (0, 0), (-1, 0), header_bg),
+        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+        ("FONTSIZE", (0, 0), (-1, -1), 7),
+        ("TOPPADDING", (0, 0), (-1, -1), 3),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
+        ("LEFTPADDING", (0, 0), (-1, -1), 4),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 4),
+        ("LINEBELOW", (0, 0), (-1, 0), 0.5, colors.HexColor("#1e3a5f")),
+        ("GRID", (0, 1), (-1, -1), 0.3, colors.HexColor("#d0d7e3")),
+        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+    ]
+    for i, _ in enumerate(data_rows):
+        if i % 2 == 1:
+            style_cmds.append(("BACKGROUND", (0, i + 1), (-1, i + 1), zebra_bg))
+
+    tabela_exams = Table(table_data, colWidths=col_w, repeatRows=1)
+    tabela_exams.setStyle(TableStyle(style_cmds))
     story.append(KeepTogether(tabela_exams))
 
     append_fim(story)

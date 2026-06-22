@@ -115,13 +115,13 @@ function ResultRow({
     />
   )
 
-  const td = "px-3 py-2 text-xs align-middle truncate max-w-0"
+  const td = "px-2 py-0.5 text-xs align-middle truncate max-w-0"
 
   // ── Validado ────────────────────────────────────────────────────────────────
   if (isValidated) {
     return (
       <tr className="bg-emerald-50/60 dark:bg-emerald-900/10">
-        <td className="px-4 py-2 align-middle">{cb}</td>
+        <td className="px-2 py-0.5 align-middle">{cb}</td>
         <td className={td + " font-medium text-[var(--gray-500)]"}>{item.exam_name}</td>
         <td className={td + " text-[var(--gray-500)]"}>
           {item.exam_field_name !== item.exam_name ? item.exam_field_name : "—"}
@@ -131,7 +131,7 @@ function ResultRow({
         <td className={td + " font-bold text-[var(--text)]"}>
           {item.result_value ?? "—"}
         </td>
-        <td className="px-4 py-2 text-right align-middle">
+        <td className="px-2 py-0.5 text-right align-middle">
           <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
             Validado ✓
           </span>
@@ -144,7 +144,7 @@ function ResultRow({
   if (isDisregarded) {
     return (
       <tr className="opacity-40">
-        <td className="px-4 py-2 align-middle">{cb}</td>
+        <td className="px-2 py-0.5 align-middle">{cb}</td>
         <td className={td + " line-through text-[var(--gray-500)]"}>{item.exam_name}</td>
         <td className={td + " line-through text-[var(--gray-500)]"}>
           {item.exam_field_name !== item.exam_name ? item.exam_field_name : "—"}
@@ -152,7 +152,7 @@ function ResultRow({
         <td className={td}>—</td>
         <td className={td}>—</td>
         <td className={td}>—</td>
-        <td className="px-4 py-2 text-right align-middle text-[11px] text-[var(--gray-400)]">
+        <td className="px-2 py-0.5 text-right align-middle text-[11px] text-[var(--gray-400)]">
           Desconsiderado
         </td>
       </tr>
@@ -163,7 +163,7 @@ function ResultRow({
   if (isPending && !isOpen) {
     return (
       <tr>
-        <td className="px-4 py-2 align-middle">{cb}</td>
+        <td className="px-2 py-0.5 align-middle">{cb}</td>
         <td className={td + " font-medium text-[var(--text)]"}>
           {item.exam_name}
           {item.critical_alert && (
@@ -176,13 +176,13 @@ function ResultRow({
         <td className={td + " text-[var(--gray-400)]"}>{item.exam_field_reference || "—"}</td>
         <td className={td + " text-[var(--gray-400)]"}>{item.exam_field_unit || "—"}</td>
         <td className={td + " text-[var(--gray-300)]"}>—</td>
-        <td className="px-4 py-2 text-right align-middle">
-          <div className="flex items-center justify-end gap-1.5">
+        <td className="px-2 py-0.5 text-right align-middle">
+          <div className="flex items-center justify-end gap-1">
             <button
               type="button"
               onClick={() => setIniciado(true)}
               disabled={busy}
-              className="rounded border border-[var(--primary-400)] bg-[var(--primary-50)] px-2.5 py-1 text-[11px] font-semibold text-[var(--primary-700)] hover:bg-[var(--primary-100)] disabled:opacity-50 dark:bg-transparent dark:text-[var(--primary-400)]"
+              className="rounded border border-[var(--primary-400)] bg-[var(--primary-50)] px-2 py-0.5 text-[10px] font-semibold text-[var(--primary-700)] hover:bg-[var(--primary-100)] disabled:opacity-50 dark:bg-transparent dark:text-[var(--primary-400)]"
             >
               Iniciar
             </button>
@@ -190,7 +190,7 @@ function ResultRow({
               type="button"
               onClick={() => onDisregard(item.id)}
               disabled={busy}
-              className="rounded border border-amber-400 px-2.5 py-1 text-[11px] font-medium text-amber-700 hover:bg-amber-50 disabled:opacity-50 dark:border-amber-600 dark:text-amber-400"
+              className="rounded border border-amber-400 px-2 py-0.5 text-[10px] font-medium text-amber-700 hover:bg-amber-50 disabled:opacity-50 dark:border-amber-600 dark:text-amber-400"
             >
               {busy ? "..." : "Desconsiderar"}
             </button>
@@ -203,7 +203,7 @@ function ResultRow({
   // ── Input aberto ─────────────────────────────────────────────────────────────
   return (
     <tr className={isSaved ? "bg-blue-50/40 dark:bg-blue-900/10" : ""}>
-      <td className="px-4 py-1.5 align-middle">{cb}</td>
+      <td className="px-2 py-0.5 align-middle">{cb}</td>
       <td className={td + " font-semibold text-[var(--text)]"}>
         {item.exam_name}
         {item.critical_alert && (
@@ -215,7 +215,7 @@ function ResultRow({
       </td>
       <td className={td + " text-[11px] text-[var(--gray-400)]"}>{item.exam_field_reference || "—"}</td>
       <td className={td + " text-[11px] text-[var(--gray-400)]"}>{item.exam_field_unit || "—"}</td>
-      <td className="px-3 py-1.5 align-middle">
+      <td className="px-2 py-0.5 align-middle">
         <input
           type={item.exam_field_type === "NUMERIC" ? "number" : "text"}
           value={value}
@@ -224,7 +224,7 @@ function ResultRow({
           className="h-6 w-full min-w-[80px] rounded border border-[var(--border)] bg-[var(--card)] px-2 text-xs text-[var(--text)] placeholder:text-[var(--gray-400)] placeholder:opacity-50 focus:border-[var(--primary-400)] focus:outline-none"
         />
       </td>
-      <td className="px-4 py-1.5 text-right align-middle">
+      <td className="px-2 py-0.5 text-right align-middle">
         {!isSaved && (
           <button
             type="button"
@@ -249,7 +249,7 @@ function ResultRow({
             >
               {busy ? "..." : "Validar"}
             </button>
-            <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-semibold text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
+            <span className="whitespace-nowrap rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-semibold text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
               Ag. validação
             </span>
           </div>
@@ -638,13 +638,13 @@ export default function WorklistDetailPage() {
                 </colgroup>
                 <thead className="border-b border-[var(--border)] bg-[var(--gray-50,#f9fafb)] dark:bg-[var(--gray-900,#111)]">
                   <tr>
-                    <th className="px-4 py-1.5" scope="col" aria-label="Selecionar" />
-                    <th className="px-3 py-1.5 text-left text-[10px] font-semibold uppercase tracking-wide text-[var(--gray-500)]">Exame</th>
-                    <th className="px-3 py-1.5 text-left text-[10px] font-semibold uppercase tracking-wide text-[var(--gray-500)]">Parâmetro</th>
-                    <th className="px-3 py-1.5 text-left text-[10px] font-semibold uppercase tracking-wide text-[var(--gray-500)]">Referência</th>
-                    <th className="px-3 py-1.5 text-left text-[10px] font-semibold uppercase tracking-wide text-[var(--gray-500)]">Unidade</th>
-                    <th className="px-3 py-1.5 text-left text-[10px] font-semibold uppercase tracking-wide text-[var(--gray-500)]">Resultado</th>
-                    <th className="px-4 py-1.5 text-right text-[10px] font-semibold uppercase tracking-wide text-[var(--gray-500)]">Acção</th>
+                    <th className="px-2 py-1" scope="col" aria-label="Selecionar" />
+                    <th className="px-2 py-1 text-left text-[10px] font-semibold uppercase tracking-wide text-[var(--gray-500)]">Exame</th>
+                    <th className="px-2 py-1 text-left text-[10px] font-semibold uppercase tracking-wide text-[var(--gray-500)]">Parâmetro</th>
+                    <th className="px-2 py-1 text-left text-[10px] font-semibold uppercase tracking-wide text-[var(--gray-500)]">Referência</th>
+                    <th className="px-2 py-1 text-left text-[10px] font-semibold uppercase tracking-wide text-[var(--gray-500)]">Unidade</th>
+                    <th className="px-2 py-1 text-left text-[10px] font-semibold uppercase tracking-wide text-[var(--gray-500)]">Resultado</th>
+                    <th className="px-2 py-1 text-right text-[10px] font-semibold uppercase tracking-wide text-[var(--gray-500)]">Acção</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[var(--border)]">
