@@ -187,6 +187,16 @@ class LabRequestViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin,
             raise ValidationError(getattr(err, "message_dict", None) or getattr(err, "messages", None) or str(err)) from err
         return Response(LabRequestSerializer(request_record, context={"request": request}).data)
 
+    @action(detail=True, methods=["get"], url_path="request-pdf", url_name="request-pdf")
+    def request_pdf(self, request, pk=None):
+        """PDF institucional da requisição sem resultados — para uso interno e referenciamento externo."""
+        request_record = self.get_object()
+        from tasks.generate_pdf.request_pdf_generator import generate_request_pdf
+        pdf_bytes, filename = generate_request_pdf(request_record)
+        resp = HttpResponse(pdf_bytes, content_type="application/pdf")
+        resp["Content-Disposition"] = f'inline; filename="{filename}"'
+        return resp
+
     @action(detail=True, methods=["get"], url_path="etiqueta", url_name="etiqueta")
     def etiqueta(self, request, pk=None):
         """Etiqueta PDF (60x30 mm) com código de barras para impressora de etiquetas."""

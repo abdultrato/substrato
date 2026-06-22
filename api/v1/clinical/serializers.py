@@ -952,6 +952,8 @@ class LabRequestSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializ
 
     class LabRequestItemSummarySerializer(serializers.ModelSerializer):
         exam_name = serializers.CharField(source="exam.name", read_only=True)
+        exam_custom_id = serializers.CharField(source="exam.custom_id", read_only=True)
+        exam_method = serializers.CharField(source="exam.method", read_only=True)
         medical_exam_name = serializers.CharField(source="medical_exam.name", read_only=True)
         sample_options = serializers.SerializerMethodField()
         sample_status_display = serializers.CharField(source="get_sample_status_display", read_only=True)
@@ -989,6 +991,8 @@ class LabRequestSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializ
                 "position",
                 "exam",
                 "exam_name",
+                "exam_custom_id",
+                "exam_method",
                 "medical_exam",
                 "medical_exam_name",
                 "sample_options",
@@ -1265,7 +1269,7 @@ class LaboratoryResultItemSerializer(serializers.ModelSerializer):
     exam_field_unit = serializers.CharField(source="exam_field.unit", read_only=True)
     exam_field_type = serializers.CharField(source="exam_field.type", read_only=True)
     exam_field_position = serializers.IntegerField(source="exam_field.position", read_only=True)
-    exam_field_reference = serializers.CharField(source="exam_field.referencia", read_only=True)
+    exam_field_reference = serializers.CharField(source="exam_field.reference", read_only=True)
     patient_name = serializers.CharField(source="result.request.patient.name", read_only=True)
     request_id = serializers.IntegerField(source="result.request_id", read_only=True)
     request_code = serializers.CharField(source="result.request.custom_id", read_only=True)

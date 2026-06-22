@@ -14,6 +14,8 @@ import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 type RequestItem = {
   id: number
   exam_name?: string
+  exam_custom_id?: string
+  exam_method?: string
   medical_exam_name?: string
   sample_status?: string
 }
@@ -37,11 +39,8 @@ function fmt(v?: string) {
   return d.toLocaleString("pt-PT", { dateStyle: "short", timeStyle: "short" })
 }
 
-function examNames(row: LabRequest) {
-  return (row.items ?? [])
-    .filter((i) => i.exam_name || i.medical_exam_name)
-    .map((i) => i.exam_name ?? i.medical_exam_name ?? "")
-    .join(", ")
+function examRows(row: LabRequest) {
+  return (row.items ?? []).filter((i) => i.exam_name || i.medical_exam_name)
 }
 
 // ─── Request Card ─────────────────────────────────────────────────────────────
@@ -57,9 +56,13 @@ function OrderCard({
   onTransferir: () => void
   busy: boolean
 }) {
+  const statusLabel = getClinicalStatusLabel(row.clinical_status, row.clinical_status_display)
+  const exams = examRows(row)
+
   return (
-    <article className="rounded border border-[var(--border)] bg-[var(--card)] p-3 shadow-sm">
-      <div className="mb-2 flex items-start justify-between gap-2">
+    <article className="overflow-hidden rounded border border-[var(--border)] bg-[var(--card)] shadow-sm">
+      {/* Header */}
+      <div className="flex items-start justify-between gap-2 px-3 pt-3">
         <div className="min-w-0">
           <Link
             href={`/requests/${row.id}`}
@@ -71,7 +74,6 @@ function OrderCard({
           {row.patient_age && (
             <p className="text-[10px] text-[var(--gray-500)]">{row.patient_age}</p>
           )}
-          <p className="mt-0.5 text-[11px] text-[var(--gray-500)]">{examNames(row)}</p>
         </div>
         <div className="flex shrink-0 flex-col items-end gap-1">
           <span className={`rounded px-1.5 py-0.5 text-[10px] font-medium ${
@@ -81,9 +83,9 @@ function OrderCard({
           }`}>
             {row.type}
           </span>
-          {getClinicalStatusLabel(row.clinical_status, row.clinical_status_display) && (
+          {statusLabel && (
             <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
-              {getClinicalStatusLabel(row.clinical_status, row.clinical_status_display)}
+              {statusLabel}
             </span>
           )}
           <span className="rounded bg-emerald-100 px-1.5 py-0.5 text-[10px] font-medium text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">
@@ -93,7 +95,43 @@ function OrderCard({
         </div>
       </div>
 
-      <div className="flex items-center justify-end gap-2 border-t border-[var(--border)] pt-2">
+      {/* Exam table */}
+      {exams.length > 0 && (
+        <div className="mx-3 mt-2.5 overflow-hidden border border-[var(--border)]">
+          <table className="w-full table-fixed border-collapse text-[11px]">
+            <colgroup>
+              <col className="w-[22%]" />
+              <col className="w-[50%]" />
+              <col className="w-[28%]" />
+            </colgroup>
+            <thead>
+              <tr className="border-b border-[var(--border)] bg-[var(--gray-50,#f9fafb)] dark:bg-[var(--gray-900,#111)]">
+                <th className="px-3 py-1.5 text-left text-[10px] font-semibold uppercase tracking-wide text-[var(--gray-500)]">Código</th>
+                <th className="px-3 py-1.5 text-left text-[10px] font-semibold uppercase tracking-wide text-[var(--gray-500)]">Exame</th>
+                <th className="px-3 py-1.5 text-left text-[10px] font-semibold uppercase tracking-wide text-[var(--gray-500)]">Método</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-[var(--border)]">
+              {exams.map((item, idx) => (
+                <tr key={item.id} className={idx % 2 === 1 ? "bg-[var(--gray-50,#f9fafb)] dark:bg-[var(--gray-900,#0d0d0d)]" : ""}>
+                  <td className="truncate px-3 py-1.5 font-mono text-[10px] text-[var(--gray-500)]">
+                    {item.exam_custom_id ?? "—"}
+                  </td>
+                  <td className="truncate px-3 py-1.5 font-medium text-[var(--text)]">
+                    {item.exam_name ?? item.medical_exam_name ?? "—"}
+                  </td>
+                  <td className="truncate px-3 py-1.5 text-[var(--gray-500)]">
+                    {item.exam_method ?? "—"}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* Actions */}
+      <div className="mt-3 flex items-center justify-end gap-2 border-t border-[var(--border)] px-3 py-2">
         <button
           type="button"
           onClick={onTransferir}
