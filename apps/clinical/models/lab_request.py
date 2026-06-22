@@ -365,6 +365,8 @@ class LabRequest(NoNameCoreModel):
         Marca como coletadas todas as amostras dos exames laboratoriais que ainda
         não foram coletadas/recebidas e regista a colheita da requisição.
         """
+        from django.db import transaction
+
         from .lab_request_item import LabRequestItem
 
         if not self.validated_at:
@@ -381,11 +383,11 @@ class LabRequest(NoNameCoreModel):
         if not pendentes:
             raise ValidationError("Não há amostras pendentes de colheita.")
 
-        for item in pendentes:
-            item.colher_amostra(user=user, cascade_same_sample=False)
-
-        if not self.collected_at:
-            self.registar_colheita(user=user)
+        with transaction.atomic():
+            for item in pendentes:
+                item.colher_amostra(user=user, cascade_same_sample=False)
+            if not self.collected_at:
+                self.registar_colheita(user=user)
         return self
 
     def amostras_conferidas(self) -> bool:
