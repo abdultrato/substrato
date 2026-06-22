@@ -1,6 +1,6 @@
 "use client"
 
-import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { useCallback, useEffect, useMemo, useState } from "react"
 
 import AppLayout from "@/components/layout/AppLayout"
@@ -126,6 +126,7 @@ async function abrirEtiqueta(id: number) {
 
 export default function NursingCollectionsPage() {
   useAuthGuard()
+  const router = useRouter()
   const safeRefreshToken = useSafeDataRefreshSignal()
   const [rows, setRows] = useState<CollectionRequest[]>([])
   const [loading, setLoading] = useState(true)
@@ -202,86 +203,101 @@ export default function NursingCollectionsPage() {
               return (
                 <section
                   key={column.key}
-                  className={`flex flex-col gap-2 rounded-lg bg-[var(--card)]/40 p-2 ${column.top}`}
+                  className={`flex flex-col rounded-lg bg-[var(--card)]/40 p-2 ${column.top}`}
                 >
-                  <div className="flex items-center justify-between px-1 pt-1">
+                  <div className="flex items-center justify-between px-1 pb-2 pt-1">
                     <h2 className={`text-xs font-semibold uppercase tracking-wide ${column.header}`}>{column.title}</h2>
                     <span className={`inline-flex min-w-5 items-center justify-center rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${column.badge}`}>
                       {items.length}
                     </span>
                   </div>
 
-                  {items.length === 0 ? (
-                    <div className="rounded-md border border-dashed border-[var(--border)] px-3 py-6 text-center text-xs text-[var(--gray-500)]">
-                      Sem requisições.
-                    </div>
-                  ) : (
-                    items.map((row) => {
-                      const { collected, total } = progressOf(row)
-                      return (
-                        <div
-                          key={row.id}
-                          className="space-y-1.5 rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-2.5 shadow-sm"
-                        >
-                          <div className="flex items-start justify-between gap-2">
-                            <Link
-                              href={`/nursing/requests/${row.id}`}
-                              className="text-sm font-semibold text-[var(--primary-700)] hover:underline"
-                            >
-                              {row.custom_id}
-                            </Link>
-                            {total > 0 ? (
-                              <span className="shrink-0 text-[10px] font-medium text-[var(--gray-500)]">
-                                {collected}/{total}
-                              </span>
-                            ) : null}
-                          </div>
-                          <div className="text-xs text-[var(--text)]">
-                            {row.patient_name}
-                            {row.patient_age ? <span className="text-[var(--gray-500)]"> · {row.patient_age}</span> : null}
-                          </div>
-                          <div className="text-[10px] text-[var(--gray-500)]">Validada: {formatDateTime(row.validated_at)}</div>
-
-                          {row.sample_details?.length ? (
-                            <div className="flex flex-wrap gap-1 pt-0.5">
-                              {row.sample_details.map((sample) => (
-                                <span
-                                  key={`${row.id}-sample-${sample.id}`}
-                                  className="inline-flex items-center rounded border border-[var(--primary-300)] bg-[var(--primary-300)]/20 px-1.5 py-0.5 text-[10px] font-medium text-[var(--text)]"
-                                  title={sample.name}
-                                >
-                                  {sample.bottle_type_display || sample.bottle_type}
-                                  {sample.minimum_volume_ml && Number(sample.minimum_volume_ml) > 0
-                                    ? ` · ${sample.minimum_volume_ml} ml`
-                                    : ""}
+                  <div className="grid auto-rows-min grid-cols-1 gap-2 overflow-y-auto pr-1 max-h-[calc(100vh-210px)] sm:grid-cols-2 xl:grid-cols-1">
+                    {items.length === 0 ? (
+                      <div className="rounded-md border border-dashed border-[var(--border)] px-3 py-6 text-center text-xs text-[var(--gray-500)] sm:col-span-2 xl:col-span-1">
+                        Sem requisições.
+                      </div>
+                    ) : (
+                      items.map((row) => {
+                        const { collected, total } = progressOf(row)
+                        const target = `/nursing/requests/${row.id}`
+                        return (
+                          <div
+                            key={row.id}
+                            role="button"
+                            tabIndex={0}
+                            onClick={() => router.push(target)}
+                            onKeyDown={(event) => {
+                              if (event.key === "Enter" || event.key === " ") {
+                                event.preventDefault()
+                                router.push(target)
+                              }
+                            }}
+                            className="flex aspect-square cursor-pointer flex-col gap-1.5 overflow-hidden rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-2.5 shadow-sm transition hover:border-[var(--primary-400)] hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-400)]"
+                          >
+                            <div className="flex items-start justify-between gap-2">
+                              <span className="text-sm font-semibold text-[var(--primary-700)]">{row.custom_id}</span>
+                              {total > 0 ? (
+                                <span className="shrink-0 text-[10px] font-medium text-[var(--gray-500)]">
+                                  {collected}/{total}
                                 </span>
-                              ))}
+                              ) : null}
                             </div>
-                          ) : null}
+                            <div className="truncate text-xs text-[var(--text)]">
+                              {row.patient_name}
+                              {row.patient_age ? <span className="text-[var(--gray-500)]"> · {row.patient_age}</span> : null}
+                            </div>
+                            <div className="text-[10px] text-[var(--gray-500)]">Validada: {formatDateTime(row.validated_at)}</div>
 
-                          <div className="flex flex-wrap items-center gap-2 pt-1">
-                            {column.action ? (
+                            {row.sample_details?.length ? (
+                              <div className="flex flex-1 flex-wrap content-start gap-1 overflow-hidden pt-0.5">
+                                {row.sample_details.map((sample) => (
+                                  <span
+                                    key={`${row.id}-sample-${sample.id}`}
+                                    className="inline-flex h-fit items-center rounded border border-[var(--primary-300)] bg-[var(--primary-300)]/20 px-1.5 py-0.5 text-[10px] font-medium text-[var(--text)]"
+                                    title={sample.name}
+                                  >
+                                    {sample.bottle_type_display || sample.bottle_type}
+                                    {sample.minimum_volume_ml && Number(sample.minimum_volume_ml) > 0
+                                      ? ` · ${sample.minimum_volume_ml} ml`
+                                      : ""}
+                                  </span>
+                                ))}
+                              </div>
+                            ) : (
+                              <div className="flex-1" />
+                            )}
+
+                            <div className="mt-auto flex flex-wrap items-center gap-2">
+                              {column.action ? (
+                                <button
+                                  type="button"
+                                  onClick={(event) => {
+                                    event.stopPropagation()
+                                    fazerColheita(row)
+                                  }}
+                                  disabled={busyId === row.id}
+                                  className="inline-flex h-8 items-center justify-center rounded-md bg-[var(--primary-600)] px-3 text-xs font-semibold text-white shadow-sm transition-all duration-150 hover:bg-[var(--primary-700)] disabled:opacity-60"
+                                >
+                                  {busyId === row.id ? "Registando..." : column.action}
+                                </button>
+                              ) : null}
                               <button
                                 type="button"
-                                onClick={() => fazerColheita(row)}
-                                disabled={busyId === row.id}
-                                className="inline-flex h-8 items-center justify-center rounded-md bg-[var(--primary-600)] px-3 text-xs font-semibold text-white shadow-sm transition-all duration-150 hover:bg-[var(--primary-700)] disabled:opacity-60"
+                                onClick={(event) => {
+                                  event.stopPropagation()
+                                  abrirEtiqueta(row.id).catch(() => setError("Falha ao gerar a etiqueta."))
+                                }}
+                                className="inline-flex h-8 items-center justify-center rounded-md border border-[var(--border)] bg-[var(--card)] px-3 text-xs font-medium text-[var(--gray-700)] transition hover:bg-[var(--gray-100)]"
                               >
-                                {busyId === row.id ? "Registando..." : column.action}
+                                Etiqueta
                               </button>
-                            ) : null}
-                            <button
-                              type="button"
-                              onClick={() => abrirEtiqueta(row.id).catch(() => setError("Falha ao gerar a etiqueta."))}
-                              className="inline-flex h-8 items-center justify-center rounded-md border border-[var(--border)] bg-[var(--card)] px-3 text-xs font-medium text-[var(--gray-700)] transition hover:bg-[var(--gray-100)]"
-                            >
-                              Etiqueta
-                            </button>
+                            </div>
                           </div>
-                        </div>
-                      )
-                    })
-                  )}
+                        )
+                      })
+                    )}
+                  </div>
                 </section>
               )
             })}
