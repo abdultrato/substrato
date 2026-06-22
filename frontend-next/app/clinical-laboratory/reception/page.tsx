@@ -62,7 +62,7 @@ function ReceptionCard({ row }: { row: LabRequest }) {
           router.push(target)
         }
       }}
-      className="flex aspect-square max-h-[240px] cursor-pointer flex-col gap-1.5 overflow-hidden rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-2.5 shadow-sm transition hover:border-[var(--primary-400)] hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-400)]"
+      className="flex aspect-square cursor-pointer flex-col gap-1.5 overflow-hidden rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-2.5 shadow-sm transition hover:border-[var(--primary-400)] hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-400)]"
     >
       <div className="flex items-start justify-between gap-2">
         <span className="text-sm font-semibold text-[var(--primary-700)] dark:text-[var(--primary-400)]">{row.custom_id}</span>
