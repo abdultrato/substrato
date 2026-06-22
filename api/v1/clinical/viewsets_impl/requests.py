@@ -161,6 +161,17 @@ class LabRequestViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin,
         request_record.refresh_from_db()
         return Response(LabRequestSerializer(request_record, context={"request": request}).data)
 
+    @action(detail=True, methods=["post"], url_path="receber-todas-amostras", url_name="receber-todas-amostras")
+    def receber_todas_amostras(self, request, pk=None):
+        """Recebe (confere) de uma vez todas as amostras pendentes da requisição."""
+        request_record = self.get_object()
+        try:
+            request_record.receber_todas_amostras(user=getattr(request, "user", None))
+        except DjangoValidationError as err:
+            raise ValidationError(getattr(err, "message_dict", None) or getattr(err, "messages", None) or str(err)) from err
+        request_record.refresh_from_db()
+        return Response(LabRequestSerializer(request_record, context={"request": request}).data)
+
     @action(detail=True, methods=["post"], url_path="iniciar-processamento", url_name="iniciar-processamento")
     def iniciar_processamento(self, request, pk=None):
         """Laboratório inicia o processamento da requisição colhida."""

@@ -407,6 +407,46 @@ class LabRequest(NoNameCoreModel):
                 self.registar_colheita(user=user)
         return self
 
+    def receber_todas_amostras(self, user=None):
+        """Laboratório recebe (confere) de uma vez todas as amostras pendentes.
+
+        Marca como recebidas todas as amostras dos exames laboratoriais que ainda
+        estão por conferir (não recebidas nem rejeitadas). As amostras rejeitadas
+        são mantidas como tal — devem ser tratadas em recoleta.
+        """
+        from django.db import transaction
+        from django.utils import timezone
+
+        from .lab_request_item import LabRequestItem
+
+        pendente_ids = list(
+            self.items.filter(deleted=False, exam__isnull=False)
+            .exclude(
+                sample_status__in=[
+                    LabRequestItem.SampleStatus.RECEIVED,
+                    LabRequestItem.SampleStatus.REJECTED,
+                ]
+            )
+            .values_list("pk", flat=True)
+        )
+        if not pendente_ids:
+            raise ValidationError("Não há amostras pendentes de receção.")
+
+        # Atualização em massa (ver nota em colher_todas_amostras): o save() de
+        # LabRequestItem é O(n) por item, logo o loop seria O(n²).
+        with transaction.atomic():
+            now = timezone.now()
+            LabRequestItem.objects.filter(pk__in=pendente_ids).update(
+                sample_status=LabRequestItem.SampleStatus.RECEIVED,
+                sample_received_at=now,
+                rejection_note="",
+                updated_at=now,
+            )
+            LabRequestItem.rejection_reasons.through.objects.filter(
+                labrequestitem_id__in=pendente_ids
+            ).delete()
+        return self
+
     def amostras_conferidas(self) -> bool:
         """True quando todos os itens LAB têm amostra recebida na receção."""
         items = self.items.filter(deleted=False, exam__isnull=False)

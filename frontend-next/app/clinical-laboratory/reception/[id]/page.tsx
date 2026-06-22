@@ -28,6 +28,7 @@ export default function LabReceptionDetailPage() {
   const [error, setError] = useState<string | null>(null)
   const [feedback, setFeedback] = useState<string | null>(null)
   const [busyItem, setBusyItem] = useState<number | null>(null)
+  const [busyAll, setBusyAll] = useState(false)
 
   const load = useCallback(async () => {
     if (!id) return
@@ -66,6 +67,22 @@ export default function LabReceptionDetailPage() {
     }
   }
 
+  async function handleReceiveAll() {
+    if (!record?.id) return
+    setBusyAll(true)
+    setError(null)
+    setFeedback(null)
+    try {
+      await apiFetch(`/clinical/labrequest/${record.id}/receber-todas-amostras/`, { method: "POST" })
+      setFeedback("Todas as amostras pendentes foram recebidas.")
+      await load()
+    } catch (e: any) {
+      setError(e?.message || "Falha ao receber as amostras.")
+    } finally {
+      setBusyAll(false)
+    }
+  }
+
   async function handleRejectItem(item: RequestItem, note: string, reasonIds: number[]) {
     setBusyItem(item.id)
     setError(null)
@@ -95,12 +112,24 @@ export default function LabReceptionDetailPage() {
         <PageHeader
           title={record?.custom_id ? `Recepção — ${record.custom_id}` : "Recepção de Amostra"}
           actions={
-            <Link
-              href="/clinical-laboratory/reception"
-              className="inline-flex h-8 items-center rounded border border-[var(--border)] bg-[var(--card)] px-2.5 text-xs font-medium text-[var(--gray-700)] transition hover:bg-[var(--gray-100)]"
-            >
-              Voltar
-            </Link>
+            <div className="flex items-center gap-2">
+              {counts.pending > 0 ? (
+                <button
+                  type="button"
+                  onClick={handleReceiveAll}
+                  disabled={busyAll}
+                  className="inline-flex h-8 items-center rounded bg-emerald-600 px-3 text-xs font-semibold text-white shadow-sm transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {busyAll ? "A receber..." : "Receber todas as amostras"}
+                </button>
+              ) : null}
+              <Link
+                href="/clinical-laboratory/reception"
+                className="inline-flex h-8 items-center rounded border border-[var(--border)] bg-[var(--card)] px-2.5 text-xs font-medium text-[var(--gray-700)] transition hover:bg-[var(--gray-100)]"
+              >
+                Voltar
+              </Link>
+            </div>
           }
         />
 
