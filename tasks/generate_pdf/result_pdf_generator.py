@@ -211,7 +211,7 @@ def generate_results_pdf(request, apenas_validados=True) -> tuple[bytes, str]:
                     cell_paragraph("Parâmetro", True),
                     cell_paragraph("Resultado", True),
                     cell_paragraph("Unidade", True),
-                    cell_paragraph("Valor de Referência", True),
+                    cell_paragraph("Referência", True),
                 ]
             ]
 
