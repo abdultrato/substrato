@@ -112,6 +112,7 @@ class LabRequestItem(TenantPropagationMixin, ScopedPositionMixin, NoNameCoreMode
         self.rejection_note = ""
         self.save(update_fields=["sample_status", "sample_received_at", "rejection_note", "updated_at"])
         self.rejection_reasons.clear()
+        self._resolver_rejeicoes_pendentes(user=user)
         if cascade_same_sample:
             self._receber_itens_da_mesma_amostra(user=user)
         return self
@@ -175,7 +176,38 @@ class LabRequestItem(TenantPropagationMixin, ScopedPositionMixin, NoNameCoreMode
         self.rejection_note = note or ""
         self.save(update_fields=["sample_status", "sample_received_at", "rejection_note", "updated_at"])
         self.rejection_reasons.set(reasons)
+
+        # Regista o evento de rejeição (histórico independente do estado do item),
+        # para alimentar a página de Rejeições (pendentes vs resolvidas).
+        from .sample_rejection import SampleRejectionRecord
+
+        reasons_text = ", ".join(
+            (getattr(r, "name", "") or getattr(r, "get_code_display", lambda: "")()) for r in reasons
+        ).strip(", ")
+        SampleRejectionRecord.objects.create(
+            tenant_id=self.tenant_id,
+            request_id=self.request_id,
+            request_item=self,
+            reasons_text=reasons_text,
+            note=note or "",
+            status=SampleRejectionRecord.Status.PENDING,
+            created_by=user if getattr(user, "pk", None) else None,
+        )
         return self
+
+    def _resolver_rejeicoes_pendentes(self, user=None):
+        """Marca como resolvidas as rejeições pendentes deste item — chamado
+        quando a amostra (reconferida pela enfermagem) é recebida sem nova
+        rejeição."""
+        from django.utils import timezone
+
+        from .sample_rejection import SampleRejectionRecord
+
+        self.rejections.filter(status=SampleRejectionRecord.Status.PENDING).update(
+            status=SampleRejectionRecord.Status.RESOLVED,
+            resolved_at=timezone.now(),
+            resolved_by=user if getattr(user, "pk", None) else None,
+        )
 
     class Meta:
         db_table = "clinico_requisicaoitem"

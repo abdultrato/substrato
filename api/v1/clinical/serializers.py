@@ -22,7 +22,7 @@ from apps.clinical.models.medical_result_file import (
 from apps.clinical.models.patient import Patient
 from apps.clinical.models.result_item import ResultItem
 from apps.clinical.models.sample import Sample
-from apps.clinical.models.sample_rejection import SampleRejectionReason
+from apps.clinical.models.sample_rejection import SampleRejectionRecord, SampleRejectionReason
 from core.constants.provenance import Provenance
 
 CORE_READ_ONLY_FIELDS = [
@@ -832,6 +832,39 @@ class SampleRejectionReasonSerializer(serializers.ModelSerializer):
         model = SampleRejectionReason
         fields = "__all__"
         read_only_fields = CORE_READ_ONLY_FIELDS
+
+
+class SampleRejectionSerializer(serializers.ModelSerializer):
+    request_custom_id = serializers.CharField(source="request.custom_id", read_only=True)
+    patient_name = serializers.CharField(source="request.patient.name", read_only=True)
+    exam_name = serializers.SerializerMethodField()
+    status_display = serializers.CharField(source="get_status_display", read_only=True)
+
+    def get_exam_name(self, obj):
+        item = getattr(obj, "request_item", None)
+        if item is None:
+            return ""
+        exam = getattr(item, "exam", None) or getattr(item, "medical_exam", None)
+        return getattr(exam, "name", "") if exam else ""
+
+    class Meta:
+        model = SampleRejectionRecord
+        fields = [
+            "id",
+            "custom_id",
+            "request",
+            "request_custom_id",
+            "request_item",
+            "patient_name",
+            "exam_name",
+            "reasons_text",
+            "note",
+            "status",
+            "status_display",
+            "created_at",
+            "resolved_at",
+        ]
+        read_only_fields = fields
 
 
 class LabRequestSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer):

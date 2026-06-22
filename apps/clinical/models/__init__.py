@@ -20,7 +20,7 @@ from .lab_request import LabRequest
 from .lab_request_item import LabRequestItem
 from .medical_exam import MedicalExam, MedicalExamField
 from .occupational_profile import OccupationalExamProfile
-from .sample_rejection import SampleRejectionReason
+from .sample_rejection import SampleRejectionRecord, SampleRejectionReason
 from .medical_result_file import MedicalResultFile
 from .patient import Patient
 from .result import Result
@@ -43,6 +43,7 @@ __all__ = [
     "Result",
     "ResultItem",
     "Sample",
+    "SampleRejectionRecord",
     "SampleRejectionReason",
     "clinical_event",
     "clinical_history",

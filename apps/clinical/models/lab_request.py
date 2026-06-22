@@ -445,6 +445,18 @@ class LabRequest(NoNameCoreModel):
             LabRequestItem.rejection_reasons.through.objects.filter(
                 labrequestitem_id__in=pendente_ids
             ).delete()
+            # Resolve as rejeições pendentes das amostras agora recebidas (foram
+            # reconferidas pela enfermagem e recebidas sem nova rejeição).
+            from .sample_rejection import SampleRejectionRecord
+
+            SampleRejectionRecord.objects.filter(
+                request_item_id__in=pendente_ids,
+                status=SampleRejectionRecord.Status.PENDING,
+            ).update(
+                status=SampleRejectionRecord.Status.RESOLVED,
+                resolved_at=now,
+                resolved_by=user if getattr(user, "pk", None) else None,
+            )
         return self
 
     def amostras_conferidas(self) -> bool:
