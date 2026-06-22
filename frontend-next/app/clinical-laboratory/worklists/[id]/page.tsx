@@ -214,14 +214,16 @@ function ResultRow({
         }`}
       />
 
-      <button
-        type="button"
-        onClick={() => onSave(item.id, value)}
-        disabled={busy || !value.trim()}
-        className="h-6 rounded border border-[var(--border)] px-2 text-[10px] font-medium text-[var(--gray-700)] hover:bg-[var(--gray-100)] disabled:opacity-50 dark:text-[var(--gray-300)]"
-      >
-        {busy && !isSaved ? "..." : "Gravar"}
-      </button>
+      {!isSaved && (
+        <button
+          type="button"
+          onClick={() => onSave(item.id, value)}
+          disabled={busy || !value.trim()}
+          className="h-6 rounded border border-[var(--border)] px-2 text-[10px] font-medium text-[var(--gray-700)] hover:bg-[var(--gray-100)] disabled:opacity-50 dark:text-[var(--gray-300)]"
+        >
+          {busy ? "..." : "Gravar"}
+        </button>
+      )}
 
       {isSaved && (
         <>
