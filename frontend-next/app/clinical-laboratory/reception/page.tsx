@@ -6,7 +6,7 @@ import { AlertTriangle } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
 import PageHeader from "@/components/ui/PageHeader"
-import { apiFetchList } from "@/lib/api"
+import { apiFetch, apiFetchList } from "@/lib/api"
 import { getClinicalStatusLabel } from "@/lib/clinicalStatus"
 import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import {
@@ -46,7 +46,15 @@ function classifyReception(row: LabRequest): ColumnKey {
 
 // ─── Summary Card (square, clickable) ───────────────────────────────────────────
 
-function ReceptionCard({ row }: { row: LabRequest }) {
+function ReceptionCard({
+  row,
+  onReceive,
+  busy,
+}: {
+  row: LabRequest
+  onReceive: () => void
+  busy: boolean
+}) {
   const router = useRouter()
   const counts = countsByStatus(labItemsOf(row))
   const target = `/clinical-laboratory/reception/${row.id}`
@@ -101,7 +109,22 @@ function ReceptionCard({ row }: { row: LabRequest }) {
         ) : null}
       </div>
 
-      <div className="mt-auto text-[10px] text-[var(--gray-400)]">Colhida {fmt(row.collected_at)}</div>
+      <div className="mt-auto flex items-end justify-between gap-2">
+        <span className="text-[10px] text-[var(--gray-400)]">Colhida {fmt(row.collected_at)}</span>
+        {counts.pending > 0 ? (
+          <button
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation()
+              onReceive()
+            }}
+            disabled={busy}
+            className="inline-flex h-7 shrink-0 items-center rounded bg-emerald-600 px-2.5 text-[10px] font-semibold text-white shadow-sm transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {busy ? "A receber..." : counts.pending === 1 ? "Receber amostra" : "Receber amostras"}
+          </button>
+        ) : null}
+      </div>
     </div>
   )
 }
@@ -113,6 +136,7 @@ export default function LabReceptionPage() {
   const [rows, setRows] = useState<LabRequest[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [busyId, setBusyId] = useState<number | null>(null)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -133,6 +157,19 @@ export default function LabReceptionPage() {
   useEffect(() => {
     load()
   }, [load, safeRefreshToken])
+
+  async function handleReceiveAll(row: LabRequest) {
+    setBusyId(row.id)
+    setError(null)
+    try {
+      await apiFetch(`/clinical/labrequest/${row.id}/receber-todas-amostras/`, { method: "POST" })
+      await load()
+    } catch (e: any) {
+      setError(e?.message || "Falha ao receber as amostras.")
+    } finally {
+      setBusyId(null)
+    }
+  }
 
   const buckets = useMemo(() => {
     const grouped: Record<ColumnKey, LabRequest[]> = {
@@ -182,7 +219,14 @@ export default function LabReceptionPage() {
                         Sem requisições.
                       </div>
                     ) : (
-                      items.map((row) => <ReceptionCard key={row.id} row={row} />)
+                      items.map((row) => (
+                        <ReceptionCard
+                          key={row.id}
+                          row={row}
+                          onReceive={() => handleReceiveAll(row)}
+                          busy={busyId === row.id}
+                        />
+                      ))
                     )}
                   </div>
                 </section>
