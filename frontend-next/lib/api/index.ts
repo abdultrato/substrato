@@ -370,16 +370,8 @@ export async function apiFetch<T = any>(
                 throw err
               }
             } else {
-              // Sessão inválida/expirada: limpa client-side e envia para login.
-              try {
-                clearSession()
-              } catch {
-                // ignore
-              }
-              if (typeof window !== "undefined") {
-                const next = encodeURIComponent(window.location.pathname + window.location.search)
-                window.location.href = `/login?next=${next}`
-              }
+              // Redirect por sessão expirada desactivado temporariamente.
+              // Para reactivar: descomentar clearSession() e window.location.href abaixo.
               throw new Error("Sessão expirada. Faça login novamente.")
             }
           }

@@ -402,13 +402,23 @@ class LabRequestViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin,
             ).count(),
         }
 
+        patient = request_record.patient
+        try:
+            patient_age = patient.idade() or ""
+        except Exception:
+            patient_age = ""
+        patient_gender = getattr(patient, "gender", "") or ""
+
         request_payload = {
             "id": request_record.id,
             "custom_id": request_record.custom_id,
             "patient": request_record.patient_id,
-            "patient_name": request_record.patient.name,
+            "patient_name": patient.name,
+            "patient_age": patient_age,
+            "patient_gender": patient_gender,
             "status": request_record.status,
             "clinical_status": request_record.clinical_status,
+            "clinical_status_display": request_record.get_clinical_status_display(),
             "has_critical_result": request_record.has_critical_result,
         }
 
