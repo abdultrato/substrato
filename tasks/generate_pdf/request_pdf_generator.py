@@ -30,7 +30,6 @@ from .institutional_pdf_design import (
     append_fim,
     bold_inst as bold,
     draw_institutional_corner_barcode,
-    draw_institutional_overflow_qr,
     institutional_cell_paragraph as cell_paragraph,
     institutional_section_style as document_section_style,
     institutional_title_style as document_title_style,
@@ -263,7 +262,8 @@ def generate_request_pdf(request) -> tuple[bytes, str]:
         draw_line_full_width(canvas_obj, doc_obj)
 
     def _later_page(canvas_obj, doc_obj):
-        draw_institutional_overflow_qr(canvas_obj, doc_obj)
+        # Sem header e sem QR a partir da 2ª página; mantém só o código de
+        # barras de canto e a linha de rodapé.
         draw_institutional_corner_barcode(canvas_obj, doc_obj)
         draw_line_full_width(canvas_obj, doc_obj)
 

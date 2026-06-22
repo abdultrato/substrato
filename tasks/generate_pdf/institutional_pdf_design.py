@@ -197,7 +197,16 @@ def _institutional_code_payload(doc) -> str:
 
 def draw_institutional_overflow_qr(canvas_obj, doc) -> None:
     """QR Code no quadrante superior direito, quase a transbordar a borda da
-    página. Aplicável a todos os PDFs institucionais do Substrato."""
+    página. Aplicável a todos os PDFs institucionais do Substrato.
+
+    O QR só é desenhado na PRIMEIRA página do documento (requisição, resultado,
+    etc.) — as páginas seguintes não repetem o código de verificação.
+    """
+    try:
+        if canvas_obj.getPageNumber() != 1:
+            return
+    except Exception:
+        pass
     payload = _institutional_code_payload(doc)
     if not payload:
         return
