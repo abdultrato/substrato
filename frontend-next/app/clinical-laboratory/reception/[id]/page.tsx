@@ -114,7 +114,7 @@ export default function LabReceptionDetailPage() {
           title={record?.custom_id ? `Recepção — ${record.custom_id}` : "Recepção de Amostra"}
           actions={
             <div className="flex items-center gap-2">
-              {counts.pending > 0 ? (
+              {counts.pending > 0 && counts.rejected === 0 ? (
                 <button
                   type="button"
                   onClick={handleReceiveAll}

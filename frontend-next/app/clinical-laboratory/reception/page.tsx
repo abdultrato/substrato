@@ -111,7 +111,7 @@ function ReceptionCard({
 
       <div className="mt-auto flex items-end justify-between gap-2">
         <span className="text-[10px] text-[var(--gray-400)]">Colhida {fmt(row.collected_at)}</span>
-        {counts.pending > 0 ? (
+        {counts.pending > 0 && counts.rejected === 0 ? (
           <button
             type="button"
             onClick={(event) => {
