@@ -157,7 +157,7 @@ function SearchPanel({
   }
 
   return (
-    <div className="rounded-xl border border-[var(--border)] bg-[var(--card)] px-4 py-3 shadow-sm">
+    <div className="rounded-xl border border-[var(--border)] bg-transparent px-4 py-3">
       <div className="grid grid-cols-2 gap-2 md:grid-cols-3 xl:grid-cols-4">
         <div className="col-span-2 md:col-span-3 xl:col-span-4">
           <label className={LABEL_CLS}>Pesquisa livre (código, paciente, documento, empresa…)</label>
@@ -265,7 +265,7 @@ function SmartCard({
   }
 
   return (
-    <div className="space-y-1.5 rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-2.5 shadow-sm">
+    <div className="space-y-1.5 rounded-lg border border-[var(--border)] bg-transparent px-3 py-2.5">
       <div className="flex items-start justify-between gap-2">
         <Link
           href={`/requests/${row.id}`}
