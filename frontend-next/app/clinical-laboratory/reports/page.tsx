@@ -27,6 +27,7 @@ type LabRequest = {
   type: "LAB" | "MED"
   collected_at?: string
   validated_at?: string
+  updated_at?: string
   items?: RequestItem[]
 }
 
@@ -121,7 +122,7 @@ function ReportCard({
               {getClinicalStatusLabel(row.clinical_status, row.clinical_status_display)}
             </span>
           )}
-          <span className="text-[10px] text-[var(--gray-400)]">Validado {fmt(row.validated_at)}</span>
+          <span className="text-[10px] text-[var(--gray-400)]">Validado {fmt(row.updated_at)}</span>
         </div>
       </div>
 
@@ -301,7 +302,7 @@ export default function LabReportsPage() {
     setLoading(true)
     setError(null)
     try {
-      const params = new URLSearchParams({ fase: "laudos", ordering: "-validated_at" })
+      const params = new URLSearchParams({ fase: "laudos", ordering: "-updated_at" })
       if (isSearch) {
         params.set("page_size", "50")
         if (f.dateFrom) params.set("validated_from", f.dateFrom)

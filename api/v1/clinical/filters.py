@@ -207,8 +207,8 @@ class LabRequestFilter(SafeFilterSet):
     # Fila do laboratório: ?fase=rececao_amostras|pedidos|trabalho|recolheita
     fase = django_filters.CharFilter(method="filter_fase")
     # Intervalo de validação
-    validated_from = django_filters.DateFilter(field_name="validated_at", lookup_expr="date__gte")
-    validated_to = django_filters.DateFilter(field_name="validated_at", lookup_expr="date__lte")
+    validated_from = django_filters.DateFilter(field_name="updated_at", lookup_expr="date__gte")
+    validated_to = django_filters.DateFilter(field_name="updated_at", lookup_expr="date__lte")
     # Pesquisa por dados do paciente
     patient_name = django_filters.CharFilter(field_name="patient__name", lookup_expr="icontains")
     patient_document = django_filters.CharFilter(field_name="patient__document_number", lookup_expr="icontains")

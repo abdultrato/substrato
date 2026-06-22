@@ -665,7 +665,7 @@ class LabRequest(NoNameCoreModel):
                 desconsiderados_validados = int(stats.get("desconsiderados_validados") or 0)
                 entradas_concluidas = (aguardando + validados + desconsiderados) == total
 
-                if (validados + desconsiderados_validados) == total:
+                if (validados + desconsiderados) == total:
                     novo_status_fluxo = ResultState.VALIDATED
                 elif entradas_concluidas:
                     novo_status_fluxo = ResultState.AWAITING_VALIDATION
