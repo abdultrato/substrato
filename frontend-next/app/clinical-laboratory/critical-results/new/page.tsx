@@ -1,12 +1,12 @@
 "use client";
 
 import { Suspense } from "react";
-import { GeneratedResourceCreatePage } from "@/components/resources/GeneratedResourcePages";
+import CriticalResultCreateForm from "@/components/clinical-laboratory/CriticalResultCreateForm";
 
 export default function ClinicalLaboratoryCriticalResultsCreatePage() {
   return (
     <Suspense fallback={<div className="p-4 text-sm text-[var(--gray-500)]">Carregando...</div>}>
-      <GeneratedResourceCreatePage endpoint="/clinical_laboratory/critical_notification/" />
+      <CriticalResultCreateForm />
     </Suspense>
   );
 }

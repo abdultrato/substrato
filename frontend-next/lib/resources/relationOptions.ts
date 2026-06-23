@@ -198,6 +198,11 @@ const RELATION_TARGETS: Record<string, RelationTarget> = {
 }
 
 const ENDPOINT_FIELD_OVERRIDES: Record<string, Record<string, RelationTarget>> = {
+  "/clinical_laboratory/critical_notification/": {
+    result: { endpoint: "/clinical_laboratory/result/", labelFields: ["custom_id", "value", "unit", ...DEFAULT_LABEL_FIELDS] },
+    order: { endpoint: "/clinical_laboratory/order/", labelFields: ["custom_id", "patient_name", ...DEFAULT_LABEL_FIELDS] },
+    patient: { endpoint: "/clinical/patient/", labelFields: ["name", "document_number", ...DEFAULT_LABEL_FIELDS] },
+  },
   "/reception/checkin/": {
     tenant: { endpoint: "/tenants/tenant/", labelFields: TENANT_LABEL_FIELDS },
     tenant_unit: { endpoint: "/tenants/tenant/", labelFields: TENANT_LABEL_FIELDS },
