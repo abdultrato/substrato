@@ -14,6 +14,7 @@ import {
     HeartPulse,
     Receipt,
     Scissors,
+    Search,
     Stethoscope,
     UserPlus,
     Users,
@@ -21,10 +22,8 @@ import {
     XCircle,
 } from "lucide-react"
 
-import { lucideToDataUrl } from "@/lib/icon-svg"
 import { getManchesterMeta } from "@/lib/manchesterTriage"
 import AppLayout from "@/components/layout/AppLayout"
-import Card from "@/components/ui/Card"
 import PageHeader from "@/components/ui/PageHeader"
 import MoneyValue from "@/components/ui/MoneyValue"
 import useAuthGuard from "@/hooks/useAuthGuard"
@@ -202,11 +201,11 @@ export default function RecepcaoPage() {
     const [workspace, setWorkspace] = useState<ReceptionWorkspace>(EMPTY_WORKSPACE)
     const [erro, setErro] = useState<string | null>(null)
     const [carregando, setCarregando] = useState(true)
-
     const [approvedNotes, setApprovedNotes] = useState<CreditNoteRow[]>([])
     const [rejectedNotes, setRejectedNotes] = useState<CreditNoteRow[]>([])
     const [loadingNotes, setLoadingNotes] = useState(true)
     const [showWizard, setShowWizard] = useState(false)
+    const [search, setSearch] = useState("")
 
     useEffect(() => {
         async function carregarWorkspace() {
@@ -235,7 +234,7 @@ export default function RecepcaoPage() {
                 setApprovedNotes(Array.isArray(apro?.results ?? apro) ? (apro?.results ?? apro) : [])
                 setRejectedNotes(Array.isArray(reje?.results ?? reje) ? (reje?.results ?? reje) : [])
             } catch {
-                // silently ignore — the section just stays empty
+                // silently ignore
             } finally {
                 setLoadingNotes(false)
             }
@@ -249,294 +248,233 @@ export default function RecepcaoPage() {
 
     const now = new Date()
     const hour = now.getHours()
-    const greeting =
-        hour < 12 ? "Bom dia" :
-        hour < 18 ? "Boa tarde" :
-        "Boa noite"
-
+    const greeting = hour < 12 ? "Bom dia" : hour < 18 ? "Boa tarde" : "Boa noite"
     const firstName = user?.first_name?.trim() || user?.username?.trim() || null
-    const greetingName = firstName ? `${greeting}, ${firstName}` : `${greeting}`
-
+    const greetingName = firstName ? `${greeting}, ${firstName}` : greeting
     const todayLabel = now.toLocaleDateString("pt-MZ", {
-        weekday: "long",
-        day: "numeric",
-        month: "long",
-        year: "numeric",
+        weekday: "long", day: "numeric", month: "long", year: "numeric",
     })
+
+    const q = search.trim().toLowerCase()
+    const filteredQueue = q
+        ? workspace.queue.filter(
+            (item) =>
+                item.patient_name.toLowerCase().includes(q) ||
+                item.patient_code.toLowerCase().includes(q) ||
+                item.request_code.toLowerCase().includes(q) ||
+                item.invoice_code.toLowerCase().includes(q) ||
+                item.status.toLowerCase().includes(q),
+        )
+        : workspace.queue
 
     return (
         <>
         <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.RECEPCAO]}>
-            <div className="space-y-6">
+            <div className="space-y-3">
                 <PageHeader
                     title="Recepção"
                     actions={
-                        podeVerAdmin ? (
-                            <Link
-                                href="/admin/"
-                                className="inline-flex items-center rounded-lg border border-border bg-card px-3 py-1.5 text-sm font-medium text-foreground-2 transition hover:bg-muted hover:text-foreground"
-                            >
-                                Abrir admin
-                            </Link>
-                        ) : null
+                        <div className="flex items-center gap-2">
+                            {/* Global search */}
+                            <div className="relative">
+                                <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+                                <input
+                                    type="search"
+                                    value={search}
+                                    onChange={(e) => setSearch(e.target.value)}
+                                    placeholder="Pesquisar fila..."
+                                    className="h-8 w-44 rounded-lg border border-border bg-background pl-7 pr-3 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/30"
+                                />
+                            </div>
+                            {podeVerAdmin && (
+                                <Link
+                                    href="/admin/"
+                                    className="inline-flex items-center rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground-2 transition hover:bg-muted hover:text-foreground"
+                                >
+                                    Admin
+                                </Link>
+                            )}
+                        </div>
                     }
                 />
 
-                {/* Hero greeting strip */}
-                <div className="relative overflow-hidden rounded-xl border border-white/20 bg-white/30 px-5 py-4 shadow-sm backdrop-blur-sm dark:bg-white/5 dark:border-white/10">
-                    <div className="relative z-10">
-                        <p className="text-xs font-medium uppercase tracking-widest text-[var(--primary-500)] dark:text-[var(--primary-400)]">
-                            Recepção · Área de Trabalho
-                        </p>
-                        <h2 className="mt-0.5 text-lg font-bold text-foreground">{greetingName}</h2>
-                        <p className="mt-0.5 text-xs text-muted-foreground capitalize">{todayLabel}</p>
+                {/* Hero greeting strip — compact */}
+                <div className="relative overflow-hidden rounded-xl border border-white/20 bg-white/30 px-4 py-2.5 shadow-sm backdrop-blur-sm dark:bg-white/5 dark:border-white/10">
+                    <div className="relative z-10 flex items-center gap-4">
+                        <div>
+                            <p className="text-[10px] font-semibold uppercase tracking-widest text-[var(--primary-500)] dark:text-[var(--primary-400)]">
+                                Recepção · Área de Trabalho
+                            </p>
+                            <h2 className="text-base font-bold text-foreground leading-tight">{greetingName}</h2>
+                            <p className="text-[11px] text-muted-foreground capitalize">{todayLabel}</p>
+                        </div>
                     </div>
-                    {/* decorative glow blob */}
-                    <div
-                        aria-hidden
-                        className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-[var(--primary-200)] opacity-20 blur-3xl dark:bg-[var(--primary-700)]"
-                    />
+                    <div aria-hidden className="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-[var(--primary-200)] opacity-20 blur-3xl dark:bg-[var(--primary-700)]" />
                 </div>
 
                 {erro && (
-                    <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-800/40 dark:bg-amber-900/20 dark:text-amber-300">
+                    <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-800/40 dark:bg-amber-900/20 dark:text-amber-300">
                         {erro}
                     </div>
                 )}
 
-                {/* KPI stat cards */}
-                <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-4">
-                    <ResumoCard
-                        title="Check-ins hoje"
-                        value={workspace.summary.checkins_today}
-                        icon={Users}
-                        accentColor="border-l-blue-500"
-                        iconBg="bg-blue-100 dark:bg-blue-900/40"
-                        iconColor="text-blue-600 dark:text-blue-400"
-                        gradientFrom="from-blue-50/60 dark:from-blue-950/20"
-                    />
-                    <ResumoCard
-                        title="Na fila"
-                        value={workspace.summary.queue_size}
-                        icon={ClipboardList}
-                        accentColor="border-l-amber-500"
-                        iconBg="bg-amber-100 dark:bg-amber-900/40"
-                        iconColor="text-amber-600 dark:text-amber-400"
-                        gradientFrom="from-amber-50/60 dark:from-amber-950/20"
-                    />
-                    <ResumoCard
-                        title="Em atendimento"
-                        value={workspace.summary.in_care}
-                        icon={UserPlus}
-                        accentColor="border-l-violet-500"
-                        iconBg="bg-violet-100 dark:bg-violet-900/40"
-                        iconColor="text-violet-600 dark:text-violet-400"
-                        gradientFrom="from-violet-50/60 dark:from-violet-950/20"
-                    />
-                    <ResumoCard
-                        title="Recebido hoje"
-                        value={<MoneyValue value={workspace.summary.received_today} />}
-                        icon={Receipt}
-                        accentColor="border-l-emerald-500"
-                        iconBg="bg-emerald-100 dark:bg-emerald-900/40"
-                        iconColor="text-emerald-600 dark:text-emerald-400"
-                        gradientFrom="from-emerald-50/60 dark:from-emerald-950/20"
-                    />
+                {/* KPI row — compact */}
+                <div className="grid gap-2 sm:grid-cols-2 md:grid-cols-4">
+                    <KpiCard title="Check-ins hoje" value={workspace.summary.checkins_today} icon={Users} accentClass="border-l-blue-500" iconBg="bg-blue-100 dark:bg-blue-900/40" iconColor="text-blue-600 dark:text-blue-400" />
+                    <KpiCard title="Na fila" value={workspace.summary.queue_size} icon={ClipboardList} accentClass="border-l-amber-500" iconBg="bg-amber-100 dark:bg-amber-900/40" iconColor="text-amber-600 dark:text-amber-400" />
+                    <KpiCard title="Em atendimento" value={workspace.summary.in_care} icon={UserPlus} accentClass="border-l-violet-500" iconBg="bg-violet-100 dark:bg-violet-900/40" iconColor="text-violet-600 dark:text-violet-400" />
+                    <KpiCard title="Recebido hoje" value={<MoneyValue value={workspace.summary.received_today} />} icon={Receipt} accentClass="border-l-emerald-500" iconBg="bg-emerald-100 dark:bg-emerald-900/40" iconColor="text-emerald-600 dark:text-emerald-400" />
                 </div>
 
-                <div className="grid gap-4 lg:grid-cols-2">
-                    {/* Marcação por Categoria — 2-col mini card grid */}
-                    <Card title="Marcação por Categoria">
-                        <div className="grid grid-cols-2 gap-2 sm:gap-3">
-                            {marcacoesPorSector.map((sector) => (
-                                <Link
-                                    key={sector.href}
-                                    href={sector.href}
-                                    className="group flex flex-col gap-2 rounded-xl border border-white/25 bg-white/30 p-3 shadow-sm backdrop-blur-sm transition-all hover:-translate-y-0.5 hover:border-[var(--primary-300)] hover:bg-white/50 hover:shadow-md dark:bg-white/5 dark:border-white/10 dark:hover:border-[var(--primary-600)] dark:hover:bg-white/10"
-                                >
-                                    <span className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${sector.iconBg}`}>
-                                        <sector.icon size={16} className={sector.iconColor} />
-                                    </span>
-                                    <div>
-                                        <p className="text-sm font-semibold leading-tight text-foreground group-hover:text-[var(--primary-700)] dark:group-hover:text-[var(--primary-400)]">
-                                            {sector.title}
-                                        </p>
-                                        <p className="mt-0.5 text-xs leading-snug text-muted-foreground">
-                                            {sector.description}
-                                        </p>
-                                    </div>
-                                </Link>
-                            ))}
+                {/* Main board — 3-col: fila (wide) | atalhos | marcações */}
+                <div className="grid gap-3 lg:grid-cols-[1fr_220px_220px]">
+                    {/* Fila do dia */}
+                    <section className="rounded-xl border border-white/20 bg-white/25 shadow-sm backdrop-blur-sm dark:bg-white/5 dark:border-white/10">
+                        <div className="flex items-center gap-2 border-b border-border/60 px-3 py-2">
+                            <span className="text-xs font-semibold text-foreground">Fila do dia</span>
+                            {!carregando && (
+                                <span className="ml-auto rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold text-foreground-2">
+                                    {filteredQueue.length}{q ? `/${workspace.queue.length}` : ""}
+                                </span>
+                            )}
                         </div>
-                    </Card>
-
-                    {/* Fila do dia — horizontal compact cards */}
-                    <Card title="Fila do dia">
-                        {carregando ? (
-                            <div className="text-sm text-muted-foreground">Carregando fila...</div>
-                        ) : workspace.queue.length === 0 ? (
-                            <div className="rounded-xl border border-dashed border-border px-4 py-6 text-center text-sm text-muted-foreground">
-                                Nenhum check-in aberto hoje.
-                            </div>
-                        ) : (
-                            <div className="flex flex-col gap-2">
-                                {workspace.queue.map((item) => {
-                                    const meta = getManchesterMeta(item.priority)
-                                    return (
-                                        <div
-                                            key={item.id}
-                                            className={`flex items-center gap-3 rounded-xl border border-l-4 border-white/20 bg-white/25 px-3 py-2.5 shadow-sm backdrop-blur-sm dark:bg-white/5 dark:border-white/10 ${meta.accentClass} ${meta.animClass}`}
-                                        >
-                                            {/* Priority pill */}
-                                            <span className={`shrink-0 rounded-md border px-1.5 py-0.5 text-[10px] font-bold leading-none ${meta.badgeClass}`}>
-                                                {meta.label}
-                                            </span>
-
-                                            {/* Patient info */}
-                                            <div className="min-w-0 flex-1">
-                                                <p className="truncate text-sm font-semibold text-foreground">{item.patient_name}</p>
-                                                <p className="text-[11px] text-muted-foreground">{item.patient_code}</p>
+                        <div className="max-h-[calc(100vh-310px)] min-h-[120px] overflow-y-auto p-2 [scrollbar-width:thin]">
+                            {carregando ? (
+                                <p className="px-2 py-4 text-center text-xs text-muted-foreground">Carregando fila...</p>
+                            ) : filteredQueue.length === 0 ? (
+                                <div className="rounded-lg border border-dashed border-border px-3 py-5 text-center text-xs text-muted-foreground">
+                                    {q ? "Nenhum resultado para a pesquisa." : "Nenhum check-in aberto hoje."}
+                                </div>
+                            ) : (
+                                <div className="flex flex-col gap-1.5">
+                                    {filteredQueue.map((item) => {
+                                        const meta = getManchesterMeta(item.priority)
+                                        return (
+                                            <div
+                                                key={item.id}
+                                                className={`flex items-center gap-2 rounded-lg border border-l-4 border-white/20 bg-white/30 px-2.5 py-1.5 shadow-sm backdrop-blur-sm dark:bg-white/5 dark:border-white/10 ${meta.accentClass} ${meta.animClass}`}
+                                            >
+                                                <span className={`shrink-0 rounded border px-1 py-0.5 text-[9px] font-bold leading-none ${meta.badgeClass}`}>
+                                                    {meta.label}
+                                                </span>
+                                                <div className="min-w-0 flex-1">
+                                                    <p className="truncate text-xs font-semibold text-foreground">{item.patient_name}</p>
+                                                    <p className="text-[10px] text-muted-foreground">{item.patient_code}</p>
+                                                </div>
+                                                <span className="shrink-0 rounded-full bg-muted px-1.5 py-0.5 text-[9px] font-medium text-foreground-2">
+                                                    {item.status}
+                                                </span>
+                                                <div className="hidden shrink-0 flex-col items-end gap-0.5 sm:flex">
+                                                    {item.request_code ? (
+                                                        <span className="rounded bg-blue-50 px-1 py-0.5 text-[9px] font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
+                                                            REQ {item.request_code}
+                                                        </span>
+                                                    ) : (
+                                                        <span className="rounded bg-muted px-1 py-0.5 text-[9px] text-muted-foreground">—</span>
+                                                    )}
+                                                    {item.invoice_code ? (
+                                                        <span className="rounded bg-violet-50 px-1 py-0.5 text-[9px] font-medium text-violet-700 dark:bg-violet-900/30 dark:text-violet-300">
+                                                            FAT {item.invoice_code}
+                                                        </span>
+                                                    ) : (
+                                                        <span className="rounded bg-muted px-1 py-0.5 text-[9px] text-muted-foreground">—</span>
+                                                    )}
+                                                </div>
                                             </div>
-
-                                            {/* Status pill */}
-                                            <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-foreground-2">
-                                                {item.status}
-                                            </span>
-
-                                            {/* Chips */}
-                                            <div className="hidden shrink-0 flex-col items-end gap-0.5 sm:flex">
-                                                {item.request_code ? (
-                                                    <span className="rounded bg-blue-50 px-1.5 py-0.5 text-[10px] font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
-                                                        REQ {item.request_code}
-                                                    </span>
-                                                ) : (
-                                                    <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
-                                                        Sem req.
-                                                    </span>
-                                                )}
-                                                {item.invoice_code ? (
-                                                    <span className="rounded bg-violet-50 px-1.5 py-0.5 text-[10px] font-medium text-violet-700 dark:bg-violet-900/30 dark:text-violet-300">
-                                                        FAT {item.invoice_code}
-                                                    </span>
-                                                ) : (
-                                                    <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
-                                                        Sem fat.
-                                                    </span>
-                                                )}
-                                            </div>
-                                        </div>
-                                    )
-                                })}
-                            </div>
-                        )}
-                    </Card>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4 items-start">
-                    {/* Indicadores operacionais — 2×2 stat tile grid */}
-                    <Card title="Indicadores operacionais">
-                        <div className="grid grid-cols-2 gap-2">
-                            <IndicadorLinha
-                                label="Pacientes novos"
-                                value={workspace.summary.new_patients}
-                                href="/patients"
-                                accentColor="text-blue-600 dark:text-blue-400"
-                                tileBg="bg-blue-50/60 dark:bg-blue-950/20"
-                            />
-                            <IndicadorLinha
-                                label="Requisições pendentes"
-                                value={workspace.summary.pending_requests}
-                                href="/requests/pendentes"
-                                accentColor="text-amber-600 dark:text-amber-400"
-                                tileBg="bg-amber-50/60 dark:bg-amber-950/20"
-                            />
-                            <IndicadorLinha
-                                label="Faturas em aberto"
-                                value={workspace.summary.open_invoices}
-                                href="/billing/invoices?status=EMIT"
-                                accentColor="text-red-600 dark:text-red-400"
-                                tileBg="bg-red-50/60 dark:bg-red-950/20"
-                            />
-                            <IndicadorLinha
-                                label="Recibos gerados hoje"
-                                value={workspace.summary.receipts_generated_today}
-                                href="/payments/receipts"
-                                accentColor="text-emerald-600 dark:text-emerald-400"
-                                tileBg="bg-emerald-50/60 dark:bg-emerald-950/20"
-                            />
+                                        )
+                                    })}
+                                </div>
+                            )}
                         </div>
-                    </Card>
+                    </section>
 
-                    {/* Atalhos da recepção — 2-col card grid */}
-                    <Card title="Atalhos da recepção">
-                        <div className="flex flex-col gap-2">
-                            {/* Registar paciente — premium gradient primary card */}
+                    {/* Atalhos */}
+                    <section className="rounded-xl border border-white/20 bg-white/25 shadow-sm backdrop-blur-sm dark:bg-white/5 dark:border-white/10">
+                        <div className="border-b border-border/60 px-3 py-2">
+                            <span className="text-xs font-semibold text-foreground">Atalhos</span>
+                        </div>
+                        <div className="flex flex-col gap-1.5 p-2">
+                            {/* Registar paciente */}
                             <button
                                 type="button"
                                 onClick={() => setShowWizard(true)}
-                                className="group flex w-full items-center gap-3 rounded-xl border border-[var(--primary-300)]/60 bg-[var(--primary-500)]/10 px-3 py-3 text-left shadow-sm backdrop-blur-sm transition-all hover:-translate-y-0.5 hover:bg-[var(--primary-500)]/15 hover:border-[var(--primary-400)]/80 hover:shadow-md dark:bg-[var(--primary-500)]/10 dark:border-[var(--primary-500)]/30"
+                                className="group flex w-full items-center gap-2 rounded-lg border border-[var(--primary-300)]/60 bg-[var(--primary-500)]/10 px-2.5 py-2 text-left transition-all hover:bg-[var(--primary-500)]/15 dark:border-[var(--primary-500)]/30"
                             >
-                                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[var(--primary-100)] dark:bg-[var(--primary-800)]">
-                                    <UserPlus size={17} className="text-[var(--primary-600)] dark:text-[var(--primary-300)]" />
+                                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[var(--primary-100)] dark:bg-[var(--primary-800)]">
+                                    <UserPlus size={13} className="text-[var(--primary-600)] dark:text-[var(--primary-300)]" />
                                 </span>
                                 <div className="min-w-0 flex-1">
-                                    <span className="block text-sm font-bold text-[var(--primary-700)] dark:text-[var(--primary-300)]">
+                                    <span className="block text-xs font-bold text-[var(--primary-700)] dark:text-[var(--primary-300)] leading-tight">
                                         Registar paciente
                                     </span>
-                                    <span className="text-xs text-[var(--primary-500)] dark:text-[var(--primary-400)]">
-                                        Fluxo de entrada com classificação e perfil
+                                    <span className="text-[10px] text-[var(--primary-500)] dark:text-[var(--primary-400)] leading-tight">
+                                        Fluxo de entrada
                                     </span>
                                 </div>
-                                <ChevronRight size={14} className="shrink-0 text-[var(--primary-400)] opacity-0 transition-opacity group-hover:opacity-100" />
+                                <ChevronRight size={12} className="shrink-0 text-[var(--primary-400)] opacity-0 transition-opacity group-hover:opacity-100" />
                             </button>
-
-                            <div className="grid grid-cols-2 gap-2">
-                                {atalhos.map((atalho) => {
-                                    const iconUrl = lucideToDataUrl(atalho.icon)
-                                    return (
-                                        <Link
-                                            key={atalho.href}
-                                            href={atalho.href}
-                                            className="group flex flex-col gap-2 rounded-xl border border-white/25 bg-white/20 p-3 shadow-sm backdrop-blur-sm transition-all hover:-translate-y-0.5 hover:border-[var(--primary-300)] hover:bg-white/40 dark:bg-white/5 dark:border-white/10 dark:hover:border-[var(--primary-600)] dark:hover:bg-white/10"
-                                        >
-                                            <span className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-muted">
-                                                <span
-                                                    aria-hidden
-                                                    className="absolute inset-[7px] text-muted-foreground"
-                                                    style={{
-                                                        backgroundColor: "currentColor",
-                                                        WebkitMaskImage: `url("${iconUrl}")`,
-                                                        WebkitMaskRepeat: "no-repeat",
-                                                        WebkitMaskSize: "contain",
-                                                        WebkitMaskPosition: "center",
-                                                        maskImage: `url("${iconUrl}")`,
-                                                        maskRepeat: "no-repeat",
-                                                        maskSize: "contain",
-                                                        maskPosition: "center",
-                                                    }}
-                                                />
-                                            </span>
-                                            <div>
-                                                <p className="text-xs font-semibold leading-tight text-foreground group-hover:text-[var(--primary-700)] dark:group-hover:text-[var(--primary-400)]">
-                                                    {atalho.title}
-                                                </p>
-                                                <p className="mt-0.5 text-[10px] leading-snug text-muted-foreground">
-                                                    {atalho.description}
-                                                </p>
-                                            </div>
-                                        </Link>
-                                    )
-                                })}
-                            </div>
+                            {atalhos.map((atalho) => (
+                                <Link
+                                    key={atalho.href}
+                                    href={atalho.href}
+                                    className="group flex items-center gap-2 rounded-lg border border-white/20 bg-white/20 px-2.5 py-1.5 shadow-sm backdrop-blur-sm transition-all hover:border-[var(--primary-300)] hover:bg-white/40 dark:bg-white/5 dark:border-white/10 dark:hover:border-[var(--primary-600)] dark:hover:bg-white/10"
+                                >
+                                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded bg-muted">
+                                        <atalho.icon size={13} className="text-muted-foreground" />
+                                    </span>
+                                    <p className="truncate text-xs font-medium text-foreground group-hover:text-[var(--primary-700)] dark:group-hover:text-[var(--primary-400)]">
+                                        {atalho.title}
+                                    </p>
+                                </Link>
+                            ))}
                         </div>
-                    </Card>
+                    </section>
+
+                    {/* Marcações + Indicadores empilhados */}
+                    <div className="flex flex-col gap-3">
+                        {/* Indicadores operacionais */}
+                        <section className="rounded-xl border border-white/20 bg-white/25 shadow-sm backdrop-blur-sm dark:bg-white/5 dark:border-white/10">
+                            <div className="border-b border-border/60 px-3 py-2">
+                                <span className="text-xs font-semibold text-foreground">Indicadores</span>
+                            </div>
+                            <div className="grid grid-cols-2 gap-1.5 p-2">
+                                <IndicadorTile label="Pacientes novos" value={workspace.summary.new_patients} href="/patients" accent="text-blue-600 dark:text-blue-400" />
+                                <IndicadorTile label="Req. pendentes" value={workspace.summary.pending_requests} href="/requests/pendentes" accent="text-amber-600 dark:text-amber-400" />
+                                <IndicadorTile label="Faturas abertas" value={workspace.summary.open_invoices} href="/billing/invoices?status=EMIT" accent="text-red-600 dark:text-red-400" />
+                                <IndicadorTile label="Recibos hoje" value={workspace.summary.receipts_generated_today} href="/payments/receipts" accent="text-emerald-600 dark:text-emerald-400" />
+                            </div>
+                        </section>
+
+                        {/* Marcação por Categoria */}
+                        <section className="rounded-xl border border-white/20 bg-white/25 shadow-sm backdrop-blur-sm dark:bg-white/5 dark:border-white/10">
+                            <div className="border-b border-border/60 px-3 py-2">
+                                <span className="text-xs font-semibold text-foreground">Marcações</span>
+                            </div>
+                            <div className="flex flex-col gap-1 p-2">
+                                {marcacoesPorSector.map((sector) => (
+                                    <Link
+                                        key={sector.href}
+                                        href={sector.href}
+                                        className="group flex items-center gap-2 rounded-lg border border-white/20 bg-white/20 px-2.5 py-1.5 transition-all hover:border-[var(--primary-300)] hover:bg-white/40 dark:bg-white/5 dark:border-white/10 dark:hover:border-[var(--primary-600)] dark:hover:bg-white/10"
+                                    >
+                                        <span className={`inline-flex h-6 w-6 shrink-0 items-center justify-center rounded ${sector.iconBg}`}>
+                                            <sector.icon size={12} className={sector.iconColor} />
+                                        </span>
+                                        <p className="truncate text-xs font-medium text-foreground group-hover:text-[var(--primary-700)] dark:group-hover:text-[var(--primary-400)]">
+                                            {sector.title}
+                                        </p>
+                                    </Link>
+                                ))}
+                            </div>
+                        </section>
+                    </div>
                 </div>
 
                 {(loadingNotes || approvedNotes.length > 0 || rejectedNotes.length > 0) && (
-                    <div className="grid gap-4 lg:grid-cols-2">
+                    <div className="grid gap-3 lg:grid-cols-2">
                         <ReceptionDecidedSection
                             title="Notas de crédito aprovadas"
-                            icon={<CheckCircle2 size={14} className="text-emerald-600" />}
+                            icon={<CheckCircle2 size={13} className="text-emerald-600" />}
                             rows={approvedNotes}
                             loading={loadingNotes}
                             emptyMsg="Nenhuma nota de crédito aprovada."
@@ -544,7 +482,7 @@ export default function RecepcaoPage() {
                         />
                         <ReceptionDecidedSection
                             title="Notas de crédito rejeitadas"
-                            icon={<XCircle size={14} className="text-red-500" />}
+                            icon={<XCircle size={13} className="text-red-500" />}
                             rows={rejectedNotes}
                             loading={loadingNotes}
                             emptyMsg="Nenhuma nota de crédito rejeitada."
@@ -590,29 +528,29 @@ function ReceptionDecidedSection({
         : "bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300"
 
     return (
-        <section className="rounded-xl border border-white/20 bg-white/25 p-3 shadow-sm backdrop-blur-sm dark:bg-white/5 dark:border-white/10">
-            <div className="flex items-center gap-2 pb-3">
-                <div className="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-muted">{icon}</div>
-                <p className="text-sm font-semibold text-foreground">{title}</p>
+        <section className="rounded-xl border border-white/20 bg-white/25 shadow-sm backdrop-blur-sm dark:bg-white/5 dark:border-white/10">
+            <div className="flex items-center gap-2 border-b border-border/60 px-3 py-2">
+                <div className="inline-flex h-6 w-6 items-center justify-center rounded bg-muted">{icon}</div>
+                <p className="text-xs font-semibold text-foreground">{title}</p>
                 {!loading && rows.length > 0 && (
-                    <span className="ml-auto rounded-full bg-muted px-2 py-0.5 text-[11px] font-semibold text-foreground-2">
+                    <span className="ml-auto rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold text-foreground-2">
                         {rows.length}
                     </span>
                 )}
             </div>
-
+            <div className="p-2">
             {loading ? (
                 <p className="text-[11px] text-muted-foreground">Carregando...</p>
             ) : rows.length === 0 ? (
-                <div className="rounded-xl border border-dashed border-border px-3 py-5 text-center text-[11px] text-muted-foreground">
+                <div className="rounded-lg border border-dashed border-border px-3 py-4 text-center text-xs text-muted-foreground">
                     {emptyMsg}
                 </div>
             ) : (
-                <div className="space-y-2">
+                <div className="space-y-1.5">
                     {rows.map((r) => (
                         <div
                             key={r.id}
-                            className={`relative rounded-xl border border-l-4 ${borderColor} bg-white/30 ${accentBorder} px-3 py-2.5 shadow-sm backdrop-blur-sm dark:bg-white/5`}
+                            className={`relative rounded-lg border border-l-4 ${borderColor} bg-white/30 ${accentBorder} px-2.5 py-2 shadow-sm backdrop-blur-sm dark:bg-white/5`}
                         >
                             <div className="flex flex-wrap items-start justify-between gap-1">
                                 <div className="min-w-0">
@@ -642,6 +580,7 @@ function ReceptionDecidedSection({
                     ))}
                 </div>
             )}
+            </div>
         </section>
     )
 }
@@ -684,67 +623,52 @@ function normalizeReceptionWorkspace ( raw: any ): ReceptionWorkspace {
     }
 }
 
-function ResumoCard({
+function KpiCard({
     title,
     value,
     icon: Icon,
-    accentColor,
+    accentClass,
     iconBg,
     iconColor,
-    gradientFrom,
 }: {
     title: string
     value: number | string | React.ReactNode
     icon: typeof Users
-    accentColor: string
+    accentClass: string
     iconBg: string
     iconColor: string
-    gradientFrom: string
 }) {
     return (
-        <div
-            className={`relative overflow-hidden rounded-xl border border-l-4 border-white/20 bg-white/30 px-4 py-3.5 shadow-sm backdrop-blur-sm dark:bg-white/5 dark:border-white/10 ${accentColor}`}
-        >
-            {/* Icon pill top-right */}
-            <span className={`absolute right-3 top-3 inline-flex h-8 w-8 items-center justify-center rounded-lg ${iconBg}`}>
-                <Icon size={15} className={iconColor} />
+        <div className={`relative overflow-hidden rounded-xl border border-l-4 border-white/20 bg-white/30 px-3 py-2.5 shadow-sm backdrop-blur-sm dark:bg-white/5 dark:border-white/10 ${accentClass}`}>
+            <span className={`absolute right-2.5 top-2.5 inline-flex h-7 w-7 items-center justify-center rounded-lg ${iconBg}`}>
+                <Icon size={13} className={iconColor} />
             </span>
-
-            <div className="mt-1">
-                <div className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">{title}</div>
-                <div className="mt-1 text-2xl font-bold text-foreground">{value}</div>
-            </div>
+            <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{title}</div>
+            <div className="mt-0.5 text-xl font-bold text-foreground">{value}</div>
         </div>
     )
 }
 
-function IndicadorLinha({
+function IndicadorTile({
     label,
     value,
     href,
-    accentColor,
-    tileBg,
+    accent,
 }: {
     label: string
     value: number | string
     href?: string
-    accentColor?: string
-    tileBg?: string
+    accent?: string
 }) {
     const inner = (
-        <div className={`flex flex-col gap-0.5 rounded-xl border border-white/25 bg-white/30 px-3 py-3 shadow-sm backdrop-blur-sm transition-all dark:bg-white/5 dark:border-white/10`}>
-            <span className="text-[11px] font-medium text-muted-foreground leading-none">{label}</span>
-            <span className={`text-xl font-bold leading-tight ${accentColor ?? "text-foreground"}`}>{value}</span>
+        <div className="flex flex-col gap-0.5 rounded-lg border border-white/20 bg-white/25 px-2.5 py-2 backdrop-blur-sm dark:bg-white/5 dark:border-white/10">
+            <span className="text-[10px] font-medium text-muted-foreground leading-none">{label}</span>
+            <span className={`text-lg font-bold leading-tight ${accent ?? "text-foreground"}`}>{value}</span>
         </div>
     )
-
     if (href) {
         return (
-            <Link
-                href={href}
-                className="group block hover:-translate-y-0.5 transition-transform"
-                title="Abrir listagem correspondente"
-            >
+            <Link href={href} className="group block hover:-translate-y-0.5 transition-transform" title="Abrir listagem">
                 {inner}
             </Link>
         )
