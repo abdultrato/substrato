@@ -35,6 +35,7 @@ def autoflag_lab_result(sender, instance: LabResult, **kwargs):
 
     if instance.numeric_value is None:
         instance.numeric_value = instance.coerce_numeric(instance.value)
+    instance.inherit_catalog_metadata()
     instance.flag = instance.compute_flag()
 
 

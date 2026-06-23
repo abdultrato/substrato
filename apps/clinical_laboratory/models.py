@@ -659,15 +659,38 @@ class LabResult(NoNameCoreModel):
         except (InvalidOperation, ValueError):
             return None
 
-    def _thresholds(self):
-        """Limiares (ref_low, ref_high, crit_low, crit_high): campo tem prioridade."""
+    def _catalog_source(self):
+        """Origem dos metadados do catálogo: o campo (ExameCampo) ou, em falta, o exame."""
         source = self.test_field
         if source is None and self.order_item_id:
             source = getattr(self.order_item, "test", None)
+        return source
+
+    def _thresholds(self):
+        """Limiares (ref_low, ref_high, crit_low, crit_high): campo tem prioridade."""
+        source = self._catalog_source()
         if source is None:
             return (None, None, None, None)
         return (source.reference_low, source.reference_high,
                 source.critical_low, source.critical_high)
+
+    def inherit_catalog_metadata(self):
+        """Herda unidade/intervalo de referência do campo/exame quando vazios.
+
+        Mantém o resultado autossuficiente para apresentação (ex.: "520 mg/dL"
+        na página de críticos) sem sobrescrever valores já preenchidos.
+        """
+        source = self._catalog_source()
+        changed = []
+        if source is None:
+            return changed
+        if not self.unit and getattr(source, "unit", ""):
+            self.unit = source.unit
+            changed.append("unit")
+        if not self.reference_range and getattr(source, "reference_range", ""):
+            self.reference_range = source.reference_range
+            changed.append("reference_range")
+        return changed
 
     def compute_flag(self, numeric_value=None):
         """Determina o flag a partir do valor numérico e dos limiares do campo/exame.
@@ -696,12 +719,13 @@ class LabResult(NoNameCoreModel):
         numeric = self.coerce_numeric(value)
         if numeric is not None:
             self.numeric_value = numeric
+        self.inherit_catalog_metadata()
         self.flag = self.compute_flag()
         self.status = self.Status.ENTERED
         self.performed_by = by or self.performed_by
         self.performed_at = self.performed_at or timezone.now()
-        self.save(update_fields=["value", "numeric_value", "flag", "status",
-                                 "performed_by", "performed_at"])
+        self.save(update_fields=["value", "numeric_value", "unit", "reference_range",
+                                 "flag", "status", "performed_by", "performed_at"])
 
     def mark_validated(self):
         self.status = self.Status.VALIDATED

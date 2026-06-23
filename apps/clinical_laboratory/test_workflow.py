@@ -194,6 +194,34 @@ def test_direct_save_of_critical_numeric_value_surfaces():
 
 
 @pytest.mark.django_db
+def test_result_inherits_unit_from_field_then_test():
+    # A unidade (e intervalo de referência) é herdada do campo/exame quando o
+    # resultado não a traz — para a página de críticos mostrar "520 mg/dL".
+    tenant, patient, sector, test, order, item = _critical_setup(
+        "lab-unit-1", test_kwargs={"unit": "mg/dL", "reference_range": "70-110",
+                                   "critical_high": Decimal("400")})
+    # Campo com unidade própria tem prioridade sobre a do exame.
+    field = LabTestField.objects.create(tenant=tenant, test=test, name="Glicemia",
+                                        unit="mmol/L", critical_high=Decimal("22"))
+    r_field = LabResult.objects.create(tenant=tenant, order_item=item, test_field=field)
+    r_field.enter_result(value="30")
+    assert r_field.unit == "mmol/L"
+
+    # Sem campo, herda do exame.
+    item2 = LabOrderItem.objects.create(tenant=tenant, order=order, test=test)
+    r_test = LabResult.objects.create(tenant=tenant, order_item=item2)
+    r_test.enter_result(value="520")
+    assert r_test.unit == "mg/dL"
+    assert r_test.reference_range == "70-110"
+
+    # Unidade explícita no resultado não é sobrescrita.
+    item3 = LabOrderItem.objects.create(tenant=tenant, order=order, test=test)
+    r_keep = LabResult.objects.create(tenant=tenant, order_item=item3, unit="g/L")
+    r_keep.enter_result(value="9")
+    assert r_keep.unit == "g/L"
+
+
+@pytest.mark.django_db
 def test_report_sign_then_deliver():
     tenant = Tenant.objects.create(identifier="lab-rep", name="LAB-REP")
     patient = Patient.objects.create(tenant=tenant, name="Maria")
