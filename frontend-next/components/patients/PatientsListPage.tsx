@@ -50,7 +50,9 @@ type Summary = {
   new_last_30_days: number
 }
 
-const PAGE_SIZE = 20
+const DEFAULT_PAGE_SIZE = 20
+const MIN_PAGE_SIZE = 1
+const MAX_PAGE_SIZE = 999
 
 const PROVENANCE_OPTIONS = [
   "Ambulatório",
@@ -140,6 +142,8 @@ export default function PatientsListPage() {
   const [total, setTotal] = useState(0)
   const [totalPages, setTotalPages] = useState(1)
   const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE)
+  const [pageSizeDraft, setPageSizeDraft] = useState(String(DEFAULT_PAGE_SIZE))
 
   const [searchInput, setSearchInput] = useState("")
   const [search, setSearch] = useState("")
@@ -154,10 +158,10 @@ export default function PatientsListPage() {
     return () => clearTimeout(handle)
   }, [searchInput])
 
-  // Volta à primeira página sempre que um filtro muda.
+  // Volta à primeira página sempre que um filtro ou o tamanho da página muda.
   useEffect(() => {
     setPage(1)
-  }, [search, gender, provenance, donorsOnly])
+  }, [search, gender, provenance, donorsOnly, pageSize])
 
   const loadSummary = useCallback(async () => {
     try {
@@ -180,9 +184,10 @@ export default function PatientsListPage() {
 
       const { items, meta } = await apiFetchList<PatientRow>("/clinical/patient/", {
         page,
-        pageSize: PAGE_SIZE,
+        pageSize,
         query,
         clientCache: false,
+        clientPaginate: true,
       })
       setRows(items)
       setTotal(typeof meta.total === "number" ? meta.total : items.length)
@@ -192,7 +197,7 @@ export default function PatientsListPage() {
     } finally {
       setLoading(false)
     }
-  }, [page, search, gender, provenance, donorsOnly])
+  }, [page, pageSize, search, gender, provenance, donorsOnly])
 
   useEffect(() => {
     loadList()
@@ -209,6 +214,16 @@ export default function PatientsListPage() {
     setGender("")
     setProvenance("")
     setDonorsOnly(false)
+  }
+
+  // Aceita um inteiro entre 1 e 999; valores fora do intervalo são fixados nos limites.
+  const commitPageSize = () => {
+    const parsed = Math.round(Number(pageSizeDraft))
+    const next = Number.isFinite(parsed)
+      ? Math.min(MAX_PAGE_SIZE, Math.max(MIN_PAGE_SIZE, parsed))
+      : DEFAULT_PAGE_SIZE
+    setPageSizeDraft(String(next))
+    setPageSize(next)
   }
 
   const kpis = useMemo(
@@ -408,29 +423,50 @@ export default function PatientsListPage() {
             </div>
 
             {/* Paginação */}
-            <div className="flex items-center justify-between gap-2 border-t border-border/60 px-3 py-2 text-[11px] text-muted-foreground">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border/60 px-3 py-2 text-[11px] text-muted-foreground">
               <span>
                 {total > 0 ? `Página ${page} de ${totalPages} · ${total} paciente${total > 1 ? "s" : ""}` : "—"}
               </span>
-              <div className="flex items-center gap-1.5">
-                <button
-                  type="button"
-                  onClick={() => setPage((value) => Math.max(1, value - 1))}
-                  disabled={loading || page <= 1}
-                  className="inline-flex h-7 items-center gap-1 rounded-lg border border-border bg-card px-2 font-medium text-foreground-2 transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  <ChevronLeft size={13} />
-                  Anterior
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setPage((value) => Math.min(totalPages, value + 1))}
-                  disabled={loading || page >= totalPages}
-                  className="inline-flex h-7 items-center gap-1 rounded-lg border border-border bg-card px-2 font-medium text-foreground-2 transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  Próximo
-                  <ChevronRight size={13} />
-                </button>
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-1.5">
+                  <label htmlFor="patients-page-size">Por página</label>
+                  <input
+                    id="patients-page-size"
+                    type="number"
+                    min={MIN_PAGE_SIZE}
+                    max={MAX_PAGE_SIZE}
+                    value={pageSizeDraft}
+                    onChange={(e) => setPageSizeDraft(e.target.value)}
+                    onBlur={commitPageSize}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault()
+                        commitPageSize()
+                      }
+                    }}
+                    className="h-7 w-16 rounded-lg border border-border bg-background px-2 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-ring/30"
+                  />
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setPage((value) => Math.max(1, value - 1))}
+                    disabled={loading || page <= 1}
+                    className="inline-flex h-7 items-center gap-1 rounded-lg border border-border bg-card px-2 font-medium text-foreground-2 transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <ChevronLeft size={13} />
+                    Anterior
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPage((value) => Math.min(totalPages, value + 1))}
+                    disabled={loading || page >= totalPages}
+                    className="inline-flex h-7 items-center gap-1 rounded-lg border border-border bg-card px-2 font-medium text-foreground-2 transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    Próximo
+                    <ChevronRight size={13} />
+                  </button>
+                </div>
               </div>
             </div>
           </div>
