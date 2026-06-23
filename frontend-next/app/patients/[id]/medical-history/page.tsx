@@ -1,6 +1,7 @@
 "use client"
 
 import { isNotFoundLikeError } from "@/lib/errors/api-error"
+import { ArrowLeft } from "lucide-react"
 import Link from "next/link"
 import { useParams } from "next/navigation"
 import { useEffect, useMemo, useState } from "react"
@@ -296,6 +297,17 @@ export default function MedicalHistoryPage() {
     []
   )
 
+  const pagamentosCols = useMemo(
+    () => [
+      { header: "Método", render: (r: any) => r.method || r.metodo || "-" },
+      { header: "Valor", render: (r: any) => <MoneyValue value={r.value ?? r.valor} /> },
+      { header: "Estado", render: (r: any) => r.status || r.estado || "-" },
+      { header: "Pago em", render: (r: any) => fmtDate(r.paid_at || r.pago_em) },
+      { header: "Criado em", render: (r: any) => fmtDate(r.created_at || r.criado_em) },
+    ],
+    []
+  )
+
   if (loading) return null
 
   return (
@@ -338,8 +350,9 @@ export default function MedicalHistoryPage() {
               </button>
               <Link
                 href={`/patients/${id}`}
-                className="inline-flex items-center rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-1.5 text-sm font-medium text-[var(--gray-700)] transition hover:bg-[var(--gray-100)]"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-1.5 text-sm font-medium text-[var(--gray-700)] transition hover:bg-[var(--gray-100)]"
               >
+                <ArrowLeft size={15} />
                 Voltar ao paciente
               </Link>
             </div>
@@ -361,12 +374,14 @@ export default function MedicalHistoryPage() {
               <MetricCard label="Requisições" value={requisicoes.length} />
               <MetricCard label="Consultas" value={consultas.length} />
               <MetricCard label="Procedimentos" value={procedimentos.length} />
+              <MetricCard label="Internamentos" value={internamentos.length} />
               <MetricCard label="Faturas" value={faturas.length} />
               <MetricCard label="Pagamentos" value={pagamentos.length} />
+              <MetricCard label="Recibos" value={recibos.length} />
               <MetricCard label="Vendas (Farmácia)" value={vendas.length} />
             </div>
 
-            <Card title="Paciente" subtitle="Dados base (vinculado por número de documento quando disponível).">
+            <Card title="Paciente">
               <div className="grid gap-2 text-sm text-[var(--gray-700)] md:grid-cols-2">
                 <div>
                   <span className="font-semibold text-[var(--text)]">Nome:</span> {paciente.nome || "-"}
@@ -377,6 +392,9 @@ export default function MedicalHistoryPage() {
                 </div>
                 <div>
                   <span className="font-semibold text-[var(--text)]">Género:</span> {paciente.genero || "-"}
+                </div>
+                <div>
+                  <span className="font-semibold text-[var(--text)]">Idade:</span> {paciente.age_display || "-"}
                 </div>
                 <div>
                   <span className="font-semibold text-[var(--text)]">Contacto:</span> {paciente.contacto || "-"}
@@ -390,19 +408,19 @@ export default function MedicalHistoryPage() {
               </div>
             </Card>
 
-            <Card title="Cardex (Prontuário)" subtitle="Registros médicos e prescrições estruturadas.">
+            <Card title="Cardex (Prontuário)">
               <DataTable columns={cardexCols as any} data={cardex} emptyMessage="Sem cardex." />
             </Card>
 
-            <Card title="Requisições (Exames)" subtitle="Exames laboratoriais e médicos solicitados.">
+            <Card title="Requisições (Exames)">
               <DataTable columns={requisicoesCols as any} data={requisicoes} emptyMessage="Sem requisições." />
             </Card>
 
-            <Card title="Consultas" subtitle="Consultas marcadas/concluídas.">
+            <Card title="Consultas">
               <DataTable columns={consultasCols as any} data={consultas} emptyMessage="Sem consultas." />
             </Card>
 
-            <Card title="Enfermagem" subtitle="Procedimentos e internamentos (enfermaria).">
+            <Card title="Enfermagem">
               <div className="space-y-6">
                 <div>
                   <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-[var(--gray-500)]">
@@ -419,17 +437,23 @@ export default function MedicalHistoryPage() {
               </div>
             </Card>
 
-            <Card title="Farmácia" subtitle="Vendas associadas ao paciente.">
+            <Card title="Farmácia">
               <DataTable columns={vendasCols as any} data={vendas} emptyMessage="Sem vendas." />
             </Card>
 
-            <Card title="Financeiro" subtitle="Faturas e recibos associados ao paciente.">
+            <Card title="Financeiro">
               <div className="space-y-6">
                 <div>
                   <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-[var(--gray-500)]">
                     Faturas
                   </div>
                   <DataTable columns={faturasCols as any} data={faturas} emptyMessage="Sem faturas." />
+                </div>
+                <div>
+                  <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-[var(--gray-500)]">
+                    Pagamentos
+                  </div>
+                  <DataTable columns={pagamentosCols as any} data={pagamentos} emptyMessage="Sem pagamentos." />
                 </div>
                 <div>
                   <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-[var(--gray-500)]">
