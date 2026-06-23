@@ -211,11 +211,14 @@ function SearchPanel({
           <ChevronDown size={13} className={`transition-transform ${expanded ? "rotate-180" : ""}`} />
         </button>
 
-        {anyActive ? (
-          <button type="button" onClick={onClear} className="h-7 rounded border border-[var(--border)] px-3 text-xs text-[var(--gray-600)] hover:bg-[var(--gray-100)] dark:text-[var(--gray-300)]">
-            Limpar
-          </button>
-        ) : null}
+        <button
+          type="button"
+          onClick={onClear}
+          disabled={!anyActive}
+          className="h-7 rounded border border-white/30 bg-white/25 px-3 text-xs font-medium text-[var(--gray-700)] backdrop-blur-sm hover:bg-white/40 disabled:cursor-default disabled:opacity-40 disabled:hover:bg-white/25 dark:border-white/10 dark:bg-white/5 dark:text-[var(--gray-300)]"
+        >
+          Limpar
+        </button>
 
         <span className="ml-auto self-center whitespace-nowrap text-[11px] text-[var(--gray-500)]">
           {loading ? "A procurar…" : `${total} ${total === 1 ? "laudo" : "laudos"}`}
