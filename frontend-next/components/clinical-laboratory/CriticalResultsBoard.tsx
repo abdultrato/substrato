@@ -108,11 +108,11 @@ function CriticalCard({ row, busy, onConfirm, t }: { row: Row; busy: boolean; on
 
   return (
     <article
-      className={`relative overflow-hidden rounded-xl border bg-[var(--card)] shadow-sm transition hover:shadow-md
+      className={`relative flex aspect-[2/1] w-[320px] max-w-full flex-col overflow-hidden rounded-xl border bg-[var(--card)] shadow-sm transition hover:shadow-md
         before:absolute before:inset-y-0 before:left-0 before:w-1.5 ${accent} ${confirmed ? "opacity-[0.92]" : ""}
         ${overdue ? "border-rose-300 ring-1 ring-rose-300/70 dark:border-rose-900/50 dark:ring-rose-900/40" : "border-[var(--border)]"}`}
     >
-      <div className="flex flex-col gap-3 p-4 pl-5 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex min-h-0 flex-1 items-start justify-between gap-2 p-3 pl-4">
         {/* identity + clinical context */}
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
@@ -161,7 +161,7 @@ function CriticalCard({ row, busy, onConfirm, t }: { row: Row; busy: boolean; on
       </div>
 
       {/* footer: readback state + actions */}
-      <div className="flex flex-wrap items-center justify-between gap-2 border-t border-[var(--border)] bg-[var(--gray-50)] px-4 py-2 pl-5 dark:bg-white/[0.02]">
+      <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 border-t border-[var(--border)] bg-[var(--gray-50)] px-3 py-2 pl-4 dark:bg-white/[0.02]">
         {confirmed ? (
           <span className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-700 dark:text-emerald-300">
             <CheckCircle2 size={14} />
@@ -380,9 +380,9 @@ export default function CriticalResultsBoard() {
 
       {/* List */}
       {query.isLoading ? (
-        <div className="space-y-3">
+        <div className="flex flex-wrap gap-3">
           {[0, 1, 2].map((i) => (
-            <div key={i} className="h-[104px] animate-pulse rounded-xl border border-[var(--border)] bg-[var(--gray-100)] dark:bg-white/[0.03]" />
+            <div key={i} className="aspect-[2/1] w-[320px] max-w-full animate-pulse rounded-xl border border-[var(--border)] bg-[var(--gray-100)] dark:bg-white/[0.03]" />
           ))}
         </div>
       ) : query.isError ? (
@@ -406,7 +406,7 @@ export default function CriticalResultsBoard() {
           ) : null}
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="flex flex-wrap gap-3">
           {visible.map((row) => (
             <CriticalCard key={String(row.id)} row={row} busy={busyId === String(row.id)} onConfirm={confirmReadback} t={t} />
           ))}
