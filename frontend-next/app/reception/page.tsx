@@ -398,20 +398,20 @@ export default function RecepcaoPage() {
                             <button
                                 type="button"
                                 onClick={() => setShowWizard(true)}
-                                className="group flex w-full items-center gap-2 rounded-lg border border-[var(--primary-300)]/60 bg-[var(--primary-500)]/10 px-2.5 py-2 text-left transition-all hover:bg-[var(--primary-500)]/15 dark:border-[var(--primary-500)]/30"
+                                className="group flex w-full items-center gap-2 rounded-lg bg-primary px-2.5 py-2 text-left text-primary-foreground shadow-sm transition-colors hover:bg-primary-hover"
                             >
-                                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[var(--primary-100)] dark:bg-[var(--primary-800)]">
-                                    <UserPlus size={13} className="text-[var(--primary-600)] dark:text-[var(--primary-300)]" />
+                                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-white/20">
+                                    <UserPlus size={13} className="text-primary-foreground" />
                                 </span>
                                 <div className="min-w-0 flex-1">
-                                    <span className="block text-xs font-bold text-[var(--primary-700)] dark:text-[var(--primary-300)] leading-tight">
+                                    <span className="block text-xs font-bold leading-tight text-primary-foreground">
                                         Registar paciente
                                     </span>
-                                    <span className="text-[10px] text-[var(--primary-500)] dark:text-[var(--primary-400)] leading-tight">
+                                    <span className="text-[10px] leading-tight text-primary-foreground/80">
                                         Fluxo de entrada
                                     </span>
                                 </div>
-                                <ChevronRight size={12} className="shrink-0 text-[var(--primary-400)] opacity-0 transition-opacity group-hover:opacity-100" />
+                                <ChevronRight size={12} className="shrink-0 text-primary-foreground/70 opacity-0 transition-opacity group-hover:opacity-100" />
                             </button>
                             {atalhos.map((atalho) => (
                                 <Link
