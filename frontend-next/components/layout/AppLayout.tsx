@@ -251,7 +251,7 @@ export default function AppLayout ( {
                 >
                     <Header user={user} onMenuClick={handleMenuClick} />
 
-                    <main data-no-scroll-arrows className="substrato-app-surface flex-1 min-w-0 overflow-x-hidden overflow-y-auto px-2 py-2 sm:px-3 md:px-4 md:py-3">
+                    <main data-no-scroll-arrows className="substrato-app-surface min-h-0 flex-1 min-w-0 overflow-x-hidden overflow-y-auto px-2 py-2 sm:px-3 md:px-4 md:py-3">
                         <div className="page-transition">
                             <AutoTranslateTree>
                                 <AccessDenied
@@ -276,8 +276,8 @@ export default function AppLayout ( {
                                 />
                             </AutoTranslateTree>
                         </div>
-                        <Footer />
                     </main>
+                    <Footer />
                 </div>
 
                 {rightAside ? (
@@ -315,12 +315,12 @@ export default function AppLayout ( {
                     {subNav ?? <ModuleSubNav />}
                 </div>
 
-                <main ref={mainRef} data-no-scroll-arrows className="substrato-app-surface flex-1 min-w-0 overflow-x-hidden overflow-y-auto px-2 py-2 sm:px-3 md:px-4 md:py-3">
+                <main ref={mainRef} data-no-scroll-arrows className="substrato-app-surface min-h-0 flex-1 min-w-0 overflow-x-hidden overflow-y-auto px-2 py-2 sm:px-3 md:px-4 md:py-3">
                     <div className="page-transition">
                         <AutoTranslateTree>{children}</AutoTranslateTree>
                     </div>
-                    <Footer />
                 </main>
+                <Footer />
             </div>
 
             {rightAside ? (
