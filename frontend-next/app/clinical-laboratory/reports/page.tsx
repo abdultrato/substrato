@@ -211,15 +211,6 @@ function SearchPanel({
           <ChevronDown size={13} className={`transition-transform ${expanded ? "rotate-180" : ""}`} />
         </button>
 
-        <button
-          type="button"
-          onClick={onClear}
-          disabled={!anyActive}
-          className="h-7 rounded border border-white/30 bg-white/25 px-3 text-xs font-medium text-[var(--gray-700)] backdrop-blur-sm hover:bg-white/40 disabled:cursor-default disabled:opacity-40 disabled:hover:bg-white/25 dark:border-white/10 dark:bg-white/5 dark:text-[var(--gray-300)]"
-        >
-          Limpar
-        </button>
-
         <span className="ml-auto self-center whitespace-nowrap text-[11px] text-[var(--gray-500)]">
           {loading ? "A procurar…" : `${total} ${total === 1 ? "laudo" : "laudos"}`}
         </span>
@@ -284,6 +275,16 @@ function SearchPanel({
             <div>
               <label className={LABEL_CLS}>Validado — até</label>
               <input type="date" value={filters.dateTo} onChange={(e) => set("dateTo", e.target.value)} onKeyDown={handleKey} className={INPUT_CLS} />
+            </div>
+            <div className="flex items-end">
+              <button
+                type="button"
+                onClick={onClear}
+                disabled={!anyActive}
+                className="h-7 w-full rounded border border-white/30 bg-white/25 px-3 text-xs font-medium text-[var(--gray-700)] backdrop-blur-sm hover:bg-white/40 disabled:cursor-default disabled:opacity-40 disabled:hover:bg-white/25 dark:border-white/10 dark:bg-white/5 dark:text-[var(--gray-300)]"
+              >
+                Limpar
+              </button>
             </div>
           </div>
         </div>
