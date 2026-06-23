@@ -381,7 +381,7 @@ export default function MedicalHistoryPage() {
               <MetricCard label="Vendas (Farmácia)" value={vendas.length} />
             </div>
 
-            <Card title="Paciente">
+            <Card glass title="Paciente">
               <div className="grid gap-2 text-sm text-[var(--gray-700)] md:grid-cols-2">
                 <div>
                   <span className="font-semibold text-[var(--text)]">Nome:</span> {paciente.nome || "-"}
@@ -408,60 +408,40 @@ export default function MedicalHistoryPage() {
               </div>
             </Card>
 
-            <Card title="Cardex (Prontuário)">
-              <DataTable columns={cardexCols as any} data={cardex} emptyMessage="Sem cardex." />
+            <Card glass title="Cardex (Prontuário)">
+              <DataTable bare columns={cardexCols as any} data={cardex} emptyMessage="Sem cardex." />
             </Card>
 
-            <Card title="Requisições (Exames)">
-              <DataTable columns={requisicoesCols as any} data={requisicoes} emptyMessage="Sem requisições." />
+            <Card glass title="Requisições (Exames)">
+              <DataTable bare columns={requisicoesCols as any} data={requisicoes} emptyMessage="Sem requisições." />
             </Card>
 
-            <Card title="Consultas">
-              <DataTable columns={consultasCols as any} data={consultas} emptyMessage="Sem consultas." />
+            <Card glass title="Consultas">
+              <DataTable bare columns={consultasCols as any} data={consultas} emptyMessage="Sem consultas." />
             </Card>
 
-            <Card title="Enfermagem">
-              <div className="space-y-6">
-                <div>
-                  <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-[var(--gray-500)]">
-                    Procedimentos
-                  </div>
-                  <DataTable columns={procedimentosCols as any} data={procedimentos} emptyMessage="Sem procedimentos." />
-                </div>
-                <div>
-                  <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-[var(--gray-500)]">
-                    Internamentos
-                  </div>
-                  <DataTable columns={internamentosCols as any} data={internamentos} emptyMessage="Sem internamentos." />
-                </div>
-              </div>
+            <Card glass title="Procedimentos">
+              <DataTable bare columns={procedimentosCols as any} data={procedimentos} emptyMessage="Sem procedimentos." />
             </Card>
 
-            <Card title="Farmácia">
-              <DataTable columns={vendasCols as any} data={vendas} emptyMessage="Sem vendas." />
+            <Card glass title="Internamentos">
+              <DataTable bare columns={internamentosCols as any} data={internamentos} emptyMessage="Sem internamentos." />
             </Card>
 
-            <Card title="Financeiro">
-              <div className="space-y-6">
-                <div>
-                  <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-[var(--gray-500)]">
-                    Faturas
-                  </div>
-                  <DataTable columns={faturasCols as any} data={faturas} emptyMessage="Sem faturas." />
-                </div>
-                <div>
-                  <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-[var(--gray-500)]">
-                    Pagamentos
-                  </div>
-                  <DataTable columns={pagamentosCols as any} data={pagamentos} emptyMessage="Sem pagamentos." />
-                </div>
-                <div>
-                  <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-[var(--gray-500)]">
-                    Recibos
-                  </div>
-                  <DataTable columns={recibosCols as any} data={recibos} emptyMessage="Sem recibos." />
-                </div>
-              </div>
+            <Card glass title="Farmácia">
+              <DataTable bare columns={vendasCols as any} data={vendas} emptyMessage="Sem vendas." />
+            </Card>
+
+            <Card glass title="Faturas">
+              <DataTable bare columns={faturasCols as any} data={faturas} emptyMessage="Sem faturas." />
+            </Card>
+
+            <Card glass title="Pagamentos">
+              <DataTable bare columns={pagamentosCols as any} data={pagamentos} emptyMessage="Sem pagamentos." />
+            </Card>
+
+            <Card glass title="Recibos">
+              <DataTable bare columns={recibosCols as any} data={recibos} emptyMessage="Sem recibos." />
             </Card>
 
           </>

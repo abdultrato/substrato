@@ -18,6 +18,8 @@ interface Props<T> {
     searchable?: boolean
     searchPlaceholder?: string
     searchKeys?: Array<keyof T | string>
+    /** Remove a superfície opaca própria para a tabela fundir-se num cartão glass. */
+    bare?: boolean
 }
 
 export default function DataTable<T> ( {
@@ -27,9 +29,30 @@ export default function DataTable<T> ( {
     searchable = true,
     searchPlaceholder,
     searchKeys = [],
+    bare = false,
 }: Props<T> ) {
     const { t, tr } = useLanguage()
     const [query, setQuery] = useState("")
+
+    const searchWrapCls = bare
+        ? "flex flex-col gap-2 rounded-lg border border-border/60 bg-white/30 px-3 py-2 backdrop-blur-sm dark:bg-white/5 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between"
+        : "flex flex-col gap-2 rounded-lg border border-border bg-card px-3 py-2 shadow-sm sm:flex-row sm:flex-wrap sm:items-center sm:justify-between"
+    const mobileCardCls = bare
+        ? "rounded-lg border border-white/20 bg-white/30 p-3 backdrop-blur-sm dark:border-white/10 dark:bg-white/5"
+        : "rounded-lg border border-border bg-card p-3 shadow-sm"
+    const mobileEmptyCls = bare
+        ? "rounded-lg border border-white/20 bg-white/30 p-4 text-sm text-muted-foreground backdrop-blur-sm dark:border-white/10 dark:bg-white/5"
+        : "rounded-lg border border-border bg-card p-4 text-sm text-muted-foreground"
+    const tableWrapCls = bare
+        ? "hidden overflow-x-auto md:block"
+        : "hidden overflow-x-auto rounded-lg border border-border bg-card shadow-sm md:block"
+    const theadCls = bare
+        ? "border-b border-border/60 text-muted-foreground"
+        : "sticky top-0 z-10 bg-muted text-muted-foreground"
+    const tbodyCls = bare ? "" : "divide-y divide-border"
+    const rowCls = bare
+        ? "border-b border-border/40 transition-colors hover:bg-white/40 dark:hover:bg-white/10"
+        : "transition-colors hover:bg-muted/55"
 
     const normalizedQuery = normalizeText(query)
     const activeSearchKeys = searchKeys.map((k) => String(k))
@@ -64,7 +87,7 @@ export default function DataTable<T> ( {
     return (
         <div className="space-y-2">
             {showSearch ? (
-                <div className="flex flex-col gap-2 rounded-lg border border-border bg-card px-3 py-2 shadow-sm sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+                <div className={searchWrapCls}>
                     <div className="relative min-w-0 flex-1">
                         <Search className="pointer-events-none absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                         <input
@@ -95,7 +118,7 @@ export default function DataTable<T> ( {
             <div className="space-y-2 md:hidden">
                 {filteredData.length ? (
                     filteredData.map((row, i) => (
-                        <article key={i} className="rounded-lg border border-border bg-card p-3 shadow-sm">
+                        <article key={i} className={mobileCardCls}>
                             <div className="space-y-3">
                                 {columns.map((col, idx) => (
                                     <div key={idx} className={idx === 0 ? "space-y-1" : "grid grid-cols-[minmax(0,0.42fr)_minmax(0,0.58fr)] gap-2"}>
@@ -111,7 +134,7 @@ export default function DataTable<T> ( {
                         </article>
                     ))
                 ) : (
-                    <div className="rounded-lg border border-border bg-card p-4 text-sm text-muted-foreground">
+                    <div className={mobileEmptyCls}>
                         {query.trim()
                             ? t("Nenhum resultado para a pesquisa.", "No results for this search.")
                             : tr(emptyMessage)}
@@ -119,9 +142,9 @@ export default function DataTable<T> ( {
                 )}
             </div>
 
-            <div className="hidden overflow-x-auto rounded-lg border border-border bg-card shadow-sm md:block">
+            <div className={tableWrapCls}>
                 <table className="min-w-full text-sm">
-                    <thead className="sticky top-0 z-10 bg-muted text-muted-foreground">
+                    <thead className={theadCls}>
                         <tr>
                             {columns.map( ( col, idx ) => (
                                 <th
@@ -134,10 +157,10 @@ export default function DataTable<T> ( {
                         </tr>
                     </thead>
 
-                    <tbody className="divide-y divide-border">
+                    <tbody className={tbodyCls}>
                         {filteredData.length ? (
                             filteredData.map( ( row, i ) => (
-                                <tr key={i} className="transition-colors hover:bg-muted/55">
+                                <tr key={i} className={rowCls}>
                                     {columns.map( ( col, idx ) => (
                                         <td
                                             key={idx}
