@@ -312,7 +312,7 @@ export default function MedicalHistoryPage() {
 
   return (
     <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.MEDICINA, GROUPS.MEDICINA_OCUPACIONAL]}>
-      <div className="space-y-6">
+      <div className="mx-auto w-full max-w-6xl space-y-6">
         <PageHeader
           title="História clínica"
           subtitle={`${paciente?.nome || "Paciente"} · ${paciente?.id_custom || id}`}
@@ -381,6 +381,7 @@ export default function MedicalHistoryPage() {
               <MetricCard label="Vendas (Farmácia)" value={vendas.length} />
             </div>
 
+            <div className="grid items-start gap-4 lg:grid-cols-2">
             <Card glass title="Paciente">
               <div className="grid gap-2 text-sm text-[var(--gray-700)] md:grid-cols-2">
                 <div>
@@ -443,6 +444,7 @@ export default function MedicalHistoryPage() {
             <Card glass title="Recibos">
               <DataTable bare columns={recibosCols as any} data={recibos} emptyMessage="Sem recibos." />
             </Card>
+            </div>
 
           </>
         )}
