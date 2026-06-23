@@ -202,7 +202,7 @@ class SampleCollectionViewSet(ValidatedSearchOrderingMixin, TenantScopedQueryset
 
 
 class LabSampleViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
-    queryset = LabSample.objects.select_related("order", "collection").all()
+    queryset = LabSample.objects.select_related("order", "order__patient", "collection").all()
     serializer_class = LabSampleSerializer
     search_fields = ["custom_id", "barcode", "storage_location"]
     ordering_fields = ["status", "received_at", "collected_at", "created_at"]

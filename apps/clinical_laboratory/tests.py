@@ -37,6 +37,7 @@ from apps.clinical_laboratory.models import (
     SampleReception,
 )
 from apps.tenants.models.tenant import Tenant
+from api.v1.clinical_laboratory.serializers import LabSampleSerializer
 
 
 def _tenant(slug="lab-t"):
@@ -113,6 +114,32 @@ def test_barcode_de_amostra_unico_por_tenant():
     LabSample.objects.create(tenant=t, order=order, barcode="DUP-1")
     with pytest.raises(IntegrityError):
         LabSample.objects.create(tenant=t, order=order, barcode="DUP-1")
+
+
+@pytest.mark.django_db
+def test_lab_sample_serializer_expoe_contexto_humano_para_pagina_operacional():
+    t = _tenant("lab-sample-ui")
+    patient = Patient.objects.create(tenant=t, name="Ana Silva", gender="F", birth_date=timezone.localdate() - timedelta(days=365 * 31))
+    order = LabOrder.objects.create(tenant=t, patient=patient)
+    sample = LabSample.objects.create(
+        tenant=t,
+        order=order,
+        barcode="UI-001",
+        sample_type="SORO",
+        container_type="Tubo amarelo",
+        condition=LabSample.Condition.ADEQUATE,
+        status=LabSample.Status.RECEIVED,
+    )
+
+    data = LabSampleSerializer(sample).data
+
+    assert data["order_custom_id"] == order.custom_id
+    assert data["patient_name"] == "Ana Silva"
+    assert data["patient_gender"] == patient.gender
+    assert data["patient_age"] == "31 anos"
+    assert data["sample_type_display"] == "Soro"
+    assert data["status_display"] == "Recebida"
+    assert data["condition_display"] == "Adequada"
 
 
 # --- sectores especializados ---

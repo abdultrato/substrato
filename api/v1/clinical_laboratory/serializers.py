@@ -246,7 +246,32 @@ class SampleCollectionSerializer(serializers.ModelSerializer):
 
 
 class LabSampleSerializer(serializers.ModelSerializer):
-    Meta = _meta(LabSample)
+    order_custom_id = serializers.CharField(source="order.custom_id", read_only=True)
+    patient_name = serializers.CharField(source="order.patient.name", read_only=True)
+    patient_gender = serializers.CharField(source="order.patient.gender", read_only=True)
+    patient_age = serializers.SerializerMethodField()
+    sample_type_display = serializers.CharField(source="get_sample_type_display", read_only=True)
+    status_display = serializers.CharField(source="get_status_display", read_only=True)
+    condition_display = serializers.CharField(source="get_condition_display", read_only=True)
+
+    class Meta:
+        model = LabSample
+        fields = "__all__"
+        read_only_fields = CORE_READ_ONLY_FIELDS + [
+            "order_custom_id",
+            "patient_name",
+            "patient_gender",
+            "patient_age",
+            "sample_type_display",
+            "status_display",
+            "condition_display",
+        ]
+
+    def get_patient_age(self, obj):
+        patient = getattr(getattr(obj, "order", None), "patient", None)
+        if patient is None:
+            return ""
+        return patient.idade()
 
 
 class SampleReceptionSerializer(serializers.ModelSerializer):
