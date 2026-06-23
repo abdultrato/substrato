@@ -281,7 +281,9 @@ class LabWorklistViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin
 
 
 class LabResultViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
-    queryset = LabResult.objects.select_related("order_item", "sample", "performed_by").all()
+    queryset = LabResult.objects.select_related(
+        "order_item__order__patient", "order_item__test", "test_field", "sample", "performed_by"
+    ).all()
     serializer_class = LabResultSerializer
     search_fields = ["custom_id", "value", "unit", "method", "equipment"]
     ordering_fields = ["status", "flag", "performed_at", "created_at"]

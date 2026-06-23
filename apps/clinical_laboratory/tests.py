@@ -189,6 +189,38 @@ def test_sample_collection_transicoes_de_estado():
     assert collection.status == SampleCollection.Status.FAILED
 
 
+@pytest.mark.django_db
+def test_lab_result_serializer_expoe_contexto_humano_para_pagina_operacional():
+    from apps.clinical_laboratory.models import LabTestField
+    from api.v1.clinical_laboratory.serializers import LabResultSerializer
+
+    t = _tenant("lab-result-ui")
+    patient = Patient.objects.create(tenant=t, name="Diana Reis")
+    sector = LabSector.objects.create(tenant=t, name="Bioquímica", code="BQR")
+    test = LabTest.objects.create(tenant=t, name="Glicose", code="GLIR", sector=sector, price=Decimal("100.00"))
+    field = LabTestField.objects.create(tenant=t, test=test, name="Glicose sérica")
+    order = LabOrder.objects.create(tenant=t, patient=patient)
+    item = LabOrderItem.objects.create(tenant=t, order=order, test=test, price=test.price)
+    result = LabResult.objects.create(
+        tenant=t,
+        order_item=item,
+        test_field=field,
+        value="520",
+        unit="mg/dL",
+        flag=LabResult.Flag.CRITICAL_HIGH,
+        status=LabResult.Status.ENTERED,
+    )
+
+    data = LabResultSerializer(result).data
+
+    assert data["order_custom_id"] == order.custom_id
+    assert data["patient_name"] == "Diana Reis"
+    assert data["test_name"] == "Glicose"
+    assert data["field_name"] == field.name
+    assert data["flag_display"] == "Crítico alto"
+    assert data["status_display"] == "Inserido"
+
+
 # --- sectores especializados ---
 @pytest.mark.django_db
 def test_microbiologia_cultura_isolado_antibiograma():

@@ -319,7 +319,35 @@ class LabWorklistSerializer(serializers.ModelSerializer):
 
 
 class LabResultSerializer(serializers.ModelSerializer):
-    Meta = _meta(LabResult)
+    order_custom_id = serializers.CharField(source="order_item.order.custom_id", read_only=True)
+    patient_name = serializers.CharField(source="order_item.order.patient.name", read_only=True)
+    test_name = serializers.CharField(source="order_item.test.name", read_only=True)
+    field_name = serializers.CharField(source="test_field.name", read_only=True)
+    sample_barcode = serializers.CharField(source="sample.barcode", read_only=True)
+    flag_display = serializers.CharField(source="get_flag_display", read_only=True)
+    status_display = serializers.CharField(source="get_status_display", read_only=True)
+    performed_by_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = LabResult
+        fields = "__all__"
+        read_only_fields = CORE_READ_ONLY_FIELDS + [
+            "order_custom_id",
+            "patient_name",
+            "test_name",
+            "field_name",
+            "sample_barcode",
+            "flag_display",
+            "status_display",
+            "performed_by_name",
+        ]
+
+    def get_performed_by_name(self, obj):
+        user = getattr(obj, "performed_by", None)
+        if user is None:
+            return ""
+        full = (user.get_full_name() or "").strip() if hasattr(user, "get_full_name") else ""
+        return full or getattr(user, "username", "") or ""
 
 
 class ResultValidationSerializer(serializers.ModelSerializer):
