@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { Search } from "lucide-react"
+import { ChevronDown, Search, SlidersHorizontal } from "lucide-react"
 import { useCallback, useEffect, useMemo, useState } from "react"
 
 import AppLayout from "@/components/layout/AppLayout"
@@ -135,20 +135,36 @@ function makeBucketer() {
 // ─── Search panel ───────────────────────────────────────────────────────────
 
 const INPUT_CLS =
-  "h-7 w-full rounded border border-white/30 bg-white/50 px-2 text-xs text-[var(--text)] backdrop-blur-sm placeholder:text-[var(--gray-400)] focus:border-[var(--primary-400)] focus:outline-none dark:border-white/10 dark:bg-white/5"
+  "h-7 w-full rounded border border-white/30 bg-white/35 px-2 text-xs text-[var(--text)] backdrop-blur-sm placeholder:text-[var(--gray-400)] focus:border-[var(--primary-400)] focus:outline-none dark:border-white/10 dark:bg-white/5"
 const LABEL_CLS = "block text-[10px] font-semibold uppercase tracking-wide text-[var(--gray-500)] mb-0.5"
+
+// Campos sempre visíveis na barra rápida; o resto fica em "Filtros avançados".
+const QUICK_KEYS: (keyof SearchFilters)[] = ["search", "reqNumber", "patientName"]
+const ADVANCED_KEYS = (Object.keys(EMPTY_FILTERS) as (keyof SearchFilters)[]).filter(
+  (k) => !QUICK_KEYS.includes(k),
+)
+
+function countActive(f: SearchFilters, keys: (keyof SearchFilters)[]): number {
+  return keys.filter((k) => f[k].trim()).length
+}
 
 function SearchPanel({
   filters,
   onChange,
   onSearch,
   onClear,
+  total,
+  loading,
 }: {
   filters: SearchFilters
   onChange: (f: SearchFilters) => void
   onSearch: () => void
   onClear: () => void
+  total: number
+  loading: boolean
 }) {
+  const [expanded, setExpanded] = useState(false)
+
   function set<K extends keyof SearchFilters>(key: K, value: string) {
     onChange({ ...filters, [key]: value })
   }
@@ -156,90 +172,119 @@ function SearchPanel({
     if (e.key === "Enter") onSearch()
   }
 
+  const advancedCount = countActive(filters, ADVANCED_KEYS)
+  const anyActive = !isFiltersEmpty(filters)
+
   return (
-    <div className="rounded-xl border border-white/20 bg-white/25 px-3 py-2 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/5">
-      <div className="grid grid-cols-2 gap-x-2 gap-y-1.5 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-7">
-        <div className="col-span-2">
+    <div className="rounded-xl border border-white/20 bg-white/15 px-3 py-2 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/5">
+      {/* Barra rápida — sempre visível */}
+      <div className="flex flex-wrap items-end gap-2">
+        <div className="min-w-[180px] flex-1">
           <label className={LABEL_CLS}>Pesquisa livre (código, paciente, documento, empresa…)</label>
           <div className="relative">
             <Search size={13} className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-[var(--gray-400)]" />
             <input type="search" value={filters.search} onChange={(e) => set("search", e.target.value)} onKeyDown={handleKey} placeholder="Escreva qualquer termo…" className={`${INPUT_CLS} pl-7`} />
           </div>
         </div>
-
-        <div>
+        <div className="w-32 sm:w-40">
           <label className={LABEL_CLS}>Nº requisição</label>
           <input value={filters.reqNumber} onChange={(e) => set("reqNumber", e.target.value)} onKeyDown={handleKey} placeholder="REQ-…" className={INPUT_CLS} />
         </div>
-        <div>
+        <div className="w-36 sm:w-48">
           <label className={LABEL_CLS}>Nome do paciente</label>
           <input value={filters.patientName} onChange={(e) => set("patientName", e.target.value)} onKeyDown={handleKey} placeholder="ex: João, nunes…" className={INPUT_CLS} />
         </div>
-        <div>
-          <label className={LABEL_CLS}>Nº documento</label>
-          <input value={filters.docNumber} onChange={(e) => set("docNumber", e.target.value)} onKeyDown={handleKey} placeholder="BI / passaporte" className={INPUT_CLS} />
-        </div>
-        <div>
-          <label className={LABEL_CLS}>Data de nascimento</label>
-          <input type="date" value={filters.birthDate} onChange={(e) => set("birthDate", e.target.value)} onKeyDown={handleKey} className={INPUT_CLS} />
-        </div>
 
-        <div>
-          <label className={LABEL_CLS}>Sexo</label>
-          <select value={filters.gender} onChange={(e) => set("gender", e.target.value)} className={INPUT_CLS}>
-            <option value="">Todos</option>
-            <option value="M">Masculino</option>
-            <option value="F">Feminino</option>
-          </select>
-        </div>
-        <div>
-          <label className={LABEL_CLS}>Prioridade</label>
-          <select value={filters.priority} onChange={(e) => set("priority", e.target.value)} className={INPUT_CLS}>
-            {PRIORITY_OPTIONS.map(([v, label]) => (
-              <option key={v} value={v}>{label}</option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label className={LABEL_CLS}>Tipo</label>
-          <select value={filters.type} onChange={(e) => set("type", e.target.value)} className={INPUT_CLS}>
-            <option value="">Todos</option>
-            <option value="LAB">Laboratório</option>
-            <option value="MED">Médico</option>
-          </select>
-        </div>
-        <div>
-          <label className={LABEL_CLS}>Resultado crítico</label>
-          <select value={filters.critical} onChange={(e) => set("critical", e.target.value)} className={INPUT_CLS}>
-            <option value="">Todos</option>
-            <option value="true">Com resultado crítico</option>
-            <option value="false">Sem resultado crítico</option>
-          </select>
-        </div>
-
-        <div>
-          <label className={LABEL_CLS}>Exame</label>
-          <input value={filters.exam} onChange={(e) => set("exam", e.target.value)} onKeyDown={handleKey} placeholder="ex: Hemograma…" className={INPUT_CLS} />
-        </div>
-        <div>
-          <label className={LABEL_CLS}>Médico solicitante</label>
-          <input value={filters.physician} onChange={(e) => set("physician", e.target.value)} onKeyDown={handleKey} placeholder="nome do médico" className={INPUT_CLS} />
-        </div>
-        <div>
-          <label className={LABEL_CLS}>Validado — de</label>
-          <input type="date" value={filters.dateFrom} onChange={(e) => set("dateFrom", e.target.value)} onKeyDown={handleKey} className={INPUT_CLS} />
-        </div>
-        <div>
-          <label className={LABEL_CLS}>Validado — até</label>
-          <input type="date" value={filters.dateTo} onChange={(e) => set("dateTo", e.target.value)} onKeyDown={handleKey} className={INPUT_CLS} />
-        </div>
-      </div>
-
-      <div className="mt-2 flex items-center justify-end border-t border-[var(--border)] pt-2">
-        <button type="button" onClick={onClear} className="h-7 rounded border border-[var(--border)] px-3 text-xs text-[var(--gray-600)] hover:bg-[var(--gray-100)] dark:text-[var(--gray-300)]">
-          Limpar
+        <button
+          type="button"
+          onClick={() => setExpanded((v) => !v)}
+          aria-expanded={expanded}
+          className="inline-flex h-7 items-center gap-1.5 rounded border border-white/30 bg-white/25 px-2.5 text-xs font-medium text-[var(--gray-700)] backdrop-blur-sm hover:bg-white/40 dark:border-white/10 dark:bg-white/5 dark:text-[var(--gray-300)]"
+        >
+          <SlidersHorizontal size={13} />
+          Filtros avançados
+          {advancedCount > 0 ? (
+            <span className="inline-flex min-w-4 items-center justify-center rounded-full bg-[var(--primary-600)] px-1 text-[10px] font-semibold text-white">
+              {advancedCount}
+            </span>
+          ) : null}
+          <ChevronDown size={13} className={`transition-transform ${expanded ? "rotate-180" : ""}`} />
         </button>
+
+        {anyActive ? (
+          <button type="button" onClick={onClear} className="h-7 rounded border border-[var(--border)] px-3 text-xs text-[var(--gray-600)] hover:bg-[var(--gray-100)] dark:text-[var(--gray-300)]">
+            Limpar
+          </button>
+        ) : null}
+
+        <span className="ml-auto self-center whitespace-nowrap text-[11px] text-[var(--gray-500)]">
+          {loading ? "A procurar…" : `${total} ${total === 1 ? "laudo" : "laudos"}`}
+        </span>
       </div>
+
+      {/* Filtros avançados — recolhíveis */}
+      {expanded ? (
+        <div className="mt-2 border-t border-white/20 pt-2 dark:border-white/10">
+          <div className="grid grid-cols-2 gap-x-2 gap-y-1.5 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6">
+            <div>
+              <label className={LABEL_CLS}>Nº documento</label>
+              <input value={filters.docNumber} onChange={(e) => set("docNumber", e.target.value)} onKeyDown={handleKey} placeholder="BI / passaporte" className={INPUT_CLS} />
+            </div>
+            <div>
+              <label className={LABEL_CLS}>Data de nascimento</label>
+              <input type="date" value={filters.birthDate} onChange={(e) => set("birthDate", e.target.value)} onKeyDown={handleKey} className={INPUT_CLS} />
+            </div>
+            <div>
+              <label className={LABEL_CLS}>Sexo</label>
+              <select value={filters.gender} onChange={(e) => set("gender", e.target.value)} className={INPUT_CLS}>
+                <option value="">Todos</option>
+                <option value="M">Masculino</option>
+                <option value="F">Feminino</option>
+              </select>
+            </div>
+            <div>
+              <label className={LABEL_CLS}>Prioridade</label>
+              <select value={filters.priority} onChange={(e) => set("priority", e.target.value)} className={INPUT_CLS}>
+                {PRIORITY_OPTIONS.map(([v, label]) => (
+                  <option key={v} value={v}>{label}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className={LABEL_CLS}>Tipo</label>
+              <select value={filters.type} onChange={(e) => set("type", e.target.value)} className={INPUT_CLS}>
+                <option value="">Todos</option>
+                <option value="LAB">Laboratório</option>
+                <option value="MED">Médico</option>
+              </select>
+            </div>
+            <div>
+              <label className={LABEL_CLS}>Resultado crítico</label>
+              <select value={filters.critical} onChange={(e) => set("critical", e.target.value)} className={INPUT_CLS}>
+                <option value="">Todos</option>
+                <option value="true">Com resultado crítico</option>
+                <option value="false">Sem resultado crítico</option>
+              </select>
+            </div>
+            <div>
+              <label className={LABEL_CLS}>Exame</label>
+              <input value={filters.exam} onChange={(e) => set("exam", e.target.value)} onKeyDown={handleKey} placeholder="ex: Hemograma…" className={INPUT_CLS} />
+            </div>
+            <div>
+              <label className={LABEL_CLS}>Médico solicitante</label>
+              <input value={filters.physician} onChange={(e) => set("physician", e.target.value)} onKeyDown={handleKey} placeholder="nome do médico" className={INPUT_CLS} />
+            </div>
+            <div>
+              <label className={LABEL_CLS}>Validado — de</label>
+              <input type="date" value={filters.dateFrom} onChange={(e) => set("dateFrom", e.target.value)} onKeyDown={handleKey} className={INPUT_CLS} />
+            </div>
+            <div>
+              <label className={LABEL_CLS}>Validado — até</label>
+              <input type="date" value={filters.dateTo} onChange={(e) => set("dateTo", e.target.value)} onKeyDown={handleKey} className={INPUT_CLS} />
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   )
 }
@@ -265,7 +310,7 @@ function SmartCard({
   }
 
   return (
-    <div className="space-y-1.5 rounded-lg border border-white/20 bg-white/30 px-3 py-2.5 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/5">
+    <div className="space-y-1.5 rounded-lg border border-white/20 bg-white/20 px-3 py-2.5 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/5">
       <div className="flex items-start justify-between gap-2">
         <Link
           href={`/requests/${row.id}`}
@@ -380,6 +425,8 @@ export default function LabReportsPage() {
           onChange={setFilters}
           onSearch={() => load(filters)}
           onClear={handleClear}
+          total={rows.length}
+          loading={loading}
         />
 
         {error && (
@@ -395,7 +442,7 @@ export default function LabReportsPage() {
             {COLUMNS.map((column) => {
               const items = buckets[column.key]
               return (
-                <section key={column.key} className={`flex flex-col rounded-xl border border-white/20 bg-white/25 p-2 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/5 ${column.top}`}>
+                <section key={column.key} className={`flex flex-col rounded-xl border border-white/20 bg-white/15 p-2 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/5 ${column.top}`}>
                   <div className="flex items-center justify-between gap-2 px-1 pb-2 pt-1">
                     <h2 className={`text-xs font-semibold uppercase tracking-wide ${column.header}`}>{column.title}</h2>
                     <span className={`inline-flex min-w-5 items-center justify-center rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${column.badge}`}>
