@@ -142,6 +142,53 @@ def test_lab_sample_serializer_expoe_contexto_humano_para_pagina_operacional():
     assert data["condition_display"] == "Adequada"
 
 
+@pytest.mark.django_db
+def test_sample_collection_serializer_expoe_contexto_humano_para_pagina_operacional():
+    from api.v1.clinical_laboratory.serializers import SampleCollectionSerializer
+
+    t = _tenant("lab-collection-ui")
+    patient = Patient.objects.create(tenant=t, name="Bruno Costa", gender="M", birth_date=timezone.localdate() - timedelta(days=365 * 40))
+    order = LabOrder.objects.create(tenant=t, patient=patient)
+    collection = SampleCollection.objects.create(
+        tenant=t,
+        order=order,
+        patient=patient,
+        sample_type="SORO",
+        container_type="Tubo vermelho",
+        location="Sala 2",
+        status=SampleCollection.Status.COLLECTED,
+    )
+
+    data = SampleCollectionSerializer(collection).data
+
+    assert data["order_custom_id"] == order.custom_id
+    assert data["patient_name"] == "Bruno Costa"
+    assert data["patient_gender"] == patient.gender
+    assert data["patient_age"] == "40 anos"
+    assert data["sample_type_display"] == "Soro"
+    assert data["status_display"] == "Colhida"
+
+
+@pytest.mark.django_db
+def test_sample_collection_transicoes_de_estado():
+    t = _tenant("lab-collection-flow")
+    patient = Patient.objects.create(tenant=t, name="Carla Dias")
+    order = LabOrder.objects.create(tenant=t, patient=patient)
+    collection = SampleCollection.objects.create(tenant=t, order=order, patient=patient)
+
+    assert collection.status == SampleCollection.Status.PENDING
+
+    collection.mark_collected()
+    assert collection.status == SampleCollection.Status.COLLECTED
+    assert collection.collection_at is not None
+
+    collection.send_to_lab()
+    assert collection.status == SampleCollection.Status.SENT
+
+    collection.mark_failed()
+    assert collection.status == SampleCollection.Status.FAILED
+
+
 # --- sectores especializados ---
 @pytest.mark.django_db
 def test_microbiologia_cultura_isolado_antibiograma():

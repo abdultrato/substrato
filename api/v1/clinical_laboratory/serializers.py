@@ -242,7 +242,39 @@ class LabOrderItemSerializer(serializers.ModelSerializer):
 
 
 class SampleCollectionSerializer(serializers.ModelSerializer):
-    Meta = _meta(SampleCollection)
+    order_custom_id = serializers.CharField(source="order.custom_id", read_only=True)
+    patient_name = serializers.CharField(source="patient.name", read_only=True)
+    patient_gender = serializers.CharField(source="patient.gender", read_only=True)
+    patient_age = serializers.SerializerMethodField()
+    sample_type_display = serializers.CharField(source="get_sample_type_display", read_only=True)
+    status_display = serializers.CharField(source="get_status_display", read_only=True)
+    collected_by_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = SampleCollection
+        fields = "__all__"
+        read_only_fields = CORE_READ_ONLY_FIELDS + [
+            "order_custom_id",
+            "patient_name",
+            "patient_gender",
+            "patient_age",
+            "sample_type_display",
+            "status_display",
+            "collected_by_name",
+        ]
+
+    def get_patient_age(self, obj):
+        patient = getattr(obj, "patient", None)
+        if patient is None:
+            return ""
+        return patient.idade()
+
+    def get_collected_by_name(self, obj):
+        user = getattr(obj, "collected_by", None)
+        if user is None:
+            return ""
+        full = (user.get_full_name() or "").strip() if hasattr(user, "get_full_name") else ""
+        return full or getattr(user, "username", "") or ""
 
 
 class LabSampleSerializer(serializers.ModelSerializer):

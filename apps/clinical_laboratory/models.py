@@ -410,6 +410,14 @@ class SampleCollection(NoNameCoreModel):
         self.collection_at = when or timezone.now()
         self.save(update_fields=["status", "collected_by", "collection_at"])
 
+    def send_to_lab(self):
+        self.status = self.Status.SENT
+        self.save(update_fields=["status"])
+
+    def mark_failed(self):
+        self.status = self.Status.FAILED
+        self.save(update_fields=["status"])
+
     def __str__(self) -> str:
         return f"{self.custom_id or self.pk} ({self.get_status_display()})"
 

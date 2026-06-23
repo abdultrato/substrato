@@ -200,6 +200,30 @@ class SampleCollectionViewSet(ValidatedSearchOrderingMixin, TenantScopedQueryset
     search_fields = ["custom_id", "barcode", "location"]
     ordering_fields = ["status", "collection_at", "created_at"]
 
+    @action(detail=True, methods=["post"], url_path="colher", url_name="colher")
+    def colher(self, request, pk=None):
+        collection = self.get_object()
+        if collection.status not in {SampleCollection.Status.PENDING, SampleCollection.Status.FAILED}:
+            raise _as_drf_error(DjangoValidationError("Só é possível registar a colheita de colheitas pendentes ou falhadas."))
+        collection.mark_collected(by=_current_user(request))
+        return Response(self.get_serializer(collection).data)
+
+    @action(detail=True, methods=["post"], url_path="enviar", url_name="enviar")
+    def enviar(self, request, pk=None):
+        collection = self.get_object()
+        if collection.status != SampleCollection.Status.COLLECTED:
+            raise _as_drf_error(DjangoValidationError("Só é possível enviar ao laboratório colheitas no estado 'Colhida'."))
+        collection.send_to_lab()
+        return Response(self.get_serializer(collection).data)
+
+    @action(detail=True, methods=["post"], url_path="falhar", url_name="falhar")
+    def falhar(self, request, pk=None):
+        collection = self.get_object()
+        if collection.status in {SampleCollection.Status.SENT, SampleCollection.Status.CANCELLED}:
+            raise _as_drf_error(DjangoValidationError("Não é possível marcar como falhada uma colheita já enviada ou cancelada."))
+        collection.mark_failed()
+        return Response(self.get_serializer(collection).data)
+
 
 class LabSampleViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
     queryset = LabSample.objects.select_related("order", "order__patient", "collection").all()
