@@ -203,11 +203,27 @@ const DONOR_PROVENANCE = "Doação de Sangue"
 const PURPOSE_OPTIONS: Array<{
   value: VisitPurpose
   title: string
+  description: string
   icon: typeof ClipboardList
 }> = [
-  { value: "occupational", title: "Medicina Ocupacional", icon: Building2 },
-  { value: "clinical", title: "Paciente clínico", icon: Stethoscope },
-  { value: "donor", title: "Doador de sangue", icon: Droplets },
+  {
+    value: "occupational",
+    title: "Medicina Ocupacional",
+    description: "Admissional ou periódico por uma empresa",
+    icon: Building2,
+  },
+  {
+    value: "clinical",
+    title: "Paciente clínico",
+    description: "Atendimento clínico geral",
+    icon: Stethoscope,
+  },
+  {
+    value: "donor",
+    title: "Doador de sangue",
+    description: "Colheita para o banco de sangue",
+    icon: Droplets,
+  },
 ]
 
 function purposeLabel(purpose: VisitPurpose) {
@@ -282,6 +298,58 @@ function emailError(value: string, label: string) {
   return null
 }
 
+// Feedback em tempo real: erro só quando o valor já está claramente errado;
+// caso contrário uma dica neutra (contador/idade) para guiar o preenchimento.
+function phoneFeedback(value: string): { error: string | null; hint: string | null } {
+  const trimmed = value.trim()
+  if (!trimmed) return { error: null, hint: null }
+  const digits = phoneDigits(trimmed)
+  if (digits.length >= 2 && !/^8[234567]/.test(digits)) {
+    return { error: "Deve começar por 82, 83, 84, 85, 86 ou 87.", hint: null }
+  }
+  if (digits.length !== 9) return { error: null, hint: `${digits.length}/9 dígitos` }
+  return { error: null, hint: "Número válido" }
+}
+
+function emailFeedback(value: string, label: string) {
+  if (!value.includes("@")) return null
+  return emailError(value, label)
+}
+
+function birthDateError(value: string): string | null {
+  if (!value) return null
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return null
+  if (date.getTime() > Date.now()) return "A data de nascimento não pode ser futura."
+  return null
+}
+
+function ageLabel(value: string): string | null {
+  if (!value) return null
+  const birth = new Date(value)
+  if (Number.isNaN(birth.getTime()) || birth.getTime() > Date.now()) return null
+  const today = new Date()
+  let years = today.getFullYear() - birth.getFullYear()
+  let months = today.getMonth() - birth.getMonth()
+  if (today.getDate() < birth.getDate()) months -= 1
+  if (months < 0) {
+    years -= 1
+    months += 12
+  }
+  if (years <= 0) {
+    if (months <= 0) return "Recém-nascido"
+    return `${months} ${months === 1 ? "mês" : "meses"}`
+  }
+  return `${years} ${years === 1 ? "ano" : "anos"}`
+}
+
+function documentNumberError(type: string, value: string): string | null {
+  const trimmed = value.trim()
+  if (!trimmed) return null
+  if (type === "NUIT" && !/^\d{9}$/.test(trimmed)) return "O NUIT deve ter 9 dígitos."
+  return null
+}
+
 function addText(payload: Record<string, any>, key: string, value: string) {
   const trimmed = value.trim()
   if (trimmed) payload[key] = trimmed
@@ -315,10 +383,14 @@ function firstApiError(error: any, fallback: string) {
 function Field({
   label,
   required,
+  error,
+  hint,
   children,
 }: {
   label: string
   required?: boolean
+  error?: string | null
+  hint?: string | null
   children: React.ReactNode
 }) {
   return (
@@ -328,6 +400,14 @@ function Field({
         {required ? <span className="ml-0.5 text-rose-500">*</span> : null}
       </span>
       {children}
+      {error ? (
+        <span className="flex items-center gap-1 text-[11px] font-medium text-rose-600">
+          <AlertTriangle size={11} className="shrink-0" />
+          {error}
+        </span>
+      ) : hint ? (
+        <span className="text-[11px] text-[var(--gray-500)]">{hint}</span>
+      ) : null}
     </label>
   )
 }
@@ -385,18 +465,20 @@ function PurposeCard({
   onSelect,
   icon: Icon,
   title,
+  description,
 }: {
   active: boolean
   onSelect: () => void
   icon: typeof ClipboardList
   title: string
+  description: string
 }) {
   return (
     <button
       type="button"
       onClick={onSelect}
       aria-pressed={active}
-      className={`flex items-center gap-3 rounded-lg border px-3 py-3 text-left transition ${
+      className={`flex items-start gap-3 rounded-lg border px-3 py-3 text-left transition ${
         active
           ? "border-[var(--primary-500)] bg-[var(--primary-600)] text-white shadow-sm"
           : "border-[var(--border)] bg-[var(--card)] text-[var(--gray-700)] hover:border-[var(--primary-300)]"
@@ -409,7 +491,13 @@ function PurposeCard({
       >
         <Icon size={18} />
       </span>
-      <span className="min-w-0 text-sm font-semibold">{title}</span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-sm font-semibold leading-tight">{title}</span>
+        <span className={`block text-[11px] leading-snug ${active ? "text-white/80" : "text-[var(--gray-500)]"}`}>
+          {description}
+        </span>
+      </span>
+      {active ? <CheckCircle2 size={16} className="mt-0.5 shrink-0" /> : null}
     </button>
   )
 }
@@ -610,6 +698,10 @@ export function PatientIntakeWizard({
       if (data.is_blood_donor && !data.birth_date) {
         return "Informe a data de nascimento para validar a idade mínima do doador de sangue."
       }
+      const birthProblem = birthDateError(data.birth_date)
+      if (birthProblem) return birthProblem
+      const documentProblem = documentNumberError(data.document_type, data.document_number)
+      if (documentProblem) return documentProblem
     }
 
     if (key === "contact") {
@@ -999,49 +1091,68 @@ export function PatientIntakeWizard({
                 onSelect={() => selectPurpose(option.value)}
                 icon={option.icon}
                 title={option.title}
+                description={option.description}
               />
             ))}
           </div>
 
-          {isOccupational ? (
-            <Field label="Empresa de origem" required>
-              <LookupSearch
-                endpoint="/external_entities/empresa/"
-                placeholder="Pesquisar empresa"
-                value={{ id: data.origin_company_id, name: data.origin_company_name }}
-                onChange={(company) =>
-                  update({ origin_company_id: company.id, origin_company_name: company.name })
-                }
-              />
-            </Field>
+          {isOccupational || isClinical ? (
+            <div className="space-y-3 rounded-lg border border-[var(--border)] bg-[var(--gray-100)] p-3">
+              <h4 className="text-xs font-semibold uppercase tracking-wide text-[var(--gray-500)]">
+                Detalhes — {purposeLabel(data.visit_purpose)}
+              </h4>
+
+              {isOccupational ? (
+                <Field label="Empresa de origem" required>
+                  <LookupSearch
+                    endpoint="/external_entities/empresa/"
+                    placeholder="Pesquisar empresa"
+                    value={{ id: data.origin_company_id, name: data.origin_company_name }}
+                    onChange={(company) =>
+                      update({ origin_company_id: company.id, origin_company_name: company.name })
+                    }
+                  />
+                </Field>
+              ) : null}
+
+              {isClinical ? (
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <Field label="Tipo de proveniência">
+                    <select
+                      value={data.provenance}
+                      onChange={(event) => update({ provenance: event.target.value })}
+                      className={inputCls}
+                    >
+                      {CLINICAL_PROVENANCE_OPTIONS.map((option) => (
+                        <option key={option} value={option}>
+                          {option}
+                        </option>
+                      ))}
+                    </select>
+                  </Field>
+                  <div className="flex items-end">
+                    <div className="w-full">
+                      <ToggleRow
+                        checked={data.is_organ_donor}
+                        onChange={(checked) => update({ is_organ_donor: checked })}
+                        icon={HeartHandshake}
+                        title="Doador de órgãos"
+                        tone="amber"
+                      />
+                    </div>
+                  </div>
+                </div>
+              ) : null}
+            </div>
           ) : null}
 
-          {isClinical ? (
-            <div className="grid gap-3 sm:grid-cols-2">
-              <Field label="Tipo de proveniência">
-                <select
-                  value={data.provenance}
-                  onChange={(event) => update({ provenance: event.target.value })}
-                  className={inputCls}
-                >
-                  {CLINICAL_PROVENANCE_OPTIONS.map((option) => (
-                    <option key={option} value={option}>
-                      {option}
-                    </option>
-                  ))}
-                </select>
-              </Field>
-              <div className="flex items-end">
-                <div className="w-full">
-                  <ToggleRow
-                    checked={data.is_organ_donor}
-                    onChange={(checked) => update({ is_organ_donor: checked })}
-                    icon={HeartHandshake}
-                    title="Doador de órgãos"
-                    tone="amber"
-                  />
-                </div>
-              </div>
+          {isDonor ? (
+            <div className="flex items-start gap-2 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2.5 text-xs text-rose-700">
+              <Droplets size={14} className="mt-0.5 shrink-0" />
+              <span>
+                Será adicionado o passo <strong>Doação de sangue</strong> para registar a colheita, sinais
+                vitais e triagem.
+              </span>
             </div>
           ) : null}
         </div>
@@ -1065,10 +1176,16 @@ export function PatientIntakeWizard({
               </Field>
             </div>
 
-            <Field label="Data de nascimento" required={data.is_blood_donor}>
+            <Field
+              label="Data de nascimento"
+              required={data.is_blood_donor}
+              error={birthDateError(data.birth_date)}
+              hint={ageLabel(data.birth_date) ? `Idade: ${ageLabel(data.birth_date)}` : null}
+            >
               <input
                 type="date"
                 value={data.birth_date}
+                max={new Date().toISOString().slice(0, 10)}
                 onChange={(event) => update({ birth_date: event.target.value })}
                 className={inputCls}
               />
@@ -1134,11 +1251,15 @@ export function PatientIntakeWizard({
               </select>
             </Field>
 
-            <Field label="Número do documento">
+            <Field
+              label="Número do documento"
+              error={documentNumberError(data.document_type, data.document_number)}
+              hint={data.document_type === "NUIT" ? "9 dígitos" : null}
+            >
               <input
                 value={data.document_number}
                 onChange={(event) => update({ document_number: event.target.value })}
-                placeholder="Número do documento"
+                placeholder={data.document_type === "NUIT" ? "000000000" : "Número do documento"}
                 className={inputCls}
               />
             </Field>
@@ -1152,7 +1273,11 @@ export function PatientIntakeWizard({
         <div className="space-y-5">
           <SectionTitle icon={Phone} title="Contacto e morada" />
           <div className="grid gap-3 sm:grid-cols-2">
-            <Field label="Telefone">
+            <Field
+              label="Telefone"
+              error={phoneFeedback(data.contact).error}
+              hint={phoneFeedback(data.contact).hint}
+            >
               <input
                 value={data.contact}
                 onChange={(event) => update({ contact: event.target.value })}
@@ -1161,7 +1286,7 @@ export function PatientIntakeWizard({
               />
             </Field>
 
-            <Field label="Email">
+            <Field label="Email" error={emailFeedback(data.email, "Email do paciente")}>
               <input
                 type="email"
                 value={data.email}
@@ -1347,7 +1472,10 @@ export function PatientIntakeWizard({
                     className={inputCls}
                   />
                 </Field>
-                <Field label="Email do acompanhante">
+                <Field
+                  label="Email do acompanhante"
+                  error={emailFeedback(data.companion_email, "Email do acompanhante")}
+                >
                   <input
                     type="email"
                     value={data.companion_email}
