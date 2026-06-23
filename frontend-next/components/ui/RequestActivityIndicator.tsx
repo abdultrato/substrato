@@ -65,19 +65,15 @@ export default function RequestActivityIndicator() {
 
   return (
     <div
-      className="fixed right-4 top-4 z-[9998] animate-scale-in rounded-xl border border-primary/20 bg-card/95 px-3 py-2 shadow-lg backdrop-blur"
+      className="inline-flex items-center gap-1.5 rounded-full border border-primary/25 bg-primary/8 px-2.5 py-1 shadow-sm"
       role="status"
       aria-live="polite"
     >
-      <div className="flex items-center gap-3">
-        <div className="relative h-7 w-7 shrink-0" aria-hidden="true">
-          <div className="absolute inset-0 rounded-full border-2 border-primary/15" />
-          <div className="absolute inset-0 animate-spin rounded-full border-2 border-transparent border-r-primary/60 border-t-primary" />
-          <div className="absolute inset-[8px] rounded-full bg-primary/25 animate-pulse" />
-        </div>
-
-        <span className="text-sm font-semibold text-foreground">Espere...</span>
+      <div className="relative h-3.5 w-3.5 shrink-0" aria-hidden="true">
+        <div className="absolute inset-0 rounded-full border border-primary/20" />
+        <div className="absolute inset-0 animate-spin rounded-full border border-transparent border-r-primary/70 border-t-primary" />
       </div>
+      <span className="text-[11px] font-semibold text-primary/80 leading-none">Espere…</span>
     </div>
   )
 }

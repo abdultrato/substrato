@@ -12,13 +12,15 @@ import { useWorkspaceScope } from "@/hooks/useWorkspaceScope"
 import { userHasAnyGroup } from "@/lib/rbac"
 import { AlignJustify, ChevronDown, ChevronLeft, ChevronRight, LogOut, Moon, RefreshCw, Settings, Sun, User } from "lucide-react"
 import { NAV_ITEMS, NAV_SECTIONS, type NavItem } from "@/components/layout/Sidebar"
+import RequestActivityIndicator from "@/components/ui/RequestActivityIndicator"
 
 interface Props {
     user: SessionUser | null
     onMenuClick?: () => void
+    scrolledDown?: boolean
 }
 
-export default function Header({ user, onMenuClick }: Props) {
+export default function Header({ user, onMenuClick, scrolledDown = false }: Props) {
     const { signOut } = useAuth()
     const { isDark, toggle: toggleTheme } = useTheme()
     const { t } = useLanguage()
@@ -163,6 +165,7 @@ export default function Header({ user, onMenuClick }: Props) {
                 </div>
 
                 <div className="ml-auto flex items-center gap-2">
+                    <RequestActivityIndicator />
                     <button
                         type="button"
                         onClick={() => void refreshNow("manual")}
@@ -256,6 +259,7 @@ export default function Header({ user, onMenuClick }: Props) {
                 </div>
             </div>
 
+            <div className={`overflow-hidden transition-all duration-300 ease-in-out ${scrolledDown ? "max-h-0 opacity-0 pointer-events-none" : "max-h-12 opacity-100"}`}>
             <div className="flex h-8 items-center gap-0.5 border-t border-border/70 bg-card/90 px-1">
                 <button
                     type="button"
@@ -313,6 +317,7 @@ export default function Header({ user, onMenuClick }: Props) {
                 >
                     <ChevronRight size={16} />
                 </button>
+            </div>
             </div>
         </header>
     )

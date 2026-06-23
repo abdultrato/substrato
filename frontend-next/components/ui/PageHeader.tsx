@@ -17,9 +17,9 @@ export default function PageHeader ( {
     const { tr } = useLanguage()
 
     return (
-        <div className="mb-4 flex flex-col gap-3 border-b border-border pb-3 md:flex-row md:items-end md:justify-between">
+        <div className="mb-2 flex flex-col gap-1.5 border-b border-border pb-2 md:flex-row md:items-end md:justify-between">
             <div className="min-w-0">
-                <h1 className="break-words font-display text-xl font-semibold text-foreground sm:text-2xl">
+                <h1 className="break-words font-display text-sm font-semibold text-foreground sm:text-base">
                     {tr(title)}
                 </h1>
 

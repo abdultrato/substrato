@@ -10,7 +10,6 @@ import { SafeDataRefreshProvider } from "@/hooks/useSafeDataRefresh"
 
 const ToastContainer = dynamic(() => import("@/components/ui/ToastContainer"), { ssr: false })
 const ScrollArrowsManager = dynamic(() => import("@/components/ui/ScrollArrowsManager"), { ssr: false })
-const RequestActivityIndicator = dynamic(() => import("@/components/ui/RequestActivityIndicator"), { ssr: false })
 const NavigationWarmup = dynamic(() => import("@/components/navigation/NavigationWarmup"), { ssr: false })
 const NavigationClickFeedback = dynamic(() => import("@/components/navigation/NavigationClickFeedback"), { ssr: false })
 const FrontendErrorTelemetry = dynamic(() => import("@/components/monitoring/FrontendErrorTelemetry"), { ssr: false })
@@ -28,7 +27,6 @@ export default function Providers ( { children }: { children: React.ReactNode } 
                         </Suspense>
                         <FrontendErrorTelemetry />
                         {children}
-                        <RequestActivityIndicator />
                         <ToastContainer />
                         <ScrollArrowsManager />
                     </AutoTranslateTree>

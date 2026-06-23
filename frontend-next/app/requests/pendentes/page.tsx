@@ -1,6 +1,9 @@
 "use client"
 
 import Link from "next/link"
+import { Plus, FlaskConical, Clock, CheckCircle2, XCircle, Pencil, Loader2, Search, RotateCcw } from "lucide-react"
+import ManchesterBadge from "@/components/ui/ManchesterBadge"
+import { getManchesterMeta } from "@/lib/manchesterTriage"
 import { useCallback, useEffect, useRef, useState } from "react"
 
 import AppLayout from "@/components/layout/AppLayout"
@@ -8,7 +11,6 @@ import PageHeader from "@/components/ui/PageHeader"
 import useAuthGuard from "@/hooks/useAuthGuard"
 import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { apiFetch, apiFetchList } from "@/lib/api"
-import { getClinicalStatusLabel } from "@/lib/clinicalStatus"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -55,14 +57,14 @@ function fmt(value: string): string {
   return d.toLocaleString("pt-PT", { dateStyle: "short", timeStyle: "short" })
 }
 
+function urgencyAccent(status?: string): string {
+  const meta = getManchesterMeta(status)
+  return meta.accentClass
+}
+
 function priorityBadge(status?: string, display?: string) {
-  const label = getClinicalStatusLabel(status, display)
-  if (!label) return null
-  return (
-    <span className="inline-block rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
-      {label}
-    </span>
-  )
+  if (!status && !display) return null
+  return <ManchesterBadge status={status} display={display} />
 }
 
 // ─── Edit Modal ───────────────────────────────────────────────────────────────
@@ -280,66 +282,80 @@ function RequestCard({
 }) {
   const busy = busyId === row.id
   const isPending = row.status === "pendente" && !row.validated_at
+  const exams = row.items?.map((i) => i.exam_name ?? i.medical_exam_name).filter(Boolean) ?? []
 
   return (
-    <div className="flex flex-col gap-2 rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-3 shadow-sm">
-      {/* Top row */}
-      <div className="flex items-start justify-between gap-2">
+    <div className={`group relative flex flex-col gap-2 rounded-xl border border-[var(--border)] border-l-4 bg-[var(--card)] px-3 py-2.5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${urgencyAccent(row.clinical_status)}`}>
+
+      {/* Clicável — navega para detalhe */}
+      <Link href={`/requests/${row.id}`} className="absolute inset-0 rounded-xl" aria-label={`Ver requisição ${row.custom_id}`} />
+
+      {/* Header */}
+      <div className="relative flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <Link
-            href={`/requests/${row.id}`}
-            className="font-semibold text-[var(--primary-700)] hover:underline dark:text-[var(--primary-400)]"
-          >
-            {row.custom_id}
-          </Link>
-          <p className="truncate text-sm text-[var(--text)]">{row.patient_name}</p>
-          {row.patient_age ? (
-            <p className="text-xs text-[var(--gray-500)]">{row.patient_age}</p>
-          ) : null}
+          <span className="font-mono text-[11px] font-bold text-[var(--primary-700)]">{row.custom_id}</span>
+          <p className="mt-0.5 truncate text-xs font-semibold text-[var(--text)]">{row.patient_name}</p>
+          {row.patient_age ? <p className="text-[10px] text-[var(--gray-500)]">{row.patient_age}</p> : null}
         </div>
-        <div className="flex flex-shrink-0 flex-col items-end gap-1">
-          <span className={`rounded px-1.5 py-0.5 text-[10px] font-medium ${row.type === "LAB" ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300" : "bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300"}`}>
-            {row.type === "LAB" ? "Lab" : "Med"}
+        <div className="flex shrink-0 flex-col items-end gap-1">
+          <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${row.type === "LAB" ? "bg-sky-100 text-sky-700" : "bg-violet-100 text-violet-700"}`}>
+            {row.type === "LAB" ? "LAB" : "MED"}
           </span>
           {priorityBadge(row.clinical_status, row.clinical_status_display)}
         </div>
       </div>
 
-      {/* Items summary */}
-      {row.items?.length > 0 ? (
-        <p className="text-xs text-[var(--gray-500)] leading-snug">
-          {row.items.map((item) => item.exam_name ?? item.medical_exam_name ?? "Exame").join(", ")}
-        </p>
+      {/* Exames como pills */}
+      {exams.length > 0 ? (
+        <div className="relative flex flex-wrap gap-1">
+          {exams.slice(0, 3).map((name, i) => (
+            <span key={i} className="inline-flex items-center gap-0.5 rounded-full border border-[var(--primary-200)] bg-[var(--primary-50)] px-1.5 py-0.5 text-[10px] font-medium text-[var(--primary-700)]">
+              <FlaskConical size={8} />
+              {name}
+            </span>
+          ))}
+          {exams.length > 3 ? (
+            <span className="rounded-full border border-[var(--border)] bg-[var(--gray-100)] px-1.5 py-0.5 text-[10px] text-[var(--gray-500)]">
+              +{exams.length - 3}
+            </span>
+          ) : null}
+        </div>
       ) : null}
 
       {/* Footer */}
-      <div className="flex items-center justify-between gap-2 pt-1">
-        <span className="text-[10px] text-[var(--gray-400)]">{fmt(row.created_at)}</span>
+      <div className="relative flex items-center justify-between gap-2">
+        <span className="flex items-center gap-1 text-[10px] text-[var(--gray-400)]">
+          <Clock size={9} />
+          {fmt(row.created_at)}
+        </span>
 
         {isPending ? (
           <div className="flex items-center gap-1">
             <button
               type="button"
-              onClick={() => onCancel?.(row)}
+              onClick={(e) => { e.preventDefault(); onCancel?.(row) }}
               disabled={busy}
-              className="h-7 rounded border border-red-200 px-2 text-xs text-red-600 hover:bg-red-50 disabled:opacity-50 dark:border-red-800/40 dark:text-red-400 dark:hover:bg-red-900/20"
+              className="inline-flex h-6 items-center gap-1 rounded-full border border-red-200 bg-white px-2 text-[10px] font-medium text-red-600 transition hover:bg-red-50 disabled:opacity-50"
             >
+              <XCircle size={10} />
               Cancelar
             </button>
             <button
               type="button"
-              onClick={() => onEdit?.(row)}
+              onClick={(e) => { e.preventDefault(); onEdit?.(row) }}
               disabled={busy}
-              className="h-7 rounded border border-[var(--border)] px-2 text-xs text-[var(--gray-700)] hover:bg-[var(--gray-100)] disabled:opacity-50 dark:text-[var(--gray-300)]"
+              className="inline-flex h-6 items-center gap-1 rounded-full border border-[var(--border)] bg-white px-2 text-[10px] font-medium text-[var(--gray-700)] transition hover:bg-[var(--gray-100)] disabled:opacity-50"
             >
+              <Pencil size={10} />
               Editar
             </button>
             <button
               type="button"
-              onClick={() => onValidate?.(row)}
+              onClick={(e) => { e.preventDefault(); onValidate?.(row) }}
               disabled={busy}
-              className="h-7 rounded bg-[var(--primary-600)] px-3 text-xs font-semibold text-white hover:bg-[var(--primary-700)] disabled:opacity-60"
+              className="inline-flex h-6 items-center gap-1 rounded-full bg-[var(--primary-600)] px-2.5 text-[10px] font-semibold text-white transition hover:bg-[var(--primary-700)] disabled:opacity-60"
             >
+              {busy ? <Loader2 size={10} className="animate-spin" /> : <CheckCircle2 size={10} />}
               {busy ? "..." : "Validar"}
             </button>
           </div>
@@ -357,21 +373,21 @@ function Column({
   loading,
   empty,
   children,
-  colorClass = "bg-[var(--card)]",
+  accent,
 }: {
   title: string
   count: number
   loading: boolean
   empty: string
   children: React.ReactNode
-  colorClass?: string
+  accent: { header: string; badge: string }
 }) {
   return (
-    <div className="flex min-h-0 flex-col">
-      <div className={`mb-2 flex items-center gap-2 rounded-lg px-3 py-2 ${colorClass}`}>
-        <span className="font-semibold text-[var(--text)]">{title}</span>
+    <div className="flex flex-col">
+      <div className={`mb-2.5 flex items-center gap-2 rounded-xl border px-3 py-2 ${accent.header}`}>
+        <span className="text-sm font-semibold">{title}</span>
         {!loading ? (
-          <span className="rounded-full bg-[var(--background)] px-2 py-0.5 text-xs font-medium text-[var(--gray-500)]">
+          <span className={`ml-auto rounded-full px-2.5 py-0.5 text-xs font-bold ${accent.badge}`}>
             {count}
           </span>
         ) : null}
@@ -379,7 +395,7 @@ function Column({
       {loading ? (
         <p className="px-1 text-xs text-[var(--gray-400)]">Carregando...</p>
       ) : count === 0 ? (
-        <p className="px-1 text-xs text-[var(--gray-400)]">{empty}</p>
+        <p className="rounded-lg border border-dashed border-[var(--border)] px-3 py-6 text-center text-xs text-[var(--gray-400)]">{empty}</p>
       ) : (
         <div className="space-y-2">{children}</div>
       )}
@@ -403,48 +419,31 @@ export default function PendingRequestsPage() {
   const [feedback, setFeedback] = useState<string | null>(null)
   const [globalError, setGlobalError] = useState<string | null>(null)
   const [editRow, setEditRow] = useState<LabRequest | null>(null)
+  const [search, setSearch] = useState("")
 
-  const loadPending = useCallback(async () => {
+  const loadAll = useCallback(async () => {
     setLoadingPending(true)
-    try {
-      const { items } = await apiFetchList<LabRequest>(
-        "/clinical/labrequest/?validada=false&status=pendente",
-        { page: 1, pageSize: 100, clientCache: false }
-      )
-      setPending(items)
-    } catch { /* silent */ }
-    finally { setLoadingPending(false) }
-  }, [])
-
-  const loadCanceled = useCallback(async () => {
     setLoadingCanceled(true)
-    try {
-      const { items } = await apiFetchList<LabRequest>(
-        "/clinical/labrequest/?status=cancelado",
-        { page: 1, pageSize: 100, clientCache: false }
-      )
-      setCanceled(items)
-    } catch { /* silent */ }
-    finally { setLoadingCanceled(false) }
-  }, [])
-
-  const loadValidated = useCallback(async () => {
     setLoadingValidated(true)
     try {
       const { items } = await apiFetchList<LabRequest>(
-        "/clinical/labrequest/?validada=true",
-        { page: 1, pageSize: 100, clientCache: false }
+        "/clinical/labrequest/",
+        { page: 1, pageSize: 200, clientCache: false }
       )
-      setValidated(items)
+      setPending(items.filter((r) => ["pendente", "em_analise", "aguardando_validacao"].includes(r.status)))
+      setCanceled(items.filter((r) => r.status === "cancelado"))
+      setValidated(items.filter((r) => r.status === "validado"))
     } catch { /* silent */ }
-    finally { setLoadingValidated(false) }
+    finally {
+      setLoadingPending(false)
+      setLoadingCanceled(false)
+      setLoadingValidated(false)
+    }
   }, [])
 
   useEffect(() => {
-    loadPending()
-    loadCanceled()
-    loadValidated()
-  }, [loadPending, loadCanceled, loadValidated, safeRefreshToken])
+    loadAll()
+  }, [loadAll, safeRefreshToken])
 
   async function handleValidate(row: LabRequest) {
     setBusyId(row.id)
@@ -454,7 +453,7 @@ export default function PendingRequestsPage() {
       await apiFetch(`/clinical/labrequest/${row.id}/validar/`, { method: "POST" })
       setPending((prev) => prev.filter((r) => r.id !== row.id))
       setFeedback(`${row.custom_id} encaminhada para colheita.`)
-      loadValidated()
+      loadAll()
     } catch (e: any) {
       setGlobalError(e?.message || "Falha ao validar.")
     } finally {
@@ -470,18 +469,31 @@ export default function PendingRequestsPage() {
       await apiFetch(`/clinical/labrequest/${row.id}/cancelar/`, { method: "POST" })
       setPending((prev) => prev.filter((r) => r.id !== row.id))
       setFeedback(`${row.custom_id} cancelada.`)
-      loadCanceled()
+      loadAll()
     } catch (e: any) {
       const msg: string = e?.message ?? ""
       if (msg.includes("já foi cancelada")) {
         setPending((prev) => prev.filter((r) => r.id !== row.id))
-        loadCanceled()
+        loadAll()
       } else {
         setGlobalError(msg || "Falha ao cancelar.")
       }
     } finally {
       setBusyId(null)
     }
+  }
+
+  function filterRows(rows: LabRequest[]): LabRequest[] {
+    const q = search.trim().toLowerCase()
+    if (!q) return rows
+    return rows.filter((r) =>
+      r.custom_id?.toLowerCase().includes(q) ||
+      r.patient_name?.toLowerCase().includes(q) ||
+      r.items?.some((i) =>
+        i.exam_name?.toLowerCase().includes(q) ||
+        i.medical_exam_name?.toLowerCase().includes(q)
+      )
+    )
   }
 
   function handleSaved(updated: LabRequest) {
@@ -495,12 +507,12 @@ export default function PendingRequestsPage() {
       <div className="mx-auto w-full max-w-6xl space-y-4">
         <PageHeader
           title="Fila de requisições"
-          subtitle="Valide, edite ou cancele antes de encaminhar para colheita."
           actions={
             <Link
               href="/requests/new"
-              className="inline-flex h-9 items-center rounded-md bg-[var(--primary-600)] px-3 text-sm font-semibold text-white shadow-sm hover:bg-[var(--primary-700)]"
+              className="group/btn inline-flex h-8 items-center gap-1.5 rounded-full border border-[var(--primary-400)] bg-gradient-to-br from-[var(--primary-500)] to-[var(--primary-700)] px-3.5 text-xs font-semibold text-white shadow-md shadow-[var(--primary-900)]/20 transition-all duration-150 hover:from-[var(--primary-600)] hover:to-[var(--primary-800)] hover:text-white hover:shadow-lg hover:shadow-[var(--primary-900)]/30 active:scale-95"
             >
+              <Plus size={13} strokeWidth={2.5} className="transition-transform duration-150 group-hover/btn:rotate-90" />
               Nova requisição
             </Link>
           }
@@ -517,16 +529,39 @@ export default function PendingRequestsPage() {
           </div>
         ) : null}
 
+        {/* Barra de pesquisa */}
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="relative flex-1 min-w-[200px] max-w-sm">
+            <Search className="pointer-events-none absolute left-2.5 top-2.5 h-4 w-4 text-[var(--gray-400)]" />
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Pesquisar por código, paciente ou exame…"
+              className="w-full rounded-md border border-[var(--border)] bg-transparent py-2 pl-8 pr-3 text-sm text-[var(--text)] transition-colors placeholder:text-[var(--gray-400)] hover:border-[var(--primary-400)] focus:border-[var(--primary-500)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-100)]"
+            />
+          </div>
+          {search ? (
+            <button
+              type="button"
+              onClick={() => setSearch("")}
+              className="inline-flex h-9 items-center gap-1 rounded-md border border-[var(--border)] bg-transparent px-2.5 text-xs font-semibold text-[var(--gray-700)] shadow-sm transition hover:border-[var(--primary-300)] hover:bg-[var(--gray-100)]"
+            >
+              <RotateCcw size={12} />
+              Limpar
+            </button>
+          ) : null}
+        </div>
+
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           {/* Coluna 1 — Pendentes */}
           <Column
             title="Pendentes"
-            count={pending.length}
+            count={filterRows(pending).length}
             loading={loadingPending}
             empty="Sem requisições pendentes."
-            colorClass="border border-amber-200 bg-amber-50 dark:border-amber-800/30 dark:bg-amber-900/10"
+            accent={{ header: "border-amber-200 bg-amber-50 text-amber-800", badge: "bg-amber-100 text-amber-700" }}
           >
-            {pending.map((row) => (
+            {filterRows(pending).map((row) => (
               <RequestCard
                 key={row.id}
                 row={row}
@@ -541,12 +576,12 @@ export default function PendingRequestsPage() {
           {/* Coluna 2 — Canceladas */}
           <Column
             title="Canceladas"
-            count={canceled.length}
+            count={filterRows(canceled).length}
             loading={loadingCanceled}
             empty="Sem requisições canceladas."
-            colorClass="border border-red-200 bg-red-50 dark:border-red-800/30 dark:bg-red-900/10"
+            accent={{ header: "border-red-200 bg-red-50 text-red-800", badge: "bg-red-100 text-red-700" }}
           >
-            {canceled.map((row) => (
+            {filterRows(canceled).map((row) => (
               <RequestCard key={row.id} row={row} busyId={null} />
             ))}
           </Column>
@@ -554,12 +589,12 @@ export default function PendingRequestsPage() {
           {/* Coluna 3 — Validadas */}
           <Column
             title="Encaminhadas à Enfermagem"
-            count={validated.length}
+            count={filterRows(validated).length}
             loading={loadingValidated}
             empty="Nenhuma requisição encaminhada."
-            colorClass="border border-emerald-200 bg-emerald-50 dark:border-emerald-800/30 dark:bg-emerald-900/10"
+            accent={{ header: "border-emerald-200 bg-emerald-50 text-emerald-800", badge: "bg-emerald-100 text-emerald-700" }}
           >
-            {validated.map((row) => (
+            {filterRows(validated).map((row) => (
               <RequestCard key={row.id} row={row} busyId={null} />
             ))}
           </Column>

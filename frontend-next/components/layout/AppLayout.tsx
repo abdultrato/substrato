@@ -1,6 +1,6 @@
 "use client"
 
-import { ReactNode, useEffect, useMemo, useState, type CSSProperties } from "react"
+import { ReactNode, useEffect, useMemo, useRef, useState, type CSSProperties } from "react"
 import { usePathname, useRouter } from "next/navigation"
 import { useAuth } from "@/hooks/useAuth"
 import useAuthGuard from "@/hooks/useAuthGuard"
@@ -52,6 +52,10 @@ export default function AppLayout ( {
     const [navOpen, setNavOpen] = useState( false )
     const [accessResolutionReady, setAccessResolutionReady] = useState( true )
     const [showRestrictionNotice, setShowRestrictionNotice] = useState( false )
+    const [subNavVisible, setSubNavVisible] = useState( true )
+    const mainRef = useRef<HTMLElement>( null )
+    const lastScrollY = useRef( 0 )
+    const lockUntil = useRef( 0 )
     const footerLeftOffset = sidebarDesktopWidth
     const contentFrameStyle = {
         "--layout-right": rightAside ? rightAsideWidth : "0px",
@@ -182,6 +186,26 @@ export default function AppLayout ( {
         }
     }, [navOpen] )
 
+    useEffect( () => {
+        const el = mainRef.current
+        if ( !el ) return
+        function onScroll () {
+            if ( Date.now() < lockUntil.current ) return
+            const y = el.scrollTop
+            const delta = y - lastScrollY.current
+            if ( Math.abs( delta ) < 6 ) return
+            const next = delta < 0 || y < 40
+            setSubNavVisible( ( prev ) => {
+                if ( prev === next ) return prev
+                lockUntil.current = Date.now() + 400
+                return next
+            } )
+            lastScrollY.current = y
+        }
+        el.addEventListener( "scroll", onScroll, { passive: true } )
+        return () => el.removeEventListener( "scroll", onScroll )
+    }, [] )
+
     function handleMenuClick () {
         setNavOpen( true )
     }
@@ -287,11 +311,17 @@ export default function AppLayout ( {
                 className="flex h-screen min-w-0 flex-col md:ml-16 md:mr-[var(--layout-right)]"
                 style={contentFrameStyle}
             >
-                <Header user={user} onMenuClick={handleMenuClick} />
+                <Header user={user} onMenuClick={handleMenuClick} scrolledDown={!subNavVisible} />
 
-                {subNav ?? <ModuleSubNav />}
+                <div
+                    className={`overflow-hidden transition-all duration-300 ease-in-out ${
+                        subNavVisible ? "max-h-20 opacity-100" : "max-h-0 opacity-0 pointer-events-none"
+                    }`}
+                >
+                    {subNav ?? <ModuleSubNav />}
+                </div>
 
-                <main data-no-scroll-arrows className="substrato-app-surface flex-1 min-w-0 overflow-x-hidden overflow-y-auto px-2 py-2 pb-[calc(4rem+env(safe-area-inset-bottom))] sm:px-3 md:px-4 md:py-3 md:pb-12">
+                <main ref={mainRef} data-no-scroll-arrows className="substrato-app-surface flex-1 min-w-0 overflow-x-hidden overflow-y-auto px-2 py-2 pb-[calc(4rem+env(safe-area-inset-bottom))] sm:px-3 md:px-4 md:py-3 md:pb-12">
                     <div className="page-transition">
                         <AutoTranslateTree>{children}</AutoTranslateTree>
                     </div>
