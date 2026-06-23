@@ -370,8 +370,11 @@ export async function apiFetch<T = any>(
                 throw err
               }
             } else {
-              // Redirect por sessão expirada desactivado temporariamente.
-              // Para reactivar: descomentar clearSession() e window.location.href abaixo.
+              if (typeof window !== "undefined") {
+                const { logout } = await import("@/lib/session")
+                logout()
+                window.location.href = "/login"
+              }
               throw new Error("Sessão expirada. Faça login novamente.")
             }
           }

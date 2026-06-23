@@ -688,7 +688,8 @@ def institutional_draw_line_full_width(canvas_obj, doc):
 # =========================================================
 
 def institutional_on_page(canvas_obj, doc, user=None):
-    draw_institutional_header(canvas_obj, doc)
+    if canvas_obj.getPageNumber() == 1:
+        draw_institutional_header(canvas_obj, doc)
     draw_institutional_corner_barcode(canvas_obj, doc)
     _request_institutional_signatures(canvas_obj, doc, user, draw_institutional_signatures)
 
@@ -1339,7 +1340,8 @@ def institutional_draw_line_full_width_improved(canvas_obj, doc):
 # =========================================================
 
 def improved_institutional_on_page(canvas_obj, doc, user=None):
-    draw_institutional_header_improved(canvas_obj, doc, getattr(doc, "header_config", None))
+    if canvas_obj.getPageNumber() == 1:
+        draw_institutional_header_improved(canvas_obj, doc, getattr(doc, "header_config", None))
     draw_institutional_corner_barcode(canvas_obj, doc)
     _request_institutional_signatures(canvas_obj, doc, user, draw_institutional_signatures_improved)
 

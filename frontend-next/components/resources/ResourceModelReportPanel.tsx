@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useRef, useState } from "react"
-import { CalendarRange, FileDown, FileText, Loader2, Sparkles } from "lucide-react"
+import { CalendarRange, FileDown, Loader2, Sparkles } from "lucide-react"
 
 import { useLanguage } from "@/hooks/useLanguage"
 import { apiFetch } from "@/lib/api"
@@ -193,142 +193,99 @@ export default function ResourceModelReportPanel({
   }
 
   return (
-    <section className="rounded-lg border border-[var(--border)] bg-[var(--card)] p-3 shadow-sm">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <div className="inline-flex h-8 w-8 items-center justify-center rounded-md bg-[var(--primary-100)] text-[var(--primary-700)]">
-            <FileText size={16} />
-          </div>
-          <div>
-            <p className="text-sm font-semibold text-[var(--text)]">{t("Relatório corporativo", "Corporate report")}</p>
-            <p className="text-xs text-[var(--gray-600)]">
-              {groupLabel} / {resourceLabel}
-            </p>
-          </div>
+    <section className="rounded-xl border border-white/20 bg-white/25 shadow-sm backdrop-blur-sm dark:bg-white/5 dark:border-white/10">
+      {/* Controls */}
+      <div className="flex flex-wrap items-center gap-2 p-3">
+        <div className="relative">
+          <CalendarRange className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+          <input
+            type="date"
+            value={dateFrom}
+            onChange={(e) => setDateFrom(e.target.value)}
+            className="rounded-lg border border-border bg-background py-1.5 pl-8 pr-2 text-xs text-foreground outline-none transition focus:border-violet-500 focus:ring-2 focus:ring-violet-500/25"
+          />
+        </div>
+        <span className="text-[11px] text-muted-foreground">→</span>
+        <div className="relative">
+          <CalendarRange className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+          <input
+            type="date"
+            value={dateTo}
+            onChange={(e) => setDateTo(e.target.value)}
+            className="rounded-lg border border-border bg-background py-1.5 pl-8 pr-2 text-xs text-foreground outline-none transition focus:border-violet-500 focus:ring-2 focus:ring-violet-500/25"
+          />
         </div>
 
         <div className="flex items-center gap-1">
-          <button
-            type="button"
-            onClick={() => applyQuickWindow(7)}
-            className="rounded-md border border-[var(--border)] bg-white px-2 py-1 text-xs font-medium text-[var(--gray-700)] shadow-sm transition-all duration-150 hover:border-[var(--primary-300)] hover:bg-[var(--gray-100)]"
-          >
-            7d
-          </button>
-          <button
-            type="button"
-            onClick={() => applyQuickWindow(30)}
-            className="rounded-md border border-[var(--border)] bg-white px-2 py-1 text-xs font-medium text-[var(--gray-700)] shadow-sm transition-all duration-150 hover:border-[var(--primary-300)] hover:bg-[var(--gray-100)]"
-          >
-            30d
-          </button>
-          <button
-            type="button"
-            onClick={() => applyQuickWindow(90)}
-            className="rounded-md border border-[var(--border)] bg-white px-2 py-1 text-xs font-medium text-[var(--gray-700)] shadow-sm transition-all duration-150 hover:border-[var(--primary-300)] hover:bg-[var(--gray-100)]"
-          >
-            90d
-          </button>
+          {[7, 30, 90].map((d) => (
+            <button key={d} type="button" onClick={() => applyQuickWindow(d)}
+              className="rounded-lg border border-border bg-card px-2 py-1.5 text-[11px] font-semibold text-foreground transition hover:border-violet-400 hover:bg-muted">
+              {d}d
+            </button>
+          ))}
         </div>
-      </div>
 
-      <div className="mt-3 grid gap-2 md:grid-cols-2 xl:grid-cols-5">
-        <label className="space-y-1">
-          <span className="text-[11px] font-semibold uppercase tracking-wide text-[var(--gray-600)]">{t("De", "From")}</span>
-          <div className="relative">
-            <CalendarRange className="pointer-events-none absolute left-2 top-2 h-4 w-4 text-[var(--gray-400)]" />
-            <input
-              type="date"
-              value={dateFrom}
-              onChange={(e) => setDateFrom(e.target.value)}
-              className="w-full rounded-md border border-[var(--border)] bg-white py-1.5 pl-8 pr-2 text-sm text-[var(--text)] shadow-sm transition-colors duration-150 hover:border-[var(--primary-400)] focus:border-[var(--primary-500)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-100)]"
-            />
-          </div>
-        </label>
+        <select
+          value={mode}
+          onChange={(e) => setMode(e.target.value as ReportMode)}
+          className="rounded-lg border border-border bg-background px-2.5 py-1.5 text-xs text-foreground outline-none transition focus:border-violet-500 focus:ring-2 focus:ring-violet-500/25"
+        >
+          {modeOptions.map((option) => (
+            <option key={option.value} value={option.value}>{t(option.labelPt, option.labelEn)}</option>
+          ))}
+        </select>
 
-        <label className="space-y-1">
-          <span className="text-[11px] font-semibold uppercase tracking-wide text-[var(--gray-600)]">{t("Até", "To")}</span>
-          <div className="relative">
-            <CalendarRange className="pointer-events-none absolute left-2 top-2 h-4 w-4 text-[var(--gray-400)]" />
-            <input
-              type="date"
-              value={dateTo}
-              onChange={(e) => setDateTo(e.target.value)}
-              className="w-full rounded-md border border-[var(--border)] bg-white py-1.5 pl-8 pr-2 text-sm text-[var(--text)] shadow-sm transition-colors duration-150 hover:border-[var(--primary-400)] focus:border-[var(--primary-500)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-100)]"
-            />
-          </div>
-        </label>
+        <input
+          type="number"
+          min={20}
+          max={1000}
+          step={10}
+          value={limit}
+          onChange={(e) => setLimit(Number(e.target.value || 200))}
+          className="w-20 rounded-lg border border-border bg-background px-2.5 py-1.5 text-xs text-foreground outline-none transition focus:border-violet-500 focus:ring-2 focus:ring-violet-500/25"
+        />
 
-        <label className="space-y-1">
-          <span className="text-[11px] font-semibold uppercase tracking-wide text-[var(--gray-600)]">{t("Modo", "Mode")}</span>
-          <select
-            value={mode}
-            onChange={(e) => setMode(e.target.value as ReportMode)}
-            className="w-full rounded-md border border-[var(--border)] bg-white px-2 py-1.5 text-sm text-[var(--text)] shadow-sm transition-colors duration-150 hover:border-[var(--primary-400)] focus:border-[var(--primary-500)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-100)]"
-          >
-            {modeOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {t(option.labelPt, option.labelEn)}
-              </option>
-            ))}
-          </select>
-        </label>
+        <button
+          type="button"
+          onClick={() => void handleGenerate()}
+          disabled={running}
+          className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-md shadow-violet-500/30 transition hover:from-violet-700 hover:to-indigo-700 disabled:opacity-60"
+        >
+          {running ? <Loader2 size={12} className="animate-spin" /> : <FileDown size={12} />}
+          {running ? t("Gerando...", "Generating...") : t("Gerar PDF", "Generate PDF")}
+        </button>
 
-        <label className="space-y-1">
-          <span className="text-[11px] font-semibold uppercase tracking-wide text-[var(--gray-600)]">{t("Linhas", "Rows")}</span>
-          <input
-            type="number"
-            min={20}
-            max={1000}
-            step={10}
-            value={limit}
-            onChange={(e) => setLimit(Number(e.target.value || 200))}
-            className="w-full rounded-md border border-[var(--border)] bg-white px-2 py-1.5 text-sm text-[var(--text)] shadow-sm transition-colors duration-150 hover:border-[var(--primary-400)] focus:border-[var(--primary-500)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-100)]"
-          />
-        </label>
-
-        <div className="flex items-end">
-          <button
-            type="button"
-            onClick={() => void handleGenerate()}
-            disabled={running}
-            className="inline-flex h-9 w-full items-center justify-center gap-2 rounded-md bg-[var(--primary-600)] px-3 text-sm font-semibold text-white shadow-sm transition-all duration-150 hover:bg-[var(--primary-700)] hover:shadow-md disabled:opacity-70"
-          >
-            {running ? <Loader2 size={15} className="animate-spin" /> : <FileDown size={15} />}
-            {running ? t("Gerando...", "Generating...") : t("Gerar PDF", "Generate PDF")}
-          </button>
-        </div>
-      </div>
-
-      <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
         {(searchTerm || "").trim() ? (
-          <span className="rounded-md border border-[var(--border)] bg-white px-2 py-0.5 text-[var(--gray-700)]">
+          <span className="rounded-lg border border-border bg-muted px-2 py-1 text-[11px] text-foreground">
             {t("Pesquisa:", "Search:")} {(searchTerm || "").trim()}
           </span>
         ) : null}
         {(statusFilter || "").trim() ? (
-          <span className="rounded-md border border-[var(--border)] bg-white px-2 py-0.5 text-[var(--gray-700)]">
+          <span className="rounded-lg border border-border bg-muted px-2 py-1 text-[11px] text-foreground">
             {t("Estado:", "Status:")} {(statusFilter || "").trim()}
           </span>
         ) : null}
       </div>
 
-      {jobStatus ? (
-        <div className="mt-2 inline-flex items-center gap-1 rounded-md bg-[var(--gray-100)] px-2 py-1 text-xs font-medium text-[var(--gray-700)]">
-          <Sparkles size={12} />
-          {t("Estado do job:", "Job status:")} {jobStatus}
-        </div>
-      ) : null}
-
-      {feedback ? (
-        <div className="mt-2 rounded-md border border-emerald-200 bg-emerald-50 px-2.5 py-1.5 text-xs text-emerald-800">
-          {feedback}
-        </div>
-      ) : null}
-
-      {error ? (
-        <div className="mt-2 rounded-md border border-rose-200 bg-rose-50 px-2.5 py-1.5 text-xs text-rose-800">
-          {error}
+      {/* Status / feedback */}
+      {(jobStatus || feedback || error) ? (
+        <div className="border-t border-border/60 px-4 py-3 space-y-2">
+          {jobStatus && !feedback && !error ? (
+            <div className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-muted px-3 py-1.5 text-xs font-medium text-foreground">
+              <Sparkles size={12} className="text-violet-500" />
+              {t("Estado:", "Status:")} {jobStatus}
+            </div>
+          ) : null}
+          {feedback ? (
+            <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-800 dark:border-emerald-700/30 dark:bg-emerald-900/15 dark:text-emerald-400">
+              {feedback}
+            </div>
+          ) : null}
+          {error ? (
+            <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-medium text-red-800 dark:border-red-700/30 dark:bg-red-900/15 dark:text-red-400">
+              {error}
+            </div>
+          ) : null}
         </div>
       ) : null}
     </section>

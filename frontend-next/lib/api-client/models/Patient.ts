@@ -70,7 +70,7 @@ export type Patient = {
     /**
      * Origem/proveniência do patient na clínica
      */
-    provenance?: 'Ambulatório' | 'Clínica Externa' | 'Medicina Ocupacional' | 'Maternidade' | 'Ginecologia' | 'Pediatria' | 'Banco de Socorros' | 'Consulta Externa' | 'Urologia' | 'Cirurgia' | 'Dentária' | 'Oftalmologia' | 'Outro';
+    provenance?: 'Ambulatório' | 'Clínica Externa' | 'Medicina Ocupacional' | 'Maternidade' | 'Ginecologia' | 'Pediatria' | 'Banco de Socorros' | 'Consulta Externa' | 'Urologia' | 'Cirurgia' | 'Dentária' | 'Oftalmologia' | 'Doação de Sangue' | 'Outro';
     readonly created_by?: string | null;
     readonly updated_by?: string | null;
     readonly deleted_by?: string | null;

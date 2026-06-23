@@ -14,6 +14,7 @@ class Provenance(models.TextChoices):
     CIRURGIA = "Cirurgia", "Cirurgia"
     DENTARIA = "Dentária", "Dentária"
     OFTALMOLOGIA = "Oftalmologia", "Oftalmologia"
+    DOACAO_SANGUE = "Doação de Sangue", "Doação de Sangue"
     OUTRO = "Outro", "Outro"
 
 

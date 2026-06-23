@@ -10,25 +10,61 @@ import useAuth from "@/hooks/useAuth";
 import { useLanguage } from "@/hooks/useLanguage";
 import { getDefaultWorkspaceHref } from "@/lib/rbac";
 import { getLastVisitedPath, isSafeInternalPath } from "@/lib/lastVisited";
-import { LOGO_DARK_SRC } from "@/lib/brand";
+import { LOGO_LIGHT_SRC, LOGO_DARK_SRC } from "@/lib/brand";
 
 type View = "login" | "reset_request" | "reset_confirm";
 
-// Token-based surface (light/dark aware) + brand-violet focus ring.
-const INPUT_CLASS =
-    "w-full rounded-lg border border-border bg-background px-3.5 py-2.5 text-sm text-foreground placeholder:text-muted-foreground shadow-sm outline-none transition focus:border-violet-500 focus:ring-2 focus:ring-violet-500/25";
+const FLOATING_INPUT_CLASS =
+    "peer w-full rounded-lg border border-border bg-background px-3.5 pb-2 pt-5 text-sm text-foreground shadow-sm outline-none transition focus:border-violet-500 focus:ring-2 focus:ring-violet-500/25";
 
-function PasswordInput({
+const FLOATING_LABEL_CLASS =
+    "pointer-events-none absolute left-3.5 top-1.5 text-[10px] font-medium text-muted-foreground transition-all peer-placeholder-shown:top-3.5 peer-placeholder-shown:text-sm peer-focus:top-1.5 peer-focus:text-[10px] peer-focus:text-violet-500";
+
+function FloatingInput({
     id,
     name,
-    placeholder,
+    label,
+    value,
+    onChange,
+    autoComplete,
+    autoFocus,
+}: {
+    id: string;
+    name: string;
+    label: string;
+    value: string;
+    onChange: (v: string) => void;
+    autoComplete?: string;
+    autoFocus?: boolean;
+}) {
+    return (
+        <div className="relative">
+            <input
+                id={id}
+                name={name}
+                placeholder=" "
+                value={value}
+                onChange={(e) => onChange(e.target.value)}
+                autoComplete={autoComplete}
+                autoFocus={autoFocus}
+                className={FLOATING_INPUT_CLASS}
+            />
+            <label htmlFor={id} className={FLOATING_LABEL_CLASS}>{label}</label>
+        </div>
+    );
+}
+
+function FloatingPasswordInput({
+    id,
+    name,
+    label,
     value,
     onChange,
     autoComplete,
 }: {
     id: string;
     name: string;
-    placeholder: string;
+    label: string;
     value: string;
     onChange: (v: string) => void;
     autoComplete?: string;
@@ -41,12 +77,13 @@ function PasswordInput({
                 id={id}
                 name={name}
                 type={show ? "text" : "password"}
-                placeholder={placeholder}
+                placeholder=" "
                 value={value}
                 onChange={(e) => onChange(e.target.value)}
                 autoComplete={autoComplete}
-                className={`${INPUT_CLASS} pr-10`}
+                className={`${FLOATING_INPUT_CLASS} pr-10`}
             />
+            <label htmlFor={id} className={FLOATING_LABEL_CLASS}>{label}</label>
             <button
                 type="button"
                 onClick={() => setShow((v) => !v)}
@@ -192,7 +229,7 @@ export default function LoginPage() {
             {/* ─── Centered card ─── */}
             {/* scale uniforme: reduz altura e largura na mesma proporção exata,
                 preservando toda a estrutura/comportamento do formulário. */}
-            <div className="substrato-brand-card w-full max-w-md origin-center scale-90 overflow-hidden rounded-2xl border border-border shadow-xl lg:grid lg:max-w-3xl lg:grid-cols-2">
+            <div className="substrato-brand-card w-full max-w-md origin-center scale-[0.70] overflow-hidden rounded-2xl border border-border shadow-xl lg:grid lg:max-w-3xl lg:grid-cols-2">
 
                 {/* Brand panel — left on lg+, hidden on small (mobile shows it above the form) */}
                 <aside className="relative hidden overflow-hidden bg-gradient-to-br from-violet-700 via-violet-800 to-indigo-900 p-10 text-white lg:flex lg:flex-col lg:justify-center">
@@ -244,8 +281,20 @@ export default function LoginPage() {
                         </div>
                     </div>
 
-                    {/* Heading */}
+                    {/* Logo + Heading */}
                     <div className="mb-6">
+                        <img
+                            src={LOGO_LIGHT_SRC}
+                            alt="Substrato"
+                            className="mb-4 h-7 w-auto dark:hidden"
+                            draggable={false}
+                        />
+                        <img
+                            src={LOGO_DARK_SRC}
+                            alt="Substrato"
+                            className="mb-4 hidden h-7 w-auto dark:block"
+                            draggable={false}
+                        />
                         {view === "login" ? (
                             <h1 className="text-xl font-semibold tracking-tight text-foreground">
                                 {t("Iniciar", "Sign")}{" "}
@@ -274,31 +323,27 @@ export default function LoginPage() {
                     {view === "login" && (
                         <>
                             <form onSubmit={handleLogin} className="flex flex-col gap-4">
-                                <label className="flex flex-col gap-1.5">
-                                    <input
-                                        id="utilizador"
-                                        name="utilizador"
-                                        autoComplete="username"
-                                        placeholder={t("Usuário", "Username")}
-                                        value={user}
-                                        onChange={(e) => setUser(e.target.value)}
-                                        className={INPUT_CLASS}
-                                    />
-                                </label>
-                                <label className="flex flex-col gap-1.5">
-                                    <PasswordInput
-                                        id="palavra-passe"
-                                        name="palavra_passe"
-                                        placeholder={t("Palavra-passe", "Password")}
-                                        value={pass}
-                                        onChange={setPass}
-                                        autoComplete="current-password"
-                                    />
-                                </label>
+                                <FloatingInput
+                                    id="utilizador"
+                                    name="utilizador"
+                                    label={t("Usuário", "Username")}
+                                    value={user}
+                                    onChange={setUser}
+                                    autoComplete="username"
+                                    autoFocus
+                                />
+                                <FloatingPasswordInput
+                                    id="palavra-passe"
+                                    name="palavra_passe"
+                                    label={t("Palavra-passe", "Password")}
+                                    value={pass}
+                                    onChange={setPass}
+                                    autoComplete="current-password"
+                                />
                                 <button
                                     type="submit"
                                     disabled={loading}
-                                    className="mt-1 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-violet-600 px-3 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-violet-700 disabled:opacity-60"
+                                    className="mt-1 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-violet-600 to-indigo-600 px-3 py-2.5 text-sm font-semibold text-white shadow-md shadow-violet-500/30 transition hover:from-violet-700 hover:to-indigo-700 disabled:opacity-60"
                                 >
                                     {loading && <Loader2 size={15} className="animate-spin" />}
                                     {t("Entrar", "Sign in")}
@@ -319,21 +364,18 @@ export default function LoginPage() {
                     {view === "reset_request" && (
                         <>
                             <form onSubmit={handleResetRequest} className="flex flex-col gap-4">
-                                <label className="flex flex-col gap-1.5">
-                                    <span className="text-xs font-medium text-foreground">{t("Identificação", "Identification")}</span>
-                                    <input
-                                        id="identificador-reposicao"
-                                        name="identificador_reposicao"
-                                        placeholder={t("E-mail, telefone ou utilizador", "E-mail, phone or username")}
-                                        value={resetId}
-                                        onChange={(e) => setResetId(e.target.value)}
-                                        className={INPUT_CLASS}
-                                    />
-                                </label>
+                                <FloatingInput
+                                    id="identificador-reposicao"
+                                    name="identificador_reposicao"
+                                    label={t("E-mail, telefone ou utilizador", "E-mail, phone or username")}
+                                    value={resetId}
+                                    onChange={setResetId}
+                                    autoFocus
+                                />
                                 <button
                                     type="submit"
                                     disabled={loading}
-                                    className="mt-1 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-violet-600 px-3 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-violet-700 disabled:opacity-60"
+                                    className="mt-1 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-violet-600 to-indigo-600 px-3 py-2.5 text-sm font-semibold text-white shadow-md shadow-violet-500/30 transition hover:from-violet-700 hover:to-indigo-700 disabled:opacity-60"
                                 >
                                     {loading && <Loader2 size={15} className="animate-spin" />}
                                     {t("Enviar código", "Send code")}
@@ -354,43 +396,34 @@ export default function LoginPage() {
                     {view === "reset_confirm" && (
                         <>
                             <form onSubmit={handleResetConfirm} className="flex flex-col gap-4">
-                                <label className="flex flex-col gap-1.5">
-                                    <span className="text-xs font-medium text-foreground">{t("Código recebido", "Received code")}</span>
-                                    <input
-                                        id="codigo-reposicao"
-                                        name="codigo_reposicao"
-                                        placeholder={t("Código recebido", "Received code")}
-                                        value={resetToken}
-                                        onChange={(e) => setResetToken(e.target.value)}
-                                        className={INPUT_CLASS}
-                                    />
-                                </label>
-                                <label className="flex flex-col gap-1.5">
-                                    <span className="text-xs font-medium text-foreground">{t("Nova palavra-passe", "New password")}</span>
-                                    <PasswordInput
-                                        id="nova-palavra-passe"
-                                        name="nova_palavra_passe"
-                                        placeholder="••••••••"
-                                        value={resetPass}
-                                        onChange={setResetPass}
-                                        autoComplete="new-password"
-                                    />
-                                </label>
-                                <label className="flex flex-col gap-1.5">
-                                    <span className="text-xs font-medium text-foreground">{t("Confirmar palavra-passe", "Confirm password")}</span>
-                                    <PasswordInput
-                                        id="confirmar-palavra-passe"
-                                        name="confirmar_palavra_passe"
-                                        placeholder="••••••••"
-                                        value={resetPass2}
-                                        onChange={setResetPass2}
-                                        autoComplete="new-password"
-                                    />
-                                </label>
+                                <FloatingInput
+                                    id="codigo-reposicao"
+                                    name="codigo_reposicao"
+                                    label={t("Código recebido", "Received code")}
+                                    value={resetToken}
+                                    onChange={setResetToken}
+                                    autoFocus
+                                />
+                                <FloatingPasswordInput
+                                    id="nova-palavra-passe"
+                                    name="nova_palavra_passe"
+                                    label={t("Nova palavra-passe", "New password")}
+                                    value={resetPass}
+                                    onChange={setResetPass}
+                                    autoComplete="new-password"
+                                />
+                                <FloatingPasswordInput
+                                    id="confirmar-palavra-passe"
+                                    name="confirmar_palavra_passe"
+                                    label={t("Confirmar palavra-passe", "Confirm password")}
+                                    value={resetPass2}
+                                    onChange={setResetPass2}
+                                    autoComplete="new-password"
+                                />
                                 <button
                                     type="submit"
                                     disabled={loading}
-                                    className="mt-1 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-violet-600 px-3 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-violet-700 disabled:opacity-60"
+                                    className="mt-1 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-violet-600 to-indigo-600 px-3 py-2.5 text-sm font-semibold text-white shadow-md shadow-violet-500/30 transition hover:from-violet-700 hover:to-indigo-700 disabled:opacity-60"
                                 >
                                     {loading && <Loader2 size={15} className="animate-spin" />}
                                     {t("Repor palavra-passe", "Reset password")}

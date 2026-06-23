@@ -524,7 +524,8 @@ def _request_signatures(canvas_obj, doc, user=None):
 
 
 def on_page(canvas_obj, doc, user=None):
-    draw_header(canvas_obj, doc)
+    if canvas_obj.getPageNumber() == 1:
+        draw_header(canvas_obj, doc)
     draw_corner_barcode(canvas_obj, doc)
     _request_signatures(canvas_obj, doc, user)
 

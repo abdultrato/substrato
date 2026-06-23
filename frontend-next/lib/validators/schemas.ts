@@ -21,6 +21,7 @@ const ProvenienciaEnum = z.enum([
   'Cirurgia',
   'Dentária',
   'Oftalmologia',
+  'Doação de Sangue',
   'Outro',
 ])
 

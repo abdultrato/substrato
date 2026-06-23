@@ -3,11 +3,13 @@
 import { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
+    Activity,
     ArrowLeft,
     Building2,
     Calendar,
     Droplets,
     FileText,
+    FlaskConical,
     HeartHandshake,
     Pencil,
     Phone,
@@ -22,13 +24,30 @@ import { useAuth } from "@/hooks/useAuth";
 import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh";
 import { GROUPS, userHasAnyGroup } from "@/lib/rbac";
 import type { Patient } from "@/lib/types";
+import type { BloodDonation } from "@/lib/api-client/models/BloodDonation";
 
 type PatientDetail = Patient & {
     age_display?: string | null;
     age_years?: number | null;
     is_blood_donor?: boolean;
+    is_replacement_donor_inapt?: boolean;
+    replacement_donor_inapt_at?: string | null;
+    replacement_donor_inapt_reason?: string;
     updated_at?: string;
 };
+
+const DONOR_ROLE: Record<string, string> = { VOL: "Voluntário", REP: "Substituição" };
+const DONATION_TYPE: Record<string, string> = { WBL: "Sangue total", APH: "Aférese" };
+const DONATION_STATUS: Record<string, string> = { REG: "Registado", SCR: "Em rastreio", COM: "Concluído", CAN: "Cancelado" };
+const SCREENING_STATUS: Record<string, string> = { PEN: "Pendente", APR: "Aprovado", REJ: "Rejeitado" };
+const TEST_RESULT: Record<string, string> = { PEN: "Pendente", NEG: "Negativo", POS: "Positivo", INC: "Inconclusivo", NDO: "Não realizado" };
+
+function testBadge(val?: string): React.ReactNode {
+    if (!val || val === "NDO") return undefined;
+    if (val === "NEG") return <span className="font-semibold text-emerald-600 dark:text-emerald-400">{TEST_RESULT[val]}</span>;
+    if (val === "POS") return <span className="font-semibold text-red-600 dark:text-red-400">{TEST_RESULT[val]}</span>;
+    return <span className="font-semibold text-amber-600 dark:text-amber-400">{TEST_RESULT[val] ?? val}</span>;
+}
 
 const VIEW_GROUPS = [
     GROUPS.ADMIN,
@@ -49,8 +68,8 @@ const DOC_LABELS: Record<string, string> = {
     OUT: "Outro",
 };
 
-function fmtDate(value?: string | null): string {
-    if (!value) return "—";
+function fmtDate(value?: string | null): string | undefined {
+    if (!value) return undefined;
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) return String(value);
     return date.toLocaleDateString("pt-PT", { dateStyle: "medium" });
@@ -141,10 +160,11 @@ function SectionCard({
 }
 
 function InfoRow({ label, value }: { label: string; value?: React.ReactNode }) {
+    if (value === null || value === undefined || value === "" || value === "—") return null;
     return (
         <div className="flex items-start justify-between gap-4 py-2 text-xs">
             <span className="shrink-0 font-medium text-muted-foreground">{label}</span>
-            <span className="max-w-[62%] text-right font-medium text-foreground">{value ?? "—"}</span>
+            <span className="max-w-[62%] text-right font-medium text-foreground">{value}</span>
         </div>
     );
 }
@@ -173,6 +193,7 @@ export default function PacienteDetalhePage() {
     const [paciente, setPaciente] = useState<PatientDetail | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [donations, setDonations] = useState<BloodDonation[]>([]);
 
     const carregar = useCallback(async () => {
         if (!idStr) return;
@@ -184,6 +205,16 @@ export default function PacienteDetalhePage() {
                 clientCache: safeRefreshToken === 0,
             });
             setPaciente(data);
+            if (data.is_blood_donor) {
+                try {
+                    const res = await apiFetch<{ results: BloodDonation[] }>(
+                        `/blood-donations/?donor=${idStr}&page_size=20&ordering=-collected_at`,
+                    );
+                    setDonations(res?.results ?? []);
+                } catch {
+                    setDonations([]);
+                }
+            }
         } catch (err: any) {
             setError(isNotFoundLikeError(err) ? null : err?.message || "Erro ao carregar paciente");
         } finally {
@@ -327,20 +358,20 @@ export default function PacienteDetalhePage() {
                 <div className="grid gap-3 md:grid-cols-2">
                     <SectionCard icon={User} title="Identificação">
                         <InfoRow label="Género" value={genderLabel(p.gender)} />
-                        <InfoRow label="Idade" value={p.age_display || "—"} />
+                        <InfoRow label="Idade" value={p.age_display} />
                         <InfoRow label="Data de nascimento" value={fmtDate(p.birth_date)} />
-                        <InfoRow label="Raça / origem" value={p.race_origin || "—"} />
+                        <InfoRow label="Raça / origem" value={p.race_origin} />
                         <InfoRow
                             label="Tipo sanguíneo"
-                            value={p.blood_type && p.blood_type !== "UNK" ? p.blood_type : "—"}
+                            value={p.blood_type && p.blood_type !== "UNK" ? p.blood_type : undefined}
                         />
-                        <InfoRow label="Documento" value={documentValue(p)} />
+                        <InfoRow label="Documento" value={documentValue(p) === "—" ? undefined : documentValue(p)} />
                     </SectionCard>
 
                     <SectionCard icon={Phone} title="Contacto e morada">
-                        <InfoRow label="Telefone" value={p.contact || "—"} />
-                        <InfoRow label="Email" value={p.email || "—"} />
-                        <InfoRow label="Morada" value={buildAddress(p)} />
+                        <InfoRow label="Telefone" value={p.contact} />
+                        <InfoRow label="Email" value={p.email} />
+                        <InfoRow label="Morada" value={buildAddress(p) === "—" ? undefined : buildAddress(p)} />
                     </SectionCard>
 
                     <SectionCard icon={HeartHandshake} title="Clínico">
@@ -355,6 +386,60 @@ export default function PacienteDetalhePage() {
                         <InfoRow label="Doador de sangue" value={p.is_blood_donor ? "Sim" : "Não"} />
                         <InfoRow label="Doador de órgãos" value={p.is_organ_donor ? "Sim" : "Não"} />
                     </SectionCard>
+
+                    {p.is_blood_donor ? (() => {
+                        const last = donations[0];
+                        return (
+                            <>
+                                <SectionCard icon={Droplets} title="Doação de sangue">
+                                    <InfoRow label="Total de doações" value={donations.length > 0 ? String(donations.length) : undefined} />
+                                    <InfoRow label="Última doação" value={last ? fmtDate(last.collected_at) : undefined} />
+                                    <InfoRow label="Tipo de doador" value={last?.donor_role ? (DONOR_ROLE[last.donor_role] ?? last.donor_role) : undefined} />
+                                    <InfoRow label="Tipo de colheita" value={last?.donation_type ? (DONATION_TYPE[last.donation_type] ?? last.donation_type) : undefined} />
+                                    <InfoRow label="Estado" value={last?.status ? (DONATION_STATUS[last.status] ?? last.status) : undefined} />
+                                    <InfoRow label="Rastreio" value={last?.screening_status ? (SCREENING_STATUS[last.screening_status] ?? last.screening_status) : undefined} />
+                                    <InfoRow label="Volume colhido" value={last?.volume_ml ? `${last.volume_ml} mL` : undefined} />
+                                    {p.is_replacement_donor_inapt ? (
+                                        <InfoRow
+                                            label="Inapto (substituição)"
+                                            value={
+                                                <span className="font-semibold text-red-600 dark:text-red-400">
+                                                    Sim{p.replacement_donor_inapt_at ? ` · ${fmtDate(p.replacement_donor_inapt_at)}` : ""}
+                                                </span>
+                                            }
+                                        />
+                                    ) : null}
+                                    {p.replacement_donor_inapt_reason ? (
+                                        <InfoRow label="Motivo inaptidão" value={p.replacement_donor_inapt_reason} />
+                                    ) : null}
+                                </SectionCard>
+
+                                {last ? (
+                                    <SectionCard icon={FlaskConical} title="Rastreio serológico">
+                                        <InfoRow label="VIH" value={testBadge(last.hiv_test)} />
+                                        <InfoRow label="Sífilis (RPR)" value={testBadge(last.syphilis_rpr_test)} />
+                                        <InfoRow label="Hepatite B (HBsAg)" value={testBadge(last.hepatitis_b_hbsag_test)} />
+                                        <InfoRow label="Hepatite C (Anti-HCV)" value={testBadge(last.hepatitis_c_anti_hcv_test)} />
+                                        <InfoRow label="Malária" value={testBadge(last.malaria_test)} />
+                                        {last.test_notes ? <InfoRow label="Notas" value={last.test_notes} /> : null}
+                                    </SectionCard>
+                                ) : null}
+
+                                {last && (last.donor_weight_kg || last.hemoglobin_g_dl || last.blood_pressure_systolic || last.pulse_bpm || last.temperature_c) ? (
+                                    <SectionCard icon={Activity} title="Sinais vitais (última doação)">
+                                        {last.donor_weight_kg ? <InfoRow label="Peso" value={`${last.donor_weight_kg} kg`} /> : null}
+                                        {last.donor_height_cm ? <InfoRow label="Altura" value={`${last.donor_height_cm} cm`} /> : null}
+                                        {last.hemoglobin_g_dl ? <InfoRow label="Hemoglobina" value={`${last.hemoglobin_g_dl} g/dL`} /> : null}
+                                        {last.blood_pressure_systolic && last.blood_pressure_diastolic ? (
+                                            <InfoRow label="Pressão arterial" value={`${last.blood_pressure_systolic}/${last.blood_pressure_diastolic} mmHg`} />
+                                        ) : null}
+                                        {last.pulse_bpm ? <InfoRow label="Pulso" value={`${last.pulse_bpm} bpm`} /> : null}
+                                        {last.temperature_c ? <InfoRow label="Temperatura" value={`${last.temperature_c} °C`} /> : null}
+                                    </SectionCard>
+                                ) : null}
+                            </>
+                        );
+                    })() : null}
 
                     {hasCompanion ? (
                         <SectionCard icon={User} title="Acompanhante">
