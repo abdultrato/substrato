@@ -66,7 +66,7 @@ export default function NursingPage() {
 
   return (
     <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.ENFERMAGEM]}>
-      <div className="space-y-6">
+      <div className="space-y-3">
         <PageHeader
           title={t("Enfermagem", "Nursing")}
           subtitle={t("Execução: coletas, procedimentos e registos.", "Execution: sample collection, procedures, and records.")}
@@ -74,32 +74,33 @@ export default function NursingPage() {
             canViewAdmin ? (
               <Link
                 href="/admin/nursing/"
-                className="inline-flex items-center rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50"
+                className="inline-flex items-center rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground-2 transition hover:bg-muted hover:text-foreground"
               >
-                {t("Abrir na Administração", "Open in Administration")}
+                {t("Admin", "Admin")}
               </Link>
             ) : null
           }
         />
 
         {errorMessage ? (
-          <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-800/40 dark:bg-amber-900/20 dark:text-amber-300">
             {errorMessage}
           </div>
         ) : null}
 
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <MetricCard label={t("Requisições pendentes", "Pending requests")} value={loading ? "..." : pendingRequests} />
-          <MetricCard label={t("Procedimentos", "Procedures")} value={loading ? "..." : procedures} />
-          <MetricCard label={t("Coletas", "Sample collections")} value={loading ? "..." : "—"} />
+        <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4">
+          <MetricCard label={t("Requisições pendentes", "Pending requests")} value={loading ? "..." : pendingRequests} accentClass="border-l-amber-500" />
+          <MetricCard label={t("Procedimentos", "Procedures")} value={loading ? "..." : procedures} accentClass="border-l-violet-500" />
+          <MetricCard label={t("Coletas", "Sample collections")} value={loading ? "..." : "—"} accentClass="border-l-blue-500" />
           <MetricCard
             label={t("Sinais vitais", "Vital signs")}
             value={loading ? "..." : "—"}
             hint={t("Entrada via módulo Enfermagem", "Entries via the Nursing module")}
+            accentClass="border-l-emerald-500"
           />
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4">
           <ActionTile
             title={t("Requisições", "Requests")}
             description={t("Visualize as requisições pendentes e o que precisa ser executado.", "View pending requests and what still needs execution.")}

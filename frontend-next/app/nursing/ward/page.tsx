@@ -5,7 +5,6 @@ import Link from "next/link"
 import { useEffect, useMemo, useState } from "react"
 
 import AppLayout from "@/components/layout/AppLayout"
-import Card from "@/components/ui/Card"
 import DataTable from "@/components/ui/DataTable"
 import MetricCard from "@/components/ui/MetricCard"
 import PageHeader from "@/components/ui/PageHeader"
@@ -111,33 +110,33 @@ export default function WardDashboardPage() {
 
   return (
     <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.ENFERMAGEM]}>
-      <div className="space-y-6">
+      <div className="space-y-3">
         <PageHeader
           title="Enfermaria"
           subtitle="Painel: ocupação de camas e próximas medicações."
           actions={
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap items-center gap-1.5">
               <Link
                 href="/nursing"
-                className="inline-flex items-center rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-sm font-medium text-[var(--gray-700)] shadow-sm transition hover:bg-[var(--gray-100)]"
+                className="inline-flex items-center rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground-2 transition hover:bg-muted hover:text-foreground"
               >
                 Voltar
               </Link>
               <Link
                 href="/nursing/wards"
-                className="inline-flex items-center rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-sm font-medium text-[var(--gray-700)] shadow-sm transition hover:bg-[var(--gray-100)]"
+                className="inline-flex items-center rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground-2 transition hover:bg-muted hover:text-foreground"
               >
-                Gerenciamento (Enfermarias)
+                Enfermarias
               </Link>
               <Link
                 href="/nursing/ward-beds"
-                className="inline-flex items-center rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-sm font-medium text-[var(--gray-700)] shadow-sm transition hover:bg-[var(--gray-100)]"
+                className="inline-flex items-center rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground-2 transition hover:bg-muted hover:text-foreground"
               >
-                Gerenciamento (Camas)
+                Camas
               </Link>
               <Link
                 href="/nursing/ward-admissions"
-                className="inline-flex items-center rounded-xl bg-[var(--primary-600)] px-3 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[var(--primary-700)]"
+                className="inline-flex items-center rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground transition hover:bg-primary/90"
               >
                 Internamentos
               </Link>
@@ -146,25 +145,31 @@ export default function WardDashboardPage() {
         />
 
         {errorMessage ? (
-          <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-800/40 dark:bg-amber-900/20 dark:text-amber-300">
             {errorMessage}
           </div>
         ) : null}
 
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <MetricCard label="Pacientes" value={loading ? "..." : summary?.patients ?? 0} />
-          <MetricCard label="Camas totais" value={loading ? "..." : summary?.total_beds ?? 0} />
-          <MetricCard label="Camas ocupadas" value={loading ? "..." : summary?.occupied_beds ?? 0} />
-          <MetricCard label="Camas livres" value={loading ? "..." : summary?.available_beds ?? 0} />
+        <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4">
+          <MetricCard label="Pacientes" value={loading ? "..." : summary?.patients ?? 0} accentClass="border-l-blue-500" />
+          <MetricCard label="Camas totais" value={loading ? "..." : summary?.total_beds ?? 0} accentClass="border-l-slate-500" />
+          <MetricCard label="Camas ocupadas" value={loading ? "..." : summary?.occupied_beds ?? 0} accentClass="border-l-amber-500" />
+          <MetricCard label="Camas livres" value={loading ? "..." : summary?.available_beds ?? 0} accentClass="border-l-emerald-500" />
         </div>
 
-        <Card title="Camas ocupadas" subtitle="Lista de internamentos ativos (uma linha por cama ocupada).">
-          {loading ? (
-            <div className="text-sm text-[var(--gray-500)]">Carregando...</div>
-          ) : (
-            <DataTable columns={columns as any} data={data?.beds || []} emptyMessage="Nenhuma cama ocupada." />
-          )}
-        </Card>
+        <section className="rounded-xl border border-white/20 bg-white/25 shadow-sm backdrop-blur-sm dark:bg-white/5 dark:border-white/10">
+          <div className="border-b border-border/60 px-3 py-2">
+            <p className="text-xs font-semibold text-foreground">Camas ocupadas</p>
+            <p className="text-[10px] text-muted-foreground">Internamentos ativos (uma linha por cama ocupada)</p>
+          </div>
+          <div className="p-2">
+            {loading ? (
+              <div className="py-4 text-center text-xs text-muted-foreground">Carregando...</div>
+            ) : (
+              <DataTable columns={columns as any} data={data?.beds || []} emptyMessage="Nenhuma cama ocupada." />
+            )}
+          </div>
+        </section>
       </div>
     </AppLayout>
   )

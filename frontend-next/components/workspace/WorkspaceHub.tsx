@@ -4,7 +4,6 @@ import Link from "next/link"
 import { ArrowRight, ShieldCheck, type LucideIcon } from "lucide-react"
 
 import ActionTile from "@/components/ui/ActionTile"
-import Card from "@/components/ui/Card"
 import MetricCard from "@/components/ui/MetricCard"
 import PageHeader from "@/components/ui/PageHeader"
 import { useLanguage } from "@/hooks/useLanguage"
@@ -46,7 +45,7 @@ export default function WorkspaceHub({
   const { t } = useLanguage()
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3">
       <PageHeader
         title={title}
         subtitle={subtitle}
@@ -55,30 +54,30 @@ export default function WorkspaceHub({
             {secondaryCta ? (
               <Link
                 href={secondaryCta.href}
-                className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-3 py-1.5 text-sm font-medium text-foreground shadow-sm transition hover:bg-muted"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground-2 transition hover:bg-muted hover:text-foreground"
               >
                 {secondaryCta.label}
-                <ArrowRight size={15} />
+                <ArrowRight size={13} />
               </Link>
             ) : null}
             <Link
               href={adminHref}
-              className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-3 py-1.5 text-sm font-medium text-foreground shadow-sm transition hover:bg-muted"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground-2 transition hover:bg-muted hover:text-foreground"
             >
-              <ShieldCheck size={15} />
-              {t("Administração", "Administration")}
+              <ShieldCheck size={13} />
+              {t("Admin", "Admin")}
             </Link>
           </div>
         }
       />
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4">
         {metrics.map((item) => (
           <MetricCard key={item.label} label={item.label} value={item.value} hint={item.hint} />
         ))}
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4">
         {actions.map((item) => (
           <ActionTile
             key={item.href}
@@ -91,13 +90,14 @@ export default function WorkspaceHub({
       </div>
 
       {noteTitle && notes.length ? (
-        <Card title={noteTitle}>
-          <div className="text-sm text-foreground-2 space-y-1">
+        <section className="rounded-xl border border-white/20 bg-white/25 px-4 py-3 shadow-sm backdrop-blur-sm dark:bg-white/5 dark:border-white/10">
+          <p className="mb-1.5 text-xs font-semibold text-foreground">{noteTitle}</p>
+          <div className="space-y-0.5 text-xs text-muted-foreground">
             {notes.map((line) => (
               <p key={line}>{line}</p>
             ))}
           </div>
-        </Card>
+        </section>
       ) : null}
     </div>
   )

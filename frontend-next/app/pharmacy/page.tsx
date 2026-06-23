@@ -5,7 +5,6 @@ import { useEffect, useState } from "react"
 import { Boxes, Layers, Repeat, ShieldCheck } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
-import Card from "@/components/ui/Card"
 import PageHeader from "@/components/ui/PageHeader"
 import MetricCard from "@/components/ui/MetricCard"
 import ActionTile from "@/components/ui/ActionTile"
@@ -76,36 +75,36 @@ export default function FarmaciaPage() {
 
   return (
     <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.FARMACIA]}>
-      <div className="space-y-6">
+      <div className="space-y-3">
         <PageHeader
           title="Farmácia"
           actions={
             podeVerAdmin ? (
               <Link
                 href="/admin/pharmacy/"
-                className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground-2 transition hover:bg-muted hover:text-foreground"
               >
-                <ShieldCheck size={16} />
-                Abrir na Administração
+                <ShieldCheck size={13} />
+                Admin
               </Link>
             ) : null
           }
         />
 
         {erro ? (
-          <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-800/40 dark:bg-amber-900/20 dark:text-amber-300">
             {erro}
           </div>
         ) : null}
 
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <MetricCard label="Produtos" value={loading ? "..." : produtos} />
-          <MetricCard label="Lotes" value={loading ? "..." : lotes} />
-          <MetricCard label="Movimentos" value={loading ? "..." : movimentos} />
-          <MetricCard label="Inventário" value="—" />
+        <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4">
+          <MetricCard label="Produtos" value={loading ? "..." : produtos} accentClass="border-l-blue-500" />
+          <MetricCard label="Lotes" value={loading ? "..." : lotes} accentClass="border-l-amber-500" />
+          <MetricCard label="Movimentos" value={loading ? "..." : movimentos} accentClass="border-l-violet-500" />
+          <MetricCard label="Inventário" value="—" accentClass="border-l-emerald-500" />
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4">
           <ActionTile
             title="Produtos"
             description="Catálogo de produtos e itens de almoxarifado."
@@ -132,14 +131,10 @@ export default function FarmaciaPage() {
           />
         </div>
 
-        <Card
-          title="Visão do módulo"
-          subtitle="Escopo do módulo de almoxarifado."
-        >
-          <div className="text-sm text-slate-700">
-            Requisições internas de materiais por setor, avio parcial/total e baixa de estoque já estão disponíveis.
-          </div>
-        </Card>
+        <section className="rounded-xl border border-white/20 bg-white/25 px-4 py-3 shadow-sm backdrop-blur-sm dark:bg-white/5 dark:border-white/10">
+          <p className="mb-1 text-xs font-semibold text-foreground">Visão do módulo</p>
+          <p className="text-xs text-muted-foreground">Requisições internas de materiais por setor, avio parcial/total e baixa de estoque já estão disponíveis.</p>
+        </section>
       </div>
     </AppLayout>
   )

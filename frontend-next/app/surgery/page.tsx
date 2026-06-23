@@ -21,7 +21,6 @@ import {
 } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
-import Card from "@/components/ui/Card"
 import PageHeader from "@/components/ui/PageHeader"
 import MetricCard from "@/components/ui/MetricCard"
 import ActionTile from "@/components/ui/ActionTile"
@@ -97,7 +96,7 @@ export default function SurgeryPage() {
 
     return (
         <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.RECEPCAO, GROUPS.MEDICINA, GROUPS.MEDICINA_OCUPACIONAL]}>
-            <div className="space-y-6">
+            <div className="space-y-3">
                 <PageHeader
                     title="Cirurgia"
                     subtitle="Orquestração do pedido cirúrgico, avaliação, sala, equipa, consumos, recuperação e faturação."
@@ -105,35 +104,35 @@ export default function SurgeryPage() {
                         canViewAdmin ? (
                             <Link
                                 href="/admin/surgery/surgery/"
-                                className="inline-flex items-center rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50"
+                                className="inline-flex items-center rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground-2 transition hover:bg-muted hover:text-foreground"
                             >
-                                Abrir na Administração
+                                Admin
                             </Link>
                         ) : null
                     }
                 />
 
                 {errorMessage ? (
-                    <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                    <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-800/40 dark:bg-amber-900/20 dark:text-amber-300">
                         {errorMessage}
                     </div>
                 ) : null}
 
-                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-                    <MetricCard label="Pedidos cirúrgicos" value={loading ? "..." : requests} />
-                    <MetricCard label="Avaliações pré-op." value={loading ? "..." : preoperativeAssessments} />
-                    <MetricCard label="Pequenas cirurgias" value={loading ? "..." : smallSurgeries} />
-                    <MetricCard label="Grandes cirurgias" value={loading ? "..." : largeSurgeries} />
-                    <MetricCard label="Procedimentos (catálogo)" value={loading ? "..." : procedures} />
-                    <MetricCard label="Agenda cirúrgica" value={loading ? "..." : schedules} />
-                    <MetricCard label="Salas operatórias" value={loading ? "..." : operatingRooms} />
-                    <MetricCard label="Autorizações" value={loading ? "..." : authorizations} />
-                    <MetricCard label="Itens faturáveis" value={loading ? "..." : billingItems} />
-                    <MetricCard label="Amostras cirúrgicas" value={loading ? "..." : specimens} />
-                    <MetricCard label="Relatórios operatórios" value={loading ? "..." : operativeReports} />
+                <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-5">
+                    <MetricCard label="Pedidos cirúrgicos" value={loading ? "..." : requests} accentClass="border-l-red-500" />
+                    <MetricCard label="Avaliações pré-op." value={loading ? "..." : preoperativeAssessments} accentClass="border-l-amber-500" />
+                    <MetricCard label="Pequenas cirurgias" value={loading ? "..." : smallSurgeries} accentClass="border-l-blue-500" />
+                    <MetricCard label="Grandes cirurgias" value={loading ? "..." : largeSurgeries} accentClass="border-l-violet-500" />
+                    <MetricCard label="Procedimentos (catálogo)" value={loading ? "..." : procedures} accentClass="border-l-slate-500" />
+                    <MetricCard label="Agenda cirúrgica" value={loading ? "..." : schedules} accentClass="border-l-cyan-500" />
+                    <MetricCard label="Salas operatórias" value={loading ? "..." : operatingRooms} accentClass="border-l-emerald-500" />
+                    <MetricCard label="Autorizações" value={loading ? "..." : authorizations} accentClass="border-l-orange-500" />
+                    <MetricCard label="Itens faturáveis" value={loading ? "..." : billingItems} accentClass="border-l-teal-500" />
+                    <MetricCard label="Amostras cirúrgicas" value={loading ? "..." : specimens} accentClass="border-l-pink-500" />
+                    <MetricCard label="Relatórios operatórios" value={loading ? "..." : operativeReports} accentClass="border-l-indigo-500" />
                 </div>
 
-                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4">
                     <ActionTile
                         title="Pedidos cirúrgicos"
                         description="Indicações cirúrgicas com diagnóstico, prioridade, especialidade e estado."
@@ -262,15 +261,10 @@ export default function SurgeryPage() {
                     />
                 </div>
 
-                <Card
-                    title="Fluxo cirúrgico"
-                    subtitle="Indicação -> avaliação -> autorização -> agenda -> sala -> equipa -> materiais -> checklist -> anestesia -> cirurgia -> recuperação -> relatório -> faturação."
-                >
-                    <div className="text-sm text-slate-700">
-                        O caso cirúrgico centraliza os vínculos clínicos, operacionais e financeiros, mantendo integração
-                        opcional com patologia, farmácia/stock e faturação final.
-                    </div>
-                </Card>
+                <section className="rounded-xl border border-white/20 bg-white/25 px-4 py-3 shadow-sm backdrop-blur-sm dark:bg-white/5 dark:border-white/10">
+                    <p className="mb-1 text-xs font-semibold text-foreground">Fluxo cirúrgico</p>
+                    <p className="text-[10px] text-muted-foreground">Indicação → avaliação → autorização → agenda → sala → equipa → materiais → checklist → anestesia → cirurgia → recuperação → relatório → faturação.</p>
+                </section>
             </div>
         </AppLayout>
     )
