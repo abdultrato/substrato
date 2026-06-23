@@ -18,6 +18,7 @@ from apps.clinical_laboratory.models import (
     LabSample,
     LabSector,
     LabTest,
+    LabTestField,
     LabTestPanel,
     LabWorklist,
     ResultValidation,
@@ -101,6 +102,18 @@ class LabTestSerializer(serializers.ModelSerializer):
         model = LabTest
         fields = "__all__"
         read_only_fields = CORE_READ_ONLY_FIELDS + ["sector_name", "sector_code"]
+
+
+class LabTestFieldSerializer(serializers.ModelSerializer):
+    """Campo/analito de um exame, com os seus limiares de referência/críticos."""
+
+    test_name = serializers.CharField(source="test.name", read_only=True)
+    test_code = serializers.CharField(source="test.code", read_only=True)
+
+    class Meta:
+        model = LabTestField
+        fields = "__all__"
+        read_only_fields = CORE_READ_ONLY_FIELDS + ["test_name", "test_code"]
 
 
 class LabTestPanelSerializer(serializers.ModelSerializer):
@@ -261,7 +274,40 @@ class LabReportSerializer(serializers.ModelSerializer):
 
 
 class CriticalResultNotificationSerializer(serializers.ModelSerializer):
-    Meta = _meta(CriticalResultNotification)
+    """Expõe a requisição e o resultado crítico em contexto para a página.
+
+    Cada comunicação crítica carrega a requisição (pedido), o exame/campo, o
+    valor e o flag do resultado, de modo a que a página de resultados críticos
+    seja autossuficiente.
+    """
+
+    patient_name = serializers.CharField(source="patient.name", read_only=True)
+    order_code = serializers.CharField(source="order.custom_id", read_only=True)
+    result_value = serializers.CharField(source="result.value", read_only=True)
+    result_unit = serializers.CharField(source="result.unit", read_only=True)
+    result_flag = serializers.CharField(source="result.flag", read_only=True)
+    result_flag_display = serializers.CharField(source="result.get_flag_display", read_only=True)
+    test_name = serializers.SerializerMethodField()
+    field_name = serializers.CharField(source="result.test_field.name", read_only=True)
+
+    class Meta:
+        model = CriticalResultNotification
+        fields = "__all__"
+        read_only_fields = CORE_READ_ONLY_FIELDS + [
+            "patient_name",
+            "order_code",
+            "result_value",
+            "result_unit",
+            "result_flag",
+            "result_flag_display",
+            "test_name",
+            "field_name",
+        ]
+
+    def get_test_name(self, obj):
+        order_item = getattr(getattr(obj, "result", None), "order_item", None)
+        test = getattr(order_item, "test", None)
+        return getattr(test, "name", None)
 
 
 # --- sectores especializados ---

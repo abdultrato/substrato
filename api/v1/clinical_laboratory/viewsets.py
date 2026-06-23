@@ -36,6 +36,7 @@ from apps.clinical_laboratory.models import (
     LabSample,
     LabSector,
     LabTest,
+    LabTestField,
     LabTestPanel,
     LabWorklist,
     ResultValidation,
@@ -97,6 +98,7 @@ from .serializers import (
     LabResultSerializer,
     LabSampleSerializer,
     LabSectorSerializer,
+    LabTestFieldSerializer,
     LabTestPanelSerializer,
     LabTestSerializer,
     LabWorklistSerializer,
@@ -135,6 +137,16 @@ class LabTestViewSet(_CatalogActivationMixin, ValidatedSearchOrderingMixin, Tena
     serializer_class = LabTestSerializer
     search_fields = ["custom_id", "code", "name", "method", "unit"]
     ordering_fields = ["code", "name", "price", "turnaround_hours", "active", "created_at"]
+
+
+class LabTestFieldViewSet(_CatalogActivationMixin, ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
+    queryset = LabTestField.objects.select_related("test").all()
+    serializer_class = LabTestFieldSerializer
+    # Campos são "segunda camada": o frontend lista-os filtrados pelo exame
+    # (`?test=<id>`) dentro do detalhe do exame.
+    filterset_fields = ["test", "active"]
+    search_fields = ["custom_id", "code", "name", "unit"]
+    ordering_fields = ["test", "sequence", "name", "active", "created_at"]
 
 
 class LabTestPanelViewSet(_CatalogActivationMixin, ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
@@ -315,8 +327,16 @@ class LabReportViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, 
 
 
 class CriticalResultNotificationViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
-    queryset = CriticalResultNotification.objects.select_related("result", "patient", "notified_by").all()
+    queryset = CriticalResultNotification.objects.select_related(
+        "result",
+        "result__order_item__test",
+        "result__test_field",
+        "order",
+        "patient",
+        "notified_by",
+    ).all()
     serializer_class = CriticalResultNotificationSerializer
+    filterset_fields = ["readback_confirmed", "method", "order"]
     search_fields = ["custom_id", "notified_professional", "notes"]
     ordering_fields = ["notified_at", "readback_confirmed", "method", "created_at"]
 
@@ -549,6 +569,7 @@ class BiosafetyInspectionViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
 VIEWSET_MAP = {
     "sector": LabSectorViewSet,
     "test": LabTestViewSet,
+    "test_field": LabTestFieldViewSet,
     "panel": LabTestPanelViewSet,
     "order": LabOrderViewSet,
     "order_item": LabOrderItemViewSet,

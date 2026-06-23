@@ -4,6 +4,7 @@ export const LAB_RESOURCE_ROUTES: Record<string, string> = {
   // Catálogo
   sectors: "/clinical_laboratory/sector/",
   tests: "/clinical_laboratory/test/",
+  "test-fields": "/clinical_laboratory/test_field/",
   panels: "/clinical_laboratory/panel/",
   // Pedido
   orders: "/clinical_laboratory/order/",

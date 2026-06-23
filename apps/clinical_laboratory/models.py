@@ -11,7 +11,7 @@ com prefixo ``laboratorio_``, custom_id por ``prefix``, FKs a ``clinical.Patient
 e ``identidade.User``.
 """
 
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 
 from django.conf import settings
 from django.db import models
@@ -96,6 +96,18 @@ class LabTest(CoreModel):
     unit = models.CharField("Unidade", db_column="unit", max_length=30, blank=True, default="")
     reference_range = models.CharField("Intervalo de referência", db_column="reference_range",
                                        max_length=160, blank=True, default="")
+    # Limiares numéricos para exames de valor único (sem campos/analitos). Quando
+    # preenchidos, o flag do resultado é determinado automaticamente e os críticos
+    # passam para a página de resultados críticos. Exames com vários analitos
+    # devem antes definir os limiares por ``LabTestField`` (ExameCampo).
+    reference_low = models.DecimalField("Limite inferior de referência", db_column="reference_low",
+                                        max_digits=18, decimal_places=4, null=True, blank=True)
+    reference_high = models.DecimalField("Limite superior de referência", db_column="reference_high",
+                                         max_digits=18, decimal_places=4, null=True, blank=True)
+    critical_low = models.DecimalField("Limite crítico inferior (pânico)", db_column="critical_low",
+                                       max_digits=18, decimal_places=4, null=True, blank=True)
+    critical_high = models.DecimalField("Limite crítico superior (pânico)", db_column="critical_high",
+                                        max_digits=18, decimal_places=4, null=True, blank=True)
     price = MoneyField("Preço", default=Decimal("0.00"))
     turnaround_hours = models.PositiveIntegerField("Tempo de resposta (h)", db_column="turnaround_hours",
                                                    default=24)
@@ -125,6 +137,58 @@ class LabTest(CoreModel):
 
     def deactivate(self):
         """Suspende o exame — deixa de poder ser solicitado/faturado."""
+        self.active = False
+        self.save(update_fields=["active", "updated_at"])
+        return self
+
+
+class LabTestField(CoreModel):
+    """Campo/analito de um exame (ex.: Hemoglobina, Leucócitos num hemograma).
+
+    Permite que um único exame produza vários resultados, cada um com a sua
+    unidade, intervalo de referência e limiares próprios. Os limiares definidos
+    aqui tornam o tratamento de resultados críticos intuitivo: ao introduzir um
+    valor para o campo, o flag (normal/baixo/alto/crítico) é determinado
+    automaticamente e os críticos passam para a página de resultados críticos.
+    """
+
+    prefix = "LTSF"
+
+    test = models.ForeignKey(LabTest, db_column="test_id", verbose_name="Exame",
+                             on_delete=models.CASCADE, related_name="fields")
+    code = models.CharField("Código", db_column="code", max_length=30, blank=True, default="")
+    unit = models.CharField("Unidade", db_column="unit", max_length=30, blank=True, default="")
+    reference_range = models.CharField("Intervalo de referência", db_column="reference_range",
+                                       max_length=160, blank=True, default="")
+    reference_low = models.DecimalField("Limite inferior de referência", db_column="reference_low",
+                                        max_digits=18, decimal_places=4, null=True, blank=True)
+    reference_high = models.DecimalField("Limite superior de referência", db_column="reference_high",
+                                         max_digits=18, decimal_places=4, null=True, blank=True)
+    critical_low = models.DecimalField("Limite crítico inferior (pânico)", db_column="critical_low",
+                                       max_digits=18, decimal_places=4, null=True, blank=True)
+    critical_high = models.DecimalField("Limite crítico superior (pânico)", db_column="critical_high",
+                                        max_digits=18, decimal_places=4, null=True, blank=True)
+    sequence = models.PositiveIntegerField("Ordem", db_column="sequence", default=0)
+    active = models.BooleanField("Ativo", db_column="active", default=True, db_index=True)
+
+    class Meta:
+        db_table = "laboratorio_exame_campo"
+        verbose_name = "Campo de exame"
+        verbose_name_plural = "Campos de exame"
+        ordering = ["test", "sequence", "name"]
+        indexes = [models.Index(fields=["tenant", "test", "active"])]
+
+    def __str__(self) -> str:
+        return f"{self.name or self.code}".strip() or f"Campo {self.pk}"
+
+    def activate(self):
+        """Disponibiliza o campo do exame."""
+        self.active = True
+        self.save(update_fields=["active", "updated_at"])
+        return self
+
+    def deactivate(self):
+        """Suspende o campo do exame."""
         self.active = False
         self.save(update_fields=["active", "updated_at"])
         return self
@@ -545,6 +609,8 @@ class LabResult(NoNameCoreModel):
 
     order_item = models.ForeignKey(LabOrderItem, db_column="order_item_id", verbose_name="Item do pedido",
                                    on_delete=models.CASCADE, related_name="results")
+    test_field = models.ForeignKey(LabTestField, db_column="test_field_id", verbose_name="Campo de exame",
+                                   on_delete=models.SET_NULL, related_name="results", null=True, blank=True)
     sample = models.ForeignKey(LabSample, db_column="sample_id", verbose_name="Amostra",
                                on_delete=models.SET_NULL, related_name="results", null=True, blank=True)
     value = models.CharField("Resultado", db_column="value", max_length=255, blank=True, default="")
@@ -578,12 +644,64 @@ class LabResult(NoNameCoreModel):
     def is_critical(self) -> bool:
         return self.flag in (self.Flag.CRITICAL_LOW, self.Flag.CRITICAL_HIGH)
 
+    @property
+    def order(self):
+        """Requisição (pedido) a que este resultado pertence."""
+        return self.order_item.order if self.order_item_id else None
+
+    @staticmethod
+    def coerce_numeric(value):
+        """Converte um valor introduzido para Decimal (aceita vírgula decimal)."""
+        if value in (None, ""):
+            return None
+        try:
+            return Decimal(str(value).strip().replace(",", "."))
+        except (InvalidOperation, ValueError):
+            return None
+
+    def _thresholds(self):
+        """Limiares (ref_low, ref_high, crit_low, crit_high): campo tem prioridade."""
+        source = self.test_field
+        if source is None and self.order_item_id:
+            source = getattr(self.order_item, "test", None)
+        if source is None:
+            return (None, None, None, None)
+        return (source.reference_low, source.reference_high,
+                source.critical_low, source.critical_high)
+
+    def compute_flag(self, numeric_value=None):
+        """Determina o flag a partir do valor numérico e dos limiares do campo/exame.
+
+        Resultados qualitativos (sem valor numérico) ou exames sem limiares
+        mantêm o flag atual — não sobrescreve flags como POSITIVO/REAGENTE.
+        """
+        value = numeric_value if numeric_value is not None else self.numeric_value
+        if value is None:
+            return self.flag
+        ref_low, ref_high, crit_low, crit_high = self._thresholds()
+        if crit_low is not None and value < crit_low:
+            return self.Flag.CRITICAL_LOW
+        if crit_high is not None and value > crit_high:
+            return self.Flag.CRITICAL_HIGH
+        if ref_low is not None and value < ref_low:
+            return self.Flag.LOW
+        if ref_high is not None and value > ref_high:
+            return self.Flag.HIGH
+        if any(t is not None for t in (ref_low, ref_high, crit_low, crit_high)):
+            return self.Flag.NORMAL
+        return self.flag
+
     def enter_result(self, *, value, by=None):
         self.value = str(value)
+        numeric = self.coerce_numeric(value)
+        if numeric is not None:
+            self.numeric_value = numeric
+        self.flag = self.compute_flag()
         self.status = self.Status.ENTERED
         self.performed_by = by or self.performed_by
         self.performed_at = self.performed_at or timezone.now()
-        self.save(update_fields=["value", "status", "performed_by", "performed_at"])
+        self.save(update_fields=["value", "numeric_value", "flag", "status",
+                                 "performed_by", "performed_at"])
 
     def mark_validated(self):
         self.status = self.Status.VALIDATED
@@ -711,6 +829,9 @@ class CriticalResultNotification(NoNameCoreModel):
 
     result = models.ForeignKey(LabResult, db_column="result_id", verbose_name="Resultado",
                                on_delete=models.CASCADE, related_name="critical_notifications")
+    order = models.ForeignKey(LabOrder, db_column="order_id", verbose_name="Requisição",
+                              on_delete=models.PROTECT, related_name="critical_notifications",
+                              null=True, blank=True)
     patient = models.ForeignKey("clinical.Patient", db_column="patient_id", verbose_name="Paciente",
                                 on_delete=models.PROTECT, related_name="lab_critical_notifications")
     notified_professional = models.CharField("Profissional notificado", db_column="notified_professional",

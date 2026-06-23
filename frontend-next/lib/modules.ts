@@ -99,6 +99,7 @@ const RESOURCE_LABEL_PT_BY_KEY: Record<string, string> = {
   sector: "Sectores",
   spill: "Derrames",
   test: "Análises",
+  test_field: "Campos de Análise",
   training_record: "Registos de Formação",
   vaccination: "Vacinações",
   validation: "Validações",

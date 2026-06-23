@@ -11,6 +11,7 @@ from .models import (
     LabSample,
     LabSector,
     LabTest,
+    LabTestField,
     LabTestPanel,
     LabWorklist,
     MicrobiologyCulture,
@@ -43,7 +44,7 @@ from .models import (
 )
 
 for _model in (
-    LabSector, LabTest, LabTestPanel, LabOrder, LabOrderItem, SampleCollection,
+    LabSector, LabTest, LabTestField, LabTestPanel, LabOrder, LabOrderItem, SampleCollection,
     LabSample, SampleReception, SampleRejection, LabWorklist, LabResult,
     ResultValidation, LabReport, CriticalResultNotification,
     MicrobiologyCulture, MicrobiologyIsolate, AntibioticSusceptibility,
