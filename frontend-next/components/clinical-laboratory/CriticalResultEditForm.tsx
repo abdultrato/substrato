@@ -34,8 +34,13 @@ const METHODS: { value: string; pt: string; en: string }[] = [
   { value: "EMAIL", pt: "E-mail", en: "E-mail" },
 ]
 
+// Translucent "glass" surfaces — let the brand canvas show through.
+const GLASS =
+  "rounded-2xl border border-white/30 bg-white/55 shadow-sm backdrop-blur-md dark:border-white/10 dark:bg-white/[0.04]"
+const GLASS_SOFT =
+  "rounded-md border border-white/40 bg-white/50 backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.05]"
 const INPUT_CLASS =
-  "w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground shadow-sm outline-none transition focus:border-[var(--primary-500)] focus:ring-2 focus:ring-[var(--primary-500)]/20"
+  "w-full rounded-lg border border-white/40 bg-white/50 px-3 py-2 text-sm text-foreground shadow-sm outline-none backdrop-blur-sm transition placeholder:text-[var(--gray-400)] focus:border-[var(--primary-500)] focus:ring-2 focus:ring-[var(--primary-500)]/25 dark:border-white/10 dark:bg-white/[0.06]"
 
 function isHigh(r: Row) { return String(r?.result_flag || "") === "CRITICO_ALTO" }
 
@@ -113,15 +118,15 @@ export default function CriticalResultEditForm() {
     <AppLayout>
       <div className="mx-auto w-full max-w-2xl space-y-4">
         {/* Header */}
-        <div className="flex items-center gap-3 border-b border-border pb-3">
+        <div className="flex items-center gap-3 border-b border-white/30 pb-3 dark:border-white/10">
           <Link
             href={BOARD_PATH}
-            className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-border bg-card text-[var(--gray-600)] transition hover:bg-[var(--gray-100)] dark:text-[var(--gray-300)]"
+            className={`inline-flex h-8 w-8 items-center justify-center text-[var(--gray-600)] transition hover:bg-white/70 dark:text-[var(--gray-300)] dark:hover:bg-white/10 ${GLASS_SOFT}`}
             aria-label={t("Voltar", "Back")}
           >
             <ArrowLeft size={16} />
           </Link>
-          <div className="grid h-8 w-8 place-items-center rounded-lg bg-rose-50 text-rose-600 dark:bg-rose-900/20 dark:text-rose-400">
+          <div className="grid h-8 w-8 place-items-center rounded-lg bg-rose-500/15 text-rose-600 backdrop-blur-sm dark:text-rose-400">
             <ShieldAlert size={18} />
           </div>
           <div>
@@ -134,20 +139,24 @@ export default function CriticalResultEditForm() {
 
         {isLoading ? (
           <div className="space-y-3">
-            <div className="h-24 animate-pulse rounded-xl border border-[var(--border)] bg-[var(--gray-100)] dark:bg-white/[0.03]" />
-            <div className="h-64 animate-pulse rounded-xl border border-[var(--border)] bg-[var(--gray-100)] dark:bg-white/[0.03]" />
+            <div className={`h-24 animate-pulse ${GLASS}`} />
+            <div className={`h-64 animate-pulse ${GLASS}`} />
           </div>
         ) : error ? (
-          <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+          <div className="rounded-xl border border-amber-300/50 bg-amber-50/60 px-3 py-2 text-sm text-amber-800 backdrop-blur-sm dark:bg-amber-900/15 dark:text-amber-200">
             {(error as any)?.message || t("Falha ao carregar o registo.", "Failed to load record.")}
           </div>
         ) : (
           <>
             {/* Clinical context — read-only summary */}
             <section
-              className={`relative overflow-hidden rounded-xl border bg-[var(--card)] p-4 pl-5 shadow-sm
+              className={`relative overflow-hidden p-4 pl-5 backdrop-blur-md
                 before:absolute before:inset-y-0 before:left-0 before:w-1.5 ${high ? "before:bg-rose-500" : "before:bg-sky-500"}
-                ${high ? "border-rose-200 dark:border-rose-900/40" : "border-sky-200 dark:border-sky-900/40"}`}
+                rounded-2xl border shadow-sm ${
+                  high
+                    ? "border-rose-200/50 bg-rose-50/45 dark:border-rose-900/30 dark:bg-rose-950/20"
+                    : "border-sky-200/50 bg-sky-50/45 dark:border-sky-900/30 dark:bg-sky-950/20"
+                }`}
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
@@ -156,7 +165,7 @@ export default function CriticalResultEditForm() {
                     {data?.order ? (
                       <Link
                         href={`/clinical-laboratory/orders/${encodeURIComponent(String(data.order))}`}
-                        className="shrink-0 rounded-md border border-[var(--border)] px-1.5 py-0.5 font-mono text-[11px] text-[var(--primary-600)] hover:bg-[var(--gray-100)]"
+                        className="shrink-0 rounded-md border border-white/40 bg-white/50 px-1.5 py-0.5 font-mono text-[11px] text-[var(--primary-600)] backdrop-blur-sm hover:bg-white/70 dark:border-white/10 dark:bg-white/5"
                         title={t("Abrir requisição", "Open requisition")}
                       >
                         {String(data?.order_code || `#${data.order}`)}
@@ -175,8 +184,8 @@ export default function CriticalResultEditForm() {
                     {unit ? <span className="text-xs font-medium opacity-80">{unit}</span> : null}
                   </div>
                   <span
-                    className={`mt-1 inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] font-semibold ${
-                      high ? "bg-rose-50 text-rose-700 dark:bg-rose-900/25 dark:text-rose-300" : "bg-sky-50 text-sky-700 dark:bg-sky-900/25 dark:text-sky-300"
+                    className={`mt-1 inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] font-semibold backdrop-blur-sm ${
+                      high ? "bg-rose-500/15 text-rose-700 dark:text-rose-300" : "bg-sky-500/15 text-sky-700 dark:text-sky-300"
                     }`}
                   >
                     {high ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
@@ -187,7 +196,7 @@ export default function CriticalResultEditForm() {
             </section>
 
             {/* Readback form */}
-            <form onSubmit={handleSubmit} className="space-y-4 rounded-xl border border-border bg-card p-5 shadow-sm">
+            <form onSubmit={handleSubmit} className={`space-y-4 p-5 ${GLASS}`}>
               <label className="block">
                 <span className="mb-1.5 block text-xs font-medium text-foreground">{t("Profissional notificado", "Notified professional")}</span>
                 <input
@@ -213,10 +222,10 @@ export default function CriticalResultEditForm() {
                   <button
                     type="button"
                     onClick={() => setConfirmed(true)}
-                    className={`inline-flex flex-1 items-center justify-center gap-1.5 rounded-md border px-3 py-2 text-sm font-medium transition ${
+                    className={`inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium backdrop-blur-sm transition ${
                       confirmed
-                        ? "border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-900/50 dark:bg-emerald-900/20 dark:text-emerald-300"
-                        : "border-border bg-background text-[var(--gray-600)] hover:bg-[var(--gray-100)] dark:text-[var(--gray-300)]"
+                        ? "border-emerald-300/60 bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"
+                        : "border-white/40 bg-white/40 text-[var(--gray-600)] hover:bg-white/60 dark:border-white/10 dark:bg-white/[0.05] dark:text-[var(--gray-300)]"
                     }`}
                   >
                     <CheckCircle2 size={15} /> {t("Sim", "Yes")}
@@ -224,10 +233,10 @@ export default function CriticalResultEditForm() {
                   <button
                     type="button"
                     onClick={() => setConfirmed(false)}
-                    className={`inline-flex flex-1 items-center justify-center gap-1.5 rounded-md border px-3 py-2 text-sm font-medium transition ${
+                    className={`inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium backdrop-blur-sm transition ${
                       !confirmed
-                        ? "border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-900/50 dark:bg-amber-900/20 dark:text-amber-300"
-                        : "border-border bg-background text-[var(--gray-600)] hover:bg-[var(--gray-100)] dark:text-[var(--gray-300)]"
+                        ? "border-amber-300/60 bg-amber-500/15 text-amber-700 dark:text-amber-300"
+                        : "border-white/40 bg-white/40 text-[var(--gray-600)] hover:bg-white/60 dark:border-white/10 dark:bg-white/[0.05] dark:text-[var(--gray-300)]"
                     }`}
                   >
                     <XCircle size={15} /> {t("Não", "No")}
@@ -247,22 +256,22 @@ export default function CriticalResultEditForm() {
               </label>
 
               {saveError ? (
-                <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800 dark:border-red-800/40 dark:bg-red-900/15 dark:text-red-300">
+                <div className="rounded-lg border border-red-300/50 bg-red-50/60 px-3 py-2 text-sm text-red-800 backdrop-blur-sm dark:bg-red-900/15 dark:text-red-300">
                   {saveError}
                 </div>
               ) : null}
 
-              <div className="flex items-center justify-end gap-2 border-t border-border pt-4">
+              <div className="flex items-center justify-end gap-2 border-t border-white/30 pt-4 dark:border-white/10">
                 <Link
                   href={detailPath}
-                  className="inline-flex h-9 items-center rounded-md border border-border bg-card px-3 text-sm font-medium text-[var(--gray-700)] shadow-sm transition hover:bg-[var(--gray-100)] dark:text-[var(--gray-300)]"
+                  className={`inline-flex h-9 items-center px-3 text-sm font-medium text-[var(--gray-700)] transition hover:bg-white/70 dark:text-[var(--gray-300)] dark:hover:bg-white/10 ${GLASS_SOFT}`}
                 >
                   {t("Cancelar", "Cancel")}
                 </Link>
                 <button
                   type="submit"
                   disabled={saving}
-                  className="inline-flex h-9 items-center gap-1.5 rounded-md bg-[var(--primary-600)] px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-[var(--primary-700)] disabled:opacity-60"
+                  className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-[var(--primary-600)] px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-[var(--primary-700)] disabled:opacity-60"
                 >
                   {saving ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />}
                   {t("Guardar alterações", "Save changes")}
