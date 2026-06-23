@@ -33,6 +33,13 @@ const ENDPOINT = "/clinical_laboratory/critical_notification/"
 const BOARD_PATH = "/clinical-laboratory/critical-results"
 const OVERDUE_MIN = 30
 
+// Translucent "glass" surfaces — let the brand canvas show through.
+const GLASS =
+  "rounded-2xl border border-white/30 bg-white/55 shadow-sm backdrop-blur-md dark:border-white/10 dark:bg-white/[0.04]"
+const GLASS_SOFT =
+  "rounded-md border border-white/40 bg-white/50 backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.05]"
+const SKELETON = "animate-pulse rounded-2xl border border-white/30 bg-white/40 backdrop-blur-md dark:border-white/10 dark:bg-white/[0.04]"
+
 const METHOD_LABELS: Record<string, { pt: string; en: string }> = {
   TELEFONE: { pt: "Telefone", en: "Phone" },
   SMS: { pt: "SMS", en: "SMS" },
@@ -83,11 +90,11 @@ function Row2({ label, children }: { label: string; children: React.ReactNode })
 
 function Card({ title, icon, children }: { title: string; icon: React.ReactNode; children: React.ReactNode }) {
   return (
-    <section className="rounded-xl border border-border bg-card p-4 shadow-sm">
+    <section className={`p-4 ${GLASS}`}>
       <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-[var(--gray-500)]">
         {icon} {title}
       </div>
-      <div className="divide-y divide-[var(--border)]">{children}</div>
+      <div className="divide-y divide-white/30 dark:divide-white/10">{children}</div>
     </section>
   )
 }
@@ -164,16 +171,16 @@ export default function CriticalResultDetail() {
     <AppLayout>
       <div className="mx-auto w-full max-w-4xl space-y-4">
         {/* Header */}
-        <div className="flex flex-col gap-3 border-b border-border pb-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-3 border-b border-white/30 pb-3 dark:border-white/10 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
             <Link
               href={BOARD_PATH}
-              className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-border bg-card text-[var(--gray-600)] transition hover:bg-[var(--gray-100)] dark:text-[var(--gray-300)]"
+              className={`inline-flex h-8 w-8 items-center justify-center text-[var(--gray-600)] transition hover:bg-white/70 dark:text-[var(--gray-300)] dark:hover:bg-white/10 ${GLASS_SOFT}`}
               aria-label={t("Voltar", "Back")}
             >
               <ArrowLeft size={16} />
             </Link>
-            <div className="grid h-8 w-8 place-items-center rounded-lg bg-rose-50 text-rose-600 dark:bg-rose-900/20 dark:text-rose-400">
+            <div className="grid h-8 w-8 place-items-center rounded-lg bg-rose-500/15 text-rose-600 backdrop-blur-sm dark:text-rose-400">
               <ShieldAlert size={18} />
             </div>
             <div>
@@ -198,7 +205,7 @@ export default function CriticalResultDetail() {
               ) : null}
               <Link
                 href={`${BOARD_PATH}/${encodeURIComponent(id)}/edit`}
-                className="inline-flex h-9 items-center gap-1.5 rounded-md border border-border bg-card px-3 text-sm font-medium text-[var(--gray-700)] shadow-sm transition hover:bg-[var(--gray-100)] dark:text-[var(--gray-300)]"
+                className={`inline-flex h-9 items-center gap-1.5 px-3 text-sm font-medium text-[var(--gray-700)] shadow-sm transition hover:bg-white/70 dark:text-[var(--gray-300)] dark:hover:bg-white/10 ${GLASS_SOFT}`}
               >
                 <Pencil size={14} /> {t("Editar", "Edit")}
               </Link>
@@ -208,32 +215,32 @@ export default function CriticalResultDetail() {
 
         {isLoading ? (
           <div className="space-y-3">
-            <div className="h-16 animate-pulse rounded-xl border border-[var(--border)] bg-[var(--gray-100)] dark:bg-white/[0.03]" />
+            <div className={`h-16 ${SKELETON}`} />
             <div className="grid gap-4 lg:grid-cols-3">
-              <div className="h-56 animate-pulse rounded-xl border border-[var(--border)] bg-[var(--gray-100)] dark:bg-white/[0.03] lg:col-span-2" />
-              <div className="h-56 animate-pulse rounded-xl border border-[var(--border)] bg-[var(--gray-100)] dark:bg-white/[0.03]" />
+              <div className={`h-56 lg:col-span-2 ${SKELETON}`} />
+              <div className={`h-56 ${SKELETON}`} />
             </div>
           </div>
         ) : error ? (
-          <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+          <div className="rounded-xl border border-amber-300/50 bg-amber-50/60 px-3 py-2 text-sm text-amber-800 backdrop-blur-sm dark:bg-amber-900/15 dark:text-amber-200">
             {(error as any)?.message || t("Falha ao carregar o registo.", "Failed to load record.")}
           </div>
         ) : (
           <>
             {actionError ? (
-              <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800 dark:border-red-800/40 dark:bg-red-900/15 dark:text-red-300">
+              <div className="rounded-xl border border-red-300/50 bg-red-50/60 px-3 py-2 text-sm text-red-800 backdrop-blur-sm dark:border-red-800/40 dark:bg-red-900/15 dark:text-red-300">
                 {actionError}
               </div>
             ) : null}
 
             {/* Status banner */}
             <div
-              className={`flex items-center gap-3 rounded-xl border px-4 py-3 ${
+              className={`flex items-center gap-3 rounded-2xl border px-4 py-3 backdrop-blur-md ${
                 confirmed
-                  ? "border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-900/40 dark:bg-emerald-900/15 dark:text-emerald-200"
+                  ? "border-emerald-200/50 bg-emerald-50/50 text-emerald-800 dark:border-emerald-900/40 dark:bg-emerald-900/15 dark:text-emerald-200"
                   : overdue
-                    ? "border-rose-300 bg-rose-50 text-rose-800 dark:border-rose-900/50 dark:bg-rose-900/20 dark:text-rose-200"
-                    : "border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-900/40 dark:bg-amber-900/15 dark:text-amber-200"
+                    ? "border-rose-300/60 bg-rose-50/55 text-rose-800 dark:border-rose-900/50 dark:bg-rose-900/20 dark:text-rose-200"
+                    : "border-amber-200/50 bg-amber-50/50 text-amber-800 dark:border-amber-900/40 dark:bg-amber-900/15 dark:text-amber-200"
               }`}
             >
               {confirmed ? (
@@ -258,9 +265,9 @@ export default function CriticalResultDetail() {
               <div className="space-y-4 lg:col-span-2">
                 {/* Clinical context */}
                 <section
-                  className={`relative overflow-hidden rounded-xl border bg-[var(--card)] p-4 pl-5 shadow-sm
+                  className={`relative overflow-hidden rounded-2xl border p-4 pl-5 shadow-sm backdrop-blur-md
                     before:absolute before:inset-y-0 before:left-0 before:w-1.5 ${high ? "before:bg-rose-500" : "before:bg-sky-500"}
-                    ${high ? "border-rose-200 dark:border-rose-900/40" : "border-sky-200 dark:border-sky-900/40"}`}
+                    ${high ? "border-rose-200/50 bg-rose-50/45 dark:border-rose-900/30 dark:bg-rose-950/20" : "border-sky-200/50 bg-sky-50/45 dark:border-sky-900/30 dark:bg-sky-950/20"}`}
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
@@ -269,7 +276,7 @@ export default function CriticalResultDetail() {
                         {d?.order ? (
                           <Link
                             href={`/clinical-laboratory/orders/${encodeURIComponent(String(d.order))}`}
-                            className="shrink-0 rounded-md border border-[var(--border)] px-1.5 py-0.5 font-mono text-[11px] text-[var(--primary-600)] hover:bg-[var(--gray-100)]"
+                            className="shrink-0 rounded-md border border-white/40 bg-white/50 px-1.5 py-0.5 font-mono text-[11px] text-[var(--primary-600)] backdrop-blur-sm hover:bg-white/70 dark:border-white/10 dark:bg-white/5"
                             title={t("Abrir requisição", "Open requisition")}
                           >
                             {String(d?.order_code || `#${d.order}`)}
@@ -288,8 +295,8 @@ export default function CriticalResultDetail() {
                         {unit ? <span className="text-xs font-medium opacity-80">{unit}</span> : null}
                       </div>
                       <span
-                        className={`mt-1 inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] font-semibold ${
-                          high ? "bg-rose-50 text-rose-700 dark:bg-rose-900/25 dark:text-rose-300" : "bg-sky-50 text-sky-700 dark:bg-sky-900/25 dark:text-sky-300"
+                        className={`mt-1 inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] font-semibold backdrop-blur-sm ${
+                          high ? "bg-rose-500/15 text-rose-700 dark:text-rose-300" : "bg-sky-500/15 text-sky-700 dark:text-sky-300"
                         }`}
                       >
                         {high ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
@@ -324,7 +331,7 @@ export default function CriticalResultDetail() {
               {/* Side */}
               <div className="space-y-4">
                 {/* Timeline */}
-                <section className="rounded-xl border border-border bg-card p-4 shadow-sm">
+                <section className={`p-4 ${GLASS}`}>
                   <div className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-[var(--gray-500)]">
                     <Activity size={13} /> {t("Fluxo", "Workflow")}
                   </div>

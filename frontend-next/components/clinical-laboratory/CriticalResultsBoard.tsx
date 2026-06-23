@@ -28,6 +28,13 @@ const ENDPOINT = "/clinical_laboratory/critical_notification/"
 const REFRESH_MS = 25000
 const OVERDUE_MIN = 30 // pending readback beyond this = escalate (patient-safety SLA)
 
+// Translucent "glass" surfaces — let the brand canvas show through.
+const GLASS =
+  "border border-white/30 bg-white/55 shadow-sm backdrop-blur-md dark:border-white/10 dark:bg-white/[0.04]"
+const GLASS_SOFT =
+  "border border-white/40 bg-white/50 backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.05]"
+const SKELETON = "animate-pulse rounded-xl border border-white/30 bg-white/40 backdrop-blur-md dark:border-white/10 dark:bg-white/[0.04]"
+
 function isHigh(r: Row) { return String(r?.result_flag || "") === "CRITICO_ALTO" }
 function isLow(r: Row) { return String(r?.result_flag || "") === "CRITICO_BAIXO" }
 
@@ -68,14 +75,14 @@ function matchesQuery(r: Row, q: string): boolean {
 // ── Stat card ───────────────────────────────────────────────────────────────
 function StatCard({ icon, label, value, tone }: { icon: React.ReactNode; label: string; value: number | string; tone: "amber" | "rose" | "sky" | "emerald" }) {
   const tones: Record<string, string> = {
-    amber: "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900/40 dark:bg-amber-900/15 dark:text-amber-300",
-    rose: "border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-900/40 dark:bg-rose-900/15 dark:text-rose-300",
-    sky: "border-sky-200 bg-sky-50 text-sky-700 dark:border-sky-900/40 dark:bg-sky-900/15 dark:text-sky-300",
-    emerald: "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/40 dark:bg-emerald-900/15 dark:text-emerald-300",
+    amber: "border-amber-200/50 bg-amber-50/50 text-amber-700 dark:border-amber-900/40 dark:bg-amber-900/15 dark:text-amber-300",
+    rose: "border-rose-200/50 bg-rose-50/50 text-rose-700 dark:border-rose-900/40 dark:bg-rose-900/15 dark:text-rose-300",
+    sky: "border-sky-200/50 bg-sky-50/50 text-sky-700 dark:border-sky-900/40 dark:bg-sky-900/15 dark:text-sky-300",
+    emerald: "border-emerald-200/50 bg-emerald-50/50 text-emerald-700 dark:border-emerald-900/40 dark:bg-emerald-900/15 dark:text-emerald-300",
   }
   return (
-    <div className={`flex items-center gap-3 rounded-xl border px-4 py-3 ${tones[tone]}`}>
-      <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-white/70 dark:bg-white/10">{icon}</div>
+    <div className={`flex items-center gap-3 rounded-xl border px-4 py-3 backdrop-blur-md ${tones[tone]}`}>
+      <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-white/60 dark:bg-white/10">{icon}</div>
       <div className="min-w-0">
         <div className="text-2xl font-bold leading-none tabular-nums">{value}</div>
         <div className="mt-1 truncate text-xs font-medium opacity-80">{label}</div>
@@ -108,9 +115,9 @@ function CriticalCard({ row, busy, onConfirm, t }: { row: Row; busy: boolean; on
 
   return (
     <article
-      className={`relative flex aspect-[2/1] w-[320px] max-w-full flex-col overflow-hidden rounded-xl border bg-[var(--card)] shadow-sm transition hover:shadow-md
+      className={`relative flex aspect-[2/1] w-[320px] max-w-full flex-col overflow-hidden rounded-xl border bg-white/55 shadow-sm backdrop-blur-md transition hover:shadow-md dark:bg-white/[0.04]
         before:absolute before:inset-y-0 before:left-0 before:w-1.5 ${accent} ${confirmed ? "opacity-[0.92]" : ""}
-        ${overdue ? "border-rose-300 ring-1 ring-rose-300/70 dark:border-rose-900/50 dark:ring-rose-900/40" : "border-[var(--border)]"}`}
+        ${overdue ? "border-rose-300/70 ring-1 ring-rose-300/60 dark:border-rose-900/50 dark:ring-rose-900/40" : "border-white/30 dark:border-white/10"}`}
     >
       <div className="flex min-h-0 flex-1 items-start justify-between gap-2 p-3 pl-4">
         {/* identity + clinical context */}
@@ -125,7 +132,7 @@ function CriticalCard({ row, busy, onConfirm, t }: { row: Row; busy: boolean; on
             {row?.order ? (
               <Link
                 href={`/clinical-laboratory/orders/${encodeURIComponent(String(row.order))}`}
-                className="shrink-0 rounded-md border border-[var(--border)] px-1.5 py-0.5 font-mono text-[11px] text-[var(--primary-600)] hover:bg-[var(--gray-100)]"
+                className="shrink-0 rounded-md border border-white/40 bg-white/50 px-1.5 py-0.5 font-mono text-[11px] text-[var(--primary-600)] backdrop-blur-sm hover:bg-white/70 dark:border-white/10 dark:bg-white/5"
                 title={t("Abrir requisição", "Open requisition")}
               >
                 {String(row?.order_code || `#${row.order}`)}
@@ -147,10 +154,10 @@ function CriticalCard({ row, busy, onConfirm, t }: { row: Row; busy: boolean; on
               {unit ? <span className="text-xs font-medium opacity-80">{unit}</span> : null}
             </div>
             <span
-              className={`mt-1 inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] font-semibold ${
+              className={`mt-1 inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] font-semibold backdrop-blur-sm ${
                 high
-                  ? "bg-rose-50 text-rose-700 dark:bg-rose-900/25 dark:text-rose-300"
-                  : "bg-sky-50 text-sky-700 dark:bg-sky-900/25 dark:text-sky-300"
+                  ? "bg-rose-500/15 text-rose-700 dark:text-rose-300"
+                  : "bg-sky-500/15 text-sky-700 dark:text-sky-300"
               }`}
             >
               {high ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
@@ -161,7 +168,7 @@ function CriticalCard({ row, busy, onConfirm, t }: { row: Row; busy: boolean; on
       </div>
 
       {/* footer: readback state + actions */}
-      <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 border-t border-[var(--border)] bg-[var(--gray-50)] px-3 py-2 pl-4 dark:bg-white/[0.02]">
+      <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 border-t border-white/30 bg-white/30 px-3 py-2 pl-4 backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.03]">
         {confirmed ? (
           <span className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-700 dark:text-emerald-300">
             <CheckCircle2 size={14} />
@@ -189,7 +196,7 @@ function CriticalCard({ row, busy, onConfirm, t }: { row: Row; busy: boolean; on
         <div className="flex items-center gap-2">
           <Link
             href={`/clinical-laboratory/critical-results/${encodeURIComponent(id)}/edit`}
-            className="inline-flex h-7 items-center gap-1 rounded-md border border-[var(--border)] bg-[var(--card)] px-2.5 text-xs font-medium text-[var(--gray-700)] hover:bg-[var(--gray-100)] dark:text-[var(--gray-300)]"
+            className="inline-flex h-7 items-center gap-1 rounded-md border border-white/40 bg-white/50 px-2.5 text-xs font-medium text-[var(--gray-700)] backdrop-blur-sm hover:bg-white/70 dark:border-white/10 dark:bg-white/5 dark:text-[var(--gray-300)]"
           >
             <Phone size={12} /> {confirmed ? t("Detalhes", "Details") : t("Comunicar", "Notify")}
           </Link>
@@ -280,7 +287,7 @@ export default function CriticalResultsBoard() {
       className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
         scope === key
           ? "bg-[var(--primary-600)] text-white shadow-sm"
-          : "border border-[var(--border)] bg-[var(--card)] text-[var(--gray-700)] hover:bg-[var(--gray-100)] dark:text-[var(--gray-300)]"
+          : "border border-white/40 bg-white/50 text-[var(--gray-700)] backdrop-blur-sm hover:bg-white/70 dark:border-white/10 dark:bg-white/5 dark:text-[var(--gray-300)]"
       }`}
     >
       {label}
@@ -291,9 +298,9 @@ export default function CriticalResultsBoard() {
   return (
     <AppLayout>
       {/* Header */}
-      <div className="mb-3 flex flex-col gap-2 border-b border-border pb-3 md:flex-row md:items-center md:justify-between">
+      <div className="mb-3 flex flex-col gap-2 border-b border-white/30 pb-3 dark:border-white/10 md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-2">
-          <div className="grid h-8 w-8 place-items-center rounded-lg bg-rose-50 text-rose-600 dark:bg-rose-900/20 dark:text-rose-400">
+          <div className="grid h-8 w-8 place-items-center rounded-lg bg-rose-500/15 text-rose-600 backdrop-blur-sm dark:text-rose-400">
             <ShieldAlert size={18} />
           </div>
           <h1 className="font-display text-base font-semibold text-foreground">{t("Resultados críticos", "Critical results")}</h1>
@@ -309,7 +316,7 @@ export default function CriticalResultsBoard() {
           <button
             type="button"
             onClick={() => query.refetch()}
-            className="inline-flex h-8 items-center gap-1 rounded-md border border-[var(--border)] bg-[var(--card)] px-2.5 text-xs font-medium text-[var(--gray-700)] hover:bg-[var(--gray-100)] dark:text-[var(--gray-300)]"
+            className={`inline-flex h-8 items-center gap-1 rounded-md px-2.5 text-xs font-medium text-[var(--gray-700)] transition hover:bg-white/70 dark:text-[var(--gray-300)] dark:hover:bg-white/10 ${GLASS_SOFT}`}
           >
             <RefreshCw size={13} className={query.isFetching ? "animate-spin" : ""} /> {t("Atualizar", "Refresh")}
           </button>
@@ -319,10 +326,10 @@ export default function CriticalResultsBoard() {
       {/* Live patient-safety banner */}
       {pending.length > 0 ? (
         <div
-          className={`mb-4 flex items-center gap-3 rounded-xl border px-4 py-3 ${
+          className={`mb-4 flex items-center gap-3 rounded-xl border px-4 py-3 backdrop-blur-md ${
             overduePending > 0
-              ? "border-rose-300 bg-rose-50 text-rose-800 dark:border-rose-900/50 dark:bg-rose-900/20 dark:text-rose-200"
-              : "border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-900/40 dark:bg-amber-900/15 dark:text-amber-200"
+              ? "border-rose-300/60 bg-rose-50/55 text-rose-800 dark:border-rose-900/50 dark:bg-rose-900/20 dark:text-rose-200"
+              : "border-amber-200/50 bg-amber-50/50 text-amber-800 dark:border-amber-900/40 dark:bg-amber-900/15 dark:text-amber-200"
           }`}
         >
           <span className="relative flex h-2.5 w-2.5 shrink-0">
@@ -367,13 +374,13 @@ export default function CriticalResultsBoard() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={t("Pesquisar paciente, requisição, exame...", "Search patient, requisition, test...")}
-            className="h-9 w-full rounded-md border border-border bg-background py-2 pl-8 pr-3 text-sm text-foreground shadow-sm outline-none focus-visible:border-ring"
+            className="h-9 w-full rounded-md border border-white/40 bg-white/50 py-2 pl-8 pr-3 text-sm text-foreground shadow-sm outline-none backdrop-blur-sm focus-visible:border-ring dark:border-white/10 dark:bg-white/5"
           />
         </div>
       </div>
 
       {actionError ? (
-        <div className="mb-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800 dark:border-red-800/40 dark:bg-red-900/15 dark:text-red-300">
+        <div className="mb-3 rounded-xl border border-red-300/50 bg-red-50/60 px-3 py-2 text-sm text-red-800 backdrop-blur-sm dark:border-red-800/40 dark:bg-red-900/15 dark:text-red-300">
           {actionError}
         </div>
       ) : null}
@@ -382,16 +389,16 @@ export default function CriticalResultsBoard() {
       {query.isLoading ? (
         <div className="flex flex-wrap gap-3">
           {[0, 1, 2].map((i) => (
-            <div key={i} className="aspect-[2/1] w-[320px] max-w-full animate-pulse rounded-xl border border-[var(--border)] bg-[var(--gray-100)] dark:bg-white/[0.03]" />
+            <div key={i} className={`aspect-[2/1] w-[320px] max-w-full ${SKELETON}`} />
           ))}
         </div>
       ) : query.isError ? (
-        <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+        <div className="rounded-xl border border-amber-300/50 bg-amber-50/60 px-3 py-2 text-sm text-amber-800 backdrop-blur-sm dark:bg-amber-900/15 dark:text-amber-200">
           {(query.error as any)?.message || t("Falha ao carregar resultados críticos.", "Failed to load critical results.")}
         </div>
       ) : visible.length === 0 ? (
-        <div className="grid place-items-center rounded-xl border border-dashed border-[var(--border)] bg-[var(--card)] px-6 py-14 text-center">
-          <div className="grid h-12 w-12 place-items-center rounded-full bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400">
+        <div className="grid place-items-center rounded-2xl border border-dashed border-white/40 bg-white/40 px-6 py-14 text-center backdrop-blur-md dark:border-white/10 dark:bg-white/[0.04]">
+          <div className="grid h-12 w-12 place-items-center rounded-full bg-emerald-500/15 text-emerald-600 backdrop-blur-sm dark:text-emerald-400">
             <Activity size={22} />
           </div>
           <p className="mt-3 text-sm font-medium text-[var(--text)]">

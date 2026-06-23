@@ -13,6 +13,12 @@ import type { ResourceFormConfig } from "@/lib/resources/resourceFormConfig"
 const ENDPOINT = "/clinical_laboratory/critical_notification/"
 const BOARD_PATH = "/clinical-laboratory/critical-results"
 
+// Translucent "glass" surfaces — let the brand canvas show through.
+const GLASS =
+  "rounded-2xl border border-white/30 bg-white/55 shadow-sm backdrop-blur-md dark:border-white/10 dark:bg-white/[0.04]"
+const GLASS_SOFT =
+  "rounded-md border border-white/40 bg-white/50 backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.05]"
+
 export default function CriticalResultCreateForm() {
   useAuthGuard()
   const { t } = useLanguage()
@@ -40,15 +46,15 @@ export default function CriticalResultCreateForm() {
     <AppLayout>
       <div className="mx-auto w-full max-w-2xl space-y-4">
         {/* Header */}
-        <div className="flex items-center gap-3 border-b border-border pb-3">
+        <div className="flex items-center gap-3 border-b border-white/30 pb-3 dark:border-white/10">
           <Link
             href={BOARD_PATH}
             aria-label={t("Voltar", "Back")}
-            className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-border bg-card text-[var(--gray-600)] transition hover:bg-[var(--gray-100)] dark:text-[var(--gray-300)]"
+            className={`inline-flex h-8 w-8 items-center justify-center text-[var(--gray-600)] transition hover:bg-white/70 dark:text-[var(--gray-300)] dark:hover:bg-white/10 ${GLASS_SOFT}`}
           >
             <ArrowLeft size={16} />
           </Link>
-          <div className="grid h-8 w-8 place-items-center rounded-lg bg-rose-50 text-rose-600 dark:bg-rose-900/20 dark:text-rose-400">
+          <div className="grid h-8 w-8 place-items-center rounded-lg bg-rose-500/15 text-rose-600 backdrop-blur-sm dark:text-rose-400">
             <ShieldAlert size={18} />
           </div>
           <div>
@@ -61,7 +67,7 @@ export default function CriticalResultCreateForm() {
           </div>
         </div>
 
-        <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
+        <div className={`p-5 ${GLASS}`}>
           <AutoForm
             endpoint={ENDPOINT}
             method="post"
