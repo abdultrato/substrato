@@ -26,6 +26,7 @@ type Scope = "pending" | "confirmed" | "all"
 
 const ENDPOINT = "/clinical_laboratory/critical_notification/"
 const REFRESH_MS = 25000
+const OVERDUE_MIN = 30 // pending readback beyond this = escalate (patient-safety SLA)
 
 function isHigh(r: Row) { return String(r?.result_flag || "") === "CRITICO_ALTO" }
 function isLow(r: Row) { return String(r?.result_flag || "") === "CRITICO_BAIXO" }
@@ -47,6 +48,13 @@ function timeAgo(value: any, t: (pt: string, en: string) => string): string {
   if (h < 24) return t(`há ${h} h`, `${h} h ago`)
   const days = Math.floor(h / 24)
   return t(`há ${days} d`, `${days} d ago`)
+}
+
+function minutesSince(value: any): number | null {
+  if (!value) return null
+  const d = new Date(value)
+  if (Number.isNaN(d.getTime())) return null
+  return Math.max(0, Math.floor((Date.now() - d.getTime()) / 60000))
 }
 
 function matchesQuery(r: Row, q: string): boolean {
@@ -86,14 +94,23 @@ function CriticalCard({ row, busy, onConfirm, t }: { row: Row; busy: boolean; on
   const flagLabel = String(row?.result_flag_display || row?.result_flag || "").trim()
   const prof = String(row?.notified_professional || "").trim()
   const method = String(row?.method || "").trim()
+  const mins = minutesSince(row?.notified_at)
+  const overdue = !confirmed && mins != null && mins >= OVERDUE_MIN
 
-  const accent = confirmed ? "before:bg-emerald-400" : high ? "before:bg-rose-500" : "before:bg-sky-500"
+  const accent = confirmed
+    ? "before:bg-emerald-400"
+    : overdue
+      ? "before:bg-rose-600"
+      : high
+        ? "before:bg-rose-500"
+        : "before:bg-sky-500"
   const valueTone = confirmed ? "text-[var(--text)]" : high ? "text-rose-600 dark:text-rose-400" : "text-sky-600 dark:text-sky-400"
 
   return (
     <article
-      className={`relative overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--card)] shadow-sm transition hover:shadow-md
-        before:absolute before:inset-y-0 before:left-0 before:w-1.5 ${accent} ${confirmed ? "opacity-[0.92]" : ""}`}
+      className={`relative overflow-hidden rounded-xl border bg-[var(--card)] shadow-sm transition hover:shadow-md
+        before:absolute before:inset-y-0 before:left-0 before:w-1.5 ${accent} ${confirmed ? "opacity-[0.92]" : ""}
+        ${overdue ? "border-rose-300 ring-1 ring-rose-300/70 dark:border-rose-900/50 dark:ring-rose-900/40" : "border-[var(--border)]"}`}
     >
       <div className="flex flex-col gap-3 p-4 pl-5 sm:flex-row sm:items-center sm:justify-between">
         {/* identity + clinical context */}
@@ -150,6 +167,14 @@ function CriticalCard({ row, busy, onConfirm, t }: { row: Row; busy: boolean; on
             <CheckCircle2 size={14} />
             {t("Readback confirmado", "Readback confirmed")}
             {prof ? <span className="text-[var(--gray-500)]">· {prof}{method ? ` (${method})` : ""}</span> : null}
+          </span>
+        ) : overdue ? (
+          <span className="inline-flex items-center gap-1.5 text-xs font-bold text-rose-700 dark:text-rose-300">
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-rose-500 opacity-80" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-rose-600" />
+            </span>
+            {t(`Atrasado há ${mins} min — comunicar já`, `Overdue ${mins} min — notify now`)}
           </span>
         ) : (
           <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-700 dark:text-amber-300">
@@ -208,9 +233,29 @@ export default function CriticalResultsBoard() {
   const confirmed = useMemo(() => all.filter((r) => r?.readback_confirmed), [all])
   const highPending = useMemo(() => pending.filter(isHigh).length, [pending])
   const lowPending = useMemo(() => pending.filter(isLow).length, [pending])
+  const overduePending = useMemo(
+    () => pending.filter((r) => { const m = minutesSince(r?.notified_at); return m != null && m >= OVERDUE_MIN }).length,
+    [pending],
+  )
+  const oldestPendingMin = useMemo(
+    () => pending.reduce((mx, r) => { const m = minutesSince(r?.notified_at); return m != null && m > mx ? m : mx }, 0),
+    [pending],
+  )
 
   const base = scope === "pending" ? pending : scope === "confirmed" ? confirmed : all
-  const visible = useMemo(() => base.filter((r) => matchesQuery(r, search)), [base, search])
+  const visible = useMemo(() => {
+    const list = base.filter((r) => matchesQuery(r, search))
+    // Triage order: unconfirmed first; among pending the longest-waiting on top,
+    // among confirmed the most recently notified on top.
+    return [...list].sort((a, b) => {
+      const ca = !!a?.readback_confirmed
+      const cb = !!b?.readback_confirmed
+      if (ca !== cb) return ca ? 1 : -1
+      const ta = new Date(a?.notified_at || 0).getTime()
+      const tb = new Date(b?.notified_at || 0).getTime()
+      return ca ? tb - ta : ta - tb
+    })
+  }, [base, search])
 
   async function confirmReadback(id: string) {
     setBusyId(id)
@@ -270,6 +315,36 @@ export default function CriticalResultsBoard() {
           </button>
         </div>
       </div>
+
+      {/* Live patient-safety banner */}
+      {pending.length > 0 ? (
+        <div
+          className={`mb-4 flex items-center gap-3 rounded-xl border px-4 py-3 ${
+            overduePending > 0
+              ? "border-rose-300 bg-rose-50 text-rose-800 dark:border-rose-900/50 dark:bg-rose-900/20 dark:text-rose-200"
+              : "border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-900/40 dark:bg-amber-900/15 dark:text-amber-200"
+          }`}
+        >
+          <span className="relative flex h-2.5 w-2.5 shrink-0">
+            <span className={`absolute inline-flex h-full w-full animate-ping rounded-full opacity-75 ${overduePending > 0 ? "bg-rose-500" : "bg-amber-400"}`} />
+            <span className={`relative inline-flex h-2.5 w-2.5 rounded-full ${overduePending > 0 ? "bg-rose-600" : "bg-amber-500"}`} />
+          </span>
+          <p className="min-w-0 text-sm leading-snug">
+            <span className="font-semibold">
+              {t(
+                `${pending.length} resultado${pending.length > 1 ? "s" : ""} crítico${pending.length > 1 ? "s" : ""} aguarda${pending.length > 1 ? "m" : ""} comunicação`,
+                `${pending.length} critical result${pending.length > 1 ? "s" : ""} awaiting notification`,
+              )}
+            </span>
+            {oldestPendingMin > 0 ? (
+              <span className="opacity-80"> · {t(`mais antigo há ${oldestPendingMin} min`, `oldest ${oldestPendingMin} min ago`)}</span>
+            ) : null}
+            {overduePending > 0 ? (
+              <span className="font-semibold"> · {t(`${overduePending} atrasado${overduePending > 1 ? "s" : ""} (>${OVERDUE_MIN} min)`, `${overduePending} overdue (>${OVERDUE_MIN} min)`)}</span>
+            ) : null}
+          </p>
+        </div>
+      ) : null}
 
       {/* KPIs */}
       <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
