@@ -112,44 +112,42 @@ function ReceiptCard({ row, busy, onPdf }: {
   const date    = getDate(row)
 
   return (
-    <div className="group flex flex-col gap-2 rounded-lg border border-white/25 bg-white/30 px-3 py-2.5 shadow-sm backdrop-blur-sm transition-all duration-150 hover:-translate-y-0.5 hover:border-[var(--primary-300)]/60 hover:bg-white/45 hover:shadow-md dark:bg-white/5 dark:border-white/10 dark:hover:border-[var(--primary-500)]/40 dark:hover:bg-white/10">
+    <div className="group flex flex-col gap-1 rounded-md border border-white/25 bg-white/30 px-2 py-1.5 shadow-sm backdrop-blur-sm transition-all duration-150 hover:border-[var(--primary-300)]/60 hover:bg-white/45 dark:bg-white/5 dark:border-white/10 dark:hover:border-[var(--primary-500)]/40">
 
-      {/* Top */}
-      <div className="flex items-start justify-between gap-2">
-        <span className="font-mono text-[11px] font-bold text-[var(--primary-700)] dark:text-white">
+      {/* Top row: code + amount */}
+      <div className="flex items-center justify-between gap-1">
+        <span className="font-mono text-[10px] font-bold text-[var(--primary-700)] dark:text-white truncate">
           {code}
         </span>
-        <div className="shrink-0 rounded-md border border-[var(--primary-300)] bg-[var(--primary-50)] px-2 py-0.5 dark:border-[var(--primary-400)] dark:bg-[var(--primary-800)]/60">
-          <span className="text-xs font-bold text-[var(--primary-700)] dark:text-white">
+        <div className="shrink-0 rounded border border-[var(--primary-300)] bg-[var(--primary-50)] px-1.5 py-px dark:border-[var(--primary-400)] dark:bg-[var(--primary-800)]/60">
+          <span className="text-[10px] font-bold text-[var(--primary-700)] dark:text-white">
             <MoneyValue value={amount} />
           </span>
         </div>
       </div>
 
-      {/* Patient */}
-      <p className="truncate text-xs font-semibold text-foreground">{patient}</p>
+      {/* Patient + meta in one compact row */}
+      <div className="flex items-center gap-1 min-w-0">
+        <p className="truncate text-[10px] font-semibold text-foreground flex-1">{patient}</p>
+        <span className="shrink-0 text-[9px] text-muted-foreground">{fmtDate(date)}</span>
+      </div>
 
-      {/* Meta */}
-      <div className="flex flex-wrap items-center gap-1.5 text-[10px] text-muted-foreground">
+      {/* Invoice chip + PDF inline */}
+      <div className="flex items-center gap-1">
         {invoice && (
-          <span className="inline-flex items-center gap-0.5 rounded border border-border bg-muted/40 px-1 py-px font-medium text-foreground-2">
-            <FileText size={8} />
+          <span className="inline-flex items-center gap-0.5 rounded border border-border bg-muted/40 px-1 py-px text-[9px] font-medium text-foreground-2 truncate max-w-[60%]">
+            <FileText size={7} />
             {invoice}
           </span>
         )}
-        <span className="ml-auto">{fmtDate(date)}</span>
-      </div>
-
-      {/* PDF */}
-      <div className="border-t border-white/25 pt-1.5 dark:border-white/10">
         <button
           type="button"
           onClick={() => onPdf(Number(row.id))}
           disabled={busy}
-          className="inline-flex h-6 w-full items-center justify-center gap-1.5 rounded-full border border-[var(--primary-300)] bg-[var(--primary-50)] text-[10px] font-semibold text-[var(--primary-700)] transition hover:bg-[var(--primary-100)] disabled:cursor-wait disabled:opacity-60 dark:border-[var(--primary-400)] dark:bg-[var(--primary-700)]/50 dark:text-white dark:hover:bg-[var(--primary-600)]/60"
+          className="ml-auto inline-flex h-5 items-center gap-1 rounded-full border border-[var(--primary-300)] bg-[var(--primary-50)] px-2 text-[9px] font-semibold text-[var(--primary-700)] transition hover:bg-[var(--primary-100)] disabled:cursor-wait disabled:opacity-60 dark:border-[var(--primary-400)] dark:bg-[var(--primary-700)]/50 dark:text-white dark:hover:bg-[var(--primary-600)]/60"
         >
-          {busy ? <Loader2 size={10} className="animate-spin" /> : <FileText size={10} />}
-          <PdfActionLabel loading={busy} loadingLabel="A gerar…">PDF</PdfActionLabel>
+          {busy ? <Loader2 size={8} className="animate-spin" /> : <FileText size={8} />}
+          <PdfActionLabel loading={busy} loadingLabel="…">PDF</PdfActionLabel>
         </button>
       </div>
     </div>
@@ -346,15 +344,15 @@ export default function RecibosPage() {
           </div>
         ) : (
           // eslint-disable-next-line react/forbid-dom-props
-          <div className="grid grid-cols-4 gap-3" style={{ "--col-max-height": "calc(100vh - 210px)" } as React.CSSProperties}>
+          <div className="grid grid-cols-4 gap-3" style={{ "--col-max-height": "calc(100vh - 145px)" } as React.CSSProperties}>
             <BoardColumn
               title="Hoje"
-              icon={<Receipt size={14} className="text-emerald-600" />}
+              icon={<Receipt size={13} className="text-white/90" />}
               rows={hoje}
               tokens={{
-                headerBgHex: "#ecfdf5", border: "#6ee7b7",
-                bg: "bg-emerald-50/80", text: "text-emerald-800",
-                countBg: "bg-emerald-100", countText: "text-emerald-700",
+                headerBgHex: "#059669", border: "#6ee7b7",
+                bg: "bg-emerald-600", text: "text-white",
+                countBg: "bg-emerald-500", countText: "text-white",
               }}
               emptyText="Nenhum recibo hoje"
               acaoId={acaoId}
@@ -362,12 +360,12 @@ export default function RecibosPage() {
             />
             <BoardColumn
               title="Ontem"
-              icon={<Clock size={14} className="text-sky-600" />}
+              icon={<Clock size={13} className="text-white/90" />}
               rows={ontem}
               tokens={{
-                headerBgHex: "#f0f9ff", border: "#7dd3fc",
-                bg: "bg-sky-50/80", text: "text-sky-800",
-                countBg: "bg-sky-100", countText: "text-sky-700",
+                headerBgHex: "#0284c7", border: "#7dd3fc",
+                bg: "bg-sky-600", text: "text-white",
+                countBg: "bg-sky-500", countText: "text-white",
               }}
               emptyText="Nenhum recibo de ontem"
               acaoId={acaoId}
@@ -375,12 +373,12 @@ export default function RecibosPage() {
             />
             <BoardColumn
               title="Este mês"
-              icon={<Calendar size={14} className="text-violet-600" />}
+              icon={<Calendar size={13} className="text-white/90" />}
               rows={mes}
               tokens={{
-                headerBgHex: "#f5f3ff", border: "#c4b5fd",
-                bg: "bg-violet-50/80", text: "text-violet-800",
-                countBg: "bg-violet-100", countText: "text-violet-700",
+                headerBgHex: "#7c3aed", border: "#c4b5fd",
+                bg: "bg-violet-600", text: "text-white",
+                countBg: "bg-violet-500", countText: "text-white",
               }}
               emptyText="Nenhum recibo este mês"
               acaoId={acaoId}
@@ -388,12 +386,12 @@ export default function RecibosPage() {
             />
             <BoardColumn
               title="Antigas"
-              icon={<Archive size={14} className="text-slate-400 dark:text-slate-300" />}
+              icon={<Archive size={13} className="text-white/90" />}
               rows={antigas}
               tokens={{
-                headerBgHex: "#1e293b", border: "#475569",
-                bg: "bg-slate-100/80 dark:bg-slate-800/80", text: "text-slate-700 dark:text-slate-200",
-                countBg: "bg-slate-200 dark:bg-slate-700", countText: "text-slate-600 dark:text-slate-300",
+                headerBgHex: "#475569", border: "#94a3b8",
+                bg: "bg-slate-500", text: "text-white",
+                countBg: "bg-slate-400", countText: "text-white",
               }}
               emptyText="Nenhum recibo mais antigo"
               acaoId={acaoId}

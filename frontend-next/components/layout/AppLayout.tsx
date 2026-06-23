@@ -42,7 +42,6 @@ export default function AppLayout ( {
     rightAsideWidth = "20rem",
     subNav,
 }: Props ) {
-    const sidebarDesktopWidth = "4rem"
     const { loading } = useAuthGuard()
     const { user } = useAuth()
     const { t } = useLanguage()
@@ -56,7 +55,6 @@ export default function AppLayout ( {
     const mainRef = useRef<HTMLElement>( null )
     const lastScrollY = useRef( 0 )
     const lockUntil = useRef( 0 )
-    const footerLeftOffset = sidebarDesktopWidth
     const contentFrameStyle = {
         "--layout-right": rightAside ? rightAsideWidth : "0px",
     } as CSSProperties
@@ -253,7 +251,7 @@ export default function AppLayout ( {
                 >
                     <Header user={user} onMenuClick={handleMenuClick} />
 
-                    <main data-no-scroll-arrows className="substrato-app-surface flex-1 min-w-0 overflow-x-hidden overflow-y-auto px-2 py-2 pb-[calc(4rem+env(safe-area-inset-bottom))] sm:px-3 md:px-4 md:py-3 md:pb-12">
+                    <main data-no-scroll-arrows className="substrato-app-surface flex-1 min-w-0 overflow-x-hidden overflow-y-auto px-2 py-2 sm:px-3 md:px-4 md:py-3">
                         <div className="page-transition">
                             <AutoTranslateTree>
                                 <AccessDenied
@@ -278,6 +276,7 @@ export default function AppLayout ( {
                                 />
                             </AutoTranslateTree>
                         </div>
+                        <Footer />
                     </main>
                 </div>
 
@@ -289,11 +288,6 @@ export default function AppLayout ( {
                         <AutoTranslateTree>{rightAside}</AutoTranslateTree>
                     </aside>
                 ) : null}
-
-                <Footer
-                    leftOffset={footerLeftOffset}
-                    rightOffset={rightAside ? rightAsideWidth : "0px"}
-                />
             </div>
         )
     }
@@ -321,10 +315,11 @@ export default function AppLayout ( {
                     {subNav ?? <ModuleSubNav />}
                 </div>
 
-                <main ref={mainRef} data-no-scroll-arrows className="substrato-app-surface flex-1 min-w-0 overflow-x-hidden overflow-y-auto px-2 py-2 pb-[calc(4rem+env(safe-area-inset-bottom))] sm:px-3 md:px-4 md:py-3 md:pb-12">
+                <main ref={mainRef} data-no-scroll-arrows className="substrato-app-surface flex-1 min-w-0 overflow-x-hidden overflow-y-auto px-2 py-2 sm:px-3 md:px-4 md:py-3">
                     <div className="page-transition">
                         <AutoTranslateTree>{children}</AutoTranslateTree>
                     </div>
+                    <Footer />
                 </main>
             </div>
 
@@ -336,11 +331,6 @@ export default function AppLayout ( {
                     <AutoTranslateTree>{rightAside}</AutoTranslateTree>
                 </aside>
             ) : null}
-
-            <Footer
-                leftOffset={footerLeftOffset}
-                rightOffset={rightAside ? rightAsideWidth : "0px"}
-            />
         </div>
     )
 }
