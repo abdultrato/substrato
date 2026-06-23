@@ -75,6 +75,57 @@ class PatientViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Mo
     ]
     ordering = ["-created_at"]
 
+    def get_queryset(self):
+        """Lista enriquecida: empresa de origem pré-carregada e contagem de
+        doações de sangue anotada (evita N+1 no campo `is_blood_donor`)."""
+        from django.db.models import Count, Q
+
+        return (
+            super()
+            .get_queryset()
+            .select_related("origin_company")
+            .annotate(
+                blood_donation_count=Count(
+                    "blood_donations",
+                    filter=Q(blood_donations__deleted=False),
+                    distinct=True,
+                )
+            )
+        )
+
+    @extend_schema(
+        operation_id="v1_clinical_patient_summary",
+        description="Indicadores agregados de pacientes para o cabeçalho da listagem.",
+    )
+    @action(detail=False, methods=["get"], url_path="summary", url_name="summary")
+    def summary(self, request):
+        from datetime import timedelta
+
+        from django.db.models import Count, Q
+        from django.utils import timezone
+
+        from core.constants.gender import Gender
+        from core.constants.provenance import Provenance
+
+        tenant = getattr(request, "tenant", None)
+        base = Patient.objects.filter(deleted=False)
+        if tenant is not None:
+            base = base.filter(tenant=tenant)
+
+        cutoff = timezone.now() - timedelta(days=30)
+        data = base.aggregate(
+            total=Count("id", distinct=True),
+            female=Count("id", filter=Q(gender=Gender.FEMALE), distinct=True),
+            male=Count("id", filter=Q(gender=Gender.MALE), distinct=True),
+            pregnant=Count("id", filter=Q(pregnant=True), distinct=True),
+            occupational=Count(
+                "id", filter=Q(provenance=Provenance.MEDICINA_OCUPACIONAL), distinct=True
+            ),
+            new_last_30_days=Count("id", filter=Q(created_at__gte=cutoff), distinct=True),
+        )
+        data["blood_donors"] = base.filter(blood_donations__deleted=False).distinct().count()
+        return Response(data)
+
     @extend_schema(
         description="Listar pacientes com filtros, busca e paginação",
         parameters=[

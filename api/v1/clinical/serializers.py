@@ -95,6 +95,9 @@ class PatientSerializer(serializers.ModelSerializer):
     """
 
     origin_company_name = serializers.CharField(source="origin_company.name", read_only=True)
+    age_display = serializers.CharField(source="idade", read_only=True)
+    age_years = serializers.SerializerMethodField()
+    is_blood_donor = serializers.SerializerMethodField()
     legacy_input_aliases = {
         "id_custom": "custom_id",
         "nome": "name",
@@ -334,6 +337,20 @@ class PatientSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         data = super().to_representation(instance)
         return append_legacy_aliases(data, self.legacy_output_aliases)
+
+    def get_age_years(self, obj):
+        try:
+            return obj.idade_em_anos()
+        except Exception:
+            return None
+
+    def get_is_blood_donor(self, obj):
+        # Em listagem o viewset anota `blood_donation_count` para evitar N+1;
+        # no detalhe/após criação recorre a uma única query de fallback.
+        annotated = getattr(obj, "blood_donation_count", None)
+        if annotated is not None:
+            return bool(annotated)
+        return obj.blood_donations.filter(deleted=False).exists()
 
     def validate_email(self, value):
         """Validação adicional de email."""
