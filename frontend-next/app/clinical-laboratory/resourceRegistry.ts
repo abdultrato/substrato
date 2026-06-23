@@ -20,7 +20,10 @@ export const LAB_RESOURCE_ROUTES: Record<string, string> = {
   validations: "/clinical_laboratory/validation/",
   // Pós-analítico
   reports: "/clinical_laboratory/report/",
-  "critical-results": "/clinical_laboratory/critical_notification/",
+  // NB: "critical-results" is intentionally NOT mapped here. It is served by the
+  // dedicated static board (app/clinical-laboratory/critical-results/page.tsx →
+  // CriticalResultsBoard). Mapping it would let the generic [resourceSlug] table
+  // shadow the board on stale clients.
   // Sectores especializados
   cultures: "/clinical_laboratory/culture/",
   isolates: "/clinical_laboratory/isolate/",
