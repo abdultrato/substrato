@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import { Search } from "lucide-react"
 import { useCallback, useEffect, useMemo, useState } from "react"
 
 import AppLayout from "@/components/layout/AppLayout"
@@ -134,7 +135,7 @@ function makeBucketer() {
 // ─── Search panel ───────────────────────────────────────────────────────────
 
 const INPUT_CLS =
-  "h-7 w-full rounded border border-[var(--border)] bg-[var(--card)] px-2 text-xs text-[var(--text)] placeholder:text-[var(--gray-400)] focus:border-[var(--primary-400)] focus:outline-none"
+  "h-7 w-full rounded border border-white/30 bg-white/50 px-2 text-xs text-[var(--text)] backdrop-blur-sm placeholder:text-[var(--gray-400)] focus:border-[var(--primary-400)] focus:outline-none dark:border-white/10 dark:bg-white/5"
 const LABEL_CLS = "block text-[10px] font-semibold uppercase tracking-wide text-[var(--gray-500)] mb-0.5"
 
 function SearchPanel({
@@ -156,11 +157,14 @@ function SearchPanel({
   }
 
   return (
-    <div className="rounded-xl border border-[var(--border)] bg-transparent px-3 py-2">
+    <div className="rounded-xl border border-white/20 bg-white/25 px-3 py-2 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/5">
       <div className="grid grid-cols-2 gap-x-2 gap-y-1.5 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-7">
         <div className="col-span-2">
           <label className={LABEL_CLS}>Pesquisa livre (código, paciente, documento, empresa…)</label>
-          <input value={filters.search} onChange={(e) => set("search", e.target.value)} onKeyDown={handleKey} placeholder="Escreva qualquer termo…" className={INPUT_CLS} />
+          <div className="relative">
+            <Search size={13} className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-[var(--gray-400)]" />
+            <input type="search" value={filters.search} onChange={(e) => set("search", e.target.value)} onKeyDown={handleKey} placeholder="Escreva qualquer termo…" className={`${INPUT_CLS} pl-7`} />
+          </div>
         </div>
 
         <div>
@@ -261,7 +265,7 @@ function SmartCard({
   }
 
   return (
-    <div className="space-y-1.5 rounded-lg border border-[var(--border)] bg-transparent px-3 py-2.5">
+    <div className="space-y-1.5 rounded-lg border border-white/20 bg-white/30 px-3 py-2.5 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/5">
       <div className="flex items-start justify-between gap-2">
         <Link
           href={`/requests/${row.id}`}
@@ -391,7 +395,7 @@ export default function LabReportsPage() {
             {COLUMNS.map((column) => {
               const items = buckets[column.key]
               return (
-                <section key={column.key} className={`flex flex-col rounded-lg bg-[var(--card)]/40 p-2 ${column.top}`}>
+                <section key={column.key} className={`flex flex-col rounded-xl border border-white/20 bg-white/25 p-2 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/5 ${column.top}`}>
                   <div className="flex items-center justify-between gap-2 px-1 pb-2 pt-1">
                     <h2 className={`text-xs font-semibold uppercase tracking-wide ${column.header}`}>{column.title}</h2>
                     <span className={`inline-flex min-w-5 items-center justify-center rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${column.badge}`}>
