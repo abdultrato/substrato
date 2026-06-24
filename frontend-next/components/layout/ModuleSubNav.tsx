@@ -308,7 +308,6 @@ const MODULE_NAVS: ModuleNavConfig[] = [
             { href: "/clinical-laboratory/reception", label: "Recepção", labelEn: "Reception" },
             { href: "/clinical-laboratory/rejections", label: "Rejeições", labelEn: "Rejections" },
             { href: "/clinical-laboratory/worklists", label: "Listas de trabalho", labelEn: "Worklists" },
-            { href: "/clinical-laboratory/results", label: "Resultados", labelEn: "Results" },
             { href: "/clinical-laboratory/validations", label: "Validações", labelEn: "Validations" },
             { href: "/clinical-laboratory/reports", label: "Laudos", labelEn: "Reports" },
             { href: "/clinical-laboratory/critical-results", label: "Críticos", labelEn: "Critical results" },

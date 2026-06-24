@@ -13,7 +13,6 @@ const TABS: Tab[] = [
   { href: "/clinical-laboratory/samples", label: "Amostras" },
   { href: "/clinical-laboratory/reception", label: "Recepção" },
   { href: "/clinical-laboratory/worklists", label: "Listas de Trabalho" },
-  { href: "/clinical-laboratory/results", label: "Resultados" },
   { href: "/clinical-laboratory/validations", label: "Validações" },
   { href: "/clinical-laboratory/reports", label: "Laudos" },
   { href: "/clinical-laboratory/critical-results", label: "Críticos" },

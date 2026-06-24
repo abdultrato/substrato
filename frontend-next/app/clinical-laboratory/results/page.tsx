@@ -1,11 +1,7 @@
-"use client";
-import { Suspense } from "react";
-import ResultsBoardPage from "@/components/clinical-laboratory/ResultsBoardPage";
+import { redirect } from "next/navigation";
 
+// A entrada/validação de resultados foi consolidada no fluxo por requisição
+// (Listas de Trabalho). Esta rota redirecciona para evitar duplicação.
 export default function LabResultsPage() {
-  return (
-    <Suspense fallback={<div className="p-4 text-sm text-[var(--gray-500)]">Carregando...</div>}>
-      <ResultsBoardPage />
-    </Suspense>
-  );
+  redirect("/clinical-laboratory/worklists");
 }

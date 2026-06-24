@@ -70,7 +70,6 @@ const PHASES: Phase[] = [
     hint: "Processamento, resultado e validação.",
     items: [
       { href: "/clinical-laboratory/worklists", label: "Listas de trabalho", desc: "Trabalho por sector e equipamento", icon: Beaker },
-      { href: "/clinical-laboratory/results", label: "Resultados", desc: "Resultados técnicos e flags", icon: FlaskConical },
       { href: "/clinical-laboratory/validations", label: "Validações", desc: "Validação técnica e clínica", icon: FileCheck2 },
     ],
   },

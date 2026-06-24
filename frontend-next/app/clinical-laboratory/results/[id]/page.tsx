@@ -1,14 +1,6 @@
-"use client";
-import { Suspense } from "react";
-import { GeneratedResourceDetailPage } from "@/components/resources/GeneratedResourcePages";
-import ResultValidationsSection from "@/components/clinical-laboratory/ResultValidationsSection";
+import { redirect } from "next/navigation";
 
+// Detalhe consolidado no fluxo por requisição (Listas de Trabalho).
 export default function Page() {
-  return (
-    <Suspense fallback={<div className="p-4 text-sm text-[var(--gray-500)]">Carregando...</div>}>
-      <GeneratedResourceDetailPage endpoint="/clinical_laboratory/result/">
-        <ResultValidationsSection />
-      </GeneratedResourceDetailPage>
-    </Suspense>
-  );
+  redirect("/clinical-laboratory/worklists");
 }
