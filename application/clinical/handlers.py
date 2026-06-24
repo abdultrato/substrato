@@ -32,8 +32,6 @@ def handle_start_result_analysis(command: StartResultAnalysisCommand) -> ResultI
 
 
 def handle_save_result_value(command: SaveResultValueCommand) -> ResultItem:
-    value = _normalize_value(command.raw_value)
-
     with transaction.atomic():
         locked = (
             ResultItem.all_objects.select_for_update()
@@ -42,26 +40,45 @@ def handle_save_result_value(command: SaveResultValueCommand) -> ResultItem:
                 "result__request",
                 "result__request__patient",
                 "exam_field",
-                "exam_field__exam",
+                "exam_field__test",
             )
             .get(pk=command.result_item.pk)
         )
 
-        if (
-            command.idempotent
-            and locked.status == ResultState.AWAITING_VALIDATION
-            and locked.result_value == value
-        ):
-            return locked
+        result_type = getattr(getattr(locked, "exam_field", None), "result_type", "numero") or "numero"
+        is_numeric = result_type == "numero"
 
         if locked.status == ResultState.VALIDATED:
             raise ValidationError("Resultado validado não pode ser alterado.")
         if locked.status == ResultState.DISREGARDED:
             raise ValidationError("Resultado desconsiderado não pode receber valor.")
 
-        locked.result_value = value
+        if is_numeric:
+            value = _normalize_value(command.raw_value)
+            if (
+                command.idempotent
+                and locked.status == ResultState.AWAITING_VALIDATION
+                and locked.result_value == value
+            ):
+                return locked
+            locked.result_value = value
+            update_fields = ["result_value", "status"]
+        else:
+            text_val = (command.raw_value or "").strip()
+            if not text_val:
+                raise ValidationError({"result_value": "Informe um valor antes de gravar."})
+            if (
+                command.idempotent
+                and locked.status == ResultState.AWAITING_VALIDATION
+                and locked.result_text == text_val
+            ):
+                return locked
+            locked.result_text = text_val
+            locked.result_value = None
+            update_fields = ["result_text", "result_value", "status"]
+
         locked.status = ResultState.AWAITING_VALIDATION
-        locked.save(update_fields=["result_value", "status"])
+        locked.save(update_fields=update_fields)
 
     locked.refresh_from_db()
     return locked

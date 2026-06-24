@@ -137,6 +137,7 @@ class LabTestViewSet(_CatalogActivationMixin, ValidatedSearchOrderingMixin, Tena
     serializer_class = LabTestSerializer
     search_fields = ["custom_id", "code", "name", "method", "unit"]
     ordering_fields = ["code", "name", "price", "turnaround_hours", "active", "created_at"]
+    filterset_fields = ["sector", "active", "sample_type", "requires_fasting", "requires_consent"]
 
 
 class LabTestFieldViewSet(_CatalogActivationMixin, ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):

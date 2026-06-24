@@ -191,6 +191,9 @@ export function SearchableRelationSelect({
   const [open, setOpen] = useState(false)
   const [results, setResults] = useState<RelationOption[]>(EMPTY_RELATION_OPTIONS)
   const [searching, setSearching] = useState(false)
+  const [lastSelectedOption, setLastSelectedOption] = useState<RelationOption | null>(
+    initialOptions?.find((o) => o.value === selectedId) ?? null
+  )
   const listboxId = useId()
   const debouncedQuery = useDebounce(query.trim(), 250)
 
@@ -200,13 +203,18 @@ export function SearchableRelationSelect({
     if (fromKnown) return fromKnown
     const fromResults = results.find((option) => option.value === selectedId)
     if (fromResults) return fromResults
+    if (lastSelectedOption?.value === selectedId) return lastSelectedOption
     return fallbackSelectedRelationOption(value, target)
-  }, [knownOptions, results, selectedId, target, value])
+  }, [knownOptions, results, selectedId, target, value, lastSelectedOption])
 
   useEffect(() => {
     if (open) return
-    setQuery(selectedOption?.label || "")
-  }, [open, selectedOption?.label])
+    // Use lastSelectedOption label as source of truth to avoid showing fallback text
+    const label = lastSelectedOption?.value === selectedId
+      ? lastSelectedOption.label
+      : selectedOption?.label || ""
+    setQuery(label)
+  }, [open, selectedOption?.label, lastSelectedOption, selectedId])
 
   useEffect(() => {
     if (!open) return
@@ -225,7 +233,7 @@ export function SearchableRelationSelect({
         const { items } = await apiFetchList<Record<string, any>>(target.endpoint, {
           page: 1,
           pageSize: 25,
-          query: { search: searchText },
+          query: { ...(target.staticFilters ?? {}), search: searchText },
           clientCache: safeRefreshToken === 0,
           clientCacheTtlMs: 30000,
         })
@@ -267,6 +275,7 @@ export function SearchableRelationSelect({
   }
 
   function selectOption(option: RelationOption) {
+    setLastSelectedOption(option)
     setQuery(option.label)
     setOpen(false)
     onChange(Number(option.value))
@@ -412,7 +421,7 @@ export function SearchableMultiSelect({
         const { items } = await apiFetchList<Record<string, any>>(target.endpoint, {
           page: 1,
           pageSize: 25,
-          query: searchText ? { search: searchText } : undefined,
+          query: { ...(target.staticFilters ?? {}), ...(searchText ? { search: searchText } : {}) },
           clientCache: safeRefreshToken === 0,
           clientCacheTtlMs: 30000,
         })
@@ -1155,6 +1164,7 @@ export default function AutoForm({
             const { items } = await apiFetchList<Record<string, any>>(target.endpoint, {
               page: 1,
               pageSize: 100,
+              query: target.staticFilters ? { ...target.staticFilters } : undefined,
               clientCache: safeRefreshToken === 0,
               clientCacheTtlMs: 60000,
             })

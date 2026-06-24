@@ -10,7 +10,6 @@ from core.models.base import NoNameCoreModel
 from domain.clinical.result_state import ResultState
 from domain.clinical.result_state_machine import ResultStateMachine
 
-from .lab_exam import LabExam
 from .patient import Patient
 from .sample import Sample
 
@@ -93,7 +92,7 @@ class LabRequest(NoNameCoreModel):
     )
 
     exams = models.ManyToManyField(
-        LabExam,
+        "laboratorio.LabTest",
         through="LabRequestItem",
         blank=True,
         related_name="lab_requests",
@@ -276,7 +275,7 @@ class LabRequest(NoNameCoreModel):
     # AGGREGATE ROOT
     # =====================================================
 
-    def add_exam(self, exam: LabExam):
+    def add_exam(self, exam):
         if self.type != self.Type.LABORATORY:
             raise ValidationError("Esta requisição é de exams médicos e não aceita exams laboratoriais.")
 
@@ -332,7 +331,8 @@ class LabRequest(NoNameCoreModel):
 
         self.validated_at = timezone.now()
         self.validated_by = user if getattr(user, "pk", None) else None
-        self.save(update_fields=["validated_at", "validated_by", "updated_at"])
+        self.status = ResultState.VALIDATED
+        self.save(update_fields=["validated_at", "validated_by", "status", "updated_at"])
         return self
 
     def cancelar(self, user=None):
@@ -587,15 +587,14 @@ class LabRequest(NoNameCoreModel):
                 exam__isnull=False,
                 exam__deleted=False,
             )
-            .select_related("exam", "exam__sample_type")
-            .prefetch_related("exam__sample_options")
+            .select_related("exam")
             .order_by("position", "id")
         )
 
     def build_collection_guidance(self):
         """
-        Estrutura operacional para orientar a enfermagem na coleta:
-        exame -> opções de amostra -> frasco/tubo -> volume mínimo.
+        Estrutura operacional para orientar a enfermagem na coleta.
+        LabTest.sample_type é um CharField; não há sample_options relacionados.
         """
         guidance = []
 
@@ -604,22 +603,10 @@ class LabRequest(NoNameCoreModel):
             if exam is None:
                 continue
 
-            sample_options = []
-            for sample in exam.get_sample_options():
-                sample_options.append(
-                    {
-                        "sample_id": sample.id,
-                        "sample_code": sample.custom_id,
-                        "sample_name": sample.name,
-                        "bottle_type": sample.bottle_type,
-                        "bottle_type_label": sample.get_bottle_type_display(),
-                        "cap_color": sample.cap_color or "",
-                        "minimum_volume_ml": str(sample.minimum_volume_ml),
-                        "fasting_required": bool(sample.fasting_required),
-                        "fasting_hours": int(sample.fasting_hours or 0),
-                        "collection_instructions": sample.collection_instructions or "",
-                    }
-                )
+            sample_type = getattr(exam, "sample_type", "") or ""
+            sample_options = (
+                [{"sample_name": sample_type}] if sample_type else []
+            )
 
             guidance.append(
                 {

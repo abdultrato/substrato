@@ -78,7 +78,7 @@ class Result(NoNameCoreModel):
         tenant = self.tenant
 
         request_items = (
-            self.request.items.select_related("exam").prefetch_related("exam__campos").order_by("position", "id")
+            self.request.items.select_related("exam").prefetch_related("exam__fields").order_by("position", "id")
         )
         next_position = 1
 
@@ -88,7 +88,10 @@ class Result(NoNameCoreModel):
             if not item.exam_id:
                 continue
 
-            for campo in item.exam.campos.all().order_by("position", "id"):
+            fields_mgr = getattr(item.exam, "fields", None) or getattr(item.exam, "campos", None)
+            if fields_mgr is None:
+                continue
+            for campo in fields_mgr.all().order_by("sequence", "id"):
                 items_to_create.append(
                     ResultItem(
                         result=self,

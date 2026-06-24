@@ -12,6 +12,7 @@ from api.v1.compat import LegacyAliasSerializerMixin, append_legacy_aliases, nor
 from apps.clinical.models.lab_exam import LabExam
 from apps.clinical.models.lab_exam_field import LabExamField
 from apps.clinical.models.lab_request import LabRequest
+from apps.clinical_laboratory.models import LabTest
 from apps.clinical.models.lab_request_item import LabRequestItem
 from apps.clinical.models.medical_exam import MedicalExam, MedicalExamField
 from apps.clinical.models.occupational_profile import OccupationalExamProfile
@@ -830,7 +831,7 @@ class OccupationalExamProfileSerializer(serializers.ModelSerializer):
 
     exams = serializers.PrimaryKeyRelatedField(
         many=True,
-        queryset=LabExam.objects.all(),
+        queryset=LabTest.objects.all(),
         required=False,
     )
     exam_names = serializers.SerializerMethodField()
@@ -896,7 +897,7 @@ class LabRequestSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializ
     # key `exams` (compatível com o frontend) mas tratamos manualmente.
     exams = serializers.PrimaryKeyRelatedField(
         many=True,
-        queryset=LabExam.objects.all(),
+        queryset=LabTest.objects.all(),
         required=False,
     )
 
@@ -1017,6 +1018,11 @@ class LabRequestSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializ
             exam = getattr(obj, "exam", None)
             if exam is None:
                 return []
+
+            # LabTest.sample_type is a CharField; no FK sample objects exist.
+            if not callable(getattr(exam, "get_sample_options", None)):
+                sample_type = getattr(exam, "sample_type", "") or ""
+                return [{"name": sample_type}] if sample_type else []
 
             payload = []
             for sample in exam.get_sample_options():
@@ -1215,7 +1221,7 @@ class LabRequestSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializ
                 if remover:
                     instance.items.filter(exam_id__in=remover).delete()
 
-                for exam in LabExam.objects.filter(id__in=adicionar):
+                for exam in LabTest.objects.filter(id__in=adicionar):
                     instance.add_exam(exam)
 
                 instance._sync_samples_from_items()
@@ -1314,14 +1320,15 @@ class LaboratoryResultItemSerializer(serializers.ModelSerializer):
     Inclui campos derivados para evitar N+1 requests no frontend.
     """
 
-    exam_name = serializers.CharField(source="exam_field.exam.name", read_only=True)
-    exam_id = serializers.IntegerField(source="exam_field.exam_id", read_only=True)
+    exam_name = serializers.CharField(source="exam_field.test.name", read_only=True)
+    exam_id = serializers.IntegerField(source="exam_field.test_id", read_only=True)
 
     exam_field_name = serializers.CharField(source="exam_field.name", read_only=True)
     exam_field_unit = serializers.CharField(source="exam_field.unit", read_only=True)
-    exam_field_type = serializers.CharField(source="exam_field.type", read_only=True)
-    exam_field_position = serializers.IntegerField(source="exam_field.position", read_only=True)
-    exam_field_reference = serializers.CharField(source="exam_field.reference", read_only=True)
+    exam_field_type = serializers.CharField(source="exam_field.result_type", read_only=True)
+    exam_field_choices = serializers.JSONField(source="exam_field.result_choices", read_only=True)
+    exam_field_position = serializers.IntegerField(source="exam_field.sequence", read_only=True)
+    exam_field_reference = serializers.CharField(source="exam_field.reference_range", read_only=True)
     patient_name = serializers.CharField(source="result.request.patient.name", read_only=True)
     request_id = serializers.IntegerField(source="result.request_id", read_only=True)
     request_code = serializers.CharField(source="result.request.custom_id", read_only=True)
@@ -1343,8 +1350,10 @@ class LaboratoryResultItemSerializer(serializers.ModelSerializer):
             "exam_field_position",
             "exam_field_unit",
             "exam_field_type",
+            "exam_field_choices",
             "exam_field_reference",
             "result_value",
+            "result_text",
             "clinical_status",
             "report_color",
             "critical_alert",

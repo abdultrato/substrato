@@ -16,8 +16,10 @@ type ResultItem = {
   exam_field_name?: string
   exam_field_unit?: string
   exam_field_type?: string
+  exam_field_choices?: string[]
   exam_field_reference?: string
   result_value?: string | null
+  result_text?: string | null
   status?: string
   critical_alert?: boolean
   disregard_reason?: string
@@ -83,7 +85,9 @@ function ResultRow({
 }) {
   const [iniciado, setIniciado] = useState(false)
   const isOpen = iniciado || !!forceOpen
-  const [value, setValue] = useState(item.result_value ?? "")
+  const isTextual = item.exam_field_type === "texto_choice" || item.exam_field_type === "texto"
+  const currentStoredValue = isTextual ? (item.result_text ?? "") : (item.result_value ?? "")
+  const [value, setValue] = useState(currentStoredValue)
 
   function handleValueChange(v: string) {
     setValue(v)
@@ -98,10 +102,10 @@ function ResultRow({
   const isSaved = s === "awaiting_validation" || s === "aguardando_validacao"
   const isPending = !isValidated && !isDisregarded && !isInAnalysis && !isSaved
 
-  const prevValue = useRef(item.result_value)
-  if (prevValue.current !== item.result_value) {
-    prevValue.current = item.result_value
-    setValue(item.result_value ?? "")
+  const prevValue = useRef(currentStoredValue)
+  if (prevValue.current !== currentStoredValue) {
+    prevValue.current = currentStoredValue
+    setValue(currentStoredValue)
   }
 
   const cb = (
@@ -129,7 +133,7 @@ function ResultRow({
         <td className={td + " text-[var(--gray-400)]"}>{item.exam_field_reference || "—"}</td>
         <td className={td + " text-[var(--gray-400)]"}>{item.exam_field_unit || "—"}</td>
         <td className={td + " font-bold text-[var(--text)]"}>
-          {item.result_value ?? "—"}
+          {(isTextual ? item.result_text : item.result_value) ?? "—"}
         </td>
         <td className="px-2 py-0.5 text-right align-middle">
           <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
@@ -216,13 +220,26 @@ function ResultRow({
       <td className={td + " text-[11px] text-[var(--gray-400)]"}>{item.exam_field_reference || "—"}</td>
       <td className={td + " text-[11px] text-[var(--gray-400)]"}>{item.exam_field_unit || "—"}</td>
       <td className="px-2 py-0.5 align-middle">
-        <input
-          type={item.exam_field_type === "NUMERIC" ? "number" : "text"}
-          value={value}
-          onChange={(e) => handleValueChange(e.target.value)}
-          placeholder="Inserir resultado"
-          className="h-6 w-full min-w-[80px] rounded border border-[var(--border)] bg-[var(--card)] px-2 text-xs text-[var(--text)] placeholder:text-[var(--gray-400)] placeholder:opacity-50 focus:border-[var(--primary-400)] focus:outline-none"
-        />
+        {item.exam_field_type === "texto_choice" && item.exam_field_choices?.length ? (
+          <select
+            value={value}
+            onChange={(e) => handleValueChange(e.target.value)}
+            className="h-6 w-full min-w-[80px] rounded border border-[var(--border)] bg-[var(--card)] px-1 text-xs text-[var(--text)] focus:border-[var(--primary-400)] focus:outline-none"
+          >
+            <option value="">— selecionar —</option>
+            {item.exam_field_choices.map((c) => (
+              <option key={c} value={c}>{c}</option>
+            ))}
+          </select>
+        ) : (
+          <input
+            type={item.exam_field_type === "numero" ? "number" : "text"}
+            value={value}
+            onChange={(e) => handleValueChange(e.target.value)}
+            placeholder="Inserir resultado"
+            className="h-6 w-full min-w-[80px] rounded border border-[var(--border)] bg-[var(--card)] px-2 text-xs text-[var(--text)] placeholder:text-[var(--gray-400)] placeholder:opacity-50 focus:border-[var(--primary-400)] focus:outline-none"
+          />
+        )}
       </td>
       <td className="px-2 py-0.5 text-right align-middle">
         {!isSaved && (
@@ -310,13 +327,19 @@ export default function WorklistDetailPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [requestId])
 
+  function buildSaveBody(itemId: number, value: string) {
+    const item = data?.items.find((i) => i.id === itemId)
+    const isTextual = item?.exam_field_type === "texto_choice" || item?.exam_field_type === "texto"
+    return isTextual ? { result_text: value } : { result_value: value }
+  }
+
   async function handleSave(itemId: number, value: string) {
     setBusyItemId(itemId)
     setError(null)
     try {
       await apiFetch(`/clinical/resultitem/${itemId}/save-result/`, {
         method: "POST",
-        body: JSON.stringify({ result_value: value }),
+        body: JSON.stringify(buildSaveBody(itemId, value)),
       })
       await fetchData()
     } catch (e: any) {
@@ -456,8 +479,13 @@ export default function WorklistDetailPage() {
       })
     : []
 
+  function itemDisplayValue(item: ResultItem) {
+    const isTextual = item.exam_field_type === "texto_choice" || item.exam_field_type === "texto"
+    return isTextual ? (item.result_text ?? "") : (item.result_value ?? "")
+  }
+
   const saveableItems = openItems.filter((item) => {
-    const val = (valueMap.get(item.id) ?? item.result_value ?? "").trim()
+    const val = (valueMap.get(item.id) ?? itemDisplayValue(item)).trim()
     return val.length > 0
   })
 
@@ -467,11 +495,11 @@ export default function WorklistDetailPage() {
     setError(null)
     try {
       for (const item of saveableItems) {
-        const val = (valueMap.get(item.id) ?? item.result_value ?? "").trim()
+        const val = (valueMap.get(item.id) ?? itemDisplayValue(item)).trim()
         if (val) {
           await apiFetch(`/clinical/resultitem/${item.id}/save-result/`, {
             method: "POST",
-            body: JSON.stringify({ result_value: val }),
+            body: JSON.stringify(buildSaveBody(item.id, val)),
           })
         }
       }

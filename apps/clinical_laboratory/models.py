@@ -17,6 +17,7 @@ from django.conf import settings
 from django.db import models
 from django.utils import timezone
 
+from core.constants.laboratory.units import DefaultUnit
 from core.models.base import CoreModel, NoNameCoreModel
 from infrastructure.orm.fields.money_field import MoneyField
 
@@ -154,10 +155,20 @@ class LabTestField(CoreModel):
 
     prefix = "LTSF"
 
+    class ResultType(models.TextChoices):
+        NUMERO = "numero", "Número"
+        TEXTO = "texto", "Texto livre"
+        TEXTO_CHOICE = "texto_choice", "Escolha (lista)"
+
     test = models.ForeignKey(LabTest, db_column="test_id", verbose_name="Exame",
                              on_delete=models.CASCADE, related_name="fields")
     code = models.CharField("Código", db_column="code", max_length=30, blank=True, default="")
-    unit = models.CharField("Unidade", db_column="unit", max_length=30, blank=True, default="")
+    unit = models.CharField("Unidade", db_column="unit", max_length=30,
+                            choices=DefaultUnit.choices, blank=True, default="")
+    result_type = models.CharField("Tipo de resultado", db_column="result_type", max_length=15,
+                                   choices=ResultType.choices, default=ResultType.NUMERO)
+    result_choices = models.JSONField("Opções de resultado", db_column="result_choices",
+                                      default=list, blank=True)
     reference_range = models.CharField("Intervalo de referência", db_column="reference_range",
                                        max_length=160, blank=True, default="")
     reference_low = models.DecimalField("Limite inferior de referência", db_column="reference_low",

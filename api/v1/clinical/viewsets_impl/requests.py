@@ -99,8 +99,7 @@ class LabRequestViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin,
             .prefetch_related(
                 "items",
                 "items__exam",
-                "items__exam__sample_type",
-                "items__exam__sample_options",
+                "items__exam__fields",
                 "items__medical_exam",
                 "items__rejection_reasons",
                 "samples",
@@ -406,14 +405,14 @@ class LabRequestViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin,
 
         qs = result.items.select_related(
             "exam_field",
-            "exam_field__exam",
+            "exam_field__test",
             "result",
             "result__request",
             "result__request__patient",
         ).order_by(
             "position",
-            "exam_field__position",
-            "exam_field__exam__name",
+            "exam_field__sequence",
+            "exam_field__test__name",
             "exam_field__name",
             "id",
         )

@@ -32,8 +32,9 @@ const T_PHYSICIAN: RelationTarget = {
   labelFields: ["name", "profession_name", "custom_id"],
 };
 const T_EXAMS: RelationTarget = {
-  endpoint: "/clinical/exam/",
+  endpoint: "/clinical_laboratory/test/",
   labelFields: ["name", "code", "custom_id"],
+  staticFilters: { active: true },
 };
 const T_PROFILE: RelationTarget = {
   endpoint: "/clinical/occupational_profile/",

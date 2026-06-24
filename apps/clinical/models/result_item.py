@@ -15,7 +15,6 @@ from domain.clinical.result_state import ResultState
 from domain.clinical.result_state_machine import ResultStateMachine
 from events.bus import event_bus
 
-from .lab_exam_field import LabExamField
 from .result import Result
 
 User = settings.AUTH_USER_MODEL
@@ -40,11 +39,11 @@ class ResultItem(TenantPropagationMixin, ScopedPositionMixin, NoNameCoreModel):
 
     exam_field = models.ForeignKey(
 
-        LabExamField,
+        "laboratorio.LabTestField",
 
         db_column="exam_field_id",
         on_delete=models.CASCADE,
-        related_name="results",
+        related_name="result_items",
         verbose_name="Campo do exame",
     )
 
@@ -54,6 +53,12 @@ class ResultItem(TenantPropagationMixin, ScopedPositionMixin, NoNameCoreModel):
         verbose_name="Valor do resultado",
         max_digits=12, decimal_places=2,
         null=True, blank=True)
+
+    result_text = models.CharField(
+        db_column="result_text",
+        verbose_name="Resultado textual",
+        max_length=500,
+        blank=True, default="")
 
     clinical_status = models.CharField(
         verbose_name="Status clínico",
@@ -202,15 +207,19 @@ class ResultItem(TenantPropagationMixin, ScopedPositionMixin, NoNameCoreModel):
 
         value_changed = previous_value != self.result_value
 
-        # interpretação automática
-        if value_changed and self.status != ResultState.VALIDATED:
-            try:
-                if self.result_value is not None:
-                    self.result_value = Decimal(self.result_value)
-            except (InvalidOperation, TypeError) as err:
-                raise ValidationError("Valor do result inválido.") from err
+        result_type = getattr(getattr(self, "exam_field", None), "result_type", "numero") or "numero"
+        is_numeric = result_type == "numero"
 
-            self._result_service().interpret(self)
+        # interpretação automática apenas para campos numéricos
+        if value_changed and self.status != ResultState.VALIDATED:
+            if is_numeric:
+                try:
+                    if self.result_value is not None:
+                        self.result_value = Decimal(self.result_value)
+                except (InvalidOperation, TypeError) as err:
+                    raise ValidationError("Valor do result inválido.") from err
+
+                self._result_service().interpret(self)
 
         super().save(*args, **kwargs)
 
@@ -233,7 +242,7 @@ class ResultItem(TenantPropagationMixin, ScopedPositionMixin, NoNameCoreModel):
 
     def transition(self, new_status, user=None):
         with transaction.atomic():
-            result = ResultItem.all_objects.select_for_update().get(pk=self.pk)
+            result = ResultItem.all_objects.select_for_update().select_related("exam_field").get(pk=self.pk)
 
             ResultStateMachine.validate_transition(
                 result.status,
@@ -241,13 +250,17 @@ class ResultItem(TenantPropagationMixin, ScopedPositionMixin, NoNameCoreModel):
             )
 
             if new_status == ResultState.VALIDATED:
-                if result.result_value is None:
+                result_type = getattr(getattr(result, "exam_field", None), "result_type", "numero") or "numero"
+                is_numeric = result_type == "numero"
+                has_value = result.result_value is not None if is_numeric else bool(result.result_text)
+                if not has_value:
                     raise ValidationError("Não é possível validar result vazio.")
 
                 result.validated_by = user
                 result.validation_date = timezone.now()
 
-                self._result_service().interpret(result)
+                if is_numeric:
+                    self._result_service().interpret(result)
 
             result.status = new_status
 
@@ -275,21 +288,14 @@ class ResultItem(TenantPropagationMixin, ScopedPositionMixin, NoNameCoreModel):
 
     @property
     def formatted_result_value(self):
-        """
-        Retorna o value do result acompanhado do símbolo clínico.
-
-        Exemplos:
-        6.2 ↓↓
-        14.1 ↑
-        4.5
-        """
+        result_type = getattr(getattr(self, "exam_field", None), "result_type", "numero") or "numero"
+        if result_type != "numero":
+            return self.result_text or "-"
 
         if self.result_value is None:
             return "-"
 
         symbol = self.clinical_status or ""
-
         if symbol and symbol != "N":
             return f"{self.result_value} {symbol}"
-
         return str(self.result_value)

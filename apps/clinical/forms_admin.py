@@ -9,10 +9,10 @@ class ResultItemInlineFormSet(BaseInlineFormSet):
     def get_queryset(self):
         qs = super().get_queryset()
 
-        return qs.select_related("exam_field", "exam_field__exam").order_by(
+        return qs.select_related("exam_field", "exam_field__test").order_by(
             "position",
-            "exam_field__exam__name",
-            "exam_field__position",
+            "exam_field__test__name",
+            "exam_field__sequence",
             "exam_field__name",
         )
 
@@ -21,9 +21,10 @@ class ResultItemInlineFormSet(BaseInlineFormSet):
         grupos = {}
 
         for form in self.forms:
-            exam = form.instance.exam_field.exam.name
-
-            grupos.setdefault(exam, []).append(form)
+            campo = form.instance.exam_field
+            test = getattr(campo, "test", None) or getattr(campo, "exam", None)
+            exam_name = getattr(test, "name", "—") if test else "—"
+            grupos.setdefault(exam_name, []).append(form)
 
         return grupos
 

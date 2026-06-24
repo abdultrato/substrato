@@ -7,7 +7,6 @@ from core.mixins.model.position import ScopedPositionMixin
 from core.mixins.tenant_propagation import TenantPropagationMixin
 from core.models.base import NoNameCoreModel
 
-from .lab_exam import LabExam
 from .medical_exam import MedicalExam
 from .result import Result
 from .result_item import ResultItem
@@ -30,7 +29,7 @@ class LabRequestItem(TenantPropagationMixin, ScopedPositionMixin, NoNameCoreMode
 
     exam = models.ForeignKey(
 
-        LabExam,
+        "laboratorio.LabTest",
 
         db_column="exam_id",
         on_delete=models.PROTECT,
@@ -120,8 +119,8 @@ class LabRequestItem(TenantPropagationMixin, ScopedPositionMixin, NoNameCoreMode
     def _colher_itens_da_mesma_amostra(self, user=None):
         """Coleta agrupada por tipo de amostra."""
         exam = self.exam
-        primary_sample_id = getattr(exam, "sample_type_id", None) if exam else None
-        if not primary_sample_id:
+        primary_sample_type = getattr(exam, "sample_type", None) if exam else None
+        if not primary_sample_type:
             return
 
         pendentes = (
@@ -131,26 +130,17 @@ class LabRequestItem(TenantPropagationMixin, ScopedPositionMixin, NoNameCoreMode
                 sample_status=self.SampleStatus.AWAITING,
             )
             .exclude(pk=self.pk)
-            .select_related("exam", "exam__sample_type")
-            .prefetch_related("exam__sample_options")
+            .select_related("exam")
         )
         for item in pendentes:
-            accepted_ids = {sample.id for sample in item.exam.get_sample_options()}
-            if primary_sample_id in accepted_ids:
+            if item.exam and item.exam.sample_type == primary_sample_type:
                 item.colher_amostra(user=user, cascade_same_sample=False)
 
     def _receber_itens_da_mesma_amostra(self, user=None):
-        """Coleta agrupada por tipo de amostra.
-
-        Uma única coleta cobre todos os exames da requisição que aceitam a mesma
-        amostra principal deste item (ex.: sangue total). Os outros itens ainda
-        pendentes (aguardando) que aceitam essa amostra são marcados como
-        recebidos na mesma ação; exames que exigem outra amostra continuam
-        pendentes.
-        """
+        """Coleta agrupada por tipo de amostra."""
         exam = self.exam
-        primary_sample_id = getattr(exam, "sample_type_id", None) if exam else None
-        if not primary_sample_id:
+        primary_sample_type = getattr(exam, "sample_type", None) if exam else None
+        if not primary_sample_type:
             return
 
         pendentes = (
@@ -160,12 +150,10 @@ class LabRequestItem(TenantPropagationMixin, ScopedPositionMixin, NoNameCoreMode
                 sample_status=self.SampleStatus.AWAITING,
             )
             .exclude(pk=self.pk)
-            .select_related("exam", "exam__sample_type")
-            .prefetch_related("exam__sample_options")
+            .select_related("exam")
         )
         for item in pendentes:
-            accepted_ids = {sample.id for sample in item.exam.get_sample_options()}
-            if primary_sample_id in accepted_ids:
+            if item.exam and item.exam.sample_type == primary_sample_type:
                 item.receber_amostra(user=user, cascade_same_sample=False)
 
     def rejeitar_amostra(self, reasons, note="", user=None):
@@ -277,10 +265,11 @@ class LabRequestItem(TenantPropagationMixin, ScopedPositionMixin, NoNameCoreMode
         if not exam_base:
             return
 
-        fields = getattr(exam_base, "campos", None)
+        # LabTest usa related_name "fields"; LabExam (médico) usa "campos"
+        fields = getattr(exam_base, "fields", None) or getattr(exam_base, "campos", None)
         if fields is None:
             return
-        fields_queryset = fields.all().order_by("position", "id")
+        fields_queryset = fields.all().order_by("sequence", "id")
 
         items = []
         next_position = (

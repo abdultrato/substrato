@@ -4,9 +4,6 @@ from django.db import models
 
 from core.models.base import CoreModel
 
-from .lab_exam import LabExam
-
-
 class OccupationalExamProfile(CoreModel):
     """
     Bandeja de exames associada a um perfil profissional.
@@ -44,7 +41,7 @@ class OccupationalExamProfile(CoreModel):
     )
 
     exams = models.ManyToManyField(
-        LabExam,
+        "laboratorio.LabTest",
         blank=True,
         related_name="occupational_profiles",
         verbose_name="Exames do perfil",

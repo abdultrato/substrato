@@ -9,6 +9,7 @@ import {
   ChevronRight,
   Droplets,
   HeartHandshake,
+  Phone,
   Search,
   UserPlus,
   Users,
@@ -330,100 +331,63 @@ export default function PatientsListPage() {
             </div>
           ) : null}
 
-          {/* Tabela */}
-          <div className="overflow-hidden rounded-xl border border-white/20 bg-white/25 shadow-sm backdrop-blur-sm dark:bg-white/5 dark:border-white/10">
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[760px] text-left text-xs">
-                <thead>
-                  <tr className="border-b border-border/60 text-[10px] uppercase tracking-wide text-muted-foreground">
-                    <th className="px-3 py-2 font-semibold">Paciente</th>
-                    <th className="px-3 py-2 font-semibold">Idade / Género</th>
-                    <th className="px-3 py-2 font-semibold">Documento</th>
-                    <th className="px-3 py-2 font-semibold">Contacto</th>
-                    <th className="px-3 py-2 font-semibold">Proveniência</th>
-                    <th className="px-3 py-2 font-semibold">Registado</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {loading ? (
-                    <tr>
-                      <td colSpan={6} className="px-3 py-8 text-center text-muted-foreground">
-                        Carregando pacientes...
-                      </td>
-                    </tr>
-                  ) : rows.length === 0 ? (
-                    <tr>
-                      <td colSpan={6} className="px-3 py-8 text-center text-muted-foreground">
-                        {hasFilters ? "Nenhum paciente para os filtros aplicados." : "Sem pacientes registados."}
-                      </td>
-                    </tr>
-                  ) : (
-                    rows.map((row) => (
-                      <tr
-                        key={row.id}
-                        onClick={() => router.push(`/patients/${row.id}`)}
-                        className="cursor-pointer border-b border-border/40 transition hover:bg-white/40 dark:hover:bg-white/10"
-                      >
-                        <td className="px-3 py-2">
-                          <div className="flex items-center gap-2">
-                            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--primary-600)]/10 text-[11px] font-bold text-[var(--primary-700)] dark:text-[var(--primary-400)]">
-                              {initials(row.name)}
-                            </span>
-                            <div className="min-w-0">
-                              <div className="flex items-center gap-1.5">
-                                <span className="truncate font-semibold text-foreground">{row.name}</span>
-                                {row.pregnant ? (
-                                  <span className="inline-flex items-center gap-0.5 rounded bg-pink-100 px-1 py-0.5 text-[9px] font-semibold text-pink-700 dark:bg-pink-900/30 dark:text-pink-300">
-                                    <HeartHandshake size={9} /> Gestante
-                                  </span>
-                                ) : null}
-                                {row.is_blood_donor ? (
-                                  <span className="inline-flex items-center gap-0.5 rounded bg-rose-100 px-1 py-0.5 text-[9px] font-semibold text-rose-700 dark:bg-rose-900/30 dark:text-rose-300">
-                                    <Droplets size={9} /> Doador
-                                  </span>
-                                ) : null}
-                              </div>
-                              <span className="block truncate text-[10px] text-muted-foreground">
-                                {row.custom_id || `ID ${row.id}`}
-                              </span>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-3 py-2">
-                          <div className="flex flex-col gap-0.5">
-                            <span className="font-medium text-foreground">{row.age_display || "-"}</span>
-                            <span className={`inline-flex w-fit items-center rounded px-1.5 py-0.5 text-[9px] font-medium ${genderTone(row.gender)}`}>
-                              {genderLabel(row.gender)}
-                            </span>
-                          </div>
-                        </td>
-                        <td className="px-3 py-2 text-foreground-2">
-                          {row.document_number ? (
-                            <span>
-                              <span className="text-[10px] text-muted-foreground">{row.document_type} </span>
-                              {row.document_number}
-                            </span>
-                          ) : (
-                            <span className="text-muted-foreground">-</span>
-                          )}
-                        </td>
-                        <td className="px-3 py-2 text-foreground-2">{row.contact || <span className="text-muted-foreground">-</span>}</td>
-                        <td className="px-3 py-2">
-                          <span className="text-foreground-2">{row.provenance || "-"}</span>
-                          {row.origin_company_name ? (
-                            <span className="block truncate text-[10px] text-muted-foreground">{row.origin_company_name}</span>
-                          ) : null}
-                        </td>
-                        <td className="px-3 py-2 text-muted-foreground">{fmtDate(row.created_at)}</td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
+          {/* Cards */}
+          {loading ? (
+            <div className="flex items-center justify-center gap-2 py-16 text-sm text-muted-foreground">
+              <span className="animate-spin">⟳</span> Carregando pacientes...
             </div>
+          ) : rows.length === 0 ? (
+            <div className="flex flex-col items-center gap-2 rounded-xl border border-white/20 bg-white/25 py-14 text-center shadow-sm backdrop-blur-sm dark:bg-white/5 dark:border-white/10">
+              <Users size={26} className="text-muted-foreground/30" />
+              <p className="text-sm text-muted-foreground">
+                {hasFilters ? "Nenhum paciente para os filtros aplicados." : "Sem pacientes registados."}
+              </p>
+            </div>
+          ) : (
+            <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+              {rows.map((row) => (
+                <Link key={row.id} href={`/patients/${row.id}`}
+                  className="group flex items-center gap-3 rounded-xl border border-white/20 bg-white/25 px-3 py-2.5 shadow-sm backdrop-blur-sm transition hover:bg-white/40 hover:shadow-md dark:bg-white/5 dark:border-white/10 dark:hover:bg-white/8">
 
-            {/* Paginação */}
-            <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border/60 px-3 py-2 text-[11px] text-muted-foreground">
+                  {/* Avatar */}
+                  <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[11px] font-bold ${genderTone(row.gender)}`}>
+                    {initials(row.name)}
+                  </span>
+
+                  {/* Info */}
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-1">
+                      <span className="text-sm font-semibold text-foreground">{row.name}</span>
+                      {row.pregnant && (
+                        <span className="inline-flex items-center gap-0.5 rounded bg-pink-100 px-1 py-0.5 text-[9px] font-semibold text-pink-700 dark:bg-pink-900/30 dark:text-pink-300">
+                          <HeartHandshake size={8} /> Gestante
+                        </span>
+                      )}
+                      {row.is_blood_donor && (
+                        <span className="inline-flex items-center gap-0.5 rounded bg-rose-100 px-1 py-0.5 text-[9px] font-semibold text-rose-700 dark:bg-rose-900/30 dark:text-rose-300">
+                          <Droplets size={8} /> Doador
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] text-muted-foreground">
+                      <span>{row.custom_id || `ID ${row.id}`}</span>
+                      {row.age_display && <span>· {row.age_display}</span>}
+                      {row.gender && <span className={`rounded px-1 py-0.5 text-[9px] font-medium ${genderTone(row.gender)}`}>{genderLabel(row.gender)}</span>}
+                      {row.contact && <span className="flex items-center gap-0.5"><Phone size={8} />{row.contact}</span>}
+                      {row.document_number && <span>{row.document_type} {row.document_number}</span>}
+                      {row.provenance && <span>· {row.provenance}</span>}
+                    </div>
+                  </div>
+
+                  <ChevronRight size={13} className="shrink-0 text-muted-foreground/30 group-hover:text-[var(--primary-600)] transition" />
+                </Link>
+              ))}
+            </div>
+          )}
+
+          {/* Paginação */}
+          {(total > 0 || totalPages > 1) && (
+          <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-white/20 bg-white/25 px-3 py-2 shadow-sm backdrop-blur-sm text-[11px] text-muted-foreground dark:bg-white/5 dark:border-white/10">
               <span>
                 {total > 0 ? `Página ${page} de ${totalPages} · ${total} paciente${total > 1 ? "s" : ""}` : "—"}
               </span>
@@ -469,7 +433,7 @@ export default function PatientsListPage() {
                 </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
       </AppLayout>
 

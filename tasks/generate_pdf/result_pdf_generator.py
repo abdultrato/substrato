@@ -106,7 +106,7 @@ def generate_results_pdf(request, apenas_validados=True) -> tuple[bytes, str]:
 
     result = getattr(request, "result", None)
 
-    resultados_qs = result.items.select_related("exam_field", "exam_field__exam") if result else []
+    resultados_qs = result.items.select_related("exam_field", "exam_field__test") if result else []
 
     if apenas_validados and resultados_qs:
         resultados_qs = resultados_qs.filter(status=ResultState.VALIDATED)
@@ -185,8 +185,9 @@ def generate_results_pdf(request, apenas_validados=True) -> tuple[bytes, str]:
     exams_agrupados = {}
 
     for item in resultados_qs:
-        exam = item.exam_field.exam
-        exams_agrupados.setdefault(exam.name, []).append(item)
+        exam = getattr(item.exam_field, "test", None) or getattr(item.exam_field, "exam", None)
+        exam_name = getattr(exam, "name", "—") if exam else "—"
+        exams_agrupados.setdefault(exam_name, []).append(item)
 
     # =====================================
     # TABELAS
@@ -194,12 +195,12 @@ def generate_results_pdf(request, apenas_validados=True) -> tuple[bytes, str]:
 
     if exams_agrupados:
         for exam_name, resultados in exams_agrupados.items():
-            exam = resultados[0].exam_field.exam
+            exam = getattr(resultados[0].exam_field, "test", None) or getattr(resultados[0].exam_field, "exam", None)
 
             elements.append(Spacer(1, A5Margins.ROW_SPACING))
             elements.append(
                 Paragraph(
-                    f"{exam_name} — {exam.method}",
+                    f"{exam_name}" + (f" — {exam.method}" if exam and getattr(exam, 'method', None) else ""),
                     section_style_improved(color=header_config["sector_color"]),
                 )
             )
@@ -219,15 +220,16 @@ def generate_results_pdf(request, apenas_validados=True) -> tuple[bytes, str]:
                 campo = r.exam_field
 
                 value = getattr(r, "formatted_result_value", None)
-                if not value:
-                    raw_value = getattr(r, "result_value", None)
-                    value = "-" if raw_value is None else str(raw_value)
-                # `reference` (propriedade do campo) devolve o intervalo formatado
-                # ou None. Não usar a relação reversa `referencias`: é um
-                # RelatedManager cujo str() vira "clinical.ClinicalReference.None"
-                # e vazava para o PDF.
+                if not value or value == "-":
+                    result_type = getattr(campo, "result_type", "numero") or "numero"
+                    if result_type != "numero":
+                        value = getattr(r, "result_text", None) or "-"
+                    else:
+                        raw_value = getattr(r, "result_value", None)
+                        value = "-" if raw_value is None else str(raw_value)
                 reference_value = (
-                    getattr(campo, "reference", None)
+                    getattr(campo, "reference_range", None)
+                    or getattr(campo, "reference", None)
                     or getattr(campo, "referencia", None)
                     or "-"
                 )

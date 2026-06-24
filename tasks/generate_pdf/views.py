@@ -28,7 +28,7 @@ def result_pdf(request, custom_id):
                 "patient",
                 "analyst",
             ).prefetch_related(
-                "result__itens__exam_field__exam",
+                "result__itens__exam_field__test",
             ),
             custom_id=custom_id,
         )

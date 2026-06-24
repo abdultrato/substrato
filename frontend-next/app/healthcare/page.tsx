@@ -78,7 +78,7 @@ export default function HealthcarePage() {
         ) : null}
 
         <WorkspaceHub
-          title="Substrato Saúde"
+          title="Portal Clínico"
           adminHref="/admin/"
           secondaryCta={{ href: "/patients", label: t("Abrir pacientes", "Open Patients") }}
           metrics={[

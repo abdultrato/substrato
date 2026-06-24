@@ -3,6 +3,7 @@ import { canonicalCollectionPath } from "@/lib/openapi/endpointResolver"
 export type RelationTarget = {
   endpoint: string
   labelFields: string[]
+  staticFilters?: Record<string, string | number | boolean>
 }
 
 export type RelationOption = {

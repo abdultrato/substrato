@@ -321,72 +321,61 @@ export default function ReceptionCheckinsPage() {
 
                   {/* Clickable body → detail page */}
                   <Link href={`/reception/reception-checkins/${c.id}`}
-                    className="flex flex-1 flex-col gap-3 px-4 pb-3 pt-3 pl-5">
+                    className="flex flex-1 flex-col gap-0.5 py-1 pr-3 pl-4">
 
                     {/* Top row: ID + badges */}
                     <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <span className="font-mono text-[11px] font-semibold text-[var(--primary-700)] dark:text-[var(--primary-400)]">
+                      <div className="flex flex-wrap items-center gap-2 min-w-0">
+                        <span className="font-mono text-[11px] font-semibold text-[var(--primary-700)] dark:text-[var(--primary-400)] shrink-0">
                           {c.custom_id || `#${c.id}`}
                         </span>
-                        <div className="mt-0.5 flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                          <Clock size={10} />
-                          {fmtDateTime(c.arrived_at)}
-                        </div>
+                        <span className="text-xs font-semibold text-foreground">{c.patient_name || "—"}</span>
+                        {c.patient_code && <span className="text-[10px] text-muted-foreground shrink-0">{c.patient_code}</span>}
                       </div>
-                      <div className="flex flex-wrap items-center justify-end gap-1">
+                      <div className="flex shrink-0 items-center gap-1">
                         <PriorityBadge priority={c.priority} />
                         <StatusBadge status={c.status} />
                       </div>
                     </div>
 
-                    {/* Patient */}
-                    <div className="flex items-center gap-2">
-                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--primary-600)]/10 text-[var(--primary-700)] dark:text-[var(--primary-400)]">
-                        <User size={14} />
-                      </span>
-                      <div className="min-w-0">
-                        <div className="truncate text-sm font-semibold text-foreground">{c.patient_name || "—"}</div>
-                        {c.patient_code && <div className="text-[10px] text-muted-foreground">{c.patient_code}</div>}
+                    {/* Time + reason */}
+                    <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+                      <Clock size={10} className="shrink-0" />
+                      <span className="shrink-0">{fmtDateTime(c.arrived_at)}</span>
+                      {c.reason && <><span className="text-border">·</span><span className="truncate">{c.reason}</span></>}
+                    </div>
+
+                    {/* Codes + arrow */}
+                    {(c.request_code || c.invoice_code || c.attendant_name) && (
+                      <div className="flex flex-wrap items-center gap-1">
+                        {c.request_code && (
+                          <span className="inline-flex items-center gap-0.5 rounded border border-violet-200 bg-violet-50 px-1.5 py-0.5 text-[10px] font-medium text-violet-700 dark:border-violet-700/30 dark:bg-violet-900/20 dark:text-violet-400">
+                            <FileText size={8} /> {c.request_code}
+                          </span>
+                        )}
+                        {c.invoice_code && (
+                          <span className="inline-flex items-center gap-0.5 rounded border border-emerald-200 bg-emerald-50 px-1.5 py-0.5 text-[10px] font-medium text-emerald-700 dark:border-emerald-700/30 dark:bg-emerald-900/20 dark:text-emerald-400">
+                            <Receipt size={8} /> {c.invoice_code}
+                          </span>
+                        )}
+                        {c.attendant_name && (
+                          <span className="inline-flex items-center gap-0.5 rounded border border-border bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
+                            <UserCheck size={8} /> {c.attendant_name}
+                          </span>
+                        )}
+                        <ArrowRight size={9} className="ml-auto text-muted-foreground/40 group-hover:text-[var(--primary-600)] transition" />
                       </div>
-                    </div>
-
-                    {/* Reason */}
-                    {c.reason && (
-                      <p className="line-clamp-2 text-[11px] text-muted-foreground leading-relaxed">{c.reason}</p>
                     )}
-
-                    {/* Codes row */}
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      {c.request_code && (
-                        <span className="inline-flex items-center gap-1 rounded border border-violet-200 bg-violet-50 px-1.5 py-0.5 text-[10px] font-medium text-violet-700 dark:border-violet-700/30 dark:bg-violet-900/20 dark:text-violet-400">
-                          <FileText size={9} /> {c.request_code}
-                        </span>
-                      )}
-                      {c.invoice_code && (
-                        <span className="inline-flex items-center gap-1 rounded border border-emerald-200 bg-emerald-50 px-1.5 py-0.5 text-[10px] font-medium text-emerald-700 dark:border-emerald-700/30 dark:bg-emerald-900/20 dark:text-emerald-400">
-                          <Receipt size={9} /> {c.invoice_code}
-                        </span>
-                      )}
-                      {c.attendant_name && (
-                        <span className="inline-flex items-center gap-1 rounded border border-border bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
-                          <UserCheck size={9} /> {c.attendant_name}
-                        </span>
-                      )}
-                      <span className="ml-auto text-[10px] text-muted-foreground/60 group-hover:text-[var(--primary-600)] transition flex items-center gap-0.5">
-                        Ver detalhes <ArrowRight size={9} />
-                      </span>
-                    </div>
                   </Link>
 
                   {/* Action footer (only for write access) */}
                   {canWrite && (canStart || canComplete || canCancel) && (
-                    <div className="flex items-center gap-1.5 border-t border-border/40 px-4 py-2 pl-5">
+                    <div className="flex items-center gap-1 border-t border-border/40 px-3 py-0.5 pl-4">
                       {canStart && (
                         <button type="button"
                           onClick={(e) => { e.preventDefault(); handleAction(c.id, "start-care"); }}
-                          className="inline-flex items-center gap-1 rounded-lg border border-blue-200 bg-blue-50 px-2.5 py-1 text-[11px] font-semibold text-blue-700 transition hover:bg-blue-100 dark:border-blue-700/30 dark:bg-blue-900/20 dark:text-blue-400">
-                          <UserCheck size={11} /> Atender
+                          className="inline-flex items-center gap-1 rounded border border-blue-200 bg-blue-50 px-2 py-0.5 text-[10px] font-semibold text-blue-700 transition hover:bg-blue-100 dark:border-blue-700/30 dark:bg-blue-900/20 dark:text-blue-400">
+                          <UserCheck size={10} /> Atender
                         </button>
                       )}
                       {canComplete && (
@@ -397,8 +386,8 @@ export default function ReceptionCheckinsPage() {
                           onConfirm={() => handleAction(c.id, "complete")}
                         >
                           <button type="button"
-                            className="inline-flex items-center gap-1 rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 transition hover:bg-emerald-100 dark:border-emerald-700/30 dark:bg-emerald-900/20 dark:text-emerald-400">
-                            <CheckCircle2 size={11} /> Concluir
+                            className="inline-flex items-center gap-1 rounded border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 transition hover:bg-emerald-100 dark:border-emerald-700/30 dark:bg-emerald-900/20 dark:text-emerald-400">
+                            <CheckCircle2 size={10} /> Concluir
                           </button>
                         </ConfirmDialog>
                       )}
@@ -411,8 +400,8 @@ export default function ReceptionCheckinsPage() {
                           onConfirm={() => handleAction(c.id, "cancel")}
                         >
                           <button type="button"
-                            className="ml-auto inline-flex items-center gap-1 rounded-lg border border-red-200 bg-white px-2.5 py-1 text-[11px] font-medium text-red-700 transition hover:bg-red-50 dark:bg-transparent dark:text-red-400">
-                            <X size={11} /> Cancelar
+                            className="ml-auto inline-flex items-center gap-1 rounded border border-red-200 bg-white px-2 py-0.5 text-[10px] font-medium text-red-700 transition hover:bg-red-50 dark:bg-transparent dark:text-red-400">
+                            <X size={10} /> Cancelar
                           </button>
                         </ConfirmDialog>
                       )}

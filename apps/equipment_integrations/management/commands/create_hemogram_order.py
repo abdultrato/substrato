@@ -69,7 +69,7 @@ class Command(BaseCommand):
 
         # Verifica se a requisicao tem itens de exame
         items = list(
-            request.items.filter(deleted=False).select_related("exam__campos", "exam")
+            request.items.filter(deleted=False).select_related("exam").prefetch_related("exam__fields")
         )
         if not items:
             raise CommandError("A requisicao nao tem itens de exame.")

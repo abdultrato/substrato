@@ -45,7 +45,7 @@ class ResultItemViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin,
         "result__request__patient__document_number",
         "exam_field__custom_id",
         "exam_field__name",
-        "exam_field__exam__name",
+        "exam_field__test__name",
         "status",
         "clinical_status",
         "report_color",
@@ -133,7 +133,7 @@ class ResultItemViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin,
         """
         ensure_laboratory_result_privilege(getattr(request, "user", None))
         payload = request.data or {}
-        raw = payload.get("result_value")
+        raw = payload.get("result_value") or payload.get("result_text")
 
         updated = self._execute_command(
             handle_save_result_value,

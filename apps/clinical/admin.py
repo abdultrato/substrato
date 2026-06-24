@@ -671,7 +671,7 @@ class RequestLabItemInline(admin.TabularInline):
     model = LabRequestItem
     extra = 1
 
-    autocomplete_fields = ("exam",)
+    raw_id_fields = ("exam",)
 
     fields = ("position", "exam")
     ordering = ("position", "id")
@@ -948,7 +948,7 @@ class ResultItemInlineAdmin(admin.TabularInline):
         "interpretation",
     )
 
-    autocomplete_fields = ("exam_field",)
+    raw_id_fields = ("exam_field",)
 
     # -----------------------------------------------------
     # QUERY OTIMIZADA
@@ -960,10 +960,10 @@ class ResultItemInlineAdmin(admin.TabularInline):
 
         return qs.select_related(
             "exam_field",
-            "exam_field__exam",
+            "exam_field__test",
         ).order_by(
             "position",
-            "exam_field__exam__name",
+            "exam_field__test__name",
             "exam_field__name",
         )
 
@@ -975,8 +975,9 @@ class ResultItemInlineAdmin(admin.TabularInline):
 
         campo = getattr(obj, "exam_field", None)
 
-        if campo and campo.exam:
-            return format_html("<strong>{}</strong>", campo.exam.name)
+        test = getattr(campo, "test", None) or getattr(campo, "exam", None)
+        if campo and test:
+            return format_html("<strong>{}</strong>", test.name)
 
         return "-"
 
@@ -993,7 +994,7 @@ class ResultItemInlineAdmin(admin.TabularInline):
         if not campo:
             return "-"
 
-        return campo.referencia or "-"
+        return getattr(campo, "reference_range", None) or getattr(campo, "referencia", None) or "-"
 
     reference.short_description = "Referência"
 

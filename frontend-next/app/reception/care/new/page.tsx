@@ -158,7 +158,7 @@ export default function ReceptionCareCreatePage() {
         </SectionCard>
 
         <SectionCard title="Observações">
-          <Field label="Motivo da vinda" hint="Breve descrição do motivo do atendimento.">
+          <Field label="Motivo da visita" hint="Breve descrição do motivo do atendimento.">
             <input
               type="text"
               value={reason}
