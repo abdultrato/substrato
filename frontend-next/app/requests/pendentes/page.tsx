@@ -450,9 +450,12 @@ export default function PendingRequestsPage() {
         "/clinical/labrequest/",
         { page: 1, pageSize: 200, clientCache: false }
       )
-      setPending(items.filter((r) => ["pendente", "em_analise", "aguardando_validacao"].includes(r.status)))
+      // Modelo A: "encaminhada" é marcada por validated_at (o status fica
+      // 'pendente' durante toda a fase pré-analítica). Pendentes = ainda não
+      // encaminhadas; Encaminhadas = validated_at presente (e não canceladas).
+      setPending(items.filter((r) => r.status === "pendente" && !r.validated_at))
       setCanceled(items.filter((r) => r.status === "cancelado"))
-      setValidated(items.filter((r) => r.status === "validado"))
+      setValidated(items.filter((r) => !!r.validated_at && r.status !== "cancelado"))
     } catch { /* silent */ }
     finally {
       setLoadingPending(false)
@@ -475,7 +478,9 @@ export default function PendingRequestsPage() {
       // mesmo que o reload seguinte falhe (ex.: blip de rede).
       setPending((prev) => prev.filter((r) => r.id !== row.id))
       setValidated((prev) =>
-        prev.some((r) => r.id === row.id) ? prev : [{ ...row, status: "validado" }, ...prev],
+        prev.some((r) => r.id === row.id)
+          ? prev
+          : [{ ...row, validated_at: new Date().toISOString() }, ...prev],
       )
       setFeedback(`${row.custom_id} encaminhada para colheita.`)
       loadAll()

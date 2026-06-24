@@ -326,7 +326,15 @@ class LabRequest(NoNameCoreModel):
     # =====================================================
 
     def validar(self, user=None):
-        """Receção/laboratório valida a requisição para seguir para colheita."""
+        """Receção valida/encaminha a requisição para colheita.
+
+        Marca apenas ``validated_at`` — o status permanece ``pendente`` durante
+        toda a fase pré-analítica (encaminhamento → colheita → receção de
+        amostras). O status só transita para ``em_analise`` ao iniciar o
+        processamento e para ``validado`` (laudos) no fim do pipeline de
+        resultados. Mudar o status aqui (PENDING→VALIDATED) saltava a state
+        machine e tirava a requisição das filas do laboratório.
+        """
         from django.utils import timezone
 
         if self.status != ResultState.PENDING:
@@ -336,8 +344,7 @@ class LabRequest(NoNameCoreModel):
 
         self.validated_at = timezone.now()
         self.validated_by = user if getattr(user, "pk", None) else None
-        self.status = ResultState.VALIDATED
-        self.save(update_fields=["validated_at", "validated_by", "status", "updated_at"])
+        self.save(update_fields=["validated_at", "validated_by", "updated_at"])
         return self
 
     def cancelar(self, user=None):
