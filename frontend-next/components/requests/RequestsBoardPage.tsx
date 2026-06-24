@@ -4,7 +4,7 @@ import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import styles from "./RequestsBoardPage.module.css"
 import { useEffect, useMemo, useState } from "react"
-import { Search, RotateCcw, BarChart2, Clock, XCircle, CheckCircle2, FlaskConical, AlertTriangle, ChevronLeft } from "lucide-react"
+import { Search, RotateCcw, BarChart2, Clock, XCircle, CheckCircle2, FlaskConical, AlertTriangle, ChevronLeft, Microscope, Hourglass } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
 import PageHeader from "@/components/ui/PageHeader"
@@ -12,7 +12,7 @@ import useAuthGuard from "@/hooks/useAuthGuard"
 import { useLanguage } from "@/hooks/useLanguage"
 import useDebounce from "@/hooks/useDebounce"
 import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
-import { apiFetchList } from "@/lib/api"
+import { apiFetchAll } from "@/lib/api"
 import { canonicalCollectionPath } from "@/lib/openapi/endpointResolver"
 import { hasOpenApiMethod } from "@/lib/openapi/writeContract"
 import { buildRecordDetailHref } from "@/lib/resources/recordIdentity"
@@ -25,9 +25,8 @@ type Row = Record<string, any>
 const ENDPOINT = "/clinical/labrequest/"
 const ROUTE_BASE = "/requests"
 
-const STATUS_PENDING = ["pendente", "em_analise", "aguardando_validacao"]
-const STATUS_CANCELLED = ["cancelado"]
-const STATUS_VALIDATED = ["validado"]
+// Estados terminais negativos agrupados sob "Canceladas" (toggle).
+const STATUS_CANCELLED = ["cancelado", "desconsiderado"]
 
 function getStatus(row: Row): string {
   return String(row?.status || row?.estado || "").toLowerCase().trim()
@@ -257,14 +256,21 @@ export function RequestsSubNav() {
   )
 }
 
+type ColumnDef = {
+  key: string
+  title: string
+  icon: React.ReactNode
+  statuses: string[]
+  colorTokens: ColumnColorTokens
+  emptyText: string
+}
+
 export default function RequestsBoardPage() {
   const { loading } = useAuthGuard()
   const { t } = useLanguage()
   const [search, setSearch] = useState("")
-  const [page, setPage] = useState(1)
-  const [pageSize] = useState(100)
+  const [showCancelled, setShowCancelled] = useState(false)
   const [data, setData] = useState<Row[]>([])
-  const [totalItems, setTotalItems] = useState(0)
   const [loadingData, setLoadingData] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const debouncedSearch = useDebounce(search, 300)
@@ -280,8 +286,6 @@ export default function RequestsBoardPage() {
     return `${url.pathname}${url.search}`
   }, [debouncedSearch, normalizedEndpoint])
 
-  useEffect(() => { setPage(1) }, [requestUrl])
-
   useEffect(() => {
     if (!canList) return
     let mounted = true
@@ -289,16 +293,14 @@ export default function RequestsBoardPage() {
       try {
         setLoadingData(true)
         setError(null)
-        const res = await apiFetchList<Row>(requestUrl, {
-          page,
-          pageSize,
-          clientPaginate: true,
+        // Carrega o conjunto completo para que as colunas reflictam os totais
+        // reais por estado (não apenas a primeira página do servidor).
+        const all = await apiFetchAll<Row>(requestUrl, {
+          pageSize: 200,
           clientCache: safeRefreshToken === 0,
         })
         if (!mounted) return
-        const items = Array.isArray(res?.items) ? res.items : []
-        setData(items)
-        setTotalItems(res?.meta?.total ?? items.length)
+        setData(Array.isArray(all) ? all : [])
       } catch (e: any) {
         if (mounted) setError(e?.message || t("Falha ao carregar dados.", "Failed to load data."))
       } finally {
@@ -307,17 +309,79 @@ export default function RequestsBoardPage() {
     }
     load()
     return () => { mounted = false }
-  }, [canList, page, pageSize, requestUrl, safeRefreshToken, t])
+  }, [canList, requestUrl, safeRefreshToken, t])
 
-  const pending = useMemo(() => data.filter((r) => STATUS_PENDING.includes(getStatus(r))), [data])
-  const cancelled = useMemo(() => data.filter((r) => STATUS_CANCELLED.includes(getStatus(r))), [data])
-  const validated = useMemo(() => data.filter((r) => STATUS_VALIDATED.includes(getStatus(r))), [data])
+  // Agrupamento por estado sobre o conjunto completo.
+  const byStatus = useMemo(() => {
+    const map = new Map<string, Row[]>()
+    for (const row of data) {
+      const s = getStatus(row)
+      const bucket = map.get(s)
+      if (bucket) bucket.push(row)
+      else map.set(s, [row])
+    }
+    return map
+  }, [data])
+
+  const columns: ColumnDef[] = useMemo(() => {
+    const pipeline: ColumnDef[] = [
+      {
+        key: "pendente",
+        title: "Pendentes",
+        icon: <Clock size={14} className="text-amber-600" />,
+        statuses: ["pendente"],
+        colorTokens: { bg: "bg-amber-50/80", headerBgHex: "#fffbeb", border: "#fcd34d", text: "text-amber-800", countBg: "bg-amber-100", countText: "text-amber-700" },
+        emptyText: "Nenhuma requisição pendente",
+      },
+      {
+        key: "em_analise",
+        title: "Em Análise",
+        icon: <Microscope size={14} className="text-blue-600" />,
+        statuses: ["em_analise"],
+        colorTokens: { bg: "bg-blue-50/80", headerBgHex: "#eff6ff", border: "#93c5fd", text: "text-blue-800", countBg: "bg-blue-100", countText: "text-blue-700" },
+        emptyText: "Nenhuma requisição em análise",
+      },
+      {
+        key: "aguardando_validacao",
+        title: "Aguard. Validação",
+        icon: <Hourglass size={14} className="text-indigo-600" />,
+        statuses: ["aguardando_validacao"],
+        colorTokens: { bg: "bg-indigo-50/80", headerBgHex: "#eef2ff", border: "#a5b4fc", text: "text-indigo-800", countBg: "bg-indigo-100", countText: "text-indigo-700" },
+        emptyText: "Nenhuma requisição a aguardar validação",
+      },
+      {
+        key: "validado",
+        title: "Validadas",
+        icon: <CheckCircle2 size={14} className="text-emerald-600" />,
+        statuses: ["validado"],
+        colorTokens: { bg: "bg-emerald-50/80", headerBgHex: "#ecfdf5", border: "#6ee7b7", text: "text-emerald-800", countBg: "bg-emerald-100", countText: "text-emerald-700" },
+        emptyText: "Nenhuma requisição validada",
+      },
+    ]
+    if (!showCancelled) return pipeline
+    return [
+      ...pipeline,
+      {
+        key: "cancelado",
+        title: "Canceladas",
+        icon: <XCircle size={14} className="text-red-600" />,
+        statuses: STATUS_CANCELLED,
+        colorTokens: { bg: "bg-red-50/80", headerBgHex: "#fef2f2", border: "#fca5a5", text: "text-red-800", countBg: "bg-red-100", countText: "text-red-700" },
+        emptyText: "Nenhuma requisição cancelada",
+      },
+    ]
+  }, [showCancelled])
+
+  function columnRows(col: ColumnDef): Row[] {
+    return col.statuses.flatMap((s) => byStatus.get(s) ?? [])
+  }
 
   function rowHref(row: Row): string {
     return buildRecordDetailHref(ROUTE_BASE, row) ?? `${ROUTE_BASE}/${row.id}`
   }
 
   const reportHref = `/reports?endpoint=${encodeURIComponent(normalizedEndpoint)}&group=${encodeURIComponent("Área Clínica")}&resource=${encodeURIComponent("Requisição")}`
+  const gridColsClass = columns.length >= 5 ? "xl:grid-cols-5" : "xl:grid-cols-4"
 
   if (loading) return null
 
@@ -358,15 +422,27 @@ export default function RequestsBoardPage() {
             />
           </div>
 
-          <div className="flex items-center gap-1.5 text-xs text-[var(--gray-500)]">
-            <span>Total: {totalItems}</span>
-            <span className="text-[var(--gray-300)]">·</span>
-            <span>Na página: {data.length}</span>
+          <div className="text-xs text-[var(--gray-500)]">
+            <span>Total: {data.length}</span>
           </div>
 
           <button
             type="button"
-            onClick={() => { setSearch(""); setPage(1) }}
+            onClick={() => setShowCancelled((v) => !v)}
+            aria-pressed={showCancelled}
+            className={`inline-flex h-8 items-center gap-1 rounded-md border px-2.5 text-xs font-semibold shadow-sm transition-all duration-150 ${
+              showCancelled
+                ? "border-red-300 bg-red-50 text-red-700 hover:bg-red-100"
+                : "border-[var(--border)] bg-transparent text-[var(--gray-700)] hover:border-[var(--primary-300)] hover:bg-[var(--gray-100)] hover:text-[var(--text)]"
+            }`}
+          >
+            <XCircle size={12} />
+            {showCancelled ? t("Ocultar canceladas", "Hide cancelled") : t("Mostrar canceladas", "Show cancelled")}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => { setSearch(""); setShowCancelled(false) }}
             className="inline-flex h-8 items-center gap-1 rounded-md border border-[var(--border)] bg-transparent px-2.5 text-xs font-semibold text-[var(--gray-700)] shadow-sm transition-all duration-150 hover:border-[var(--primary-300)] hover:bg-[var(--gray-100)] hover:text-[var(--text)]"
           >
             <RotateCcw size={12} />
@@ -374,56 +450,22 @@ export default function RequestsBoardPage() {
           </button>
         </div>
 
-        {/* Board 3 colunas */}
+        {/* Board: colunas por etapa do pipeline (totais reais por estado) */}
         {loadingData ? (
           <div className="text-sm text-[var(--gray-500)]">{t("Carregando...", "Loading...")}</div>
         ) : (
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-            <BoardColumn
-              title="Pendentes"
-              icon={<Clock size={14} className="text-amber-600" />}
-              rows={pending}
-              colorTokens={{
-                bg: "bg-amber-50/80",
-                headerBgHex: "#fffbeb",
-                border: "#fcd34d",
-                text: "text-amber-800",
-                countBg: "bg-amber-100",
-                countText: "text-amber-700",
-              }}
-              emptyText="Nenhuma requisição pendente"
-              rowHref={rowHref}
-            />
-            <BoardColumn
-              title="Canceladas"
-              icon={<XCircle size={14} className="text-red-600" />}
-              rows={cancelled}
-              colorTokens={{
-                bg: "bg-red-50/80",
-                headerBgHex: "#fef2f2",
-                border: "#fca5a5",
-                text: "text-red-800",
-                countBg: "bg-red-100",
-                countText: "text-red-700",
-              }}
-              emptyText="Nenhuma requisição cancelada"
-              rowHref={rowHref}
-            />
-            <BoardColumn
-              title="Validadas — Enfermagem"
-              icon={<CheckCircle2 size={14} className="text-emerald-600" />}
-              rows={validated}
-              colorTokens={{
-                bg: "bg-emerald-50/80",
-                headerBgHex: "#ecfdf5",
-                border: "#6ee7b7",
-                text: "text-emerald-800",
-                countBg: "bg-emerald-100",
-                countText: "text-emerald-700",
-              }}
-              emptyText="Nenhuma requisição validada"
-              rowHref={rowHref}
-            />
+          <div className={`grid grid-cols-1 gap-3 sm:grid-cols-2 ${gridColsClass}`}>
+            {columns.map((col) => (
+              <BoardColumn
+                key={col.key}
+                title={col.title}
+                icon={col.icon}
+                rows={columnRows(col)}
+                colorTokens={col.colorTokens}
+                emptyText={col.emptyText}
+                rowHref={rowHref}
+              />
+            ))}
           </div>
         )}
       </div>
