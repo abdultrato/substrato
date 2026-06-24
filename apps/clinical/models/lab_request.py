@@ -246,8 +246,13 @@ class LabRequest(NoNameCoreModel):
 
         original = self.__class__.all_objects.filter(pk=self.pk).only("status").first()
 
-        if original and original.status in ResultState.TERMINAL:
-            raise ValidationError("Requisição finalizada é imutável.")
+        # Para a *requisição*, apenas 'cancelado' é imutável. 'validado' significa
+        # "encaminhada para colheita" (e é reutilizado no fim do fluxo), mas a
+        # requisição continua a ser gravada pela colheita/processamento/resultados.
+        # Usar ResultState.TERMINAL aqui (que inclui 'validado') bloqueava
+        # indevidamente a colheita da enfermagem ("Requisição finalizada é imutável").
+        if original and original.status == ResultState.CANCELED:
+            raise ValidationError("Requisição cancelada é imutável.")
 
     # =====================================================
     # SAVE CONTROLADO
