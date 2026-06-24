@@ -132,7 +132,7 @@ const MODULES_BASE: ModuleGroup[] = [
     label: "Área Clínica",
     resources: [
       { key: "paciente", label: "Pacientes", endpoint: "/clinical/patient/", adminListHref: "/admin/clinico/patient/" },
-      { key: "exame", label: "Exame", endpoint: "/clinical/exam/", adminListHref: "/admin/clinico/labexam/" },
+      { key: "exame", label: "Exame", endpoint: "/clinical_laboratory/test/", adminListHref: "/admin/laboratorio/labtest/" },
       { key: "examemedico", label: "Exame Médico", endpoint: "/clinical/medicalexam/", adminListHref: "/admin/clinico/medicalexam/" },
       { key: "examecampo", label: "Campo de Exame", endpoint: "/clinical/examfield/", adminListHref: "/admin/clinico/labexamfield/" },
       { key: "examemedicocampo", label: "Campo de Exame Médico", endpoint: "/clinical/medicalexamfield/" },
@@ -650,7 +650,7 @@ const MODULES_BASE: ModuleGroup[] = [
 const ADMIN_LIST_BY_ENDPOINT: Record<string, string> = {
   // Clinical
   "/clinical/patient/": "/admin/clinical/patient/",
-  "/clinical/exam/": "/admin/clinical/labexam/",
+  "/clinical_laboratory/test/": "/admin/laboratorio/labtest/",
   "/clinical/medicalexam/": "/admin/clinical/medicalexam/",
   "/clinical/examfield/": "/admin/clinical/labexamfield/",
   "/clinical/labrequest/": "/admin/clinical/labrequest/",

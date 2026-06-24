@@ -127,7 +127,9 @@ def handle_disregard_empty_request_results(command: DisregardEmptyRequestResults
             if item.status == ResultState.DISREGARDED:
                 summary["already_disregarded"] += 1
                 continue
-            if item.result_value is not None:
+            result_type = getattr(getattr(item, "exam_field", None), "result_type", "numero") or "numero"
+            has_value = item.result_value is not None if result_type == "numero" else bool(item.result_text)
+            if has_value:
                 summary["skipped_with_value"] += 1
                 continue
 
@@ -154,11 +156,15 @@ def handle_validate_request_results(command: ValidateRequestResultsCommand) -> d
 
     with transaction.atomic():
         items = _request_result_items_for_update(command.lab_request)
+        def _item_has_value(item) -> bool:
+            rt = getattr(getattr(item, "exam_field", None), "result_type", "numero") or "numero"
+            return item.result_value is not None if rt == "numero" else bool(item.result_text)
+
         incomplete = [
             item
             for item in items
             if item.status in {ResultState.PENDING, ResultState.IN_ANALYSIS, ResultState.REJECTED}
-            or (item.status not in {ResultState.VALIDATED, ResultState.DISREGARDED} and item.result_value is None)
+            or (item.status not in {ResultState.VALIDATED, ResultState.DISREGARDED} and not _item_has_value(item))
         ]
         if incomplete:
             raise ValidationError("Preencha ou desconsidere todos os campos antes de validar a requisição.")
@@ -178,7 +184,7 @@ def handle_validate_request_results(command: ValidateRequestResultsCommand) -> d
                 summary["validated_disregards"] += 1
                 continue
 
-            if item.result_value is None:
+            if not _item_has_value(item):
                 summary["skipped_empty"] += 1
                 continue
 
@@ -218,7 +224,7 @@ def _request_result_items_for_update(lab_request):
     result = lab_request.create_result()
     return list(
         ResultItem.all_objects.select_for_update()
-        .select_related("result", "result__request", "exam_field")
+        .select_related("result", "result__request", "exam_field", "exam_field__test")
         .filter(result=result)
         .order_by("position", "id")
     )
@@ -233,7 +239,9 @@ def _disregard_locked_result_item(
 ) -> None:
     if item.status == ResultState.VALIDATED:
         raise ValidationError("Resultado validado não pode ser desconsiderado.")
-    if item.result_value is not None:
+    result_type = getattr(getattr(item, "exam_field", None), "result_type", "numero") or "numero"
+    has_value = item.result_value is not None if result_type == "numero" else bool(item.result_text)
+    if has_value:
         raise ValidationError("Resultado com valor inserido não pode ser desconsiderado.")
     if idempotent and item.status == ResultState.DISREGARDED and item.disregard_reason == reason:
         return

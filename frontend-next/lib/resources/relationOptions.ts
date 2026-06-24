@@ -94,9 +94,9 @@ const RELATION_TARGETS: Record<string, RelationTarget> = {
   employee: { endpoint: "/human_resources/employee/", labelFields: ["name", "employee_code", ...DEFAULT_LABEL_FIELDS] },
   enrollment: { endpoint: "/education/enrollment/", labelFields: ["custom_id", "student", "classroom", ...DEFAULT_LABEL_FIELDS] },
   equipment: { endpoint: "/equipment/equipment/", labelFields: ["name", "serial_number", ...DEFAULT_LABEL_FIELDS] },
-  exam: { endpoint: "/clinical/exam/", labelFields: ["name", "code", ...DEFAULT_LABEL_FIELDS] },
+  exam: { endpoint: "/clinical_laboratory/test/", labelFields: ["name", "code", ...DEFAULT_LABEL_FIELDS], staticFilters: { active: true } },
   // M2M `exams` das requisições laboratoriais — multi-seleção por pesquisa.
-  exams: { endpoint: "/clinical/exam/", labelFields: ["name", "code", ...DEFAULT_LABEL_FIELDS] },
+  exams: { endpoint: "/clinical_laboratory/test/", labelFields: ["name", "code", ...DEFAULT_LABEL_FIELDS], staticFilters: { active: true } },
   medical_exams: { endpoint: "/clinical/medicalexam/", labelFields: ["name", "code", ...DEFAULT_LABEL_FIELDS] },
   // Bandeja de exames do perfil profissional (medicina ocupacional).
   occupational_profile: { endpoint: "/clinical/occupational_profile/", labelFields: ["name", "profession", ...DEFAULT_LABEL_FIELDS] },

@@ -86,7 +86,7 @@ function EditModal({
   const [error, setError] = useState<string | null>(null)
   const searchRef = useRef<HTMLInputElement>(null)
 
-  const examEndpoint = req.type === "LAB" ? "/clinical/exam/" : "/clinical/medicalexam/"
+  const examEndpoint = req.type === "LAB" ? "/clinical_laboratory/test/" : "/clinical/medicalexam/"
 
   useEffect(() => {
     setLoadingExams(true)
@@ -451,9 +451,8 @@ export default function PendingRequestsPage() {
     setFeedback(null)
     try {
       await apiFetch(`/clinical/labrequest/${row.id}/validar/`, { method: "POST" })
-      setPending((prev) => prev.filter((r) => r.id !== row.id))
+      await loadAll()
       setFeedback(`${row.custom_id} encaminhada para colheita.`)
-      loadAll()
     } catch (e: any) {
       setGlobalError(e?.message || "Falha ao validar.")
     } finally {
