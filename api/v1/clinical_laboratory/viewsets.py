@@ -128,6 +128,7 @@ class _CatalogActivationMixin:
 class LabSectorViewSet(_CatalogActivationMixin, ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
     queryset = LabSector.objects.all()
     serializer_class = LabSectorSerializer
+    filterset_fields = ["active"]
     search_fields = ["custom_id", "code", "name"]
     ordering_fields = ["code", "name", "active", "created_at"]
 
@@ -372,6 +373,7 @@ class CriticalResultNotificationViewSet(ValidatedSearchOrderingMixin, TenantScop
 class MicrobiologyCultureViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
     queryset = MicrobiologyCulture.objects.select_related("order_item", "sample", "performed_by").all()
     serializer_class = MicrobiologyCultureSerializer
+    filterset_fields = ["status", "culture_type"]
     search_fields = ["custom_id", "specimen", "notes"]
     ordering_fields = ["status", "culture_type", "read_at", "created_at"]
 
@@ -386,6 +388,7 @@ class MicrobiologyIsolateViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
 class AntibioticSusceptibilityViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
     queryset = AntibioticSusceptibility.objects.select_related("isolate").all()
     serializer_class = AntibioticSusceptibilitySerializer
+    filterset_fields = ["result", "method", "isolate"]
     search_fields = ["custom_id", "antibiotic", "mic_value"]
     ordering_fields = ["antibiotic", "result", "method", "created_at"]
 
@@ -393,6 +396,7 @@ class AntibioticSusceptibilityViewSet(ValidatedSearchOrderingMixin, TenantScoped
 class MolecularResultViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
     queryset = MolecularResult.objects.select_related("order_item", "sample", "performed_by").all()
     serializer_class = MolecularResultSerializer
+    filterset_fields = ["assay", "detection", "rif_resistance"]
     search_fields = ["custom_id", "instrument", "notes"]
     ordering_fields = ["assay", "detection", "performed_at", "created_at"]
 
@@ -400,6 +404,7 @@ class MolecularResultViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetM
 class AcidFastSmearViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
     queryset = AcidFastSmear.objects.select_related("order_item", "sample", "performed_by").all()
     serializer_class = AcidFastSmearSerializer
+    filterset_fields = ["stain", "grade"]
     search_fields = ["custom_id", "afb_count", "notes"]
     ordering_fields = ["grade", "stain", "performed_at", "created_at"]
 
