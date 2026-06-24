@@ -8,6 +8,16 @@ from apps.clinical.models.clinical_reference import ClinicalReference
 class ClinicalReferenceResolver:
     @staticmethod
     def resolve(exam_field, patient):
+        from apps.clinical.models.lab_exam_field import LabExamField
+
+        # ClinicalReference referencia o LabExamField clínico. Result items que
+        # usam laboratorio.LabTestField trazem as faixas inline (reference_low/
+        # high, critical_low/high) e são interpretados via field.interpret_result,
+        # por isso não há referência externa a consultar (e filtrar a FK com um
+        # LabTestField lançaria "Must be LabExamField instance").
+        if not isinstance(exam_field, LabExamField):
+            return None
+
         age_in_days = patient.idade_em_dias()
 
         references = ClinicalReference.objects.filter(exam_field=exam_field)

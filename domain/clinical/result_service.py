@@ -52,7 +52,7 @@ class ResultService:
 
         if new_alert is not None:
             result_item.critical_alert = bool(new_alert)
-        elif "CRITICO" in indicator:
+        elif "CRITICO" in indicator or indicator in ("↑↑", "↓↓"):
             result_item.critical_alert = True
 
         ResultService._delta_check(result_item)
@@ -62,7 +62,8 @@ class ResultService:
     def _delta_check(result_item):
         field = result_item.exam_field
 
-        if not field.max_delta:
+        # LabTestField não define max_delta (delta-check só no LabExamField clínico).
+        if not getattr(field, "max_delta", None):
             return
 
         patient = None

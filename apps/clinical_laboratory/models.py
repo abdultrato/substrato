@@ -204,6 +204,31 @@ class LabTestField(CoreModel):
         self.save(update_fields=["active", "updated_at"])
         return self
 
+    def interpret_result(self, value):
+        """Flag do resultado numérico a partir das faixas inline do campo.
+
+        Devolve "↓↓"/"↑↑" (crítico), "↓"/"↑" (fora de referência) ou "N"
+        (normal); None quando não há valor ou não é numérico.
+        """
+        if value is None:
+            return None
+        from decimal import Decimal
+
+        try:
+            value = Decimal(value)
+        except Exception:
+            return None
+
+        if self.critical_low is not None and value < self.critical_low:
+            return "↓↓"
+        if self.critical_high is not None and value > self.critical_high:
+            return "↑↑"
+        if self.reference_low is not None and value < self.reference_low:
+            return "↓"
+        if self.reference_high is not None and value > self.reference_high:
+            return "↑"
+        return "N"
+
 
 class LabTestPanel(CoreModel):
     """Painel/pacote de exames (hemograma, perfil lipídico, pré-operatório, ...).
