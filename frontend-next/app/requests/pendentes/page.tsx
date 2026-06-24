@@ -471,8 +471,14 @@ export default function PendingRequestsPage() {
     setFeedback(null)
     try {
       await apiFetch(`/clinical/labrequest/${row.id}/validar/`, { method: "POST" })
-      await loadAll()
+      // Atualização otimista: sai de "Pendentes" e entra em "Encaminhadas" já,
+      // mesmo que o reload seguinte falhe (ex.: blip de rede).
+      setPending((prev) => prev.filter((r) => r.id !== row.id))
+      setValidated((prev) =>
+        prev.some((r) => r.id === row.id) ? prev : [{ ...row, status: "validado" }, ...prev],
+      )
       setFeedback(`${row.custom_id} encaminhada para colheita.`)
+      loadAll()
     } catch (e: any) {
       setGlobalError(e?.message || "Falha ao validar.")
     } finally {
