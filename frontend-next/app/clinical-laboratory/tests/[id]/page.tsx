@@ -587,7 +587,7 @@ export default function LabTestDetailPage() {
 
             {fields.length === 0 && !addingField && (
               <p className="py-4 text-center text-xs text-muted-foreground">
-                Nenhum campo adicionado. Clique em "Adicionar campo" para começar.
+                Nenhum campo adicionado. Clique em &quot;Adicionar campo&quot; para começar.
               </p>
             )}
           </div>

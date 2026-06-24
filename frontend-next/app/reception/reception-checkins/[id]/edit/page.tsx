@@ -71,7 +71,7 @@ export default function ReceptionCheckinEditPage() {
   const [notes, setNotes] = useState("");
 
   // initialOptions for SearchableRelationSelect pre-population
-  const [patientInitial, setPatientInitial] = useState<{ value: number; label: string } | null>(null);
+  const [patientInitial, setPatientInitial] = useState<{ value: string; label: string } | null>(null);
 
   const [loadError, setLoadError] = useState<string | null>(null);
   const [loadingData, setLoadingData] = useState(true);
@@ -90,7 +90,7 @@ export default function ReceptionCheckinEditPage() {
         setReason(data.reason ?? "");
         setNotes(data.notes ?? "");
         if (data.patient && data.patient_name) {
-          setPatientInitial({ value: data.patient, label: data.patient_name });
+          setPatientInitial({ value: String(data.patient), label: data.patient_name });
         }
       } catch (e: any) {
         setLoadError(e?.message || "Erro ao carregar dados.");

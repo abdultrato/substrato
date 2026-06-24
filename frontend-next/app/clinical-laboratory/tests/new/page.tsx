@@ -409,7 +409,7 @@ function NewLabTestForm() {
           </div>
           {fieldRows.length === 0 && (
             <p className="py-3 text-center text-xs text-muted-foreground">
-              Nenhum campo adicionado. Clique em "Adicionar campo" para começar.
+              Nenhum campo adicionado. Clique em &quot;Adicionar campo&quot; para começar.
             </p>
           )}
         </SectionCard>

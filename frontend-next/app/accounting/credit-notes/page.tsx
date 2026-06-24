@@ -362,7 +362,7 @@ function DecidedSection({
                 {r.reviewed_at ? <span>{fmtDate(r.reviewed_at)}</span> : null}
               </div>
               {r.decision_note ? (
-                <p className={`mt-1 text-[11px] italic ${subTextColor}`}>"{r.decision_note}"</p>
+                <p className={`mt-1 text-[11px] italic ${subTextColor}`}>&quot;{r.decision_note}&quot;</p>
               ) : null}
             </div>
           ))}

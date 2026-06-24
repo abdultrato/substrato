@@ -92,7 +92,7 @@ export default function LabTestsPage() {
         clientCache: safeRefreshToken === 0, clientCacheTtlMs: 20000,
       });
       setTests(res.items);
-      setTotal(res.total ?? res.items.length);
+      setTotal(res.meta.total ?? res.items.length);
     } catch (e: any) {
       setError(e?.message || "Erro ao carregar exames.");
     } finally {
