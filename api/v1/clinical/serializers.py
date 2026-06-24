@@ -1019,10 +1019,28 @@ class LabRequestSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializ
             if exam is None:
                 return []
 
-            # LabTest.sample_type is a CharField; no FK sample objects exist.
+            # LabTest (new model): sample_type is a CharField, container_type is a FK.
             if not callable(getattr(exam, "get_sample_options", None)):
                 sample_type = getattr(exam, "sample_type", "") or ""
-                return [{"name": sample_type}] if sample_type else []
+                ct = getattr(exam, "container_type", None)
+                entry = {"name": sample_type}
+                if ct is not None:
+                    entry.update({
+                        "container_type_id": ct.id,
+                        "container_code": ct.code,
+                        "container_name": ct.name,
+                        "cap_color": ct.cap_color,
+                        "cap_color_display": ct.get_cap_color_display(),
+                        "additive": ct.additive,
+                        "specimen_yields": ct.specimen_yields,
+                        "volume_ml": str(ct.volume_ml) if ct.volume_ml is not None else None,
+                        "inversions": ct.inversions,
+                        "conservation_temperature": ct.conservation_temperature,
+                        "conservation_temperature_display": ct.get_conservation_temperature_display(),
+                        "conservation_max_hours": ct.conservation_max_hours,
+                        "notes": ct.notes,
+                    })
+                return [entry] if sample_type or ct else []
 
             payload = []
             for sample in exam.get_sample_options():
@@ -1328,7 +1346,30 @@ class LaboratoryResultItemSerializer(serializers.ModelSerializer):
     exam_field_type = serializers.CharField(source="exam_field.result_type", read_only=True)
     exam_field_choices = serializers.JSONField(source="exam_field.result_choices", read_only=True)
     exam_field_position = serializers.IntegerField(source="exam_field.sequence", read_only=True)
-    exam_field_reference = serializers.CharField(source="exam_field.reference_range", read_only=True)
+    exam_field_reference = serializers.SerializerMethodField()
+    exam_field_reference_low = serializers.DecimalField(source="exam_field.reference_low", max_digits=12, decimal_places=4, read_only=True)
+    exam_field_reference_high = serializers.DecimalField(source="exam_field.reference_high", max_digits=12, decimal_places=4, read_only=True)
+    exam_field_critical_low = serializers.DecimalField(source="exam_field.critical_low", max_digits=12, decimal_places=4, read_only=True)
+    exam_field_critical_high = serializers.DecimalField(source="exam_field.critical_high", max_digits=12, decimal_places=4, read_only=True)
+
+    def get_exam_field_reference(self, obj):
+        ef = obj.exam_field
+        if ef is None:
+            return ""
+        if ef.reference_range:
+            return ef.reference_range
+        lo = ef.reference_low
+        hi = ef.reference_high
+        if lo is not None and hi is not None:
+            def _fmt(v):
+                v = float(v)
+                return str(int(v)) if v == int(v) else f"{v:g}"
+            return f"{_fmt(lo)} – {_fmt(hi)}"
+        if lo is not None:
+            return f"≥ {float(lo):g}"
+        if hi is not None:
+            return f"≤ {float(hi):g}"
+        return ""
     patient_name = serializers.CharField(source="result.request.patient.name", read_only=True)
     request_id = serializers.IntegerField(source="result.request_id", read_only=True)
     request_code = serializers.CharField(source="result.request.custom_id", read_only=True)
@@ -1352,6 +1393,10 @@ class LaboratoryResultItemSerializer(serializers.ModelSerializer):
             "exam_field_type",
             "exam_field_choices",
             "exam_field_reference",
+            "exam_field_reference_low",
+            "exam_field_reference_high",
+            "exam_field_critical_low",
+            "exam_field_critical_high",
             "result_value",
             "result_text",
             "clinical_status",
@@ -1384,6 +1429,10 @@ class LaboratoryResultItemSerializer(serializers.ModelSerializer):
             "exam_field_unit",
             "exam_field_type",
             "exam_field_reference",
+            "exam_field_reference_low",
+            "exam_field_reference_high",
+            "exam_field_critical_low",
+            "exam_field_critical_high",
             "clinical_status",
             "report_color",
             "critical_alert",

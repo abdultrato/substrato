@@ -8,6 +8,7 @@ from apps.clinical.models.lab_exam import LabExam
 from apps.clinical.models.lab_request import LabRequest
 from apps.clinical.models.patient import Patient
 from apps.clinical.models.sample import Sample
+from apps.clinical_laboratory.models import LabSector, LabTest, SampleType
 from apps.nursing.models import NursingRecord
 from apps.tenants.models.tenant import Tenant
 from core.constants.laboratory.method import Method
@@ -50,6 +51,24 @@ def _exam(tenant, sample_type):
         method=Method.PCR,
         sector=Sector.BIOLOGIA_MOLECULAR,
         sample_type=sample_type,
+    )
+
+
+def _lab_test(tenant):
+    sector = LabSector.objects.create(
+        tenant=tenant,
+        name="Biologia Molecular",
+        code="BIO-MOL",
+    )
+    return LabTest.objects.create(
+        tenant=tenant,
+        name="GeneXpert MTB/RIF",
+        code="GX-MTB-RIF",
+        sector=sector,
+        sample_type=SampleType.SPUTUM,
+        method="PCR",
+        price=Decimal("1500.00"),
+        turnaround_hours=24,
     )
 
 
@@ -122,8 +141,7 @@ def test_lab_request_created_by_reception_or_doctor_syncs_nursing_entry(
         bottle_type=Sample.BottleType.STERILE_CONTAINER,
         minimum_volume="1.50",
     )
-    exam = _exam(tenant, sputum)
-    exam.sample_options.add(saliva)
+    exam = _lab_test(tenant)
 
     _authenticate(
         api_client,
@@ -154,13 +172,10 @@ def test_lab_request_created_by_reception_or_doctor_syncs_nursing_entry(
 
     first_exam = record.collection_guidance[0]
     assert first_exam["exam_id"] == exam.id
-    sample_ids = {option["sample_id"] for option in first_exam["sample_options"]}
-    assert sputum.id in sample_ids
-    assert saliva.id in sample_ids
+    assert first_exam["sample_options"] == [{"sample_name": SampleType.SPUTUM}]
 
     lab_request.refresh_from_db()
-    assert lab_request.samples.filter(id=sputum.id).exists()
-    assert lab_request.samples.filter(id=saliva.id).exists()
+    assert not lab_request.samples.exists()
 
 
 @pytest.mark.django_db(transaction=True)
@@ -173,7 +188,7 @@ def test_lab_request_created_by_other_profile_does_not_auto_create_nursing_entry
         bottle_type=Sample.BottleType.STERILE_CONTAINER,
         minimum_volume="2.00",
     )
-    exam = _exam(tenant, sputum)
+    exam = _lab_test(tenant)
 
     User = get_user_model()
     user = User.objects.create_user(

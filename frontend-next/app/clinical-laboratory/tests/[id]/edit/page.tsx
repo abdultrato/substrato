@@ -12,6 +12,7 @@ import { LAB_METHOD_OPTIONS } from "@/lib/clinicalLabMethods";
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 type LabSector = { id: number; name: string; code: string };
+type LabContainerType = { id: number; code: string; name: string; cap_color_display: string };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -59,6 +60,7 @@ export default function LabTestEditPage() {
   const router = useRouter();
 
   const [sectors, setSectors] = useState<LabSector[]>([]);
+  const [containerTypes, setContainerTypes] = useState<LabContainerType[]>([]);
   const [loadingData, setLoadingData] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
 
@@ -66,6 +68,7 @@ export default function LabTestEditPage() {
   const [code, setCode] = useState("");
   const [sector, setSector] = useState("");
   const [sampleType, setSampleType] = useState("SORO");
+  const [containerType, setContainerType] = useState<string>(""); // stores container type ID (number as string) or ""
   const [method, setMethod] = useState("");
   const [price, setPrice] = useState("0.00");
   const [turnaroundHours, setTurnaroundHours] = useState("24");
@@ -81,15 +84,18 @@ export default function LabTestEditPage() {
       setLoadingData(true);
       setLoadError(null);
       try {
-        const [testData, sectorsData] = await Promise.all([
+        const [testData, sectorsData, containersData] = await Promise.all([
           apiFetch<any>(`/clinical_laboratory/test/${id}/`),
           apiFetchList<LabSector>("/clinical_laboratory/sector/", { pageSize: 200 }),
+          apiFetchList<LabContainerType>("/clinical_laboratory/container_type/", { pageSize: 200 }),
         ]);
         setSectors(sectorsData.items);
+        setContainerTypes(containersData.items);
         setName(testData.name ?? "");
         setCode(testData.code ?? "");
         setSector(String(testData.sector ?? ""));
         setSampleType(testData.sample_type ?? "SORO");
+        setContainerType(testData.container_type ? String(testData.container_type) : "");
         setMethod(testData.method ?? "");
         setPrice(testData.price ?? "0.00");
         setTurnaroundHours(String(testData.turnaround_hours ?? 24));
@@ -123,7 +129,8 @@ export default function LabTestEditPage() {
         method: "PATCH",
         body: JSON.stringify({
           name: name.trim(), code: code.trim(), sector: Number(sector),
-          sample_type: sampleType, method: method.trim(),
+          sample_type: sampleType, container_type: containerType ? Number(containerType) : null,
+          method: method.trim(),
           price, turnaround_hours: Number(turnaroundHours) || 24,
           requires_fasting: requiresFasting, requires_consent: requiresConsent,
         }),
@@ -205,6 +212,16 @@ export default function LabTestEditPage() {
                   </select>
                 </Field>
               </div>
+              <Field label="Tipo de tubo/recipiente" hint="Recipiente utilizado para a coleta da amostra">
+                <select value={containerType} onChange={(e) => setContainerType(e.target.value)} className={inputCls}>
+                  <option value="">— Não especificado —</option>
+                  {containerTypes.map((ct) => (
+                    <option key={ct.id} value={ct.id}>
+                      {ct.name} ({ct.cap_color_display})
+                    </option>
+                  ))}
+                </select>
+              </Field>
               <Field label="Método">
                 <select value={method} onChange={(e) => setMethod(e.target.value)} className={inputCls}>
                   <option value="">— Selecionar —</option>

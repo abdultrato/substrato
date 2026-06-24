@@ -160,16 +160,139 @@ class LabSector(CoreModel):
         return self
 
 
+class LabContainerType(CoreModel):
+    """Tipo de tubo/recipiente para coleta de amostras biológicas.
+
+    Define o recipiente correto, aditivo/conservante, volume, inversões e
+    condições de conservação. Usado como guia para a enfermagem na coleta.
+    """
+
+    prefix = "LCONT"
+
+    class CapColor(models.TextChoices):
+        RED = "vermelho", "Vermelho"
+        GOLD = "dourado", "Dourado / Amarelo SST"
+        PURPLE = "roxo", "Roxo / Lilás (EDTA)"
+        LIGHT_BLUE = "azul_claro", "Azul claro (Citrato)"
+        GREY = "cinzento", "Cinzento (Fluoreto)"
+        DARK_GREEN = "verde_escuro", "Verde escuro (Heparina)"
+        LIGHT_GREEN = "verde_claro", "Verde claro (Heparina + Gel)"
+        YELLOW = "amarelo", "Amarelo (ACD)"
+        ORANGE = "laranja", "Laranja"
+        BLACK = "preto", "Preto"
+        WHITE = "branco", "Branco"
+        TRANSPARENT = "transparente", "Transparente"
+        BROWN = "castanho", "Castanho"
+        PINK = "rosa", "Rosa"
+        NONE = "nenhuma", "Sem tampa / Recipiente"
+
+    class ConservationTemp(models.TextChoices):
+        AMBIENT = "AMBIENTE", "Temperatura ambiente (15–25 °C)"
+        COLD = "REFRIGERADO", "Refrigerado (2–8 °C)"
+        FROZEN = "CONGELADO", "Congelado (−20 °C)"
+        ULTRA_COLD = "ULTRA_FRIO", "Ultracongelado (−70/−80 °C)"
+        FRESH = "FRESCO", "Fresco — não refrigerar"
+        INCUBATOR = "ESTUFA", "Estufa (35–37 °C)"
+
+    code = models.CharField("Código", db_column="code", max_length=30, db_index=True)
+    cap_color = models.CharField(
+        "Cor da tampa",
+        db_column="cap_color",
+        max_length=20,
+        choices=CapColor.choices,
+        default=CapColor.TRANSPARENT,
+    )
+    additive = models.CharField(
+        "Aditivo / Conservante",
+        db_column="additive",
+        max_length=200,
+        blank=True,
+        default="",
+        help_text="Ex.: EDTA K3, Citrato de sódio 3,2 %, Fluoreto de sódio + Oxalato",
+    )
+    specimen_yields = models.CharField(
+        "Amostra produzida",
+        db_column="specimen_yields",
+        max_length=120,
+        blank=True,
+        default="",
+        help_text="Ex.: Soro, Plasma heparinizado, Sangue total, Urina",
+    )
+    volume_ml = models.DecimalField(
+        "Volume a coletar (mL)",
+        db_column="volume_ml",
+        max_digits=6,
+        decimal_places=2,
+        null=True,
+        blank=True,
+    )
+    inversions = models.PositiveSmallIntegerField(
+        "Número de inversões",
+        db_column="inversions",
+        default=0,
+        help_text="Inversões suaves imediatamente após a coleta para homogeneizar o aditivo.",
+    )
+    conservation_temperature = models.CharField(
+        "Temperatura de conservação",
+        db_column="conservation_temperature",
+        max_length=15,
+        choices=ConservationTemp.choices,
+        default=ConservationTemp.AMBIENT,
+    )
+    conservation_max_hours = models.PositiveSmallIntegerField(
+        "Estabilidade máxima (h)",
+        db_column="conservation_max_hours",
+        null=True,
+        blank=True,
+        help_text="Horas máximas entre coleta e análise nas condições de conservação indicadas.",
+    )
+    notes = models.TextField(
+        "Observações / Instruções",
+        db_column="notes",
+        blank=True,
+        default="",
+        help_text="Instruções especiais de preparo, manuseio ou transporte.",
+    )
+    active = models.BooleanField("Ativo", db_column="active", default=True, db_index=True)
+
+    class Meta:
+        db_table = "laboratorio_tipo_recipiente"
+        verbose_name = "Tipo de tubo/recipiente"
+        verbose_name_plural = "Tipos de tubo/recipiente"
+        ordering = ["name"]
+        indexes = [models.Index(fields=["tenant", "active"])]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["tenant", "code"],
+                condition=models.Q(deleted=False),
+                name="uniq_lab_container_code",
+            ),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.name} ({self.code})" if self.code else self.name
+
+
 class LabTest(CoreModel):
     """Exame laboratorial no catálogo (técnico + financeiro)."""
 
     prefix = "LTST"
+    name_preserve_case = True
 
     code = models.CharField("Código", db_column="code", max_length=30, db_index=True)
     sector = models.ForeignKey(LabSector, db_column="sector_id", verbose_name="Sector",
                                on_delete=models.PROTECT, related_name="tests")
     sample_type = models.CharField("Tipo de amostra", db_column="sample_type", max_length=14,
                                    choices=SampleType.choices, default=SampleType.SERUM)
+    container_type = models.ForeignKey(
+        LabContainerType,
+        db_column="container_type_id",
+        verbose_name="Tipo de tubo/recipiente",
+        on_delete=models.SET_NULL,
+        related_name="tests",
+        null=True,
+        blank=True,
+    )
     method = models.CharField("Método", db_column="method", max_length=120, blank=True, default="",
                               choices=LabMethod.choices)
     unit = models.CharField("Unidade", db_column="unit", max_length=30, blank=True, default="")
@@ -232,6 +355,7 @@ class LabTestField(CoreModel):
     """
 
     prefix = "LTSF"
+    name_preserve_case = True
 
     class ResultType(models.TextChoices):
         NUMERO = "numero", "Número"

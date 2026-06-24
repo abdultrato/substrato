@@ -12,14 +12,29 @@ import { routeParamToString } from "@/lib/routeParams"
 import { GROUPS } from "@/lib/rbac"
 
 type SampleOption = {
-  id: number
+  id?: number
   custom_id?: string
   name?: string
+  // Legacy (LabExam / Sample model)
   bottle_type?: string
   bottle_type_display?: string
   minimum_volume_ml?: string
   fasting_required?: boolean
   fasting_hours?: number
+  // New (LabTest / LabContainerType model)
+  container_type_id?: number
+  container_code?: string
+  container_name?: string
+  cap_color?: string
+  cap_color_display?: string
+  additive?: string
+  specimen_yields?: string
+  volume_ml?: string | null
+  inversions?: number
+  conservation_temperature?: string
+  conservation_temperature_display?: string
+  conservation_max_hours?: number | null
+  notes?: string
 }
 
 type RequestItem = {
@@ -243,14 +258,14 @@ export default function NursingRequestDetailPage() {
                   </span>
                 </div>
                 <div className="flex flex-wrap gap-1.5">
-                  {pendingSampleSummary.map((sample) => (
+                  {pendingSampleSummary.map((sample, idx) => (
                     <span
-                      key={sample.id}
+                      key={sample.id ?? idx}
                       className="inline-flex items-center rounded border border-primary/20 bg-primary/5 px-2 py-0.5 text-[10px] font-medium text-slate-800"
                     >
-                      {sample.name || "Amostra"}
-                      {sample.bottle_type_display || sample.bottle_type ? ` · ${sample.bottle_type_display || sample.bottle_type}` : ""}
-                      {sample.minimum_volume_ml && Number(sample.minimum_volume_ml) > 0 ? ` · ${sample.minimum_volume_ml} ml` : ""}
+                      {sample.container_name || sample.name || "Amostra"}
+                      {sample.cap_color_display ? ` · ${sample.cap_color_display}` : (sample.bottle_type_display || sample.bottle_type ? ` · ${sample.bottle_type_display || sample.bottle_type}` : "")}
+                      {sample.volume_ml && Number(sample.volume_ml) > 0 ? ` · ${sample.volume_ml} mL` : (sample.minimum_volume_ml && Number(sample.minimum_volume_ml) > 0 ? ` · ${sample.minimum_volume_ml} mL` : "")}
                     </span>
                   ))}
                 </div>
@@ -287,17 +302,54 @@ export default function NursingRequestDetailPage() {
                           </span>
                         </div>
 
-                        <div className="mt-1.5 flex flex-wrap gap-1">
-                          {(item.sample_options || []).map((sample) => (
-                            <span
-                              key={`${item.id}-${sample.id}`}
-                              className="inline-flex items-center rounded border border-slate-200 bg-slate-50 px-2 py-0.5 text-[10px] text-slate-700"
+                        <div className="mt-1.5 space-y-1">
+                          {(item.sample_options || []).map((sample, sIdx) => (
+                            <div
+                              key={`${item.id}-${sample.id ?? sIdx}`}
+                              className="rounded border border-slate-200 bg-slate-50 px-2 py-1.5 text-[10px] text-slate-700"
                             >
-                              {sample.name || "Amostra"}
-                              {sample.bottle_type_display || sample.bottle_type ? ` · ${sample.bottle_type_display || sample.bottle_type}` : ""}
-                              {sample.minimum_volume_ml && Number(sample.minimum_volume_ml) > 0 ? ` · ${sample.minimum_volume_ml} ml` : ""}
-                              {sample.fasting_required ? ` · jejum ${sample.fasting_hours || 0}h` : ""}
-                            </span>
+                              <div className="flex flex-wrap items-center gap-1.5">
+                                {/* Container / tube name */}
+                                <span className="font-semibold text-slate-900">
+                                  {sample.container_name || sample.name || "Amostra"}
+                                </span>
+                                {/* Cap color badge */}
+                                {(sample.cap_color_display || sample.bottle_type_display || sample.bottle_type) && (
+                                  <span className="rounded bg-slate-200 px-1.5 py-0.5 font-medium">
+                                    {sample.cap_color_display || sample.bottle_type_display || sample.bottle_type}
+                                  </span>
+                                )}
+                                {/* Volume */}
+                                {(sample.volume_ml && Number(sample.volume_ml) > 0) ? (
+                                  <span>{Number(sample.volume_ml)} mL</span>
+                                ) : (sample.minimum_volume_ml && Number(sample.minimum_volume_ml) > 0) ? (
+                                  <span>{sample.minimum_volume_ml} mL</span>
+                                ) : null}
+                                {/* Inversions */}
+                                {sample.inversions ? <span>{sample.inversions}× inversões</span> : null}
+                                {/* Conservation */}
+                                {sample.conservation_temperature_display && (
+                                  <span className="text-slate-500">{sample.conservation_temperature_display}</span>
+                                )}
+                                {/* Stability */}
+                                {sample.conservation_max_hours ? (
+                                  <span className="text-slate-500">estável {sample.conservation_max_hours}h</span>
+                                ) : null}
+                                {/* Fasting (legacy) */}
+                                {sample.fasting_required ? (
+                                  <span className="rounded bg-amber-100 px-1.5 py-0.5 font-medium text-amber-800">
+                                    jejum {sample.fasting_hours || 0}h
+                                  </span>
+                                ) : null}
+                              </div>
+                              {/* Additive / notes */}
+                              {sample.additive && (
+                                <p className="mt-0.5 text-slate-500">{sample.additive}</p>
+                              )}
+                              {sample.notes && (
+                                <p className="mt-0.5 italic text-slate-400">{sample.notes}</p>
+                              )}
+                            </div>
                           ))}
                         </div>
 

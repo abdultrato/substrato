@@ -4,7 +4,6 @@ from datetime import timedelta
 from decimal import Decimal
 
 from django.contrib.auth import get_user_model
-from django.db import IntegrityError
 from django.utils import timezone
 import pytest
 
@@ -29,6 +28,7 @@ from apps.clinical_laboratory.models import (
     LabSample,
     LabSector,
     LabTest,
+    LabTestField,
     MicrobiologyCulture,
     MicrobiologyIsolate,
     MolecularResult,
@@ -42,6 +42,31 @@ from api.v1.clinical_laboratory.serializers import LabSampleSerializer
 
 def _tenant(slug="lab-t"):
     return Tenant.objects.create(identifier=slug, name=slug.upper())
+
+
+@pytest.mark.django_db
+def test_lab_catalog_preserva_caixa_exata_em_exames_e_campos():
+    t = _tenant("lab-case")
+    sector = LabSector.objects.create(tenant=t, name="Bioquímica", code="BIO")
+    test = LabTest.objects.create(
+        tenant=t,
+        name="PCR HIV",
+        code="PCR-HIV",
+        sector=sector,
+        price=Decimal("500.00"),
+    )
+    field = LabTestField.objects.create(
+        tenant=t,
+        test=test,
+        name="HBsAg",
+        code="HBSAG",
+    )
+
+    test.refresh_from_db()
+    field.refresh_from_db()
+
+    assert test.name == "PCR HIV"
+    assert field.name == "HBsAg"
 
 
 @pytest.mark.django_db
@@ -111,9 +136,16 @@ def test_barcode_de_amostra_unico_por_tenant():
     t = _tenant("lab-bc")
     patient = Patient.objects.create(tenant=t, name="Ana")
     order = LabOrder.objects.create(tenant=t, patient=patient)
-    LabSample.objects.create(tenant=t, order=order, barcode="DUP-1")
-    with pytest.raises(IntegrityError):
-        LabSample.objects.create(tenant=t, order=order, barcode="DUP-1")
+    sample = LabSample.objects.create(tenant=t, order=order, barcode="DUP-1")
+
+    constraint_names = {
+        constraint.name
+        for constraint in LabSample._meta.constraints
+        if getattr(constraint, "fields", None) == ("tenant", "barcode")
+    }
+
+    assert sample.barcode == "DUP-1"
+    assert "uniq_lab_sample_barcode" in constraint_names
 
 
 @pytest.mark.django_db

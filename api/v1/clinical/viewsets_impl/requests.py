@@ -398,10 +398,16 @@ class LabRequestViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin,
     def _result_items_response(self, request_record, workflow: dict | None = None):
         from apps.clinical.models.result import Result
 
-        result, _ = Result.objects.get_or_create(
+        result, created = Result.objects.get_or_create(
             request=request_record,
             defaults={"tenant": request_record.tenant},
         )
+
+        # Garante que todos os campos de exame têm o seu ResultItem.
+        # Necessário quando exames sem campos foram adicionados antes de os
+        # campos (LabTestField) serem configurados no catálogo.
+        if not created:
+            result._create_items()
 
         qs = result.items.select_related(
             "exam_field",

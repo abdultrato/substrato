@@ -29,6 +29,7 @@ from apps.clinical_laboratory.models import (
     MicrobiologyCulture,
     MicrobiologyIsolate,
     MolecularResult,
+    LabContainerType,
     LabOrder,
     LabOrderItem,
     LabReport,
@@ -66,6 +67,7 @@ from apps.clinical_laboratory.models import (
 )
 
 from .serializers import (
+    LabContainerTypeSerializer,
     QualityDocumentSerializer,
     NonconformitySerializer,
     CorrectiveActionSerializer,
@@ -123,6 +125,14 @@ class _CatalogActivationMixin:
         obj = self.get_object()
         obj.deactivate()
         return Response(self.get_serializer(obj).data)
+
+
+class LabContainerTypeViewSet(_CatalogActivationMixin, ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
+    queryset = LabContainerType.objects.all()
+    serializer_class = LabContainerTypeSerializer
+    filterset_fields = ["active", "cap_color", "conservation_temperature"]
+    search_fields = ["custom_id", "code", "name", "additive", "specimen_yields"]
+    ordering_fields = ["code", "name", "cap_color", "active", "created_at"]
 
 
 class LabSectorViewSet(_CatalogActivationMixin, ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
@@ -600,6 +610,7 @@ class BiosafetyInspectionViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
 
 
 VIEWSET_MAP = {
+    "container_type": LabContainerTypeViewSet,
     "sector": LabSectorViewSet,
     "test": LabTestViewSet,
     "test_field": LabTestFieldViewSet,

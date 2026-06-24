@@ -11,6 +11,7 @@ from apps.clinical_laboratory.models import (
     MicrobiologyCulture,
     MicrobiologyIsolate,
     MolecularResult,
+    LabContainerType,
     LabOrder,
     LabOrderItem,
     LabReport,
@@ -94,14 +95,51 @@ class LabSectorSerializer(serializers.ModelSerializer):
     Meta = _meta(LabSector)
 
 
+class LabContainerTypeSerializer(serializers.ModelSerializer):
+    cap_color_display = serializers.CharField(source="get_cap_color_display", read_only=True)
+    conservation_temperature_display = serializers.CharField(
+        source="get_conservation_temperature_display", read_only=True
+    )
+
+    class Meta:
+        model = LabContainerType
+        fields = "__all__"
+        read_only_fields = CORE_READ_ONLY_FIELDS + [
+            "cap_color_display", "conservation_temperature_display"
+        ]
+
+
 class LabTestSerializer(serializers.ModelSerializer):
     sector_name = serializers.CharField(source="sector.name", read_only=True)
     sector_code = serializers.CharField(source="sector.code", read_only=True)
+    container_type_detail = serializers.SerializerMethodField()
 
     class Meta:
         model = LabTest
         fields = "__all__"
-        read_only_fields = CORE_READ_ONLY_FIELDS + ["sector_name", "sector_code"]
+        read_only_fields = CORE_READ_ONLY_FIELDS + [
+            "sector_name", "sector_code", "container_type_detail"
+        ]
+
+    def get_container_type_detail(self, obj):
+        ct = obj.container_type
+        if ct is None:
+            return None
+        return {
+            "id": ct.id,
+            "code": ct.code,
+            "name": ct.name,
+            "cap_color": ct.cap_color,
+            "cap_color_display": ct.get_cap_color_display(),
+            "additive": ct.additive,
+            "specimen_yields": ct.specimen_yields,
+            "volume_ml": str(ct.volume_ml) if ct.volume_ml is not None else None,
+            "inversions": ct.inversions,
+            "conservation_temperature": ct.conservation_temperature,
+            "conservation_temperature_display": ct.get_conservation_temperature_display(),
+            "conservation_max_hours": ct.conservation_max_hours,
+            "notes": ct.notes,
+        }
 
 
 class LabTestFieldSerializer(serializers.ModelSerializer):

@@ -68,23 +68,30 @@ class Result(NoNameCoreModel):
     # -----------------------------------------------------
 
     def _create_items(self):
-        from .result_item import ResultItem
+        from django.db.models import Max
 
-        # evita recriar itens se já existirem
-        if self.items.exists():
-            return
+        from .result_item import ResultItem
 
         items_to_create = []
         tenant = self.tenant
 
+        # Determina a próxima posição livre (permite adicionar campos a um
+        # resultado que já tem itens, p. ex. quando um exame sem campos
+        # entretanto recebe a sua configuração de campos).
+        next_position = (
+            ResultItem.all_objects.filter(result=self)
+            .aggregate(max_pos=Max("position"))
+            .get("max_pos") or 0
+        ) + 1
+
         request_items = (
-            self.request.items.select_related("exam").prefetch_related("exam__fields").order_by("position", "id")
+            self.request.items.select_related("exam")
+            .prefetch_related("exam__fields")
+            .order_by("position", "id")
         )
-        next_position = 1
 
         for item in request_items:
-            # Requisições podem conter itens de exam médico (imagem) que não
-            # geram `ResultadoItem`. Evita error quando `item.exam` é None.
+            # Itens de exame médico (imagiologia) não geram ResultItem.
             if not item.exam_id:
                 continue
 
@@ -92,11 +99,14 @@ class Result(NoNameCoreModel):
             if fields_mgr is None:
                 continue
             for campo in fields_mgr.all().order_by("sequence", "id"):
+                # Não duplica: salta campo que já tem ResultItem
+                if ResultItem.objects.filter(result=self, exam_field=campo).exists():
+                    continue
                 items_to_create.append(
                     ResultItem(
                         result=self,
                         exam_field=campo,
-                        tenant=tenant,  # ESSENCIAL para multi-tenant
+                        tenant=tenant,
                         position=next_position,
                     )
                 )

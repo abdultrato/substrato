@@ -12,6 +12,7 @@ import { LAB_METHOD_OPTIONS } from "@/lib/clinicalLabMethods";
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 type LabSector = { id: number; name: string; code: string };
+type LabContainerType = { id: number; code: string; name: string; cap_color_display: string };
 
 type FieldRow = {
   _key: number;
@@ -224,11 +225,13 @@ function NewLabTestForm() {
   const router = useRouter();
 
   const [sectors, setSectors] = useState<LabSector[]>([]);
+  const [containerTypes, setContainerTypes] = useState<LabContainerType[]>([]);
 
   const [name, setName] = useState("");
   const [code, setCode] = useState("");
   const [sector, setSector] = useState("");
   const [sampleType, setSampleType] = useState("SORO");
+  const [containerType, setContainerType] = useState("");
   const [method, setMethod] = useState("");
   const [price, setPrice] = useState("0.00");
   const [turnaroundHours, setTurnaroundHours] = useState("24");
@@ -242,9 +245,13 @@ function NewLabTestForm() {
   const [saveError, setSaveError] = useState<string | null>(null);
 
   useEffect(() => {
-    apiFetchList<LabSector>("/clinical_laboratory/sector/", { pageSize: 200 })
-      .then((res) => setSectors(res.items))
-      .catch(() => {});
+    Promise.all([
+      apiFetchList<LabSector>("/clinical_laboratory/sector/", { pageSize: 200 }),
+      apiFetchList<LabContainerType>("/clinical_laboratory/container_type/", { pageSize: 200 }),
+    ]).then(([s, c]) => {
+      setSectors(s.items);
+      setContainerTypes(c.items);
+    }).catch(() => {});
   }, []);
 
   function updateField(key: number, patch: Partial<FieldRow>) {
@@ -278,7 +285,8 @@ function NewLabTestForm() {
         method: "POST",
         body: JSON.stringify({
           name: name.trim(), code: code.trim(), sector: Number(sector),
-          sample_type: sampleType, method: method.trim(),
+          sample_type: sampleType, container_type: containerType ? Number(containerType) : null,
+          method: method.trim(),
           price, turnaround_hours: Number(turnaroundHours) || 24,
           requires_fasting: requiresFasting, requires_consent: requiresConsent,
         }),
@@ -375,6 +383,16 @@ function NewLabTestForm() {
               </select>
             </Field>
           </div>
+          <Field label="Tipo de tubo/recipiente">
+            <select value={containerType} onChange={(e) => setContainerType(e.target.value)} className={inputCls}>
+              <option value="">— Não especificado —</option>
+              {containerTypes.map((ct) => (
+                <option key={ct.id} value={ct.id}>
+                  {ct.name} ({ct.cap_color_display})
+                </option>
+              ))}
+            </select>
+          </Field>
           <Field label="Método">
             <select value={method} onChange={(e) => setMethod(e.target.value)} className={inputCls}>
               <option value="">— Selecionar —</option>

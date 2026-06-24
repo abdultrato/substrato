@@ -18,6 +18,10 @@ type ResultItem = {
   exam_field_type?: string
   exam_field_choices?: string[]
   exam_field_reference?: string
+  exam_field_reference_low?: string | null
+  exam_field_reference_high?: string | null
+  exam_field_critical_low?: string | null
+  exam_field_critical_high?: string | null
   result_value?: string | null
   result_text?: string | null
   status?: string

@@ -10,8 +10,8 @@ Uso:
 
 from django.core.management.base import BaseCommand
 
-from apps.clinical.models.lab_exam import LabExam
 from apps.clinical.models.occupational_profile import OccupationalExamProfile
+from apps.clinical_laboratory.models import LabTest
 from apps.tenants.models.tenant import Tenant
 
 # ---------------------------------------------------------------------------
@@ -117,13 +117,13 @@ PROFILES = [
 ]
 
 
-def _match_exams(tenant, name_fragments: list[str]) -> list[LabExam]:
-    """Devolve os exames do tenant cujo nome contenha algum dos fragmentos."""
+def _match_exams(tenant, name_fragments: list[str]) -> list[LabTest]:
+    """Devolve os LabTest do tenant cujo nome contenha algum dos fragmentos."""
     from django.db.models import Q
     q = Q()
     for fragment in name_fragments:
         q |= Q(name__icontains=fragment)
-    return list(LabExam.objects.filter(tenant=tenant).filter(q))
+    return list(LabTest.objects.filter(tenant=tenant).filter(q))
 
 
 class Command(BaseCommand):
