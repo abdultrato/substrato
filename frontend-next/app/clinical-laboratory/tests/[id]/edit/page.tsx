@@ -7,6 +7,7 @@ import { ArrowLeft, FlaskConical, Loader2, Save } from "lucide-react";
 import AppLayout from "@/components/layout/AppLayout";
 import { apiFetch, apiFetchList } from "@/lib/api";
 import { requiredGroupsForResourceGroup } from "@/lib/resourcesAccess";
+import { LAB_METHOD_OPTIONS } from "@/lib/clinicalLabMethods";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -205,8 +206,13 @@ export default function LabTestEditPage() {
                 </Field>
               </div>
               <Field label="Método">
-                <input type="text" value={method} onChange={(e) => setMethod(e.target.value)}
-                  placeholder="Ex.: Espectrofotometria" className={inputCls} />
+                <select value={method} onChange={(e) => setMethod(e.target.value)} className={inputCls}>
+                  <option value="">— Selecionar —</option>
+                  {method && !LAB_METHOD_OPTIONS.some(([v]) => v === method) && (
+                    <option value={method}>{method}</option>
+                  )}
+                  {LAB_METHOD_OPTIONS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+                </select>
               </Field>
               <div className="flex gap-6">
                 <label className="flex cursor-pointer items-center gap-2 text-xs text-foreground">

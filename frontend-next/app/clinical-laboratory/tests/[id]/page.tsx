@@ -24,6 +24,7 @@ import {
 import AppLayout from "@/components/layout/AppLayout";
 import { apiFetch, apiFetchList } from "@/lib/api";
 import { requiredGroupsForResourceGroup } from "@/lib/resourcesAccess";
+import { LAB_METHOD_OPTIONS } from "@/lib/clinicalLabMethods";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -58,6 +59,8 @@ const SAMPLE_LABELS: Record<string, string> = {
   FEZES: "Fezes", ESCARRO: "Escarro", LCR: "Líquor", ZARAGATOA: "Swab",
   SEMEN: "Sémen", MEDULA: "Medula", LIQUIDO: "Líquido", OUTRO: "Outro",
 };
+
+const METHOD_LABELS: Record<string, string> = Object.fromEntries(LAB_METHOD_OPTIONS);
 
 const UNIT_OPTIONS = [
   "g/dl", "g/L", "mg/dl", "mg/L", "mg/24h", "µg/dL", "µg/L", "µg/mL",
@@ -475,7 +478,7 @@ export default function LabTestDetailPage() {
             <div className="divide-y divide-border/30">
               <InfoRow label="Sector" value={test.sector_name || "—"} />
               <InfoRow label="Tipo de amostra" value={(SAMPLE_LABELS[test.sample_type] ?? test.sample_type) || "—"} />
-              <InfoRow label="Método" value={test.method || "—"} />
+              <InfoRow label="Método" value={(METHOD_LABELS[test.method] ?? test.method) || "—"} />
               <InfoRow label="Jejum" value={test.requires_fasting ? <span className="text-amber-600 font-semibold">Sim</span> : "Não"} />
               <InfoRow label="Consentimento" value={test.requires_consent ? <span className="text-amber-600 font-semibold">Sim</span> : "Não"} />
             </div>

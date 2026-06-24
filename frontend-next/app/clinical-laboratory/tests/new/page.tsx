@@ -7,6 +7,7 @@ import { ArrowLeft, FlaskConical, Loader2, Plus, Save, Trash2 } from "lucide-rea
 import AppLayout from "@/components/layout/AppLayout";
 import { apiFetch, apiFetchList } from "@/lib/api";
 import { requiredGroupsForResourceGroup } from "@/lib/resourcesAccess";
+import { LAB_METHOD_OPTIONS } from "@/lib/clinicalLabMethods";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -375,8 +376,10 @@ function NewLabTestForm() {
             </Field>
           </div>
           <Field label="Método">
-            <input type="text" value={method} onChange={(e) => setMethod(e.target.value)}
-              placeholder="Ex.: Espectrofotometria" className={inputCls} />
+            <select value={method} onChange={(e) => setMethod(e.target.value)} className={inputCls}>
+              <option value="">— Selecionar —</option>
+              {LAB_METHOD_OPTIONS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+            </select>
           </Field>
           <div className="flex gap-6">
             <label className="flex cursor-pointer items-center gap-2 text-xs text-foreground">

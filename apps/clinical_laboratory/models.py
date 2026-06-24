@@ -46,6 +46,83 @@ class LabPriority(models.TextChoices):
     SCHEDULED = "AGENDADO", "Agendado"
 
 
+class LabMethod(models.TextChoices):
+    """Método analítico do exame (catálogo).
+
+    Os valores correspondem ao vocabulário já existente no catálogo, ordenados
+    pelo rótulo para apresentação no formulário.
+    """
+
+    AGLUTINACAO = 'Aglutinacao', 'Aglutinação'
+    AGLUTINACAOLATEX = 'AglutinacaoLatex', 'Aglutinação em látex'
+    AUTOMATIZADO = 'Automatizado', 'Automatizado'
+    AVALIACAOMACROSCOPICA = 'AvaliacaoMacroscopica', 'Avaliação macroscópica'
+    BAERMANN = 'Baermann', 'Baermann'
+    BIURETO = 'Biureto', 'Biureto'
+    CINETICOCOLORIMETRICO = 'CineticoColorimetrico', 'Cinético colorimétrico'
+    CINETICOENZIMATICO = 'CineticoEnzimatico', 'Cinético enzimático'
+    CINETICOUV = 'CineticoUV', 'Cinético UV'
+    COAGULOMETRIA = 'Coagulometria', 'Coagulometria'
+    COLORACAOGRAM = 'ColoracaoGram', 'Coloração de Gram'
+    COLORACAOZIEHL = 'ColoracaoZiehl', 'Coloração de Ziehl-Neelsen'
+    COLORIMETRICO = 'Colorimetrico', 'Colorimétrico'
+    CONCENTRACAOFORMOLETER = 'ConcentracaoFormolEter', 'Concentração formol-éter'
+    CROMOGENICO = 'Cromogenico', 'Cromogénico'
+    CULTURA = 'Cultura', 'Cultura'
+    CULTURAMICOLOGICA = 'CulturaMicologica', 'Cultura micológica'
+    CULTURAQUANTITATIVA = 'CulturaQuantitativa', 'Cultura quantitativa'
+    CULTURASELETIVA = 'CulturaSeletiva', 'Cultura seletiva'
+    CULTURASEMIQUANTITATIVA = 'CulturaSemiquantitativa', 'Cultura semiquantitativa'
+    CALCULO = 'Calculo', 'Cálculo'
+    DIAZOCOLORIMETRICO = 'DiazoColorimetrico', 'Diazo-colorimétrico'
+    DRVVT = 'dRVVT', 'dRVVT'
+    ELISA = 'ELISA', 'ELISA'
+    ELETRODOIONSELETIVO = 'EletrodoIonSeletivo', 'Elétrodo íon-seletivo (ISE)'
+    ENZIMATICO = 'Enzimatico', 'Enzimático'
+    ENZIMATICOCOLORIMETRICO = 'EnzimaticoColorimetrico', 'Enzimático colorimétrico'
+    ENZIMATICODIRETO = 'EnzimaticoDireto', 'Enzimático direto'
+    ESFREGACODELGADO = 'EsfregacoDelgado', 'Esfregaço delgado'
+    ESPECTROFOTOMETRICO_COLORIMETRICO = 'espectrofotometrico/colorimetrico', 'Espectrofotométrico / Colorimétrico'
+    EXAMEMICOLOGICODIRETO = 'ExameMicologicoDireto', 'Exame micológico direto'
+    FITAGOMADA = 'FitaGomada', 'Fita gomada'
+    FLOCULACAO = 'Floculacao', 'Floculação'
+    FISICOQUIMICOMICROSCOPIA = 'FisicoQuimicoMicroscopia', 'Físico-químico + microscopia'
+    GENOTIPAGEM = 'Genotipagem', 'Genotipagem'
+    GOTAESPESSA = 'GotaEspessa', 'Gota espessa'
+    HEMAGLUTINACAO = 'Hemaglutinacao', 'Hemaglutinação'
+    HEMATOLOGIAAUTOMATIZADA = 'HematologiaAutomatizada', 'Hematologia automatizada'
+    HIBRIDIZACAOMOLECULAR = 'HibridizacaoMolecular', 'Hibridização molecular'
+    HPLC = 'HPLC', 'HPLC'
+    IMUNOCROMATOGRAFIA = 'Imunocromatografia', 'Imunocromatografia'
+    IMUNOENSAIO = 'Imunoensaio', 'Imunoensaio'
+    IMUNOINIBICAO = 'Imunoinibicao', 'Imunoinibição'
+    IMUNOTURBIDIMETRIA = 'Imunoturbidimetria', 'Imunoturbidimetria'
+    IVYDUKE = 'IvyDuke', 'Ivy / Duke'
+    KATOKATZ = 'KatoKatz', 'Kato-Katz'
+    KIRBYBAUER = 'KirbyBauer', 'Kirby-Bauer'
+    MICROSCOPIASEDIMENTO = 'MicroscopiaSedimento', 'Microscopia de sedimento'
+    MICROSCOPIAOPTICA = 'MicroscopiaOptica', 'Microscopia óptica'
+    MICROSCOPICO = 'Microscopico', 'Microscópico'
+    METODOMANUAL = 'MetodoManual', 'Método manual'
+    NAAT = 'NAAT', 'NAAT'
+    PCR = 'PCR', 'PCR'
+    PCRALELOESPECIFICO = 'PCRAleloEspecifico', 'PCR alelo-específico'
+    PCRTEMPOREAL = 'PCRTempoReal', 'PCR em tempo real'
+    PCRMULTIPLEX = 'PCRMultiplex', 'PCR multiplex'
+    PCRMUTACIONAL = 'PCRMutacional', 'PCR mutacional'
+    PCRQUALITATIVO = 'PCRQualitativo', 'PCR qualitativo'
+    PCRQUANTITATIVO = 'PCRQuantitativo', 'PCR quantitativo'
+    QUIMIOLUMINESCENCIA = 'Quimioluminescencia', 'Quimioluminescência (CLIA)'
+    RTPCRMULTIPLEX = 'RTPCRMultiplex', 'RT-PCR multiplex'
+    RTPCRQUALITATIVO = 'RTPCRQualitativo', 'RT-PCR qualitativo'
+    RTPCRQUANTITATIVO = 'RTPCRQuantitativo', 'RT-PCR quantitativo'
+    RTQPCR = 'RTqPCR', 'RT-qPCR'
+    SEDIMENTACAO = 'Sedimentacao', 'Sedimentação'
+    SEQUENCIAMENTO = 'Sequenciamento', 'Sequenciamento'
+    TIRAREAGENTE = 'TiraReagente', 'Tira reagente'
+    VERDEBROMOCRESOL = 'VerdeBromocresol', 'Verde de bromocresol'
+
+
 # =====================================================================
 # CATÁLOGO
 # =====================================================================
@@ -93,7 +170,8 @@ class LabTest(CoreModel):
                                on_delete=models.PROTECT, related_name="tests")
     sample_type = models.CharField("Tipo de amostra", db_column="sample_type", max_length=14,
                                    choices=SampleType.choices, default=SampleType.SERUM)
-    method = models.CharField("Método", db_column="method", max_length=120, blank=True, default="")
+    method = models.CharField("Método", db_column="method", max_length=120, blank=True, default="",
+                              choices=LabMethod.choices)
     unit = models.CharField("Unidade", db_column="unit", max_length=30, blank=True, default="")
     reference_range = models.CharField("Intervalo de referência", db_column="reference_range",
                                        max_length=160, blank=True, default="")
