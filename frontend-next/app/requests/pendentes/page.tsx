@@ -84,6 +84,8 @@ function EditModal({
   const [search, setSearch] = useState("")
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  // Bloqueia vincular novos exames quando a requisição já tem resultado validado.
+  const [hasValidatedResult, setHasValidatedResult] = useState(false)
   const searchRef = useRef<HTMLInputElement>(null)
 
   const examEndpoint = req.type === "LAB" ? "/clinical_laboratory/test/" : "/clinical/medicalexam/"
@@ -95,6 +97,17 @@ function EditModal({
       .catch(() => setExams([]))
       .finally(() => setLoadingExams(false))
   }, [examEndpoint])
+
+  useEffect(() => {
+    let active = true
+    apiFetch<{ summary?: { validated?: number } }>(
+      `/clinical/labrequest/${req.id}/result-items/`,
+      { method: "GET", clientCache: false },
+    )
+      .then((r) => { if (active) setHasValidatedResult((r?.summary?.validated ?? 0) > 0) })
+      .catch(() => { /* na dúvida, não bloqueia */ })
+    return () => { active = false }
+  }, [req.id])
 
   const currentIds = new Set(items.map((i) => i.exam ?? i.medical_exam).filter(Boolean))
 
@@ -110,6 +123,7 @@ function EditModal({
   }
 
   function addExam(exam: ExamOption) {
+    if (hasValidatedResult) return
     const fakeItem: RequestItem = {
       id: -(exam.id),
       custom_id: "",
@@ -200,6 +214,11 @@ function EditModal({
           </div>
 
           {/* Add exam */}
+          {hasValidatedResult ? (
+            <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-800/40 dark:bg-amber-900/15 dark:text-amber-300">
+              Não é possível vincular novos exames: esta requisição já tem pelo menos um exame com resultado validado.
+            </div>
+          ) : (
           <div>
             <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-[var(--gray-500)]">
               Adicionar exame
@@ -235,6 +254,7 @@ function EditModal({
               </ul>
             )}
           </div>
+          )}
         </div>
 
         {/* Footer */}
@@ -356,7 +376,7 @@ function RequestCard({
               className="inline-flex h-6 items-center gap-1 rounded-full bg-[var(--primary-600)] px-2.5 text-[10px] font-semibold text-white transition hover:bg-[var(--primary-700)] disabled:opacity-60"
             >
               {busy ? <Loader2 size={10} className="animate-spin" /> : <CheckCircle2 size={10} />}
-              {busy ? "..." : "Validar"}
+              {busy ? "..." : "Encaminhar"}
             </button>
           </div>
         ) : null}
