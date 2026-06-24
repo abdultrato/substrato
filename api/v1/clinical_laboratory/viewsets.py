@@ -153,6 +153,7 @@ class LabTestFieldViewSet(_CatalogActivationMixin, ValidatedSearchOrderingMixin,
 class LabTestPanelViewSet(_CatalogActivationMixin, ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
     queryset = LabTestPanel.objects.select_related("sector").prefetch_related("tests__sector").all()
     serializer_class = LabTestPanelSerializer
+    filterset_fields = ["sector", "active", "profile_type"]
     search_fields = ["custom_id", "code", "name"]
     ordering_fields = ["code", "name", "package_price", "active", "created_at"]
 
