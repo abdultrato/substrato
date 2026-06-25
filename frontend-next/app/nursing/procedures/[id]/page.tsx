@@ -282,7 +282,7 @@ function SurfaceCard({
   header?: React.ReactNode
 }) {
   return (
-    <section className={`relative block w-full self-start overflow-hidden ${GLASS} ${className}`}>
+    <section className={`relative block min-w-0 self-start overflow-hidden ${GLASS} ${className}`}>
       <span className={`absolute left-0 top-0 h-full w-1 ${accent}`} />
       <div className="flex flex-col gap-1.5 px-3 py-2.5 pl-4">
         {header ?? (
@@ -711,7 +711,7 @@ export default function ProcedureDetailPage() {
     serviceSubtotal !== null || materialSubtotal !== null
       ? (serviceSubtotal || 0) + (materialSubtotal || 0)
       : numberValue(data.total)
-  const hasTeamCard = professionals.length > 0 || Boolean(createdBy) || Boolean(data.updated_at)
+  const hasTeamCard = Boolean(wardName) || professionals.length > 0 || Boolean(createdBy) || Boolean(data.updated_at)
   const hasWorkflowCard =
     Boolean(data.workflow_status_display || data.workflow_status || data.billing_status_display || data.billing_status) ||
     Boolean(data.executed_at || data.performed_date || data.completed_at || data.billed_at)
@@ -727,14 +727,6 @@ export default function ProcedureDetailPage() {
   const hasNotesCard = Boolean(notes)
   const hasItemsCard = items.length > 0
   const hasMaterialsCard = materials.length > 0
-  const hasContextRail = hasTeamCard || hasWorkflowCard || hasTimelineCard || hasCatalogsCard
-  const hasMainDeck =
-    hasFinanceCard ||
-    hasNotesCard ||
-    hasItemsCard ||
-    hasMaterialsCard ||
-    hasOperationalGap ||
-    Boolean(data.completed_at)
   const requestDone = Boolean(data?.created_at || workflowCode)
   const executionDone = ["CON", "BIL"].includes(workflowCode) || Boolean(data?.completed_at)
   const executionActive =
@@ -864,73 +856,118 @@ export default function ProcedureDetailPage() {
           </div>
         ) : null}
 
-        <div className={`grid gap-3 ${hasContextRail && hasMainDeck ? "xl:grid-cols-[minmax(0,18rem)_minmax(0,1fr)]" : ""}`}>
-          {hasContextRail ? (
-            <div className="space-y-3">
-              {hasTeamCard ? (
+        <div className="space-y-3">
+          <div className="grid items-start gap-3 lg:grid-cols-4">
+            {wardName ? (
+              <SurfaceCard
+                title="Sector"
+                icon={<Building2 size={14} />}
+                accent="bg-amber-400"
+                iconTone="bg-amber-500/10 text-amber-700 dark:bg-amber-400/10 dark:text-amber-400"
+              >
+                <MiniPanel
+                  label="Sector"
+                  value={wardName}
+                  tone="border-amber-200 bg-amber-50 dark:border-amber-700/30 dark:bg-amber-900/20"
+                />
+              </SurfaceCard>
+            ) : null}
+
+            {professionals.length > 0 ? (
+              <SurfaceCard
+                title="Serviços"
+                icon={<Stethoscope size={14} />}
+                accent="bg-orange-400"
+                iconTone="bg-orange-500/10 text-orange-700 dark:bg-orange-400/10 dark:text-orange-400"
+              >
+                <div className="flex flex-wrap gap-1.5">
+                  {professionals.map((name) => (
+                    <span
+                      key={name}
+                      className="rounded-lg border border-orange-200 bg-orange-50 px-2 py-1 text-[11px] font-semibold text-orange-700 dark:border-orange-700/30 dark:bg-orange-900/20 dark:text-orange-300"
+                    >
+                      {name}
+                    </span>
+                  ))}
+                </div>
+              </SurfaceCard>
+            ) : null}
+
+            {selectedCatalogs.length > 0 || totalItems > 0 ? (
+              <SurfaceCard
+                title="Volume Clínico"
+                icon={<ClipboardList size={14} />}
+                accent="bg-yellow-400"
+                iconTone="bg-yellow-500/10 text-yellow-700 dark:bg-yellow-400/10 dark:text-yellow-400"
+              >
+                <div className="flex flex-wrap gap-1.5">
+                  {selectedCatalogs.length > 0 ? (
+                    <InlineMiniPanel
+                      label="Catálogos"
+                      value={selectedCatalogs.length}
+                      tone="border-orange-200 bg-orange-50 dark:border-orange-700/30 dark:bg-orange-900/20"
+                    />
+                  ) : null}
+                  {totalItems > 0 ? (
+                    <InlineMiniPanel
+                      label="Itens"
+                      value={totalItems}
+                      tone="border-yellow-200 bg-yellow-50 dark:border-yellow-700/30 dark:bg-yellow-900/20"
+                    />
+                  ) : null}
+                </div>
+              </SurfaceCard>
+            ) : null}
+
+            {createdBy || data.updated_at ? (
+              <SurfaceCard
+                title="Auditoria"
+                icon={<CalendarClock size={14} />}
+                accent="bg-slate-400"
+                iconTone="bg-slate-500/10 text-slate-700 dark:bg-slate-400/10 dark:text-slate-400"
+              >
+                <div className="grid gap-1.5">
+                  {createdBy ? (
+                    <InlineMiniPanel
+                      label="Criado por"
+                      value={createdBy}
+                      tone="border-slate-200 bg-slate-50 dark:border-slate-700/30 dark:bg-slate-900/20"
+                    />
+                  ) : null}
+                  {data.updated_at ? (
+                    <InlineMiniPanel
+                      label="Atualizado"
+                      value={fmtDate(data.updated_at)}
+                      tone="border-slate-200 bg-slate-50 dark:border-slate-700/30 dark:bg-slate-900/20"
+                    />
+                  ) : null}
+                </div>
+              </SurfaceCard>
+            ) : null}
+          </div>
+
+          <div className="grid items-start gap-3 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)]">
+            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-1">
+              {hasWorkflowCard ? (
                 <SurfaceCard
-                  title="Sectores e Serviços"
-                  icon={<Building2 size={14} />}
-                  accent="bg-amber-400"
-                  iconTone="bg-amber-500/10 text-amber-700 dark:bg-amber-400/10 dark:text-amber-400"
+                  title="Fluxo Operacional"
+                  icon={<Stethoscope size={14} />}
+                  accent="bg-emerald-400"
+                  iconTone="bg-emerald-500/10 text-emerald-700 dark:bg-emerald-400/10 dark:text-emerald-400"
                 >
-                  <div className="grid gap-2">
-                    {wardName ? (
-                      <MiniPanel
-                        label="Sector"
-                        value={wardName}
-                        tone="border-amber-200 bg-amber-50 dark:border-amber-700/30 dark:bg-amber-900/20"
-                      />
-                    ) : null}
-                    {professionals.length > 0 ? (
-                      <MiniPanel
-                        label="Serviços"
-                        value={professionals.join(", ")}
-                        tone="border-amber-200 bg-amber-50 dark:border-amber-700/30 dark:bg-amber-900/20"
-                      />
-                    ) : null}
-                    <div className="grid grid-cols-2 gap-2">
-                      {selectedCatalogs.length > 0 ? (
-                        <MiniPanel label="Catálogos" value={selectedCatalogs.length} tone="border-orange-200 bg-orange-50 dark:border-orange-700/30 dark:bg-orange-900/20" />
-                      ) : null}
-                      {totalItems > 0 ? (
-                        <MiniPanel label="Itens" value={totalItems} tone="border-yellow-200 bg-yellow-50 dark:border-yellow-700/30 dark:bg-yellow-900/20" />
-                      ) : null}
-                      {createdBy ? (
-                        <MiniPanel label="Criado por" value={createdBy} tone="border-orange-200 bg-orange-50 dark:border-orange-700/30 dark:bg-orange-900/20" />
-                      ) : null}
-                      {data.updated_at ? (
-                        <MiniPanel label="Atualizado" value={fmtDate(data.updated_at)} tone="border-yellow-200 bg-yellow-50 dark:border-yellow-700/30 dark:bg-yellow-900/20" />
-                      ) : null}
-                    </div>
-                  </div>
+                  <Timeline steps={workflowSteps} />
                 </SurfaceCard>
               ) : null}
 
-              {hasWorkflowCard || hasTimelineCard ? (
-                <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-1">
-                  {hasWorkflowCard ? (
-                    <SurfaceCard
-                      title="Fluxo Operacional"
-                      icon={<Stethoscope size={14} />}
-                      accent="bg-emerald-400"
-                      iconTone="bg-emerald-500/10 text-emerald-700 dark:bg-emerald-400/10 dark:text-emerald-400"
-                    >
-                      <Timeline steps={workflowSteps} />
-                    </SurfaceCard>
-                  ) : null}
-
-                  {hasTimelineCard ? (
-                    <SurfaceCard
-                      title="Linha do Tempo"
-                      icon={<CalendarClock size={14} />}
-                      accent="bg-indigo-400"
-                      iconTone="bg-indigo-500/10 text-indigo-700 dark:bg-indigo-400/10 dark:text-indigo-400"
-                    >
-                      <Timeline steps={timelineSteps} />
-                    </SurfaceCard>
-                  ) : null}
-                </div>
+              {hasTimelineCard ? (
+                <SurfaceCard
+                  title="Linha do Tempo"
+                  icon={<CalendarClock size={14} />}
+                  accent="bg-indigo-400"
+                  iconTone="bg-indigo-500/10 text-indigo-700 dark:bg-indigo-400/10 dark:text-indigo-400"
+                >
+                  <Timeline steps={timelineSteps} />
+                </SurfaceCard>
               ) : null}
 
               {hasCatalogsCard ? (
@@ -948,53 +985,78 @@ export default function ProcedureDetailPage() {
                 </SurfaceCard>
               ) : null}
             </div>
-          ) : null}
 
-          {hasMainDeck ? (
-            <div className="space-y-3">
+            <div className="grid gap-3">
               {hasFinanceCard ? (
-                <SurfaceCard
-                  title="Resumo Financeiro"
-                  icon={<Wallet size={14} />}
-                  accent="bg-emerald-400"
-                  iconTone="bg-emerald-500/10 text-emerald-700 dark:bg-emerald-400/10 dark:text-emerald-400"
-                >
-                  <div className="grid gap-2">
-                    {serviceBreakdown.length > 0 ? (
+                <div className="grid gap-3 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+                  {combinedTotal !== null || serviceSubtotal !== null || materialSubtotal !== null || billedItems > 0 ? (
+                    <SurfaceCard
+                      title="Totais Financeiros"
+                      icon={<Wallet size={14} />}
+                      accent="bg-emerald-400"
+                      iconTone="bg-emerald-500/10 text-emerald-700 dark:bg-emerald-400/10 dark:text-emerald-400"
+                    >
                       <div className="grid gap-1.5">
-                        <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--gray-500)]">Serviços</p>
+                        {combinedTotal !== null ? (
+                          <InlineMiniPanel
+                            label="Total geral"
+                            value={fmtMoney(combinedTotal)}
+                            tone="border-emerald-300 bg-emerald-100 dark:border-emerald-700/30 dark:bg-emerald-900/25"
+                          />
+                        ) : null}
+                        {serviceSubtotal !== null ? (
+                          <InlineMiniPanel
+                            label="Serviços"
+                            value={fmtMoney(serviceSubtotal)}
+                            tone="border-emerald-200 bg-emerald-50 dark:border-emerald-700/30 dark:bg-emerald-900/20"
+                          />
+                        ) : null}
+                        {materialSubtotal !== null ? (
+                          <InlineMiniPanel
+                            label="Materiais"
+                            value={fmtMoney(materialSubtotal)}
+                            tone="border-teal-200 bg-teal-50 dark:border-teal-700/30 dark:bg-teal-900/20"
+                          />
+                        ) : null}
+                        {billedItems > 0 ? (
+                          <InlineMiniPanel
+                            label="Faturados"
+                            value={`${billedItems}/${items.length}`}
+                            tone="border-lime-200 bg-lime-50 dark:border-lime-700/30 dark:bg-lime-900/20"
+                          />
+                        ) : null}
+                      </div>
+                    </SurfaceCard>
+                  ) : null}
+
+                  {serviceBreakdown.length > 0 ? (
+                    <SurfaceCard
+                      title={`Serviços (${serviceBreakdown.length})`}
+                      icon={<Stethoscope size={14} />}
+                      accent="bg-emerald-400"
+                      iconTone="bg-emerald-500/10 text-emerald-700 dark:bg-emerald-400/10 dark:text-emerald-400"
+                    >
+                      <div className="grid gap-1.5">
                         {serviceBreakdown.map((item) => (
                           <FinancialRow key={item.id} label={item.label} meta={item.meta} value={fmtMoney(item.total)} />
                         ))}
                       </div>
-                    ) : null}
-                    {materialBreakdown.length > 0 ? (
-                      <div className="grid gap-1.5">
-                        <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--gray-500)]">Materiais</p>
-                        {materialBreakdown.map((item) => (
-                          <FinancialRow key={item.id} label={item.label} meta={item.meta} value={fmtMoney(item.total)} />
-                        ))}
-                      </div>
-                    ) : null}
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      {serviceSubtotal !== null ? (
-                        <InlineMiniPanel label="Subtotal serviços" value={fmtMoney(serviceSubtotal)} tone="border-emerald-200 bg-emerald-50 dark:border-emerald-700/30 dark:bg-emerald-900/20" />
-                      ) : null}
-                      {materialSubtotal !== null ? (
-                        <InlineMiniPanel label="Subtotal materiais" value={fmtMoney(materialSubtotal)} tone="border-teal-200 bg-teal-50 dark:border-teal-700/30 dark:bg-teal-900/20" />
-                      ) : null}
-                      {billedItems > 0 ? (
-                        <InlineMiniPanel label="Faturados" value={`${billedItems}/${items.length}`} tone="border-lime-200 bg-lime-50 dark:border-lime-700/30 dark:bg-lime-900/20" />
-                      ) : null}
-                    </div>
-                    {combinedTotal !== null ? (
-                      <div className="w-full rounded-lg border border-emerald-300 bg-emerald-100/90 px-3 py-2 backdrop-blur-sm dark:border-emerald-700/30 dark:bg-emerald-900/25">
-                        <div className="flex items-center justify-between gap-3">
-                          <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-emerald-800 dark:text-emerald-300">Total geral</span>
-                          <span className="text-[16px] font-semibold leading-none text-emerald-800 dark:text-emerald-200">{fmtMoney(combinedTotal)}</span>
-                        </div>
-                      </div>
-                    ) : null}
+                    </SurfaceCard>
+                  ) : null}
+                </div>
+              ) : null}
+
+              {materialBreakdown.length > 0 ? (
+                <SurfaceCard
+                  title={`Materiais (${materialBreakdown.length})`}
+                  icon={<Package2 size={14} />}
+                  accent="bg-teal-400"
+                  iconTone="bg-teal-500/10 text-teal-700 dark:bg-teal-400/10 dark:text-teal-400"
+                >
+                  <div className="grid gap-1.5 md:grid-cols-2">
+                    {materialBreakdown.map((item) => (
+                      <FinancialRow key={item.id} label={item.label} meta={item.meta} value={fmtMoney(item.total)} />
+                    ))}
                   </div>
                 </SurfaceCard>
               ) : null}
@@ -1007,38 +1069,6 @@ export default function ProcedureDetailPage() {
                   iconTone="bg-slate-500/10 text-slate-700 dark:bg-slate-400/10 dark:text-slate-400"
                 >
                   <p className="whitespace-pre-wrap text-[13px] text-[var(--text)]">{notes}</p>
-                </SurfaceCard>
-              ) : null}
-
-              {hasItemsCard ? (
-                <SurfaceCard
-                  title={`Itens do Procedimento (${items.length})`}
-                  icon={<ClipboardList size={14} />}
-                  accent="bg-sky-400"
-                  iconTone="bg-sky-500/10 text-sky-700 dark:bg-sky-400/10 dark:text-sky-400"
-                >
-                  <div className="grid gap-1.5 [grid-template-columns:repeat(auto-fit,minmax(14rem,1fr))]">
-                    {items.map((item) => <ProcedureItemCard key={item.id || item.custom_id} item={item} />)}
-                  </div>
-                </SurfaceCard>
-              ) : null}
-
-              {hasMaterialsCard ? (
-                <SurfaceCard
-                  title={`Materiais Consumidos (${materials.length})`}
-                  icon={<Package2 size={14} />}
-                  accent="bg-violet-400"
-                  iconTone="bg-violet-500/10 text-violet-700 dark:bg-violet-400/10 dark:text-violet-400"
-                >
-                  <div className="grid gap-1.5 [grid-template-columns:repeat(auto-fit,minmax(14rem,1fr))]">
-                    {materials.map((item) => (
-                      <ProcedureMaterialCard
-                        key={item.id || item.custom_id}
-                        item={item}
-                        resolvedUnitValue={resolveMaterialUnitValue(item)}
-                      />
-                    ))}
-                  </div>
                 </SurfaceCard>
               ) : null}
 
@@ -1060,7 +1090,41 @@ export default function ProcedureDetailPage() {
                 </section>
               ) : null}
             </div>
-          ) : null}
+          </div>
+
+          <div className="grid items-start gap-3 xl:grid-cols-2">
+            {hasMaterialsCard ? (
+              <SurfaceCard
+                title={`Materiais Consumidos (${materials.length})`}
+                icon={<Package2 size={14} />}
+                accent="bg-violet-400"
+                iconTone="bg-violet-500/10 text-violet-700 dark:bg-violet-400/10 dark:text-violet-400"
+              >
+                <div className="grid gap-1.5 md:grid-cols-2">
+                  {materials.map((item) => (
+                    <ProcedureMaterialCard
+                      key={item.id || item.custom_id}
+                      item={item}
+                      resolvedUnitValue={resolveMaterialUnitValue(item)}
+                    />
+                  ))}
+                </div>
+              </SurfaceCard>
+            ) : null}
+
+            {hasItemsCard ? (
+              <SurfaceCard
+                title={`Itens do Procedimento (${items.length})`}
+                icon={<ClipboardList size={14} />}
+                accent="bg-sky-400"
+                iconTone="bg-sky-500/10 text-sky-700 dark:bg-sky-400/10 dark:text-sky-400"
+              >
+                <div className="grid gap-1.5 md:grid-cols-2">
+                  {items.map((item) => <ProcedureItemCard key={item.id || item.custom_id} item={item} />)}
+                </div>
+              </SurfaceCard>
+            ) : null}
+          </div>
         </div>
       </div>
     </AppLayout>

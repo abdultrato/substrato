@@ -1,13 +1,13 @@
 "use client"
 
 import { isNotFoundLikeError } from "@/lib/errors/api-error"
+import { ArrowLeft, BedDouble, Building2, ClipboardList, DoorOpen, Loader2, Plus } from "lucide-react"
 import Link from "next/link"
 import { useEffect, useMemo, useState } from "react"
 
 import AppLayout from "@/components/layout/AppLayout"
 import DataTable from "@/components/ui/DataTable"
 import MetricCard from "@/components/ui/MetricCard"
-import PageHeader from "@/components/ui/PageHeader"
 import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { apiFetch } from "@/lib/api"
 import { GROUPS } from "@/lib/rbac"
@@ -42,6 +42,15 @@ function fmtDateTime(v: any) {
   return d.toLocaleString()
 }
 
+const secondaryActionClass =
+  "inline-flex h-8 items-center gap-1.5 rounded-lg border border-white/30 bg-white/50 px-3 text-xs font-medium text-[var(--gray-700)] shadow-sm backdrop-blur-sm transition-all duration-150 hover:border-[var(--primary-300)] hover:bg-white/70 hover:text-[var(--text)] dark:border-white/10 dark:bg-white/10 dark:text-[var(--gray-200)] dark:hover:bg-white/15"
+
+const primaryActionClass =
+  "inline-flex h-8 items-center gap-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-indigo-600 px-3 text-xs font-semibold text-white shadow-md shadow-violet-500/30 transition hover:from-violet-700 hover:to-indigo-700"
+
+const recordLinkClass =
+  "font-medium text-[var(--text)] no-underline decoration-[var(--border)] underline-offset-2 transition hover:text-[var(--hover-accent)] hover:underline hover:decoration-[var(--gray-300)]"
+
 export default function WardDashboardPage() {
   const safeRefreshToken = useSafeDataRefreshSignal()
   const [data, setData] = useState<DashboardData | null>(null)
@@ -73,19 +82,39 @@ export default function WardDashboardPage() {
   const columns = useMemo(
     () => [
       { header: "Enfermaria", render: (r: any) => r.ward || "—" },
-      { header: "Cama", render: (r: any) => r.bed_number || "—" },
+      {
+        header: "Cama",
+        render: (r: any) =>
+          r.bed_id ? (
+            <Link href={`/nursing/ward-beds/${r.bed_id}`} className={recordLinkClass}>
+              {r.bed_number || "—"}
+            </Link>
+          ) : (
+            r.bed_number || "—"
+          ),
+      },
       {
         header: "Paciente",
-        render: (r: any) => (
-          <Link
-            href={`/patients/${r.patient_id}`}
-            className="font-medium text-[var(--text)] no-underline decoration-[var(--border)] underline-offset-2 hover:underline hover:decoration-[var(--gray-300)]"
-          >
-            {r.patient_name || "—"}
-          </Link>
-        ),
+        render: (r: any) =>
+          r.patient_id ? (
+            <Link href={`/patients/${r.patient_id}`} className={recordLinkClass}>
+              {r.patient_name || "—"}
+            </Link>
+          ) : (
+            r.patient_name || "—"
+          ),
       },
-      { header: "Internamento", render: (r: any) => r.admission_code || r.admission_id || "—" },
+      {
+        header: "Internamento",
+        render: (r: any) =>
+          r.admission_id ? (
+            <Link href={`/nursing/ward-admissions/${r.admission_id}`} className={recordLinkClass}>
+              {r.admission_code || r.admission_id || "—"}
+            </Link>
+          ) : (
+            r.admission_code || "—"
+          ),
+      },
       { header: "Internado em", render: (r: any) => fmtDateTime(r.admission_date) },
       { header: "Alta prevista", render: (r: any) => fmtDateTime(r.expected_discharge_date) },
       {
@@ -107,45 +136,66 @@ export default function WardDashboardPage() {
   )
 
   const summary = data?.summary
+  const occupiedBeds = data?.beds?.length ?? 0
 
   return (
     <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.ENFERMAGEM]}>
       <div className="space-y-3">
-        <PageHeader
-          title="Enfermaria"
-          subtitle="Painel: ocupação de camas e próximas medicações."
-          actions={
+        <div className="relative overflow-hidden rounded-xl border border-white/20 bg-white/30 px-4 py-3 shadow-sm backdrop-blur-sm dark:bg-white/5 dark:border-white/10">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex min-w-0 items-center gap-3">
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[var(--primary-600)]/10 text-[var(--primary-700)] dark:text-[var(--primary-400)]">
+                <BedDouble size={16} />
+              </span>
+              <div className="min-w-0">
+                <h1 className="text-lg font-bold leading-tight text-foreground">Enfermaria</h1>
+                <p className="text-[11px] text-muted-foreground">
+                  {loading
+                    ? "Carregando ocupação, camas e medicações..."
+                    : `${summary?.occupied_beds ?? occupiedBeds} cama${(summary?.occupied_beds ?? occupiedBeds) === 1 ? "" : "s"} ocupada${(summary?.occupied_beds ?? occupiedBeds) === 1 ? "" : "s"} · ${summary?.available_beds ?? 0} livre${(summary?.available_beds ?? 0) === 1 ? "" : "s"}`}
+                </p>
+              </div>
+            </div>
+
             <div className="flex flex-wrap items-center gap-1.5">
               <Link
                 href="/nursing"
-                className="inline-flex items-center rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground-2 transition hover:bg-muted hover:text-foreground"
+                className={secondaryActionClass}
               >
+                <ArrowLeft size={13} />
                 Voltar
               </Link>
               <Link
                 href="/nursing/wards"
-                className="inline-flex items-center rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground-2 transition hover:bg-muted hover:text-foreground"
+                className={secondaryActionClass}
               >
+                <Building2 size={13} />
                 Enfermarias
               </Link>
               <Link
                 href="/nursing/ward-beds"
-                className="inline-flex items-center rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground-2 transition hover:bg-muted hover:text-foreground"
+                className={secondaryActionClass}
               >
+                <DoorOpen size={13} />
                 Camas
               </Link>
               <Link
                 href="/nursing/ward-admissions"
-                className="inline-flex items-center rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground transition hover:bg-primary/90"
+                className={secondaryActionClass}
               >
+                <ClipboardList size={13} />
                 Internamentos
               </Link>
+              <Link href="/nursing/ward-admissions/new" className={primaryActionClass}>
+                <Plus size={13} />
+                Nova admissão
+              </Link>
             </div>
-          }
-        />
+          </div>
+        </div>
 
         {errorMessage ? (
-          <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-800/40 dark:bg-amber-900/20 dark:text-amber-300">
+          <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm text-amber-800 dark:border-amber-800/40 dark:bg-amber-900/20 dark:text-amber-300">
             {errorMessage}
           </div>
         ) : null}
@@ -157,16 +207,31 @@ export default function WardDashboardPage() {
           <MetricCard label="Camas livres" value={loading ? "..." : summary?.available_beds ?? 0} accentClass="border-l-emerald-500" />
         </div>
 
-        <section className="rounded-xl border border-white/20 bg-white/25 shadow-sm backdrop-blur-sm dark:bg-white/5 dark:border-white/10">
-          <div className="border-b border-border/60 px-3 py-2">
-            <p className="text-xs font-semibold text-foreground">Camas ocupadas</p>
-            <p className="text-[10px] text-muted-foreground">Internamentos ativos (uma linha por cama ocupada)</p>
+        <section className="overflow-hidden rounded-xl border border-white/20 bg-white/20 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/5">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/50 px-3 py-2">
+            <div>
+              <p className="text-sm font-semibold text-foreground">Camas ocupadas</p>
+              <p className="text-[11px] text-muted-foreground">Internamentos ativos, localização e próxima medicação por paciente.</p>
+            </div>
+            <span className="rounded-full border border-white/25 bg-white/45 px-2.5 py-1 text-[11px] font-semibold tabular-nums text-[var(--gray-700)] shadow-sm dark:border-white/10 dark:bg-white/10 dark:text-[var(--gray-200)]">
+              {loading ? "..." : `${occupiedBeds} / ${summary?.occupied_beds ?? occupiedBeds}`}
+            </span>
           </div>
           <div className="p-2">
             {loading ? (
-              <div className="py-4 text-center text-xs text-muted-foreground">Carregando...</div>
+              <div className="flex items-center justify-center gap-2 py-10 text-sm text-muted-foreground">
+                <Loader2 size={16} className="animate-spin" />
+                Carregando...
+              </div>
             ) : (
-              <DataTable columns={columns as any} data={data?.beds || []} emptyMessage="Nenhuma cama ocupada." />
+              <DataTable
+                columns={columns as any}
+                data={data?.beds || []}
+                emptyMessage="Nenhuma cama ocupada."
+                searchPlaceholder="Pesquisar por enfermaria, cama, paciente ou internamento..."
+                searchKeys={["ward", "bed_number", "patient_name", "admission_code", "next_medication_description"]}
+                bare
+              />
             )}
           </div>
         </section>
@@ -204,4 +269,3 @@ function normalizeDashboardData(raw: any): DashboardData {
       : [],
   }
 }
-
