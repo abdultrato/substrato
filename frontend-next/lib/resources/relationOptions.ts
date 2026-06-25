@@ -199,6 +199,11 @@ const RELATION_TARGETS: Record<string, RelationTarget> = {
 }
 
 const ENDPOINT_FIELD_OVERRIDES: Record<string, Record<string, RelationTarget>> = {
+  "/nursing/procedure/": {
+    professional: { endpoint: "/identity/user/", labelFields: USER_LABEL_FIELDS },
+    selected_catalogs: { endpoint: "/nursing/procedure_catalog/", labelFields: ["procedure_code", "name", ...DEFAULT_LABEL_FIELDS] },
+    selected_materials: { endpoint: "/pharmacy/product/", labelFields: ["name", "custom_id", ...DEFAULT_LABEL_FIELDS] },
+  },
   "/clinical_laboratory/critical_notification/": {
     result: { endpoint: "/clinical_laboratory/result/", labelFields: ["custom_id", "value", "unit", ...DEFAULT_LABEL_FIELDS] },
     order: { endpoint: "/clinical_laboratory/order/", labelFields: ["custom_id", "patient_name", ...DEFAULT_LABEL_FIELDS] },

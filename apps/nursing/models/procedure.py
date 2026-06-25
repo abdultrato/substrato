@@ -137,7 +137,7 @@ class Procedure(WardScopedModel, NoNameCoreModel):
         services_subtotal = self.itens.filter(performed=True).aggregate(
             total=Coalesce(
                 Sum(
-                    F("quantity") * F("value__unit_price"),
+                    F("quantity") * Coalesce(F("value__unit_price"), F("unit_price")),
                     output_field=DecimalField(max_digits=14, decimal_places=2),
                 ),
                 Decimal("0.00"),
@@ -147,7 +147,7 @@ class Procedure(WardScopedModel, NoNameCoreModel):
         materials_subtotal = self.materiais.aggregate(
             total=Coalesce(
                 Sum(
-                    F("quantity") * F("value__unit_cost"),
+                    F("quantity") * Coalesce(F("value__unit_cost"), F("unit_cost")),
                     output_field=DecimalField(max_digits=14, decimal_places=2),
                 ),
                 Decimal("0.00"),

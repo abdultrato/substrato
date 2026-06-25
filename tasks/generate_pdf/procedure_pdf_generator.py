@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from decimal import Decimal
 import io
+import logging
 import os
 
 from django.conf import settings
@@ -32,6 +33,8 @@ from .institutional_pdf_design import (
     build_institutional_header_config as build_personalized_header,
     draw_institutional_header_improved as draw_header_improved,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def _text(value, default: str = "—") -> str:
@@ -132,268 +135,304 @@ def _collect_unique_invoices(procedure):
 
 def generate_procedure_pdf(procedure, request=None) -> tuple[bytes, str]:
     """Monta e devolve o PDF do procedimento de enfermagem com cabeçalho personalizado."""
-    buffer = io.BytesIO()
-
-    # Usar margens institucionais padronizadas
-    usable_width = A5Margins.usable_width()
-
-    doc = SimpleDocTemplate(
-        buffer,
-        pagesize=A5,
-        leftMargin=A5Margins.LEFT,
-        rightMargin=A5Margins.RIGHT,
-        topMargin=A5Margins.TOP,
-        bottomMargin=A5Margins.BOTTOM,
-        encrypt=pdf_encryption(),
-    )
-    doc.include_signatures = False
-
-    # Configurar cabeçalho institucional
-    tenant = getattr(procedure.patient, "tenant", None) if procedure.patient else None
-    tenant_name = getattr(tenant, "name", "SERVIÇO DE ENFERMAGEM")
-
-    header_config = build_personalized_header(
-        doc_type=DocumentType.NURSING_PROCEDURE,
-        tenant_name=tenant_name,
-        logo_path=os.path.join(settings.BASE_DIR, "static", "img", "logo.png"),
-    )
-    doc.header_config = header_config
-
-    # Código de barras no header (repete em todas páginas)
     try:
-        doc.barcode_value = (
-            f"PROC:{_text(getattr(procedure, 'custom_id', None), default=getattr(procedure, 'pk', None))}"
-            f"|PAC:{_text(getattr(getattr(procedure, 'patient', None), 'custom_id', None), default=getattr(procedure, 'patient_id', None))}"
+        buffer = io.BytesIO()
+
+        # Usar margens institucionais padronizadas
+        usable_width = A5Margins.usable_width()
+
+        doc = SimpleDocTemplate(
+            buffer,
+            pagesize=A5,
+            leftMargin=A5Margins.LEFT,
+            rightMargin=A5Margins.RIGHT,
+            topMargin=A5Margins.TOP,
+            bottomMargin=A5Margins.BOTTOM,
+            encrypt=pdf_encryption(),
         )
-    except Exception:
-        doc.barcode_value = None
+        doc.include_signatures = False
 
-    patient = procedure.patient
-    user_documento = _resolve_document_user(procedure, request=request)
+        # Configurar cabeçalho institucional
+        tenant = getattr(procedure.patient, "tenant", None) if procedure.patient else None
+        tenant_name = getattr(tenant, "name", "SERVIÇO DE ENFERMAGEM")
 
-    story: list = []
-    story.append(Paragraph("RELATÓRIO DE PROCEDIMENTO DE ENFERMAGEM", institutional_title_style(color=header_config["sector_color"])))
-    story.append(Spacer(1, A5Margins.SECTION_SPACING))
-
-    professionals = [_person_name(prof) for prof in procedure.professional.all()]
-    professionals_text = ", ".join(professionals) if professionals else "Sem profissional associado"
-
-    left_lines = [
-        f"{bold_text('Procedimento')}: {_text(procedure.custom_id, default=str(procedure.pk))}",
-        f"{bold_text('Paciente')}: {_text(patient.name)}",
-        f"{bold_text('Data de realização')}: {_dt(procedure.performed_date)}",
-        f"{bold_text('Fluxo')}: {_text(getattr(procedure, 'get_workflow_status_display', lambda: '')() or procedure.workflow_status)}",
-        f"{bold_text('Faturação')}: {_text(getattr(procedure, 'get_billing_status_display', lambda: '')() or procedure.billing_status)}",
-        f"{bold_text('Profissionais')}: {_text(professionals_text)}",
-    ]
-    right_lines = [
-        f"{bold_text('Executado em')}: {_dt(procedure.executed_at)}",
-        f"{bold_text('Concluído em')}: {_dt(procedure.completed_at)}",
-        f"{bold_text('Faturado em')}: {_dt(procedure.billed_at)}",
-        f"{bold_text('Emitido por')}: {institutional_user_identity(user_documento)}",
-        f"{bold_text('Gerado em')}: {_dt(timezone.now())}",
-    ]
-    story.append(
-        montar_bloco_identificacao(
-            usable_width=usable_width,
-            left_lines=left_lines,
-            right_lines=right_lines,
+        header_config = build_personalized_header(
+            doc_type=DocumentType.NURSING_PROCEDURE,
+            tenant_name=tenant_name,
+            logo_path=os.path.join(settings.BASE_DIR, "static", "img", "logo.png"),
         )
-    )
-    story.append(Spacer(1, A5Margins.SECTION_SPACING))
+        doc.header_config = header_config
 
-    if (procedure.notes or "").strip():
-        story.append(Paragraph(
-            f"{bold_text('Observações')}: {_text(procedure.notes)}",
-            institutional_section_style(color=header_config["sector_color"], name="ProcedureNotes")
+        # Código de barras no header (repete em todas páginas)
+        try:
+            doc.barcode_value = (
+                f"PROC:{_text(getattr(procedure, 'custom_id', None), default=getattr(procedure, 'pk', None))}"
+                f"|PAC:{_text(getattr(getattr(procedure, 'patient', None), 'custom_id', None), default=getattr(procedure, 'patient_id', None))}"
+            )
+        except Exception:
+            doc.barcode_value = None
+
+        patient = procedure.patient
+        user_documento = _resolve_document_user(procedure, request=request)
+
+        story: list = []
+        story.append(Paragraph("RELATÓRIO DE PROCEDIMENTO DE ENFERMAGEM", institutional_title_style(color=header_config["sector_color"])))
+        story.append(Spacer(1, A5Margins.SECTION_SPACING))
+
+        professionals = [_person_name(prof) for prof in procedure.professional.all()]
+        professionals_text = ", ".join(professionals) if professionals else "Sem profissional associado"
+
+        left_lines = [
+            f"{bold_text('Procedimento')}: {_text(procedure.custom_id, default=str(procedure.pk))}",
+            f"{bold_text('Paciente')}: {_text(patient.name)}",
+            f"{bold_text('Data de realização')}: {_dt(procedure.performed_date)}",
+            f"{bold_text('Fluxo')}: {_text(getattr(procedure, 'get_workflow_status_display', lambda: '')() or procedure.workflow_status)}",
+            f"{bold_text('Faturação')}: {_text(getattr(procedure, 'get_billing_status_display', lambda: '')() or procedure.billing_status)}",
+            f"{bold_text('Profissionais')}: {_text(professionals_text)}",
+        ]
+        right_lines = [
+            f"{bold_text('Executado em')}: {_dt(procedure.executed_at)}",
+            f"{bold_text('Concluído em')}: {_dt(procedure.completed_at)}",
+            f"{bold_text('Faturado em')}: {_dt(procedure.billed_at)}",
+            f"{bold_text('Emitido por')}: {institutional_user_identity(user_documento)}",
+            f"{bold_text('Gerado em')}: {_dt(timezone.now())}",
+        ]
+        story.append(
+            montar_bloco_identificacao(
+                usable_width=usable_width,
+                left_lines=left_lines,
+                right_lines=right_lines,
+            )
+        )
+        story.append(Spacer(1, A5Margins.SECTION_SPACING))
+
+        if (procedure.notes or "").strip():
+            story.append(Paragraph(
+                f"{bold_text('Observações')}: {_text(procedure.notes)}",
+                institutional_section_style(color=header_config["sector_color"], name="ProcedureNotes")
+            ))
+            story.append(Spacer(1, A5Margins.ROW_SPACING))
+
+        # Linha divisória com cor do setor (vermelho para enfermagem)
+        story.append(HRFlowable(
+            width="100%",
+            thickness=0.5,
+            color=header_config["sector_color"]
         ))
         story.append(Spacer(1, A5Margins.ROW_SPACING))
 
-    # Linha divisória com cor do setor (vermelho para enfermagem)
-    story.append(HRFlowable(
-        width="100%",
-        thickness=0.5,
-        color=header_config["sector_color"]
-    ))
-    story.append(Spacer(1, A5Margins.ROW_SPACING))
-
-    items = list(
-        procedure.itens.filter(deleted=False).select_related("catalog", "value").order_by("created_at", "id")
-    )
-    item_rows: list[list[str]] = []
-    for item in items:
-        unit_price = getattr(getattr(item, "value", None), "unit_price", None) or item.unit_price or Decimal("0.00")
-        item_rows.append(
-            [
-                _text(item.custom_id, default=str(item.pk)),
-                _text(item.description or getattr(getattr(item, "catalog", None), "name", None)),
-                _text(item.quantity, default="0"),
-                _text(getattr(item, "get_execution_status_display", lambda: "")() or item.execution_status),
-                _money(unit_price),
-                _money(item.total_linha),
-            ]
+        items = list(
+            procedure.itens.filter(deleted=False).select_related("catalog", "value").order_by("created_at", "id")
         )
-
-    _append_table(
-        story,
-        "Atos/Serviços realizados",
-        ["Código", "Descrição", "Qtd", "Estado", "Preço Unit.", "Total"],
-        item_rows,
-        usable_width,
-        col_widths=[usable_width * 0.13, usable_width * 0.33, usable_width * 0.08, usable_width * 0.14, usable_width * 0.16, usable_width * 0.16],
-        sector_color=header_config["sector_color"],
-    )
-
-    materials = list(
-        procedure.materiais.filter(deleted=False)
-        .select_related("product", "lot", "procedure_item", "value")
-        .order_by("created_at", "id")
-    )
-    medication_rows: list[list[str]] = []
-    material_rows: list[list[str]] = []
-    for material in materials:
-        unit_cost = getattr(getattr(material, "value", None), "unit_cost", None) or material.unit_cost or Decimal("0.00")
-        base_row = [
-            _text(material.custom_id, default=str(material.pk)),
-            _text(getattr(material.product, "name", None)),
-            _text(getattr(material.lot, "lot_number", None)),
-            _text(material.quantity, default="0"),
-            _money(unit_cost),
-            _money(material.total_linha),
-        ]
-        if material.product and material.product.type == Product.ProductType.MEDICAMENTO:
-            medication_rows.append(base_row)
-        else:
-            material_rows.append(base_row)
-
-    _append_table(
-        story,
-        "Medicação usada",
-        ["Código", "Medicamento", "Lote", "Qtd", "Custo Unit.", "Total"],
-        medication_rows,
-        usable_width,
-        col_widths=[usable_width * 0.13, usable_width * 0.33, usable_width * 0.12, usable_width * 0.08, usable_width * 0.17, usable_width * 0.17],
-        sector_color=header_config["sector_color"],
-    )
-
-    _append_table(
-        story,
-        "Material usado",
-        ["Código", "Material", "Lote", "Qtd", "Custo Unit.", "Total"],
-        material_rows,
-        usable_width,
-        col_widths=[usable_width * 0.13, usable_width * 0.33, usable_width * 0.12, usable_width * 0.08, usable_width * 0.17, usable_width * 0.17],
-    )
-
-    invoices = _collect_unique_invoices(procedure)
-    total_invoice = Decimal("0.00")
-    total_paid = Decimal("0.00")
-    invoice_rows: list[list[str]] = []
-    payment_rows: list[list[str]] = []
-    for invoice in invoices:
-        invoice_total = getattr(invoice, "total_a_pagar", None) or getattr(invoice, "total", None) or Decimal("0.00")
-        paid_amount = invoice.confirmed_paid_amount() or Decimal("0.00")
-        balance = (Decimal(invoice_total) - Decimal(paid_amount)).quantize(Decimal("0.01"))
-
-        total_invoice += Decimal(invoice_total)
-        total_paid += Decimal(paid_amount)
-
-        invoice_rows.append(
-            [
-                _text(invoice.custom_id, default=str(invoice.pk)),
-                _text(getattr(invoice, "get_status_display", lambda: "")() or invoice.status),
-                _money(invoice_total),
-                _money(paid_amount),
-                _money(balance),
-            ]
-        )
-
-        payments = invoice.pagamentos.filter(deleted=False).order_by("-created_at", "-id")
-        for payment in payments:
-            payment_rows.append(
+        item_rows: list[list[str]] = []
+        for item in items:
+            unit_price = getattr(getattr(item, "value", None), "unit_price", None) or item.unit_price or Decimal("0.00")
+            # Calculate line total directly to avoid potential property access issues
+            try:
+                line_total = (item.quantity or 0) * unit_price
+            except Exception:
+                line_total = Decimal("0.00")
+            item_rows.append(
                 [
-                    _text(invoice.custom_id, default=str(invoice.pk)),
-                    _text(payment.custom_id, default=str(payment.pk)),
-                    _text(getattr(payment, "get_method_display", lambda: "")() or payment.method),
-                    _text(getattr(payment, "get_status_display", lambda: "")() or payment.status),
-                    _money(payment.net_value()),
-                    _dt(payment.paid_at or payment.created_at),
+                    _text(item.custom_id, default=str(item.pk)),
+                    _text(item.description or getattr(getattr(item, "catalog", None), "name", None)),
+                    _text(item.quantity, default="0"),
+                    _text(getattr(item, "get_execution_status_display", lambda: "")() or item.execution_status),
+                    _money(unit_price),
+                    _money(line_total),
                 ]
             )
 
-    summary_rows = [
-        ["Subtotal serviços", _money(procedure.services_subtotal)],
-        ["Subtotal materiais", _money(procedure.materials_subtotal)],
-        ["Total do procedimento", _money(procedure.total)],
-        ["Total faturado", _money(total_invoice)],
-        ["Valor pago (confirmado)", _money(total_paid)],
-        ["Saldo em aberto", _money((total_invoice - total_paid).quantize(Decimal("0.01")))],
-    ]
-    _append_table(
-        story,
-        "Resumo financeiro",
-        ["Indicador", "Valor"],
-        summary_rows,
-        usable_width,
-        col_widths=[usable_width * 0.70, usable_width * 0.30],
-    )
+        _append_table(
+            story,
+            "Atos/Serviços realizados",
+            ["Código", "Descrição", "Qtd", "Estado", "Preço Unit.", "Total"],
+            item_rows,
+            usable_width,
+            col_widths=[usable_width * 0.13, usable_width * 0.33, usable_width * 0.08, usable_width * 0.14, usable_width * 0.16, usable_width * 0.16],
+            sector_color=header_config["sector_color"],
+        )
 
-    _append_table(
-        story,
-        "Faturas associadas ao procedimento",
-        ["Fatura", "Estado", "Total", "Pago", "Saldo"],
-        invoice_rows,
-        usable_width,
-        col_widths=[usable_width * 0.22, usable_width * 0.22, usable_width * 0.18, usable_width * 0.18, usable_width * 0.20],
-    )
+        materials = list(
+            procedure.materiais.filter(deleted=False)
+            .select_related("product", "lot", "procedure_item", "value")
+            .order_by("created_at", "id")
+        )
+        medication_rows: list[list[str]] = []
+        material_rows: list[list[str]] = []
+        for material in materials:
+            unit_cost = getattr(getattr(material, "value", None), "unit_cost", None) or material.unit_cost or Decimal("0.00")
+            # Calculate line total directly to avoid potential property access issues
+            try:
+                line_total = (material.quantity or 0) * unit_cost
+            except Exception:
+                line_total = Decimal("0.00")
+            base_row = [
+                _text(material.custom_id, default=str(material.pk)),
+                _text(getattr(material.product, "name", None)),
+                _text(getattr(material.lot, "lot_number", None)),
+                _text(material.quantity, default="0"),
+                _money(unit_cost),
+                _money(line_total),
+            ]
+            if material.product and material.product.type == Product.ProductType.MEDICAMENTO:
+                medication_rows.append(base_row)
+            else:
+                material_rows.append(base_row)
 
-    _append_table(
-        story,
-        "Pagamentos registados",
-        ["Fatura", "Pagamento", "Método", "Estado", "Valor líquido", "Data"],
-        payment_rows,
-        usable_width,
-        col_widths=[usable_width * 0.14, usable_width * 0.17, usable_width * 0.16, usable_width * 0.16, usable_width * 0.18, usable_width * 0.19],
-    )
+        _append_table(
+            story,
+            "Medicação usada",
+            ["Código", "Medicamento", "Lote", "Qtd", "Custo Unit.", "Total"],
+            medication_rows,
+            usable_width,
+            col_widths=[usable_width * 0.13, usable_width * 0.33, usable_width * 0.12, usable_width * 0.08, usable_width * 0.17, usable_width * 0.17],
+            sector_color=header_config["sector_color"],
+        )
 
-    prescriptions = list(
-        patient.prescricoes_enfermagem.filter(deleted=False, active=True).order_by("-prescription_date", "-id")[:5]
-    )
-    prescription_rows = [
-        [
-            _dt(prescription.prescription_date),
-            _text(prescription.description),
+        _append_table(
+            story,
+            "Material usado",
+            ["Código", "Material", "Lote", "Qtd", "Custo Unit.", "Total"],
+            material_rows,
+            usable_width,
+            col_widths=[usable_width * 0.13, usable_width * 0.33, usable_width * 0.12, usable_width * 0.08, usable_width * 0.17, usable_width * 0.17],
+        )
+
+        invoices = _collect_unique_invoices(procedure)
+        total_invoice = Decimal("0.00")
+        total_paid = Decimal("0.00")
+        invoice_rows: list[list[str]] = []
+        payment_rows: list[list[str]] = []
+        for invoice in invoices:
+            invoice_total = getattr(invoice, "total_a_pagar", None) or getattr(invoice, "total", None) or Decimal("0.00")
+            paid_amount = invoice.confirmed_paid_amount() or Decimal("0.00")
+            balance = (Decimal(invoice_total) - Decimal(paid_amount)).quantize(Decimal("0.01"))
+
+            total_invoice += Decimal(invoice_total)
+            total_paid += Decimal(paid_amount)
+
+            invoice_rows.append(
+                [
+                    _text(invoice.custom_id, default=str(invoice.pk)),
+                    _text(getattr(invoice, "get_status_display", lambda: "")() or invoice.status),
+                    _money(invoice_total),
+                    _money(paid_amount),
+                    _money(balance),
+                ]
+            )
+
+            payments = invoice.pagamentos.filter(deleted=False).order_by("-created_at", "-id")
+            for payment in payments:
+                payment_rows.append(
+                    [
+                        _text(invoice.custom_id, default=str(invoice.pk)),
+                        _text(payment.custom_id, default=str(payment.pk)),
+                        _text(getattr(payment, "get_method_display", lambda: "")() or payment.method),
+                        _text(getattr(payment, "get_status_display", lambda: "")() or payment.status),
+                        _money(payment.net_value()),
+                        _dt(payment.paid_at or payment.created_at),
+                    ]
+                )
+
+        # Calculate totals from the actual items/materials being displayed
+        # This ensures consistency with the PDF table values and avoids
+        # potential issues with model field calculations or caching
+        materials_total = Decimal("0.00")
+        for material in materials:
+            unit_cost = getattr(getattr(material, "value", None), "unit_cost", None) or material.unit_cost or Decimal("0.00")
+            try:
+                line_total = (material.quantity or 0) * unit_cost
+            except Exception:
+                line_total = Decimal("0.00")
+            materials_total += line_total
+
+        # Calculate services total from items for consistency (though services_subtotal should be correct)
+        services_total = Decimal("0.00")
+        for item in items:
+            unit_price = getattr(getattr(item, "value", None), "unit_price", None) or item.unit_price or Decimal("0.00")
+            try:
+                line_total = (item.quantity or 0) * unit_price
+            except Exception:
+                line_total = Decimal("0.00")
+            services_total += line_total
+
+        summary_rows = [
+            ["Subtotal serviços", _money(services_total)],
+            ["Subtotal materiais", _money(materials_total)],
+            ["Total do procedimento", _money(services_total + materials_total)],
+            ["Total faturado", _money(total_invoice)],
+            ["Valor pago (confirmado)", _money(total_paid)],
+            ["Saldo em aberto", _money((total_invoice - total_paid).quantize(Decimal("0.01")))],
         ]
-        for prescription in prescriptions
-    ]
-    _append_table(
-        story,
-        "Prescrições ativas relacionadas ao paciente",
-        ["Data", "Descrição"],
-        prescription_rows,
-        usable_width,
-        col_widths=[usable_width * 0.28, usable_width * 0.72],
-    )
+        _append_table(
+            story,
+            "Resumo financeiro",
+            ["Indicador", "Valor"],
+            summary_rows,
+            usable_width,
+            col_widths=[usable_width * 0.70, usable_width * 0.30],
+        )
 
-    append_fim(story)
+        _append_table(
+            story,
+            "Faturas associadas ao procedimento",
+            ["Fatura", "Estado", "Total", "Pago", "Saldo"],
+            invoice_rows,
+            usable_width,
+            col_widths=[usable_width * 0.22, usable_width * 0.22, usable_width * 0.18, usable_width * 0.18, usable_width * 0.20],
+        )
 
-    doc.build(
-        story,
-        onFirstPage=lambda c, d: (
-            on_page(c, d, user_documento),
-            draw_line_full_width(c, d),
-        ),
-        onLaterPages=lambda c, d: (
-            on_page(c, d, user_documento),
-            draw_line_full_width(c, d),
-        ),
-        canvasmaker=NumberedCanvas,
-    )
+        _append_table(
+            story,
+            "Pagamentos registados",
+            ["Fatura", "Pagamento", "Método", "Estado", "Valor líquido", "Data"],
+            payment_rows,
+            usable_width,
+            col_widths=[usable_width * 0.14, usable_width * 0.17, usable_width * 0.16, usable_width * 0.16, usable_width * 0.18, usable_width * 0.19],
+        )
 
-    pdf_bytes = buffer.getvalue()
-    buffer.close()
-    filename = f"procedimento_{_text(procedure.custom_id, default=str(procedure.pk))}.pdf"
-    return pdf_bytes, filename
+        prescriptions = list(
+            patient.prescricoes_enfermagem.filter(deleted=False, active=True).order_by("-prescription_date", "-id")[:5]
+        )
+        prescription_rows = [
+            [
+                _dt(prescription.prescription_date),
+                _text(prescription.description),
+            ]
+            for prescription in prescriptions
+        ]
+        _append_table(
+            story,
+            "Prescrições ativas relacionadas ao paciente",
+            ["Data", "Descrição"],
+            prescription_rows,
+            usable_width,
+            col_widths=[usable_width * 0.28, usable_width * 0.72],
+        )
+
+        append_fim(story)
+
+        doc.build(
+            story,
+            onFirstPage=lambda c, d: (
+                on_page(c, d, user_documento),
+                draw_line_full_width(c, d),
+            ),
+            onLaterPages=lambda c, d: (
+                on_page(c, d, user_documento),
+                draw_line_full_width(c, d),
+            ),
+            canvasmaker=NumberedCanvas,
+        )
+
+        pdf_bytes = buffer.getvalue()
+        buffer.close()
+        filename = f"procedimento_{_text(procedure.custom_id, default=str(procedure.pk))}.pdf"
+        return pdf_bytes, filename
+    except Exception as e:
+        logger.exception("Failed to generate procedure PDF for procedure %s", getattr(procedure, 'pk', 'unknown'))
+        raise
 
 
 gerar_pdf_procedure = generate_procedure_pdf

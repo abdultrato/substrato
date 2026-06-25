@@ -3086,6 +3086,84 @@ function dentalPatientPlanSummaryConfig(): ResourceFormConfig {
   )
 }
 
+function nursingProcedureConfig(): ResourceFormConfig {
+  return {
+    esconderCampos: [
+      ...NURSING_INTERNAL_FIELDS,
+      "ward",
+      "ward_name",
+      "patient_name",
+      "professional_name",
+      "professional_names",
+      "workflow_status_display",
+      "billing_status_display",
+      "items_count",
+      "services_subtotal",
+      "materials_subtotal",
+      "total",
+      "billed_at",
+      "executed_at",
+      "completed_at",
+    ],
+    ordenarCampos: [
+      "patient",
+      "professional",
+      "performed_date",
+      "selected_catalogs",
+      "selected_materials",
+      "workflow_status",
+      "billing_status",
+      "notes",
+    ],
+    labels: {
+      patient: "Paciente",
+      professional: "Profissionais",
+      performed_date: "Data de realizacao",
+      selected_catalogs: "Procedimentos do catalogo",
+      selected_materials: "Materiais selecionados",
+      workflow_status: "Estado do fluxo",
+      billing_status: "Estado da faturacao",
+      notes: "Observacoes",
+    },
+    placeholders: {
+      selected_catalogs: "Pesquisar procedimentos e adicionar por clique...",
+      selected_materials: "Pesquisar materiais e adicionar por clique...",
+      notes: "Observacoes clinicas ou operacionais do procedimento.",
+    },
+    hints: {
+      patient: "Paciente principal do procedimento.",
+      professional: "Equipa responsavel pelo registo e execucao.",
+      selected_catalogs: "Catalogos selecionados alimentam a leitura clinica e financeira do procedimento.",
+      selected_materials: "Materiais associados ao procedimento de enfermagem.",
+    },
+    widgets: {
+      notes: "textarea",
+    },
+    etapas: [
+      {
+        titulo: "Paciente e equipa",
+        descricao: "Contexto principal do procedimento",
+        campos: ["patient", "professional"],
+      },
+      {
+        titulo: "Procedimento",
+        descricao: "Data, catalogos e materiais",
+        campos: ["performed_date", "selected_catalogs", "selected_materials"],
+      },
+      {
+        titulo: "Fluxo",
+        descricao: "Estados operacional e de faturacao",
+        campos: ["workflow_status", "billing_status"],
+      },
+      {
+        titulo: "Observacoes",
+        descricao: "Notas clinicas e operacionais",
+        campos: ["notes"],
+      },
+    ],
+  }
+}
+
 function nursingProcedureMaterialConfig(): ResourceFormConfig {
   return {
     esconderCampos: [
@@ -4827,6 +4905,9 @@ export function getResourceFormConfig(
   }
 
   if (g === "nursing") {
+    if (r === "procedure" || ep === "/nursing/procedure/") {
+      return nursingProcedureConfig()
+    }
     if (r === "procedure_material" || ep === "/nursing/procedure_material/") {
       return nursingProcedureMaterialConfig()
     }
