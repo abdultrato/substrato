@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
+  ChevronLeft,
   ChevronRight,
   Circle,
   Clock,
@@ -51,9 +52,9 @@ type WardWithStats = WardRow & {
 const PAGE_SIZE = 20;
 
 const STATUS_OPTIONS = [
-  { value: "", label: "Todos os status" },
-  { value: "true", label: "Ativas" },
-  { value: "false", label: "Inativas" },
+  { value: "", labelPt: "Todos os status", labelEn: "All statuses" },
+  { value: "true", labelPt: "Ativas", labelEn: "Active" },
+  { value: "false", labelPt: "Inativas", labelEn: "Inactive" },
 ];
 
 function formatDate(value: string | null | undefined): string {
@@ -109,7 +110,7 @@ async function fetchWardBases() {
       page: 1,
       pageSize: 200, // Fetch all to minimize requests
       clientPaginate: true,
-      clientCache: 0,
+      clientCache: false,
     });
     return res.items || [];
   } catch (error) {
@@ -132,7 +133,7 @@ async function fetchBedSummaryForWard(wardId: number): Promise<BedSummary> {
         ward_id: wardId.toString(),
       },
       clientPaginate: true,
-      clientCache: 0,
+      clientCache: false,
     });
 
     const beds = res.items || [];
@@ -168,7 +169,7 @@ async function fetchRecentAdmissionsForWard(wardId: number): Promise<number> {
         admission_date__gte: thirtyDaysAgo.toISOString().split('T')[0],
       },
       clientPaginate: true,
-      clientCache: 0,
+      clientCache: false,
     });
 
     return res.items?.length || 0;
@@ -387,7 +388,7 @@ export default function NursingWardPage() {
           >
             {STATUS_OPTIONS.map((option) => (
               <option key={option.value || "all"} value={option.value}>
-                {t(option.label)}
+                {t(option.labelPt, option.labelEn)}
               </option>
             ))}
           </select>

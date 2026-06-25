@@ -2,6 +2,6 @@
 
 import WardCreatePage from "@/components/nursing/WardCreatePage";
 
-export default function NursingWardsCreatePage() {
+export default function NursingWardCreatePage() {
   return <WardCreatePage />;
 }
