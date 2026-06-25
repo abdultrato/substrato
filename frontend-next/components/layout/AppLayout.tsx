@@ -249,7 +249,9 @@ export default function AppLayout ( {
                     className="flex h-screen min-w-0 flex-col md:ml-16 md:mr-[var(--layout-right)]"
                     style={contentFrameStyle}
                 >
-                    <Header user={user} onMenuClick={handleMenuClick} />
+                    <div className="sticky top-0 z-40 shrink-0">
+                        <Header user={user} onMenuClick={handleMenuClick} />
+                    </div>
 
                     <main data-no-scroll-arrows className="substrato-app-surface min-h-0 flex-1 min-w-0 overflow-x-hidden overflow-y-auto px-2 py-2 sm:px-3 md:px-4 md:py-3">
                         <div className="page-transition">
@@ -305,14 +307,16 @@ export default function AppLayout ( {
                 className="flex h-screen min-w-0 flex-col md:ml-16 md:mr-[var(--layout-right)]"
                 style={contentFrameStyle}
             >
-                <Header user={user} onMenuClick={handleMenuClick} scrolledDown={!subNavVisible} />
+                <div className="sticky top-0 z-40 shrink-0">
+                    <Header user={user} onMenuClick={handleMenuClick} scrolledDown={!subNavVisible} />
 
-                <div
-                    className={`overflow-hidden transition-all duration-300 ease-in-out ${
-                        subNavVisible ? "max-h-20 opacity-100" : "max-h-0 opacity-0 pointer-events-none"
-                    }`}
-                >
-                    {subNav ?? <ModuleSubNav />}
+                    <div
+                        className={`overflow-hidden transition-all duration-300 ease-in-out ${
+                            subNavVisible ? "max-h-20 opacity-100" : "max-h-0 opacity-0 pointer-events-none"
+                        }`}
+                    >
+                        {subNav ?? <ModuleSubNav />}
+                    </div>
                 </div>
 
                 <main ref={mainRef} data-no-scroll-arrows className="substrato-app-surface min-h-0 flex-1 min-w-0 overflow-x-hidden overflow-y-auto px-2 py-2 sm:px-3 md:px-4 md:py-3">

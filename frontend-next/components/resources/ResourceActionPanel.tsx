@@ -252,7 +252,7 @@ function renderField(
   onChange: (value: FieldValue) => void
 ) {
   const baseClass =
-    "w-full rounded-md border border-[var(--border)] bg-white px-2.5 py-2 text-sm text-[var(--text)] shadow-sm transition-colors duration-150 placeholder:text-[var(--gray-400)] hover:border-[var(--primary-400)] focus:border-[var(--primary-500)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-100)]"
+    "w-full rounded-md border border-white/30 bg-white/55 px-2.5 py-2 text-sm text-[var(--text)] shadow-sm backdrop-blur-sm transition-colors duration-150 placeholder:text-[var(--gray-400)] hover:border-[var(--primary-400)] focus:border-[var(--primary-500)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-100)] dark:border-white/10 dark:bg-white/10"
 
   if (field.type === "select") {
     return (
@@ -279,7 +279,7 @@ function renderField(
 
   if (field.type === "checkbox") {
     return (
-      <label className="inline-flex h-9 items-center gap-2 rounded-md border border-[var(--border)] bg-white px-2.5 text-sm text-[var(--gray-700)] shadow-sm">
+      <label className="inline-flex h-9 items-center gap-2 rounded-md border border-white/30 bg-white/55 px-2.5 text-sm text-[var(--gray-700)] shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/10 dark:text-[var(--gray-200)]">
         <input
           type="checkbox"
           checked={Boolean(value)}
@@ -431,10 +431,10 @@ export default function ResourceActionPanel({
   }
 
   return (
-    <section className="rounded-lg border border-[var(--border)] bg-[var(--card)] p-3 shadow-sm">
+    <section className="rounded-xl border border-white/20 bg-white/20 p-2.5 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/5">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <div className="inline-flex h-8 w-8 items-center justify-center rounded-md bg-[var(--gray-100)] text-[var(--primary-700)]">
+          <div className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-white/25 bg-white/45 text-[var(--primary-700)] shadow-sm dark:border-white/10 dark:bg-white/10">
             <Wrench size={16} />
           </div>
           <div>
@@ -444,7 +444,7 @@ export default function ResourceActionPanel({
             </p>
           </div>
         </div>
-        <span className="rounded-md border border-[var(--border)] bg-white px-2 py-1 text-xs font-medium text-[var(--gray-700)]">
+        <span className="rounded-md border border-white/30 bg-white/45 px-2 py-1 text-xs font-medium text-[var(--gray-700)] shadow-sm dark:border-white/10 dark:bg-white/10 dark:text-[var(--gray-200)]">
           {actions.length} {t("ação(ões)", "action(s)")}
         </span>
       </div>
@@ -456,15 +456,15 @@ export default function ResourceActionPanel({
           const hasResult = state.result !== undefined
 
           return (
-            <div key={action.key} className="rounded-md border border-[var(--border)] bg-white p-3 shadow-sm">
+            <div key={action.key} className="rounded-lg border border-white/20 bg-white/30 p-2.5 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/10">
               <div className="flex flex-wrap items-start justify-between gap-2">
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-[var(--primary-50)] text-[var(--primary-700)]">
+                    <span className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-white/25 bg-white/45 text-[var(--primary-700)] shadow-sm dark:border-white/10 dark:bg-white/10">
                       {isAiAction ? <Bot size={14} /> : action.responseMode === "json" ? <Play size={14} /> : <FileDown size={14} />}
                     </span>
                     <p className="text-sm font-semibold text-[var(--text)]">{action.label}</p>
-                    <span className="rounded-md border border-[var(--border)] bg-[var(--gray-100)] px-1.5 py-0.5 text-[11px] font-semibold text-[var(--gray-600)]">
+                    <span className="rounded-md border border-white/25 bg-white/45 px-1.5 py-0.5 text-[11px] font-semibold text-[var(--gray-600)] shadow-sm dark:border-white/10 dark:bg-white/10 dark:text-[var(--gray-300)]">
                       {action.method}
                     </span>
                   </div>
@@ -475,7 +475,7 @@ export default function ResourceActionPanel({
                 {action.dedicatedHref ? (
                   <Link
                     href={action.dedicatedHref}
-                    className="inline-flex h-8 items-center gap-1 rounded-md border border-[var(--border)] bg-[var(--card)] px-2 text-xs font-semibold text-[var(--gray-700)] shadow-sm transition-all duration-150 hover:border-[var(--primary-300)] hover:bg-[var(--gray-100)] hover:text-[var(--text)]"
+                    className="inline-flex h-8 items-center gap-1 rounded-md border border-white/30 bg-white/45 px-2 text-xs font-semibold text-[var(--gray-700)] shadow-sm backdrop-blur-sm transition-all duration-150 hover:border-[var(--primary-300)] hover:bg-white/60 hover:text-[var(--text)] dark:border-white/10 dark:bg-white/10 dark:text-[var(--gray-200)] dark:hover:bg-white/15"
                   >
                     <ExternalLink size={12} />
                     {t("Fluxo dedicado", "Dedicated flow")}
@@ -525,7 +525,7 @@ export default function ResourceActionPanel({
                   <button
                     type="button"
                     onClick={() => void copyResult(action)}
-                    className="inline-flex h-9 items-center gap-1 rounded-md border border-[var(--border)] bg-white px-2.5 text-xs font-semibold text-[var(--gray-700)] shadow-sm transition-all duration-150 hover:border-[var(--primary-300)] hover:bg-[var(--gray-100)]"
+                    className="inline-flex h-9 items-center gap-1 rounded-md border border-white/30 bg-white/55 px-2.5 text-xs font-semibold text-[var(--gray-700)] shadow-sm backdrop-blur-sm transition-all duration-150 hover:border-[var(--primary-300)] hover:bg-white/70 dark:border-white/10 dark:bg-white/10 dark:text-[var(--gray-200)] dark:hover:bg-white/15"
                   >
                     <Clipboard size={13} />
                     {t("Copiar resposta", "Copy response")}
@@ -533,7 +533,7 @@ export default function ResourceActionPanel({
                 ) : null}
 
                 {state.jobStatus ? (
-                  <span className="inline-flex h-8 items-center rounded-md bg-[var(--gray-100)] px-2 text-xs font-medium text-[var(--gray-700)]">
+                  <span className="inline-flex h-8 items-center rounded-md border border-white/25 bg-white/45 px-2 text-xs font-medium text-[var(--gray-700)] shadow-sm dark:border-white/10 dark:bg-white/10 dark:text-[var(--gray-200)]">
                     {t("Job:", "Job:")} {state.jobStatus}
                   </span>
                 ) : null}
@@ -553,9 +553,9 @@ export default function ResourceActionPanel({
               ) : null}
 
               {hasResult ? (
-                <div className="mt-2 max-h-64 overflow-auto rounded-md border border-[var(--border)] bg-[var(--gray-50)] text-[11px] leading-relaxed text-[var(--gray-800)]">
+                <div className="mt-2 max-h-64 overflow-auto rounded-md border border-white/20 bg-white/40 text-[11px] leading-relaxed text-[var(--gray-800)] backdrop-blur-sm dark:border-white/10 dark:bg-white/10 dark:text-[var(--gray-100)]">
                   {resultRows(state.result).map((row) => (
-                    <div key={row.label} className="grid grid-cols-3 gap-2 border-b border-[var(--border)] px-2 py-1.5 last:border-b-0">
+                    <div key={row.label} className="grid grid-cols-3 gap-2 border-b border-white/20 px-2 py-1.5 last:border-b-0 dark:border-white/10">
                       <span className="font-semibold uppercase tracking-wide text-[var(--gray-500)]">{row.label}</span>
                       <span className="col-span-2 whitespace-pre-wrap text-[var(--gray-800)]">{row.value}</span>
                     </div>

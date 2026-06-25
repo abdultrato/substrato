@@ -17,14 +17,14 @@ export default function PageHeader ( {
     const { tr } = useLanguage()
 
     return (
-        <div className="mb-2 flex flex-col gap-1.5 border-b border-border pb-2 md:flex-row md:items-end md:justify-between">
+        <div className="mb-3 flex flex-col gap-2.5 border-b border-border/60 pb-2.5 md:flex-row md:items-end md:justify-between">
             <div className="min-w-0">
-                <h1 className="break-words font-display text-sm font-semibold text-foreground sm:text-base">
+                <h1 className="break-words font-display text-xl font-semibold text-foreground sm:text-2xl">
                     {tr(title)}
                 </h1>
 
                 {subtitle && (
-                    <p className="mt-0.5 text-sm text-muted-foreground">
+                    <p className="mt-1 text-sm text-muted-foreground">
                         {tr(subtitle)}
                     </p>
                 )}

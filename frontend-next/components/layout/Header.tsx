@@ -127,7 +127,7 @@ export default function Header({ user, onMenuClick, scrolledDown = false }: Prop
     }, [sectionedItems, updateNavScrollState])
 
     return (
-        <header className="sticky top-0 z-40 overflow-visible border-b border-border bg-card/95 text-sm leading-none shadow-sm backdrop-blur">
+        <header className="overflow-visible border-b border-border bg-card/95 text-sm leading-none shadow-sm backdrop-blur">
             <div className="flex h-11 flex-nowrap items-center justify-between gap-2 px-2 sm:gap-2 sm:px-3">
                 <div className="flex min-w-0 flex-1 items-center gap-2">
                     <button
