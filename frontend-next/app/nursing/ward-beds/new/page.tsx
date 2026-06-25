@@ -1,12 +1,7 @@
 "use client";
 
-import { Suspense } from "react";
-import { GeneratedResourceCreatePage } from "@/components/resources/GeneratedResourcePages";
+import WardBedCreatePage from "@/components/nursing/WardBedCreatePage";
 
 export default function NursingWardBedsCreatePage() {
-  return (
-    <Suspense fallback={<div className="p-4 text-sm text-[var(--gray-500)]">Carregando...</div>}>
-      <GeneratedResourceCreatePage endpoint="/nursing/ward_bed/" />
-    </Suspense>
-  );
+  return <WardBedCreatePage />;
 }
