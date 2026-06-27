@@ -13,15 +13,12 @@ import {
   Clock3,
   ClipboardList,
   FileText,
-  HeartPulse,
   Package2,
   Stethoscope,
   User,
-  Wallet,
 } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
-import PdfActionLabel from "@/components/ui/PdfActionLabel"
 import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { apiFetch, apiFetchList } from "@/lib/api"
 import { isNotFoundLikeError } from "@/lib/errors/api-error"
@@ -48,9 +45,6 @@ type ProcedureDetail = Record<string, any> & {
   executed_at?: string | null
   completed_at?: string | null
   billed_at?: string | null
-  total?: string | number | null
-  services_subtotal?: string | number | null
-  materials_subtotal?: string | number | null
 }
 
 type ProcedureCatalog = {
@@ -72,7 +66,6 @@ type ProcedureItem = {
   billed?: boolean
   performed?: boolean
   observation?: string | null
-  value_unitario?: string | number | null
   created_at?: string | null
   executed_at?: string | null
   completed_at?: string | null
@@ -85,10 +78,7 @@ type ProcedureMaterial = {
   product_name?: string
   product_type?: string
   lot_number?: string
-  product?: number | null
-  lot?: number | null
   quantity?: number | null
-  value_unitario?: string | number | null
   observation?: string | null
   created_at?: string | null
 }
@@ -126,25 +116,6 @@ function fmtDate(value: any): string {
   }
 }
 
-function fmtMoney(value: string | number | null | undefined): string {
-  if (value === null || value === undefined || value === "") return "—"
-  const numeric = typeof value === "string" ? Number.parseFloat(value) : value
-  if (Number.isNaN(numeric)) return String(value)
-  return numeric.toLocaleString("pt-PT", { style: "currency", currency: "MZN" })
-}
-
-function formatTotalWithIva(value: string | number | null | undefined): string {
-  if (value === null || value === undefined || value === "") return "—"
-  const numeric = typeof value === "string" ? parseFloat(value) : value
-  if (Number.isNaN(numeric)) return String(value)
-
-  // Apply 17% IVA (Imposto sobre o Valor Acrescentado)
-  // Note: This assumes the 'value' already includes materials cost.
-  // If materials need to be added separately, that logic should be added here.
-  const totalWithIva = numeric * 1.17
-  return totalWithIva.toLocaleString("pt-PT", { style: "currency", currency: "MZN" })
-}
-
 function val(record: Record<string, any> | null | undefined, ...keys: string[]): any {
   for (const key of keys) {
     if (record?.[key] !== undefined && record?.[key] !== null && record?.[key] !== "") {
@@ -152,12 +123,6 @@ function val(record: Record<string, any> | null | undefined, ...keys: string[]):
     }
   }
   return null
-}
-
-function numberValue(value: string | number | null | undefined): number | null {
-  if (value === null || value === undefined || value === "") return null
-  const parsed = typeof value === "string" ? Number.parseFloat(value) : value
-  return Number.isFinite(parsed) ? parsed : null
 }
 
 function ageFromBirthDate(value: any): string | null {
@@ -180,6 +145,19 @@ function genderLabel(value: any): string | null {
   if (code === "M" || code === "MASCULINO" || code === "MALE") return "Masculino"
   if (code === "F" || code === "FEMENINO" || code === "FEMININO" || code === "FEMALE") return "Feminino"
   return raw
+}
+
+function userDisplayName(user: Record<string, any> | null | undefined): string | null {
+  const direct = val(user, "full_name", "display_name", "name", "nome")
+  if (direct) return String(direct).trim()
+  const composed = [val(user, "first_name", "nome_proprio"), val(user, "last_name", "apelido")]
+    .filter(Boolean)
+    .map((part) => String(part).trim())
+    .filter(Boolean)
+    .join(" ")
+  if (composed) return composed
+  const username = val(user, "username", "email")
+  return username ? String(username).trim() : null
 }
 
 function normalizeProfessionalNames(value: ProcedureDetail["professional_names"], fallback?: string): string[] {
@@ -354,31 +332,11 @@ function InlineMiniPanel({
   )
 }
 
-function FinancialRow({
-  label,
-  meta,
-  value,
-}: {
-  label: string
-  meta?: string | null
-  value: React.ReactNode
-}) {
-  return (
-    <div className="flex flex-col gap-1 rounded-lg border border-emerald-200 bg-emerald-50 px-2 py-1.5 dark:border-emerald-700/30 dark:bg-emerald-900/20 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
-      <div className="min-w-0">
-        <p className="text-[11px] font-semibold text-[var(--text)]">{label}</p>
-        {meta ? <p className="mt-0.5 text-[10px] text-[var(--gray-500)]">{meta}</p> : null}
-      </div>
-      <div className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-300 sm:shrink-0">{value}</div>
-    </div>
-  )
-}
-
 function Timeline({ steps }: { steps: TimelineStep[] }) {
   return (
-    <ol className="space-y-1.5">
+    <ol className="space-y-1">
       {steps.map((step, index) => (
-        <li key={index} className="relative flex gap-3">
+        <li key={index} className="relative flex gap-2">
           <div className="flex flex-col items-center">
             <span className="relative z-10 mt-0.5 shrink-0">
               {step.state === "active" ? (
@@ -391,11 +349,11 @@ function Timeline({ steps }: { steps: TimelineStep[] }) {
             </span>
             {index < steps.length - 1 ? <span className="mt-1 w-px flex-1 bg-white/40 dark:bg-white/10" /> : null}
           </div>
-          <div className="min-w-0 pb-2.5">
-            <div className="flex flex-wrap items-center gap-1.5">
+          <div className="min-w-0 pb-1.5">
+            <div className="flex flex-wrap items-center gap-1">
               <p className={`text-[12px] font-semibold ${step.done || step.state === "active" ? "text-[var(--text)]" : "text-[var(--gray-500)]"}`}>{step.label}</p>
               {step.status ? (
-                <span className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${timelineBadgeTone(step.state)}`}>
+                <span className={`rounded-full border px-1.5 py-px text-[9px] font-semibold ${timelineBadgeTone(step.state)}`}>
                   {step.status}
                 </span>
               ) : null}
@@ -409,18 +367,39 @@ function Timeline({ steps }: { steps: TimelineStep[] }) {
   )
 }
 
-function CatalogPill({ name, code }: { name: string; code?: string | null }) {
+function HorizontalTimeline({ steps }: { steps: TimelineStep[] }) {
   return (
-    <span className="inline-flex items-center gap-1 rounded-full border border-[var(--primary-200)] bg-[var(--primary-50)]/90 px-2 py-0.5 text-[10px] font-semibold text-[var(--primary-700)] shadow-sm backdrop-blur-sm">
-      <HeartPulse size={9} />
-      {code ? `${code} · ${name}` : name}
-    </span>
+    <ol className="grid min-w-[680px] grid-cols-[repeat(4,minmax(140px,1fr))]">
+      {steps.map((step, index) => (
+        <li key={index} className="relative min-w-0 px-2 first:pl-0 last:pr-0">
+          <div className="flex items-center">
+            <span className="relative z-10 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-white/50 bg-white/55 shadow-sm backdrop-blur dark:border-white/10 dark:bg-slate-900/60">
+              {step.state === "active" ? (
+                <Clock3 size={13} className="text-amber-500" />
+              ) : step.done ? (
+                <CheckCircle2 size={13} className="text-emerald-500" />
+              ) : (
+                <Circle size={13} className="text-[var(--gray-300)]" />
+              )}
+            </span>
+            {index < steps.length - 1 ? <span className="h-px flex-1 bg-gradient-to-r from-violet-300/70 to-slate-200/60 dark:from-violet-700/50 dark:to-slate-700/40" /> : null}
+          </div>
+          <div className="mt-1.5 min-w-0">
+            <div className="flex flex-wrap items-center gap-1">
+              <p className={`text-[11px] font-semibold ${step.done || step.state === "active" ? "text-foreground" : "text-muted-foreground"}`}>{step.label}</p>
+              {step.status ? <span className={`rounded-full border px-1.5 py-px text-[8px] font-semibold ${timelineBadgeTone(step.state)}`}>{step.status}</span> : null}
+            </div>
+            {step.date ? <p className="mt-0.5 truncate text-[10px] text-muted-foreground">{fmtDate(step.date)}</p> : null}
+            {step.note ? <p className="mt-0.5 truncate text-[10px] text-muted-foreground">{step.note}</p> : null}
+          </div>
+        </li>
+      ))}
+    </ol>
   )
 }
 
 function ProcedureItemCard({ item }: { item: ProcedureItem }) {
   const title = item.catalog_name || item.description || item.custom_id || "Item do procedimento"
-  const unitValue = fmtMoney(item.value_unitario)
   const statusLabel = item.execution_status_display || item.execution_status || "Pendente"
   const href = item.id ? `/nursing/procedure-items/${item.id}` : null
   const content = (
@@ -439,7 +418,7 @@ function ProcedureItemCard({ item }: { item: ProcedureItem }) {
             ) : null}
           </div>
           <p className="mt-0.5 break-words text-[10px] text-[var(--gray-500)]">
-            {[item.catalog_code, item.quantity ? `Qtd. ${item.quantity}` : null, unitValue !== "—" ? unitValue : null].filter(Boolean).join(" · ") || "Sem detalhe adicional"}
+            {[item.catalog_code, item.quantity ? `Qtd. ${item.quantity}` : null].filter(Boolean).join(" · ") || "Sem detalhe adicional"}
           </p>
         </div>
         <ClipboardList size={14} className="mt-0.5 shrink-0 text-sky-500" />
@@ -457,15 +436,8 @@ function ProcedureItemCard({ item }: { item: ProcedureItem }) {
   )
 }
 
-function ProcedureMaterialCard({
-  item,
-  resolvedUnitValue,
-}: {
-  item: ProcedureMaterial
-  resolvedUnitValue?: string | number | null
-}) {
+function ProcedureMaterialCard({ item }: { item: ProcedureMaterial }) {
   const title = item.product_name || item.custom_id || "Material"
-  const unitValue = fmtMoney(resolvedUnitValue ?? item.value_unitario)
 
   return (
     <article className={`${GLASS_SOFT} p-2`}>
@@ -473,7 +445,7 @@ function ProcedureMaterialCard({
         <div className="min-w-0">
           <p className="text-[12px] font-semibold leading-tight text-[var(--text)]">{title}</p>
           <p className="mt-0.5 break-words text-[10px] text-[var(--gray-500)]">
-            {[item.product_type, item.quantity ? `Qtd. ${item.quantity}` : null, item.lot_number ? `Lote ${item.lot_number}` : null, unitValue !== "—" ? unitValue : null]
+            {[item.product_type, item.quantity ? `Qtd. ${item.quantity}` : null, item.lot_number ? `Lote ${item.lot_number}` : null]
               .filter(Boolean)
               .join(" · ") || "Sem detalhe adicional"}
           </p>
@@ -492,14 +464,12 @@ export default function ProcedureDetailPage() {
 
   const [data, setData] = useState<ProcedureDetail | null>(null)
   const [patientProfile, setPatientProfile] = useState<Record<string, any> | null>(null)
-  const [productPriceById, setProductPriceById] = useState<Record<number, string>>({})
-  const [lotPriceById, setLotPriceById] = useState<Record<number, string>>({})
+  const [createdByName, setCreatedByName] = useState<string | null>(null)
   const [catalogs, setCatalogs] = useState<ProcedureCatalog[]>([])
   const [items, setItems] = useState<ProcedureItem[]>([])
   const [materials, setMaterials] = useState<ProcedureMaterial[]>([])
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
-  const [downloadingPdf, setDownloadingPdf] = useState(false)
   const reload = useCallback(async () => {
     setLoading(true)
     setErrorMessage(null)
@@ -530,53 +500,29 @@ export default function ProcedureDetailPage() {
       ])
 
       const patientId = Number(val(procedureRes, "patient", "paciente"))
+      const createdById = Number(val(procedureRes, "created_by"))
       const materialItems = Array.isArray(materialRes.items) ? materialRes.items : []
-      const productIds = [...new Set(materialItems.map((item) => Number(item.product)).filter((value) => Number.isInteger(value) && value > 0))]
-      const lotIds = [...new Set(materialItems.map((item) => Number(item.lot)).filter((value) => Number.isInteger(value) && value > 0))]
-      const patientRes =
+      const [patientRes, creatorRes] = await Promise.all([
         Number.isInteger(patientId) && patientId > 0
-          ? await apiFetch<Record<string, any>>(`/clinical/patient/${patientId}/`, { clientCache: safeRefreshToken === 0 })
-          : null
-      const [productResults, lotResults] = await Promise.all([
-        Promise.allSettled(
-          productIds.map(async (productId) => ({
-            id: productId,
-            data: await apiFetch<Record<string, any>>(`/pharmacy/product/${productId}/`, { clientCache: safeRefreshToken === 0 }),
-          })),
-        ),
-        Promise.allSettled(
-          lotIds.map(async (lotId) => ({
-            id: lotId,
-            data: await apiFetch<Record<string, any>>(`/pharmacy/lot/${lotId}/`, { clientCache: safeRefreshToken === 0 }),
-          })),
-        ),
+          ? apiFetch<Record<string, any>>(`/clinical/patient/${patientId}/`, { clientCache: safeRefreshToken === 0 })
+          : Promise.resolve(null),
+        Number.isInteger(createdById) && createdById > 0
+          ? apiFetch<Record<string, any>>(`/identity/user/${createdById}/`, { clientCache: safeRefreshToken === 0 })
+              .catch(() => null)
+          : Promise.resolve(null),
       ])
-      const nextProductPrices: Record<number, string> = {}
-      const nextLotPrices: Record<number, string> = {}
-      for (const result of productResults) {
-        if (result.status === "fulfilled") {
-          const price = val(result.value.data, "sale_price", "preco", "preço")
-          if (price !== null) nextProductPrices[result.value.id] = String(price)
-        }
-      }
-      for (const result of lotResults) {
-        if (result.status === "fulfilled") {
-          const price = val(result.value.data, "sale_price", "preco", "preço")
-          if (price !== null) nextLotPrices[result.value.id] = String(price)
-        }
-      }
 
       setData(procedureRes)
       setPatientProfile(patientRes)
-      setProductPriceById(nextProductPrices)
-      setLotPriceById(nextLotPrices)
+      setCreatedByName(
+        String(val(procedureRes, "created_by_name", "creator_name") || "").trim() || userDisplayName(creatorRes),
+      )
       setCatalogs(Array.isArray(catalogRes.items) ? catalogRes.items : [])
       setItems(Array.isArray(itemRes.items) ? itemRes.items : [])
       setMaterials(materialItems)
     } catch (error: any) {
       setPatientProfile(null)
-      setProductPriceById({})
-      setLotPriceById({})
+      setCreatedByName(null)
       setErrorMessage(isNotFoundLikeError(error) ? null : (error?.message || "Falha ao carregar procedimento."))
     } finally {
       setLoading(false)
@@ -586,24 +532,6 @@ export default function ProcedureDetailPage() {
   useEffect(() => {
     reload().catch(() => {})
   }, [reload])
-
-  async function handleOpenPdf() {
-    setDownloadingPdf(true)
-    setErrorMessage(null)
-    try {
-      const endpoint = ensureTrailingSlash("/nursing/procedure/") + `${id}/pdf/`
-      const blob = await apiFetch<Blob>(endpoint, { responseType: "blob" })
-      const url = window.URL.createObjectURL(blob)
-      window.open(url, "_blank", "noopener,noreferrer")
-      setTimeout(() => window.URL.revokeObjectURL(url), 60_000)
-    } catch (error: any) {
-      setErrorMessage(isNotFoundLikeError(error) ? null : (error?.message || "Falha ao gerar PDF."))
-    } finally {
-      setDownloadingPdf(false)
-    }
-  }
-
-  const reportHref = `/reports?endpoint=${encodeURIComponent("/nursing/procedure/")}&group=Enfermagem&resource=Procedimento`
 
   const catalogNameById = useMemo(() => {
     const next = new Map<number, ProcedureCatalog>()
@@ -665,7 +593,7 @@ export default function ProcedureDetailPage() {
   const code = val(data, "custom_id", "id_custom", "codigo") || `#${data.id}`
   const patientName = val(data, "patient_name", "paciente_nome") || "—"
   const wardName = val(data, "ward_name", "enfermaria_nome")
-  const createdBy = val(data, "created_by")
+  const createdBy = createdByName
   const notes = val(data, "notes", "observacoes", "observações")
   const patientAge =
     val(data, "patient_age", "idade_paciente", "age_display") ||
@@ -677,65 +605,11 @@ export default function ProcedureDetailPage() {
   )
   const hasOperationalGap = String(data?.workflow_status || "").toUpperCase() === "NCO"
   const totalItems = items.length || Number(data.items_count || 0)
-  const billedItems = items.filter((item) => !!item.billed).length
-  const resolveMaterialUnitValue = (item: ProcedureMaterial): string | number | null =>
-    item.value_unitario ??
-    (item.lot ? lotPriceById[Number(item.lot)] : null) ??
-    (item.product ? productPriceById[Number(item.product)] : null) ??
-    null
-  const materialsValue = materials.reduce((sum, item) => {
-    const unit = numberValue(resolveMaterialUnitValue(item))
-    const quantity = Number(item.quantity || 0)
-    return sum + (unit && quantity ? unit * quantity : 0)
-  }, 0)
-  const serviceBreakdown = items
-    .map((item) => {
-      const unit = numberValue(item.value_unitario)
-      const quantity = Math.max(1, Number(item.quantity || 1))
-      if (unit === null) return null
-      return {
-        id: item.id || item.custom_id || `${item.catalog_name}-${quantity}`,
-        label: item.catalog_name || item.description || item.custom_id || "Serviço",
-        meta: [`Qtd. ${quantity}`, fmtMoney(unit)].filter(Boolean).join(" * "),
-        total: unit * quantity,
-      }
-    })
-    .filter((item): item is { id: string | number; label: string; meta: string; total: number } => Boolean(item))
-  const materialBreakdown = materials
-    .map((item) => {
-      const unit = numberValue(resolveMaterialUnitValue(item))
-      const quantity = Math.max(1, Number(item.quantity || 1))
-      if (unit === null) return null
-      return {
-        id: item.id || item.custom_id || `${item.product_name}-${quantity}`,
-        label: item.product_name || item.custom_id || "Material",
-        meta: [item.product_type, `Qtd. ${quantity}`, fmtMoney(unit)].filter(Boolean).join(" * "),
-        total: unit * quantity,
-      }
-    })
-    .filter((item): item is { id: string | number; label: string; meta: string; total: number } => Boolean(item))
-  const servicesValue = serviceBreakdown.reduce((sum, item) => sum + item.total, 0)
-  const backendServiceSubtotal = numberValue(data.services_subtotal)
-  const backendMaterialSubtotal = numberValue(data.materials_subtotal)
-  const serviceSubtotal = servicesValue > 0 ? servicesValue : backendServiceSubtotal
-  const materialSubtotal = materialsValue > 0 ? materialsValue : backendMaterialSubtotal
-  const combinedTotal =
-    serviceSubtotal !== null || materialSubtotal !== null
-      ? (serviceSubtotal || 0) + (materialSubtotal || 0)
-      : numberValue(data.total)
   const hasTeamCard = Boolean(wardName) || professionals.length > 0 || Boolean(createdBy) || Boolean(data.updated_at)
   const hasWorkflowCard =
     Boolean(data.workflow_status_display || data.workflow_status || data.billing_status_display || data.billing_status) ||
     Boolean(data.executed_at || data.performed_date || data.completed_at || data.billed_at)
   const hasTimelineCard = timelineSteps.some((step) => step.done || Boolean(step.date) || Boolean(step.note))
-  const hasCatalogsCard = selectedCatalogs.length > 0
-  const hasFinanceCard =
-    serviceBreakdown.length > 0 ||
-    materialBreakdown.length > 0 ||
-    serviceSubtotal !== null ||
-    materialSubtotal !== null ||
-    combinedTotal !== null ||
-    billedItems > 0
   const hasNotesCard = Boolean(notes)
   const hasItemsCard = items.length > 0
   const hasMaterialsCard = materials.length > 0
@@ -797,7 +671,7 @@ export default function ProcedureDetailPage() {
                   {patientName}
                   {(patientGender || patientAge) ? (
                     <span className="ml-2 text-[11px] font-medium text-[var(--gray-500)]">
-                      {[patientGender, patientAge].filter(Boolean).join(" * ")}
+                      {[patientGender, patientAge].filter(Boolean).join(" . ")}
                     </span>
                   ) : null}
                 </h1>
@@ -817,40 +691,18 @@ export default function ProcedureDetailPage() {
                   <span className="text-xs leading-none">{totalItems}</span>
                 </span>
               ) : null}
-              {numberValue(data.total) !== null ? (
-                <span className="inline-flex flex-col items-center justify-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50 px-2 py-1 text-[10px] font-semibold text-emerald-700 dark:border-emerald-700/30 dark:bg-emerald-900/20 dark:text-emerald-400 sm:flex-sm-row sm:items-sm-center sm:justify-sm-center">
-                  <span className="uppercase tracking-wide text-emerald-500/80">Valor</span>
-                  <span className="text-xs leading-none">{formatTotalWithIva(data.total)}</span>
-                </span>
-              ) : null}
-              <div className="flex flex-wrap gap-2 sm:flex-nowrap">
-              <button
-                type="button"
-                onClick={handleOpenPdf}
-                disabled={downloadingPdf}
-                className="flex-1 min-w-[80px] flex-nowrap items-center justify-center rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-100 disabled:opacity-60 sm:px-4 sm:py-2.5 sm:text-sm"
-              >
-                <PdfActionLabel loading={downloadingPdf} loadingLabel="Gerando PDF...">
-                  PDF cotação
-                </PdfActionLabel>
-              </button>
+              <div className="flex flex-nowrap gap-1.5">
               <Link
                 href={`/nursing/procedures/${id}/edit`}
-                className="flex-1 min-w-[80px] flex-nowrap items-center justify-center rounded-lg border border-border bg-card px-3 py-2 text-xs font-medium text-foreground transition hover:bg-muted sm:px-4 sm:py-2.5 sm:text-sm"
+                className="inline-flex h-7 items-center justify-center rounded-md border border-border bg-card px-2.5 text-[11px] font-medium text-foreground transition hover:bg-muted"
               >
                 Editar
               </Link>
               <Link
-                href={reportHref}
-                className="flex-1 min-w-[80px] flex-nowrap items-center justify-center rounded-lg border border-violet-200 bg-violet-50 px-3 py-2 text-xs font-semibold text-violet-700 transition hover:bg-violet-100 dark:border-violet-700/30 dark:bg-violet-900/20 dark:text-violet-400 sm:px-4 sm:py-2.5 sm:text-sm"
-              >
-                Relatório
-              </Link>
-              <Link
                 href="/nursing/procedures"
-                className="flex-1 min-w-[80px] flex-nowrap items-center justify-center gap-1.5 rounded-lg border border-border bg-card px-3 py-2 text-xs text-muted-foreground transition hover:bg-muted hover:text-foreground sm:px-4 sm:py-2.5 sm:text-sm"
+                className="inline-flex h-7 items-center justify-center gap-1 rounded-md border border-border bg-card px-2.5 text-[11px] text-muted-foreground transition hover:bg-muted hover:text-foreground"
               >
-                <ArrowLeft size={12} className="mr-1.5" />
+                <ArrowLeft size={11} />
                 Voltar
               </Link>
             </div>
@@ -872,29 +724,21 @@ export default function ProcedureDetailPage() {
 
         <div className="space-y-3">
           <div className="grid items-start gap-3 lg:grid-cols-4">
-            {wardName ? (
-              <SurfaceCard
-                title="Sector"
-                icon={<Building2 size={14} />}
-                accent="bg-amber-400"
-                iconTone="bg-amber-500/10 text-amber-700 dark:bg-amber-400/10 dark:text-amber-400"
-              >
-                <MiniPanel
-                  label="Sector"
-                  value={wardName}
-                  tone="border-amber-200 bg-amber-50 dark:border-amber-700/30 dark:bg-amber-900/20"
-                />
-              </SurfaceCard>
-            ) : null}
-
-            {professionals.length > 0 ? (
+            {professionals.length > 0 || wardName ? (
               <SurfaceCard
                 title="Serviços"
                 icon={<Stethoscope size={14} />}
                 accent="bg-orange-400"
                 iconTone="bg-orange-500/10 text-orange-700 dark:bg-orange-400/10 dark:text-orange-400"
               >
-                <div className="flex flex-wrap gap-1.5">
+                <div className="grid gap-1.5">
+                  {wardName ? (
+                    <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                      <Building2 size={11} className="text-amber-600" />
+                      <span className="truncate font-medium text-foreground">{wardName}</span>
+                    </div>
+                  ) : null}
+                  <div className="flex flex-wrap gap-1.5">
                   {professionals.map((name) => (
                     <span
                       key={name}
@@ -903,6 +747,7 @@ export default function ProcedureDetailPage() {
                       {name}
                     </span>
                   ))}
+                  </div>
                 </div>
               </SurfaceCard>
             ) : null}
@@ -914,20 +759,22 @@ export default function ProcedureDetailPage() {
                 accent="bg-yellow-400"
                 iconTone="bg-yellow-500/10 text-yellow-700 dark:bg-yellow-400/10 dark:text-yellow-400"
               >
-                <div className="flex flex-wrap gap-1.5">
+                <div className="grid gap-2">
                   {selectedCatalogs.length > 0 ? (
-                    <InlineMiniPanel
-                      label="Catálogos"
-                      value={selectedCatalogs.length}
-                      tone="border-orange-200 bg-orange-50 dark:border-orange-700/30 dark:bg-orange-900/20"
-                    />
+                    <div className="rounded-lg border border-orange-200 bg-orange-50/80 px-2.5 py-2 dark:border-orange-700/30 dark:bg-orange-900/20">
+                      <p className="text-[9px] font-semibold uppercase tracking-wide text-orange-600 dark:text-orange-300">Catálogos</p>
+                      <ol className="mt-1 list-inside list-decimal space-y-0.5 text-[11px] font-medium text-orange-800 dark:text-orange-200">
+                        {selectedCatalogs.map((catalog) => (
+                          <li key={catalog.id} className="truncate" title={catalog.name}>{catalog.name}</li>
+                        ))}
+                      </ol>
+                    </div>
                   ) : null}
                   {totalItems > 0 ? (
-                    <InlineMiniPanel
-                      label="Itens"
-                      value={totalItems}
-                      tone="border-yellow-200 bg-yellow-50 dark:border-yellow-700/30 dark:bg-yellow-900/20"
-                    />
+                    <div className="flex items-center justify-between rounded-lg border border-yellow-200 bg-yellow-50/80 px-2.5 py-1.5 text-[10px] dark:border-yellow-700/30 dark:bg-yellow-900/20">
+                      <span className="font-semibold uppercase tracking-wide text-yellow-700 dark:text-yellow-300">Itens</span>
+                      <span className="font-bold text-yellow-900 dark:text-yellow-100">{totalItems}</span>
+                    </div>
                   ) : null}
                 </div>
               </SurfaceCard>
@@ -958,123 +805,34 @@ export default function ProcedureDetailPage() {
                 </div>
               </SurfaceCard>
             ) : null}
+
+            {hasWorkflowCard ? (
+              <SurfaceCard
+                title="Fluxo Operacional"
+                icon={<Stethoscope size={14} />}
+                accent="bg-emerald-400"
+                iconTone="bg-emerald-500/10 text-emerald-700 dark:bg-emerald-400/10 dark:text-emerald-400"
+              >
+                <Timeline steps={workflowSteps} />
+              </SurfaceCard>
+            ) : null}
           </div>
 
-          <div className="grid items-start gap-3 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)]">
-            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-1">
-              {hasWorkflowCard ? (
-                <SurfaceCard
-                  title="Fluxo Operacional"
-                  icon={<Stethoscope size={14} />}
-                  accent="bg-emerald-400"
-                  iconTone="bg-emerald-500/10 text-emerald-700 dark:bg-emerald-400/10 dark:text-emerald-400"
-                >
-                  <Timeline steps={workflowSteps} />
-                </SurfaceCard>
-              ) : null}
+          {hasTimelineCard ? (
+            <SurfaceCard
+              title="Linha do Tempo"
+              icon={<CalendarClock size={14} />}
+              accent="bg-indigo-400"
+              iconTone="bg-indigo-500/10 text-indigo-700 dark:bg-indigo-400/10 dark:text-indigo-400"
+            >
+              <div className="overflow-x-auto pb-1">
+                <HorizontalTimeline steps={timelineSteps} />
+              </div>
+            </SurfaceCard>
+          ) : null}
 
-              {hasTimelineCard ? (
-                <SurfaceCard
-                  title="Linha do Tempo"
-                  icon={<CalendarClock size={14} />}
-                  accent="bg-indigo-400"
-                  iconTone="bg-indigo-500/10 text-indigo-700 dark:bg-indigo-400/10 dark:text-indigo-400"
-                >
-                  <Timeline steps={timelineSteps} />
-                </SurfaceCard>
-              ) : null}
-
-              {hasCatalogsCard ? (
-                <SurfaceCard
-                  title="Catálogos Selecionados"
-                  icon={<HeartPulse size={14} />}
-                  accent="bg-violet-400"
-                  iconTone="bg-violet-500/10 text-violet-700 dark:bg-violet-400/10 dark:text-violet-400"
-                >
-                  <div className="flex flex-wrap gap-1.5">
-                    {selectedCatalogs.map((catalog) => (
-                      <CatalogPill key={catalog.id} name={catalog.name} code={catalog.code} />
-                    ))}
-                  </div>
-                </SurfaceCard>
-              ) : null}
-            </div>
-
+          <div className="grid items-start gap-3">
             <div className="grid gap-3">
-              {hasFinanceCard ? (
-                <div className="grid gap-3 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
-                  {combinedTotal !== null || serviceSubtotal !== null || materialSubtotal !== null || billedItems > 0 ? (
-                    <SurfaceCard
-                      title="Totais Financeiros"
-                      icon={<Wallet size={14} />}
-                      accent="bg-emerald-400"
-                      iconTone="bg-emerald-500/10 text-emerald-700 dark:bg-emerald-400/10 dark:text-emerald-400"
-                    >
-                      <div className="grid gap-1.5">
-                        {combinedTotal !== null ? (
-                          <InlineMiniPanel
-                            label="Total geral"
-                            value={formatTotalWithIva(combinedTotal)}
-                            tone="border-emerald-300 bg-emerald-100 dark:border-emerald-700/30 dark:bg-emerald-900/25"
-                          />
-                        ) : null}
-                        {serviceSubtotal !== null ? (
-                          <InlineMiniPanel
-                            label="Serviços"
-                            value={fmtMoney(serviceSubtotal)}
-                            tone="border-emerald-200 bg-emerald-50 dark:border-emerald-700/30 dark:bg-emerald-900/20"
-                          />
-                        ) : null}
-                        {materialSubtotal !== null ? (
-                          <InlineMiniPanel
-                            label="Materiais"
-                            value={fmtMoney(materialSubtotal)}
-                            tone="border-teal-200 bg-teal-50 dark:border-teal-700/30 dark:bg-teal-900/20"
-                          />
-                        ) : null}
-                        {billedItems > 0 ? (
-                          <InlineMiniPanel
-                            label="Faturados"
-                            value={`${billedItems}/${items.length}`}
-                            tone="border-lime-200 bg-lime-50 dark:border-lime-700/30 dark:bg-lime-900/20"
-                          />
-                        ) : null}
-                      </div>
-                    </SurfaceCard>
-                  ) : null}
-
-                  {serviceBreakdown.length > 0 ? (
-                    <SurfaceCard
-                      title={`Serviços (${serviceBreakdown.length})`}
-                      icon={<Stethoscope size={14} />}
-                      accent="bg-emerald-400"
-                      iconTone="bg-emerald-500/10 text-emerald-700 dark:bg-emerald-400/10 dark:text-emerald-400"
-                    >
-                      <div className="grid gap-1.5">
-                        {serviceBreakdown.map((item) => (
-                          <FinancialRow key={item.id} label={item.label} meta={item.meta} value={fmtMoney(item.total)} />
-                        ))}
-                      </div>
-                    </SurfaceCard>
-                  ) : null}
-                </div>
-              ) : null}
-
-              {materialBreakdown.length > 0 ? (
-                <SurfaceCard
-                  title={`Materiais (${materialBreakdown.length})`}
-                  icon={<Package2 size={14} />}
-                  accent="bg-teal-400"
-                  iconTone="bg-teal-500/10 text-teal-700 dark:bg-teal-400/10 dark:text-teal-400"
-                >
-                  <div className="grid gap-1.5 md:grid-cols-2">
-                    {materialBreakdown.map((item) => (
-                      <FinancialRow key={item.id} label={item.label} meta={item.meta} value={fmtMoney(item.total)} />
-                    ))}
-                  </div>
-                </SurfaceCard>
-              ) : null}
-
               {hasNotesCard ? (
                 <SurfaceCard
                   title="Observações Clínicas"
@@ -1119,7 +877,6 @@ export default function ProcedureDetailPage() {
                     <ProcedureMaterialCard
                       key={item.id || item.custom_id}
                       item={item}
-                      resolvedUnitValue={resolveMaterialUnitValue(item)}
                     />
                   ))}
                 </div>

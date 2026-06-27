@@ -477,6 +477,8 @@ class ProcedureItemSerializer(LegacyAliasSerializerMixin, serializers.ModelSeria
     )
     catalog_name = serializers.CharField(source="catalog.name", read_only=True)
     catalog_code = serializers.CharField(source="catalog.procedure_code", read_only=True)
+    procedure_code = serializers.CharField(source="procedure.custom_id", read_only=True)
+    patient_name = serializers.CharField(source="procedure.patient.name", read_only=True)
     execution_status_display = serializers.CharField(source="get_execution_status_display", read_only=True)
 
     class Meta:
@@ -488,6 +490,8 @@ class ProcedureItemSerializer(LegacyAliasSerializerMixin, serializers.ModelSeria
             "value_unitario",
             "catalog_name",
             "catalog_code",
+            "procedure_code",
+            "patient_name",
             "execution_status_display",
         )
 

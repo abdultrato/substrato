@@ -14,6 +14,7 @@ import {
 
 import AppLayout from "@/components/layout/AppLayout";
 import { apiFetchList } from "@/lib/api";
+import { formatCount } from "@/lib/i18n/plural";
 import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh";
 import { GROUPS } from "@/lib/rbac";
 
@@ -31,7 +32,6 @@ type ProcedureRow = {
   items_count?: number;
   performed_date?: string | null;
   created_at?: string | null;
-  total?: string | number | null;
   notes?: string | null;
   selected_catalogs?: Array<number | string> | null;
 };
@@ -86,25 +86,6 @@ function fmtDate(value: string | null | undefined) {
   const parsed = new Date(value);
   if (Number.isNaN(parsed.getTime())) return String(value);
   return parsed.toLocaleString();
-}
-
-function fmtMoney(value: string | number | null | undefined) {
-  if (value === null || value === undefined || value === "") return "—";
-  const numeric = typeof value === "string" ? parseFloat(value) : value;
-  if (Number.isNaN(numeric)) return String(value);
-  return numeric.toLocaleString("pt-PT", { style: "currency", currency: "MZN" });
-}
-
-function formatTotalWithIva(value: string | number | null | undefined): string {
-  if (value === null || value === undefined || value === "") return "—";
-  const numeric = typeof value === "string" ? parseFloat(value) : value;
-  if (Number.isNaN(numeric)) return String(value);
-
-  // Apply 17% IVA (Imposto sobre o Valor Acrescentado)
-  // Note: This assumes the 'value' already includes materials cost.
-  // If materials need to be added separately, that logic should be added here.
-  const totalWithIva = numeric * 1.17;
-  return totalWithIva.toLocaleString("pt-PT", { style: "currency", currency: "MZN" });
 }
 
 function workflowStripe(status: string | null | undefined) {
@@ -255,7 +236,7 @@ export default function NursingProceduresPage() {
               <div>
                 <h1 className="text-lg font-bold leading-tight text-foreground">Procedimentos de enfermagem</h1>
                 <p className="text-[11px] text-muted-foreground">
-                  {loading ? "Carregando…" : `${total} procedimento${total !== 1 ? "s" : ""} na listagem`}
+                  {loading ? "Carregando…" : formatCount(total, { one: "procedimento na listagem", other: "procedimentos na listagem" })}
                 </p>
               </div>
             </div>
@@ -389,7 +370,6 @@ export default function NursingProceduresPage() {
                     )}
 
                     <div className="flex items-center justify-between border-t border-border/40 pt-1.5">
-                      <span className="text-xs font-semibold text-foreground">{formatTotalWithIva(procedure.total)}</span>
                       <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground">
                         <Clock size={10} /> {fmtDate(procedure.performed_date || procedure.created_at)}
                       </span>

@@ -13,6 +13,7 @@ import {
 
 import AppLayout from "@/components/layout/AppLayout";
 import { apiFetchList } from "@/lib/api";
+import { formatCount } from "@/lib/i18n/plural";
 import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh";
 import { GROUPS } from "@/lib/rbac";
 
@@ -182,7 +183,7 @@ export default function PatientsPage() {
               <div>
                 <h1 className="text-lg font-bold leading-tight text-foreground">Pacientes</h1>
                 <p className="text-[11px] text-muted-foreground">
-                  {loading ? "Carregando…" : `${total} paciente${total !== 1 ? "s" : ""} cadastrado${total !== 1 ? "s" : ""}`}
+                  {loading ? "Carregando…" : formatCount(total, { one: "paciente cadastrado", other: "pacientes cadastrados" })}
                 </p>
               </div>
             </div>

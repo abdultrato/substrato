@@ -237,7 +237,7 @@ export default function NursingCollectionsPage() {
 
   return (
     <AppLayout>
-      <div className="mx-auto w-full max-w-[1400px] space-y-4">
+      <div className="mx-auto w-[90vw] max-w-[90vw] space-y-4">
         <PageHeader title="Coletas" />
 
         {feedback ? (
@@ -250,24 +250,24 @@ export default function NursingCollectionsPage() {
         {loading ? (
           <div className="text-sm text-[var(--gray-500)]">Carregando...</div>
         ) : (
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
+          <div className="grid grid-cols-1 items-start gap-2.5 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
             {COLUMNS.map((column) => {
               const items = buckets[column.key]
               return (
                 <section
                   key={column.key}
-                  className={`flex flex-col rounded-lg bg-[var(--card)]/40 p-2 ${column.top}`}
+                  className={`flex min-w-0 flex-col overflow-hidden rounded-xl border border-white/20 bg-white/20 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04] ${column.top}`}
                 >
-                  <div className="flex items-center justify-between px-1 pb-2 pt-1">
-                    <h2 className={`text-xs font-semibold uppercase tracking-wide ${column.header}`}>{column.title}</h2>
+                  <div className="flex min-h-12 items-center justify-between gap-2 border-b border-border/50 bg-white/25 px-3 py-2 dark:bg-white/[0.03]">
+                    <h2 className={`text-sm font-bold leading-tight ${column.header}`}>{column.title}</h2>
                     <span className={`inline-flex min-w-5 items-center justify-center rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${column.badge}`}>
                       {items.length}
                     </span>
                   </div>
 
-                  <div className="grid auto-rows-min grid-cols-1 gap-2 overflow-y-auto pr-1 max-h-[calc(100vh-210px)] sm:grid-cols-2 xl:grid-cols-1">
+                  <div className="grid max-h-[calc(100vh-210px)] auto-rows-min grid-cols-1 gap-1.5 overflow-y-auto p-1.5 pr-2">
                     {items.length === 0 ? (
-                      <div className="rounded-md border border-dashed border-[var(--border)] px-3 py-6 text-center text-xs text-[var(--gray-500)] sm:col-span-2 xl:col-span-1">
+                      <div className="rounded-md border border-dashed border-[var(--border)] px-3 py-4 text-center text-xs text-[var(--gray-500)]">
                         Sem requisições.
                       </div>
                     ) : (
@@ -287,9 +287,9 @@ export default function NursingCollectionsPage() {
                                 router.push(target)
                               }
                             }}
-                            className="flex aspect-square max-h-[240px] cursor-pointer flex-col gap-1.5 overflow-hidden rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-2.5 shadow-sm transition hover:border-[var(--primary-400)] hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-400)]"
+                            className="grid cursor-pointer grid-cols-1 gap-x-3 gap-y-1 overflow-hidden rounded-lg border border-white/25 bg-white/35 px-3 py-2 shadow-sm backdrop-blur-sm transition hover:border-[var(--primary-400)] hover:bg-white/45 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-400)] dark:border-white/10 dark:bg-white/5 xl:grid-cols-[minmax(0,1fr)_auto]"
                           >
-                            <div className="flex items-start justify-between gap-2">
+                            <div className="flex items-center justify-between gap-2 xl:col-start-1">
                               <span className="text-sm font-semibold text-[var(--primary-700)]">{row.custom_id}</span>
                               <div className="flex shrink-0 items-center gap-1">
                                 {warnings.length ? (
@@ -302,14 +302,16 @@ export default function NursingCollectionsPage() {
                                 ) : null}
                               </div>
                             </div>
-                            <div className="truncate text-xs text-[var(--text)]">
-                              {row.patient_name}
-                              {row.patient_age ? <span className="text-[var(--gray-500)]"> · {row.patient_age}</span> : null}
+                            <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-[var(--text)] xl:col-start-1">
+                              <span className="truncate font-medium">
+                                {row.patient_name}
+                                {row.patient_age ? <span className="text-[var(--gray-500)]"> · {row.patient_age}</span> : null}
+                              </span>
+                              <span className="text-[10px] text-[var(--gray-500)]">Validada: {formatDateTime(row.validated_at)}</span>
                             </div>
-                            <div className="text-[10px] text-[var(--gray-500)]">Validada: {formatDateTime(row.validated_at)}</div>
 
                             {warnings.length ? (
-                              <div className="flex flex-wrap gap-1">
+                              <div className="flex flex-wrap gap-1 xl:col-start-1">
                                 {warnings.map((warning) => (
                                   <span
                                     key={`${row.id}-warn-${warning.key}`}
@@ -323,8 +325,8 @@ export default function NursingCollectionsPage() {
                             ) : null}
 
                             {row.sample_details?.length ? (
-                              <div className="flex flex-1 flex-wrap content-start gap-1 overflow-hidden pt-0.5">
-                                {row.sample_details.map((sample) => (
+                              <div className="flex flex-wrap items-center gap-1 overflow-hidden pt-0.5 xl:col-start-1">
+                                {row.sample_details.slice(0, 3).map((sample) => (
                                   <span
                                     key={`${row.id}-sample-${sample.id}`}
                                     className="inline-flex h-fit items-center rounded border border-[var(--primary-300)] bg-[var(--primary-300)]/20 px-1.5 py-0.5 text-[10px] font-medium text-[var(--text)]"
@@ -336,12 +338,13 @@ export default function NursingCollectionsPage() {
                                       : ""}
                                   </span>
                                 ))}
+                                {row.sample_details.length > 3 ? (
+                                  <span className="text-[10px] font-semibold text-muted-foreground">+{row.sample_details.length - 3}</span>
+                                ) : null}
                               </div>
-                            ) : (
-                              <div className="flex-1" />
-                            )}
+                            ) : null}
 
-                            <div className="mt-auto flex flex-wrap items-center gap-2">
+                            <div className="flex flex-wrap items-center gap-1.5 pt-1 xl:col-start-2 xl:row-start-1 xl:row-span-4 xl:self-center xl:pt-0">
                               {column.action ? (
                                 <button
                                   type="button"
@@ -350,7 +353,7 @@ export default function NursingCollectionsPage() {
                                     fazerColheita(row)
                                   }}
                                   disabled={busyId === row.id}
-                                  className="inline-flex h-8 items-center justify-center rounded-md bg-[var(--primary-600)] px-3 text-xs font-semibold text-white shadow-sm transition-all duration-150 hover:bg-[var(--primary-700)] disabled:opacity-60"
+                                  className="inline-flex h-7 items-center justify-center rounded-md bg-[var(--primary-600)] px-2.5 text-[11px] font-semibold text-white shadow-sm transition-all duration-150 hover:bg-[var(--primary-700)] disabled:opacity-60"
                                 >
                                   {busyId === row.id ? "Registando..." : column.action}
                                 </button>
@@ -361,7 +364,7 @@ export default function NursingCollectionsPage() {
                                   event.stopPropagation()
                                   abrirEtiqueta(row.id).catch(() => setError("Falha ao gerar a etiqueta."))
                                 }}
-                                className="inline-flex h-8 items-center justify-center rounded-md border border-[var(--border)] bg-[var(--card)] px-3 text-xs font-medium text-[var(--gray-700)] transition hover:bg-[var(--gray-100)]"
+                                className="inline-flex h-7 items-center justify-center rounded-md border border-white/30 bg-white/30 px-2.5 text-[11px] font-medium text-[var(--gray-700)] transition hover:bg-white/50 dark:border-white/10 dark:bg-white/5"
                               >
                                 Etiqueta
                               </button>

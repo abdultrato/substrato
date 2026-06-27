@@ -16,6 +16,7 @@ import {
 
 import AppLayout from "@/components/layout/AppLayout";
 import { apiFetchList } from "@/lib/api";
+import { formatCount } from "@/lib/i18n/plural";
 import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh";
 import { requiredGroupsForResourceGroup } from "@/lib/resourcesAccess";
 
@@ -119,7 +120,7 @@ export default function LabTestsPage() {
               <div>
                 <h1 className="text-lg font-bold leading-tight text-foreground">Catálogo de exames</h1>
                 <p className="text-[11px] text-muted-foreground">
-                  {loading ? "Carregando…" : `${total} exame${total !== 1 ? "s" : ""} no catálogo`}
+                  {loading ? "Carregando…" : formatCount(total, { one: "exame no catálogo", other: "exames no catálogo" })}
                 </p>
               </div>
             </div>

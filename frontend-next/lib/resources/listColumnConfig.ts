@@ -157,10 +157,26 @@ const INVOICE_CONFIG: ListColumnConfig = {
   ]),
 }
 
+const NURSING_MONETARY_FIELDS_BY_ENDPOINT: Record<string, string[]> = {
+  "/nursing/procedure/": ["services_subtotal", "materials_subtotal", "total"],
+  "/nursing/procedure_catalog/": ["default_price", "preco", "preço", "preco_padrao", "preço_padrão"],
+  "/nursing/procedure_catalog_material/": ["default_unit_cost"],
+  "/nursing/procedure_item/": ["value_unitario", "unit_price", "valor_unitario", "valor_unitário"],
+  "/nursing/procedure_material/": ["value_unitario", "unit_cost", "valor_unitario", "valor_unitário"],
+  "/nursing/procedure_item_value/": ["unit_price", "preco_unitario", "preço_unitário", "valor_unitario", "valor_unitário"],
+  "/nursing/procedure_material_value/": ["unit_cost", "custo_unitario", "custo_unitário", "valor_unitario", "valor_unitário"],
+}
+
+function nursingMonetaryConfig(endpoint: string): ListColumnConfig | null {
+  const hidden = NURSING_MONETARY_FIELDS_BY_ENDPOINT[endpoint]
+  if (!hidden) return null
+  return { hidden: new Set(hidden), labels: {} }
+}
+
 /** Devolve a config de colunas para o endpoint, ou null se não houver. */
 export function getListColumnConfig(endpoint: string): ListColumnConfig | null {
   const normalized = normalize(endpoint)
   if (PATIENT_ENDPOINTS.has(normalized)) return PATIENT_CONFIG
   if (INVOICE_ENDPOINTS.has(normalized)) return INVOICE_CONFIG
-  return null
+  return nursingMonetaryConfig(normalized)
 }

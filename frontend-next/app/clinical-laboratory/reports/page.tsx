@@ -7,6 +7,7 @@ import { useCallback, useEffect, useMemo, useState } from "react"
 import AppLayout from "@/components/layout/AppLayout"
 import PageHeader from "@/components/ui/PageHeader"
 import { apiFetch, apiFetchList } from "@/lib/api"
+import { formatCount } from "@/lib/i18n/plural"
 import { getClinicalStatusLabel } from "@/lib/clinicalStatus"
 import useDebounce from "@/hooks/useDebounce"
 import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
@@ -212,7 +213,7 @@ function SearchPanel({
         </button>
 
         <span className="ml-auto self-center whitespace-nowrap text-[11px] text-[var(--gray-500)]">
-          {loading ? "A procurar…" : `${total} ${total === 1 ? "laudo" : "laudos"}`}
+          {loading ? "A procurar…" : formatCount(total, { one: "laudo", other: "laudos" })}
         </span>
       </div>
 

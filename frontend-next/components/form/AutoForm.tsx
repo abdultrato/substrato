@@ -1056,6 +1056,9 @@ export default function AutoForm({
 }: AutoFormProps) {
   const { tr } = useLanguage()
   const safeRefreshToken = useSafeDataRefreshSignal()
+  const modernNursingProcedureFlow = /^\/nursing\/procedure(?:\/[^/]+)?$/.test(
+    String(endpoint || "").split("?")[0].replace(/\/+$/, "")
+  )
   const effectiveMethod = useMemo<Method>(() => {
     if (buildFormSpec(endpoint, method)) return method
     if (method === "put" && buildFormSpec(endpoint, "patch")) return "patch"
@@ -1138,7 +1141,13 @@ export default function AutoForm({
   const relationSelectedValueKey = useMemo(
     () =>
       relationFieldTargets
-        .map(({ field }) => `${field.name}:${relationIdFromValue(values[field.name]) || ""}`)
+        .map(({ field }) => {
+          const value = values[field.name]
+          const selected = Array.isArray(value)
+            ? value.map((item) => relationIdFromValue(item)).filter(Boolean).join(",")
+            : relationIdFromValue(value) || ""
+          return `${field.name}:${selected}`
+        })
         .join("|"),
     [relationFieldTargets, values]
   )
@@ -1173,9 +1182,39 @@ export default function AutoForm({
             options = []
           }
 
+          const currentRaw = values[field.name]
+          if (Array.isArray(currentRaw)) {
+            const selectedIds = currentRaw
+              .map((item) => relationIdFromValue(item))
+              .filter((item): item is string => Boolean(item))
+            const missingIds = selectedIds.filter(
+              (selectedId) => !options.some((option) => option.value === selectedId)
+            )
+            if (missingIds.length) {
+              const selectedOptions = await Promise.all(
+                missingIds.map(async (selectedId) => {
+                  try {
+                    const row = await apiFetch<Record<string, any>>(
+                      relationDetailEndpoint(target, selectedId),
+                      {
+                        clientCache: safeRefreshToken === 0,
+                        clientCacheTtlMs: 60000,
+                      }
+                    )
+                    return relationOptionFromRow(row, target)
+                  } catch {
+                    return null
+                  }
+                })
+              )
+              for (const selectedOption of selectedOptions) {
+                options = mergeSelectedRelationOption(options, selectedOption)
+              }
+            }
+          }
+
           const currentValue = relationIdFromValue(values[field.name])
           if (currentValue && !options.some((option) => option.value === currentValue)) {
-            const currentRaw = values[field.name]
             let selectedOption =
               currentRaw && typeof currentRaw === "object" && !Array.isArray(currentRaw)
                 ? relationOptionFromRow(currentRaw, target)
@@ -1483,7 +1522,7 @@ export default function AutoForm({
   const submitDisabled = submitting
 
   return (
-    <div className="mx-auto w-full max-w-3xl space-y-3">
+    <div className={`mx-auto w-full max-w-3xl ${modernNursingProcedureFlow ? "space-y-2" : "space-y-3"}`}>
       {message && (
         <div className="rounded-lg border border-[var(--border)] bg-[var(--gray-100)] px-3 py-1.5 text-sm text-[var(--text)]">
           {message}
@@ -1491,12 +1530,23 @@ export default function AutoForm({
       )}
 
       {etapas?.length ? (
-        <Etapas etapas={etapas.map((e) => ({ titulo: e.titulo, descricao: e.descricao }))} etapaAtual={etapaAtual} onChange={setEtapaAtual} />
+        <Etapas
+          etapas={etapas.map((e) => ({ titulo: e.titulo, descricao: e.descricao }))}
+          etapaAtual={etapaAtual}
+          onChange={setEtapaAtual}
+          variant={modernNursingProcedureFlow ? "modern" : "default"}
+        />
       ) : null}
 
-      <div className="rounded-lg border border-[var(--border)] bg-[var(--card)] p-4 shadow-sm">
+      <div className={modernNursingProcedureFlow
+        ? "overflow-hidden rounded-xl border border-white/25 bg-white/20 p-3 shadow-lg shadow-slate-900/5 backdrop-blur-md [&_input]:!border-white/35 [&_input]:!bg-white/35 [&_select]:!border-white/35 [&_select]:!bg-white/35 [&_textarea]:!border-white/35 [&_textarea]:!bg-white/35 dark:border-white/10 dark:bg-white/[0.04] dark:[&_input]:!border-white/10 dark:[&_input]:!bg-white/[0.05] dark:[&_select]:!border-white/10 dark:[&_select]:!bg-white/[0.05] dark:[&_textarea]:!border-white/10 dark:[&_textarea]:!bg-white/[0.05]"
+        : "rounded-lg border border-[var(--border)] bg-[var(--card)] p-4 shadow-sm"
+      }>
         {requiredFields.length ? (
-          <div className="mb-3 flex flex-wrap items-center justify-between gap-2 rounded-md border border-[var(--border)] bg-[var(--gray-50)] px-3 py-2 text-xs text-[var(--gray-700)]">
+          <div className={modernNursingProcedureFlow
+            ? "mb-2 flex flex-wrap items-center justify-between gap-1.5 rounded-lg border border-violet-200/70 bg-violet-50/60 px-2.5 py-1.5 text-xs text-violet-800 dark:border-violet-700/30 dark:bg-violet-900/15 dark:text-violet-300"
+            : "mb-3 flex flex-wrap items-center justify-between gap-2 rounded-md border border-[var(--border)] bg-[var(--gray-50)] px-3 py-2 text-xs text-[var(--gray-700)]"
+          }>
             <span className="font-semibold">
               Obrigatórios: {requiredFields.length}
             </span>
@@ -1509,12 +1559,22 @@ export default function AutoForm({
         ) : null}
 
         {etapas?.length ? (
-          <div className="mb-3 text-sm font-semibold text-[var(--text)]">
-            {etapas[etapaAtual]?.titulo}
+          <div className={modernNursingProcedureFlow ? "mb-3 border-b border-border/50 pb-2" : "mb-3 text-sm font-semibold text-[var(--text)]"}>
+            {modernNursingProcedureFlow ? (
+              <>
+                <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-violet-600 dark:text-violet-400">
+                  Etapa {etapaAtual + 1}
+                </p>
+                <h2 className="mt-0.5 text-sm font-semibold text-foreground">{etapas[etapaAtual]?.titulo}</h2>
+                {etapas[etapaAtual]?.descricao ? (
+                  <p className="mt-0.5 text-[11px] text-muted-foreground">{etapas[etapaAtual]?.descricao}</p>
+                ) : null}
+              </>
+            ) : etapas[etapaAtual]?.titulo}
           </div>
         ) : null}
 
-        <div className="grid gap-3 md:grid-cols-2">
+        <div className={`grid md:grid-cols-2 ${modernNursingProcedureFlow ? "gap-2" : "gap-3"}`}>
           {fieldsToRender.map((field) => {
             const label = config?.labels?.[field.name] || field.label
             const hint = config?.hints?.[field.name]
@@ -1525,7 +1585,7 @@ export default function AutoForm({
               <label
                 key={field.name}
                 data-form-field={field.name}
-                className="space-y-1 text-sm text-[var(--gray-700)]"
+                className={`${modernNursingProcedureFlow ? "space-y-0.5" : "space-y-1"} text-sm text-[var(--gray-700)]`}
               >
                 <div className="flex items-center justify-between">
                   <span className="font-medium text-[var(--gray-700)]">
@@ -1559,13 +1619,11 @@ export default function AutoForm({
             )
           })}
         </div>
-      </div>
-      <div>
-        {etapas?.length ? (
-          <div className="flex flex-wrap items-center justify-between gap-2">
+        {modernNursingProcedureFlow && etapas?.length ? (
+          <div className="mt-3 flex flex-nowrap items-center justify-between gap-2 border-t border-white/30 pt-3 dark:border-white/10">
             <button
               type="button"
-              className="inline-flex h-11 w-full items-center justify-center rounded-md border border-[var(--border)] bg-[var(--card)] px-3 text-sm font-semibold leading-tight text-[var(--gray-700)] shadow-sm transition-all duration-150 hover:border-[var(--primary-300)] hover:bg-[var(--gray-100)] hover:text-[var(--text)] disabled:opacity-60 sm:w-auto"
+              className="inline-flex h-9 items-center justify-center rounded-lg border border-white/40 bg-white/25 px-4 text-xs font-semibold text-foreground shadow-sm backdrop-blur-md transition hover:bg-white/45 disabled:opacity-40 dark:border-white/10 dark:bg-white/5"
               onClick={() => setEtapaAtual((prev) => Math.max(0, prev - 1))}
               disabled={submitting || etapaAtual === 0}
             >
@@ -1575,7 +1633,35 @@ export default function AutoForm({
               type="button"
               onClick={handleSubmit}
               disabled={submitDisabled}
-              className="inline-flex h-11 w-full items-center justify-center rounded-md bg-[var(--primary-600)] px-3 text-sm font-semibold leading-tight text-white shadow-sm transition-all duration-150 hover:bg-[var(--primary-700)] hover:shadow-md disabled:opacity-60 sm:w-auto"
+              className="inline-flex h-9 items-center justify-center rounded-lg bg-gradient-to-r from-violet-600 to-indigo-600 px-5 text-xs font-semibold text-white shadow-md shadow-violet-500/25 transition hover:from-violet-700 hover:to-indigo-700 disabled:opacity-60"
+            >
+              {submitting ? "Salvando..." : etapaAtual < etapas.length - 1 ? "Seguinte" : submitLabel}
+            </button>
+          </div>
+        ) : null}
+      </div>
+      {!modernNursingProcedureFlow ? <div>
+        {etapas?.length ? (
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <button
+              type="button"
+              className={modernNursingProcedureFlow
+                ? "inline-flex h-9 w-full items-center justify-center rounded-lg border border-border bg-card px-4 text-xs font-semibold text-foreground shadow-sm transition hover:bg-muted disabled:opacity-40 sm:w-auto"
+                : "inline-flex h-11 w-full items-center justify-center rounded-md border border-[var(--border)] bg-[var(--card)] px-3 text-sm font-semibold leading-tight text-[var(--gray-700)] shadow-sm transition-all duration-150 hover:border-[var(--primary-300)] hover:bg-[var(--gray-100)] hover:text-[var(--text)] disabled:opacity-60 sm:w-auto"
+              }
+              onClick={() => setEtapaAtual((prev) => Math.max(0, prev - 1))}
+              disabled={submitting || etapaAtual === 0}
+            >
+              Anterior
+            </button>
+            <button
+              type="button"
+              onClick={handleSubmit}
+              disabled={submitDisabled}
+              className={modernNursingProcedureFlow
+                ? "inline-flex h-9 w-full items-center justify-center rounded-lg bg-gradient-to-r from-violet-600 to-indigo-600 px-5 text-xs font-semibold text-white shadow-md shadow-violet-500/25 transition hover:from-violet-700 hover:to-indigo-700 disabled:opacity-60 sm:w-auto"
+                : "inline-flex h-11 w-full items-center justify-center rounded-md bg-[var(--primary-600)] px-3 text-sm font-semibold leading-tight text-white shadow-sm transition-all duration-150 hover:bg-[var(--primary-700)] hover:shadow-md disabled:opacity-60 sm:w-auto"
+              }
             >
               {submitting ? "Salvando..." : etapaAtual < etapas.length - 1 ? "Seguinte" : submitLabel}
             </button>
@@ -1590,7 +1676,7 @@ export default function AutoForm({
             {submitting ? "Salvando..." : submitLabel}
           </button>
         )}
-      </div>
+      </div> : null}
     </div>
   )
 }

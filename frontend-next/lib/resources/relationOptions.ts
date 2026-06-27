@@ -201,8 +201,8 @@ const RELATION_TARGETS: Record<string, RelationTarget> = {
 const ENDPOINT_FIELD_OVERRIDES: Record<string, Record<string, RelationTarget>> = {
   "/nursing/procedure/": {
     professional: { endpoint: "/identity/user/", labelFields: USER_LABEL_FIELDS },
-    selected_catalogs: { endpoint: "/nursing/procedure_catalog/", labelFields: ["procedure_code", "name", ...DEFAULT_LABEL_FIELDS] },
-    selected_materials: { endpoint: "/pharmacy/product/", labelFields: ["name", "custom_id", ...DEFAULT_LABEL_FIELDS] },
+    selected_catalogs: { endpoint: "/nursing/procedure_catalog/", labelFields: ["name", "nome"] },
+    selected_materials: { endpoint: "/pharmacy/product/", labelFields: ["name", "nome"] },
   },
   "/clinical_laboratory/critical_notification/": {
     result: { endpoint: "/clinical_laboratory/result/", labelFields: ["custom_id", "value", "unit", ...DEFAULT_LABEL_FIELDS] },
@@ -563,7 +563,8 @@ function normalizeFieldName(name: string): string {
 }
 
 function normalizeEndpoint(endpoint: string): string {
-  return canonicalCollectionPath(endpoint)
+  const canonical = canonicalCollectionPath(endpoint)
+  return canonical.replace(/\/\d+\/$/, "/")
 }
 
 export function relationTargetForField(fieldName: string, currentEndpoint = ""): RelationTarget | null {

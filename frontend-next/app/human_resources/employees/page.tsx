@@ -7,6 +7,7 @@ import AppLayout from "@/components/layout/AppLayout"
 import PageHeader from "@/components/ui/PageHeader"
 import Pagination from "@/components/ui/Pagination"
 import { apiFetchList, extractResults } from "@/lib/api"
+import { formatCount } from "@/lib/i18n/plural"
 import { GROUPS } from "@/lib/rbac"
 import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 
@@ -140,7 +141,7 @@ export default function EmployeesListPage() {
       <div className="space-y-5">
         <PageHeader
           title="Funcionários"
-          subtitle={`${total} funcionário${total !== 1 ? "s" : ""} registado${total !== 1 ? "s" : ""}`}
+          subtitle={formatCount(total, { one: "funcionário registado", other: "funcionários registados" })}
           actions={
             <Link
               href="/human_resources/employees/new"

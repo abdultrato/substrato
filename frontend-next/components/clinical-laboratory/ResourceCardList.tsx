@@ -6,6 +6,7 @@ import { Loader2, Plus, Search, type LucideIcon } from "lucide-react";
 
 import AppLayout from "@/components/layout/AppLayout";
 import { apiFetchList } from "@/lib/api";
+import { countForm } from "@/lib/i18n/plural";
 import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh";
 import { requiredGroupsForResourceGroup } from "@/lib/resourcesAccess";
 
@@ -165,7 +166,7 @@ export default function ResourceCardList<T extends { id: number }>({
               <div>
                 <h1 className="text-lg font-bold leading-tight text-foreground">{title}</h1>
                 <p className="text-[11px] text-muted-foreground">
-                  {loading ? "Carregando…" : `${total} ${total !== 1 ? plural : singular}`}
+                  {loading ? "Carregando…" : `${total.toLocaleString("pt-PT")} ${countForm(total, { one: singular, other: plural })}`}
                 </p>
               </div>
             </div>

@@ -23,6 +23,7 @@ import {
 
 import AppLayout from "@/components/layout/AppLayout";
 import { apiFetchList } from "@/lib/api";
+import { formatCount } from "@/lib/i18n/plural";
 import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh";
 import { GROUPS } from "@/lib/rbac";
 import { useLanguage } from "@/hooks/useLanguage";
@@ -356,7 +357,7 @@ export default function NursingWardPage() {
                   Enfermarias
                 </h1>
                 <p className="text-[11px] text-muted-foreground">
-                  {loading ? "Carregando…" : `${total} enfermaria${total !== 1 ? "s" : ""} cadastrada${total !== 1 ? "s" : ""}`}
+                  {loading ? "Carregando…" : formatCount(total, { one: "enfermaria cadastrada", other: "enfermarias cadastradas" })}
                 </p>
               </div>
             </div>

@@ -35,6 +35,16 @@ describe("relation options", () => {
     expect(relationTargetForField("product", "/pharmacy/product/")).toBeNull()
   })
 
+  it("resolves nursing procedure detail relations using name-only labels", () => {
+    const catalogs = relationTargetForField("selected_catalogs", "/nursing/procedure/221/")
+    const materials = relationTargetForField("selected_materials", "/nursing/procedure/221/")
+
+    expect(catalogs).toEqual({ endpoint: "/nursing/procedure_catalog/", labelFields: ["name", "nome"] })
+    expect(materials).toEqual({ endpoint: "/pharmacy/product/", labelFields: ["name", "nome"] })
+    expect(relationOptionFromRow({ id: 208, name: "Compressa esterilizada", custom_id: "PROD-208" }, materials!))
+      .toEqual({ value: "208", label: "Compressa esterilizada" })
+  })
+
   it("builds readable labels without exposing integer IDs when descriptive fields exist", () => {
     expect(relationLabelForRow({ id: 7, name: "Paracetamol", custom_id: "MED-7" }, ["name", "custom_id"])).toBe(
       "Paracetamol - MED-7"

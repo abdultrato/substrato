@@ -4,7 +4,7 @@ import Link from "next/link"
 import { useMemo, useState, type ReactNode } from "react"
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation"
 import { useQuery } from "@tanstack/react-query"
-import { ClipboardList } from "lucide-react"
+import { ArrowLeft, ClipboardList, HeartPulse } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
 import AutoForm from "@/components/form/AutoForm"
@@ -218,10 +218,12 @@ export function GeneratedResourceListPage({
 export function GeneratedResourceCreatePage({
   endpoint,
   initialValues,
+  presentation = "default",
 }: {
   endpoint: string
   /** Valores iniciais (ex.: pré-selecionar o resultado ao criar uma validação em contexto). */
   initialValues?: Record<string, any>
+  presentation?: "default" | "nursing-procedure"
 }) {
   useAuthGuard()
   const { t, tr, language } = useLanguage()
@@ -232,6 +234,7 @@ export function GeneratedResourceCreatePage({
   const canCreate = hasOpenApiMethod(ctx.normalizedEndpoint, "post")
   const resourceLabel = tr(ctx.resourceLabel)
   const createActionLabel = createResourceActionLabel(resourceLabel, language)
+  const isNursingProcedure = presentation === "nursing-procedure"
 
   // Glass styles copied from procedure detail page
   const GLASS =
@@ -273,34 +276,61 @@ export function GeneratedResourceCreatePage({
 
   return (
     <AppLayout requiredGroups={ctx.requiredGroups}>
-      <div className="mx-auto w-full max-w-6xl space-y-2.5 px-1">
+      <div className={`mx-auto w-full px-1 ${isNursingProcedure ? "max-w-4xl space-y-2" : "max-w-6xl space-y-2.5"}`}>
         {/* Header */}
-        <section className={`relative overflow-hidden ${GLASS} h-[80px]`}>
-          <span className="absolute left-0 top-0 h-full w-1 bg-[var(--primary-500)]" />
-          <div className="flex h-full items-center justify-between gap-3 px-4 py-3 pl-5">
-            <div className="min-w-0">
-              <div className="flex items-center gap-1.5 text-[10px] text-[var(--gray-500)]">
-                <Link href={basePath} className="transition-colors hover:text-foreground">{resourceLabel + "s"}</Link>
-                <span>/</span>
-                <span className="font-semibold text-foreground">{createActionLabel}</span>
+        <section className={`relative overflow-hidden ${GLASS} ${isNursingProcedure ? "min-h-[64px]" : "h-[80px]"}`}>
+          {isNursingProcedure ? (
+            <>
+              <div className="pointer-events-none absolute -right-8 -top-16 h-36 w-36 rounded-full bg-violet-500/10 blur-2xl" />
+              <div className="relative flex min-h-[64px] items-center justify-between gap-2 px-3 py-2">
+                <div className="flex min-w-0 items-center gap-2.5">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-violet-600 to-indigo-600 text-white shadow-md shadow-violet-500/20">
+                    <HeartPulse size={17} />
+                  </span>
+                  <div className="min-w-0">
+                    <h1 className="truncate text-lg font-bold leading-tight text-foreground">Novo procedimento</h1>
+                    <p className="text-[11px] text-muted-foreground">Registo clínico de enfermagem em etapas</p>
+                  </div>
+                </div>
+                <Link
+                  href={basePath}
+                  className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border border-border bg-card/80 px-3 text-xs font-medium text-foreground transition hover:bg-muted"
+                >
+                  <ArrowLeft size={13} /> {t("Voltar", "Back")}
+                </Link>
               </div>
-            </div>
-            <div className="flex min-w-0 flex-1 items-center justify-end gap-2 overflow-x-auto">
-              <Link
-                href={basePath}
-                className="inline-flex h-9 items-center rounded-md border border-[var(--border)] bg-[var(--card)] px-3 text-sm font-medium text-[var(--gray-700)] shadow-sm transition-all duration-150 hover:border-[var(--primary-300)] hover:bg-[var(--gray-100)] hover:text-[var(--text)]"
-              >
-                {t("Voltar", "Back")}
-              </Link>
-            </div>
-          </div>
-            </section>
+            </>
+          ) : (
+            <>
+              <span className="absolute left-0 top-0 h-full w-1 bg-[var(--primary-500)]" />
+              <div className="flex h-full items-center justify-between gap-3 px-4 py-3 pl-5">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1.5 text-[10px] text-[var(--gray-500)]">
+                    <Link href={basePath} className="transition-colors hover:text-foreground">{resourceLabel + "s"}</Link>
+                    <span>/</span>
+                    <span className="font-semibold text-foreground">{createActionLabel}</span>
+                  </div>
+                </div>
+                <div className="flex min-w-0 flex-1 items-center justify-end gap-2 overflow-x-auto">
+                  <Link
+                    href={basePath}
+                    className="inline-flex h-9 items-center rounded-md border border-[var(--border)] bg-[var(--card)] px-3 text-sm font-medium text-[var(--gray-700)] shadow-sm transition-all duration-150 hover:border-[var(--primary-300)] hover:bg-[var(--gray-100)] hover:text-[var(--text)]"
+                  >
+                    {t("Voltar", "Back")}
+                  </Link>
+                </div>
+              </div>
+            </>
+          )}
+        </section>
         {/* Form card */}
-        <div className={GLASS}>
-          <div className="px-4 py-3">
-            <h2 className="text-lg font-semibold text-foreground mb-2">
-              {t("Dados do", "Data for")} {resourceLabel}
-            </h2>
+        <div className={isNursingProcedure ? "" : GLASS}>
+          <div className={isNursingProcedure ? "" : "px-4 py-3"}>
+            {!isNursingProcedure ? (
+              <h2 className="mb-2 text-lg font-semibold text-foreground">
+                {t("Dados do", "Data for")} {resourceLabel}
+              </h2>
+            ) : null}
             <AutoForm
               endpoint={ctx.normalizedEndpoint}
               method="post"

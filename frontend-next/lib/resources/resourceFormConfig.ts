@@ -3219,6 +3219,12 @@ function nursingProcedureMaterialConfig(): ResourceFormConfig {
   }
 }
 
+function nursingNonFinancialConfig(...monetaryFields: string[]): ResourceFormConfig {
+  return {
+    esconderCampos: [...NURSING_INTERNAL_FIELDS, ...monetaryFields],
+  }
+}
+
 // ─── Human Resources ────────────────────────────────────────────────────────
 
 const HR_INTERNAL_FIELDS = [
@@ -4910,6 +4916,21 @@ export function getResourceFormConfig(
     }
     if (r === "procedure_material" || ep === "/nursing/procedure_material/") {
       return nursingProcedureMaterialConfig()
+    }
+    if (r === "procedure_catalog" || ep === "/nursing/procedure_catalog/") {
+      return nursingNonFinancialConfig("default_price", "preco", "preço", "preco_padrao", "preço_padrão")
+    }
+    if (r === "procedure_catalog_material" || ep === "/nursing/procedure_catalog_material/") {
+      return nursingNonFinancialConfig("default_unit_cost")
+    }
+    if (r === "procedure_item" || ep === "/nursing/procedure_item/") {
+      return nursingNonFinancialConfig("value_unitario", "unit_price", "valor_unitario", "valor_unitário")
+    }
+    if (r === "procedure_item_value" || ep === "/nursing/procedure_item_value/") {
+      return nursingNonFinancialConfig("unit_price", "preco_unitario", "preço_unitário", "valor_unitario", "valor_unitário")
+    }
+    if (r === "procedure_material_value" || ep === "/nursing/procedure_material_value/") {
+      return nursingNonFinancialConfig("unit_cost", "custo_unitario", "custo_unitário", "valor_unitario", "valor_unitário")
     }
     return null
   }

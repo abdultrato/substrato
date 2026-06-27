@@ -13,6 +13,7 @@ import {
 
 import AppLayout from "@/components/layout/AppLayout";
 import { apiFetchList } from "@/lib/api";
+import { formatCount } from "@/lib/i18n/plural";
 import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh";
 import { requiredGroupsForResourceGroup } from "@/lib/resourcesAccess";
 
@@ -108,7 +109,7 @@ export default function LabPanelsPage() {
               <div>
                 <h1 className="text-lg font-bold leading-tight text-foreground">Painéis de exames</h1>
                 <p className="text-[11px] text-muted-foreground">
-                  {loading ? "Carregando…" : `${total} painel${total !== 1 ? "is" : ""} no catálogo`}
+                  {loading ? "Carregando…" : formatCount(total, { one: "painel no catálogo", other: "painéis no catálogo" })}
                 </p>
               </div>
             </div>

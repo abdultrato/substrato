@@ -121,6 +121,23 @@ const HIDDEN_DETAIL_FIELDS_BY_ENDPOINT: Record<string, Set<string>> = {
     // IDs crus de amostras (sample_details já mostra os detalhes)
     "samples",
   ]),
+  "/nursing/procedure/": new Set(["services_subtotal", "materials_subtotal", "total"]),
+  "/nursing/procedure_catalog/": new Set([
+    "default_price", "preco", "preço", "preco_padrao", "preço_padrão",
+  ]),
+  "/nursing/procedure_catalog_material/": new Set(["default_unit_cost"]),
+  "/nursing/procedure_item/": new Set([
+    "value_unitario", "unit_price", "valor_unitario", "valor_unitário",
+  ]),
+  "/nursing/procedure_material/": new Set([
+    "value_unitario", "unit_cost", "valor_unitario", "valor_unitário",
+  ]),
+  "/nursing/procedure_item_value/": new Set([
+    "unit_price", "preco_unitario", "preço_unitário", "valor_unitario", "valor_unitário",
+  ]),
+  "/nursing/procedure_material_value/": new Set([
+    "unit_cost", "custo_unitario", "custo_unitário", "valor_unitario", "valor_unitário",
+  ]),
 }
 
 const RECEPTION_CHECKIN_VISIBLE_INTERNAL_FIELDS = new Set([
