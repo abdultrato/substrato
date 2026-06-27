@@ -123,18 +123,6 @@ function requestItemsLabel(row: RequestRow): string {
   return `${items.length} ${items.length === 1 ? "exame" : "exames"}`
 }
 
-function formatPriority(status: string | undefined): string {
-  if (!status) return "Sem prioridade"
-  switch (status.toUpperCase()) {
-    case "BAIXA": return "Baixa prioridade"
-    case "NORMAL": return "Prioridade normal"
-    case "ALTA": return "Alta prioridade"
-    case "URGENTE": return "Urgente"
-    case "EMERGENCIA": return "Emergência"
-    default: return status;
-  }
-}
-
 type StatusBadge = { label: string; color: string }
 
 function statusBadge(row: RequestRow, bucket: BucketKey): StatusBadge {
@@ -157,37 +145,24 @@ function statusBadge(row: RequestRow, bucket: BucketKey): StatusBadge {
   return { label: "Aguardando coleta", color: "text-sky-700 border-sky-200 bg-sky-50/60" }
 }
 
-function RequestCardInProcedureFormat({ row }: { row: RequestRow }) {
+function RequestCard({ row, bucket }: { row: RequestRow; bucket: BucketKey }) {
   const [showReason, setShowReason] = useState(false)
   const rejected = rejectedItems(row)
-  const code = row.custom_id || `REQ ${row.id}`
-  const patientName = row.patient_name || "Paciente sem nome"
-  const age = row.patient_age ? `${row.patient_age} anos` : "Idade não informada"
-
-  // Count collected items
-  const items = Array.isArray(row.items) ? row.items : []
-  const collectedCount = items.filter(item =>
-    isCollectedProgress(normalizeText(item.sample_status))
-  ).length
-  const totalItems = items.length
-
   return (
     <Link
       href={`/nursing/requests/${row.id}`}
-      className="group relative flex flex-col overflow-hidden rounded-xl border border-white/20 bg-white/25 shadow-md backdrop-blur-sm transition hover:border-violet-300/50 hover:shadow-md dark:bg-white/5 dark:border-white/10 dark:hover:border-violet-500/30"
+      className="group flex flex-col justify-between border border-slate-200 bg-transparent p-2.5 transition-colors hover:border-primary/30 hover:bg-white/30 [font-size:65%]"
     >
-      <span className="absolute left-0 top-0 h-full w-1 bg-sky-400" />
-
-      <div className="flex flex-1 flex-col gap-2 px-4 py-3 pl-5">
-        <div className="flex items-start justify-between gap-2">
+      <div className="space-y-3">
+        <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <p className="text-[10px] font-mono text-muted-foreground">{code}</p>
-            <p className="text-sm font-semibold leading-snug text-foreground">{patientName}</p>
-            <p className="text-xs text-muted-foreground">{age}</p>
-            {/* Clinical status as secondary info */}
-            <p className="text-xs text-muted-foreground">
-              {formatPriority(row.clinical_status)}
-            </p>
+            <div className="truncate text-xs font-semibold text-slate-900">
+              {row.custom_id || `REQ ${row.id}`}
+            </div>
+            <div className="mt-1 text-sm text-slate-700">{row.patient_name || "Paciente sem nome"}</div>
+            {row.patient_age ? (
+              <div className="mt-1 text-xs text-slate-500">{row.patient_age}</div>
+            ) : null}
           </div>
           <ChevronRight
             size={16}
@@ -195,20 +170,17 @@ function RequestCardInProcedureFormat({ row }: { row: RequestRow }) {
           />
         </div>
 
-        {/* Items info */}
-        <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
-          <span>
-            {totalItems} {totalItems === 1 ? "exame" : "exames"}
+        <div className="flex flex-wrap gap-2">
+          <span className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-medium text-slate-700">
+            {getClinicalStatusLabel(row.clinical_status, row.clinical_status_display) || "Sem prioridade"}
           </span>
-          <span>
-            {collectedCount} coletado{collectedCount === 1 ? "" : "s"}
-          </span>
-          <span>
-            {totalItems - collectedCount} pendente{totalItems - collectedCount === 1 ? "" : "s"}
+          <span className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-medium text-slate-700">
+            {requestItemsLabel(row)}
           </span>
         </div>
+      </div>
 
-        {/* Rejected items notice */}
+      <div className="space-y-1 pt-2">
         {rejected.length > 0 ? (
           <div>
             <span
@@ -217,19 +189,19 @@ function RequestCardInProcedureFormat({ row }: { row: RequestRow }) {
               onClick={(event) => {
                 event.preventDefault()
                 event.stopPropagation()
-                setShowReason(!showReason)
+                setShowReason((value) => !value)
               }}
               onKeyDown={(event) => {
                 if (event.key === "Enter" || event.key === " ") {
                   event.preventDefault()
                   event.stopPropagation()
-                  setShowReason(!showReason)
+                  setShowReason((value) => !value)
                 }
               }}
               className="inline-flex cursor-pointer items-center gap-1 rounded border border-rose-200 bg-rose-50 px-1.5 py-0.5 text-[9px] font-semibold text-rose-700 transition-colors hover:bg-rose-100"
             >
               <span className="flex h-3 w-3 shrink-0 items-center justify-center rounded-full border border-current text-[7px] font-bold leading-none">i</span>
-              {rejected.length} amostra{rejected.length === 1 ? "" : "s"} rejeitada{rejected.length === 1 ? "" : "s"}
+              Amostra Rejeitada pelo laboratório
             </span>
             {showReason ? (
               <div className="mt-1 space-y-0.5 rounded border border-rose-200 bg-rose-50/70 px-1.5 py-1 text-[9px] leading-snug text-rose-800">
@@ -245,18 +217,15 @@ function RequestCardInProcedureFormat({ row }: { row: RequestRow }) {
           </div>
         ) : null}
 
-        {/* Validation status */}
-        {!row.validated_at ? (
-          <span className="inline-flex items-center gap-1 rounded border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-[9px] font-medium text-amber-800">
-            <span className="flex h-3 w-3 shrink-0 items-center justify-center rounded-full border border-current text-[7px] font-bold leading-none">i</span>
-            Aguardando validação
-          </span>
-        ) : (
-          <span className="inline-flex items-center gap-1 rounded border border-emerald-200 bg-emerald-50 px-1.5 py-0.5 text-[9px] font-medium text-emerald-800">
-            <span className="flex h-3 w-3 shrink-0 items-center justify-center rounded-full border border-current text-[7px] font-bold leading-none">i</span>
-            Validado
-          </span>
-        )}
+        {(() => {
+          const { label, color } = statusBadge(row, bucket)
+          return (
+            <span className={`inline-flex items-center gap-1 rounded border px-1.5 py-0.5 text-[9px] font-medium ${color}`}>
+              <span className="flex h-3 w-3 shrink-0 items-center justify-center rounded-full border border-current text-[7px] font-bold leading-none">i</span>
+              {label}
+            </span>
+          )
+        })()}
       </div>
     </Link>
   )
@@ -315,10 +284,7 @@ export default function NursingRequestsPage() {
     }
 
     for (const row of rows) {
-      // Only process requests that have items (exams/procedures)
-      if (Array.isArray(row.items) && row.items.length > 0) {
-        base[classifyRequest(row)].push(row)
-      }
+      base[classifyRequest(row)].push(row)
     }
 
     return base
@@ -372,7 +338,7 @@ export default function NursingRequestsPage() {
                       </div>
                     ) : (
                       items.map((row) => (
-                        <RequestCardInProcedureFormat key={row.id} row={row} />
+                        <RequestCard key={row.id} row={row} bucket={bucket.key} />
                       ))
                     )}
                   </div>

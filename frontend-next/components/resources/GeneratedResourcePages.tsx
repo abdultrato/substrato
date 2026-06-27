@@ -233,22 +233,39 @@ export function GeneratedResourceCreatePage({
   const resourceLabel = tr(ctx.resourceLabel)
   const createActionLabel = createResourceActionLabel(resourceLabel, language)
 
+  // Glass styles copied from procedure detail page
+  const GLASS =
+    "rounded-xl border border-white/20 bg-white/30 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]"
+  const GLASS_SOFT =
+    "rounded-lg border border-white/20 bg-white/25 backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]"
+
   if (!canCreate) {
     return (
       <AppLayout requiredGroups={ctx.requiredGroups}>
-        <div className="mx-auto w-full max-w-5xl space-y-4">
-          <PageHeader
-            title={t("Criação indisponível", "Creation unavailable")}
-            subtitle={t("Este recurso não expõe criação no contrato atual da API.", "This resource does not expose creation in the current API contract.")}
-            actions={
-              <Link
-                href={basePath}
-                className="inline-flex h-9 items-center rounded-md border border-[var(--border)] bg-[var(--card)] px-3 text-sm font-medium text-[var(--gray-700)] shadow-sm transition-all duration-150 hover:border-[var(--primary-300)] hover:bg-[var(--gray-100)] hover:text-[var(--text)]"
-              >
-                {t("Voltar", "Back")}
-              </Link>
-            }
-          />
+        <div className="mx-auto w-full max-w-6xl space-y-2.5 px-1">
+          <section className={`relative overflow-hidden ${GLASS} h-[80px]`}>
+            <span className="absolute left-0 top-0 h-full w-1 bg-[var(--primary-500)]" />
+            <div className="flex h-full items-center justify-between gap-3 px-4 py-3 pl-5">
+              <div className="min-w-0">
+                <div className="flex items-center gap-1.5 text-[10px] text-[var(--gray-500)]">
+                  <Link href={basePath} className="transition-colors hover:text-foreground">{resourceLabel + "s"}</Link>
+                  <span>/</span>
+                  <span className="font-semibold text-foreground">{t("Criação indisponível", "Creation unavailable")}</span>
+                </div>
+              </div>
+              <div className="flex min-w-0 flex-1 items-center justify-end gap-2 overflow-x-auto">
+                <Link
+                  href={basePath}
+                  className="inline-flex h-9 items-center rounded-md border border-[var(--border)] bg-[var(--card)] px-3 text-sm font-medium text-[var(--gray-700)] shadow-sm transition-all duration-150 hover:border-[var(--primary-300)] hover:bg-[var(--gray-100)] hover:text-[var(--text)]"
+                >
+                  {t("Voltar", "Back")}
+                </Link>
+              </div>
+            </div>
+          </section>
+          <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+            {t("Este recurso não expõe criação no contrato atual da API.", "This resource does not expose creation in the current API contract.")}
+          </div>
         </div>
       </AppLayout>
     )
@@ -256,34 +273,51 @@ export function GeneratedResourceCreatePage({
 
   return (
     <AppLayout requiredGroups={ctx.requiredGroups}>
-      <div className="mx-auto w-full max-w-5xl space-y-4">
-        <PageHeader
-          title={createActionLabel}
-          actions={
-            <Link
-              href={basePath}
-              className="inline-flex h-9 items-center rounded-md border border-[var(--border)] bg-[var(--card)] px-3 text-sm font-medium text-[var(--gray-700)] shadow-sm transition-all duration-150 hover:border-[var(--primary-300)] hover:bg-[var(--gray-100)] hover:text-[var(--text)]"
-            >
-              {t("Voltar", "Back")}
-            </Link>
-          }
-        />
-
-        <AutoForm
-          endpoint={ctx.normalizedEndpoint}
-          method="post"
-          initialValues={initialValues}
-          submitLabel={createActionLabel}
-          config={getResourceFormConfig(ctx.groupKey, ctx.resourceKey, ctx.normalizedEndpoint)}
-          onSuccess={(data) => {
-            const id = primaryRecordId(data)
-            if (id !== undefined && id !== null && String(id).trim()) {
-              router.push(`${basePath}/${encodeURIComponent(String(id))}`)
-              return
-            }
-            router.push(basePath)
-          }}
-        />
+      <div className="mx-auto w-full max-w-6xl space-y-2.5 px-1">
+        {/* Header */}
+        <section className={`relative overflow-hidden ${GLASS} h-[80px]`}>
+          <span className="absolute left-0 top-0 h-full w-1 bg-[var(--primary-500)]" />
+          <div className="flex h-full items-center justify-between gap-3 px-4 py-3 pl-5">
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5 text-[10px] text-[var(--gray-500)]">
+                <Link href={basePath} className="transition-colors hover:text-foreground">{resourceLabel + "s"}</Link>
+                <span>/</span>
+                <span className="font-semibold text-foreground">{createActionLabel}</span>
+              </div>
+            </div>
+            <div className="flex min-w-0 flex-1 items-center justify-end gap-2 overflow-x-auto">
+              <Link
+                href={basePath}
+                className="inline-flex h-9 items-center rounded-md border border-[var(--border)] bg-[var(--card)] px-3 text-sm font-medium text-[var(--gray-700)] shadow-sm transition-all duration-150 hover:border-[var(--primary-300)] hover:bg-[var(--gray-100)] hover:text-[var(--text)]"
+              >
+                {t("Voltar", "Back")}
+              </Link>
+            </div>
+          </div>
+            </section>
+        {/* Form card */}
+        <div className={GLASS}>
+          <div className="px-4 py-3">
+            <h2 className="text-lg font-semibold text-foreground mb-2">
+              {t("Dados do", "Data for")} {resourceLabel}
+            </h2>
+            <AutoForm
+              endpoint={ctx.normalizedEndpoint}
+              method="post"
+              initialValues={initialValues}
+              submitLabel={createActionLabel}
+              config={getResourceFormConfig(ctx.groupKey, ctx.resourceKey, ctx.normalizedEndpoint)}
+              onSuccess={(data) => {
+                const id = primaryRecordId(data)
+                if (id !== undefined && id !== null && String(id).trim()) {
+                  router.push(`${basePath}/${encodeURIComponent(String(id))}`)
+                  return
+                }
+                router.push(basePath)
+              }}
+            />
+          </div>
+        </div>
       </div>
     </AppLayout>
   )

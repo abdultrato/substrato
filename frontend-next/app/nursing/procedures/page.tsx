@@ -95,6 +95,18 @@ function fmtMoney(value: string | number | null | undefined) {
   return numeric.toLocaleString("pt-PT", { style: "currency", currency: "MZN" });
 }
 
+function formatTotalWithIva(value: string | number | null | undefined): string {
+  if (value === null || value === undefined || value === "") return "—";
+  const numeric = typeof value === "string" ? parseFloat(value) : value;
+  if (Number.isNaN(numeric)) return String(value);
+
+  // Apply 17% IVA (Imposto sobre o Valor Acrescentado)
+  // Note: This assumes the 'value' already includes materials cost.
+  // If materials need to be added separately, that logic should be added here.
+  const totalWithIva = numeric * 1.17;
+  return totalWithIva.toLocaleString("pt-PT", { style: "currency", currency: "MZN" });
+}
+
 function workflowStripe(status: string | null | undefined) {
   switch (String(status || "").toUpperCase()) {
     case "CON":
@@ -377,7 +389,7 @@ export default function NursingProceduresPage() {
                     )}
 
                     <div className="flex items-center justify-between border-t border-border/40 pt-1.5">
-                      <span className="text-xs font-semibold text-foreground">{fmtMoney(procedure.total)}</span>
+                      <span className="text-xs font-semibold text-foreground">{formatTotalWithIva(procedure.total)}</span>
                       <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground">
                         <Clock size={10} /> {fmtDate(procedure.performed_date || procedure.created_at)}
                       </span>

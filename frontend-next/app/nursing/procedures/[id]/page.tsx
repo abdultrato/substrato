@@ -133,6 +133,18 @@ function fmtMoney(value: string | number | null | undefined): string {
   return numeric.toLocaleString("pt-PT", { style: "currency", currency: "MZN" })
 }
 
+function formatTotalWithIva(value: string | number | null | undefined): string {
+  if (value === null || value === undefined || value === "") return "—"
+  const numeric = typeof value === "string" ? parseFloat(value) : value
+  if (Number.isNaN(numeric)) return String(value)
+
+  // Apply 17% IVA (Imposto sobre o Valor Acrescentado)
+  // Note: This assumes the 'value' already includes materials cost.
+  // If materials need to be added separately, that logic should be added here.
+  const totalWithIva = numeric * 1.17
+  return totalWithIva.toLocaleString("pt-PT", { style: "currency", currency: "MZN" })
+}
+
 function val(record: Record<string, any> | null | undefined, ...keys: string[]): any {
   for (const key of keys) {
     if (record?.[key] !== undefined && record?.[key] !== null && record?.[key] !== "") {
@@ -794,28 +806,29 @@ export default function ProcedureDetailPage() {
 
             <div className="flex min-w-0 flex-1 items-center justify-end gap-2 overflow-x-auto">
               {selectedCatalogs.length > 0 ? (
-                <span className="inline-flex h-8 min-w-[74px] flex-col justify-center rounded-lg border border-violet-200 bg-violet-50 px-2 text-center text-[10px] font-semibold text-violet-700 dark:border-violet-700/30 dark:bg-violet-900/20 dark:text-violet-400">
+                <span className="inline-flex flex-col items-center justify-center gap-1.5 rounded-lg border border-violet-200 bg-violet-50 px-2 py-1 text-[10px] font-semibold text-violet-700 dark:border-violet-700/30 dark:bg-violet-900/20 dark:text-violet-400 sm:flex-sm-row sm:items-sm-center sm:justify-sm-center">
                   <span className="uppercase tracking-wide text-violet-500/80">Catálogos</span>
                   <span className="text-xs leading-none">{selectedCatalogs.length}</span>
                 </span>
               ) : null}
               {totalItems > 0 ? (
-                <span className="inline-flex h-8 min-w-[74px] flex-col justify-center rounded-lg border border-sky-200 bg-sky-50 px-2 text-center text-[10px] font-semibold text-sky-700 dark:border-sky-700/30 dark:bg-sky-900/20 dark:text-sky-400">
+                <span className="inline-flex flex-col items-center justify-center gap-1.5 rounded-lg border border-sky-200 bg-sky-50 px-2 py-1 text-[10px] font-semibold text-sky-700 dark:border-sky-700/30 dark:bg-sky-900/20 dark:text-sky-400 sm:flex-sm-row sm:items-sm-center sm:justify-sm-center">
                   <span className="uppercase tracking-wide text-sky-500/80">Itens</span>
                   <span className="text-xs leading-none">{totalItems}</span>
                 </span>
               ) : null}
               {numberValue(data.total) !== null ? (
-                <span className="inline-flex h-8 min-w-[92px] flex-col justify-center rounded-lg border border-emerald-200 bg-emerald-50 px-2 text-center text-[10px] font-semibold text-emerald-700 dark:border-emerald-700/30 dark:bg-emerald-900/20 dark:text-emerald-400">
+                <span className="inline-flex flex-col items-center justify-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50 px-2 py-1 text-[10px] font-semibold text-emerald-700 dark:border-emerald-700/30 dark:bg-emerald-900/20 dark:text-emerald-400 sm:flex-sm-row sm:items-sm-center sm:justify-sm-center">
                   <span className="uppercase tracking-wide text-emerald-500/80">Valor</span>
-                  <span className="text-xs leading-none">{fmtMoney(data.total)}</span>
+                  <span className="text-xs leading-none">{formatTotalWithIva(data.total)}</span>
                 </span>
               ) : null}
+              <div className="flex flex-wrap gap-2 sm:flex-nowrap">
               <button
                 type="button"
                 onClick={handleOpenPdf}
                 disabled={downloadingPdf}
-                className="inline-flex h-8 items-center rounded-lg border border-emerald-200 bg-emerald-50 px-3 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-100 disabled:opacity-60 dark:border-emerald-700/30 dark:bg-emerald-900/20 dark:text-emerald-300 dark:hover:bg-emerald-900/30"
+                className="flex-1 min-w-[80px] flex-nowrap items-center justify-center rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-100 disabled:opacity-60 sm:px-4 sm:py-2.5 sm:text-sm"
               >
                 <PdfActionLabel loading={downloadingPdf} loadingLabel="Gerando PDF...">
                   PDF cotação
@@ -823,23 +836,24 @@ export default function ProcedureDetailPage() {
               </button>
               <Link
                 href={`/nursing/procedures/${id}/edit`}
-                className="inline-flex h-8 items-center rounded-lg border border-border bg-card px-3 text-xs font-medium text-foreground transition hover:bg-muted"
+                className="flex-1 min-w-[80px] flex-nowrap items-center justify-center rounded-lg border border-border bg-card px-3 py-2 text-xs font-medium text-foreground transition hover:bg-muted sm:px-4 sm:py-2.5 sm:text-sm"
               >
                 Editar
               </Link>
               <Link
                 href={reportHref}
-                className="inline-flex h-8 items-center rounded-lg border border-violet-200 bg-violet-50 px-3 text-xs font-semibold text-violet-700 transition hover:bg-violet-100 dark:border-violet-700/30 dark:bg-violet-900/20 dark:text-violet-400"
+                className="flex-1 min-w-[80px] flex-nowrap items-center justify-center rounded-lg border border-violet-200 bg-violet-50 px-3 py-2 text-xs font-semibold text-violet-700 transition hover:bg-violet-100 dark:border-violet-700/30 dark:bg-violet-900/20 dark:text-violet-400 sm:px-4 sm:py-2.5 sm:text-sm"
               >
                 Relatório
               </Link>
               <Link
                 href="/nursing/procedures"
-                className="inline-flex h-8 items-center gap-1 rounded-lg border border-border bg-card px-3 text-xs text-muted-foreground transition hover:bg-muted hover:text-foreground"
+                className="flex-1 min-w-[80px] flex-nowrap items-center justify-center gap-1.5 rounded-lg border border-border bg-card px-3 py-2 text-xs text-muted-foreground transition hover:bg-muted hover:text-foreground sm:px-4 sm:py-2.5 sm:text-sm"
               >
-                <ArrowLeft size={12} />
+                <ArrowLeft size={12} className="mr-1.5" />
                 Voltar
               </Link>
+            </div>
               {hasOperationalGap ? (
                 <span className="inline-flex h-8 items-center gap-1 rounded-lg border border-rose-200 bg-rose-50 px-2.5 text-[10px] font-semibold text-rose-700 dark:border-rose-700/30 dark:bg-rose-900/20 dark:text-rose-400">
                   <AlertTriangle size={10} />
@@ -1000,7 +1014,7 @@ export default function ProcedureDetailPage() {
                         {combinedTotal !== null ? (
                           <InlineMiniPanel
                             label="Total geral"
-                            value={fmtMoney(combinedTotal)}
+                            value={formatTotalWithIva(combinedTotal)}
                             tone="border-emerald-300 bg-emerald-100 dark:border-emerald-700/30 dark:bg-emerald-900/25"
                           />
                         ) : null}

@@ -212,7 +212,10 @@ export default function NursingCollectionsPage() {
       coletadas: [],
     }
     for (const row of rows) {
-      grouped[classify(row)].push(row)
+      // Only process requests that have items (exams/procedures)
+      if (Array.isArray(row.items) && row.items.length > 0) {
+        grouped[classify(row)].push(row)
+      }
     }
     return grouped
   }, [rows])
