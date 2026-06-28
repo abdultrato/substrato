@@ -3164,6 +3164,35 @@ function nursingProcedureConfig(): ResourceFormConfig {
   }
 }
 
+function nursingRecordConfig(): ResourceFormConfig {
+  return {
+    esconderCampos: [...NURSING_INTERNAL_FIELDS, "collection_guidance"],
+    ordenarCampos: ["name", "patient", "ward", "priority", "record_kind", "origin_role", "lab_request", "observation"],
+    labels: {
+      name: "Nome",
+      patient: "Paciente",
+      ward: "Enfermaria",
+      priority: "Prioridade",
+      record_kind: "Tipo de registo",
+      origin_role: "Perfil de origem",
+      lab_request: "Requisição laboratorial",
+      observation: "Observação",
+    },
+    placeholders: {
+      observation: "Observações clínicas ou operacionais do registo.",
+    },
+    hints: {
+      patient: "Paciente associado ao registo de enfermagem.",
+      ward: "Enfermaria responsável pelo atendimento.",
+      lab_request: "Requisição laboratorial vinculada, quando aplicável.",
+    },
+    widgets: {
+      observation: "textarea",
+    },
+    somenteLeituraCampos: ["record_kind", "origin_role", "lab_request"],
+  }
+}
+
 function nursingProcedureMaterialConfig(): ResourceFormConfig {
   return {
     esconderCampos: [
@@ -4944,6 +4973,9 @@ export function getResourceFormConfig(
   }
 
   if (g === "nursing") {
+    if (r === "nursing_record" || ep === "/nursing/nursing_record/") {
+      return nursingRecordConfig()
+    }
     if (r === "procedure" || ep === "/nursing/procedure/") {
       return nursingProcedureConfig()
     }

@@ -36,6 +36,7 @@ export type AutoFormProps = {
   config?: ResourceFormConfig | null
   presentation?: "default" | "modern-nursing"
   compactFields?: string[]
+  initialRelationLabels?: Record<string, string | null | undefined>
 }
 
 const LONG_TEXT_FIELDS = new Set([
@@ -1057,6 +1058,7 @@ export default function AutoForm({
   config,
   presentation = "default",
   compactFields = [],
+  initialRelationLabels = {},
 }: AutoFormProps) {
   const { tr } = useLanguage()
   const safeRefreshToken = useSafeDataRefreshSignal()
@@ -1156,6 +1158,10 @@ export default function AutoForm({
         .join("|"),
     [relationFieldTargets, values]
   )
+  const initialRelationLabelsKey = useMemo(
+    () => JSON.stringify(initialRelationLabels),
+    [initialRelationLabels]
+  )
 
   useEffect(() => {
     let mounted = true
@@ -1188,6 +1194,12 @@ export default function AutoForm({
           }
 
           const currentRaw = values[field.name]
+          const currentValue = relationIdFromValue(currentRaw)
+          const initialLabel = String(initialRelationLabels[field.name] || "").trim()
+          if (currentValue && initialLabel) {
+            options = mergeSelectedRelationOption(options, { value: currentValue, label: initialLabel })
+          }
+
           if (Array.isArray(currentRaw)) {
             const selectedIds = currentRaw
               .map((item) => relationIdFromValue(item))
@@ -1218,7 +1230,6 @@ export default function AutoForm({
             }
           }
 
-          const currentValue = relationIdFromValue(values[field.name])
           if (currentValue && !options.some((option) => option.value === currentValue)) {
             let selectedOption =
               currentRaw && typeof currentRaw === "object" && !Array.isArray(currentRaw)
@@ -1258,7 +1269,7 @@ export default function AutoForm({
     }
     // relationSelectedValueKey limits reloads to relation field ID changes instead of every keystroke.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [relationFieldTargets, relationSelectedValueKey, safeRefreshToken])
+  }, [initialRelationLabelsKey, relationFieldTargets, relationSelectedValueKey, safeRefreshToken])
 
   useEffect(() => {
     if (!config?.lembrarCampos?.length) return

@@ -21,6 +21,10 @@ type NursingRecord = Record<string, any> & {
   patient_name?: string | null
   priority?: string | null
   record_kind?: string | null
+  ward_name?: string | null
+  lab_request_code?: string | null
+  lab_request_status?: string | null
+  collection_guidance?: unknown
 }
 
 const GLASS =
@@ -30,6 +34,21 @@ const PRIORITY_ACCENTS: Record<string, string> = {
   URG: "bg-red-500",
   NOR: "bg-emerald-500",
   BAI: "bg-sky-500",
+}
+
+function humanize(value: string) {
+  return value.replaceAll("_", " ").replace(/^./, (letter) => letter.toUpperCase())
+}
+
+function formatGuidanceValue(value: unknown): string {
+  if (value === null || value === undefined || value === "") return "—"
+  if (Array.isArray(value)) return value.map(formatGuidanceValue).filter(Boolean).join(" · ")
+  if (typeof value === "object") {
+    return Object.entries(value as Record<string, unknown>)
+      .map(([key, item]) => `${humanize(key)}: ${formatGuidanceValue(item)}`)
+      .join(" · ")
+  }
+  return String(value)
 }
 
 export default function NursingRecordsEditPage() {
@@ -135,6 +154,15 @@ export default function NursingRecordsEditPage() {
               </span>
             </div>
 
+            {data.collection_guidance && Object.keys(data.collection_guidance as object).length ? (
+              <div className="mb-3 rounded-lg border border-sky-200/50 bg-sky-50/40 px-3 py-2 backdrop-blur dark:border-sky-800/30 dark:bg-sky-950/15">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-sky-700 dark:text-sky-300">Guia de coleta</p>
+                <p className="mt-1 whitespace-pre-wrap text-xs leading-relaxed text-foreground">
+                  {formatGuidanceValue(data.collection_guidance)}
+                </p>
+              </div>
+            ) : null}
+
             <AutoForm
               endpoint={`/nursing/nursing_record/${id}/`}
               method="put"
@@ -142,6 +170,13 @@ export default function NursingRecordsEditPage() {
               submitLabel="Guardar alterações"
               presentation="modern-nursing"
               config={getResourceFormConfig("nursing", "nursing_record", "/nursing/nursing_record/")}
+              initialRelationLabels={{
+                patient: data.patient_name,
+                ward: data.ward_name,
+                lab_request: data.lab_request_code
+                  ? `${data.lab_request_code}${data.lab_request_status ? ` · ${humanize(data.lab_request_status.toLowerCase())}` : ""}`
+                  : null,
+              }}
               onSuccess={() => router.push(detailPath)}
             />
           </div>
