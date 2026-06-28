@@ -35,6 +35,7 @@ export type AutoFormProps = {
   onSuccess?: (data: any) => void
   config?: ResourceFormConfig | null
   presentation?: "default" | "modern-nursing"
+  compactFields?: string[]
 }
 
 const LONG_TEXT_FIELDS = new Set([
@@ -1055,9 +1056,11 @@ export default function AutoForm({
   onSuccess,
   config,
   presentation = "default",
+  compactFields = [],
 }: AutoFormProps) {
   const { tr } = useLanguage()
   const safeRefreshToken = useSafeDataRefreshSignal()
+  const compactFieldNames = useMemo(() => new Set(compactFields), [compactFields])
   const modernNursingProcedureFlow = presentation === "modern-nursing" || /^\/nursing\/procedure(?:\/[^/]+)?$/.test(
     String(endpoint || "").split("?")[0].replace(/\/+$/, "")
   )
@@ -1576,7 +1579,7 @@ export default function AutoForm({
           </div>
         ) : null}
 
-        <div className={`grid md:grid-cols-2 ${modernNursingProcedureFlow ? "gap-2" : "gap-3"}`}>
+        <div className={`grid ${compactFieldNames.size ? "grid-cols-2 md:grid-cols-4" : "md:grid-cols-2"} ${modernNursingProcedureFlow ? "gap-2" : "gap-3"}`}>
           {fieldsToRender.map((field) => {
             const label = config?.labels?.[field.name] || field.label
             const hint = config?.hints?.[field.name]
@@ -1587,7 +1590,7 @@ export default function AutoForm({
               <label
                 key={field.name}
                 data-form-field={field.name}
-                className={`${modernNursingProcedureFlow ? "space-y-0.5" : "space-y-1"} text-sm text-[var(--gray-700)]`}
+                className={`${compactFieldNames.size ? (compactFieldNames.has(field.name) ? "col-span-1 min-w-0" : "col-span-2") : ""} ${modernNursingProcedureFlow ? "space-y-0.5" : "space-y-1"} text-sm text-[var(--gray-700)]`}
               >
                 <div className="flex items-center justify-between">
                   <span className="font-medium text-[var(--gray-700)]">

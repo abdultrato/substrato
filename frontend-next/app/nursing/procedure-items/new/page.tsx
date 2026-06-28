@@ -11,6 +11,7 @@ import { GROUPS } from "@/lib/rbac";
 
 const ENDPOINT = "/nursing/procedure_item/";
 const LIST_HREF = "/nursing/procedure-items";
+const COMPACT_FIELDS = ["quantity", "position"];
 
 const guidance = [
   {
@@ -93,6 +94,7 @@ export default function CreateProcedureItemPage() {
           submitLabel="Criar item"
           config={config}
           presentation="modern-nursing"
+          compactFields={COMPACT_FIELDS}
           onSuccess={(data) => {
             const id = data?.id ?? data?.pk;
             router.push(id ? `${LIST_HREF}/${encodeURIComponent(String(id))}` : LIST_HREF);
