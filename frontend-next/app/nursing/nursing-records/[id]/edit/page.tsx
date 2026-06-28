@@ -140,6 +140,7 @@ export default function NursingRecordsEditPage() {
               method="put"
               initialValues={data}
               submitLabel="Guardar alterações"
+              presentation="modern-nursing"
               config={getResourceFormConfig("nursing", "nursing_record", "/nursing/nursing_record/")}
               onSuccess={() => router.push(detailPath)}
             />
