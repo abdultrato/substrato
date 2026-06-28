@@ -90,7 +90,7 @@ function guidanceSummary(guidance: unknown) {
 
 function FieldRow({ label, value }: { label: string; value: ReactNode }) {
   return (
-    <div className="grid grid-cols-1 gap-1.5 py-2.5 sm:grid-cols-[180px_minmax(0,1fr)] sm:gap-4">
+    <div className="grid grid-cols-1 gap-1 py-1.5 sm:grid-cols-[180px_minmax(0,1fr)] sm:gap-4">
       <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">{label}</div>
       <div className="min-w-0 break-words text-sm leading-relaxed text-foreground">{value || "—"}</div>
     </div>
@@ -113,8 +113,8 @@ function SectionCard({
   return (
     <section className={`relative overflow-hidden ${GLASS}`}>
       <span className={`absolute left-0 top-0 h-full w-1 ${accent}`} />
-      <div className="px-4 py-3 pl-5">
-        <div className="mb-3 flex items-start gap-3">
+      <div className="px-4 py-2 pl-5">
+        <div className="mb-2 flex items-start gap-3">
           <span className={`mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${accent} text-white shadow-sm`}>
             <Icon size={16} />
           </span>
@@ -200,7 +200,7 @@ export default function NursingRecordsDetailPage() {
       <div className="mx-auto w-full max-w-5xl space-y-4 px-1">
         <section className={`relative overflow-hidden ${GLASS}`}>
           <span className={`absolute left-0 top-0 h-full w-1 ${priority.accent}`} />
-          <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 pl-5">
+          <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-2 pl-5">
             <div className="flex min-w-0 items-center gap-2">
               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-600 to-teal-600 text-white shadow-md shadow-emerald-500/20">
                 <Clipboard size={17} />
