@@ -431,7 +431,7 @@ class ProcedureMaterialViewSet(TenantScopedModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return ProcedureMaterial.objects.select_related('ward', 'procedure', 'product', 'lot', 'tenant')
+        return ProcedureMaterial.objects.select_related('ward', 'procedure', 'product', 'lot', 'tenant', 'value')
     search_fields = [
         "custom_id",
         "ward__name",

@@ -285,6 +285,11 @@ def test_procedure_material_links_product_through_procedure_not_patient():
     assert serializer.data["product"] == medication.id
     assert serializer.data["product_name"] == medication.name
     assert serializer.data["product_type"] == "Medicamento"
+    assert serializer.data["value_unitario"] == "4.00"
+
+    material.value.delete()
+    fallback_serializer = ProcedureMaterialSerializer(material)
+    assert fallback_serializer.data["value_unitario"] == "4.00"
 
 
 @pytest.mark.django_db

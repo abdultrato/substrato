@@ -505,12 +505,14 @@ class ProcedureMaterialSerializer(LegacyAliasSerializerMixin, serializers.ModelS
     product_type = serializers.CharField(source="product.get_type_display", read_only=True)
     lot_number = serializers.CharField(source="lot.lot_number", read_only=True)
     ward_name = serializers.CharField(source="ward.name", read_only=True)
-    value_unitario = serializers.DecimalField(
-        source="value.unit_cost",
-        max_digits=14,
-        decimal_places=2,
-        read_only=True,
-    )
+    value_unitario = serializers.SerializerMethodField()
+
+    def get_value_unitario(self, obj):
+        try:
+            value = obj.value.unit_cost
+        except ProcedureMaterialValue.DoesNotExist:
+            value = obj.unit_cost
+        return str(value or "0.00")
 
     class Meta:
         model = ProcedureMaterial
