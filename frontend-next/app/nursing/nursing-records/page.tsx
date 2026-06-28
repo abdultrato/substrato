@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { ChevronRight, ClipboardPlus, Clock3, FileHeart, FlaskConical, Loader2, MapPin, Plus, Search, UserRound } from "lucide-react";
+import { ChevronRight, Clipboard, Clock3, FileHeart, FlaskConical, Loader2, MapPin, Plus, Search, User } from "lucide-react";
 
 import AppLayout from "@/components/layout/AppLayout";
 import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh";
@@ -157,7 +157,7 @@ export default function NursingNursingRecordsPage() {
           <div className="flex items-center justify-center gap-2 py-16 text-sm text-muted-foreground"><Loader2 size={16} className="animate-spin" /> A carregar registos…</div>
         ) : records.length === 0 ? (
           <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed border-white/30 bg-white/[0.03] py-16 text-center backdrop-blur-xl dark:border-white/10 dark:bg-white/[0.015]">
-            <ClipboardPlus size={26} className="text-muted-foreground/40" />
+            <Clipboard size={26} className="text-muted-foreground/40" />
             <p className="text-sm font-medium text-foreground">Nenhum registo encontrado</p>
             <p className="text-xs text-muted-foreground">Altere a pesquisa ou crie um novo registo.</p>
           </div>
@@ -179,7 +179,7 @@ export default function NursingNursingRecordsPage() {
                     </div>
 
                     <div className="grid gap-1 text-[10px] text-muted-foreground">
-                      <p className="flex min-w-0 items-center gap-1"><UserRound size={10} className="shrink-0" /><span className="truncate">{record.patient_name || `Paciente #${record.patient || "—"}`}</span></p>
+                      <p className="flex min-w-0 items-center gap-1"><User size={10} className="shrink-0" /><span className="truncate">{record.patient_name || `Paciente #${record.patient || "—"}`}</span></p>
                       <p className="flex min-w-0 items-center gap-1"><MapPin size={10} className="shrink-0" /><span className="truncate">{record.ward_name || "Sem enfermaria associada"}</span></p>
                       <p className="flex min-w-0 items-center gap-1">{isLabRequest ? <FlaskConical size={10} className="shrink-0" /> : <FileHeart size={10} className="shrink-0" />}<span className="truncate">{isLabRequest ? `Coleta laboratorial${record.lab_request_code ? ` · ${record.lab_request_code}` : ""}` : "Registo manual"}</span></p>
                     </div>
