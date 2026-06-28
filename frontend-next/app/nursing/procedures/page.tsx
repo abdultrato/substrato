@@ -61,6 +61,41 @@ const BILLING_OPTIONS = [
   { value: "BIL", label: "Faturados" },
 ];
 
+type ProcedureColumn = "pending" | "partial" | "completed";
+
+const PROCEDURE_COLUMNS: Array<{
+  key: ProcedureColumn;
+  label: string;
+  headerClass: string;
+  countClass: string;
+}> = [
+  {
+    key: "pending",
+    label: "Pendentes",
+    headerClass: "border-violet-200/70 bg-violet-50/70 dark:border-violet-800/40 dark:bg-violet-950/20",
+    countClass: "bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300",
+  },
+  {
+    key: "partial",
+    label: "Parciais",
+    headerClass: "border-amber-200/70 bg-amber-50/70 dark:border-amber-800/40 dark:bg-amber-950/20",
+    countClass: "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300",
+  },
+  {
+    key: "completed",
+    label: "Concluídos",
+    headerClass: "border-emerald-200/70 bg-emerald-50/70 dark:border-emerald-800/40 dark:bg-emerald-950/20",
+    countClass: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300",
+  },
+];
+
+function procedureColumn(status: string | null | undefined): ProcedureColumn {
+  const normalized = String(status || "").toUpperCase();
+  if (normalized === "PAR") return "partial";
+  if (normalized === "CON" || normalized === "BIL") return "completed";
+  return "pending";
+}
+
 function normalizeProfessionalNames(value: ProcedureRow["professional_names"], fallback?: string): string[] {
   if (Array.isArray(value)) {
     return value.map((item) => String(item || "").trim()).filter(Boolean);
@@ -223,6 +258,19 @@ export default function NursingProceduresPage() {
   }, [load]);
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const proceduresByColumn = useMemo(() => {
+    const grouped: Record<ProcedureColumn, ProcedureRow[]> = {
+      pending: [],
+      partial: [],
+      completed: [],
+    };
+
+    for (const procedure of procedures) {
+      grouped[procedureColumn(procedure.workflow_status)].push(procedure);
+    }
+
+    return grouped;
+  }, [procedures]);
 
   return (
     <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.ENFERMAGEM]}>
@@ -306,20 +354,39 @@ export default function NursingProceduresPage() {
             </Link>
           </div>
         ) : (
-          <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
-            {procedures.map((procedure) => {
-              const code = procedure.custom_id || `PROC-${procedure.id}`;
-              const professionals = normalizeProfessionalNames(procedure.professional_names, procedure.professional_name);
-              const catalogNames = normalizeCatalogIds(procedure.selected_catalogs)
-                .map((catalogId) => catalogNameById.get(catalogId))
-                .filter((item): item is string => Boolean(item));
+          <div className="grid items-start gap-3 lg:grid-cols-3">
+            {PROCEDURE_COLUMNS.map((column) => (
+              <section
+                key={column.key}
+                className={`overflow-hidden rounded-xl border ${column.headerClass}`}
+              >
+                <div className="flex items-center justify-between border-b border-inherit px-3 py-2.5">
+                  <h2 className="text-xs font-bold uppercase tracking-wide text-foreground">{column.label}</h2>
+                  <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${column.countClass}`}>
+                    {proceduresByColumn[column.key].length}
+                  </span>
+                </div>
 
-              return (
-                <Link
-                  key={procedure.id}
-                  href={`/nursing/procedures/${procedure.id}`}
-                  className="group relative flex flex-col overflow-hidden rounded-xl border border-white/20 bg-white/25 shadow-sm backdrop-blur-sm transition hover:border-violet-300/50 hover:shadow-md dark:bg-white/5 dark:border-white/10 dark:hover:border-violet-500/30"
-                >
+                <div className="space-y-2 bg-background/35 p-2">
+                  {proceduresByColumn[column.key].length === 0 ? (
+                    <p className="rounded-lg border border-dashed border-border/70 px-3 py-8 text-center text-xs text-muted-foreground">
+                      Nenhum procedimento nesta coluna.
+                    </p>
+                  ) : null}
+
+                  {proceduresByColumn[column.key].map((procedure) => {
+                    const code = procedure.custom_id || `PROC-${procedure.id}`;
+                    const professionals = normalizeProfessionalNames(procedure.professional_names, procedure.professional_name);
+                    const catalogNames = normalizeCatalogIds(procedure.selected_catalogs)
+                      .map((catalogId) => catalogNameById.get(catalogId))
+                      .filter((item): item is string => Boolean(item));
+
+                    return (
+                      <Link
+                        key={procedure.id}
+                        href={`/nursing/procedures/${procedure.id}`}
+                        className="group relative flex flex-col overflow-hidden rounded-xl border border-white/20 bg-white/70 shadow-sm backdrop-blur-sm transition hover:border-violet-300/50 hover:shadow-md dark:border-white/10 dark:bg-white/5 dark:hover:border-violet-500/30"
+                      >
                   <span className={`absolute left-0 top-0 h-full w-1 ${workflowStripe(procedure.workflow_status)}`} />
 
                   <div className="flex flex-1 flex-col gap-2 px-4 py-3 pl-5">
@@ -379,9 +446,12 @@ export default function NursingProceduresPage() {
                       </span>
                     </div>
                   </div>
-                </Link>
-              );
-            })}
+                      </Link>
+                    );
+                  })}
+                </div>
+              </section>
+            ))}
           </div>
         )}
 
