@@ -52,7 +52,7 @@ function SectionCard({
   children: React.ReactNode
 }) {
   return (
-    <section className="overflow-visible rounded-xl border border-emerald-200/30 bg-white/25 shadow-lg shadow-slate-900/5 backdrop-blur-2xl dark:border-emerald-800/20 dark:bg-white/[0.04]">
+    <section className="relative z-10 overflow-visible rounded-xl border border-emerald-200/30 bg-white/25 shadow-lg shadow-slate-900/5 backdrop-blur-2xl focus-within:z-30 dark:border-emerald-800/20 dark:bg-white/[0.04]">
       <div className="flex items-center gap-2.5 border-b border-white/30 px-4 py-3 dark:border-white/10">
         <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-500 text-white shadow-sm">
           <Icon size={15} />
