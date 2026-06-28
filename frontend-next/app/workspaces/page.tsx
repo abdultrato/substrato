@@ -21,7 +21,6 @@ import {
   type LucideIcon,
 } from "lucide-react"
 
-import { lucideToDataUrl } from "@/lib/icon-svg"
 import AppLayout from "@/components/layout/AppLayout"
 import PageHeader from "@/components/ui/PageHeader"
 import { useAuth } from "@/hooks/useAuth"
@@ -55,6 +54,110 @@ function storeScope(scope: DepartmentScope) {
   if (scope === "healthcare" || scope === "education") {
     writeStoredWorkspaceScope(scope)
   }
+}
+
+function workspaceTone(key: string) {
+  switch (key) {
+    case "health":
+      return {
+        panel:
+          "border-violet-200/80 bg-gradient-to-br from-violet-50/90 via-card to-card hover:border-violet-300 dark:border-violet-900/40 dark:from-violet-950/25 dark:via-card dark:to-card",
+        accent: "bg-violet-500/10 text-violet-700 ring-violet-500/15 dark:bg-violet-500/15 dark:text-violet-300",
+        glow: "from-violet-500/12 via-violet-500/0 to-transparent",
+        title: "text-violet-950 dark:text-violet-50",
+        description: "text-violet-900/70 dark:text-violet-200/70",
+      }
+    case "education":
+      return {
+        panel:
+          "border-sky-200/80 bg-gradient-to-br from-sky-50/90 via-card to-card hover:border-sky-300 dark:border-sky-900/40 dark:from-sky-950/25 dark:via-card dark:to-card",
+        accent: "bg-sky-500/10 text-sky-700 ring-sky-500/15 dark:bg-sky-500/15 dark:text-sky-300",
+        glow: "from-sky-500/12 via-sky-500/0 to-transparent",
+        title: "text-sky-950 dark:text-sky-50",
+        description: "text-sky-900/70 dark:text-sky-200/70",
+      }
+    case "transport-logistics":
+      return {
+        panel:
+          "border-amber-200/80 bg-gradient-to-br from-amber-50/90 via-card to-card hover:border-amber-300 dark:border-amber-900/40 dark:from-amber-950/25 dark:via-card dark:to-card",
+        accent: "bg-amber-500/10 text-amber-700 ring-amber-500/15 dark:bg-amber-500/15 dark:text-amber-300",
+        glow: "from-amber-500/12 via-amber-500/0 to-transparent",
+        title: "text-amber-950 dark:text-amber-50",
+        description: "text-amber-900/70 dark:text-amber-200/70",
+      }
+    default:
+      return {
+        panel:
+          "border-border/80 bg-gradient-to-br from-muted/60 via-card to-card hover:border-primary/25 dark:from-muted/30 dark:via-card dark:to-card",
+        accent: "bg-primary/10 text-primary ring-primary/15",
+        glow: "from-primary/12 via-primary/0 to-transparent",
+        title: "text-foreground",
+        description: "text-muted-foreground",
+      }
+  }
+}
+
+function WorkspaceCard({
+  title,
+  description,
+  icon: Icon,
+  href,
+  onClick,
+  toneKey,
+  selected = false,
+}: {
+  title: string
+  description: string
+  icon: LucideIcon
+  href?: string
+  onClick?: () => void
+  toneKey: string
+  selected?: boolean
+}) {
+  const tone = workspaceTone(toneKey)
+  const content = (
+    <>
+      <span
+        aria-hidden
+        className={`pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b ${tone.glow} opacity-100`}
+      />
+      <div className={`relative flex h-full flex-col justify-between gap-4 rounded-[inherit] p-4 sm:p-5 ${tone.panel}`}>
+        <div className="flex items-start justify-between gap-3">
+          <div className={`inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ring-1 ${tone.accent}`}>
+            <Icon size={20} strokeWidth={2.1} />
+          </div>
+          {selected ? (
+            <span className="inline-flex items-center rounded-full border border-border/70 bg-card/80 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground shadow-sm">
+              ativo
+            </span>
+          ) : null}
+        </div>
+        <div className="space-y-1.5">
+          <h3 className={`font-display text-base font-semibold leading-tight sm:text-[1.05rem] ${tone.title}`}>
+            {title}
+          </h3>
+          <p className={`text-xs leading-relaxed sm:text-sm ${tone.description}`}>{description}</p>
+        </div>
+      </div>
+    </>
+  )
+
+  const className =
+    "group relative flex min-h-[152px] overflow-hidden rounded-xl border shadow-sm shadow-black/5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/25"
+
+  if (href) {
+    return (
+      <Link href={href} onClick={onClick} className={className}>
+        {content}
+      </Link>
+    )
+  }
+
+  return (
+    <button type="button" onClick={onClick} className={`${className} text-left`}>
+      {content}
+    </button>
+  )
 }
 
 export default function WorkspacesPage() {
@@ -531,7 +634,7 @@ export default function WorkspacesPage() {
           title={selectedLayer ? selectedLayer.title : t("Selecionar área de trabalho", "Select workspace")}
           subtitle={
             selectedLayer
-              ? t("Escolha o departamento para continuar.", "Choose the department to continue.")
+              ? selectedLayer.description
               : undefined
           }
         />
@@ -547,75 +650,38 @@ export default function WorkspacesPage() {
               {t("Voltar às áreas principais", "Back to main areas")}
             </button>
 
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-2 sm:gap-4 xl:grid-cols-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
               {visibleDepartments.map((department) => {
-                const iconUrl = lucideToDataUrl(department.icon)
                 return (
-                  <Link
+                  <WorkspaceCard
                     key={department.key}
+                    title={department.title}
+                    description={department.description}
+                    icon={department.icon}
                     href={department.href}
                     onClick={() => storeScope(department.scope)}
-                    className="group relative flex h-20 min-h-0 flex-col justify-end overflow-hidden rounded-xl border border-border/80 bg-transparent px-2.5 py-2 shadow-sm shadow-black/5 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/25 hover:shadow-md sm:h-auto sm:min-h-[148px] sm:rounded-md sm:px-5 sm:py-5"
-                  >
-                    <span
-                      aria-hidden
-                      className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-200 group-hover:opacity-100"
-                      style={{
-                        background:
-                          "radial-gradient(circle at 50% 30%, rgba(59, 130, 246, 0.12), transparent 62%)",
-                        WebkitMaskImage: `url("${iconUrl}")`,
-                        WebkitMaskRepeat: "no-repeat",
-                        WebkitMaskSize: "28%",
-                        WebkitMaskPosition: "center 23%",
-                        maskImage: `url("${iconUrl}")`,
-                        maskRepeat: "no-repeat",
-                        maskSize: "28%",
-                        maskPosition: "center 23%",
-                      }}
-                    />
-                    <p className="relative min-w-0 font-display text-[11px] font-semibold tracking-tight text-foreground sm:text-lg">
-                      {department.title}
-                    </p>
-                  </Link>
+                    toneKey={selectedLayer.key}
+                  />
                 )
               })}
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-2 sm:gap-4 md:grid-cols-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
             {visibleLayers.map((layer) => {
-              const iconUrl = lucideToDataUrl(layer.icon)
               return (
-                <button
+                <WorkspaceCard
                   key={layer.key}
-                  type="button"
+                  title={layer.title}
+                  description={layer.description}
+                  icon={layer.icon}
+                  toneKey={layer.key}
                   onClick={() => {
                     if (layer.key === "health") writeStoredWorkspaceScope("healthcare")
                     if (layer.key === "education") writeStoredWorkspaceScope("education")
                     setSelectedLayerKey(layer.key)
                   }}
-                    className="group relative flex h-20 min-h-0 h-full flex-col justify-end overflow-hidden rounded-xl border border-border/80 bg-transparent px-2.5 py-2 text-left shadow-sm shadow-black/5 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/25 hover:shadow-md sm:h-auto sm:min-h-[148px] sm:rounded-md sm:px-5 sm:py-5"
-                >
-                  <span
-                    aria-hidden
-                    className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-200 group-hover:opacity-100"
-                    style={{
-                      background:
-                        "radial-gradient(circle at 50% 30%, rgba(59, 130, 246, 0.12), transparent 62%)",
-                      WebkitMaskImage: `url("${iconUrl}")`,
-                      WebkitMaskRepeat: "no-repeat",
-                      WebkitMaskSize: "28%",
-                      WebkitMaskPosition: "center 23%",
-                      maskImage: `url("${iconUrl}")`,
-                      maskRepeat: "no-repeat",
-                      maskSize: "28%",
-                      maskPosition: "center 23%",
-                    }}
-                  />
-                  <p className="relative min-w-0 font-display text-[11px] font-semibold tracking-tight text-foreground sm:text-lg">
-                    {layer.title}
-                  </p>
-                </button>
+                />
               )
             })}
           </div>
