@@ -36,12 +36,32 @@ const PRIORITY_ACCENTS: Record<string, string> = {
   BAI: "bg-sky-500",
 }
 
+const GUIDANCE_LABELS: Record<string, string> = {
+  item_id: "Identificador do item",
+  item_code: "Código do item",
+  exam_id: "Identificador do exame",
+  exam_code: "Código do exame",
+  exam_name: "Nome do exame",
+  sample_options: "Opções de amostra",
+  sample_id: "Identificador da amostra",
+  sample_code: "Código da amostra",
+  sample_name: "Nome da amostra",
+  bottle_type: "Tipo de recipiente",
+  bottle_type_label: "Recipiente",
+  cap_color: "Cor da tampa",
+  minimum_volume_ml: "Volume mínimo (ml)",
+  fasting_required: "Requer jejum",
+  fasting_hours: "Horas de jejum",
+  collection_instructions: "Instruções de coleta",
+}
+
 function humanize(value: string) {
-  return value.replaceAll("_", " ").replace(/^./, (letter) => letter.toUpperCase())
+  return (GUIDANCE_LABELS[value] || value.replaceAll("_", " ")).replace(/^./, (letter) => letter.toUpperCase())
 }
 
 function formatGuidanceValue(value: unknown): string {
   if (value === null || value === undefined || value === "") return "—"
+  if (typeof value === "boolean") return value ? "Sim" : "Não"
   if (Array.isArray(value)) return value.map(formatGuidanceValue).filter(Boolean).join(" · ")
   if (typeof value === "object") {
     return Object.entries(value as Record<string, unknown>)
@@ -154,15 +174,6 @@ export default function NursingRecordsEditPage() {
               </span>
             </div>
 
-            {data.collection_guidance && Object.keys(data.collection_guidance as object).length ? (
-              <div className="mb-3 rounded-lg border border-sky-200/50 bg-sky-50/40 px-3 py-2 backdrop-blur dark:border-sky-800/30 dark:bg-sky-950/15">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-sky-700 dark:text-sky-300">Guia de coleta</p>
-                <p className="mt-1 whitespace-pre-wrap text-xs leading-relaxed text-foreground">
-                  {formatGuidanceValue(data.collection_guidance)}
-                </p>
-              </div>
-            ) : null}
-
             <AutoForm
               endpoint={`/nursing/nursing_record/${id}/`}
               method="put"
@@ -181,6 +192,26 @@ export default function NursingRecordsEditPage() {
             />
           </div>
         </section>
+
+        {data.collection_guidance && Object.keys(data.collection_guidance as object).length ? (
+          <section className={`relative w-full overflow-hidden ${GLASS}`}>
+            <span className="absolute left-0 top-0 h-full w-1 bg-sky-500" />
+            <div className="px-4 py-2 pl-5">
+              <div className="mb-2 flex items-center gap-2.5 border-b border-white/30 pb-2 dark:border-white/10">
+                <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sky-500 text-white shadow-sm">
+                  <Clipboard size={15} />
+                </span>
+                <div>
+                  <h2 className="text-sm font-semibold text-foreground">Guia de coleta</h2>
+                  <p className="text-[11px] text-muted-foreground">Orientações de amostra e recipiente para a equipa de enfermagem.</p>
+                </div>
+              </div>
+              <p className="whitespace-pre-wrap text-xs leading-relaxed text-foreground">
+                {formatGuidanceValue(data.collection_guidance)}
+              </p>
+            </div>
+          </section>
+        ) : null}
       </div>
     </AppLayout>
   )
