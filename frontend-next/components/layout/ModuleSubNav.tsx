@@ -2,7 +2,8 @@
 
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { ChevronLeft } from "lucide-react"
+import { useCallback, useEffect, useRef, useState } from "react"
+import { ChevronLeft, ChevronRight } from "lucide-react"
 import { useLanguage } from "@/hooks/useLanguage"
 
 type NavTab = {
@@ -556,6 +557,41 @@ export default function ModuleSubNav() {
     const router = useRouter()
     const { t } = useLanguage()
     const moduleNav = resolveModule(pathname)
+    const [canScrollLeft, setCanScrollLeft] = useState(false)
+    const [canScrollRight, setCanScrollRight] = useState(false)
+    const navScrollerRef = useRef<HTMLDivElement>(null)
+
+    const updateNavScrollState = useCallback(() => {
+        const scroller = navScrollerRef.current
+        if (!scroller) return
+        const maxScrollLeft = scroller.scrollWidth - scroller.clientWidth
+        setCanScrollLeft(scroller.scrollLeft > 4)
+        setCanScrollRight(scroller.scrollLeft < maxScrollLeft - 4)
+    }, [])
+
+    const scrollModuleNav = useCallback((direction: "left" | "right") => {
+        const scroller = navScrollerRef.current
+        if (!scroller) return
+        const distance = Math.max(220, Math.floor(scroller.clientWidth * 0.72))
+        scroller.scrollBy({
+            left: direction === "right" ? distance : -distance,
+            behavior: "smooth",
+        })
+        window.setTimeout(updateNavScrollState, 260)
+    }, [updateNavScrollState])
+
+    useEffect(() => {
+        const scroller = navScrollerRef.current
+        if (!scroller) return
+
+        updateNavScrollState()
+        scroller.addEventListener("scroll", updateNavScrollState, { passive: true })
+        window.addEventListener("resize", updateNavScrollState)
+        return () => {
+            scroller.removeEventListener("scroll", updateNavScrollState)
+            window.removeEventListener("resize", updateNavScrollState)
+        }
+    }, [moduleNav, updateNavScrollState])
 
     if (!moduleNav) return null
 
@@ -585,7 +621,23 @@ export default function ModuleSubNav() {
                     </button>
                 ) : null}
 
-                <div className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                <button
+                    type="button"
+                    onClick={() => scrollModuleNav("left")}
+                    disabled={!canScrollLeft}
+                    className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-border bg-card text-foreground shadow-sm transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/25 disabled:pointer-events-none disabled:opacity-0 ${
+                        canScrollLeft ? "" : "invisible"
+                    }`}
+                    aria-label={t("Mostrar atalhos anteriores", "Show previous shortcuts")}
+                    title={t("Mostrar atalhos anteriores", "Show previous shortcuts")}
+                >
+                    <ChevronLeft size={16} />
+                </button>
+
+                <div
+                    ref={navScrollerRef}
+                    className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                >
                     {moduleNav.tabs.map((tab) => {
                         const active = isActive(pathname, tab.href)
                         return (
@@ -603,6 +655,19 @@ export default function ModuleSubNav() {
                         )
                     })}
                 </div>
+
+                <button
+                    type="button"
+                    onClick={() => scrollModuleNav("right")}
+                    disabled={!canScrollRight}
+                    className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-border bg-card text-foreground shadow-sm transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/25 disabled:pointer-events-none disabled:opacity-0 ${
+                        canScrollRight ? "" : "invisible"
+                    }`}
+                    aria-label={t("Mostrar próximos atalhos", "Show next shortcuts")}
+                    title={t("Mostrar próximos atalhos", "Show next shortcuts")}
+                >
+                    <ChevronRight size={16} />
+                </button>
             </div>
         </nav>
     )
