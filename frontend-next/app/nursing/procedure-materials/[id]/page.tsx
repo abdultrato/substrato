@@ -5,10 +5,9 @@ import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react
 import { useParams } from "next/navigation"
 import {
   ArrowLeft,
-  Clock3,
   Package2,
   Pill,
-  ReceiptText,
+  Receipt,
   Stethoscope,
   Tag,
   TriangleAlert,
@@ -258,7 +257,7 @@ export default function ProcedureMaterialsDetailPage() {
           <SectionCard
             title="Quantidade e custo"
             subtitle="Valores usados para cálculo e conferência."
-            icon={ReceiptText}
+            icon={Receipt}
             accent="bg-amber-500"
           >
             <FieldRow label="Quantidade" value={fmtCount(data.quantity)} />
