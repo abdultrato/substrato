@@ -581,11 +581,12 @@ class NursingEvolutionSerializer(LegacyAliasSerializerMixin, serializers.ModelSe
     legacy_output_aliases = NURSING_EVOLUTION_ALIASES
 
     ward_name = serializers.CharField(source="ward.name", read_only=True)
+    patient_name = serializers.CharField(source="patient.name", read_only=True)
 
     class Meta:
         model = NursingEvolution
         fields = "__all__"
-        read_only_fields = (*CORE_READ_ONLY_FIELDS, "ward_name", "evolution_date")
+        read_only_fields = (*CORE_READ_ONLY_FIELDS, "ward_name", "patient_name", "evolution_date")
 
 
 class WardSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer):
