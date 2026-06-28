@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { FormEvent, useEffect, useMemo, useState } from "react"
 import {
   ArrowLeft,
-  ClipboardPlus,
+  ClipboardEdit,
   FileHeart,
   Info,
   Loader2,
@@ -212,7 +212,7 @@ export default function CreateNursingRecordPage() {
           <div className="relative flex flex-wrap items-center justify-between gap-3">
             <div className="flex min-w-0 items-center gap-3">
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-600 to-teal-600 text-white shadow-md shadow-emerald-500/25">
-                <ClipboardPlus size={18} />
+                <ClipboardEdit size={18} />
               </span>
               <div>
                 <h1 className="text-lg font-bold leading-tight text-foreground">
