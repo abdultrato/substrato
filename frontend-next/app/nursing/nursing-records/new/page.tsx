@@ -10,7 +10,7 @@ import {
   Info,
   Loader2,
   Save,
-  UserRound,
+  User,
 } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
@@ -240,7 +240,7 @@ export default function CreateNursingRecordPage() {
 
         <form onSubmit={createRecord} className="space-y-3">
           <SectionCard
-            icon={UserRound}
+            icon={User}
             title={t("Paciente e localização", "Patient and location")}
             subtitle={t("Identifique o paciente e, quando aplicável, a enfermaria.", "Identify the patient and, when applicable, the ward.")}
           >
