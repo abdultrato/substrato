@@ -52,8 +52,8 @@ function SectionCard({
   children: React.ReactNode
 }) {
   return (
-    <section className="relative z-10 overflow-visible rounded-xl border border-emerald-200/30 bg-white/25 shadow-lg shadow-slate-900/5 backdrop-blur-2xl focus-within:z-30 dark:border-emerald-800/20 dark:bg-white/[0.04]">
-      <div className="flex items-center gap-2.5 border-b border-white/30 px-4 py-3 dark:border-white/10">
+    <section className="relative z-10 overflow-visible rounded-xl border border-white/35 bg-white/10 shadow-lg shadow-slate-900/10 ring-1 ring-white/15 backdrop-blur-2xl focus-within:z-30 dark:border-white/10 dark:bg-white/[0.025] dark:ring-white/[0.06]">
+      <div className="flex items-center gap-2.5 border-b border-white/25 bg-white/[0.04] px-4 py-3 dark:border-white/[0.08] dark:bg-white/[0.015]">
         <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-500 text-white shadow-sm">
           <Icon size={15} />
         </span>
@@ -321,7 +321,7 @@ export default function CreateNursingRecordPage() {
             </div>
           </SectionCard>
 
-          <section className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-sky-200/40 bg-sky-50/40 px-4 py-3 text-xs text-sky-900 backdrop-blur dark:border-sky-800/30 dark:bg-sky-950/20 dark:text-sky-200">
+          <section className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/35 bg-white/10 px-4 py-3 text-xs text-sky-900 shadow-lg shadow-slate-900/10 ring-1 ring-white/15 backdrop-blur-2xl dark:border-white/10 dark:bg-white/[0.025] dark:text-sky-200 dark:ring-white/[0.06]">
             <p className="inline-flex items-center gap-2">
               <Info size={14} className="shrink-0" />
               {t(
