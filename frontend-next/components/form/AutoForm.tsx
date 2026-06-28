@@ -1541,7 +1541,7 @@ export default function AutoForm({
       ) : null}
 
       <div className={modernNursingProcedureFlow
-        ? "overflow-hidden rounded-xl border border-white/25 bg-white/20 p-3 shadow-lg shadow-slate-900/5 backdrop-blur-md [&_input]:!border-white/35 [&_input]:!bg-white/35 [&_select]:!border-white/35 [&_select]:!bg-white/35 [&_textarea]:!border-white/35 [&_textarea]:!bg-white/35 dark:border-white/10 dark:bg-white/[0.04] dark:[&_input]:!border-white/10 dark:[&_input]:!bg-white/[0.05] dark:[&_select]:!border-white/10 dark:[&_select]:!bg-white/[0.05] dark:[&_textarea]:!border-white/10 dark:[&_textarea]:!bg-white/[0.05]"
+        ? "overflow-hidden rounded-xl border border-white/35 bg-white/25 p-3 shadow-lg shadow-slate-900/5 backdrop-blur-xl [&_input]:!border-white/35 [&_input]:!bg-white/35 [&_select]:!border-white/35 [&_select]:!bg-white/35 [&_textarea]:!border-white/35 [&_textarea]:!bg-white/35 dark:border-white/10 dark:bg-white/[0.04] dark:[&_input]:!border-white/10 dark:[&_input]:!bg-white/[0.05] dark:[&_select]:!border-white/10 dark:[&_select]:!bg-white/[0.05] dark:[&_textarea]:!border-white/10 dark:[&_textarea]:!bg-white/[0.05]"
         : "rounded-lg border border-[var(--border)] bg-[var(--card)] p-4 shadow-sm"
       }>
         {requiredFields.length ? (
@@ -1641,8 +1641,20 @@ export default function AutoForm({
             </button>
           </div>
         ) : null}
+        {modernNursingProcedureFlow && !etapas?.length ? (
+          <div className="mt-3 flex justify-end border-t border-white/30 pt-3 dark:border-white/10">
+            <button
+              type="button"
+              onClick={handleSubmit}
+              disabled={submitDisabled}
+              className="inline-flex h-9 w-full items-center justify-center rounded-lg bg-gradient-to-r from-violet-600 to-indigo-600 px-5 text-xs font-semibold text-white shadow-md shadow-violet-500/25 transition hover:from-violet-700 hover:to-indigo-700 disabled:opacity-60 sm:w-auto"
+            >
+              {submitting ? "Salvando..." : submitLabel}
+            </button>
+          </div>
+        ) : null}
       </div>
-      {!modernNursingProcedureFlow || !etapas?.length ? <div>
+      {!modernNursingProcedureFlow ? <div>
         {etapas?.length ? (
           <div className="flex flex-wrap items-center justify-between gap-2">
             <button

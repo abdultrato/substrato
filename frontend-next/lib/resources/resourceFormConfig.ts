@@ -3225,6 +3225,39 @@ function nursingNonFinancialConfig(...monetaryFields: string[]): ResourceFormCon
   }
 }
 
+function nursingProcedureItemConfig(): ResourceFormConfig {
+  return {
+    esconderCampos: [
+      ...NURSING_INTERNAL_FIELDS,
+      "value_unitario",
+      "unit_price",
+      "valor_unitario",
+      "valor_unitário",
+      "performed",
+      "execution_status",
+      "execution_status_display",
+      "billed",
+      "billed_at",
+      "executed_at",
+      "completed_at",
+      "procedure_code",
+      "patient_name",
+      "ward_name",
+      "catalog_name",
+      "catalog_code",
+    ],
+    ordenarCampos: ["procedure", "catalog", "description", "quantity", "position", "observation"],
+    labels: {
+      procedure: "Procedimento",
+      catalog: "Item do catálogo",
+      description: "Descrição",
+      quantity: "Quantidade",
+      position: "Posição",
+      observation: "Observações",
+    },
+  }
+}
+
 // ─── Human Resources ────────────────────────────────────────────────────────
 
 const HR_INTERNAL_FIELDS = [
@@ -4924,7 +4957,7 @@ export function getResourceFormConfig(
       return nursingNonFinancialConfig("default_unit_cost")
     }
     if (r === "procedure_item" || ep === "/nursing/procedure_item/") {
-      return nursingNonFinancialConfig("value_unitario", "unit_price", "valor_unitario", "valor_unitário")
+      return nursingProcedureItemConfig()
     }
     if (r === "procedure_item_value" || ep === "/nursing/procedure_item_value/") {
       return nursingNonFinancialConfig("unit_price", "preco_unitario", "preço_unitário", "valor_unitario", "valor_unitário")
