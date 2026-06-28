@@ -1544,7 +1544,7 @@ export default function AutoForm({
       ) : null}
 
       <div className={modernNursingProcedureFlow
-        ? "overflow-hidden rounded-xl border border-white/[0.32] bg-gradient-to-br from-white/[0.18] via-white/[0.08] to-sky-100/[0.08] p-3 shadow-lg shadow-slate-900/5 backdrop-blur-2xl [&_input]:!border-white/[0.32] [&_input]:!bg-white/[0.18] [&_select]:!border-white/[0.32] [&_select]:!bg-white/[0.18] [&_textarea]:!border-white/[0.32] [&_textarea]:!bg-white/[0.18] dark:border-white/10 dark:from-white/[0.055] dark:via-white/[0.025] dark:to-sky-950/[0.04] dark:[&_input]:!border-white/10 dark:[&_input]:!bg-white/[0.05] dark:[&_select]:!border-white/10 dark:[&_select]:!bg-white/[0.05] dark:[&_textarea]:!border-white/10 dark:[&_textarea]:!bg-white/[0.05]"
+        ? "overflow-hidden rounded-xl border border-white/[0.24] bg-gradient-to-br from-white/[0.07] via-white/[0.025] to-sky-100/[0.035] p-3 shadow-lg shadow-slate-900/5 backdrop-blur-2xl [&_input]:!border-white/[0.28] [&_input]:!bg-white/[0.10] [&_select]:!border-white/[0.28] [&_select]:!bg-white/[0.10] [&_textarea]:!border-white/[0.28] [&_textarea]:!bg-white/[0.10] dark:border-white/[0.08] dark:from-white/[0.035] dark:via-white/[0.015] dark:to-sky-950/[0.025] dark:[&_input]:!border-white/[0.08] dark:[&_input]:!bg-white/[0.035] dark:[&_select]:!border-white/[0.08] dark:[&_select]:!bg-white/[0.035] dark:[&_textarea]:!border-white/[0.08] dark:[&_textarea]:!bg-white/[0.035]"
         : "rounded-lg border border-[var(--border)] bg-[var(--card)] p-4 shadow-sm"
       }>
         {requiredFields.length ? (

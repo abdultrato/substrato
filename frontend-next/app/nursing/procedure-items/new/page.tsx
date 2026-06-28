@@ -19,7 +19,7 @@ const guidance = [
     description: "Associe o item ao procedimento clínico correto.",
     icon: Stethoscope,
     tone: "from-sky-500 to-cyan-500",
-    surface: "border-sky-200/40 from-sky-100/[0.18] via-white/[0.07] to-cyan-100/[0.10] dark:border-sky-800/25 dark:from-sky-950/[0.12] dark:via-white/[0.025] dark:to-cyan-950/[0.08]",
+    surface: "border-sky-200/30 from-sky-100/[0.07] via-white/[0.02] to-cyan-100/[0.04] dark:border-sky-800/20 dark:from-sky-950/[0.06] dark:via-white/[0.015] dark:to-cyan-950/[0.04]",
     titleTone: "text-sky-800 dark:text-sky-200",
   },
   {
@@ -27,7 +27,7 @@ const guidance = [
     description: "Defina o catálogo, a quantidade e a posição de execução.",
     icon: Layers,
     tone: "from-violet-500 to-indigo-500",
-    surface: "border-violet-200/40 from-violet-100/[0.18] via-white/[0.07] to-indigo-100/[0.10] dark:border-violet-800/25 dark:from-violet-950/[0.12] dark:via-white/[0.025] dark:to-indigo-950/[0.08]",
+    surface: "border-violet-200/30 from-violet-100/[0.07] via-white/[0.02] to-indigo-100/[0.04] dark:border-violet-800/20 dark:from-violet-950/[0.06] dark:via-white/[0.015] dark:to-indigo-950/[0.04]",
     titleTone: "text-violet-800 dark:text-violet-200",
   },
   {
@@ -35,7 +35,7 @@ const guidance = [
     description: "O estado operacional será acompanhado na ficha do item.",
     icon: ListChecks,
     tone: "from-emerald-500 to-teal-500",
-    surface: "border-emerald-200/40 from-emerald-100/[0.18] via-white/[0.07] to-teal-100/[0.10] dark:border-emerald-800/25 dark:from-emerald-950/[0.12] dark:via-white/[0.025] dark:to-teal-950/[0.08]",
+    surface: "border-emerald-200/30 from-emerald-100/[0.07] via-white/[0.02] to-teal-100/[0.04] dark:border-emerald-800/20 dark:from-emerald-950/[0.06] dark:via-white/[0.015] dark:to-teal-950/[0.04]",
     titleTone: "text-emerald-800 dark:text-emerald-200",
   },
 ];
@@ -47,7 +47,7 @@ export default function CreateProcedureItemPage() {
   return (
     <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.ENFERMAGEM]}>
       <div className="mx-auto w-full max-w-5xl space-y-3">
-        <header className="relative overflow-hidden rounded-2xl border border-sky-200/40 bg-gradient-to-br from-sky-100/[0.18] via-white/[0.07] to-indigo-100/[0.12] p-4 shadow-xl shadow-sky-950/5 backdrop-blur-2xl dark:border-sky-800/25 dark:from-sky-950/[0.12] dark:via-white/[0.025] dark:to-indigo-950/[0.08]">
+        <header className="relative overflow-hidden rounded-2xl border border-sky-200/30 bg-gradient-to-br from-sky-100/[0.07] via-white/[0.02] to-indigo-100/[0.04] p-4 shadow-xl shadow-sky-950/5 backdrop-blur-2xl dark:border-sky-800/20 dark:from-sky-950/[0.06] dark:via-white/[0.015] dark:to-indigo-950/[0.04]">
           <div className="absolute -right-8 -top-12 h-36 w-36 rounded-full bg-sky-400/20 blur-3xl" />
           <div className="relative flex flex-wrap items-center justify-between gap-3">
             <div className="flex min-w-0 items-center gap-3">
