@@ -4,7 +4,7 @@ import Link from "next/link"
 import { useMemo, useState, type ReactNode } from "react"
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation"
 import { useQuery } from "@tanstack/react-query"
-import { ArrowLeft, ClipboardList, HeartPulse } from "lucide-react"
+import { ArrowLeft, ClipboardList, HeartPulse, Package2 } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
 import AutoForm from "@/components/form/AutoForm"
@@ -223,7 +223,7 @@ export function GeneratedResourceCreatePage({
   endpoint: string
   /** Valores iniciais (ex.: pré-selecionar o resultado ao criar uma validação em contexto). */
   initialValues?: Record<string, any>
-  presentation?: "default" | "nursing-procedure"
+  presentation?: "default" | "nursing-procedure" | "nursing-material"
 }) {
   useAuthGuard()
   const { t, tr, language } = useLanguage()
@@ -235,6 +235,7 @@ export function GeneratedResourceCreatePage({
   const resourceLabel = tr(ctx.resourceLabel)
   const createActionLabel = createResourceActionLabel(resourceLabel, language)
   const isNursingProcedure = presentation === "nursing-procedure"
+  const isNursingMaterial = presentation === "nursing-material"
 
   // Glass styles copied from procedure detail page
   const GLASS =
@@ -276,9 +277,9 @@ export function GeneratedResourceCreatePage({
 
   return (
     <AppLayout requiredGroups={ctx.requiredGroups}>
-      <div className={`mx-auto w-full px-1 ${isNursingProcedure ? "max-w-4xl space-y-2" : "max-w-6xl space-y-2.5"}`}>
+      <div className={`mx-auto w-full px-1 ${isNursingProcedure ? "max-w-4xl space-y-2" : isNursingMaterial ? "max-w-5xl space-y-3" : "max-w-6xl space-y-2.5"}`}>
         {/* Header */}
-        <section className={`relative overflow-hidden ${GLASS} ${isNursingProcedure ? "min-h-[64px]" : "h-[80px]"}`}>
+        <section className={`relative overflow-hidden ${GLASS} ${isNursingProcedure || isNursingMaterial ? "min-h-[64px]" : "h-[80px]"}`}>
           {isNursingProcedure ? (
             <>
               <div className="pointer-events-none absolute -right-8 -top-16 h-36 w-36 rounded-full bg-violet-500/10 blur-2xl" />
@@ -295,6 +296,31 @@ export function GeneratedResourceCreatePage({
                 <Link
                   href={basePath}
                   className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border border-border bg-card/80 px-3 text-xs font-medium text-foreground transition hover:bg-muted"
+                >
+                  <ArrowLeft size={13} /> {t("Voltar", "Back")}
+                </Link>
+              </div>
+            </>
+          ) : isNursingMaterial ? (
+            <>
+              <span className="absolute inset-x-0 top-0 h-1 bg-emerald-500" />
+              <div className="pointer-events-none absolute -right-10 -top-16 h-40 w-40 rounded-full bg-emerald-400/15 blur-3xl" />
+              <div className="pointer-events-none absolute -left-16 bottom-0 h-28 w-28 rounded-full bg-teal-400/10 blur-3xl" />
+              <div className="relative flex min-h-[72px] flex-wrap items-center justify-between gap-3 px-4 py-3">
+                <div className="flex min-w-0 items-center gap-3">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-600 to-teal-600 text-white shadow-md shadow-emerald-500/25">
+                    <Package2 size={18} />
+                  </span>
+                  <div className="min-w-0">
+                    <h1 className="truncate text-lg font-bold leading-tight text-foreground">Novo material de procedimento</h1>
+                    <p className="text-[11px] text-muted-foreground">
+                      Registe produto, lote, quantidade e vínculo ao procedimento de enfermagem.
+                    </p>
+                  </div>
+                </div>
+                <Link
+                  href={basePath}
+                  className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border border-border bg-card/70 px-3 text-xs font-medium text-foreground shadow-sm backdrop-blur transition hover:bg-muted"
                 >
                   <ArrowLeft size={13} /> {t("Voltar", "Back")}
                 </Link>
@@ -324,12 +350,39 @@ export function GeneratedResourceCreatePage({
           )}
         </section>
         {/* Form card */}
-        <div className={isNursingProcedure ? "" : GLASS}>
-          <div className={isNursingProcedure ? "" : "px-4 py-3"}>
-            {!isNursingProcedure ? (
+        <div
+          className={
+            isNursingProcedure
+              ? ""
+              : isNursingMaterial
+                ? "relative overflow-hidden rounded-xl border border-emerald-200/30 bg-white/25 shadow-lg shadow-slate-900/5 backdrop-blur-2xl dark:border-emerald-800/20 dark:bg-white/[0.04]"
+                : GLASS
+          }
+        >
+          {isNursingMaterial ? (
+            <>
+              <span className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-emerald-500 via-teal-500 to-sky-500" />
+              <div className="pointer-events-none absolute right-0 top-0 h-24 w-24 rounded-full bg-emerald-400/10 blur-2xl" />
+            </>
+          ) : null}
+          <div className={isNursingProcedure ? "" : isNursingMaterial ? "relative px-4 py-4 sm:px-5" : "px-4 py-3"}>
+            {!isNursingProcedure && !isNursingMaterial ? (
               <h2 className="mb-2 text-lg font-semibold text-foreground">
                 {t("Dados do", "Data for")} {resourceLabel}
               </h2>
+            ) : null}
+            {isNursingMaterial ? (
+              <div className="mb-4 flex flex-wrap items-center justify-between gap-2 border-b border-white/30 pb-3 dark:border-white/10">
+                <div>
+                  <h2 className="text-sm font-semibold text-foreground">Dados do material</h2>
+                  <p className="mt-0.5 text-[11px] text-muted-foreground">
+                    Preencha os campos essenciais para consumo e rastreio de stock.
+                  </p>
+                </div>
+                <span className="rounded-full border border-emerald-200/70 bg-emerald-50/70 px-2.5 py-1 text-[10px] font-semibold text-emerald-700 dark:border-emerald-700/30 dark:bg-emerald-950/30 dark:text-emerald-300">
+                  Enfermagem
+                </span>
+              </div>
             ) : null}
             <AutoForm
               endpoint={ctx.normalizedEndpoint}
