@@ -53,8 +53,8 @@ function SectionCard({
 }) {
   return (
     <section className="relative z-10 overflow-visible rounded-xl border border-white/25 bg-white/[0.02] shadow-md shadow-slate-900/5 ring-1 ring-white/10 backdrop-blur-xl focus-within:z-30 dark:border-white/[0.08] dark:bg-white/[0.01] dark:ring-white/[0.04]">
-      <div className="flex items-center gap-2.5 border-b border-white/20 bg-transparent px-4 py-3 dark:border-white/[0.06]">
-        <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-500 text-white shadow-sm">
+      <div className="flex items-center gap-2 border-b border-white/20 bg-transparent px-3 py-2 dark:border-white/[0.06]">
+        <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-emerald-500 text-white shadow-sm">
           <Icon size={15} />
         </span>
         <div>
@@ -62,14 +62,14 @@ function SectionCard({
           <p className="text-[11px] text-muted-foreground">{subtitle}</p>
         </div>
       </div>
-      <div className="p-4">{children}</div>
+      <div className="p-3">{children}</div>
     </section>
   )
 }
 
 function Field({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
   return (
-    <label className="space-y-1.5">
+    <label className="space-y-1">
       <span className="text-[11px] font-semibold text-muted-foreground">
         {label} {required ? <span className="text-red-500">*</span> : null}
       </span>
@@ -206,12 +206,12 @@ export default function CreateNursingRecordPage() {
 
   return (
     <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.ENFERMAGEM]}>
-      <div className="mx-auto w-full max-w-5xl space-y-3 px-1">
-        <section className="relative overflow-hidden rounded-xl border border-emerald-200/30 bg-gradient-to-br from-emerald-100/[0.08] via-white/[0.03] to-teal-100/[0.05] px-4 py-3 shadow-xl shadow-slate-900/5 backdrop-blur-2xl dark:border-emerald-800/20 dark:from-emerald-950/[0.07] dark:via-white/[0.02] dark:to-teal-950/[0.04]">
+      <div className="mx-auto w-full max-w-5xl space-y-2 px-1">
+        <section className="relative overflow-hidden rounded-xl border border-emerald-200/30 bg-gradient-to-br from-emerald-100/[0.08] via-white/[0.03] to-teal-100/[0.05] px-3 py-2 shadow-xl shadow-slate-900/5 backdrop-blur-2xl dark:border-emerald-800/20 dark:from-emerald-950/[0.07] dark:via-white/[0.02] dark:to-teal-950/[0.04]">
           <div className="pointer-events-none absolute -right-10 -top-14 h-36 w-36 rounded-full bg-emerald-400/15 blur-3xl" />
           <div className="relative flex flex-wrap items-center justify-between gap-3">
-            <div className="flex min-w-0 items-center gap-3">
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-600 to-teal-600 text-white shadow-md shadow-emerald-500/25">
+            <div className="flex min-w-0 items-center gap-2">
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-600 to-teal-600 text-white shadow-md shadow-emerald-500/25">
                 <ClipboardEdit size={18} />
               </span>
               <div>
@@ -238,13 +238,13 @@ export default function CreateNursingRecordPage() {
           </div>
         ) : null}
 
-        <form onSubmit={createRecord} className="space-y-3">
+        <form onSubmit={createRecord} className="space-y-2">
           <SectionCard
             icon={User}
             title={t("Paciente e localização", "Patient and location")}
             subtitle={t("Identifique o paciente e, quando aplicável, a enfermaria.", "Identify the patient and, when applicable, the ward.")}
           >
-            <div className="grid gap-3 md:grid-cols-2">
+            <div className="grid gap-2 md:grid-cols-2">
               <Field label={t("Paciente", "Patient")} required>
                 <SearchableSelect
                   value={patientId}
@@ -283,8 +283,8 @@ export default function CreateNursingRecordPage() {
             title={t("Dados clínicos", "Clinical details")}
             subtitle={t("Descreva o motivo, a prioridade e a observação de enfermagem.", "Describe the reason, priority, and nursing note.")}
           >
-            <div className="space-y-3">
-              <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_14rem]">
+            <div className="space-y-2">
+              <div className="grid gap-2 md:grid-cols-[minmax(0,1fr)_14rem]">
                 <Field label={t("Título do registo", "Record title")} required>
                   <input
                     value={name}
@@ -311,7 +311,7 @@ export default function CreateNursingRecordPage() {
                 <textarea
                   value={observation}
                   onChange={(event) => setObservation(event.target.value)}
-                  className={`${FIELD_CLASS} min-h-32 resize-y leading-relaxed`}
+                  className={`${FIELD_CLASS} min-h-20 resize-y leading-relaxed`}
                   placeholder={t(
                     "Descreva o estado do paciente, cuidados prestados e orientações relevantes...",
                     "Describe the patient's condition, care provided, and relevant guidance...",
@@ -321,7 +321,7 @@ export default function CreateNursingRecordPage() {
             </div>
           </SectionCard>
 
-          <section className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/25 bg-white/[0.02] px-4 py-3 text-xs text-sky-900 shadow-md shadow-slate-900/5 ring-1 ring-white/10 backdrop-blur-xl dark:border-white/[0.08] dark:bg-white/[0.01] dark:text-sky-200 dark:ring-white/[0.04]">
+          <section className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-white/25 bg-white/[0.02] px-3 py-2 text-xs text-sky-900 shadow-md shadow-slate-900/5 ring-1 ring-white/10 backdrop-blur-xl dark:border-white/[0.08] dark:bg-white/[0.01] dark:text-sky-200 dark:ring-white/[0.04]">
             <p className="inline-flex items-center gap-2">
               <Info size={14} className="shrink-0" />
               {t(
