@@ -10,7 +10,7 @@ import {
   Receipt,
   Stethoscope,
   Tag,
-  TriangleAlert,
+  AlertTriangle,
 } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
@@ -270,7 +270,7 @@ export default function ProcedureMaterialsDetailPage() {
         <SectionCard
           title="Observações"
           subtitle="Notas livres e detalhes operacionais."
-          icon={TriangleAlert}
+          icon={AlertTriangle}
           accent="bg-rose-500"
         >
           <FieldRow label="Observação" value={data.observation || "—"} />
