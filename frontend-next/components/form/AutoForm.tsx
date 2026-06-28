@@ -1590,7 +1590,7 @@ export default function AutoForm({
               <label
                 key={field.name}
                 data-form-field={field.name}
-                className={`${compactFieldNames.size ? (compactFieldNames.has(field.name) ? "col-span-1 min-w-0" : "col-span-2") : ""} ${modernNursingProcedureFlow ? "space-y-0.5" : "space-y-1"} text-sm text-[var(--gray-700)]`}
+                className={`${compactFieldNames.size ? (compactFieldNames.has(field.name) ? "col-span-1 min-w-0" : "col-span-2") : ""} ${modernNursingProcedureFlow ? "space-y-0.5 rounded-lg p-1.5 transition duration-150 focus-within:bg-white/[0.14] focus-within:ring-2 focus-within:ring-sky-400/40 dark:focus-within:bg-white/[0.05]" : "space-y-1"} text-sm text-[var(--gray-700)]`}
               >
                 <div className="flex items-center justify-between">
                   <span className="font-medium text-[var(--gray-700)]">
