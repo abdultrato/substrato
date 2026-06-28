@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ChevronRight, Clipboard, Clock3, FileHeart, FlaskConical, Loader2, MapPin, Plus, Search, User } from "lucide-react";
 
 import AppLayout from "@/components/layout/AppLayout";
+import PageSizeInput from "@/components/ui/PageSizeInput";
 import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh";
 import { apiFetchList } from "@/lib/api";
 import { formatCount } from "@/lib/i18n/plural";
@@ -87,6 +88,7 @@ export default function NursingNursingRecordsPage() {
         page,
         pageSize,
         query,
+        clientPaginate: true,
         clientCache: safeRefreshToken === 0,
         clientCacheTtlMs: 20000,
       });
@@ -144,9 +146,7 @@ export default function NursingNursingRecordsPage() {
           </label>
           <label className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-white/30 bg-white/[0.06] px-2.5 text-[10px] font-medium text-muted-foreground backdrop-blur-xl dark:border-white/10 dark:bg-white/[0.03]">
             Mostrar
-            <select value={pageSize} onChange={(event) => setPageSize(Number(event.target.value))} aria-label="Número de registos por página" className="bg-transparent text-xs font-semibold text-foreground outline-none">
-              {[25, 50, 100, 200].map((size) => <option key={size} value={size}>{size}</option>)}
-            </select>
+            <PageSizeInput value={pageSize} onChange={setPageSize} ariaLabel="Número de registos por página, de 1 a 999" />
             por página
           </label>
         </div>
