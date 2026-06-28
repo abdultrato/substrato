@@ -31,6 +31,7 @@ export default function NursingPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [pendingRequests, setPendingRequests] = useState<number>(0)
   const [procedures, setProcedures] = useState<number>(0)
+  const [collections, setCollections] = useState<number>(0)
 
   useEffect(() => {
     let mounted = true
@@ -39,14 +40,18 @@ export default function NursingPage() {
         setLoading(true)
         setErrorMessage(null)
 
-        const [requests, procedureResponse] = await Promise.all([
+        const [requests, procedureResponse, collectionResponse] = await Promise.all([
           apiFetch<any>("/requests/?type=LAB&status=pendente", { clientCache: safeRefreshToken === 0 }),
           apiFetch<any>("/nursing/procedure/", { clientCache: safeRefreshToken === 0 }),
+          apiFetch<any>("/clinical/labrequest/?validada=true&type=LAB&status=pendente", {
+            clientCache: safeRefreshToken === 0,
+          }),
         ])
 
         if (!mounted) return
         setPendingRequests(extractTotalCount(requests))
         setProcedures(extractTotalCount(procedureResponse))
+        setCollections(extractTotalCount(collectionResponse))
       } catch (e: any) {
         if (!mounted) return
         setErrorMessage(
@@ -91,7 +96,7 @@ export default function NursingPage() {
         <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4">
           <MetricCard label={t("Requisições pendentes", "Pending requests")} value={loading ? "..." : pendingRequests} accentClass="border-l-amber-500" />
           <MetricCard label={t("Procedimentos", "Procedures")} value={loading ? "..." : procedures} accentClass="border-l-violet-500" />
-          <MetricCard label={t("Coletas", "Sample collections")} value={loading ? "..." : "—"} accentClass="border-l-blue-500" />
+          <MetricCard label={t("Coletas", "Sample collections")} value={loading ? "..." : collections} accentClass="border-l-blue-500" />
           <MetricCard
             label={t("Sinais vitais", "Vital signs")}
             value={loading ? "..." : "—"}
@@ -139,4 +144,3 @@ export default function NursingPage() {
     </AppLayout>
   )
 }
-
