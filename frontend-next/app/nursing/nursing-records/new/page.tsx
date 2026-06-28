@@ -52,8 +52,8 @@ function SectionCard({
   children: React.ReactNode
 }) {
   return (
-    <section className="relative z-10 overflow-visible rounded-xl border border-white/35 bg-white/10 shadow-lg shadow-slate-900/10 ring-1 ring-white/15 backdrop-blur-2xl focus-within:z-30 dark:border-white/10 dark:bg-white/[0.025] dark:ring-white/[0.06]">
-      <div className="flex items-center gap-2.5 border-b border-white/25 bg-white/[0.04] px-4 py-3 dark:border-white/[0.08] dark:bg-white/[0.015]">
+    <section className="relative z-10 overflow-visible rounded-xl border border-white/25 bg-white/[0.02] shadow-md shadow-slate-900/5 ring-1 ring-white/10 backdrop-blur-xl focus-within:z-30 dark:border-white/[0.08] dark:bg-white/[0.01] dark:ring-white/[0.04]">
+      <div className="flex items-center gap-2.5 border-b border-white/20 bg-transparent px-4 py-3 dark:border-white/[0.06]">
         <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-500 text-white shadow-sm">
           <Icon size={15} />
         </span>
@@ -321,7 +321,7 @@ export default function CreateNursingRecordPage() {
             </div>
           </SectionCard>
 
-          <section className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/35 bg-white/10 px-4 py-3 text-xs text-sky-900 shadow-lg shadow-slate-900/10 ring-1 ring-white/15 backdrop-blur-2xl dark:border-white/10 dark:bg-white/[0.025] dark:text-sky-200 dark:ring-white/[0.06]">
+          <section className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/25 bg-white/[0.02] px-4 py-3 text-xs text-sky-900 shadow-md shadow-slate-900/5 ring-1 ring-white/10 backdrop-blur-xl dark:border-white/[0.08] dark:bg-white/[0.01] dark:text-sky-200 dark:ring-white/[0.04]">
             <p className="inline-flex items-center gap-2">
               <Info size={14} className="shrink-0" />
               {t(
