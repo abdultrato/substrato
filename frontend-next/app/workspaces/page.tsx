@@ -63,6 +63,7 @@ function workspaceTone(key: string) {
         panel:
           "border-violet-200/80 bg-gradient-to-br from-violet-50/90 via-card to-card hover:border-violet-300 dark:border-violet-900/40 dark:from-violet-950/25 dark:via-card dark:to-card",
         accent: "bg-violet-500/10 text-violet-700 ring-violet-500/15 dark:bg-violet-500/15 dark:text-violet-300",
+        bar: "bg-violet-500",
         glow: "from-violet-500/12 via-violet-500/0 to-transparent",
         title: "text-violet-950 dark:text-violet-50",
         description: "text-violet-900/70 dark:text-violet-200/70",
@@ -72,6 +73,7 @@ function workspaceTone(key: string) {
         panel:
           "border-sky-200/80 bg-gradient-to-br from-sky-50/90 via-card to-card hover:border-sky-300 dark:border-sky-900/40 dark:from-sky-950/25 dark:via-card dark:to-card",
         accent: "bg-sky-500/10 text-sky-700 ring-sky-500/15 dark:bg-sky-500/15 dark:text-sky-300",
+        bar: "bg-sky-500",
         glow: "from-sky-500/12 via-sky-500/0 to-transparent",
         title: "text-sky-950 dark:text-sky-50",
         description: "text-sky-900/70 dark:text-sky-200/70",
@@ -81,6 +83,7 @@ function workspaceTone(key: string) {
         panel:
           "border-amber-200/80 bg-gradient-to-br from-amber-50/90 via-card to-card hover:border-amber-300 dark:border-amber-900/40 dark:from-amber-950/25 dark:via-card dark:to-card",
         accent: "bg-amber-500/10 text-amber-700 ring-amber-500/15 dark:bg-amber-500/15 dark:text-amber-300",
+        bar: "bg-amber-500",
         glow: "from-amber-500/12 via-amber-500/0 to-transparent",
         title: "text-amber-950 dark:text-amber-50",
         description: "text-amber-900/70 dark:text-amber-200/70",
@@ -90,6 +93,7 @@ function workspaceTone(key: string) {
         panel:
           "border-border/80 bg-gradient-to-br from-muted/60 via-card to-card hover:border-primary/25 dark:from-muted/30 dark:via-card dark:to-card",
         accent: "bg-primary/10 text-primary ring-primary/15",
+        bar: "bg-primary",
         glow: "from-primary/12 via-primary/0 to-transparent",
         title: "text-foreground",
         description: "text-muted-foreground",
@@ -121,6 +125,7 @@ function WorkspaceCard({
         aria-hidden
         className={`pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b ${tone.glow} opacity-100`}
       />
+      <span aria-hidden className={`pointer-events-none absolute inset-x-0 top-0 h-1 ${tone.bar}`} />
       <div className={`relative flex h-full flex-col justify-between gap-4 rounded-[inherit] p-4 sm:p-5 ${tone.panel}`}>
         <div className="flex items-start justify-between gap-3">
           <div className={`inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ring-1 ${tone.accent}`}>
