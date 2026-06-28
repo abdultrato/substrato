@@ -34,6 +34,7 @@ export type AutoFormProps = {
   initialValues?: Record<string, any>
   onSuccess?: (data: any) => void
   config?: ResourceFormConfig | null
+  presentation?: "default" | "modern-nursing"
 }
 
 const LONG_TEXT_FIELDS = new Set([
@@ -1053,10 +1054,11 @@ export default function AutoForm({
   initialValues = {},
   onSuccess,
   config,
+  presentation = "default",
 }: AutoFormProps) {
   const { tr } = useLanguage()
   const safeRefreshToken = useSafeDataRefreshSignal()
-  const modernNursingProcedureFlow = /^\/nursing\/procedure(?:\/[^/]+)?$/.test(
+  const modernNursingProcedureFlow = presentation === "modern-nursing" || /^\/nursing\/procedure(?:\/[^/]+)?$/.test(
     String(endpoint || "").split("?")[0].replace(/\/+$/, "")
   )
   const effectiveMethod = useMemo<Method>(() => {
@@ -1640,7 +1642,7 @@ export default function AutoForm({
           </div>
         ) : null}
       </div>
-      {!modernNursingProcedureFlow ? <div>
+      {!modernNursingProcedureFlow || !etapas?.length ? <div>
         {etapas?.length ? (
           <div className="flex flex-wrap items-center justify-between gap-2">
             <button
@@ -1671,7 +1673,10 @@ export default function AutoForm({
             type="button"
             onClick={handleSubmit}
             disabled={submitDisabled}
-            className="inline-flex h-11 w-full items-center justify-center rounded-md bg-[var(--primary-600)] px-3 text-sm font-semibold leading-tight text-white shadow-sm transition-all duration-150 hover:bg-[var(--primary-700)] hover:shadow-md disabled:opacity-60 sm:w-auto"
+            className={modernNursingProcedureFlow
+              ? "inline-flex h-9 w-full items-center justify-center rounded-lg bg-gradient-to-r from-violet-600 to-indigo-600 px-5 text-xs font-semibold text-white shadow-md shadow-violet-500/25 transition hover:from-violet-700 hover:to-indigo-700 disabled:opacity-60 sm:w-auto"
+              : "inline-flex h-11 w-full items-center justify-center rounded-md bg-[var(--primary-600)] px-3 text-sm font-semibold leading-tight text-white shadow-sm transition-all duration-150 hover:bg-[var(--primary-700)] hover:shadow-md disabled:opacity-60 sm:w-auto"
+            }
           >
             {submitting ? "Salvando..." : submitLabel}
           </button>
