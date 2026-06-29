@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Baby, BedDouble, Calendar, Heart, Loader2, Plus, Search, Stethoscope, User, X } from "lucide-react";
 
 import AppLayout from "@/components/layout/AppLayout";
+import PageSizeInput from "@/components/ui/PageSizeInput";
 import { apiFetch } from "@/lib/api";
 import { GROUPS } from "@/lib/rbac";
 
@@ -118,7 +119,7 @@ export default function MaternityPregnanciesListPage() {
   const [statusFilter, setStatusFilter] = useState("");
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
-  const pageSize = 20;
+  const [pageSize, setPageSize] = useState(10);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -136,7 +137,7 @@ export default function MaternityPregnanciesListPage() {
       }
     } catch { setItems([]); }
     finally { setLoading(false); }
-  }, [search, statusFilter, page]);
+  }, [search, statusFilter, page, pageSize]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -204,6 +205,16 @@ export default function MaternityPregnanciesListPage() {
                 <X size={13} /> Limpar
               </button>
             )}
+            <div>
+              <label className="mb-1 block text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Por página</label>
+              <div className="flex h-9 items-center">
+                <PageSizeInput
+                  value={pageSize}
+                  onChange={(v) => { setPageSize(v); setPage(1); }}
+                  ariaLabel="Registos por página"
+                />
+              </div>
+            </div>
           </div>
         </section>
 
