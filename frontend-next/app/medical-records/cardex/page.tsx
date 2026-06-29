@@ -3,10 +3,10 @@
 import { isNotFoundLikeError } from "@/lib/errors/api-error"
 import Link from "next/link"
 import { useEffect, useMemo, useState } from "react"
+import { ArrowLeft, ClipboardList, LayoutList, Settings2 } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
 import DataTable from "@/components/ui/DataTable"
-import PageHeader from "@/components/ui/PageHeader"
 import Pagination from "@/components/ui/Pagination"
 import { apiFetchList } from "@/lib/api"
 import { useAuth } from "@/hooks/useAuth"
@@ -93,11 +93,14 @@ export default function ProntuarioCardexPage() {
     return (
         <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.MEDICINA, GROUPS.MEDICINA_OCUPACIONAL]}>
             <div className="space-y-6">
-                <PageHeader
-                    title="Cardex"
-                    subtitle="Registros do prontuário (Cardex)."
-                    actions={
-                        <div className="flex flex-wrap items-center gap-2">
+                <div className="relative overflow-hidden rounded-2xl border border-slate-200/70 bg-white/75 p-5 shadow-sm backdrop-blur-sm dark:border-slate-800/80 dark:bg-slate-950/45">
+                    <div className="absolute inset-y-0 left-0 w-1.5 bg-gradient-to-b from-sky-500 via-cyan-500 to-teal-400" />
+                    <div className="flex flex-wrap items-start justify-between gap-3 pl-2">
+                        <div className="min-w-0 space-y-1">
+                            <h1 className="text-lg font-bold text-foreground">Cardex</h1>
+                            <p className="text-sm text-muted-foreground">Registros do prontuário (Cardex).</p>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
                             <Link
                                 href="/medical-records/records/new"
                                 className="inline-flex items-center rounded-xl bg-[var(--primary-600)] px-3 py-1.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[var(--primary-700)]"
@@ -106,27 +109,29 @@ export default function ProntuarioCardexPage() {
                             </Link>
                             <Link
                                 href="/medical-records/records"
-                                className="inline-flex items-center rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-1.5 text-sm font-medium text-[var(--gray-700)] shadow-sm transition hover:bg-[var(--gray-100)]"
+                                className="inline-flex items-center gap-1.5 rounded-xl border border-[var(--border)] bg-card/60 px-3 py-1.5 text-sm font-medium text-[var(--gray-700)] shadow-sm transition hover:bg-muted/55"
                             >
+                                <Settings2 size={15} />
                                 Gerenciamento
                             </Link>
                             <Link
                                 href="/medical-records"
-                                className="inline-flex items-center rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-1.5 text-sm font-medium text-[var(--gray-700)] shadow-sm transition hover:bg-[var(--gray-100)]"
+                                className="inline-flex items-center gap-1.5 rounded-xl border border-[var(--border)] bg-card/60 px-3 py-1.5 text-sm font-medium text-[var(--gray-700)] shadow-sm transition hover:bg-muted/55"
                             >
+                                <ArrowLeft size={15} />
                                 Voltar
                             </Link>
                             {podeVerAdmin ? (
                                 <Link
                                     href="/admin/medical-records/medicalrecordentry/"
-                                    className="inline-flex items-center rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50"
+                                    className="inline-flex items-center rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-100 dark:hover:bg-slate-900"
                                 >
                                     Admin
                                 </Link>
                             ) : null}
                         </div>
-                    }
-                />
+                    </div>
+                </div>
 
                 {erro ? (
                     <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
@@ -134,39 +139,59 @@ export default function ProntuarioCardexPage() {
                     </div>
                 ) : null}
 
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div className="text-sm text-slate-600">Total: {totalItems}</div>
-                    <label className="flex items-center gap-2 text-sm text-slate-700">
-                        <span>Por página</span>
-                        <select
-                            value={pageSize}
-                            onChange={(e) => {
-                                setPage(1)
-                                setPageSize(Number(e.target.value))
-                            }}
-                            className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-800 shadow-sm"
-                        >
-                            <option value={20}>20</option>
-                        </select>
-                    </label>
+                <div className="flex flex-wrap gap-4">
+                    <div className="group relative min-w-[220px] flex-1 basis-[220px] overflow-hidden rounded-xl border border-slate-200/70 bg-white/70 shadow-sm backdrop-blur-sm dark:border-slate-800/80 dark:bg-slate-950/45">
+                        <div className="absolute inset-y-0 left-0 w-1.5 bg-gradient-to-b from-sky-500 via-cyan-500 to-teal-400" />
+                        <div className="flex items-center justify-between gap-3 p-4 pl-6">
+                            <div>
+                                <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Total</div>
+                                <div className="mt-0.5 font-display text-xl font-bold text-foreground tabular-nums">{totalItems}</div>
+                            </div>
+                            <LayoutList className="text-sky-600 dark:text-sky-400" size={18} />
+                        </div>
+                    </div>
+
+                    <div className="group relative min-w-[220px] flex-1 basis-[220px] overflow-hidden rounded-xl border border-slate-200/70 bg-white/70 shadow-sm backdrop-blur-sm dark:border-slate-800/80 dark:bg-slate-950/45">
+                        <div className="absolute inset-y-0 left-0 w-1.5 bg-gradient-to-b from-violet-500 via-fuchsia-500 to-pink-400" />
+                        <div className="flex items-center justify-between gap-3 p-4 pl-6">
+                            <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
+                                <span>Por página</span>
+                                <select
+                                    value={pageSize}
+                                    onChange={(e) => {
+                                        setPage(1)
+                                        setPageSize(Number(e.target.value))
+                                    }}
+                                    className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-800 shadow-sm dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-100"
+                                >
+                                    <option value={20}>20</option>
+                                </select>
+                            </label>
+                            <Settings2 className="text-violet-600 dark:text-violet-400" size={18} />
+                        </div>
+                    </div>
                 </div>
 
-                {loading ? (
-                    <div className="text-sm text-gray-500">Carregando...</div>
-                ) : (
-                    <>
+                <div className="relative basis-full overflow-hidden rounded-xl border border-slate-200/70 bg-white/70 shadow-sm backdrop-blur-sm dark:border-slate-800/80 dark:bg-slate-950/45">
+                    <div className="absolute inset-y-0 left-0 w-1.5 bg-gradient-to-b from-indigo-500 via-blue-500 to-cyan-400" />
+                    <div className="space-y-4 p-4 pl-6">
+                        {loading ? (
+                            <div className="text-sm text-gray-500">Carregando...</div>
+                        ) : (
+                            <>
                         <DataTable<RegistroRow>
                             columns={columns as any}
                             data={data}
                             emptyMessage="Nenhum registro encontrado."
                         />
                         <Pagination page={page} totalPages={totalPages} onChange={setPage} />
-                    </>
-                )}
+                            </>
+                        )}
+                    </div>
+                </div>
             </div>
         </AppLayout>
     )
 }
-
 
 
