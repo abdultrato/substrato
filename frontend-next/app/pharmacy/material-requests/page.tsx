@@ -198,11 +198,15 @@ export default function RequisicoesMateriaisPage() {
               </div>
             </div>
             {isPharmacy && (
-              <label className="flex cursor-pointer items-center gap-2 text-sm text-foreground">
-                <input type="checkbox" checked={onlyPending} onChange={e => setOnlyPending(e.target.checked)}
-                  className="h-4 w-4 rounded border-border accent-violet-600" />
-                Só pendentes/parciais
-              </label>
+              <button type="button" onClick={() => setOnlyPending(p => !p)}
+                className={`inline-flex h-9 items-center gap-1.5 rounded-md border px-3 text-sm font-medium transition ${
+                  onlyPending
+                    ? "border-violet-500/40 bg-violet-500/15 text-violet-600 dark:text-violet-300"
+                    : "border-white/20 bg-white/10 text-muted-foreground hover:bg-white/20 hover:text-foreground"
+                }`}>
+                <span className={`h-2 w-2 rounded-full ${onlyPending ? "bg-amber-400" : "bg-muted-foreground/40"}`} />
+                Pendentes / parciais
+              </button>
             )}
           </div>
         </section>
