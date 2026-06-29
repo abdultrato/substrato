@@ -1963,7 +1963,7 @@ function ModalShell({ title, onClose, children }: { title: string; onClose: () =
   return (
     <div className="fixed inset-0 z-[9999] flex items-start justify-center overflow-hidden p-3 pt-10 sm:p-6 sm:pt-12">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative flex max-h-[calc(100vh-4rem)] w-full max-w-5xl flex-col overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--card)] shadow-2xl">
+      <div className="relative flex max-h-[calc(100vh-4rem)] w-full max-w-5xl flex-col overflow-hidden rounded-xl border border-[var(--border)] bg-card/78 shadow-2xl backdrop-blur-xl supports-[backdrop-filter]:bg-card/72">
         <div className="flex shrink-0 items-center justify-between border-b border-[var(--border)] px-4 py-3">
           <div>
             <h2 className="text-sm font-semibold text-[var(--text)]">{title}</h2>
