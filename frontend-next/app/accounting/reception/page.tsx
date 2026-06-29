@@ -1,39 +1,59 @@
 "use client"
 
 import { isNotFoundLikeError } from "@/lib/errors/api-error"
-import { useEffect, useMemo, useState } from "react"
-import { AlertTriangle } from "lucide-react"
+import { useCallback, useEffect, useMemo, useState } from "react"
+import {
+  AlertTriangle,
+  CalendarClock,
+  ClipboardList,
+  FileText,
+  Loader2,
+  Receipt,
+  Search,
+  User,
+  UserCog,
+  X,
+} from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
-import Card from "@/components/ui/Card"
-import DataTable from "@/components/ui/DataTable"
-import MetricCard from "@/components/ui/MetricCard"
-import PageHeader from "@/components/ui/PageHeader"
+import PageSizeInput from "@/components/ui/PageSizeInput"
 import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { apiFetch } from "@/lib/api"
 import { GROUPS } from "@/lib/rbac"
 
+const GLASS =
+  "rounded-xl border border-white/20 bg-white/30 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]"
+
 type Row = Record<string, any>
 
-function fmtDate(value: any): string {
-  if (!value) return "-"
-  const d = new Date(value)
-  if (Number.isNaN(d.getTime())) return String(value)
-  return d.toLocaleString()
+const CHECKIN_STATUS: Record<string, { label: string; dot: string; badge: string }> = {
+  AGUARD: { label: "Aguardando", dot: "bg-amber-400", badge: "border-amber-200 bg-amber-50 text-amber-700" },
+  ATEND: { label: "Em atendimento", dot: "bg-blue-400", badge: "border-blue-200 bg-blue-50 text-blue-700" },
+  REQ: { label: "Requisição criada", dot: "bg-violet-400", badge: "border-violet-200 bg-violet-50 text-violet-700" },
+  FAT: { label: "Fatura vinculada", dot: "bg-sky-400", badge: "border-sky-200 bg-sky-50 text-sky-700" },
+  CONC: { label: "Concluído", dot: "bg-emerald-400", badge: "border-emerald-200 bg-emerald-50 text-emerald-700" },
+  CANC: { label: "Cancelado", dot: "bg-rose-400", badge: "border-rose-200 bg-rose-50 text-rose-700" },
 }
 
-function fmtMoney(value: any): string {
-  if (value === null || value === undefined || value === "") return "-"
-  const n = Number(value)
-  if (Number.isNaN(n)) return String(value)
-  return n.toLocaleString("pt-PT", { style: "currency", currency: "MZN" })
-}
-
-const INVOICE_BADGE: Record<string, string> = {
-  RASC: "border-slate-200 bg-slate-50 text-slate-700",
+const INVOICE_STATUS: Record<string, string> = {
+  RASC: "border-slate-200 bg-slate-50 text-slate-600",
   EMIT: "border-sky-200 bg-sky-50 text-sky-700",
   PAGA: "border-emerald-200 bg-emerald-50 text-emerald-700",
   CANC: "border-rose-200 bg-rose-50 text-rose-700",
+}
+
+function fmtDate(value: any): string {
+  if (!value) return "—"
+  const d = new Date(value)
+  if (Number.isNaN(d.getTime())) return String(value)
+  return d.toLocaleString("pt-PT", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })
+}
+
+function fmtMoney(value: any): string {
+  if (value === null || value === undefined || value === "") return "—"
+  const n = Number(value)
+  if (Number.isNaN(n)) return String(value)
+  return n.toLocaleString("pt-PT", { style: "currency", currency: "MZN" })
 }
 
 /** Atendimento ativo (não cancelado) sem fatura vinculada = risco de receita não faturada. */
@@ -41,39 +61,146 @@ function isUnbilled(r: Row): boolean {
   return !r.invoice && r.status !== "CANC"
 }
 
+function Metric({
+  label,
+  value,
+  hint,
+  accent,
+  icon: Icon,
+}: {
+  label: string
+  value: React.ReactNode
+  hint?: string
+  accent: string
+  icon: React.ElementType
+}) {
+  return (
+    <section className={`relative overflow-hidden ${GLASS}`}>
+      <span className={`absolute left-0 top-0 h-full w-1 ${accent}`} />
+      <div className="flex items-center gap-3 px-4 py-3 pl-5">
+        <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${accent} text-white shadow-sm`}>
+          <Icon size={16} />
+        </span>
+        <div className="min-w-0">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">{label}</p>
+          <p className="font-display text-xl font-bold leading-tight text-foreground tabular-nums">{value}</p>
+          {hint ? <p className="text-[10px] text-muted-foreground">{hint}</p> : null}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function CheckinCard({ r }: { r: Row }) {
+  const st = CHECKIN_STATUS[r.status] ?? CHECKIN_STATUS.AGUARD
+  const unbilled = isUnbilled(r)
+  const invBadge = INVOICE_STATUS[r.invoice_status] ?? INVOICE_STATUS.RASC
+  return (
+    <article className={`group relative overflow-hidden ${GLASS} transition hover:border-pink-500/30 hover:shadow-md`}>
+      <span className={`absolute left-0 top-0 h-full w-1 ${st.dot}`} />
+      <div className="px-4 py-3 pl-5">
+        <div className="mb-2 flex flex-wrap items-start justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-pink-500/10 text-pink-500">
+              <User size={13} />
+            </span>
+            <div className="min-w-0">
+              <p className="truncate text-xs font-bold text-foreground">{r.patient_name || "—"}</p>
+              <p className="text-[10px] text-muted-foreground">{r.patient_code || r.id_custom || `#${r.id}`}</p>
+            </div>
+          </div>
+          <span className={`rounded-full border px-2 py-0.5 text-[9px] font-semibold ${st.badge}`}>{st.label}</span>
+        </div>
+
+        <div className="space-y-1 text-[11px] text-muted-foreground">
+          <div className="flex items-center gap-1.5">
+            <ClipboardList size={11} className="shrink-0" />
+            <span className="truncate">Requisição: {r.request_code || "—"}</span>
+          </div>
+
+          {r.invoice ? (
+            <div className="flex flex-wrap items-center gap-1.5">
+              <FileText size={11} className="shrink-0" />
+              <span className="font-medium text-foreground">{r.invoice_code || `#${r.invoice}`}</span>
+              <span className={`rounded-md border px-1.5 py-0.5 text-[9px] font-semibold ${invBadge}`}>
+                {r.invoice_status_display || r.invoice_status}
+              </span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-1.5">
+              <FileText size={11} className="shrink-0" />
+              {unbilled ? (
+                <span className="inline-flex items-center gap-1 rounded-md border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-[9px] font-semibold text-amber-800">
+                  <AlertTriangle size={10} /> Sem fatura
+                </span>
+              ) : (
+                <span>Sem fatura</span>
+              )}
+            </div>
+          )}
+
+          {r.invoice ? (
+            <div className="flex items-center gap-1.5">
+              <Receipt size={11} className="shrink-0" />
+              <span className="text-foreground tabular-nums">{fmtMoney(r.invoice_total)}</span>
+              {r.invoice_patient_amount != null ? (
+                <span className="text-muted-foreground">· doente {fmtMoney(r.invoice_patient_amount)}</span>
+              ) : null}
+            </div>
+          ) : null}
+
+          <div className="flex items-center gap-1.5">
+            <UserCog size={11} className="shrink-0" />
+            <span className="truncate">{r.attendant_name || "Sem atendente"}</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <CalendarClock size={11} className="shrink-0" />
+            <span>{fmtDate(r.arrived_at || r.criado_em)}</span>
+          </div>
+        </div>
+      </div>
+    </article>
+  )
+}
+
 export default function ContabilidadeRecepcaoAuditPage() {
   const safeRefreshToken = useSafeDataRefreshSignal()
   const [erro, setErro] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [checkins, setCheckins] = useState<Row[]>([])
+  const [search, setSearch] = useState("")
+  const [statusFilter, setStatusFilter] = useState("")
+  const [billingFilter, setBillingFilter] = useState("")
+  const [pageSize, setPageSize] = useState(10)
+
+  const load = useCallback(async () => {
+    setLoading(true)
+    setErro(null)
+    try {
+      const params = new URLSearchParams({ ordering: "-arrived_at", page_size: String(pageSize) })
+      if (statusFilter) params.set("status", statusFilter)
+      if (search) params.set("search", search)
+      const res = await apiFetch<any>(`/reception/checkin/?${params}`, { clientCache: safeRefreshToken === 0 })
+      const list = (v: any) => (v && v.results ? v.results : v) || []
+      setCheckins(Array.isArray(list(res)) ? list(res) : [])
+    } catch (e: any) {
+      setCheckins([])
+      setErro(isNotFoundLikeError(e) ? null : e?.message || "Falha ao carregar dados da recepção.")
+    } finally {
+      setLoading(false)
+    }
+  }, [safeRefreshToken, pageSize, statusFilter, search])
 
   useEffect(() => {
-    let mounted = true
-    async function load() {
-      try {
-        setLoading(true)
-        setErro(null)
+    load().catch(() => {})
+  }, [load])
 
-        const cRes = await apiFetch<any>("/reception/checkin/?ordering=-arrived_at", {
-          clientCache: safeRefreshToken === 0,
-        })
-
-        const list = (v: any) => (v && v.results ? v.results : v) || []
-
-        if (!mounted) return
-        setCheckins(Array.isArray(list(cRes)) ? list(cRes).slice(0, 200) : [])
-      } catch (e: any) {
-        if (!mounted) return
-        setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao carregar dados da recepção."))
-      } finally {
-        if (mounted) setLoading(false)
-      }
-    }
-    load()
-    return () => {
-      mounted = false
-    }
-  }, [safeRefreshToken])
+  const visible = useMemo(() => {
+    if (billingFilter === "unbilled") return checkins.filter(isUnbilled)
+    if (billingFilter === "billed") return checkins.filter((r) => !!r.invoice)
+    if (billingFilter === "paid") return checkins.filter((r) => r.invoice_status === "PAGA")
+    return checkins
+  }, [checkins, billingFilter])
 
   const metrics = useMemo(() => {
     const total = checkins.length
@@ -83,108 +210,127 @@ export default function ContabilidadeRecepcaoAuditPage() {
     return { total, comFatura, semFatura, pagas }
   }, [checkins])
 
-  const columns = useMemo(
-    () => [
-      { header: "Código", render: (r: Row) => r.invoice_code || r.id_custom || r.id || "-" },
-      {
-        header: "Paciente",
-        render: (r: Row) => (
-          <div className="space-y-0.5">
-            <div className="font-medium text-foreground">{r.patient_name || r.paciente || "-"}</div>
-            {r.patient_code ? (
-              <div className="text-[11px] text-muted-foreground">{r.patient_code}</div>
-            ) : null}
-          </div>
-        ),
-      },
-      { header: "Estado", render: (r: Row) => r.status_display || r.estado || "-" },
-      { header: "Requisição", render: (r: Row) => r.request_code || "—" },
-      {
-        header: "Fatura",
-        render: (r: Row) => {
-          if (!r.invoice) {
-            return isUnbilled(r) ? (
-              <span className="inline-flex items-center gap-1 rounded-md border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-[11px] font-semibold text-amber-800">
-                <AlertTriangle size={12} />
-                Sem fatura
-              </span>
-            ) : (
-              <span className="text-muted-foreground">—</span>
-            )
-          }
-          const badge = INVOICE_BADGE[r.invoice_status] || INVOICE_BADGE.RASC
-          return (
-            <div className="space-y-0.5">
-              <div className="font-medium text-foreground">{r.invoice_code || r.invoice}</div>
-              <span className={`inline-block rounded-md border px-1.5 py-0.5 text-[11px] font-semibold ${badge}`}>
-                {r.invoice_status_display || r.invoice_status}
-              </span>
-            </div>
-          )
-        },
-      },
-      {
-        header: "Valor",
-        className: "text-right tabular-nums",
-        render: (r: Row) => fmtMoney(r.invoice_total),
-      },
-      {
-        header: "Doente paga",
-        className: "text-right tabular-nums",
-        render: (r: Row) => fmtMoney(r.invoice_patient_amount),
-      },
-      { header: "Atendente", render: (r: Row) => r.attendant_name || "—" },
-      { header: "Chegada", render: (r: Row) => fmtDate(r.arrived_at || r.criado_em) },
-    ],
-    []
-  )
-
   return (
-    <AppLayout
-      requiredGroups={[
-        GROUPS.ADMIN,
-        GROUPS.CONTABILIDADE,
-      ]}
-    >
-      <div className="space-y-4">
-        <PageHeader
-          title="Recepção (auditoria financeira)"
-          subtitle="Somente leitura: check-ins ligados à requisição, fatura e cobrança."
-        />
+    <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.CONTABILIDADE]}>
+      <div className="w-full space-y-3 px-1">
+
+        {/* ── Cabeçalho ── */}
+        <section className={`relative overflow-hidden ${GLASS}`}>
+          <span className="absolute left-0 top-0 h-full w-1 bg-rose-500" />
+          <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 pl-5">
+            <div className="flex min-w-0 items-center gap-2">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-rose-500 to-pink-600 text-white shadow-md shadow-rose-500/20">
+                <Receipt size={17} />
+              </span>
+              <div>
+                <h1 className="text-lg font-bold leading-tight text-foreground">Recepção · auditoria financeira</h1>
+                <p className="text-[11px] text-muted-foreground">
+                  {loading ? "A carregar…" : `${metrics.total} check-in${metrics.total !== 1 ? "s" : ""} · ligados a fatura e cobrança`}
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
 
         {erro ? (
-          <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-            {erro}
-          </div>
+          <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">{erro}</div>
         ) : null}
 
-        <div className="grid gap-2.5 md:grid-cols-2 xl:grid-cols-4">
-          <MetricCard label="Check-ins" value={loading ? "..." : metrics.total} accentClass="border-l-slate-500" />
-          <MetricCard label="Com fatura" value={loading ? "..." : metrics.comFatura} accentClass="border-l-sky-500" />
-          <MetricCard
+        {/* ── Métricas ── */}
+        <div className="grid grid-cols-2 gap-2 xl:grid-cols-4">
+          <Metric label="Check-ins" value={loading ? "…" : metrics.total} accent="bg-slate-500" icon={ClipboardList} />
+          <Metric label="Com fatura" value={loading ? "…" : metrics.comFatura} accent="bg-sky-500" icon={FileText} />
+          <Metric
             label="Sem fatura"
-            value={loading ? "..." : metrics.semFatura}
+            value={loading ? "…" : metrics.semFatura}
             hint="Atendimentos ativos sem cobrança"
-            accentClass="border-l-amber-500"
+            accent="bg-amber-500"
+            icon={AlertTriangle}
           />
-          <MetricCard label="Faturas pagas" value={loading ? "..." : metrics.pagas} accentClass="border-l-emerald-500" />
+          <Metric label="Faturas pagas" value={loading ? "…" : metrics.pagas} accent="bg-emerald-500" icon={Receipt} />
         </div>
 
-        <Card
-          title="Check-ins e cobrança"
-          subtitle="Cada atendimento ligado à sua fatura e estado de pagamento."
-        >
-          {loading ? (
-            <div className="text-sm text-gray-500">Carregando...</div>
-          ) : (
-            <DataTable<Row>
-              columns={columns as any}
-              data={checkins}
-              searchKeys={["invoice_code", "patient_name", "patient_code", "request_code", "status_display"]}
-              emptyMessage="Nenhum check-in encontrado."
-            />
-          )}
-        </Card>
+        {/* ── Filtros ── */}
+        <section className={`relative ${GLASS}`}>
+          <span className="absolute left-0 top-0 h-full w-1 rounded-l-xl bg-slate-400" />
+          <div className="flex flex-wrap items-center gap-3 px-4 py-3 pl-5">
+            <div className="relative min-w-[200px] flex-1">
+              <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <input
+                type="text"
+                placeholder="Pesquisar por código, paciente…"
+                className="h-9 w-full rounded-lg border border-border bg-background/60 py-2 pl-8 pr-8 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-rose-500/40 transition"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+              {search && (
+                <button
+                  type="button"
+                  aria-label="Limpar pesquisa"
+                  onClick={() => setSearch("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  <X size={13} />
+                </button>
+              )}
+            </div>
+            <select
+              aria-label="Estado do check-in"
+              className={`h-9 w-44 rounded-lg border border-border bg-background/60 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500/40 transition ${statusFilter ? "text-foreground" : "text-muted-foreground"}`}
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+            >
+              <option value="">Estado: todos</option>
+              <option value="AGUARD">Aguardando</option>
+              <option value="ATEND">Em atendimento</option>
+              <option value="REQ">Requisição criada</option>
+              <option value="FAT">Fatura vinculada</option>
+              <option value="CONC">Concluído</option>
+              <option value="CANC">Cancelado</option>
+            </select>
+            <select
+              aria-label="Cobrança"
+              className={`h-9 w-44 rounded-lg border border-border bg-background/60 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500/40 transition ${billingFilter ? "text-foreground" : "text-muted-foreground"}`}
+              value={billingFilter}
+              onChange={(e) => setBillingFilter(e.target.value)}
+            >
+              <option value="">Cobrança: todas</option>
+              <option value="billed">Com fatura</option>
+              <option value="unbilled">Sem fatura</option>
+              <option value="paid">Pagas</option>
+            </select>
+            <div className="inline-flex h-9 items-center gap-1.5" title="Registos por página">
+              <PageSizeInput value={pageSize} onChange={setPageSize} ariaLabel="Registos por página" />
+              <span className="text-xs text-muted-foreground">/pág</span>
+            </div>
+          </div>
+        </section>
+
+        {/* ── Cartões ── */}
+        {loading ? (
+          <div className="flex h-32 items-center justify-center text-muted-foreground">
+            <Loader2 size={20} className="animate-spin" />
+          </div>
+        ) : visible.length === 0 ? (
+          <section className={`relative overflow-hidden ${GLASS}`}>
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+              <span className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-rose-500/10 text-rose-500">
+                <Receipt size={22} />
+              </span>
+              <p className="text-sm font-medium text-foreground">Nenhum check-in encontrado</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {search || statusFilter || billingFilter ? "Tente ajustar os filtros." : "Ainda não há check-ins registados."}
+              </p>
+            </div>
+          </section>
+        ) : (
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
+            {visible.map((r) => (
+              <CheckinCard key={r.id} r={r} />
+            ))}
+          </div>
+        )}
+
       </div>
     </AppLayout>
   )
