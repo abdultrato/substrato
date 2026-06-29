@@ -153,11 +153,19 @@ export default function MedicinaPage() {
           </div>
         ) : null}
 
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-          <MetricCard label="Pacientes" value={loading ? "..." : pacientes} />
-          <MetricCard label="Requisições" value={loading ? "..." : requisicoes} />
-          <MetricCard label="Anamnese" value="—" />
-          <MetricCard label="Diagnósticos" value="—" />
+        <div className="flex flex-nowrap gap-3 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div className="min-w-[160px] flex-1">
+            <MetricCard label="Pacientes" value={loading ? "..." : pacientes} />
+          </div>
+          <div className="min-w-[160px] flex-1">
+            <MetricCard label="Requisições" value={loading ? "..." : requisicoes} />
+          </div>
+          <div className="min-w-[160px] flex-1">
+            <MetricCard label="Anamnese" value="—" />
+          </div>
+          <div className="min-w-[160px] flex-1">
+            <MetricCard label="Diagnósticos" value="—" />
+          </div>
         </div>
 
         <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
@@ -183,4 +191,3 @@ export default function MedicinaPage() {
     </AppLayout>
   )
 }
-
