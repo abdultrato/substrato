@@ -154,13 +154,13 @@ export default function MedicinaPage() {
         ) : null}
 
         <div className="flex flex-nowrap gap-3 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          <div className="min-w-[160px] flex-1">
+          <div className="min-w-[160px] shrink-0">
             <MetricCard label="Pacientes" value={loading ? "..." : pacientes} />
           </div>
-          <div className="min-w-[160px] flex-1">
+          <div className="min-w-[160px] shrink-0">
             <MetricCard label="Requisições" value={loading ? "..." : requisicoes} />
           </div>
-          <div className="min-w-[160px] flex-1">
+          <div className="min-w-[160px] shrink-0">
             <MetricCard label="Anamnese" value="—" />
           </div>
           <div className="min-w-[160px] flex-1">
