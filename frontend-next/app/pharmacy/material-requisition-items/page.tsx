@@ -100,6 +100,7 @@ export default function PharmacyMaterialRequisitionItemsPage() {
   const [allItems, setAllItems] = useState<ReqItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [colFilter, setColFilter] = useState<ColKey | "">("");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -159,15 +160,14 @@ export default function PharmacyMaterialRequisitionItemsPage() {
           </div>
         </section>
 
-        {/* ── Filtro ── */}
+        {/* ── Filtros inline ── */}
         <section className={`relative ${GLASS}`}>
           <span className="absolute left-0 top-0 h-full w-1 rounded-l-xl bg-slate-400" />
-          <div className="px-4 py-3 pl-5">
-            <label className="mb-1 block text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Pesquisar</label>
-            <div className="relative">
+          <div className="flex flex-wrap items-center gap-2 px-4 py-2.5 pl-5">
+            <div className="relative min-w-[180px] flex-1">
               <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
               <input type="text" placeholder="Produto, lote, código…"
-                className="w-full rounded-lg border border-border bg-background/60 py-2 pl-8 pr-8 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-violet-500/40 transition"
+                className="w-full rounded-lg border border-border bg-background/60 py-1.5 pl-8 pr-8 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-violet-500/40 transition"
                 value={search} onChange={e => setSearch(e.target.value)} />
               {search && (
                 <button type="button" onClick={() => setSearch("")}
@@ -176,6 +176,17 @@ export default function PharmacyMaterialRequisitionItemsPage() {
                 </button>
               )}
             </div>
+            <select className="rounded-lg border border-border bg-background/60 px-3 py-1.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-violet-500/40 transition"
+              value={colFilter} onChange={e => setColFilter(e.target.value as ColKey | "")}>
+              <option value="">Todos os estados</option>
+              {COLS.map(c => <option key={c.key} value={c.key}>{c.label}</option>)}
+            </select>
+            {(search || colFilter) && (
+              <button type="button" onClick={() => { setSearch(""); setColFilter(""); }}
+                className="inline-flex h-8 items-center gap-1 rounded-md border border-white/20 bg-white/10 px-3 text-xs text-muted-foreground backdrop-blur-sm transition hover:bg-white/20 hover:text-foreground">
+                <X size={11} /> Limpar
+              </button>
+            )}
           </div>
         </section>
 
@@ -185,8 +196,8 @@ export default function PharmacyMaterialRequisitionItemsPage() {
             <Loader2 size={20} className="animate-spin" />
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-2 xl:grid-cols-4">
-            {COLS.map(col => (
+          <div className={`grid gap-2 ${colFilter ? "grid-cols-1" : "grid-cols-2 xl:grid-cols-4"}`}>
+            {COLS.filter(col => !colFilter || col.key === colFilter).map(col => (
               <div key={col.key} className="flex flex-col gap-2">
                 {/* Cabeçalho coluna */}
                 <div className={`flex items-center justify-between rounded-lg border px-3 py-1.5 ${col.header}`}>
