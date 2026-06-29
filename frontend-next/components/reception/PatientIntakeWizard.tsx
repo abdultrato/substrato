@@ -310,10 +310,10 @@ const STEP_DEFINITIONS: Array<{ key: StepKey; label: string; icon: typeof Clipbo
 ]
 
 const inputCls =
-  "w-full rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-sm text-[var(--text)] shadow-sm outline-none transition placeholder:text-[var(--gray-400)] hover:border-[var(--primary-400)] focus:border-[var(--primary-500)] focus:ring-2 focus:ring-[var(--primary-300)] disabled:bg-[var(--gray-100)] disabled:text-[var(--gray-500)]"
+  "w-full rounded-lg border border-[var(--border)] bg-card/60 px-3 py-2 text-sm text-[var(--text)] shadow-sm outline-none transition placeholder:text-[var(--gray-400)] hover:border-[var(--primary-400)] focus:border-[var(--primary-500)] focus:ring-2 focus:ring-[var(--primary-300)] disabled:bg-muted/45 disabled:text-[var(--gray-500)]"
 
 const compactInputCls =
-  "w-full rounded-md border border-[var(--border)] bg-[var(--card)] px-2.5 py-1.5 text-xs text-[var(--text)] shadow-sm outline-none transition placeholder:text-[var(--gray-400)] hover:border-[var(--primary-400)] focus:border-[var(--primary-500)] focus:ring-2 focus:ring-[var(--primary-300)] disabled:bg-[var(--gray-100)] disabled:text-[var(--gray-500)]"
+  "w-full rounded-md border border-[var(--border)] bg-card/60 px-2.5 py-1.5 text-xs text-[var(--text)] shadow-sm outline-none transition placeholder:text-[var(--gray-400)] hover:border-[var(--primary-400)] focus:border-[var(--primary-500)] focus:ring-2 focus:ring-[var(--primary-300)] disabled:bg-muted/45 disabled:text-[var(--gray-500)]"
 
 function phoneDigits(value: string) {
   return value.replace(/\D/g, "")
@@ -1148,7 +1148,7 @@ export function PatientIntakeWizard({
   return (
     <ModalShell title={isEditMode ? "Editar paciente" : "Registar paciente"} onClose={onClose}>
       <div className="grid min-h-0 flex-1 grid-cols-1 md:grid-cols-[230px_minmax(0,1fr)]">
-        <aside className="border-b border-[var(--border)] bg-[var(--gray-100)] p-3 md:border-b-0 md:border-r">
+        <aside className="border-b border-[var(--border)] bg-muted/45 p-3 backdrop-blur-sm md:border-b-0 md:border-r">
           <div className="flex gap-2 overflow-x-auto md:flex-col md:overflow-visible">
             {steps.map((definition, index) => {
               const Icon = definition.icon
@@ -1164,13 +1164,13 @@ export function PatientIntakeWizard({
                     active
                       ? "border-[var(--primary-500)] bg-[var(--primary-600)] text-white"
                       : complete
-                        ? "border-emerald-200 bg-emerald-50 text-emerald-800"
-                        : "border-[var(--border)] bg-[var(--card)] text-[var(--gray-700)] disabled:opacity-60"
+                        ? "border-emerald-200 bg-emerald-50/75 text-emerald-800"
+                        : "border-[var(--border)] bg-card/55 text-[var(--gray-700)] disabled:opacity-60"
                   }`}
                 >
                   <span
                     className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md ${
-                      active ? "bg-white/15" : complete ? "bg-emerald-100" : "bg-[var(--gray-100)]"
+                      active ? "bg-white/15" : complete ? "bg-emerald-100/80" : "bg-muted/55"
                     }`}
                   >
                     {complete ? <CheckCircle2 size={15} /> : <Icon size={15} />}
@@ -1188,7 +1188,7 @@ export function PatientIntakeWizard({
           <div className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-5">{renderStep(currentStep.key)}</div>
 
           {error ? (
-            <div className="mx-4 mb-3 flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 sm:mx-5">
+            <div className="mx-4 mb-3 flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50/80 px-3 py-2 text-xs text-amber-800 backdrop-blur-sm sm:mx-5">
               <AlertTriangle size={14} className="mt-0.5 shrink-0" />
               <span>{error}</span>
             </div>
@@ -1202,7 +1202,7 @@ export function PatientIntakeWizard({
                 setStep((current) => Math.max(0, current - 1))
               }}
               disabled={step === 0}
-              className="inline-flex h-9 items-center rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 text-xs font-semibold text-[var(--gray-700)] transition hover:bg-[var(--gray-100)] disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex h-9 items-center rounded-lg border border-[var(--border)] bg-card/55 px-3 text-xs font-semibold text-[var(--gray-700)] transition hover:bg-muted/55 disabled:cursor-not-allowed disabled:opacity-50"
             >
               Anterior
             </button>
@@ -1251,7 +1251,7 @@ export function PatientIntakeWizard({
           </div>
 
           {isOccupational || isClinical ? (
-            <div className="space-y-3 rounded-lg border border-[var(--border)] bg-[var(--gray-100)] p-3">
+            <div className="space-y-3 rounded-lg border border-[var(--border)] bg-muted/45 p-3 backdrop-blur-sm">
               <h4 className="text-xs font-semibold uppercase tracking-wide text-[var(--gray-500)]">
                 Detalhes — {purposeLabel(data.visit_purpose)}
               </h4>
@@ -1301,7 +1301,7 @@ export function PatientIntakeWizard({
           ) : null}
 
           {isDonor ? (
-            <div className="flex items-start gap-2 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2.5 text-xs text-rose-700">
+            <div className="flex items-start gap-2 rounded-lg border border-rose-200 bg-rose-50/80 px-3 py-2.5 text-xs text-rose-700 backdrop-blur-sm">
               <Droplets size={14} className="mt-0.5 shrink-0" />
               <span>
                 Será adicionado o passo <strong>Doação de sangue</strong> para registar a colheita, sinais
@@ -1985,7 +1985,7 @@ function ModalShell({ title, onClose, children }: { title: string; onClose: () =
 
 function SummaryGroup({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="space-y-2 rounded-lg border border-[var(--border)] bg-[var(--gray-100)] p-3">
+    <section className="space-y-2 rounded-lg border border-[var(--border)] bg-muted/45 p-3 backdrop-blur-sm">
       <h4 className="text-xs font-semibold uppercase text-[var(--gray-500)]">{title}</h4>
       <div className="divide-y divide-[var(--border)]">{children}</div>
     </section>
