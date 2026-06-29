@@ -309,7 +309,7 @@ export default function MedicalRecordsRecordsDetailPage() {
         ) : null}
 
         {/* ── Cartões intermédios — grelha 4 colunas ── */}
-        <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-2 lg:grid-cols-3">
           <SectionCard
             title="Identificação"
             subtitle="Referência e estado."
