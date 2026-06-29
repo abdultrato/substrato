@@ -1,6 +1,7 @@
 "use client"
 
 import { isNotFoundLikeError } from "@/lib/errors/api-error"
+import Link from "next/link"
 import { useCallback, useEffect, useMemo, useState } from "react"
 import {
   AlertTriangle,
@@ -96,7 +97,10 @@ function CheckinCard({ r }: { r: Row }) {
   const unbilled = isUnbilled(r)
   const invBadge = INVOICE_STATUS[r.invoice_status] ?? INVOICE_STATUS.RASC
   return (
-    <article className={`group relative overflow-hidden ${GLASS} transition hover:border-pink-500/30 hover:shadow-md`}>
+    <Link
+      href={`/reception/reception-checkins/${r.id}`}
+      className={`group relative block overflow-hidden ${GLASS} transition hover:border-pink-500/30 hover:shadow-md`}
+    >
       <span className={`absolute left-0 top-0 h-full w-1 ${st.dot}`} />
       <div className="px-4 py-3 pl-5">
         <div className="mb-2 flex flex-wrap items-start justify-between gap-2">
@@ -159,7 +163,7 @@ function CheckinCard({ r }: { r: Row }) {
           </div>
         </div>
       </div>
-    </article>
+    </Link>
   )
 }
 
