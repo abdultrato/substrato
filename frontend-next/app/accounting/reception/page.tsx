@@ -2,7 +2,7 @@
 
 import { isNotFoundLikeError } from "@/lib/errors/api-error"
 import Link from "next/link"
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import {
   AlertTriangle,
   CalendarClock,
@@ -171,27 +171,45 @@ export default function ContabilidadeRecepcaoAuditPage() {
   const safeRefreshToken = useSafeDataRefreshSignal()
   const [erro, setErro] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
   const [checkins, setCheckins] = useState<Row[]>([])
+  const [searchInput, setSearchInput] = useState("")
   const [search, setSearch] = useState("")
   const [statusFilter, setStatusFilter] = useState("")
   const [billingFilter, setBillingFilter] = useState("")
   const [pageSize, setPageSize] = useState(10)
+  const reqId = useRef(0)
+  const loadedOnce = useRef(false)
+
+  // Debounce da pesquisa para não disparar uma chamada por tecla.
+  useEffect(() => {
+    const t = setTimeout(() => setSearch(searchInput.trim()), 300)
+    return () => clearTimeout(t)
+  }, [searchInput])
 
   const load = useCallback(async () => {
-    setLoading(true)
+    const id = ++reqId.current
+    if (loadedOnce.current) setRefreshing(true)
+    else setLoading(true)
     setErro(null)
     try {
       const params = new URLSearchParams({ ordering: "-arrived_at", page_size: String(pageSize) })
       if (statusFilter) params.set("status", statusFilter)
       if (search) params.set("search", search)
       const res = await apiFetch<any>(`/reception/checkin/?${params}`, { clientCache: safeRefreshToken === 0 })
+      // Descarta respostas fora de ordem (só aplica a mais recente).
+      if (id !== reqId.current) return
       const list = (v: any) => (v && v.results ? v.results : v) || []
       setCheckins(Array.isArray(list(res)) ? list(res) : [])
     } catch (e: any) {
-      setCheckins([])
+      if (id !== reqId.current) return
       setErro(isNotFoundLikeError(e) ? null : e?.message || "Falha ao carregar dados da recepção.")
     } finally {
-      setLoading(false)
+      if (id === reqId.current) {
+        loadedOnce.current = true
+        setLoading(false)
+        setRefreshing(false)
+      }
     }
   }, [safeRefreshToken, pageSize, statusFilter, search])
 
@@ -264,19 +282,21 @@ export default function ContabilidadeRecepcaoAuditPage() {
                 type="text"
                 placeholder="Pesquisar por código, paciente…"
                 className="h-9 w-full rounded-lg border border-border bg-background/60 py-2 pl-8 pr-8 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-rose-500/40 transition"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
               />
-              {search && (
+              {refreshing ? (
+                <Loader2 size={13} className="absolute right-3 top-1/2 -translate-y-1/2 animate-spin text-muted-foreground" />
+              ) : searchInput ? (
                 <button
                   type="button"
                   aria-label="Limpar pesquisa"
-                  onClick={() => setSearch("")}
+                  onClick={() => setSearchInput("")}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                 >
                   <X size={13} />
                 </button>
-              )}
+              ) : null}
             </div>
             <select
               aria-label="Estado do check-in"
@@ -328,7 +348,7 @@ export default function ContabilidadeRecepcaoAuditPage() {
             </div>
           </section>
         ) : (
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
+          <div className={`grid grid-cols-1 gap-2 transition-opacity sm:grid-cols-2 xl:grid-cols-3 ${refreshing ? "opacity-60" : "opacity-100"}`}>
             {visible.map((r) => (
               <CheckinCard key={r.id} r={r} />
             ))}
