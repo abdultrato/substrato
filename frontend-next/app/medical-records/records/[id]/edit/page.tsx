@@ -352,15 +352,17 @@ function EditRecordInner() {
               value={symptoms} onChange={e => setSymptoms(e.target.value)} />
           </SectionCard>
 
-          <SectionCard title="Diagnóstico" subtitle="Hipótese diagnóstica." icon={BookOpen} accent="bg-indigo-500">
-            <textarea rows={4} placeholder="Registe o diagnóstico…" className={`${FIELD} resize-none`}
-              value={diagnosis} onChange={e => setDiagnosis(e.target.value)} />
-          </SectionCard>
-
           <SectionCard title="Prescrição" subtitle="Observações livres de prescrição." icon={FileText} accent="bg-emerald-500">
             <textarea rows={4} placeholder="Notas de prescrição…" className={`${FIELD} resize-none`}
               value={prescription} onChange={e => setPrescription(e.target.value)} />
           </SectionCard>
+
+          <div className="lg:col-span-2">
+            <SectionCard title="Diagnóstico" subtitle="Hipótese diagnóstica." icon={BookOpen} accent="bg-indigo-500">
+              <textarea rows={4} placeholder="Registe o diagnóstico…" className={`${FIELD} resize-none`}
+                value={diagnosis} onChange={e => setDiagnosis(e.target.value)} />
+            </SectionCard>
+          </div>
 
         </div>
 
