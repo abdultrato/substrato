@@ -308,23 +308,10 @@ export default function MedicalRecordsRecordsDetailPage() {
           </div>
         ) : null}
 
-        {/* ── Cartões intermédios — grelha 4 colunas ── */}
-        <div className="grid grid-cols-2 gap-2 lg:grid-cols-3">
-          <SectionCard
-            title="Identificação"
-            subtitle="Referência e estado."
-            icon={ClipboardList}
-            accent="bg-violet-500"
-          >
-            <FieldRow label="Código" value={data.custom_id || `PRT-${data.id}`} />
-            <FieldRow label="Estado" value={status.label} />
-            <FieldRow label="Criado em" value={fmtDate(data.created_at)} />
-            <FieldRow label="Atualizado" value={fmtDate(data.updated_at)} />
-          </SectionCard>
-
+        <div className="grid grid-cols-1 gap-2 lg:grid-cols-2">
           <SectionCard
             title="Paciente e médico"
-            subtitle="Titular e responsável."
+            subtitle="Titular do cardex e responsável clínico."
             icon={User}
             accent="bg-sky-500"
           >
@@ -337,17 +324,21 @@ export default function MedicalRecordsRecordsDetailPage() {
               value={data.doctor_name || (data.doctor ? `#${data.doctor}` : "Não atribuído")}
             />
             <FieldRow label="Consulta" value={data.consultation_codes || "—"} />
+            <FieldRow label="Código" value={data.custom_id || `PRT-${data.id}`} />
           </SectionCard>
 
           <SectionCard
-            title="Período"
-            subtitle="Janela do episódio clínico."
+            title="Período e estado"
+            subtitle="Janela temporal do episódio clínico."
             icon={Calendar}
             accent="bg-teal-500"
           >
+            <FieldRow label="Estado" value={status.label} />
             <FieldRow label="Início" value={fmtDate(data.care_start_at)} />
             <FieldRow label="Fim" value={fmtDate(data.care_end_at)} />
             <FieldRow label="Duração" value={dur || "Em curso"} />
+            <FieldRow label="Criado em" value={fmtDate(data.created_at)} />
+            <FieldRow label="Atualizado" value={fmtDate(data.updated_at)} />
           </SectionCard>
 
           <SectionCard
@@ -360,25 +351,26 @@ export default function MedicalRecordsRecordsDetailPage() {
           </SectionCard>
 
           <SectionCard
-            title="Diagnóstico"
-            subtitle="Hipótese diagnóstica."
-            icon={BookOpen}
-            accent="bg-indigo-500"
-          >
-            <ClinicalTextBlock label="Diagnóstico" text={data.diagnosis} />
-          </SectionCard>
-
-          <SectionCard
             title="Prescrição"
-            subtitle="Observações livres."
+            subtitle="Observações livres de prescrição."
             icon={FileText}
             accent="bg-emerald-500"
           >
             <ClinicalTextBlock label="Prescrição" text={data.prescription} />
           </SectionCard>
+
+          <div className="lg:col-span-2">
+            <SectionCard
+              title="Diagnóstico"
+              subtitle="Hipótese diagnóstica."
+              icon={BookOpen}
+              accent="bg-indigo-500"
+            >
+              <ClinicalTextBlock label="Diagnóstico" text={data.diagnosis} />
+            </SectionCard>
+          </div>
         </div>
 
-        {/* ── Relatório médico — largura total ── */}
         <SectionCard
           title="Relatório médico"
           subtitle="Notas clínicas, evolução e conclusões do episódio."
