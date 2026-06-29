@@ -59,6 +59,7 @@
     --ui-text-size: 0.9em;
     --ui-text-size-relaxed: 1em;
     --ui-title-size: 1.5em;
+    --workspace-content-width: 85vw;
 
     --background-hsl: 210 24% 97%;
     --foreground-hsl: 222 47% 11%;

@@ -27,6 +27,12 @@ module.exports = {
         sans: ["var(--font-sans)", "system-ui", "sans-serif"],
         display: ["var(--font-display)", "system-ui", "sans-serif"],
       },
+      width: {
+        workspace: "var(--workspace-content-width)",
+      },
+      maxWidth: {
+        workspace: "var(--workspace-content-width)",
+      },
       colors: {
         substrato: substratoPalette,
         background: "hsl(var(--background-hsl) / <alpha-value>)",
