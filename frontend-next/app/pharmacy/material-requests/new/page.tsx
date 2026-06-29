@@ -109,6 +109,10 @@ function formatWarehouseItemLabel(item: WarehouseStockRow) {
   return `${item.name || "Item"}${item.sku ? ` [${item.sku}]` : ""}`
 }
 
+function formatProductLabel(product: PharmacyProduct) {
+  return product.name || product.custom_id || `Produto ${product.id}`
+}
+
 export default function CriarRequisicaoMateriaisPage() {
   useAuthGuard()
   const router = useRouter()
@@ -396,65 +400,84 @@ export default function CriarRequisicaoMateriaisPage() {
                   : warehouseItem
                     ? Number(warehouseItem.available || 0)
                     : null
+                const selectedLabel = isWarehouseSource
+                  ? (warehouseItem ? formatWarehouseItemLabel(warehouseItem) : "")
+                  : (product ? formatProductLabel(product) : "")
                 return (
                   <div key={idx} className="rounded-xl border border-white/20 bg-white/15 p-3 dark:border-white/10 dark:bg-white/[0.03]">
                     <div className="flex flex-nowrap items-end gap-3 overflow-x-auto">
-                    <div className="min-w-[18rem] flex-[1.35]">
+                    <div className="relative min-w-[18rem] flex-[1.35]">
                       <input
                         type="text"
                         className={FIELD}
                         value={it.searchQuery}
-                        onChange={(e) => updateItem(idx, { searchQuery: e.target.value })}
+                        onChange={(e) =>
+                          updateItem(idx, {
+                            searchQuery: e.target.value,
+                            productId: isWarehouseSource ? it.productId : null,
+                            warehouseItemId: isWarehouseSource ? null : it.warehouseItemId,
+                          })
+                        }
                         placeholder={isWarehouseSource ? "Pesquisar item por nome ou SKU…" : "Pesquisar produto por nome ou código…"}
                         disabled={submitting}
                       />
+                      {it.searchQuery.trim() && !selectedLabel ? (
+                        <div className="absolute left-0 right-0 top-full z-20 mt-1 max-h-56 overflow-auto rounded-lg border border-white/20 bg-white/95 shadow-xl backdrop-blur dark:border-white/10 dark:bg-slate-950/95">
+                          {(isWarehouseSource ? filteredWarehouseOptions : filteredProductOptions).slice(0, 8).map((option) => {
+                            const optionId = option.id
+                            const optionLabel = isWarehouseSource
+                              ? formatWarehouseItemLabel(option as WarehouseStockRow)
+                              : formatProductLabel(option as PharmacyProduct)
+                            return (
+                              <button
+                                key={optionId}
+                                type="button"
+                                onClick={() =>
+                                  updateItem(idx, isWarehouseSource
+                                    ? {
+                                        warehouseItemId: optionId,
+                                        productId: null,
+                                        searchQuery: optionLabel,
+                                      }
+                                    : {
+                                        productId: optionId,
+                                        warehouseItemId: null,
+                                        searchQuery: optionLabel,
+                                      })
+                                }
+                                className="block w-full border-b border-white/10 px-3 py-2 text-left text-sm text-foreground transition hover:bg-white/60 last:border-b-0 dark:hover:bg-white/10"
+                              >
+                                {optionLabel}
+                              </button>
+                            )
+                          })}
+                          {(isWarehouseSource ? filteredWarehouseOptions : filteredProductOptions).length === 0 ? (
+                            <div className="px-3 py-2 text-sm text-muted-foreground">Nenhum resultado.</div>
+                          ) : null}
+                        </div>
+                      ) : null}
                     </div>
                     <div className="min-w-[20rem] flex-[1.55]">
-                      {isWarehouseSource ? (
-                        <select
-                          className={FIELD}
-                          value={it.warehouseItemId ?? ""}
-                          onChange={(e) =>
-                            updateItem(idx, {
-                              warehouseItemId: e.target.value ? Number(e.target.value) : null,
-                              productId: null,
-                              searchQuery: e.target.value
-                                ? formatWarehouseItemLabel(warehouseItemById.get(Number(e.target.value))!)
-                                : it.searchQuery,
-                            })
-                          }
-                          disabled={submitting}
-                        >
-                          <option value="">{isWarehouseSource ? "Selecionar item…" : "Selecionar produto…"}</option>
-                          {filteredWarehouseOptions.map((item) => (
-                            <option key={item.id} value={item.id}>
-                              {formatWarehouseItemLabel(item)}
-                            </option>
-                          ))}
-                        </select>
-                      ) : (
-                        <select
-                          className={FIELD}
-                          value={it.productId ?? ""}
-                          onChange={(e) =>
-                            updateItem(idx, {
-                              productId: e.target.value ? Number(e.target.value) : null,
-                              warehouseItemId: null,
-                              searchQuery: e.target.value
-                                ? `${productById.get(Number(e.target.value))?.name || productById.get(Number(e.target.value))?.custom_id || "Produto"}`
-                                : it.searchQuery,
-                            })
-                          }
-                          disabled={submitting}
-                        >
-                          <option value="">{isWarehouseSource ? "Selecionar item…" : "Selecionar produto…"}</option>
-                          {filteredProductOptions.map((p) => (
-                            <option key={p.id} value={p.id}>
-                              {p.name || p.custom_id || `Produto ${p.id}`}
-                            </option>
-                          ))}
-                        </select>
-                      )}
+                      <div className={`${FIELD} flex items-center justify-between gap-2`}>
+                        <span className={selectedLabel ? "truncate text-foreground" : "truncate text-muted-foreground"}>
+                          {selectedLabel || (isWarehouseSource ? "Nenhum item selecionado" : "Nenhum produto selecionado")}
+                        </span>
+                        {selectedLabel ? (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              updateItem(idx, {
+                                productId: null,
+                                warehouseItemId: null,
+                                searchQuery: "",
+                              })
+                            }
+                            className="shrink-0 text-xs font-semibold text-muted-foreground transition hover:text-foreground"
+                          >
+                            Limpar
+                          </button>
+                        ) : null}
+                      </div>
                       {product && (stockByProductId.get(product.id) || 0) <= 0 ? (
                         <div className="mt-1 text-xs text-amber-700">
                           Sem saldo em estoque: a requisição ficará pendente até a farmácia repor.
