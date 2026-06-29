@@ -3,10 +3,9 @@
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useEffect, useMemo, useState } from "react"
+import { ArrowLeft, Building2, ClipboardList, Loader2, PackageSearch, PillBottle, PlusCircle } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
-import PageHeader from "@/components/ui/PageHeader"
-import Card from "@/components/ui/Card"
 import useAuthGuard from "@/hooks/useAuthGuard"
 import { useSafeDataRefresh, useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { apiFetch, apiFetchAll } from "@/lib/api"
@@ -68,6 +67,44 @@ type RequesterContextResponse = {
 
 const SOURCE_PHARMACY = "PHA"
 const SOURCE_WAREHOUSE = "WHS"
+const GLASS =
+  "rounded-xl border border-white/20 bg-white/30 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]"
+const FIELD =
+  "mt-1 w-full rounded-lg border border-border bg-background/60 px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-indigo-500/40 transition"
+const READONLY_FIELD =
+  "mt-1 w-full rounded-lg border border-white/20 bg-white/20 px-3 py-2 text-sm text-foreground dark:border-white/10 dark:bg-white/[0.05]"
+
+function SectionCard({
+  title,
+  subtitle,
+  icon: Icon,
+  accent,
+  children,
+}: {
+  title: string
+  subtitle?: string
+  icon: React.ElementType
+  accent: string
+  children: React.ReactNode
+}) {
+  return (
+    <section className={`relative ${GLASS}`}>
+      <span className={`absolute left-0 top-0 h-full w-1 rounded-l-xl ${accent}`} />
+      <div className="px-4 py-3 pl-5">
+        <div className="mb-3 flex items-start gap-2">
+          <span className={`mt-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${accent} text-white shadow-sm`}>
+            <Icon size={14} />
+          </span>
+          <div className="min-w-0">
+            <h2 className="text-xs font-semibold leading-tight text-foreground">{title}</h2>
+            {subtitle ? <p className="mt-0.5 text-[10px] text-muted-foreground">{subtitle}</p> : null}
+          </div>
+        </div>
+        {children}
+      </div>
+    </section>
+  )
+}
 
 function emptyItem(): DraftItem {
   return { productId: null, warehouseItemId: null, requestedQuantity: 1 }
@@ -275,40 +312,56 @@ export default function CriarRequisicaoMateriaisPage() {
 
   return (
     <AppLayout requiredGroups={requiredGroups}>
-      <div className="space-y-6">
-        <PageHeader
-          title="Criar requisição de materiais"
-          actions={
+      <div className="space-y-3 px-1">
+        <section className={`relative overflow-hidden ${GLASS}`}>
+          <span className="absolute left-0 top-0 h-full w-1 bg-indigo-500" />
+          <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 pl-5">
+            <div className="flex min-w-0 items-center gap-2">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-blue-600 text-white shadow-md shadow-indigo-500/20">
+                <PackageSearch size={17} />
+              </span>
+              <div>
+                <h1 className="text-lg font-bold leading-tight text-foreground">Criar requisição de materiais</h1>
+                <p className="text-[11px] text-muted-foreground">
+                  Solicite produtos da farmácia ou do armazém mantendo o fluxo atual.
+                </p>
+              </div>
+            </div>
             <Link
               href="/pharmacy/material-requests"
-              className="text-sm text-[var(--gray-700)] no-underline hover:underline"
+              className="inline-flex items-center gap-2 rounded-lg border border-white/20 bg-white/20 px-3 py-2 text-sm font-semibold text-foreground transition hover:border-indigo-500/30 hover:bg-white/30 dark:border-white/10 dark:bg-white/[0.06] dark:hover:bg-white/[0.1]"
             >
+              <ArrowLeft size={14} />
               Voltar
             </Link>
-          }
-        />
+          </div>
+        </section>
 
         {error ? (
-          <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-800 backdrop-blur-sm dark:text-amber-200">
             {error}
           </div>
         ) : null}
 
-        <Card
+        <SectionCard
           title="Dados do solicitante"
-          subtitle="O setor requisitante será registado automaticamente para perfis não-admin."
+          subtitle="O setor requisitante continua a ser preenchido automaticamente para perfis não-admin."
+          icon={Building2}
+          accent="bg-indigo-500"
         >
           {loadingLots ? (
-            <div className="text-sm text-[var(--gray-600)]">Carregando contexto do solicitante…</div>
+            <div className="flex h-20 items-center justify-center text-muted-foreground">
+              <Loader2 size={18} className="animate-spin" />
+            </div>
           ) : (
             <div className="grid gap-3 md:grid-cols-12">
               <div className="md:col-span-4">
-                <label className="block text-sm font-medium text-[var(--gray-700)]">
+                <label className="block text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
                   Setor solicitante
                 </label>
                 {requesterContext?.is_admin ? (
                   <select
-                    className="mt-1 w-full rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-sm"
+                    className={FIELD}
                     value={requesterSector}
                     onChange={(event) => changeSector(event.target.value)}
                     disabled={submitting}
@@ -323,7 +376,7 @@ export default function CriarRequisicaoMateriaisPage() {
                 ) : (
                   <input
                     type="text"
-                    className="mt-1 w-full rounded-lg border border-[var(--border)] bg-[var(--gray-100)] px-3 py-2 text-sm text-[var(--gray-700)]"
+                    className={READONLY_FIELD}
                     value={requesterContext?.requester_sector_label || ""}
                     readOnly
                   />
@@ -331,38 +384,42 @@ export default function CriarRequisicaoMateriaisPage() {
               </div>
 
               <div className="md:col-span-4">
-                <label className="block text-sm font-medium text-[var(--gray-700)]">
+                <label className="block text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
                   Fonte de abastecimento
                 </label>
                 <input
                   type="text"
-                  className="mt-1 w-full rounded-lg border border-[var(--border)] bg-[var(--gray-100)] px-3 py-2 text-sm text-[var(--gray-700)]"
+                  className={READONLY_FIELD}
                   value={isWarehouseSource ? "Armazém central" : "Estoque da farmácia"}
                   readOnly
                 />
               </div>
 
               <div className="md:col-span-4">
-                <label className="block text-sm font-medium text-[var(--gray-700)]">
+                <label className="block text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
                   Departamento
                 </label>
                 <input
                   type="text"
-                  className="mt-1 w-full rounded-lg border border-[var(--border)] bg-[var(--gray-100)] px-3 py-2 text-sm text-[var(--gray-700)]"
+                  className={READONLY_FIELD}
                   value={requesterContext?.requested_by_department || "—"}
                   readOnly
                 />
               </div>
             </div>
           )}
-        </Card>
+        </SectionCard>
 
-        <Card
+        <SectionCard
           title={isWarehouseSource ? "Produtos em estoque no armazém" : "Produtos da farmácia"}
-          subtitle="Saldo real agregado por produto (a partir dos lotes)."
+          subtitle="Saldo real agregado por produto a partir dos lotes."
+          icon={PillBottle}
+          accent="bg-emerald-500"
         >
           {loadingLots ? (
-            <div className="text-sm text-[var(--gray-600)]">Carregando produtos…</div>
+            <div className="flex h-20 items-center justify-center text-muted-foreground">
+              <Loader2 size={18} className="animate-spin" />
+            </div>
           ) : productStocks.length ? (
             <div className="space-y-3">
               <div className="flex flex-wrap items-center gap-2">
@@ -371,25 +428,25 @@ export default function CriarRequisicaoMateriaisPage() {
                   value={productQuery}
                   onChange={(e) => setProductQuery(e.target.value)}
                   placeholder="Buscar produto por nome…"
-                  className="w-full max-w-md rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-sm"
+                  className="w-full max-w-md rounded-lg border border-border bg-background/60 px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-emerald-500/40 transition"
                   disabled={submitting}
                 />
-                <div className="text-xs text-[var(--gray-500)]">
+                <div className="text-xs text-muted-foreground">
                   Produtos listados: {filteredProductStocks.length}
                 </div>
               </div>
 
-              <div className="overflow-auto rounded-xl border border-[var(--border)]">
-                <table className="min-w-full text-sm">
-                  <thead className="bg-[var(--gray-100)] text-left text-[var(--gray-600)]">
+              <div className="overflow-auto rounded-xl border border-white/20 bg-white/15 dark:border-white/10 dark:bg-white/[0.03]">
+                <table className="min-w-full text-sm text-foreground">
+                  <thead className="text-left text-muted-foreground">
                     <tr>
                       <th className="px-3 py-2 font-semibold">Produto</th>
                       <th className="px-3 py-2 font-semibold">Estoque disponível</th>
                     </tr>
                   </thead>
-                  <tbody className="text-[var(--text)]">
+                  <tbody>
                     {filteredProductStocks.map((row) => (
-                      <tr key={row.key} className="border-t border-[var(--border)]">
+                      <tr key={row.key} className="border-t border-white/10">
                         <td className="px-3 py-2">{row.productName}</td>
                         <td className="px-3 py-2">{row.totalStock}</td>
                       </tr>
@@ -399,24 +456,28 @@ export default function CriarRequisicaoMateriaisPage() {
               </div>
             </div>
           ) : (
-            <div className="text-sm text-[var(--gray-600)]">
+            <div className="text-sm text-muted-foreground">
               {isWarehouseSource
                 ? "Nenhum item com saldo disponível no armazém."
                 : "Nenhum produto registado na farmácia."}
             </div>
           )}
-        </Card>
+        </SectionCard>
 
-        <Card
-          title="Itens"
+        <SectionCard
+          title="Itens da requisição"
           subtitle={
             isWarehouseSource
               ? "Selecione o item de armazém e informe a quantidade desejada."
               : "Selecione o produto e informe a quantidade desejada."
           }
+          icon={ClipboardList}
+          accent="bg-violet-500"
         >
           {loadingLots ? (
-            <div className="text-sm text-[var(--gray-600)]">Carregando estoque disponível…</div>
+            <div className="flex h-20 items-center justify-center text-muted-foreground">
+              <Loader2 size={18} className="animate-spin" />
+            </div>
           ) : hasSelectableStock ? (
             <div className="space-y-3">
               {items.map((it, idx) => {
@@ -429,14 +490,15 @@ export default function CriarRequisicaoMateriaisPage() {
                     ? Number(warehouseItem.available || 0)
                     : null
                 return (
-                  <div key={idx} className="grid gap-3 md:grid-cols-12">
+                  <div key={idx} className="rounded-xl border border-white/20 bg-white/15 p-3 dark:border-white/10 dark:bg-white/[0.03]">
+                    <div className="grid gap-3 md:grid-cols-12">
                     <div className="md:col-span-8">
-                      <label className="block text-sm font-medium text-[var(--gray-700)]">
+                      <label className="block text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
                         {isWarehouseSource ? "Item de armazém" : "Produto"}
                       </label>
                       {isWarehouseSource ? (
                         <select
-                          className="mt-1 w-full rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-sm"
+                          className={FIELD}
                           value={it.warehouseItemId ?? ""}
                           onChange={(e) =>
                             updateItem(idx, {
@@ -455,7 +517,7 @@ export default function CriarRequisicaoMateriaisPage() {
                         </select>
                       ) : (
                         <select
-                          className="mt-1 w-full rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-sm"
+                          className={FIELD}
                           value={it.productId ?? ""}
                           onChange={(e) =>
                             updateItem(idx, {
@@ -481,13 +543,13 @@ export default function CriarRequisicaoMateriaisPage() {
                     </div>
 
                     <div className="md:col-span-3">
-                      <label className="block text-sm font-medium text-[var(--gray-700)]">
+                      <label className="block text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
                         Quantidade
                       </label>
                       <input
                         type="number"
                         min={1}
-                        className="mt-1 w-full rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-sm"
+                        className={FIELD}
                         value={it.requestedQuantity}
                         onChange={(e) =>
                           updateItem(idx, { requestedQuantity: Math.max(1, Number(e.target.value || 1)) })
@@ -504,11 +566,12 @@ export default function CriarRequisicaoMateriaisPage() {
                         type="button"
                         onClick={() => removeItem(idx)}
                         disabled={submitting || items.length <= 1}
-                        className="w-full rounded-lg border border-[var(--border)] bg-[var(--card)] px-2.5 py-2 text-sm font-semibold text-[var(--gray-700)] transition hover:bg-[var(--gray-100)] disabled:opacity-60"
+                        className="w-full rounded-lg border border-white/20 bg-white/20 px-2.5 py-2 text-sm font-semibold text-foreground transition hover:bg-white/30 disabled:opacity-60 dark:border-white/10 dark:bg-white/[0.05] dark:hover:bg-white/[0.1]"
                         title="Remover"
                       >
                         —
                       </button>
+                    </div>
                     </div>
                   </div>
                 )
@@ -519,28 +582,30 @@ export default function CriarRequisicaoMateriaisPage() {
                   type="button"
                   onClick={addItem}
                   disabled={submitting}
-                  className="rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-sm font-semibold text-[var(--gray-700)] transition hover:bg-[var(--gray-100)] disabled:opacity-60"
+                  className="inline-flex items-center gap-2 rounded-lg border border-white/20 bg-white/20 px-3 py-2 text-sm font-semibold text-foreground transition hover:bg-white/30 disabled:opacity-60 dark:border-white/10 dark:bg-white/[0.06] dark:hover:bg-white/[0.1]"
                 >
+                  <PlusCircle size={14} />
                   Adicionar item
                 </button>
                 <button
                   type="button"
                   onClick={submit}
                   disabled={submitting}
-                  className="rounded-lg bg-[var(--primary-600)] px-3 py-2 text-sm font-semibold text-white transition hover:bg-[var(--primary-700)] disabled:opacity-60"
+                  className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-indigo-600 to-blue-600 px-3 py-2 text-sm font-semibold text-white transition hover:from-indigo-500 hover:to-blue-500 disabled:opacity-60"
                 >
+                  {submitting ? <Loader2 size={14} className="animate-spin" /> : <PackageSearch size={14} />}
                   {submitting ? "Criando…" : "Criar requisição"}
                 </button>
               </div>
             </div>
           ) : (
-            <div className="text-sm text-[var(--gray-600)]">
+            <div className="text-sm text-muted-foreground">
               {isWarehouseSource
                 ? "Nenhum item de armazém disponível para requisição no momento."
                 : "Nenhum produto registado na farmácia para requisição."}
             </div>
           )}
-        </Card>
+        </SectionCard>
       </div>
     </AppLayout>
   )
