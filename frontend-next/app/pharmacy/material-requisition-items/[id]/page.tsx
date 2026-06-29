@@ -181,25 +181,33 @@ export default function MaterialRequisitionItemsDetailPage() {
 
             {/* ── Quantidades ── */}
             <SectionCard title="Quantidades" icon={Box} accent="bg-emerald-500">
-              <div className="grid grid-cols-3 gap-4">
-                <div className="text-center">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Solicitado</p>
-                  <p className="mt-1 text-2xl font-bold text-foreground">{req}</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Disponível</p>
-                  <p className="mt-1 text-2xl font-bold text-foreground">{avail ?? "—"}</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Aviado</p>
-                  <p className="mt-1 text-2xl font-bold text-foreground">{sup}</p>
-                </div>
+              <div className="grid grid-cols-3 gap-3">
+                {[
+                  { label: "Solicitado", value: req, hint: "pedido pelo setor", color: "text-foreground" },
+                  { label: "Disponível em stock", value: avail ?? "—", hint: "no momento do pedido", color: "text-foreground" },
+                  { label: "Aviado", value: sup, hint: `de ${req} solicitado${req !== 1 ? "s" : ""}`, color: pct >= 100 ? "text-emerald-500" : pct > 0 ? "text-blue-500" : "text-amber-500" },
+                ].map(({ label, value, hint, color }) => (
+                  <div key={label} className="rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-center">
+                    <p className="text-[9px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">{label}</p>
+                    <p className={`mt-1 text-2xl font-bold ${color}`}>{value}</p>
+                    <p className="mt-0.5 text-[9px] text-muted-foreground/60">{hint}</p>
+                  </div>
+                ))}
               </div>
               {req > 0 && (
                 <div className="mt-3">
-                  <div className="mb-1 flex justify-between text-[10px] text-muted-foreground">
-                    <span>{pct}% aviado</span>
-                    <span>Restante: {remaining}</span>
+                  <div className="mb-1.5 flex items-center justify-between text-[10px]">
+                    <span className={`font-semibold ${pct >= 100 ? "text-emerald-500" : pct > 0 ? "text-blue-500" : "text-amber-500"}`}>
+                      {pct}% aviado
+                    </span>
+                    {remaining > 0 && (
+                      <span className="text-muted-foreground">
+                        Faltam <strong className="text-foreground">{remaining}</strong> unidade{remaining !== 1 ? "s" : ""}
+                      </span>
+                    )}
+                    {remaining === 0 && (
+                      <span className="text-emerald-500 font-medium">Completamente aviado ✓</span>
+                    )}
                   </div>
                   <div className="h-2 w-full overflow-hidden rounded-full bg-white/10">
                     <div className={`h-full rounded-full transition-all ${pct >= 100 ? "bg-emerald-500" : pct > 0 ? "bg-blue-500" : "bg-amber-400"}`}
