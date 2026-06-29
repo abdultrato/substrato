@@ -132,7 +132,7 @@ export default function MedicinaPage() {
 
   return (
     <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.MEDICINA]}>
-      <div className="space-y-6">
+      <div className="mx-auto w-[85vw] max-w-[85vw] space-y-6">
         <PageHeader
           title="Medicina"
           actions={
