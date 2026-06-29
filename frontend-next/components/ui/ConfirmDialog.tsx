@@ -6,6 +6,7 @@ import {
     useRef,
     useState,
 } from "react"
+import { createPortal } from "react-dom"
 
 interface Props {
     title?: string
@@ -78,43 +79,47 @@ export default function ConfirmDialog ( {
                 {children}
             </span>
 
-            {open && (
+            {open && typeof document !== "undefined" && createPortal(
                 <div
-                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-[2px] animate-fade-in"
+                    className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
                     onMouseDown={handleBackdropClick}
                 >
                     <div
                         ref={modalRef}
-                        className="w-full max-w-sm rounded-2xl border border-border bg-card p-4 shadow-lg animate-scale-in"
+                        className="w-full max-w-sm rounded-2xl border border-white/20 bg-white/30 p-5 shadow-2xl backdrop-blur-md dark:border-white/10 dark:bg-white/[0.06]"
                     >
-                        <h3 className="font-display text-lg font-semibold tracking-tight text-foreground">
-                            {title}
-                        </h3>
-
-                        <p className="mt-1.5 text-sm text-muted-foreground">{message}</p>
-
-                        <div className="flex justify-end gap-2 mt-4">
+                        <div className="mb-1 flex items-center gap-2">
+                            {danger && (
+                                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-red-600 to-rose-600 text-white shadow-sm shadow-red-500/20">
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18M19 6l-1 14H6L5 6M10 11v6M14 11v6M9 6V4h6v2"/></svg>
+                                </span>
+                            )}
+                            <h3 className="text-base font-bold text-foreground">{title}</h3>
+                        </div>
+                        <p className="mt-2 text-sm text-muted-foreground">{message}</p>
+                        <div className="mt-5 flex justify-end gap-2">
                             <button
-                                onClick={() => setOpen( false )}
+                                onClick={() => setOpen(false)}
                                 disabled={loading}
-                                className="rounded-lg border border-border bg-card px-3 py-1.5 text-sm font-semibold text-foreground-2 shadow-sm transition-colors hover:bg-muted disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/25 focus-visible:ring-offset-2 focus-visible:ring-offset-card"
+                                className="inline-flex h-9 items-center rounded-md border border-white/20 bg-white/10 px-4 text-sm font-medium text-foreground backdrop-blur-sm transition hover:bg-white/20 disabled:opacity-50"
                             >
                                 {cancelText}
                             </button>
-
                             <button
                                 onClick={handleConfirm}
                                 disabled={loading}
-                                className={`rounded-lg px-3 py-1.5 text-sm font-semibold text-white shadow-sm transition-colors disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/25 focus-visible:ring-offset-2 focus-visible:ring-offset-card ${danger
-                                    ? "bg-red-600 hover:bg-red-700"
-                                    : "bg-primary hover:bg-primary-hover"
-                                    }`}
+                                className={`inline-flex h-9 items-center rounded-md px-4 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 disabled:opacity-50 ${
+                                    danger
+                                        ? "bg-gradient-to-br from-red-600 to-rose-600 shadow-red-500/20"
+                                        : "bg-gradient-to-br from-violet-600 to-purple-600 shadow-violet-500/20"
+                                }`}
                             >
-                                {loading ? "Processando..." : confirmText}
+                                {loading ? "A processar…" : confirmText}
                             </button>
                         </div>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
         </>
     )
