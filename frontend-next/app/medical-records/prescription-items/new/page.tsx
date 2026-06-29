@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
+import { createPortal } from "react-dom";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, Check, ClipboardList, Loader2, Pill, Plus, Search, StickyNote, Trash2, X } from "lucide-react";
 import Link from "next/link";
@@ -122,10 +123,12 @@ function MedicationSearch({ onSelect }: { onSelect: (p: Product) => void }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [dropdownStyle, setDropdownStyle] = useState<React.CSSProperties>({});
 
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
+
   function updateDropdownPosition() {
     if (!inputRef.current || !ref.current) return;
     const inputRect = inputRef.current.getBoundingClientRect();
-    // align to parent card (section) left edge and width
     const card = ref.current.closest("section");
     const cardRect = card ? card.getBoundingClientRect() : inputRect;
     setDropdownStyle({
@@ -158,7 +161,7 @@ function MedicationSearch({ onSelect }: { onSelect: (p: Product) => void }) {
           </button>
         )}
       </div>
-      {open && results.length > 0 && (
+      {mounted && open && results.length > 0 && createPortal(
         <ul ref={dropdownRef as React.RefObject<HTMLUListElement>} style={dropdownStyle}
           className="overflow-hidden rounded-xl border border-white/20 bg-white/60 shadow-xl backdrop-blur-md dark:border-white/10 dark:bg-black/40">
           {results.map(p => (
@@ -171,13 +174,15 @@ function MedicationSearch({ onSelect }: { onSelect: (p: Product) => void }) {
               </button>
             </li>
           ))}
-        </ul>
+        </ul>,
+        document.body
       )}
-      {open && !loading && query && results.length === 0 && (
+      {mounted && open && !loading && query && results.length === 0 && createPortal(
         <div style={dropdownStyle}
           className="rounded-xl border border-white/20 bg-white/60 px-4 py-3 text-sm text-muted-foreground shadow-xl backdrop-blur-md dark:border-white/10 dark:bg-black/40">
           Sem resultados para "{query}"
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
