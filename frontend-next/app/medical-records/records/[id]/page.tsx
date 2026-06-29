@@ -243,7 +243,7 @@ export default function MedicalRecordsRecordsDetailPage() {
 
   return (
     <AppLayout requiredGroups={requiredGroups}>
-      <div className="w-full space-y-4 px-1">
+      <div className="w-full space-y-2 px-1">
 
         {/* ── Cabeçalho — largura total ── */}
         <section className={`relative overflow-hidden ${GLASS}`}>
@@ -309,7 +309,7 @@ export default function MedicalRecordsRecordsDetailPage() {
         ) : null}
 
         {/* ── Cartões intermédios — grelha 4 colunas ── */}
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
           <SectionCard
             title="Identificação"
             subtitle="Referência e estado."
