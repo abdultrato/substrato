@@ -4,7 +4,7 @@ import { createPortal } from "react-dom"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useEffect, useMemo, useRef, useState } from "react"
-import { ArrowLeft, Building2, ClipboardList, Loader2, PackageSearch, PlusCircle } from "lucide-react"
+import { ArrowLeft, Building2, ClipboardList, Loader2, PackageSearch, PlusCircle, Trash2 } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
 import useAuthGuard from "@/hooks/useAuthGuard"
@@ -563,10 +563,11 @@ export default function CriarRequisicaoMateriaisPage() {
                         type="button"
                         onClick={() => removeItem(idx)}
                         disabled={submitting || items.length <= 1}
-                        className="w-full rounded-lg border border-white/20 bg-white/20 px-2.5 py-2 text-sm font-semibold text-foreground transition hover:bg-white/30 disabled:opacity-60 dark:border-white/10 dark:bg-white/[0.05] dark:hover:bg-white/[0.1]"
+                        className="flex w-full items-center justify-center rounded-lg border border-white/20 bg-white/20 px-2.5 py-2 text-sm font-semibold text-foreground transition hover:bg-white/30 disabled:opacity-60 dark:border-white/10 dark:bg-white/[0.05] dark:hover:bg-white/[0.1]"
                         title="Remover"
+                        aria-label="Remover item"
                       >
-                        —
+                        <Trash2 size={14} />
                       </button>
                     </div>
                     </div>
