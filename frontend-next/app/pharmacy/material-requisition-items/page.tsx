@@ -23,19 +23,36 @@ type ReqItem = {
   supplied_quantity?: number;
   available_quantity?: number;
   notes?: string;
+  // requisition status if available
+  requisition_status?: string;
 };
 
-function itemStatus(item: ReqItem) {
+type ColKey = "pending" | "partial" | "fulfilled" | "archived";
+
+const COLS: { key: ColKey; label: string; dot: string; header: string; empty: string }[] = [
+  { key: "pending",   label: "Pendentes",          dot: "bg-amber-400",   header: "border-amber-400/40 bg-amber-400/10",   empty: "Sem itens pendentes" },
+  { key: "partial",   label: "Parcialmente aviadas", dot: "bg-blue-400",   header: "border-blue-400/40 bg-blue-400/10",     empty: "Sem itens parciais" },
+  { key: "fulfilled", label: "Totalmente aviadas",  dot: "bg-emerald-400", header: "border-emerald-400/40 bg-emerald-400/10", empty: "Sem itens aviados" },
+  { key: "archived",  label: "Arquivadas",          dot: "bg-slate-400",   header: "border-slate-400/40 bg-slate-400/10",   empty: "Sem itens arquivados" },
+];
+
+const BADGE: Record<ColKey, string> = {
+  pending:   "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800/50 dark:bg-amber-950/30 dark:text-amber-300",
+  partial:   "border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-800/50 dark:bg-blue-950/30 dark:text-blue-300",
+  fulfilled: "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800/50 dark:bg-emerald-950/30 dark:text-emerald-300",
+  archived:  "border-slate-200 bg-slate-50 text-slate-600 dark:border-slate-700/50 dark:bg-slate-900/30 dark:text-slate-400",
+};
+
+function classify(item: ReqItem): ColKey {
+  if (item.requisition_status === "HLD") return "archived";
   const req = Number(item.requested_quantity ?? 0);
   const sup = Number(item.supplied_quantity ?? 0);
-  const remaining = Math.max(0, req - sup);
-  if (remaining <= 0) return { label: "Aviado", badge: "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800/50 dark:bg-emerald-950/30 dark:text-emerald-300", dot: "bg-emerald-400" };
-  if (sup > 0) return { label: "Parcial", badge: "border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-800/50 dark:bg-blue-950/30 dark:text-blue-300", dot: "bg-blue-400" };
-  return { label: "Pendente", badge: "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800/50 dark:bg-amber-950/30 dark:text-amber-300", dot: "bg-amber-400" };
+  if (sup >= req && req > 0) return "fulfilled";
+  if (sup > 0) return "partial";
+  return "pending";
 }
 
-function ItemCard({ item }: { item: ReqItem }) {
-  const st = itemStatus(item);
+function ItemCard({ item, col }: { item: ReqItem; col: ColKey }) {
   const name = item.product_name || item.warehouse_item_name || `Item #${item.id}`;
   const req = Number(item.requested_quantity ?? 0);
   const sup = Number(item.supplied_quantity ?? 0);
@@ -44,51 +61,34 @@ function ItemCard({ item }: { item: ReqItem }) {
   return (
     <Link href={`/pharmacy/material-requisition-items/${item.id}`}
       className={`group relative block ${GLASS} transition hover:border-violet-500/30 hover:shadow-md`}>
-      <span className={`absolute left-0 top-0 h-full w-1 rounded-l-xl ${st.dot}`} />
-      <div className="px-4 py-3 pl-5">
-        <div className="mb-2 flex flex-wrap items-start justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-violet-500/10 text-violet-500">
-              <Package size={13} />
+      <span className={`absolute left-0 top-0 h-full w-1 rounded-l-xl ${COLS.find(c=>c.key===col)!.dot}`} />
+      <div className="px-3 py-2.5 pl-4">
+        <div className="mb-1.5 flex items-start justify-between gap-2">
+          <div className="flex min-w-0 items-center gap-1.5">
+            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-violet-500/10 text-violet-500">
+              <Package size={11} />
             </span>
-            <div>
-              <p className="text-xs font-bold text-foreground group-hover:text-violet-500 transition truncate max-w-[130px]">
-                {name}
-              </p>
-              <p className="text-[10px] text-muted-foreground">{item.custom_id || `MREI-${item.id}`}</p>
-            </div>
+            <p className="truncate text-xs font-bold text-foreground group-hover:text-violet-500 transition">
+              {name}
+            </p>
           </div>
-          <span className={`rounded-full border px-2 py-0.5 text-[9px] font-semibold ${st.badge}`}>
-            {st.label}
-          </span>
         </div>
-
-        <div className="space-y-0.5 text-[11px] text-muted-foreground">
+        <div className="space-y-0.5 text-[10px] text-muted-foreground">
+          <p className="text-[9px] text-muted-foreground/70">{item.custom_id || `MREI-${item.id}`}</p>
           {item.lot_number && (
-            <div className="flex items-center gap-1.5">
-              <ClipboardList size={10} className="shrink-0" />
-              <span>Lote: {item.lot_number}</span>
+            <div className="flex items-center gap-1">
+              <ClipboardList size={9} className="shrink-0" />
+              <span>{item.lot_number}</span>
+              {item.lot_expiration_date && <span className="text-muted-foreground/60">· {item.lot_expiration_date}</span>}
             </div>
           )}
-          {item.lot_expiration_date && (
-            <div className="flex items-center gap-1.5">
-              <Calendar size={10} className="shrink-0" />
-              <span>Val: {item.lot_expiration_date}</span>
-            </div>
-          )}
-          <div className="flex items-center gap-3 pt-0.5">
-            <span className="flex items-center gap-1">
-              <Box size={9} className="shrink-0" />
-              Req: <strong className="text-foreground ml-0.5">{req}</strong>
-            </span>
-            <span>Disp: <strong className="text-foreground">{avail ?? "—"}</strong></span>
-            <span className="flex items-center gap-1">
-              <CheckCircle2 size={9} className="shrink-0" />
-              Aviado: <strong className="text-foreground ml-0.5">{sup}</strong>
-            </span>
+          <div className="flex items-center gap-2 pt-0.5 flex-wrap">
+            <span className="flex items-center gap-0.5"><Box size={8} />Req:<strong className="text-foreground ml-0.5">{req}</strong></span>
+            <span>Disp:<strong className="text-foreground ml-0.5">{avail ?? "—"}</strong></span>
+            <span className="flex items-center gap-0.5"><CheckCircle2 size={8} /><strong className="text-foreground">{sup}</strong></span>
           </div>
           {item.requisition && (
-            <p className="text-[10px] text-muted-foreground/70">Requisição #{item.requisition}</p>
+            <p className="text-[9px] text-muted-foreground/60">Req. #{item.requisition}</p>
           )}
         </div>
       </div>
@@ -97,30 +97,41 @@ function ItemCard({ item }: { item: ReqItem }) {
 }
 
 export default function PharmacyMaterialRequisitionItemsPage() {
-  const [items, setItems] = useState<ReqItem[]>([]);
+  const [allItems, setAllItems] = useState<ReqItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [total, setTotal] = useState(0);
-  const [page, setPage] = useState(1);
-  const pageSize = 20;
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const params = new URLSearchParams({ page: String(page), page_size: String(pageSize) });
-      if (search) params.set("search", search);
+      // fetch up to 200 items (no server-side status filter available)
+      const params = new URLSearchParams({ page_size: "200" });
       const data = await apiFetch<{ results: ReqItem[]; count: number } | ReqItem[]>(
         `/pharmacy/material_requisition_item/?${params}`
       );
-      if (Array.isArray(data)) { setItems(data); setTotal(data.length); }
-      else { setItems(data.results ?? []); setTotal(data.count ?? 0); }
-    } catch { setItems([]); }
+      setAllItems(Array.isArray(data) ? data : (data.results ?? []));
+    } catch { setAllItems([]); }
     finally { setLoading(false); }
-  }, [search, page]);
+  }, []);
 
   useEffect(() => { load(); }, [load]);
 
-  const totalPages = Math.ceil(total / pageSize);
+  const filtered = search.trim()
+    ? allItems.filter(i => {
+        const q = search.toLowerCase();
+        return (
+          (i.product_name || "").toLowerCase().includes(q) ||
+          (i.warehouse_item_name || "").toLowerCase().includes(q) ||
+          (i.lot_number || "").toLowerCase().includes(q) ||
+          (i.custom_id || "").toLowerCase().includes(q)
+        );
+      })
+    : allItems;
+
+  const grouped: Record<ColKey, ReqItem[]> = { pending: [], partial: [], fulfilled: [], archived: [] };
+  for (const item of filtered) grouped[classify(item)].push(item);
+
+  const total = allItems.length;
 
   return (
     <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.FARMACIA, GROUPS.MEDICINA, GROUPS.ENFERMAGEM]}>
@@ -157,9 +168,9 @@ export default function PharmacyMaterialRequisitionItemsPage() {
               <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
               <input type="text" placeholder="Produto, lote, código…"
                 className="w-full rounded-lg border border-border bg-background/60 py-2 pl-8 pr-8 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-violet-500/40 transition"
-                value={search} onChange={e => { setSearch(e.target.value); setPage(1); }} />
+                value={search} onChange={e => setSearch(e.target.value)} />
               {search && (
-                <button type="button" onClick={() => { setSearch(""); setPage(1); }}
+                <button type="button" onClick={() => setSearch("")}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
                   <X size={13} />
                 </button>
@@ -168,41 +179,33 @@ export default function PharmacyMaterialRequisitionItemsPage() {
           </div>
         </section>
 
-        {/* ── Cards ── */}
+        {/* ── Kanban ── */}
         {loading ? (
           <div className="flex h-32 items-center justify-center text-muted-foreground">
             <Loader2 size={20} className="animate-spin" />
           </div>
-        ) : items.length === 0 ? (
-          <section className={`relative overflow-hidden ${GLASS}`}>
-            <div className="flex flex-col items-center justify-center py-16 text-center">
-              <span className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-violet-500/10 text-violet-500">
-                <Package size={22} />
-              </span>
-              <p className="text-sm font-medium text-foreground">Nenhum item encontrado</p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                {search ? "Tente ajustar a pesquisa." : "Ainda não existem itens de requisição."}
-              </p>
-            </div>
-          </section>
         ) : (
           <div className="grid grid-cols-2 gap-2 xl:grid-cols-4">
-            {items.map(item => <ItemCard key={item.id} item={item} />)}
-          </div>
-        )}
-
-        {/* ── Paginação ── */}
-        {totalPages > 1 && (
-          <div className="flex items-center justify-center gap-2 pt-1">
-            <button disabled={page <= 1} onClick={() => setPage(p => p - 1)}
-              className="inline-flex h-8 items-center rounded-md border border-white/20 bg-white/10 px-3 text-xs font-medium text-foreground backdrop-blur-sm transition hover:bg-white/20 disabled:opacity-40">
-              ← Anterior
-            </button>
-            <span className="text-xs text-muted-foreground">{page} / {totalPages}</span>
-            <button disabled={page >= totalPages} onClick={() => setPage(p => p + 1)}
-              className="inline-flex h-8 items-center rounded-md border border-white/20 bg-white/10 px-3 text-xs font-medium text-foreground backdrop-blur-sm transition hover:bg-white/20 disabled:opacity-40">
-              Seguinte →
-            </button>
+            {COLS.map(col => (
+              <div key={col.key} className="flex flex-col gap-2">
+                {/* Cabeçalho coluna */}
+                <div className={`flex items-center justify-between rounded-lg border px-3 py-1.5 ${col.header}`}>
+                  <div className="flex items-center gap-1.5">
+                    <span className={`h-2 w-2 rounded-full ${col.dot}`} />
+                    <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-foreground/70">{col.label}</span>
+                  </div>
+                  <span className="text-[10px] font-bold text-foreground/60">{grouped[col.key].length}</span>
+                </div>
+                {/* Cards */}
+                {grouped[col.key].length === 0 ? (
+                  <div className={`flex items-center justify-center rounded-xl border border-dashed border-white/10 py-8 text-[10px] text-muted-foreground/50`}>
+                    {col.empty}
+                  </div>
+                ) : (
+                  grouped[col.key].map(item => <ItemCard key={item.id} item={item} col={col.key} />)
+                )}
+              </div>
+            ))}
           </div>
         )}
 
