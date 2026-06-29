@@ -246,7 +246,7 @@ export default function MaterialRequisitionDetailPage() {
                 {!data.items?.length ? (
                   <p className="text-sm text-muted-foreground">Sem itens.</p>
                 ) : (
-                  <div className="space-y-2">
+                  <div className="grid grid-cols-2 gap-2">
                     {data.items.map((it) => {
                       const available = typeof it.available_quantity === "number" ? it.available_quantity : null
                       const remaining = Math.max(0, Number(it.requested_quantity) - Number(it.supplied_quantity || 0))
