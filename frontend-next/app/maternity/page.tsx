@@ -6,9 +6,8 @@ import { Baby, BedDouble, ClipboardList, Heart, Loader2, PackageSearch, PlusCirc
 
 import AppLayout from "@/components/layout/AppLayout"
 import { apiFetch, extractTotalCount } from "@/lib/api"
-import { useAuth } from "@/hooks/useAuth"
 import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
-import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
+import { GROUPS } from "@/lib/rbac"
 
 const GLASS =
   "rounded-xl border border-white/20 bg-white/30 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]"
@@ -55,8 +54,6 @@ function ActionCard({
 }
 
 export default function MaternidadePage() {
-  const { user } = useAuth()
-  const podeVerAdmin = userHasAnyGroup(user, [GROUPS.ADMIN])
   const safeRefreshToken = useSafeDataRefreshSignal()
 
   const [loading, setLoading] = useState(true)
@@ -96,12 +93,6 @@ export default function MaternidadePage() {
                 </p>
               </div>
             </div>
-            {podeVerAdmin && (
-              <Link href="/admin/maternity/pregnancy/"
-                className="inline-flex h-9 items-center gap-1.5 rounded-md border border-white/20 bg-white/10 px-4 text-sm font-medium text-foreground backdrop-blur-sm transition hover:bg-white/20">
-                Abrir na Administração
-              </Link>
-            )}
           </div>
         </section>
 
@@ -123,8 +114,10 @@ export default function MaternidadePage() {
         <div className="grid grid-cols-2 gap-2 xl:grid-cols-4">
           <ActionCard title="Gestações" href="/maternity/pregnancies" icon={Baby} accent="from-pink-500 to-rose-600" />
           <ActionCard title="Nova gestação" href="/maternity/pregnancies/new" icon={PlusCircle} accent="from-violet-600 to-purple-600" />
-          <ActionCard title="Registos (CRUD)" href="/maternity/pregnancies" icon={ClipboardList} accent="from-slate-600 to-slate-700" />
-          <ActionCard title="Requisição de materiais" href="/pharmacy/material-requests/new" icon={PackageSearch} accent="from-indigo-600 to-blue-600" />
+          <ActionCard title="Gestações (lista)" href="/maternity/pregnancies" icon={ClipboardList} accent="from-slate-600 to-slate-700" />
+          <div className="col-span-2 xl:col-span-1">
+            <ActionCard title="Requisição de materiais" href="/pharmacy/material-requests/new" icon={PackageSearch} accent="from-indigo-600 to-blue-600" />
+          </div>
         </div>
 
       </div>
