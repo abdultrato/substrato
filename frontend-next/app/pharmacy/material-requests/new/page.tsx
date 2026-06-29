@@ -412,9 +412,6 @@ export default function CriarRequisicaoMateriaisPage() {
                   <div key={idx} className="rounded-xl border border-white/20 bg-white/15 p-3 dark:border-white/10 dark:bg-white/[0.03]">
                     <div className="flex flex-nowrap items-end gap-3 overflow-x-auto">
                     <div className="min-w-[18rem] flex-[1.35]">
-                      <label className="block text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-                        Busca
-                      </label>
                       <input
                         type="text"
                         className={FIELD}
@@ -425,9 +422,6 @@ export default function CriarRequisicaoMateriaisPage() {
                       />
                     </div>
                     <div className="min-w-[20rem] flex-[1.55]">
-                      <label className="block text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-                        {isWarehouseSource ? "Item de armazém" : "Produto"}
-                      </label>
                       {isWarehouseSource ? (
                         <select
                           className={FIELD}
@@ -443,7 +437,7 @@ export default function CriarRequisicaoMateriaisPage() {
                           }
                           disabled={submitting}
                         >
-                          <option value="">Selecione…</option>
+                          <option value="">{isWarehouseSource ? "Selecionar item…" : "Selecionar produto…"}</option>
                           {filteredWarehouseOptions.map((item) => (
                             <option key={item.id} value={item.id}>
                               {formatWarehouseItemLabel(item)}
@@ -465,7 +459,7 @@ export default function CriarRequisicaoMateriaisPage() {
                           }
                           disabled={submitting}
                         >
-                          <option value="">Selecione…</option>
+                          <option value="">{isWarehouseSource ? "Selecionar item…" : "Selecionar produto…"}</option>
                           {filteredProductOptions.map((p) => (
                             <option key={p.id} value={p.id}>
                               {p.name || p.custom_id || `Produto ${p.id}`}
@@ -481,9 +475,6 @@ export default function CriarRequisicaoMateriaisPage() {
                     </div>
 
                     <div className="min-w-[8rem] shrink-0">
-                      <label className="block text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-                        Quantidade
-                      </label>
                       <input
                         type="number"
                         min={1}
@@ -493,6 +484,8 @@ export default function CriarRequisicaoMateriaisPage() {
                           updateItem(idx, { requestedQuantity: Math.max(1, Number(e.target.value || 1)) })
                         }
                         disabled={submitting}
+                        placeholder="Quantidade"
+                        aria-label="Quantidade"
                       />
                       {available !== null ? (
                         <div className="mt-1 text-xs text-[var(--gray-500)]">Disponível: {available}</div>
