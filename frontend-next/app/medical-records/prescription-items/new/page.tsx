@@ -52,8 +52,8 @@ function SectionCard({
   children: React.ReactNode;
 }) {
   return (
-    <section className={`relative overflow-hidden ${GLASS}`}>
-      <span className={`absolute left-0 top-0 h-full w-1 ${accent}`} />
+    <section className={`relative ${GLASS}`}>
+      <span className={`absolute left-0 top-0 h-full w-1 rounded-l-xl ${accent}`} />
       <div className="px-3 py-2 pl-4">
         <div className="mb-3 flex items-start gap-2">
           <span className={`mt-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${accent} text-white shadow-sm`}>
@@ -78,9 +78,14 @@ function MedicationSearch({ onSelect }: { onSelect: (p: Product) => void }) {
   const ref = useRef<HTMLDivElement>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const dropdownRef = useRef<HTMLUListElement | HTMLDivElement | null>(null);
+
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+      const target = e.target as Node;
+      const inContainer = ref.current?.contains(target);
+      const inDropdown = dropdownRef.current?.contains(target);
+      if (!inContainer && !inDropdown) setOpen(false);
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
@@ -94,11 +99,14 @@ function MedicationSearch({ onSelect }: { onSelect: (p: Product) => void }) {
     timer.current = setTimeout(async () => {
       setLoading(true);
       try {
-        const data = await apiFetch<{ results?: Product[]; count?: number } | Product[]>(
-          `/pharmacy/product/?type=MED&search=${encodeURIComponent(val)}&page_size=10`
+        const res = await fetch(
+          `/api/v1/pharmacy/product/?type=MED&search=${encodeURIComponent(val)}&page_size=10`,
+          { credentials: "include" }
         );
-        const list = Array.isArray(data) ? data : (data as any).results ?? [];
+        const data = await res.json();
+        const list: Product[] = Array.isArray(data) ? data : (data.results ?? []);
         setResults(list);
+        setOpen(true);
       } catch { setResults([]); }
       finally { setLoading(false); }
     }, 300);
@@ -111,17 +119,33 @@ function MedicationSearch({ onSelect }: { onSelect: (p: Product) => void }) {
     setOpen(false);
   }
 
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [dropdownStyle, setDropdownStyle] = useState<React.CSSProperties>({});
+
+  function updateDropdownPosition() {
+    if (!inputRef.current) return;
+    const rect = inputRef.current.getBoundingClientRect();
+    setDropdownStyle({
+      position: "fixed",
+      top: rect.bottom + 4,
+      left: rect.left,
+      width: rect.width,
+      zIndex: 9999,
+    });
+  }
+
   return (
     <div ref={ref} className="relative">
       <div className="relative">
         <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
         <input
+          ref={inputRef}
           type="text"
           placeholder="Pesquisar medicação por nome…"
           className={`${FIELD} pl-8 pr-8`}
           value={query}
-          onChange={e => onInput(e.target.value)}
-          onFocus={() => query && setOpen(true)}
+          onChange={e => { updateDropdownPosition(); onInput(e.target.value); }}
+          onFocus={() => { updateDropdownPosition(); if (query) setOpen(true); }}
         />
         {loading && <Loader2 size={14} className="absolute right-3 top-1/2 -translate-y-1/2 animate-spin text-muted-foreground" />}
         {query && !loading && (
@@ -132,7 +156,7 @@ function MedicationSearch({ onSelect }: { onSelect: (p: Product) => void }) {
         )}
       </div>
       {open && results.length > 0 && (
-        <ul className="absolute z-50 mt-1 w-full overflow-hidden rounded-lg border border-border bg-card shadow-lg">
+        <ul ref={dropdownRef as React.RefObject<HTMLUListElement>} style={dropdownStyle} className="overflow-hidden rounded-lg border border-border bg-card shadow-lg">
           {results.map(p => (
             <li key={p.id}>
               <button type="button" onClick={() => select(p)}
@@ -146,7 +170,7 @@ function MedicationSearch({ onSelect }: { onSelect: (p: Product) => void }) {
         </ul>
       )}
       {open && !loading && query && results.length === 0 && (
-        <div className="absolute z-50 mt-1 w-full rounded-lg border border-border bg-card px-3 py-2 text-sm text-muted-foreground shadow-lg">
+        <div style={dropdownStyle} className="rounded-lg border border-border bg-card px-3 py-2 text-sm text-muted-foreground shadow-lg">
           Sem resultados para "{query}"
         </div>
       )}
