@@ -193,8 +193,36 @@ export default function ProntuarioCardexPage() {
                     <div className="group relative min-w-[280px] flex-1 basis-[320px] overflow-hidden rounded-xl border border-slate-200/70 bg-white/70 shadow-sm backdrop-blur-sm dark:border-slate-800/80 dark:bg-slate-950/45">
                         <div className="absolute inset-y-0 left-0 w-1.5 bg-gradient-to-b from-violet-500 via-fuchsia-500 to-pink-400" />
                         <div className="space-y-3 p-4 pl-6">
-                            <div className="flex items-center justify-between gap-3">
-                                <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
+                            <div className="relative">
+                                <Search className="pointer-events-none absolute left-3 top-2.5 text-muted-foreground" size={15} />
+                                <input
+                                    value={query}
+                                    onChange={(e) => setQuery(e.target.value)}
+                                    placeholder="Pesquisar registros..."
+                                    className="h-10 w-full rounded-xl border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm text-slate-800 shadow-sm outline-none transition focus:border-violet-400 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-100"
+                                />
+                            </div>
+                            <div className="flex flex-nowrap items-center gap-3 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                                <Settings2 className="shrink-0 text-violet-600 dark:text-violet-400" size={18} />
+                                <label className="flex flex-nowrap items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
+                                    <span>Estado</span>
+                                    <select
+                                        value={statusFilter}
+                                        onChange={(e) => {
+                                            setPage(1)
+                                            setStatusFilter(e.target.value)
+                                        }}
+                                        className="min-w-[180px] rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-800 shadow-sm dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-100"
+                                    >
+                                        <option value="all">Todos</option>
+                                        {availableStatuses.map((status) => (
+                                            <option key={status} value={status}>
+                                                {status}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </label>
+                                <label className="flex flex-nowrap items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
                                     <span>Por página</span>
                                     <input
                                         type="number"
@@ -210,34 +238,6 @@ export default function ProntuarioCardexPage() {
                                         className="w-24 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-800 shadow-sm dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-100"
                                     />
                                 </label>
-                                <Settings2 className="text-violet-600 dark:text-violet-400" size={18} />
-                            </div>
-                            <div className="relative">
-                                <Search className="pointer-events-none absolute left-3 top-2.5 text-muted-foreground" size={15} />
-                                <input
-                                    value={query}
-                                    onChange={(e) => setQuery(e.target.value)}
-                                    placeholder="Pesquisar registros..."
-                                    className="h-10 w-full rounded-xl border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm text-slate-800 shadow-sm outline-none transition focus:border-violet-400 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-100"
-                                />
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <span className="text-sm text-slate-700 dark:text-slate-200">Estado</span>
-                                <select
-                                    value={statusFilter}
-                                    onChange={(e) => {
-                                        setPage(1)
-                                        setStatusFilter(e.target.value)
-                                    }}
-                                    className="min-w-[180px] rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-800 shadow-sm dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-100"
-                                >
-                                    <option value="all">Todos</option>
-                                    {availableStatuses.map((status) => (
-                                        <option key={status} value={status}>
-                                            {status}
-                                        </option>
-                                    ))}
-                                </select>
                             </div>
                             <div className="text-xs text-muted-foreground">
                                 Resultados: {filteredData.length}/{data.length}
