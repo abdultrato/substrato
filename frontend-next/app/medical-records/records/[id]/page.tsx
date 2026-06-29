@@ -92,11 +92,11 @@ function duration(start?: string | null, end?: string | null) {
 
 function FieldRow({ label, value }: { label: string; value: ReactNode }) {
   return (
-    <div className="grid grid-cols-1 gap-1 py-2 sm:grid-cols-[180px_minmax(0,1fr)] sm:gap-4">
-      <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+    <div className="py-1.5">
+      <div className="text-[9px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
         {label}
       </div>
-      <div className="min-w-0 break-words text-sm leading-relaxed text-foreground">
+      <div className="mt-0.5 min-w-0 break-words text-xs leading-snug text-foreground">
         {value || "—"}
       </div>
     </div>
@@ -106,20 +106,20 @@ function FieldRow({ label, value }: { label: string; value: ReactNode }) {
 function ClinicalTextBlock({ label, text }: { label: string; text?: string | null }) {
   if (!text?.trim()) {
     return (
-      <div className="py-2">
-        <div className="mb-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+      <div className="py-1.5">
+        <div className="mb-0.5 text-[9px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
           {label}
         </div>
-        <p className="text-sm italic text-muted-foreground">Sem conteúdo registado.</p>
+        <p className="text-xs italic text-muted-foreground">Sem conteúdo registado.</p>
       </div>
     );
   }
   return (
-    <div className="py-2">
-      <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+    <div className="py-1.5">
+      <div className="mb-1 text-[9px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
         {label}
       </div>
-      <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">{text.trim()}</p>
+      <p className="whitespace-pre-wrap text-xs leading-relaxed text-foreground">{text.trim()}</p>
     </div>
   );
 }
@@ -140,17 +140,17 @@ function SectionCard({
   return (
     <section className={`relative overflow-hidden ${GLASS}`}>
       <span className={`absolute left-0 top-0 h-full w-1 ${accent}`} />
-      <div className="px-4 py-3 pl-5">
-        <div className="mb-2 flex items-start gap-3">
+      <div className="px-3 py-2 pl-4">
+        <div className="mb-1.5 flex items-start gap-2">
           <span
-            className={`mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${accent} text-white shadow-sm`}
+            className={`mt-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${accent} text-white shadow-sm`}
           >
-            <Icon size={16} />
+            <Icon size={14} />
           </span>
           <div className="min-w-0">
-            <h2 className="text-sm font-semibold leading-tight text-foreground">{title}</h2>
+            <h2 className="text-xs font-semibold leading-tight text-foreground">{title}</h2>
             {subtitle ? (
-              <p className="mt-0.5 text-[11px] text-muted-foreground">{subtitle}</p>
+              <p className="mt-0.5 text-[10px] text-muted-foreground">{subtitle}</p>
             ) : null}
           </div>
         </div>
@@ -243,9 +243,9 @@ export default function MedicalRecordsRecordsDetailPage() {
 
   return (
     <AppLayout requiredGroups={requiredGroups}>
-      <div className="mx-auto w-full max-w-5xl space-y-4 px-1">
+      <div className="w-full space-y-4 px-1">
 
-        {/* ── Cabeçalho ── */}
+        {/* ── Cabeçalho — largura total ── */}
         <section className={`relative overflow-hidden ${GLASS}`}>
           <span className={`absolute left-0 top-0 h-full w-1 ${status.accent}`} />
           <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 pl-5">
@@ -308,75 +308,51 @@ export default function MedicalRecordsRecordsDetailPage() {
           </div>
         ) : null}
 
-        {/* ── Linha superior: Identificação + Paciente/Médico ── */}
-        <div className="grid gap-4 lg:grid-cols-2">
+        {/* ── Cartões intermédios — grelha 4 colunas ── */}
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           <SectionCard
             title="Identificação"
-            subtitle="Referência do registo e controlo de estado."
+            subtitle="Referência e estado."
             icon={ClipboardList}
             accent="bg-violet-500"
           >
             <FieldRow label="Código" value={data.custom_id || `PRT-${data.id}`} />
             <FieldRow label="Estado" value={status.label} />
             <FieldRow label="Criado em" value={fmtDate(data.created_at)} />
-            <FieldRow label="Atualizado em" value={fmtDate(data.updated_at)} />
+            <FieldRow label="Atualizado" value={fmtDate(data.updated_at)} />
           </SectionCard>
 
           <SectionCard
             title="Paciente e médico"
-            subtitle="Titular do cardex e profissional responsável."
+            subtitle="Titular e responsável."
             icon={User}
             accent="bg-sky-500"
           >
             <FieldRow
               label="Paciente"
-              value={data.patient_name || (data.patient ? `Paciente #${data.patient}` : "—")}
+              value={data.patient_name || (data.patient ? `#${data.patient}` : "—")}
             />
             <FieldRow
               label="Médico"
-              value={data.doctor_name || (data.doctor ? `Médico #${data.doctor}` : "Não atribuído")}
+              value={data.doctor_name || (data.doctor ? `#${data.doctor}` : "Não atribuído")}
             />
-            <FieldRow
-              label="Consulta"
-              value={data.consultation_codes || "—"}
-            />
+            <FieldRow label="Consulta" value={data.consultation_codes || "—"} />
           </SectionCard>
-        </div>
 
-        {/* ── Período de atendimento ── */}
-        <SectionCard
-          title="Período de atendimento"
-          subtitle="Janela temporal do episódio clínico."
-          icon={Calendar}
-          accent="bg-teal-500"
-        >
-          <div className="grid gap-4 sm:grid-cols-3">
-            <div className="py-2">
-              <div className="mb-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                Início
-              </div>
-              <p className="text-sm text-foreground">{fmtDate(data.care_start_at)}</p>
-            </div>
-            <div className="py-2">
-              <div className="mb-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                Fim
-              </div>
-              <p className="text-sm text-foreground">{fmtDate(data.care_end_at)}</p>
-            </div>
-            <div className="py-2">
-              <div className="mb-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                Duração
-              </div>
-              <p className="text-sm text-foreground">{dur || "Em curso"}</p>
-            </div>
-          </div>
-        </SectionCard>
+          <SectionCard
+            title="Período"
+            subtitle="Janela do episódio clínico."
+            icon={Calendar}
+            accent="bg-teal-500"
+          >
+            <FieldRow label="Início" value={fmtDate(data.care_start_at)} />
+            <FieldRow label="Fim" value={fmtDate(data.care_end_at)} />
+            <FieldRow label="Duração" value={dur || "Em curso"} />
+          </SectionCard>
 
-        {/* ── Conteúdo clínico: Sintomas + Diagnóstico ── */}
-        <div className="grid gap-4 lg:grid-cols-2">
           <SectionCard
             title="Sintomas"
-            subtitle="Queixas e sinais relatados pelo paciente."
+            subtitle="Queixas relatadas."
             icon={Stethoscope}
             accent="bg-rose-500"
           >
@@ -385,25 +361,24 @@ export default function MedicalRecordsRecordsDetailPage() {
 
           <SectionCard
             title="Diagnóstico"
-            subtitle="Hipótese diagnóstica estabelecida."
+            subtitle="Hipótese diagnóstica."
             icon={BookOpen}
             accent="bg-indigo-500"
           >
             <ClinicalTextBlock label="Diagnóstico" text={data.diagnosis} />
           </SectionCard>
+
+          <SectionCard
+            title="Prescrição"
+            subtitle="Observações livres."
+            icon={FileText}
+            accent="bg-emerald-500"
+          >
+            <ClinicalTextBlock label="Prescrição" text={data.prescription} />
+          </SectionCard>
         </div>
 
-        {/* ── Prescrição ── */}
-        <SectionCard
-          title="Prescrição"
-          subtitle="Observações livres sobre a prescrição. A prescrição estruturada encontra-se nos itens de prescrição."
-          icon={FileText}
-          accent="bg-emerald-500"
-        >
-          <ClinicalTextBlock label="Observações da prescrição" text={data.prescription} />
-        </SectionCard>
-
-        {/* ── Relatório médico ── */}
+        {/* ── Relatório médico — largura total ── */}
         <SectionCard
           title="Relatório médico"
           subtitle="Notas clínicas, evolução e conclusões do episódio."
