@@ -43,6 +43,13 @@ from .models import (
     BiosafetyInspection,
 )
 
+def _register_if_needed(model):
+    try:
+        admin.site.register(model)
+    except admin.sites.AlreadyRegistered:
+        pass
+
+
 for _model in (
     LabSector, LabTest, LabTestField, LabTestPanel, LabOrder, LabOrderItem, SampleCollection,
     LabSample, SampleReception, SampleRejection, LabWorklist, LabResult,
@@ -55,7 +62,4 @@ for _model in (
     BiologicalHazard, ExposureIncident, PPEItem, PPEDistribution, WasteRecord,
     DecontaminationRecord, SpillResponseRecord, VaccinationRecord, BiosafetyInspection,
 ):
-    try:
-        admin.site.register(_model)
-    except admin.sites.AlreadyRegistered:
-        pass
+    _register_if_needed(_model)
