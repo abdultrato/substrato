@@ -172,13 +172,12 @@ export default function MaternityPregnanciesListPage() {
         {/* ── Filtros ── */}
         <section className={`relative ${GLASS}`}>
           <span className="absolute left-0 top-0 h-full w-1 rounded-l-xl bg-slate-400" />
-          <div className="flex flex-wrap items-end gap-3 px-4 py-3 pl-5">
+          <div className="flex flex-wrap items-center gap-3 px-4 py-3 pl-5">
             <div className="min-w-[200px] flex-1">
-              <label className="mb-1 block text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Pesquisar</label>
               <div className="relative">
                 <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                <input type="text" placeholder="Código, paciente…"
-                  className="w-full rounded-lg border border-border bg-background/60 py-2 pl-8 pr-8 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-pink-500/40 transition"
+                <input type="text" placeholder="Pesquisar por código, paciente…"
+                  className="h-9 w-full rounded-lg border border-border bg-background/60 py-2 pl-8 pr-8 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-pink-500/40 transition"
                   value={search} onChange={e => { setSearch(e.target.value); setPage(1); }} />
                 {search && (
                   <button type="button" onClick={() => { setSearch(""); setPage(1); }}
@@ -188,32 +187,28 @@ export default function MaternityPregnanciesListPage() {
                 )}
               </div>
             </div>
-            <div className="w-48">
-              <label className="mb-1 block text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Estado</label>
-              <select className="w-full rounded-lg border border-border bg-background/60 px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-pink-500/40 transition"
-                value={statusFilter} onChange={e => { setStatusFilter(e.target.value); setPage(1); }}>
-                <option value="">Todos</option>
-                <option value="ACOMP">Em acompanhamento</option>
-                <option value="PARTO">Parto</option>
-                <option value="ENCERR">Encerrada</option>
-                <option value="CANCEL">Cancelada</option>
-              </select>
-            </div>
+            <select aria-label="Estado"
+              className={`h-9 w-48 rounded-lg border border-border bg-background/60 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500/40 transition ${statusFilter ? "text-foreground" : "text-muted-foreground"}`}
+              value={statusFilter} onChange={e => { setStatusFilter(e.target.value); setPage(1); }}>
+              <option value="">Estado: todos</option>
+              <option value="ACOMP">Em acompanhamento</option>
+              <option value="PARTO">Parto</option>
+              <option value="ENCERR">Encerrada</option>
+              <option value="CANCEL">Cancelada</option>
+            </select>
             {(search || statusFilter) && (
               <button type="button" onClick={() => { setSearch(""); setStatusFilter(""); setPage(1); }}
                 className="inline-flex h-9 items-center gap-1.5 rounded-md border border-white/20 bg-white/10 px-3 text-sm text-muted-foreground backdrop-blur-sm transition hover:bg-white/20 hover:text-foreground">
                 <X size={13} /> Limpar
               </button>
             )}
-            <div>
-              <label className="mb-1 block text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Por página</label>
-              <div className="flex h-9 items-center">
-                <PageSizeInput
-                  value={pageSize}
-                  onChange={(v) => { setPageSize(v); setPage(1); }}
-                  ariaLabel="Registos por página"
-                />
-              </div>
+            <div className="inline-flex h-9 items-center gap-1.5" title="Registos por página">
+              <PageSizeInput
+                value={pageSize}
+                onChange={(v) => { setPageSize(v); setPage(1); }}
+                ariaLabel="Registos por página"
+              />
+              <span className="text-xs text-muted-foreground">/pág</span>
             </div>
           </div>
         </section>
