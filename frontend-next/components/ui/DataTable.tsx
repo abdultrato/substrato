@@ -1,6 +1,7 @@
 "use client"
 
 import { ReactNode, useMemo, useState } from "react"
+import { useRouter } from "next/navigation"
 import { Search, RotateCcw } from "lucide-react"
 import { useLanguage } from "@/hooks/useLanguage"
 
@@ -20,6 +21,8 @@ interface Props<T> {
     searchKeys?: Array<keyof T | string>
     /** Remove a superfície opaca própria para a tabela fundir-se num cartão glass. */
     bare?: boolean
+    rowHref?: (row: T) => string | undefined
+    compact?: boolean
 }
 
 export default function DataTable<T> ( {
@@ -30,16 +33,19 @@ export default function DataTable<T> ( {
     searchPlaceholder,
     searchKeys = [],
     bare = false,
+    rowHref,
+    compact = false,
 }: Props<T> ) {
     const { t, tr } = useLanguage()
+    const router = useRouter()
     const [query, setQuery] = useState("")
 
     const searchWrapCls = bare
         ? "flex flex-col gap-2 rounded-lg border border-border/60 bg-white/30 px-3 py-2 backdrop-blur-sm dark:bg-white/5 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between"
         : "flex flex-col gap-2 rounded-lg border border-border bg-card px-3 py-2 shadow-sm sm:flex-row sm:flex-wrap sm:items-center sm:justify-between"
     const mobileCardCls = bare
-        ? "rounded-lg border border-white/20 bg-white/30 p-3 backdrop-blur-sm dark:border-white/10 dark:bg-white/5"
-        : "rounded-lg border border-border bg-card p-3 shadow-sm"
+        ? `rounded-lg border border-white/20 bg-white/30 backdrop-blur-sm dark:border-white/10 dark:bg-white/5 ${compact ? "p-2.5" : "p-3"}`
+        : `rounded-lg border border-border bg-card shadow-sm ${compact ? "p-2.5" : "p-3"}`
     const mobileEmptyCls = bare
         ? "rounded-lg border border-white/20 bg-white/30 p-4 text-sm text-muted-foreground backdrop-blur-sm dark:border-white/10 dark:bg-white/5"
         : "rounded-lg border border-border bg-card p-4 text-sm text-muted-foreground"
@@ -53,6 +59,7 @@ export default function DataTable<T> ( {
     const rowCls = bare
         ? "border-b border-border/40 transition-colors hover:bg-white/40 dark:hover:bg-white/10"
         : "transition-colors hover:bg-muted/55"
+    const isRowInteractive = typeof rowHref === "function"
 
     const normalizedQuery = normalizeText(query)
     const activeSearchKeys = searchKeys.map((k) => String(k))
@@ -117,8 +124,14 @@ export default function DataTable<T> ( {
 
             <div className="space-y-2 md:hidden">
                 {filteredData.length ? (
-                    filteredData.map((row, i) => (
-                        <article key={i} className={mobileCardCls}>
+                    filteredData.map((row, i) => {
+                        const href = rowHref?.(row)
+                        return (
+                        <article
+                            key={i}
+                            className={`${mobileCardCls} ${href ? "cursor-pointer transition hover:border-primary/40 hover:bg-white/40 dark:hover:bg-white/10" : ""}`}
+                            onClick={href ? () => router.push(href) : undefined}
+                        >
                             <div className="space-y-3">
                                 {columns.map((col, idx) => (
                                     <div key={idx} className={idx === 0 ? "space-y-1" : "grid grid-cols-[minmax(0,0.42fr)_minmax(0,0.58fr)] gap-2"}>
@@ -132,7 +145,7 @@ export default function DataTable<T> ( {
                                 ))}
                             </div>
                         </article>
-                    ))
+                    )})
                 ) : (
                     <div className={mobileEmptyCls}>
                         {query.trim()
@@ -160,7 +173,14 @@ export default function DataTable<T> ( {
                     <tbody className={tbodyCls}>
                         {filteredData.length ? (
                             filteredData.map( ( row, i ) => (
-                                <tr key={i} className={rowCls}>
+                                <tr
+                                    key={i}
+                                    className={`${rowCls} ${isRowInteractive ? "cursor-pointer" : ""}`}
+                                    onClick={isRowInteractive ? () => {
+                                        const href = rowHref?.(row)
+                                        if (href) router.push(href)
+                                    } : undefined}
+                                >
                                     {columns.map( ( col, idx ) => (
                                         <td
                                             key={idx}

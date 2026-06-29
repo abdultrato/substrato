@@ -3,7 +3,7 @@
 import { isNotFoundLikeError } from "@/lib/errors/api-error"
 import Link from "next/link"
 import { useEffect, useMemo, useState } from "react"
-import { ArrowLeft, ClipboardList, LayoutList, Settings2 } from "lucide-react"
+import { ArrowLeft, LayoutList, Search, Settings2 } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
 import DataTable from "@/components/ui/DataTable"
@@ -31,6 +31,7 @@ export default function ProntuarioCardexPage() {
     const [data, setData] = useState<RegistroRow[]>([])
     const [page, setPage] = useState(1)
     const [pageSize, setPageSize] = useState(20)
+    const [query, setQuery] = useState("")
     const [totalItems, setTotalItems] = useState(0)
     const [totalPages, setTotalPages] = useState(1)
     const safeRefreshToken = useSafeDataRefreshSignal()
@@ -89,6 +90,29 @@ export default function ProntuarioCardexPage() {
         ],
         []
     )
+
+    const filteredData = useMemo(() => {
+        const normalized = query.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim()
+        if (!normalized) return data
+        return data.filter((row) =>
+            [
+                row.id_custom,
+                row.id,
+                row.paciente_nome,
+                row.medico_nome,
+                row.estado,
+                row.inicio_atendimento,
+            ]
+                .filter(Boolean)
+                .some((value) =>
+                    String(value)
+                        .normalize("NFD")
+                        .replace(/[\u0300-\u036f]/g, "")
+                        .toLowerCase()
+                        .includes(normalized),
+                ),
+        )
+    }, [data, query])
 
     return (
         <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.MEDICINA, GROUPS.MEDICINA_OCUPACIONAL]}>
@@ -151,38 +175,59 @@ export default function ProntuarioCardexPage() {
                         </div>
                     </div>
 
-                    <div className="group relative min-w-[220px] flex-1 basis-[220px] overflow-hidden rounded-xl border border-slate-200/70 bg-white/70 shadow-sm backdrop-blur-sm dark:border-slate-800/80 dark:bg-slate-950/45">
+                    <div className="group relative min-w-[280px] flex-1 basis-[320px] overflow-hidden rounded-xl border border-slate-200/70 bg-white/70 shadow-sm backdrop-blur-sm dark:border-slate-800/80 dark:bg-slate-950/45">
                         <div className="absolute inset-y-0 left-0 w-1.5 bg-gradient-to-b from-violet-500 via-fuchsia-500 to-pink-400" />
-                        <div className="flex items-center justify-between gap-3 p-4 pl-6">
-                            <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
-                                <span>Por página</span>
-                                <select
-                                    value={pageSize}
-                                    onChange={(e) => {
-                                        setPage(1)
-                                        setPageSize(Number(e.target.value))
-                                    }}
-                                    className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-800 shadow-sm dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-100"
-                                >
-                                    <option value={20}>20</option>
-                                </select>
-                            </label>
-                            <Settings2 className="text-violet-600 dark:text-violet-400" size={18} />
+                        <div className="space-y-3 p-4 pl-6">
+                            <div className="flex items-center justify-between gap-3">
+                                <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
+                                    <span>Por página</span>
+                                    <input
+                                        type="number"
+                                        min={1}
+                                        max={999}
+                                        value={pageSize}
+                                        onChange={(e) => {
+                                            const next = Number(e.target.value)
+                                            if (!Number.isFinite(next)) return
+                                            setPage(1)
+                                            setPageSize(Math.max(1, Math.min(999, next)))
+                                        }}
+                                        className="w-24 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-800 shadow-sm dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-100"
+                                    />
+                                </label>
+                                <Settings2 className="text-violet-600 dark:text-violet-400" size={18} />
+                            </div>
+                            <div className="relative">
+                                <Search className="pointer-events-none absolute left-3 top-2.5 text-muted-foreground" size={15} />
+                                <input
+                                    value={query}
+                                    onChange={(e) => setQuery(e.target.value)}
+                                    placeholder="Pesquisar registros..."
+                                    className="h-10 w-full rounded-xl border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm text-slate-800 shadow-sm outline-none transition focus:border-violet-400 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-100"
+                                />
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                                Resultados: {filteredData.length}/{data.length}
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <div className="relative basis-full overflow-hidden rounded-xl border border-slate-200/70 bg-white/70 shadow-sm backdrop-blur-sm dark:border-slate-800/80 dark:bg-slate-950/45">
+                <div className="relative basis-full overflow-hidden rounded-xl border border-slate-200/70 bg-white/60 shadow-sm backdrop-blur-sm dark:border-slate-800/80 dark:bg-slate-950/40">
                     <div className="absolute inset-y-0 left-0 w-1.5 bg-gradient-to-b from-indigo-500 via-blue-500 to-cyan-400" />
-                    <div className="space-y-4 p-4 pl-6">
+                    <div className="space-y-3 p-3 pl-5">
                         {loading ? (
                             <div className="text-sm text-gray-500">Carregando...</div>
                         ) : (
                             <>
                         <DataTable<RegistroRow>
                             columns={columns as any}
-                            data={data}
+                            data={filteredData}
                             emptyMessage="Nenhum registro encontrado."
+                            searchable={false}
+                            bare
+                            compact
+                            rowHref={(row) => `/medical-records/records/${row.id}`}
                         />
                         <Pagination page={page} totalPages={totalPages} onChange={setPage} />
                             </>
@@ -193,5 +238,4 @@ export default function ProntuarioCardexPage() {
         </AppLayout>
     )
 }
-
 
