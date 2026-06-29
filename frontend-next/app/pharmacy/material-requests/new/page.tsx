@@ -315,8 +315,8 @@ export default function CriarRequisicaoMateriaisPage() {
               <Loader2 size={18} className="animate-spin" />
             </div>
           ) : (
-            <div className="grid gap-3 md:grid-cols-12">
-              <div className="md:col-span-4">
+            <div className="grid gap-3 md:grid-cols-2">
+              <div>
                 <label className="block text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
                   Setor solicitante
                 </label>
@@ -344,19 +344,7 @@ export default function CriarRequisicaoMateriaisPage() {
                 )}
               </div>
 
-              <div className="md:col-span-4">
-                <label className="block text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-                  Fonte de abastecimento
-                </label>
-                <input
-                  type="text"
-                  className={READONLY_FIELD}
-                  value={isWarehouseSource ? "Armazém central" : "Estoque da farmácia"}
-                  readOnly
-                />
-              </div>
-
-              <div className="md:col-span-4">
+              <div>
                 <label className="block text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
                   Departamento
                 </label>
