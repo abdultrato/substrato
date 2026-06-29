@@ -10,7 +10,6 @@
     "quality:strict": "node scripts/run-python.js scripts/phase1_quality_gate.py --full --strict-ruff"
   },
   "dependencies": {
-    "codex": "^0.2.3",
     "concurrently": "^9.2.1",
     "http-proxy-middleware": "^3.0.5",
     "openai": "^6.34.0"

@@ -166,7 +166,7 @@ function EntitySearch({
       )}
       {mounted && open && !loading && query && results.length === 0 && createPortal(
         <div style={dropStyle} className="rounded-xl border border-white/20 bg-white/70 px-4 py-3 text-sm text-muted-foreground shadow-xl backdrop-blur-md dark:border-white/10 dark:bg-black/50">
-          Sem resultados para "{query}"
+          Sem resultados para {`"${query}"`}
         </div>,
         document.body
       )}

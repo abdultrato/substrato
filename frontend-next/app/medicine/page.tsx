@@ -14,6 +14,7 @@ import {
   ImagePlus,
   Pill,
 } from "lucide-react"
+import type { LucideIcon } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
 import PageHeader from "@/components/ui/PageHeader"
@@ -24,7 +25,16 @@ import { useAuth } from "@/hooks/useAuth"
 import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
 
-const medicineActionTiles = [
+type MedicineActionTile = {
+  title: string
+  description: string
+  href: string
+  icon: LucideIcon
+  accentClass: string
+  fullWidth?: boolean
+}
+
+const medicineActionTiles: MedicineActionTile[] = [
   {
     title: "Pacientes",
     description: "Ver e registar pacientes vindos da recepção.",
@@ -89,7 +99,7 @@ const medicineActionTiles = [
     accentClass: "from-amber-500 via-orange-500 to-rose-400",
     fullWidth: true,
   },
-] as const
+]
 
 export default function MedicinaPage() {
   const { user } = useAuth()

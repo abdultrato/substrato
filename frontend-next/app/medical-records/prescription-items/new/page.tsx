@@ -180,7 +180,7 @@ function MedicationSearch({ onSelect }: { onSelect: (p: Product) => void }) {
       {mounted && open && !loading && query && results.length === 0 && createPortal(
         <div style={dropdownStyle}
           className="rounded-xl border border-white/20 bg-white/60 px-4 py-3 text-sm text-muted-foreground shadow-xl backdrop-blur-md dark:border-white/10 dark:bg-black/40">
-          Sem resultados para "{query}"
+          Sem resultados para {`"${query}"`}
         </div>,
         document.body
       )}

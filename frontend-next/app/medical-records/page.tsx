@@ -4,6 +4,7 @@ import { isNotFoundLikeError } from "@/lib/errors/api-error"
 import Link from "next/link"
 import { useEffect, useState } from "react"
 import { ArrowLeft, ClipboardList, ScrollText, Pill, PlusCircle } from "lucide-react"
+import type { LucideIcon } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
 import MetricCard from "@/components/ui/MetricCard"
@@ -13,14 +14,29 @@ import { useAuth } from "@/hooks/useAuth"
 import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
 
-const recordMetricCards = [
+type RecordMetricCard = {
+    label: string
+    accentClass: string
+    hint?: string
+}
+
+type RecordActionTile = {
+    title: string
+    description: string
+    href: string
+    icon: LucideIcon
+    accentClass: string
+    fullWidth?: boolean
+}
+
+const recordMetricCards: RecordMetricCard[] = [
     { label: "Cardex (registros)", accentClass: "from-sky-500 via-cyan-500 to-teal-400" },
     { label: "Itens de prescrição", accentClass: "from-emerald-500 via-lime-500 to-amber-400" },
     { label: "Consultas", accentClass: "from-violet-500 via-fuchsia-500 to-pink-400", hint: "Vínculo via many-to-many" },
     { label: "História clínica", accentClass: "from-indigo-500 via-blue-500 to-cyan-400", hint: "Visão agregada por paciente" },
-] as const
+]
 
-const recordActionTiles = [
+const recordActionTiles: RecordActionTile[] = [
     {
         title: "Cardex",
         description: "Listar e gerir registros (CRUD).",
@@ -50,7 +66,7 @@ const recordActionTiles = [
         accentClass: "from-indigo-500 via-blue-500 to-cyan-400",
         fullWidth: true,
     },
-] as const
+]
 
 export default function ProntuarioPage() {
     const { user } = useAuth()
