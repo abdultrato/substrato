@@ -287,9 +287,6 @@ export default function CriarRequisicaoMateriaisPage() {
               </span>
               <div>
                 <h1 className="text-lg font-bold leading-tight text-foreground">Criar requisição de materiais</h1>
-                <p className="text-[11px] text-muted-foreground">
-                  Solicite produtos da farmácia ou do armazém mantendo o fluxo atual.
-                </p>
               </div>
             </div>
             <Link
@@ -310,7 +307,6 @@ export default function CriarRequisicaoMateriaisPage() {
 
         <SectionCard
           title="Dados do solicitante"
-          subtitle="O setor requisitante continua a ser preenchido automaticamente para perfis não-admin."
           icon={Building2}
           accent="bg-indigo-500"
         >
@@ -377,11 +373,6 @@ export default function CriarRequisicaoMateriaisPage() {
 
         <SectionCard
           title="Itens da requisição"
-          subtitle={
-            isWarehouseSource
-              ? "Pesquise o item de armazém, selecione-o e só então veja o saldo disponível."
-              : "Pesquise o produto, selecione-o e só então veja o saldo disponível."
-          }
           icon={ClipboardList}
           accent="bg-violet-500"
         >
@@ -419,10 +410,10 @@ export default function CriarRequisicaoMateriaisPage() {
                     : null
                 return (
                   <div key={idx} className="rounded-xl border border-white/20 bg-white/15 p-3 dark:border-white/10 dark:bg-white/[0.03]">
-                    <div className="grid gap-3 md:grid-cols-12">
-                    <div className="md:col-span-8">
+                    <div className="flex flex-nowrap items-end gap-3 overflow-x-auto">
+                    <div className="min-w-[18rem] flex-[1.35]">
                       <label className="block text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-                        {isWarehouseSource ? "Item de armazém" : "Produto"}
+                        Busca
                       </label>
                       <input
                         type="text"
@@ -432,6 +423,11 @@ export default function CriarRequisicaoMateriaisPage() {
                         placeholder={isWarehouseSource ? "Pesquisar item por nome ou SKU…" : "Pesquisar produto por nome ou código…"}
                         disabled={submitting}
                       />
+                    </div>
+                    <div className="min-w-[20rem] flex-[1.55]">
+                      <label className="block text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                        {isWarehouseSource ? "Item de armazém" : "Produto"}
+                      </label>
                       {isWarehouseSource ? (
                         <select
                           className={FIELD}
@@ -484,7 +480,7 @@ export default function CriarRequisicaoMateriaisPage() {
                       ) : null}
                     </div>
 
-                    <div className="md:col-span-3">
+                    <div className="min-w-[8rem] shrink-0">
                       <label className="block text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
                         Quantidade
                       </label>
@@ -503,7 +499,7 @@ export default function CriarRequisicaoMateriaisPage() {
                       ) : null}
                     </div>
 
-                    <div className="md:col-span-1 md:flex md:items-end">
+                    <div className="min-w-[3.5rem] shrink-0">
                       <button
                         type="button"
                         onClick={() => removeItem(idx)}
