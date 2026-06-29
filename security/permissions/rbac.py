@@ -697,6 +697,7 @@ def _policy() -> dict[str, dict[str, frozenset[str]]]:
             "accounting-entry": accounting_crud,
             "accounting-movement": accounting_crud,
             "accounting-financialreconciliation": accounting_crud,
+            "accounting-bank_account": accounting_crud,
             **insurer_crud,
             # Pacientes (leitura para contexto das faturas)
             "clinico-patient": SAFE_METHODS,

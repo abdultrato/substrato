@@ -28,7 +28,11 @@ module.exports = (phase) => {
   const csp = buildCsp(isDevelopment)
   const retiredGeneratedRoutes = [
     { source: "/accounting/account-balances/:path*", destination: "/accounting/accounts/" },
-    { source: "/accounting/ledger-lines/:path*", destination: "/accounting/ledger-entries/" },
+    { source: "/accounting/ledger-lines/:path*", destination: "/accounting/movements/" },
+    { source: "/accounting/ledger-entries/:path*", destination: "/accounting/entries/" },
+    { source: "/accounting/legacy-entries/:path*", destination: "/accounting/entries/" },
+    { source: "/accounting/legacy-movements/:path*", destination: "/accounting/movements/" },
+    { source: "/accounting/financial-reconciliations/:path*", destination: "/accounting/reconciliations/" },
     { source: "/ai_assistant/ai-knowledge-entries/:path*", destination: "/ai/" },
     { source: "/ai_assistant/ai-messages/:path*", destination: "/ai/" },
     { source: "/ai_assistant/ai-policy-events/:path*", destination: "/ai/" },

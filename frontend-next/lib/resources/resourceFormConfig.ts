@@ -18,6 +18,10 @@ export type ResourceFormConfig = {
    *  controlador tiver o valor indicado (ex.: checkbox marcado). */
   mostrarSe?: Record<string, { campo: string; igualA?: any }>
   somenteLeituraCampos?: string[]
+  /** Somente-leitura condicional: o campo (chave) fica bloqueado quando o campo
+   *  controlador tiver o valor `igualA`; se `igualA` for omitido, basta o campo
+   *  controlador ter um valor preenchido (ex.: bloquear saldo quando há vínculo). */
+  somenteLeituraSe?: Record<string, { campo: string; igualA?: any }>
   ordenarCampos?: string[]
   labels?: Record<string, string>
   placeholders?: Record<string, string>
@@ -3164,6 +3168,366 @@ function nursingProcedureConfig(): ResourceFormConfig {
   }
 }
 
+function nursingEvolutionConfig(): ResourceFormConfig {
+  return {
+    esconderCampos: [
+      ...NURSING_INTERNAL_FIELDS,
+      "ward_name",
+      "patient_name",
+      "evolution_date",
+    ],
+    ordenarCampos: ["patient", "ward", "observation"],
+    labels: {
+      patient: "Paciente",
+      ward: "Enfermaria",
+      observation: "Evolução clínica",
+    },
+    placeholders: {
+      patient: "Pesquisar paciente por nome, código ou referência...",
+      observation:
+        "Descreva a evolução clínica: estado do paciente, sinais, intervenções de enfermagem e plano de seguimento.",
+    },
+    hints: {
+      patient: "Paciente acompanhado nesta evolução.",
+      ward: "Enfermaria onde decorre o acompanhamento (opcional).",
+      observation: "Texto livre, datado automaticamente no momento do registo.",
+    },
+    widgets: {
+      observation: "textarea",
+    },
+    etapas: [
+      {
+        titulo: "Paciente e enfermaria",
+        descricao: "Contexto do acompanhamento",
+        campos: ["patient", "ward"],
+      },
+      {
+        titulo: "Evolução clínica",
+        descricao: "Anotação de enfermagem",
+        campos: ["observation"],
+      },
+    ],
+  }
+}
+
+function nursingPrescriptionConfig(): ResourceFormConfig {
+  return {
+    esconderCampos: [
+      ...NURSING_INTERNAL_FIELDS,
+      "ward_name",
+      "patient_name",
+      "prescription_date",
+    ],
+    ordenarCampos: ["patient", "ward", "active", "description"],
+    labels: {
+      patient: "Paciente",
+      ward: "Enfermaria",
+      active: "Prescrição ativa",
+      description: "Descrição da prescrição",
+    },
+    placeholders: {
+      patient: "Pesquisar paciente por nome, código ou referência...",
+      description:
+        "Descreva os cuidados de enfermagem prescritos: medidas, frequência, via, observações e plano de seguimento.",
+    },
+    hints: {
+      patient: "Paciente a quem se destina a prescrição.",
+      ward: "Enfermaria onde decorre o cuidado (opcional).",
+      active: "Desmarque para arquivar a prescrição sem a apagar.",
+    },
+    widgets: {
+      description: "textarea",
+    },
+    etapas: [
+      {
+        titulo: "Paciente e enfermaria",
+        descricao: "Contexto da prescrição",
+        campos: ["patient", "ward", "active"],
+      },
+      {
+        titulo: "Prescrição de cuidados",
+        descricao: "Cuidados de enfermagem",
+        campos: ["description"],
+      },
+    ],
+  }
+}
+
+function financialReconciliationConfig(): ResourceFormConfig {
+  return {
+    esconderCampos: [
+      ...NURSING_INTERNAL_FIELDS,
+      "invoice_code",
+      "discrepancy",
+      "reconciled",
+    ],
+    ordenarCampos: ["invoice", "external_reference", "accounting_value", "received_amount"],
+    labels: {
+      invoice: "Fatura",
+      external_reference: "Referência externa",
+      accounting_value: "Valor contabilístico",
+      received_amount: "Valor recebido",
+    },
+    placeholders: {
+      external_reference: "Ex.: extrato, recibo, transferência...",
+      accounting_value: "Ex.: 0.00",
+      received_amount: "Ex.: 0.00",
+    },
+    hints: {
+      invoice: "Fatura a conciliar.",
+      received_amount: "A diferença (discrepância) é calculada automaticamente.",
+    },
+    etapas: [
+      {
+        titulo: "Fatura",
+        descricao: "Documento e referência",
+        campos: ["invoice", "external_reference"],
+      },
+      {
+        titulo: "Valores",
+        descricao: "Contabilístico vs. recebido",
+        campos: ["accounting_value", "received_amount"],
+      },
+    ],
+  }
+}
+
+function ledgerMovementConfig(): ResourceFormConfig {
+  return {
+    esconderCampos: [
+      ...NURSING_INTERNAL_FIELDS,
+      "account_name",
+      "account_type",
+      "entry_code",
+    ],
+    ordenarCampos: ["entry", "account", "debit", "credit", "name"],
+    labels: {
+      entry: "Lançamento",
+      account: "Conta contábil",
+      debit: "Débito",
+      credit: "Crédito",
+      name: "Identificação (opcional)",
+    },
+    placeholders: {
+      debit: "Ex.: 0.00",
+      credit: "Ex.: 0.00",
+    },
+    hints: {
+      entry: "Lançamento ao qual este movimento pertence.",
+      account: "Conta movimentada (débito ou crédito).",
+      debit: "Preencha o débito OU o crédito.",
+    },
+    etapas: [
+      {
+        titulo: "Vínculos",
+        descricao: "Lançamento e conta",
+        campos: ["entry", "account"],
+      },
+      {
+        titulo: "Valores",
+        descricao: "Débito / crédito",
+        campos: ["debit", "credit", "name"],
+      },
+    ],
+  }
+}
+
+function ledgerEntryConfig(): ResourceFormConfig {
+  return {
+    esconderCampos: [
+      ...NURSING_INTERNAL_FIELDS,
+      "confirmed",
+    ],
+    ordenarCampos: ["name", "date", "external_reference", "description"],
+    labels: {
+      name: "Identificação do lançamento",
+      date: "Data da transação",
+      external_reference: "Referência externa",
+      description: "Descrição",
+    },
+    placeholders: {
+      name: "Ex.: Pagamento de fornecedor, Receção de receita...",
+      external_reference: "Ex.: NF-2024-001, recibo, contrato...",
+      description: "Detalhe do lançamento contabilístico.",
+    },
+    hints: {
+      confirmed: "A confirmação (partida dobrada) é feita pelas ações do lançamento, não aqui.",
+    },
+    widgets: {
+      description: "textarea",
+    },
+    etapas: [
+      {
+        titulo: "Lançamento",
+        descricao: "Identificação, data e referência",
+        campos: ["name", "date", "external_reference"],
+      },
+      {
+        titulo: "Descrição",
+        descricao: "Detalhe do lançamento",
+        campos: ["description"],
+      },
+    ],
+  }
+}
+
+function accountConfig(): ResourceFormConfig {
+  return {
+    esconderCampos: [
+      ...NURSING_INTERNAL_FIELDS,
+      "current_balance",
+      "saldo",
+    ],
+    ordenarCampos: ["name", "type"],
+    labels: {
+      name: "Nome da conta",
+      type: "Tipo de conta",
+    },
+    placeholders: {
+      name: "Ex.: Caixa, Banco, Fornecedores, Receita de serviços...",
+    },
+    hints: {
+      type: "Ativo, Passivo, Receita, Despesa ou Patrimônio. Não pode mudar após haver movimentação.",
+    },
+  }
+}
+
+function bankAccountConfig(): ResourceFormConfig {
+  return {
+    esconderCampos: [
+      ...NURSING_INTERNAL_FIELDS,
+      "account_name",
+    ],
+    ordenarCampos: [
+      "bank_name",
+      "kind",
+      "account_number",
+      "branch",
+      "iban",
+      "swift",
+      "currency",
+      "holder_name",
+      "account",
+      "current_balance",
+      "active",
+      "notes",
+    ],
+    labels: {
+      bank_name: "Banco",
+      kind: "Tipo de conta",
+      account_number: "Número da conta",
+      branch: "Agência / Balcão",
+      iban: "IBAN / NIB",
+      swift: "SWIFT / BIC",
+      currency: "Moeda",
+      holder_name: "Titular",
+      account: "Conta contábil (opcional)",
+      current_balance: "Saldo atual",
+      active: "Conta ativa",
+      notes: "Observações",
+    },
+    placeholders: {
+      bank_name: "Ex.: Millennium BIM, BCI, Standard Bank...",
+      account_number: "Ex.: 0001234567890",
+      iban: "Ex.: MZ59 0001 0000 0012 3456 7890 1",
+      swift: "Ex.: BIMOMZMX",
+      currency: "Ex.: MZN",
+      holder_name: "Nome do titular da conta",
+      current_balance: "Ex.: 0.00",
+    },
+    hints: {
+      account: "Vincule à conta do plano de contas, se aplicável.",
+      current_balance: "Saldo inicial/atual. Quando há conta contábil vinculada, é calculado automaticamente pelos lançamentos.",
+    },
+    widgets: {
+      notes: "textarea",
+    },
+    // Saldo vira somente-leitura quando há conta contábil vinculada (passa a ser derivado).
+    somenteLeituraSe: {
+      current_balance: { campo: "account" },
+    },
+    etapas: [
+      {
+        titulo: "Banco",
+        descricao: "Identificação da instituição e tipo",
+        campos: ["bank_name", "kind", "account_number", "branch"],
+      },
+      {
+        titulo: "Dados bancários",
+        descricao: "Códigos internacionais e titular",
+        campos: ["iban", "swift", "currency", "holder_name"],
+      },
+      {
+        titulo: "Contabilidade e saldo",
+        descricao: "Vínculo contábil, saldo e estado",
+        campos: ["account", "current_balance", "active", "notes"],
+      },
+    ],
+  }
+}
+
+function nursingVitalSignConfig(): ResourceFormConfig {
+  return {
+    esconderCampos: [
+      ...NURSING_INTERNAL_FIELDS,
+      "ward",
+      "ward_name",
+      "patient_name",
+    ],
+    ordenarCampos: [
+      "patient",
+      "record",
+      "collected_at",
+      "temperature_c",
+      "blood_pressure",
+      "heart_rate",
+      "respiratory_rate",
+      "oxygen_saturation",
+    ],
+    labels: {
+      patient: "Paciente",
+      record: "Registo de enfermagem",
+      collected_at: "Coletado em",
+      temperature_c: "Temperatura (°C)",
+      blood_pressure: "Pressão arterial",
+      heart_rate: "Frequência cardíaca (bpm)",
+      respiratory_rate: "Frequência respiratória (rpm)",
+      oxygen_saturation: "Saturação de O₂ (%)",
+    },
+    placeholders: {
+      patient: "Pesquisar paciente por nome, código ou referência...",
+      blood_pressure: "Ex.: 120/80",
+      temperature_c: "Ex.: 36.5",
+      heart_rate: "Ex.: 78",
+      respiratory_rate: "Ex.: 16",
+      oxygen_saturation: "Ex.: 98",
+    },
+    hints: {
+      patient: "Paciente a quem pertencem os sinais vitais.",
+      record: "Registo de enfermagem associado (deve pertencer ao paciente).",
+      collected_at: "Momento da colheita dos sinais vitais.",
+    },
+    etapas: [
+      {
+        titulo: "Paciente e registo",
+        descricao: "Contexto da colheita",
+        campos: ["patient", "record", "collected_at"],
+      },
+      {
+        titulo: "Sinais vitais",
+        descricao: "Medições coletadas",
+        campos: [
+          "temperature_c",
+          "blood_pressure",
+          "heart_rate",
+          "respiratory_rate",
+          "oxygen_saturation",
+        ],
+      },
+    ],
+  }
+}
+
 function nursingRecordConfig(): ResourceFormConfig {
   return {
     esconderCampos: [...NURSING_INTERNAL_FIELDS, "collection_guidance"],
@@ -4972,9 +5336,40 @@ export function getResourceFormConfig(
     return null
   }
 
+  if (g === "accounting" || ep.startsWith("/accounting/")) {
+    if (r === "bank_account" || ep === "/accounting/bank_account/") {
+      return bankAccountConfig()
+    }
+    if (r === "account" || ep === "/accounting/accounts/" || ep === "/accounting/account/") {
+      return accountConfig()
+    }
+    if (r === "entry" || ep === "/accounting/entry/") {
+      return ledgerEntryConfig()
+    }
+    if (r === "movement" || ep === "/accounting/movement/") {
+      return ledgerMovementConfig()
+    }
+    if (
+      r === "financialreconciliation" ||
+      ep === "/accounting/financialreconciliation/" ||
+      ep === "/accounting/financial-reconciliations/"
+    ) {
+      return financialReconciliationConfig()
+    }
+  }
+
   if (g === "nursing") {
     if (r === "nursing_record" || ep === "/nursing/nursing_record/") {
       return nursingRecordConfig()
+    }
+    if (r === "nursing_evolution" || ep === "/nursing/nursing_evolution/") {
+      return nursingEvolutionConfig()
+    }
+    if (r === "nursing_prescription" || ep === "/nursing/nursing_prescription/") {
+      return nursingPrescriptionConfig()
+    }
+    if (r === "nursing_vital_sign" || ep === "/nursing/nursing_vital_sign/") {
+      return nursingVitalSignConfig()
     }
     if (r === "procedure" || ep === "/nursing/procedure/") {
       return nursingProcedureConfig()

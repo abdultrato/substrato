@@ -36,12 +36,11 @@ type CrudMenuItem = {
 const MODULES: Record<string, CrudMenuItem[]> = {
   "accounting": [
     { nome: "Conta", href: "/accounting/accounts" },
-    { nome: "Saldo da Conta", href: "/accounting/accounts" },
-    { nome: "Conciliação Financeira", href: "/accounting/financial-reconciliations" },
-    { nome: "Lançamento Contábil", href: "/accounting/ledger-entries" },
-    { nome: "Linha Contábil", href: "/accounting/ledger-entries" },
-    { nome: "Lançamento Legado", href: "/accounting/legacy-entries" },
-    { nome: "Movimento Legado", href: "/accounting/legacy-movements" },
+    { nome: "Conta Bancária", href: "/accounting/bank-accounts" },
+    { nome: "Conciliação Financeira", href: "/accounting/reconciliations" },
+    { nome: "Lançamento", href: "/accounting/entries" },
+    { nome: "Movimento", href: "/accounting/movements" },
+    { nome: "Nota de Crédito", href: "/accounting/credit-notes" },
   ],
   "ai_assistant": [
     { nome: "Sessões da IA", href: "/ai_assistant/ai-sessions", icon: Bot },

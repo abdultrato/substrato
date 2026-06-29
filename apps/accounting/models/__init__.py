@@ -1,5 +1,6 @@
 from .account import Account
 from .account_balance import AccountBalance
+from .bank_account import BankAccount
 from .financial_reconciliation import FinancialReconciliation
 from .ledger_entry import LedgerEntry
 from .ledger_line import LedgerLine
@@ -12,9 +13,13 @@ Lancamento = LegacyEntry
 Movimento = LegacyMovement
 SaldoConta = AccountBalance
 
+ContaBancaria = BankAccount
+
 __all__ = [
     "Account",
     "AccountBalance",
+    "BankAccount",
+    "ContaBancaria",
     "ConciliacaoFinanceira",
     "Conta",
     "FinancialReconciliation",

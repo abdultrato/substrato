@@ -557,11 +557,12 @@ class NursingVitalSignSerializer(LegacyAliasSerializerMixin, serializers.ModelSe
     legacy_output_aliases = VITAL_SIGN_ALIASES
 
     ward_name = serializers.CharField(source="ward.name", read_only=True)
+    patient_name = serializers.CharField(source="patient.name", read_only=True)
 
     class Meta:
         model = NursingVitalSign
         fields = "__all__"
-        read_only_fields = (*CORE_READ_ONLY_FIELDS, "ward_name")
+        read_only_fields = (*CORE_READ_ONLY_FIELDS, "ward_name", "patient_name")
 
 
 class NursingPrescriptionSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer):
@@ -569,11 +570,12 @@ class NursingPrescriptionSerializer(LegacyAliasSerializerMixin, serializers.Mode
     legacy_output_aliases = NURSING_PRESCRIPTION_ALIASES
 
     ward_name = serializers.CharField(source="ward.name", read_only=True)
+    patient_name = serializers.CharField(source="patient.name", read_only=True)
 
     class Meta:
         model = NursingPrescription
         fields = "__all__"
-        read_only_fields = (*CORE_READ_ONLY_FIELDS, "ward_name", "prescription_date")
+        read_only_fields = (*CORE_READ_ONLY_FIELDS, "ward_name", "patient_name", "prescription_date")
 
 
 class NursingEvolutionSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer):

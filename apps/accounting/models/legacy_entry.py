@@ -73,12 +73,24 @@ class LegacyEntry(CoreModel):
             raise ValidationError("Lançamento sem valor.")
         self.confirmed = True
         self.save(update_fields=["confirmed", "updated_at"])
+        self._recompute_account_balances(movimentos)
         return self
 
     def unconfirm(self):
         """Reabre um lançamento confirmado para correção."""
         if not self.confirmed:
             raise ValidationError("Lançamento já está aberto.")
+        movimentos = list(self.movimentos.all())
         self.confirmed = False
         self.save(update_fields=["confirmed", "updated_at"])
+        self._recompute_account_balances(movimentos)
         return self
+
+    @staticmethod
+    def _recompute_account_balances(movimentos):
+        """Atualiza o saldo materializado de cada conta afetada pelos movimentos."""
+        from apps.accounting.models.account_balance import recompute_account_balance
+
+        contas = {m.account for m in movimentos if m.account_id}
+        for conta in contas:
+            recompute_account_balance(conta)

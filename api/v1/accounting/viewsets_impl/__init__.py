@@ -1,6 +1,7 @@
 from .core import (
     VIEWSET_MAP,
     AccountViewSet,
+    BankAccountViewSet,
     FinancialReconciliationViewSet,
     LedgerEntryViewSet,
     LedgerMovementViewSet,
@@ -9,6 +10,7 @@ from .core import (
 __all__ = [
     "VIEWSET_MAP",
     "AccountViewSet",
+    "BankAccountViewSet",
     "FinancialReconciliationViewSet",
     "LedgerEntryViewSet",
     "LedgerMovementViewSet",

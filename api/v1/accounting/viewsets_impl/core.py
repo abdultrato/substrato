@@ -8,6 +8,7 @@ from rest_framework.viewsets import ModelViewSet
 
 from api.v1.viewset_mixins import ValidatedSearchOrderingMixin
 from apps.accounting.models.account import Account
+from apps.accounting.models.bank_account import BankAccount
 from apps.accounting.models.financial_reconciliation import FinancialReconciliation
 from apps.accounting.models.legacy_entry import LegacyEntry
 from apps.accounting.models.legacy_movement import LegacyMovement
@@ -20,6 +21,7 @@ from ..filters import (
 )
 from ..serializers import (
     AccountSerializer,
+    BankAccountSerializer,
     FinancialReconciliationSerializer,
     LedgerEntrySerializer,
     LedgerMovementSerializer,
@@ -76,7 +78,7 @@ class AccountViewSet(TenantOwnedViewSet):
         "custom_id",
         "name",
         "type",
-        "saldo",
+        "saldo__current_balance",
         "created_at",
         "updated_at",
     ]
@@ -121,7 +123,14 @@ class LedgerMovementViewSet(TenantOwnedViewSet):
     queryset = LegacyMovement.objects.select_related("account", "entry").all()
     serializer_class = LedgerMovementSerializer
     filterset_class = LedgerMovementFilter
-    search_fields = ["custom_id", "name", "account__custom_id"]
+    search_fields = [
+        "custom_id",
+        "name",
+        "account__custom_id",
+        "account__name",
+        "entry__custom_id",
+        "entry__name",
+    ]
     ordering_fields = [
         "custom_id",
         "name",
@@ -169,7 +178,7 @@ class FinancialReconciliationViewSet(TenantOwnedViewSet):
     queryset = FinancialReconciliation.objects.select_related("invoice").all()
     serializer_class = FinancialReconciliationSerializer
     filterset_class = FinancialReconciliationFilter
-    search_fields = ["invoice__custom_id"]
+    search_fields = ["custom_id", "external_reference", "invoice__custom_id"]
     ordering_fields = ["invoice", "reconciled", "created_at"]
     ordering = ["-created_at"]
 
@@ -181,8 +190,38 @@ class FinancialReconciliationViewSet(TenantOwnedViewSet):
         return queryset
 
 
+class BankAccountViewSet(TenantOwnedViewSet):
+    queryset = BankAccount.objects.select_related("account").all()
+    serializer_class = BankAccountSerializer
+    search_fields = [
+        "custom_id",
+        "name",
+        "bank_name",
+        "account_number",
+        "branch",
+        "iban",
+        "swift",
+        "holder_name",
+        "currency",
+        "account__custom_id",
+        "account__name",
+    ]
+    ordering_fields = [
+        "custom_id",
+        "name",
+        "bank_name",
+        "kind",
+        "current_balance",
+        "active",
+        "created_at",
+        "updated_at",
+    ]
+    ordering = ["bank_name", "name"]
+
+
 VIEWSET_MAP = {
     "account": AccountViewSet,
+    "bank_account": BankAccountViewSet,
     "entry": LedgerEntryViewSet,
     "financialreconciliation": FinancialReconciliationViewSet,
     "movement": LedgerMovementViewSet,

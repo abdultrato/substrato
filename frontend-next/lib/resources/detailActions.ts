@@ -952,8 +952,8 @@ const PAYMENTS_DETAIL_ACTIONS: Record<string, DetailActionDefinition[]> = {
 // ── Contabilidade ────────────────────────────────────────────────────────────
 const ACCOUNTING_DETAIL_ACTIONS: Record<string, DetailActionDefinition[]> = {
   "/accounting/entry/": [
-    { key: "accounting.entry.confirm", action: "confirm", labelPt: "Confirmar lançamento", labelEn: "Confirm entry", successPt: "Lançamento confirmado.", successEn: "Entry confirmed.", tone: "primary" },
-    { key: "accounting.entry.reopen", action: "reopen", labelPt: "Reabrir", labelEn: "Reopen", successPt: "Lançamento reaberto.", successEn: "Entry reopened.", confirm: true },
+    { key: "accounting.entry.confirm", action: "confirm", labelPt: "Confirmar lançamento", labelEn: "Confirm entry", successPt: "Lançamento confirmado.", successEn: "Entry confirmed.", tone: "primary", visibleWhen: (r) => r?.confirmed !== true },
+    { key: "accounting.entry.reopen", action: "reopen", labelPt: "Reabrir", labelEn: "Reopen", successPt: "Lançamento reaberto.", successEn: "Entry reopened.", confirm: true, visibleWhen: (r) => r?.confirmed === true },
   ],
 }
 

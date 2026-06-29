@@ -1,8 +1,8 @@
 "use client"
 
 import Link from "next/link"
-import { useEffect, useMemo, useState } from "react"
-import { Search, RotateCcw, BarChart2 } from "lucide-react"
+import { useEffect, useMemo, useState, type ReactNode } from "react"
+import { Search, RotateCcw, BarChart2, Plus } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
 import ResourceActionPanel from "@/components/resources/ResourceActionPanel"
@@ -93,6 +93,45 @@ function fmtBool(value: any): string {
   if (value === true) return "Sim"
   if (value === false) return "Não"
   return "-"
+}
+
+// Normaliza para busca: minúsculas + remove acentos.
+function normSearch(value: any): string {
+  return String(value ?? "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+}
+
+// "Haystack" pesquisável: serializa recursivamente todos os valores da linha.
+function rowSearchHaystack(row: Row): string {
+  const parts: string[] = []
+  const walk = (value: any, depth: number) => {
+    if (value === null || value === undefined) return
+    if (Array.isArray(value)) {
+      if (depth > 3) return
+      value.forEach((item) => walk(item, depth + 1))
+      return
+    }
+    if (typeof value === "object") {
+      if (depth > 3) return
+      Object.values(value).forEach((item) => walk(item, depth + 1))
+      return
+    }
+    parts.push(String(value))
+  }
+  walk(row, 0)
+  return normSearch(parts.join("  "))
+}
+
+// Motor de busca: divide a consulta em termos e exige que TODOS estejam presentes (AND).
+function fullTextFilter(rows: Row[], query: string): Row[] {
+  const terms = normSearch(query).split(/\s+/).filter(Boolean)
+  if (!terms.length) return rows
+  return rows.filter((row) => {
+    const hay = rowSearchHaystack(row)
+    return terms.every((term) => hay.includes(term))
+  })
 }
 
 function normalizeEndpointPath(value: string): string {
@@ -320,12 +359,14 @@ export default function ResourceListPage({
   title,
   subtitle,
   endpoint,
-  adminListHref,
   createHref,
   rowHref,
   requiredGroups,
   groupLabel,
   resourceLabel,
+  renderCard,
+  cardGridClassName,
+  clientFullTextSearch = false,
 }: {
   title: string
   subtitle?: string
@@ -336,11 +377,20 @@ export default function ResourceListPage({
   requiredGroups?: string[]
   groupLabel?: string
   resourceLabel?: string
+  /** Quando definido, a lista é renderizada como cartões (em vez da tabela). */
+  renderCard?: (row: Row, href: string | null | undefined) => ReactNode
+  /** Classe do grid de cartões (permite ajustar nº de colunas / largura). */
+  cardGridClassName?: string
+  /**
+   * Motor de busca multi-campo no cliente: filtra TODAS as variáveis das linhas
+   * carregadas (sem acento, múltiplos termos em AND). A pesquisa deixa de ir ao
+   * servidor para não pré-filtrar por campos limitados.
+   */
+  clientFullTextSearch?: boolean
 }) {
   const { loading } = useAuthGuard()
   const { user } = useAuth()
   const { t, tr, language } = useLanguage()
-  const canViewAdmin = userHasAnyGroup(user, [GROUPS.ADMIN])
   const canCreateIdentityUsers = userHasAnyGroup(user, [
     GROUPS.ADMIN,
     GROUPS.DIRETOR_ESCOLA,
@@ -383,17 +433,19 @@ export default function ResourceListPage({
 
   const requestUrl = useMemo(() => {
     const parsed = new URL(endpoint, "http://local")
-    if (debouncedSearch.trim()) {
+    // Com busca full-text no cliente, não enviamos `search` ao servidor para
+    // não pré-filtrar por campos limitados — filtramos todas as variáveis localmente.
+    if (debouncedSearch.trim() && !clientFullTextSearch) {
       parsed.searchParams.set("search", debouncedSearch.trim())
     } else {
       parsed.searchParams.delete("search")
     }
     return `${parsed.pathname}${parsed.search}`
-  }, [debouncedSearch, endpoint])
+  }, [debouncedSearch, endpoint, clientFullTextSearch])
 
   useEffect(() => {
     setPage(1)
-  }, [requestUrl, pageSize, statusFilter])
+  }, [requestUrl, pageSize, statusFilter, debouncedSearch])
 
   useEffect(() => {
     let mounted = true
@@ -453,19 +505,26 @@ export default function ResourceListPage({
     )
   }, [filteredData, isIdentityUserResource, user])
 
+  // Motor de busca full-text no cliente (todas as variáveis) — só quando ativado.
+  const searchedData = useMemo(() => {
+    if (!clientFullTextSearch || !debouncedSearch.trim()) return visibleData
+    return fullTextFilter(visibleData, debouncedSearch)
+  }, [clientFullTextSearch, debouncedSearch, visibleData])
+
   // Paginação a 20/página. Quando o backend não pagina (devolve a coleção
   // inteira), fatiamos no cliente pela janela da página atual; quando o
   // backend devolve uma página parcial, respeitamos a meta do servidor.
-  const serverPaginated = totalItems > data.length
+  // Com busca full-text no cliente paginamos sempre sobre o resultado filtrado.
+  const serverPaginated = totalItems > data.length && !clientFullTextSearch
   const pagedVisibleData = useMemo(() => {
-    if (serverPaginated) return visibleData
+    if (serverPaginated) return searchedData
     const start = (page - 1) * pageSize
-    return visibleData.slice(start, start + pageSize)
-  }, [serverPaginated, visibleData, page, pageSize])
-  const effectiveTotal = serverPaginated ? totalItems : visibleData.length
+    return searchedData.slice(start, start + pageSize)
+  }, [serverPaginated, searchedData, page, pageSize])
+  const effectiveTotal = serverPaginated ? totalItems : searchedData.length
   const effectiveTotalPages = useMemo(
-    () => (serverPaginated ? totalPages : Math.max(1, Math.ceil(visibleData.length / pageSize))),
-    [serverPaginated, totalPages, visibleData.length, pageSize]
+    () => (serverPaginated ? totalPages : Math.max(1, Math.ceil(searchedData.length / pageSize))),
+    [serverPaginated, totalPages, searchedData.length, pageSize]
   )
 
   // Resolve FKs (sector, exames, etc.) para nomes nas colunas da página atual.
@@ -563,7 +622,8 @@ export default function ResourceListPage({
   return (
     <AppLayout requiredGroups={requiredGroups}>
       <div className="mx-auto w-full max-w-6xl space-y-2.5">
-        <section className="sticky top-0 z-20 rounded-xl border border-white/20 bg-white/30 px-3 py-2.5 shadow-sm backdrop-blur-md dark:border-white/10 dark:bg-white/10">
+        <section className="relative overflow-hidden rounded-xl border border-white/20 bg-white/30 px-3 py-2 pl-4 shadow-sm backdrop-blur-md dark:border-white/10 dark:bg-white/10">
+          <span className="absolute left-0 top-0 h-full w-1.5 bg-[var(--primary-500)]" />
           <PageHeader
             title={title}
             subtitle={subtitle}
@@ -573,40 +633,25 @@ export default function ResourceListPage({
                   !isIdentityUserResource || canCreateIdentityUsers ? (
                     <Link
                       href={createHref}
-                      className="inline-flex h-9 items-center rounded-md bg-[var(--primary-600)] px-3 text-sm font-semibold leading-tight text-white shadow-sm transition-all duration-150 hover:bg-[var(--primary-700)] hover:shadow-md"
+                      className="inline-flex h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg bg-gradient-to-r from-[var(--primary-600)] to-[var(--primary-500)] px-3.5 text-sm font-semibold leading-tight text-white shadow-sm shadow-[var(--primary-500)]/25 transition-all duration-150 hover:shadow-md hover:brightness-105"
                     >
+                      <Plus size={15} strokeWidth={2.5} />
                       {createActionLabel}
                     </Link>
                   ) : null
                 ) : null}
 
-                {adminListHref && canViewAdmin ? (
-                  <Link
-                    href={adminListHref}
-                    className="inline-flex h-9 items-center rounded-md border border-white/30 bg-white/50 px-3 text-sm font-medium leading-tight text-[var(--gray-700)] shadow-sm backdrop-blur-sm transition-all duration-150 hover:border-[var(--primary-300)] hover:bg-white/70 hover:text-[var(--text)] dark:border-white/10 dark:bg-white/10 dark:text-[var(--gray-200)] dark:hover:bg-white/15"
-                  >
-                    {t("Abrir na administração", "Open in administration")}
-                  </Link>
-                ) : null}
+                <Link
+                  href={`/reports?endpoint=${encodeURIComponent(normalizedEndpoint)}&group=${encodeURIComponent(resolvedGroupLabel)}&resource=${encodeURIComponent(resolvedResourceLabel)}`}
+                  className="inline-flex h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg border border-[var(--primary-300)]/60 bg-[var(--primary-500)]/15 px-3.5 text-sm font-semibold text-[var(--primary-700)] shadow-sm backdrop-blur-sm transition hover:bg-[var(--primary-500)]/25 dark:text-[var(--primary-200)]"
+                >
+                  <BarChart2 size={14} />
+                  {t("Ver relatório", "View report")}
+                </Link>
               </>
             }
           />
 
-          <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-white/20 bg-white/25 px-3 py-2 shadow-sm dark:border-white/10 dark:bg-white/5">
-            <div className="flex min-w-0 items-center gap-2 text-sm text-[var(--gray-700)] dark:text-[var(--gray-200)]">
-              <BarChart2 size={15} className="shrink-0 text-[var(--primary-600)]" />
-              <span className="truncate">{t("Relatório corporativo disponível", "Corporate report available")}</span>
-              <span className="text-[var(--gray-400)]">·</span>
-              <span className="truncate text-xs text-[var(--gray-500)] dark:text-[var(--gray-300)]">{resolvedGroupLabel} / {resolvedResourceLabel}</span>
-            </div>
-            <Link
-              href={`/reports?endpoint=${encodeURIComponent(normalizedEndpoint)}&group=${encodeURIComponent(resolvedGroupLabel)}&resource=${encodeURIComponent(resolvedResourceLabel)}`}
-              className="inline-flex items-center gap-1.5 rounded-md border border-[var(--primary-200)] bg-white/55 px-3 py-1.5 text-xs font-semibold text-[var(--primary-700)] shadow-sm backdrop-blur-sm transition hover:bg-white/75 dark:border-[var(--primary-400)]/30 dark:bg-white/10 dark:text-[var(--primary-200)] dark:hover:bg-white/15"
-            >
-              <BarChart2 size={12} />
-              {t("Ver relatório", "View report")}
-            </Link>
-          </div>
         </section>
 
         {error && (
@@ -622,12 +667,10 @@ export default function ResourceListPage({
           statusFilter={statusFilter}
         />
 
-        <div className="rounded-xl border border-white/20 bg-white/20 p-2.5 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/5">
-          <div className="grid gap-2.5 md:grid-cols-2 xl:grid-cols-4">
-            <label className="space-y-1 xl:col-span-2">
-              <span className="text-xs font-semibold uppercase tracking-wide text-[var(--gray-600)]">
-                {t("Pesquisar", "Search")}
-              </span>
+        <div className="relative overflow-hidden rounded-xl border border-white/20 bg-white/20 p-2 pl-3.5 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/5">
+          <span className="absolute left-0 top-0 h-full w-1.5 bg-[var(--primary-500)]" />
+          <div className="flex flex-nowrap items-end gap-2">
+            <label className="min-w-0 flex-1">
               <div className="relative">
                 <Search className="pointer-events-none absolute left-2.5 top-2.5 h-4 w-4 text-[var(--gray-400)]" />
                 <input
@@ -642,11 +685,9 @@ export default function ResourceListPage({
               </div>
             </label>
 
-            <label className="space-y-1">
-              <span className="text-xs font-semibold uppercase tracking-wide text-[var(--gray-600)]">
-                {t("Estado (na página)", "Status (on page)")}
-              </span>
+            <label className="w-32 shrink-0 sm:w-40">
               <select
+                aria-label={t("Estado (na página)", "Status (on page)")}
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
                 className="w-full rounded-md border border-white/30 bg-white/55 px-3 py-2 text-sm text-[var(--text)] shadow-sm backdrop-blur-sm transition-colors duration-150 hover:border-[var(--primary-400)] focus:border-[var(--primary-500)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-100)] dark:border-white/10 dark:bg-white/10"
@@ -660,25 +701,24 @@ export default function ResourceListPage({
               </select>
             </label>
 
-            <label className="space-y-1">
-              <span className="text-xs font-semibold uppercase tracking-wide text-[var(--gray-600)]">
-                {t("Por página", "Per page")}
-              </span>
-              <select
+            <label className="w-24 shrink-0 sm:w-28">
+              <input
+                type="number"
+                inputMode="numeric"
+                aria-label={t("Por página", "Per page")}
+                title={t("Por página", "Per page")}
+                min={1}
+                max={999}
                 value={pageSize}
-                onChange={(e) => setPageSize(Number(e.target.value))}
+                onChange={(e) => {
+                  const raw = Number(e.target.value)
+                  if (!Number.isFinite(raw)) return
+                  setPageSize(Math.max(1, Math.min(999, Math.round(raw))))
+                }}
                 className="w-full rounded-md border border-white/30 bg-white/55 px-3 py-2 text-sm text-[var(--text)] shadow-sm backdrop-blur-sm transition-colors duration-150 hover:border-[var(--primary-400)] focus:border-[var(--primary-500)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-100)] dark:border-white/10 dark:bg-white/10"
-              >
-                <option value={10}>10</option>
-                <option value={20}>20</option>
-              </select>
+              />
             </label>
-          </div>
 
-          <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2 text-xs text-[var(--gray-600)]">
-            <span>
-              {t("Total:", "Total:")} {effectiveTotal} · {t("Na página:", "On page:")} {pagedVisibleData.length}
-            </span>
             <button
               type="button"
               onClick={() => {
@@ -687,10 +727,10 @@ export default function ResourceListPage({
                 setPageSize(20)
                 setPage(1)
               }}
-              className="inline-flex h-8 items-center gap-1 rounded-md border border-white/30 bg-white/45 px-2.5 font-semibold text-[var(--gray-700)] shadow-sm backdrop-blur-sm transition-all duration-150 hover:border-[var(--primary-300)] hover:bg-white/60 hover:text-[var(--text)] dark:border-white/10 dark:bg-white/10 dark:text-[var(--gray-200)] dark:hover:bg-white/15"
+              className="inline-flex h-[38px] shrink-0 items-center gap-1 whitespace-nowrap rounded-md border border-white/30 bg-white/45 px-3 text-xs font-semibold text-[var(--gray-700)] shadow-sm backdrop-blur-sm transition-all duration-150 hover:border-[var(--primary-300)] hover:bg-white/60 hover:text-[var(--text)] dark:border-white/10 dark:bg-white/10 dark:text-[var(--gray-200)] dark:hover:bg-white/15"
             >
               <RotateCcw size={12} />
-              {t("Limpar filtros", "Clear filters")}
+              {t("Limpar", "Clear")}
             </button>
           </div>
         </div>
@@ -703,26 +743,39 @@ export default function ResourceListPage({
               <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/50 px-3 py-2">
                 <div>
                   <p className="text-sm font-semibold text-foreground">{resolvedResourceLabel}</p>
-                  <p className="text-[11px] text-muted-foreground">
-                    {t("Paciente, procedimento e estado com leitura rápida em superfície translúcida.", "Patient, procedure, and status with quick reading on a translucent surface.")}
-                  </p>
                 </div>
                 <span className="rounded-full border border-white/25 bg-white/45 px-2.5 py-1 text-[11px] font-semibold text-[var(--gray-700)] shadow-sm dark:border-white/10 dark:bg-white/10 dark:text-[var(--gray-200)]">
                   {pagedVisibleData.length} / {effectiveTotal}
                 </span>
               </div>
               <div className="p-2">
-                <DataTable<Row>
-                  columns={columns as any}
-                  data={pagedVisibleData}
-                  emptyMessage={t("Nenhum registo encontrado.", "No record found.")}
-                  searchable={false}
-                  bare
-                />
+                {renderCard ? (
+                  pagedVisibleData.length ? (
+                    <div className={cardGridClassName || "grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"}>
+                      {pagedVisibleData.map((row, index) => (
+                        <div key={row?.id ?? row?.custom_id ?? index}>
+                          {renderCard(row, rowHref?.(row))}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="px-2 py-6 text-center text-sm text-[var(--gray-500)]">
+                      {t("Nenhum registo encontrado.", "No record found.")}
+                    </p>
+                  )
+                ) : (
+                  <DataTable<Row>
+                    columns={columns as any}
+                    data={pagedVisibleData}
+                    emptyMessage={t("Nenhum registo encontrado.", "No record found.")}
+                    searchable={false}
+                    bare
+                  />
+                )}
               </div>
             </section>
             <div className="text-xs text-[var(--gray-600)]">
-              {t("Página", "Page")} {page} {t("de", "of")} {effectiveTotalPages}
+              {t("Total:", "Total:")} {effectiveTotal} · {t("Na página:", "On page:")} {pagedVisibleData.length} · {t("Página", "Page")} {page} {t("de", "of")} {effectiveTotalPages}
             </div>
             <Pagination page={page} totalPages={effectiveTotalPages} onChange={setPage} />
           </>

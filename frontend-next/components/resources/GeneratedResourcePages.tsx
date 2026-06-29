@@ -4,12 +4,27 @@ import Link from "next/link"
 import { useMemo, useState, type ReactNode } from "react"
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation"
 import { useQuery } from "@tanstack/react-query"
-import { ArrowLeft, ClipboardList, HeartPulse, Package2 } from "lucide-react"
+import { Activity, ArrowLeft, BookOpenCheck, Building2, ClipboardList, HeartPulse, Landmark, Package2, Pencil, Scale, Stethoscope, Trash2 } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
 import AutoForm from "@/components/form/AutoForm"
 import ResourceDetailActionsPanel from "@/components/resources/ResourceDetailActionsPanel"
 import ResourceDetailsCard from "@/components/resources/ResourceDetailsCard"
+import NursingEvolutionDetails from "@/components/resources/NursingEvolutionDetails"
+import NursingPrescriptionDetails from "@/components/resources/NursingPrescriptionDetails"
+import NursingPrescriptionListCard from "@/components/resources/NursingPrescriptionListCard"
+import NursingVitalSignDetails from "@/components/resources/NursingVitalSignDetails"
+import NursingVitalSignListCard from "@/components/resources/NursingVitalSignListCard"
+import AccountListCard from "@/components/resources/AccountListCard"
+import AccountDetails from "@/components/resources/AccountDetails"
+import BankAccountListCard from "@/components/resources/BankAccountListCard"
+import BankAccountDetails from "@/components/resources/BankAccountDetails"
+import LedgerEntryListCard from "@/components/resources/LedgerEntryListCard"
+import LedgerEntryDetails from "@/components/resources/LedgerEntryDetails"
+import LedgerMovementListCard from "@/components/resources/LedgerMovementListCard"
+import LedgerMovementDetails from "@/components/resources/LedgerMovementDetails"
+import FinancialReconciliationListCard from "@/components/resources/FinancialReconciliationListCard"
+import FinancialReconciliationDetails from "@/components/resources/FinancialReconciliationDetails"
 import ResourceListPage from "@/components/resources/ResourceListPage"
 import PageHeader from "@/components/ui/PageHeader"
 import ConfirmDialog from "@/components/ui/ConfirmDialog"
@@ -211,6 +226,29 @@ export function GeneratedResourceListPage({
       createHref={canCreate ? `${basePath}/new` : undefined}
       rowHref={(row) => buildRecordDetailHref(basePath, row)}
       requiredGroups={ctx.requiredGroups}
+      clientFullTextSearch={ctx.groupKey === "accounting" || ctx.normalizedEndpoint.startsWith("/accounting/")}
+      cardGridClassName={
+        ctx.groupKey === "accounting" || ctx.normalizedEndpoint.startsWith("/accounting/")
+          ? "grid gap-1.5 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6"
+          : undefined
+      }
+      renderCard={
+        ctx.normalizedEndpoint === "/nursing/nursing_prescription/"
+          ? (row, href) => <NursingPrescriptionListCard row={row} href={href} />
+          : ctx.normalizedEndpoint === "/nursing/nursing_vital_sign/"
+            ? (row, href) => <NursingVitalSignListCard row={row} href={href} />
+            : ctx.normalizedEndpoint === "/accounting/accounts/"
+              ? (row, href) => <AccountListCard row={row} href={href} />
+              : ctx.normalizedEndpoint === "/accounting/bank_account/"
+                ? (row, href) => <BankAccountListCard row={row} href={href} />
+                : ctx.normalizedEndpoint === "/accounting/entry/"
+                  ? (row, href) => <LedgerEntryListCard row={row} href={href} />
+                  : ctx.normalizedEndpoint === "/accounting/movement/"
+                    ? (row, href) => <LedgerMovementListCard row={row} href={href} />
+                    : ctx.normalizedEndpoint === "/accounting/financialreconciliation/" || ctx.normalizedEndpoint === "/accounting/financial-reconciliations/"
+                      ? (row, href) => <FinancialReconciliationListCard row={row} href={href} />
+                      : undefined
+      }
     />
   )
 }
@@ -390,6 +428,7 @@ export function GeneratedResourceCreatePage({
               initialValues={initialValues}
               submitLabel={createActionLabel}
               config={getResourceFormConfig(ctx.groupKey, ctx.resourceKey, ctx.normalizedEndpoint)}
+              presentation={ctx.normalizedEndpoint === "/nursing/nursing_evolution/" || ctx.normalizedEndpoint === "/nursing/nursing_prescription/" || ctx.normalizedEndpoint === "/nursing/nursing_vital_sign/" || ctx.normalizedEndpoint === "/accounting/bank_account/" || ctx.normalizedEndpoint === "/accounting/accounts/" || ctx.normalizedEndpoint === "/accounting/entry/" || ctx.normalizedEndpoint === "/accounting/movement/" || ctx.normalizedEndpoint === "/accounting/financialreconciliation/" || ctx.normalizedEndpoint === "/accounting/financial-reconciliations/" ? "nursing-system" : "default"}
               onSuccess={(data) => {
                 const id = primaryRecordId(data)
                 if (id !== undefined && id !== null && String(id).trim()) {
@@ -546,15 +585,20 @@ export function GeneratedResourceDetailPage({
   const currentStatus = String(data?.status ?? data?.estado ?? "").toLowerCase()
   const canNotifyPaidInvoice = ctx.normalizedEndpoint === "/billing/invoice/" && currentStatus === "paga"
   const canNotifyValidatedResults = ctx.normalizedEndpoint === "/clinical/labrequest/" && currentStatus === "validado"
+  const isNursingEvolution = ctx.normalizedEndpoint === "/nursing/nursing_evolution/"
+  const isNursingPrescription = ctx.normalizedEndpoint === "/nursing/nursing_prescription/"
+  const isNursingVitalSign = ctx.normalizedEndpoint === "/nursing/nursing_vital_sign/"
+  const isAccount = ctx.normalizedEndpoint === "/accounting/accounts/"
+  const isBankAccount = ctx.normalizedEndpoint === "/accounting/bank_account/"
+  const isLedgerEntry = ctx.normalizedEndpoint === "/accounting/entry/"
+  const isLedgerMovement = ctx.normalizedEndpoint === "/accounting/movement/"
+  const isReconciliation = ctx.normalizedEndpoint === "/accounting/financialreconciliation/" || ctx.normalizedEndpoint === "/accounting/financial-reconciliations/"
+  const isNursingCard = isNursingEvolution || isNursingPrescription || isNursingVitalSign
+  const isCardDetail = isNursingCard || isAccount || isBankAccount || isLedgerEntry || isLedgerMovement || isReconciliation
 
-  return (
-    <AppLayout requiredGroups={ctx.requiredGroups}>
-      <div className="mx-auto w-full max-w-5xl space-y-4">
-        <PageHeader
-          title={primary ? primary : `${resourceLabel} #${id}`}
-          actions={
-            <div className="flex flex-wrap items-center gap-2">
-              {canNotifyPaidInvoice ? (
+  const detailActions = (
+    <div className="flex flex-wrap items-center gap-2">
+      {canNotifyPaidInvoice ? (
                 <button
                   type="button"
                   onClick={() => handleBusinessNotification("invoice")}
@@ -603,15 +647,60 @@ export function GeneratedResourceDetailPage({
                   </button>
                 </ConfirmDialog>
               ) : null}
-              <Link
-                href={basePath}
-                className="inline-flex h-9 items-center rounded-md border border-[var(--border)] bg-[var(--card)] px-3 text-sm font-medium text-[var(--gray-700)] shadow-sm transition-all duration-150 hover:border-[var(--primary-300)] hover:bg-[var(--gray-100)] hover:text-[var(--text)]"
-              >
-                {t("Voltar", "Back")}
-              </Link>
-            </div>
-          }
-        />
+      <Link
+        href={basePath}
+        className="inline-flex h-9 items-center rounded-md border border-[var(--border)] bg-[var(--card)] px-3 text-sm font-medium text-[var(--gray-700)] shadow-sm transition-all duration-150 hover:border-[var(--primary-300)] hover:bg-[var(--gray-100)] hover:text-[var(--text)]"
+      >
+        {t("Voltar", "Back")}
+      </Link>
+    </div>
+  )
+
+  const nursingCardActions = (
+    <div className="flex flex-wrap items-center gap-1.5">
+      {canEdit ? (
+        <Link
+          href={`${basePath}/${id}/edit`}
+          className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-[var(--primary-300)]/60 bg-[var(--primary-500)]/15 px-3 text-xs font-semibold text-[var(--primary-700)] backdrop-blur-sm transition hover:bg-[var(--primary-500)]/25"
+        >
+          <Pencil size={13} /> {t("Editar", "Edit")}
+        </Link>
+      ) : null}
+      {canDelete ? (
+        <ConfirmDialog
+          title={t("Apagar registo", "Delete record")}
+          message={t("Esta ação apaga o registo selecionado.", "This action deletes the selected record.")}
+          confirmText={t("Apagar", "Delete")}
+          onConfirm={handleDelete}
+          disabled={deleting}
+        >
+          <button
+            type="button"
+            disabled={deleting}
+            className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-red-300/50 bg-red-500/15 px-3 text-xs font-semibold text-red-600 backdrop-blur-sm transition hover:bg-red-500/25 disabled:opacity-60 dark:text-red-400"
+          >
+            <Trash2 size={13} /> {deleting ? t("Apagando...", "Deleting...") : t("Apagar", "Delete")}
+          </button>
+        </ConfirmDialog>
+      ) : null}
+      <Link
+        href={basePath}
+        className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-white/30 bg-white/25 px-3 text-xs font-semibold text-[var(--gray-700)] backdrop-blur-sm transition hover:bg-white/40 dark:border-white/10 dark:bg-white/[0.04] dark:text-white"
+      >
+        <ArrowLeft size={13} /> {t("Voltar", "Back")}
+      </Link>
+    </div>
+  )
+
+  return (
+    <AppLayout requiredGroups={ctx.requiredGroups}>
+      <div className="mx-auto w-full max-w-5xl space-y-4">
+        {!isCardDetail ? (
+          <PageHeader
+            title={primary ? primary : `${resourceLabel} #${id}`}
+            actions={detailActions}
+          />
+        ) : null}
 
         {deleteError ? (
           <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
@@ -642,7 +731,25 @@ export function GeneratedResourceDetailPage({
         ) : null}
 
         {data ? (
-          <ResourceDetailsCard endpoint={ctx.normalizedEndpoint} data={data} />
+          isNursingEvolution ? (
+            <NursingEvolutionDetails endpoint={ctx.normalizedEndpoint} data={data} actions={nursingCardActions} />
+          ) : isNursingPrescription ? (
+            <NursingPrescriptionDetails endpoint={ctx.normalizedEndpoint} data={data} actions={nursingCardActions} />
+          ) : isNursingVitalSign ? (
+            <NursingVitalSignDetails endpoint={ctx.normalizedEndpoint} data={data} actions={nursingCardActions} />
+          ) : isAccount ? (
+            <AccountDetails endpoint={ctx.normalizedEndpoint} data={data} actions={nursingCardActions} />
+          ) : isBankAccount ? (
+            <BankAccountDetails endpoint={ctx.normalizedEndpoint} data={data} actions={nursingCardActions} />
+          ) : isLedgerEntry ? (
+            <LedgerEntryDetails endpoint={ctx.normalizedEndpoint} data={data} actions={nursingCardActions} />
+          ) : isLedgerMovement ? (
+            <LedgerMovementDetails endpoint={ctx.normalizedEndpoint} data={data} actions={nursingCardActions} />
+          ) : isReconciliation ? (
+            <FinancialReconciliationDetails endpoint={ctx.normalizedEndpoint} data={data} actions={nursingCardActions} />
+          ) : (
+            <ResourceDetailsCard endpoint={ctx.normalizedEndpoint} data={data} />
+          )
         ) : (
           <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
             {t("Registo não encontrado.", "Record not found.")}
@@ -832,20 +939,71 @@ export function GeneratedResourceEditPage({ endpoint }: { endpoint: string }) {
     )
   }
 
+  const isNursingEvolution = ctx.normalizedEndpoint === "/nursing/nursing_evolution/"
+  const isNursingPrescription = ctx.normalizedEndpoint === "/nursing/nursing_prescription/"
+  const isNursingVitalSign = ctx.normalizedEndpoint === "/nursing/nursing_vital_sign/"
+  const isBankAccount = ctx.normalizedEndpoint === "/accounting/bank_account/"
+  const isAccount = ctx.normalizedEndpoint === "/accounting/accounts/"
+  const isLedgerEntry = ctx.normalizedEndpoint === "/accounting/entry/"
+  const isLedgerMovement = ctx.normalizedEndpoint === "/accounting/movement/"
+  const isReconciliation = ctx.normalizedEndpoint === "/accounting/financialreconciliation/" || ctx.normalizedEndpoint === "/accounting/financial-reconciliations/"
+  const isNursingCard = isNursingEvolution || isNursingPrescription || isNursingVitalSign || isBankAccount || isAccount || isLedgerEntry || isLedgerMovement || isReconciliation
+
   return (
     <AppLayout requiredGroups={ctx.requiredGroups}>
       <div className="mx-auto w-full max-w-5xl space-y-4">
-        <PageHeader
-          title={`${t("Editar", "Edit")} ${resourceLabel}`}
-          actions={
-            <Link
-              href={detailPath}
-              className="inline-flex h-9 items-center rounded-md border border-[var(--border)] bg-[var(--card)] px-3 text-sm font-medium text-[var(--gray-700)] shadow-sm transition-all duration-150 hover:border-[var(--primary-300)] hover:bg-[var(--gray-100)] hover:text-[var(--text)]"
-            >
-              {t("Voltar", "Back")}
-            </Link>
-          }
-        />
+        {isNursingCard ? (
+          <section className="relative overflow-hidden rounded-xl border border-white/20 bg-white/30 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]">
+            <span className="absolute left-0 top-0 h-full w-1 bg-[var(--primary-500)]" />
+            <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 pl-5">
+              <div className="flex min-w-0 items-center gap-3">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-red-500/15 text-red-600 shadow-sm dark:bg-white/10 dark:text-white">
+                  {isReconciliation ? <Scale size={18} /> : isLedgerMovement ? <Scale size={18} /> : isLedgerEntry ? <BookOpenCheck size={18} /> : isAccount ? <Landmark size={18} /> : isBankAccount ? <Building2 size={18} /> : isNursingVitalSign ? <Activity size={18} /> : isNursingPrescription ? <Stethoscope size={18} /> : <HeartPulse size={18} />}
+                </span>
+                <div className="min-w-0">
+                  <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--gray-500)]">
+                    {isReconciliation
+                      ? t("Editar conciliação", "Edit reconciliation")
+                      : isLedgerMovement
+                      ? t("Editar movimento", "Edit movement")
+                      : isLedgerEntry
+                      ? t("Editar lançamento", "Edit entry")
+                      : isAccount
+                        ? t("Editar conta contábil", "Edit account")
+                        : isBankAccount
+                          ? t("Editar conta bancária", "Edit bank account")
+                          : isNursingVitalSign
+                            ? t("Editar sinais vitais", "Edit vital signs")
+                            : isNursingPrescription
+                              ? t("Editar prescrição de enfermagem", "Edit nursing prescription")
+                              : t("Editar evolução de enfermagem", "Edit nursing evolution")}
+                  </p>
+                  <h2 className="truncate text-lg font-bold leading-tight text-[var(--text)]">
+                    {pickPrimaryLabel(data) || `${resourceLabel} #${id}`}
+                  </h2>
+                </div>
+              </div>
+              <Link
+                href={detailPath}
+                className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-white/30 bg-white/25 px-3 text-xs font-semibold text-[var(--gray-700)] backdrop-blur-sm transition hover:bg-white/40 dark:border-white/10 dark:bg-white/[0.04] dark:text-white"
+              >
+                <ArrowLeft size={13} /> {t("Voltar", "Back")}
+              </Link>
+            </div>
+          </section>
+        ) : (
+          <PageHeader
+            title={`${t("Editar", "Edit")} ${resourceLabel}`}
+            actions={
+              <Link
+                href={detailPath}
+                className="inline-flex h-9 items-center rounded-md border border-[var(--border)] bg-[var(--card)] px-3 text-sm font-medium text-[var(--gray-700)] shadow-sm transition-all duration-150 hover:border-[var(--primary-300)] hover:bg-[var(--gray-100)] hover:text-[var(--text)]"
+              >
+                {t("Voltar", "Back")}
+              </Link>
+            }
+          />
+        )}
 
         <AutoForm
           endpoint={`${ctx.normalizedEndpoint}${id}/`}
@@ -853,6 +1011,7 @@ export function GeneratedResourceEditPage({ endpoint }: { endpoint: string }) {
           initialValues={data || {}}
           submitLabel={t("Guardar alterações", "Save changes")}
           config={getResourceFormConfig(ctx.groupKey, ctx.resourceKey, ctx.normalizedEndpoint)}
+          presentation={isNursingCard ? "nursing-system" : "default"}
           onSuccess={() => router.push(detailPath)}
         />
       </div>

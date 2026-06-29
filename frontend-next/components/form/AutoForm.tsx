@@ -34,7 +34,7 @@ export type AutoFormProps = {
   initialValues?: Record<string, any>
   onSuccess?: (data: any) => void
   config?: ResourceFormConfig | null
-  presentation?: "default" | "modern-nursing"
+  presentation?: "default" | "modern-nursing" | "nursing-system"
   compactFields?: string[]
   initialRelationLabels?: Record<string, string | null | undefined>
 }
@@ -959,6 +959,18 @@ function conditionVisible(
   return values[rule.campo] === expected
 }
 
+function conditionReadOnly(
+  fieldName: string,
+  values: Record<string, any>,
+  config?: ResourceFormConfig | null
+): boolean {
+  const rule = config?.somenteLeituraSe?.[fieldName]
+  if (!rule) return false
+  // Sem `igualA`: basta o campo controlador ter um valor preenchido.
+  if (rule.igualA === undefined) return hasRequiredValue(values[rule.campo])
+  return values[rule.campo] === rule.igualA
+}
+
 function safeFieldSelector(fieldName: string): string {
   return fieldName.replace(/\\/g, "\\\\").replace(/"/g, '\\"')
 }
@@ -1066,6 +1078,8 @@ export default function AutoForm({
   const modernNursingProcedureFlow = presentation === "modern-nursing" || /^\/nursing\/procedure(?:\/[^/]+)?$/.test(
     String(endpoint || "").split("?")[0].replace(/\/+$/, "")
   )
+  // Apresentação translúcida com cores do sistema; botões de navegação ficam dentro do cartão do formulário.
+  const nursingSystemFlow = presentation === "nursing-system"
   const effectiveMethod = useMemo<Method>(() => {
     if (buildFormSpec(endpoint, method)) return method
     if (method === "put" && buildFormSpec(endpoint, "patch")) return "patch"
@@ -1545,7 +1559,7 @@ export default function AutoForm({
         </div>
       )}
 
-      {etapas?.length ? (
+      {etapas?.length && !nursingSystemFlow ? (
         <Etapas
           etapas={etapas.map((e) => ({ titulo: e.titulo, descricao: e.descricao }))}
           etapaAtual={etapaAtual}
@@ -1556,7 +1570,9 @@ export default function AutoForm({
 
       <div className={modernNursingProcedureFlow
         ? "overflow-hidden rounded-xl border border-white/[0.24] bg-gradient-to-br from-white/[0.07] via-white/[0.025] to-sky-100/[0.035] p-3 shadow-lg shadow-slate-900/5 backdrop-blur-2xl [&_input]:!border-white/[0.28] [&_input]:!bg-white/[0.10] [&_select]:!border-white/[0.28] [&_select]:!bg-white/[0.10] [&_textarea]:!border-white/[0.28] [&_textarea]:!bg-white/[0.10] dark:border-white/[0.08] dark:from-white/[0.035] dark:via-white/[0.015] dark:to-sky-950/[0.025] dark:[&_input]:!border-white/[0.08] dark:[&_input]:!bg-white/[0.035] dark:[&_select]:!border-white/[0.08] dark:[&_select]:!bg-white/[0.035] dark:[&_textarea]:!border-white/[0.08] dark:[&_textarea]:!bg-white/[0.035]"
-        : "rounded-lg border border-[var(--border)] bg-[var(--card)] p-4 shadow-sm"
+        : nursingSystemFlow
+          ? "rounded-xl border border-white/20 bg-white/30 p-4 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]"
+          : "rounded-lg border border-[var(--border)] bg-[var(--card)] p-4 shadow-sm"
       }>
         {requiredFields.length ? (
           <div className={modernNursingProcedureFlow
@@ -1596,7 +1612,7 @@ export default function AutoForm({
             const hint = config?.hints?.[field.name]
             const placeholder = placeholderForField(field, label, config?.placeholders?.[field.name])
             const widget = config?.widgets?.[field.name] || (LONG_TEXT_FIELDS.has(field.name) ? "textarea" : undefined)
-            const isReadOnly = somenteLeitura.has(field.name)
+            const isReadOnly = somenteLeitura.has(field.name) || conditionReadOnly(field.name, values, config)
             return (
               <label
                 key={field.name}
@@ -1667,8 +1683,40 @@ export default function AutoForm({
             </button>
           </div>
         ) : null}
+        {nursingSystemFlow && etapas?.length ? (
+          <div className="mt-3 flex flex-nowrap items-center justify-between gap-2 border-t border-white/20 pt-3 dark:border-white/10">
+            <button
+              type="button"
+              className="inline-flex h-9 items-center justify-center rounded-lg border border-white/30 bg-white/25 px-4 text-xs font-semibold text-[var(--gray-700)] shadow-sm backdrop-blur-sm transition hover:bg-white/40 disabled:opacity-40 dark:border-white/10 dark:bg-white/[0.04] dark:text-white"
+              onClick={() => setEtapaAtual((prev) => Math.max(0, prev - 1))}
+              disabled={submitting || etapaAtual === 0}
+            >
+              Anterior
+            </button>
+            <button
+              type="button"
+              onClick={handleSubmit}
+              disabled={submitDisabled}
+              className="inline-flex h-9 items-center justify-center rounded-lg bg-[var(--primary-600)] px-5 text-xs font-semibold text-white shadow-sm transition hover:bg-[var(--primary-700)] disabled:opacity-60"
+            >
+              {submitting ? "Salvando..." : etapaAtual < etapas.length - 1 ? "Seguinte" : submitLabel}
+            </button>
+          </div>
+        ) : null}
+        {nursingSystemFlow && !etapas?.length ? (
+          <div className="mt-3 flex justify-end border-t border-white/20 pt-3 dark:border-white/10">
+            <button
+              type="button"
+              onClick={handleSubmit}
+              disabled={submitDisabled}
+              className="inline-flex h-9 w-full items-center justify-center rounded-lg bg-[var(--primary-600)] px-5 text-xs font-semibold text-white shadow-sm transition hover:bg-[var(--primary-700)] disabled:opacity-60 sm:w-auto"
+            >
+              {submitting ? "Salvando..." : submitLabel}
+            </button>
+          </div>
+        ) : null}
       </div>
-      {!modernNursingProcedureFlow ? <div>
+      {!modernNursingProcedureFlow && !nursingSystemFlow ? <div>
         {etapas?.length ? (
           <div className="flex flex-wrap items-center justify-between gap-2">
             <button

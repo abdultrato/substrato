@@ -1,8 +1,9 @@
 "use client"
 
 import { isNotFoundLikeError } from "@/lib/errors/api-error"
-import { useCallback, useEffect, useState } from "react"
-import { CheckCircle2, XCircle } from "lucide-react"
+import Link from "next/link"
+import { useCallback, useEffect, useMemo, useState } from "react"
+import { CheckCircle2, ChevronRight, Search, X, XCircle } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
 import Card from "@/components/ui/Card"
@@ -46,6 +47,47 @@ function fmtDate(value: any): string {
   return d.toLocaleString()
 }
 
+// Normaliza para busca: minúsculas + remove acentos.
+function norm(value: any): string {
+  return String(value ?? "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+}
+
+// Constrói o "haystack" pesquisável de um pedido a partir dos campos relevantes.
+function rowHaystack(r: CreditNoteRow): string {
+  return norm(
+    [
+      r.custom_id,
+      r.id,
+      r.invoice_code,
+      r.invoice_status,
+      r.consultation_code,
+      r.patient_name,
+      r.amount,
+      r.reason,
+      r.status,
+      r.status_display,
+      r.requested_by_name,
+      r.reviewed_by_name,
+      r.decision_note,
+      fmtDate(r.created_at),
+      fmtDate(r.reviewed_at),
+    ].join("  ")
+  )
+}
+
+// Motor de busca: divide a consulta em termos e exige que TODOS estejam presentes (AND).
+function filterRows(rows: CreditNoteRow[], query: string): CreditNoteRow[] {
+  const terms = norm(query).split(/\s+/).filter(Boolean)
+  if (!terms.length) return rows
+  return rows.filter((r) => {
+    const hay = rowHaystack(r)
+    return terms.every((term) => hay.includes(term))
+  })
+}
+
 async function loadCreditNotes(status: string): Promise<CreditNoteRow[]> {
   const query = status ? `?status=${status}&ordering=-created_at` : "?ordering=-created_at"
   const res = await apiFetch<any>(`/billing/credit-note-request/${query}`, { clientCache: false })
@@ -62,6 +104,24 @@ export default function CreditNotesQueuePage() {
   const [pendingRows, setPendingRows] = useState<CreditNoteRow[]>([])
   const [approvedRows, setApprovedRows] = useState<CreditNoteRow[]>([])
   const [rejectedRows, setRejectedRows] = useState<CreditNoteRow[]>([])
+
+  const [search, setSearch] = useState("")
+  const [pageSize, setPageSize] = useState(20)
+  const [statusFilter, setStatusFilter] = useState<"" | "PEND" | "APRO" | "REJE">("")
+
+  const showPending = statusFilter === "" || statusFilter === "PEND"
+  const showApproved = statusFilter === "" || statusFilter === "APRO"
+  const showRejected = statusFilter === "" || statusFilter === "REJE"
+
+  const filteredPending = useMemo(() => filterRows(pendingRows, search), [pendingRows, search])
+  const filteredApproved = useMemo(() => filterRows(approvedRows, search), [approvedRows, search])
+  const filteredRejected = useMemo(() => filterRows(rejectedRows, search), [rejectedRows, search])
+  const totalMatches = filteredPending.length + filteredApproved.length + filteredRejected.length
+
+  // Limite de itens exibidos por secção (1–999).
+  const pendingShown = useMemo(() => filteredPending.slice(0, pageSize), [filteredPending, pageSize])
+  const approvedShown = useMemo(() => filteredApproved.slice(0, pageSize), [filteredApproved, pageSize])
+  const rejectedShown = useMemo(() => filteredRejected.slice(0, pageSize), [filteredRejected, pageSize])
 
   const [decisionRow, setDecisionRow] = useState<CreditNoteRow | null>(null)
   const [decision, setDecision] = useState<Decision>("approve")
@@ -130,6 +190,59 @@ export default function CreditNotesQueuePage() {
       <div className="space-y-4">
         <PageHeader title="Notas de crédito" />
 
+        {/* Motor de busca */}
+        <div className="relative overflow-hidden rounded-xl border border-white/20 bg-white/10 p-2 pl-3.5 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/5">
+          <span className="absolute left-0 top-0 h-full w-1.5 bg-[var(--primary-500)]" />
+          <div className="flex flex-nowrap items-center gap-2">
+            <div className="relative min-w-0 flex-1">
+              <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--gray-400)]" />
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Pesquisar por pedido, fatura, paciente, valor, motivo, estado, solicitante ou decisor..."
+                className="w-full rounded-md border border-white/30 bg-white/80 py-2 pl-8 pr-9 text-sm text-[var(--text)] shadow-sm backdrop-blur-sm transition-colors duration-150 placeholder:text-[var(--gray-400)] hover:border-[var(--primary-400)] focus:border-[var(--primary-500)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-100)] dark:border-white/10 dark:bg-slate-800"
+              />
+              {search ? (
+                <button
+                  type="button"
+                  aria-label="Limpar busca"
+                  onClick={() => setSearch("")}
+                  className="absolute right-2 top-1/2 inline-flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-md text-[var(--gray-500)] transition hover:bg-white/40 hover:text-[var(--text)] dark:hover:bg-white/10"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              ) : null}
+            </div>
+            <select
+              aria-label="Estado"
+              title="Filtrar por estado"
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}
+              className="w-32 shrink-0 rounded-md border border-white/30 bg-white/80 px-2.5 py-2 text-sm text-[var(--text)] shadow-sm backdrop-blur-sm transition-colors duration-150 hover:border-[var(--primary-400)] focus:border-[var(--primary-500)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-100)] dark:border-white/10 dark:bg-slate-800"
+            >
+              <option value="">Todos os estados</option>
+              <option value="PEND">Pendentes</option>
+              <option value="APRO">Aprovadas</option>
+              <option value="REJE">Rejeitadas</option>
+            </select>
+            <input
+              type="number"
+              inputMode="numeric"
+              aria-label="Por página"
+              title="Itens por página (1–999)"
+              min={1}
+              max={999}
+              value={pageSize}
+              onChange={(e) => {
+                const raw = Number(e.target.value)
+                if (!Number.isFinite(raw)) return
+                setPageSize(Math.max(1, Math.min(999, Math.round(raw))))
+              }}
+              className="w-20 shrink-0 rounded-md border border-white/30 bg-white/80 px-2.5 py-2 text-sm text-[var(--text)] shadow-sm backdrop-blur-sm transition-colors duration-150 hover:border-[var(--primary-400)] focus:border-[var(--primary-500)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-100)] dark:border-white/10 dark:bg-slate-800"
+            />
+          </div>
+        </div>
+
         {erro ? (
           <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
             {erro}
@@ -137,37 +250,47 @@ export default function CreditNotesQueuePage() {
         ) : null}
 
         {/* Fila de pendentes */}
-        <Card title="Pedidos pendentes" subtitle="A aguardar decisão da Contabilidade.">
-          {loadingPending ? (
-            <div className="text-sm text-gray-500">Carregando...</div>
-          ) : pendingRows.length === 0 ? (
-            <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-3 py-6 text-center text-sm text-slate-500">
-              Nenhum pedido pendente.
-            </div>
-          ) : (
-            <CreditNoteTable rows={pendingRows} onDecide={openDecision} showActions />
-          )}
-        </Card>
+        {showPending ? (
+          <Card title="Pedidos pendentes" subtitle="A aguardar decisão da Contabilidade." glass>
+            {loadingPending ? (
+              <div className="text-sm text-gray-500">Carregando...</div>
+            ) : filteredPending.length === 0 ? (
+              <div className="rounded-xl border border-dashed border-white/30 bg-white/5 px-3 py-6 text-center text-sm text-[var(--gray-500)] dark:border-white/10">
+                {search ? "Nenhum pedido pendente corresponde à busca." : "Nenhum pedido pendente."}
+              </div>
+            ) : (
+              <CreditNoteTable rows={pendingShown} onDecide={openDecision} showActions />
+            )}
+          </Card>
+        ) : null}
 
         {/* Aprovadas e rejeitadas */}
-        <div className="grid gap-4 lg:grid-cols-2">
+        <div className={`grid gap-4 ${showApproved && showRejected ? "lg:grid-cols-2" : "grid-cols-1"}`}>
+          {showApproved ? (
           <DecidedSection
             title="Aprovadas"
             icon={<CheckCircle2 size={14} className="text-emerald-600" />}
-            rows={approvedRows}
+            rows={approvedShown}
             loading={loadingDecided}
-            emptyMsg="Nenhuma nota de crédito aprovada."
+            emptyMsg={search ? "Nenhuma aprovada corresponde à busca." : "Nenhuma nota de crédito aprovada."}
             tone="emerald"
           />
+          ) : null}
+          {showRejected ? (
           <DecidedSection
             title="Rejeitadas"
             icon={<XCircle size={14} className="text-red-500" />}
-            rows={rejectedRows}
+            rows={rejectedShown}
             loading={loadingDecided}
-            emptyMsg="Nenhuma nota de crédito rejeitada."
+            emptyMsg={search ? "Nenhuma rejeitada corresponde à busca." : "Nenhuma nota de crédito rejeitada."}
             tone="red"
           />
+          ) : null}
         </div>
+
+        <p className="pl-0.5 text-[11px] text-[var(--gray-500)]">
+          {totalMatches} resultado(s) · {filteredPending.length} pendente(s) · {filteredApproved.length} aprovada(s) · {filteredRejected.length} rejeitada(s) · {pageSize}/secção
+        </p>
       </div>
 
       {decisionRow ? (
@@ -241,64 +364,60 @@ function CreditNoteTable({
   showActions?: boolean
 }) {
   return (
-    <div className="overflow-x-auto rounded-lg border border-slate-200">
-      <table className="min-w-full text-sm">
-        <thead className="bg-slate-50 text-xs font-semibold text-slate-600">
-          <tr>
-            <th className="px-3 py-2 text-left">Pedido</th>
-            <th className="px-3 py-2 text-left">Fatura</th>
-            <th className="px-3 py-2 text-left">Paciente</th>
-            <th className="px-3 py-2 text-right">Valor</th>
-            <th className="px-3 py-2 text-left">Motivo</th>
-            <th className="px-3 py-2 text-left">Solicitante</th>
-            {showActions ? <th className="px-3 py-2 text-right">Ações</th> : null}
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-slate-200">
-          {rows.map((r) => (
-            <tr key={r.id} className="hover:bg-slate-50">
-              <td className="px-3 py-2 font-medium text-slate-900">{r.custom_id || r.id}</td>
-              <td className="px-3 py-2 text-slate-700">
-                <div>{r.invoice_code || "-"}</div>
-                {r.consultation_code ? (
-                  <div className="text-[11px] text-slate-500">{r.consultation_code}</div>
-                ) : null}
-              </td>
-              <td className="px-3 py-2 text-slate-700">{r.patient_name || "-"}</td>
-              <td className="px-3 py-2 text-right font-medium text-slate-900">
-                <MoneyValue value={r.amount} />
-              </td>
-              <td className="min-w-[160px] px-3 py-2 text-slate-600">{r.reason || "-"}</td>
-              <td className="px-3 py-2 text-slate-600">
-                <div>{fmtDate(r.created_at)}</div>
-                {r.requested_by_name ? (
-                  <div className="text-[11px] text-slate-500">{r.requested_by_name}</div>
-                ) : null}
-              </td>
-              {showActions ? (
-                <td className="px-3 py-2 text-right">
-                  <div className="flex justify-end gap-1.5">
-                    <button
-                      type="button"
-                      onClick={() => onDecide?.(r, "approve")}
-                      className="inline-flex items-center rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-800 transition hover:bg-emerald-100"
-                    >
-                      Aprovar
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => onDecide?.(r, "reject")}
-                      className="inline-flex items-center rounded-lg border border-red-200 bg-red-50 px-2.5 py-1 text-[11px] font-semibold text-red-700 transition hover:bg-red-100"
-                    >
-                      Rejeitar
-                    </button>
-                  </div>
-                </td>
+    <div className="grid gap-1.5 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+      {rows.map((r) => (
+        <div
+          key={r.id}
+          className="relative overflow-hidden rounded-lg border border-white/20 bg-white/10 px-2.5 py-2 pl-3 shadow-sm backdrop-blur-sm transition hover:bg-white/20 dark:border-white/10 dark:bg-white/[0.04] dark:hover:bg-white/[0.07]"
+        >
+          <span className="absolute left-0 top-0 h-full w-1 bg-amber-500" />
+          <div className="flex items-start justify-between gap-1.5">
+            <div className="min-w-0">
+              <span className="text-xs font-bold text-[var(--text)]">{r.custom_id || `#${r.id}`}</span>
+              {r.invoice_code ? (
+                <span className="ml-1 text-[10px] font-medium text-[var(--gray-500)]">{r.invoice_code}</span>
               ) : null}
-            </tr>
-          ))}
-        </tbody>
-      </table>
+            </div>
+            <MoneyValue value={r.amount} className="shrink-0 text-xs font-bold text-[var(--text)]" />
+          </div>
+
+          {r.patient_name ? (
+            <p className="mt-0.5 truncate text-[11px] font-medium text-black dark:text-white">{r.patient_name}</p>
+          ) : null}
+          {r.consultation_code ? (
+            <p className="text-[10px] text-[var(--gray-500)]">{r.consultation_code}</p>
+          ) : null}
+          {r.reason ? (
+            <p className="mt-0.5 line-clamp-2 text-[10px] leading-snug text-[var(--gray-600)] dark:text-[var(--gray-300)]">
+              {r.reason}
+            </p>
+          ) : null}
+
+          <div className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[10px] text-[var(--gray-500)]">
+            <span>{fmtDate(r.created_at)}</span>
+            {r.requested_by_name ? <span>· {r.requested_by_name}</span> : null}
+          </div>
+
+          {showActions ? (
+            <div className="mt-1.5 flex gap-1 border-t border-white/20 pt-1.5 dark:border-white/10">
+              <button
+                type="button"
+                onClick={() => onDecide?.(r, "approve")}
+                className="inline-flex flex-1 items-center justify-center rounded-md border border-emerald-300/50 bg-emerald-500/15 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 backdrop-blur-sm transition hover:bg-emerald-500/25 dark:text-emerald-400"
+              >
+                Aprovar
+              </button>
+              <button
+                type="button"
+                onClick={() => onDecide?.(r, "reject")}
+                className="inline-flex flex-1 items-center justify-center rounded-md border border-red-300/50 bg-red-500/15 px-2 py-0.5 text-[10px] font-semibold text-red-600 backdrop-blur-sm transition hover:bg-red-500/25 dark:text-red-400"
+              >
+                Rejeitar
+              </button>
+            </div>
+          ) : null}
+        </div>
+      ))}
     </div>
   )
 }
@@ -318,18 +437,17 @@ function DecidedSection({
   emptyMsg: string
   tone: "emerald" | "red"
 }) {
-  const borderColor = tone === "emerald" ? "border-emerald-200" : "border-red-200"
-  const bgColor = tone === "emerald" ? "bg-emerald-50" : "bg-red-50"
-  const textColor = tone === "emerald" ? "text-emerald-800" : "text-red-800"
-  const subTextColor = tone === "emerald" ? "text-emerald-700" : "text-red-700"
+  const accentColor = tone === "emerald" ? "bg-emerald-500" : "bg-red-500"
+  const textColor = tone === "emerald" ? "text-emerald-700 dark:text-emerald-400" : "text-red-600 dark:text-red-400"
+  const subTextColor = "text-[var(--gray-600)] dark:text-[var(--gray-300)]"
 
   return (
-    <section className="rounded-lg border border-[var(--border)] bg-[var(--card)] p-2 shadow-sm">
+    <section className="rounded-xl border border-white/20 bg-white/10 p-2 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/5">
       <div className="flex items-center gap-2 pb-2">
-        <div className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-[var(--gray-100)]">{icon}</div>
+        <div className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-white/30 dark:bg-slate-800">{icon}</div>
         <p className="text-xs font-semibold text-[var(--text)]">{title}</p>
         {!loading && rows.length > 0 ? (
-          <span className="ml-auto rounded-full bg-[var(--gray-100)] px-2 py-0.5 text-[11px] font-semibold text-[var(--gray-700)]">
+          <span className="ml-auto rounded-full border border-white/25 bg-white/20 px-2 py-0.5 text-[11px] font-semibold text-[var(--gray-700)] dark:border-white/10 dark:bg-white/10 dark:text-[var(--gray-200)]">
             {rows.length}
           </span>
         ) : null}
@@ -342,29 +460,38 @@ function DecidedSection({
           {emptyMsg}
         </div>
       ) : (
-        <div className="space-y-2">
+        <div className="grid gap-1.5 sm:grid-cols-2">
           {rows.map((r) => (
-            <div key={r.id} className={`rounded-lg border ${borderColor} ${bgColor} px-3 py-2`}>
-              <div className="flex flex-wrap items-start justify-between gap-1">
-                <div>
-                  <span className={`text-xs font-semibold ${textColor}`}>{r.custom_id || `#${r.id}`}</span>
-                  <span className={`ml-1.5 text-[11px] ${subTextColor}`}>{r.invoice_code || "-"}</span>
-                  {r.patient_name ? (
-                    <span className={`ml-1.5 text-[11px] ${subTextColor}`}>· {r.patient_name}</span>
+            <Link
+              key={r.id}
+              href={`/accounting/credit-notes/${r.id}`}
+              className="group relative block overflow-hidden rounded-lg border border-white/20 bg-white/10 px-2.5 py-2 pl-3 shadow-sm backdrop-blur-sm transition hover:bg-white/20 dark:border-white/10 dark:bg-white/[0.04] dark:hover:bg-white/[0.07]"
+            >
+              <span className={`absolute left-0 top-0 h-full w-1 ${accentColor}`} />
+              <div className="flex items-start justify-between gap-1.5">
+                <div className="min-w-0">
+                  <span className={`text-xs font-bold ${textColor}`}>{r.custom_id || `#${r.id}`}</span>
+                  {r.invoice_code ? (
+                    <span className="ml-1 text-[10px] font-medium text-[var(--gray-500)]">{r.invoice_code}</span>
                   ) : null}
                 </div>
-                <MoneyValue value={r.amount} className={`text-xs font-semibold ${textColor}`} />
+                <div className="flex shrink-0 items-center gap-1">
+                  <MoneyValue value={r.amount} className={`text-xs font-bold ${textColor}`} />
+                  <ChevronRight size={14} className="text-[var(--gray-400)] transition group-hover:text-[var(--primary-600)]" />
+                </div>
               </div>
-              {r.reason ? <p className={`mt-0.5 text-[11px] ${subTextColor}`}>{r.reason}</p> : null}
-              <div className={`mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] ${subTextColor}`}>
-                {r.requested_by_name ? <span>Solicitado por: <strong>{r.requested_by_name}</strong></span> : null}
-                {r.reviewed_by_name ? <span>Decidido por: <strong>{r.reviewed_by_name}</strong></span> : null}
-                {r.reviewed_at ? <span>{fmtDate(r.reviewed_at)}</span> : null}
+              {r.patient_name ? (
+                <p className="mt-0.5 truncate text-[11px] font-medium text-black dark:text-white">{r.patient_name}</p>
+              ) : null}
+              {r.reason ? <p className={`mt-0.5 line-clamp-2 text-[10px] leading-snug ${subTextColor}`}>{r.reason}</p> : null}
+              <div className={`mt-1 flex flex-wrap gap-x-2 gap-y-0.5 text-[10px] ${subTextColor}`}>
+                {r.reviewed_by_name ? <span>Por: <strong>{r.reviewed_by_name}</strong></span> : null}
+                {r.reviewed_at ? <span>· {fmtDate(r.reviewed_at)}</span> : null}
               </div>
               {r.decision_note ? (
-                <p className={`mt-1 text-[11px] italic ${subTextColor}`}>&quot;{r.decision_note}&quot;</p>
+                <p className={`mt-0.5 line-clamp-1 text-[10px] italic ${subTextColor}`}>&quot;{r.decision_note}&quot;</p>
               ) : null}
-            </div>
+            </Link>
           ))}
         </div>
       )}
