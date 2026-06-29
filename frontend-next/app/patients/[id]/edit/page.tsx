@@ -1,12 +1,34 @@
-"use client";
+"use client"
 
-import { Suspense } from "react";
-import { GeneratedResourceEditPage } from "@/components/resources/GeneratedResourcePages";
+import { useParams, useRouter } from "next/navigation"
+
+import AppLayout from "@/components/layout/AppLayout"
+import { PatientIntakeWizard } from "@/components/reception/PatientIntakeWizard"
+import { GROUPS } from "@/lib/rbac"
+
+const ALLOWED = [
+  GROUPS.ADMIN,
+  GROUPS.RECEPCAO,
+  GROUPS.MEDICINA,
+  GROUPS.MEDICINA_OCUPACIONAL,
+  GROUPS.LABORATORIO,
+  GROUPS.ENFERMAGEM,
+]
 
 export default function EditPatientPage() {
+  const router = useRouter()
+  const { id } = useParams() as { id?: string | string[] }
+  const patientId = Number(Array.isArray(id) ? id[0] : id)
+
+  if (!Number.isFinite(patientId)) return null
+
   return (
-    <Suspense fallback={<div className="p-4 text-sm text-[var(--gray-500)]">Carregando...</div>}>
-      <GeneratedResourceEditPage endpoint="/clinical/patient/" />
-    </Suspense>
-  );
+    <AppLayout requiredGroups={ALLOWED}>
+      <PatientIntakeWizard
+        patientId={patientId}
+        onClose={() => router.push(`/patients/${patientId}`)}
+        onSuccess={(savedId) => router.push(`/patients/${savedId}`)}
+      />
+    </AppLayout>
+  )
 }

@@ -118,6 +118,43 @@ type CreatedPatient = {
   warning?: string
 }
 
+type ExistingPatientRecord = {
+  id: number
+  custom_id?: string | null
+  name?: string | null
+  provenance?: string | null
+  origin_company?: number | { id?: number | null; name?: string | null; nome?: string | null } | null
+  origin_company_name?: string | null
+  is_blood_donor?: boolean | null
+  is_organ_donor?: boolean | null
+  birth_date?: string | null
+  gender?: string | null
+  blood_type?: string | null
+  race_origin?: string | null
+  document_type?: string | null
+  document_number?: string | null
+  contact?: string | null
+  email?: string | null
+  address_street?: string | null
+  address_number?: string | null
+  address_neighborhood?: string | null
+  address_city?: string | null
+  address_province?: string | null
+  address_postal_code?: string | null
+  address_country?: string | null
+  address_complement?: string | null
+  address?: string | null
+  pregnant?: boolean | null
+  gestational_age_weeks?: number | string | null
+  is_replacement_donor_inapt?: boolean | null
+  replacement_donor_inapt_at?: string | null
+  replacement_donor_inapt_reason?: string | null
+  companion_name?: string | null
+  companion_relationship?: string | null
+  companion_contact?: string | null
+  companion_email?: string | null
+}
+
 const EMPTY: WizardData = {
   visit_purpose: "clinical",
   provenance: "Clínica Externa",
@@ -622,9 +659,11 @@ function lookupItemLabel(item: LookupItem) {
 export function PatientIntakeWizard({
   onClose,
   onSuccess,
+  patientId,
 }: {
   onClose: () => void
   onSuccess?: (id: number) => void
+  patientId?: number | null
 }) {
   const [step, setStep] = useState(0)
   const [data, setData] = useState<WizardData>(EMPTY)
@@ -632,10 +671,16 @@ export function PatientIntakeWizard({
   const [error, setError] = useState<string | null>(null)
   const [created, setCreated] = useState<CreatedPatient | null>(null)
   const [labelError, setLabelError] = useState<string | null>(null)
+  const [bootstrapping, setBootstrapping] = useState(Boolean(patientId))
+  const isEditMode = Boolean(patientId)
 
   const steps = useMemo(
-    () => STEP_DEFINITIONS.filter((definition) => definition.key !== "donation" || data.is_blood_donor),
-    [data.is_blood_donor],
+    () =>
+      STEP_DEFINITIONS.filter((definition) => {
+        if (definition.key === "donation") return !isEditMode && data.is_blood_donor
+        return true
+      }),
+    [data.is_blood_donor, isEditMode],
   )
   const currentStep = steps[Math.min(step, steps.length - 1)]
   const isOccupational = data.visit_purpose === "occupational"
@@ -645,6 +690,92 @@ export function PatientIntakeWizard({
   useEffect(() => {
     setStep((current) => Math.min(current, steps.length - 1))
   }, [steps.length])
+
+  useEffect(() => {
+    if (!patientId) {
+      setBootstrapping(false)
+      return
+    }
+
+    let active = true
+    setBootstrapping(true)
+    setError(null)
+
+    apiFetch<ExistingPatientRecord>(`/clinical/patient/${patientId}/`)
+      .then((patient) => {
+        if (!active) return
+        const originCompanyObject =
+          patient.origin_company && typeof patient.origin_company === "object" ? patient.origin_company : null
+        const originCompanyId =
+          typeof patient.origin_company === "number"
+            ? patient.origin_company
+            : originCompanyObject?.id ?? null
+        const originCompanyName =
+          patient.origin_company_name ||
+          originCompanyObject?.name ||
+          originCompanyObject?.nome ||
+          ""
+        const provenance = patient.provenance?.trim() || EMPTY.provenance
+        const isOccupational = provenance === "Medicina Ocupacional"
+        const isDonor = Boolean(patient.is_blood_donor)
+        const visitPurpose: VisitPurpose = isDonor
+          ? "donor"
+          : isOccupational
+            ? "occupational"
+            : "clinical"
+
+        setData({
+          ...EMPTY,
+          visit_purpose: visitPurpose,
+          provenance,
+          origin_company_id: originCompanyId,
+          origin_company_name: originCompanyName,
+          is_blood_donor: isDonor,
+          is_organ_donor: Boolean(patient.is_organ_donor),
+          name: patient.name || "",
+          birth_date: patient.birth_date || "",
+          gender: patient.gender || EMPTY.gender,
+          blood_type: patient.blood_type || EMPTY.blood_type,
+          race_origin: patient.race_origin || EMPTY.race_origin,
+          document_type: patient.document_type || EMPTY.document_type,
+          document_number: patient.document_number || "",
+          contact: patient.contact || "",
+          email: patient.email || "",
+          address_street: patient.address_street || "",
+          address_number: patient.address_number || "",
+          address_neighborhood: patient.address_neighborhood || "",
+          address_city: patient.address_city || "",
+          address_province: patient.address_province || "",
+          address_postal_code: patient.address_postal_code || "",
+          address_country: patient.address_country || EMPTY.address_country,
+          address_complement: patient.address_complement || "",
+          address: patient.address || "",
+          pregnant: Boolean(patient.pregnant),
+          gestational_age_weeks:
+            patient.gestational_age_weeks === null || patient.gestational_age_weeks === undefined
+              ? ""
+              : String(patient.gestational_age_weeks),
+          is_replacement_donor_inapt: Boolean(patient.is_replacement_donor_inapt),
+          replacement_donor_inapt_at: patient.replacement_donor_inapt_at || "",
+          replacement_donor_inapt_reason: patient.replacement_donor_inapt_reason || "",
+          companion_name: patient.companion_name || "",
+          companion_relationship: patient.companion_relationship || "",
+          companion_contact: patient.companion_contact || "",
+          companion_email: patient.companion_email || "",
+        })
+      })
+      .catch((loadError: any) => {
+        if (!active) return
+        setError(firstApiError(loadError, "Falha ao carregar o paciente para edição."))
+      })
+      .finally(() => {
+        if (active) setBootstrapping(false)
+      })
+
+    return () => {
+      active = false
+    }
+  }, [patientId])
 
   const update = useCallback((patch: Partial<WizardData>) => {
     setData((previous) => ({ ...previous, ...patch }))
@@ -851,8 +982,8 @@ export function PatientIntakeWizard({
     setSubmitting(true)
     setError(null)
     try {
-      const patient = await apiFetch<any>("/clinical/patient/", {
-        method: "POST",
+      const patient = await apiFetch<any>(isEditMode ? `/clinical/patient/${patientId}/` : "/clinical/patient/", {
+        method: isEditMode ? "PATCH" : "POST",
         body: JSON.stringify(buildPatientPayload()),
       })
 
@@ -860,7 +991,7 @@ export function PatientIntakeWizard({
       let donationId: number | null = null
       let bagIdentifier: string | null = null
       let warning: string | undefined
-      if (data.is_blood_donor && patient?.id) {
+      if (!isEditMode && data.is_blood_donor && patient?.id) {
         try {
           const donation = await apiFetch<any>("/bloodbank/donation/", {
             method: "POST",
@@ -877,6 +1008,12 @@ export function PatientIntakeWizard({
         }
       }
 
+      if (isEditMode) {
+        onSuccess?.(patient.id)
+        onClose()
+        return
+      }
+
       setCreated({
         id: patient.id,
         custom_id: patient.custom_id,
@@ -888,10 +1025,27 @@ export function PatientIntakeWizard({
       })
       if (!warning) onSuccess?.(patient.id)
     } catch (submitError: any) {
-      setError(firstApiError(submitError, "Falha ao registar o paciente. Verifique os dados e tente novamente."))
+      setError(
+        firstApiError(
+          submitError,
+          isEditMode
+            ? "Falha ao atualizar o paciente. Verifique os dados e tente novamente."
+            : "Falha ao registar o paciente. Verifique os dados e tente novamente.",
+        ),
+      )
     } finally {
       setSubmitting(false)
     }
+  }
+
+  if (bootstrapping) {
+    return (
+      <ModalShell title={isEditMode ? "Editar paciente" : "Registar paciente"} onClose={onClose}>
+        <div className="flex min-h-[320px] items-center justify-center p-5 text-sm text-[var(--gray-500)]">
+          Carregando paciente...
+        </div>
+      </ModalShell>
+    )
   }
 
   if (created) {
@@ -992,7 +1146,7 @@ export function PatientIntakeWizard({
   }
 
   return (
-    <ModalShell title="Registar paciente" onClose={onClose}>
+    <ModalShell title={isEditMode ? "Editar paciente" : "Registar paciente"} onClose={onClose}>
       <div className="grid min-h-0 flex-1 grid-cols-1 md:grid-cols-[230px_minmax(0,1fr)]">
         <aside className="border-b border-[var(--border)] bg-[var(--gray-100)] p-3 md:border-b-0 md:border-r">
           <div className="flex gap-2 overflow-x-auto md:flex-col md:overflow-visible">
@@ -1069,7 +1223,7 @@ export function PatientIntakeWizard({
                 className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-emerald-600 px-4 text-xs font-semibold text-white shadow-sm transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <UserPlus size={14} />
-                {submitting ? "A registar..." : "Confirmar e registar"}
+                {submitting ? (isEditMode ? "A atualizar..." : "A registar...") : isEditMode ? "Guardar alterações" : "Confirmar e registar"}
               </button>
             )}
           </div>
