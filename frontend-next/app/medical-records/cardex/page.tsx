@@ -32,6 +32,7 @@ export default function ProntuarioCardexPage() {
     const [page, setPage] = useState(1)
     const [pageSize, setPageSize] = useState(20)
     const [query, setQuery] = useState("")
+    const [statusFilter, setStatusFilter] = useState("all")
     const [totalItems, setTotalItems] = useState(0)
     const [totalPages, setTotalPages] = useState(1)
     const safeRefreshToken = useSafeDataRefreshSignal()
@@ -93,9 +94,11 @@ export default function ProntuarioCardexPage() {
 
     const filteredData = useMemo(() => {
         const normalized = query.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim()
-        if (!normalized) return data
-        return data.filter((row) =>
-            [
+        return data.filter((row) => {
+            const matchesStatus = statusFilter === "all" || String(row.estado || "").trim() === statusFilter
+            if (!matchesStatus) return false
+            if (!normalized) return true
+            return [
                 row.id_custom,
                 row.id,
                 row.paciente_nome,
@@ -110,9 +113,21 @@ export default function ProntuarioCardexPage() {
                         .replace(/[\u0300-\u036f]/g, "")
                         .toLowerCase()
                         .includes(normalized),
+                )
+        })
+    }, [data, query, statusFilter])
+
+    const availableStatuses = useMemo(
+        () =>
+            Array.from(
+                new Set(
+                    data
+                        .map((row) => String(row.estado || "").trim())
+                        .filter(Boolean),
                 ),
-        )
-    }, [data, query])
+            ).sort((a, b) => a.localeCompare(b, "pt")),
+        [data],
+    )
 
     return (
         <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.MEDICINA, GROUPS.MEDICINA_OCUPACIONAL]}>
@@ -206,6 +221,24 @@ export default function ProntuarioCardexPage() {
                                     className="h-10 w-full rounded-xl border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm text-slate-800 shadow-sm outline-none transition focus:border-violet-400 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-100"
                                 />
                             </div>
+                            <div className="flex items-center gap-2">
+                                <span className="text-sm text-slate-700 dark:text-slate-200">Estado</span>
+                                <select
+                                    value={statusFilter}
+                                    onChange={(e) => {
+                                        setPage(1)
+                                        setStatusFilter(e.target.value)
+                                    }}
+                                    className="min-w-[180px] rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-800 shadow-sm dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-100"
+                                >
+                                    <option value="all">Todos</option>
+                                    {availableStatuses.map((status) => (
+                                        <option key={status} value={status}>
+                                            {status}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
                             <div className="text-xs text-muted-foreground">
                                 Resultados: {filteredData.length}/{data.length}
                             </div>
@@ -238,4 +271,3 @@ export default function ProntuarioCardexPage() {
         </AppLayout>
     )
 }
-
