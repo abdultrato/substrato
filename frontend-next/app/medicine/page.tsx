@@ -164,7 +164,7 @@ export default function MedicinaPage() {
           {medicineActionTiles.map((tile) => (
             <div
               key={tile.href}
-              className="group relative overflow-hidden rounded-xl border border-slate-200/70 bg-white/70 shadow-sm backdrop-blur-sm transition hover:border-slate-300 hover:shadow-md"
+              className="group relative overflow-hidden rounded-xl border border-slate-200/70 bg-white/70 shadow-sm backdrop-blur-sm transition hover:border-slate-300 hover:shadow-md dark:border-slate-800/80 dark:bg-slate-950/45 dark:hover:border-slate-700"
             >
               <div className={`absolute inset-y-0 left-0 w-1.5 bg-gradient-to-b ${tile.accentClass}`} />
               <div className="pl-2">
@@ -183,5 +183,4 @@ export default function MedicinaPage() {
     </AppLayout>
   )
 }
-
 
