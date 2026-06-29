@@ -141,13 +141,15 @@ function SectionCard({
     icon: Icon,
     title,
     children,
+    className,
 }: {
     icon: React.ElementType;
     title: string;
     children: React.ReactNode;
+    className?: string;
 }) {
     return (
-        <section className="rounded-xl border border-white/20 bg-white/25 shadow-sm backdrop-blur-sm dark:bg-white/5 dark:border-white/10">
+        <section className={`rounded-xl border border-white/20 bg-white/25 shadow-sm backdrop-blur-sm dark:bg-white/5 dark:border-white/10 ${className || ""}`}>
             <div className="flex items-center gap-2 border-b border-border/60 px-3 py-2">
                 <span className="flex h-6 w-6 items-center justify-center rounded-md bg-[var(--primary-600)]/10 text-[var(--primary-700)] dark:text-[var(--primary-400)]">
                     <Icon size={13} />
@@ -456,7 +458,7 @@ export default function PacienteDetalhePage() {
                         </SectionCard>
                     ) : null}
 
-                    <SectionCard icon={FileText} title="Registo">
+                    <SectionCard icon={FileText} title="Registo" className="md:col-span-2">
                         <InfoRow label="Proveniência" value={p.provenance || "—"} />
                         <InfoRow label="Criado em" value={fmtDate(p.created_at)} />
                         {p.updated_at ? <InfoRow label="Atualizado em" value={fmtDate(p.updated_at)} /> : null}
