@@ -97,7 +97,7 @@ export default function ConfirmDialog ( {
                             <h3 className="text-base font-bold text-foreground">{title}</h3>
                         </div>
                         <p className="mt-2 text-sm text-muted-foreground">{message}</p>
-                        <div className="mt-5 flex justify-end gap-2">
+                        <div className="mt-5 flex justify-between gap-2">
                             <button
                                 onClick={() => setOpen(false)}
                                 disabled={loading}
