@@ -72,6 +72,9 @@ function ItemCard({ item, col }: { item: ReqItem; col: ColKey }) {
               {name}
             </p>
           </div>
+          <span className={`shrink-0 rounded-full border px-1.5 py-0.5 text-[9px] font-semibold ${BADGE[col]}`}>
+            {COLS.find(c => c.key === col)!.label}
+          </span>
         </div>
         <div className="space-y-0.5 text-[10px] text-muted-foreground">
           <p className="text-[9px] text-muted-foreground/70">{item.custom_id || `MREI-${item.id}`}</p>
