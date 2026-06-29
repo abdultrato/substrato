@@ -169,11 +169,11 @@ export default function MedicinaPage() {
           </div>
         </div>
 
-        <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+        <div className="flex flex-wrap gap-3">
           {medicineActionTiles.map((tile) => (
             <div
               key={tile.href}
-              className={`group relative overflow-hidden rounded-xl border border-slate-200/70 bg-white/70 shadow-sm backdrop-blur-sm transition hover:border-slate-300 hover:shadow-md dark:border-slate-800/80 dark:bg-slate-950/45 dark:hover:border-slate-700 ${tile.fullWidth ? "sm:col-span-2 md:col-span-3 xl:col-span-4 2xl:col-span-5" : ""}`}
+              className={`group relative overflow-hidden rounded-xl border border-slate-200/70 bg-white/70 shadow-sm backdrop-blur-sm transition hover:border-slate-300 hover:shadow-md dark:border-slate-800/80 dark:bg-slate-950/45 dark:hover:border-slate-700 ${tile.fullWidth ? "basis-full w-full" : "min-w-[220px] flex-1 basis-[220px]"}`}
             >
               <div className={`absolute inset-y-0 left-0 w-1.5 bg-gradient-to-b ${tile.accentClass}`} />
               <div className="pl-2">
