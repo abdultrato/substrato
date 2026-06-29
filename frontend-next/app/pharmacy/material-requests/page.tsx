@@ -159,7 +159,7 @@ export default function RequisicoesMateriaisPage() {
               <div>
                 <h1 className="text-lg font-bold leading-tight text-foreground">Requisições de materiais</h1>
                 <p className="text-[11px] text-muted-foreground">
-                  {loading ? "A carregar…" : `${totalItems} requisição${totalItems !== 1 ? "ões" : ""}`}
+                  {loading ? "A carregar…" : `${totalItems} ${totalItems !== 1 ? "requisições" : "requisição"}`}
                 </p>
               </div>
             </div>
