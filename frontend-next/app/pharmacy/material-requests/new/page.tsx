@@ -1,8 +1,9 @@
 "use client"
 
+import { createPortal } from "react-dom"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { ArrowLeft, Building2, ClipboardList, Loader2, PackageSearch, PlusCircle } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
@@ -129,8 +130,12 @@ export default function CriarRequisicaoMateriaisPage() {
   const [submitting, setSubmitting] = useState(false)
   const [requesterContext, setRequesterContext] = useState<RequesterContextResponse | null>(null)
   const [requesterSector, setRequesterSector] = useState("")
+  const [mounted, setMounted] = useState(false)
+  const [activeSearchIndex, setActiveSearchIndex] = useState<number | null>(null)
+  const [searchDropdownStyle, setSearchDropdownStyle] = useState<React.CSSProperties>({})
 
   const [items, setItems] = useState<DraftItem[]>([emptyItem()])
+  const searchInputRefs = useRef<Record<number, HTMLInputElement | null>>({})
 
   const sectorSource = useMemo(() => {
     if (!requesterContext) return SOURCE_PHARMACY
@@ -140,6 +145,10 @@ export default function CriarRequisicaoMateriaisPage() {
     return SOURCE_PHARMACY
   }, [requesterContext, requesterSector])
   const isWarehouseSource = sectorSource === SOURCE_WAREHOUSE
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   useEffect(() => {
     if (safeRefreshToken > 0 && hasUnsavedInput) return
@@ -192,6 +201,19 @@ export default function CriarRequisicaoMateriaisPage() {
     }
   }, [hasUnsavedInput, safeRefreshToken])
 
+  useEffect(() => {
+    function handleOutsideClick(event: MouseEvent) {
+      const target = event.target as HTMLElement | null
+      if (target?.closest("[data-search-dropdown='true']")) return
+      const currentInput = activeSearchIndex !== null ? searchInputRefs.current[activeSearchIndex] : null
+      if (currentInput && target && currentInput.contains(target)) return
+      setActiveSearchIndex(null)
+    }
+
+    document.addEventListener("mousedown", handleOutsideClick)
+    return () => document.removeEventListener("mousedown", handleOutsideClick)
+  }, [activeSearchIndex])
+
   const warehouseItemById = useMemo(
     () => new Map(warehouseStock.map((item) => [item.id, item])),
     [warehouseStock]
@@ -233,6 +255,20 @@ export default function CriarRequisicaoMateriaisPage() {
     if (nextSource !== previousSource) {
       setItems([emptyItem()])
     }
+  }
+
+  function openSearchDropdown(idx: number) {
+    const input = searchInputRefs.current[idx]
+    if (!input) return
+    const rect = input.getBoundingClientRect()
+    setSearchDropdownStyle({
+      position: "fixed",
+      top: rect.bottom + 4,
+      left: rect.left,
+      width: rect.width,
+      zIndex: 9999,
+    })
+    setActiveSearchIndex(idx)
   }
 
   async function submit() {
@@ -408,21 +444,28 @@ export default function CriarRequisicaoMateriaisPage() {
                     <div className="flex flex-nowrap items-end gap-3 overflow-x-auto">
                     <div className="relative min-w-[18rem] flex-[1.35]">
                       <input
+                        ref={(node) => {
+                          searchInputRefs.current[idx] = node
+                        }}
                         type="text"
                         className={FIELD}
                         value={it.searchQuery}
                         onChange={(e) =>
-                          updateItem(idx, {
-                            searchQuery: e.target.value,
-                            productId: isWarehouseSource ? it.productId : null,
-                            warehouseItemId: isWarehouseSource ? null : it.warehouseItemId,
-                          })
+                          {
+                            updateItem(idx, {
+                              searchQuery: e.target.value,
+                              productId: isWarehouseSource ? it.productId : null,
+                              warehouseItemId: isWarehouseSource ? null : it.warehouseItemId,
+                            })
+                            openSearchDropdown(idx)
+                          }
                         }
+                        onFocus={() => openSearchDropdown(idx)}
                         placeholder={isWarehouseSource ? "Pesquisar item por nome ou SKU…" : "Pesquisar produto por nome ou código…"}
                         disabled={submitting}
                       />
-                      {it.searchQuery.trim() && !selectedLabel ? (
-                        <div className="absolute left-0 right-0 top-full z-20 mt-1 max-h-56 overflow-auto rounded-lg border border-white/20 bg-white/95 shadow-xl backdrop-blur dark:border-white/10 dark:bg-slate-950/95">
+                      {mounted && activeSearchIndex === idx && it.searchQuery.trim() && !selectedLabel ? createPortal(
+                        <div data-search-dropdown="true" style={searchDropdownStyle} className="max-h-56 overflow-auto rounded-lg border border-white/20 bg-white/95 shadow-xl backdrop-blur dark:border-white/10 dark:bg-slate-950/95">
                           {(isWarehouseSource ? filteredWarehouseOptions : filteredProductOptions).slice(0, 8).map((option) => {
                             const optionId = option.id
                             const optionLabel = isWarehouseSource
@@ -432,18 +475,22 @@ export default function CriarRequisicaoMateriaisPage() {
                               <button
                                 key={optionId}
                                 type="button"
+                                data-search-dropdown="true"
                                 onClick={() =>
-                                  updateItem(idx, isWarehouseSource
-                                    ? {
-                                        warehouseItemId: optionId,
-                                        productId: null,
-                                        searchQuery: optionLabel,
-                                      }
-                                    : {
-                                        productId: optionId,
-                                        warehouseItemId: null,
-                                        searchQuery: optionLabel,
-                                      })
+                                  {
+                                    updateItem(idx, isWarehouseSource
+                                      ? {
+                                          warehouseItemId: optionId,
+                                          productId: null,
+                                          searchQuery: optionLabel,
+                                        }
+                                      : {
+                                          productId: optionId,
+                                          warehouseItemId: null,
+                                          searchQuery: optionLabel,
+                                        })
+                                    setActiveSearchIndex(null)
+                                  }
                                 }
                                 className="block w-full border-b border-white/10 px-3 py-2 text-left text-sm text-foreground transition hover:bg-white/60 last:border-b-0 dark:hover:bg-white/10"
                               >
@@ -454,7 +501,8 @@ export default function CriarRequisicaoMateriaisPage() {
                           {(isWarehouseSource ? filteredWarehouseOptions : filteredProductOptions).length === 0 ? (
                             <div className="px-3 py-2 text-sm text-muted-foreground">Nenhum resultado.</div>
                           ) : null}
-                        </div>
+                        </div>,
+                        document.body
                       ) : null}
                     </div>
                     <div className="min-w-[20rem] flex-[1.55]">
