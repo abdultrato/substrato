@@ -14,6 +14,44 @@ import { useAuth } from "@/hooks/useAuth"
 import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
 
+const recordMetricCards = [
+    { label: "Cardex (registros)", accentClass: "from-sky-500 via-cyan-500 to-teal-400" },
+    { label: "Itens de prescrição", accentClass: "from-emerald-500 via-lime-500 to-amber-400" },
+    { label: "Consultas", accentClass: "from-violet-500 via-fuchsia-500 to-pink-400", hint: "Vínculo via many-to-many" },
+    { label: "História clínica", accentClass: "from-indigo-500 via-blue-500 to-cyan-400", hint: "Visão agregada por paciente" },
+] as const
+
+const recordActionTiles = [
+    {
+        title: "Cardex",
+        description: "Listar e gerir registros (CRUD).",
+        href: "/medical-records/cardex",
+        icon: ScrollText,
+        accentClass: "from-sky-500 via-cyan-500 to-teal-400",
+    },
+    {
+        title: "Criar Cardex",
+        description: "Criar registro de cardex para um paciente.",
+        href: "/medical-records/records/new",
+        icon: PlusCircle,
+        accentClass: "from-emerald-500 via-lime-500 to-amber-400",
+    },
+    {
+        title: "Itens de prescrição",
+        description: "Gerir prescrição estruturada (CRUD).",
+        href: "/medical-records/prescriptions",
+        icon: Pill,
+        accentClass: "from-violet-500 via-fuchsia-500 to-pink-400",
+    },
+    {
+        title: "Gerenciamento (API)",
+        description: "Acesso direto à interface genérica do prontuário.",
+        href: "/medical-records/records",
+        icon: ClipboardList,
+        accentClass: "from-indigo-500 via-blue-500 to-cyan-400",
+    },
+] as const
+
 export default function ProntuarioPage() {
     const { user } = useAuth()
     const podeVerAdmin = userHasAnyGroup(user, [GROUPS.ADMIN])
@@ -77,42 +115,50 @@ export default function ProntuarioPage() {
                 ) : null}
 
                 <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                    <MetricCard label="Cardex (registros)" value={loading ? "..." : cardex} />
-                    <MetricCard label="Itens de prescrição" value={loading ? "..." : itensPrescricao} />
-                    <MetricCard label="Consultas" value="—" hint="Vínculo via many-to-many" />
-                    <MetricCard label="História clínica" value="—" hint="Visão agregada por paciente" />
+                    {recordMetricCards.map((card) => (
+                        <div
+                            key={card.label}
+                            className="group relative overflow-hidden rounded-xl border border-slate-200/70 bg-white/70 shadow-sm backdrop-blur-sm transition hover:border-slate-300 hover:shadow-md dark:border-slate-800/80 dark:bg-slate-950/45 dark:hover:border-slate-700"
+                        >
+                            <div className={`absolute inset-y-0 left-0 w-1.5 bg-gradient-to-b ${card.accentClass}`} />
+                            <div className="pl-2">
+                                <MetricCard
+                                    label={card.label}
+                                    value={
+                                        card.label === "Cardex (registros)"
+                                            ? loading ? "..." : cardex
+                                            : card.label === "Itens de prescrição"
+                                                ? loading ? "..." : itensPrescricao
+                                                : "—"
+                                    }
+                                    hint={card.hint}
+                                />
+                            </div>
+                        </div>
+                    ))}
                 </div>
 
                 <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                    <ActionTile
-                        title="Cardex"
-                        description="Listar e gerir registros (CRUD)."
-                        href="/medical-records/cardex"
-                        icon={ScrollText}
-                    />
-                    <ActionTile
-                        title="Criar Cardex"
-                        description="Criar registro de cardex para um paciente."
-                        href="/medical-records/records/new"
-                        icon={PlusCircle}
-                    />
-                    <ActionTile
-                        title="Itens de prescrição"
-                        description="Gerir prescrição estruturada (CRUD)."
-                        href="/medical-records/prescriptions"
-                        icon={Pill}
-                    />
-                    <ActionTile
-                        title="Gerenciamento (API)"
-                        description="Acesso direto à interface genérica do prontuário."
-                        href="/medical-records/records"
-                        icon={ClipboardList}
-                    />
+                    {recordActionTiles.map((tile) => (
+                        <div
+                            key={tile.href}
+                            className="group relative overflow-hidden rounded-xl border border-slate-200/70 bg-white/70 shadow-sm backdrop-blur-sm transition hover:border-slate-300 hover:shadow-md dark:border-slate-800/80 dark:bg-slate-950/45 dark:hover:border-slate-700"
+                        >
+                            <div className={`absolute inset-y-0 left-0 w-1.5 bg-gradient-to-b ${tile.accentClass}`} />
+                            <div className="pl-2">
+                                <ActionTile
+                                    title={tile.title}
+                                    description={tile.description}
+                                    href={tile.href}
+                                    icon={tile.icon}
+                                />
+                            </div>
+                        </div>
+                    ))}
                 </div>
 
             </div>
         </AppLayout>
     )
 }
-
 
