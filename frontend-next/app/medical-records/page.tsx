@@ -6,7 +6,6 @@ import { useEffect, useState } from "react"
 import { ClipboardList, ScrollText, Pill, PlusCircle } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
-import Card from "@/components/ui/Card"
 import PageHeader from "@/components/ui/PageHeader"
 import MetricCard from "@/components/ui/MetricCard"
 import ActionTile from "@/components/ui/ActionTile"
@@ -111,18 +110,9 @@ export default function ProntuarioPage() {
                     />
                 </div>
 
-                <Card
-                    title="Atalho por paciente"
-                    subtitle="A história clínica já agrega Cardex, requisições, enfermaria, farmácia e faturamento."
-                >
-                    <div className="text-sm text-slate-700">
-                        Use a página do paciente e clique em <strong>História clínica</strong> para ver tudo consolidado.
-                    </div>
-                </Card>
             </div>
         </AppLayout>
     )
 }
-
 
 
