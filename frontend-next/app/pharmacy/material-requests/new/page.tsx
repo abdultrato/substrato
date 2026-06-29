@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useEffect, useMemo, useState } from "react"
-import { ArrowLeft, Building2, ClipboardList, Loader2, PackageSearch, PillBottle, PlusCircle } from "lucide-react"
+import { ArrowLeft, Building2, ClipboardList, Loader2, PackageSearch, Pill, PlusCircle } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
 import useAuthGuard from "@/hooks/useAuthGuard"
@@ -413,7 +413,7 @@ export default function CriarRequisicaoMateriaisPage() {
         <SectionCard
           title={isWarehouseSource ? "Produtos em estoque no armazém" : "Produtos da farmácia"}
           subtitle="Saldo real agregado por produto a partir dos lotes."
-          icon={PillBottle}
+          icon={Pill}
           accent="bg-emerald-500"
         >
           {loadingLots ? (
