@@ -1,12 +1,10 @@
 "use client";
 
-import { Suspense } from "react";
-import { GeneratedResourceListPage } from "@/components/resources/GeneratedResourcePages";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 export default function MedicalRecordsPrescriptionItemsListPage() {
-  return (
-    <Suspense fallback={<div className="p-4 text-sm text-[var(--gray-500)]">Carregando...</div>}>
-      <GeneratedResourceListPage endpoint="/medical_records/prescricaoitem/" />
-    </Suspense>
-  );
+  const router = useRouter();
+  useEffect(() => { router.replace("/medical-records/prescriptions/"); }, [router]);
+  return null;
 }
