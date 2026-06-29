@@ -135,7 +135,6 @@ export default function MedicinaPage() {
       <div className="space-y-6">
         <PageHeader
           title="Medicina"
-          subtitle="Jornada clínica: pacientes, requisições e acompanhamento."
           actions={
             podeVerAdmin ? (
               <Link
