@@ -273,7 +273,7 @@ export default function MedicalRecordsRecordsDetailPage() {
             <div className="flex flex-wrap items-center gap-2">
               <Link
                 href={`/medical-records/records/${id}/edit`}
-                className="inline-flex h-9 items-center gap-1.5 rounded-md border border-border bg-card px-3 text-sm font-medium text-foreground shadow-sm transition hover:bg-muted"
+                className="inline-flex h-9 items-center gap-1.5 rounded-md bg-gradient-to-br from-violet-600 to-purple-600 px-3 text-sm font-semibold text-white shadow-sm shadow-violet-500/20 transition hover:opacity-90"
               >
                 <Edit3 size={15} /> Editar
               </Link>
@@ -287,14 +287,14 @@ export default function MedicalRecordsRecordsDetailPage() {
                 <button
                   type="button"
                   disabled={deleting}
-                  className="inline-flex h-9 items-center gap-1.5 rounded-md bg-red-600 px-3 text-sm font-semibold text-white shadow-sm transition hover:bg-red-500 disabled:opacity-60"
+                  className="inline-flex h-9 items-center gap-1.5 rounded-md bg-gradient-to-br from-red-600 to-rose-600 px-3 text-sm font-semibold text-white shadow-sm shadow-red-500/20 transition hover:opacity-90 disabled:opacity-60"
                 >
                   <Trash2 size={15} /> {deleting ? "Apagando..." : "Apagar"}
                 </button>
               </ConfirmDialog>
               <Link
                 href="/medical-records/records"
-                className="inline-flex h-9 items-center gap-1.5 rounded-md border border-border bg-card px-3 text-sm font-medium text-foreground shadow-sm transition hover:bg-muted"
+                className="inline-flex h-9 items-center gap-1.5 rounded-md border border-white/20 bg-white/10 px-3 text-sm font-medium text-foreground shadow-sm backdrop-blur-sm transition hover:bg-white/20"
               >
                 <ArrowLeft size={16} /> Voltar
               </Link>
