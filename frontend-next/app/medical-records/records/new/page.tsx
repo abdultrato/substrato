@@ -272,7 +272,7 @@ function CreateRecordInner() {
               <EntitySearch
                 label="Médico responsável"
                 placeholder="Pesquisar médico por nome…"
-                endpoint="recursos_humanos/employee/"
+                endpoint="human_resources/employee/"
                 value={doctor}
                 onSelect={setDoctor}
                 onClear={() => setDoctor(null)}
