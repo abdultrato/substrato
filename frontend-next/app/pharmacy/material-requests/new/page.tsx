@@ -506,25 +506,30 @@ export default function CriarRequisicaoMateriaisPage() {
                       ) : null}
                     </div>
                     <div className="min-w-[20rem] flex-[1.55]">
-                      <div className={`${FIELD} flex items-center justify-between gap-2`}>
-                        <span className={selectedLabel ? "truncate text-foreground" : "truncate text-muted-foreground"}>
+                      <div className="rounded-lg border border-white/20 bg-white/20 px-3 py-2 dark:border-white/10 dark:bg-white/[0.05]">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                            {isWarehouseSource ? "Item selecionado" : "Produto selecionado"}
+                          </span>
+                          {selectedLabel ? (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                updateItem(idx, {
+                                  productId: null,
+                                  warehouseItemId: null,
+                                  searchQuery: "",
+                                })
+                              }
+                              className="shrink-0 text-xs font-semibold text-muted-foreground transition hover:text-foreground"
+                            >
+                              Limpar
+                            </button>
+                          ) : null}
+                        </div>
+                        <div className={`mt-1 text-sm ${selectedLabel ? "text-foreground" : "text-muted-foreground"}`}>
                           {selectedLabel || (isWarehouseSource ? "Nenhum item selecionado" : "Nenhum produto selecionado")}
-                        </span>
-                        {selectedLabel ? (
-                          <button
-                            type="button"
-                            onClick={() =>
-                              updateItem(idx, {
-                                productId: null,
-                                warehouseItemId: null,
-                                searchQuery: "",
-                              })
-                            }
-                            className="shrink-0 text-xs font-semibold text-muted-foreground transition hover:text-foreground"
-                          >
-                            Limpar
-                          </button>
-                        ) : null}
+                        </div>
                       </div>
                       {product && (stockByProductId.get(product.id) || 0) <= 0 ? (
                         <div className="mt-1 text-xs text-amber-700">
