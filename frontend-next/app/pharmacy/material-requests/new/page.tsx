@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useEffect, useMemo, useState } from "react"
-import { ArrowLeft, Building2, ClipboardList, Loader2, PackageSearch, Pill, PlusCircle } from "lucide-react"
+import { ArrowLeft, Building2, ClipboardList, Loader2, PackageSearch, PlusCircle } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
 import useAuthGuard from "@/hooks/useAuthGuard"
@@ -34,16 +34,11 @@ type WarehouseStockRow = {
   available: number
 }
 
-type ProductStockRow = {
-  key: string
-  productName: string
-  totalStock: number
-}
-
 type DraftItem = {
   productId: number | null
   warehouseItemId: number | null
   requestedQuantity: number
+  searchQuery: string
 }
 
 type RequesterSectorOption = {
@@ -107,12 +102,11 @@ function SectionCard({
 }
 
 function emptyItem(): DraftItem {
-  return { productId: null, warehouseItemId: null, requestedQuantity: 1 }
+  return { productId: null, warehouseItemId: null, requestedQuantity: 1, searchQuery: "" }
 }
 
 function formatWarehouseItemLabel(item: WarehouseStockRow) {
-  const unit = item.unit_of_measure ? ` ${item.unit_of_measure}` : ""
-  return `${item.name || "Item"}${item.sku ? ` [${item.sku}]` : ""} (disp.: ${item.available}${unit})`
+  return `${item.name || "Item"}${item.sku ? ` [${item.sku}]` : ""}`
 }
 
 export default function CriarRequisicaoMateriaisPage() {
@@ -129,7 +123,6 @@ export default function CriarRequisicaoMateriaisPage() {
   const [loadingLots, setLoadingLots] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
-  const [productQuery, setProductQuery] = useState("")
   const [requesterContext, setRequesterContext] = useState<RequesterContextResponse | null>(null)
   const [requesterSector, setRequesterSector] = useState("")
 
@@ -213,34 +206,6 @@ export default function CriarRequisicaoMateriaisPage() {
   }, [stockLots])
 
   const productById = useMemo(() => new Map(products.map((p) => [p.id, p])), [products])
-
-  const productStocks = useMemo<ProductStockRow[]>(() => {
-    if (isWarehouseSource) {
-      return warehouseStock
-        .filter((item) => Number(item.available || 0) > 0)
-        .map((item) => ({
-          key: String(item.id),
-          productName: item.name || item.sku || "Item sem nome",
-          totalStock: Number(item.available || 0),
-        }))
-        .sort((a, b) => a.productName.localeCompare(b.productName, undefined, { sensitivity: "base" }))
-    }
-
-    // Catálogo real da farmácia: mostra todos os produtos, mesmo sem saldo.
-    return products
-      .map((product) => ({
-        key: String(product.id),
-        productName: (product.name || product.custom_id || "Produto sem nome").trim(),
-        totalStock: stockByProductId.get(product.id) || 0,
-      }))
-      .sort((a, b) => a.productName.localeCompare(b.productName, undefined, { sensitivity: "base" }))
-  }, [isWarehouseSource, products, stockByProductId, warehouseStock])
-
-  const filteredProductStocks = useMemo(() => {
-    const q = productQuery.trim().toLowerCase()
-    if (!q) return productStocks
-    return productStocks.filter((item) => item.productName.toLowerCase().includes(q))
-  }, [productQuery, productStocks])
 
   const hasSelectableStock = isWarehouseSource ? warehouseStock.length > 0 : products.length > 0
 
@@ -411,65 +376,11 @@ export default function CriarRequisicaoMateriaisPage() {
         </SectionCard>
 
         <SectionCard
-          title={isWarehouseSource ? "Produtos em estoque no armazém" : "Produtos da farmácia"}
-          subtitle="Saldo real agregado por produto a partir dos lotes."
-          icon={Pill}
-          accent="bg-emerald-500"
-        >
-          {loadingLots ? (
-            <div className="flex h-20 items-center justify-center text-muted-foreground">
-              <Loader2 size={18} className="animate-spin" />
-            </div>
-          ) : productStocks.length ? (
-            <div className="space-y-3">
-              <div className="flex flex-wrap items-center gap-2">
-                <input
-                  type="text"
-                  value={productQuery}
-                  onChange={(e) => setProductQuery(e.target.value)}
-                  placeholder="Buscar produto por nome…"
-                  className="w-full max-w-md rounded-lg border border-border bg-background/60 px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-emerald-500/40 transition"
-                  disabled={submitting}
-                />
-                <div className="text-xs text-muted-foreground">
-                  Produtos listados: {filteredProductStocks.length}
-                </div>
-              </div>
-
-              <div className="overflow-auto rounded-xl border border-white/20 bg-white/15 dark:border-white/10 dark:bg-white/[0.03]">
-                <table className="min-w-full text-sm text-foreground">
-                  <thead className="text-left text-muted-foreground">
-                    <tr>
-                      <th className="px-3 py-2 font-semibold">Produto</th>
-                      <th className="px-3 py-2 font-semibold">Estoque disponível</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredProductStocks.map((row) => (
-                      <tr key={row.key} className="border-t border-white/10">
-                        <td className="px-3 py-2">{row.productName}</td>
-                        <td className="px-3 py-2">{row.totalStock}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          ) : (
-            <div className="text-sm text-muted-foreground">
-              {isWarehouseSource
-                ? "Nenhum item com saldo disponível no armazém."
-                : "Nenhum produto registado na farmácia."}
-            </div>
-          )}
-        </SectionCard>
-
-        <SectionCard
           title="Itens da requisição"
           subtitle={
             isWarehouseSource
-              ? "Selecione o item de armazém e informe a quantidade desejada."
-              : "Selecione o produto e informe a quantidade desejada."
+              ? "Pesquise o item de armazém, selecione-o e só então veja o saldo disponível."
+              : "Pesquise o produto, selecione-o e só então veja o saldo disponível."
           }
           icon={ClipboardList}
           accent="bg-violet-500"
@@ -484,6 +395,23 @@ export default function CriarRequisicaoMateriaisPage() {
                 const product = !isWarehouseSource && it.productId ? productById.get(it.productId) : null
                 const warehouseItem =
                   isWarehouseSource && it.warehouseItemId ? warehouseItemById.get(it.warehouseItemId) : null
+                const searchNeedle = it.searchQuery.trim().toLowerCase()
+                const filteredWarehouseOptions = warehouseStock
+                  .filter((item) => {
+                    const label = `${item.name || ""} ${item.sku || ""}`.toLowerCase()
+                    return !searchNeedle || label.includes(searchNeedle)
+                  })
+                  .sort((a, b) =>
+                    (a.name || a.sku || "Item sem nome").localeCompare(b.name || b.sku || "Item sem nome", undefined, { sensitivity: "base" })
+                  )
+                const filteredProductOptions = products
+                  .filter((p) => {
+                    const label = `${p.name || ""} ${p.custom_id || ""}`.toLowerCase()
+                    return !searchNeedle || label.includes(searchNeedle)
+                  })
+                  .sort((a, b) =>
+                    (a.name || a.custom_id || "Produto sem nome").localeCompare(b.name || b.custom_id || "Produto sem nome", undefined, { sensitivity: "base" })
+                  )
                 const available = product
                   ? stockByProductId.get(product.id) || 0
                   : warehouseItem
@@ -496,6 +424,14 @@ export default function CriarRequisicaoMateriaisPage() {
                       <label className="block text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
                         {isWarehouseSource ? "Item de armazém" : "Produto"}
                       </label>
+                      <input
+                        type="text"
+                        className={FIELD}
+                        value={it.searchQuery}
+                        onChange={(e) => updateItem(idx, { searchQuery: e.target.value })}
+                        placeholder={isWarehouseSource ? "Pesquisar item por nome ou SKU…" : "Pesquisar produto por nome ou código…"}
+                        disabled={submitting}
+                      />
                       {isWarehouseSource ? (
                         <select
                           className={FIELD}
@@ -504,12 +440,15 @@ export default function CriarRequisicaoMateriaisPage() {
                             updateItem(idx, {
                               warehouseItemId: e.target.value ? Number(e.target.value) : null,
                               productId: null,
+                              searchQuery: e.target.value
+                                ? formatWarehouseItemLabel(warehouseItemById.get(Number(e.target.value))!)
+                                : it.searchQuery,
                             })
                           }
                           disabled={submitting}
                         >
                           <option value="">Selecione…</option>
-                          {warehouseStock.map((item) => (
+                          {filteredWarehouseOptions.map((item) => (
                             <option key={item.id} value={item.id}>
                               {formatWarehouseItemLabel(item)}
                             </option>
@@ -523,14 +462,17 @@ export default function CriarRequisicaoMateriaisPage() {
                             updateItem(idx, {
                               productId: e.target.value ? Number(e.target.value) : null,
                               warehouseItemId: null,
+                              searchQuery: e.target.value
+                                ? `${productById.get(Number(e.target.value))?.name || productById.get(Number(e.target.value))?.custom_id || "Produto"}`
+                                : it.searchQuery,
                             })
                           }
                           disabled={submitting}
                         >
                           <option value="">Selecione…</option>
-                          {products.map((p) => (
+                          {filteredProductOptions.map((p) => (
                             <option key={p.id} value={p.id}>
-                              {`${p.name || p.custom_id || `Produto ${p.id}`} (disp.: ${stockByProductId.get(p.id) || 0})`}
+                              {p.name || p.custom_id || `Produto ${p.id}`}
                             </option>
                           ))}
                         </select>
