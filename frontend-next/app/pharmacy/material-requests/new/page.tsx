@@ -527,15 +527,17 @@ export default function CriarRequisicaoMateriaisPage() {
                             </button>
                           ) : null}
                         </div>
-                        <div className={`mt-1 text-sm ${selectedLabel ? "text-foreground" : "text-muted-foreground"}`}>
-                          {selectedLabel || (isWarehouseSource ? "Nenhum item selecionado" : "Nenhum produto selecionado")}
+                        <div className="mt-1 flex items-center justify-between gap-2">
+                          <div className={`min-w-0 text-sm ${selectedLabel ? "text-foreground" : "text-muted-foreground"}`}>
+                            {selectedLabel || (isWarehouseSource ? "Nenhum item selecionado" : "Nenhum produto selecionado")}
+                          </div>
+                          {product && (stockByProductId.get(product.id) || 0) <= 0 ? (
+                            <div className="shrink-0 text-xs font-medium text-amber-700">
+                              Sem saldo em estoque
+                            </div>
+                          ) : null}
                         </div>
                       </div>
-                      {product && (stockByProductId.get(product.id) || 0) <= 0 ? (
-                        <div className="mt-1 text-xs text-amber-700">
-                          Sem saldo em estoque: a requisição ficará pendente até a farmácia repor.
-                        </div>
-                      ) : null}
                     </div>
 
                     <div className="min-w-[5.5rem] w-[5.5rem] shrink-0">
