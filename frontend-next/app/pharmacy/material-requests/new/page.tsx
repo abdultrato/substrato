@@ -441,8 +441,8 @@ export default function CriarRequisicaoMateriaisPage() {
                   : (product ? formatProductLabel(product) : "")
                 return (
                   <div key={idx} className="rounded-xl border border-white/20 bg-white/15 p-3 dark:border-white/10 dark:bg-white/[0.03]">
-                    <div className="flex flex-nowrap items-end gap-3 overflow-x-auto">
-                    <div className="relative min-w-[18rem] flex-[1.35]">
+                    <div className="flex flex-nowrap items-center gap-3 overflow-x-auto">
+                    <div className="relative min-w-[18rem] flex-[1.35] self-center">
                       <input
                         ref={(node) => {
                           searchInputRefs.current[idx] = node
@@ -505,7 +505,7 @@ export default function CriarRequisicaoMateriaisPage() {
                         document.body
                       ) : null}
                     </div>
-                    <div className="min-w-[20rem] flex-[1.55]">
+                    <div className="min-w-[20rem] flex-[1.55] self-center">
                       <div className="rounded-lg border border-white/20 bg-white/20 px-3 py-2 dark:border-white/10 dark:bg-white/[0.05]">
                         <div className="flex items-center justify-between gap-2">
                           <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
@@ -540,7 +540,7 @@ export default function CriarRequisicaoMateriaisPage() {
                       </div>
                     </div>
 
-                    <div className="min-w-[5.5rem] w-[5.5rem] shrink-0">
+                    <div className="min-w-[5.5rem] w-[5.5rem] shrink-0 self-center">
                       <input
                         type="number"
                         min={1}
@@ -558,7 +558,7 @@ export default function CriarRequisicaoMateriaisPage() {
                       ) : null}
                     </div>
 
-                    <div className="min-w-[3.5rem] shrink-0">
+                    <div className="min-w-[3.5rem] shrink-0 self-center">
                       <button
                         type="button"
                         onClick={() => removeItem(idx)}
