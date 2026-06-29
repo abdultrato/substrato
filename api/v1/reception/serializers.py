@@ -95,6 +95,14 @@ class ReceptionCheckinSerializer(LegacyAliasSerializerMixin, serializers.ModelSe
     patient_code = serializers.CharField(source="patient.custom_id", read_only=True)
     request_code = serializers.CharField(source="request.custom_id", read_only=True)
     invoice_code = serializers.CharField(source="invoice.custom_id", read_only=True)
+    invoice_status = serializers.CharField(source="invoice.status", read_only=True)
+    invoice_status_display = serializers.CharField(source="invoice.get_status_display", read_only=True)
+    invoice_total = serializers.DecimalField(
+        source="invoice.total", max_digits=12, decimal_places=2, read_only=True
+    )
+    invoice_patient_amount = serializers.DecimalField(
+        source="invoice.patient_amount", max_digits=12, decimal_places=2, read_only=True
+    )
     status_display = serializers.CharField(source="get_status_display", read_only=True)
     priority_display = serializers.CharField(source="get_priority_display", read_only=True)
     attendant_name = serializers.SerializerMethodField(method_name="get_attendant_name")
@@ -108,6 +116,10 @@ class ReceptionCheckinSerializer(LegacyAliasSerializerMixin, serializers.ModelSe
             "patient_code",
             "request_code",
             "invoice_code",
+            "invoice_status",
+            "invoice_status_display",
+            "invoice_total",
+            "invoice_patient_amount",
             "status_display",
             "priority_display",
             "attendant_name",

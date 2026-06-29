@@ -171,7 +171,7 @@ export default function ContabilidadePage() {
           />
           <ActionTile
             title="Recepção (audit)"
-            description="Ver check-ins e atendimentos sem editar."
+            description="Check-ins ligados a fatura e cobrança."
             href="/accounting/reception"
             icon={ClipboardList}
             accentClass="border-l-rose-500"
