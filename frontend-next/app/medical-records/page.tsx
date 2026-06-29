@@ -106,7 +106,7 @@ export default function ProntuarioPage() {
                                 className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-100 dark:hover:bg-slate-900"
                             >
                                 <ArrowLeft size={15} />
-                                Voltar à Medicina
+                                Voltar
                             </Link>
                             {podeVerAdmin ? (
                             <Link
