@@ -123,13 +123,16 @@ function MedicationSearch({ onSelect }: { onSelect: (p: Product) => void }) {
   const [dropdownStyle, setDropdownStyle] = useState<React.CSSProperties>({});
 
   function updateDropdownPosition() {
-    if (!inputRef.current) return;
-    const rect = inputRef.current.getBoundingClientRect();
+    if (!inputRef.current || !ref.current) return;
+    const inputRect = inputRef.current.getBoundingClientRect();
+    // align to parent card (section) left edge and width
+    const card = ref.current.closest("section");
+    const cardRect = card ? card.getBoundingClientRect() : inputRect;
     setDropdownStyle({
       position: "fixed",
-      top: rect.bottom + 4,
-      left: rect.left,
-      width: rect.width,
+      top: inputRect.bottom + 4,
+      left: cardRect.left,
+      width: cardRect.width,
       zIndex: 9999,
     });
   }
@@ -156,11 +159,12 @@ function MedicationSearch({ onSelect }: { onSelect: (p: Product) => void }) {
         )}
       </div>
       {open && results.length > 0 && (
-        <ul ref={dropdownRef as React.RefObject<HTMLUListElement>} style={dropdownStyle} className="overflow-hidden rounded-lg border border-border bg-card shadow-lg">
+        <ul ref={dropdownRef as React.RefObject<HTMLUListElement>} style={dropdownStyle}
+          className="overflow-hidden rounded-xl border border-white/20 bg-white/60 shadow-xl backdrop-blur-md dark:border-white/10 dark:bg-black/40">
           {results.map(p => (
-            <li key={p.id}>
+            <li key={p.id} className="border-b border-white/10 last:border-0">
               <button type="button" onClick={() => select(p)}
-                className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-muted transition">
+                className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm transition hover:bg-white/20 dark:hover:bg-white/10">
                 <Pill size={13} className="shrink-0 text-violet-500" />
                 <span className="font-medium text-foreground">{p.name}</span>
                 {p.custom_id && <span className="ml-auto text-[10px] text-muted-foreground">{p.custom_id}</span>}
@@ -170,7 +174,8 @@ function MedicationSearch({ onSelect }: { onSelect: (p: Product) => void }) {
         </ul>
       )}
       {open && !loading && query && results.length === 0 && (
-        <div style={dropdownStyle} className="rounded-lg border border-border bg-card px-3 py-2 text-sm text-muted-foreground shadow-lg">
+        <div style={dropdownStyle}
+          className="rounded-xl border border-white/20 bg-white/60 px-4 py-3 text-sm text-muted-foreground shadow-xl backdrop-blur-md dark:border-white/10 dark:bg-black/40">
           Sem resultados para "{query}"
         </div>
       )}
