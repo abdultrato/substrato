@@ -1,182 +1,216 @@
-"use client"
+"use client";
 
-import { isNotFoundLikeError } from "@/lib/errors/api-error"
-import Link from "next/link"
-import { useEffect, useMemo, useState } from "react"
+import { Suspense, useCallback, useEffect, useState } from "react";
+import Link from "next/link";
+import { ClipboardList, Loader2, Pill, Plus, Search, StickyNote, X } from "lucide-react";
 
-import AppLayout from "@/components/layout/AppLayout"
-import DataTable from "@/components/ui/DataTable"
-import PageHeader from "@/components/ui/PageHeader"
-import Pagination from "@/components/ui/Pagination"
-import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
-import { apiFetchList } from "@/lib/api"
-import { useAuth } from "@/hooks/useAuth"
-import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
+import AppLayout from "@/components/layout/AppLayout";
+import { apiFetch } from "@/lib/api";
+import { GROUPS } from "@/lib/rbac";
 
-type PrescricaoItemRow = Record<string, any>
+const GLASS =
+  "rounded-xl border border-white/20 bg-white/30 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]";
 
-export default function ProntuarioPrescricoesPage() {
-    const { user } = useAuth()
-    const podeVerAdmin = userHasAnyGroup(user, [GROUPS.ADMIN])
-    const safeRefreshToken = useSafeDataRefreshSignal()
+const UNIT_LABEL: Record<string, string> = {
+  MG: "mg", ML: "ml", G: "g", L: "L", KG: "kg",
+};
 
-    const [erro, setErro] = useState<string | null>(null)
-    const [loading, setLoading] = useState(true)
-    const [data, setData] = useState<PrescricaoItemRow[]>([])
-    const [page, setPage] = useState(1)
-    const [pageSize, setPageSize] = useState(20)
-    const [totalItems, setTotalItems] = useState(0)
-    const [totalPages, setTotalPages] = useState(1)
+type PrescItem = {
+  id: number;
+  custom_id?: string;
+  record?: number;
+  medication?: number;
+  medication_name?: string;
+  dosage_value?: string | number;
+  dosage_unit?: string;
+  dose_count?: number;
+  interval_hours?: number;
+  notes?: string;
+};
 
-    useEffect(() => {
-        let mounted = true
-        async function load() {
-            try {
-                setLoading(true)
-                setErro(null)
-                const { items, meta } = await apiFetchList<PrescricaoItemRow>("/medical-records/prescricaoitem/", {
-                    page,
-                    pageSize,
-                    clientPaginate: true,
-                    clientCache: safeRefreshToken === 0,
-                })
-                const total = meta.total ?? items.length
-                const computedTotalPages =
-                    meta.totalPages ??
-                    (total && pageSize ? Math.max(1, Math.ceil(total / pageSize)) : 1)
-                if (!mounted) return
-                setData(items)
-                setTotalItems(total || 0)
-                setTotalPages(computedTotalPages)
-                if (page > computedTotalPages) setPage(computedTotalPages)
-            } catch (e: any) {
-                if (!mounted) return
-                setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao carregar itens de prescrição."))
-            } finally {
-                if (mounted) setLoading(false)
-            }
-        }
-        load()
-        return () => {
-            mounted = false
-        }
-    }, [page, pageSize, safeRefreshToken])
+function ItemCard({ item }: { item: PrescItem }) {
+  const dose = item.dosage_value
+    ? `${item.dosage_value} ${UNIT_LABEL[item.dosage_unit ?? ""] ?? item.dosage_unit ?? ""}`
+    : null;
+  const scheme = item.dose_count
+    ? `${item.dose_count} dose${item.dose_count > 1 ? "s" : ""}${item.interval_hours ? ` · cada ${item.interval_hours}h` : ""}`
+    : null;
 
-    const columns = useMemo(
-        () => [
-            {
-                header: "Código",
-                render: (r: PrescricaoItemRow) => (
-                    <Link
-                        href={`/medical-records/prescription-items/${r.id}`}
-                        className="font-medium text-[var(--text)] no-underline decoration-[var(--border)] underline-offset-2 hover:underline hover:decoration-[var(--gray-300)]"
-                    >
-                        {r.id_custom || r.id || "-"}
-                    </Link>
-                ),
-            },
-            {
-                header: "Cardex",
-                render: (r: PrescricaoItemRow) => r.registro || "-",
-            },
-            {
-                header: "Medicação",
-                render: (r: PrescricaoItemRow) => r.medicacao_nome || r.medicacao || "-",
-            },
-            {
-                header: "Dose",
-                render: (r: PrescricaoItemRow) =>
-                    r.dosagem_valor ? `${r.dosagem_valor}${r.dosagem_unidade || ""}` : "-",
-            },
-            {
-                header: "Esquema",
-                render: (r: PrescricaoItemRow) => {
-                    const n = r.numero_doses ?? "-"
-                    const i = r.intervalo_horas ? `a cada ${r.intervalo_horas}h` : "dose única"
-                    return `${n} dose(s) · ${i}`
-                },
-            },
-        ],
-        []
-    )
-
-    return (
-        <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.MEDICINA, GROUPS.MEDICINA_OCUPACIONAL]}>
-            <div className="space-y-6">
-                <PageHeader
-                    title="Itens de prescrição"
-                    subtitle="Prescrição estruturada vinculada ao Cardex."
-                    actions={
-                        <div className="flex flex-wrap items-center gap-2">
-                            <Link
-                                href="/medical-records/prescription-items/new"
-                                className="inline-flex items-center rounded-xl bg-[var(--primary-600)] px-3 py-1.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[var(--primary-700)]"
-                            >
-                                Criar item de prescrição
-                            </Link>
-                            <Link
-                                href="/medical-records/prescription-items"
-                                className="inline-flex items-center rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-1.5 text-sm font-medium text-[var(--gray-700)] shadow-sm transition hover:bg-[var(--gray-100)]"
-                            >
-                                Gerenciamento
-                            </Link>
-                            <Link
-                                href="/medical-records"
-                                className="inline-flex items-center rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-1.5 text-sm font-medium text-[var(--gray-700)] shadow-sm transition hover:bg-[var(--gray-100)]"
-                            >
-                                Voltar
-                            </Link>
-                            {podeVerAdmin ? (
-                                <Link
-                                    href="/admin/medical-records/prescriptionitem/"
-                                    className="inline-flex items-center rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50"
-                                >
-                                    Admin
-                                </Link>
-                            ) : null}
-                        </div>
-                    }
-                />
-
-                {erro ? (
-                    <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-                        {erro}
-                    </div>
-                ) : null}
-
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div className="text-sm text-slate-600">Total: {totalItems}</div>
-                    <label className="flex items-center gap-2 text-sm text-slate-700">
-                        <span>Por página</span>
-                        <select
-                            value={pageSize}
-                            onChange={(e) => {
-                                setPage(1)
-                                setPageSize(Number(e.target.value))
-                            }}
-                            className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-800 shadow-sm"
-                        >
-                            <option value={20}>20</option>
-                        </select>
-                    </label>
-                </div>
-
-                {loading ? (
-                    <div className="text-sm text-gray-500">Carregando...</div>
-                ) : (
-                    <>
-                        <DataTable<PrescricaoItemRow>
-                            columns={columns as any}
-                            data={data}
-                            emptyMessage="Nenhum item de prescrição encontrado."
-                        />
-                        <Pagination page={page} totalPages={totalPages} onChange={setPage} />
-                    </>
-                )}
+  return (
+    <Link href={`/medical-records/prescription-items/${item.id}`}
+      className={`group relative block ${GLASS} transition hover:border-violet-500/30 hover:shadow-md`}>
+      <span className="absolute left-0 top-0 h-full w-1 rounded-l-xl bg-violet-500" />
+      <div className="px-4 py-3 pl-5">
+        <div className="mb-2 flex items-start justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-violet-500/10 text-violet-500">
+              <Pill size={13} />
+            </span>
+            <div>
+              <p className="text-xs font-bold text-foreground group-hover:text-violet-500 transition">
+                {item.medication_name || `Medicação #${item.medication}`}
+              </p>
+              <p className="text-[10px] text-muted-foreground">{item.custom_id || `PRTI-${item.id}`}</p>
             </div>
-        </AppLayout>
-    )
+          </div>
+          {dose && (
+            <span className="rounded-full border border-violet-200 bg-violet-50 px-2 py-0.5 text-[9px] font-semibold text-violet-700 dark:border-violet-800/50 dark:bg-violet-950/30 dark:text-violet-300">
+              {dose}
+            </span>
+          )}
+        </div>
+
+        <div className="space-y-0.5 text-[11px] text-muted-foreground">
+          {scheme && (
+            <div className="flex items-center gap-1.5">
+              <ClipboardList size={10} className="shrink-0" />
+              <span>{scheme}</span>
+            </div>
+          )}
+          {item.record && (
+            <div className="flex items-center gap-1.5">
+              <ClipboardList size={10} className="shrink-0" />
+              <span>Cardex #{item.record}</span>
+            </div>
+          )}
+          {item.notes && (
+            <div className="flex items-center gap-1.5">
+              <StickyNote size={10} className="shrink-0" />
+              <span className="truncate">{item.notes}</span>
+            </div>
+          )}
+        </div>
+      </div>
+    </Link>
+  );
 }
 
+function PrescriptionsListInner() {
+  const [items, setItems] = useState<PrescItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
+  const pageSize = 20;
 
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams({ page: String(page), page_size: String(pageSize) });
+      if (search) params.set("search", search);
+      const data = await apiFetch<{ results: PrescItem[]; count: number } | PrescItem[]>(
+        `/medical_records/prescricaoitem/?${params}`
+      );
+      if (Array.isArray(data)) {
+        setItems(data); setTotal(data.length);
+      } else {
+        setItems(data.results ?? []); setTotal(data.count ?? 0);
+      }
+    } catch { setItems([]); }
+    finally { setLoading(false); }
+  }, [search, page]);
 
+  useEffect(() => { load(); }, [load]);
+
+  const totalPages = Math.ceil(total / pageSize);
+
+  return (
+    <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.MEDICINA, GROUPS.ENFERMAGEM]}>
+      <div className="w-full space-y-3 px-1">
+
+        {/* ── Cabeçalho ── */}
+        <section className={`relative overflow-hidden ${GLASS}`}>
+          <span className="absolute left-0 top-0 h-full w-1 bg-violet-500" />
+          <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 pl-5">
+            <div className="flex min-w-0 items-center gap-2">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-violet-600 to-purple-600 text-white shadow-md shadow-violet-500/20">
+                <Pill size={17} />
+              </span>
+              <div>
+                <h1 className="text-lg font-bold leading-tight text-foreground">Prescrições</h1>
+                <p className="text-[11px] text-muted-foreground">
+                  {loading ? "A carregar…" : `${total} item${total !== 1 ? "s" : ""}`}
+                </p>
+              </div>
+            </div>
+            <Link href="/medical-records/prescription-items/new"
+              className="inline-flex h-9 items-center gap-1.5 rounded-md bg-gradient-to-br from-violet-600 to-purple-600 px-4 text-sm font-semibold text-white shadow-sm shadow-violet-500/20 transition hover:opacity-90">
+              <Plus size={15} /> Nova prescrição
+            </Link>
+          </div>
+        </section>
+
+        {/* ── Filtro ── */}
+        <section className={`relative ${GLASS}`}>
+          <span className="absolute left-0 top-0 h-full w-1 rounded-l-xl bg-slate-400" />
+          <div className="px-4 py-3 pl-5">
+            <label className="mb-1 block text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Pesquisar</label>
+            <div className="relative">
+              <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <input
+                type="text"
+                placeholder="Medicação, cardex, código…"
+                className="w-full rounded-lg border border-border bg-background/60 py-2 pl-8 pr-8 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-violet-500/40 transition"
+                value={search}
+                onChange={e => { setSearch(e.target.value); setPage(1); }}
+              />
+              {search && (
+                <button type="button" onClick={() => { setSearch(""); setPage(1); }}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                  <X size={13} />
+                </button>
+              )}
+            </div>
+          </div>
+        </section>
+
+        {/* ── Lista ── */}
+        {loading ? (
+          <div className="flex h-32 items-center justify-center text-muted-foreground">
+            <Loader2 size={20} className="animate-spin" />
+          </div>
+        ) : items.length === 0 ? (
+          <section className={`relative overflow-hidden ${GLASS}`}>
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+              <span className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-violet-500/10 text-violet-500">
+                <Pill size={22} />
+              </span>
+              <p className="text-sm font-medium text-foreground">Nenhuma prescrição encontrada</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {search ? "Tente ajustar a pesquisa." : "Crie a primeira prescrição clicando em «Nova prescrição»."}
+              </p>
+            </div>
+          </section>
+        ) : (
+          <div className="grid grid-cols-2 gap-2 xl:grid-cols-4">
+            {items.map(item => <ItemCard key={item.id} item={item} />)}
+          </div>
+        )}
+
+        {/* ── Paginação ── */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-center gap-2 pt-1">
+            <button disabled={page <= 1} onClick={() => setPage(p => p - 1)}
+              className="inline-flex h-8 items-center rounded-md border border-white/20 bg-white/10 px-3 text-xs font-medium text-foreground backdrop-blur-sm transition hover:bg-white/20 disabled:opacity-40">
+              ← Anterior
+            </button>
+            <span className="text-xs text-muted-foreground">{page} / {totalPages}</span>
+            <button disabled={page >= totalPages} onClick={() => setPage(p => p + 1)}
+              className="inline-flex h-8 items-center rounded-md border border-white/20 bg-white/10 px-3 text-xs font-medium text-foreground backdrop-blur-sm transition hover:bg-white/20 disabled:opacity-40">
+              Seguinte →
+            </button>
+          </div>
+        )}
+
+      </div>
+    </AppLayout>
+  );
+}
+
+export default function PrescriptionsPage() {
+  return (
+    <Suspense fallback={<div className="p-4 text-sm text-muted-foreground">Carregando…</div>}>
+      <PrescriptionsListInner />
+    </Suspense>
+  );
+}
