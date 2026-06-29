@@ -196,9 +196,9 @@ export default function PharmacyMaterialRequisitionItemsPage() {
             <Loader2 size={20} className="animate-spin" />
           </div>
         ) : (
-          <div className={`grid gap-2 ${colFilter ? "grid-cols-1" : "grid-cols-2 xl:grid-cols-4"}`}>
+          <div className="grid grid-cols-2 gap-2 xl:grid-cols-4">
             {COLS.filter(col => !colFilter || col.key === colFilter).map(col => (
-              <div key={col.key} className="flex flex-col gap-2">
+              <div key={col.key} className={`flex flex-col gap-2 ${colFilter ? "col-span-2 xl:col-span-4" : ""}`}>
                 {/* Cabeçalho coluna */}
                 <div className={`flex items-center justify-between rounded-lg border px-3 py-1.5 ${col.header}`}>
                   <div className="flex items-center gap-1.5">
@@ -209,8 +209,12 @@ export default function PharmacyMaterialRequisitionItemsPage() {
                 </div>
                 {/* Cards */}
                 {grouped[col.key].length === 0 ? (
-                  <div className={`flex items-center justify-center rounded-xl border border-dashed border-white/10 py-8 text-[10px] text-muted-foreground/50`}>
+                  <div className="flex items-center justify-center rounded-xl border border-dashed border-white/10 py-8 text-[10px] text-muted-foreground/50">
                     {col.empty}
+                  </div>
+                ) : colFilter ? (
+                  <div className="grid grid-cols-2 gap-2 xl:grid-cols-4">
+                    {grouped[col.key].map(item => <ItemCard key={item.id} item={item} col={col.key} />)}
                   </div>
                 ) : (
                   grouped[col.key].map(item => <ItemCard key={item.id} item={item} col={col.key} />)
