@@ -485,7 +485,7 @@ export default function CriarRequisicaoMateriaisPage() {
                       ) : null}
                     </div>
 
-                    <div className="min-w-[8rem] shrink-0">
+                    <div className="min-w-[5.5rem] w-[5.5rem] shrink-0">
                       <input
                         type="number"
                         min={1}
