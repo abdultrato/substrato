@@ -221,7 +221,7 @@ function RecordsListInner() {
             </div>
           </section>
         ) : (
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
+          <div className="grid grid-cols-2 gap-2 xl:grid-cols-4">
             {items.map(rec => <RecordCard key={rec.id} rec={rec} />)}
           </div>
         )}
