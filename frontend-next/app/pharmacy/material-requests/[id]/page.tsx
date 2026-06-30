@@ -329,7 +329,7 @@ export default function MaterialRequisitionDetailPage() {
                                 type="button"
                                 onClick={() => fulfillItem(it.id)}
                                 disabled={busy}
-                                className="inline-flex h-8 items-center gap-1 rounded-md bg-gradient-to-br from-emerald-600 to-teal-600 px-3 text-xs font-semibold text-white shadow-sm transition hover:opacity-90 disabled:opacity-50"
+                                className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 px-3 text-xs font-bold text-white shadow shadow-emerald-500/30 ring-1 ring-emerald-400/20 transition hover:from-emerald-400 hover:to-teal-500 hover:shadow-emerald-400/40 active:scale-95 disabled:opacity-50 disabled:shadow-none"
                               >
                                 {busy ? <Loader2 size={12} className="animate-spin" /> : <CheckCircle2 size={12} />}
                                 Aviar
@@ -339,7 +339,7 @@ export default function MaterialRequisitionDetailPage() {
                                 type="button"
                                 onClick={() => setSkipDialog({ itemId: it.id, itemName: it.product_name || it.warehouse_item_name || "—", reason: "" })}
                                 disabled={busy}
-                                className="inline-flex h-8 items-center gap-1 rounded-md border border-white/20 bg-white/10 px-3 text-xs font-medium text-muted-foreground backdrop-blur-sm transition hover:bg-white/20 hover:text-foreground disabled:opacity-50"
+                                className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-gradient-to-br from-amber-500 to-orange-500 px-3 text-xs font-bold text-white shadow shadow-amber-500/30 ring-1 ring-amber-400/20 transition hover:from-amber-400 hover:to-orange-400 hover:shadow-amber-400/40 active:scale-95 disabled:opacity-50 disabled:shadow-none"
                               >
                                 <Archive size={12} /> Arquivar item
                               </button>
@@ -366,7 +366,7 @@ export default function MaterialRequisitionDetailPage() {
                       className="min-w-[220px] flex-1 rounded-lg border border-border bg-background/60 px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-violet-500/40"
                       disabled={archiving} />
                     <button type="button" onClick={archiveRequisition} disabled={archiving || loading}
-                      className="inline-flex h-9 items-center gap-1.5 rounded-md border border-white/20 bg-white/10 px-4 text-sm font-medium text-foreground backdrop-blur-sm transition hover:bg-white/20 disabled:opacity-50">
+                      className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-gradient-to-br from-rose-500 to-red-600 px-4 text-sm font-bold text-white shadow shadow-rose-500/30 ring-1 ring-rose-400/20 transition hover:from-rose-400 hover:to-red-500 hover:shadow-rose-400/40 active:scale-95 disabled:opacity-50 disabled:shadow-none">
                       {archiving ? <Loader2 size={13} className="animate-spin" /> : <Archive size={14} />}
                       Arquivar requisição
                     </button>
@@ -424,7 +424,7 @@ export default function MaterialRequisitionDetailPage() {
               </button>
               <button
                 onClick={() => skipItem(skipDialog.itemId, skipDialog.reason)}
-                className="inline-flex h-9 items-center gap-1.5 rounded-md border border-amber-400/30 bg-amber-500/15 px-4 text-sm font-semibold text-amber-700 dark:text-amber-300 transition hover:bg-amber-500/25"
+                className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-gradient-to-br from-amber-500 to-orange-500 px-4 text-sm font-bold text-white shadow shadow-amber-500/30 ring-1 ring-amber-400/20 transition hover:from-amber-400 hover:to-orange-400 active:scale-95"
               >
                 <Archive size={14} /> Confirmar arquivo
               </button>
