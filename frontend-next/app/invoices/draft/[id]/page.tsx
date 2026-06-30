@@ -1762,12 +1762,16 @@ export default function FaturaRascunhoPage() {
                 const pendentesFarmacia = vendas.flatMap((v) =>
                   (vendaItens[v.id] || []).filter((it) => { const id = toNumberId(it.id); return !(id && referenciaIds.itensVenda.has(id)) }).map((it) => ({ v, it }))
                 )
-                // Materiais de procedimentos que estão na fatura mas cujos materiais ainda não foram adicionados
-                const pendentesProcedimento = procedimentos.flatMap((p) =>
-                  (procedimentoMateriais[p.id] || []).filter((mat) => {
-                    const matId = toNumberId(mat.id)
-                    return matId && !referenciaIds.procedimentoMateriais.has(matId)
-                  }).map((mat) => ({ p, mat }))
+                // Materiais de procedimentos pendentes — deduplica por mat.id (mesmo material pode aparecer em vários procedimentos)
+                const pendentesProcedimento = Array.from(
+                  new Map(
+                    procedimentos.flatMap((p) =>
+                      (procedimentoMateriais[p.id] || []).filter((mat) => {
+                        const matId = toNumberId(mat.id)
+                        return matId && !referenciaIds.procedimentoMateriais.has(matId)
+                      }).map((mat) => ({ p, mat }))
+                    ).map((entry) => [entry.mat.id, entry])
+                  ).values()
                 )
                 if (!adicionados.length && !pendentesFarmacia.length && !pendentesProcedimento.length) return null
                 return (
