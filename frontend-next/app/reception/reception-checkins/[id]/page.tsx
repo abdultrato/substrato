@@ -355,7 +355,7 @@ export default function ReceptionCheckinDetailPage() {
                           <div className="text-sm font-semibold text-emerald-700 dark:text-emerald-300">{checkin.invoice_code}</div>
                         </div>
                         {checkin.invoice && (
-                          <Link href={`/invoices/${checkin.invoice}`}
+                          <Link href={`/invoices/draft/${checkin.invoice}`}
                             className="ml-2 text-[11px] text-emerald-600 hover:underline dark:text-emerald-400">
                             Ver →
                           </Link>
