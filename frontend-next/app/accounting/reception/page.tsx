@@ -280,7 +280,7 @@ export default function ContabilidadeRecepcaoAuditPage() {
               <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
               <input
                 type="text"
-                placeholder="Pesquisar por código, paciente…"
+                placeholder="Pesquisar por código, paciente, fatura, requisição ou atendente…"
                 className="h-9 w-full rounded-lg border border-border bg-background/60 py-2 pl-8 pr-8 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-rose-500/40 transition"
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}

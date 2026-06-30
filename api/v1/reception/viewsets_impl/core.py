@@ -92,6 +92,12 @@ class ReceptionCheckinViewSet(ValidatedSearchOrderingMixin, TenantAwareMixin, Mo
         "custom_id",
         "patient__custom_id",
         "patient__name",
+        "patient__document_number",
+        "request__custom_id",
+        "invoice__custom_id",
+        "attendant__first_name",
+        "attendant__last_name",
+        "attendant__username",
         "reason",
         "notes",
     ]
