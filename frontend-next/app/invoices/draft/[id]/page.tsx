@@ -1428,7 +1428,7 @@ export default function FaturaRascunhoPage() {
 
         {/* ── Adicionar itens — grid 3 colunas ── */}
         {podeEditar && faturaRascunho && !faturaProforma ? (<>
-          <div className="grid grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-3 items-start">
+          <div className="columns-1 gap-2 md:columns-2 lg:columns-3 [&>*]:break-inside-avoid [&>*]:mb-2">
 
             {/* Exames laboratoriais */}
             <section className={`${GLASS} border-l-4 border-l-sky-500 flex flex-col`}>
