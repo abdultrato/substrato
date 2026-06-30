@@ -112,11 +112,12 @@ function StatusDot({ status }: { status: string }) {
 
 // ── KPI Card ──────────────────────────────────────────────────────────────────
 
-function KpiCard({ icon: Icon, label, value, color, href }: {
-  icon: React.ElementType; label: string; value: string | number; color: string; href?: string;
+function KpiCard({ icon: Icon, label, value, color, accent, href }: {
+  icon: React.ElementType; label: string; value: string | number; color: string; accent: string; href?: string;
 }) {
   const inner = (
-    <div className={`flex items-center gap-3 rounded-xl border border-white/20 bg-white/25 px-4 py-3 shadow-sm backdrop-blur-sm transition dark:bg-white/5 dark:border-white/10 ${href ? "hover:bg-white/35 dark:hover:bg-white/8 cursor-pointer" : ""}`}>
+    <div className={`relative flex items-center gap-3 overflow-hidden rounded-xl border border-white/20 bg-white/25 px-4 py-3 pl-5 shadow-sm backdrop-blur-sm transition dark:bg-white/5 dark:border-white/10 ${href ? "hover:bg-white/35 dark:hover:bg-white/8 cursor-pointer" : ""}`}>
+      <span className={`absolute left-0 top-0 h-full w-1 ${accent}`} />
       <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${color}/10`}>
         <Icon size={16} className={color} />
       </span>
@@ -215,14 +216,14 @@ export default function ReceptionWorkspacePage() {
         {/* KPIs */}
         {s && (
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <KpiCard icon={Users}       label="Check-ins hoje"       value={s.checkins_today}             color="text-[var(--primary-600)] dark:text-[var(--primary-400)]" href="/reception/reception-checkins" />
-            <KpiCard icon={ClipboardList} label="Na fila"            value={s.queue_size}                 color="text-amber-600 dark:text-amber-400" />
-            <KpiCard icon={Stethoscope} label="Em atendimento"       value={s.in_care}                    color="text-blue-600 dark:text-blue-400" />
-            <KpiCard icon={UserPlus}    label="Novos pacientes"      value={s.new_patients}               color="text-emerald-600 dark:text-emerald-400" href="/patients" />
-            <KpiCard icon={FileText}    label="Req. pendentes"       value={s.pending_requests}           color="text-violet-600 dark:text-violet-400" href="/requests" />
-            <KpiCard icon={AlertCircle} label="Faturas em aberto"    value={s.open_invoices}              color="text-orange-600 dark:text-orange-400" />
-            <KpiCard icon={Receipt}     label="Recibos hoje"         value={s.receipts_generated_today}   color="text-indigo-600 dark:text-indigo-400" />
-            <KpiCard icon={DollarSign}  label="Recebido hoje"        value={fmtCurrency(s.received_today)} color="text-emerald-600 dark:text-emerald-400" />
+            <KpiCard icon={Users}       label="Check-ins hoje"       value={s.checkins_today}             color="text-[var(--primary-600)] dark:text-[var(--primary-400)]" accent="bg-[var(--primary-600)]" href="/reception/reception-checkins" />
+            <KpiCard icon={ClipboardList} label="Na fila"            value={s.queue_size}                 color="text-amber-600 dark:text-amber-400" accent="bg-amber-500" href="/reception/reception-checkins?status=AGUARD" />
+            <KpiCard icon={Stethoscope} label="Em atendimento"       value={s.in_care}                    color="text-blue-600 dark:text-blue-400" accent="bg-blue-500" href="/reception/reception-checkins?status=ATEND" />
+            <KpiCard icon={UserPlus}    label="Novos pacientes"      value={s.new_patients}               color="text-emerald-600 dark:text-emerald-400" accent="bg-emerald-500" href="/patients" />
+            <KpiCard icon={FileText}    label="Req. pendentes"       value={s.pending_requests}           color="text-violet-600 dark:text-violet-400" accent="bg-violet-500" href="/requests" />
+            <KpiCard icon={AlertCircle} label="Faturas em aberto"    value={s.open_invoices}              color="text-orange-600 dark:text-orange-400" accent="bg-orange-500" href="/invoices" />
+            <KpiCard icon={Receipt}     label="Recibos hoje"         value={s.receipts_generated_today}   color="text-indigo-600 dark:text-indigo-400" accent="bg-indigo-500" href="/receipts" />
+            <KpiCard icon={DollarSign}  label="Recebido hoje"        value={fmtCurrency(s.received_today)} color="text-emerald-600 dark:text-emerald-400" accent="bg-emerald-500" href="/receipts" />
           </div>
         )}
 

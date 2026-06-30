@@ -176,6 +176,16 @@ export default function ReceptionCheckinsPage() {
 
   useEffect(() => { load(); }, [load]);
 
+  // Aplica filtros vindos da URL (ex.: ?status=AGUARD) ao montar.
+  useEffect(() => {
+    const sp = new URLSearchParams(window.location.search);
+    const st = sp.get("status");
+    const pr = sp.get("priority");
+    if (st) setStatusFilter(st);
+    if (pr) setPriorityFilter(pr);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Debounce search
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
