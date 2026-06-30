@@ -12,6 +12,8 @@ export type CatalogOption = {
   added?: boolean
 }
 
+type DropdownPos = { top: number; left: number; width: number; openUp: boolean }
+
 type Props = {
   placeholder?: string
   fetcher: (query: string) => Promise<CatalogOption[]>
@@ -20,6 +22,8 @@ type Props = {
   minChars?: number
   delay?: number
 }
+
+const MAX_H = 256 // px — deve coincidir com max-h-64
 
 export default function CatalogSearchSelect({
   placeholder = "Pesquisar...",
@@ -35,10 +39,25 @@ export default function CatalogSearchSelect({
   const [loading, setLoading] = useState(false)
   const [highlight, setHighlight] = useState(0)
   const [busy, setBusy] = useState(false)
-  const [dropdownRect, setDropdownRect] = useState<{ top: number; left: number; width: number } | null>(null)
+  const [pos, setPos] = useState<DropdownPos | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const reqIdRef = useRef(0)
+
+  const calcPos = useCallback(() => {
+    if (!inputRef.current) return
+    const r = inputRef.current.getBoundingClientRect()
+    const spaceBelow = window.innerHeight - r.bottom
+    const openUp = spaceBelow < MAX_H + 8 && r.top > MAX_H
+    setPos({
+      top: openUp
+        ? r.top + window.scrollY - MAX_H - 4
+        : r.bottom + window.scrollY + 4,
+      left: r.left + window.scrollX,
+      width: r.width,
+      openUp,
+    })
+  }, [])
 
   useEffect(() => {
     const q = query.trim()
@@ -56,10 +75,7 @@ export default function CatalogSearchSelect({
           setOptions(res)
           setOpen(true)
           setHighlight(0)
-          if (inputRef.current) {
-            const r = inputRef.current.getBoundingClientRect()
-            setDropdownRect({ top: r.bottom + window.scrollY, left: r.left + window.scrollX, width: r.width })
-          }
+          calcPos()
         }
       } catch {
         if (reqIdRef.current === myId) setOptions([])
@@ -68,7 +84,7 @@ export default function CatalogSearchSelect({
       }
     }, delay)
     return () => clearTimeout(timer)
-  }, [query, fetcher, minChars, delay])
+  }, [query, fetcher, minChars, delay, calcPos])
 
   useEffect(() => {
     function onDocMouseDown(e: MouseEvent) {
@@ -79,6 +95,18 @@ export default function CatalogSearchSelect({
     document.addEventListener("mousedown", onDocMouseDown)
     return () => document.removeEventListener("mousedown", onDocMouseDown)
   }, [])
+
+  // Recalculate on scroll/resize so position stays correct
+  useEffect(() => {
+    if (!open) return
+    const onMove = () => calcPos()
+    window.addEventListener("scroll", onMove, true)
+    window.addEventListener("resize", onMove)
+    return () => {
+      window.removeEventListener("scroll", onMove, true)
+      window.removeEventListener("resize", onMove)
+    }
+  }, [open, calcPos])
 
   const choose = useCallback(
     async (opt: CatalogOption) => {
@@ -99,58 +127,60 @@ export default function CatalogSearchSelect({
   const selectableOptions = options.filter((o) => !o.added)
   const showDropdown = open && query.trim().length >= minChars
 
-  const dropdown = showDropdown && dropdownRect ? createPortal(
-    <div
-      style={{
-        position: "absolute",
-        top: dropdownRect.top + 4,
-        left: dropdownRect.left,
-        width: dropdownRect.width,
-        zIndex: 9999,
-      }}
-      className="max-h-64 overflow-auto rounded-md border border-border bg-background shadow-xl"
-      onMouseDown={(e) => e.preventDefault()}
-    >
-      {loading ? (
-        <div className="px-3 py-2 text-xs text-muted-foreground">Buscando...</div>
-      ) : options.length === 0 ? (
-        <div className="px-3 py-2 text-xs text-muted-foreground">Nenhum resultado.</div>
-      ) : (
-        options.map((opt) => {
-          const isAdded = !!opt.added
-          const selectableIdx = selectableOptions.indexOf(opt)
-          return (
-            <div
-              key={opt.key}
-              onMouseEnter={() => { if (!isAdded) setHighlight(selectableIdx) }}
-              onClick={() => choose(opt)}
-              className={`flex w-full items-center justify-between gap-3 px-3 py-2 text-left text-sm transition-colors select-none
-                ${isAdded
-                  ? "cursor-default opacity-50 bg-muted/40"
-                  : `cursor-pointer hover:bg-muted ${selectableIdx === highlight ? "bg-muted" : ""}`
-                }`}
-            >
-              <span className={`truncate ${isAdded ? "text-muted-foreground" : "text-foreground"}`}>
-                {opt.label}
-              </span>
-              <div className="flex shrink-0 items-center gap-1.5">
-                {opt.hint && !isAdded ? (
-                  <span className="text-xs text-muted-foreground">{opt.hint}</span>
-                ) : null}
-                {isAdded ? (
-                  <span className="inline-flex items-center gap-1 text-[10px] font-medium text-emerald-600 dark:text-emerald-400">
-                    <Info size={11} />
-                    já adicionado
+  const dropdown = showDropdown && pos
+    ? createPortal(
+        <div
+          style={{
+            position: "absolute",
+            top: pos.top,
+            left: pos.left,
+            width: pos.width,
+            zIndex: 9999,
+            maxHeight: MAX_H,
+          }}
+          className="overflow-auto rounded-md border border-border bg-background shadow-xl"
+          onMouseDown={(e) => e.preventDefault()}
+        >
+          {loading ? (
+            <div className="px-3 py-2 text-xs text-muted-foreground">Buscando...</div>
+          ) : options.length === 0 ? (
+            <div className="px-3 py-2 text-xs text-muted-foreground">Nenhum resultado.</div>
+          ) : (
+            options.map((opt) => {
+              const isAdded = !!opt.added
+              const selectableIdx = selectableOptions.indexOf(opt)
+              return (
+                <div
+                  key={opt.key}
+                  onMouseEnter={() => { if (!isAdded) setHighlight(selectableIdx) }}
+                  onClick={() => choose(opt)}
+                  className={`flex w-full items-center justify-between gap-3 px-3 py-2 text-left text-sm transition-colors select-none
+                    ${isAdded
+                      ? "cursor-default opacity-50 bg-muted/40"
+                      : `cursor-pointer hover:bg-muted ${selectableIdx === highlight ? "bg-muted" : ""}`
+                    }`}
+                >
+                  <span className={`truncate ${isAdded ? "text-muted-foreground" : "text-foreground"}`}>
+                    {opt.label}
                   </span>
-                ) : null}
-              </div>
-            </div>
-          )
-        })
-      )}
-    </div>,
-    document.body
-  ) : null
+                  <div className="flex shrink-0 items-center gap-1.5">
+                    {opt.hint && !isAdded
+                      ? <span className="text-xs text-muted-foreground">{opt.hint}</span>
+                      : null}
+                    {isAdded
+                      ? <span className="inline-flex items-center gap-1 text-[10px] font-medium text-emerald-600 dark:text-emerald-400">
+                          <Info size={11} />já adicionado
+                        </span>
+                      : null}
+                  </div>
+                </div>
+              )
+            })
+          )}
+        </div>,
+        document.body
+      )
+    : null
 
   return (
     <div ref={containerRef} className="relative">
@@ -163,15 +193,11 @@ export default function CatalogSearchSelect({
         onChange={(e) => {
           setQuery(e.target.value)
           setOpen(true)
-          if (inputRef.current) {
-            const r = inputRef.current.getBoundingClientRect()
-            setDropdownRect({ top: r.bottom + window.scrollY, left: r.left + window.scrollX, width: r.width })
-          }
+          calcPos()
         }}
         onFocus={() => {
-          if (options.length && inputRef.current) {
-            const r = inputRef.current.getBoundingClientRect()
-            setDropdownRect({ top: r.bottom + window.scrollY, left: r.left + window.scrollX, width: r.width })
+          if (options.length) {
+            calcPos()
             setOpen(true)
           }
         }}
