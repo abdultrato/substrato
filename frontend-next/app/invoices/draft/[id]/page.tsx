@@ -321,10 +321,10 @@ export default function FaturaRascunhoPage() {
     totalLiquidoPagamentoCents,
   ])
 
-  const carregarItens = useCallback(async (fatId: number) => {
+  const carregarItens = useCallback(async (fatId: number, forceRefresh = false) => {
     try {
       const res = await apiFetch<any>(`/billing/invoiceitem/?fatura=${fatId}`, {
-        clientCache: safeRefreshToken === 0,
+        clientCache: !forceRefresh && safeRefreshToken === 0,
       })
       const lista = listFrom(res)
       setItens(lista as FaturaItem[])
@@ -528,7 +528,7 @@ export default function FaturaRascunhoPage() {
         method: "POST",
         body: JSON.stringify({ ...payload, fatura: faturaId }),
       })
-      await carregarItens(faturaId)
+      await carregarItens(faturaId, true)
       const fat = await apiFetch<any>(`/invoices/${faturaId}/`)
       setFatura(fat)
     } catch (e: any) {
@@ -555,7 +555,7 @@ export default function FaturaRascunhoPage() {
     try {
       setErro(null)
       await apiFetch(`/billing/invoiceitem/${itemId}/`, { method: "DELETE" })
-      if (faturaId) await carregarItens(faturaId)
+      if (faturaId) await carregarItens(faturaId, true)
     } catch (e: any) {
       setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao remover item."))
     }
@@ -576,7 +576,7 @@ export default function FaturaRascunhoPage() {
         method: "PATCH",
         body: JSON.stringify({ aplica_iva: !item.aplica_iva }),
       })
-      if (faturaId) await carregarItens(faturaId)
+      if (faturaId) await carregarItens(faturaId, true)
     } catch (e: any) {
       setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao atualizar IVA do item."))
     }
