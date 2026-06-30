@@ -629,8 +629,15 @@ export default function FaturasPage() {
             >
               <div className="space-y-6">
                 <div className="space-y-3">
-                  <div className="text-xs font-semibold uppercase text-muted-foreground">
-                    Requisições por faturar
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="text-xs font-semibold uppercase text-muted-foreground">
+                      Requisições por faturar
+                    </div>
+                    {requisicoes.length > 0 ? (
+                      <span className="text-[11px] text-muted-foreground">
+                        A mostrar {Math.min(requisicoes.length, pageSize)} de {requisicoes.length}
+                      </span>
+                    ) : null}
                   </div>
                   {carregandoRequisicoes ? (
                     <div className="text-sm text-gray-500">Carregando requisições...</div>
@@ -678,8 +685,15 @@ export default function FaturasPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <div className="text-xs font-semibold uppercase text-muted-foreground">
-                    Rascunhos aguardando emissão
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="text-xs font-semibold uppercase text-muted-foreground">
+                      Rascunhos aguardando emissão
+                    </div>
+                    {rascunhos.length > 0 ? (
+                      <span className="text-[11px] text-muted-foreground">
+                        A mostrar {Math.min(rascunhos.length, pageSize)} de {rascunhos.length}
+                      </span>
+                    ) : null}
                   </div>
                   {rascunhos.length === 0 ? (
                     <div className="text-sm text-gray-500">Nenhum rascunho encontrado.</div>
