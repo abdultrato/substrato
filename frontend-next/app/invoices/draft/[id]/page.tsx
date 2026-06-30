@@ -144,6 +144,7 @@ export default function FaturaRascunhoPage() {
   const [cirurgias, setCirurgias] = useState<Row[]>([])
   const [consultas, setConsultas] = useState<Row[]>([])
   const [consultaQuery, setConsultaQuery] = useState("")
+  const [consultasSelecionadas, setConsultasSelecionadas] = useState<Set<number>>(new Set())
 
   const [exames, setExames] = useState<Row[]>([])
   const [examesMedicos, setExamesMedicos] = useState<Row[]>([])
@@ -1327,354 +1328,314 @@ export default function FaturaRascunhoPage() {
         </div>{/* fim grid 4-col */}
 
         {/* ── Row: Itens do paciente (50%) + Pesquisa de catálogo (50%) ── */}
-        <div className="grid grid-cols-1 gap-2 lg:grid-cols-2">
+        <div className="grid grid-cols-1 gap-2 lg:grid-cols-2 lg:items-start">
 
-        <section className={`${GLASS} border-l-4 border-l-amber-500`}>
-          <div className="px-4 py-3 space-y-3">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Itens do paciente</p>
-              <p className="text-[11px] text-muted-foreground">Requisições, procedimentos, vendas e cirurgias.</p>
-            </div>
+        {/* ── Itens do paciente ── */}
+        <div className={`${GLASS} border-l-4 border-l-amber-500 flex flex-col gap-0`}>
+          <div className="border-b border-white/20 px-4 py-2.5 dark:border-white/10">
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Itens do paciente</p>
+            <p className="text-[11px] text-muted-foreground">Requisições, procedimentos, vendas, cirurgias e consultas do paciente.</p>
+          </div>
           {!podeEditar ? (
-            <div className="text-sm text-muted-foreground">Sem permissão para adicionar itens do paciente.</div>
+            <div className="px-4 py-3 text-sm text-muted-foreground">Sem permissão para adicionar itens do paciente.</div>
           ) : (
-          <div className="space-y-4">
-            <div>
-              <div className="text-sm font-semibold text-foreground">Requisições (exames)</div>
-              {requisicoes.length === 0 ? (
-                <div className="text-sm text-muted-foreground">Sem requisições.</div>
-              ) : (
-                <div className="space-y-2">
-                  {requisicoes.map((r) => {
-                    const availableItems = (requisicaoItens[r.id] || []).filter((it) => {
-                      const exameId = toNumberId(it.exame)
-                      if (exameId && referenciaIds.exames.has(exameId)) return false
-                      const exameMedId = toNumberId(it.exame_medico)
-                      if (exameMedId && referenciaIds.examesMedicos.has(exameMedId)) return false
-                      return true
-                    })
-                    return (
-                      <div key={r.id} className="rounded-lg border border-white/20 bg-white/40 p-3 text-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.06]">
-                        <div className="font-semibold text-gray-800">{r.id_custom || `REQ ${r.id}`}</div>
-                        <div className="text-xs text-muted-foreground">Tipo: {r.tipo || "-"}</div>
-                        <div className="mt-2 space-y-1">
-                          {availableItems.length === 0 ? (
-                            <div className="text-xs text-muted-foreground">Todos os exames já foram adicionados.</div>
-                          ) : (
-                            availableItems.map((it) => {
-                              const exame = it.exame ? exameById.get(it.exame) : null
-                              const exameMed = it.exame_medico ? exameMedById.get(it.exame_medico) : null
-                              const label =
-                                exame?.nome ||
-                                exameMed?.nome ||
-                                (it.exame ? `Exame ${it.exame}` : `Exame médico ${it.exame_medico}`)
-                              const addKey = it.exame ? `req-exam-${it.id}` : `req-medical-exam-${it.id}`
-                              return (
-                                <div key={it.id} className="flex items-center justify-between gap-2">
-                                  <div className="text-foreground">{label}</div>
-                                  <button
-                                    className="inline-flex items-center rounded-lg border border-emerald-200 px-2.5 py-1 text-xs font-medium text-emerald-700 transition hover:bg-emerald-50 disabled:opacity-50"
-                                    onClick={() => {
-                                      if (it.exame) {
-                                        adicionarItem({ tipo_item: "EXA", exame: it.exame }, addKey)
-                                      } else if (it.exame_medico) {
-                                        adicionarItem({ tipo_item: "EXM", exame_medico: it.exame_medico }, addKey)
-                                      }
-                                    }}
-                                    disabled={addItemButtonDisabled}
-                                  >
-                                    {addItemButtonLabel(addKey)}
-                                  </button>
-                                </div>
-                              )
-                            })
-                          )}
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
-              )}
-            </div>
+          <div className="flex flex-col divide-y divide-white/20 dark:divide-white/10">
 
-            <div>
-              <div className="text-sm font-semibold text-foreground">Procedimentos (enfermagem)</div>
-              {procedimentos.length === 0 ? (
-                <div className="text-sm text-muted-foreground">Sem procedimentos.</div>
-              ) : (
-                <div className="space-y-2">
-                  {procedimentos.map((p) => {
-                    const itensDisponiveis = (procedimentoItens[p.id] || []).filter((it) => {
-                      const id = toNumberId(it.id)
-                      return !(id && referenciaIds.procedimentoItens.has(id))
-                    })
-                    const materiaisDisponiveis = (procedimentoMateriais[p.id] || []).filter((mat) => {
-                      const id = toNumberId(mat.id)
-                      return !(id && referenciaIds.procedimentoMateriais.has(id))
-                    })
-                    return (
-                      <div key={p.id} className="rounded-lg border border-white/20 bg-white/40 p-3 text-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.06]">
-                        <div className="font-semibold text-gray-800">{p.id_custom || `PROC ${p.id}`}</div>
-                        <div className="text-xs text-muted-foreground">Total: <MoneyValue value={p.total} /></div>
-                        <div className="mt-2 space-y-1">
-                          {itensDisponiveis.length === 0 ? (
-                            <div className="text-xs text-muted-foreground">Todos os serviços deste procedimento já estão adicionados.</div>
-                          ) : (
-                            itensDisponiveis.map((it) => (
-                              <div key={it.id} className="flex items-center justify-between gap-2">
-                                <div className="text-foreground">{it.descricao || `Serviço ${it.id}`}</div>
-                                <button
-                                  className="inline-flex items-center rounded-lg border border-emerald-200 px-2.5 py-1 text-xs font-medium text-emerald-700 transition hover:bg-emerald-50 disabled:opacity-50"
-                                  onClick={() => adicionarItem({ tipo_item: "PRC", procedimento_item: it.id }, `procedure-item-${it.id}`)}
-                                  disabled={addItemButtonDisabled}
-                                >
-                                  {addItemButtonLabel(`procedure-item-${it.id}`)}
-                                </button>
-                              </div>
-                            ))
-                          )}
-                          {materiaisDisponiveis.length === 0 ? (
-                            <div className="text-xs text-muted-foreground">Todos os materiais deste procedimento já foram adicionados.</div>
-                          ) : (
-                            materiaisDisponiveis.map((mat) => {
-                              const prod = produtoById.get(mat.produto)
-                              const nome = prod?.nome || `Material ${mat.produto}`
-                              return (
-                                <div key={mat.id} className="flex items-center justify-between gap-2">
-                                  <div className="text-foreground">{nome}</div>
-                                  <button
-                                    className="inline-flex items-center rounded-lg border border-emerald-200 px-2.5 py-1 text-xs font-medium text-emerald-700 transition hover:bg-emerald-50 disabled:opacity-50"
-                                    onClick={() => adicionarItem({ tipo_item: "MAT", procedimento_material: mat.id }, `procedure-material-${mat.id}`)}
-                                    disabled={addItemButtonDisabled}
-                                  >
-                                    {addItemButtonLabel(`procedure-material-${mat.id}`)}
-                                  </button>
-                                </div>
-                              )
-                            })
-                          )}
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
-              )}
-            </div>
-
-            <div>
-              <div className="text-sm font-semibold text-foreground">Vendas (farmácia)</div>
-              {vendas.length === 0 ? (
-                <div className="text-sm text-muted-foreground">Sem vendas.</div>
-              ) : (
-                <div className="space-y-2">
-                  {vendas.map((v) => {
-                    const itensDisponiveis = (vendaItens[v.id] || []).filter((it) => {
-                      const id = toNumberId(it.id)
-                      return !(id && referenciaIds.itensVenda.has(id))
-                    })
-                    return (
-                      <div key={v.id} className="rounded-lg border border-white/20 bg-white/40 p-3 text-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.06]">
-                        <div className="font-semibold text-gray-800">{v.numero || v.id_custom || `VENDA ${v.id}`}</div>
-                        <div className="text-xs text-muted-foreground">Total: <MoneyValue value={v.total} /></div>
-                        <div className="mt-2 space-y-1">
-                          {itensDisponiveis.length === 0 ? (
-                            <div className="text-xs text-muted-foreground">Todos os itens desta venda já foram adicionados.</div>
-                          ) : (
-                            itensDisponiveis.map((it) => {
-                              const prod = produtoById.get(it.produto)
-                              return (
-                                <div key={it.id} className="flex items-center justify-between gap-2">
-                                  <div className="text-foreground">{prod?.nome || `Produto ${it.produto}`}</div>
-                                  <button
-                                    className="inline-flex items-center rounded-lg border border-emerald-200 px-2.5 py-1 text-xs font-medium text-emerald-700 transition hover:bg-emerald-50 disabled:opacity-50"
-                                    onClick={() => adicionarItem({ tipo_item: "FAR", item_venda: it.id }, `sale-item-${it.id}`)}
-                                    disabled={addItemButtonDisabled}
-                                  >
-                                    {addItemButtonLabel(`sale-item-${it.id}`)}
-                                  </button>
-                                </div>
-                              )
-                            })
-                          )}
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
-              )}
-            </div>
-
-            <div>
-              <div className="text-sm font-semibold text-foreground">Cirurgias</div>
-              {cirurgias.length === 0 ? (
-                <div className="text-sm text-muted-foreground">Sem cirurgias.</div>
-              ) : (
-                <div className="space-y-2">
-                  {cirurgias.map((c) => (
-                    <div key={c.id} className="flex items-center justify-between gap-2 rounded-lg border border-slate-100 bg-white p-3 text-sm">
-                      <div className="text-foreground">{c.procedimento || c.id_custom || `Cirurgia ${c.id}`}</div>
-                      <button
-                        className="inline-flex items-center rounded-lg border border-emerald-200 px-2.5 py-1 text-xs font-medium text-emerald-700 transition hover:bg-emerald-50 disabled:opacity-50"
-                        onClick={() => adicionarItem({
-                          tipo_item: "AJU",
-                          descricao: `Cirurgia: ${c.procedimento || c.id_custom || c.id}`,
-                          quantidade: 1,
-                          preco_unitario: c.preco_estimado || 0,
-                          iva_percentual: c.iva_percentual,
-                          aplica_iva: c.aplica_iva_por_padrao,
-                        }, `patient-surgery-${c.id}`)}
-                        disabled={addItemButtonDisabled}
-                      >
-                        {addItemButtonLabel(`patient-surgery-${c.id}`)}
-                      </button>
+            {/* Requisições */}
+            <details open className="group">
+              <summary className="flex cursor-pointer list-none items-center gap-2 px-4 py-2.5 select-none">
+                <span className="flex h-5 w-5 items-center justify-center rounded-md bg-sky-100 text-sky-600 dark:bg-sky-900/40 dark:text-sky-400 text-[10px] font-bold">R</span>
+                <span className="text-xs font-semibold text-foreground flex-1">Requisições (exames)</span>
+                <span className="text-[10px] text-muted-foreground">{requisicoes.length === 0 ? "—" : `${requisicoes.length}`}</span>
+              </summary>
+              <div className="px-4 pb-3 space-y-1.5">
+                {requisicoes.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">Sem requisições para este paciente.</p>
+                ) : requisicoes.map((r) => {
+                  const availableItems = (requisicaoItens[r.id] || []).filter((it) => {
+                    const exameId = toNumberId(it.exame)
+                    if (exameId && referenciaIds.exames.has(exameId)) return false
+                    const exameMedId = toNumberId(it.exame_medico)
+                    if (exameMedId && referenciaIds.examesMedicos.has(exameMedId)) return false
+                    return true
+                  })
+                  if (availableItems.length === 0) return null
+                  return (
+                    <div key={r.id} className="rounded-lg border border-white/20 bg-white/30 px-3 py-2 dark:border-white/10 dark:bg-white/[0.05]">
+                      <p className="text-[11px] font-semibold text-foreground mb-1">{r.id_custom || `REQ ${r.id}`} <span className="font-normal text-muted-foreground">· {r.tipo || "-"}</span></p>
+                      {availableItems.map((it) => {
+                        const exame = it.exame ? exameById.get(it.exame) : null
+                        const exameMed = it.exame_medico ? exameMedById.get(it.exame_medico) : null
+                        const label = exame?.nome || exameMed?.nome || (it.exame ? `Exame ${it.exame}` : `Exame médico ${it.exame_medico}`)
+                        const addKey = it.exame ? `req-exam-${it.id}` : `req-medical-exam-${it.id}`
+                        return (
+                          <div key={it.id} className="flex items-center justify-between gap-2 py-0.5">
+                            <span className="text-xs text-foreground">{label}</span>
+                            <button className="shrink-0 inline-flex items-center rounded-md border border-emerald-200 px-2 py-0.5 text-[10px] font-medium text-emerald-700 transition hover:bg-emerald-50 disabled:opacity-50 dark:border-emerald-700/40 dark:text-emerald-400"
+                              onClick={() => it.exame ? adicionarItem({ tipo_item: "EXA", exame: it.exame }, addKey) : adicionarItem({ tipo_item: "EXM", exame_medico: it.exame_medico }, addKey)}
+                              disabled={addItemButtonDisabled}
+                            >{addItemButtonLabel(addKey)}</button>
+                          </div>
+                        )
+                      })}
                     </div>
-                  ))}
-                </div>
-              )}
-            </div>
+                  )
+                })}
+              </div>
+            </details>
 
-            <div>
-              <div className="text-sm font-semibold text-foreground mb-1">Consultas</div>
-              {consultas.length === 0 ? (
-                <div className="text-sm text-muted-foreground">Sem consultas.</div>
-              ) : (
-                <div className="space-y-2">
-                  <div className="relative">
+            {/* Procedimentos */}
+            <details open className="group">
+              <summary className="flex cursor-pointer list-none items-center gap-2 px-4 py-2.5 select-none">
+                <span className="flex h-5 w-5 items-center justify-center rounded-md bg-violet-100 text-violet-600 dark:bg-violet-900/40 dark:text-violet-400 text-[10px] font-bold">P</span>
+                <span className="text-xs font-semibold text-foreground flex-1">Procedimentos (enfermagem)</span>
+                <span className="text-[10px] text-muted-foreground">{procedimentos.length === 0 ? "—" : `${procedimentos.length}`}</span>
+              </summary>
+              <div className="px-4 pb-3 space-y-1.5">
+                {procedimentos.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">Sem procedimentos.</p>
+                ) : procedimentos.map((p) => {
+                  const itensDisp = (procedimentoItens[p.id] || []).filter((it) => { const id = toNumberId(it.id); return !(id && referenciaIds.procedimentoItens.has(id)) })
+                  const matsDisp  = (procedimentoMateriais[p.id] || []).filter((mat) => { const id = toNumberId(mat.id); return !(id && referenciaIds.procedimentoMateriais.has(id)) })
+                  if (itensDisp.length === 0 && matsDisp.length === 0) return null
+                  return (
+                    <div key={p.id} className="rounded-lg border border-white/20 bg-white/30 px-3 py-2 dark:border-white/10 dark:bg-white/[0.05]">
+                      <p className="text-[11px] font-semibold text-foreground mb-1">{p.id_custom || `PROC ${p.id}`} <span className="font-normal text-muted-foreground">· <MoneyValue value={p.total} /></span></p>
+                      {itensDisp.map((it) => (
+                        <div key={it.id} className="flex items-center justify-between gap-2 py-0.5">
+                          <span className="text-xs text-foreground">{it.descricao || `Serviço ${it.id}`}</span>
+                          <button className="shrink-0 inline-flex items-center rounded-md border border-emerald-200 px-2 py-0.5 text-[10px] font-medium text-emerald-700 transition hover:bg-emerald-50 disabled:opacity-50 dark:border-emerald-700/40 dark:text-emerald-400"
+                            onClick={() => adicionarItem({ tipo_item: "PRC", procedimento_item: it.id }, `procedure-item-${it.id}`)} disabled={addItemButtonDisabled}
+                          >{addItemButtonLabel(`procedure-item-${it.id}`)}</button>
+                        </div>
+                      ))}
+                      {matsDisp.map((mat) => {
+                        const prod = produtoById.get(mat.produto)
+                        return (
+                          <div key={mat.id} className="flex items-center justify-between gap-2 py-0.5">
+                            <span className="text-xs text-foreground">{prod?.nome || `Material ${mat.produto}`}</span>
+                            <button className="shrink-0 inline-flex items-center rounded-md border border-emerald-200 px-2 py-0.5 text-[10px] font-medium text-emerald-700 transition hover:bg-emerald-50 disabled:opacity-50 dark:border-emerald-700/40 dark:text-emerald-400"
+                              onClick={() => adicionarItem({ tipo_item: "MAT", procedimento_material: mat.id }, `procedure-material-${mat.id}`)} disabled={addItemButtonDisabled}
+                            >{addItemButtonLabel(`procedure-material-${mat.id}`)}</button>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )
+                })}
+              </div>
+            </details>
+
+            {/* Vendas farmácia */}
+            <details open className="group">
+              <summary className="flex cursor-pointer list-none items-center gap-2 px-4 py-2.5 select-none">
+                <span className="flex h-5 w-5 items-center justify-center rounded-md bg-teal-100 text-teal-600 dark:bg-teal-900/40 dark:text-teal-400 text-[10px] font-bold">F</span>
+                <span className="text-xs font-semibold text-foreground flex-1">Vendas (farmácia)</span>
+                <span className="text-[10px] text-muted-foreground">{vendas.length === 0 ? "—" : `${vendas.length}`}</span>
+              </summary>
+              <div className="px-4 pb-3 space-y-1.5">
+                {vendas.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">Sem vendas.</p>
+                ) : vendas.map((v) => {
+                  const itensDisp = (vendaItens[v.id] || []).filter((it) => { const id = toNumberId(it.id); return !(id && referenciaIds.itensVenda.has(id)) })
+                  if (itensDisp.length === 0) return null
+                  return (
+                    <div key={v.id} className="rounded-lg border border-white/20 bg-white/30 px-3 py-2 dark:border-white/10 dark:bg-white/[0.05]">
+                      <p className="text-[11px] font-semibold text-foreground mb-1">{v.numero || v.id_custom || `VENDA ${v.id}`} <span className="font-normal text-muted-foreground">· <MoneyValue value={v.total} /></span></p>
+                      {itensDisp.map((it) => {
+                        const prod = produtoById.get(it.produto)
+                        return (
+                          <div key={it.id} className="flex items-center justify-between gap-2 py-0.5">
+                            <span className="text-xs text-foreground">{prod?.nome || `Produto ${it.produto}`}</span>
+                            <button className="shrink-0 inline-flex items-center rounded-md border border-emerald-200 px-2 py-0.5 text-[10px] font-medium text-emerald-700 transition hover:bg-emerald-50 disabled:opacity-50 dark:border-emerald-700/40 dark:text-emerald-400"
+                              onClick={() => adicionarItem({ tipo_item: "FAR", item_venda: it.id }, `sale-item-${it.id}`)} disabled={addItemButtonDisabled}
+                            >{addItemButtonLabel(`sale-item-${it.id}`)}</button>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )
+                })}
+              </div>
+            </details>
+
+            {/* Cirurgias */}
+            <details open className="group">
+              <summary className="flex cursor-pointer list-none items-center gap-2 px-4 py-2.5 select-none">
+                <span className="flex h-5 w-5 items-center justify-center rounded-md bg-rose-100 text-rose-600 dark:bg-rose-900/40 dark:text-rose-400 text-[10px] font-bold">C</span>
+                <span className="text-xs font-semibold text-foreground flex-1">Cirurgias</span>
+                <span className="text-[10px] text-muted-foreground">{cirurgias.length === 0 ? "—" : `${cirurgias.length}`}</span>
+              </summary>
+              <div className="px-4 pb-3 space-y-1">
+                {cirurgias.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">Sem cirurgias.</p>
+                ) : cirurgias.map((c) => (
+                  <div key={c.id} className="flex items-center justify-between gap-2 py-0.5">
+                    <span className="text-xs text-foreground">{c.procedimento || c.id_custom || `Cirurgia ${c.id}`}</span>
+                    <button className="shrink-0 inline-flex items-center rounded-md border border-emerald-200 px-2 py-0.5 text-[10px] font-medium text-emerald-700 transition hover:bg-emerald-50 disabled:opacity-50 dark:border-emerald-700/40 dark:text-emerald-400"
+                      onClick={() => adicionarItem({ tipo_item: "AJU", descricao: `Cirurgia: ${c.procedimento || c.id_custom || c.id}`, quantidade: 1, preco_unitario: c.preco_estimado || 0, iva_percentual: c.iva_percentual, aplica_iva: c.aplica_iva_por_padrao }, `patient-surgery-${c.id}`)}
+                      disabled={addItemButtonDisabled}
+                    >{addItemButtonLabel(`patient-surgery-${c.id}`)}</button>
+                  </div>
+                ))}
+              </div>
+            </details>
+
+            {/* Consultas — pesquisa + multi-select */}
+            <details open className="group">
+              <summary className="flex cursor-pointer list-none items-center gap-2 px-4 py-2.5 select-none">
+                <span className="flex h-5 w-5 items-center justify-center rounded-md bg-amber-100 text-amber-600 dark:bg-amber-900/40 dark:text-amber-400 text-[10px] font-bold">Q</span>
+                <span className="text-xs font-semibold text-foreground flex-1">Consultas</span>
+                <span className="text-[10px] text-muted-foreground">{consultas.length === 0 ? "—" : `${consultas.length} disponível${consultas.length !== 1 ? "s" : ""}`}</span>
+              </summary>
+              <div className="px-4 pb-3 space-y-2">
+                {consultas.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">Sem consultas para este paciente.</p>
+                ) : (
+                  <>
                     <input
                       type="text"
                       value={consultaQuery}
                       onChange={(e) => setConsultaQuery(e.target.value)}
-                      placeholder="Filtrar consultas…"
+                      placeholder="Pesquisar consulta por especialidade…"
                       className="h-8 w-full rounded-lg border border-border bg-background/60 px-3 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-[var(--primary-400)]"
                     />
-                  </div>
-                  {consultas
-                    .filter((c) => {
-                      if (!consultaQuery.trim()) return true
-                      const q = consultaQuery.toLowerCase()
-                      return (
-                        (c.type || "").toLowerCase().includes(q) ||
-                        (c.specialty_name || "").toLowerCase().includes(q) ||
-                        (c.custom_id || "").toLowerCase().includes(q) ||
-                        String(c.id).includes(q)
-                      )
-                    })
-                    .map((c) => {
-                      const nomeConsulta = c.type || c.specialty_name || c.custom_id || `Consulta ${c.id}`
-                      return (
-                        <div key={c.id} className="flex items-center justify-between gap-2 rounded-lg border border-white/20 bg-white/40 p-3 text-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.06]">
-                          <div className="text-foreground">{nomeConsulta}</div>
-                          <button
-                            className="inline-flex items-center rounded-lg border border-emerald-200 px-2.5 py-1 text-xs font-medium text-emerald-700 transition hover:bg-emerald-50 disabled:opacity-50"
-                            onClick={() => adicionarItem({ tipo_item: "CON", consultation: c.id }, `patient-consultation-${c.id}`)}
-                            disabled={addItemButtonDisabled}
-                          >
-                            {addItemButtonLabel(`patient-consultation-${c.id}`)}
-                          </button>
+                    {/* resultados da busca — apenas com query */}
+                    {consultaQuery.trim() ? (
+                      <div className="space-y-1 max-h-48 overflow-y-auto">
+                        {consultas
+                          .filter((c) => {
+                            const q = consultaQuery.toLowerCase()
+                            return (
+                              (c.type || "").toLowerCase().includes(q) ||
+                              (c.specialty_name || "").toLowerCase().includes(q) ||
+                              (c.custom_id || "").toLowerCase().includes(q) ||
+                              String(c.id).includes(q)
+                            )
+                          })
+                          .map((c) => {
+                            const nome = c.type || c.specialty_name || c.custom_id || `Consulta ${c.id}`
+                            const sel = consultasSelecionadas.has(c.id)
+                            return (
+                              <button
+                                key={c.id}
+                                type="button"
+                                onClick={() => setConsultasSelecionadas((prev) => {
+                                  const next = new Set(prev)
+                                  if (next.has(c.id)) next.delete(c.id); else next.add(c.id)
+                                  return next
+                                })}
+                                className={`w-full text-left flex items-center gap-2 rounded-lg border px-3 py-1.5 text-xs transition ${sel ? "border-emerald-400 bg-emerald-50 text-emerald-800 dark:border-emerald-600/50 dark:bg-emerald-900/20 dark:text-emerald-300" : "border-border bg-background/60 text-foreground hover:bg-muted"}`}
+                              >
+                                <span className={`h-3.5 w-3.5 shrink-0 rounded border flex items-center justify-center text-[8px] ${sel ? "border-emerald-500 bg-emerald-500 text-white" : "border-border"}`}>
+                                  {sel ? "✓" : ""}
+                                </span>
+                                {nome}
+                              </button>
+                            )
+                          })}
+                      </div>
+                    ) : null}
+                    {/* chips das selecionadas */}
+                    {consultasSelecionadas.size > 0 ? (
+                      <div className="space-y-1.5 pt-1">
+                        <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Selecionadas ({consultasSelecionadas.size})</p>
+                        <div className="flex flex-wrap gap-1">
+                          {consultas.filter((c) => consultasSelecionadas.has(c.id)).map((c) => (
+                            <span key={c.id} className="inline-flex items-center gap-1 rounded-full border border-emerald-300 bg-emerald-50 px-2 py-0.5 text-[10px] text-emerald-800 dark:border-emerald-700/50 dark:bg-emerald-900/20 dark:text-emerald-300">
+                              {c.type || c.specialty_name || `Consulta ${c.id}`}
+                              <button type="button" className="hover:text-rose-500" onClick={() => setConsultasSelecionadas((prev) => { const n = new Set(prev); n.delete(c.id); return n })}>×</button>
+                            </span>
+                          ))}
                         </div>
-                      )
-                    })}
-                </div>
-              )}
-            </div>
+                        <button
+                          type="button"
+                          disabled={addItemButtonDisabled}
+                          onClick={async () => {
+                            for (const c of consultas.filter((c) => consultasSelecionadas.has(c.id))) {
+                              await adicionarItem({ tipo_item: "CON", consultation: c.id }, `patient-consultation-${c.id}`)
+                            }
+                            setConsultasSelecionadas(new Set())
+                          }}
+                          className="inline-flex items-center rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-50"
+                        >
+                          Adicionar {consultasSelecionadas.size} consulta{consultasSelecionadas.size !== 1 ? "s" : ""}
+                        </button>
+                      </div>
+                    ) : null}
+                  </>
+                )}
+              </div>
+            </details>
+
           </div>
           )}
-          </div>
-        </section>
+        </div>
 
-        <section className={`${GLASS} border-l-4 border-l-indigo-500`}>
-          <div className="px-4 py-3 space-y-3">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Pesquisa de catálogo</p>
-              <p className="text-[11px] text-muted-foreground">Busque e adicione itens avulsos.</p>
-            </div>
+        {/* ── Pesquisa de catálogo ── */}
+        <div className={`${GLASS} border-l-4 border-l-indigo-500 flex flex-col gap-0`}>
+          <div className="border-b border-white/20 px-4 py-2.5 dark:border-white/10">
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Pesquisa de catálogo</p>
+            <p className="text-[11px] text-muted-foreground">Busque e adicione itens avulsos ao rascunho.</p>
+          </div>
           {!podeEditar ? (
-            <div className="text-sm text-muted-foreground">Sem permissão para pesquisar catálogo.</div>
+            <div className="px-4 py-3 text-sm text-muted-foreground">Sem permissão para pesquisar catálogo.</div>
           ) : (
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <div className="text-sm font-semibold text-foreground">Exames laboratoriais</div>
-              <CatalogSearchSelect
-                placeholder="Pesquisar exames"
-                fetcher={buscarExames}
-                disabled={addItemButtonDisabled}
-                onSelect={(opt) => adicionarItem({ tipo_item: "EXA", exame: opt.raw.id }, `catalog-exam-${opt.raw.id}`)}
-              />
+          <div className="flex flex-col divide-y divide-white/20 dark:divide-white/10">
+
+            {/* Exames laboratoriais */}
+            <div className="px-4 py-3 space-y-1.5">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="flex h-5 w-5 items-center justify-center rounded-md bg-sky-100 text-sky-600 dark:bg-sky-900/40 dark:text-sky-400 text-[10px] font-bold">E</span>
+                <span className="text-xs font-semibold text-foreground">Exames laboratoriais</span>
+              </div>
+              <CatalogSearchSelect placeholder="Pesquisar exames…" fetcher={buscarExames} disabled={addItemButtonDisabled}
+                onSelect={(opt) => adicionarItem({ tipo_item: "EXA", exame: opt.raw.id }, `catalog-exam-${opt.raw.id}`)} />
             </div>
 
-            <div className="space-y-2">
-              <div className="text-sm font-semibold text-foreground">Exames médicos</div>
-              <CatalogSearchSelect
-                placeholder="Pesquisar exames médicos"
-                fetcher={buscarExamesMedicos}
-                disabled={addItemButtonDisabled}
-                onSelect={(opt) => adicionarItem({ tipo_item: "EXM", exame_medico: opt.raw.id }, `catalog-medical-exam-${opt.raw.id}`)}
-              />
+            {/* Exames médicos */}
+            <div className="px-4 py-3 space-y-1.5">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="flex h-5 w-5 items-center justify-center rounded-md bg-violet-100 text-violet-600 dark:bg-violet-900/40 dark:text-violet-400 text-[10px] font-bold">M</span>
+                <span className="text-xs font-semibold text-foreground">Exames médicos</span>
+              </div>
+              <CatalogSearchSelect placeholder="Pesquisar exames médicos…" fetcher={buscarExamesMedicos} disabled={addItemButtonDisabled}
+                onSelect={(opt) => adicionarItem({ tipo_item: "EXM", exame_medico: opt.raw.id }, `catalog-medical-exam-${opt.raw.id}`)} />
             </div>
 
-            <div className="space-y-2">
-              <div className="text-sm font-semibold text-foreground">Procedimentos (catálogo)</div>
-              <CatalogSearchSelect
-                placeholder="Pesquisar procedimentos"
-                fetcher={buscarProcedimentosCatalogo}
-                disabled={addItemButtonDisabled}
-                onSelect={(opt) => {
-                  const p = opt.raw
-                  return adicionarItem({
-                    tipo_item: "AJU",
-                    descricao: `Procedimento: ${p.nome || p.id_custom || p.id}`,
-                    quantidade: 1,
-                    preco_unitario: p.preco_padrao || 0,
-                    iva_percentual: p.iva_percentual,
-                    aplica_iva: p.aplica_iva_por_padrao,
-                  }, `catalog-procedure-${p.id}`)
-                }}
-              />
+            {/* Procedimentos enfermagem */}
+            <div className="px-4 py-3 space-y-1.5">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="flex h-5 w-5 items-center justify-center rounded-md bg-teal-100 text-teal-600 dark:bg-teal-900/40 dark:text-teal-400 text-[10px] font-bold">P</span>
+                <span className="text-xs font-semibold text-foreground">Procedimentos (catálogo)</span>
+              </div>
+              <CatalogSearchSelect placeholder="Pesquisar procedimentos…" fetcher={buscarProcedimentosCatalogo} disabled={addItemButtonDisabled}
+                onSelect={(opt) => { const p = opt.raw; return adicionarItem({ tipo_item: "AJU", descricao: `Procedimento: ${p.nome || p.id_custom || p.id}`, quantidade: 1, preco_unitario: p.preco_padrao || 0, iva_percentual: p.iva_percentual, aplica_iva: p.aplica_iva_por_padrao }, `catalog-procedure-${p.id}`) }} />
             </div>
 
-            <div className="space-y-2">
-              <div className="text-sm font-semibold text-foreground">Procedimentos cirúrgicos</div>
-              <CatalogSearchSelect
-                placeholder="Pesquisar cirurgias"
-                fetcher={buscarProcedimentosCirurgicos}
-                disabled={addItemButtonDisabled}
-                onSelect={(opt) => {
-                  const p = opt.raw
-                  return adicionarItem({
-                    tipo_item: "AJU",
-                    descricao: `Cirurgia: ${p.nome || p.id_custom || p.id}`,
-                    quantidade: 1,
-                    preco_unitario: p.preco_base || 0,
-                    iva_percentual: p.iva_percentual,
-                    aplica_iva: p.aplica_iva_por_padrao,
-                  }, `catalog-surgery-${p.id}`)
-                }}
-              />
+            {/* Procedimentos cirúrgicos */}
+            <div className="px-4 py-3 space-y-1.5">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="flex h-5 w-5 items-center justify-center rounded-md bg-rose-100 text-rose-600 dark:bg-rose-900/40 dark:text-rose-400 text-[10px] font-bold">C</span>
+                <span className="text-xs font-semibold text-foreground">Procedimentos cirúrgicos</span>
+              </div>
+              <CatalogSearchSelect placeholder="Pesquisar cirurgias…" fetcher={buscarProcedimentosCirurgicos} disabled={addItemButtonDisabled}
+                onSelect={(opt) => { const p = opt.raw; return adicionarItem({ tipo_item: "AJU", descricao: `Cirurgia: ${p.nome || p.id_custom || p.id}`, quantidade: 1, preco_unitario: p.preco_base || 0, iva_percentual: p.iva_percentual, aplica_iva: p.aplica_iva_por_padrao }, `catalog-surgery-${p.id}`) }} />
             </div>
 
-            <div className="space-y-2">
-              <div className="text-sm font-semibold text-foreground">Medicamentos / materiais</div>
-              <CatalogSearchSelect
-                placeholder="Pesquisar produtos"
-                fetcher={buscarProdutos}
-                disabled={addItemButtonDisabled}
-                onSelect={(opt) => {
-                  const p = opt.raw
-                  return adicionarItem({
-                    tipo_item: "AJU",
-                    descricao: `Produto: ${p.nome || p.id_custom || p.id}`,
-                    quantidade: 1,
-                    preco_unitario: p.preco_venda || 0,
-                    iva_percentual: p.iva_percentual,
-                    aplica_iva: p.aplica_iva_por_padrao,
-                  }, `catalog-product-${p.id}`)
-                }}
-              />
+            {/* Medicamentos / materiais */}
+            <div className="px-4 py-3 space-y-1.5">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="flex h-5 w-5 items-center justify-center rounded-md bg-amber-100 text-amber-600 dark:bg-amber-900/40 dark:text-amber-400 text-[10px] font-bold">F</span>
+                <span className="text-xs font-semibold text-foreground">Medicamentos / materiais</span>
+              </div>
+              <CatalogSearchSelect placeholder="Pesquisar produtos…" fetcher={buscarProdutos} disabled={addItemButtonDisabled}
+                onSelect={(opt) => { const p = opt.raw; return adicionarItem({ tipo_item: "AJU", descricao: `Produto: ${p.nome || p.id_custom || p.id}`, quantidade: 1, preco_unitario: p.preco_venda || 0, iva_percentual: p.iva_percentual, aplica_iva: p.aplica_iva_por_padrao }, `catalog-product-${p.id}`) }} />
             </div>
+
           </div>
           )}
-          </div>
-        </section>
+        </div>
 
         </div>{/* fim grid 2-col */}
       </div>
