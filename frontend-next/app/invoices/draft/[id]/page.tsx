@@ -1567,12 +1567,11 @@ export default function FaturaRascunhoPage() {
               {(() => {
                 const adicionados = itens.filter(i =>
                   (i.tipo_item === "AJU" && String(i.descricao).startsWith("Procedimento:")) ||
-                  i.tipo_item === "PRC" ||
-                  i.tipo_item === "MAT"
+                  i.tipo_item === "PRC"
                 )
                 const pendentes = procedimentos.flatMap((p) => [
                   ...(procedimentoItens[p.id] || []).filter((it) => { const id = toNumberId(it.id); return !(id && referenciaIds.procedimentoItens.has(id)) }).map((it) => ({ tipo: "item" as const, p, it })),
-                  ...(procedimentoMateriais[p.id] || []).filter((mat) => { const id = toNumberId(mat.id); return !(id && referenciaIds.procedimentoMateriais.has(id)) }).map((mat) => ({ tipo: "mat" as const, p, it: mat })),
+                  // materiais de procedimento aparecem na seção Medicamentos / materiais
                 ])
                 if (!adicionados.length && !pendentes.length) return null
                 return (
@@ -1751,11 +1750,21 @@ export default function FaturaRascunhoPage() {
                 )}
               </div>
               {(() => {
-                const adicionados = itens.filter(i => i.tipo_item === "AJU" && String(i.descricao).startsWith("Produto:"))
-                const pendentes = vendas.flatMap((v) =>
+                const adicionados = itens.filter(i =>
+                  (i.tipo_item === "AJU" && String(i.descricao).startsWith("Produto:")) ||
+                  i.tipo_item === "MAT"
+                )
+                const pendentesFarmacia = vendas.flatMap((v) =>
                   (vendaItens[v.id] || []).filter((it) => { const id = toNumberId(it.id); return !(id && referenciaIds.itensVenda.has(id)) }).map((it) => ({ v, it }))
                 )
-                if (!adicionados.length && !pendentes.length) return null
+                // Materiais de procedimentos que estão na fatura mas cujos materiais ainda não foram adicionados
+                const pendentesProcedimento = procedimentos.flatMap((p) =>
+                  (procedimentoMateriais[p.id] || []).filter((mat) => {
+                    const matId = toNumberId(mat.id)
+                    return matId && !referenciaIds.procedimentoMateriais.has(matId)
+                  }).map((mat) => ({ p, mat }))
+                )
+                if (!adicionados.length && !pendentesFarmacia.length && !pendentesProcedimento.length) return null
                 return (
                   <div className="border-t border-white/20 dark:border-white/10 px-4 py-2.5 space-y-2">
                     {adicionados.length > 0 && (
@@ -1767,11 +1776,29 @@ export default function FaturaRascunhoPage() {
                         ))}
                       </div>
                     )}
-                    {pendentes.length > 0 && (
+                    {pendentesProcedimento.length > 0 && (
+                      <div className="space-y-0.5">
+                        <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Do procedimento (enfermagem)</p>
+                        <div className="flex flex-wrap gap-1">
+                          {pendentesProcedimento.map(({ p, mat }) => {
+                            const prod = produtoById.get(toNumberId(mat.produto) ?? mat.produto)
+                            const label = prod?.nome || mat.produto_nome || `Material ${mat.produto}`
+                            const addKey = `procedure-material-${mat.id}`
+                            return (
+                              <button key={mat.id} type="button" disabled={addItemButtonDisabled}
+                                onClick={() => adicionarItem({ tipo_item: "MAT", procedimento_material: mat.id }, addKey)}
+                                className="inline-flex items-center gap-1 rounded-full border border-dashed border-indigo-400 bg-indigo-50/60 px-2 py-0.5 text-[10px] text-indigo-700 transition hover:bg-indigo-100 disabled:opacity-50 dark:border-indigo-600/50 dark:bg-indigo-900/10 dark:text-indigo-400"
+                              >+ {label}</button>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    )}
+                    {pendentesFarmacia.length > 0 && (
                       <div className="space-y-0.5">
                         <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Do paciente (farmácia)</p>
                         <div className="flex flex-wrap gap-1">
-                          {pendentes.map(({ v, it }) => {
+                          {pendentesFarmacia.map(({ v, it }) => {
                             const prod = produtoById.get(it.produto)
                             const label = prod?.nome || `Produto ${it.produto}`
                             const addKey = `sale-item-${it.id}`
