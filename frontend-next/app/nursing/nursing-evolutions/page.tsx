@@ -127,17 +127,16 @@ export default function NursingNursingEvolutionsPage() {
         </section>
 
         <section className="flex flex-wrap gap-2 rounded-xl border border-white/25 bg-white/[0.02] p-2 shadow-sm backdrop-blur-xl dark:border-white/[0.08] dark:bg-white/[0.01]">
-          <label className="relative min-w-[220px] flex-1">
-            <span className="sr-only">Pesquisar evoluções</span>
-            <Search size={13} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+          <div className="relative w-48">
+            <Search size={12} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <input
-              type="search"
+              type="text"
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              placeholder="Pesquisar por paciente, enfermaria, observação ou código…"
-              className="h-8 w-full rounded-lg border border-white/30 bg-white/[0.05] pl-7 pr-3 text-xs text-foreground outline-none backdrop-blur-xl transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/15 dark:border-white/10 dark:bg-white/[0.025]"
+              placeholder="Pesquisar…"
+              className="w-full rounded-lg border border-border bg-background/60 py-1.5 pl-7 pr-6 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:w-72 focus:ring-2 focus:ring-violet-500/40 transition-all"
             />
-          </label>
+          </div>
           <label className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-white/30 bg-white/[0.05] px-2.5 text-[10px] font-medium text-muted-foreground backdrop-blur-xl dark:border-white/10 dark:bg-white/[0.025]">
             Mostrar
             <PageSizeInput value={pageSize} onChange={setPageSize} ariaLabel="Número de evoluções por página, de 1 a 999" />

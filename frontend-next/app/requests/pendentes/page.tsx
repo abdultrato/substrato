@@ -223,14 +223,17 @@ function EditModal({
             <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-[var(--gray-500)]">
               Adicionar exame
             </p>
-            <input
-              ref={searchRef}
-              type="text"
-              placeholder="Pesquisar exame..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="mb-2 h-8 w-full rounded-md border border-[var(--border)] bg-[var(--background)] px-3 text-sm text-[var(--text)] placeholder:text-[var(--gray-400)] focus:border-[var(--primary-400)] focus:outline-none"
-            />
+            <div className="relative w-48 mb-2">
+              <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <input
+                ref={searchRef}
+                type="text"
+                placeholder="Pesquisar…"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full rounded-lg border border-border bg-background/60 py-1.5 pl-7 pr-6 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:w-72 focus:ring-2 focus:ring-violet-500/40 transition-all"
+              />
+            </div>
             {loadingExams ? (
               <p className="text-xs text-[var(--gray-400)]">A carregar exames...</p>
             ) : filtered.length === 0 ? (

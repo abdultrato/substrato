@@ -279,13 +279,13 @@ export default function RecibosPage() {
           title="Recibos"
           actions={
             <div className="flex items-center gap-2">
-              <div className="relative">
-                <Search className="pointer-events-none absolute left-2.5 top-2 h-3.5 w-3.5 text-[var(--gray-400)]" />
+              <div className="relative w-48">
+                <Search size={12} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
                 <input
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Pesquisar…"
-                  className="h-8 w-52 rounded-md border border-[var(--border)] bg-transparent py-1.5 pl-7 pr-3 text-xs text-[var(--text)] transition-colors placeholder:text-[var(--gray-400)] hover:border-[var(--primary-400)] focus:border-[var(--primary-500)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-100)]"
+                  className="w-full rounded-lg border border-border bg-background/60 py-1.5 pl-7 pr-6 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:w-72 focus:ring-2 focus:ring-violet-500/40 transition-all"
                 />
               </div>
               {search && (

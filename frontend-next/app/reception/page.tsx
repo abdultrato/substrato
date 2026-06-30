@@ -276,14 +276,14 @@ export default function RecepcaoPage() {
                     actions={
                         <div className="flex items-center gap-2">
                             {/* Global search */}
-                            <div className="relative">
-                                <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+                            <div className="relative w-48">
+                                <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
                                 <input
-                                    type="search"
+                                    type="text"
                                     value={search}
                                     onChange={(e) => setSearch(e.target.value)}
-                                    placeholder="Pesquisar fila..."
-                                    className="h-8 w-44 rounded-lg border border-border bg-background pl-7 pr-3 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/30"
+                                    placeholder="Pesquisar…"
+                                    className="w-full rounded-lg border border-border bg-background/60 py-1.5 pl-7 pr-6 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:w-72 focus:ring-2 focus:ring-violet-500/40 transition-all"
                                 />
                             </div>
                             {podeVerAdmin && (

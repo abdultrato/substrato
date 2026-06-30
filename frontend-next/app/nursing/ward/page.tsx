@@ -372,14 +372,14 @@ export default function NursingWardPage() {
 
         {/* Filters */}
         <div className="flex flex-wrap gap-1">
-          <div className="relative min-w-[200px] flex-1">
+          <div className="relative w-48">
             <Search size={12} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <input
               type="text"
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              placeholder="Pesquisar por nome, código ou descrição…"
-              className="h-8 w-full rounded-lg border border-border bg-card pl-7 pr-3 text-sm text-foreground outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/25"
+              placeholder="Pesquisar…"
+              className="w-full rounded-lg border border-border bg-background/60 py-1.5 pl-7 pr-6 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:w-72 focus:ring-2 focus:ring-violet-500/40 transition-all"
             />
           </div>
           <select

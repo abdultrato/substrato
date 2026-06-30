@@ -11,6 +11,7 @@ import {
   Layers,
   HeartPulse,
   type LucideIcon,
+  Search,
 } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
@@ -207,12 +208,15 @@ export default function BloodBankPage() {
               <Droplet size={16} className="text-rose-500" />
               Doadores de sangue
             </h2>
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Pesquisar por nome ou ID"
-              className="w-64 max-w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm outline-none transition focus:border-rose-400 focus:ring-2 focus:ring-rose-200"
-            />
+            <div className="relative w-48">
+              <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Pesquisar…"
+                className="w-full rounded-lg border border-border bg-background/60 py-1.5 pl-7 pr-6 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:w-72 focus:ring-2 focus:ring-violet-500/40 transition-all"
+              />
+            </div>
           </div>
 
           {listErro ? (

@@ -145,17 +145,16 @@ export default function NursingProcedureCatalogsPage() {
         </section>
 
         <div className="flex flex-wrap gap-2">
-          <label className="relative min-w-[220px] flex-1">
-            <span className="sr-only">Pesquisar catálogos</span>
-            <Search size={13} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+          <div className="relative w-48">
+            <Search size={12} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <input
-              type="search"
+              type="text"
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              placeholder="Pesquisar por nome, código ou descrição…"
-              className="h-8 w-full rounded-lg border border-border bg-card pl-7 pr-3 text-xs text-foreground outline-none transition focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20"
+              placeholder="Pesquisar…"
+              className="w-full rounded-lg border border-border bg-background/60 py-1.5 pl-7 pr-6 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:w-72 focus:ring-2 focus:ring-violet-500/40 transition-all"
             />
-          </label>
+          </div>
           <select
             value={status}
             onChange={(event) => setStatus(event.target.value)}

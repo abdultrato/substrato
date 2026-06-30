@@ -3,7 +3,7 @@
 import { isNotFoundLikeError } from "@/lib/errors/api-error"
 import Link from "next/link"
 import { useEffect, useMemo, useState } from "react"
-import { FilePlus2, HeartPulse, ScrollText, Pill, UserPlus } from "lucide-react"
+import { FilePlus2, HeartPulse, ScrollText, Pill, UserPlus , Search } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
 import PageHeader from "@/components/ui/PageHeader"
@@ -186,12 +186,15 @@ export default function MedicinaOcupacionalPage() {
         <section className="space-y-3 rounded-2xl border border-[var(--border)] bg-[var(--card)] p-4 shadow-sm">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <h2 className="text-sm font-semibold text-[var(--text)]">Pacientes de Medicina Ocupacional</h2>
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Pesquisar por nome, ID ou empresa"
-              className="w-64 max-w-full rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-sm text-[var(--text)] shadow-sm outline-none transition placeholder:text-[var(--gray-400)] focus:border-[var(--primary-500)] focus:ring-2 focus:ring-[var(--primary-300)]"
-            />
+            <div className="relative w-48">
+              <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Pesquisar…"
+                className="w-full rounded-lg border border-border bg-background/60 py-1.5 pl-7 pr-6 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:w-72 focus:ring-2 focus:ring-violet-500/40 transition-all"
+              />
+            </div>
           </div>
 
           {listErro ? (

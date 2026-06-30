@@ -199,8 +199,8 @@ export default function CreditNotesQueuePage() {
               <input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Pesquisar por pedido, fatura, paciente, valor, motivo, estado, solicitante ou decisor..."
-                className="w-full rounded-md border border-white/30 bg-white/80 py-2 pl-8 pr-9 text-sm text-[var(--text)] shadow-sm backdrop-blur-sm transition-colors duration-150 placeholder:text-[var(--gray-400)] hover:border-[var(--primary-400)] focus:border-[var(--primary-500)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-100)] dark:border-white/10 dark:bg-slate-800"
+                placeholder="Pesquisar…"
+                className="w-full rounded-lg border border-border bg-background/60 py-1.5 pl-7 pr-6 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:w-72 focus:ring-2 focus:ring-violet-500/40 transition-all"
               />
               {search ? (
                 <button

@@ -196,11 +196,11 @@ export default function PatientsPage() {
 
         {/* Filter bar */}
         <div className="flex flex-wrap gap-2">
-          <div className="relative flex-1 min-w-[180px]">
+          <div className="relative w-48">
             <Search size={12} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <input type="text" value={search} onChange={(e) => setSearch(e.target.value)}
-              placeholder="Pesquisar por nome ou código…"
-              className="h-8 w-full rounded-lg border border-border bg-card pl-7 pr-3 text-xs text-foreground outline-none transition focus:border-violet-500 focus:ring-2 focus:ring-violet-500/25" />
+              placeholder="Pesquisar…"
+              className="w-full rounded-lg border border-border bg-background/60 py-1.5 pl-7 pr-6 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:w-72 focus:ring-2 focus:ring-violet-500/40 transition-all" />
           </div>
           <select value={filterGender} onChange={(e) => setFilterGender(e.target.value as any)}
             className="h-8 rounded-lg border border-border bg-card px-2.5 text-xs text-foreground outline-none transition focus:border-violet-500">

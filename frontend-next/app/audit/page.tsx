@@ -1,5 +1,6 @@
 "use client"
 
+import { Search } from "lucide-react"
 import { isNotFoundLikeError } from "@/lib/errors/api-error"
 import Link from "next/link"
 import { useEffect, useMemo, useState } from "react"
@@ -130,12 +131,15 @@ export default function AuditoriaUsuariosPage() {
         <PageHeader
           title="Histórico de atividades"
           actions={
-            <input
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              placeholder="Pesquisar utilizador/grupo..."
-              className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm"
-            />
+            <div className="relative w-48">
+              <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <input
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                placeholder="Pesquisar…"
+                className="w-full rounded-lg border border-border bg-background/60 py-1.5 pl-7 pr-6 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:w-72 focus:ring-2 focus:ring-violet-500/40 transition-all"
+              />
+            </div>
           }
         />
 

@@ -1,5 +1,6 @@
 "use client"
 
+import { Search } from "lucide-react"
 import Link from "next/link"
 import { useCallback, useEffect, useMemo, useState } from "react"
 
@@ -1025,13 +1026,16 @@ export default function EducationTeacherAreaPage() {
 
           <Card title="Estudantes da turma">
             <div className="space-y-1">
-              <input
-                type="text"
-                value={studentSearch}
-                onChange={(event) => setStudentSearch(event.target.value)}
-                placeholder="Buscar estudante/aluno/encarregado..."
-                className={educationCompactControlClass}
-              />
+              <div className="relative w-48">
+                <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                <input
+                  type="text"
+                  value={studentSearch}
+                  onChange={(event) => setStudentSearch(event.target.value)}
+                  placeholder="Pesquisar…"
+                  className="w-full rounded-lg border border-border bg-background/60 py-1.5 pl-7 pr-6 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:w-72 focus:ring-2 focus:ring-violet-500/40 transition-all"
+                />
+              </div>
               {filteredEnrollments.length ? (
                 filteredEnrollments.map((enrollment) => {
                   const student = enrollment.student ? studentsById.get(enrollment.student) : null

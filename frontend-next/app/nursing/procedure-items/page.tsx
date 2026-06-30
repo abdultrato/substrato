@@ -154,11 +154,10 @@ export default function NursingProcedureItemsPage() {
         </section>
 
         <div className="flex flex-wrap gap-2">
-          <label className="relative min-w-[220px] flex-1">
-            <span className="sr-only">Pesquisar itens</span>
-            <Search size={13} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
-            <input type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Pesquisar por paciente, catálogo, código ou descrição…" className="h-8 w-full rounded-lg border border-white/40 bg-white/25 pl-7 pr-3 text-xs text-foreground outline-none backdrop-blur-xl transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/15 dark:border-white/10 dark:bg-white/5" />
-          </label>
+          <div className="relative w-48">
+            <Search size={12} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <input type="text" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Pesquisar…" className="w-full rounded-lg border border-border bg-background/60 py-1.5 pl-7 pr-6 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:w-72 focus:ring-2 focus:ring-violet-500/40 transition-all" />
+          </div>
           <select value={status} onChange={(event) => setStatus(event.target.value)} aria-label="Filtrar por execução" className="h-8 rounded-lg border border-white/40 bg-white/25 px-2.5 text-xs text-foreground outline-none backdrop-blur-xl focus:border-sky-500 dark:border-white/10 dark:bg-slate-900/60">
             {STATUS_OPTIONS.map((option) => <option key={option.value || "all"} value={option.value}>{option.label}</option>)}
           </select>
