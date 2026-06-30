@@ -982,11 +982,24 @@ class MaterialRequisitionViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
     filterset_class = MaterialRequisitionFilter
     permission_classes = [IsAuthenticated]
     search_fields = [
+        # Requisição
         "custom_id",
+        # Produto/medicamento nos itens (cobre busca por material, medicamento)
+        "items__product__name",
+        # Referência da fatura / departamento (cobre busca por procedimento via fatura)
         "requested_by_department",
+        # Solicitante / usuário criador
         "created_by__username",
         "created_by__first_name",
         "created_by__last_name",
+        # Usuário que aviou
+        "fulfilled_by__username",
+        "fulfilled_by__first_name",
+        "fulfilled_by__last_name",
+        # Usuário que arquivou
+        "on_hold_by__username",
+        "on_hold_by__first_name",
+        "on_hold_by__last_name",
     ]
     ordering_fields = [
         "tenant",
