@@ -1791,7 +1791,7 @@ export default function FaturaRascunhoPage() {
                             const label = prod?.nome || mat.produto_nome || `Material ${mat.produto}`
                             const addKey = `procedure-material-${mat.id}`
                             return (
-                              <button key={mat.id} type="button" disabled={addItemButtonDisabled}
+                              <button key={`pm-${mat.id}`} type="button" disabled={addItemButtonDisabled}
                                 onClick={() => adicionarItem({ tipo_item: "MAT", procedimento_material: mat.id }, addKey)}
                                 className="inline-flex items-center gap-1 rounded-full border border-dashed border-indigo-400 bg-indigo-50/60 px-2 py-0.5 text-[10px] text-indigo-700 transition hover:bg-indigo-100 disabled:opacity-50 dark:border-indigo-600/50 dark:bg-indigo-900/10 dark:text-indigo-400"
                               >+ {label}</button>
