@@ -4,15 +4,14 @@ import { isNotFoundLikeError } from "@/lib/errors/api-error"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 
+import { BadgeCheck, FileText, Receipt, Wallet } from "lucide-react"
 import AppLayout from "@/components/layout/AppLayout"
-import PageHeader from "@/components/ui/PageHeader"
 import Card from "@/components/ui/Card"
 import DataTable from "@/components/ui/DataTable"
 import CatalogSearchSelect, { type CatalogOption } from "@/components/ui/CatalogSearchSelect"
 import SelectInput from "@/components/ui/SelectInput"
 import TextAreaInput from "@/components/ui/TextAreaInput"
 import TextInput from "@/components/ui/TextInput"
-import StatusBadge from "@/components/ui/StatusBadge"
 import MoneyValue from "@/components/ui/MoneyValue"
 import PdfActionLabel from "@/components/ui/PdfActionLabel"
 import ConfirmDialog from "@/components/ui/ConfirmDialog"
@@ -53,6 +52,16 @@ const PAGAMENTO_METODOS = [
 ] as const
 
 type MetodoPagamento = (typeof PAGAMENTO_METODOS)[number]["value"]
+
+const GLASS =
+  "rounded-xl border-t border-r border-b border-white/20 bg-white/30 shadow-sm backdrop-blur-sm dark:border-t-white/10 dark:border-r-white/10 dark:border-b-white/10 dark:bg-white/[0.04]"
+
+const INVOICE_STATUS: Record<string, { label: string; accent: string; bar: string }> = {
+  RASC: { label: "Rascunho", accent: "bg-amber-500", bar: "border-l-amber-500" },
+  EMIT: { label: "Emitida",  accent: "bg-sky-500",   bar: "border-l-sky-500"   },
+  PAGA: { label: "Paga",     accent: "bg-emerald-500", bar: "border-l-emerald-500" },
+  CANC: { label: "Cancelada", accent: "bg-rose-500", bar: "border-l-rose-500"  },
+}
 
 function listFrom(res: any): any[] {
   if (res && (res as any).results) return (res as any).results
@@ -949,28 +958,75 @@ export default function FaturaRascunhoPage() {
     )
   }
 
+  const estadoInfo = INVOICE_STATUS[String(fatura.estado || "").toUpperCase()] ?? INVOICE_STATUS.RASC
+
   return (
     <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.RECEPCAO, GROUPS.CONTABILIDADE]}>
-      <div className="space-y-6">
-        <PageHeader
-          title={`Fatura ${fatura.id_custom || fatura.id}`}
-          subtitle={
-            paciente
-              ? `${paciente.nome || "Paciente"} · ${paciente.id_custom || paciente.id}`
-              : "Sem paciente"
-          }
-          actions={
+      <div className="space-y-2">
+
+        {/* ── Hero ── */}
+        <section className={`relative overflow-hidden ${GLASS} border-l-4 ${estadoInfo.bar}`}>
+          <div className="flex flex-wrap items-center justify-between gap-3 px-3 py-2 pl-4">
+            <div className="flex min-w-0 items-center gap-2">
+              <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${estadoInfo.accent} text-white shadow-md`}>
+                <Receipt size={17} />
+              </span>
+              <div>
+                <h1 className="text-lg font-bold leading-tight text-foreground">
+                  Fatura {fatura.id_custom || fatura.id}
+                </h1>
+                <p className="text-[11px] text-muted-foreground">
+                  {paciente ? `${paciente.nome || "Paciente"} · ${paciente.id_custom || paciente.id}` : "Sem paciente"}
+                  {" · "}<span className="font-semibold">{estadoInfo.label}</span>
+                </p>
+              </div>
+            </div>
             <div className="flex flex-wrap items-center gap-2">
-              <StatusBadge status={fatura.estado} />
+              {faturaRascunho && podeEditar ? (
+                <button
+                  className={`inline-flex items-center rounded-lg ${estadoInfo.accent} px-3 py-2 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 disabled:opacity-50`}
+                  onClick={issueInvoiceAction}
+                  disabled={!podeEmitirFatura}
+                >
+                  {acaoId === fatura.id ? "Emitindo..." : "Emitir fatura"}
+                </button>
+              ) : null}
               <button
-                className="inline-flex items-center rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-white/20 bg-white/10 px-3 py-2 text-sm font-medium text-foreground shadow-sm backdrop-blur-sm transition hover:bg-white/20 dark:border-white/10"
                 onClick={() => router.push("/invoices")}
               >
                 Voltar
               </button>
             </div>
-          }
-        />
+          </div>
+        </section>
+
+        {/* ── Métricas ── */}
+        <div className="flex flex-wrap gap-2 md:flex-nowrap [&>*]:flex-1 [&>*]:min-w-[130px]">
+          {[
+            { icon: FileText, label: "Subtotal", value: <MoneyValue value={fatura.subtotal} />, accent: "bg-slate-500" },
+            { icon: Wallet,   label: "IVA",      value: <MoneyValue value={fatura.iva_valor} />, accent: "bg-violet-500" },
+            { icon: BadgeCheck, label: "Total a pagar", value: <MoneyValue value={totalAPagarFatura} />, accent: estadoInfo.accent },
+          ].map(({ icon: Icon, label, value, accent }) => (
+            <section key={label} className={`relative overflow-hidden ${GLASS} border-l-4 ${accent.replace("bg-", "border-l-")}`}>
+              <div className="flex items-center gap-2.5 px-3 py-2 pl-4">
+                <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${accent} text-white shadow-sm`}>
+                  <Icon size={13} />
+                </span>
+                <div className="min-w-0">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">{label}</p>
+                  <p className="font-display text-lg font-bold leading-tight text-foreground tabular-nums">{value}</p>
+                </div>
+              </div>
+            </section>
+          ))}
+        </div>
+
+        {motivoBloqueioEmissao ? (
+          <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-2 text-xs text-amber-700 dark:border-amber-700/40 dark:bg-amber-900/20 dark:text-amber-300">
+            {motivoBloqueioEmissao}
+          </div>
+        ) : null}
 
         {erro ? (
           <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
@@ -984,72 +1040,38 @@ export default function FaturaRascunhoPage() {
           </div>
         ) : null}
 
-        <Card title="Resumo" subtitle="Fluxo: rascunho → emitir → pagar → recibo.">
-          <div className="grid gap-3 md:grid-cols-3">
-            <div className="rounded-lg border border-slate-100 bg-white p-3 text-sm">
-              <div className="text-xs text-gray-500">Subtotal</div>
-              <div className="text-base font-semibold text-gray-900"><MoneyValue value={fatura.subtotal} /></div>
-            </div>
-            <div className="rounded-lg border border-slate-100 bg-white p-3 text-sm">
-              <div className="text-xs text-gray-500">IVA</div>
-              <div className="text-base font-semibold text-gray-900"><MoneyValue value={fatura.iva_valor} /></div>
-            </div>
-            <div className="rounded-lg border border-slate-100 bg-white p-3 text-sm">
-              <div className="text-xs text-gray-500">Total a pagar (com IVA)</div>
-              <div className="text-base font-semibold text-gray-900"><MoneyValue value={totalAPagarFatura} /></div>
-            </div>
-          </div>
-
-          <div className="mt-4 flex flex-wrap items-center gap-2">
-            {faturaRascunho && podeEditar ? (
-              <div className="flex flex-col gap-1">
-                <button
-                  className="inline-flex items-center rounded-lg bg-[var(--primary-600)] px-3 py-2 text-sm font-semibold text-white transition hover:bg-[var(--primary-700)] disabled:opacity-50"
-                  onClick={issueInvoiceAction}
-                  disabled={!podeEmitirFatura}
-                >
-                  {acaoId === fatura.id ? "Emitindo..." : "Emitir fatura"}
-                </button>
-                {motivoBloqueioEmissao ? (
-                  <div className="max-w-xs text-xs text-amber-700">{motivoBloqueioEmissao}</div>
-                ) : null}
-              </div>
-            ) : null}
-            {faturaRascunho && !podeEditar ? (
-              <div className="text-xs text-amber-700">Sem permissão para emitir fatura.</div>
-            ) : null}
-
-            {fatura.estado === "EMIT" ? (
-              <div className="text-sm text-sky-700">Aguardando pagamento</div>
-            ) : null}
-
+        {/* ── Barra de ações rápidas ── */}
+        <section className={`relative overflow-hidden ${GLASS} border-l-4 border-l-slate-400`}>
+          <div className="flex flex-wrap items-center gap-2 px-3 py-2 pl-4">
+            <span className="text-xs font-semibold text-muted-foreground">Ações</span>
             <button
-              className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background/60 px-3 py-1.5 text-xs font-medium text-foreground transition hover:bg-muted"
               onClick={downloadInvoicePdf}
             >
               <PdfActionLabel>PDF da fatura</PdfActionLabel>
             </button>
-
             {recibo ? (
               <button
-                className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-200 px-3 py-2 text-sm font-medium text-emerald-700 transition hover:bg-emerald-50"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-700 transition hover:bg-emerald-100 dark:border-emerald-700/40 dark:bg-emerald-900/20 dark:text-emerald-300"
                 onClick={downloadReceiptPdf}
               >
                 <PdfActionLabel>PDF do recibo</PdfActionLabel>
               </button>
             ) : null}
-
             {fatura.estado === "PAGA" ? (
               <button
-                className="inline-flex items-center rounded-lg border border-sky-200 px-3 py-2 text-sm font-medium text-sky-700 transition hover:bg-sky-50 disabled:opacity-50"
+                className="inline-flex items-center rounded-lg border border-sky-200 bg-sky-50 px-3 py-1.5 text-xs font-medium text-sky-700 transition hover:bg-sky-100 dark:border-sky-700/40 dark:bg-sky-900/20 dark:text-sky-300 disabled:opacity-50"
                 onClick={sendInvoiceNotification}
                 disabled={notificacaoEnviando}
               >
                 {notificacaoEnviando ? "Notificando..." : "Enviar notificação"}
               </button>
             ) : null}
+            {fatura.estado === "EMIT" ? (
+              <span className="text-xs text-sky-600 dark:text-sky-400">Aguardando pagamento</span>
+            ) : null}
           </div>
-        </Card>
+        </section>
 
         <Card title="Cliente fiscal" subtitle="Quem paga (pode ser empresa, seguradora, escola, ONG ou hospital). Por omissão, o paciente.">
           <div className="space-y-2">
