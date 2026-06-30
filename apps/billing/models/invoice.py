@@ -522,12 +522,26 @@ class Invoice(NoNameCoreModel):
             )
             for item in request_items:
                 if item.exam_id:
-                    InvoiceItem.objects.create(
-                        tenant=self.tenant,
-                        invoice=self,
-                        item_type=InvoiceItem.TipoItem.EXAME,
-                        exam=item.exam,
-                    )
+                    from apps.clinical.models.lab_exam import LabExam
+                    from apps.clinical_laboratory.models import LabTest
+                    exam_obj = item.exam
+                    if isinstance(exam_obj, LabExam):
+                        InvoiceItem.objects.create(
+                            tenant=self.tenant,
+                            invoice=self,
+                            item_type=InvoiceItem.TipoItem.EXAME,
+                            exam=exam_obj,
+                        )
+                    elif isinstance(exam_obj, LabTest):
+                        # LabTest (clinical_laboratory catalog) — no LabExam FK; use adjustment item
+                        InvoiceItem.objects.create(
+                            tenant=self.tenant,
+                            invoice=self,
+                            item_type=InvoiceItem.TipoItem.AJUSTE,
+                            descricao=exam_obj.name or exam_obj.code or f"Exame {exam_obj.pk}",
+                            quantidade=1,
+                            preco_unitario=exam_obj.price or 0,
+                        )
 
                 elif item.medical_exam_id:
                     InvoiceItem.objects.create(
