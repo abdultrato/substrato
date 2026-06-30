@@ -160,6 +160,10 @@ export default function FaturasPage() {
       return haystack.includes(q)
     })
   }, [faturas, busca])
+  const faturasVisiveis = useMemo(
+    () => faturasFiltradas.slice(0, pageSize),
+    [faturasFiltradas, pageSize]
+  )
   const totalAPagar = useCallback(
     (f?: FaturaRow | null) => f?.total_a_pagar ?? f?.valor_a_pagar ?? f?.total,
     []
@@ -694,7 +698,7 @@ export default function FaturasPage() {
               </div>
             </Card>
 
-            {faturasFiltradas.length === 0 ? (
+            {faturasVisiveis.length === 0 ? (
               <Card glass>
                 <div className="py-10 text-center text-sm text-muted-foreground">
                   {busca ? "Nenhuma fatura corresponde à pesquisa." : "Nenhuma fatura encontrada."}
@@ -702,7 +706,7 @@ export default function FaturasPage() {
               </Card>
             ) : (
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-4">
-                {faturasFiltradas.map((f) => {
+                {faturasVisiveis.map((f) => {
                   const accent = INVOICE_STATUS[String(f.estado || "").toUpperCase()]
                   const accentBar =
                     f.estado === "PAGA" ? "bg-emerald-500"
