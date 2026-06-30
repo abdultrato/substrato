@@ -27,7 +27,7 @@ class Command(BaseCommand):
             "--tenant-id",
             type=str,
             default=None,
-            help="UUID do tenant. Omitir = primeiro tenant ativo.",
+            help="UUID do tenant. Omitir = todos os tenants ativos.",
         )
         parser.add_argument(
             "--todos",
@@ -49,79 +49,69 @@ class Command(BaseCommand):
         tenant_id = options["tenant_id"]
         forcar_todos = options["todos"]
 
-        # Resolve tenant
+        from apps.tenants.models import Tenant
+
+        # Resolve lista de tenants a processar
         if tenant_id:
-            from apps.tenants.models import Tenant
             try:
-                tenant = Tenant.objects.get(id=tenant_id)
+                tenants = [Tenant.all_objects.get(id=tenant_id)]
             except Tenant.DoesNotExist:
                 raise CommandError(f"Tenant {tenant_id} não encontrado.")
         else:
-            from apps.tenants.models import Tenant
-            tenant = Tenant.objects.filter(active=True).first()
-            if not tenant:
+            tenants = list(Tenant.all_objects.filter(active=True))
+            if not tenants:
                 raise CommandError("Nenhum tenant ativo encontrado.")
 
-        self.stdout.write(f"Tenant: {tenant.name} ({tenant.id})")
+        validade = date.today() + timedelta(days=730)
+        total_criados = 0
+        total_ignorados = 0
+
+        for tenant in tenants:
+            self.stdout.write(f"\nTenant: {tenant.name} ({tenant.id})")
+            criados, ignorados = self._seed_tenant(tenant, quantidade, validade, forcar_todos)
+            self._seed_pending_procedure_materials(tenant, quantidade, validade)
+            total_criados += criados
+            total_ignorados += ignorados
+
+        self.stdout.write(
+            self.style.SUCCESS(
+                f"\nConcluído: {total_criados} produtos com estoque adicionado, {total_ignorados} ignorados."
+            )
+        )
+
+    def _seed_tenant(self, tenant, quantidade, validade, forcar_todos):
+        from apps.pharmacy.models.inventory_movement import InventoryMovement, MovementOrigin, MovementType
+        from apps.pharmacy.models.lot import Lot
+        from apps.pharmacy.models.product import Product
 
         produtos = Product.objects.filter(tenant=tenant, deleted=False)
-        total = produtos.count()
-        self.stdout.write(f"Produtos encontrados: {total}")
-
-        validade = date.today() + timedelta(days=730)  # 2 anos
+        self.stdout.write(f"  Produtos: {produtos.count()}")
         criados = 0
         ignorados = 0
 
+        from django.db import transaction
         with transaction.atomic():
             for produto in produtos:
-                # Verifica se já tem estoque disponível
                 if not forcar_todos:
-                    lotes_disponiveis = Lot.available(produto)
-                    if lotes_disponiveis.exists():
+                    if Lot.available(produto).exists():
                         ignorados += 1
                         continue
 
                 numero_lote = f"SEED-{date.today().strftime('%Y%m%d')}-{produto.pk}"
-
-                # Evita duplicar lote com mesmo número
                 if Lot.objects.filter(product=produto, lot_number=numero_lote, deleted=False).exists():
                     ignorados += 1
                     continue
 
-                preco = produto.sale_price or 0
-
-                lote = Lot(
-                    tenant=tenant,
-                    product=produto,
-                    lot_number=numero_lote,
-                    expiration_date=validade,
-                    initial_quantity=quantidade,
-                    sale_price=preco,
-                )
+                lote = Lot(tenant=tenant, product=produto, lot_number=numero_lote,
+                           expiration_date=validade, initial_quantity=quantidade,
+                           sale_price=produto.sale_price or 0)
                 lote.save()
-
-                movimento = InventoryMovement(
-                    tenant=tenant,
-                    lot=lote,
-                    type=MovementType.ENTRADA,
-                    origin=MovementOrigin.AJUSTE,
-                    quantity=quantidade,
-                )
-                movimento.save()
-
+                InventoryMovement(tenant=tenant, lot=lote, type=MovementType.ENTRADA,
+                                  origin=MovementOrigin.AJUSTE, quantity=quantidade).save()
                 criados += 1
-                self.stdout.write(
-                    f"  ✓ {produto.name} — lote {numero_lote} ({quantidade} un.)"
-                )
+                self.stdout.write(f"  ✓ {produto.name} — lote {numero_lote} ({quantidade} un.)")
 
-        # Cobrir também ProcedureMaterials pendentes cujo produto é de outro tenant
-        self._seed_pending_procedure_materials(tenant, quantidade, validade)
-
-        self.stdout.write(
-            self.style.SUCCESS(
-                f"\nConcluído: {criados} produtos com estoque adicionado, {ignorados} ignorados."
-            )
-        )
+        return criados, ignorados
 
     def _seed_pending_procedure_materials(self, tenant, quantidade, validade):
         """Garante estoque para materiais de procedimento pendentes referenciando produtos de outros tenants."""
