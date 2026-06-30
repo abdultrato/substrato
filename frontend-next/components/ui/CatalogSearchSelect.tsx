@@ -50,9 +50,12 @@ export default function CatalogSearchSelect({
     const r = inputRef.current.getBoundingClientRect()
     const spaceBelow = window.innerHeight - r.bottom
     const openUp = spaceBelow < MAX_H + 8 && r.top > MAX_H
+    const dropH = dropdownRef.current
+      ? Math.min(dropdownRef.current.scrollHeight, MAX_H)
+      : MAX_H
     setPos({
       top: openUp
-        ? r.top + window.scrollY - MAX_H - 4
+        ? r.top + window.scrollY - dropH - 4
         : r.bottom + window.scrollY + 4,
       left: r.left + window.scrollX,
       width: r.width,
@@ -99,6 +102,12 @@ export default function CatalogSearchSelect({
     document.addEventListener("mousedown", onDocMouseDown)
     return () => document.removeEventListener("mousedown", onDocMouseDown)
   }, [])
+
+  // Recalculate once dropdown is in DOM so we know its real height
+  useEffect(() => {
+    if (open && dropdownRef.current) calcPos()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, options])
 
   // Recalculate on scroll/resize so position stays correct
   useEffect(() => {
