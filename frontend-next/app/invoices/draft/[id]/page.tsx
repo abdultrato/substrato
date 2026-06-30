@@ -1461,9 +1461,10 @@ export default function FaturaRascunhoPage() {
                     {adicionados.length > 0 && (
                       <div className="flex flex-wrap gap-1">
                         {adicionados.map(i => (
-                          <span key={i.id} className="inline-flex items-center gap-1 rounded-full border border-sky-300 bg-sky-50 px-2 py-0.5 text-[10px] text-sky-800 dark:border-sky-700/50 dark:bg-sky-900/20 dark:text-sky-300">
-                            <span className="text-[8px]">✓</span>{i.descricao || `Exame ${i.exame}`}
-                          </span>
+                          <button key={i.id} type="button" disabled={!faturaRascunho || !podeEditar} onClick={() => removerItem(i.id)}
+                            className="inline-flex items-center gap-1 rounded-full border border-sky-300 bg-sky-50 px-2 py-0.5 text-[10px] text-sky-800 transition hover:border-rose-300 hover:bg-rose-50 hover:text-rose-700 disabled:cursor-default dark:border-sky-700/50 dark:bg-sky-900/20 dark:text-sky-300">
+                            <span className="text-[8px]">✓</span>{i.descricao || `Exame ${i.exame}`}<span className="text-[9px] opacity-60">×</span>
+                          </button>
                         ))}
                       </div>
                     )}
@@ -1521,9 +1522,10 @@ export default function FaturaRascunhoPage() {
                     {adicionados.length > 0 && (
                       <div className="flex flex-wrap gap-1">
                         {adicionados.map(i => (
-                          <span key={i.id} className="inline-flex items-center gap-1 rounded-full border border-violet-300 bg-violet-50 px-2 py-0.5 text-[10px] text-violet-800 dark:border-violet-700/50 dark:bg-violet-900/20 dark:text-violet-300">
-                            <span className="text-[8px]">✓</span>{i.descricao || `Exame ${i.exame_medico}`}
-                          </span>
+                          <button key={i.id} type="button" disabled={!faturaRascunho || !podeEditar} onClick={() => removerItem(i.id)}
+                            className="inline-flex items-center gap-1 rounded-full border border-violet-300 bg-violet-50 px-2 py-0.5 text-[10px] text-violet-800 transition hover:border-rose-300 hover:bg-rose-50 hover:text-rose-700 disabled:cursor-default dark:border-violet-700/50 dark:bg-violet-900/20 dark:text-violet-300">
+                            <span className="text-[8px]">✓</span>{i.descricao || `Exame ${i.exame_medico}`}<span className="text-[9px] opacity-60">×</span>
+                          </button>
                         ))}
                       </div>
                     )}
@@ -1579,9 +1581,10 @@ export default function FaturaRascunhoPage() {
                     {adicionados.length > 0 && (
                       <div className="flex flex-wrap gap-1">
                         {adicionados.map(i => (
-                          <span key={i.id} className="inline-flex items-center gap-1 rounded-full border border-teal-300 bg-teal-50 px-2 py-0.5 text-[10px] text-teal-800 dark:border-teal-700/50 dark:bg-teal-900/20 dark:text-teal-300">
-                            <span className="text-[8px]">✓</span>{String(i.descricao).replace(/^Procedimento:\s*/, "")}
-                          </span>
+                          <button key={i.id} type="button" disabled={!faturaRascunho || !podeEditar} onClick={() => removerItem(i.id)}
+                            className="inline-flex items-center gap-1 rounded-full border border-teal-300 bg-teal-50 px-2 py-0.5 text-[10px] text-teal-800 transition hover:border-rose-300 hover:bg-rose-50 hover:text-rose-700 disabled:cursor-default dark:border-teal-700/50 dark:bg-teal-900/20 dark:text-teal-300">
+                            <span className="text-[8px]">✓</span>{String(i.descricao).replace(/^Procedimento:\s*/, "")}<span className="text-[9px] opacity-60">×</span>
+                          </button>
                         ))}
                       </div>
                     )}
@@ -1634,9 +1637,10 @@ export default function FaturaRascunhoPage() {
                     {adicionadas.length > 0 && (
                       <div className="flex flex-wrap gap-1">
                         {adicionadas.map(i => (
-                          <span key={i.id} className="inline-flex items-center gap-1 rounded-full border border-rose-300 bg-rose-50 px-2 py-0.5 text-[10px] text-rose-800 dark:border-rose-700/50 dark:bg-rose-900/20 dark:text-rose-300">
-                            <span className="text-[8px]">✓</span>{String(i.descricao).replace(/^Cirurgia:\s*/, "")}
-                          </span>
+                          <button key={i.id} type="button" disabled={!faturaRascunho || !podeEditar} onClick={() => removerItem(i.id)}
+                            className="inline-flex items-center gap-1 rounded-full border border-rose-300 bg-rose-50 px-2 py-0.5 text-[10px] text-rose-800 transition hover:border-rose-500 hover:bg-rose-100 disabled:cursor-default dark:border-rose-700/50 dark:bg-rose-900/20 dark:text-rose-300">
+                            <span className="text-[8px]">✓</span>{String(i.descricao).replace(/^Cirurgia:\s*/, "")}<span className="text-[9px] opacity-60">×</span>
+                          </button>
                         ))}
                       </div>
                     )}
@@ -1684,9 +1688,10 @@ export default function FaturaRascunhoPage() {
                 <div className="border-t border-white/20 dark:border-white/10 px-4 py-2.5">
                   <div className="flex flex-wrap gap-1">
                     {itens.filter(i => i.tipo_item === "CON").map(i => (
-                      <span key={i.id} className="inline-flex items-center gap-1 rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-[10px] text-amber-800 dark:border-amber-700/50 dark:bg-amber-900/20 dark:text-amber-300">
-                        <span className="text-[8px]">✓</span>{i.descricao || `Consulta ${i.id}`}
-                      </span>
+                      <button key={i.id} type="button" disabled={!faturaRascunho || !podeEditar} onClick={() => removerItem(i.id)}
+                        className="inline-flex items-center gap-1 rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-[10px] text-amber-800 transition hover:border-rose-300 hover:bg-rose-50 hover:text-rose-700 disabled:cursor-default dark:border-amber-700/50 dark:bg-amber-900/20 dark:text-amber-300">
+                        <span className="text-[8px]">✓</span>{i.descricao || `Consulta ${i.id}`}<span className="text-[9px] opacity-60">×</span>
+                      </button>
                     ))}
                   </div>
                 </div>
@@ -1770,9 +1775,10 @@ export default function FaturaRascunhoPage() {
                     {adicionados.length > 0 && (
                       <div className="flex flex-wrap gap-1">
                         {adicionados.map(i => (
-                          <span key={i.id} className="inline-flex items-center gap-1 rounded-full border border-indigo-300 bg-indigo-50 px-2 py-0.5 text-[10px] text-indigo-800 dark:border-indigo-700/50 dark:bg-indigo-900/20 dark:text-indigo-300">
-                            <span className="text-[8px]">✓</span>{String(i.descricao).replace(/^Produto:\s*/, "")}{Number(i.quantidade) > 1 ? ` ×${Number(i.quantidade)}` : ""}
-                          </span>
+                          <button key={i.id} type="button" disabled={!faturaRascunho || !podeEditar} onClick={() => removerItem(i.id)}
+                            className="inline-flex items-center gap-1 rounded-full border border-indigo-300 bg-indigo-50 px-2 py-0.5 text-[10px] text-indigo-800 transition hover:border-rose-300 hover:bg-rose-50 hover:text-rose-700 disabled:cursor-default dark:border-indigo-700/50 dark:bg-indigo-900/20 dark:text-indigo-300">
+                            <span className="text-[8px]">✓</span>{String(i.descricao).replace(/^Produto:\s*/, "")}{Number(i.quantidade) > 1 ? ` ×${Number(i.quantidade)}` : ""}<span className="text-[9px] opacity-60">×</span>
+                          </button>
                         ))}
                       </div>
                     )}
