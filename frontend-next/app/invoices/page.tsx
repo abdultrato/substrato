@@ -638,7 +638,7 @@ export default function FaturasPage() {
                     <div className="text-sm text-gray-500">Nenhuma requisição por faturar.</div>
                   ) : (
                     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                      {requisicoes.map((r) => (
+                      {requisicoes.slice(0, pageSize).map((r) => (
                         <div
                           key={r.id}
                           className={`relative flex min-h-[160px] flex-col justify-between overflow-hidden ${GLASS} p-4 pl-5 transition hover:shadow`}
@@ -685,7 +685,7 @@ export default function FaturasPage() {
                     <div className="text-sm text-gray-500">Nenhum rascunho encontrado.</div>
                   ) : (
                     <div className="space-y-2">
-                      {rascunhos.map((f) => (
+                      {rascunhos.slice(0, pageSize).map((f) => (
                         <div
                           key={f.id}
                           className={`relative flex flex-wrap items-center justify-between gap-2 overflow-hidden ${GLASS} px-3 py-2 pl-4 text-sm`}
@@ -708,6 +708,11 @@ export default function FaturasPage() {
                 </div>
               </div>
             </Card>
+
+            <div className="px-1 text-[11px] text-muted-foreground">
+              A mostrar {faturasVisiveis.length} de {faturasFiltradas.length} fatura{faturasFiltradas.length !== 1 ? "s" : ""}
+              {faturasFiltradas.length > pageSize ? ` · aumente os itens por página para ver mais` : ""}
+            </div>
 
             {faturasVisiveis.length === 0 ? (
               <Card glass>
