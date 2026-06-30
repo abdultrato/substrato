@@ -8,6 +8,7 @@ import { useCallback, useEffect, useMemo, useState } from "react"
 import { BadgeCheck, BarChart3, Building2, FilePlus2, FileText, Plus, Receipt, Search, Wallet, X } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
+import PageSizeInput from "@/components/ui/PageSizeInput"
 import useAuthGuard from "@/hooks/useAuthGuard"
 import { useAuth } from "@/hooks/useAuth"
 import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
@@ -135,6 +136,7 @@ export default function FaturasPage() {
   const [selectedFatura, setSelectedFatura] = useState<FaturaRow | null>(null)
   const [temPagamentoPendente, setTemPagamentoPendente] = useState(false)
   const [busca, setBusca] = useState("")
+  const [pageSize, setPageSize] = useState(10)
   const [requisicoes, setRequisicoes] = useState<RequisicaoPendente[]>([])
   const [carregandoRequisicoes, setCarregandoRequisicoes] = useState(true)
   const [acaoRequisicaoId, setAcaoRequisicaoId] = useState<number | null>(null)
@@ -167,7 +169,7 @@ export default function FaturasPage() {
     try {
       setCarregando(true)
       setErro(null)
-      const res = await apiFetch<any>("/invoices/", { clientCache: safeRefreshToken === 0 })
+      const res = await apiFetch<any>(`/invoices/?page_size=${pageSize}`, { clientCache: safeRefreshToken === 0 })
       const items = res && (res as any).results ? (res as any).results : res
       setFaturas(Array.isArray(items) ? items : [])
     } catch (e: any) {
@@ -175,7 +177,7 @@ export default function FaturasPage() {
     } finally {
       setCarregando(false)
     }
-  }, [safeRefreshToken])
+  }, [safeRefreshToken, pageSize])
 
   useEffect(() => {
     carregar()
@@ -587,6 +589,10 @@ export default function FaturasPage() {
                   <X size={14} />
                 </button>
               )}
+            </div>
+            <div className="inline-flex h-9 items-center gap-1.5" title="Itens por página">
+              <PageSizeInput value={pageSize} onChange={setPageSize} ariaLabel="Itens por página" />
+              <span className="text-xs text-muted-foreground">/pág</span>
             </div>
             <Link
               href="/invoices/reports"
