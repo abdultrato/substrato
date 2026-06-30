@@ -711,7 +711,6 @@ export default function FaturasPage() {
 
             <div className="px-1 text-[11px] text-muted-foreground">
               A mostrar {faturasVisiveis.length} de {faturasFiltradas.length} fatura{faturasFiltradas.length !== 1 ? "s" : ""}
-              {faturasFiltradas.length > pageSize ? ` · aumente os itens por página para ver mais` : ""}
             </div>
 
             {faturasVisiveis.length === 0 ? (
