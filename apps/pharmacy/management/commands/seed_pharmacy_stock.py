@@ -114,8 +114,64 @@ class Command(BaseCommand):
                     f"  ✓ {produto.name} — lote {numero_lote} ({quantidade} un.)"
                 )
 
+        # Cobrir também ProcedureMaterials pendentes cujo produto é de outro tenant
+        self._seed_pending_procedure_materials(tenant, quantidade, validade)
+
         self.stdout.write(
             self.style.SUCCESS(
                 f"\nConcluído: {criados} produtos com estoque adicionado, {ignorados} ignorados."
             )
         )
+
+    def _seed_pending_procedure_materials(self, tenant, quantidade, validade):
+        """Garante estoque para materiais de procedimento pendentes referenciando produtos de outros tenants."""
+        from apps.nursing.models.procedure_material import ProcedureMaterial
+        from apps.pharmacy.models.inventory_movement import (
+            InventoryMovement,
+            MovementOrigin,
+            MovementType,
+        )
+        from apps.pharmacy.models.lot import Lot
+
+        pendentes = (
+            ProcedureMaterial.objects.filter(
+                inventory_movement__isnull=True,
+                deleted=False,
+                product__isnull=False,
+            )
+            .exclude(product__tenant=tenant)
+            .select_related("product")
+            .distinct()
+        )
+
+        extras = 0
+        for material in pendentes:
+            produto = material.product
+            lotes = Lot.available(produto).filter(tenant_id=tenant.pk)
+            if lotes.exists():
+                continue
+            numero = f"SEED-{date.today().strftime('%Y%m%d')}-XTENANTE-{produto.pk}"
+            if Lot.objects.filter(product=produto, lot_number=numero, deleted=False).exists():
+                continue
+            lote = Lot(
+                tenant=tenant,
+                product=produto,
+                lot_number=numero,
+                expiration_date=validade,
+                initial_quantity=quantidade,
+                sale_price=produto.sale_price or 0,
+            )
+            lote.save()
+            mov = InventoryMovement(
+                tenant=tenant,
+                lot=lote,
+                type=MovementType.ENTRADA,
+                origin=MovementOrigin.AJUSTE,
+                quantity=quantidade,
+            )
+            mov.save()
+            self.stdout.write(f"  ✓ [cross-tenant] {produto.name} — lote {numero}")
+            extras += 1
+
+        if extras:
+            self.stdout.write(f"  {extras} produto(s) cross-tenant com estoque adicionado.")
