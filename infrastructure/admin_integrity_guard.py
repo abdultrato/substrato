@@ -68,24 +68,31 @@ def _redirect_to_current_page(request):
 def _patch_admin_site_check() -> None:
     """Fix race condition in Django admin check() when autoreloader is active.
 
-    Django's AdminSite.check() iterates self._registry.values() without taking
-    a snapshot, which raises RuntimeError if another thread registers a model
-    concurrently (common with Python 3.13 autoreloader). Wrapping check() to
-    temporarily replace _registry with a snapshot dict is safe because all
-    registrations are complete before any request is served.
+    Django's AdminSite.check() iterates self._registry.values() inside a
+    generator without taking a snapshot first, which raises RuntimeError if
+    another thread registers a model concurrently (Python 3.13 autoreloader).
+    We replace check() with an equivalent that snapshots _registry before
+    iterating, making the iteration immune to concurrent registrations.
     """
+    from django.apps import apps as django_apps
+    from django.contrib.admin import ModelAdmin
     from django.contrib.admin import sites as _sites
 
     _AdminSite = _sites.AdminSite
-    _original_check = _AdminSite.check
 
     def _safe_check(self, app_configs):
-        original_registry = self._registry
-        self._registry = dict(original_registry)
-        try:
-            return _original_check(self, app_configs)
-        finally:
-            self._registry = original_registry
+        if app_configs is None:
+            app_configs = django_apps.get_app_configs()
+        app_configs = set(app_configs)
+
+        errors = []
+        snapshot = list(self._registry.values())
+        for modeladmin in snapshot:
+            if modeladmin.__class__ is ModelAdmin:
+                continue
+            if modeladmin.model._meta.app_config in app_configs:
+                errors.extend(modeladmin.check())
+        return errors
 
     _AdminSite.check = _safe_check
 
