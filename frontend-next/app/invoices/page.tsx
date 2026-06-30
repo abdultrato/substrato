@@ -5,10 +5,9 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useCallback, useEffect, useMemo, useState } from "react"
 
-import { BadgeCheck, Building2, FilePlus2, FileText, Plus, Receipt, Wallet } from "lucide-react"
+import { BadgeCheck, BarChart3, Building2, FilePlus2, FileText, Plus, Receipt, Search, Wallet, X } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
-import DataTable from "@/components/ui/DataTable"
 import useAuthGuard from "@/hooks/useAuthGuard"
 import { useAuth } from "@/hooks/useAuth"
 import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
@@ -31,12 +30,6 @@ type FaturaItem = {
   iva_valor?: string | number
   total_sem_iva?: string | number
   total_com_iva?: string | number
-}
-
-type UserOption = {
-  id: number
-  username: string
-  displayName: string
 }
 
 type RequisicaoPendente = {
@@ -141,32 +134,7 @@ export default function FaturasPage() {
   const [carregandoItens, setCarregandoItens] = useState(false)
   const [selectedFatura, setSelectedFatura] = useState<FaturaRow | null>(null)
   const [temPagamentoPendente, setTemPagamentoPendente] = useState(false)
-  const [reportUsers, setReportUsers] = useState<UserOption[]>([])
-  const [reportUserId, setReportUserId] = useState<string>("__all__")
-  const [reportYear, setReportYear] = useState<number>(new Date().getFullYear())
-  const [reportDate, setReportDate] = useState<string>(() => {
-    const now = new Date()
-    const yyyy = now.getFullYear()
-    const mm = String(now.getMonth() + 1).padStart(2, "0")
-    const dd = String(now.getDate()).padStart(2, "0")
-    return `${yyyy}-${mm}-${dd}`
-  })
-  const [reportMonth, setReportMonth] = useState<number>(new Date().getMonth() + 1)
-  const [reportQuarter, setReportQuarter] = useState<number>(Math.floor(new Date().getMonth() / 3) + 1)
-  const [reportSemester, setReportSemester] = useState<number>(new Date().getMonth() + 1 <= 6 ? 1 : 2)
-  const [reportLoading, setReportLoading] = useState<
-    | null
-    | "daily"
-    | "monthly"
-    | "quarterly"
-    | "semiannual"
-    | "annual"
-    | "general-daily"
-    | "general-monthly"
-    | "general-annual"
-  >(null)
-  const [reportUsersLoading, setReportUsersLoading] = useState(false)
-  const [reportUsersError, setReportUsersError] = useState<string | null>(null)
+  const [busca, setBusca] = useState("")
   const [requisicoes, setRequisicoes] = useState<RequisicaoPendente[]>([])
   const [carregandoRequisicoes, setCarregandoRequisicoes] = useState(true)
   const [acaoRequisicaoId, setAcaoRequisicaoId] = useState<number | null>(null)
@@ -179,6 +147,17 @@ export default function FaturasPage() {
     emitidas: faturas.filter((f) => f.estado === "EMIT").length,
     pagas: faturas.filter((f) => f.estado === "PAGA").length,
   }), [faturas])
+  const faturasFiltradas = useMemo(() => {
+    const q = busca.trim().toLowerCase()
+    if (!q) return faturas
+    return faturas.filter((f) => {
+      const estado = INVOICE_STATUS[String(f.estado || "").toUpperCase()]?.label || f.estado || ""
+      const haystack = [
+        f.id_custom, f.id, f.paciente, f.estado, estado, invoiceOriginLabel(f), f.total, f.total_a_pagar,
+      ].map((v) => String(v ?? "").toLowerCase()).join(" ")
+      return haystack.includes(q)
+    })
+  }, [faturas, busca])
   const totalAPagar = useCallback(
     (f?: FaturaRow | null) => f?.total_a_pagar ?? f?.valor_a_pagar ?? f?.total,
     []
@@ -251,37 +230,6 @@ export default function FaturasPage() {
     [carregar, carregarRequisicoes, podeAlterar, router]
   )
 
-  const carregarUtilizadores = useCallback(async () => {
-    try {
-      setReportUsersLoading(true)
-      setReportUsersError(null)
-      const res = await apiFetch<any>("/identity/user/?page_size=500", { clientCache: safeRefreshToken === 0 })
-      const items = res && res.results ? res.results : res
-      const rows = Array.isArray(items) ? items : []
-      const options: UserOption[] = rows.map((row: any) => {
-        const firstName = String(row.first_name || "").trim()
-        const lastName = String(row.last_name || "").trim()
-        const fullName = `${firstName} ${lastName}`.trim()
-        const username = String(row.username || "")
-        return {
-          id: Number(row.id),
-          username,
-          displayName: fullName || username || `Utilizador ${row.id}`,
-        }
-      })
-      setReportUsers(options)
-    } catch (e: any) {
-      setReportUsers([])
-      setReportUsersError(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao carregar utilizadores."))
-    } finally {
-      setReportUsersLoading(false)
-    }
-  }, [safeRefreshToken])
-
-  useEffect(() => {
-    carregarUtilizadores()
-  }, [carregarUtilizadores])
-
   const issueInvoiceAction = useCallback(async (id: number) => {
     if (!podeAlterar) {
       setErro("Sem permissão para emitir fatura.")
@@ -337,55 +285,6 @@ export default function FaturasPage() {
       setAcaoId(null)
     }
   }, [])
-
-  const downloadBillingHistoryPdf = useCallback(
-    async (period: "daily" | "monthly" | "quarterly" | "semiannual" | "annual", forceAll = false) => {
-      try {
-        const loadingKey =
-          forceAll && period === "daily"
-            ? "general-daily"
-            : forceAll && period === "monthly"
-              ? "general-monthly"
-              : forceAll && period === "annual"
-                ? "general-annual"
-                : period
-        setReportLoading(loadingKey)
-
-        const scope = forceAll ? "all" : "user"
-        if (!forceAll && (!reportUserId || reportUserId === "__all__")) {
-          setErro("Selecione um utilizador específico para gerar histórico individual.")
-          return
-        }
-
-        const params = new URLSearchParams()
-        params.set("period", period)
-        params.set("scope", scope)
-        params.set("year", String(reportYear))
-        if (period === "daily") params.set("date", String(reportDate))
-        if (period === "monthly") params.set("month", String(reportMonth))
-        if (period === "quarterly") params.set("quarter", String(reportQuarter))
-        if (period === "semiannual") params.set("semester", String(reportSemester))
-        if (scope === "user") params.set("user_id", String(reportUserId))
-        params.set("limit", "300")
-
-        const blob = await apiFetch<Blob>(`/invoices/billing-history/pdf/?${params.toString()}`, {
-          responseType: "blob",
-        })
-        const url = window.URL.createObjectURL(blob)
-        const a = document.createElement("a")
-        a.href = url
-        const periodRef = period === "daily" ? reportDate : String(reportYear)
-        a.download = `billing_history_${period}_${scope}_${periodRef}.pdf`
-        a.click()
-        window.URL.revokeObjectURL(url)
-      } catch (e: any) {
-        setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao gerar histórico de faturamento."))
-      } finally {
-        setReportLoading(null)
-      }
-    },
-    [reportDate, reportMonth, reportQuarter, reportSemester, reportUserId, reportYear]
-  )
 
   const carregarItens = useCallback(async (faturaId: number) => {
     setCarregandoItens(true)
@@ -513,115 +412,54 @@ export default function FaturasPage() {
     [carregarItens, itensFaturaId, podeAlterar]
   )
 
-  const columns = useMemo(
-    () => [
-      { header: "Código", render: (f: FaturaRow) => f.id_custom || f.id },
-      {
-        header: "Origem",
-        render: (f: FaturaRow) => (
-          isProformaOrigin(f)
-            ? (
-              <span className="inline-flex rounded-md border border-violet-200 bg-violet-50 px-2 py-0.5 text-xs font-semibold text-violet-700">
-                Proforma
-              </span>
-            )
-            : invoiceOriginLabel(f)
-        ),
-      },
-      { header: "Estado", render: (f: FaturaRow) => <EstadoBadge estado={f.estado} /> },
-      { header: "Total a pagar", render: (f: FaturaRow) => <MoneyValue value={totalAPagar(f)} /> },
-      {
-        header: "Ações",
-        render: (f: FaturaRow) => {
-          const isProforma = isProformaOrigin(f)
-
-          return (
-            <div className="flex flex-wrap gap-2">
-              {f.estado === "RASC" ? (
-                <Link
-                  href={`/invoices/draft/${f.id}`}
-                  className="inline-flex items-center rounded-lg border border-emerald-200 px-3 py-1.5 text-xs font-medium text-emerald-700 transition hover:bg-emerald-50"
-                >
-                  {isProforma ? "Rever fatura proforma" : podeAlterar ? "Editar rascunho" : "Ver rascunho"}
-                </Link>
-              ) : null}
-              <button
-                className="inline-flex items-center rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-50"
-                onClick={() => detalhar(f)}
-              >
-                Detalhes
-              </button>
-              {podeAlterar && f.estado === "RASC" && !isProforma ? (
-                <button
-                  className="inline-flex items-center rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-50"
-                  disabled={acaoId === f.id}
-                  onClick={() => issueInvoiceAction(f.id)}
-                >
-                  Emitir
-                </button>
-              ) : null}
-              <button
-                className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-50"
-                disabled={acaoId === f.id}
-                onClick={() => downloadPdf(f.id)}
-              >
-                <PdfActionLabel loading={acaoId === f.id} loadingLabel="PDF...">
-                  PDF
-                </PdfActionLabel>
-              </button>
-              <button
-                className="inline-flex items-center rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-50"
-                disabled={carregandoItens && itensFaturaId === f.id}
-                onClick={() => carregarItens(f.id)}
-              >
-                Itens/IVA
-              </button>
-              {f.estado === "PAGA" ? (
-                <button
-                  className="inline-flex items-center rounded-lg border border-sky-200 px-3 py-1.5 text-xs font-medium text-sky-700 transition hover:bg-sky-50 disabled:opacity-50"
-                  disabled={notificacaoId === f.id}
-                  onClick={() => sendInvoiceNotification(f.id)}
-                >
-                  {notificacaoId === f.id ? "Notificando..." : "Notificar"}
-                </button>
-              ) : null}
-              {podeAlterar && f.estado === "RASC" ? (
-                <ConfirmDialog
-                  title="Anular fatura"
-                  message="Esta fatura será anulada. Confirme apenas se já revisou o rascunho."
-                  confirmText="Anular"
-                  onConfirm={() => voidInvoiceAction(f.id)}
-                  disabled={acaoId === f.id}
-                >
-                  <button
-                    type="button"
-                    className="inline-flex items-center rounded-lg border border-red-200 px-3 py-1.5 text-xs font-medium text-red-700 transition hover:bg-red-50 disabled:opacity-50"
-                    disabled={acaoId === f.id}
-                  >
-                    Anular
-                  </button>
-                </ConfirmDialog>
-              ) : null}
-            </div>
-          )
-        },
-      },
-    ],
-    [
-      acaoId,
-      downloadPdf,
-      issueInvoiceAction,
-      voidInvoiceAction,
-      podeAlterar,
-      carregarItens,
-      carregandoItens,
-      itensFaturaId,
-      detalhar,
-      totalAPagar,
-      notificacaoId,
-      sendInvoiceNotification,
-    ]
-  )
+  const acaoBtn = "inline-flex items-center rounded-md border px-2 py-1 text-[11px] font-medium transition disabled:opacity-50"
+  const renderAcoes = useCallback((f: FaturaRow) => {
+    const isProforma = isProformaOrigin(f)
+    return (
+      <div className="flex flex-wrap gap-1.5">
+        {f.estado === "RASC" ? (
+          <Link
+            href={`/invoices/draft/${f.id}`}
+            className={`${acaoBtn} border-emerald-200 text-emerald-700 hover:bg-emerald-50`}
+          >
+            {isProforma ? "Rever proforma" : podeAlterar ? "Editar" : "Ver"}
+          </Link>
+        ) : null}
+        <button type="button" className={`${acaoBtn} border-gray-200 text-gray-700 hover:bg-gray-50`} onClick={() => detalhar(f)}>
+          Detalhes
+        </button>
+        {podeAlterar && f.estado === "RASC" && !isProforma ? (
+          <button type="button" className={`${acaoBtn} border-gray-200 text-gray-700 hover:bg-gray-50`} disabled={acaoId === f.id} onClick={() => issueInvoiceAction(f.id)}>
+            Emitir
+          </button>
+        ) : null}
+        <button type="button" className={`${acaoBtn} gap-1 border-gray-200 text-gray-700 hover:bg-gray-50`} disabled={acaoId === f.id} onClick={() => downloadPdf(f.id)}>
+          <PdfActionLabel loading={acaoId === f.id} loadingLabel="PDF...">PDF</PdfActionLabel>
+        </button>
+        <button type="button" className={`${acaoBtn} border-gray-200 text-gray-700 hover:bg-gray-50`} disabled={carregandoItens && itensFaturaId === f.id} onClick={() => carregarItens(f.id)}>
+          Itens/IVA
+        </button>
+        {f.estado === "PAGA" ? (
+          <button type="button" className={`${acaoBtn} border-sky-200 text-sky-700 hover:bg-sky-50`} disabled={notificacaoId === f.id} onClick={() => sendInvoiceNotification(f.id)}>
+            {notificacaoId === f.id ? "Notificando..." : "Notificar"}
+          </button>
+        ) : null}
+        {podeAlterar && f.estado === "RASC" ? (
+          <ConfirmDialog
+            title="Anular fatura"
+            message="Esta fatura será anulada. Confirme apenas se já revisou o rascunho."
+            confirmText="Anular"
+            onConfirm={() => voidInvoiceAction(f.id)}
+            disabled={acaoId === f.id}
+          >
+            <button type="button" className={`${acaoBtn} border-red-200 text-red-700 hover:bg-red-50`} disabled={acaoId === f.id}>
+              Anular
+            </button>
+          </ConfirmDialog>
+        ) : null}
+      </div>
+    )
+  }, [acaoId, downloadPdf, issueInvoiceAction, voidInvoiceAction, podeAlterar, carregarItens, carregandoItens, itensFaturaId, detalhar, notificacaoId, sendInvoiceNotification])
 
   const groupedItens = useMemo(() => {
     const normalize = (item: FaturaItem) => (item.tipo_item ?? "").toString().toUpperCase()
@@ -726,184 +564,38 @@ export default function FaturasPage() {
           </div>
         )}
 
-        <Card
-          glass
-          title="Relatórios de faturamento por utilizador"
-        >
-          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-6">
-            <div className="space-y-1">
-              <label className="text-xs font-semibold uppercase text-muted-foreground">Utilizador</label>
-              <select
-                className="h-9 w-full rounded-md border border-input bg-background px-2 text-sm"
-                value={reportUserId}
-                onChange={(e) => setReportUserId(e.target.value)}
-                disabled={reportUsersLoading}
-              >
-                <option value="__all__">Todos os utilizadores</option>
-                {reportUsers.map((u) => (
-                  <option key={u.id} value={u.id}>
-                    {u.displayName}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-xs font-semibold uppercase text-muted-foreground">Data (diário)</label>
+        {/* ── Busca + relatórios ── */}
+        <section className={`relative ${GLASS}`}>
+          <span className="absolute left-0 top-0 h-full w-1 rounded-l-xl bg-slate-400" />
+          <div className="flex flex-wrap items-center gap-3 px-4 py-3 pl-5">
+            <div className="relative min-w-[220px] flex-1">
+              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
               <input
-                type="date"
-                className="h-9 w-full rounded-md border border-input bg-background px-2 text-sm"
-                value={reportDate}
-                onChange={(e) => setReportDate(e.target.value)}
+                type="text"
+                placeholder="Pesquisar por código, paciente, estado, origem ou valor…"
+                className="h-9 w-full rounded-lg border border-border bg-background/60 py-2 pl-8 pr-8 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-sky-500/40 transition"
+                value={busca}
+                onChange={(e) => setBusca(e.target.value)}
               />
+              {busca && (
+                <button
+                  type="button"
+                  aria-label="Limpar pesquisa"
+                  onClick={() => setBusca("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  <X size={14} />
+                </button>
+              )}
             </div>
-
-            <div className="space-y-1">
-              <label className="text-xs font-semibold uppercase text-muted-foreground">Ano</label>
-              <input
-                type="number"
-                min={2000}
-                max={2100}
-                className="h-9 w-full rounded-md border border-input bg-background px-2 text-sm"
-                value={reportYear}
-                onChange={(e) => setReportYear(Number(e.target.value || new Date().getFullYear()))}
-              />
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-xs font-semibold uppercase text-muted-foreground">Mês (mensal)</label>
-              <select
-                className="h-9 w-full rounded-md border border-input bg-background px-2 text-sm"
-                value={reportMonth}
-                onChange={(e) => setReportMonth(Number(e.target.value))}
-              >
-                {Array.from({ length: 12 }).map((_, idx) => (
-                  <option key={idx + 1} value={idx + 1}>
-                    {String(idx + 1).padStart(2, "0")}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-xs font-semibold uppercase text-muted-foreground">Trimestre</label>
-              <select
-                className="h-9 w-full rounded-md border border-input bg-background px-2 text-sm"
-                value={reportQuarter}
-                onChange={(e) => setReportQuarter(Number(e.target.value))}
-              >
-                <option value={1}>1º trimestre</option>
-                <option value={2}>2º trimestre</option>
-                <option value={3}>3º trimestre</option>
-                <option value={4}>4º trimestre</option>
-              </select>
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-xs font-semibold uppercase text-muted-foreground">Semestre</label>
-              <select
-                className="h-9 w-full rounded-md border border-input bg-background px-2 text-sm"
-                value={reportSemester}
-                onChange={(e) => setReportSemester(Number(e.target.value))}
-              >
-                <option value={1}>1º semestre</option>
-                <option value={2}>2º semestre</option>
-              </select>
-            </div>
+            <Link
+              href="/invoices/reports"
+              className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-indigo-200 bg-indigo-50 px-3 text-sm font-semibold text-indigo-700 transition hover:bg-indigo-100 dark:border-indigo-700/40 dark:bg-indigo-900/20 dark:text-indigo-300"
+            >
+              <BarChart3 size={15} /> Relatórios de faturamento
+            </Link>
           </div>
-
-          {reportUsersError ? (
-            <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
-              {reportUsersError}
-            </div>
-          ) : null}
-
-          <div className="mt-4 space-y-3">
-            <div className="text-xs font-semibold uppercase text-muted-foreground">
-              Histórico por utilizador selecionado
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <button
-                className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-xs font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-50"
-                disabled={reportLoading !== null}
-                onClick={() => downloadBillingHistoryPdf("daily")}
-              >
-                <PdfActionLabel loading={reportLoading === "daily"} loadingLabel="Gerando...">
-                  Gerar histórico diário
-                </PdfActionLabel>
-              </button>
-              <button
-                className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-xs font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-50"
-                disabled={reportLoading !== null}
-                onClick={() => downloadBillingHistoryPdf("monthly")}
-              >
-                <PdfActionLabel loading={reportLoading === "monthly"} loadingLabel="Gerando...">
-                  Gerar histórico mensal
-                </PdfActionLabel>
-              </button>
-              <button
-                className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-xs font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-50"
-                disabled={reportLoading !== null}
-                onClick={() => downloadBillingHistoryPdf("quarterly")}
-              >
-                <PdfActionLabel loading={reportLoading === "quarterly"} loadingLabel="Gerando...">
-                  Gerar histórico trimestral
-                </PdfActionLabel>
-              </button>
-              <button
-                className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-xs font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-50"
-                disabled={reportLoading !== null}
-                onClick={() => downloadBillingHistoryPdf("semiannual")}
-              >
-                <PdfActionLabel loading={reportLoading === "semiannual"} loadingLabel="Gerando...">
-                  Gerar histórico semestral
-                </PdfActionLabel>
-              </button>
-              <button
-                className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-xs font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-50"
-                disabled={reportLoading !== null}
-                onClick={() => downloadBillingHistoryPdf("annual")}
-              >
-                <PdfActionLabel loading={reportLoading === "annual"} loadingLabel="Gerando...">
-                  Gerar histórico anual
-                </PdfActionLabel>
-              </button>
-            </div>
-
-            <div className="text-xs font-semibold uppercase text-muted-foreground">
-              Histórico geral (todos utilizadores)
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <button
-                className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--primary-200)] px-3 py-2 text-xs font-semibold text-[var(--primary-700)] transition hover:bg-[var(--primary-50)] disabled:opacity-50"
-                disabled={reportLoading !== null}
-                onClick={() => downloadBillingHistoryPdf("daily", true)}
-              >
-                <PdfActionLabel loading={reportLoading === "general-daily"} loadingLabel="Gerando...">
-                  Gerar histórico geral diário
-                </PdfActionLabel>
-              </button>
-              <button
-                className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--primary-200)] px-3 py-2 text-xs font-semibold text-[var(--primary-700)] transition hover:bg-[var(--primary-50)] disabled:opacity-50"
-                disabled={reportLoading !== null}
-                onClick={() => downloadBillingHistoryPdf("monthly", true)}
-              >
-                <PdfActionLabel loading={reportLoading === "general-monthly"} loadingLabel="Gerando...">
-                  Gerar histórico geral mensal
-                </PdfActionLabel>
-              </button>
-              <button
-                className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--primary-200)] px-3 py-2 text-xs font-semibold text-[var(--primary-700)] transition hover:bg-[var(--primary-50)] disabled:opacity-50"
-                disabled={reportLoading !== null}
-                onClick={() => downloadBillingHistoryPdf("annual", true)}
-              >
-                <PdfActionLabel loading={reportLoading === "general-annual"} loadingLabel="Gerando...">
-                  Gerar histórico geral anual
-                </PdfActionLabel>
-              </button>
-            </div>
-          </div>
-        </Card>
+        </section>
 
         {carregando ? (
           <div className="text-sm text-gray-500">Carregando faturas...</div>
@@ -996,7 +688,50 @@ export default function FaturasPage() {
               </div>
             </Card>
 
-            <DataTable<FaturaRow> columns={columns as any} data={faturas} />
+            {faturasFiltradas.length === 0 ? (
+              <Card glass>
+                <div className="py-10 text-center text-sm text-muted-foreground">
+                  {busca ? "Nenhuma fatura corresponde à pesquisa." : "Nenhuma fatura encontrada."}
+                </div>
+              </Card>
+            ) : (
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-4">
+                {faturasFiltradas.map((f) => {
+                  const accent = INVOICE_STATUS[String(f.estado || "").toUpperCase()]
+                  const accentBar =
+                    f.estado === "PAGA" ? "bg-emerald-500"
+                    : f.estado === "EMIT" ? "bg-sky-500"
+                    : f.estado === "CANC" ? "bg-rose-500"
+                    : "bg-amber-500"
+                  return (
+                    <article
+                      key={f.id}
+                      className={`relative flex aspect-[2/1] flex-col overflow-hidden ${GLASS} p-3 pl-4`}
+                    >
+                      <span className={`absolute left-0 top-0 h-full w-1 ${accentBar}`} />
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <div className="truncate text-sm font-bold text-foreground">{f.id_custom || `Fatura ${f.id}`}</div>
+                          <div className="truncate text-[11px] text-muted-foreground">{f.paciente || "—"}</div>
+                        </div>
+                        <EstadoBadge estado={f.estado} />
+                      </div>
+                      <div className="mt-1 flex items-center gap-2">
+                        {isProformaOrigin(f) ? (
+                          <span className="inline-flex rounded-md border border-violet-200 bg-violet-50 px-1.5 py-0.5 text-[10px] font-semibold text-violet-700">Proforma</span>
+                        ) : (
+                          <span className="text-[11px] text-muted-foreground">{invoiceOriginLabel(f)}</span>
+                        )}
+                        <span className="ml-auto text-sm font-bold text-foreground tabular-nums">
+                          <MoneyValue value={totalAPagar(f)} />
+                        </span>
+                      </div>
+                      <div className="mt-auto pt-2">{renderAcoes(f)}</div>
+                    </article>
+                  )
+                })}
+              </div>
+            )}
           </div>
         )}
 
