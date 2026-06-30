@@ -144,7 +144,7 @@ export default function FaturaRascunhoPage() {
   const [cirurgias, setCirurgias] = useState<Row[]>([])
   const [consultas, setConsultas] = useState<Row[]>([])
   const [consultaQuery, setConsultaQuery] = useState("")
-  const [consultasSelecionadas, setConsultasSelecionadas] = useState<Set<number>>(new Set())
+  const [consultasSelecionadas, setConsultasSelecionadas] = useState<number[]>([])
 
   const [exames, setExames] = useState<Row[]>([])
   const [examesMedicos, setExamesMedicos] = useState<Row[]>([])
@@ -1065,7 +1065,7 @@ export default function FaturaRascunhoPage() {
         ) : null}
 
         {/* ── Row: Cliente fiscal (25%) + Itens da fatura (25%) + Registrar pagamento (50%) ── */}
-        <div className="grid grid-cols-1 gap-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-2 lg:grid-cols-4 lg:items-start">
 
         {/* Cliente fiscal — 25% */}
         <section className={`${GLASS} border-l-4 border-l-teal-500 lg:col-span-1`}>
@@ -1106,7 +1106,7 @@ export default function FaturaRascunhoPage() {
         </section>
 
         {/* Itens da fatura — 25% */}
-        <section className={`${GLASS} border-l-4 border-l-sky-500 lg:col-span-1`}>
+        <section className={`${GLASS} border-l-4 border-l-sky-500 lg:col-span-1 overflow-hidden`}>
           <div className="px-4 py-3 space-y-2">
             <div>
               <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Itens da fatura</p>
@@ -1118,7 +1118,9 @@ export default function FaturaRascunhoPage() {
             {itens.length === 0 ? (
               <div className="text-sm text-muted-foreground">Nenhum item adicionado.</div>
             ) : (
-              <DataTable<FaturaItem> columns={itensCols as any} data={itens} />
+              <div className="max-h-64 overflow-auto">
+                <DataTable<FaturaItem> columns={itensCols as any} data={itens} />
+              </div>
             )}
           </div>
         </section>
@@ -1331,7 +1333,7 @@ export default function FaturaRascunhoPage() {
         <div className="grid grid-cols-1 gap-2 lg:grid-cols-2 lg:items-start">
 
         {/* ── Itens do paciente ── */}
-        <div className={`${GLASS} border-l-4 border-l-amber-500 flex flex-col gap-0`}>
+        <div className={`${GLASS} border-l-4 border-l-amber-500 flex flex-col gap-0 overflow-hidden`}>
           <div className="border-b border-white/20 px-4 py-2.5 dark:border-white/10">
             <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Itens do paciente</p>
             <p className="text-[11px] text-muted-foreground">Requisições, procedimentos, vendas, cirurgias e consultas do paciente.</p>
@@ -1339,7 +1341,7 @@ export default function FaturaRascunhoPage() {
           {!podeEditar ? (
             <div className="px-4 py-3 text-sm text-muted-foreground">Sem permissão para adicionar itens do paciente.</div>
           ) : (
-          <div className="flex flex-col divide-y divide-white/20 dark:divide-white/10">
+          <div className="flex flex-col divide-y divide-white/20 dark:divide-white/10 max-h-[600px] overflow-y-auto">
 
             {/* Requisições */}
             <details open className="group">
@@ -1515,16 +1517,14 @@ export default function FaturaRascunhoPage() {
                           })
                           .map((c) => {
                             const nome = c.type || c.specialty_name || c.custom_id || `Consulta ${c.id}`
-                            const sel = consultasSelecionadas.has(c.id)
+                            const sel = consultasSelecionadas.includes(c.id)
                             return (
                               <button
                                 key={c.id}
                                 type="button"
-                                onClick={() => setConsultasSelecionadas((prev) => {
-                                  const next = new Set(prev)
-                                  if (next.has(c.id)) next.delete(c.id); else next.add(c.id)
-                                  return next
-                                })}
+                                onClick={() => setConsultasSelecionadas((prev) =>
+                                  prev.includes(c.id) ? prev.filter((x) => x !== c.id) : [...prev, c.id]
+                                )}
                                 className={`w-full text-left flex items-center gap-2 rounded-lg border px-3 py-1.5 text-xs transition ${sel ? "border-emerald-400 bg-emerald-50 text-emerald-800 dark:border-emerald-600/50 dark:bg-emerald-900/20 dark:text-emerald-300" : "border-border bg-background/60 text-foreground hover:bg-muted"}`}
                               >
                                 <span className={`h-3.5 w-3.5 shrink-0 rounded border flex items-center justify-center text-[8px] ${sel ? "border-emerald-500 bg-emerald-500 text-white" : "border-border"}`}>
@@ -1537,14 +1537,14 @@ export default function FaturaRascunhoPage() {
                       </div>
                     ) : null}
                     {/* chips das selecionadas */}
-                    {consultasSelecionadas.size > 0 ? (
+                    {consultasSelecionadas.length > 0 ? (
                       <div className="space-y-1.5 pt-1">
-                        <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Selecionadas ({consultasSelecionadas.size})</p>
+                        <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Selecionadas ({consultasSelecionadas.length})</p>
                         <div className="flex flex-wrap gap-1">
-                          {consultas.filter((c) => consultasSelecionadas.has(c.id)).map((c) => (
+                          {consultas.filter((c) => consultasSelecionadas.includes(c.id)).map((c) => (
                             <span key={c.id} className="inline-flex items-center gap-1 rounded-full border border-emerald-300 bg-emerald-50 px-2 py-0.5 text-[10px] text-emerald-800 dark:border-emerald-700/50 dark:bg-emerald-900/20 dark:text-emerald-300">
                               {c.type || c.specialty_name || `Consulta ${c.id}`}
-                              <button type="button" className="hover:text-rose-500" onClick={() => setConsultasSelecionadas((prev) => { const n = new Set(prev); n.delete(c.id); return n })}>×</button>
+                              <button type="button" className="hover:text-rose-500" onClick={() => setConsultasSelecionadas((prev) => prev.filter((x) => x !== c.id))}>×</button>
                             </span>
                           ))}
                         </div>
@@ -1552,14 +1552,14 @@ export default function FaturaRascunhoPage() {
                           type="button"
                           disabled={addItemButtonDisabled}
                           onClick={async () => {
-                            for (const c of consultas.filter((c) => consultasSelecionadas.has(c.id))) {
+                            for (const c of consultas.filter((c) => consultasSelecionadas.includes(c.id))) {
                               await adicionarItem({ tipo_item: "CON", consultation: c.id }, `patient-consultation-${c.id}`)
                             }
-                            setConsultasSelecionadas(new Set())
+                            setConsultasSelecionadas([])
                           }}
                           className="inline-flex items-center rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-50"
                         >
-                          Adicionar {consultasSelecionadas.size} consulta{consultasSelecionadas.size !== 1 ? "s" : ""}
+                          Adicionar {consultasSelecionadas.length} consulta{consultasSelecionadas.length !== 1 ? "s" : ""}
                         </button>
                       </div>
                     ) : null}
@@ -1573,7 +1573,7 @@ export default function FaturaRascunhoPage() {
         </div>
 
         {/* ── Pesquisa de catálogo ── */}
-        <div className={`${GLASS} border-l-4 border-l-indigo-500 flex flex-col gap-0`}>
+        <div className={`${GLASS} border-l-4 border-l-indigo-500 flex flex-col gap-0 overflow-hidden`}>
           <div className="border-b border-white/20 px-4 py-2.5 dark:border-white/10">
             <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Pesquisa de catálogo</p>
             <p className="text-[11px] text-muted-foreground">Busque e adicione itens avulsos ao rascunho.</p>
@@ -1581,7 +1581,7 @@ export default function FaturaRascunhoPage() {
           {!podeEditar ? (
             <div className="px-4 py-3 text-sm text-muted-foreground">Sem permissão para pesquisar catálogo.</div>
           ) : (
-          <div className="flex flex-col divide-y divide-white/20 dark:divide-white/10">
+          <div className="flex flex-col divide-y divide-white/20 dark:divide-white/10 max-h-[600px] overflow-y-auto">
 
             {/* Exames laboratoriais */}
             <div className="px-4 py-3 space-y-1.5">
