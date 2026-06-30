@@ -65,10 +65,37 @@ def _redirect_to_current_page(request):
     return HttpResponseRedirect(target)
 
 
+def _patch_admin_site_check() -> None:
+    """Fix race condition in Django admin check() when autoreloader is active.
+
+    Django's AdminSite.check() iterates self._registry.values() without taking
+    a snapshot, which raises RuntimeError if another thread registers a model
+    concurrently (common with Python 3.13 autoreloader). Wrapping check() to
+    temporarily replace _registry with a snapshot dict is safe because all
+    registrations are complete before any request is served.
+    """
+    from django.contrib.admin import sites as _sites
+
+    _AdminSite = _sites.AdminSite
+    _original_check = _AdminSite.check
+
+    def _safe_check(self, app_configs):
+        original_registry = self._registry
+        self._registry = dict(original_registry)
+        try:
+            return _original_check(self, app_configs)
+        finally:
+            self._registry = original_registry
+
+    _AdminSite.check = _safe_check
+
+
 def install_admin_integrity_guard() -> None:
     """Instala wrappers de proteção no ModelAdmin uma única vez."""
     if getattr(ModelAdmin, _PATCH_FLAG, False):
         return
+
+    _patch_admin_site_check()
 
     original_changeform_view = ModelAdmin.changeform_view
     original_changelist_view = ModelAdmin.changelist_view
