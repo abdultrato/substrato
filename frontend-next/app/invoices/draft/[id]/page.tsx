@@ -4,7 +4,7 @@ import { isNotFoundLikeError } from "@/lib/errors/api-error"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 
-import { BadgeCheck, FileText, Receipt, Wallet } from "lucide-react"
+import { BadgeCheck, FileText, Receipt, Search, Wallet } from "lucide-react"
 import AppLayout from "@/components/layout/AppLayout"
 import DataTable from "@/components/ui/DataTable"
 import CatalogSearchSelect, { type CatalogOption } from "@/components/ui/CatalogSearchSelect"
@@ -1325,7 +1325,10 @@ export default function FaturaRascunhoPage() {
         {/* ── Adicionar itens — grid 3 colunas ── */}
         {podeEditar && faturaRascunho && !faturaProforma ? (<>
           <div className={`${GLASS} border-l-4 border-l-indigo-500 px-4 py-2.5`}>
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Adicionar itens à fatura atual</p>
+            <div className="flex items-center gap-2">
+              <Search size={14} className="text-indigo-500" />
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Adicionar itens à fatura atual</p>
+            </div>
           </div>
           <div className="grid grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-3">
 
