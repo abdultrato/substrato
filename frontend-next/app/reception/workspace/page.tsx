@@ -220,7 +220,7 @@ export default function ReceptionWorkspacePage() {
             <KpiCard icon={ClipboardList} label="Na fila"            value={s.queue_size}                 color="text-amber-600 dark:text-amber-400" accent="bg-amber-500" href="/reception/reception-checkins?status=AGUARD" />
             <KpiCard icon={Stethoscope} label="Em atendimento"       value={s.in_care}                    color="text-blue-600 dark:text-blue-400" accent="bg-blue-500" href="/reception/reception-checkins?status=ATEND" />
             <KpiCard icon={UserPlus}    label="Novos pacientes"      value={s.new_patients}               color="text-emerald-600 dark:text-emerald-400" accent="bg-emerald-500" href="/patients" />
-            <KpiCard icon={FileText}    label="Req. pendentes"       value={s.pending_requests}           color="text-violet-600 dark:text-violet-400" accent="bg-violet-500" href="/requests" />
+            <KpiCard icon={FileText}    label="Requisições pendentes"       value={s.pending_requests}           color="text-violet-600 dark:text-violet-400" accent="bg-violet-500" href="/requests" />
             <KpiCard icon={AlertCircle} label="Faturas em aberto"    value={s.open_invoices}              color="text-orange-600 dark:text-orange-400" accent="bg-orange-500" href="/invoices" />
             <KpiCard icon={Receipt}     label="Recibos hoje"         value={s.receipts_generated_today}   color="text-indigo-600 dark:text-indigo-400" accent="bg-indigo-500" href="/receipts" />
             <KpiCard icon={DollarSign}  label="Recebido hoje"        value={fmtCurrency(s.received_today)} color="text-emerald-600 dark:text-emerald-400" accent="bg-emerald-500" href="/receipts" />
