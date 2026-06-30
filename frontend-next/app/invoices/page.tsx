@@ -642,7 +642,7 @@ export default function FaturasPage() {
             <Card
               glass
               title="Faturas por criar"
-              subtitle="Requisições por faturar e rascunhos aguardando emissão."
+              actions={<span className="text-xs text-muted-foreground">Requisições por faturar e rascunhos aguardando emissão.</span>}
             >
               <div className="space-y-4">
                 <div className="space-y-2">
