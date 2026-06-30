@@ -562,7 +562,7 @@ export default function FaturasPage() {
         </section>
 
         {/* ── Métricas ── */}
-        <div className="grid grid-cols-2 gap-2 xl:grid-cols-4">
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
           <InvoiceMetric icon={FileText} label="Total" value={carregando ? "…" : stats.total} accent="bg-slate-500" />
           <InvoiceMetric icon={FilePlus2} label="Rascunhos" value={carregando ? "…" : stats.rascunhos} accent="bg-amber-500" />
           <InvoiceMetric icon={Wallet} label="Emitidas" value={carregando ? "…" : stats.emitidas} accent="bg-sky-500" />
