@@ -170,16 +170,27 @@ export default function FaturasPage() {
   )
 
   const carregar = useCallback(async () => {
-    try {
-      setCarregando(true)
-      setErro(null)
-      const res = await apiFetch<any>(`/invoices/?page_size=${pageSize}`, { clientCache: safeRefreshToken === 0 })
-      const items = res && (res as any).results ? (res as any).results : res
-      setFaturas(Array.isArray(items) ? items : [])
-    } catch (e: any) {
-      setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao carregar faturas."))
-    } finally {
-      setCarregando(false)
+    setCarregando(true)
+    setErro(null)
+    // Retenta resets transitórios de ligação ao backend (ECONNRESET / socket hang up).
+    const maxTentativas = 3
+    for (let tentativa = 1; tentativa <= maxTentativas; tentativa++) {
+      try {
+        const res = await apiFetch<any>(`/invoices/?page_size=${pageSize}`, { clientCache: safeRefreshToken === 0 })
+        const items = res && (res as any).results ? (res as any).results : res
+        setFaturas(Array.isArray(items) ? items : [])
+        setCarregando(false)
+        return
+      } catch (e: any) {
+        const transitorio = /ECONNRESET|socket hang up|network|fetch failed|Failed to fetch/i.test(String(e?.message || ""))
+        if (transitorio && tentativa < maxTentativas) {
+          await new Promise((r) => setTimeout(r, 500 * tentativa))
+          continue
+        }
+        setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao carregar faturas."))
+        setCarregando(false)
+        return
+      }
     }
   }, [safeRefreshToken, pageSize])
 
