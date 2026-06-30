@@ -6,7 +6,6 @@ import { useParams, useRouter } from "next/navigation"
 
 import { BadgeCheck, FileText, Receipt, Wallet } from "lucide-react"
 import AppLayout from "@/components/layout/AppLayout"
-import Card from "@/components/ui/Card"
 import DataTable from "@/components/ui/DataTable"
 import CatalogSearchSelect, { type CatalogOption } from "@/components/ui/CatalogSearchSelect"
 import SelectInput from "@/components/ui/SelectInput"
@@ -906,7 +905,7 @@ export default function FaturaRascunhoPage() {
       {
         header: "IVA",
         render: (i: FaturaItem) => (
-          <label className="flex items-center gap-2 text-xs text-gray-700">
+          <label className="flex items-center gap-2 text-xs text-foreground">
             <input
               type="checkbox"
               checked={!!i.aplica_iva}
@@ -945,7 +944,7 @@ export default function FaturaRascunhoPage() {
   if (loading) {
     return (
       <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.RECEPCAO, GROUPS.CONTABILIDADE]}>
-        <div className="text-sm text-gray-500">Carregando...</div>
+        <div className="text-sm text-muted-foreground">Carregando...</div>
       </AppLayout>
     )
   }
@@ -953,7 +952,7 @@ export default function FaturaRascunhoPage() {
   if (!fatura) {
     return (
       <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.RECEPCAO, GROUPS.CONTABILIDADE]}>
-        <div className="text-sm text-gray-500">Fatura não encontrada.</div>
+        <div className="text-sm text-muted-foreground">Fatura não encontrada.</div>
       </AppLayout>
     )
   }
@@ -1073,9 +1072,13 @@ export default function FaturaRascunhoPage() {
           </div>
         </section>
 
-        <Card title="Cliente fiscal" subtitle="Quem paga (pode ser empresa, seguradora, escola, ONG ou hospital). Por omissão, o paciente.">
-          <div className="space-y-2">
-            <div className="text-sm text-gray-700">
+        <section className={`${GLASS} border-l-4 border-l-teal-500`}>
+          <div className="px-4 py-3 space-y-2">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Cliente fiscal</p>
+              <p className="text-[11px] text-muted-foreground">Quem paga (pode ser empresa, seguradora, escola, ONG ou hospital). Por omissão, o paciente.</p>
+            </div>
+            <div className="text-sm text-foreground">
               <span className="font-semibold">Atual:</span>{" "}
               {fatura?.fiscal_client_name
                 ? `${fatura.fiscal_client_name}${fatura.fiscal_client_nuit ? ` · NUIT: ${fatura.fiscal_client_nuit}` : ""}`
@@ -1094,33 +1097,45 @@ export default function FaturaRascunhoPage() {
                   <button
                     type="button"
                     onClick={() => definirClienteFiscal(null)}
-                    className="inline-flex items-center rounded-lg border border-gray-200 px-3 py-2 text-xs font-medium text-gray-700 transition hover:bg-gray-50"
+                    className="inline-flex items-center rounded-lg border border-border bg-background/60 px-3 py-2 text-xs font-medium text-foreground transition hover:bg-muted"
                   >
                     Repor paciente
                   </button>
                 ) : null}
               </div>
             ) : (
-              <div className="text-xs text-gray-500">O cliente fiscal só pode ser alterado enquanto a fatura estiver em rascunho.</div>
+              <div className="text-xs text-muted-foreground">O cliente fiscal só pode ser alterado enquanto a fatura estiver em rascunho.</div>
             )}
           </div>
-        </Card>
+        </section>
 
-        <Card title="Itens da fatura" subtitle="Adicione itens enquanto estiver em rascunho.">
-          {!podeEditar ? (
-            <div className="mb-3 text-xs text-gray-500">Somente leitura para este perfil.</div>
-          ) : null}
-          {itens.length === 0 ? (
-            <div className="text-sm text-gray-500">Nenhum item adicionado.</div>
-          ) : (
-            <DataTable<FaturaItem> columns={itensCols as any} data={itens} />
-          )}
-        </Card>
+        <section className={`${GLASS} border-l-4 border-l-sky-500`}>
+          <div className="px-4 py-3 space-y-2">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Itens da fatura</p>
+              <p className="text-[11px] text-muted-foreground">Adicione itens enquanto estiver em rascunho.</p>
+            </div>
+            {!podeEditar ? (
+              <div className="text-xs text-muted-foreground">Somente leitura para este perfil.</div>
+            ) : null}
+            {itens.length === 0 ? (
+              <div className="text-sm text-muted-foreground">Nenhum item adicionado.</div>
+            ) : (
+              <DataTable<FaturaItem> columns={itensCols as any} data={itens} />
+            )}
+          </div>
+        </section>
 
-        <Card
-          title={fatura.estado === "PAGA" ? "Fatura paga" : "Registrar pagamento"}
-          subtitle={fatura.estado === "PAGA" ? "Imprima a fatura e o recibo." : "Disponível após emissão da fatura."}
-        >
+        <section className={`${GLASS} border-l-4 ${fatura.estado === "PAGA" ? "border-l-emerald-500" : "border-l-violet-500"}`}>
+          <div className="px-4 py-3 space-y-3">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                {fatura.estado === "PAGA" ? "Fatura paga" : "Registrar pagamento"}
+              </p>
+              <p className="text-[11px] text-muted-foreground">
+                {fatura.estado === "PAGA" ? "Imprima a fatura e o recibo." : "Disponível após emissão da fatura."}
+              </p>
+            </div>
           {fatura.estado === "PAGA" ? (
             <div className="space-y-4">
               <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800">
@@ -1135,10 +1150,10 @@ export default function FaturaRascunhoPage() {
                       <tbody className="divide-y divide-border">
                         {pagamentos.map((p) => (
                           <tr key={p.id}>
-                            <td className="px-3 py-2 text-gray-700">
+                            <td className="px-3 py-2 text-foreground">
                               {metodosLabelByValue.get((p.metodo ?? p.method) as MetodoPagamento) || p.metodo || p.method || "-"}
                             </td>
-                            <td className="px-3 py-2 text-right font-medium text-gray-900">
+                            <td className="px-3 py-2 text-right font-medium text-foreground">
                               <MoneyValue value={p.valor ?? p.value} />
                             </td>
                           </tr>
@@ -1169,19 +1184,19 @@ export default function FaturaRascunhoPage() {
               </div>
             </div>
           ) : fatura.estado !== "EMIT" ? (
-            <div className="text-sm text-gray-500">Emita a fatura para liberar o pagamento.</div>
+            <div className="text-sm text-muted-foreground">Emita a fatura para liberar o pagamento.</div>
           ) : !podePagar ? (
-            <div className="text-sm text-gray-500">Sem permissão para registrar pagamento.</div>
+            <div className="text-sm text-muted-foreground">Sem permissão para registrar pagamento.</div>
           ) : (
             <>
               <div className="space-y-4">
                 <div>
-                  <label className="text-xs font-semibold text-gray-600">Tipos de pagamento</label>
+                  <label className="text-xs font-semibold text-muted-foreground">Tipos de pagamento</label>
                   <div className="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
                     {PAGAMENTO_METODOS.map((metodo) => (
                       <label
                         key={metodo.value}
-                        className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-gray-700"
+                        className="inline-flex items-center gap-2 rounded-lg border border-border bg-background/60 px-3 py-2 text-sm text-foreground"
                       >
                         <input
                           type="checkbox"
@@ -1195,14 +1210,14 @@ export default function FaturaRascunhoPage() {
                   </div>
                 </div>
 
-                <div className="text-xs text-gray-500">
+                <div className="text-xs text-muted-foreground">
                   Informe manualmente o valor por método. Se ultrapassar o total da fatura, o excedente será registrado como troco.
                 </div>
 
                 <div className="grid gap-3 md:grid-cols-3">
                   {metodosSelecionados.map((metodo) => (
                     <div key={metodo.value}>
-                      <label className="text-xs font-semibold text-gray-600">{metodo.label} · Valor</label>
+                      <label className="text-xs font-semibold text-muted-foreground">{metodo.label} · Valor</label>
                       <TextInput
                         value={pagamentoValoresPorMetodo[metodo.value]}
                         onChange={(e) => definirValorMetodoPagamento(metodo.value, e.target.value)}
@@ -1212,23 +1227,23 @@ export default function FaturaRascunhoPage() {
                   ))}
                 </div>
 
-                <div className="grid gap-3 rounded-lg border border-slate-100 bg-slate-50 p-3 text-sm md:grid-cols-4">
+                <div className="grid gap-3 rounded-lg border border-white/20 bg-white/30 p-3 text-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.06] md:grid-cols-4">
                   <div>
-                    <div className="text-xs text-gray-500">Total a pagar (com IVA)</div>
-                    <div className="font-semibold text-gray-900"><MoneyValue value={totalAPagarFatura} /></div>
+                    <div className="text-xs text-muted-foreground">Total a pagar (com IVA)</div>
+                    <div className="font-semibold text-foreground"><MoneyValue value={totalAPagarFatura} /></div>
                   </div>
                   <div>
-                    <div className="text-xs text-gray-500">Total informado</div>
-                    <div className="font-semibold text-gray-900"><MoneyValue value={totalInformadoCents / 100} /></div>
+                    <div className="text-xs text-muted-foreground">Total informado</div>
+                    <div className="font-semibold text-foreground"><MoneyValue value={totalInformadoCents / 100} /></div>
                   </div>
                   <div>
-                    <div className="text-xs text-gray-500">Troco previsto</div>
+                    <div className="text-xs text-muted-foreground">Troco previsto</div>
                     <div className={`font-semibold ${trocoPrevistoCents > 0 ? "text-amber-700" : "text-gray-900"}`}>
                       <MoneyValue value={trocoPrevistoCents / 100} />
                     </div>
                   </div>
                   <div>
-                    <div className="text-xs text-gray-500">Valor líquido</div>
+                    <div className="text-xs text-muted-foreground">Valor líquido</div>
                     <div className={`font-semibold ${faltaPagamentoCents === 0 ? "text-emerald-700" : "text-rose-700"}`}>
                       <MoneyValue value={totalLiquidoPagamentoCents / 100} />
                     </div>
@@ -1257,7 +1272,7 @@ export default function FaturaRascunhoPage() {
                 <>
                   <div className="mt-3 grid gap-3 md:grid-cols-3">
                     <div>
-                      <label className="text-xs font-semibold text-gray-600">Seguradora</label>
+                      <label className="text-xs font-semibold text-muted-foreground">Seguradora</label>
                       <SelectInput
                         value={pagamentoSeguradora}
                         onChange={(e) => setPagamentoSeguradora(e.target.value)}
@@ -1269,7 +1284,7 @@ export default function FaturaRascunhoPage() {
                       />
                     </div>
                     <div>
-                      <label className="text-xs font-semibold text-gray-600">Plano de cobertura</label>
+                      <label className="text-xs font-semibold text-muted-foreground">Plano de cobertura</label>
                       <SelectInput
                         value={pagamentoPlano}
                         onChange={(e) => setPagamentoPlano(e.target.value)}
@@ -1282,7 +1297,7 @@ export default function FaturaRascunhoPage() {
                       />
                     </div>
                     <div>
-                      <label className="text-xs font-semibold text-gray-600">Número de autorização</label>
+                      <label className="text-xs font-semibold text-muted-foreground">Número de autorização</label>
                       <TextInput
                         value={numeroAutorizacao}
                         onChange={(e) => setNumeroAutorizacao(e.target.value)}
@@ -1291,7 +1306,7 @@ export default function FaturaRascunhoPage() {
                     </div>
                   </div>
                   <div className="mt-3">
-                    <label className="text-xs font-semibold text-gray-600">Dados adicionais do seguro</label>
+                    <label className="text-xs font-semibold text-muted-foreground">Dados adicionais do seguro</label>
                     <TextAreaInput
                       value={dadosSeguro}
                       onChange={(e) => setDadosSeguro(e.target.value)}
@@ -1303,17 +1318,23 @@ export default function FaturaRascunhoPage() {
               ) : null}
             </>
           )}
-        </Card>
+          </div>
+        </section>
 
-        <Card title="Itens do paciente" subtitle="Requisições, procedimentos, vendas e cirurgias.">
+        <section className={`${GLASS} border-l-4 border-l-amber-500`}>
+          <div className="px-4 py-3 space-y-3">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Itens do paciente</p>
+              <p className="text-[11px] text-muted-foreground">Requisições, procedimentos, vendas e cirurgias.</p>
+            </div>
           {!podeEditar ? (
-            <div className="text-sm text-gray-500">Sem permissão para adicionar itens do paciente.</div>
+            <div className="text-sm text-muted-foreground">Sem permissão para adicionar itens do paciente.</div>
           ) : (
           <div className="space-y-4">
             <div>
-              <div className="text-sm font-semibold text-gray-800">Requisições (exames)</div>
+              <div className="text-sm font-semibold text-foreground">Requisições (exames)</div>
               {requisicoes.length === 0 ? (
-                <div className="text-sm text-gray-500">Sem requisições.</div>
+                <div className="text-sm text-muted-foreground">Sem requisições.</div>
               ) : (
                 <div className="space-y-2">
                   {requisicoes.map((r) => {
@@ -1325,12 +1346,12 @@ export default function FaturaRascunhoPage() {
                       return true
                     })
                     return (
-                      <div key={r.id} className="rounded-lg border border-slate-100 bg-white p-3 text-sm">
+                      <div key={r.id} className="rounded-lg border border-white/20 bg-white/40 p-3 text-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.06]">
                         <div className="font-semibold text-gray-800">{r.id_custom || `REQ ${r.id}`}</div>
-                        <div className="text-xs text-gray-500">Tipo: {r.tipo || "-"}</div>
+                        <div className="text-xs text-muted-foreground">Tipo: {r.tipo || "-"}</div>
                         <div className="mt-2 space-y-1">
                           {availableItems.length === 0 ? (
-                            <div className="text-xs text-gray-500">Todos os exames já foram adicionados.</div>
+                            <div className="text-xs text-muted-foreground">Todos os exames já foram adicionados.</div>
                           ) : (
                             availableItems.map((it) => {
                               const exame = it.exame ? exameById.get(it.exame) : null
@@ -1342,7 +1363,7 @@ export default function FaturaRascunhoPage() {
                               const addKey = it.exame ? `req-exam-${it.id}` : `req-medical-exam-${it.id}`
                               return (
                                 <div key={it.id} className="flex items-center justify-between gap-2">
-                                  <div className="text-gray-700">{label}</div>
+                                  <div className="text-foreground">{label}</div>
                                   <button
                                     className="inline-flex items-center rounded-lg border border-emerald-200 px-2.5 py-1 text-xs font-medium text-emerald-700 transition hover:bg-emerald-50 disabled:opacity-50"
                                     onClick={() => {
@@ -1369,9 +1390,9 @@ export default function FaturaRascunhoPage() {
             </div>
 
             <div>
-              <div className="text-sm font-semibold text-gray-800">Procedimentos (enfermagem)</div>
+              <div className="text-sm font-semibold text-foreground">Procedimentos (enfermagem)</div>
               {procedimentos.length === 0 ? (
-                <div className="text-sm text-gray-500">Sem procedimentos.</div>
+                <div className="text-sm text-muted-foreground">Sem procedimentos.</div>
               ) : (
                 <div className="space-y-2">
                   {procedimentos.map((p) => {
@@ -1384,16 +1405,16 @@ export default function FaturaRascunhoPage() {
                       return !(id && referenciaIds.procedimentoMateriais.has(id))
                     })
                     return (
-                      <div key={p.id} className="rounded-lg border border-slate-100 bg-white p-3 text-sm">
+                      <div key={p.id} className="rounded-lg border border-white/20 bg-white/40 p-3 text-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.06]">
                         <div className="font-semibold text-gray-800">{p.id_custom || `PROC ${p.id}`}</div>
-                        <div className="text-xs text-gray-500">Total: <MoneyValue value={p.total} /></div>
+                        <div className="text-xs text-muted-foreground">Total: <MoneyValue value={p.total} /></div>
                         <div className="mt-2 space-y-1">
                           {itensDisponiveis.length === 0 ? (
-                            <div className="text-xs text-gray-500">Todos os serviços deste procedimento já estão adicionados.</div>
+                            <div className="text-xs text-muted-foreground">Todos os serviços deste procedimento já estão adicionados.</div>
                           ) : (
                             itensDisponiveis.map((it) => (
                               <div key={it.id} className="flex items-center justify-between gap-2">
-                                <div className="text-gray-700">{it.descricao || `Serviço ${it.id}`}</div>
+                                <div className="text-foreground">{it.descricao || `Serviço ${it.id}`}</div>
                                 <button
                                   className="inline-flex items-center rounded-lg border border-emerald-200 px-2.5 py-1 text-xs font-medium text-emerald-700 transition hover:bg-emerald-50 disabled:opacity-50"
                                   onClick={() => adicionarItem({ tipo_item: "PRC", procedimento_item: it.id }, `procedure-item-${it.id}`)}
@@ -1405,14 +1426,14 @@ export default function FaturaRascunhoPage() {
                             ))
                           )}
                           {materiaisDisponiveis.length === 0 ? (
-                            <div className="text-xs text-gray-500">Todos os materiais deste procedimento já foram adicionados.</div>
+                            <div className="text-xs text-muted-foreground">Todos os materiais deste procedimento já foram adicionados.</div>
                           ) : (
                             materiaisDisponiveis.map((mat) => {
                               const prod = produtoById.get(mat.produto)
                               const nome = prod?.nome || `Material ${mat.produto}`
                               return (
                                 <div key={mat.id} className="flex items-center justify-between gap-2">
-                                  <div className="text-gray-700">{nome}</div>
+                                  <div className="text-foreground">{nome}</div>
                                   <button
                                     className="inline-flex items-center rounded-lg border border-emerald-200 px-2.5 py-1 text-xs font-medium text-emerald-700 transition hover:bg-emerald-50 disabled:opacity-50"
                                     onClick={() => adicionarItem({ tipo_item: "MAT", procedimento_material: mat.id }, `procedure-material-${mat.id}`)}
@@ -1433,9 +1454,9 @@ export default function FaturaRascunhoPage() {
             </div>
 
             <div>
-              <div className="text-sm font-semibold text-gray-800">Vendas (farmácia)</div>
+              <div className="text-sm font-semibold text-foreground">Vendas (farmácia)</div>
               {vendas.length === 0 ? (
-                <div className="text-sm text-gray-500">Sem vendas.</div>
+                <div className="text-sm text-muted-foreground">Sem vendas.</div>
               ) : (
                 <div className="space-y-2">
                   {vendas.map((v) => {
@@ -1444,18 +1465,18 @@ export default function FaturaRascunhoPage() {
                       return !(id && referenciaIds.itensVenda.has(id))
                     })
                     return (
-                      <div key={v.id} className="rounded-lg border border-slate-100 bg-white p-3 text-sm">
+                      <div key={v.id} className="rounded-lg border border-white/20 bg-white/40 p-3 text-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.06]">
                         <div className="font-semibold text-gray-800">{v.numero || v.id_custom || `VENDA ${v.id}`}</div>
-                        <div className="text-xs text-gray-500">Total: <MoneyValue value={v.total} /></div>
+                        <div className="text-xs text-muted-foreground">Total: <MoneyValue value={v.total} /></div>
                         <div className="mt-2 space-y-1">
                           {itensDisponiveis.length === 0 ? (
-                            <div className="text-xs text-gray-500">Todos os itens desta venda já foram adicionados.</div>
+                            <div className="text-xs text-muted-foreground">Todos os itens desta venda já foram adicionados.</div>
                           ) : (
                             itensDisponiveis.map((it) => {
                               const prod = produtoById.get(it.produto)
                               return (
                                 <div key={it.id} className="flex items-center justify-between gap-2">
-                                  <div className="text-gray-700">{prod?.nome || `Produto ${it.produto}`}</div>
+                                  <div className="text-foreground">{prod?.nome || `Produto ${it.produto}`}</div>
                                   <button
                                     className="inline-flex items-center rounded-lg border border-emerald-200 px-2.5 py-1 text-xs font-medium text-emerald-700 transition hover:bg-emerald-50 disabled:opacity-50"
                                     onClick={() => adicionarItem({ tipo_item: "FAR", item_venda: it.id }, `sale-item-${it.id}`)}
@@ -1476,14 +1497,14 @@ export default function FaturaRascunhoPage() {
             </div>
 
             <div>
-              <div className="text-sm font-semibold text-gray-800">Cirurgias</div>
+              <div className="text-sm font-semibold text-foreground">Cirurgias</div>
               {cirurgias.length === 0 ? (
-                <div className="text-sm text-gray-500">Sem cirurgias.</div>
+                <div className="text-sm text-muted-foreground">Sem cirurgias.</div>
               ) : (
                 <div className="space-y-2">
                   {cirurgias.map((c) => (
                     <div key={c.id} className="flex items-center justify-between gap-2 rounded-lg border border-slate-100 bg-white p-3 text-sm">
-                      <div className="text-gray-700">{c.procedimento || c.id_custom || `Cirurgia ${c.id}`}</div>
+                      <div className="text-foreground">{c.procedimento || c.id_custom || `Cirurgia ${c.id}`}</div>
                       <button
                         className="inline-flex items-center rounded-lg border border-emerald-200 px-2.5 py-1 text-xs font-medium text-emerald-700 transition hover:bg-emerald-50 disabled:opacity-50"
                         onClick={() => adicionarItem({
@@ -1505,9 +1526,9 @@ export default function FaturaRascunhoPage() {
             </div>
 
             <div>
-              <div className="text-sm font-semibold text-gray-800">Consultas</div>
+              <div className="text-sm font-semibold text-foreground">Consultas</div>
               {consultas.length === 0 ? (
-                <div className="text-sm text-gray-500">Sem consultas.</div>
+                <div className="text-sm text-muted-foreground">Sem consultas.</div>
               ) : (
                 <div className="space-y-2">
                   {consultas.map((c) => {
@@ -1515,7 +1536,7 @@ export default function FaturaRascunhoPage() {
                       c.type || c.specialty_name || c.custom_id || `Consulta ${c.id}`
                     return (
                       <div key={c.id} className="flex items-center justify-between gap-2 rounded-lg border border-slate-100 bg-white p-3 text-sm">
-                        <div className="text-gray-700">{nomeConsulta}</div>
+                        <div className="text-foreground">{nomeConsulta}</div>
                         <button
                           className="inline-flex items-center rounded-lg border border-emerald-200 px-2.5 py-1 text-xs font-medium text-emerald-700 transition hover:bg-emerald-50 disabled:opacity-50"
                           onClick={() => adicionarItem({ tipo_item: "CON", consultation: c.id }, `patient-consultation-${c.id}`)}
@@ -1531,15 +1552,21 @@ export default function FaturaRascunhoPage() {
             </div>
           </div>
           )}
-        </Card>
+          </div>
+        </section>
 
-        <Card title="Pesquisa de catálogo" subtitle="Busque e adicione itens avulsos.">
+        <section className={`${GLASS} border-l-4 border-l-indigo-500`}>
+          <div className="px-4 py-3 space-y-3">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Pesquisa de catálogo</p>
+              <p className="text-[11px] text-muted-foreground">Busque e adicione itens avulsos.</p>
+            </div>
           {!podeEditar ? (
-            <div className="text-sm text-gray-500">Sem permissão para pesquisar catálogo.</div>
+            <div className="text-sm text-muted-foreground">Sem permissão para pesquisar catálogo.</div>
           ) : (
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
-              <div className="text-sm font-semibold text-gray-800">Exames laboratoriais</div>
+              <div className="text-sm font-semibold text-foreground">Exames laboratoriais</div>
               <CatalogSearchSelect
                 placeholder="Pesquisar exames"
                 fetcher={buscarExames}
@@ -1549,7 +1576,7 @@ export default function FaturaRascunhoPage() {
             </div>
 
             <div className="space-y-2">
-              <div className="text-sm font-semibold text-gray-800">Exames médicos</div>
+              <div className="text-sm font-semibold text-foreground">Exames médicos</div>
               <CatalogSearchSelect
                 placeholder="Pesquisar exames médicos"
                 fetcher={buscarExamesMedicos}
@@ -1559,7 +1586,7 @@ export default function FaturaRascunhoPage() {
             </div>
 
             <div className="space-y-2">
-              <div className="text-sm font-semibold text-gray-800">Procedimentos (catálogo)</div>
+              <div className="text-sm font-semibold text-foreground">Procedimentos (catálogo)</div>
               <CatalogSearchSelect
                 placeholder="Pesquisar procedimentos"
                 fetcher={buscarProcedimentosCatalogo}
@@ -1579,7 +1606,7 @@ export default function FaturaRascunhoPage() {
             </div>
 
             <div className="space-y-2">
-              <div className="text-sm font-semibold text-gray-800">Procedimentos cirúrgicos</div>
+              <div className="text-sm font-semibold text-foreground">Procedimentos cirúrgicos</div>
               <CatalogSearchSelect
                 placeholder="Pesquisar cirurgias"
                 fetcher={buscarProcedimentosCirurgicos}
@@ -1599,7 +1626,7 @@ export default function FaturaRascunhoPage() {
             </div>
 
             <div className="space-y-2">
-              <div className="text-sm font-semibold text-gray-800">Medicamentos / materiais</div>
+              <div className="text-sm font-semibold text-foreground">Medicamentos / materiais</div>
               <CatalogSearchSelect
                 placeholder="Pesquisar produtos"
                 fetcher={buscarProdutos}
@@ -1619,7 +1646,8 @@ export default function FaturaRascunhoPage() {
             </div>
           </div>
           )}
-        </Card>
+          </div>
+        </section>
       </div>
     </AppLayout>
   )
