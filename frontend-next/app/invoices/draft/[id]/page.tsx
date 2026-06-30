@@ -1378,7 +1378,7 @@ export default function FaturaRascunhoPage() {
 
             {/* Exames laboratoriais */}
             <section className={`${GLASS} border-l-4 border-l-sky-500 flex flex-col`}>
-              <div className="px-4 pt-3 pb-10">
+              <div className="px-4 pt-3 pb-3">
                 <div className="flex items-center gap-2 mb-2">
                   <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-sky-100 text-sky-600 dark:bg-sky-900/40 dark:text-sky-400 text-[10px] font-bold">E</span>
                   <span className="text-xs font-semibold text-foreground">Exames laboratoriais</span>
@@ -1438,7 +1438,7 @@ export default function FaturaRascunhoPage() {
 
             {/* Exames médicos */}
             <section className={`${GLASS} border-l-4 border-l-violet-500 flex flex-col`}>
-              <div className="px-4 pt-3 pb-10">
+              <div className="px-4 pt-3 pb-3">
                 <div className="flex items-center gap-2 mb-2">
                   <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-violet-100 text-violet-600 dark:bg-violet-900/40 dark:text-violet-400 text-[10px] font-bold">M</span>
                   <span className="text-xs font-semibold text-foreground">Exames médicos</span>
@@ -1498,7 +1498,7 @@ export default function FaturaRascunhoPage() {
 
             {/* Procedimentos */}
             <section className={`${GLASS} border-l-4 border-l-teal-500 flex flex-col`}>
-              <div className="px-4 pt-3 pb-10">
+              <div className="px-4 pt-3 pb-3">
                 <div className="flex items-center gap-2 mb-2">
                   <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-teal-100 text-teal-600 dark:bg-teal-900/40 dark:text-teal-400 text-[10px] font-bold">P</span>
                   <span className="text-xs font-semibold text-foreground">Procedimentos</span>
@@ -1557,7 +1557,7 @@ export default function FaturaRascunhoPage() {
 
             {/* Cirurgias */}
             <section className={`${GLASS} border-l-4 border-l-rose-500 flex flex-col`}>
-              <div className="px-4 pt-3 pb-10">
+              <div className="px-4 pt-3 pb-3">
                 <div className="flex items-center gap-2 mb-2">
                   <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-rose-100 text-rose-600 dark:bg-rose-900/40 dark:text-rose-400 text-[10px] font-bold">C</span>
                   <span className="text-xs font-semibold text-foreground">Cirurgias</span>
@@ -1606,7 +1606,7 @@ export default function FaturaRascunhoPage() {
 
             {/* Consultas */}
             <section className={`${GLASS} border-l-4 border-l-amber-500 flex flex-col`}>
-              <div className="px-4 pt-3 pb-10">
+              <div className="px-4 pt-3 pb-3">
                 <div className="flex items-center gap-2 mb-2">
                   <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-amber-100 text-amber-600 dark:bg-amber-900/40 dark:text-amber-400 text-[10px] font-bold">Q</span>
                   <span className="text-xs font-semibold text-foreground">Consultas</span>
@@ -1638,7 +1638,7 @@ export default function FaturaRascunhoPage() {
 
             {/* Medicamentos / materiais */}
             <section className={`${GLASS} border-l-4 border-l-indigo-500 flex flex-col`}>
-              <div className="px-4 pt-3 pb-10">
+              <div className="px-4 pt-3 pb-3">
                 <div className="flex items-center gap-2 mb-2">
                   <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-indigo-100 text-indigo-600 dark:bg-indigo-900/40 dark:text-indigo-400 text-[10px] font-bold">F</span>
                   <span className="text-xs font-semibold text-foreground">Medicamentos / materiais</span>
