@@ -1324,337 +1324,340 @@ export default function FaturaRascunhoPage() {
           </section>
         ) : null}
 
-        {/* ── Adicionar itens ── */}
-        {podeEditar && faturaRascunho && !faturaProforma ? (
-        <section className={`${GLASS} border-l-4 border-l-indigo-500`}>
-          <div className="border-b border-white/20 px-4 py-2.5 dark:border-white/10">
+        {/* ── Adicionar itens — grid 3 colunas ── */}
+        {podeEditar && faturaRascunho && !faturaProforma ? (<>
+          <div className={`${GLASS} border-l-4 border-l-indigo-500 px-4 py-2.5`}>
             <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Adicionar itens</p>
           </div>
-          <div className="divide-y divide-white/20 dark:divide-white/10">
+          <div className="grid grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-3">
 
             {/* Exames laboratoriais */}
-            <div className="px-4 py-3 space-y-2">
-              <div className="flex items-center gap-2">
-                <span className="flex h-5 w-5 items-center justify-center rounded-md bg-sky-100 text-sky-600 dark:bg-sky-900/40 dark:text-sky-400 text-[10px] font-bold">E</span>
-                <span className="text-xs font-semibold text-foreground">Exames laboratoriais</span>
+            <section className={`${GLASS} border-l-4 border-l-sky-500`}>
+              <div className="px-4 py-3 space-y-2">
+                <div className="flex items-center gap-2">
+                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-sky-100 text-sky-600 dark:bg-sky-900/40 dark:text-sky-400 text-[10px] font-bold">E</span>
+                  <span className="text-xs font-semibold text-foreground">Exames laboratoriais</span>
+                  {referenciaIds.exames.size > 0 && (
+                    <span className="ml-auto shrink-0 text-[10px] font-semibold text-sky-600 dark:text-sky-400">{referenciaIds.exames.size} ✓</span>
+                  )}
+                </div>
+                <CatalogSearchSelect
+                  placeholder="Pesquisar e selecionar…"
+                  fetcher={buscarExames}
+                  disabled={addItemButtonDisabled}
+                  onSelect={(opt) => adicionarItem({ tipo_item: "EXA", exame: opt.raw.id }, `catalog-exam-${opt.raw.id}`)}
+                />
                 {referenciaIds.exames.size > 0 && (
-                  <span className="ml-auto text-[10px] font-semibold text-sky-600 dark:text-sky-400">{referenciaIds.exames.size} adicionado{referenciaIds.exames.size !== 1 ? "s" : ""}</span>
-                )}
-              </div>
-              <CatalogSearchSelect
-                placeholder="Pesquisar e selecionar exame…"
-                fetcher={buscarExames}
-                disabled={addItemButtonDisabled}
-                onSelect={(opt) => adicionarItem({ tipo_item: "EXA", exame: opt.raw.id }, `catalog-exam-${opt.raw.id}`)}
-              />
-              {referenciaIds.exames.size > 0 && (
-                <div className="flex flex-wrap gap-1">
-                  {itens.filter(i => toNumberId(i.exame) && referenciaIds.exames.has(toNumberId(i.exame)!)).map(i => (
-                    <span key={i.id} className="inline-flex items-center gap-1 rounded-full border border-sky-300 bg-sky-50 px-2 py-0.5 text-[10px] text-sky-800 dark:border-sky-700/50 dark:bg-sky-900/20 dark:text-sky-300">
-                      <span className="text-[8px]">✓</span>{i.descricao || `Exame ${i.exame}`}
-                    </span>
-                  ))}
-                </div>
-              )}
-              {/* itens de requisições do paciente ainda não adicionados */}
-              {(() => {
-                const pendentes = requisicoes.flatMap((r) =>
-                  (requisicaoItens[r.id] || []).filter((it) => {
-                    const exameId = toNumberId(it.exame)
-                    return exameId && !referenciaIds.exames.has(exameId)
-                  }).map((it) => ({ r, it }))
-                )
-                if (!pendentes.length) return null
-                return (
-                  <div className="space-y-0.5">
-                    <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Do paciente</p>
-                    <div className="flex flex-wrap gap-1">
-                      {pendentes.map(({ it }) => {
-                        const exame = exameById.get(toNumberId(it.exame)!)
-                        const label = exame?.nome || `Exame ${it.exame}`
-                        const addKey = `req-exam-${it.id}`
-                        return (
-                          <button key={it.id} type="button" disabled={addItemButtonDisabled}
-                            onClick={() => adicionarItem({ tipo_item: "EXA", exame: it.exame }, addKey)}
-                            className="inline-flex items-center gap-1 rounded-full border border-dashed border-sky-400 bg-sky-50/60 px-2 py-0.5 text-[10px] text-sky-700 transition hover:bg-sky-100 disabled:opacity-50 dark:border-sky-600/50 dark:bg-sky-900/10 dark:text-sky-400"
-                          >+ {label}</button>
-                        )
-                      })}
-                    </div>
-                  </div>
-                )
-              })()}
-            </div>
-
-            {/* Exames médicos */}
-            <div className="px-4 py-3 space-y-2">
-              <div className="flex items-center gap-2">
-                <span className="flex h-5 w-5 items-center justify-center rounded-md bg-violet-100 text-violet-600 dark:bg-violet-900/40 dark:text-violet-400 text-[10px] font-bold">M</span>
-                <span className="text-xs font-semibold text-foreground">Exames médicos</span>
-                {referenciaIds.examesMedicos.size > 0 && (
-                  <span className="ml-auto text-[10px] font-semibold text-violet-600 dark:text-violet-400">{referenciaIds.examesMedicos.size} adicionado{referenciaIds.examesMedicos.size !== 1 ? "s" : ""}</span>
-                )}
-              </div>
-              <CatalogSearchSelect
-                placeholder="Pesquisar e selecionar exame médico…"
-                fetcher={buscarExamesMedicos}
-                disabled={addItemButtonDisabled}
-                onSelect={(opt) => adicionarItem({ tipo_item: "EXM", exame_medico: opt.raw.id }, `catalog-medical-exam-${opt.raw.id}`)}
-              />
-              {referenciaIds.examesMedicos.size > 0 && (
-                <div className="flex flex-wrap gap-1">
-                  {itens.filter(i => toNumberId(i.exame_medico) && referenciaIds.examesMedicos.has(toNumberId(i.exame_medico)!)).map(i => (
-                    <span key={i.id} className="inline-flex items-center gap-1 rounded-full border border-violet-300 bg-violet-50 px-2 py-0.5 text-[10px] text-violet-800 dark:border-violet-700/50 dark:bg-violet-900/20 dark:text-violet-300">
-                      <span className="text-[8px]">✓</span>{i.descricao || `Exame ${i.exame_medico}`}
-                    </span>
-                  ))}
-                </div>
-              )}
-              {(() => {
-                const pendentes = requisicoes.flatMap((r) =>
-                  (requisicaoItens[r.id] || []).filter((it) => {
-                    const exameMedId = toNumberId(it.exame_medico)
-                    return exameMedId && !referenciaIds.examesMedicos.has(exameMedId)
-                  }).map((it) => ({ r, it }))
-                )
-                if (!pendentes.length) return null
-                return (
-                  <div className="space-y-0.5">
-                    <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Do paciente</p>
-                    <div className="flex flex-wrap gap-1">
-                      {pendentes.map(({ it }) => {
-                        const exameMed = exameMedById.get(toNumberId(it.exame_medico)!)
-                        const label = exameMed?.nome || `Exame méd. ${it.exame_medico}`
-                        const addKey = `req-medical-exam-${it.id}`
-                        return (
-                          <button key={it.id} type="button" disabled={addItemButtonDisabled}
-                            onClick={() => adicionarItem({ tipo_item: "EXM", exame_medico: it.exame_medico }, addKey)}
-                            className="inline-flex items-center gap-1 rounded-full border border-dashed border-violet-400 bg-violet-50/60 px-2 py-0.5 text-[10px] text-violet-700 transition hover:bg-violet-100 disabled:opacity-50 dark:border-violet-600/50 dark:bg-violet-900/10 dark:text-violet-400"
-                          >+ {label}</button>
-                        )
-                      })}
-                    </div>
-                  </div>
-                )
-              })()}
-            </div>
-
-            {/* Procedimentos */}
-            <div className="px-4 py-3 space-y-2">
-              <div className="flex items-center gap-2">
-                <span className="flex h-5 w-5 items-center justify-center rounded-md bg-teal-100 text-teal-600 dark:bg-teal-900/40 dark:text-teal-400 text-[10px] font-bold">P</span>
-                <span className="text-xs font-semibold text-foreground">Procedimentos</span>
-              </div>
-              <CatalogSearchSelect
-                placeholder="Pesquisar e selecionar procedimento…"
-                fetcher={buscarProcedimentosCatalogo}
-                disabled={addItemButtonDisabled}
-                onSelect={(opt) => { const p = opt.raw; return adicionarItem({ tipo_item: "AJU", descricao: `Procedimento: ${p.nome || p.id_custom || p.id}`, quantidade: 1, preco_unitario: p.preco_padrao || 0, iva_percentual: p.iva_percentual, aplica_iva: p.aplica_iva_por_padrao }, `catalog-procedure-${p.id}`) }}
-              />
-              {(() => {
-                const adicionados = itens.filter(i => i.tipo_item === "AJU" && String(i.descricao).startsWith("Procedimento:"))
-                return adicionados.length > 0 ? (
                   <div className="flex flex-wrap gap-1">
-                    {adicionados.map(i => (
-                      <span key={i.id} className="inline-flex items-center gap-1 rounded-full border border-teal-300 bg-teal-50 px-2 py-0.5 text-[10px] text-teal-800 dark:border-teal-700/50 dark:bg-teal-900/20 dark:text-teal-300">
-                        <span className="text-[8px]">✓</span>{String(i.descricao).replace(/^Procedimento:\s*/, "")}
+                    {itens.filter(i => toNumberId(i.exame) && referenciaIds.exames.has(toNumberId(i.exame)!)).map(i => (
+                      <span key={i.id} className="inline-flex items-center gap-1 rounded-full border border-sky-300 bg-sky-50 px-2 py-0.5 text-[10px] text-sky-800 dark:border-sky-700/50 dark:bg-sky-900/20 dark:text-sky-300">
+                        <span className="text-[8px]">✓</span>{i.descricao || `Exame ${i.exame}`}
                       </span>
                     ))}
                   </div>
-                ) : null
-              })()}
-              {/* itens de procedimentos de enfermagem do paciente */}
-              {(() => {
-                const pendentes = procedimentos.flatMap((p) => [
-                  ...(procedimentoItens[p.id] || []).filter((it) => { const id = toNumberId(it.id); return !(id && referenciaIds.procedimentoItens.has(id)) }).map((it) => ({ tipo: "item" as const, p, it })),
-                  ...(procedimentoMateriais[p.id] || []).filter((mat) => { const id = toNumberId(mat.id); return !(id && referenciaIds.procedimentoMateriais.has(id)) }).map((mat) => ({ tipo: "mat" as const, p, it: mat })),
-                ])
-                if (!pendentes.length) return null
-                return (
-                  <div className="space-y-0.5">
-                    <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Do paciente (enfermagem)</p>
-                    <div className="flex flex-wrap gap-1">
-                      {pendentes.map(({ tipo, p, it }) => {
-                        const label = tipo === "item"
-                          ? (it.descricao || `Serviço ${it.id}`)
-                          : (produtoById.get(it.produto)?.nome || `Material ${it.produto}`)
-                        const addKey = tipo === "item" ? `procedure-item-${it.id}` : `procedure-material-${it.id}`
-                        const payload = tipo === "item"
-                          ? { tipo_item: "PRC", procedimento_item: it.id }
-                          : { tipo_item: "MAT", procedimento_material: it.id }
-                        return (
-                          <button key={addKey} type="button" disabled={addItemButtonDisabled}
-                            onClick={() => adicionarItem(payload, addKey)}
-                            className="inline-flex items-center gap-1 rounded-full border border-dashed border-teal-400 bg-teal-50/60 px-2 py-0.5 text-[10px] text-teal-700 transition hover:bg-teal-100 disabled:opacity-50 dark:border-teal-600/50 dark:bg-teal-900/10 dark:text-teal-400"
-                          >+ {label}</button>
-                        )
-                      })}
-                    </div>
-                  </div>
-                )
-              })()}
-            </div>
-
-            {/* Cirurgias */}
-            <div className="px-4 py-3 space-y-2">
-              <div className="flex items-center gap-2">
-                <span className="flex h-5 w-5 items-center justify-center rounded-md bg-rose-100 text-rose-600 dark:bg-rose-900/40 dark:text-rose-400 text-[10px] font-bold">C</span>
-                <span className="text-xs font-semibold text-foreground">Cirurgias</span>
-              </div>
-              <CatalogSearchSelect
-                placeholder="Pesquisar e selecionar cirurgia…"
-                fetcher={buscarProcedimentosCirurgicos}
-                disabled={addItemButtonDisabled}
-                onSelect={(opt) => { const p = opt.raw; return adicionarItem({ tipo_item: "AJU", descricao: `Cirurgia: ${p.nome || p.id_custom || p.id}`, quantidade: 1, preco_unitario: p.preco_base || 0, iva_percentual: p.iva_percentual, aplica_iva: p.aplica_iva_por_padrao }, `catalog-surgery-${p.id}`) }}
-              />
-              {(() => {
-                const adicionadas = itens.filter(i => i.tipo_item === "AJU" && String(i.descricao).startsWith("Cirurgia:"))
-                return adicionadas.length > 0 ? (
-                  <div className="flex flex-wrap gap-1">
-                    {adicionadas.map(i => (
-                      <span key={i.id} className="inline-flex items-center gap-1 rounded-full border border-rose-300 bg-rose-50 px-2 py-0.5 text-[10px] text-rose-800 dark:border-rose-700/50 dark:bg-rose-900/20 dark:text-rose-300">
-                        <span className="text-[8px]">✓</span>{String(i.descricao).replace(/^Cirurgia:\s*/, "")}
-                      </span>
-                    ))}
-                  </div>
-                ) : null
-              })()}
-              {cirurgias.length > 0 && (
-                <div className="space-y-0.5">
-                  <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Do paciente</p>
-                  <div className="flex flex-wrap gap-1">
-                    {cirurgias.map((c) => {
-                      const addKey = `patient-surgery-${c.id}`
-                      return (
-                        <button key={c.id} type="button" disabled={addItemButtonDisabled}
-                          onClick={() => adicionarItem({ tipo_item: "AJU", descricao: `Cirurgia: ${c.procedimento || c.id_custom || c.id}`, quantidade: 1, preco_unitario: c.preco_estimado || 0, iva_percentual: c.iva_percentual, aplica_iva: c.aplica_iva_por_padrao }, addKey)}
-                          className="inline-flex items-center gap-1 rounded-full border border-dashed border-rose-400 bg-rose-50/60 px-2 py-0.5 text-[10px] text-rose-700 transition hover:bg-rose-100 disabled:opacity-50 dark:border-rose-600/50 dark:bg-rose-900/10 dark:text-rose-400"
-                        >+ {c.procedimento || c.id_custom || `Cirurgia ${c.id}`}</button>
-                      )
-                    })}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Consultas */}
-            <div className="px-4 py-3 space-y-2">
-              <div className="flex items-center gap-2">
-                <span className="flex h-5 w-5 items-center justify-center rounded-md bg-amber-100 text-amber-600 dark:bg-amber-900/40 dark:text-amber-400 text-[10px] font-bold">Q</span>
-                <span className="text-xs font-semibold text-foreground">Consultas</span>
-                {consultas.length > 0 && <span className="ml-auto text-[10px] text-muted-foreground">{consultas.length} disponível{consultas.length !== 1 ? "s" : ""}</span>}
-              </div>
-              {consultas.length === 0 ? (
-                <p className="text-xs text-muted-foreground">Sem consultas para este paciente.</p>
-              ) : (
-                <>
-                  <input
-                    type="text"
-                    value={consultaQuery}
-                    onChange={(e) => setConsultaQuery(e.target.value)}
-                    placeholder="Pesquisar consulta por especialidade…"
-                    disabled={addItemButtonDisabled}
-                    className="h-9 w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground shadow-sm outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/20 disabled:opacity-60"
-                  />
-                  {consultaQuery.trim() ? (
-                    <div className="flex flex-wrap gap-1 max-h-40 overflow-y-auto">
-                      {consultas
-                        .filter((c) => {
-                          const q = consultaQuery.toLowerCase()
+                )}
+                {(() => {
+                  const pendentes = requisicoes.flatMap((r) =>
+                    (requisicaoItens[r.id] || []).filter((it) => {
+                      const exameId = toNumberId(it.exame)
+                      return exameId && !referenciaIds.exames.has(exameId)
+                    }).map((it) => ({ r, it }))
+                  )
+                  if (!pendentes.length) return null
+                  return (
+                    <div className="space-y-0.5">
+                      <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Do paciente</p>
+                      <div className="flex flex-wrap gap-1">
+                        {pendentes.map(({ it }) => {
+                          const exame = exameById.get(toNumberId(it.exame)!)
+                          const label = exame?.nome || `Exame ${it.exame}`
+                          const addKey = `req-exam-${it.id}`
                           return (
-                            (c.type || "").toLowerCase().includes(q) ||
-                            (c.specialty_name || "").toLowerCase().includes(q) ||
-                            (c.custom_id || "").toLowerCase().includes(q) ||
-                            String(c.id).includes(q)
-                          )
-                        })
-                        .map((c) => {
-                          const nome = c.type || c.specialty_name || c.custom_id || `Consulta ${c.id}`
-                          const jaAdicionada = itens.some((i) => i.tipo_item === "CON" && String(i.descricao).includes(String(c.id)))
-                          if (jaAdicionada) return null
-                          return (
-                            <button
-                              key={c.id}
-                              type="button"
-                              disabled={addItemButtonDisabled}
-                              onClick={async () => {
-                                await adicionarItem({ tipo_item: "CON", consultation: c.id }, `patient-consultation-${c.id}`)
-                                setConsultaQuery("")
-                              }}
-                              className="inline-flex items-center gap-1 rounded-full border border-dashed border-amber-400 bg-amber-50/60 px-2 py-0.5 text-[10px] text-amber-700 transition hover:bg-amber-100 disabled:opacity-50 dark:border-amber-600/50 dark:bg-amber-900/10 dark:text-amber-400"
-                            >+ {nome}</button>
+                            <button key={it.id} type="button" disabled={addItemButtonDisabled}
+                              onClick={() => adicionarItem({ tipo_item: "EXA", exame: it.exame }, addKey)}
+                              className="inline-flex items-center gap-1 rounded-full border border-dashed border-sky-400 bg-sky-50/60 px-2 py-0.5 text-[10px] text-sky-700 transition hover:bg-sky-100 disabled:opacity-50 dark:border-sky-600/50 dark:bg-sky-900/10 dark:text-sky-400"
+                            >+ {label}</button>
                           )
                         })}
+                      </div>
                     </div>
-                  ) : null}
-                  {/* chips das consultas já adicionadas */}
-                  {itens.filter(i => i.tipo_item === "CON").length > 0 && (
+                  )
+                })()}
+              </div>
+            </section>
+
+            {/* Exames médicos */}
+            <section className={`${GLASS} border-l-4 border-l-violet-500`}>
+              <div className="px-4 py-3 space-y-2">
+                <div className="flex items-center gap-2">
+                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-violet-100 text-violet-600 dark:bg-violet-900/40 dark:text-violet-400 text-[10px] font-bold">M</span>
+                  <span className="text-xs font-semibold text-foreground">Exames médicos</span>
+                  {referenciaIds.examesMedicos.size > 0 && (
+                    <span className="ml-auto shrink-0 text-[10px] font-semibold text-violet-600 dark:text-violet-400">{referenciaIds.examesMedicos.size} ✓</span>
+                  )}
+                </div>
+                <CatalogSearchSelect
+                  placeholder="Pesquisar e selecionar…"
+                  fetcher={buscarExamesMedicos}
+                  disabled={addItemButtonDisabled}
+                  onSelect={(opt) => adicionarItem({ tipo_item: "EXM", exame_medico: opt.raw.id }, `catalog-medical-exam-${opt.raw.id}`)}
+                />
+                {referenciaIds.examesMedicos.size > 0 && (
+                  <div className="flex flex-wrap gap-1">
+                    {itens.filter(i => toNumberId(i.exame_medico) && referenciaIds.examesMedicos.has(toNumberId(i.exame_medico)!)).map(i => (
+                      <span key={i.id} className="inline-flex items-center gap-1 rounded-full border border-violet-300 bg-violet-50 px-2 py-0.5 text-[10px] text-violet-800 dark:border-violet-700/50 dark:bg-violet-900/20 dark:text-violet-300">
+                        <span className="text-[8px]">✓</span>{i.descricao || `Exame ${i.exame_medico}`}
+                      </span>
+                    ))}
+                  </div>
+                )}
+                {(() => {
+                  const pendentes = requisicoes.flatMap((r) =>
+                    (requisicaoItens[r.id] || []).filter((it) => {
+                      const exameMedId = toNumberId(it.exame_medico)
+                      return exameMedId && !referenciaIds.examesMedicos.has(exameMedId)
+                    }).map((it) => ({ r, it }))
+                  )
+                  if (!pendentes.length) return null
+                  return (
+                    <div className="space-y-0.5">
+                      <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Do paciente</p>
+                      <div className="flex flex-wrap gap-1">
+                        {pendentes.map(({ it }) => {
+                          const exameMed = exameMedById.get(toNumberId(it.exame_medico)!)
+                          const label = exameMed?.nome || `Exame méd. ${it.exame_medico}`
+                          const addKey = `req-medical-exam-${it.id}`
+                          return (
+                            <button key={it.id} type="button" disabled={addItemButtonDisabled}
+                              onClick={() => adicionarItem({ tipo_item: "EXM", exame_medico: it.exame_medico }, addKey)}
+                              className="inline-flex items-center gap-1 rounded-full border border-dashed border-violet-400 bg-violet-50/60 px-2 py-0.5 text-[10px] text-violet-700 transition hover:bg-violet-100 disabled:opacity-50 dark:border-violet-600/50 dark:bg-violet-900/10 dark:text-violet-400"
+                            >+ {label}</button>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )
+                })()}
+              </div>
+            </section>
+
+            {/* Procedimentos */}
+            <section className={`${GLASS} border-l-4 border-l-teal-500`}>
+              <div className="px-4 py-3 space-y-2">
+                <div className="flex items-center gap-2">
+                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-teal-100 text-teal-600 dark:bg-teal-900/40 dark:text-teal-400 text-[10px] font-bold">P</span>
+                  <span className="text-xs font-semibold text-foreground">Procedimentos</span>
+                </div>
+                <CatalogSearchSelect
+                  placeholder="Pesquisar e selecionar…"
+                  fetcher={buscarProcedimentosCatalogo}
+                  disabled={addItemButtonDisabled}
+                  onSelect={(opt) => { const p = opt.raw; return adicionarItem({ tipo_item: "AJU", descricao: `Procedimento: ${p.nome || p.id_custom || p.id}`, quantidade: 1, preco_unitario: p.preco_padrao || 0, iva_percentual: p.iva_percentual, aplica_iva: p.aplica_iva_por_padrao }, `catalog-procedure-${p.id}`) }}
+                />
+                {(() => {
+                  const adicionados = itens.filter(i => i.tipo_item === "AJU" && String(i.descricao).startsWith("Procedimento:"))
+                  return adicionados.length > 0 ? (
                     <div className="flex flex-wrap gap-1">
-                      {itens.filter(i => i.tipo_item === "CON").map(i => (
-                        <span key={i.id} className="inline-flex items-center gap-1 rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-[10px] text-amber-800 dark:border-amber-700/50 dark:bg-amber-900/20 dark:text-amber-300">
-                          <span className="text-[8px]">✓</span>{i.descricao || `Consulta ${i.id}`}
+                      {adicionados.map(i => (
+                        <span key={i.id} className="inline-flex items-center gap-1 rounded-full border border-teal-300 bg-teal-50 px-2 py-0.5 text-[10px] text-teal-800 dark:border-teal-700/50 dark:bg-teal-900/20 dark:text-teal-300">
+                          <span className="text-[8px]">✓</span>{String(i.descricao).replace(/^Procedimento:\s*/, "")}
                         </span>
                       ))}
                     </div>
-                  )}
-                </>
-              )}
-            </div>
-
-            {/* Medicamentos / materiais */}
-            <div className="px-4 py-3 space-y-2">
-              <div className="flex items-center gap-2">
-                <span className="flex h-5 w-5 items-center justify-center rounded-md bg-indigo-100 text-indigo-600 dark:bg-indigo-900/40 dark:text-indigo-400 text-[10px] font-bold">F</span>
-                <span className="text-xs font-semibold text-foreground">Medicamentos / materiais</span>
+                  ) : null
+                })()}
+                {(() => {
+                  const pendentes = procedimentos.flatMap((p) => [
+                    ...(procedimentoItens[p.id] || []).filter((it) => { const id = toNumberId(it.id); return !(id && referenciaIds.procedimentoItens.has(id)) }).map((it) => ({ tipo: "item" as const, p, it })),
+                    ...(procedimentoMateriais[p.id] || []).filter((mat) => { const id = toNumberId(mat.id); return !(id && referenciaIds.procedimentoMateriais.has(id)) }).map((mat) => ({ tipo: "mat" as const, p, it: mat })),
+                  ])
+                  if (!pendentes.length) return null
+                  return (
+                    <div className="space-y-0.5">
+                      <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Do paciente (enfermagem)</p>
+                      <div className="flex flex-wrap gap-1">
+                        {pendentes.map(({ tipo, p, it }) => {
+                          const label = tipo === "item"
+                            ? (it.descricao || `Serviço ${it.id}`)
+                            : (produtoById.get(it.produto)?.nome || `Material ${it.produto}`)
+                          const addKey = tipo === "item" ? `procedure-item-${it.id}` : `procedure-material-${it.id}`
+                          const payload = tipo === "item"
+                            ? { tipo_item: "PRC", procedimento_item: it.id }
+                            : { tipo_item: "MAT", procedimento_material: it.id }
+                          return (
+                            <button key={addKey} type="button" disabled={addItemButtonDisabled}
+                              onClick={() => adicionarItem(payload, addKey)}
+                              className="inline-flex items-center gap-1 rounded-full border border-dashed border-teal-400 bg-teal-50/60 px-2 py-0.5 text-[10px] text-teal-700 transition hover:bg-teal-100 disabled:opacity-50 dark:border-teal-600/50 dark:bg-teal-900/10 dark:text-teal-400"
+                            >+ {label}</button>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )
+                })()}
               </div>
-              <CatalogSearchSelect
-                placeholder="Pesquisar e selecionar produto…"
-                fetcher={buscarProdutos}
-                disabled={addItemButtonDisabled}
-                onSelect={(opt) => { const p = opt.raw; return adicionarItem({ tipo_item: "AJU", descricao: `Produto: ${p.nome || p.id_custom || p.id}`, quantidade: 1, preco_unitario: p.preco_venda || 0, iva_percentual: p.iva_percentual, aplica_iva: p.aplica_iva_por_padrao }, `catalog-product-${p.id}`) }}
-              />
-              {(() => {
-                const adicionados = itens.filter(i => i.tipo_item === "AJU" && String(i.descricao).startsWith("Produto:"))
-                return adicionados.length > 0 ? (
-                  <div className="flex flex-wrap gap-1">
-                    {adicionados.map(i => (
-                      <span key={i.id} className="inline-flex items-center gap-1 rounded-full border border-indigo-300 bg-indigo-50 px-2 py-0.5 text-[10px] text-indigo-800 dark:border-indigo-700/50 dark:bg-indigo-900/20 dark:text-indigo-300">
-                        <span className="text-[8px]">✓</span>{String(i.descricao).replace(/^Produto:\s*/, "")}
-                      </span>
-                    ))}
-                  </div>
-                ) : null
-              })()}
-              {/* itens de vendas de farmácia do paciente */}
-              {(() => {
-                const pendentes = vendas.flatMap((v) =>
-                  (vendaItens[v.id] || []).filter((it) => { const id = toNumberId(it.id); return !(id && referenciaIds.itensVenda.has(id)) }).map((it) => ({ v, it }))
-                )
-                if (!pendentes.length) return null
-                return (
-                  <div className="space-y-0.5">
-                    <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Do paciente (farmácia)</p>
+            </section>
+
+            {/* Cirurgias */}
+            <section className={`${GLASS} border-l-4 border-l-rose-500`}>
+              <div className="px-4 py-3 space-y-2">
+                <div className="flex items-center gap-2">
+                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-rose-100 text-rose-600 dark:bg-rose-900/40 dark:text-rose-400 text-[10px] font-bold">C</span>
+                  <span className="text-xs font-semibold text-foreground">Cirurgias</span>
+                </div>
+                <CatalogSearchSelect
+                  placeholder="Pesquisar e selecionar…"
+                  fetcher={buscarProcedimentosCirurgicos}
+                  disabled={addItemButtonDisabled}
+                  onSelect={(opt) => { const p = opt.raw; return adicionarItem({ tipo_item: "AJU", descricao: `Cirurgia: ${p.nome || p.id_custom || p.id}`, quantidade: 1, preco_unitario: p.preco_base || 0, iva_percentual: p.iva_percentual, aplica_iva: p.aplica_iva_por_padrao }, `catalog-surgery-${p.id}`) }}
+                />
+                {(() => {
+                  const adicionadas = itens.filter(i => i.tipo_item === "AJU" && String(i.descricao).startsWith("Cirurgia:"))
+                  return adicionadas.length > 0 ? (
                     <div className="flex flex-wrap gap-1">
-                      {pendentes.map(({ v, it }) => {
-                        const prod = produtoById.get(it.produto)
-                        const label = prod?.nome || `Produto ${it.produto}`
-                        const addKey = `sale-item-${it.id}`
+                      {adicionadas.map(i => (
+                        <span key={i.id} className="inline-flex items-center gap-1 rounded-full border border-rose-300 bg-rose-50 px-2 py-0.5 text-[10px] text-rose-800 dark:border-rose-700/50 dark:bg-rose-900/20 dark:text-rose-300">
+                          <span className="text-[8px]">✓</span>{String(i.descricao).replace(/^Cirurgia:\s*/, "")}
+                        </span>
+                      ))}
+                    </div>
+                  ) : null
+                })()}
+                {cirurgias.length > 0 && (
+                  <div className="space-y-0.5">
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Do paciente</p>
+                    <div className="flex flex-wrap gap-1">
+                      {cirurgias.map((c) => {
+                        const addKey = `patient-surgery-${c.id}`
                         return (
-                          <button key={it.id} type="button" disabled={addItemButtonDisabled}
-                            onClick={() => adicionarItem({ tipo_item: "FAR", item_venda: it.id }, addKey)}
-                            className="inline-flex items-center gap-1 rounded-full border border-dashed border-indigo-400 bg-indigo-50/60 px-2 py-0.5 text-[10px] text-indigo-700 transition hover:bg-indigo-100 disabled:opacity-50 dark:border-indigo-600/50 dark:bg-indigo-900/10 dark:text-indigo-400"
-                          >+ {label}</button>
+                          <button key={c.id} type="button" disabled={addItemButtonDisabled}
+                            onClick={() => adicionarItem({ tipo_item: "AJU", descricao: `Cirurgia: ${c.procedimento || c.id_custom || c.id}`, quantidade: 1, preco_unitario: c.preco_estimado || 0, iva_percentual: c.iva_percentual, aplica_iva: c.aplica_iva_por_padrao }, addKey)}
+                            className="inline-flex items-center gap-1 rounded-full border border-dashed border-rose-400 bg-rose-50/60 px-2 py-0.5 text-[10px] text-rose-700 transition hover:bg-rose-100 disabled:opacity-50 dark:border-rose-600/50 dark:bg-rose-900/10 dark:text-rose-400"
+                          >+ {c.procedimento || c.id_custom || `Cirurgia ${c.id}`}</button>
                         )
                       })}
                     </div>
                   </div>
-                )
-              })()}
-            </div>
+                )}
+              </div>
+            </section>
+
+            {/* Consultas */}
+            <section className={`${GLASS} border-l-4 border-l-amber-500`}>
+              <div className="px-4 py-3 space-y-2">
+                <div className="flex items-center gap-2">
+                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-amber-100 text-amber-600 dark:bg-amber-900/40 dark:text-amber-400 text-[10px] font-bold">Q</span>
+                  <span className="text-xs font-semibold text-foreground">Consultas</span>
+                  {consultas.length > 0 && <span className="ml-auto shrink-0 text-[10px] text-muted-foreground">{consultas.length} disp.</span>}
+                </div>
+                {consultas.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">Sem consultas para este paciente.</p>
+                ) : (
+                  <>
+                    <input
+                      type="text"
+                      value={consultaQuery}
+                      onChange={(e) => setConsultaQuery(e.target.value)}
+                      placeholder="Pesquisar consulta…"
+                      disabled={addItemButtonDisabled}
+                      className="h-9 w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground shadow-sm outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/20 disabled:opacity-60"
+                    />
+                    {consultaQuery.trim() ? (
+                      <div className="flex flex-wrap gap-1 max-h-40 overflow-y-auto">
+                        {consultas
+                          .filter((c) => {
+                            const q = consultaQuery.toLowerCase()
+                            return (
+                              (c.type || "").toLowerCase().includes(q) ||
+                              (c.specialty_name || "").toLowerCase().includes(q) ||
+                              (c.custom_id || "").toLowerCase().includes(q) ||
+                              String(c.id).includes(q)
+                            )
+                          })
+                          .map((c) => {
+                            const nome = c.type || c.specialty_name || c.custom_id || `Consulta ${c.id}`
+                            const jaAdicionada = itens.some((i) => i.tipo_item === "CON" && String(i.descricao).includes(String(c.id)))
+                            if (jaAdicionada) return null
+                            return (
+                              <button key={c.id} type="button" disabled={addItemButtonDisabled}
+                                onClick={async () => {
+                                  await adicionarItem({ tipo_item: "CON", consultation: c.id }, `patient-consultation-${c.id}`)
+                                  setConsultaQuery("")
+                                }}
+                                className="inline-flex items-center gap-1 rounded-full border border-dashed border-amber-400 bg-amber-50/60 px-2 py-0.5 text-[10px] text-amber-700 transition hover:bg-amber-100 disabled:opacity-50 dark:border-amber-600/50 dark:bg-amber-900/10 dark:text-amber-400"
+                              >+ {nome}</button>
+                            )
+                          })}
+                      </div>
+                    ) : null}
+                    {itens.filter(i => i.tipo_item === "CON").length > 0 && (
+                      <div className="flex flex-wrap gap-1">
+                        {itens.filter(i => i.tipo_item === "CON").map(i => (
+                          <span key={i.id} className="inline-flex items-center gap-1 rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-[10px] text-amber-800 dark:border-amber-700/50 dark:bg-amber-900/20 dark:text-amber-300">
+                            <span className="text-[8px]">✓</span>{i.descricao || `Consulta ${i.id}`}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            </section>
+
+            {/* Medicamentos / materiais */}
+            <section className={`${GLASS} border-l-4 border-l-indigo-500`}>
+              <div className="px-4 py-3 space-y-2">
+                <div className="flex items-center gap-2">
+                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-indigo-100 text-indigo-600 dark:bg-indigo-900/40 dark:text-indigo-400 text-[10px] font-bold">F</span>
+                  <span className="text-xs font-semibold text-foreground">Medicamentos / materiais</span>
+                </div>
+                <CatalogSearchSelect
+                  placeholder="Pesquisar e selecionar…"
+                  fetcher={buscarProdutos}
+                  disabled={addItemButtonDisabled}
+                  onSelect={(opt) => { const p = opt.raw; return adicionarItem({ tipo_item: "AJU", descricao: `Produto: ${p.nome || p.id_custom || p.id}`, quantidade: 1, preco_unitario: p.preco_venda || 0, iva_percentual: p.iva_percentual, aplica_iva: p.aplica_iva_por_padrao }, `catalog-product-${p.id}`) }}
+                />
+                {(() => {
+                  const adicionados = itens.filter(i => i.tipo_item === "AJU" && String(i.descricao).startsWith("Produto:"))
+                  return adicionados.length > 0 ? (
+                    <div className="flex flex-wrap gap-1">
+                      {adicionados.map(i => (
+                        <span key={i.id} className="inline-flex items-center gap-1 rounded-full border border-indigo-300 bg-indigo-50 px-2 py-0.5 text-[10px] text-indigo-800 dark:border-indigo-700/50 dark:bg-indigo-900/20 dark:text-indigo-300">
+                          <span className="text-[8px]">✓</span>{String(i.descricao).replace(/^Produto:\s*/, "")}
+                        </span>
+                      ))}
+                    </div>
+                  ) : null
+                })()}
+                {(() => {
+                  const pendentes = vendas.flatMap((v) =>
+                    (vendaItens[v.id] || []).filter((it) => { const id = toNumberId(it.id); return !(id && referenciaIds.itensVenda.has(id)) }).map((it) => ({ v, it }))
+                  )
+                  if (!pendentes.length) return null
+                  return (
+                    <div className="space-y-0.5">
+                      <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Do paciente (farmácia)</p>
+                      <div className="flex flex-wrap gap-1">
+                        {pendentes.map(({ v, it }) => {
+                          const prod = produtoById.get(it.produto)
+                          const label = prod?.nome || `Produto ${it.produto}`
+                          const addKey = `sale-item-${it.id}`
+                          return (
+                            <button key={it.id} type="button" disabled={addItemButtonDisabled}
+                              onClick={() => adicionarItem({ tipo_item: "FAR", item_venda: it.id }, addKey)}
+                              className="inline-flex items-center gap-1 rounded-full border border-dashed border-indigo-400 bg-indigo-50/60 px-2 py-0.5 text-[10px] text-indigo-700 transition hover:bg-indigo-100 disabled:opacity-50 dark:border-indigo-600/50 dark:bg-indigo-900/10 dark:text-indigo-400"
+                            >+ {label}</button>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )
+                })()}
+              </div>
+            </section>
 
           </div>
-        </section>
-        ) : null}
+        </>) : null}
       </div>
     </AppLayout>
   )
