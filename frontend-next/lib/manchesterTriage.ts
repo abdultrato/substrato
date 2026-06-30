@@ -36,30 +36,30 @@ const META: Record<ManchesterLevel, ManchesterMeta> = {
   verde: {
     level:       "verde",
     label:       "Não urgente",
-    badgeClass:  "border-green-300 bg-green-50 text-green-700",
+    badgeClass:  "border-green-300 bg-green-50 text-green-700 dark:border-green-700 dark:bg-green-900/30 dark:text-green-300",
     animClass:   "",
-    accentClass: "border-l-green-500",
+    accentClass: "border-l-green-500 dark:border-l-green-400",
   },
   amarelo: {
     level:       "amarelo",
     label:       "Urgente",
-    badgeClass:  "border-yellow-400 bg-yellow-50 text-yellow-800",
+    badgeClass:  "border-yellow-400 bg-yellow-50 text-yellow-800 dark:border-yellow-600 dark:bg-yellow-900/30 dark:text-yellow-300",
     animClass:   "",
-    accentClass: "border-l-yellow-500",
+    accentClass: "border-l-yellow-500 dark:border-l-yellow-400",
   },
   vermelho: {
     level:       "vermelho",
     label:       "Urgentíssimo",
-    badgeClass:  "border-red-400 bg-red-50 text-red-700",
+    badgeClass:  "border-red-400 bg-red-50 text-red-700 dark:border-red-600 dark:bg-red-900/30 dark:text-red-300",
     animClass:   "",
-    accentClass: "border-l-red-600",
+    accentClass: "border-l-red-600 dark:border-l-red-400",
   },
   emergencia: {
     level:       "emergencia",
     label:       "Emergência",
-    badgeClass:  "border-red-500 bg-red-50",
+    badgeClass:  "border-red-500 bg-red-50 dark:border-red-500 dark:bg-red-900/30 dark:text-red-300",
     animClass:   "manchester-emergency",
-    accentClass: "border-l-red-600 manchester-emergency-border",
+    accentClass: "border-l-red-600 dark:border-l-red-400 manchester-emergency-border",
   },
 }
 

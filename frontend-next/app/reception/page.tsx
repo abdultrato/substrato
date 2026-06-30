@@ -320,10 +320,10 @@ export default function RecepcaoPage() {
 
                 {/* KPI row — compact */}
                 <div className="grid gap-2 sm:grid-cols-2 md:grid-cols-4">
-                    <KpiCard title="Check-ins hoje" value={workspace.summary.checkins_today} icon={Users} accentClass="border-l-blue-500" iconBg="bg-blue-100 dark:bg-blue-900/40" iconColor="text-blue-600 dark:text-blue-400" />
-                    <KpiCard title="Na fila" value={workspace.summary.queue_size} icon={ClipboardList} accentClass="border-l-amber-500" iconBg="bg-amber-100 dark:bg-amber-900/40" iconColor="text-amber-600 dark:text-amber-400" />
-                    <KpiCard title="Em atendimento" value={workspace.summary.in_care} icon={UserPlus} accentClass="border-l-violet-500" iconBg="bg-violet-100 dark:bg-violet-900/40" iconColor="text-violet-600 dark:text-violet-400" />
-                    <KpiCard title="Recebido hoje" value={<MoneyValue value={workspace.summary.received_today} />} icon={Receipt} accentClass="border-l-emerald-500" iconBg="bg-emerald-100 dark:bg-emerald-900/40" iconColor="text-emerald-600 dark:text-emerald-400" />
+                    <KpiCard title="Check-ins hoje" value={workspace.summary.checkins_today} icon={Users} accentClass="border-l-blue-500 dark:border-l-blue-400" iconBg="bg-blue-100 dark:bg-blue-900/40" iconColor="text-blue-600 dark:text-blue-400" />
+                    <KpiCard title="Na fila" value={workspace.summary.queue_size} icon={ClipboardList} accentClass="border-l-amber-500 dark:border-l-amber-400" iconBg="bg-amber-100 dark:bg-amber-900/40" iconColor="text-amber-600 dark:text-amber-400" />
+                    <KpiCard title="Em atendimento" value={workspace.summary.in_care} icon={UserPlus} accentClass="border-l-violet-500 dark:border-l-violet-400" iconBg="bg-violet-100 dark:bg-violet-900/40" iconColor="text-violet-600 dark:text-violet-400" />
+                    <KpiCard title="Recebido hoje" value={<MoneyValue value={workspace.summary.received_today} />} icon={Receipt} accentClass="border-l-emerald-500 dark:border-l-emerald-400" iconBg="bg-emerald-100 dark:bg-emerald-900/40" iconColor="text-emerald-600 dark:text-emerald-400" />
                 </div>
 
                 {/* Main board — 3-col: fila (wide) | atalhos | marcações */}
@@ -352,7 +352,7 @@ export default function RecepcaoPage() {
                                         return (
                                             <div
                                                 key={item.id}
-                                                className={`flex items-center gap-2 rounded-lg border border-l-4 border-white/20 bg-white/30 px-2.5 py-1.5 shadow-sm backdrop-blur-sm dark:bg-white/5 dark:border-white/10 ${meta.accentClass} ${meta.animClass}`}
+                                                className={`flex items-center gap-2 rounded-lg border border-l-4 border-white/20 bg-white/30 px-2.5 py-1.5 shadow-sm backdrop-blur-sm dark:bg-white/5 ${meta.accentClass} ${meta.animClass}`}
                                             >
                                                 <span className={`shrink-0 rounded border px-1 py-0.5 text-[9px] font-bold leading-none ${meta.badgeClass}`}>
                                                     {meta.label}
@@ -438,10 +438,10 @@ export default function RecepcaoPage() {
                                 <span className="text-xs font-semibold text-foreground">Indicadores</span>
                             </div>
                             <div className="grid grid-cols-2 gap-1.5 p-2">
-                                <IndicadorTile label="Pacientes novos" value={workspace.summary.new_patients} href="/patients" accent="text-blue-600 dark:text-blue-400" />
-                                <IndicadorTile label="Req. pendentes" value={workspace.summary.pending_requests} href="/requests/pendentes" accent="text-amber-600 dark:text-amber-400" />
-                                <IndicadorTile label="Faturas abertas" value={workspace.summary.open_invoices} href="/billing/invoices?status=EMIT" accent="text-red-600 dark:text-red-400" />
-                                <IndicadorTile label="Recibos hoje" value={workspace.summary.receipts_generated_today} href="/payments/receipts" accent="text-emerald-600 dark:text-emerald-400" />
+                                <IndicadorTile label="Pacientes novos" value={workspace.summary.new_patients} href="/patients" accent="text-blue-600 dark:text-blue-400" bar="border-l-blue-500 dark:border-l-blue-400" />
+                                <IndicadorTile label="Req. pendentes" value={workspace.summary.pending_requests} href="/requests/pendentes" accent="text-amber-600 dark:text-amber-400" bar="border-l-amber-500 dark:border-l-amber-400" />
+                                <IndicadorTile label="Faturas abertas" value={workspace.summary.open_invoices} href="/billing/invoices?status=EMIT" accent="text-red-600 dark:text-red-400" bar="border-l-red-500 dark:border-l-red-400" />
+                                <IndicadorTile label="Recibos hoje" value={workspace.summary.receipts_generated_today} href="/payments/receipts" accent="text-emerald-600 dark:text-emerald-400" bar="border-l-emerald-500 dark:border-l-emerald-400" />
                             </div>
                         </section>
 
@@ -518,7 +518,7 @@ function ReceptionDecidedSection({
     emptyMsg: string
     tone: "emerald" | "red"
 }) {
-    const accentBorder = tone === "emerald" ? "border-l-emerald-500" : "border-l-red-500"
+    const accentBorder = tone === "emerald" ? "border-l-emerald-500 dark:border-l-emerald-400" : "border-l-red-500 dark:border-l-red-400"
     const borderColor = tone === "emerald" ? "border-emerald-200 dark:border-emerald-800/50" : "border-red-200 dark:border-red-800/50"
     const bgColor = tone === "emerald" ? "bg-emerald-50/60 dark:bg-emerald-900/15" : "bg-red-50/60 dark:bg-red-900/15"
     const textColor = tone === "emerald" ? "text-emerald-800 dark:text-emerald-300" : "text-red-800 dark:text-red-300"
@@ -550,7 +550,7 @@ function ReceptionDecidedSection({
                     {rows.map((r) => (
                         <div
                             key={r.id}
-                            className={`relative rounded-lg border border-l-4 ${borderColor} bg-white/30 ${accentBorder} px-2.5 py-2 shadow-sm backdrop-blur-sm dark:bg-white/5`}
+                            className={`relative rounded-lg border border-l-4 ${borderColor} bg-white/30 ${accentBorder} px-2.5 py-2 shadow-sm backdrop-blur-sm dark:bg-white/[0.06]`}
                         >
                             <div className="flex flex-wrap items-start justify-between gap-1">
                                 <div className="min-w-0">
@@ -639,7 +639,7 @@ function KpiCard({
     iconColor: string
 }) {
     return (
-        <div className={`relative overflow-hidden rounded-xl border border-l-4 border-white/20 bg-white/30 px-3 py-2.5 shadow-sm backdrop-blur-sm dark:bg-white/5 dark:border-white/10 ${accentClass}`}>
+        <div className={`relative overflow-hidden rounded-xl border border-l-4 border-white/20 bg-white/30 px-3 py-2.5 shadow-sm backdrop-blur-sm dark:bg-white/5 ${accentClass}`}>
             <span className={`absolute right-2.5 top-2.5 inline-flex h-7 w-7 items-center justify-center rounded-lg ${iconBg}`}>
                 <Icon size={13} className={iconColor} />
             </span>
@@ -654,14 +654,16 @@ function IndicadorTile({
     value,
     href,
     accent,
+    bar,
 }: {
     label: string
     value: number | string
     href?: string
     accent?: string
+    bar?: string
 }) {
     const inner = (
-        <div className="flex flex-col gap-0.5 rounded-lg border border-white/20 bg-white/25 px-2.5 py-2 backdrop-blur-sm dark:bg-white/5 dark:border-white/10">
+        <div className={`flex flex-col gap-0.5 rounded-lg border border-l-4 border-white/20 bg-white/25 px-2.5 py-2 backdrop-blur-sm dark:bg-white/5 ${bar ?? "border-l-border"}`}>
             <span className="text-[10px] font-medium text-muted-foreground leading-none">{label}</span>
             <span className={`text-lg font-bold leading-tight ${accent ?? "text-foreground"}`}>{value}</span>
         </div>
