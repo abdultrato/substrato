@@ -1,6 +1,7 @@
 "use client"
 
 import { useCallback, useEffect, useRef, useState } from "react"
+import { createPortal } from "react-dom"
 import { Info } from "lucide-react"
 
 export type CatalogOption = {
@@ -34,6 +35,8 @@ export default function CatalogSearchSelect({
   const [loading, setLoading] = useState(false)
   const [highlight, setHighlight] = useState(0)
   const [busy, setBusy] = useState(false)
+  const [dropdownRect, setDropdownRect] = useState<{ top: number; left: number; width: number } | null>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const reqIdRef = useRef(0)
 
@@ -53,6 +56,10 @@ export default function CatalogSearchSelect({
           setOptions(res)
           setOpen(true)
           setHighlight(0)
+          if (inputRef.current) {
+            const r = inputRef.current.getBoundingClientRect()
+            setDropdownRect({ top: r.bottom + window.scrollY, left: r.left + window.scrollX, width: r.width })
+          }
         }
       } catch {
         if (reqIdRef.current === myId) setOptions([])
@@ -92,9 +99,63 @@ export default function CatalogSearchSelect({
   const selectableOptions = options.filter((o) => !o.added)
   const showDropdown = open && query.trim().length >= minChars
 
+  const dropdown = showDropdown && dropdownRect ? createPortal(
+    <div
+      style={{
+        position: "absolute",
+        top: dropdownRect.top + 4,
+        left: dropdownRect.left,
+        width: dropdownRect.width,
+        zIndex: 9999,
+      }}
+      className="max-h-64 overflow-auto rounded-md border border-border bg-background shadow-xl"
+      onMouseDown={(e) => e.preventDefault()}
+    >
+      {loading ? (
+        <div className="px-3 py-2 text-xs text-muted-foreground">Buscando...</div>
+      ) : options.length === 0 ? (
+        <div className="px-3 py-2 text-xs text-muted-foreground">Nenhum resultado.</div>
+      ) : (
+        options.map((opt) => {
+          const isAdded = !!opt.added
+          const selectableIdx = selectableOptions.indexOf(opt)
+          return (
+            <div
+              key={opt.key}
+              onMouseEnter={() => { if (!isAdded) setHighlight(selectableIdx) }}
+              onClick={() => choose(opt)}
+              className={`flex w-full items-center justify-between gap-3 px-3 py-2 text-left text-sm transition-colors select-none
+                ${isAdded
+                  ? "cursor-default opacity-50 bg-muted/40"
+                  : `cursor-pointer hover:bg-muted ${selectableIdx === highlight ? "bg-muted" : ""}`
+                }`}
+            >
+              <span className={`truncate ${isAdded ? "text-muted-foreground" : "text-foreground"}`}>
+                {opt.label}
+              </span>
+              <div className="flex shrink-0 items-center gap-1.5">
+                {opt.hint && !isAdded ? (
+                  <span className="text-xs text-muted-foreground">{opt.hint}</span>
+                ) : null}
+                {isAdded ? (
+                  <span className="inline-flex items-center gap-1 text-[10px] font-medium text-emerald-600 dark:text-emerald-400">
+                    <Info size={11} />
+                    já adicionado
+                  </span>
+                ) : null}
+              </div>
+            </div>
+          )
+        })
+      )}
+    </div>,
+    document.body
+  ) : null
+
   return (
     <div ref={containerRef} className="relative">
       <input
+        ref={inputRef}
         type="text"
         value={query}
         placeholder={placeholder}
@@ -102,9 +163,17 @@ export default function CatalogSearchSelect({
         onChange={(e) => {
           setQuery(e.target.value)
           setOpen(true)
+          if (inputRef.current) {
+            const r = inputRef.current.getBoundingClientRect()
+            setDropdownRect({ top: r.bottom + window.scrollY, left: r.left + window.scrollX, width: r.width })
+          }
         }}
         onFocus={() => {
-          if (options.length) setOpen(true)
+          if (options.length && inputRef.current) {
+            const r = inputRef.current.getBoundingClientRect()
+            setDropdownRect({ top: r.bottom + window.scrollY, left: r.left + window.scrollX, width: r.width })
+            setOpen(true)
+          }
         }}
         onKeyDown={(e) => {
           if (e.key === "ArrowDown") {
@@ -122,47 +191,7 @@ export default function CatalogSearchSelect({
         }}
         className="h-9 w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground shadow-sm outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/20 disabled:opacity-60"
       />
-      {showDropdown ? (
-        <div className="absolute z-20 mt-1 max-h-64 w-full overflow-auto rounded-md border border-border bg-background shadow-lg">
-          {loading ? (
-            <div className="px-3 py-2 text-xs text-muted-foreground">Buscando...</div>
-          ) : options.length === 0 ? (
-            <div className="px-3 py-2 text-xs text-muted-foreground">Nenhum resultado.</div>
-          ) : (
-            options.map((opt, idx) => {
-              const isAdded = !!opt.added
-              const selectableIdx = selectableOptions.indexOf(opt)
-              return (
-                <div
-                  key={opt.key}
-                  onMouseEnter={() => { if (!isAdded) setHighlight(selectableIdx) }}
-                  onClick={() => choose(opt)}
-                  className={`flex w-full items-center justify-between gap-3 px-3 py-2 text-left text-sm transition-colors select-none
-                    ${isAdded
-                      ? "cursor-default opacity-50 bg-muted/40"
-                      : `cursor-pointer hover:bg-muted ${selectableIdx === highlight ? "bg-muted" : ""}`
-                    }`}
-                >
-                  <span className={`truncate ${isAdded ? "text-muted-foreground" : "text-foreground"}`}>
-                    {opt.label}
-                  </span>
-                  <div className="flex shrink-0 items-center gap-1.5">
-                    {opt.hint && !isAdded ? (
-                      <span className="text-xs text-muted-foreground">{opt.hint}</span>
-                    ) : null}
-                    {isAdded ? (
-                      <span className="inline-flex items-center gap-1 text-[10px] font-medium text-emerald-600 dark:text-emerald-400">
-                        <Info size={11} />
-                        já adicionado
-                      </span>
-                    ) : null}
-                  </div>
-                </div>
-              )
-            })
-          )}
-        </div>
-      ) : null}
+      {dropdown}
     </div>
   )
 }
