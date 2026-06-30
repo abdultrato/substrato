@@ -1571,10 +1571,14 @@ export default function FaturaRascunhoPage() {
                   (i.tipo_item === "AJU" && String(i.descricao).startsWith("Procedimento:")) ||
                   i.tipo_item === "PRC"
                 )
-                const pendentes = procedimentos.flatMap((p) => [
-                  ...(procedimentoItens[p.id] || []).filter((it) => { const id = toNumberId(it.id); return !(id && referenciaIds.procedimentoItens.has(id)) }).map((it) => ({ tipo: "item" as const, p, it })),
-                  // materiais de procedimento aparecem na seção Medicamentos / materiais
-                ])
+                const pendentes = Array.from(
+                  new Map(
+                    procedimentos.flatMap((p) => [
+                      ...(procedimentoItens[p.id] || []).filter((it) => { const id = toNumberId(it.id); return !(id && referenciaIds.procedimentoItens.has(id)) }).map((it) => ({ tipo: "item" as const, p, it })),
+                      // materiais de procedimento aparecem na seção Medicamentos / materiais
+                    ]).map((entry) => [`${entry.tipo}-${entry.it.id}`, entry])
+                  ).values()
+                )
                 if (!adicionados.length && !pendentes.length) return null
                 return (
                   <div className="border-t border-white/20 dark:border-white/10 px-4 py-2.5 space-y-2">
