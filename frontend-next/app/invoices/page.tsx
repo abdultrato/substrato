@@ -104,9 +104,9 @@ function InvoiceMetric({
   return (
     <section className={`relative overflow-hidden ${GLASS}`}>
       <span className={`absolute left-0 top-0 h-full w-1 ${accent}`} />
-      <div className="flex items-center gap-3 px-4 py-3 pl-5">
-        <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${accent} text-white shadow-sm`}>
-          <Icon size={16} />
+      <div className="flex items-center gap-2.5 px-3 py-2 pl-4">
+        <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl ${accent} text-white shadow-sm`}>
+          <Icon size={15} />
         </span>
         <div className="min-w-0">
           <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">{label}</p>
@@ -562,7 +562,7 @@ export default function FaturasPage() {
         </section>
 
         {/* ── Métricas ── */}
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+        <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4">
           <InvoiceMetric icon={FileText} label="Total" value={carregando ? "…" : stats.total} accent="bg-slate-500" />
           <InvoiceMetric icon={FilePlus2} label="Rascunhos" value={carregando ? "…" : stats.rascunhos} accent="bg-amber-500" />
           <InvoiceMetric icon={Wallet} label="Emitidas" value={carregando ? "…" : stats.emitidas} accent="bg-sky-500" />
@@ -627,8 +627,8 @@ export default function FaturasPage() {
               title="Faturas por criar"
               subtitle="Requisições por faturar e rascunhos aguardando emissão."
             >
-              <div className="space-y-6">
-                <div className="space-y-3">
+              <div className="space-y-4">
+                <div className="space-y-2">
                   <div className="flex items-center justify-between gap-2">
                     <div className="text-xs font-semibold uppercase text-muted-foreground">
                       Requisições por faturar
@@ -644,11 +644,11 @@ export default function FaturasPage() {
                   ) : requisicoes.length === 0 ? (
                     <div className="text-sm text-gray-500">Nenhuma requisição por faturar.</div>
                   ) : (
-                    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                    <div className="grid gap-1.5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                       {requisicoes.slice(0, pageSize).map((r) => (
                         <div
                           key={r.id}
-                          className={`relative flex min-h-[160px] flex-col justify-between overflow-hidden ${GLASS} p-4 pl-5 transition hover:shadow`}
+                          className={`relative flex min-h-[150px] flex-col justify-between overflow-hidden ${GLASS} p-3 pl-4 transition hover:shadow`}
                         >
                           <span className="absolute left-0 top-0 h-full w-1 bg-violet-500" />
                           <div>
@@ -734,7 +734,7 @@ export default function FaturasPage() {
                 </div>
               </Card>
             ) : (
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-4">
+              <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 xl:grid-cols-4">
                 {faturasVisiveis.map((f) => {
                   const accent = INVOICE_STATUS[String(f.estado || "").toUpperCase()]
                   const accentBar =
@@ -745,7 +745,7 @@ export default function FaturasPage() {
                   return (
                     <article
                       key={f.id}
-                      className={`relative flex aspect-[2/1] flex-col overflow-hidden ${GLASS} p-3 pl-4`}
+                      className={`relative flex aspect-[2/1] flex-col overflow-hidden ${GLASS} p-2.5 pl-3.5`}
                     >
                       <span className={`absolute left-0 top-0 h-full w-1 ${accentBar}`} />
                       <div className="flex items-start justify-between gap-2">
