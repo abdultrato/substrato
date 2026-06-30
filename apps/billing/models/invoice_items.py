@@ -463,7 +463,8 @@ class InvoiceItem(ScopedPositionMixin, NoNameCoreModel):
         if self.item_type == self.TipoItem.PROCEDIMENTO_MATERIAL and self.procedure_material_id:
             if not self.description.strip():
                 self.description = self.procedure_material.product.name
-            self.quantity = Decimal(self.procedure_material.quantity)
+            if self.quantity == Decimal("1.00") or self.quantity is None:
+                self.quantity = Decimal(self.procedure_material.quantity)
             try:
                 self.unit_price = self.procedure_material.value.unit_cost
             except ObjectDoesNotExist:
