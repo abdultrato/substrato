@@ -31,27 +31,29 @@ def route_invoice_item_to_operational(sender, instance, created, **kwargs):
     - EXA → LabRequest (LAB) + LabRequestItem
     - EXM → LabRequest (MED) + LabRequestItem
     - PRC → garante Procedure vinculada à fatura; cria se necessário
-    - MAT → MaterialRequisition (ENF) + MaterialRequisitionItem
+    - MAT → MaterialRequisition (ENF) + MaterialRequisitionItem (cria ou actualiza qty)
     """
-    if not created:
-        return
     try:
-        _route(instance)
+        _route(instance, created=created)
     except Exception:
         # Roteamento é operacional auxiliar; não deve bloquear o faturamento.
         pass
 
 
-def _route(item: InvoiceItem):
+def _route(item: InvoiceItem, *, created: bool = True):
     invoice = item.invoice
 
     if item.item_type == "EXA":
-        _ensure_lab_request_item(invoice, item, request_type="LAB")
+        if created:
+            _ensure_lab_request_item(invoice, item, request_type="LAB")
     elif item.item_type == "EXM":
-        _ensure_lab_request_item(invoice, item, request_type="MED")
+        if created:
+            _ensure_lab_request_item(invoice, item, request_type="MED")
     elif item.item_type == "PRC":
-        _ensure_procedure(invoice, item)
+        if created:
+            _ensure_procedure(invoice, item)
     elif item.item_type == "MAT":
+        # Runs on create AND update so quantity changes are reflected immediately.
         _ensure_material_requisition_item(invoice, item)
 
 
@@ -172,13 +174,29 @@ def _ensure_material_requisition_item(invoice, item):
         requisition.requested_by_department = dept_value
         requisition.save(update_fields=["requested_by_department", "updated_at"])
 
-    # Adiciona o item apenas se o produto ainda não estiver na requisição.
-    if not MaterialRequisitionItem.objects.filter(
+    # Quantidade total = soma de todos os InvoiceItem MAT da fatura para este produto.
+    from decimal import Decimal
+    from django.db.models import Sum
+
+    total_qty = InvoiceItem.objects.filter(
+        invoice=invoice,
+        item_type="MAT",
+        deleted=False,
+        procedure_material__product=product,
+    ).aggregate(total=Sum("quantity"))["total"] or Decimal("1")
+    total_qty_int = max(1, int(total_qty))
+
+    req_item = MaterialRequisitionItem.objects.filter(
         requisition=requisition, product=product, deleted=False
-    ).exists():
+    ).first()
+
+    if req_item is None:
         MaterialRequisitionItem.objects.create(
             tenant=invoice.tenant,
             requisition=requisition,
             product=product,
-            requested_quantity=item.quantity or proc_material.quantity or 1,
+            requested_quantity=total_qty_int,
         )
+    elif req_item.requested_quantity != total_qty_int:
+        req_item.requested_quantity = total_qty_int
+        req_item.save(update_fields=["requested_quantity", "updated_at", "updated_by"])
