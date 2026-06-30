@@ -1,30 +1,25 @@
 "use client"
 
 import { useCallback, useEffect, useRef, useState } from "react"
+import { Info } from "lucide-react"
 
 export type CatalogOption = {
   key: string | number
   label: string
   hint?: string
   raw: any
+  added?: boolean
 }
 
 type Props = {
   placeholder?: string
-  /** Recebe o termo de busca e devolve as opções já mapeadas. */
   fetcher: (query: string) => Promise<CatalogOption[]>
-  /** Chamado quando o utilizador seleciona uma opção (deve adicionar o item). */
   onSelect: (option: CatalogOption) => void | Promise<void>
   disabled?: boolean
   minChars?: number
   delay?: number
 }
 
-/**
- * Combobox de busca assíncrona: o utilizador digita, vê os resultados num
- * dropdown (com preço/identificador à direita) e seleciona um para adicionar.
- * Substitui o padrão "campo de busca + lista solta" por uma seleção direta.
- */
 export default function CatalogSearchSelect({
   placeholder = "Pesquisar...",
   fetcher,
@@ -80,7 +75,7 @@ export default function CatalogSearchSelect({
 
   const choose = useCallback(
     async (opt: CatalogOption) => {
-      if (busy) return
+      if (busy || opt.added) return
       setBusy(true)
       try {
         await onSelect(opt)
@@ -94,6 +89,7 @@ export default function CatalogSearchSelect({
     [busy, onSelect]
   )
 
+  const selectableOptions = options.filter((o) => !o.added)
   const showDropdown = open && query.trim().length >= minChars
 
   return (
@@ -113,13 +109,13 @@ export default function CatalogSearchSelect({
         onKeyDown={(e) => {
           if (e.key === "ArrowDown") {
             e.preventDefault()
-            setHighlight((h) => Math.min(h + 1, options.length - 1))
+            setHighlight((h) => Math.min(h + 1, selectableOptions.length - 1))
           } else if (e.key === "ArrowUp") {
             e.preventDefault()
             setHighlight((h) => Math.max(h - 1, 0))
           } else if (e.key === "Enter") {
             e.preventDefault()
-            if (options[highlight]) choose(options[highlight])
+            if (selectableOptions[highlight]) choose(selectableOptions[highlight])
           } else if (e.key === "Escape") {
             setOpen(false)
           }
@@ -133,22 +129,37 @@ export default function CatalogSearchSelect({
           ) : options.length === 0 ? (
             <div className="px-3 py-2 text-xs text-muted-foreground">Nenhum resultado.</div>
           ) : (
-            options.map((opt, idx) => (
-              <button
-                key={opt.key}
-                type="button"
-                onMouseEnter={() => setHighlight(idx)}
-                onClick={() => choose(opt)}
-                className={`flex w-full items-center justify-between gap-3 px-3 py-2 text-left text-sm transition-colors hover:bg-muted ${
-                  idx === highlight ? "bg-muted" : ""
-                }`}
-              >
-                <span className="truncate text-foreground">{opt.label}</span>
-                {opt.hint ? (
-                  <span className="shrink-0 text-xs text-muted-foreground">{opt.hint}</span>
-                ) : null}
-              </button>
-            ))
+            options.map((opt, idx) => {
+              const isAdded = !!opt.added
+              const selectableIdx = selectableOptions.indexOf(opt)
+              return (
+                <div
+                  key={opt.key}
+                  onMouseEnter={() => { if (!isAdded) setHighlight(selectableIdx) }}
+                  onClick={() => choose(opt)}
+                  className={`flex w-full items-center justify-between gap-3 px-3 py-2 text-left text-sm transition-colors select-none
+                    ${isAdded
+                      ? "cursor-default opacity-50 bg-muted/40"
+                      : `cursor-pointer hover:bg-muted ${selectableIdx === highlight ? "bg-muted" : ""}`
+                    }`}
+                >
+                  <span className={`truncate ${isAdded ? "text-muted-foreground" : "text-foreground"}`}>
+                    {opt.label}
+                  </span>
+                  <div className="flex shrink-0 items-center gap-1.5">
+                    {opt.hint && !isAdded ? (
+                      <span className="text-xs text-muted-foreground">{opt.hint}</span>
+                    ) : null}
+                    {isAdded ? (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-medium text-emerald-600 dark:text-emerald-400">
+                        <Info size={11} />
+                        já adicionado
+                      </span>
+                    ) : null}
+                  </div>
+                </div>
+              )
+            })
           )}
         </div>
       ) : null}
