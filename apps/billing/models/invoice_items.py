@@ -531,15 +531,7 @@ class InvoiceItem(ScopedPositionMixin, NoNameCoreModel):
         if self.tenant_id and self.invoice_id and self.tenant_id != self.invoice.tenant_id:
             raise ValidationError("Item e fatura devem pertencer ao mesmo tenant.")
 
-        if self.exam_id and self.invoice.request_id:
-            existe_no_contexto = self.invoice.request.items.filter(exam_id=self.exam_id).exists()
-            if not existe_no_contexto:
-                raise ValidationError({"exam": "Exame não pertence à requisição da fatura."})
-
-        if self.medical_exam_id and self.invoice.request_id:
-            existe_no_contexto = self.invoice.request.items.filter(medical_exam_id=self.medical_exam_id).exists()
-            if not existe_no_contexto:
-                raise ValidationError({"medical_exam": "Exame médico não pertence à requisição da fatura."})
+        # Exames avulsos do catálogo são permitidos mesmo em faturas com requisição de origem.
 
         if self.sale_item_id and self.invoice.sale_id and self.sale_item.sale_id != self.invoice.sale_id:
             raise ValidationError({"sale_item": "Item de venda não pertence à venda da fatura."})
