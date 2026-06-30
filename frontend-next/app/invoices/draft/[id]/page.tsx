@@ -143,6 +143,7 @@ export default function FaturaRascunhoPage() {
   const [vendaItens, setVendaItens] = useState<Record<number, Row[]>>({})
   const [cirurgias, setCirurgias] = useState<Row[]>([])
   const [consultas, setConsultas] = useState<Row[]>([])
+  const [consultaQuery, setConsultaQuery] = useState("")
 
   const [exames, setExames] = useState<Row[]>([])
   const [examesMedicos, setExamesMedicos] = useState<Row[]>([])
@@ -981,6 +982,29 @@ export default function FaturaRascunhoPage() {
               </div>
             </div>
             <div className="flex flex-wrap items-center gap-2">
+              <button
+                className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background/60 px-3 py-1.5 text-xs font-medium text-foreground transition hover:bg-muted"
+                onClick={downloadInvoicePdf}
+              >
+                <PdfActionLabel>PDF da fatura</PdfActionLabel>
+              </button>
+              {recibo ? (
+                <button
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-700 transition hover:bg-emerald-100 dark:border-emerald-700/40 dark:bg-emerald-900/20 dark:text-emerald-300"
+                  onClick={downloadReceiptPdf}
+                >
+                  <PdfActionLabel>PDF do recibo</PdfActionLabel>
+                </button>
+              ) : null}
+              {fatura.estado === "PAGA" ? (
+                <button
+                  className="inline-flex items-center rounded-lg border border-sky-200 bg-sky-50 px-3 py-1.5 text-xs font-medium text-sky-700 transition hover:bg-sky-100 dark:border-sky-700/40 dark:bg-sky-900/20 dark:text-sky-300 disabled:opacity-50"
+                  onClick={sendInvoiceNotification}
+                  disabled={notificacaoEnviando}
+                >
+                  {notificacaoEnviando ? "Notificando..." : "Enviar notificação"}
+                </button>
+              ) : null}
               {faturaRascunho && podeEditar ? (
                 <button
                   className={`inline-flex items-center rounded-lg ${estadoInfo.accent} px-3 py-2 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 disabled:opacity-50`}
@@ -1039,40 +1063,11 @@ export default function FaturaRascunhoPage() {
           </div>
         ) : null}
 
-        {/* ── Barra de ações rápidas ── */}
-        <section className={`relative overflow-hidden ${GLASS} border-l-4 border-l-slate-400`}>
-          <div className="flex flex-wrap items-center gap-2 px-3 py-2 pl-4">
-            <span className="text-xs font-semibold text-muted-foreground">Ações</span>
-            <button
-              className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background/60 px-3 py-1.5 text-xs font-medium text-foreground transition hover:bg-muted"
-              onClick={downloadInvoicePdf}
-            >
-              <PdfActionLabel>PDF da fatura</PdfActionLabel>
-            </button>
-            {recibo ? (
-              <button
-                className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-700 transition hover:bg-emerald-100 dark:border-emerald-700/40 dark:bg-emerald-900/20 dark:text-emerald-300"
-                onClick={downloadReceiptPdf}
-              >
-                <PdfActionLabel>PDF do recibo</PdfActionLabel>
-              </button>
-            ) : null}
-            {fatura.estado === "PAGA" ? (
-              <button
-                className="inline-flex items-center rounded-lg border border-sky-200 bg-sky-50 px-3 py-1.5 text-xs font-medium text-sky-700 transition hover:bg-sky-100 dark:border-sky-700/40 dark:bg-sky-900/20 dark:text-sky-300 disabled:opacity-50"
-                onClick={sendInvoiceNotification}
-                disabled={notificacaoEnviando}
-              >
-                {notificacaoEnviando ? "Notificando..." : "Enviar notificação"}
-              </button>
-            ) : null}
-            {fatura.estado === "EMIT" ? (
-              <span className="text-xs text-sky-600 dark:text-sky-400">Aguardando pagamento</span>
-            ) : null}
-          </div>
-        </section>
+        {/* ── Row: Cliente fiscal (25%) + Itens da fatura (25%) + Registrar pagamento (50%) ── */}
+        <div className="grid grid-cols-1 gap-2 lg:grid-cols-4">
 
-        <section className={`${GLASS} border-l-4 border-l-teal-500`}>
+        {/* Cliente fiscal — 25% */}
+        <section className={`${GLASS} border-l-4 border-l-teal-500 lg:col-span-1`}>
           <div className="px-4 py-3 space-y-2">
             <div>
               <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Cliente fiscal</p>
@@ -1109,7 +1104,8 @@ export default function FaturaRascunhoPage() {
           </div>
         </section>
 
-        <section className={`${GLASS} border-l-4 border-l-sky-500`}>
+        {/* Itens da fatura — 25% */}
+        <section className={`${GLASS} border-l-4 border-l-sky-500 lg:col-span-1`}>
           <div className="px-4 py-3 space-y-2">
             <div>
               <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Itens da fatura</p>
@@ -1126,7 +1122,8 @@ export default function FaturaRascunhoPage() {
           </div>
         </section>
 
-        <section className={`${GLASS} border-l-4 ${fatura.estado === "PAGA" ? "border-l-emerald-500" : "border-l-violet-500"}`}>
+        {/* Registrar pagamento — 50% */}
+        <section className={`${GLASS} border-l-4 lg:col-span-2 ${fatura.estado === "PAGA" ? "border-l-emerald-500" : "border-l-violet-500"}`}>
           <div className="px-4 py-3 space-y-3">
             <div>
               <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -1179,15 +1176,20 @@ export default function FaturaRascunhoPage() {
                     <PdfActionLabel>Imprimir recibo</PdfActionLabel>
                   </button>
                 ) : (
-                  <span className="self-center text-xs text-gray-500">Recibo a ser gerado.</span>
+                  <span className="self-center text-xs text-muted-foreground">Recibo a ser gerado.</span>
                 )}
               </div>
             </div>
-          ) : fatura.estado !== "EMIT" ? (
-            <div className="text-sm text-muted-foreground">Emita a fatura para liberar o pagamento.</div>
-          ) : !podePagar ? (
-            <div className="text-sm text-muted-foreground">Sem permissão para registrar pagamento.</div>
           ) : (
+            <>
+            {fatura.estado !== "EMIT" ? (
+              <div className="rounded-lg border border-amber-200 bg-amber-50/60 px-3 py-2 text-xs text-amber-700 dark:border-amber-700/40 dark:bg-amber-900/20 dark:text-amber-300">
+                Emita a fatura para liberar o pagamento.
+              </div>
+            ) : !podePagar ? (
+              <div className="text-sm text-muted-foreground">Sem permissão para registrar pagamento.</div>
+            ) : null}
+            {fatura.estado === "EMIT" && podePagar ? (
             <>
               <div className="space-y-4">
                 <div>
@@ -1316,10 +1318,16 @@ export default function FaturaRascunhoPage() {
                   </div>
                 </>
               ) : null}
+            </>) : null}
             </>
           )}
           </div>
         </section>
+
+        </div>{/* fim grid 4-col */}
+
+        {/* ── Row: Itens do paciente (50%) + Pesquisa de catálogo (50%) ── */}
+        <div className="grid grid-cols-1 gap-2 lg:grid-cols-2">
 
         <section className={`${GLASS} border-l-4 border-l-amber-500`}>
           <div className="px-4 py-3 space-y-3">
@@ -1526,27 +1534,46 @@ export default function FaturaRascunhoPage() {
             </div>
 
             <div>
-              <div className="text-sm font-semibold text-foreground">Consultas</div>
+              <div className="text-sm font-semibold text-foreground mb-1">Consultas</div>
               {consultas.length === 0 ? (
                 <div className="text-sm text-muted-foreground">Sem consultas.</div>
               ) : (
                 <div className="space-y-2">
-                  {consultas.map((c) => {
-                    const nomeConsulta =
-                      c.type || c.specialty_name || c.custom_id || `Consulta ${c.id}`
-                    return (
-                      <div key={c.id} className="flex items-center justify-between gap-2 rounded-lg border border-slate-100 bg-white p-3 text-sm">
-                        <div className="text-foreground">{nomeConsulta}</div>
-                        <button
-                          className="inline-flex items-center rounded-lg border border-emerald-200 px-2.5 py-1 text-xs font-medium text-emerald-700 transition hover:bg-emerald-50 disabled:opacity-50"
-                          onClick={() => adicionarItem({ tipo_item: "CON", consultation: c.id }, `patient-consultation-${c.id}`)}
-                          disabled={addItemButtonDisabled}
-                        >
-                          {addItemButtonLabel(`patient-consultation-${c.id}`)}
-                        </button>
-                      </div>
-                    )
-                  })}
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={consultaQuery}
+                      onChange={(e) => setConsultaQuery(e.target.value)}
+                      placeholder="Filtrar consultas…"
+                      className="h-8 w-full rounded-lg border border-border bg-background/60 px-3 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-[var(--primary-400)]"
+                    />
+                  </div>
+                  {consultas
+                    .filter((c) => {
+                      if (!consultaQuery.trim()) return true
+                      const q = consultaQuery.toLowerCase()
+                      return (
+                        (c.type || "").toLowerCase().includes(q) ||
+                        (c.specialty_name || "").toLowerCase().includes(q) ||
+                        (c.custom_id || "").toLowerCase().includes(q) ||
+                        String(c.id).includes(q)
+                      )
+                    })
+                    .map((c) => {
+                      const nomeConsulta = c.type || c.specialty_name || c.custom_id || `Consulta ${c.id}`
+                      return (
+                        <div key={c.id} className="flex items-center justify-between gap-2 rounded-lg border border-white/20 bg-white/40 p-3 text-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.06]">
+                          <div className="text-foreground">{nomeConsulta}</div>
+                          <button
+                            className="inline-flex items-center rounded-lg border border-emerald-200 px-2.5 py-1 text-xs font-medium text-emerald-700 transition hover:bg-emerald-50 disabled:opacity-50"
+                            onClick={() => adicionarItem({ tipo_item: "CON", consultation: c.id }, `patient-consultation-${c.id}`)}
+                            disabled={addItemButtonDisabled}
+                          >
+                            {addItemButtonLabel(`patient-consultation-${c.id}`)}
+                          </button>
+                        </div>
+                      )
+                    })}
                 </div>
               )}
             </div>
@@ -1648,6 +1675,8 @@ export default function FaturaRascunhoPage() {
           )}
           </div>
         </section>
+
+        </div>{/* fim grid 2-col */}
       </div>
     </AppLayout>
   )
