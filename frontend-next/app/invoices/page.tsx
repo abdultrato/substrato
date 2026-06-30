@@ -524,7 +524,7 @@ export default function FaturasPage() {
         GROUPS.CONTABILIDADE,
       ]}
     >
-      <div className="space-y-4">
+      <div className="space-y-2">
         {/* ── Hero ── */}
         <section className={`relative overflow-hidden ${GLASS}`}>
           <span className="absolute left-0 top-0 h-full w-1 bg-sky-500" />
@@ -621,7 +621,7 @@ export default function FaturasPage() {
         {carregando ? (
           <div className="text-sm text-gray-500">Carregando faturas...</div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-2">
             <Card
               glass
               title="Faturas por criar"
