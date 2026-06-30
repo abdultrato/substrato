@@ -824,53 +824,75 @@ export default function FaturaRascunhoPage() {
 
   const buscarExames = useCallback(async (q: string): Promise<CatalogOption[]> => {
     const res = await apiFetch<any>(`/exams/?search=${encodeURIComponent(q)}`)
-    return listFrom(res).map((e) => ({
-      key: e.id,
-      label: e.nome || e.id_custom || `Exame ${e.id}`,
-      hint: precoHint(e.preco, e.preco_unitario, e.price),
-      raw: e,
-    }))
-  }, [precoHint])
+    return listFrom(res)
+      .filter((e) => !referenciaIds.exames.has(e.id))
+      .map((e) => ({
+        key: e.id,
+        label: e.nome || e.id_custom || `Exame ${e.id}`,
+        hint: precoHint(e.preco, e.preco_unitario, e.price),
+        raw: e,
+      }))
+  }, [precoHint, referenciaIds.exames])
 
   const buscarExamesMedicos = useCallback(async (q: string): Promise<CatalogOption[]> => {
     const res = await apiFetch<any>(`/clinical/medicalexam/?search=${encodeURIComponent(q)}`)
-    return listFrom(res).map((e) => ({
-      key: e.id,
-      label: e.nome || e.id_custom || `Exame ${e.id}`,
-      hint: precoHint(e.preco, e.preco_unitario, e.price),
-      raw: e,
-    }))
-  }, [precoHint])
+    return listFrom(res)
+      .filter((e) => !referenciaIds.examesMedicos.has(e.id))
+      .map((e) => ({
+        key: e.id,
+        label: e.nome || e.id_custom || `Exame ${e.id}`,
+        hint: precoHint(e.preco, e.preco_unitario, e.price),
+        raw: e,
+      }))
+  }, [precoHint, referenciaIds.examesMedicos])
 
   const buscarProcedimentosCatalogo = useCallback(async (q: string): Promise<CatalogOption[]> => {
+    const adicionados = new Set(
+      itens.filter(i => i.tipo_item === "AJU" && String(i.descricao).startsWith("Procedimento:"))
+        .map(i => String(i.descricao).replace(/^Procedimento:\s*/, "").toLowerCase())
+    )
     const res = await apiFetch<any>(`/nursing/procedure_catalog/?search=${encodeURIComponent(q)}`)
-    return listFrom(res).map((p) => ({
-      key: p.id,
-      label: p.nome || p.id_custom || `Procedimento ${p.id}`,
-      hint: precoHint(p.preco_padrao, p.preco),
-      raw: p,
-    }))
-  }, [precoHint])
+    return listFrom(res)
+      .filter((p) => !adicionados.has((p.nome || p.id_custom || "").toLowerCase()))
+      .map((p) => ({
+        key: p.id,
+        label: p.nome || p.id_custom || `Procedimento ${p.id}`,
+        hint: precoHint(p.preco_padrao, p.preco),
+        raw: p,
+      }))
+  }, [precoHint, itens])
 
   const buscarProcedimentosCirurgicos = useCallback(async (q: string): Promise<CatalogOption[]> => {
+    const adicionadas = new Set(
+      itens.filter(i => i.tipo_item === "AJU" && String(i.descricao).startsWith("Cirurgia:"))
+        .map(i => String(i.descricao).replace(/^Cirurgia:\s*/, "").toLowerCase())
+    )
     const res = await apiFetch<any>(`/surgery/surgical_procedure/?search=${encodeURIComponent(q)}`)
-    return listFrom(res).map((p) => ({
-      key: p.id,
-      label: p.nome || p.id_custom || `Cirurgia ${p.id}`,
-      hint: precoHint(p.preco_base, p.preco),
-      raw: p,
-    }))
-  }, [precoHint])
+    return listFrom(res)
+      .filter((p) => !adicionadas.has((p.nome || p.id_custom || "").toLowerCase()))
+      .map((p) => ({
+        key: p.id,
+        label: p.nome || p.id_custom || `Cirurgia ${p.id}`,
+        hint: precoHint(p.preco_base, p.preco),
+        raw: p,
+      }))
+  }, [precoHint, itens])
 
   const buscarProdutos = useCallback(async (q: string): Promise<CatalogOption[]> => {
+    const adicionados = new Set(
+      itens.filter(i => i.tipo_item === "AJU" && String(i.descricao).startsWith("Produto:"))
+        .map(i => String(i.descricao).replace(/^Produto:\s*/, "").toLowerCase())
+    )
     const res = await apiFetch<any>(`/pharmacy/product/?search=${encodeURIComponent(q)}`)
-    return listFrom(res).map((p) => ({
-      key: p.id,
-      label: p.nome || p.id_custom || `Produto ${p.id}`,
-      hint: precoHint(p.preco_venda, p.preco),
-      raw: p,
-    }))
-  }, [precoHint])
+    return listFrom(res)
+      .filter((p) => !adicionados.has((p.nome || p.id_custom || "").toLowerCase()))
+      .map((p) => ({
+        key: p.id,
+        label: p.nome || p.id_custom || `Produto ${p.id}`,
+        hint: precoHint(p.preco_venda, p.preco),
+        raw: p,
+      }))
+  }, [precoHint, itens])
 
   const buscarConsultas = useCallback(async (q: string): Promise<CatalogOption[]> => {
     const lower = q.toLowerCase()
