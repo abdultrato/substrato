@@ -1505,7 +1505,11 @@ export default function FaturaRascunhoPage() {
                 />
               </div>
               {(() => {
-                const adicionados = itens.filter(i => i.tipo_item === "AJU" && String(i.descricao).startsWith("Procedimento:"))
+                const adicionados = itens.filter(i =>
+                  (i.tipo_item === "AJU" && String(i.descricao).startsWith("Procedimento:")) ||
+                  i.tipo_item === "PRC" ||
+                  i.tipo_item === "MAT"
+                )
                 const pendentes = procedimentos.flatMap((p) => [
                   ...(procedimentoItens[p.id] || []).filter((it) => { const id = toNumberId(it.id); return !(id && referenciaIds.procedimentoItens.has(id)) }).map((it) => ({ tipo: "item" as const, p, it })),
                   ...(procedimentoMateriais[p.id] || []).filter((mat) => { const id = toNumberId(mat.id); return !(id && referenciaIds.procedimentoMateriais.has(id)) }).map((mat) => ({ tipo: "mat" as const, p, it: mat })),
