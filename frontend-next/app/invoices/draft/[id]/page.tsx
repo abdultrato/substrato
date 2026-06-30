@@ -1635,7 +1635,12 @@ export default function FaturaRascunhoPage() {
               </div>
               {(() => {
                 const adicionadas = itens.filter(i => i.tipo_item === "AJU" && String(i.descricao).startsWith("Cirurgia:"))
-                if (!adicionadas.length && !cirurgias.length) return null
+                const adicionadasNomes = new Set(adicionadas.map(i => String(i.descricao).replace(/^Cirurgia:\s*/, "").toLowerCase()))
+                const cirurgiasPendentes = cirurgias.filter(c => {
+                  const nome = (c.procedimento || c.id_custom || String(c.id)).toLowerCase()
+                  return !adicionadasNomes.has(nome)
+                })
+                if (!adicionadas.length && !cirurgiasPendentes.length) return null
                 return (
                   <div className="border-t border-white/20 dark:border-white/10 px-4 py-2.5 space-y-2">
                     {adicionadas.length > 0 && (
@@ -1648,11 +1653,11 @@ export default function FaturaRascunhoPage() {
                         ))}
                       </div>
                     )}
-                    {cirurgias.length > 0 && (
+                    {cirurgiasPendentes.length > 0 && (
                       <div className="space-y-0.5">
                         <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Do paciente</p>
                         <div className="flex flex-wrap gap-1">
-                          {cirurgias.map((c) => {
+                          {cirurgiasPendentes.map((c) => {
                             const addKey = `patient-surgery-${c.id}`
                             return (
                               <button key={c.id} type="button" disabled={addItemButtonDisabled}
