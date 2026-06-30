@@ -341,7 +341,7 @@ export default function MaterialRequisitionDetailPage() {
                                 disabled={busy}
                                 className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-gradient-to-br from-amber-500 to-orange-500 px-3 text-xs font-bold text-white shadow shadow-amber-500/30 ring-1 ring-amber-400/20 transition hover:from-amber-400 hover:to-orange-400 hover:shadow-amber-400/40 active:scale-95 disabled:opacity-50 disabled:shadow-none"
                               >
-                                <Archive size={12} /> Arquivar item
+                                <Archive size={12} /> Arquivar
                               </button>
                             </div>
                           )}
