@@ -52,10 +52,16 @@ function val(r: any, ...keys: string[]): any {
 
 /* ── sub-components ─────────────────────────────────────── */
 
-function SectionCard({ icon, title, children }: { icon: React.ReactNode; title: string; children: React.ReactNode }) {
+const GLASS =
+  "border border-white/20 bg-white/30 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]"
+
+function SectionCard({ icon, title, accent = "bg-[var(--primary-600)]", className = "", children }: {
+  icon: React.ReactNode; title: string; accent?: string; className?: string; children: React.ReactNode
+}) {
   return (
-    <div className="flex flex-col gap-2 rounded-xl border border-border bg-card p-3 shadow-sm">
-      <div className="flex items-center gap-1.5 border-b border-border pb-2">
+    <div className={`relative flex flex-col gap-2 overflow-hidden rounded-xl ${GLASS} p-3 pl-4 ${className}`}>
+      <span className={`absolute left-0 top-0 h-full w-1 ${accent}`} />
+      <div className="flex items-center gap-1.5 border-b border-border/50 pb-2">
         <span className="text-[var(--primary-600)]">{icon}</span>
         <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{title}</span>
       </div>
@@ -90,7 +96,7 @@ function SampleCard({ item }: { item: any }) {
   const hours   = item?.fasting_hours
 
   return (
-    <div className="flex items-start gap-2 rounded-lg border border-border bg-white px-2.5 py-2 text-[11px]">
+    <div className="flex items-start gap-2 rounded-lg border border-white/20 bg-white/40 px-2.5 py-2 text-[11px] backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]">
       <Droplets size={13} className="mt-0.5 shrink-0 text-sky-500" />
       <div className="min-w-0">
         <p className="font-semibold text-foreground">{name}</p>
@@ -105,16 +111,21 @@ type TimelineStep = { label: string; date: any; by?: string; done: boolean }
 
 function Timeline({ steps }: { steps: TimelineStep[] }) {
   return (
-    <ol className="space-y-2.5 pl-1">
+    <ol className="flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-0">
       {steps.map((step, i) => (
-        <li key={i} className="relative flex items-start gap-2.5">
+        <li key={i} className="relative flex flex-1 items-start gap-2.5 sm:flex-col sm:items-center sm:gap-2 sm:text-center">
           <span className="relative z-10 mt-0.5 shrink-0">
             {step.done
-              ? <CheckCircle2 size={14} className="text-emerald-500" />
-              : <Circle      size={14} className="text-[var(--gray-300)]" />}
+              ? <CheckCircle2 size={16} className="text-emerald-500" />
+              : <Circle      size={16} className="text-[var(--gray-300)]" />}
           </span>
           {i < steps.length - 1 && (
-            <span className="absolute left-[6px] top-5 h-full w-px bg-border" />
+            <>
+              {/* conector vertical (mobile) */}
+              <span className="absolute left-[7px] top-6 h-full w-px bg-border sm:hidden" />
+              {/* conector horizontal (desktop) */}
+              <span className={`absolute left-1/2 top-2 hidden h-px w-full sm:block ${step.done ? "bg-emerald-400/60" : "bg-border"}`} />
+            </>
           )}
           <div className="min-w-0">
             <p className={`text-xs font-semibold ${step.done ? "text-foreground" : "text-muted-foreground"}`}>{step.label}</p>
@@ -206,7 +217,7 @@ export default function RequestDetailPage() {
       <div className="w-full space-y-3 px-1">
 
         {/* ── HERO ────────────────────────────────────────── */}
-        <div className="flex flex-col gap-2 rounded-xl border border-border bg-card px-4 py-3 shadow-sm md:flex-row md:items-start md:justify-between">
+        <div className={`flex flex-col gap-2 rounded-xl ${GLASS} px-4 py-3 md:flex-row md:items-start md:justify-between`}>
           <div className="flex min-w-0 flex-col gap-1.5">
             {/* breadcrumb */}
             <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
@@ -265,13 +276,13 @@ export default function RequestDetailPage() {
 
           {/* col 1 — Paciente + Requisitante */}
           <div className="flex flex-col gap-3">
-            <SectionCard icon={<User size={13} />} title="Paciente">
+            <SectionCard icon={<User size={13} />} title="Paciente" accent="bg-sky-500">
               <Row label="Nome"   value={patientName} />
               <Row label="Código" value={patientCode} />
             </SectionCard>
 
             {(company || physician || extCompany || analystName) ? (
-              <SectionCard icon={<Building2 size={13} />} title="Requisitante">
+              <SectionCard icon={<Building2 size={13} />} title="Requisitante" accent="bg-indigo-500">
                 {company     ? <Row label="Empresa"       value={company} />     : null}
                 {physician   ? <Row label="Médico"        value={physician} />   : null}
                 {extCompany  ? <Row label="Exec. externa" value={extCompany} />  : null}
@@ -279,7 +290,7 @@ export default function RequestDetailPage() {
               </SectionCard>
             ) : null}
 
-            <SectionCard icon={<CalendarClock size={13} />} title="Datas">
+            <SectionCard icon={<CalendarClock size={13} />} title="Datas" accent="bg-teal-500">
               <Row label="Criada em"   value={fmtDate(createdAt)} />
               <Row label="Validada em" value={fmtDate(validatedAt)} />
               <Row label="Coletada em" value={fmtDate(collectedAt)} />
@@ -289,7 +300,7 @@ export default function RequestDetailPage() {
           {/* col 2 — Exames + Amostras */}
           <div className="flex flex-col gap-3">
             {tests.length > 0 ? (
-              <SectionCard icon={<FlaskConical size={13} />} title={`Exames (${tests.length})`}>
+              <SectionCard icon={<FlaskConical size={13} />} title={`Exames (${tests.length})`} accent="bg-violet-500">
                 <div className="flex flex-wrap gap-1">
                   {tests.map((item: any, i: number) => {
                     const name = val(item, "test_name", "exam_name", "medical_exam_name", "name", "nome") || `Exame ${i + 1}`
@@ -298,13 +309,13 @@ export default function RequestDetailPage() {
                 </div>
               </SectionCard>
             ) : (
-              <SectionCard icon={<FlaskConical size={13} />} title="Exames">
+              <SectionCard icon={<FlaskConical size={13} />} title="Exames" accent="bg-violet-500">
                 <p className="text-[11px] text-muted-foreground">Nenhum exame registado.</p>
               </SectionCard>
             )}
 
             {samples.length > 0 ? (
-              <SectionCard icon={<TestTube2 size={13} />} title={`Amostras (${samples.length})`}>
+              <SectionCard icon={<TestTube2 size={13} />} title={`Amostras (${samples.length})`} accent="bg-cyan-500">
                 <div className="flex flex-col gap-1.5">
                   {samples.map((s: any, i: number) => <SampleCard key={i} item={s} />)}
                 </div>
@@ -312,22 +323,18 @@ export default function RequestDetailPage() {
             ) : null}
 
             {r?.notes || r?.observacoes ? (
-              <SectionCard icon={<FileText size={13} />} title="Observações">
+              <SectionCard icon={<FileText size={13} />} title="Observações" accent="bg-amber-500">
                 <p className="whitespace-pre-wrap text-xs text-foreground">{r.notes || r.observacoes}</p>
               </SectionCard>
             ) : null}
           </div>
 
-          {/* col 3 — Linha do tempo + Urgência */}
+          {/* col 3 — Estado clínico */}
           <div className="flex flex-col gap-3">
-            <SectionCard icon={<Stethoscope size={13} />} title="Linha do tempo">
-              <Timeline steps={timelineSteps} />
-            </SectionCard>
-
-            <SectionCard icon={<Clock size={13} />} title="Estado clínico">
+            <SectionCard icon={<Clock size={13} />} title="Estado clínico" accent="bg-rose-500">
               <ManchesterBadge status={clinicalStatus} display={clinicalDisplay} className="px-3 py-2 text-xs rounded-lg" />
               {hasCritical ? (
-                <div className="flex items-start gap-1.5 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-[11px] text-red-800">
+                <div className="flex items-start gap-1.5 rounded-lg border border-red-200 bg-red-50/70 px-3 py-2 text-[11px] text-red-800 backdrop-blur-sm">
                   <AlertTriangle size={12} className="mt-0.5 shrink-0" />
                   <span>Esta requisição possui pelo menos um resultado crítico que requer atenção imediata.</span>
                 </div>
@@ -335,6 +342,11 @@ export default function RequestDetailPage() {
             </SectionCard>
           </div>
         </div>
+
+        {/* ── Linha do tempo (largura total) ──────────────── */}
+        <SectionCard icon={<Stethoscope size={13} />} title="Linha do tempo" accent="bg-emerald-500">
+          <Timeline steps={timelineSteps} />
+        </SectionCard>
       </div>
     </AppLayout>
   )
