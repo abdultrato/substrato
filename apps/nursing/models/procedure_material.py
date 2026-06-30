@@ -179,7 +179,8 @@ class ProcedureMaterial(ScopedPositionMixin, WardScopedModel, NoNameCoreModel):
 
         lot = available_lots.filter(saldo__gte=quantity).first()
         if lot is None:
-            raise ValidationError({"product": ("Sem lot válido com saldo suficiente para este material.")})
+            nome = getattr(self.product, "name", None) or f"produto {self.product_id}"
+            raise ValidationError({"product": f"Sem lote válido com saldo suficiente para {nome}."})
 
         self.lot = lot
 
