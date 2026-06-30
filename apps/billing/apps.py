@@ -10,3 +10,6 @@ class BillingConfig(AppConfig):
     name = "apps.billing"
     label = "faturamento"
     verbose_name = "Faturamentos e Pagamentos Médicos"
+
+    def ready(self):
+        import apps.billing.signals  # noqa: F401
