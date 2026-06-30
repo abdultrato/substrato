@@ -538,9 +538,9 @@ class Invoice(NoNameCoreModel):
                             tenant=self.tenant,
                             invoice=self,
                             item_type=InvoiceItem.TipoItem.AJUSTE,
-                            descricao=exam_obj.name or exam_obj.code or f"Exame {exam_obj.pk}",
-                            quantidade=1,
-                            preco_unitario=exam_obj.price or 0,
+                            description=exam_obj.name or exam_obj.code or f"Exame {exam_obj.pk}",
+                            quantity=1,
+                            unit_price=exam_obj.price or 0,
                         )
 
                 elif item.medical_exam_id:
