@@ -21,22 +21,39 @@ import { useAuth } from "@/hooks/useAuth"
 import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Row = Record<string, any>
+
+// ─── Tipos de item de fatura (espelham InvoiceItem.TipoItem no backend) ───────
+type TipoItem = "EXA" | "EXM" | "FAR" | "PRC" | "MAT" | "CON" | "AJU"
+
+// ─── Payload discriminado por tipo — garante que só os campos certos são enviados
+type AdicionarItemPayload =
+  | { tipo_item: "EXA"; exame: number | string }
+  | { tipo_item: "EXM"; exame_medico: number | string }
+  | { tipo_item: "FAR"; item_venda: number | string }
+  | { tipo_item: "PRC"; procedimento_item: number | string }
+  | { tipo_item: "MAT"; procedimento_material: number | string }
+  | { tipo_item: "CON"; consultation: number | string }
+  | { tipo_item: "AJU"; descricao: string; quantidade?: number; preco_unitario?: number; iva_percentual?: number | string | null; aplica_iva?: boolean | null }
 
 type FaturaItem = {
   id: number
-  descricao?: string
-  quantidade?: string | number
-  preco_unitario?: string | number
-  aplica_iva?: boolean
-  iva_percentual?: string | number
-  total_com_iva?: string | number
-  tipo_item?: string
+  tipo_item: TipoItem
+  descricao?: string | null
+  quantidade?: string | number | null
+  preco_unitario?: string | number | null
+  aplica_iva?: boolean | null
+  iva_percentual?: string | number | null
+  total_com_iva?: string | number | null
+  // FKs de referência — chegam como número (alias PT → EN já resolvido pelo serializer)
   exame?: number | string | null
   exame_medico?: number | string | null
   procedimento_item?: number | string | null
   procedimento_material?: number | string | null
   item_venda?: number | string | null
+  consulta?: number | string | null
+  produto?: number | string | null
 }
 
 const PAGAMENTO_METODOS = [
@@ -223,6 +240,10 @@ export default function FaturaRascunhoPage() {
       procedimentoItens: new Set<number>(),
       procedimentoMateriais: new Set<number>(),
       itensVenda: new Set<number>(),
+      // AJU sem FK direto: rastreados por nome normalizado
+      cirurgiasNomes: new Set<string>(),
+      procedimentosNomes: new Set<string>(),
+      produtosNomes: new Set<string>(),
     }
 
     itens.forEach((item) => {
@@ -240,6 +261,16 @@ export default function FaturaRascunhoPage() {
 
       const vendaItemId = toNumberId(item.item_venda)
       if (vendaItemId) sets.itensVenda.add(vendaItemId)
+
+      if (item.tipo_item === "AJU" && item.descricao) {
+        const desc = String(item.descricao)
+        if (desc.startsWith("Cirurgia:"))
+          sets.cirurgiasNomes.add(desc.replace(/^Cirurgia:\s*/, "").toLowerCase().trim())
+        else if (desc.startsWith("Procedimento:"))
+          sets.procedimentosNomes.add(desc.replace(/^Procedimento:\s*/, "").toLowerCase().trim())
+        else if (desc.startsWith("Produto:"))
+          sets.produtosNomes.add(desc.replace(/^Produto:\s*/, "").toLowerCase().trim())
+      }
     })
 
     return sets
@@ -524,7 +555,7 @@ export default function FaturaRascunhoPage() {
     }
   }, [faturaId, faturaRascunho, paciente, carregarFatura])
 
-  const adicionarItem = useCallback(async (payload: any, actionKey = "item") => {
+  const adicionarItem = useCallback(async (payload: AdicionarItemPayload, actionKey = "item") => {
     if (addingItemRef.current) return
     if (!faturaId || Number.isNaN(faturaId)) return
     if (!podeEditar) {
@@ -871,56 +902,55 @@ export default function FaturaRascunhoPage() {
   }, [precoHint, referenciaIds.examesMedicos])
 
   const buscarProcedimentosCatalogo = useCallback(async (q: string): Promise<CatalogOption[]> => {
-    const adicionados = new Set(
-      itens.filter(i => i.tipo_item === "AJU" && String(i.descricao).startsWith("Procedimento:"))
-        .map(i => String(i.descricao).replace(/^Procedimento:\s*/, "").toLowerCase())
-    )
     const res = await apiFetch<any>(`/nursing/procedure_catalog/?search=${encodeURIComponent(q)}`)
     return listFrom(res).map((p) => ({
       key: p.id,
       label: p.nome || p.id_custom || `Procedimento ${p.id}`,
       hint: precoHint(p.preco_padrao, p.preco),
       raw: p,
-      added: adicionados.has((p.nome || p.id_custom || "").toLowerCase()),
+      added: referenciaIds.procedimentosNomes.has((String(p.nome || p.id_custom || "")).toLowerCase().trim()),
     }))
-  }, [precoHint, itens])
+  }, [precoHint, referenciaIds.procedimentosNomes])
 
   const buscarProcedimentosCirurgicos = useCallback(async (q: string): Promise<CatalogOption[]> => {
-    const adicionadas = new Set(
-      itens.filter(i => i.tipo_item === "AJU" && String(i.descricao).startsWith("Cirurgia:"))
-        .map(i => String(i.descricao).replace(/^Cirurgia:\s*/, "").toLowerCase())
-    )
     const res = await apiFetch<any>(`/surgery/surgical_procedure/?search=${encodeURIComponent(q)}`)
     return listFrom(res).map((p) => ({
       key: p.id,
       label: p.nome || p.id_custom || `Cirurgia ${p.id}`,
       hint: precoHint(p.preco_base, p.preco),
       raw: p,
-      added: adicionadas.has((p.nome || p.id_custom || "").toLowerCase()),
+      added: referenciaIds.cirurgiasNomes.has((String(p.nome || p.id_custom || "")).toLowerCase().trim()),
     }))
-  }, [precoHint, itens])
+  }, [precoHint, referenciaIds.cirurgiasNomes])
 
   const buscarProdutos = useCallback(async (q: string): Promise<CatalogOption[]> => {
-    const adicionados = new Set(
-      itens.filter(i => i.tipo_item === "AJU" && String(i.descricao).startsWith("Produto:"))
-        .map(i => String(i.descricao).replace(/^Produto:\s*/, "").toLowerCase())
-    )
     const res = await apiFetch<any>(`/pharmacy/product/?search=${encodeURIComponent(q)}`)
     return listFrom(res).map((p) => ({
       key: p.id,
       label: p.nome || p.id_custom || `Produto ${p.id}`,
       hint: precoHint(p.preco_venda, p.preco),
       raw: p,
-      added: adicionados.has((p.nome || p.id_custom || "").toLowerCase()),
+      added: referenciaIds.produtosNomes.has((String(p.nome || p.id_custom || "")).toLowerCase().trim()),
     }))
-  }, [precoHint, itens])
+  }, [precoHint, referenciaIds.produtosNomes])
+
+  const consultasAdicionadasIds = useMemo(() => {
+    const s = new Set<number>()
+    itens.forEach((i) => {
+      if (i.tipo_item === "CON") {
+        // consulta chega como número (campo FK consulta/consultation no serializer)
+        const id = toNumberId(i.consulta)
+        if (id) s.add(id)
+      }
+    })
+    return s
+  }, [itens])
 
   const buscarConsultas = useCallback(async (q: string): Promise<CatalogOption[]> => {
     const lower = q.toLowerCase()
     return consultas
       .filter((c) => {
-        const jaAdicionada = itens.some((i) => i.tipo_item === "CON" && String(i.descricao).includes(String(c.id)))
-        if (jaAdicionada) return false
+        if (consultasAdicionadasIds.has(toNumberId(c.id) ?? -1)) return false
         return (
           (c.type || "").toLowerCase().includes(lower) ||
           (c.specialty_name || "").toLowerCase().includes(lower) ||
@@ -933,8 +963,9 @@ export default function FaturaRascunhoPage() {
         label: c.type || c.specialty_name || c.custom_id || `Consulta ${c.id}`,
         hint: c.specialty_name || undefined,
         raw: c,
+        added: consultasAdicionadasIds.has(toNumberId(c.id) ?? -1),
       }))
-  }, [consultas, itens])
+  }, [consultas, consultasAdicionadasIds])
 
   const buscarEmpresas = useCallback(async (q: string): Promise<CatalogOption[]> => {
     const res = await apiFetch<any>(`/companies/?search=${encodeURIComponent(q)}`)
@@ -1448,12 +1479,17 @@ export default function FaturaRascunhoPage() {
                 />
               </div>
               {(() => {
-                const adicionados = itens.filter(i => toNumberId(i.exame) && referenciaIds.exames.has(toNumberId(i.exame)!))
-                const pendentes = requisicoes.flatMap((r) =>
-                  (requisicaoItens[r.id] || []).filter((it) => {
-                    const exameId = toNumberId(it.exame)
-                    return exameId && !referenciaIds.exames.has(exameId)
-                  }).map((it) => ({ r, it }))
+                const adicionados = itens.filter(i => i.tipo_item === "EXA" && toNumberId(i.exame) && referenciaIds.exames.has(toNumberId(i.exame)!))
+                // Deduplica por ID do exame — mesmo exame pode aparecer em múltiplas requisições
+                const pendentes = Array.from(
+                  new Map(
+                    requisicoes.flatMap((r) =>
+                      (requisicaoItens[r.id] || []).filter((it) => {
+                        const exameId = toNumberId(it.exame)
+                        return exameId != null && !referenciaIds.exames.has(exameId)
+                      }).map((it) => ({ r, it }))
+                    ).map((entry) => [toNumberId(entry.it.exame), entry])
+                  ).values()
                 )
                 if (!adicionados.length && !pendentes.length) return null
                 return (
@@ -1461,7 +1497,7 @@ export default function FaturaRascunhoPage() {
                     {adicionados.length > 0 && (
                       <div className="flex flex-wrap gap-1">
                         {adicionados.map(i => (
-                          <button key={i.id} type="button" disabled={!faturaRascunho || !podeEditar} onClick={() => removerItem(i.id)}
+                          <button key={`exa-added-${i.id}`} type="button" disabled={!faturaRascunho || !podeEditar} onClick={() => removerItem(i.id)}
                             className="inline-flex items-center gap-1 rounded-full border border-sky-300 bg-sky-50 px-2 py-0.5 text-[10px] text-sky-800 transition hover:border-rose-300 hover:bg-rose-50 hover:text-rose-700 disabled:cursor-default dark:border-sky-700/50 dark:bg-sky-900/20 dark:text-sky-300">
                             <span className="text-[8px]">✓</span>{i.descricao || `Exame ${i.exame}`}<span className="text-[9px] opacity-60">×</span>
                           </button>
@@ -1473,12 +1509,12 @@ export default function FaturaRascunhoPage() {
                         <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Do paciente</p>
                         <div className="flex flex-wrap gap-1">
                           {pendentes.map(({ it }) => {
-                            const exame = exameById.get(toNumberId(it.exame)!)
+                            const exameId = toNumberId(it.exame)!
+                            const exame = exameById.get(exameId)
                             const label = exame?.nome || `Exame ${it.exame}`
-                            const addKey = `req-exam-${it.id}`
                             return (
-                              <button key={it.id} type="button" disabled={addItemButtonDisabled}
-                                onClick={() => adicionarItem({ tipo_item: "EXA", exame: it.exame }, addKey)}
+                              <button key={`exa-pending-${exameId}`} type="button" disabled={addItemButtonDisabled}
+                                onClick={() => adicionarItem({ tipo_item: "EXA", exame: exameId }, `req-exam-${exameId}`)}
                                 className="inline-flex items-center gap-1 rounded-full border border-dashed border-sky-400 bg-sky-50/60 px-2 py-0.5 text-[10px] text-sky-700 transition hover:bg-sky-100 disabled:opacity-50 dark:border-sky-600/50 dark:bg-sky-900/10 dark:text-sky-400"
                               >+ {label}</button>
                             )
@@ -1509,12 +1545,17 @@ export default function FaturaRascunhoPage() {
                 />
               </div>
               {(() => {
-                const adicionados = itens.filter(i => toNumberId(i.exame_medico) && referenciaIds.examesMedicos.has(toNumberId(i.exame_medico)!))
-                const pendentes = requisicoes.flatMap((r) =>
-                  (requisicaoItens[r.id] || []).filter((it) => {
-                    const exameMedId = toNumberId(it.exame_medico)
-                    return exameMedId && !referenciaIds.examesMedicos.has(exameMedId)
-                  }).map((it) => ({ r, it }))
+                const adicionados = itens.filter(i => i.tipo_item === "EXM" && toNumberId(i.exame_medico) && referenciaIds.examesMedicos.has(toNumberId(i.exame_medico)!))
+                // Deduplica por ID do exame médico
+                const pendentes = Array.from(
+                  new Map(
+                    requisicoes.flatMap((r) =>
+                      (requisicaoItens[r.id] || []).filter((it) => {
+                        const exameMedId = toNumberId(it.exame_medico)
+                        return exameMedId != null && !referenciaIds.examesMedicos.has(exameMedId)
+                      }).map((it) => ({ r, it }))
+                    ).map((entry) => [toNumberId(entry.it.exame_medico), entry])
+                  ).values()
                 )
                 if (!adicionados.length && !pendentes.length) return null
                 return (
@@ -1522,7 +1563,7 @@ export default function FaturaRascunhoPage() {
                     {adicionados.length > 0 && (
                       <div className="flex flex-wrap gap-1">
                         {adicionados.map(i => (
-                          <button key={i.id} type="button" disabled={!faturaRascunho || !podeEditar} onClick={() => removerItem(i.id)}
+                          <button key={`exm-added-${i.id}`} type="button" disabled={!faturaRascunho || !podeEditar} onClick={() => removerItem(i.id)}
                             className="inline-flex items-center gap-1 rounded-full border border-violet-300 bg-violet-50 px-2 py-0.5 text-[10px] text-violet-800 transition hover:border-rose-300 hover:bg-rose-50 hover:text-rose-700 disabled:cursor-default dark:border-violet-700/50 dark:bg-violet-900/20 dark:text-violet-300">
                             <span className="text-[8px]">✓</span>{i.descricao || `Exame ${i.exame_medico}`}<span className="text-[9px] opacity-60">×</span>
                           </button>
@@ -1534,12 +1575,12 @@ export default function FaturaRascunhoPage() {
                         <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Do paciente</p>
                         <div className="flex flex-wrap gap-1">
                           {pendentes.map(({ it }) => {
-                            const exameMed = exameMedById.get(toNumberId(it.exame_medico)!)
+                            const exameMedId = toNumberId(it.exame_medico)!
+                            const exameMed = exameMedById.get(exameMedId)
                             const label = exameMed?.nome || `Exame méd. ${it.exame_medico}`
-                            const addKey = `req-medical-exam-${it.id}`
                             return (
-                              <button key={it.id} type="button" disabled={addItemButtonDisabled}
-                                onClick={() => adicionarItem({ tipo_item: "EXM", exame_medico: it.exame_medico }, addKey)}
+                              <button key={`exm-pending-${exameMedId}`} type="button" disabled={addItemButtonDisabled}
+                                onClick={() => adicionarItem({ tipo_item: "EXM", exame_medico: exameMedId }, `req-medical-exam-${exameMedId}`)}
                                 className="inline-flex items-center gap-1 rounded-full border border-dashed border-violet-400 bg-violet-50/60 px-2 py-0.5 text-[10px] text-violet-700 transition hover:bg-violet-100 disabled:opacity-50 dark:border-violet-600/50 dark:bg-violet-900/10 dark:text-violet-400"
                               >+ {label}</button>
                             )
@@ -1585,9 +1626,9 @@ export default function FaturaRascunhoPage() {
                     {adicionados.length > 0 && (
                       <div className="flex flex-wrap gap-1">
                         {adicionados.map(i => (
-                          <button key={i.id} type="button" disabled={!faturaRascunho || !podeEditar} onClick={() => removerItem(i.id)}
+                          <button key={`prc-added-${i.id}`} type="button" disabled={!faturaRascunho || !podeEditar} onClick={() => removerItem(i.id)}
                             className="inline-flex items-center gap-1 rounded-full border border-teal-300 bg-teal-50 px-2 py-0.5 text-[10px] text-teal-800 transition hover:border-rose-300 hover:bg-rose-50 hover:text-rose-700 disabled:cursor-default dark:border-teal-700/50 dark:bg-teal-900/20 dark:text-teal-300">
-                            <span className="text-[8px]">✓</span>{String(i.descricao).replace(/^Procedimento:\s*/, "")}<span className="text-[9px] opacity-60">×</span>
+                            <span className="text-[8px]">✓</span>{String(i.descricao ?? "").replace(/^Procedimento:\s*/, "")}<span className="text-[9px] opacity-60">×</span>
                           </button>
                         ))}
                       </div>
@@ -1599,9 +1640,9 @@ export default function FaturaRascunhoPage() {
                           {pendentes.map(({ tipo, p, it }) => {
                             const label = tipo === "item"
                               ? (it.descricao || `Serviço ${it.id}`)
-                              : (produtoById.get(it.produto)?.nome || `Material ${it.produto}`)
-                            const addKey = tipo === "item" ? `procedure-item-${it.id}` : `procedure-material-${it.id}`
-                            const payload = tipo === "item"
+                              : (produtoById.get(toNumberId(it.produto) ?? it.produto)?.nome || `Material ${it.produto}`)
+                            const addKey = tipo === "item" ? `prc-pending-${it.id}` : `mat-pending-${it.id}`
+                            const payload: AdicionarItemPayload = tipo === "item"
                               ? { tipo_item: "PRC", procedimento_item: it.id }
                               : { tipo_item: "MAT", procedimento_material: it.id }
                             return (
@@ -1634,11 +1675,10 @@ export default function FaturaRascunhoPage() {
                 />
               </div>
               {(() => {
-                const adicionadas = itens.filter(i => i.tipo_item === "AJU" && String(i.descricao).startsWith("Cirurgia:"))
-                const adicionadasNomes = new Set(adicionadas.map(i => String(i.descricao).replace(/^Cirurgia:\s*/, "").toLowerCase()))
+                const adicionadas = itens.filter(i => i.tipo_item === "AJU" && String(i.descricao ?? "").startsWith("Cirurgia:"))
                 const cirurgiasPendentes = cirurgias.filter(c => {
-                  const nome = (c.procedimento || c.id_custom || String(c.id)).toLowerCase()
-                  return !adicionadasNomes.has(nome)
+                  const nome = String(c.procedimento || c.id_custom || c.id).toLowerCase().trim()
+                  return !referenciaIds.cirurgiasNomes.has(nome)
                 })
                 if (!adicionadas.length && !cirurgiasPendentes.length) return null
                 return (
@@ -1646,9 +1686,9 @@ export default function FaturaRascunhoPage() {
                     {adicionadas.length > 0 && (
                       <div className="flex flex-wrap gap-1">
                         {adicionadas.map(i => (
-                          <button key={i.id} type="button" disabled={!faturaRascunho || !podeEditar} onClick={() => removerItem(i.id)}
+                          <button key={`aju-cir-${i.id}`} type="button" disabled={!faturaRascunho || !podeEditar} onClick={() => removerItem(i.id)}
                             className="inline-flex items-center gap-1 rounded-full border border-rose-300 bg-rose-50 px-2 py-0.5 text-[10px] text-rose-800 transition hover:border-rose-500 hover:bg-rose-100 disabled:cursor-default dark:border-rose-700/50 dark:bg-rose-900/20 dark:text-rose-300">
-                            <span className="text-[8px]">✓</span>{String(i.descricao).replace(/^Cirurgia:\s*/, "")}<span className="text-[9px] opacity-60">×</span>
+                            <span className="text-[8px]">✓</span>{String(i.descricao ?? "").replace(/^Cirurgia:\s*/, "")}<span className="text-[9px] opacity-60">×</span>
                           </button>
                         ))}
                       </div>
@@ -1660,7 +1700,7 @@ export default function FaturaRascunhoPage() {
                           {cirurgiasPendentes.map((c) => {
                             const addKey = `patient-surgery-${c.id}`
                             return (
-                              <button key={c.id} type="button" disabled={addItemButtonDisabled}
+                              <button key={`cir-pending-${c.id}`} type="button" disabled={addItemButtonDisabled}
                                 onClick={() => adicionarItem({ tipo_item: "AJU", descricao: `Cirurgia: ${c.procedimento || c.id_custom || c.id}`, quantidade: 1, preco_unitario: c.preco_estimado || 0, iva_percentual: c.iva_percentual, aplica_iva: c.aplica_iva_por_padrao }, addKey)}
                                 className="inline-flex items-center gap-1 rounded-full border border-dashed border-rose-400 bg-rose-50/60 px-2 py-0.5 text-[10px] text-rose-700 transition hover:bg-rose-100 disabled:opacity-50 dark:border-rose-600/50 dark:bg-rose-900/10 dark:text-rose-400"
                               >+ {c.procedimento || c.id_custom || `Cirurgia ${c.id}`}</button>
@@ -1788,9 +1828,9 @@ export default function FaturaRascunhoPage() {
                     {adicionados.length > 0 && (
                       <div className="flex flex-wrap gap-1">
                         {adicionados.map(i => (
-                          <button key={i.id} type="button" disabled={!faturaRascunho || !podeEditar} onClick={() => removerItem(i.id)}
+                          <button key={`far-added-${i.id}`} type="button" disabled={!faturaRascunho || !podeEditar} onClick={() => removerItem(i.id)}
                             className="inline-flex items-center gap-1 rounded-full border border-indigo-300 bg-indigo-50 px-2 py-0.5 text-[10px] text-indigo-800 transition hover:border-rose-300 hover:bg-rose-50 hover:text-rose-700 disabled:cursor-default dark:border-indigo-700/50 dark:bg-indigo-900/20 dark:text-indigo-300">
-                            <span className="text-[8px]">✓</span>{String(i.descricao).replace(/^Produto:\s*/, "")}{Number(i.quantidade) > 1 ? ` ×${Number(i.quantidade)}` : ""}<span className="text-[9px] opacity-60">×</span>
+                            <span className="text-[8px]">✓</span>{String(i.descricao ?? "").replace(/^Produto:\s*/, "")}{Number(i.quantidade) > 1 ? ` ×${Number(i.quantidade)}` : ""}<span className="text-[9px] opacity-60">×</span>
                           </button>
                         ))}
                       </div>
@@ -1822,7 +1862,7 @@ export default function FaturaRascunhoPage() {
                             const label = prod?.nome || `Produto ${it.produto}`
                             const addKey = `sale-item-${it.id}`
                             return (
-                              <button key={it.id} type="button" disabled={addItemButtonDisabled}
+                              <button key={`far-pending-${it.id}`} type="button" disabled={addItemButtonDisabled}
                                 onClick={() => adicionarItem({ tipo_item: "FAR", item_venda: it.id }, addKey)}
                                 className="inline-flex items-center gap-1 rounded-full border border-dashed border-indigo-400 bg-indigo-50/60 px-2 py-0.5 text-[10px] text-indigo-700 transition hover:bg-indigo-100 disabled:opacity-50 dark:border-indigo-600/50 dark:bg-indigo-900/10 dark:text-indigo-400"
                               >+ {label}</button>
