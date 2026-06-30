@@ -99,16 +99,17 @@ function PriorityBadge({ priority }: { priority?: string }) {
   );
 }
 
-function SectionCard({ icon: Icon, title, children }: {
-  icon: React.ElementType; title: string; children: React.ReactNode;
+function SectionCard({ icon: Icon, title, accent = "bg-[var(--primary-600)]", children }: {
+  icon: React.ElementType; title: string; accent?: string; children: React.ReactNode;
 }) {
   return (
-    <div className="overflow-hidden rounded-xl border border-white/20 bg-white/25 shadow-sm backdrop-blur-sm dark:bg-white/5 dark:border-white/10">
-      <div className="flex items-center gap-2 border-b border-border/50 px-4 py-2.5">
+    <div className="relative overflow-hidden rounded-xl border border-white/20 bg-white/25 shadow-sm backdrop-blur-sm dark:bg-white/5 dark:border-white/10">
+      <span className={`absolute left-0 top-0 h-full w-1 ${accent}`} />
+      <div className="flex items-center gap-2 border-b border-border/50 px-4 py-1.5 pl-5">
         <Icon size={13} className="text-[var(--primary-600)] dark:text-[var(--primary-400)]" />
         <h2 className="text-xs font-semibold text-foreground">{title}</h2>
       </div>
-      <div className="p-4">{children}</div>
+      <div className="px-4 py-2.5 pl-5">{children}</div>
     </div>
   );
 }
@@ -199,7 +200,7 @@ export default function ReceptionCheckinDetailPage() {
           {/* Status accent top bar */}
           {statusMeta && <div className={`absolute inset-x-0 top-0 h-1 ${statusMeta.bar}`} />}
 
-          <div className="px-4 pb-3 pt-4">
+          <div className="px-4 py-2.5 pl-5">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div className="flex items-center gap-3">
                 <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[var(--primary-600)]/10 text-[var(--primary-700)] dark:text-[var(--primary-400)]">
@@ -277,19 +278,19 @@ export default function ReceptionCheckinDetailPage() {
         ) : error ? (
           <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-8 text-center text-sm text-red-800 dark:border-red-800/40 dark:bg-red-900/15 dark:text-red-300">{error}</div>
         ) : checkin ? (
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid gap-2 sm:grid-cols-2">
 
             {/* Patient */}
-            <SectionCard icon={User} title="Paciente">
-              <dl className="space-y-3">
+            <SectionCard icon={User} title="Paciente" accent="bg-sky-500">
+              <dl className="space-y-2">
                 <Field label="Nome">{checkin.patient_name || "—"}</Field>
                 {checkin.patient_code && <Field label="Código">{checkin.patient_code}</Field>}
               </dl>
             </SectionCard>
 
             {/* Atendimento */}
-            <SectionCard icon={Stethoscope} title="Atendimento">
-              <dl className="space-y-3">
+            <SectionCard icon={Stethoscope} title="Atendimento" accent="bg-violet-500">
+              <dl className="space-y-2">
                 <Field label="Estado"><StatusBadge status={checkin.status} /></Field>
                 <Field label="Prioridade"><PriorityBadge priority={checkin.priority} /></Field>
                 {checkin.attendant_name && <Field label="Atendente">{checkin.attendant_name}</Field>}
@@ -297,15 +298,15 @@ export default function ReceptionCheckinDetailPage() {
             </SectionCard>
 
             {/* Motivo / Notas */}
-            <SectionCard icon={ClipboardList} title="Motivo e notas">
-              <dl className="space-y-3">
+            <SectionCard icon={ClipboardList} title="Motivo e notas" accent="bg-amber-500">
+              <dl className="space-y-2">
                 <Field label="Motivo">{checkin.reason || <span className="text-muted-foreground">—</span>}</Field>
                 {checkin.notes && <Field label="Notas">{checkin.notes}</Field>}
               </dl>
             </SectionCard>
 
             {/* Timeline */}
-            <SectionCard icon={Clock} title="Linha do tempo">
+            <SectionCard icon={Clock} title="Linha do tempo" accent="bg-emerald-500">
               <div className="space-y-3">
                 <TimelineStep
                   label="Chegada"
@@ -329,7 +330,7 @@ export default function ReceptionCheckinDetailPage() {
             {/* Documentos */}
             {(checkin.request_code || checkin.invoice_code) && (
               <div className="sm:col-span-2">
-                <SectionCard icon={FileText} title="Documentos vinculados">
+                <SectionCard icon={FileText} title="Documentos vinculados" accent="bg-indigo-500">
                   <div className="flex flex-wrap gap-3">
                     {checkin.request_code && (
                       <div className="flex items-center gap-2 rounded-lg border border-violet-200 bg-violet-50 px-3 py-2 dark:border-violet-700/30 dark:bg-violet-900/20">
