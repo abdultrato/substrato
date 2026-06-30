@@ -125,16 +125,19 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 
 // ── Timeline step ─────────────────────────────────────────────────────────────
 
-function TimelineStep({ label, time, active, done }: {
-  label: string; time?: string; active?: boolean; done?: boolean;
+function TimelineStep({ label, time, active, done, last }: {
+  label: string; time?: string; active?: boolean; done?: boolean; last?: boolean;
 }) {
   return (
-    <div className="flex items-start gap-3">
-      <div className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 text-[10px] font-bold transition
+    <div className="relative flex flex-1 flex-col items-center text-center">
+      {!last && (
+        <span className={`absolute left-1/2 top-2.5 h-px w-full ${done ? "bg-emerald-400/60" : "bg-border"}`} />
+      )}
+      <div className={`relative z-10 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 text-[10px] font-bold transition
         ${done ? "border-emerald-500 bg-emerald-500 text-white" : active ? "border-[var(--primary-600)] bg-[var(--primary-600)] text-white" : "border-border bg-muted text-muted-foreground"}`}>
         {done ? "✓" : ""}
       </div>
-      <div>
+      <div className="mt-1.5 min-w-0">
         <div className={`text-xs font-semibold ${active || done ? "text-foreground" : "text-muted-foreground"}`}>{label}</div>
         <div className="text-[11px] text-muted-foreground">{time || "—"}</div>
       </div>
@@ -278,6 +281,7 @@ export default function ReceptionCheckinDetailPage() {
         ) : error ? (
           <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-8 text-center text-sm text-red-800 dark:border-red-800/40 dark:bg-red-900/15 dark:text-red-300">{error}</div>
         ) : checkin ? (
+          <>
           <div className="grid gap-2 sm:grid-cols-2">
 
             {/* Patient */}
@@ -303,28 +307,6 @@ export default function ReceptionCheckinDetailPage() {
                 <Field label="Motivo">{checkin.reason || <span className="text-muted-foreground">—</span>}</Field>
                 {checkin.notes && <Field label="Notas">{checkin.notes}</Field>}
               </dl>
-            </SectionCard>
-
-            {/* Timeline */}
-            <SectionCard icon={Clock} title="Linha do tempo" accent="bg-emerald-500">
-              <div className="space-y-3">
-                <TimelineStep
-                  label="Chegada"
-                  time={fmtDateTime(checkin.arrived_at)}
-                  done={!!checkin.arrived_at}
-                />
-                <TimelineStep
-                  label="Chamado para atendimento"
-                  time={fmtDateTime(checkin.called_at)}
-                  active={checkin.status === "ATEND" && !checkin.completed_at}
-                  done={!!checkin.called_at && checkin.status !== "ATEND"}
-                />
-                <TimelineStep
-                  label="Concluído"
-                  time={fmtDateTime(checkin.completed_at)}
-                  done={checkin.status === "CONC"}
-                />
-              </div>
             </SectionCard>
 
             {/* Documentos */}
@@ -368,6 +350,30 @@ export default function ReceptionCheckinDetailPage() {
             )}
 
           </div>
+
+          {/* Linha do tempo — barra horizontal final */}
+          <SectionCard icon={Clock} title="Linha do tempo" accent="bg-emerald-500">
+            <div className="flex items-start gap-0 pt-1">
+              <TimelineStep
+                label="Chegada"
+                time={fmtDateTime(checkin.arrived_at)}
+                done={!!checkin.arrived_at}
+              />
+              <TimelineStep
+                label="Chamado para atendimento"
+                time={fmtDateTime(checkin.called_at)}
+                active={checkin.status === "ATEND" && !checkin.completed_at}
+                done={!!checkin.called_at && checkin.status !== "ATEND"}
+              />
+              <TimelineStep
+                label="Concluído"
+                time={fmtDateTime(checkin.completed_at)}
+                done={checkin.status === "CONC"}
+                last
+              />
+            </div>
+          </SectionCard>
+          </>
         ) : null}
       </div>
     </AppLayout>
