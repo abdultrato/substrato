@@ -136,6 +136,7 @@ export default function FaturasPage() {
   const [selectedFatura, setSelectedFatura] = useState<FaturaRow | null>(null)
   const [temPagamentoPendente, setTemPagamentoPendente] = useState(false)
   const [busca, setBusca] = useState("")
+  const [filtroEstado, setFiltroEstado] = useState<string | null>(null)
   const [pageSize, setPageSize] = useState(10)
   const [requisicoes, setRequisicoes] = useState<RequisicaoPendente[]>([])
   const [carregandoRequisicoes, setCarregandoRequisicoes] = useState(true)
@@ -150,16 +151,18 @@ export default function FaturasPage() {
     pagas: faturas.filter((f) => f.estado === "PAGA").length,
   }), [faturas])
   const faturasFiltradas = useMemo(() => {
+    let lista = faturas
+    if (filtroEstado) lista = lista.filter((f) => f.estado === filtroEstado)
     const q = busca.trim().toLowerCase()
-    if (!q) return faturas
-    return faturas.filter((f) => {
+    if (!q) return lista
+    return lista.filter((f) => {
       const estado = INVOICE_STATUS[String(f.estado || "").toUpperCase()]?.label || f.estado || ""
       const haystack = [
         f.id_custom, f.id, f.paciente, f.estado, estado, invoiceOriginLabel(f), f.total, f.total_a_pagar,
       ].map((v) => String(v ?? "").toLowerCase()).join(" ")
       return haystack.includes(q)
     })
-  }, [faturas, busca])
+  }, [faturas, busca, filtroEstado])
   const faturasVisiveis = useMemo(
     () => faturasFiltradas.slice(0, pageSize),
     [faturasFiltradas, pageSize]
@@ -581,15 +584,15 @@ export default function FaturasPage() {
           </div>
         )}
 
-        {/* ── Busca + relatórios ── */}
+        {/* ── Busca + filtros + relatórios ── */}
         <section className={`relative ${GLASS}`}>
           <span className="absolute left-0 top-0 h-full w-1 rounded-l-xl bg-slate-400" />
           <div className="flex flex-wrap items-center gap-2 px-3 py-2 pl-4">
-            <div className="relative min-w-[220px] flex-1">
+            <div className="relative min-w-[160px] flex-1">
               <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
               <input
                 type="text"
-                placeholder="Pesquisar por código, paciente, estado, origem ou valor…"
+                placeholder="Pesquisar…"
                 className="h-9 w-full rounded-lg border border-border bg-background/60 py-2 pl-8 pr-8 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-sky-500/40 transition"
                 value={busca}
                 onChange={(e) => setBusca(e.target.value)}
@@ -605,6 +608,20 @@ export default function FaturasPage() {
                 </button>
               )}
             </div>
+            {(["RASC", "EMIT", "PAGA"] as const).map((cod) => {
+              const { label, badge } = INVOICE_STATUS[cod]
+              const ativo = filtroEstado === cod
+              return (
+                <button
+                  key={cod}
+                  type="button"
+                  onClick={() => setFiltroEstado(ativo ? null : cod)}
+                  className={`inline-flex h-9 items-center rounded-lg border px-3 text-xs font-semibold transition ${ativo ? badge + " ring-2 ring-offset-1 ring-current/30" : "border-border bg-background/60 text-muted-foreground hover:bg-muted"}`}
+                >
+                  {label}
+                </button>
+              )
+            })}
             <div className="inline-flex h-9 items-center gap-1.5" title="Itens por página">
               <PageSizeInput value={pageSize} onChange={setPageSize} ariaLabel="Itens por página" />
               <span className="text-xs text-muted-foreground">/pág</span>
@@ -613,7 +630,7 @@ export default function FaturasPage() {
               href="/invoices/reports"
               className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-indigo-200 bg-indigo-50 px-3 text-sm font-semibold text-indigo-700 transition hover:bg-indigo-100 dark:border-indigo-700/40 dark:bg-indigo-900/20 dark:text-indigo-300"
             >
-              <BarChart3 size={15} /> Relatórios de faturamento
+              <BarChart3 size={15} /> Relatórios
             </Link>
           </div>
         </section>
