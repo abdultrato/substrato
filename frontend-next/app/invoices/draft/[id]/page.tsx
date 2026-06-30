@@ -505,6 +505,25 @@ export default function FaturaRascunhoPage() {
     carregarFatura()
   }, [carregarFatura])
 
+  const definirAcompanhanteComoCliente = useCallback(async () => {
+    if (!faturaId || !faturaRascunho || !paciente) return
+    const nome = paciente.companion_name || paciente.acompanhante_nome
+    if (!nome) return
+    const relacao = paciente.companion_relationship || paciente.acompanhante_relacao || ""
+    const label = relacao ? `${nome} (${relacao})` : nome
+    try {
+      setErro(null)
+      await apiFetch(`/invoices/${faturaId}/`, {
+        method: "PATCH",
+        body: JSON.stringify({ fiscal_client: null, fiscal_client_name: label, fiscal_client_nuit: "", fiscal_client_address: "" }),
+      })
+      setFiscalMode(null)
+      await carregarFatura()
+    } catch (e: any) {
+      setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao definir acompanhante."))
+    }
+  }, [faturaId, faturaRascunho, paciente, carregarFatura])
+
   const adicionarItem = useCallback(async (payload: any, actionKey = "item") => {
     if (addingItemRef.current) return
     if (!faturaId || Number.isNaN(faturaId)) return
@@ -927,6 +946,8 @@ export default function FaturaRascunhoPage() {
     }))
   }, [])
 
+  const [fiscalMode, setFiscalMode] = useState<"entidade" | "acompanhante" | null>(null)
+
   const definirClienteFiscal = useCallback(async (companyId: number | null) => {
     if (!faturaId || !faturaRascunho) return
     try {
@@ -1122,23 +1143,62 @@ export default function FaturaRascunhoPage() {
                 : <>Paciente{(paciente?.nome || paciente?.name) ? <> <span className="text-muted-foreground">[{paciente?.nome || paciente?.name}]</span></> : null}</>}
             </div>
             {faturaRascunho && podeEditar ? (
-              <div className="flex flex-wrap items-center gap-2">
-                <div className="min-w-[16rem] flex-1">
-                  <CatalogSearchSelect
-                    placeholder="Pesquisar entidade (empresa/seguradora/escola/ONG/hospital)"
-                    fetcher={buscarEmpresas}
-                    onSelect={(opt) => definirClienteFiscal(Number(opt.raw.id))}
-                  />
-                </div>
-                {fatura?.fiscal_client_name ? (
+              <div className="space-y-2">
+                {/* mode selector */}
+                <div className="flex gap-1.5">
                   <button
                     type="button"
-                    onClick={() => definirClienteFiscal(null)}
-                    className="inline-flex items-center rounded-lg border border-border bg-background/60 px-3 py-2 text-xs font-medium text-foreground transition hover:bg-muted"
+                    onClick={() => setFiscalMode(fiscalMode === "entidade" ? null : "entidade")}
+                    className={`rounded-md border px-3 py-1 text-[11px] font-medium transition ${fiscalMode === "entidade" ? "border-teal-400 bg-teal-50 text-teal-700 dark:border-teal-600 dark:bg-teal-900/30 dark:text-teal-300" : "border-border bg-background/60 text-muted-foreground hover:bg-muted"}`}
                   >
-                    Repor paciente
+                    Entidade
                   </button>
-                ) : null}
+                  {(paciente?.companion_name || paciente?.acompanhante_nome) ? (
+                    <button
+                      type="button"
+                      onClick={() => setFiscalMode(fiscalMode === "acompanhante" ? null : "acompanhante")}
+                      className={`rounded-md border px-3 py-1 text-[11px] font-medium transition ${fiscalMode === "acompanhante" ? "border-teal-400 bg-teal-50 text-teal-700 dark:border-teal-600 dark:bg-teal-900/30 dark:text-teal-300" : "border-border bg-background/60 text-muted-foreground hover:bg-muted"}`}
+                    >
+                      Acompanhante
+                    </button>
+                  ) : null}
+                  {fatura?.fiscal_client_name ? (
+                    <button
+                      type="button"
+                      onClick={() => { setFiscalMode(null); definirClienteFiscal(null) }}
+                      className="ml-auto rounded-md border border-border bg-background/60 px-3 py-1 text-[11px] text-muted-foreground hover:bg-muted transition"
+                    >
+                      Repor paciente
+                    </button>
+                  ) : null}
+                </div>
+                {/* entidade search */}
+                {fiscalMode === "entidade" && (
+                  <CatalogSearchSelect
+                    placeholder="Pesquisar empresa, seguradora, escola, ONG…"
+                    fetcher={buscarEmpresas}
+                    onSelect={(opt) => { setFiscalMode(null); definirClienteFiscal(Number(opt.raw.id)) }}
+                  />
+                )}
+                {/* acompanhante */}
+                {fiscalMode === "acompanhante" && (() => {
+                  const nome = paciente?.companion_name || paciente?.acompanhante_nome || ""
+                  const relacao = paciente?.companion_relationship || paciente?.acompanhante_relacao || ""
+                  const contacto = paciente?.companion_contact || paciente?.acompanhante_contacto || ""
+                  return (
+                    <div className="rounded-lg border border-teal-200 bg-teal-50/60 dark:border-teal-700/40 dark:bg-teal-900/20 px-3 py-2 space-y-1.5">
+                      <p className="text-xs font-medium text-foreground">{nome}{relacao ? <span className="text-muted-foreground font-normal"> · {relacao}</span> : null}</p>
+                      {contacto ? <p className="text-[11px] text-muted-foreground">{contacto}</p> : null}
+                      <button
+                        type="button"
+                        onClick={definirAcompanhanteComoCliente}
+                        className="rounded-md bg-teal-600 px-3 py-1 text-[11px] font-semibold text-white hover:bg-teal-700 transition"
+                      >
+                        Usar como cliente fiscal
+                      </button>
+                    </div>
+                  )
+                })()}
               </div>
             ) : (
               <div className="text-xs text-muted-foreground">O cliente fiscal só pode ser alterado enquanto a fatura estiver em rascunho.</div>
