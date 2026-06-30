@@ -311,9 +311,8 @@ export default function ReceptionCheckinDetailPage() {
 
             {/* Documentos */}
             {(checkin.request_code || checkin.invoice_code) && (
-              <div className="sm:col-span-2">
-                <SectionCard icon={FileText} title="Documentos vinculados" accent="bg-indigo-500">
-                  <div className="flex flex-wrap gap-3">
+              <SectionCard icon={FileText} title="Documentos vinculados" accent="bg-indigo-500">
+                <div className="flex flex-wrap gap-2">
                     {checkin.request_code && (
                       <div className="flex items-center gap-2 rounded-lg border border-violet-200 bg-violet-50 px-3 py-2 dark:border-violet-700/30 dark:bg-violet-900/20">
                         <FileText size={14} className="text-violet-600 dark:text-violet-400" />
@@ -344,9 +343,8 @@ export default function ReceptionCheckinDetailPage() {
                         )}
                       </div>
                     )}
-                  </div>
-                </SectionCard>
-              </div>
+                </div>
+              </SectionCard>
             )}
 
           </div>
