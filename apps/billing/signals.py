@@ -145,13 +145,18 @@ def _ensure_material_requisition_item(invoice, item):
     product = proc_material.product
 
     fatura_ref = str(invoice.custom_id or invoice.pk)
+    patient_name = getattr(invoice.patient, "name", "") or ""
+    dept_value = f"{fatura_ref} · {patient_name}" if patient_name else fatura_ref
+    # max_length=120 — truncate safely
+    dept_value = dept_value[:120]
 
     # Encontra ou cria a MaterialRequisition pendente ligada a esta fatura.
+    # Filtra por prefixo de fatura (antes do separador · ) para tolerar actualizações.
     requisition = MaterialRequisition.objects.filter(
         tenant=invoice.tenant,
         status="PEN",
         deleted=False,
-        requested_by_department=fatura_ref,
+        requested_by_department__startswith=fatura_ref,
     ).first()
 
     if requisition is None:
@@ -160,8 +165,12 @@ def _ensure_material_requisition_item(invoice, item):
             sector="ENF",
             source="PHA",
             status="PEN",
-            requested_by_department=fatura_ref,
+            requested_by_department=dept_value,
         )
+    elif requisition.requested_by_department != dept_value:
+        # Keep patient name up to date on existing pending requisition.
+        requisition.requested_by_department = dept_value
+        requisition.save(update_fields=["requested_by_department", "updated_at"])
 
     # Adiciona o item apenas se o produto ainda não estiver na requisição.
     if not MaterialRequisitionItem.objects.filter(
