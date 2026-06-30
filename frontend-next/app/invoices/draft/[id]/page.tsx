@@ -1071,7 +1071,6 @@ export default function FaturaRascunhoPage() {
           <div className="px-4 py-3 space-y-2">
             <div>
               <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Cliente fiscal</p>
-              <p className="text-[11px] text-muted-foreground">Quem paga (pode ser empresa, seguradora, escola, ONG ou hospital). Por omissão, o paciente.</p>
             </div>
             <div className="text-sm text-foreground">
               <span className="font-semibold">Atual:</span>{" "}
