@@ -1831,7 +1831,7 @@ export default function FaturaRascunhoPage() {
                         {adicionados.map(i => (
                           <button key={`far-added-${i.id}`} type="button" disabled={!faturaRascunho || !podeEditar} onClick={() => removerItem(i.id)}
                             className="inline-flex items-center gap-1 rounded-full border border-indigo-300 bg-indigo-50 px-2 py-0.5 text-[10px] text-indigo-800 transition hover:border-rose-300 hover:bg-rose-50 hover:text-rose-700 disabled:cursor-default dark:border-indigo-700/50 dark:bg-indigo-900/20 dark:text-indigo-300">
-                            <span className="text-[8px]">✓</span>{String(i.descricao ?? "").replace(/^Produto:\s*/, "")}{Number(i.quantidade) > 1 ? ` ×${Number(i.quantidade)}` : ""}<span className="text-[9px] opacity-60">×</span>
+                            <span className="text-[8px]">✓</span>{String(i.descricao ?? "").replace(/^Produto:\s*/, "")}{Math.round(Number(i.quantidade)) > 1 ? ` ×${Math.round(Number(i.quantidade))}` : ""}<span className="text-[9px] opacity-60">×</span>
                           </button>
                         ))}
                       </div>
