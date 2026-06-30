@@ -33,7 +33,7 @@ type AdicionarItemPayload =
   | { tipo_item: "EXM"; exame_medico: number | string }
   | { tipo_item: "FAR"; item_venda: number | string }
   | { tipo_item: "PRC"; procedimento_item: number | string }
-  | { tipo_item: "MAT"; procedimento_material: number | string }
+  | { tipo_item: "MAT"; procedimento_material: number | string; quantidade?: number }
   | { tipo_item: "CON"; consultation: number | string }
   | { tipo_item: "AJU"; descricao: string; quantidade?: number; preco_unitario?: number; iva_percentual?: number | string | null; aplica_iva?: boolean | null }
 
@@ -165,6 +165,7 @@ export default function FaturaRascunhoPage() {
   const [examesMedicos, setExamesMedicos] = useState<Row[]>([])
   const [produtos, setProdutos] = useState<Row[]>([])
   const [produtoStagiado, setProdutoStagiado] = useState<{ raw: Row; label: string; qty: number } | null>(null)
+  const [matProcStagiado, setMatProcStagiado] = useState<{ matId: number | string; label: string; qty: number; defaultQty: number } | null>(null)
 
 
   const [pagamentoMetodosSelecionados, setPagamentoMetodosSelecionados] = useState<MetodoPagamento[]>([])
@@ -1838,19 +1839,58 @@ export default function FaturaRascunhoPage() {
                     {pendentesProcedimento.length > 0 && (
                       <div className="space-y-0.5">
                         <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Do procedimento (enfermagem)</p>
-                        <div className="flex flex-wrap gap-1">
-                          {pendentesProcedimento.map(({ p, mat }) => {
-                            const prod = produtoById.get(toNumberId(mat.produto) ?? mat.produto)
-                            const label = prod?.nome || mat.produto_nome || `Material ${mat.produto}`
-                            const addKey = `procedure-material-${mat.id}`
-                            return (
-                              <button key={`pm-${mat.id}`} type="button" disabled={addItemButtonDisabled}
-                                onClick={() => adicionarItem({ tipo_item: "MAT", procedimento_material: mat.id }, addKey)}
-                                className="inline-flex items-center gap-1 rounded-full border border-dashed border-indigo-400 bg-indigo-50/60 px-2 py-0.5 text-[10px] text-indigo-700 transition hover:bg-indigo-100 disabled:opacity-50 dark:border-indigo-600/50 dark:bg-indigo-900/10 dark:text-indigo-400"
-                              >+ {label}</button>
-                            )
-                          })}
-                        </div>
+                        {matProcStagiado ? (
+                          <div className="rounded-lg border border-indigo-200 bg-indigo-50/60 dark:border-indigo-700/40 dark:bg-indigo-900/20 px-3 py-2.5 space-y-2">
+                            <p className="text-xs font-medium text-foreground truncate">{matProcStagiado.label}</p>
+                            <div className="flex items-center gap-2">
+                              <label className="text-[10px] text-muted-foreground shrink-0">Qtd.</label>
+                              <input
+                                type="number"
+                                min={1}
+                                step={1}
+                                value={matProcStagiado.qty}
+                                onChange={(e) => {
+                                  const v = Math.max(1, parseInt(e.target.value) || 1)
+                                  setMatProcStagiado((s) => s ? { ...s, qty: v } : s)
+                                }}
+                                className="w-20 h-7 rounded-md border border-border bg-background px-2 text-sm text-foreground shadow-sm outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/20"
+                              />
+                              <button
+                                type="button"
+                                disabled={addItemButtonDisabled}
+                                onClick={() => {
+                                  const { matId, qty } = matProcStagiado
+                                  setMatProcStagiado(null)
+                                  adicionarItem({ tipo_item: "MAT", procedimento_material: matId, quantidade: qty }, `procedure-material-${matId}`)
+                                }}
+                                className="h-7 rounded-md bg-indigo-600 px-3 text-[11px] font-semibold text-white hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+                              >
+                                Adicionar
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setMatProcStagiado(null)}
+                                className="h-7 rounded-md border border-border px-2 text-[11px] text-muted-foreground hover:bg-muted transition-colors"
+                              >
+                                ✕
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="flex flex-wrap gap-1">
+                            {pendentesProcedimento.map(({ p, mat }) => {
+                              const prod = produtoById.get(toNumberId(mat.produto) ?? mat.produto)
+                              const label = prod?.nome || mat.produto_nome || `Material ${mat.produto}`
+                              const defaultQty: number = Math.max(1, Number(mat.quantidade) || 1)
+                              return (
+                                <button key={`pm-${mat.id}`} type="button" disabled={addItemButtonDisabled}
+                                  onClick={() => setMatProcStagiado({ matId: mat.id, label, qty: defaultQty, defaultQty })}
+                                  className="inline-flex items-center gap-1 rounded-full border border-dashed border-indigo-400 bg-indigo-50/60 px-2 py-0.5 text-[10px] text-indigo-700 transition hover:bg-indigo-100 disabled:opacity-50 dark:border-indigo-600/50 dark:bg-indigo-900/10 dark:text-indigo-400"
+                                >+ {label}{defaultQty > 1 ? ` ×${defaultQty}` : ""}</button>
+                              )
+                            })}
+                          </div>
+                        )}
                       </div>
                     )}
                     {pendentesFarmacia.length > 0 && (
