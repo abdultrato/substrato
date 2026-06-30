@@ -1368,12 +1368,6 @@ export default function FaturaRascunhoPage() {
 
         {/* ── Adicionar itens — grid 3 colunas ── */}
         {podeEditar && faturaRascunho && !faturaProforma ? (<>
-          <div className={`${GLASS} border-l-4 border-l-indigo-500 px-4 py-2.5`}>
-            <div className="flex items-center gap-2">
-              <Search size={14} className="text-indigo-500" />
-              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Adicionar itens à fatura atual</p>
-            </div>
-          </div>
           <div className="grid grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-3">
 
             {/* Exames laboratoriais */}
