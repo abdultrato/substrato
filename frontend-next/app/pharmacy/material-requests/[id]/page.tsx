@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { useParams, useRouter } from "next/navigation"
 import { useEffect, useMemo, useState } from "react"
-import { ArrowLeft, Archive, Box, Building2, Calendar, CheckCircle2, ClipboardList, Loader2, PackageCheck, User } from "lucide-react"
+import { ArrowLeft, Archive, Box, Building2, Calendar, CheckCircle2, ClipboardList, Loader2, PackageCheck, User, X } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
 import useAuthGuard from "@/hooks/useAuthGuard"
@@ -95,9 +95,15 @@ export default function MaterialRequisitionDetailPage() {
   const [data, setData] = useState<Requisition | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
-  const [submitting, setSubmitting] = useState(false)
-  const [holdReason, setHoldReason] = useState("")
+  // item-level: quantity to supply per item id
   const [toSupply, setToSupply] = useState<Record<number, number>>({})
+  // item-level: which item is currently being actioned
+  const [itemBusy, setItemBusy] = useState<Record<number, boolean>>({})
+  // per-item skip dialog: item id → reason string (null = not open)
+  const [skipDialog, setSkipDialog] = useState<{ itemId: number; itemName: string; reason: string } | null>(null)
+  // requisition-level archive
+  const [holdReason, setHoldReason] = useState("")
+  const [archiving, setArchiving] = useState(false)
 
   async function reload() {
     setError(null)
@@ -126,31 +132,55 @@ export default function MaterialRequisitionDetailPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, safeRefreshToken, hasUnsavedInput])
 
-  async function fulfill() {
-    if (!data) return
+  async function fulfillItem(itemId: number) {
+    const qty = toSupply[itemId] ?? 0
+    if (qty <= 0) { setError("Informe uma quantidade maior que zero."); return }
     setError(null)
-    const itemsPayload = (data.items || [])
-      .map((it) => ({ id: it.id, quantity: Number(toSupply[it.id] || 0) }))
-      .filter((x) => x.quantity > 0)
-    if (!itemsPayload.length) { setError("Informe pelo menos uma quantidade a aviar."); return }
+    setItemBusy(prev => ({ ...prev, [itemId]: true }))
     try {
-      setSubmitting(true)
-      await apiFetch(`/pharmacy/material_requisition/${id}/fulfill/`, {
+      const res = await apiFetch<Requisition>(`/pharmacy/material_requisition/${id}/fulfill/`, {
         method: "POST",
-        body: JSON.stringify({ items: itemsPayload }),
+        body: JSON.stringify({ items: [{ id: itemId, quantity: qty }] }),
       })
-      await reload()
+      // Update local state directly from response so we don't need a full reload
+      setData(res)
+      const defaults: Record<number, number> = {}
+      for (const it of res?.items || []) {
+        const remaining = Math.max(0, Number(it.requested_quantity) - Number(it.supplied_quantity || 0))
+        if (remaining > 0) defaults[it.id] = remaining
+      }
+      setToSupply(defaults)
+      if (res.status === "FUL") router.push("/pharmacy/material-requests")
     } catch (e: any) {
-      setError(e?.message || "Falha ao aviar.")
+      setError(e?.message || "Falha ao aviar item.")
     } finally {
-      setSubmitting(false)
+      setItemBusy(prev => ({ ...prev, [itemId]: false }))
     }
   }
 
-  async function archive() {
+  async function skipItem(itemId: number, reason: string) {
     setError(null)
+    setItemBusy(prev => ({ ...prev, [itemId]: true }))
+    setSkipDialog(null)
     try {
-      setSubmitting(true)
+      const res = await apiFetch<Requisition>(`/pharmacy/material_requisition/${id}/skip-item/`, {
+        method: "POST",
+        body: JSON.stringify({ item_id: itemId, reason: reason || null }),
+      })
+      setData(res)
+      // If all items removed → redirect (status becomes HLD)
+      if (res.status === "HLD") router.push("/pharmacy/material-requests")
+    } catch (e: any) {
+      setError(e?.message || "Falha ao arquivar item.")
+    } finally {
+      setItemBusy(prev => ({ ...prev, [itemId]: false }))
+    }
+  }
+
+  async function archiveRequisition() {
+    setError(null)
+    setArchiving(true)
+    try {
       await apiFetch(`/pharmacy/material_requisition/${id}/archive/`, {
         method: "POST",
         body: JSON.stringify({ reason: holdReason || null }),
@@ -159,11 +189,12 @@ export default function MaterialRequisitionDetailPage() {
     } catch (e: any) {
       setError(e?.message || "Falha ao arquivar.")
     } finally {
-      setSubmitting(false)
+      setArchiving(false)
     }
   }
 
   const st = STATUS[data?.status ?? ""] ?? STATUS.PEN
+  const requisitionActive = data && data.status !== "FUL" && data.status !== "HLD"
 
   return (
     <AppLayout requiredGroups={requiredGroups}>
@@ -222,7 +253,7 @@ export default function MaterialRequisitionDetailPage() {
                   <MetaRow icon={Building2} label="Setor solicitante" value={data.sector_label || materialRequisitionSectorLabel(data.sector)} />
                   <MetaRow icon={Box} label="Fonte" value={data.source_label || (data.source === "WHS" ? "Armazém central" : "Estoque da farmácia")} />
                   <MetaRow icon={User} label="Solicitante" value={data.created_by_name} />
-                  <MetaRow icon={Building2} label="Departamento" value={data.requested_by_department} />
+                  <MetaRow icon={Building2} label="Departamento / paciente" value={data.requested_by_department} />
                   {data.status === "HLD" && (
                     <MetaRow icon={Archive} label="Motivo arquivamento" value={data.hold_reason} />
                   )}
@@ -246,16 +277,20 @@ export default function MaterialRequisitionDetailPage() {
                 {!data.items?.length ? (
                   <p className="text-sm text-muted-foreground">Sem itens.</p>
                 ) : (
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                     {data.items.map((it) => {
                       const available = typeof it.available_quantity === "number" ? it.available_quantity : null
                       const remaining = Math.max(0, Number(it.requested_quantity) - Number(it.supplied_quantity || 0))
                       const itemSt = remaining <= 0 ? ITEM_STATUS.done : it.supplied_quantity > 0 ? ITEM_STATUS.partial : ITEM_STATUS.pending
+                      const busy = itemBusy[it.id] ?? false
+                      const canAct = isPharmacy && !!requisitionActive
+
                       return (
-                        <div key={it.id} className="rounded-lg border border-white/10 bg-white/10 px-3 py-2.5 dark:bg-white/[0.03]">
+                        <div key={it.id} className="rounded-lg border border-white/10 bg-white/10 px-3 py-3 dark:bg-white/[0.03] flex flex-col gap-2">
+                          {/* ── Nome + badge ── */}
                           <div className="flex flex-wrap items-start justify-between gap-2">
-                            <div>
-                              <p className="text-sm font-semibold text-foreground">
+                            <div className="min-w-0">
+                              <p className="text-sm font-semibold text-foreground truncate">
                                 {it.product_name || it.warehouse_item_name || "—"}
                               </p>
                               <p className="text-[11px] text-muted-foreground">
@@ -263,50 +298,78 @@ export default function MaterialRequisitionDetailPage() {
                                 {it.lot_expiration_date ? ` · Val: ${it.lot_expiration_date}` : ""}
                               </p>
                             </div>
-                            <span className={`rounded-full border px-2 py-0.5 text-[9px] font-semibold ${itemSt.cls}`}>
+                            <span className={`shrink-0 rounded-full border px-2 py-0.5 text-[9px] font-semibold ${itemSt.cls}`}>
                               {itemSt.label}
                             </span>
                           </div>
-                          <div className="mt-2 flex flex-wrap items-center gap-4 text-[11px] text-muted-foreground">
+
+                          {/* ── Quantidades ── */}
+                          <div className="flex flex-wrap gap-3 text-[11px] text-muted-foreground">
                             <span>Solicitado: <strong className="text-foreground">{it.requested_quantity}</strong></span>
                             <span>Disponível: <strong className="text-foreground">{available !== null ? available : "—"}</strong></span>
                             <span>Aviado: <strong className="text-foreground">{it.supplied_quantity || 0}</strong></span>
-                            {isPharmacy && remaining > 0 && (
-                              <div className="flex items-center gap-1.5 ml-auto">
-                                <label className="text-[10px] uppercase tracking-wide">Aviar agora:</label>
-                                <input type="number" min={0} max={remaining}
-                                  className="w-20 rounded-md border border-border bg-background/60 px-2 py-1 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-violet-500/40"
-                                  value={toSupply[it.id] ?? 0}
-                                  onChange={e => setToSupply(prev => ({ ...prev, [it.id]: Math.max(0, Number(e.target.value || 0)) }))}
-                                  disabled={submitting}
-                                />
-                                <span className="text-[10px]">/ {remaining}</span>
-                              </div>
-                            )}
                           </div>
+
+                          {/* ── Ações por item (só farmácia + requisição activa) ── */}
+                          {canAct && remaining > 0 && (
+                            <div className="border-t border-white/10 pt-2 flex flex-wrap items-center gap-2">
+                              <input
+                                type="number" min={1} max={remaining}
+                                className="w-20 rounded-md border border-border bg-background/60 px-2 py-1 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-violet-500/40"
+                                value={toSupply[it.id] ?? remaining}
+                                onChange={e => setToSupply(prev => ({
+                                  ...prev,
+                                  [it.id]: Math.max(1, Math.min(remaining, Number(e.target.value || 1))),
+                                }))}
+                                disabled={busy}
+                              />
+                              <span className="text-[10px] text-muted-foreground">/ {remaining}</span>
+
+                              <button
+                                type="button"
+                                onClick={() => fulfillItem(it.id)}
+                                disabled={busy}
+                                className="inline-flex h-8 items-center gap-1 rounded-md bg-gradient-to-br from-emerald-600 to-teal-600 px-3 text-xs font-semibold text-white shadow-sm transition hover:opacity-90 disabled:opacity-50"
+                              >
+                                {busy ? <Loader2 size={12} className="animate-spin" /> : <CheckCircle2 size={12} />}
+                                Aviar
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => setSkipDialog({ itemId: it.id, itemName: it.product_name || it.warehouse_item_name || "—", reason: "" })}
+                                disabled={busy}
+                                className="inline-flex h-8 items-center gap-1 rounded-md border border-white/20 bg-white/10 px-3 text-xs font-medium text-muted-foreground backdrop-blur-sm transition hover:bg-white/20 hover:text-foreground disabled:opacity-50"
+                              >
+                                <Archive size={12} /> Arquivar item
+                              </button>
+                            </div>
+                          )}
+
+                          {/* Already fully supplied — no actions needed */}
+                          {canAct && remaining <= 0 && it.supplied_quantity > 0 && (
+                            <div className="border-t border-white/10 pt-2">
+                              <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">✓ Item completamente aviado</p>
+                            </div>
+                          )}
                         </div>
                       )
                     })}
                   </div>
                 )}
 
-                {/* ── Ações farmácia ── */}
-                {isPharmacy && data.status !== "FUL" && (
-                  <div className="mt-4 flex flex-wrap items-end gap-3 border-t border-white/10 pt-4">
-                    <button type="button" onClick={fulfill} disabled={submitting || loading}
-                      className="inline-flex h-9 items-center gap-1.5 rounded-md bg-gradient-to-br from-emerald-600 to-teal-600 px-4 text-sm font-semibold text-white shadow-sm transition hover:opacity-90 disabled:opacity-50">
-                      {submitting ? <><Loader2 size={13} className="animate-spin" /> A aviar…</> : <><CheckCircle2 size={14} /> Aviar</>}
+                {/* ── Arquivar REQUISIÇÃO inteira (só se activa) ── */}
+                {isPharmacy && requisitionActive && (
+                  <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-white/10 pt-4">
+                    <input type="text" value={holdReason} onChange={e => setHoldReason(e.target.value)}
+                      placeholder="Motivo para arquivar requisição (opcional)…"
+                      className="min-w-[220px] flex-1 rounded-lg border border-border bg-background/60 px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-violet-500/40"
+                      disabled={archiving} />
+                    <button type="button" onClick={archiveRequisition} disabled={archiving || loading}
+                      className="inline-flex h-9 items-center gap-1.5 rounded-md border border-white/20 bg-white/10 px-4 text-sm font-medium text-foreground backdrop-blur-sm transition hover:bg-white/20 disabled:opacity-50">
+                      {archiving ? <Loader2 size={13} className="animate-spin" /> : <Archive size={14} />}
+                      Arquivar requisição
                     </button>
-                    <div className="flex flex-1 flex-wrap items-center gap-2">
-                      <input type="text" value={holdReason} onChange={e => setHoldReason(e.target.value)}
-                        placeholder="Motivo para arquivar (opcional)…"
-                        className="min-w-[220px] flex-1 rounded-lg border border-border bg-background/60 px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-violet-500/40"
-                        disabled={submitting} />
-                      <button type="button" onClick={archive} disabled={submitting || loading}
-                        className="inline-flex h-9 items-center gap-1.5 rounded-md border border-white/20 bg-white/10 px-4 text-sm font-medium text-foreground backdrop-blur-sm transition hover:bg-white/20 disabled:opacity-50">
-                        <Archive size={14} /> Arquivar
-                      </button>
-                    </div>
                   </div>
                 )}
               </div>
@@ -321,6 +384,54 @@ export default function MaterialRequisitionDetailPage() {
         )}
 
       </div>
+
+      {/* ── Skip item dialog ── */}
+      {skipDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className={`w-full max-w-sm ${GLASS} p-5 space-y-4`}>
+            <div className="flex items-start justify-between gap-2">
+              <div>
+                <p className="text-sm font-semibold text-foreground">Arquivar item</p>
+                <p className="text-xs text-muted-foreground mt-0.5 truncate max-w-[260px]">{skipDialog.itemName}</p>
+              </div>
+              <button onClick={() => setSkipDialog(null)} className="text-muted-foreground hover:text-foreground">
+                <X size={16} />
+              </button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              O item será removido desta requisição. Se todos os itens forem removidos, a requisição será arquivada automaticamente.
+            </p>
+            <div>
+              <label className="mb-1 block text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                Motivo (opcional)
+              </label>
+              <input
+                type="text"
+                autoFocus
+                value={skipDialog.reason}
+                onChange={e => setSkipDialog(prev => prev ? { ...prev, reason: e.target.value } : null)}
+                placeholder="Ex: sem stock, substituído…"
+                className="w-full rounded-lg border border-border bg-background/60 px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-violet-500/40"
+                onKeyDown={e => { if (e.key === "Enter") skipItem(skipDialog.itemId, skipDialog.reason) }}
+              />
+            </div>
+            <div className="flex gap-2 justify-end">
+              <button
+                onClick={() => setSkipDialog(null)}
+                className="inline-flex h-9 items-center rounded-md border border-white/20 bg-white/10 px-4 text-sm font-medium text-foreground backdrop-blur-sm transition hover:bg-white/20"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={() => skipItem(skipDialog.itemId, skipDialog.reason)}
+                className="inline-flex h-9 items-center gap-1.5 rounded-md border border-amber-400/30 bg-amber-500/15 px-4 text-sm font-semibold text-amber-700 dark:text-amber-300 transition hover:bg-amber-500/25"
+              >
+                <Archive size={14} /> Confirmar arquivo
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </AppLayout>
   )
 }

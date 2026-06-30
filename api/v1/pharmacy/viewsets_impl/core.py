@@ -1296,6 +1296,73 @@ class MaterialRequisitionViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
 
         return Response(self.get_serializer(requisition).data)
 
+    @action(detail=True, methods=["post"], url_path="skip-item", url_name="skip-item")
+    def skip_item(self, request, pk=None):
+        """Remove (soft-delete) um item da requisição e recalcula o estado da requisição.
+
+        Payload: { item_id: <int>, reason: <str|null> }
+        """
+        user = getattr(request, "user", None)
+        if not _is_pharmacy_user(user):
+            raise ValidationError("Apenas Farmácia pode arquivar itens.")
+
+        requisition: MaterialRequisition = self.get_object()
+        if requisition.status == MaterialRequisitionStatus.FULFILLED:
+            raise ValidationError("Requisição já aviada; não é possível remover itens.")
+
+        item_id_raw = request.data.get("item_id")
+        try:
+            item_id = int(item_id_raw)
+        except Exception as exc:
+            raise ValidationError({"item_id": "item_id inválido."}) from exc
+
+        reason = request.data.get("reason") or request.data.get("motivo") or None
+
+        with transaction.atomic():
+            try:
+                item = requisition.items.get(pk=item_id, deleted=False)
+            except MaterialRequisitionItem.DoesNotExist:
+                raise ValidationError({"item_id": "Item não encontrado nesta requisição."})
+
+            # Soft-delete: marca como removido; notes regista motivo.
+            item.deleted = True
+            from django.utils import timezone as tz
+            item.deleted_at = tz.now()
+            item.deleted_by = user
+            if reason:
+                item.notes = reason
+            item.save(update_fields=["deleted", "deleted_at", "deleted_by", "notes", "updated_at", "updated_by"])
+
+            # Recalcula estado da requisição com base nos itens restantes.
+            remaining_items = list(requisition.items.filter(deleted=False))
+            if not remaining_items:
+                # Sem itens: arquiva a requisição automaticamente.
+                requisition.status = MaterialRequisitionStatus.ON_HOLD
+                requisition.hold_reason = reason or "Todos os itens removidos."
+                requisition.on_hold_at = tz.now()
+                requisition.on_hold_by = user
+                requisition.save(update_fields=["status", "hold_reason", "on_hold_at", "on_hold_by", "updated_at", "updated_by"])
+            else:
+                any_supplied = any((i.supplied_quantity or 0) > 0 for i in remaining_items)
+                all_supplied = all(
+                    (i.supplied_quantity or 0) >= (i.requested_quantity or 0) for i in remaining_items
+                )
+                if all_supplied:
+                    requisition.status = MaterialRequisitionStatus.FULFILLED
+                    requisition.fulfilled_at = tz.now()
+                    requisition.fulfilled_by = user
+                    requisition.save(update_fields=["status", "fulfilled_at", "fulfilled_by", "updated_at", "updated_by"])
+                elif any_supplied:
+                    requisition.status = MaterialRequisitionStatus.PARTIAL
+                    requisition.save(update_fields=["status", "updated_at", "updated_by"])
+                else:
+                    if requisition.status != MaterialRequisitionStatus.PENDING:
+                        requisition.status = MaterialRequisitionStatus.PENDING
+                        requisition.save(update_fields=["status", "updated_at", "updated_by"])
+
+        requisition.refresh_from_db()
+        return Response(self.get_serializer(requisition).data)
+
     @action(detail=False, methods=["get"], url_path="movement-history/pdf", url_name="movement-history-pdf")
     def movement_history_pdf(self, request):
         """
