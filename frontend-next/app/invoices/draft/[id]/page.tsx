@@ -1064,11 +1064,11 @@ export default function FaturaRascunhoPage() {
           </div>
         ) : null}
 
-        {/* ── Row: Cliente fiscal (25%) + Itens da fatura (25%) + Registrar pagamento (50%) ── */}
-        <div className="grid grid-cols-1 gap-2 lg:grid-cols-4 lg:items-start">
+        {/* ── Row: Cliente fiscal (50%) + Registrar pagamento (50%) ── */}
+        <div className="grid grid-cols-1 gap-2 lg:grid-cols-2 lg:items-start">
 
-        {/* Cliente fiscal — 25% */}
-        <section className={`${GLASS} border-l-4 border-l-teal-500 lg:col-span-1`}>
+        {/* Cliente fiscal — 50% */}
+        <section className={`${GLASS} border-l-4 border-l-teal-500`}>
           <div className="px-4 py-3 space-y-2">
             <div>
               <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Cliente fiscal</p>
@@ -1105,28 +1105,8 @@ export default function FaturaRascunhoPage() {
           </div>
         </section>
 
-        {/* Itens da fatura — 25% */}
-        <section className={`${GLASS} border-l-4 border-l-sky-500 lg:col-span-1 overflow-hidden`}>
-          <div className="px-4 py-3 space-y-2">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Itens da fatura</p>
-              <p className="text-[11px] text-muted-foreground">Adicione itens enquanto estiver em rascunho.</p>
-            </div>
-            {!podeEditar ? (
-              <div className="text-xs text-muted-foreground">Somente leitura para este perfil.</div>
-            ) : null}
-            {itens.length === 0 ? (
-              <div className="text-sm text-muted-foreground">Nenhum item adicionado.</div>
-            ) : (
-              <div className="max-h-64 overflow-auto">
-                <DataTable<FaturaItem> columns={itensCols as any} data={itens} />
-              </div>
-            )}
-          </div>
-        </section>
-
         {/* Registrar pagamento — 50% */}
-        <section className={`${GLASS} border-l-4 lg:col-span-2 ${fatura.estado === "PAGA" ? "border-l-emerald-500" : "border-l-violet-500"}`}>
+        <section className={`${GLASS} border-l-4 ${fatura.estado === "PAGA" ? "border-l-emerald-500" : "border-l-violet-500"}`}>
           <div className="px-4 py-3 space-y-3">
             <div>
               <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -1327,7 +1307,23 @@ export default function FaturaRascunhoPage() {
           </div>
         </section>
 
-        </div>{/* fim grid 4-col */}
+        </div>{/* fim grid 2-col topo */}
+
+        {/* ── Itens da fatura — só visível após pagamento ── */}
+        {fatura.estado === "PAGA" ? (
+          <section className={`${GLASS} border-l-4 border-l-sky-500 overflow-hidden`}>
+            <div className="px-4 py-3 space-y-2">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Itens da fatura</p>
+              {itens.length === 0 ? (
+                <div className="text-sm text-muted-foreground">Nenhum item registado.</div>
+              ) : (
+                <div className="max-h-72 overflow-auto">
+                  <DataTable<FaturaItem> columns={itensCols as any} data={itens} />
+                </div>
+              )}
+            </div>
+          </section>
+        ) : null}
 
         {/* ── Row: Itens do paciente (50%) + Pesquisa de catálogo (50%) ── */}
         <div className="grid grid-cols-1 gap-2 lg:grid-cols-2 lg:items-start">
