@@ -1073,10 +1073,9 @@ export default function FaturaRascunhoPage() {
               <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Cliente fiscal</p>
             </div>
             <div className="text-sm text-foreground">
-              <span className="font-semibold">Atual:</span>{" "}
               {fatura?.fiscal_client_name
-                ? `${fatura.fiscal_client_name}${fatura.fiscal_client_nuit ? ` · NUIT: ${fatura.fiscal_client_nuit}` : ""}`
-                : `Paciente${paciente?.nome || paciente?.name ? ` (${paciente?.nome || paciente?.name})` : ""}`}
+                ? <>{fatura.fiscal_client_name}{fatura.fiscal_client_nuit ? <span className="text-muted-foreground"> · NUIT: {fatura.fiscal_client_nuit}</span> : null}</>
+                : <>Paciente{(paciente?.nome || paciente?.name) ? <> <span className="text-muted-foreground">[{paciente?.nome || paciente?.name}]</span></> : null}</>}
             </div>
             {faturaRascunho && podeEditar ? (
               <div className="flex flex-wrap items-center gap-2">
