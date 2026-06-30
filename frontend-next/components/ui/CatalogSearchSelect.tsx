@@ -42,6 +42,7 @@ export default function CatalogSearchSelect({
   const [pos, setPos] = useState<DropdownPos | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
+  const dropdownRef = useRef<HTMLDivElement | null>(null)
   const reqIdRef = useRef(0)
 
   const calcPos = useCallback(() => {
@@ -88,7 +89,10 @@ export default function CatalogSearchSelect({
 
   useEffect(() => {
     function onDocMouseDown(e: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+      const target = e.target as Node
+      const inContainer = containerRef.current?.contains(target)
+      const inDropdown = dropdownRef.current?.contains(target)
+      if (!inContainer && !inDropdown) {
         setOpen(false)
       }
     }
@@ -130,6 +134,7 @@ export default function CatalogSearchSelect({
   const dropdown = showDropdown && pos
     ? createPortal(
         <div
+          ref={dropdownRef}
           style={{
             position: "absolute",
             top: pos.top,
@@ -139,7 +144,6 @@ export default function CatalogSearchSelect({
             maxHeight: MAX_H,
           }}
           className="overflow-auto rounded-md border border-border bg-background shadow-xl"
-          onMouseDown={(e) => e.preventDefault()}
         >
           {loading ? (
             <div className="px-3 py-2 text-xs text-muted-foreground">Buscando...</div>
@@ -153,6 +157,7 @@ export default function CatalogSearchSelect({
                 <div
                   key={opt.key}
                   onMouseEnter={() => { if (!isAdded) setHighlight(selectableIdx) }}
+                  onMouseDown={(e) => e.preventDefault()}
                   onClick={() => choose(opt)}
                   className={`flex w-full items-center justify-between gap-3 px-3 py-2 text-left text-sm transition-colors select-none
                     ${isAdded
