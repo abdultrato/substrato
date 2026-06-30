@@ -665,35 +665,41 @@ export default function FaturasPage() {
                       {requisicoes.slice(0, pageSize).map((r) => (
                         <div
                           key={r.id}
-                          className={`relative flex min-h-[150px] flex-col justify-between overflow-hidden ${GLASS} p-3 pl-4 transition hover:shadow`}
+                          className={`group relative flex min-h-[150px] flex-col justify-between overflow-hidden ${GLASS} p-3.5 pl-4 transition hover:border-violet-300/50 hover:shadow-md`}
                         >
                           <span className="absolute left-0 top-0 h-full w-1 bg-violet-500" />
                           <div>
-                            <div className="font-semibold text-foreground">
-                              {r.id_custom || `REQ ${r.id}`}
-                            </div>
-                            <div className="mt-1 text-sm text-muted-foreground">{r.paciente || "Paciente não identificado"}</div>
-                            <div className="mt-2 flex flex-wrap gap-1">
-                              <span className="inline-flex items-center rounded-full border border-violet-200 bg-violet-50 px-2 py-0.5 text-xs text-violet-700">
+                            <div className="flex items-center justify-between gap-2">
+                              <div className="truncate font-display text-sm font-bold tracking-tight text-foreground">
+                                {r.id_custom || `REQ ${r.id}`}
+                              </div>
+                              <span className="inline-flex shrink-0 items-center rounded-full border border-violet-200 bg-violet-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-violet-700">
                                 {r.tipo_display || r.tipo || "Requisição"}
                               </span>
-                              <span className="inline-flex items-center rounded-full border border-white/30 bg-white/40 px-2 py-0.5 text-xs text-muted-foreground backdrop-blur-sm dark:bg-white/10">
+                            </div>
+                            <div className="mt-1.5 truncate text-sm font-medium text-foreground/80">{r.paciente || "Paciente não identificado"}</div>
+                            <div className="mt-2 flex flex-wrap items-center gap-1.5 text-[11px] text-muted-foreground">
+                              <span className="inline-flex items-center gap-1">
+                                <FileText size={12} className="text-violet-500/70" />
                                 {(r.num_exames ?? 0)} {r.num_exames === 1 ? "exame" : "exames"}
                               </span>
+                              {r.medico ? (
+                                <span className="truncate before:mx-1 before:content-['·']">Dr(a). {r.medico}</span>
+                              ) : null}
                             </div>
-                            {r.medico ? (
-                              <div className="mt-1 text-xs text-muted-foreground">Médico: {r.medico}</div>
-                            ) : null}
                           </div>
                           {podeAlterar ? (
-                            <button
-                              type="button"
-                              onClick={() => iniciarFaturacao(r.id)}
-                              disabled={acaoRequisicaoId === r.id}
-                              className="mt-3 inline-flex items-center justify-center rounded-lg bg-[var(--primary-600)] px-3 py-2 text-xs font-semibold text-white transition hover:bg-[var(--primary-700)] disabled:opacity-50"
-                            >
-                              {acaoRequisicaoId === r.id ? "Iniciando..." : "Iniciar faturação"}
-                            </button>
+                            <div className="mt-3 flex justify-end border-t border-white/10 pt-2.5">
+                              <button
+                                type="button"
+                                onClick={() => iniciarFaturacao(r.id)}
+                                disabled={acaoRequisicaoId === r.id}
+                                className="inline-flex items-center gap-1.5 rounded-lg border border-violet-200 bg-violet-50/80 px-3 py-1.5 text-xs font-semibold text-violet-700 shadow-sm transition hover:bg-violet-100 hover:shadow disabled:opacity-50 dark:border-violet-700/40 dark:bg-violet-900/20 dark:text-violet-300"
+                              >
+                                <FilePlus2 size={13} />
+                                {acaoRequisicaoId === r.id ? "Iniciando…" : "Iniciar faturação"}
+                              </button>
+                            </div>
                           ) : null}
                         </div>
                       ))}
