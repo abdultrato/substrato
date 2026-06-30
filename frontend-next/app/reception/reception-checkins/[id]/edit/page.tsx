@@ -38,16 +38,17 @@ function Field({ label, required, error, hint, children }: {
   );
 }
 
-function SectionCard({ icon: Icon, title, children }: {
-  icon: React.ElementType; title: string; children: React.ReactNode;
+function SectionCard({ icon: Icon, title, accent = "bg-[var(--primary-600)]", children }: {
+  icon: React.ElementType; title: string; accent?: string; children: React.ReactNode;
 }) {
   return (
-    <section className="overflow-hidden rounded-xl border border-white/20 bg-white/25 shadow-sm backdrop-blur-sm dark:bg-white/5 dark:border-white/10">
-      <div className="flex items-center gap-2 border-b border-border/50 px-4 py-2.5">
+    <section className="relative overflow-hidden rounded-xl border border-white/20 bg-white/25 shadow-sm backdrop-blur-sm dark:bg-white/5 dark:border-white/10">
+      <span className={`absolute left-0 top-0 h-full w-1 ${accent}`} />
+      <div className="flex items-center gap-2 border-b border-border/50 px-4 py-1.5 pl-5">
         <Icon size={13} className="text-[var(--primary-600)] dark:text-[var(--primary-400)]" />
         <h2 className="text-xs font-semibold text-foreground">{title}</h2>
       </div>
-      <div className="space-y-4 p-4">{children}</div>
+      <div className="space-y-2.5 px-4 py-2.5 pl-5">{children}</div>
     </section>
   );
 }
@@ -180,29 +181,31 @@ export default function ReceptionCheckinEditPage() {
         ) : (
           <>
             {/* Identificação */}
-            <SectionCard icon={ClipboardList} title="Identificação">
-              <Field label="Paciente" required error={errors.patient}>
-                <div className="flex items-start gap-2">
-                  <div className="relative flex-1 focus-within:z-50">
-                    <SearchableRelationSelect
-                      fieldName="patient"
-                      value={patient}
-                      onChange={(v) => { setPatient(v); if (v) setErrors((p) => ({ ...p, patient: "" })); }}
-                      target={T_PATIENT}
-                      placeholder="Pesquisar pelo nome ou documento..."
-                      initialOptions={patientInitial ? [patientInitial] : undefined}
-                      safeRefreshToken={safeRefreshToken}
-                    />
-                  </div>
-                  <Link href="/patients/new" target="_blank"
-                    title="Criar novo paciente"
-                    className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-violet-200 bg-violet-50 text-violet-700 transition hover:bg-violet-100 dark:border-violet-700/40 dark:bg-violet-900/20 dark:text-violet-400">
-                    <UserPlus size={15} />
-                  </Link>
+            <SectionCard icon={ClipboardList} title="Identificação" accent="bg-violet-500">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
+                <div className="sm:col-span-2">
+                  <Field label="Paciente" required error={errors.patient}>
+                    <div className="flex items-start gap-2">
+                      <div className="relative flex-1 focus-within:z-50">
+                        <SearchableRelationSelect
+                          fieldName="patient"
+                          value={patient}
+                          onChange={(v) => { setPatient(v); if (v) setErrors((p) => ({ ...p, patient: "" })); }}
+                          target={T_PATIENT}
+                          placeholder="Pesquisar pelo nome ou documento..."
+                          initialOptions={patientInitial ? [patientInitial] : undefined}
+                          safeRefreshToken={safeRefreshToken}
+                        />
+                      </div>
+                      <Link href="/patients/new" target="_blank"
+                        title="Criar novo paciente"
+                        className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-violet-200 bg-violet-50 text-violet-700 transition hover:bg-violet-100 dark:border-violet-700/40 dark:bg-violet-900/20 dark:text-violet-400">
+                        <UserPlus size={15} />
+                      </Link>
+                    </div>
+                  </Field>
                 </div>
-              </Field>
 
-              <div className="grid grid-cols-2 gap-4">
                 <Field label="Prioridade">
                   <select value={priority} onChange={(e) => setPriority(e.target.value)} className={inputCls}>
                     <option value="NOR">Normal</option>
@@ -225,7 +228,7 @@ export default function ReceptionCheckinEditPage() {
             </SectionCard>
 
             {/* Observações */}
-            <SectionCard icon={ClipboardList} title="Observações">
+            <SectionCard icon={ClipboardList} title="Observações" accent="bg-amber-500">
               <Field label="Motivo da visita" hint="Breve descrição do motivo do atendimento.">
                 <input type="text" value={reason} onChange={(e) => setReason(e.target.value)}
                   placeholder="Ex.: dor abdominal, coleta de exames..."
