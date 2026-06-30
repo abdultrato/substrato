@@ -147,6 +147,7 @@ export default function FaturaRascunhoPage() {
   const [exames, setExames] = useState<Row[]>([])
   const [examesMedicos, setExamesMedicos] = useState<Row[]>([])
   const [produtos, setProdutos] = useState<Row[]>([])
+  const [produtoStagiado, setProdutoStagiado] = useState<{ raw: Row; label: string; qty: number } | null>(null)
 
 
   const [pagamentoMetodosSelecionados, setPagamentoMetodosSelecionados] = useState<MetodoPagamento[]>([])
@@ -1642,12 +1643,54 @@ export default function FaturaRascunhoPage() {
                   <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-indigo-100 text-indigo-600 dark:bg-indigo-900/40 dark:text-indigo-400 text-[10px] font-bold">F</span>
                   <span className="text-xs font-semibold text-foreground">Medicamentos / materiais</span>
                 </div>
-                <CatalogSearchSelect
-                  placeholder="Pesquisar e selecionar…"
-                  fetcher={buscarProdutos}
-                  disabled={addItemButtonDisabled}
-                  onSelect={(opt) => { const p = opt.raw; return adicionarItem({ tipo_item: "AJU", descricao: `Produto: ${p.nome || p.id_custom || p.id}`, quantidade: 1, preco_unitario: p.preco_venda || 0, iva_percentual: p.iva_percentual, aplica_iva: p.aplica_iva_por_padrao }, `catalog-product-${p.id}`) }}
-                />
+                {produtoStagiado ? (
+                  <div className="rounded-lg border border-indigo-200 bg-indigo-50/60 dark:border-indigo-700/40 dark:bg-indigo-900/20 px-3 py-2.5 space-y-2">
+                    <p className="text-xs font-medium text-foreground truncate">{produtoStagiado.label}</p>
+                    <div className="flex items-center gap-2">
+                      <label className="text-[10px] text-muted-foreground shrink-0">Qtd.</label>
+                      <input
+                        type="number"
+                        min={1}
+                        step={1}
+                        value={produtoStagiado.qty}
+                        onChange={(e) => {
+                          const v = Math.max(1, parseInt(e.target.value) || 1)
+                          setProdutoStagiado((s) => s ? { ...s, qty: v } : s)
+                        }}
+                        className="w-20 h-7 rounded-md border border-border bg-background px-2 text-sm text-foreground shadow-sm outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/20"
+                      />
+                      <button
+                        type="button"
+                        disabled={addItemButtonDisabled}
+                        onClick={() => {
+                          const p = produtoStagiado.raw
+                          setProdutoStagiado(null)
+                          adicionarItem({ tipo_item: "AJU", descricao: `Produto: ${p.nome || p.id_custom || p.id}`, quantidade: produtoStagiado.qty, preco_unitario: p.preco_venda || 0, iva_percentual: p.iva_percentual, aplica_iva: p.aplica_iva_por_padrao }, `catalog-product-${p.id}`)
+                        }}
+                        className="h-7 rounded-md bg-indigo-600 px-3 text-[11px] font-semibold text-white hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+                      >
+                        Adicionar
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setProdutoStagiado(null)}
+                        className="h-7 rounded-md border border-border px-2 text-[11px] text-muted-foreground hover:bg-muted transition-colors"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <CatalogSearchSelect
+                    placeholder="Pesquisar e selecionar…"
+                    fetcher={buscarProdutos}
+                    disabled={addItemButtonDisabled}
+                    onSelect={(opt) => {
+                      const p = opt.raw
+                      setProdutoStagiado({ raw: p, label: p.nome || p.id_custom || `Produto ${p.id}`, qty: 1 })
+                    }}
+                  />
+                )}
               </div>
               {(() => {
                 const adicionados = itens.filter(i => i.tipo_item === "AJU" && String(i.descricao).startsWith("Produto:"))
@@ -1661,7 +1704,7 @@ export default function FaturaRascunhoPage() {
                       <div className="flex flex-wrap gap-1">
                         {adicionados.map(i => (
                           <span key={i.id} className="inline-flex items-center gap-1 rounded-full border border-indigo-300 bg-indigo-50 px-2 py-0.5 text-[10px] text-indigo-800 dark:border-indigo-700/50 dark:bg-indigo-900/20 dark:text-indigo-300">
-                            <span className="text-[8px]">✓</span>{String(i.descricao).replace(/^Produto:\s*/, "")}
+                            <span className="text-[8px]">✓</span>{String(i.descricao).replace(/^Produto:\s*/, "")}{Number(i.quantidade) > 1 ? ` ×${Number(i.quantidade)}` : ""}
                           </span>
                         ))}
                       </div>
