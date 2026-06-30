@@ -90,7 +90,7 @@ export default function ContabilidadePage() {
           </div>
         ) : null}
 
-        <div className="grid gap-2.5 md:grid-cols-2 xl:grid-cols-4">
+        <div className="flex flex-wrap gap-2.5 md:flex-nowrap [&>*]:flex-1 [&>*]:min-w-[140px]">
           <MetricCard label="Faturas" value={loading ? "..." : faturas} href="/invoices" accentClass="border-l-sky-500" />
           <MetricCard label="Recibos" value={loading ? "..." : recibos} href="/receipts" accentClass="border-l-emerald-500" />
           <MetricCard label="Lançamentos" value={loading ? "..." : lancamentos} href="/accounting/entries" accentClass="border-l-violet-500" />

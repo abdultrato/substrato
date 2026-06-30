@@ -21,7 +21,7 @@ export default function ActionTile({
   return (
     <Link
       href={href}
-      className={`group flex items-center gap-2.5 rounded-xl border border-white/20 bg-white/25 px-3 py-2 shadow-sm backdrop-blur-sm transition-all hover:border-[var(--primary-300)] hover:bg-white/45 hover:shadow-md dark:bg-white/5 dark:border-white/10 dark:hover:border-[var(--primary-600)] dark:hover:bg-white/10 ${accentClass ? `border-l-4 ${accentClass}` : ""}`}
+      className={`group flex items-center gap-2.5 rounded-xl border-t border-r border-b border-white/20 bg-white/25 px-3 py-2 shadow-sm backdrop-blur-sm transition-all hover:border-t-[var(--primary-300)] hover:border-r-[var(--primary-300)] hover:border-b-[var(--primary-300)] hover:bg-white/45 hover:shadow-md dark:border-t-white/10 dark:border-r-white/10 dark:border-b-white/10 dark:bg-white/5 dark:hover:border-t-[var(--primary-600)] dark:hover:border-r-[var(--primary-600)] dark:hover:border-b-[var(--primary-600)] dark:hover:bg-white/10 ${accentClass ? `border-l-4 ${accentClass}` : "border-l border-l-white/20 dark:border-l-white/10"}`}
     >
       <span
         aria-hidden

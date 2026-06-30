@@ -18,7 +18,7 @@ export default function MetricCard({
 }) {
   const { tr } = useLanguage()
 
-  const base = `relative block overflow-hidden rounded-xl border border-l-4 border-white/20 bg-white/30 px-3 py-2.5 shadow-sm backdrop-blur-sm dark:bg-white/5 dark:border-white/10 ${accentClass ?? "border-l-border/70"}`
+  const base = `relative block overflow-hidden rounded-xl border-t border-r border-b border-white/20 border-l-4 bg-white/30 px-3 py-2.5 shadow-sm backdrop-blur-sm dark:bg-white/5 dark:border-t-white/10 dark:border-r-white/10 dark:border-b-white/10 ${accentClass ?? "border-l-border/70"}`
   const interactive = href
     ? "group cursor-pointer transition hover:border-[var(--primary-300)]/60 hover:bg-white/45 dark:hover:bg-white/[0.08]"
     : ""
