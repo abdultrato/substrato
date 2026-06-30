@@ -5,9 +5,10 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useCallback, useEffect, useMemo, useState } from "react"
 
+import { BadgeCheck, Building2, FilePlus2, FileText, Plus, Receipt, Wallet } from "lucide-react"
+
 import AppLayout from "@/components/layout/AppLayout"
 import DataTable from "@/components/ui/DataTable"
-import PageHeader from "@/components/ui/PageHeader"
 import useAuthGuard from "@/hooks/useAuthGuard"
 import { useAuth } from "@/hooks/useAuth"
 import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
@@ -75,6 +76,53 @@ function invoiceOriginLabel(row?: FaturaRow | null): string {
   return isProformaOrigin(row) ? "Proforma" : origin
 }
 
+const GLASS =
+  "rounded-xl border border-white/20 bg-white/30 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]"
+
+const INVOICE_STATUS: Record<string, { label: string; badge: string }> = {
+  RASC: { label: "Rascunho", badge: "border-slate-200 bg-slate-50 text-slate-600" },
+  EMIT: { label: "Emitida", badge: "border-sky-200 bg-sky-50 text-sky-700" },
+  PAGA: { label: "Paga", badge: "border-emerald-200 bg-emerald-50 text-emerald-700" },
+  CANC: { label: "Cancelada", badge: "border-rose-200 bg-rose-50 text-rose-700" },
+}
+
+function EstadoBadge({ estado }: { estado?: string }) {
+  const m = INVOICE_STATUS[String(estado || "").toUpperCase()]
+  if (!m) return <span className="text-xs text-muted-foreground">{estado || "-"}</span>
+  return (
+    <span className={`inline-flex rounded-md border px-2 py-0.5 text-xs font-semibold ${m.badge}`}>
+      {m.label}
+    </span>
+  )
+}
+
+function InvoiceMetric({
+  icon: Icon,
+  label,
+  value,
+  accent,
+}: {
+  icon: React.ElementType
+  label: string
+  value: React.ReactNode
+  accent: string
+}) {
+  return (
+    <section className={`relative overflow-hidden ${GLASS}`}>
+      <span className={`absolute left-0 top-0 h-full w-1 ${accent}`} />
+      <div className="flex items-center gap-3 px-4 py-3 pl-5">
+        <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${accent} text-white shadow-sm`}>
+          <Icon size={16} />
+        </span>
+        <div className="min-w-0">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">{label}</p>
+          <p className="font-display text-xl font-bold leading-tight text-foreground tabular-nums">{value}</p>
+        </div>
+      </div>
+    </section>
+  )
+}
+
 export default function FaturasPage() {
   const router = useRouter()
   const { loading } = useAuthGuard()
@@ -125,6 +173,12 @@ export default function FaturasPage() {
 
   const podeAlterar = userHasAnyGroup(user, [GROUPS.ADMIN, GROUPS.RECEPCAO])
   const rascunhos = useMemo(() => faturas.filter((f) => f.estado === "RASC"), [faturas])
+  const stats = useMemo(() => ({
+    total: faturas.length,
+    rascunhos: faturas.filter((f) => f.estado === "RASC").length,
+    emitidas: faturas.filter((f) => f.estado === "EMIT").length,
+    pagas: faturas.filter((f) => f.estado === "PAGA").length,
+  }), [faturas])
   const totalAPagar = useCallback(
     (f?: FaturaRow | null) => f?.total_a_pagar ?? f?.valor_a_pagar ?? f?.total,
     []
@@ -474,7 +528,7 @@ export default function FaturasPage() {
             : invoiceOriginLabel(f)
         ),
       },
-      { header: "Estado", render: (f: FaturaRow) => f.estado || "-" },
+      { header: "Estado", render: (f: FaturaRow) => <EstadoBadge estado={f.estado} /> },
       { header: "Total a pagar", render: (f: FaturaRow) => <MoneyValue value={totalAPagar(f)} /> },
       {
         header: "Ações",
@@ -615,30 +669,50 @@ export default function FaturasPage() {
         GROUPS.CONTABILIDADE,
       ]}
     >
-      <div className="space-y-6">
-        <PageHeader
-          title="Faturas"
-          actions={
+      <div className="space-y-4">
+        {/* ── Hero ── */}
+        <section className={`relative overflow-hidden ${GLASS}`}>
+          <span className="absolute left-0 top-0 h-full w-1 bg-sky-500" />
+          <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 pl-5">
+            <div className="flex min-w-0 items-center gap-2">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500 to-blue-600 text-white shadow-md shadow-sky-500/20">
+                <Receipt size={17} />
+              </span>
+              <div>
+                <h1 className="text-lg font-bold leading-tight text-foreground">Faturas</h1>
+                <p className="text-[11px] text-muted-foreground">
+                  {carregando ? "A carregar…" : `${stats.total} fatura${stats.total !== 1 ? "s" : ""} · gestão e emissão`}
+                </p>
+              </div>
+            </div>
             <div className="flex flex-wrap items-center gap-2">
               {podeCriar ? (
                 <Link
                   href="/invoices/new"
-                  className="inline-flex items-center rounded-lg bg-[var(--primary-600)] px-3 py-2 text-sm font-semibold text-white transition hover:bg-[var(--primary-700)]"
+                  className="inline-flex h-9 items-center gap-1.5 rounded-md bg-gradient-to-br from-sky-500 to-blue-600 px-4 text-sm font-semibold text-white shadow-sm shadow-sky-500/20 transition hover:opacity-90"
                 >
-                  Criar fatura
+                  <Plus size={15} /> Criar fatura
                 </Link>
               ) : null}
               {podeVerAdmin ? (
                 <Link
                   href="/admin/billing/invoice/"
-                  className="inline-flex items-center rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
+                  className="inline-flex h-9 items-center gap-1.5 rounded-md border border-white/20 bg-white/10 px-3 text-sm font-medium text-foreground shadow-sm backdrop-blur-sm transition hover:bg-white/20"
                 >
-                  Abrir na Administração
+                  <Building2 size={15} /> Administração
                 </Link>
               ) : null}
             </div>
-          }
-        />
+          </div>
+        </section>
+
+        {/* ── Métricas ── */}
+        <div className="grid grid-cols-2 gap-2 xl:grid-cols-4">
+          <InvoiceMetric icon={FileText} label="Total" value={carregando ? "…" : stats.total} accent="bg-slate-500" />
+          <InvoiceMetric icon={FilePlus2} label="Rascunhos" value={carregando ? "…" : stats.rascunhos} accent="bg-amber-500" />
+          <InvoiceMetric icon={Wallet} label="Emitidas" value={carregando ? "…" : stats.emitidas} accent="bg-sky-500" />
+          <InvoiceMetric icon={BadgeCheck} label="Pagas" value={carregando ? "…" : stats.pagas} accent="bg-emerald-500" />
+        </div>
 
         {erro && (
           <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
@@ -653,6 +727,7 @@ export default function FaturasPage() {
         )}
 
         <Card
+          glass
           title="Relatórios de faturamento por utilizador"
         >
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-6">
@@ -835,6 +910,7 @@ export default function FaturasPage() {
         ) : (
           <div className="space-y-4">
             <Card
+              glass
               title="Faturas por criar"
               subtitle="Requisições por faturar e rascunhos aguardando emissão."
             >
@@ -852,23 +928,24 @@ export default function FaturasPage() {
                       {requisicoes.map((r) => (
                         <div
                           key={r.id}
-                          className="flex min-h-[160px] flex-col justify-between rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition hover:shadow"
+                          className={`relative flex min-h-[160px] flex-col justify-between overflow-hidden ${GLASS} p-4 pl-5 transition hover:shadow`}
                         >
+                          <span className="absolute left-0 top-0 h-full w-1 bg-violet-500" />
                           <div>
-                            <div className="font-semibold text-gray-800">
+                            <div className="font-semibold text-foreground">
                               {r.id_custom || `REQ ${r.id}`}
                             </div>
-                            <div className="mt-1 text-sm text-gray-600">{r.paciente || "Paciente não identificado"}</div>
+                            <div className="mt-1 text-sm text-muted-foreground">{r.paciente || "Paciente não identificado"}</div>
                             <div className="mt-2 flex flex-wrap gap-1">
-                              <span className="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600">
+                              <span className="inline-flex items-center rounded-full border border-violet-200 bg-violet-50 px-2 py-0.5 text-xs text-violet-700">
                                 {r.tipo_display || r.tipo || "Requisição"}
                               </span>
-                              <span className="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600">
+                              <span className="inline-flex items-center rounded-full border border-white/30 bg-white/40 px-2 py-0.5 text-xs text-muted-foreground backdrop-blur-sm dark:bg-white/10">
                                 {(r.num_exames ?? 0)} {r.num_exames === 1 ? "exame" : "exames"}
                               </span>
                             </div>
                             {r.medico ? (
-                              <div className="mt-1 text-xs text-gray-400">Médico: {r.medico}</div>
+                              <div className="mt-1 text-xs text-muted-foreground">Médico: {r.medico}</div>
                             ) : null}
                           </div>
                           {podeAlterar ? (
@@ -898,11 +975,12 @@ export default function FaturasPage() {
                       {rascunhos.map((f) => (
                         <div
                           key={f.id}
-                          className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-slate-100 bg-white px-3 py-2 text-sm"
+                          className={`relative flex flex-wrap items-center justify-between gap-2 overflow-hidden ${GLASS} px-3 py-2 pl-4 text-sm`}
                         >
-                          <div className="text-gray-700">
+                          <span className="absolute left-0 top-0 h-full w-1 bg-amber-500" />
+                          <div className="text-foreground">
                             <div className="font-semibold">{f.id_custom || `Fatura ${f.id}`}</div>
-                            <div className="text-xs text-gray-500">Paciente: {f.paciente || "-"}</div>
+                            <div className="text-xs text-muted-foreground">Paciente: {f.paciente || "-"}</div>
                           </div>
                           <Link
                             href={`/invoices/draft/${f.id}`}
@@ -924,6 +1002,7 @@ export default function FaturasPage() {
 
         {selectedFatura ? (
           <Card
+            glass
             title={`Detalhes da fatura ${selectedFatura.id_custom || selectedFatura.id}`}
             subtitle="Revisão e confirmação de pagamento"
             actions={
@@ -952,7 +1031,7 @@ export default function FaturasPage() {
             <div className="grid gap-3 text-sm sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
               <div>
                 <div className="text-xs font-semibold uppercase text-muted-foreground">Estado</div>
-                <div className="text-foreground">{selectedFatura.estado || "-"}</div>
+                <div className="text-foreground"><EstadoBadge estado={selectedFatura.estado} /></div>
               </div>
               <div>
                 <div className="text-xs font-semibold uppercase text-muted-foreground">Origem</div>
