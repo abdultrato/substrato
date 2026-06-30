@@ -1568,69 +1568,129 @@ export default function FaturaRascunhoPage() {
           )}
         </div>
 
-        {/* ── Pesquisa de catálogo ── */}
-        <div className={`${GLASS} border-l-4 border-l-indigo-500 flex flex-col gap-0 overflow-hidden`}>
-          <div className="border-b border-white/20 px-4 py-2.5 dark:border-white/10">
+        {/* ── Pesquisa de catálogo — 5 cartões individuais ── */}
+        <div className="flex flex-col gap-2">
+          <div className={`${GLASS} border-l-4 border-l-indigo-500 px-4 py-2.5`}>
             <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Pesquisa de catálogo</p>
             <p className="text-[11px] text-muted-foreground">Busque e adicione itens avulsos ao rascunho.</p>
           </div>
+
           {!podeEditar ? (
-            <div className="px-4 py-3 text-sm text-muted-foreground">Sem permissão para pesquisar catálogo.</div>
-          ) : (
-          <div className="flex flex-col divide-y divide-white/20 dark:divide-white/10 max-h-[600px] overflow-y-auto">
+            <div className={`${GLASS} border-l-4 border-l-indigo-500 px-4 py-3 text-sm text-muted-foreground`}>Sem permissão para pesquisar catálogo.</div>
+          ) : (<>
 
             {/* Exames laboratoriais */}
-            <div className="px-4 py-3 space-y-1.5">
-              <div className="flex items-center gap-2 mb-2">
-                <span className="flex h-5 w-5 items-center justify-center rounded-md bg-sky-100 text-sky-600 dark:bg-sky-900/40 dark:text-sky-400 text-[10px] font-bold">E</span>
-                <span className="text-xs font-semibold text-foreground">Exames laboratoriais</span>
+            <section className={`${GLASS} border-l-4 border-l-sky-500`}>
+              <div className="px-4 py-3 space-y-2">
+                <div className="flex items-center gap-2">
+                  <span className="flex h-5 w-5 items-center justify-center rounded-md bg-sky-100 text-sky-600 dark:bg-sky-900/40 dark:text-sky-400 text-[10px] font-bold">E</span>
+                  <span className="text-xs font-semibold text-foreground">Exames laboratoriais</span>
+                  {referenciaIds.exames.size > 0 && (
+                    <span className="ml-auto text-[10px] font-semibold text-sky-600 dark:text-sky-400">{referenciaIds.exames.size} adicionado{referenciaIds.exames.size !== 1 ? "s" : ""}</span>
+                  )}
+                </div>
+                <CatalogSearchSelect placeholder="Pesquisar exames…" fetcher={buscarExames} disabled={addItemButtonDisabled}
+                  onSelect={(opt) => adicionarItem({ tipo_item: "EXA", exame: opt.raw.id }, `catalog-exam-${opt.raw.id}`)} />
+                {referenciaIds.exames.size > 0 && (
+                  <div className="flex flex-wrap gap-1 pt-0.5">
+                    {itens.filter(i => toNumberId(i.exame) && referenciaIds.exames.has(toNumberId(i.exame)!)).map(i => (
+                      <span key={i.id} className="inline-flex items-center gap-1 rounded-full border border-sky-300 bg-sky-50 px-2 py-0.5 text-[10px] text-sky-800 dark:border-sky-700/50 dark:bg-sky-900/20 dark:text-sky-300">
+                        <span className="text-[8px]">✓</span>{i.descricao || `Exame ${i.exame}`}
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
-              <CatalogSearchSelect placeholder="Pesquisar exames…" fetcher={buscarExames} disabled={addItemButtonDisabled}
-                onSelect={(opt) => adicionarItem({ tipo_item: "EXA", exame: opt.raw.id }, `catalog-exam-${opt.raw.id}`)} />
-            </div>
+            </section>
 
             {/* Exames médicos */}
-            <div className="px-4 py-3 space-y-1.5">
-              <div className="flex items-center gap-2 mb-2">
-                <span className="flex h-5 w-5 items-center justify-center rounded-md bg-violet-100 text-violet-600 dark:bg-violet-900/40 dark:text-violet-400 text-[10px] font-bold">M</span>
-                <span className="text-xs font-semibold text-foreground">Exames médicos</span>
+            <section className={`${GLASS} border-l-4 border-l-violet-500`}>
+              <div className="px-4 py-3 space-y-2">
+                <div className="flex items-center gap-2">
+                  <span className="flex h-5 w-5 items-center justify-center rounded-md bg-violet-100 text-violet-600 dark:bg-violet-900/40 dark:text-violet-400 text-[10px] font-bold">M</span>
+                  <span className="text-xs font-semibold text-foreground">Exames médicos</span>
+                  {referenciaIds.examesMedicos.size > 0 && (
+                    <span className="ml-auto text-[10px] font-semibold text-violet-600 dark:text-violet-400">{referenciaIds.examesMedicos.size} adicionado{referenciaIds.examesMedicos.size !== 1 ? "s" : ""}</span>
+                  )}
+                </div>
+                <CatalogSearchSelect placeholder="Pesquisar exames médicos…" fetcher={buscarExamesMedicos} disabled={addItemButtonDisabled}
+                  onSelect={(opt) => adicionarItem({ tipo_item: "EXM", exame_medico: opt.raw.id }, `catalog-medical-exam-${opt.raw.id}`)} />
+                {referenciaIds.examesMedicos.size > 0 && (
+                  <div className="flex flex-wrap gap-1 pt-0.5">
+                    {itens.filter(i => toNumberId(i.exame_medico) && referenciaIds.examesMedicos.has(toNumberId(i.exame_medico)!)).map(i => (
+                      <span key={i.id} className="inline-flex items-center gap-1 rounded-full border border-violet-300 bg-violet-50 px-2 py-0.5 text-[10px] text-violet-800 dark:border-violet-700/50 dark:bg-violet-900/20 dark:text-violet-300">
+                        <span className="text-[8px]">✓</span>{i.descricao || `Exame ${i.exame_medico}`}
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
-              <CatalogSearchSelect placeholder="Pesquisar exames médicos…" fetcher={buscarExamesMedicos} disabled={addItemButtonDisabled}
-                onSelect={(opt) => adicionarItem({ tipo_item: "EXM", exame_medico: opt.raw.id }, `catalog-medical-exam-${opt.raw.id}`)} />
-            </div>
+            </section>
 
-            {/* Procedimentos enfermagem */}
-            <div className="px-4 py-3 space-y-1.5">
-              <div className="flex items-center gap-2 mb-2">
-                <span className="flex h-5 w-5 items-center justify-center rounded-md bg-teal-100 text-teal-600 dark:bg-teal-900/40 dark:text-teal-400 text-[10px] font-bold">P</span>
-                <span className="text-xs font-semibold text-foreground">Procedimentos (catálogo)</span>
+            {/* Procedimentos (catálogo) */}
+            <section className={`${GLASS} border-l-4 border-l-teal-500`}>
+              <div className="px-4 py-3 space-y-2">
+                <div className="flex items-center gap-2">
+                  <span className="flex h-5 w-5 items-center justify-center rounded-md bg-teal-100 text-teal-600 dark:bg-teal-900/40 dark:text-teal-400 text-[10px] font-bold">P</span>
+                  <span className="text-xs font-semibold text-foreground">Procedimentos (catálogo)</span>
+                </div>
+                <CatalogSearchSelect placeholder="Pesquisar procedimentos…" fetcher={buscarProcedimentosCatalogo} disabled={addItemButtonDisabled}
+                  onSelect={(opt) => { const p = opt.raw; return adicionarItem({ tipo_item: "AJU", descricao: `Procedimento: ${p.nome || p.id_custom || p.id}`, quantidade: 1, preco_unitario: p.preco_padrao || 0, iva_percentual: p.iva_percentual, aplica_iva: p.aplica_iva_por_padrao }, `catalog-procedure-${p.id}`) }} />
+                {(() => { const proc = itens.filter(i => i.tipo_item === "AJU" && String(i.descricao).startsWith("Procedimento:")); return proc.length > 0 ? (
+                  <div className="flex flex-wrap gap-1 pt-0.5">
+                    {proc.map(i => (
+                      <span key={i.id} className="inline-flex items-center gap-1 rounded-full border border-teal-300 bg-teal-50 px-2 py-0.5 text-[10px] text-teal-800 dark:border-teal-700/50 dark:bg-teal-900/20 dark:text-teal-300">
+                        <span className="text-[8px]">✓</span>{String(i.descricao).replace(/^Procedimento:\s*/, "")}
+                      </span>
+                    ))}
+                  </div>
+                ) : null; })()}
               </div>
-              <CatalogSearchSelect placeholder="Pesquisar procedimentos…" fetcher={buscarProcedimentosCatalogo} disabled={addItemButtonDisabled}
-                onSelect={(opt) => { const p = opt.raw; return adicionarItem({ tipo_item: "AJU", descricao: `Procedimento: ${p.nome || p.id_custom || p.id}`, quantidade: 1, preco_unitario: p.preco_padrao || 0, iva_percentual: p.iva_percentual, aplica_iva: p.aplica_iva_por_padrao }, `catalog-procedure-${p.id}`) }} />
-            </div>
+            </section>
 
             {/* Procedimentos cirúrgicos */}
-            <div className="px-4 py-3 space-y-1.5">
-              <div className="flex items-center gap-2 mb-2">
-                <span className="flex h-5 w-5 items-center justify-center rounded-md bg-rose-100 text-rose-600 dark:bg-rose-900/40 dark:text-rose-400 text-[10px] font-bold">C</span>
-                <span className="text-xs font-semibold text-foreground">Procedimentos cirúrgicos</span>
+            <section className={`${GLASS} border-l-4 border-l-rose-500`}>
+              <div className="px-4 py-3 space-y-2">
+                <div className="flex items-center gap-2">
+                  <span className="flex h-5 w-5 items-center justify-center rounded-md bg-rose-100 text-rose-600 dark:bg-rose-900/40 dark:text-rose-400 text-[10px] font-bold">C</span>
+                  <span className="text-xs font-semibold text-foreground">Procedimentos cirúrgicos</span>
+                </div>
+                <CatalogSearchSelect placeholder="Pesquisar cirurgias…" fetcher={buscarProcedimentosCirurgicos} disabled={addItemButtonDisabled}
+                  onSelect={(opt) => { const p = opt.raw; return adicionarItem({ tipo_item: "AJU", descricao: `Cirurgia: ${p.nome || p.id_custom || p.id}`, quantidade: 1, preco_unitario: p.preco_base || 0, iva_percentual: p.iva_percentual, aplica_iva: p.aplica_iva_por_padrao }, `catalog-surgery-${p.id}`) }} />
+                {(() => { const cir = itens.filter(i => i.tipo_item === "AJU" && String(i.descricao).startsWith("Cirurgia:")); return cir.length > 0 ? (
+                  <div className="flex flex-wrap gap-1 pt-0.5">
+                    {cir.map(i => (
+                      <span key={i.id} className="inline-flex items-center gap-1 rounded-full border border-rose-300 bg-rose-50 px-2 py-0.5 text-[10px] text-rose-800 dark:border-rose-700/50 dark:bg-rose-900/20 dark:text-rose-300">
+                        <span className="text-[8px]">✓</span>{String(i.descricao).replace(/^Cirurgia:\s*/, "")}
+                      </span>
+                    ))}
+                  </div>
+                ) : null; })()}
               </div>
-              <CatalogSearchSelect placeholder="Pesquisar cirurgias…" fetcher={buscarProcedimentosCirurgicos} disabled={addItemButtonDisabled}
-                onSelect={(opt) => { const p = opt.raw; return adicionarItem({ tipo_item: "AJU", descricao: `Cirurgia: ${p.nome || p.id_custom || p.id}`, quantidade: 1, preco_unitario: p.preco_base || 0, iva_percentual: p.iva_percentual, aplica_iva: p.aplica_iva_por_padrao }, `catalog-surgery-${p.id}`) }} />
-            </div>
+            </section>
 
             {/* Medicamentos / materiais */}
-            <div className="px-4 py-3 space-y-1.5">
-              <div className="flex items-center gap-2 mb-2">
-                <span className="flex h-5 w-5 items-center justify-center rounded-md bg-amber-100 text-amber-600 dark:bg-amber-900/40 dark:text-amber-400 text-[10px] font-bold">F</span>
-                <span className="text-xs font-semibold text-foreground">Medicamentos / materiais</span>
+            <section className={`${GLASS} border-l-4 border-l-amber-500`}>
+              <div className="px-4 py-3 space-y-2">
+                <div className="flex items-center gap-2">
+                  <span className="flex h-5 w-5 items-center justify-center rounded-md bg-amber-100 text-amber-600 dark:bg-amber-900/40 dark:text-amber-400 text-[10px] font-bold">F</span>
+                  <span className="text-xs font-semibold text-foreground">Medicamentos / materiais</span>
+                </div>
+                <CatalogSearchSelect placeholder="Pesquisar produtos…" fetcher={buscarProdutos} disabled={addItemButtonDisabled}
+                  onSelect={(opt) => { const p = opt.raw; return adicionarItem({ tipo_item: "AJU", descricao: `Produto: ${p.nome || p.id_custom || p.id}`, quantidade: 1, preco_unitario: p.preco_venda || 0, iva_percentual: p.iva_percentual, aplica_iva: p.aplica_iva_por_padrao }, `catalog-product-${p.id}`) }} />
+                {(() => { const prod = itens.filter(i => i.tipo_item === "AJU" && String(i.descricao).startsWith("Produto:")); return prod.length > 0 ? (
+                  <div className="flex flex-wrap gap-1 pt-0.5">
+                    {prod.map(i => (
+                      <span key={i.id} className="inline-flex items-center gap-1 rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-[10px] text-amber-800 dark:border-amber-700/50 dark:bg-amber-900/20 dark:text-amber-300">
+                        <span className="text-[8px]">✓</span>{String(i.descricao).replace(/^Produto:\s*/, "")}
+                      </span>
+                    ))}
+                  </div>
+                ) : null; })()}
               </div>
-              <CatalogSearchSelect placeholder="Pesquisar produtos…" fetcher={buscarProdutos} disabled={addItemButtonDisabled}
-                onSelect={(opt) => { const p = opt.raw; return adicionarItem({ tipo_item: "AJU", descricao: `Produto: ${p.nome || p.id_custom || p.id}`, quantidade: 1, preco_unitario: p.preco_venda || 0, iva_percentual: p.iva_percentual, aplica_iva: p.aplica_iva_por_padrao }, `catalog-product-${p.id}`) }} />
-            </div>
+            </section>
 
-          </div>
-          )}
+          </>)}
         </div>
 
         </div>{/* fim grid 2-col */}
