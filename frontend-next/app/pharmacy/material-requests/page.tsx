@@ -206,23 +206,18 @@ export default function RequisicoesMateriaisPage() {
         )}
 
         {/* ── Pesquisa ── */}
-        <section className={`relative ${GLASS}`}>
-          <span className="absolute left-0 top-0 h-full w-1 rounded-l-xl bg-slate-400" />
-          <div className="px-4 py-3 pl-5">
-            <div className="relative">
-              <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-              <input type="text" placeholder="Pesquisar por código, paciente, produto, solicitante…"
-                className="w-full rounded-lg border border-border bg-background/60 py-2 pl-8 pr-8 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-violet-500/40 transition"
-                value={search} onChange={e => setSearch(e.target.value)} />
-              {search && (
-                <button type="button" onClick={() => setSearch("")}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
-                  <X size={13} />
-                </button>
-              )}
-            </div>
-          </div>
-        </section>
+        <div className="relative w-48">
+          <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+          <input type="text" placeholder="Pesquisar…"
+            className="w-full rounded-lg border border-border bg-background/60 py-1.5 pl-7 pr-6 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:w-72 focus:ring-2 focus:ring-violet-500/40 transition-all"
+            value={search} onChange={e => setSearch(e.target.value)} />
+          {search && (
+            <button type="button" onClick={() => setSearch("")}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+              <X size={11} />
+            </button>
+          )}
+        </div>
 
         {/* ── Tabs de segregação ── */}
         <div className="flex flex-wrap gap-2">
