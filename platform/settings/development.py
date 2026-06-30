@@ -197,4 +197,7 @@ _dev_loggers["metrics"]["level"] = os.getenv("DEV_METRICS_LOG_LEVEL", "WARNING")
 
 
 LOGGING["root"]["level"] = os.getenv("DEV_ROOT_LOG_LEVEL", "INFO").upper()
+
+# Em dev sem Celery/broker, executar tasks de forma síncrona imediata.
+ASYNC_PROCESSING_ENABLED = _env_bool("ASYNC_PROCESSING_ENABLED", False)
 """Ajustes adicionais de desenvolvimento (debug, ferramentas locais)."""

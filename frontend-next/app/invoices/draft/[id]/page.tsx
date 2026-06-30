@@ -529,7 +529,8 @@ export default function FaturaRascunhoPage() {
         body: JSON.stringify({ ...payload, fatura: faturaId }),
       })
       await carregarItens(faturaId, true)
-      const fat = await apiFetch<any>(`/invoices/${faturaId}/`)
+      await new Promise((r) => setTimeout(r, 300))
+      const fat = await apiFetch<any>(`/invoices/${faturaId}/`, { clientCache: false })
       setFatura(fat)
     } catch (e: any) {
       setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao adicionar item."))
@@ -555,7 +556,12 @@ export default function FaturaRascunhoPage() {
     try {
       setErro(null)
       await apiFetch(`/billing/invoiceitem/${itemId}/`, { method: "DELETE" })
-      if (faturaId) await carregarItens(faturaId, true)
+      if (faturaId) {
+        await carregarItens(faturaId, true)
+        await new Promise((r) => setTimeout(r, 300))
+        const fat = await apiFetch<any>(`/invoices/${faturaId}/`, { clientCache: false })
+        setFatura(fat)
+      }
     } catch (e: any) {
       setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao remover item."))
     }
