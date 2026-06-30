@@ -528,7 +528,7 @@ export default function FaturasPage() {
         {/* ── Hero ── */}
         <section className={`relative overflow-hidden ${GLASS}`}>
           <span className="absolute left-0 top-0 h-full w-1 bg-sky-500" />
-          <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 pl-5">
+          <div className="flex flex-wrap items-center justify-between gap-3 px-3 py-2 pl-4">
             <div className="flex min-w-0 items-center gap-2">
               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500 to-blue-600 text-white shadow-md shadow-sky-500/20">
                 <Receipt size={17} />
@@ -584,7 +584,7 @@ export default function FaturasPage() {
         {/* ── Busca + relatórios ── */}
         <section className={`relative ${GLASS}`}>
           <span className="absolute left-0 top-0 h-full w-1 rounded-l-xl bg-slate-400" />
-          <div className="flex flex-wrap items-center gap-3 px-4 py-3 pl-5">
+          <div className="flex flex-wrap items-center gap-2 px-3 py-2 pl-4">
             <div className="relative min-w-[220px] flex-1">
               <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
               <input
