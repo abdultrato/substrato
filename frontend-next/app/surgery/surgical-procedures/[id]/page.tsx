@@ -374,7 +374,7 @@ export default function SurgicalProcedureDetailPage() {
                   className="flex-1 bg-transparent text-[12px] text-foreground placeholder:text-muted-foreground focus:outline-none"
                 />
                 {matLoading && (
-                  <span className="h-3 w-3 animate-spin rounded-full border border-amber-400 border-t-transparent" />
+                  <span className="h-3 w-3 animate-spin rounded-full border border-amber-400 border-t-transparent bg-transparent" />
                 )}
               </div>
 
