@@ -20,10 +20,10 @@ function MetricGlass({
   const content = (
     <>
       <span className={`absolute left-0 top-0 h-full w-1 rounded-l-xl ${accent}`} />
-      <div className="px-4 py-2 pl-5">
-        <div className="flex items-center gap-2 mb-0.5">
-          <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-lg ${accent.replace("bg-", "bg-").replace("-500", "-500/10")} text-foreground/60`}>
-            <Icon size={12} />
+      <div className="px-2.5 py-1.5 pl-3.5">
+        <div className="flex items-center gap-1.5 mb-0.5">
+          <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md ${accent.replace("bg-", "bg-").replace("-500", "-500/10")} text-foreground/60`}>
+            <Icon size={11} />
           </span>
           <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">{label}</p>
         </div>
@@ -126,7 +126,7 @@ export default function MaternidadePage() {
             <Loader2 size={20} className="animate-spin" />
           </div>
         ) : (
-          <div className="grid grid-cols-4 gap-2">
+          <div className="grid grid-cols-4 gap-1.5">
             <MetricGlass label="Gestações" value={gestacoes} icon={Baby} accent="bg-pink-500" href="/maternity/pregnancies" />
             <MetricGlass label="Berçário" value="—" hint="Campos na gestação" icon={Heart} accent="bg-rose-500" href="/maternity/pregnancies" />
             <MetricGlass label="Camas" value="—" hint="Campos na gestação" icon={BedDouble} accent="bg-violet-500" href="/maternity/pregnancies" />
