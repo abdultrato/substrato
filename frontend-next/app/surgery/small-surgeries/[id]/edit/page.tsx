@@ -541,18 +541,6 @@ export default function SmallSurgeryEditPage() {
   const [estimatedPrice, setEstimatedPrice] = useState("0.00")
   const [vatPct, setVatPct] = useState("16.00")
 
-  // 8 — materials
-  const [materials, setMaterials] = useState<MatItem[]>([])
-  const [matQuery, setMatQuery] = useState("")
-  const [matResults, setMatResults] = useState<Omit<MatItem, "qty">[]>([])
-  const [matOpen, setMatOpen] = useState(false)
-  const [matLoading, setMatLoading] = useState(false)
-  const [matRect, setMatRect] = useState<DOMRect | null>(null)
-  const [pending, setPending] = useState<Omit<MatItem, "qty"> | null>(null)
-  const [pendingQty, setPendingQty] = useState("1")
-  const matRef = useRef<HTMLDivElement>(null)
-  const qtyRef = useRef<HTMLInputElement>(null)
-  const matTimer = useRef<ReturnType<typeof setTimeout>>()
 
   const toDatetimeLocal = (v: any) => {
     if (!v) return ""
@@ -674,55 +662,6 @@ export default function SmallSurgeryEditPage() {
     document.addEventListener("mousedown", handle)
     return () => document.removeEventListener("mousedown", handle)
   }, [])
-
-  // materials search
-  useEffect(() => {
-    clearTimeout(matTimer.current)
-    if (!matQuery.trim()) { setMatResults([]); setMatOpen(false); return }
-    matTimer.current = setTimeout(async () => {
-      setMatLoading(true)
-      try {
-        const res = await apiFetch<any>(`/pharmacy/product/?search=${encodeURIComponent(matQuery)}&limit=20`)
-        const list = (res.results ?? res ?? []).map((p: any) => ({
-          id: p.id, name: p.name, type: p.type || "OUT", sale_price: p.sale_price || "0.00",
-        }))
-        setMatResults(list)
-        if (list.length > 0) {
-          const rect = matRef.current?.getBoundingClientRect()
-          if (rect) setMatRect(rect)
-          setMatOpen(true)
-        }
-      } catch { setMatResults([]) }
-      finally { setMatLoading(false) }
-    }, 280)
-  }, [matQuery])
-
-  useEffect(() => {
-    if (!matOpen) return
-    const handler = (e: MouseEvent) => {
-      if (matRef.current && !matRef.current.contains(e.target as Node)) setMatOpen(false)
-    }
-    document.addEventListener("mousedown", handler)
-    return () => document.removeEventListener("mousedown", handler)
-  }, [matOpen])
-
-  useEffect(() => {
-    if (pending) { setPendingQty("1"); setTimeout(() => qtyRef.current?.select(), 50) }
-  }, [pending])
-
-  function confirmAdd() {
-    if (!pending) return
-    const qty = Math.max(1, parseInt(pendingQty) || 1)
-    setMaterials(prev => {
-      const exists = prev.find(m => m.id === pending.id)
-      return exists ? prev.map(m => m.id === pending.id ? { ...m, qty } : m) : [...prev, { ...pending, qty }]
-    })
-    setPending(null); setMatQuery(""); setMatResults([]); setMatOpen(false)
-  }
-
-  function removeMaterial(itemId: number) {
-    setMaterials(prev => prev.filter(m => m.id !== itemId))
-  }
 
   // materials search
   useEffect(() => {
