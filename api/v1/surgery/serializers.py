@@ -274,11 +274,73 @@ class BaseSurgerySerializer(LegacyAliasSerializerMixin, serializers.ModelSeriali
 class SurgicalProcedureSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer):
     legacy_input_aliases = SURGICAL_PROCEDURE_ALIASES
     legacy_output_aliases = SURGICAL_PROCEDURE_ALIASES
+    default_materials_detail = serializers.SerializerMethodField()
 
     class Meta:
         model = SurgicalProcedure
         fields = "__all__"
-        read_only_fields = CORE_READ_ONLY_FIELDS
+        read_only_fields = (*CORE_READ_ONLY_FIELDS, "default_materials_detail")
+
+    def get_default_materials_detail(self, obj):
+        try:
+            from apps.surgery.models import SurgicalProcedureMaterial
+            entries = (
+                SurgicalProcedureMaterial.objects
+                .filter(procedure=obj, product__deleted=False)
+                .select_related("product")
+            )
+            return [
+                {
+                    "id": e.product.id,
+                    "name": e.product.name,
+                    "type": e.product.type,
+                    "sale_price": str(e.product.sale_price or "0.00"),
+                    "qty": e.quantity,
+                }
+                for e in entries
+            ]
+        except Exception:
+            return []
+
+    def update(self, instance, validated_data):
+        request = self.context.get("request")
+        materials_input = None
+        if request and request.data:
+            raw = request.data.get("default_materials_detail")
+            if raw is not None:
+                materials_input = raw
+
+        instance = super().update(instance, validated_data)
+
+        if materials_input is not None:
+            self._sync_materials(instance, materials_input)
+
+        return instance
+
+    def _sync_materials(self, instance, materials_input):
+        from apps.surgery.models import SurgicalProcedureMaterial
+        desired = {}
+        for entry in materials_input:
+            try:
+                pid = int(entry.get("id") or entry.get("product_id"))
+                qty = max(1, int(entry.get("qty") or entry.get("quantity") or 1))
+                desired[pid] = qty
+            except (TypeError, ValueError):
+                continue
+
+        existing = {e.product_id: e for e in SurgicalProcedureMaterial.objects.filter(procedure=instance)}
+
+        for pid in list(existing):
+            if pid not in desired:
+                existing[pid].delete()
+
+        for pid, qty in desired.items():
+            if pid in existing:
+                if existing[pid].quantity != qty:
+                    existing[pid].quantity = qty
+                    existing[pid].save(update_fields=["quantity"])
+            else:
+                SurgicalProcedureMaterial.objects.create(procedure=instance, product_id=pid, quantity=qty)
 
 
 class SurgerySerializer(BaseSurgerySerializer):

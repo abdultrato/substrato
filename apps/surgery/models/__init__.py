@@ -18,7 +18,7 @@ from .operations import (
     SurgicalTeamMember,
 )
 from .surgery import LargeSurgery, SmallSurgery, Surgery
-from .surgical_procedure import SurgicalProcedure
+from .surgical_procedure import SurgicalProcedure, SurgicalProcedureMaterial
 
 __all__ = [
     "AnesthesiaRecord",
@@ -37,6 +37,7 @@ __all__ = [
     "SurgicalDocument",
     "SurgicalMaterial",
     "SurgicalProcedure",
+    "SurgicalProcedureMaterial",
     "SurgicalRequest",
     "SurgicalSafetyChecklist",
     "SurgicalSchedule",

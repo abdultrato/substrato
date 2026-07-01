@@ -137,7 +137,9 @@ export default function SurgicalProcedureDetailPage() {
     try {
       await apiFetch(`/surgery/surgical_procedure/${id}/`, {
         method: "PATCH",
-        body: JSON.stringify({ default_materials: next.map(m => m.id) }),
+        body: JSON.stringify({
+          default_materials_detail: next.map(m => ({ id: m.id, qty: m.qty })),
+        }),
       })
     } catch { /* silently fail */ }
   }

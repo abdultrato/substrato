@@ -8,6 +8,31 @@ from core.models.base import CoreModel
 from infrastructure.orm.fields.money_field import MoneyField
 
 
+class SurgicalProcedureMaterial(models.Model):
+    """Tabela intermediária M2M com quantidade."""
+
+    procedure = models.ForeignKey(
+        "SurgicalProcedure",
+        on_delete=models.CASCADE,
+        related_name="material_entries",
+        db_column="procedure_id",
+    )
+    product = models.ForeignKey(
+        "farmacia.Product",
+        on_delete=models.CASCADE,
+        related_name="cirurgia_procedimento_entries",
+        db_column="product_id",
+    )
+    quantity = models.PositiveIntegerField(default=1, verbose_name="Quantidade")
+
+    class Meta:
+        db_table = "cirurgia_procedimento_materiais"
+        unique_together = [("procedure", "product")]
+
+    def __str__(self) -> str:
+        return f"{self.procedure_id} × {self.product_id} ({self.quantity})"
+
+
 class SurgicalProcedure(CoreModel):
     """Catálogo de procedimentos cirúrgicos usados nas cirurgias."""
 
@@ -55,6 +80,15 @@ class SurgicalProcedure(CoreModel):
         verbose_name="Ativo",
         default=True,
         db_index=True,
+    )
+
+    default_materials = models.ManyToManyField(
+        "farmacia.Product",
+        blank=True,
+        through="SurgicalProcedureMaterial",
+        through_fields=("procedure", "product"),
+        related_name="cirurgia_procedimentos_padrao",
+        verbose_name="Materiais padrão",
     )
 
     class Meta:
