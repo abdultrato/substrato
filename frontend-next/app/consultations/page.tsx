@@ -12,6 +12,7 @@ import { useAuth } from "@/hooks/useAuth"
 import { useLanguage } from "@/hooks/useLanguage"
 import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { apiFetch } from "@/lib/api"
+import { abbreviateMiddleNames } from "@/lib/formatName"
 import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
 import {
   Building2,
@@ -730,7 +731,7 @@ export default function ConsultationsPage() {
         </span>
         {/* Coluna do nome: nome, especialidade e rodapé (preço + estado) alinhados à mesma esquerda */}
         <div className="min-w-0 flex-1">
-          <div className={`truncate text-xs font-semibold leading-tight text-foreground ${overdue ? "pr-5" : ""}`}>{r.patient_name || "-"}</div>
+          <div className={`truncate text-xs font-semibold leading-tight text-foreground ${overdue ? "pr-5" : ""}`}>{abbreviateMiddleNames(r.patient_name) || "-"}</div>
           <div className="truncate text-[10px] leading-tight text-muted-foreground">{r.specialty_name || r.type || "-"}</div>
           <div className="mt-1 flex items-center justify-between gap-1.5">
             <span className="text-[10px] font-bold text-emerald-700 tabular-nums dark:text-emerald-400">
