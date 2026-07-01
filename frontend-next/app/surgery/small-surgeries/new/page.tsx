@@ -383,7 +383,10 @@ export default function SmallSurgeryNewPage() {
   }, [])
 
   function addTeamMember(emp: any) {
-    setTeam(prev => [...prev, { tempId: `new-${Date.now()}`, employeeId: emp.id, employeeName: emp.name, role: teamRole }])
+    setTeam(prev => {
+      if (prev.some(m => m.employeeId === emp.id)) return prev
+      return [...prev, { tempId: `new-${Date.now()}`, employeeId: emp.id, employeeName: emp.name, role: teamRole }]
+    })
     setTeamQuery(""); setAddingTeam(false)
   }
 
@@ -626,9 +629,9 @@ export default function SmallSurgeryNewPage() {
                         </div>
                         <DropdownPortal anchorRef={teamInputRef} portalRef={teamPortalRef} open={addingTeam && (teamResults.length > 0 || teamQuery.length > 0)}>
                           <div className="max-h-96 overflow-y-auto">
-                            {teamResults.length === 0
+                            {teamResults.filter(e => !team.some(m => m.employeeId === e.id)).length === 0
                               ? <div className="px-3 py-2 text-[11px] text-[var(--gray-400)]">Sem resultados</div>
-                              : teamResults.map(emp => (
+                              : teamResults.filter(e => !team.some(m => m.employeeId === e.id)).map(emp => (
                                 <div key={emp.id}
                                   className="flex cursor-pointer items-center gap-2 px-3 py-2 text-[12px] hover:bg-violet-50 dark:hover:bg-white/10"
                                   onMouseDown={e => { e.preventDefault(); addTeamMember(emp) }}>
