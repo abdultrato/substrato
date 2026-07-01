@@ -138,126 +138,147 @@ export default function SurgeryPage() {
                         description="Indicações cirúrgicas com diagnóstico, prioridade, especialidade e estado."
                         href="/surgery/requests"
                         icon={ClipboardList}
+                        accentClass="border-l-red-500"
                     />
                     <ActionTile
                         title="Avaliação pré-operatória"
                         description="Aptidão clínica e anestésica, ASA, exames obrigatórios e consentimento."
                         href="/surgery/preoperative-assessments"
                         icon={Stethoscope}
+                        accentClass="border-l-amber-500"
                     />
                     <ActionTile
                         title="Autorizações cirúrgicas"
                         description="Orçamento, pagamento inicial, seguro, sala, equipa e consentimento."
                         href="/surgery/authorizations"
                         icon={ShieldCheck}
+                        accentClass="border-l-orange-500"
                     />
                     <ActionTile
                         title="Pequenas cirurgias"
                         description="Listar e gerir pequenas cirurgias (CRUD)."
                         href="/surgery/small-surgeries"
                         icon={Scissors}
+                        accentClass="border-l-blue-500"
                     />
                     <ActionTile
                         title="Grandes cirurgias"
                         description="Listar e gerir grandes cirurgias (CRUD)."
                         href="/surgery/large-surgeries"
                         icon={ClipboardList}
+                        accentClass="border-l-violet-500"
                     />
                     <ActionTile
                         title="Procedimentos cirúrgicos"
                         description="Gerir catálogo de procedimentos (CRUD)."
                         href="/surgery/surgical-procedures"
                         icon={Settings}
+                        accentClass="border-l-slate-500"
                     />
                     <ActionTile
                         title="Procedimentos realizados"
                         description="Procedimentos efetivos dentro da cirurgia, lateralidade, ordem e cirurgião."
                         href="/surgery/procedure-items"
                         icon={ClipboardCheck}
+                        accentClass="border-l-sky-500"
                     />
                     <ActionTile
                         title="Gerenciamento (API)"
                         description="Acesso direto à interface genérica do módulo."
                         href="/surgery/surgeries"
                         icon={ClipboardList}
+                        accentClass="border-l-zinc-500"
                     />
                     <ActionTile
                         title="Agenda cirúrgica"
                         description="Marcação por sala, prioridade, estado e horário previsto."
                         href="/surgery/schedules"
                         icon={ClipboardList}
+                        accentClass="border-l-cyan-500"
                     />
                     <ActionTile
                         title="Centro cirúrgico"
                         description="Salas, esterilização, disponibilidade e equipamentos."
                         href="/surgery/operating-rooms"
                         icon={Scissors}
+                        accentClass="border-l-emerald-500"
                     />
                     <ActionTile
                         title="Equipa cirúrgica"
                         description="Cirurgião, anestesista, instrumentista, circulante e assistentes."
                         href="/surgery/teams"
                         icon={Users}
+                        accentClass="border-l-teal-500"
                     />
                     <ActionTile
                         title="Anestesia"
                         description="Tipo, ASA, fármacos, fluidos, via aérea e complicações."
                         href="/surgery/anesthesia"
                         icon={HeartPulse}
+                        accentClass="border-l-rose-500"
                     />
                     <ActionTile
                         title="Checklist de segurança"
                         description="Sign-in, time-out, sign-out e confirmação de segurança."
                         href="/surgery/safety-checklists"
                         icon={ClipboardCheck}
+                        accentClass="border-l-green-500"
                     />
                     <ActionTile
                         title="Materiais"
                         description="Catálogo de materiais cirúrgicos, implantes e consumíveis."
                         href="/surgery/materials"
                         icon={PackageSearch}
+                        accentClass="border-l-yellow-500"
                     />
                     <ActionTile
                         title="Consumos"
                         description="Materiais e produtos consumidos por cirurgia."
                         href="/surgery/consumptions"
                         icon={PackageCheck}
+                        accentClass="border-l-lime-500"
                     />
                     <ActionTile
                         title="Faturação cirúrgica"
                         description="Itens faturáveis por sala, equipa, procedimento, anestesia e consumos."
                         href="/surgery/billing"
                         icon={CreditCard}
+                        accentClass="border-l-indigo-500"
                     />
                     <ActionTile
                         title="Amostras cirúrgicas"
                         description="Amostras coletadas durante cirurgia e ligação ao pedido de patologia."
                         href="/surgery/specimens"
                         icon={Microscope}
+                        accentClass="border-l-pink-500"
                     />
                     <ActionTile
                         title="Recuperação"
                         description="Sala de recuperação, dor, Aldrete, sinais vitais e alta."
                         href="/surgery/recovery"
                         icon={HeartPulse}
+                        accentClass="border-l-fuchsia-500"
                     />
                     <ActionTile
                         title="Relatório operatório"
                         description="Achados, técnica, complicações e amostras para patologia."
                         href="/surgery/operative-reports"
                         icon={FileText}
+                        accentClass="border-l-purple-500"
                     />
                     <ActionTile
                         title="Documentos cirúrgicos"
                         description="Consentimentos, orçamentos, autorizações, relatórios e anexos."
                         href="/surgery/documents"
                         icon={FileText}
+                        accentClass="border-l-stone-500"
                     />
                     <ActionTile
                         title="Auditoria cirúrgica"
                         description="Rastreabilidade de estados, sala, equipa, materiais, documentos e faturação."
                         href="/surgery/audit-events"
                         icon={Activity}
+                        accentClass="border-l-neutral-500"
                     />
                 </div>
 
