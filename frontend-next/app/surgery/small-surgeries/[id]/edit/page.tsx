@@ -107,6 +107,40 @@ function FieldRow({ label, children }: { label: string; children: React.ReactNod
 const inputCls = "w-full rounded-lg border border-white/30 bg-white/40 px-2.5 py-1.5 text-[12px] text-[var(--text)] placeholder-[var(--gray-400)] backdrop-blur-sm focus:border-[var(--primary-400)] focus:outline-none dark:border-white/10 dark:bg-white/[0.06]"
 const selectCls = `${inputCls} cursor-pointer`
 
+/* Portal dropdown — renders via fixed positioning to escape any stacking context */
+function DropdownPortal({ anchorRef, open, children }: {
+  anchorRef: React.RefObject<HTMLDivElement | null>
+  open: boolean
+  children: React.ReactNode
+}) {
+  const [rect, setRect] = useState<{ top: number; left: number; width: number } | null>(null)
+
+  useEffect(() => {
+    if (!open || !anchorRef.current) return
+    const r = anchorRef.current.getBoundingClientRect()
+    setRect({ top: r.bottom + window.scrollY + 4, left: r.left + window.scrollX, width: r.width })
+
+    function onScroll() {
+      if (!anchorRef.current) return
+      const r2 = anchorRef.current.getBoundingClientRect()
+      setRect({ top: r2.bottom + window.scrollY + 4, left: r2.left + window.scrollX, width: r2.width })
+    }
+    window.addEventListener("scroll", onScroll, true)
+    return () => window.removeEventListener("scroll", onScroll, true)
+  }, [open, anchorRef])
+
+  if (!open || !rect) return null
+
+  return (
+    <div
+      style={{ position: "fixed", top: rect.top - window.scrollY, left: rect.left, width: rect.width, zIndex: 9999 }}
+      className="rounded-lg border border-violet-200 bg-white shadow-xl dark:border-white/20 dark:bg-[var(--surface-1)]"
+    >
+      {children}
+    </div>
+  )
+}
+
 /* Searchable single-select dropdown */
 function SearchSelect({
   label, placeholder, endpoint, labelField = "name", value, onChange,
@@ -124,7 +158,6 @@ function SearchSelect({
   const [selectedLabel, setSelectedLabel] = useState("")
   const ref = useRef<HTMLDivElement>(null)
 
-  // close on outside click
   useEffect(() => {
     function handle(e: MouseEvent) {
       if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
@@ -141,9 +174,7 @@ function SearchSelect({
     } catch { setResults([]) }
   }, [endpoint])
 
-  useEffect(() => {
-    if (open) search(query)
-  }, [query, open, search])
+  useEffect(() => { if (open) search(query) }, [query, open, search])
 
   function select(item: any) {
     const lbl = [item[labelField], item.custom_id].filter(Boolean).join(" — ")
@@ -161,7 +192,7 @@ function SearchSelect({
 
   return (
     <FieldRow label={label}>
-      <div ref={ref} className="relative">
+      <div ref={ref}>
         <div
           className={`${inputCls} flex cursor-pointer items-center justify-between gap-1`}
           onClick={() => setOpen(o => !o)}
@@ -178,34 +209,32 @@ function SearchSelect({
             <Search size={11} className="text-[var(--gray-400)]" />
           </div>
         </div>
-        {open && (
-          <div className="absolute z-[999] mt-1 w-full rounded-lg border border-white/30 bg-white/90 shadow-lg backdrop-blur-sm dark:bg-[var(--surface-2)]/95">
-            <div className="border-b border-white/20 px-2 py-1.5">
-              <input
-                autoFocus
-                className="w-full bg-transparent text-[12px] text-[var(--text)] outline-none placeholder-[var(--gray-400)]"
-                placeholder="Pesquisar..."
-                value={query}
-                onChange={e => setQuery(e.target.value)}
-              />
-            </div>
-            <div className="max-h-48 overflow-y-auto">
-              {results.length === 0
-                ? <div className="px-3 py-2 text-[11px] text-[var(--gray-400)]">Sem resultados</div>
-                : results.map(item => (
-                  <div
-                    key={item.id}
-                    className={`cursor-pointer px-3 py-1.5 text-[12px] hover:bg-[var(--primary-50)] dark:hover:bg-white/10 ${item.id === value ? "font-semibold text-[var(--primary-600)]" : "text-[var(--text)]"}`}
-                    onClick={() => select(item)}
-                  >
-                    {item[labelField] || item.name}
-                    {item.custom_id ? <span className="ml-1 text-[10px] text-[var(--gray-400)]">{item.custom_id}</span> : null}
-                  </div>
-                ))
-              }
-            </div>
+        <DropdownPortal anchorRef={ref} open={open}>
+          <div className="border-b border-violet-100 px-2 py-1.5 dark:border-white/10">
+            <input
+              autoFocus
+              className="w-full bg-transparent text-[12px] text-[var(--text)] outline-none placeholder-[var(--gray-400)]"
+              placeholder="Pesquisar..."
+              value={query}
+              onChange={e => setQuery(e.target.value)}
+            />
           </div>
-        )}
+          <div className="max-h-48 overflow-y-auto">
+            {results.length === 0
+              ? <div className="px-3 py-2 text-[11px] text-[var(--gray-400)]">Sem resultados</div>
+              : results.map(item => (
+                <div
+                  key={item.id}
+                  className={`cursor-pointer px-3 py-1.5 text-[12px] hover:bg-violet-50 dark:hover:bg-white/10 ${item.id === value ? "font-semibold text-violet-700 dark:text-violet-300" : "text-[var(--text)]"}`}
+                  onClick={() => select(item)}
+                >
+                  {item[labelField] || item.name}
+                  {item.custom_id ? <span className="ml-1 text-[10px] text-[var(--gray-400)]">{item.custom_id}</span> : null}
+                </div>
+              ))
+            }
+          </div>
+        </DropdownPortal>
       </div>
     </FieldRow>
   )
@@ -275,42 +304,40 @@ function ProcedureMultiSelect({
           <span className="text-[var(--gray-400)]">Adicionar procedimento...</span>
           <Search size={11} className="text-[var(--gray-400)]" />
         </div>
-        {open && (
-          <div className="absolute z-[999] mt-1 w-full rounded-lg border border-white/30 bg-white/90 shadow-lg backdrop-blur-sm dark:bg-[var(--surface-2)]/95">
-            <div className="border-b border-white/20 px-2 py-1.5">
-              <input
-                autoFocus
-                className="w-full bg-transparent text-[12px] text-[var(--text)] outline-none placeholder-[var(--gray-400)]"
-                placeholder="Pesquisar procedimento..."
-                value={query}
-                onChange={e => setQuery(e.target.value)}
-              />
-            </div>
-            <div className="max-h-52 overflow-y-auto">
-              {results.length === 0
-                ? <div className="px-3 py-2 text-[11px] text-[var(--gray-400)]">Sem resultados</div>
-                : results.map(item => {
-                  const isSelected = !!selected.find(s => s.id === item.id)
-                  return (
-                    <div
-                      key={item.id}
-                      className={`flex cursor-pointer items-center gap-2 px-3 py-1.5 text-[12px] hover:bg-[var(--primary-50)] dark:hover:bg-white/10 ${isSelected ? "bg-violet-50/60 dark:bg-violet-900/20" : ""}`}
-                      onClick={() => toggle(item)}
-                    >
-                      <span className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border ${isSelected ? "border-violet-500 bg-violet-500 text-white" : "border-[var(--gray-300)]"}`}>
-                        {isSelected ? <CheckCircle2 size={10} /> : null}
-                      </span>
-                      <span className={isSelected ? "font-semibold text-violet-700 dark:text-violet-300" : "text-[var(--text)]"}>
-                        {item.name}
-                      </span>
-                      {item.base_price ? <span className="ml-auto text-[10px] text-[var(--gray-400)]">{item.base_price} MT</span> : null}
-                    </div>
-                  )
-                })
-              }
-            </div>
+        <DropdownPortal anchorRef={ref} open={open}>
+          <div className="border-b border-violet-100 px-2 py-1.5 dark:border-white/10">
+            <input
+              autoFocus
+              className="w-full bg-transparent text-[12px] text-[var(--text)] outline-none placeholder-[var(--gray-400)]"
+              placeholder="Pesquisar procedimento..."
+              value={query}
+              onChange={e => setQuery(e.target.value)}
+            />
           </div>
-        )}
+          <div className="max-h-52 overflow-y-auto">
+            {results.length === 0
+              ? <div className="px-3 py-2 text-[11px] text-[var(--gray-400)]">Sem resultados</div>
+              : results.map(item => {
+                const isSelected = !!selected.find(s => s.id === item.id)
+                return (
+                  <div
+                    key={item.id}
+                    className={`flex cursor-pointer items-center gap-2 px-3 py-1.5 text-[12px] hover:bg-violet-50 dark:hover:bg-white/10 ${isSelected ? "bg-violet-50 dark:bg-violet-900/20" : ""}`}
+                    onClick={() => toggle(item)}
+                  >
+                    <span className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border ${isSelected ? "border-violet-500 bg-violet-500 text-white" : "border-[var(--gray-300)]"}`}>
+                      {isSelected ? <CheckCircle2 size={10} /> : null}
+                    </span>
+                    <span className={isSelected ? "font-semibold text-violet-700 dark:text-violet-300" : "text-[var(--text)]"}>
+                      {item.name}
+                    </span>
+                    {item.base_price ? <span className="ml-auto text-[10px] text-[var(--gray-400)]">{item.base_price} MT</span> : null}
+                  </div>
+                )
+              })
+            }
+          </div>
+        </DropdownPortal>
       </div>
     </FieldRow>
   )
