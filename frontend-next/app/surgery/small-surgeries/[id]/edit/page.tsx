@@ -253,13 +253,12 @@ export default function SmallSurgeryEditPage() {
           </div>
         ) : null}
 
-        {/* grid 2 cols */}
-        <div className="grid grid-cols-2 items-start gap-3">
+        {/* fluxo linear — 1 coluna, ordem de preenchimento cirúrgico */}
+        <div className="flex flex-col gap-3">
 
-          {/* col esquerda */}
-          <div className="flex flex-col gap-3">
-
-            <SurfaceCard title="Paciente e equipa" icon={<User size={13} />} accent="bg-sky-400">
+          {/* 1 — Paciente e equipa */}
+          <SurfaceCard title="1 · Paciente e equipa" icon={<User size={13} />} accent="bg-sky-400">
+            <div className="grid grid-cols-2 gap-3">
               <FieldRow label="Paciente *">
                 <SearchableRelationSelect
                   fieldName="patient"
@@ -296,53 +295,58 @@ export default function SmallSurgeryEditPage() {
                   placeholder="Pesquisar especialidade..."
                 />
               </FieldRow>
-            </SurfaceCard>
+            </div>
+          </SurfaceCard>
 
-            <SurfaceCard title="Procedimento" icon={<Scissors size={13} />} accent="bg-violet-400">
-              <FieldRow label="Procedimento">
-                <input className={inputCls} value={procedure} onChange={e => setProcedure(e.target.value)} placeholder="Nome do procedimento" />
-              </FieldRow>
-              <FieldRow label="Descrição">
-                <textarea className={`${inputCls} resize-none`} rows={2} value={description} onChange={e => setDescription(e.target.value)} placeholder="Descrição livre" />
-              </FieldRow>
-              <div className="grid grid-cols-2 gap-2">
-                <FieldRow label="Prioridade">
-                  <select className={selectCls} value={priority} onChange={e => setPriority(e.target.value)}>
-                    {PRIORITY_CHOICES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
-                  </select>
+          {/* 2 — Procedimento */}
+          <SurfaceCard title="2 · Procedimento" icon={<Scissors size={13} />} accent="bg-violet-400">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="col-span-2">
+                <FieldRow label="Procedimento">
+                  <input className={inputCls} value={procedure} onChange={e => setProcedure(e.target.value)} placeholder="Nome do procedimento" />
                 </FieldRow>
-                <FieldRow label="Classificação">
-                  <select className={selectCls} value={classification} onChange={e => setClassification(e.target.value)}>
-                    <option value="">—</option>
-                    {CLASSIFICATION_CHOICES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+              </div>
+              <div className="col-span-2">
+                <FieldRow label="Descrição">
+                  <textarea className={`${inputCls} resize-none`} rows={2} value={description} onChange={e => setDescription(e.target.value)} placeholder="Descrição livre" />
+                </FieldRow>
+              </div>
+              <FieldRow label="Prioridade">
+                <select className={selectCls} value={priority} onChange={e => setPriority(e.target.value)}>
+                  {PRIORITY_CHOICES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+                </select>
+              </FieldRow>
+              <FieldRow label="Classificação">
+                <select className={selectCls} value={classification} onChange={e => setClassification(e.target.value)}>
+                  <option value="">—</option>
+                  {CLASSIFICATION_CHOICES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+                </select>
+              </FieldRow>
+            </div>
+          </SurfaceCard>
+
+          {/* 3 — Diagnósticos */}
+          <SurfaceCard title="3 · Diagnósticos" icon={<Stethoscope size={13} />} accent="bg-amber-400">
+            <div className="grid grid-cols-2 gap-3">
+              <FieldRow label="Diagnóstico pré-operatório">
+                <textarea className={`${inputCls} resize-none`} rows={3} value={preDiag} onChange={e => setPreDiag(e.target.value)} placeholder="Diagnóstico antes da cirurgia" />
+              </FieldRow>
+              <FieldRow label="Diagnóstico pós-operatório">
+                <textarea className={`${inputCls} resize-none`} rows={3} value={posDiag} onChange={e => setPosDiag(e.target.value)} placeholder="Diagnóstico após a cirurgia" />
+              </FieldRow>
+            </div>
+          </SurfaceCard>
+
+          {/* 4 — Estado + Datas (inline, mesmo card de contexto temporal) */}
+          <SurfaceCard title="4 · Estado e agendamento" icon={<CalendarClock size={13} />} accent="bg-emerald-400">
+            <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
+              <div className="col-span-2 lg:col-span-1">
+                <FieldRow label="Estado">
+                  <select className={selectCls} value={status} onChange={e => setStatus(e.target.value)}>
+                    {STATUS_CHOICES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
                   </select>
                 </FieldRow>
               </div>
-            </SurfaceCard>
-
-            <SurfaceCard title="Diagnósticos" icon={<Stethoscope size={13} />} accent="bg-amber-400">
-              <FieldRow label="Diagnóstico pré-operatório">
-                <textarea className={`${inputCls} resize-none`} rows={2} value={preDiag} onChange={e => setPreDiag(e.target.value)} placeholder="Diagnóstico antes da cirurgia" />
-              </FieldRow>
-              <FieldRow label="Diagnóstico pós-operatório">
-                <textarea className={`${inputCls} resize-none`} rows={2} value={posDiag} onChange={e => setPosDiag(e.target.value)} placeholder="Diagnóstico após a cirurgia" />
-              </FieldRow>
-            </SurfaceCard>
-
-          </div>
-
-          {/* col direita */}
-          <div className="flex flex-col gap-3">
-
-            <SurfaceCard title="Estado" icon={<Scissors size={13} />} accent="bg-emerald-400">
-              <FieldRow label="Estado">
-                <select className={selectCls} value={status} onChange={e => setStatus(e.target.value)}>
-                  {STATUS_CHOICES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
-                </select>
-              </FieldRow>
-            </SurfaceCard>
-
-            <SurfaceCard title="Datas" icon={<CalendarClock size={13} />} accent="bg-indigo-400">
               <FieldRow label="Agendada para">
                 <input type="datetime-local" className={inputCls} value={scheduledFor} onChange={e => setScheduledFor(e.target.value)} />
               </FieldRow>
@@ -355,20 +359,21 @@ export default function SmallSurgeryEditPage() {
               <FieldRow label="Concluída em">
                 <input type="datetime-local" className={inputCls} value={completedAt} onChange={e => setCompletedAt(e.target.value)} />
               </FieldRow>
-            </SurfaceCard>
+            </div>
+          </SurfaceCard>
 
-            <SurfaceCard title="Financeiro" icon={<CreditCard size={13} />} accent="bg-teal-400">
-              <div className="grid grid-cols-2 gap-2">
-                <FieldRow label="Preço estimado (MT)">
-                  <input type="number" step="0.01" className={inputCls} value={estimatedPrice} onChange={e => setEstimatedPrice(e.target.value)} />
-                </FieldRow>
-                <FieldRow label="IVA (%)">
-                  <input type="number" step="0.01" className={inputCls} value={vatPct} onChange={e => setVatPct(e.target.value)} />
-                </FieldRow>
-              </div>
-            </SurfaceCard>
+          {/* 5 — Financeiro */}
+          <SurfaceCard title="5 · Financeiro" icon={<CreditCard size={13} />} accent="bg-teal-400">
+            <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+              <FieldRow label="Preço estimado (MT)">
+                <input type="number" step="0.01" className={inputCls} value={estimatedPrice} onChange={e => setEstimatedPrice(e.target.value)} />
+              </FieldRow>
+              <FieldRow label="IVA (%)">
+                <input type="number" step="0.01" className={inputCls} value={vatPct} onChange={e => setVatPct(e.target.value)} />
+              </FieldRow>
+            </div>
+          </SurfaceCard>
 
-          </div>
         </div>
 
         {/* acções rodapé */}
