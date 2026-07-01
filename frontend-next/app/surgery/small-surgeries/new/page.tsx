@@ -429,7 +429,7 @@ export default function SmallSurgeryNewPage() {
 
   return (
     <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.ENFERMAGEM, GROUPS.MEDICINA]}>
-      <div className="mx-auto w-full max-w-2xl space-y-4 px-1 py-1">
+      <div className="mx-auto w-full max-w-2xl space-y-2 px-1 py-1">
 
         {/* header */}
         <section className={`relative overflow-hidden ${GLASS}`}>
