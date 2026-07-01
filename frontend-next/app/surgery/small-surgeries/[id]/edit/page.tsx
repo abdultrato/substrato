@@ -815,24 +815,6 @@ export default function SmallSurgeryEditPage() {
 
         </div>
 
-        {/* footer actions */}
-        <div className="flex justify-end gap-2 pb-4">
-          <Link
-            href={`/surgery/small-surgeries/${id}`}
-            className="inline-flex h-8 items-center gap-1 rounded-md border border-border bg-card px-3 text-[11px] text-muted-foreground transition hover:bg-muted"
-          >
-            <ArrowLeft size={11} />
-            Cancelar
-          </Link>
-          <button
-            onClick={save}
-            disabled={saving || success}
-            className="inline-flex h-8 items-center gap-1.5 rounded-md border border-violet-300 bg-violet-50 px-4 text-[11px] font-semibold text-violet-700 transition hover:bg-violet-100 disabled:opacity-50 dark:border-violet-700/40 dark:bg-violet-900/20 dark:text-violet-300"
-          >
-            {saving ? <Loader2 size={11} className="animate-spin" /> : <Save size={11} />}
-            {saving ? "A guardar..." : success ? "Guardado!" : "Guardar alterações"}
-          </button>
-        </div>
       </div>
     </AppLayout>
   )
