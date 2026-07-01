@@ -116,7 +116,7 @@ class Surgery(NoNameCoreModel):
         db_index=True,
     )
     surgeons = models.ManyToManyField(
-        User,
+        "recursos_humanos.Employee",
         verbose_name="Cirurgiões",
         blank=True,
         related_name="cirurgias_como_cirurgiao",

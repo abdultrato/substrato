@@ -1,6 +1,6 @@
 """Serializers DRF para cirurgias, bloco operatório e procedimentos cirúrgicos."""
 
-from django.contrib.auth import get_user_model
+from django.apps import apps
 from rest_framework import serializers
 
 from api.v1.compat import LegacyAliasSerializerMixin
@@ -153,7 +153,9 @@ class BaseSurgerySerializer(LegacyAliasSerializerMixin, serializers.ModelSeriali
     surgeon_names = serializers.SerializerMethodField(method_name="get_surgeon_names")
     # M2M — use global queryset so cross-tenant users (HR doctors) are accepted
     surgeons = serializers.PrimaryKeyRelatedField(
-        many=True, queryset=get_user_model()._base_manager.all(), required=False,
+        many=True,
+        queryset=apps.get_model("recursos_humanos", "Employee")._default_manager.all(),
+        required=False,
     )
     operating_room_name = serializers.CharField(source="operating_room.name", read_only=True)
     ward_name = serializers.CharField(source="ward.name", read_only=True)
@@ -216,10 +218,7 @@ class BaseSurgerySerializer(LegacyAliasSerializerMixin, serializers.ModelSeriali
 
     def get_surgeon_names(self, obj: Surgery) -> list[dict]:
         try:
-            return [
-                {"id": u.id, "name": (u.get_full_name() or "").strip() or u.username}
-                for u in obj.surgeons.all()
-            ]
+            return [{"id": e.id, "name": e.name} for e in obj.surgeons.all()]
         except Exception:
             return []
 
