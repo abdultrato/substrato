@@ -260,12 +260,12 @@ export default function Header({ user, onMenuClick, scrolledDown = false }: Prop
             </div>
 
             <div className={`overflow-hidden transition-all duration-300 ease-in-out ${scrolledDown ? "max-h-0 opacity-0 pointer-events-none" : "max-h-12 opacity-100"}`}>
-            <div className="flex h-8 items-center gap-0.5 border-t border-border/70 bg-card/90 px-1">
+            <div className="flex h-7 items-center gap-0.5 border-t border-border/70 bg-card/90 px-1">
                 <button
                     type="button"
                     onClick={() => scrollHeaderNav("left")}
                     disabled={!canScrollLeft}
-                    className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-border bg-card text-foreground shadow-sm transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/25 disabled:pointer-events-none disabled:opacity-0 ${
+                    className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-border bg-card text-foreground shadow-sm transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/25 disabled:pointer-events-none disabled:opacity-0 ${
                         canScrollLeft ? "" : "invisible"
                     }`}
                     aria-label={t("Mostrar links anteriores", "Show previous links")}
@@ -291,7 +291,7 @@ export default function Header({ user, onMenuClick, scrolledDown = false }: Prop
                                     <Link
                                         key={`${section.label}:${item.href}`}
                                         href={item.href}
-                                        className={`inline-flex h-7 shrink-0 items-center rounded-md border px-2.5 text-xs font-semibold transition-colors ${
+                                        className={`inline-flex h-6 shrink-0 items-center rounded-md border px-2 text-xs font-semibold transition-colors ${
                                             active
                                                 ? "border-primary/40 bg-primary-soft text-foreground"
                                                 : "border-transparent text-foreground-2 hover:border-border hover:bg-muted hover:text-foreground"
@@ -309,7 +309,7 @@ export default function Header({ user, onMenuClick, scrolledDown = false }: Prop
                     type="button"
                     onClick={() => scrollHeaderNav("right")}
                     disabled={!canScrollRight}
-                    className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-border bg-card text-foreground shadow-sm transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/25 disabled:pointer-events-none disabled:opacity-0 ${
+                    className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-border bg-card text-foreground shadow-sm transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/25 disabled:pointer-events-none disabled:opacity-0 ${
                         canScrollRight ? "" : "invisible"
                     }`}
                     aria-label={t("Mostrar próximos links", "Show next links")}
