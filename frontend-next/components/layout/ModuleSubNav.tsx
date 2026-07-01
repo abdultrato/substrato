@@ -600,7 +600,7 @@ export default function ModuleSubNav() {
 
     return (
         <nav className="shrink-0 border-b border-border/80 bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/85">
-            <div className="flex items-center gap-2 px-2 py-2 sm:px-3 md:px-4">
+            <div className="flex items-center gap-1.5 px-2 py-1 sm:px-3 md:px-4">
                 {showBack ? (
                     <button
                         type="button"
@@ -611,7 +611,7 @@ export default function ModuleSubNav() {
                             }
                             router.push(moduleNav.baseHref)
                         }}
-                        className="inline-flex h-8 shrink-0 items-center gap-1 rounded-md border border-border bg-background px-2 text-xs font-semibold text-foreground-2 shadow-sm transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/25"
+                        className="inline-flex h-7 shrink-0 items-center gap-1 rounded-md border border-border bg-background px-2 text-xs font-semibold text-foreground-2 shadow-sm transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/25"
                     >
                         <ChevronLeft size={14} />
                         {t("Voltar", "Back")}
@@ -622,7 +622,7 @@ export default function ModuleSubNav() {
                     type="button"
                     onClick={() => scrollModuleNav("left")}
                     disabled={!canScrollLeft}
-                    className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-border bg-card text-foreground shadow-sm transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/25 disabled:pointer-events-none disabled:opacity-0 ${
+                    className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-border bg-card text-foreground shadow-sm transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/25 disabled:pointer-events-none disabled:opacity-0 ${
                         canScrollLeft ? "" : "invisible"
                     }`}
                     aria-label={t("Mostrar atalhos anteriores", "Show previous shortcuts")}
@@ -641,7 +641,7 @@ export default function ModuleSubNav() {
                             <Link
                                 key={tab.href}
                                 href={tab.href}
-                                className={`inline-flex h-8 shrink-0 items-center rounded-full border px-3 text-xs font-medium transition-colors ${
+                                className={`inline-flex h-7 shrink-0 items-center rounded-full border px-2.5 text-xs font-medium transition-colors ${
                                     active
                                         ? "border-primary/40 bg-primary-soft text-foreground"
                                         : "border-transparent text-foreground-2 hover:border-border hover:bg-muted hover:text-foreground"
@@ -657,7 +657,7 @@ export default function ModuleSubNav() {
                     type="button"
                     onClick={() => scrollModuleNav("right")}
                     disabled={!canScrollRight}
-                    className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-border bg-card text-foreground shadow-sm transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/25 disabled:pointer-events-none disabled:opacity-0 ${
+                    className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-border bg-card text-foreground shadow-sm transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/25 disabled:pointer-events-none disabled:opacity-0 ${
                         canScrollRight ? "" : "invisible"
                     }`}
                     aria-label={t("Mostrar próximos atalhos", "Show next shortcuts")}

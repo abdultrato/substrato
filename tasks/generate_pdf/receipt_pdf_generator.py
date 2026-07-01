@@ -26,6 +26,7 @@ from .institutional_pdf_design import (
     institutional_on_page as on_page,
     pdf_encryption,
 )
+from .invoice_pdf_generator import IVA_LEGAL_BASE, IVA_NOTA_SAUDE
 
 logger = logging.getLogger(__name__)
 
@@ -51,6 +52,26 @@ def _formatar_dt(value) -> str:
         return value.strftime("%d/%m/%Y %H:%M")
     except Exception:
         return str(value)
+
+
+def _as_money(v) -> str:
+    if v is None:
+        return "—"
+    try:
+        return f"{Decimal(str(v)):,.2f}".replace(",", " ")
+    except Exception:
+        return str(v)
+
+
+def _payment_identifier(payment) -> str:
+    """Identificador legível do pagamento (custom_id pode ser None na BD)."""
+    if not payment:
+        return "—"
+    custom_id = getattr(payment, "custom_id", None)
+    if custom_id:
+        return str(custom_id)
+    pk = getattr(payment, "pk", None)
+    return str(pk) if pk else "—"
 
 
 def _item_code(item) -> str:
@@ -97,6 +118,22 @@ def generate_receipt_pdf(recibo, request=None) -> tuple[bytes, str]:
 
     invoice = getattr(recibo, "invoice", None)
     payment = getattr(recibo, "payment", None)
+
+    # Todos os pagamentos confirmados da fatura — o recibo deve refletir a
+    # mesma liquidação que a fatura (que pode ter vários métodos), não apenas
+    # o pagamento diretamente associado a este recibo.
+    pagamentos_fatura = []
+    if invoice is not None:
+        try:
+            pagamentos_fatura = list(
+                invoice.pagamentos.filter(deleted=False)
+                .select_related("insurer")
+                .order_by("paid_at", "pk")
+            )
+        except Exception:
+            pagamentos_fatura = []
+    if payment is not None and payment not in pagamentos_fatura:
+        pagamentos_fatura.append(payment)
     patient = getattr(invoice, "patient", None) if invoice else None
     config = getattr(getattr(invoice, "tenant", None), "configuracao", None) if invoice else None
     currency_code = getattr(config, "currency", "") if config is not None else ""
@@ -148,14 +185,24 @@ def generate_receipt_pdf(recibo, request=None) -> tuple[bytes, str]:
     # ==========================
     # BLOCO DIREITA (RECIBO)
     # ==========================
-    method_txt = ""
+    def _metodo_label(pag) -> str:
+        try:
+            return pag.get_method_display()
+        except Exception:
+            return getattr(pag, "method", "") or ""
+
+    # Lista de todos os métodos usados na liquidação (sem repetições, por ordem
+    # de pagamento): ex. "Seguro de Saúde, Dinheiro, Transferência bancária".
+    metodos_lista: list[str] = []
+    for pag in pagamentos_fatura:
+        rotulo = _metodo_label(pag)
+        if rotulo and rotulo not in metodos_lista:
+            metodos_lista.append(rotulo)
+    methods_txt = ", ".join(metodos_lista)
+
     status_txt = ""
     paid_at = None
     if payment:
-        try:
-            method_txt = payment.get_method_display()
-        except Exception:
-            method_txt = getattr(payment, "method", "") or ""
         try:
             status_txt = payment.get_status_display()
         except Exception:
@@ -167,8 +214,8 @@ def generate_receipt_pdf(recibo, request=None) -> tuple[bytes, str]:
     right_lines = [
         f"{bold('Recibo')}: {getattr(recibo, 'number', '—')}",
         f"{bold('Fatura')}: {getattr(invoice, 'custom_id', '—') if invoice else '—'}",
-        f"{bold('Pagamento')}: {getattr(payment, 'custom_id', getattr(payment, 'pk', '—')) if payment else '—'}",
-        f"{bold('Método')}: {method_txt or '—'}",
+        f"{bold('Pagamento')}: {_payment_identifier(payment)}",
+        f"{bold('Métodos' if len(metodos_lista) > 1 else 'Método')}: {methods_txt or '—'}",
         f"{bold('Status')}: {status_txt or '—'}",
         f"{bold('Tipo de moeda')}: {_currency_label(currency_code)}",
         f"{bold('Pago em')}: {_formatar_dt(paid_at) if paid_at else _formatar_dt(getattr(recibo, 'created_at', None))}",
@@ -268,6 +315,86 @@ def generate_receipt_pdf(recibo, request=None) -> tuple[bytes, str]:
     story.append(Spacer(1, 0.18 * cm))
 
     # ==========================
+    # PAGAMENTOS (mesma liquidação da fatura — pode haver vários métodos)
+    # ==========================
+    if pagamentos_fatura:
+        story.append(Paragraph("PAGAMENTOS", style_section))
+        story.append(Spacer(1, 0.12 * cm))
+
+        pag_data = [
+            [
+                cell_paragraph("Data", is_bold=True),
+                cell_paragraph("Método", is_bold=True),
+                cell_paragraph("Referência", is_bold=True),
+                cell_paragraph("Operador", is_bold=True),
+                cell_paragraph("Estado", is_bold=True),
+                cell_paragraph("Valor", is_bold=True),
+                cell_paragraph("Troco", is_bold=True),
+            ]
+        ]
+
+        for pag in pagamentos_fatura:
+            try:
+                metodo = pag.get_method_display()
+            except Exception:
+                metodo = getattr(pag, "method", "") or "—"
+            try:
+                estado = pag.get_status_display()
+            except Exception:
+                estado = getattr(pag, "status", "") or "—"
+
+            referencia = (
+                getattr(pag, "external_reference", "")
+                or getattr(pag, "authorization_number", "")
+                or "—"
+            )
+            operador = institutional_user_identity(getattr(pag, "created_by", None)) or "—"
+            valor = getattr(pag, "value", Decimal("0.00")) or Decimal("0.00")
+            troco = getattr(pag, "change_amount", Decimal("0.00")) or Decimal("0.00")
+
+            pag_data.append(
+                [
+                    cell_paragraph(_formatar_dt(getattr(pag, "paid_at", None) or getattr(pag, "created_at", None))),
+                    cell_paragraph(metodo),
+                    cell_paragraph(str(referencia)),
+                    cell_paragraph(str(operador)),
+                    cell_paragraph(estado),
+                    cell_paragraph(_as_money(valor)),
+                    cell_paragraph(_as_money(troco)),
+                ]
+            )
+
+        pag_table = Table(
+            pag_data,
+            colWidths=[
+                usable_width * 0.16,
+                usable_width * 0.15,
+                usable_width * 0.16,
+                usable_width * 0.17,
+                usable_width * 0.12,
+                usable_width * 0.13,
+                usable_width * 0.11,
+            ],
+            repeatRows=1,
+        )
+        pag_table.setStyle(
+            TableStyle(
+                [
+                    ("FONTNAME", (0, 0), (-1, 0), FONT_BOLD),
+                    ("BACKGROUND", (0, 0), (-1, 0), colors.whitesmoke),
+                    ("GRID", (0, 0), (-1, -1), 0.25, colors.lightgrey),
+                    ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                    ("LEFTPADDING", (0, 0), (-1, -1), 2),
+                    ("RIGHTPADDING", (0, 0), (-1, -1), 2),
+                    ("TOPPADDING", (0, 0), (-1, -1), 2),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 2),
+                ]
+            )
+        )
+        story.append(pag_table)
+        story.append(Spacer(1, 0.18 * cm))
+
+    # ==========================
     # RESUMO
     # ==========================
     total_sem_iva = getattr(invoice, "subtotal", None) if invoice else None
@@ -275,14 +402,6 @@ def generate_receipt_pdf(recibo, request=None) -> tuple[bytes, str]:
     total_com_iva = getattr(invoice, "total_a_pagar", None) if invoice else None
     if total_com_iva is None:
         total_com_iva = getattr(invoice, "total", None) if invoice else None
-
-    def _as_money(v):
-        if v is None:
-            return "—"
-        try:
-            return f"{Decimal(str(v)):,.2f}".replace(",", " ")
-        except Exception:
-            return str(v)
 
     resumo = Table(
         [
@@ -312,6 +431,17 @@ def generate_receipt_pdf(recibo, request=None) -> tuple[bytes, str]:
     story.append(Paragraph("RESUMO", style_section))
     story.append(Spacer(1, 0.10 * cm))
     story.append(resumo)
+
+    # ==========================
+    # NOTA LEGAL DO IVA (cuidados de saúde — taxa reduzida)
+    # ==========================
+    try:
+        iva_total = Decimal(str(total_iva or 0))
+    except Exception:
+        iva_total = Decimal("0.00")
+    nota_iva = IVA_NOTA_SAUDE if iva_total > 0 else f"Isento/não sujeito a IVA nos termos do {IVA_LEGAL_BASE}."
+    story.append(Spacer(1, 0.18 * cm))
+    story.append(cell_paragraph(nota_iva))
 
     append_fim(story)
 

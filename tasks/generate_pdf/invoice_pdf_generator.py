@@ -59,7 +59,16 @@ PDF_LATER_TOP_MARGIN = 0.8 * cm
 
 # Base legal do IVA em Moçambique (mantida curta na fatura). Ajuste aqui caso a
 # referência legal aplicável mude.
-IVA_LEGAL_BASE = "Código do IVA (Lei n.º 32/2007, de 31 de Dezembro)"
+IVA_LEGAL_BASE = "Código do IVA (Lei n.º 13/2022, de 23 de Dezembro)"
+
+# Taxa reduzida de IVA aplicável à prestação de cuidados de saúde (serviços e
+# produtos), nos termos do Código do IVA (Lei n.º 13/2022). Ajustar aqui caso a
+# taxa legal mude.
+IVA_TAXA_REDUZIDA_SAUDE = Decimal("5")
+IVA_NOTA_SAUDE = (
+    "Prestação de cuidados de saúde sujeita à taxa reduzida de IVA de "
+    f"{IVA_TAXA_REDUZIDA_SAUDE.normalize()}%, nos termos do {IVA_LEGAL_BASE}."
+)
 
 # Vias do documento (padrão triplicado das instituições financeiras).
 INVOICE_VIAS = (
@@ -129,6 +138,10 @@ def _iva_legal_note(itens, value_total_iva: Decimal) -> str:
 
     if not rates or (value_total_iva or Decimal("0.00")) <= Decimal("0.00"):
         return f"Isento/não sujeito a IVA nos termos do {IVA_LEGAL_BASE}."
+
+    # Cuidados de saúde: taxa reduzida única (5%) → nota legal específica.
+    if rates == {IVA_TAXA_REDUZIDA_SAUDE}:
+        return IVA_NOTA_SAUDE
 
     if len(rates) == 1:
         taxa = f"à taxa de {next(iter(rates)).normalize()}%"

@@ -14,6 +14,11 @@ import {
     Users,
     UserPlus,
     CalendarClock,
+    LayoutDashboard,
+    TrendingUp,
+    AlertTriangle,
+    Activity,
+    ArrowRight,
 } from "lucide-react"
 
 interface DashboardStats {
@@ -33,6 +38,9 @@ type EventItem = {
 }
 
 const DASHBOARD_TIMEOUT_MS = 5000
+
+const GLASS =
+    "rounded-xl border border-white/20 bg-white/30 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]"
 
 export default function DashboardPage() {
     const { loading } = useAuthGuard()
@@ -98,16 +106,26 @@ export default function DashboardPage() {
 
     return (
         <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.CONTABILIDADE]}>
-            <div className="space-y-4 md:space-y-5">
-                <div className="border-b border-border pb-3">
-                    <h1 className="font-display text-2xl font-semibold text-foreground">
-                        Painel
-                    </h1>
-                    <p className="text-sm text-muted-foreground">Visão geral dos últimos 7 dias.</p>
-                </div>
+            <div className="space-y-2">
+
+                {/* ── Hero ── */}
+                <section className={`relative overflow-hidden ${GLASS}`}>
+                    <span className="absolute left-0 top-0 h-full w-1 bg-indigo-500" />
+                    <div className="flex flex-wrap items-center justify-between gap-3 px-3 py-2 pl-4">
+                        <div className="flex min-w-0 items-center gap-2">
+                            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white shadow-md shadow-indigo-500/20">
+                                <LayoutDashboard size={17} />
+                            </span>
+                            <div>
+                                <h1 className="text-lg font-bold leading-tight text-foreground">Painel</h1>
+                                <p className="text-[11px] text-muted-foreground">Visão geral dos últimos 7 dias</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
 
                 {error && (
-                    <div className="text-sm text-rose-600 dark:text-rose-300">
+                    <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200">
                         Não foi possível carregar os dados.
                     </div>
                 )}
@@ -118,47 +136,26 @@ export default function DashboardPage() {
                     </div>
                 )}
 
+                {/* ── Métricas ── */}
                 {stats && (
-                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                        <StatCard
-                            title="Pacientes"
-                            value={stats.patients}
-                            icon={Users}
-                            href="/patients"
-                        />
-
-                        <StatCard
-                            title="Requisições Pendentes"
-                            value={stats.pending_requests}
-                            icon={ClipboardList}
-                            href="/requests"
-                        />
-
-                        <StatCard
-                            title="Exames Hoje"
-                            value={stats.exams_today}
-                            icon={FlaskConical}
-                            href="/clinical-laboratory/orders"
-                        />
-
-                        <StatCard
-                            title="Faturamento Hoje"
-                            value={<MoneyValue value={stats.billing_today} />}
-                            icon={Receipt}
-                            href="/invoices"
-                        />
+                    <div className="grid grid-cols-2 gap-1.5 lg:grid-cols-4">
+                        <StatCard title="Pacientes" value={stats.patients} icon={Users} accent="bg-sky-500" href="/patients" />
+                        <StatCard title="Requisições pendentes" value={stats.pending_requests} icon={ClipboardList} accent="bg-amber-500" href="/requests" />
+                        <StatCard title="Exames hoje" value={stats.exams_today} icon={FlaskConical} accent="bg-violet-500" href="/clinical-laboratory/orders" />
+                        <StatCard title="Faturamento hoje" value={<MoneyValue value={stats.billing_today} />} icon={Receipt} accent="bg-emerald-500" href="/invoices" />
                     </div>
                 )}
 
-                <div className="grid gap-4 lg:grid-cols-[2fr_1fr]">
-                    <CardSection title="Funil de receita" subtitle="7 dias">
-                        <div className="grid gap-3 md:grid-cols-3">
+                {/* ── Funil + Alertas ── */}
+                <div className="grid gap-1.5 lg:grid-cols-[2fr_1fr]">
+                    <CardSection title="Funil de receita" subtitle="7 dias" icon={TrendingUp} accent="bg-emerald-500">
+                        <div className="grid gap-1.5 sm:grid-cols-3">
                             {funnel.map((item) => (
-                                <div key={item.label} className="rounded-lg border border-border bg-card p-3 shadow-sm transition-colors hover:bg-muted/40">
-                                    <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                                <div key={item.label} className="rounded-lg border border-white/20 bg-white/40 px-3 py-2 transition hover:bg-white/60 dark:border-white/10 dark:bg-white/[0.03] dark:hover:bg-white/[0.06]">
+                                    <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
                                         {item.label}
                                     </div>
-                                    <div className="mt-1 font-display text-lg font-bold text-foreground">
+                                    <div className="mt-0.5 font-display text-lg font-bold leading-tight text-foreground tabular-nums">
                                         {item.value}
                                     </div>
                                 </div>
@@ -166,18 +163,18 @@ export default function DashboardPage() {
                         </div>
                     </CardSection>
 
-                    <CardSection title="Alertas">
+                    <CardSection title="Alertas" icon={AlertTriangle} accent="bg-amber-500">
                         {alerts.length === 0 ? (
                             <div className="text-sm text-muted-foreground">Sem alertas.</div>
                         ) : (
-                            <ul className="space-y-2 text-sm">
+                            <ul className="space-y-1.5 text-sm">
                                 {alerts.map((a) => (
                                     <li
                                         key={a.label}
-                                        className="flex items-center justify-between rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200"
+                                        className="flex items-center justify-between rounded-lg border border-amber-200 bg-amber-50 px-3 py-1.5 text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200"
                                     >
-                                        <span>{a.label}</span>
-                                        <span className="font-semibold">{a.value}</span>
+                                        <span className="text-xs">{a.label}</span>
+                                        <span className="text-sm font-semibold tabular-nums">{a.value}</span>
                                     </li>
                                 ))}
                             </ul>
@@ -185,23 +182,24 @@ export default function DashboardPage() {
                     </CardSection>
                 </div>
 
-                <div className="grid gap-4 lg:grid-cols-[1.4fr_1fr]">
-                    <CardSection title="Últimos eventos">
+                {/* ── Eventos + Atalhos ── */}
+                <div className="grid gap-1.5 lg:grid-cols-[1.4fr_1fr]">
+                    <CardSection title="Últimos eventos" icon={Activity} accent="bg-sky-500">
                         {events.length === 0 ? (
                             <div className="text-sm text-muted-foreground">Sem eventos recentes.</div>
                         ) : (
-                            <ul className="space-y-2 text-sm">
+                            <ul className="space-y-1.5 text-sm">
                                 {events.map((ev) => (
                                     <li
                                         key={ev.id}
-                                        className="rounded-md border border-border bg-card/70 px-3 py-2 shadow-sm transition-colors hover:bg-muted/40"
+                                        className="rounded-lg border border-white/20 bg-white/40 px-3 py-1.5 transition hover:bg-white/60 dark:border-white/10 dark:bg-white/[0.03] dark:hover:bg-white/[0.06]"
                                     >
-                                        <div className="font-semibold text-foreground">{ev.title}</div>
+                                        <div className="text-sm font-semibold leading-tight text-foreground">{ev.title}</div>
                                         {ev.detail ? (
-                                            <div className="text-xs text-muted-foreground mt-0.5">{ev.detail}</div>
+                                            <div className="mt-px text-xs text-muted-foreground">{ev.detail}</div>
                                         ) : null}
                                         {ev.at ? (
-                                            <div className="text-[11px] text-muted-foreground mt-0.5">{ev.at}</div>
+                                            <div className="mt-px text-[10px] text-muted-foreground">{ev.at}</div>
                                         ) : null}
                                     </li>
                                 ))}
@@ -209,7 +207,7 @@ export default function DashboardPage() {
                         )}
                     </CardSection>
 
-                    <CardSection title="Atalhos">
+                    <CardSection title="Atalhos" icon={ArrowRight} accent="bg-violet-500">
                         <div className="grid gap-1.5 text-sm">
                             {quickLinks.map((link) => {
                                 const LinkIcon = link.icon as any
@@ -218,20 +216,16 @@ export default function DashboardPage() {
                                         key={link.href}
                                         href={link.href}
                                         title={link.desc}
-                                        className="group flex items-center justify-between gap-3 rounded-md border border-border bg-card px-3 py-2 shadow-sm transition-colors hover:border-primary/40 hover:bg-muted"
+                                        className="group flex items-center gap-2.5 rounded-lg border border-white/20 bg-white/40 px-3 py-1.5 transition hover:border-violet-300/50 hover:bg-white/60 dark:border-white/10 dark:bg-white/[0.03] dark:hover:bg-white/[0.06]"
                                     >
-                                        <div className="flex items-center gap-2">
-                                            <span
-                                                aria-hidden
-                                                className="pointer-events-none flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-gray-100 text-gray-600"
-                                            >
-                                                <LinkIcon size={16} strokeWidth={2} className="transition-colors group-hover:text-primary" />
-                                            </span>
-                                            <span className="font-medium text-foreground">{link.label}</span>
-                                        </div>
-                                        <span className="text-[11px] text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100">
-                                            {link.desc}
+                                        <span
+                                            aria-hidden
+                                            className="pointer-events-none flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-violet-500/10 text-violet-600 dark:text-violet-400"
+                                        >
+                                            <LinkIcon size={13} strokeWidth={2} />
                                         </span>
+                                        <span className="min-w-0 flex-1 truncate text-xs font-medium text-foreground">{link.label}</span>
+                                        <ArrowRight size={13} className="shrink-0 text-muted-foreground opacity-0 transition group-hover:translate-x-0.5 group-hover:opacity-100" />
                                     </Link>
                                 )
                             })}
@@ -256,24 +250,28 @@ function StatCard({
     title,
     value,
     icon,
+    accent,
     href,
 }: {
     title: string
     value: number | string | JSX.Element
     icon: any
+    accent: string
     href?: string
 }) {
     const Icon = icon as any
     const content = (
-        <div className="relative overflow-hidden rounded-lg border border-border bg-card p-4 shadow-sm transition-colors hover:bg-muted/40">
-            <span
-                aria-hidden
-                className="pointer-events-none absolute right-3 top-1/2 flex h-12 w-12 -translate-y-1/2 items-center justify-center text-foreground/10"
-            >
-                <Icon size={48} strokeWidth={1.5} />
-            </span>
-            <p className="text-sm text-muted-foreground">{title}</p>
-            <p className="mt-1 font-display text-2xl font-semibold text-foreground">{value}</p>
+        <div className={`group relative overflow-hidden ${GLASS} transition hover:shadow-md`}>
+            <span className={`absolute left-0 top-0 h-full w-1 ${accent}`} />
+            <div className="flex items-center gap-2.5 px-3 py-2 pl-4">
+                <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl ${accent} text-white shadow-sm`}>
+                    <Icon size={15} />
+                </span>
+                <div className="min-w-0">
+                    <p className="truncate text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">{title}</p>
+                    <p className="font-display text-xl font-bold leading-tight text-foreground tabular-nums">{value}</p>
+                </div>
+            </div>
         </div>
     )
 
@@ -283,32 +281,47 @@ function StatCard({
 function CardSection({
     title,
     subtitle,
+    icon,
+    accent = "bg-slate-400",
     children,
 }: {
     title: string
     subtitle?: string
+    icon?: any
+    accent?: string
     children: React.ReactNode
 }) {
+    const Icon = icon as any
     return (
-        <section className="rounded-lg border border-border bg-card p-4 shadow-sm transition-shadow hover:shadow-md">
-            <div className="flex items-baseline justify-between gap-3">
-                <div className="font-display text-base font-semibold text-foreground">
-                    {title}
-                </div>
-                {subtitle ? (
-                    <div className="text-[11px] uppercase tracking-wider text-muted-foreground">
-                        {subtitle}
+        <section className={`relative overflow-hidden ${GLASS}`}>
+            <span className={`absolute left-0 top-0 h-full w-1 ${accent}`} />
+            <div className="px-3 py-2 pl-4">
+                <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-1.5">
+                        {Icon ? (
+                            <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md ${accent.replace("-500", "-500/10")} text-foreground/60`}>
+                                <Icon size={12} />
+                            </span>
+                        ) : null}
+                        <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                            {title}
+                        </div>
                     </div>
-                ) : null}
+                    {subtitle ? (
+                        <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                            {subtitle}
+                        </div>
+                    ) : null}
+                </div>
+                <div className="mt-2">{children}</div>
             </div>
-            <div className="mt-3">{children}</div>
         </section>
     )
 }
 
 const quickLinks = [
-    { href: "/patients", label: "Registrar Paciente", icon: UserPlus, desc: "Cadastro e triagem de pacientes" },
-    { href: "/requests/new", label: "Criar Requisição", icon: ClipboardList, desc: "Fluxo de laboratório" },
-    { href: "/consultations", label: "Agendar Consulta", icon: CalendarClock, desc: "Agendamento clínico e faturamento" },
+    { href: "/patients", label: "Registrar paciente", icon: UserPlus, desc: "Cadastro e triagem de pacientes" },
+    { href: "/requests/new", label: "Criar requisição", icon: ClipboardList, desc: "Fluxo de laboratório" },
+    { href: "/consultations", label: "Agendar consulta", icon: CalendarClock, desc: "Agendamento clínico e faturamento" },
     { href: "/invoices", label: "Faturas", icon: Receipt, desc: "Emitir e revisar faturas" },
 ]

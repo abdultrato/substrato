@@ -6,15 +6,14 @@ import { useParams, useRouter } from "next/navigation"
 
 import { BadgeCheck, FileText, Receipt, Search, Wallet } from "lucide-react"
 import AppLayout from "@/components/layout/AppLayout"
-import DataTable from "@/components/ui/DataTable"
 import CatalogSearchSelect, { type CatalogOption } from "@/components/ui/CatalogSearchSelect"
 import SelectInput from "@/components/ui/SelectInput"
 import TextAreaInput from "@/components/ui/TextAreaInput"
 import TextInput from "@/components/ui/TextInput"
 import MoneyValue from "@/components/ui/MoneyValue"
 import PdfActionLabel from "@/components/ui/PdfActionLabel"
-import ConfirmDialog from "@/components/ui/ConfirmDialog"
 import { apiFetch } from "@/lib/api"
+import { mapWithConcurrency } from "@/lib/concurrency"
 import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
 import { routeParamToString } from "@/lib/routeParams"
 import { useAuth } from "@/hooks/useAuth"
@@ -54,6 +53,16 @@ type FaturaItem = {
   item_venda?: number | string | null
   consulta?: number | string | null
   produto?: number | string | null
+}
+
+const TIPO_ITEM_META: Record<TipoItem, { label: string; sigla: string; tone: string }> = {
+  EXA: { label: "Exame laboratorial", sigla: "EXA", tone: "bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-300" },
+  EXM: { label: "Exame médico", sigla: "EXM", tone: "bg-cyan-100 text-cyan-700 dark:bg-cyan-900/40 dark:text-cyan-300" },
+  FAR: { label: "Medicação", sigla: "FAR", tone: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300" },
+  PRC: { label: "Procedimento", sigla: "PRC", tone: "bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300" },
+  MAT: { label: "Material", sigla: "MAT", tone: "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300" },
+  CON: { label: "Consulta", sigla: "CON", tone: "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300" },
+  AJU: { label: "Serviço / ajuste", sigla: "AJU", tone: "bg-slate-100 text-slate-700 dark:bg-slate-800/60 dark:text-slate-300" },
 }
 
 const PAGAMENTO_METODOS = [
@@ -441,8 +450,9 @@ export default function FaturaRascunhoPage() {
       setCirurgias(cirs)
       setConsultas(cons)
 
-      const reqItemsPairs = await Promise.all(
-        reqs.map((r) => apiFetch<any>(`/clinical/labrequestitem/?requisicao=${r.id}`, { clientCache: safeRefreshToken === 0 }))
+      const reqItemsPairs = await mapWithConcurrency(
+        reqs,
+        (r) => apiFetch<any>(`/clinical/labrequestitem/?requisicao=${r.id}`, { clientCache: safeRefreshToken === 0 })
       )
       const reqMap: Record<number, Row[]> = {}
       reqs.forEach((r, idx) => {
@@ -450,11 +460,13 @@ export default function FaturaRascunhoPage() {
       })
       setRequisicaoItens(reqMap)
 
-      const procItemPairs = await Promise.all(
-        procs.map((p) => apiFetch<any>(`/nursing/procedure_item/?procedimento=${p.id}`, { clientCache: safeRefreshToken === 0 }))
+      const procItemPairs = await mapWithConcurrency(
+        procs,
+        (p) => apiFetch<any>(`/nursing/procedure_item/?procedimento=${p.id}`, { clientCache: safeRefreshToken === 0 })
       )
-      const procMatPairs = await Promise.all(
-        procs.map((p) => apiFetch<any>(`/nursing/procedure_material/?procedimento=${p.id}`, { clientCache: safeRefreshToken === 0 }))
+      const procMatPairs = await mapWithConcurrency(
+        procs,
+        (p) => apiFetch<any>(`/nursing/procedure_material/?procedimento=${p.id}`, { clientCache: safeRefreshToken === 0 })
       )
       const procItemMap: Record<number, Row[]> = {}
       const procMatMap: Record<number, Row[]> = {}
@@ -465,8 +477,9 @@ export default function FaturaRascunhoPage() {
       setProcedimentoItens(procItemMap)
       setProcedimentoMateriais(procMatMap)
 
-      const vendaItemPairs = await Promise.all(
-        vendasList.map((v) => apiFetch<any>(`/pharmacy/sale_item/?venda=${v.id}`, { clientCache: safeRefreshToken === 0 }))
+      const vendaItemPairs = await mapWithConcurrency(
+        vendasList,
+        (v) => apiFetch<any>(`/pharmacy/sale_item/?venda=${v.id}`, { clientCache: safeRefreshToken === 0 })
       )
       const vendaMap: Record<number, Row[]> = {}
       vendasList.forEach((v, idx) => {
@@ -618,27 +631,6 @@ export default function FaturaRascunhoPage() {
       setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao remover item."))
     }
   }, [carregarItens, faturaId, faturaProforma, faturaRascunho, podeEditar])
-
-  const toggleIva = useCallback(async (item: FaturaItem) => {
-    if (!item?.id) return
-    if (!podeEditar) {
-      setErro("Sem permissão para alterar IVA.")
-      return
-    }
-    if (faturaProforma) {
-      setErro("IVA de fatura proforma deve seguir a proforma de origem.")
-      return
-    }
-    try {
-      await apiFetch(`/billing/invoiceitem/${item.id}/`, {
-        method: "PATCH",
-        body: JSON.stringify({ aplica_iva: !item.aplica_iva }),
-      })
-      if (faturaId) await carregarItens(faturaId, true)
-    } catch (e: any) {
-      setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao atualizar IVA do item."))
-    }
-  }, [carregarItens, faturaId, faturaProforma, podeEditar])
 
   const issueInvoiceAction = useCallback(async () => {
     if (!faturaId) return
@@ -994,51 +986,6 @@ export default function FaturaRascunhoPage() {
     }
   }, [carregarFatura, faturaId, faturaRascunho])
 
-  const itensCols = useMemo(
-    () => [
-      { header: "Descrição", render: (i: FaturaItem) => i.descricao || `Item ${i.id}` },
-      { header: "Qtd", render: (i: FaturaItem) => i.quantidade || 1 },
-      { header: "Preço", render: (i: FaturaItem) => <MoneyValue value={i.preco_unitario} /> },
-      { header: "Total", render: (i: FaturaItem) => <MoneyValue value={i.total_com_iva} /> },
-      {
-        header: "IVA",
-        render: (i: FaturaItem) => (
-          <label className="flex items-center gap-2 text-xs text-foreground">
-            <input
-              type="checkbox"
-              checked={!!i.aplica_iva}
-              onChange={() => toggleIva(i)}
-              disabled={!faturaRascunho || !podeEditar}
-              className="h-4 w-4 rounded border-slate-300 text-slate-800 focus:ring-2 focus:ring-slate-400 disabled:opacity-60"
-            />
-            {i.iva_percentual ?? "-"}%
-          </label>
-        ),
-      },
-      {
-        header: "Ações",
-        render: (i: FaturaItem) => (
-          <ConfirmDialog
-            title="Remover item"
-            message="Este item será removido da fatura em rascunho."
-            confirmText="Remover"
-            onConfirm={() => removerItem(i.id)}
-            disabled={!faturaRascunho || !podeEditar}
-          >
-            <button
-              type="button"
-              className="inline-flex items-center rounded-lg border border-rose-200 px-3 py-1.5 text-xs font-medium text-rose-700 transition hover:bg-rose-50 disabled:opacity-50"
-              disabled={!faturaRascunho || !podeEditar}
-            >
-              Remover
-            </button>
-          </ConfirmDialog>
-        ),
-      },
-    ],
-    [faturaRascunho, removerItem, toggleIva, podeEditar]
-  )
-
   if (loading) {
     return (
       <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.RECEPCAO, GROUPS.CONTABILIDADE]}>
@@ -1160,10 +1107,10 @@ export default function FaturaRascunhoPage() {
           </div>
         ) : null}
 
-        {/* ── Row: Cliente fiscal (50%) + Registrar pagamento (50%) ── */}
-        <div className="grid grid-cols-1 gap-2 lg:grid-cols-2 lg:items-start">
+        {/* ── Masonry: Cliente fiscal + Pagamento + Itens fluem pelo espaço livre ── */}
+        <div className="columns-1 gap-2 lg:columns-2 [&>*]:mb-2 [&>*]:break-inside-avoid">
 
-        {/* Cliente fiscal — 50% */}
+        {/* Cliente fiscal */}
         <section className={`${GLASS} border-l-4 border-l-teal-500`}>
           <div className="px-4 py-3 space-y-2">
             <div>
@@ -1238,9 +1185,9 @@ export default function FaturaRascunhoPage() {
           </div>
         </section>
 
-        {/* Registrar pagamento — 50% */}
+        {/* Registrar pagamento */}
         <section className={`${GLASS} border-l-4 ${fatura.estado === "PAGA" ? "border-l-emerald-500" : "border-l-violet-500"}`}>
-          <div className="px-4 py-3 space-y-3">
+          <div className={`px-4 py-3 ${fatura.estado === "PAGA" ? "space-y-2" : "space-y-3"}`}>
             <div>
               <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 {fatura.estado === "PAGA" ? "Fatura paga" : "Registrar pagamento"}
@@ -1250,23 +1197,23 @@ export default function FaturaRascunhoPage() {
               </p>
             </div>
           {fatura.estado === "PAGA" ? (
-            <div className="space-y-4">
-              <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800">
+            <div className="space-y-2">
+              <div className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-800">
                 Fatura totalmente quitada.
               </div>
 
               {pagamentos.length > 0 ? (
-                <div className="space-y-2">
-                  <div className="text-xs font-semibold uppercase text-muted-foreground">Pagamentos</div>
-                  <div className="overflow-hidden rounded-lg border border-border">
-                    <table className="min-w-full text-sm">
+                <div className="space-y-1">
+                  <div className="text-[11px] font-semibold uppercase text-muted-foreground">Pagamentos</div>
+                  <div className="overflow-hidden rounded-md border border-border">
+                    <table className="min-w-full text-xs">
                       <tbody className="divide-y divide-border">
                         {pagamentos.map((p) => (
                           <tr key={p.id}>
-                            <td className="px-3 py-2 text-foreground">
+                            <td className="px-2.5 py-1.5 text-foreground">
                               {metodosLabelByValue.get((p.metodo ?? p.method) as MetodoPagamento) || p.metodo || p.method || "-"}
                             </td>
-                            <td className="px-3 py-2 text-right font-medium text-foreground">
+                            <td className="px-2.5 py-1.5 text-right font-medium text-foreground">
                               <MoneyValue value={p.valor ?? p.value} />
                             </td>
                           </tr>
@@ -1277,22 +1224,22 @@ export default function FaturaRascunhoPage() {
                 </div>
               ) : null}
 
-              <div className="flex flex-wrap gap-2">
+              <div className="flex items-center justify-between gap-2 pt-0.5">
                 <button
-                  className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--primary-600)] px-3 py-2 text-sm font-semibold text-white transition hover:bg-[var(--primary-700)]"
+                  className="inline-flex items-center gap-1.5 rounded-md bg-[var(--primary-600)] px-2.5 py-1.5 text-xs font-semibold text-white transition hover:bg-[var(--primary-700)]"
                   onClick={downloadInvoicePdf}
                 >
                   <PdfActionLabel>Imprimir fatura</PdfActionLabel>
                 </button>
                 {recibo ? (
                   <button
-                    className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700"
+                    className="inline-flex items-center gap-1.5 rounded-md bg-emerald-600 px-2.5 py-1.5 text-xs font-semibold text-white transition hover:bg-emerald-700"
                     onClick={downloadReceiptPdf}
                   >
                     <PdfActionLabel>Imprimir recibo</PdfActionLabel>
                   </button>
                 ) : (
-                  <span className="self-center text-xs text-muted-foreground">Recibo a ser gerado.</span>
+                  <span className="self-center text-[11px] text-muted-foreground">Recibo a ser gerado.</span>
                 )}
               </div>
             </div>
@@ -1440,23 +1387,61 @@ export default function FaturaRascunhoPage() {
           </div>
         </section>
 
-        </div>{/* fim grid 2-col topo */}
-
-        {/* ── Itens da fatura — só visível após pagamento ── */}
+        {/* ── Itens da fatura — ocupa o espaço restante da coluna direita ── */}
         {fatura.estado === "PAGA" ? (
           <section className={`${GLASS} border-l-4 border-l-sky-500 overflow-hidden`}>
-            <div className="px-4 py-3 space-y-2">
-              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Itens da fatura</p>
+            <div className="space-y-1.5 px-3 py-2">
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Itens da fatura</p>
+                {itens.length > 0 ? (
+                  <span className="rounded-full bg-sky-100 px-1.5 py-0.5 text-[9px] font-semibold text-sky-700 dark:bg-sky-900/40 dark:text-sky-300">
+                    {itens.length} {itens.length === 1 ? "item" : "itens"}
+                  </span>
+                ) : null}
+              </div>
               {itens.length === 0 ? (
-                <div className="text-sm text-muted-foreground">Nenhum item registado.</div>
+                <div className="rounded-md border border-dashed border-white/30 px-3 py-4 text-center text-xs text-muted-foreground dark:border-white/10">
+                  Nenhum item registado.
+                </div>
               ) : (
-                <div className="max-h-72 overflow-auto">
-                  <DataTable<FaturaItem> columns={itensCols as any} data={itens} />
+                <div className="space-y-1">
+                  {itens.map((i) => {
+                    const meta = TIPO_ITEM_META[i.tipo_item] ?? TIPO_ITEM_META.AJU
+                    const qtd = Number(i.quantidade) || 1
+                    return (
+                      <div
+                        key={i.id}
+                        className="flex items-center gap-2 rounded-md border border-white/20 bg-white/40 px-2 py-1.5 transition hover:bg-white/60 dark:border-white/10 dark:bg-white/[0.03] dark:hover:bg-white/[0.06]"
+                      >
+                        <span
+                          className={`flex h-5 w-7 shrink-0 items-center justify-center rounded text-[8px] font-bold tracking-wide ${meta.tone}`}
+                          title={meta.label}
+                        >
+                          {meta.sigla}
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <div className="truncate text-xs font-medium leading-tight text-foreground">{i.descricao || `Item ${i.id}`}</div>
+                          <div className="mt-px flex items-center gap-1.5 text-[10px] leading-tight text-muted-foreground">
+                            <span className="tabular-nums">{qtd} × <MoneyValue value={i.preco_unitario} /></span>
+                            <span className="opacity-50">·</span>
+                            <span className={i.aplica_iva ? "" : "opacity-60"}>
+                              {i.aplica_iva ? `IVA ${i.iva_percentual ?? 0}%` : "Isento de IVA"}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="shrink-0 text-xs font-semibold text-foreground tabular-nums">
+                          <MoneyValue value={i.total_com_iva} />
+                        </div>
+                      </div>
+                    )
+                  })}
                 </div>
               )}
             </div>
           </section>
         ) : null}
+
+        </div>{/* fim masonry topo */}
 
         {/* ── Adicionar itens — grid 3 colunas ── */}
         {podeEditar && faturaRascunho && !faturaProforma ? (<>
