@@ -132,7 +132,7 @@ export default function SurgeryPage() {
                     <MetricCard label="Relatórios operatórios" value={loading ? "..." : operativeReports} accentClass="border-l-indigo-500" />
                 </div>
 
-                <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4">
+                <div className="grid grid-cols-4 gap-2">
                     <ActionTile
                         title="Pedidos cirúrgicos"
                         description="Indicações cirúrgicas com diagnóstico, prioridade, especialidade e estado."
