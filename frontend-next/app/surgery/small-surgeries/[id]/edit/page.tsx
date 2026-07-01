@@ -1,6 +1,7 @@
 "use client"
 
 import { useCallback, useEffect, useRef, useState } from "react"
+import { createPortal } from "react-dom"
 import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import {
@@ -107,37 +108,43 @@ function FieldRow({ label, children }: { label: string; children: React.ReactNod
 const inputCls = "w-full rounded-lg border border-white/30 bg-white/40 px-2.5 py-1.5 text-[12px] text-[var(--text)] placeholder-[var(--gray-400)] backdrop-blur-sm focus:border-[var(--primary-400)] focus:outline-none dark:border-white/10 dark:bg-white/[0.06]"
 const selectCls = `${inputCls} cursor-pointer`
 
-/* Portal dropdown — renders via fixed positioning to escape any stacking context */
+/* Portal dropdown — mounts directly on document.body via createPortal */
 function DropdownPortal({ anchorRef, open, children }: {
   anchorRef: React.RefObject<HTMLDivElement | null>
   open: boolean
   children: React.ReactNode
 }) {
-  const [rect, setRect] = useState<{ top: number; left: number; width: number } | null>(null)
+  const [pos, setPos] = useState<{ top: number; left: number; width: number } | null>(null)
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => { setMounted(true) }, [])
 
   useEffect(() => {
     if (!open || !anchorRef.current) return
-    const r = anchorRef.current.getBoundingClientRect()
-    setRect({ top: r.bottom + window.scrollY + 4, left: r.left + window.scrollX, width: r.width })
-
-    function onScroll() {
+    function update() {
       if (!anchorRef.current) return
-      const r2 = anchorRef.current.getBoundingClientRect()
-      setRect({ top: r2.bottom + window.scrollY + 4, left: r2.left + window.scrollX, width: r2.width })
+      const r = anchorRef.current.getBoundingClientRect()
+      setPos({ top: r.bottom + 4, left: r.left, width: r.width })
     }
-    window.addEventListener("scroll", onScroll, true)
-    return () => window.removeEventListener("scroll", onScroll, true)
+    update()
+    window.addEventListener("scroll", update, true)
+    window.addEventListener("resize", update)
+    return () => {
+      window.removeEventListener("scroll", update, true)
+      window.removeEventListener("resize", update)
+    }
   }, [open, anchorRef])
 
-  if (!open || !rect) return null
+  if (!open || !pos || !mounted) return null
 
-  return (
+  return createPortal(
     <div
-      style={{ position: "fixed", top: rect.top - window.scrollY, left: rect.left, width: rect.width, zIndex: 9999 }}
+      style={{ position: "fixed", top: pos.top, left: pos.left, width: pos.width, zIndex: 9999 }}
       className="rounded-lg border border-violet-200 bg-white shadow-xl dark:border-white/20 dark:bg-[var(--surface-1)]"
     >
       {children}
-    </div>
+    </div>,
+    document.body
   )
 }
 
