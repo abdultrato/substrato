@@ -445,10 +445,25 @@ export default function SmallSurgeryNewPage() {
               </div>
               <h1 className="mt-0.5 font-display text-base font-semibold text-foreground">Nova pequena cirurgia</h1>
             </div>
-            <Link href="/surgery/small-surgeries"
-              className="inline-flex h-7 items-center gap-1 rounded-md border border-border bg-card px-2.5 text-[11px] text-muted-foreground transition hover:bg-muted">
-              <ArrowLeft size={11} /> Cancelar
-            </Link>
+            <div className="flex items-center gap-3">
+              {totalPrice > 0 && (
+                <div className="flex flex-col items-end gap-0.5">
+                  <span className="text-[10px] text-[var(--gray-500)]">Preço total (IVA 5%)</span>
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="text-[13px] font-semibold text-violet-700 dark:text-violet-300">
+                      {(totalPrice * 1.05).toLocaleString("pt-PT", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MT
+                    </span>
+                    <span className="text-[10px] text-[var(--gray-400)]">
+                      ({totalPrice.toLocaleString("pt-PT")} + IVA)
+                    </span>
+                  </div>
+                </div>
+              )}
+              <Link href="/surgery/small-surgeries"
+                className="inline-flex h-7 items-center gap-1 rounded-md border border-border bg-card px-2.5 text-[11px] text-muted-foreground transition hover:bg-muted">
+                <ArrowLeft size={11} /> Cancelar
+              </Link>
+            </div>
           </div>
         </section>
 
