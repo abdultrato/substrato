@@ -668,23 +668,51 @@ export default function ConsultationsPage() {
     const canRequestCreditNote = canWrite && (r.status === "CONCLUIDA" || invoiceIssued) && !hasPendingCreditNote
     const loadingReview = invoiceReviewLoading === r.id
 
+    const accent =
+      r.status === "CONCLUIDA" ? "bg-emerald-500"
+      : r.status === "CANCELADA" ? "bg-rose-500"
+      : isRescheduled(r) ? "bg-amber-500"
+      : isDueSoon(r) ? "bg-violet-500"
+      : "bg-sky-500"
+    const initial = (r.patient_name || "?").trim().charAt(0).toUpperCase()
+
     return (
-      <div key={r.id} className="rounded-xl border border-border/60 p-3 shadow-sm">
+      <div
+        key={r.id}
+        className="group relative overflow-hidden rounded-xl border border-white/20 bg-white/40 p-3 pl-3.5 shadow-sm backdrop-blur-sm transition hover:-translate-y-px hover:shadow-md dark:border-white/10 dark:bg-white/[0.04]"
+      >
+        <span className={`absolute left-0 top-0 h-full w-1 ${accent}`} />
         <div className="flex items-start justify-between gap-2">
-          <div className="min-w-0">
-            <div className="truncate text-sm font-semibold text-foreground">{r.patient_name || "-"}</div>
-            <div className="text-[11px] text-muted-foreground">{r.custom_id || r.id}</div>
+          <div className="flex min-w-0 items-center gap-2">
+            <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-xs font-bold text-white shadow-sm ${accent}`}>
+              {initial}
+            </span>
+            <div className="min-w-0">
+              <div className="truncate text-sm font-semibold text-foreground">{r.patient_name || "-"}</div>
+              <div className="font-mono text-[10px] text-muted-foreground">{r.custom_id || r.id}</div>
+            </div>
           </div>
-          <span className="shrink-0 rounded-lg border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs font-bold text-emerald-700 dark:border-emerald-700/30 dark:bg-emerald-900/20 dark:text-emerald-400">
+          <span className="shrink-0 rounded-lg border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs font-bold text-emerald-700 tabular-nums dark:border-emerald-700/30 dark:bg-emerald-900/20 dark:text-emerald-400">
             <MoneyValue value={r.price} />
           </span>
         </div>
 
-        <div className="mt-2 space-y-0.5 text-xs text-muted-foreground">
-          <div className="font-medium text-foreground">{r.specialty_name || r.type || "-"}</div>
-          <div>{r.doctor_name ? `${t("Médico", "Doctor")}: ${r.doctor_name}` : t("Sem médico atribuído", "No doctor assigned")}</div>
-          <div>{t("Data", "Date")}: {fmtDate(r.scheduled_for)}</div>
-          <div>{t("Horário", "Schedule")}: {formatScheduleTypeLabel(r.schedule_type)}</div>
+        <div className="mt-2 space-y-1 text-[11px] text-muted-foreground">
+          <div className="flex items-center gap-1.5">
+            <Stethoscope size={12} className="shrink-0 text-muted-foreground/70" />
+            <span className="truncate font-medium text-foreground">{r.specialty_name || r.type || "-"}</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <User size={12} className="shrink-0 text-muted-foreground/70" />
+            <span className="truncate">{r.doctor_name || t("Sem médico atribuído", "No doctor assigned")}</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <CalendarClock size={12} className="shrink-0 text-muted-foreground/70" />
+            <span className="truncate">{fmtDate(r.scheduled_for)}</span>
+            <span className="ml-auto shrink-0 rounded-full bg-muted px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-muted-foreground">
+              {formatScheduleTypeLabel(r.schedule_type)}
+            </span>
+          </div>
         </div>
 
         {/* Invoice info */}
