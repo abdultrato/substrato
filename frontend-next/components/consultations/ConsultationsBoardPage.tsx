@@ -4,13 +4,12 @@ import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { useEffect, useMemo, useState } from "react"
 import {
-  Search, RotateCcw, BarChart2,
+  Search, BarChart2, Stethoscope,
   Clock, XCircle, CheckCircle2,
   AlertTriangle, ChevronLeft, Info,
 } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
-import PageHeader from "@/components/ui/PageHeader"
 import ManchesterBadge from "@/components/ui/ManchesterBadge"
 import useAuthGuard from "@/hooks/useAuthGuard"
 import { useLanguage } from "@/hooks/useLanguage"
@@ -110,11 +109,15 @@ function statusAccent(status: string): { bar: string; badge: string } {
   return { bar: "bg-amber-500", badge: "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-700/30 dark:bg-amber-900/20 dark:text-amber-400" }
 }
 
+function getScheduledAt(row: Row): any {
+  return row?.scheduled_for || row?.scheduled_at || row?.data_consulta || null
+}
+
 /** Consulta em aberto (agendada/pendente) cuja hora já passou. */
 function rowIsOverdue(row: Row): boolean {
   const s = getStatus(row)
   if (!STATUS_SCHEDULED.includes(s)) return false
-  const raw = row?.scheduled_at || row?.data_consulta
+  const raw = getScheduledAt(row)
   if (!raw) return false
   const ts = new Date(raw).getTime()
   return !Number.isNaN(ts) && ts < Date.now()
@@ -127,7 +130,7 @@ function ConsultationCard({ row, href }: CardProps) {
   const patient    = getPatientName(row)
   const doctor     = getDoctorName(row)
   const specialty  = getSpecialty(row)
-  const date       = formatDate(row?.scheduled_at || row?.data_consulta || row?.created_at || row?.criado_em)
+  const date       = formatDate(getScheduledAt(row) || row?.created_at || row?.criado_em)
   const status     = getStatus(row)
   const statusLabel = getStatusLabel(status)
   const { status: pStatus, display: pDisplay } = rowPriority(row)
@@ -365,51 +368,58 @@ export default function ConsultationsBoardPage() {
   return (
     <AppLayout fullWidth requiredGroups={requiredGroupsForResourceGroup("consultations")} subNav={<ConsultationsSubNav />}>
       <div className="w-full space-y-1.5 px-1">
-        <PageHeader
-          title="Consultas Médicas"
-          actions={
+        {/* Cabeçalho com pesquisa integrada (modelo recente) */}
+        <section className="relative overflow-hidden rounded-xl border border-white/20 bg-white/30 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]">
+          <span className="absolute left-0 top-0 h-full w-1 bg-indigo-500" />
+          <div className="flex flex-wrap items-center gap-2 px-3 py-2 pl-4">
+            <div className="flex min-w-0 items-center gap-2">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white shadow-md shadow-indigo-500/20">
+                <Stethoscope size={17} />
+              </span>
+              <div className="min-w-0">
+                <h1 className="text-lg font-bold leading-tight text-foreground">{t("Consultas Médicas", "Medical Consultations")}</h1>
+                <p className="text-[11px] text-muted-foreground">
+                  {t("Total", "Total")}: {totalItems} · {t("Na página", "On page")}: {data.length}
+                </p>
+              </div>
+            </div>
+
+            {/* Motor de busca no cabeçalho */}
+            <div className="relative ml-auto min-w-[200px] flex-1 sm:max-w-md">
+              <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder={t("Pesquisar por código, paciente, médico ou estado…", "Search by code, patient, doctor or status…")}
+                className="w-full rounded-lg border border-white/30 bg-white/50 py-2 pl-8 pr-8 text-sm text-foreground shadow-sm backdrop-blur-sm transition placeholder:text-muted-foreground hover:border-[var(--primary-400)] focus:border-[var(--primary-500)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-100)] dark:border-white/10 dark:bg-white/10"
+              />
+              {search && (
+                <button
+                  type="button"
+                  aria-label={t("Limpar pesquisa", "Clear search")}
+                  onClick={() => { setSearch(""); setPage(1) }}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground transition hover:text-foreground"
+                >
+                  <XCircle size={15} />
+                </button>
+              )}
+            </div>
+
             <Link
               href={reportHref}
-              className="inline-flex items-center gap-1.5 rounded-md border border-[var(--primary-200)] bg-[var(--primary-50)] px-3 py-1.5 text-xs font-semibold text-[var(--primary-700)] shadow-sm transition hover:bg-[var(--primary-100)] h-9"
+              className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg border border-white/20 bg-white/10 px-3 text-sm font-medium text-foreground shadow-sm backdrop-blur-sm transition hover:bg-white/20 dark:border-white/10"
             >
-              <BarChart2 size={12} />
-              {t("Ver relatório", "View report")}
+              <BarChart2 size={14} />
+              {t("Relatório", "Report")}
             </Link>
-          }
-        />
+          </div>
+        </section>
 
         {error && (
           <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
             {error}
           </div>
         )}
-
-        <div className="flex flex-wrap items-center gap-2 bg-transparent">
-          <div className="relative flex-1 min-w-[200px] max-w-sm">
-            <Search className="pointer-events-none absolute left-2.5 top-2.5 h-4 w-4 text-[var(--gray-400)]" />
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder={t("Pesquise por código, paciente, médico ou estado", "Search by code, patient, doctor or status")}
-              className="w-full rounded-md border border-[var(--border)] bg-transparent py-2 pl-8 pr-3 text-sm text-[var(--text)] transition-colors duration-150 placeholder:text-[var(--gray-400)] hover:border-[var(--primary-400)] focus:border-[var(--primary-500)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-100)]"
-            />
-          </div>
-
-          <div className="flex items-center gap-1.5 text-xs text-[var(--gray-500)]">
-            <span>Total: {totalItems}</span>
-            <span className="text-[var(--gray-300)]">·</span>
-            <span>Na página: {data.length}</span>
-          </div>
-
-          <button
-            type="button"
-            onClick={() => { setSearch(""); setPage(1) }}
-            className="inline-flex h-8 items-center gap-1 rounded-md border border-[var(--border)] bg-transparent px-2.5 text-xs font-semibold text-[var(--gray-700)] shadow-sm transition-all duration-150 hover:border-[var(--primary-300)] hover:bg-[var(--gray-100)] hover:text-[var(--text)]"
-          >
-            <RotateCcw size={12} />
-            {t("Limpar filtros", "Clear filters")}
-          </button>
-        </div>
 
         {loadingData ? (
           <div className="text-sm text-[var(--gray-500)]">{t("Carregando...", "Loading...")}</div>
