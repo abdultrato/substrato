@@ -168,8 +168,9 @@ export default function SmallSurgeryDetailPage() {
   // derived fields
   const surgeonNames: { id: number; name: string }[] = data.surgeon_names || []
   const procedureNames: string[] = data.procedure_names || []
-  const estimatedPrice = parseFloat(data.estimated_price || "0")
-  const vatPct = parseFloat(data.vat_percentage || "0")
+  // prefer sum of procedure base_prices; fall back to surgery-level estimated_price
+  const estimatedPrice = parseFloat(data.procedures_price_total || data.estimated_price || "0")
+  const vatPct = parseFloat(data.procedures_vat_percentage || data.vat_percentage || "0")
   const priceWithVat = estimatedPrice > 0 ? estimatedPrice * (1 + vatPct / 100) : 0
 
   return (

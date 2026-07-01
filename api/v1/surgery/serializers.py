@@ -162,6 +162,8 @@ class BaseSurgerySerializer(LegacyAliasSerializerMixin, serializers.ModelSeriali
     preoperative_diagnosis = serializers.CharField(allow_blank=True, allow_null=True, required=False, default="")
     postoperative_diagnosis = serializers.CharField(allow_blank=True, allow_null=True, required=False, default="")
     procedure_names = serializers.SerializerMethodField(method_name="get_procedure_names")
+    procedures_price_total = serializers.SerializerMethodField(method_name="get_procedures_price_total")
+    procedures_vat_percentage = serializers.SerializerMethodField(method_name="get_procedures_vat_percentage")
     invoice_id = serializers.SerializerMethodField(method_name="get_invoice_id")
     invoice_code = serializers.SerializerMethodField(method_name="get_invoice_code")
     invoice_status = serializers.SerializerMethodField(method_name="get_invoice_status")
@@ -183,6 +185,8 @@ class BaseSurgerySerializer(LegacyAliasSerializerMixin, serializers.ModelSeriali
             "operating_room_name",
             "ward_name",
             "procedure_names",
+            "procedures_price_total",
+            "procedures_vat_percentage",
             "invoice_id",
             "invoice_code",
             "invoice_status",
@@ -227,6 +231,26 @@ class BaseSurgerySerializer(LegacyAliasSerializerMixin, serializers.ModelSeriali
             return list(obj.procedures.values_list("name", flat=True))
         except Exception:
             return []
+
+    def get_procedures_price_total(self, obj: Surgery) -> str:
+        try:
+            from decimal import Decimal
+            total = sum(
+                (p.base_price or Decimal("0")) for p in obj.procedures.all()
+            )
+            return str(total)
+        except Exception:
+            return "0.00"
+
+    def get_procedures_vat_percentage(self, obj: Surgery) -> str:
+        try:
+            procs = list(obj.procedures.values_list("vat_percentage", flat=True))
+            if procs:
+                # Use the most common VAT, falling back to first
+                return str(procs[0])
+            return "0.00"
+        except Exception:
+            return "0.00"
 
     def _get_invoice(self, obj: Surgery):
         try:
