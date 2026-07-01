@@ -39,11 +39,9 @@ const PRIORITY_CHOICES = [
   { value: "SCHEDULED", label: "Agendada", color: "text-blue-600 dark:text-blue-400" },
 ]
 
-const CLASSIFICATION_CHOICES = [
-  { value: "MINOR", label: "Minor", desc: "Procedimento simples, baixo risco" },
-  { value: "INTERMEDIATE", label: "Intermediária", desc: "Risco moderado, anestesia geral" },
-  { value: "MAJOR", label: "Major", desc: "Alto risco, internamento obrigatório" },
-  { value: "COMPLEX", label: "Complexa", desc: "Risco elevado, UCI provável" },
+const SURGERY_SIZE_CHOICES = [
+  { value: "PEQUENA", label: "Pequena cirurgia", desc: "Procedimento simples, baixo risco, sem internamento" },
+  { value: "GRANDE", label: "Grande cirurgia", desc: "Alto risco, anestesia geral, internamento obrigatório" },
 ]
 
 const TEAM_ROLES = [
@@ -334,7 +332,7 @@ export default function SmallSurgeryNewPage() {
   const [patientLabel, setPatientLabel] = useState("")
   const [procedures, setProcedures] = useState<{ id: number; name: string; base_price?: string }[]>([])
   const [priority, setPriority] = useState("ELECTIVE")
-  const [classification, setClassification] = useState("MINOR")
+  const [surgerySize, setSurgerySize] = useState("PEQUENA")
 
   // step 2
   const [surgeon, setSurgeon] = useState<number | null>(null)
@@ -413,7 +411,7 @@ export default function SmallSurgeryNewPage() {
           preoperative_diagnosis: preDiag || null,
           postoperative_diagnosis: posDiag || null,
           priority,
-          classification,
+          surgery_size: surgerySize,
           scheduled_for: scheduledFor ? new Date(scheduledFor).toISOString() : null,
           status: scheduledFor ? "AGENDADA" : "DRAFT",
         }),
@@ -423,7 +421,7 @@ export default function SmallSurgeryNewPage() {
       setError(e?.message || "Erro ao criar cirurgia.")
       setSaving(false)
     }
-  }, [patient, procedures, surgeon, specialty, operatingRoom, preDiag, posDiag, priority, classification, scheduledFor, router])
+  }, [patient, procedures, surgeon, specialty, operatingRoom, preDiag, posDiag, priority, surgerySize, scheduledFor, router])
 
   /* ── render ── */
 
@@ -503,17 +501,17 @@ export default function SmallSurgeryNewPage() {
                 </div>
               </FieldRow>
 
-              {/* classification */}
-              <FieldRow label="Classificação">
+              {/* surgery size */}
+              <FieldRow label="Tipo de cirurgia">
                 <div className="grid grid-cols-2 gap-2">
-                  {CLASSIFICATION_CHOICES.map(c => (
+                  {SURGERY_SIZE_CHOICES.map(c => (
                     <button key={c.value} type="button"
-                      onClick={() => setClassification(c.value)}
-                      className={`rounded-lg border px-3 py-2 text-left transition
-                        ${classification === c.value
+                      onClick={() => setSurgerySize(c.value)}
+                      className={`rounded-lg border px-3 py-2.5 text-left transition
+                        ${surgerySize === c.value
                           ? "border-violet-400 bg-violet-50 dark:border-violet-600/60 dark:bg-violet-900/30"
                           : "border-white/30 bg-white/20 hover:border-violet-200 dark:border-white/10 dark:bg-white/[0.03]"}`}>
-                      <div className={`text-[11px] font-semibold ${classification === c.value ? "text-violet-700 dark:text-violet-300" : "text-[var(--text)]"}`}>{c.label}</div>
+                      <div className={`text-[11px] font-semibold ${surgerySize === c.value ? "text-violet-700 dark:text-violet-300" : "text-[var(--text)]"}`}>{c.label}</div>
                       <div className="text-[10px] text-[var(--gray-400)]">{c.desc}</div>
                     </button>
                   ))}
@@ -704,7 +702,7 @@ export default function SmallSurgeryNewPage() {
                     ? <span className="flex flex-wrap gap-1">{procedures.map(p => <span key={p.id} className="rounded bg-violet-100 px-1.5 py-0.5 text-[10px] text-violet-700 dark:bg-violet-900/30 dark:text-violet-300">{p.name}</span>)}</span>
                     : null} />
                   <ReviewRow label="Prioridade" value={PRIORITY_CHOICES.find(p => p.value === priority)?.label} />
-                  <ReviewRow label="Classificação" value={CLASSIFICATION_CHOICES.find(c => c.value === classification)?.label} />
+                  <ReviewRow label="Tipo de cirurgia" value={SURGERY_SIZE_CHOICES.find(c => c.value === surgerySize)?.label} />
                   <ReviewRow label="Cirurgião" value={surgeonLabel || null} />
                   <ReviewRow label="Especialidade" value={specialtyLabel || null} />
                   <ReviewRow label="Bloco" value={operatingRoomLabel || null} />
