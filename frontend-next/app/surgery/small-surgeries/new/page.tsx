@@ -468,8 +468,14 @@ export default function SmallSurgeryNewPage() {
           <section className={`relative ${GLASS}`}>
             <span className="absolute left-0 top-0 h-full w-1 rounded-l-xl bg-sky-400" />
             <div className="flex flex-col gap-4 px-4 py-4 pl-5">
-              <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--gray-500)]">
-                <User size={12} /> Paciente & procedimento
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--gray-500)]">
+                  <User size={12} /> Paciente & procedimento
+                </div>
+                <button type="button" disabled={!canAdvance()} onClick={() => setStep(2)}
+                  className="inline-flex h-7 items-center gap-1.5 rounded-lg border border-violet-300 bg-violet-50 px-3 text-[11px] font-semibold text-violet-700 transition hover:bg-violet-100 disabled:opacity-40 dark:border-violet-700/40 dark:bg-violet-900/20 dark:text-violet-300">
+                  Próximo <ArrowRight size={11} />
+                </button>
               </div>
 
               <SearchSelect label="Paciente" placeholder="Pesquisar por nome ou nº processo..." required
@@ -526,8 +532,20 @@ export default function SmallSurgeryNewPage() {
           <section className={`relative ${GLASS}`}>
             <span className="absolute left-0 top-0 h-full w-1 rounded-l-xl bg-emerald-400" />
             <div className="flex flex-col gap-4 px-4 py-4 pl-5">
-              <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--gray-500)]">
-                <Stethoscope size={12} /> Cirurgião & bloco operatório
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--gray-500)]">
+                  <Stethoscope size={12} /> Cirurgião & bloco operatório
+                </div>
+                <div className="flex items-center gap-2">
+                  <button type="button" onClick={() => setStep(1)}
+                    className="inline-flex h-7 items-center gap-1 rounded-lg border border-border bg-card px-2.5 text-[11px] text-muted-foreground hover:bg-muted">
+                    <ArrowLeft size={11} /> Anterior
+                  </button>
+                  <button type="button" onClick={() => setStep(3)}
+                    className="inline-flex h-7 items-center gap-1.5 rounded-lg border border-violet-300 bg-violet-50 px-3 text-[11px] font-semibold text-violet-700 transition hover:bg-violet-100 dark:border-violet-700/40 dark:bg-violet-900/20 dark:text-violet-300">
+                    Próximo <ArrowRight size={11} />
+                  </button>
+                </div>
               </div>
 
               <SearchSelect label="Cirurgião" placeholder="Pesquisar médico..."
@@ -554,8 +572,20 @@ export default function SmallSurgeryNewPage() {
           <section className={`relative ${GLASS}`}>
             <span className="absolute left-0 top-0 h-full w-1 rounded-l-xl bg-indigo-400" />
             <div className="flex flex-col gap-4 px-4 py-4 pl-5">
-              <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--gray-500)]">
-                <Users size={12} /> Equipa cirúrgica & diagnóstico
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--gray-500)]">
+                  <Users size={12} /> Equipa cirúrgica & diagnóstico
+                </div>
+                <div className="flex items-center gap-2">
+                  <button type="button" onClick={() => setStep(2)}
+                    className="inline-flex h-7 items-center gap-1 rounded-lg border border-border bg-card px-2.5 text-[11px] text-muted-foreground hover:bg-muted">
+                    <ArrowLeft size={11} /> Anterior
+                  </button>
+                  <button type="button" onClick={() => setStep(4)}
+                    className="inline-flex h-7 items-center gap-1.5 rounded-lg border border-violet-300 bg-violet-50 px-3 text-[11px] font-semibold text-violet-700 transition hover:bg-violet-100 dark:border-violet-700/40 dark:bg-violet-900/20 dark:text-violet-300">
+                    Próximo <ArrowRight size={11} />
+                  </button>
+                </div>
               </div>
 
               {/* team list */}
@@ -633,8 +663,21 @@ export default function SmallSurgeryNewPage() {
           <section className={`relative ${GLASS}`}>
             <span className="absolute left-0 top-0 h-full w-1 rounded-l-xl bg-amber-400" />
             <div className="flex flex-col gap-4 px-4 py-4 pl-5">
-              <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--gray-500)]">
-                <CalendarClock size={12} /> Agendamento & revisão
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--gray-500)]">
+                  <CalendarClock size={12} /> Agendamento & revisão
+                </div>
+                <div className="flex items-center gap-2">
+                  <button type="button" onClick={() => setStep(3)}
+                    className="inline-flex h-7 items-center gap-1 rounded-lg border border-border bg-card px-2.5 text-[11px] text-muted-foreground hover:bg-muted">
+                    <ArrowLeft size={11} /> Anterior
+                  </button>
+                  <button type="button" disabled={saving || !patient || procedures.length === 0} onClick={submit}
+                    className="inline-flex h-7 items-center gap-1.5 rounded-lg border border-violet-300 bg-violet-500 px-4 text-[11px] font-semibold text-white transition hover:bg-violet-600 disabled:opacity-40">
+                    {saving ? <Loader2 size={11} className="animate-spin" /> : <Save size={11} />}
+                    {saving ? "A criar..." : "Criar cirurgia"}
+                  </button>
+                </div>
               </div>
 
               <FieldRow label="Data e hora agendada">
@@ -670,27 +713,6 @@ export default function SmallSurgeryNewPage() {
             </div>
           </section>
         )}
-
-        {/* nav buttons */}
-        <div className="flex items-center justify-between gap-2 pb-4">
-          {step > 1
-            ? <button type="button" onClick={() => setStep(s => s - 1)}
-                className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-border bg-card px-3 text-[12px] text-muted-foreground hover:bg-muted">
-                <ArrowLeft size={12} /> Anterior
-              </button>
-            : <div />}
-
-          {step < 4
-            ? <button type="button" disabled={!canAdvance()} onClick={() => setStep(s => s + 1)}
-                className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-violet-300 bg-violet-50 px-4 text-[12px] font-semibold text-violet-700 transition hover:bg-violet-100 disabled:opacity-40 dark:border-violet-700/40 dark:bg-violet-900/20 dark:text-violet-300">
-                Próximo <ArrowRight size={12} />
-              </button>
-            : <button type="button" disabled={saving || !patient || procedures.length === 0} onClick={submit}
-                className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-violet-300 bg-violet-500 px-5 text-[12px] font-semibold text-white transition hover:bg-violet-600 disabled:opacity-40 dark:border-violet-700/40">
-                {saving ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />}
-                {saving ? "A criar..." : "Criar cirurgia"}
-              </button>}
-        </div>
 
       </div>
     </AppLayout>
