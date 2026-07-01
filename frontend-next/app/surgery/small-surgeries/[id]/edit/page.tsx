@@ -729,39 +729,6 @@ export default function SmallSurgeryEditPage() {
               </div>
             </SurfaceCard>
 
-            <SurfaceCard title="7 · Estado e agendamento" icon={<CalendarClock size={13} />} accent="bg-emerald-400">
-              <FieldRow label="Estado">
-                <select className={selectCls} value={status} onChange={e => setStatus(e.target.value)}>
-                  {STATUS_CHOICES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
-                </select>
-              </FieldRow>
-              <div className="grid grid-cols-2 gap-2">
-                <FieldRow label="Prioridade">
-                  <select className={selectCls} value={priority} onChange={e => setPriority(e.target.value)}>
-                    {PRIORITY_CHOICES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
-                  </select>
-                </FieldRow>
-                <FieldRow label="Classificação">
-                  <select className={selectCls} value={classification} onChange={e => setClassification(e.target.value)}>
-                    <option value="">—</option>
-                    {CLASSIFICATION_CHOICES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
-                  </select>
-                </FieldRow>
-              </div>
-              <FieldRow label="Agendada para">
-                <input type="datetime-local" className={inputCls} value={scheduledFor} onChange={e => setScheduledFor(e.target.value)} />
-              </FieldRow>
-              <FieldRow label="Iniciada em">
-                <input type="datetime-local" className={inputCls} value={startedAt} onChange={e => setStartedAt(e.target.value)} />
-              </FieldRow>
-              <FieldRow label="Terminada em">
-                <input type="datetime-local" className={inputCls} value={endedAt} onChange={e => setEndedAt(e.target.value)} />
-              </FieldRow>
-              <FieldRow label="Concluída em">
-                <input type="datetime-local" className={inputCls} value={completedAt} onChange={e => setCompletedAt(e.target.value)} />
-              </FieldRow>
-            </SurfaceCard>
-
           </div>
 
           {/* col direita: 2, 4, 6, 8 */}
@@ -805,6 +772,40 @@ export default function SmallSurgeryEditPage() {
 
           </div>
         </div>
+
+        {/* ── 7 · Estado e agendamento — full width, último cartão ── */}
+        <SurfaceCard title="7 · Estado e agendamento" icon={<CalendarClock size={13} />} accent="bg-emerald-400">
+          <div className="grid grid-cols-7 gap-3">
+            <FieldRow label="Estado">
+              <select className={selectCls} value={status} onChange={e => setStatus(e.target.value)}>
+                {STATUS_CHOICES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+              </select>
+            </FieldRow>
+            <FieldRow label="Prioridade">
+              <select className={selectCls} value={priority} onChange={e => setPriority(e.target.value)}>
+                {PRIORITY_CHOICES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+              </select>
+            </FieldRow>
+            <FieldRow label="Classificação">
+              <select className={selectCls} value={classification} onChange={e => setClassification(e.target.value)}>
+                <option value="">—</option>
+                {CLASSIFICATION_CHOICES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+              </select>
+            </FieldRow>
+            <FieldRow label="Agendada para">
+              <input type="datetime-local" className={inputCls} value={scheduledFor} onChange={e => setScheduledFor(e.target.value)} />
+            </FieldRow>
+            <FieldRow label="Iniciada em">
+              <input type="datetime-local" className={inputCls} value={startedAt} onChange={e => setStartedAt(e.target.value)} />
+            </FieldRow>
+            <FieldRow label="Terminada em">
+              <input type="datetime-local" className={inputCls} value={endedAt} onChange={e => setEndedAt(e.target.value)} />
+            </FieldRow>
+            <FieldRow label="Concluída em">
+              <input type="datetime-local" className={inputCls} value={completedAt} onChange={e => setCompletedAt(e.target.value)} />
+            </FieldRow>
+          </div>
+        </SurfaceCard>
 
         {/* footer actions */}
         <div className="flex justify-end gap-2 pb-4">
