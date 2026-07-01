@@ -134,7 +134,7 @@ export default function NewSurgicalProcedurePage() {
               <div className="mt-3 flex items-center gap-2">
                 <button type="button" onClick={() => setAppliesVat(v => !v)}
                   className={`relative h-5 w-9 rounded-full transition-colors ${appliesVat ? "bg-teal-500" : "bg-slate-300 dark:bg-slate-600"}`}>
-                  <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform ${appliesVat ? "translate-x-[18px]" : "translate-x-0.5"}`} />
+                  <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-all ${appliesVat ? "left-[18px]" : "left-0.5"}`} />
                 </button>
                 <span className="text-[12px] text-foreground">Aplicar IVA por defeito</span>
               </div>
@@ -159,7 +159,7 @@ export default function NewSurgicalProcedurePage() {
               </div>
               <button type="button" onClick={() => setActive(v => !v)}
                 className={`relative h-5 w-9 shrink-0 rounded-full transition-colors ${active ? "bg-emerald-500" : "bg-slate-300 dark:bg-slate-600"}`}>
-                <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform ${active ? "translate-x-[18px]" : "translate-x-0.5"}`} />
+                <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-all ${active ? "left-[18px]" : "left-0.5"}`} />
               </button>
             </div>
           </section>
