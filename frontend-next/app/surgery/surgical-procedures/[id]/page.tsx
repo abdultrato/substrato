@@ -122,7 +122,7 @@ export default function SurgicalProcedureDetailPage() {
               </div>
               <h1 className="mt-0.5 font-display text-base font-semibold text-foreground">{name || "Procedimento"}</h1>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
               {total > 0 && (
                 <div className="flex flex-col items-end border-r border-white/30 pr-3 dark:border-white/10">
                   <span className="text-[9px] text-[var(--gray-500)]">Total c/ IVA</span>
@@ -131,6 +131,14 @@ export default function SurgicalProcedureDetailPage() {
                   </span>
                 </div>
               )}
+              {/* active toggle inline in header */}
+              <div className="flex items-center gap-2 border-r border-white/30 pr-3 dark:border-white/10">
+                <button type="button" onClick={() => setActive(v => !v)}
+                  className={`relative h-5 w-9 shrink-0 rounded-full transition-colors ${active ? "bg-emerald-500" : "bg-slate-300 dark:bg-slate-600"}`}>
+                  <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform ${active ? "translate-x-4" : "translate-x-0.5"}`} />
+                </button>
+                <span className="text-[11px] font-medium text-foreground">{active ? "Activo" : "Inactivo"}</span>
+              </div>
               <Link href="/surgery/surgical-procedures"
                 className="inline-flex h-7 items-center gap-1 rounded-md border border-border bg-card px-2.5 text-[11px] text-muted-foreground hover:bg-muted">
                 <ArrowLeft size={11} /> Voltar
@@ -202,21 +210,6 @@ export default function SurgicalProcedureDetailPage() {
                   </span>
                 </div>
               )}
-            </div>
-          </section>
-
-          {/* estado */}
-          <section className={`relative overflow-hidden ${GLASS}`}>
-            <span className={`absolute left-0 top-0 h-full w-1 ${active ? "bg-emerald-400" : "bg-slate-400"}`} />
-            <div className="flex items-center justify-between px-4 py-3 pl-5">
-              <div>
-                <p className="text-[12px] font-semibold text-foreground">Procedimento activo</p>
-                <p className="text-[10px] text-[var(--gray-500)]">Procedimentos inactivos não aparecem na selecção de cirurgias</p>
-              </div>
-              <button type="button" onClick={() => setActive(v => !v)}
-                className={`relative h-5 w-9 shrink-0 rounded-full transition-colors ${active ? "bg-emerald-500" : "bg-slate-300 dark:bg-slate-600"}`}>
-                <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform ${active ? "translate-x-4" : "translate-x-0.5"}`} />
-              </button>
             </div>
           </section>
 
