@@ -356,7 +356,7 @@ def _sync_procedure_consumptions(surgery_instance) -> None:
     from apps.surgery.models import SurgicalProcedureMaterial
 
     existing_product_ids = set(
-        surgery_instance.consumptions.values_list("product_id", flat=True)
+        SurgicalConsumption.objects.filter(surgery=surgery_instance).values_list("product_id", flat=True)
     )
 
     to_create = []
