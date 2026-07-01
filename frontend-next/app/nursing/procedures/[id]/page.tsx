@@ -722,8 +722,9 @@ export default function ProcedureDetailPage() {
           </div>
         ) : null}
 
-        <div className="space-y-3">
-          <div className="grid items-start gap-3 lg:grid-cols-4">
+        <div className="flex flex-wrap items-start gap-3">
+          {/* Coluna esquerda */}
+          <div className="flex min-w-0 flex-1 basis-56 flex-col gap-3">
             {professionals.length > 0 || wardName ? (
               <SurfaceCard
                 title="Serviços"
@@ -739,14 +740,14 @@ export default function ProcedureDetailPage() {
                     </div>
                   ) : null}
                   <div className="flex flex-wrap gap-1.5">
-                  {professionals.map((name) => (
-                    <span
-                      key={name}
-                      className="rounded-lg border border-orange-200 bg-orange-50 px-2 py-1 text-[11px] font-semibold text-orange-700 dark:border-orange-700/30 dark:bg-orange-900/20 dark:text-orange-300"
-                    >
-                      {name}
-                    </span>
-                  ))}
+                    {professionals.map((name) => (
+                      <span
+                        key={name}
+                        className="rounded-lg border border-orange-200 bg-orange-50 px-2 py-1 text-[11px] font-semibold text-orange-700 dark:border-orange-700/30 dark:bg-orange-900/20 dark:text-orange-300"
+                      >
+                        {name}
+                      </span>
+                    ))}
                   </div>
                 </div>
               </SurfaceCard>
@@ -780,6 +781,46 @@ export default function ProcedureDetailPage() {
               </SurfaceCard>
             ) : null}
 
+            {hasNotesCard ? (
+              <SurfaceCard
+                title="Observações Clínicas"
+                icon={<FileText size={14} />}
+                accent="bg-slate-400"
+                iconTone="bg-slate-500/10 text-slate-700 dark:bg-slate-400/10 dark:text-slate-400"
+              >
+                <p className="whitespace-pre-wrap text-[13px] text-[var(--text)]">{notes}</p>
+              </SurfaceCard>
+            ) : null}
+
+            {hasMaterialsCard ? (
+              <SurfaceCard
+                title={`Materiais Consumidos (${materials.length})`}
+                icon={<Package2 size={14} />}
+                accent="bg-violet-400"
+                iconTone="bg-violet-500/10 text-violet-700 dark:bg-violet-400/10 dark:text-violet-400"
+              >
+                <div className="grid gap-1.5">
+                  {materials.map((item) => (
+                    <ProcedureMaterialCard key={item.id || item.custom_id} item={item} />
+                  ))}
+                </div>
+              </SurfaceCard>
+            ) : null}
+          </div>
+
+          {/* Coluna direita */}
+          <div className="flex min-w-0 flex-1 basis-56 flex-col gap-3">
+            {hasWorkflowCard ? (
+              <SurfaceCard
+                title="Fluxo Operacional"
+                icon={<Stethoscope size={14} />}
+                accent="bg-emerald-400"
+                iconTone="bg-emerald-500/10 text-emerald-700 dark:bg-emerald-400/10 dark:text-emerald-400"
+              >
+                <Timeline steps={workflowSteps} />
+              </SurfaceCard>
+            ) : null}
+
             {createdBy || data.updated_at ? (
               <SurfaceCard
                 title="Auditoria"
@@ -806,81 +847,35 @@ export default function ProcedureDetailPage() {
               </SurfaceCard>
             ) : null}
 
-            {hasWorkflowCard ? (
+            {hasTimelineCard ? (
               <SurfaceCard
-                title="Fluxo Operacional"
-                icon={<Stethoscope size={14} />}
-                accent="bg-emerald-400"
-                iconTone="bg-emerald-500/10 text-emerald-700 dark:bg-emerald-400/10 dark:text-emerald-400"
+                title="Linha do Tempo"
+                icon={<CalendarClock size={14} />}
+                accent="bg-indigo-400"
+                iconTone="bg-indigo-500/10 text-indigo-700 dark:bg-indigo-400/10 dark:text-indigo-400"
               >
-                <Timeline steps={workflowSteps} />
-              </SurfaceCard>
-            ) : null}
-          </div>
-
-          {hasTimelineCard ? (
-            <SurfaceCard
-              title="Linha do Tempo"
-              icon={<CalendarClock size={14} />}
-              accent="bg-indigo-400"
-              iconTone="bg-indigo-500/10 text-indigo-700 dark:bg-indigo-400/10 dark:text-indigo-400"
-            >
-              <div className="overflow-x-auto pb-1">
-                <HorizontalTimeline steps={timelineSteps} />
-              </div>
-            </SurfaceCard>
-          ) : null}
-
-          <div className="grid items-start gap-3">
-            <div className="grid gap-3">
-              {hasNotesCard ? (
-                <SurfaceCard
-                  title="Observações Clínicas"
-                  icon={<FileText size={14} />}
-                  accent="bg-slate-400"
-                  iconTone="bg-slate-500/10 text-slate-700 dark:bg-slate-400/10 dark:text-slate-400"
-                >
-                  <p className="whitespace-pre-wrap text-[13px] text-[var(--text)]">{notes}</p>
-                </SurfaceCard>
-              ) : null}
-
-              {hasOperationalGap ? (
-                <section className="rounded-xl border border-rose-300/60 bg-rose-50/60 p-4 text-sm text-rose-800 backdrop-blur-sm dark:border-rose-900/40 dark:bg-rose-900/20 dark:text-rose-200">
-                  <div className="flex items-start gap-2">
-                    <AlertTriangle size={16} className="mt-0.5 shrink-0" />
-                    <p>O procedimento está marcado como não concluído. Revise itens, execução e materiais antes de encerrar o fluxo.</p>
-                  </div>
-                </section>
-              ) : null}
-
-              {!hasOperationalGap && data.completed_at ? (
-                <section className="rounded-xl border border-emerald-300/50 bg-emerald-50/55 p-4 text-sm text-emerald-800 backdrop-blur-sm dark:border-emerald-900/40 dark:bg-emerald-900/20 dark:text-emerald-200">
-                  <div className="flex items-start gap-2">
-                    <CheckCircle2 size={16} className="mt-0.5 shrink-0" />
-                    <p>Fluxo concluído com registo finalizado e pronto para auditoria ou faturação.</p>
-                  </div>
-                </section>
-              ) : null}
-            </div>
-          </div>
-
-          <div className="grid items-start gap-3 xl:grid-cols-2">
-            {hasMaterialsCard ? (
-              <SurfaceCard
-                title={`Materiais Consumidos (${materials.length})`}
-                icon={<Package2 size={14} />}
-                accent="bg-violet-400"
-                iconTone="bg-violet-500/10 text-violet-700 dark:bg-violet-400/10 dark:text-violet-400"
-              >
-                <div className="grid gap-1.5 md:grid-cols-2">
-                  {materials.map((item) => (
-                    <ProcedureMaterialCard
-                      key={item.id || item.custom_id}
-                      item={item}
-                    />
-                  ))}
+                <div className="overflow-x-auto pb-1">
+                  <HorizontalTimeline steps={timelineSteps} />
                 </div>
               </SurfaceCard>
+            ) : null}
+
+            {hasOperationalGap ? (
+              <section className="rounded-xl border border-rose-300/60 bg-rose-50/60 p-4 text-sm text-rose-800 backdrop-blur-sm dark:border-rose-900/40 dark:bg-rose-900/20 dark:text-rose-200">
+                <div className="flex items-start gap-2">
+                  <AlertTriangle size={16} className="mt-0.5 shrink-0" />
+                  <p>O procedimento está marcado como não concluído. Revise itens, execução e materiais antes de encerrar o fluxo.</p>
+                </div>
+              </section>
+            ) : null}
+
+            {!hasOperationalGap && data.completed_at ? (
+              <section className="rounded-xl border border-emerald-300/50 bg-emerald-50/55 p-4 text-sm text-emerald-800 backdrop-blur-sm dark:border-emerald-900/40 dark:bg-emerald-900/20 dark:text-emerald-200">
+                <div className="flex items-start gap-2">
+                  <CheckCircle2 size={16} className="mt-0.5 shrink-0" />
+                  <p>Fluxo concluído com registo finalizado e pronto para auditoria ou faturação.</p>
+                </div>
+              </section>
             ) : null}
 
             {hasItemsCard ? (
@@ -890,7 +885,7 @@ export default function ProcedureDetailPage() {
                 accent="bg-sky-400"
                 iconTone="bg-sky-500/10 text-sky-700 dark:bg-sky-400/10 dark:text-sky-400"
               >
-                <div className="grid gap-1.5 md:grid-cols-2">
+                <div className="grid gap-1.5">
                   {items.map((item) => <ProcedureItemCard key={item.id || item.custom_id} item={item} />)}
                 </div>
               </SurfaceCard>
