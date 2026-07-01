@@ -443,6 +443,8 @@ export default function SmallSurgeryEditPage() {
   const [startedAt, setStartedAt] = useState("")
   const [endedAt, setEndedAt] = useState("")
   const [completedAt, setCompletedAt] = useState("")
+  const [estimatedPrice, setEstimatedPrice] = useState("0.00")
+  const [vatPct, setVatPct] = useState("16.00")
 
   // 8 — financial
 
@@ -474,7 +476,8 @@ export default function SmallSurgeryEditPage() {
       setStartedAt(toDatetimeLocal(d.started_at))
       setEndedAt(toDatetimeLocal(d.ended_at))
       setCompletedAt(toDatetimeLocal(d.completed_at))
-
+      setEstimatedPrice(d.estimated_price || "0.00")
+      setVatPct(d.vat_percentage || "16.00")
 
       // Load procedure names if IDs exist
       if (d.procedures?.length) {
@@ -559,7 +562,8 @@ export default function SmallSurgeryEditPage() {
           started_at: startedAt ? new Date(startedAt).toISOString() : null,
           ended_at: endedAt ? new Date(endedAt).toISOString() : null,
           completed_at: completedAt ? new Date(completedAt).toISOString() : null,
-
+          estimated_price: estimatedPrice,
+          vat_percentage: vatPct,
         }),
       })
       setSuccess(true)
@@ -569,7 +573,7 @@ export default function SmallSurgeryEditPage() {
     } finally {
       setSaving(false)
     }
-  }, [id, patient, procedures, surgeon, specialty, operatingRoom, preDiag, posDiag, status, priority, classification, scheduledFor, startedAt, endedAt, completedAt, router])
+  }, [id, patient, procedures, surgeon, specialty, operatingRoom, preDiag, posDiag, status, priority, classification, scheduledFor, startedAt, endedAt, completedAt, estimatedPrice, vatPct, router])
 
   if (loading) {
     return (
@@ -643,6 +647,14 @@ export default function SmallSurgeryEditPage() {
               {patientLabel && patient ? (
                 <div className="text-[11px] text-[var(--gray-500)]">Seleccionado: <span className="font-medium text-foreground">{patientLabel}</span></div>
               ) : null}
+              <div className="mt-2 grid grid-cols-2 gap-2">
+                <FieldRow label="Preço (MT)">
+                  <input type="number" step="0.01" className={inputCls} value={estimatedPrice} onChange={e => setEstimatedPrice(e.target.value)} />
+                </FieldRow>
+                <FieldRow label="IVA (%)">
+                  <input type="number" step="0.01" className={inputCls} value={vatPct} onChange={e => setVatPct(e.target.value)} />
+                </FieldRow>
+              </div>
             </SurfaceCard>
 
             <SurfaceCard title="3 · Cirurgião e especialidade" icon={<Stethoscope size={13} />} accent="bg-emerald-400">
