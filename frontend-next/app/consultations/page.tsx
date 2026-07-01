@@ -676,21 +676,21 @@ export default function ConsultationsPage() {
         key={r.id}
         type="button"
         onClick={() => setDetailRow(r)}
-        className="group relative w-full overflow-hidden rounded-xl border border-white/20 bg-white/40 p-2.5 pl-3 text-left shadow-sm backdrop-blur-sm transition hover:-translate-y-px hover:border-white/40 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 dark:border-white/10 dark:bg-white/[0.04]"
+        className="group relative w-full overflow-hidden rounded-lg border border-white/20 bg-white/40 p-1.5 pb-4 pl-2.5 text-left shadow-sm backdrop-blur-sm transition hover:-translate-y-px hover:border-white/40 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 dark:border-white/10 dark:bg-white/[0.04]"
       >
         <span className={`absolute left-0 top-0 h-full w-1 ${accent}`} />
-        <div className="flex items-center gap-2">
-          <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-xs font-bold text-white shadow-sm ${accent}`}>
+        <div className="flex items-center gap-1.5">
+          <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-[11px] font-bold text-white shadow-sm ${accent}`}>
             {initial}
           </span>
           <div className="min-w-0 flex-1">
-            <div className="truncate text-sm font-semibold text-foreground">{r.patient_name || "-"}</div>
-            <div className="truncate text-[11px] text-muted-foreground">{r.specialty_name || r.type || "-"}</div>
+            <div className="truncate text-xs font-semibold leading-tight text-foreground">{r.patient_name || "-"}</div>
+            <div className="truncate text-[10px] leading-tight text-muted-foreground">{r.specialty_name || r.type || "-"}</div>
           </div>
-          <span className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-semibold ${badge.cls}`}>
-            {badge.label}
-          </span>
         </div>
+        <span className={`absolute bottom-1 right-1.5 rounded-full border px-1.5 py-0 text-[9px] font-semibold ${badge.cls}`}>
+          {badge.label}
+        </span>
       </button>
     )
   }, [isDueSoon, statusBadge])
