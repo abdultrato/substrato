@@ -83,8 +83,8 @@ function SurfaceCard({ title, icon, accent = "bg-sky-400", children }: {
   title: string; icon: React.ReactNode; accent?: string; children: React.ReactNode
 }) {
   return (
-    <section className={`relative overflow-hidden ${GLASS}`}>
-      <span className={`absolute left-0 top-0 h-full w-1 ${accent}`} />
+    <section className={`relative ${GLASS}`}>
+      <span className={`absolute left-0 top-0 h-full w-1 rounded-l-xl ${accent}`} />
       <div className="flex flex-col gap-3 px-3 py-3 pl-4">
         <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--gray-500)]">
           {icon}<span>{title}</span>
@@ -179,7 +179,7 @@ function SearchSelect({
           </div>
         </div>
         {open && (
-          <div className="absolute z-50 mt-1 w-full rounded-lg border border-white/30 bg-white/90 shadow-lg backdrop-blur-sm dark:bg-[var(--surface-2)]/95">
+          <div className="absolute z-[999] mt-1 w-full rounded-lg border border-white/30 bg-white/90 shadow-lg backdrop-blur-sm dark:bg-[var(--surface-2)]/95">
             <div className="border-b border-white/20 px-2 py-1.5">
               <input
                 autoFocus
@@ -276,7 +276,7 @@ function ProcedureMultiSelect({
           <Search size={11} className="text-[var(--gray-400)]" />
         </div>
         {open && (
-          <div className="absolute z-50 mt-1 w-full rounded-lg border border-white/30 bg-white/90 shadow-lg backdrop-blur-sm dark:bg-[var(--surface-2)]/95">
+          <div className="absolute z-[999] mt-1 w-full rounded-lg border border-white/30 bg-white/90 shadow-lg backdrop-blur-sm dark:bg-[var(--surface-2)]/95">
             <div className="border-b border-white/20 px-2 py-1.5">
               <input
                 autoFocus
