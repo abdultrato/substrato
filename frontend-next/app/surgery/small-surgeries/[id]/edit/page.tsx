@@ -109,8 +109,9 @@ const inputCls = "w-full rounded-lg border border-white/30 bg-white/40 px-2.5 py
 const selectCls = `${inputCls} cursor-pointer`
 
 /* Portal dropdown — mounts directly on document.body via createPortal */
-function DropdownPortal({ anchorRef, open, children }: {
+function DropdownPortal({ anchorRef, portalRef, open, children }: {
   anchorRef: React.RefObject<HTMLDivElement | null>
+  portalRef: React.RefObject<HTMLDivElement | null>
   open: boolean
   children: React.ReactNode
 }) {
@@ -139,6 +140,7 @@ function DropdownPortal({ anchorRef, open, children }: {
 
   return createPortal(
     <div
+      ref={portalRef}
       style={{ position: "fixed", top: pos.top, left: pos.left, width: pos.width, zIndex: 9999 }}
       className="rounded-lg border border-violet-200 bg-white shadow-xl dark:border-white/20 dark:bg-[var(--surface-1)]"
     >
@@ -164,10 +166,13 @@ function SearchSelect({
   const [open, setOpen] = useState(false)
   const [selectedLabel, setSelectedLabel] = useState("")
   const ref = useRef<HTMLDivElement>(null)
+  const portalRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     function handle(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+      const t = e.target as Node
+      if (ref.current?.contains(t) || portalRef.current?.contains(t)) return
+      setOpen(false)
     }
     document.addEventListener("mousedown", handle)
     return () => document.removeEventListener("mousedown", handle)
@@ -216,7 +221,7 @@ function SearchSelect({
             <Search size={11} className="text-[var(--gray-400)]" />
           </div>
         </div>
-        <DropdownPortal anchorRef={ref} open={open}>
+        <DropdownPortal anchorRef={ref} portalRef={portalRef} open={open}>
           <div className="border-b border-violet-100 px-2 py-1.5 dark:border-white/10">
             <input
               autoFocus
@@ -233,7 +238,7 @@ function SearchSelect({
                 <div
                   key={item.id}
                   className={`cursor-pointer px-3 py-1.5 text-[12px] hover:bg-violet-50 dark:hover:bg-white/10 ${item.id === value ? "font-semibold text-violet-700 dark:text-violet-300" : "text-[var(--text)]"}`}
-                  onClick={() => select(item)}
+                  onMouseDown={e => { e.preventDefault(); select(item) }}
                 >
                   {item[labelField] || item.name}
                   {item.custom_id ? <span className="ml-1 text-[10px] text-[var(--gray-400)]">{item.custom_id}</span> : null}
@@ -258,10 +263,13 @@ function ProcedureMultiSelect({
   const [results, setResults] = useState<any[]>([])
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
+  const portalRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     function handle(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+      const t = e.target as Node
+      if (ref.current?.contains(t) || portalRef.current?.contains(t)) return
+      setOpen(false)
     }
     document.addEventListener("mousedown", handle)
     return () => document.removeEventListener("mousedown", handle)
@@ -292,7 +300,7 @@ function ProcedureMultiSelect({
 
   return (
     <FieldRow label="Procedimentos cirúrgicos">
-      <div ref={ref} className="relative">
+      <div ref={ref}>
         {/* selected chips */}
         {selected.length > 0 && (
           <div className="mb-1.5 flex flex-wrap gap-1">
@@ -311,7 +319,7 @@ function ProcedureMultiSelect({
           <span className="text-[var(--gray-400)]">Adicionar procedimento...</span>
           <Search size={11} className="text-[var(--gray-400)]" />
         </div>
-        <DropdownPortal anchorRef={ref} open={open}>
+        <DropdownPortal anchorRef={ref} portalRef={portalRef} open={open}>
           <div className="border-b border-violet-100 px-2 py-1.5 dark:border-white/10">
             <input
               autoFocus
@@ -330,7 +338,7 @@ function ProcedureMultiSelect({
                   <div
                     key={item.id}
                     className={`flex cursor-pointer items-center gap-2 px-3 py-1.5 text-[12px] hover:bg-violet-50 dark:hover:bg-white/10 ${isSelected ? "bg-violet-50 dark:bg-violet-900/20" : ""}`}
-                    onClick={() => toggle(item)}
+                    onMouseDown={e => { e.preventDefault(); toggle(item) }}
                   >
                     <span className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border ${isSelected ? "border-violet-500 bg-violet-500 text-white" : "border-[var(--gray-300)]"}`}>
                       {isSelected ? <CheckCircle2 size={10} /> : null}
