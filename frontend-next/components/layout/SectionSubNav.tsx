@@ -109,18 +109,18 @@ export default function SectionSubNav() {
     if (modules.length < 2) return null
 
     return (
-        <nav className="shrink-0 border-b border-border/70 bg-card/90 backdrop-blur supports-[backdrop-filter]:bg-card/80">
+        <nav className="shrink-0 border-b border-border/50 bg-primary/[0.03] backdrop-blur supports-[backdrop-filter]:bg-primary/[0.04] dark:bg-primary/[0.05]">
             <div className="flex items-center gap-1.5 px-2 py-1 sm:px-3 md:px-4">
                 <button
                     type="button"
                     onClick={() => scrollBy("left")}
                     disabled={!canScrollLeft}
-                    className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-border bg-card text-foreground shadow-sm transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/25 disabled:pointer-events-none disabled:opacity-0 ${
+                    className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-border/80 bg-background/80 text-foreground-2 shadow-sm transition hover:border-primary/35 hover:bg-primary/8 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/25 disabled:pointer-events-none disabled:opacity-0 ${
                         canScrollLeft ? "" : "invisible"
                     }`}
                     aria-label={t("Mostrar módulos anteriores", "Show previous modules")}
                 >
-                    <ChevronLeft size={16} />
+                    <ChevronLeft size={15} />
                 </button>
 
                 <div
@@ -134,13 +134,13 @@ export default function SectionSubNav() {
                             <Link
                                 key={item.href}
                                 href={item.href}
-                                className={`inline-flex h-7 shrink-0 items-center gap-1.5 rounded-full border px-2.5 text-xs font-semibold transition-colors ${
+                                className={`inline-flex h-7 shrink-0 items-center gap-1.5 rounded-full border px-2.5 text-xs font-semibold transition-all ${
                                     active
-                                        ? "border-primary/40 bg-primary-soft text-foreground"
-                                        : "border-transparent text-foreground-2 hover:border-border hover:bg-muted hover:text-foreground"
+                                        ? "border-primary/35 bg-gradient-to-b from-primary/15 to-primary/8 text-primary shadow-sm"
+                                        : "border-transparent text-foreground-2 hover:border-primary/20 hover:bg-primary/[0.06] hover:text-foreground"
                                 }`}
                             >
-                                {Icon ? <Icon size={13} className="shrink-0" /> : null}
+                                {Icon ? <Icon size={13} className={`shrink-0 ${active ? "text-primary" : "text-muted-foreground"}`} /> : null}
                                 {t(item.label, item.labelEn || item.label)}
                             </Link>
                         )
@@ -151,12 +151,12 @@ export default function SectionSubNav() {
                     type="button"
                     onClick={() => scrollBy("right")}
                     disabled={!canScrollRight}
-                    className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-border bg-card text-foreground shadow-sm transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/25 disabled:pointer-events-none disabled:opacity-0 ${
+                    className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-border/80 bg-background/80 text-foreground-2 shadow-sm transition hover:border-primary/35 hover:bg-primary/8 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/25 disabled:pointer-events-none disabled:opacity-0 ${
                         canScrollRight ? "" : "invisible"
                     }`}
                     aria-label={t("Mostrar próximos módulos", "Show next modules")}
                 >
-                    <ChevronRight size={16} />
+                    <ChevronRight size={15} />
                 </button>
             </div>
         </nav>

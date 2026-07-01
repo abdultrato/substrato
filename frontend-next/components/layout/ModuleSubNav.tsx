@@ -599,7 +599,7 @@ export default function ModuleSubNav() {
     if (!showBack && !hasUsefulTabs) return null
 
     return (
-        <nav className="shrink-0 border-b border-border/80 bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/85">
+        <nav className="shrink-0 border-b border-border/50 bg-primary/[0.06] backdrop-blur supports-[backdrop-filter]:bg-primary/[0.07] dark:bg-primary/[0.09]">
             <div className="flex items-center gap-1.5 px-2 py-1 sm:px-3 md:px-4">
                 {showBack ? (
                     <button
@@ -611,7 +611,7 @@ export default function ModuleSubNav() {
                             }
                             router.push(moduleNav.baseHref)
                         }}
-                        className="inline-flex h-7 shrink-0 items-center gap-1 rounded-md border border-border bg-background px-2 text-xs font-semibold text-foreground-2 shadow-sm transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/25"
+                        className="inline-flex h-7 shrink-0 items-center gap-1 rounded-lg border border-border/80 bg-background/80 px-2 text-xs font-semibold text-foreground-2 shadow-sm transition-colors hover:border-primary/35 hover:bg-primary/8 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/25"
                     >
                         <ChevronLeft size={14} />
                         {t("Voltar", "Back")}
@@ -622,13 +622,13 @@ export default function ModuleSubNav() {
                     type="button"
                     onClick={() => scrollModuleNav("left")}
                     disabled={!canScrollLeft}
-                    className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-border bg-card text-foreground shadow-sm transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/25 disabled:pointer-events-none disabled:opacity-0 ${
+                    className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-border/80 bg-background/80 text-foreground-2 shadow-sm transition hover:border-primary/35 hover:bg-primary/8 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/25 disabled:pointer-events-none disabled:opacity-0 ${
                         canScrollLeft ? "" : "invisible"
                     }`}
                     aria-label={t("Mostrar atalhos anteriores", "Show previous shortcuts")}
                     title={t("Mostrar atalhos anteriores", "Show previous shortcuts")}
                 >
-                    <ChevronLeft size={16} />
+                    <ChevronLeft size={15} />
                 </button>
 
                 <div
@@ -641,10 +641,10 @@ export default function ModuleSubNav() {
                             <Link
                                 key={tab.href}
                                 href={tab.href}
-                                className={`inline-flex h-7 shrink-0 items-center rounded-full border px-2.5 text-xs font-medium transition-colors ${
+                                className={`inline-flex h-7 shrink-0 items-center rounded-full border px-2.5 text-xs font-medium transition-all ${
                                     active
-                                        ? "border-primary/40 bg-primary-soft text-foreground"
-                                        : "border-transparent text-foreground-2 hover:border-border hover:bg-muted hover:text-foreground"
+                                        ? "border-primary/35 bg-gradient-to-b from-primary/15 to-primary/8 text-primary shadow-sm"
+                                        : "border-transparent text-foreground-2 hover:border-primary/20 hover:bg-primary/[0.06] hover:text-foreground"
                                 }`}
                             >
                                 {t(tab.label, tab.labelEn || tab.label)}
@@ -657,13 +657,13 @@ export default function ModuleSubNav() {
                     type="button"
                     onClick={() => scrollModuleNav("right")}
                     disabled={!canScrollRight}
-                    className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-border bg-card text-foreground shadow-sm transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/25 disabled:pointer-events-none disabled:opacity-0 ${
+                    className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-border/80 bg-background/80 text-foreground-2 shadow-sm transition hover:border-primary/35 hover:bg-primary/8 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/25 disabled:pointer-events-none disabled:opacity-0 ${
                         canScrollRight ? "" : "invisible"
                     }`}
                     aria-label={t("Mostrar próximos atalhos", "Show next shortcuts")}
                     title={t("Mostrar próximos atalhos", "Show next shortcuts")}
                 >
-                    <ChevronRight size={16} />
+                    <ChevronRight size={15} />
                 </button>
             </div>
         </nav>
