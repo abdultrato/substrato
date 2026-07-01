@@ -259,8 +259,10 @@ export default function SmallSurgeryDetailPage() {
 
           <div style={{ breakInside: "avoid", marginBottom: "0.75rem" }}>
             <SurfaceCard title="Paciente" icon={<User size={13} />} accent="bg-sky-400">
-              <div className="grid gap-2">
-                <Field label="Nome" value={data.patient_name} />
+              <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+                <div className="col-span-2">
+                  <Field label="Nome" value={data.patient_name} />
+                </div>
                 {data.specialty_name && <Field label="Especialidade" value={data.specialty_name} />}
                 {data.classification && <Field label="Classificação" value={CLASS_LABEL[data.classification] || data.classification} />}
                 {data.surgery_size && <Field label="Tipo de cirurgia" value={SURGERY_SIZE_LABEL[data.surgery_size] || data.surgery_size} />}
