@@ -37,7 +37,7 @@ class Migration(migrations.Migration):
                     fields=[
                         ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                         ('quantity', models.PositiveIntegerField(default=1, verbose_name='Quantidade')),
-                        ('procedure', models.ForeignKey(db_column='procedure_id', on_delete=django.db.models.deletion.CASCADE, related_name='material_entries', to='cirurgia.surgicalprocedure')),
+                        ('procedure', models.ForeignKey(db_column='surgicalprocedure_id', on_delete=django.db.models.deletion.CASCADE, related_name='material_entries', to='cirurgia.surgicalprocedure')),
                         ('product', models.ForeignKey(db_column='product_id', on_delete=django.db.models.deletion.CASCADE, related_name='cirurgia_procedimento_entries', to='farmacia.product')),
                     ],
                     options={

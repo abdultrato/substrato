@@ -15,7 +15,7 @@ class SurgicalProcedureMaterial(models.Model):
         "SurgicalProcedure",
         on_delete=models.CASCADE,
         related_name="material_entries",
-        db_column="procedure_id",
+        db_column="surgicalprocedure_id",
     )
     product = models.ForeignKey(
         "farmacia.Product",
