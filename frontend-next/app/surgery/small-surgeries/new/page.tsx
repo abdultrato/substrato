@@ -482,7 +482,7 @@ export default function SmallSurgeryNewPage() {
           procedures: procedures.map(p => p.id),
           surgeons: surgeons.map(s => s.id),
           specialty: specialty ?? null,
-          operating_room: operatingRoom ?? null,
+          ward: operatingRoom ?? null,
           preoperative_diagnosis: preDiag || null,
           postoperative_diagnosis: posDiag || null,
           priority,

@@ -131,6 +131,16 @@ class Surgery(NoNameCoreModel):
         related_name="surgeries",
         db_index=True,
     )
+    ward = models.ForeignKey(
+        "enfermagem.Ward",
+        db_column="ward_id",
+        verbose_name="Bloco / enfermaria",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="surgeries",
+        db_index=True,
+    )
 
     procedures = models.ManyToManyField(
 

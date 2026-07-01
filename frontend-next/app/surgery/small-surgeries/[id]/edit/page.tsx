@@ -533,8 +533,8 @@ export default function SmallSurgeryEditPage() {
       setSurgeons((d.surgeon_names || []).map((s: any) => ({ id: s.id, name: s.name })))
       setSpecialty(d.specialty ?? null)
       setSpecialtyLabel(d.specialty_name || "")
-      setOperatingRoom(d.operating_room ?? null)
-      setOperatingRoomLabel(d.operating_room_name || "")
+      setOperatingRoom(d.ward ?? null)
+      setOperatingRoomLabel(d.ward_name || "")
       setPreDiag(d.preoperative_diagnosis || "")
       setPosDiag(d.postoperative_diagnosis || "")
       setStatus(d.status || "DRAFT")
@@ -620,7 +620,7 @@ export default function SmallSurgeryEditPage() {
           procedures: procedures.map(p => p.id),
           surgeons: surgeons.map(s => s.id),
           specialty: specialty ?? null,
-          operating_room: operatingRoom ?? null,
+          ward: operatingRoom ?? null,
           preoperative_diagnosis: preDiag,
           postoperative_diagnosis: posDiag,
           status,
