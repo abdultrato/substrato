@@ -886,6 +886,7 @@ export default function ConsultationsPage() {
 
   return (
     <AppLayout
+      fullWidth
       requiredGroups={[
         GROUPS.ADMIN,
         GROUPS.RECEPCAO,
@@ -897,27 +898,27 @@ export default function ConsultationsPage() {
       <div className="space-y-1.5">
 
         {/* Header */}
-        <div className="relative overflow-hidden rounded-xl border border-white/20 bg-white/30 px-4 py-2.5 shadow-sm backdrop-blur-sm dark:bg-white/5 dark:border-white/10">
-          <h1 className="text-lg font-bold text-foreground">{t("Consultas", "Consultations")}</h1>
-          <p className="text-[11px] text-muted-foreground">{t("Gestão do fluxo de consultas médicas", "Medical consultation flow management")}</p>
+        <div className="relative flex flex-wrap items-center justify-between gap-2 overflow-hidden rounded-xl border border-white/20 bg-white/30 px-4 py-2.5 shadow-sm backdrop-blur-sm dark:bg-white/5 dark:border-white/10">
+          <div className="min-w-0">
+            <h1 className="text-lg font-bold text-foreground">{t("Consultas", "Consultations")}</h1>
+            <p className="text-[11px] text-muted-foreground">{t("Gestão do fluxo de consultas médicas", "Medical consultation flow management")}</p>
+          </div>
+          {canWrite && !scheduleFormOpen ? (
+            <button
+              type="button"
+              onClick={() => setScheduleFormOpen(true)}
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-indigo-600 px-4 py-2 text-xs font-semibold text-white shadow-md shadow-violet-500/30 transition hover:from-violet-700 hover:to-indigo-700"
+            >
+              <CalendarPlus size={13} />
+              {t("Marcar consulta", "Schedule consultation")}
+            </button>
+          ) : null}
         </div>
 
         {errorMessage ? (
           <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-800/40 dark:bg-red-900/15 dark:text-red-300">
             {errorMessage}
           </div>
-        ) : null}
-
-        {/* Form — colapsado: só o botão; ao clicar, abre o cartão completo */}
-        {canWrite && !scheduleFormOpen ? (
-          <button
-            type="button"
-            onClick={() => setScheduleFormOpen(true)}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-indigo-600 px-4 py-2 text-xs font-semibold text-white shadow-md shadow-violet-500/30 transition hover:from-violet-700 hover:to-indigo-700"
-          >
-            <CalendarPlus size={13} />
-            {t("Marcar consulta", "Schedule consultation")}
-          </button>
         ) : null}
 
         {/* Form */}

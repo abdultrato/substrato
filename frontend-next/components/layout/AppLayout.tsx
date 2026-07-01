@@ -34,6 +34,8 @@ interface Props {
     rightAside?: ReactNode
     rightAsideWidth?: string
     subNav?: ReactNode
+    /** Quando true, o conteúdo ocupa toda a largura disponível (sem o limite de 85vw). */
+    fullWidth?: boolean
 }
 
 export default function AppLayout ( {
@@ -41,6 +43,7 @@ export default function AppLayout ( {
     requiredGroups,
     rightAside,
     rightAsideWidth = "20rem",
+    fullWidth = false,
     subNav,
 }: Props ) {
     const { loading } = useAuthGuard()
@@ -326,7 +329,7 @@ export default function AppLayout ( {
                 </div>
 
                 <main ref={mainRef} data-no-scroll-arrows className="substrato-app-surface min-h-0 flex-1 min-w-0 overflow-x-hidden overflow-y-auto px-2 py-2 sm:px-3 md:px-4 md:py-3">
-                    <div className="page-transition mx-auto w-workspace max-w-workspace">
+                    <div className={`page-transition ${fullWidth ? "w-full" : "mx-auto w-workspace max-w-workspace"}`}>
                         <AutoTranslateTree>{children}</AutoTranslateTree>
                     </div>
                 </main>
