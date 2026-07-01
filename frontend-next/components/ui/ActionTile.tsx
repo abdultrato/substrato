@@ -7,6 +7,7 @@ export default function ActionTile({
   href,
   icon,
   accentClass,
+  iconClass,
 }: {
   title: string
   description?: string
@@ -14,6 +15,8 @@ export default function ActionTile({
   icon: any
   /** Barra lateral colorida (ex.: "border-l-sky-500"). */
   accentClass?: string
+  /** Classe de cor do chip do ícone (ex.: "bg-sky-500/15 text-sky-600"). */
+  iconClass?: string
 }) {
   const { tr } = useLanguage()
   const Icon = icon as any
@@ -25,7 +28,7 @@ export default function ActionTile({
     >
       <span
         aria-hidden
-        className="pointer-events-none flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground shadow-sm transition-colors group-hover:bg-[var(--primary-100)] group-hover:text-orange-600 dark:group-hover:bg-[var(--primary-900)] dark:group-hover:text-orange-500"
+        className={`pointer-events-none flex h-7 w-7 shrink-0 items-center justify-center rounded-lg shadow-sm transition-colors ${iconClass ?? "bg-muted text-muted-foreground group-hover:bg-[var(--primary-100)] group-hover:text-orange-600 dark:group-hover:bg-[var(--primary-900)] dark:group-hover:text-orange-500"}`}
       >
         <Icon size={14} strokeWidth={2} />
       </span>

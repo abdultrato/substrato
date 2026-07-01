@@ -12,6 +12,11 @@ type WorkspaceMetric = {
   label: string
   value: string | number
   hint?: string
+  icon?: LucideIcon
+  /** Barra lateral colorida (ex.: "border-l-sky-500"). */
+  accentClass?: string
+  /** Cor do chip do ícone (ex.: "bg-sky-500/15 text-sky-600 dark:text-sky-300"). */
+  iconClass?: string
 }
 
 type WorkspaceAction = {
@@ -19,6 +24,10 @@ type WorkspaceAction = {
   description?: string
   href: string
   icon: LucideIcon
+  /** Barra lateral colorida (ex.: "border-l-sky-500"). */
+  accentClass?: string
+  /** Cor do chip do ícone (ex.: "bg-sky-500/15 text-sky-600 dark:text-sky-300"). */
+  iconClass?: string
 }
 
 type WorkspaceHubProps = {
@@ -71,13 +80,21 @@ export default function WorkspaceHub({
         }
       />
 
-      <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-4 gap-1.5">
         {metrics.map((item) => (
-          <MetricCard key={item.label} label={item.label} value={item.value} hint={item.hint} />
+          <MetricCard
+            key={item.label}
+            label={item.label}
+            value={item.value}
+            hint={item.hint}
+            icon={item.icon}
+            accentClass={item.accentClass}
+            iconClass={item.iconClass}
+          />
         ))}
       </div>
 
-      <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-1.5 xl:grid-cols-4">
         {actions.map((item) => (
           <ActionTile
             key={item.href}
@@ -85,6 +102,8 @@ export default function WorkspaceHub({
             description={item.description}
             href={item.href}
             icon={item.icon}
+            accentClass={item.accentClass}
+            iconClass={item.iconClass}
           />
         ))}
       </div>

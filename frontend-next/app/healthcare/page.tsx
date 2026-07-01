@@ -82,10 +82,10 @@ export default function HealthcarePage() {
           adminHref="/admin/"
           secondaryCta={{ href: "/patients", label: t("Abrir pacientes", "Open Patients") }}
           metrics={[
-            { label: "Pacientes", value: metricValue || patients },
-            { label: "Consultas", value: metricValue || consultations },
-            { label: "Requisições laboratoriais", value: metricValue || requests },
-            { label: "Itens de resultado", value: metricValue || results },
+            { label: "Pacientes", value: metricValue || patients, icon: Users, accentClass: "border-l-sky-500", iconClass: "bg-sky-500/15 text-sky-600 dark:text-sky-300" },
+            { label: "Consultas", value: metricValue || consultations, icon: CalendarClock, accentClass: "border-l-emerald-500", iconClass: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-300" },
+            { label: "Requisições laboratoriais", value: metricValue || requests, icon: ClipboardList, accentClass: "border-l-violet-500", iconClass: "bg-violet-500/15 text-violet-600 dark:text-violet-300" },
+            { label: "Itens de resultado", value: metricValue || results, icon: FlaskConical, accentClass: "border-l-amber-500", iconClass: "bg-amber-500/15 text-amber-600 dark:text-amber-300" },
           ]}
           actions={[
             {
@@ -93,24 +93,32 @@ export default function HealthcarePage() {
               description: t("Cadastro e histórico clínico.", "Clinical registration and history."),
               href: "/patients",
               icon: Users,
+              accentClass: "border-l-sky-500",
+              iconClass: "bg-sky-500/15 text-sky-600 dark:text-sky-300",
             },
             {
               title: "Consultas",
               description: t("Agenda clínica e seguimento.", "Clinical schedule and follow-up."),
               href: "/consultations",
               icon: CalendarClock,
+              accentClass: "border-l-emerald-500",
+              iconClass: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-300",
             },
             {
               title: "Requisições",
               description: t("Pedidos laboratoriais e operacionais.", "Laboratory and operational requests."),
               href: "/requests",
               icon: ClipboardList,
+              accentClass: "border-l-violet-500",
+              iconClass: "bg-violet-500/15 text-violet-600 dark:text-violet-300",
             },
             {
               title: "Laboratório",
               description: t("Registo e validação de resultados.", "Result registration and validation."),
               href: "/clinical-laboratory",
               icon: FlaskConical,
+              accentClass: "border-l-amber-500",
+              iconClass: "bg-amber-500/15 text-amber-600 dark:text-amber-300",
             },
           ]}
         />
