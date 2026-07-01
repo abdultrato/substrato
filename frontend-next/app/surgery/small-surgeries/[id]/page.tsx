@@ -312,21 +312,6 @@ export default function SmallSurgeryDetailPage() {
           {/* col direita */}
           <div className="flex flex-col gap-3">
 
-            <SurfaceCard title="Estado e datas" icon={<Clock3 size={13} />} accent={statusAccent(status)}>
-              <div className="grid gap-1.5">
-                <Field label="Estado" value={
-                  <span className={`inline-block rounded-full border px-2 py-0.5 text-[10px] font-semibold ${statusBadge(status)}`}>
-                    {STATUS_LABEL[status] || status}
-                  </span>
-                } />
-                <Field label="Agendada para" value={fmtDate(data.scheduled_for || data.agendada_para)} />
-                {data.started_at ? <Field label="Iniciada em" value={fmtDate(data.started_at)} /> : null}
-                {data.ended_at ? <Field label="Terminada em" value={fmtDate(data.ended_at)} /> : null}
-                {data.completed_at ? <Field label="Concluída em" value={fmtDate(data.completed_at)} /> : null}
-                {data.canceled_at ? <Field label="Cancelada em" value={fmtDate(data.canceled_at)} /> : null}
-              </div>
-            </SurfaceCard>
-
             <SurfaceCard title="Financeiro" icon={<CreditCard size={13} />} accent="bg-emerald-400">
               <div className="grid gap-1.5">
                 <Field label="Preço estimado" value={`${estimatedPrice} MT`} />
@@ -346,6 +331,53 @@ export default function SmallSurgeryDetailPage() {
 
           </div>
         </div>
+
+        {/* cronologia full-width */}
+        <section className={`relative overflow-hidden ${GLASS}`}>
+          <span className={`absolute left-0 top-0 h-full w-1 ${statusAccent(status)}`} />
+          <div className="px-4 py-3 pl-5">
+            <div className="mb-3 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--gray-500)]">
+              <Clock3 size={13} />
+              <span>Cronologia cirúrgica</span>
+              <span className={`ml-2 rounded-full border px-2 py-0.5 text-[9px] font-semibold ${statusBadge(status)}`}>
+                {STATUS_LABEL[status] || status}
+              </span>
+            </div>
+            <div className="flex items-start gap-0">
+              {[
+                { label: "Agendada", date: data.scheduled_for || data.agendada_para, done: !!(data.scheduled_for || data.agendada_para), color: "bg-violet-400", dotColor: "bg-violet-400", textColor: "text-violet-600 dark:text-violet-400" },
+                { label: "Iniciada", date: data.started_at || data.iniciada_em, done: !!(data.started_at || data.iniciada_em), color: "bg-sky-400", dotColor: "bg-sky-400", textColor: "text-sky-600 dark:text-sky-400" },
+                { label: "Terminada", date: data.ended_at || data.terminada_em, done: !!(data.ended_at || data.terminada_em), color: "bg-amber-400", dotColor: "bg-amber-400", textColor: "text-amber-600 dark:text-amber-400" },
+                { label: "Concluída", date: data.completed_at || data.concluida_em, done: !!(data.completed_at || data.concluida_em), color: "bg-emerald-400", dotColor: "bg-emerald-400", textColor: "text-emerald-600 dark:text-emerald-400" },
+                { label: "Cancelada", date: data.canceled_at || data.cancelada_em, done: !!(data.canceled_at || data.cancelada_em), color: "bg-rose-400", dotColor: "bg-rose-400", textColor: "text-rose-600 dark:text-rose-400" },
+              ].map((step, i, arr) => (
+                <div key={step.label} className="flex flex-1 flex-col">
+                  <div className="flex items-center">
+                    <span className={`relative z-10 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2 shadow-sm transition-all ${
+                      step.done
+                        ? `border-white/60 ${step.dotColor} dark:border-white/20`
+                        : "border-white/40 bg-white/30 dark:border-white/10 dark:bg-white/[0.06]"
+                    }`}>
+                      {step.done
+                        ? <CheckCircle2 size={13} className="text-white" />
+                        : <span className="h-2 w-2 rounded-full bg-[var(--gray-300)] dark:bg-white/20" />
+                      }
+                    </span>
+                    {i < arr.length - 1 ? (
+                      <span className={`h-0.5 flex-1 ${step.done ? `${step.color} opacity-60` : "bg-white/25 dark:bg-white/10"}`} />
+                    ) : null}
+                  </div>
+                  <div className="mt-2 pr-2">
+                    <p className={`text-[11px] font-semibold ${step.done ? step.textColor : "text-[var(--gray-400)]"}`}>{step.label}</p>
+                    <p className={`mt-0.5 text-[10px] ${step.done ? "text-[var(--gray-500)]" : "text-[var(--gray-300)]"}`}>
+                      {step.done ? fmtDate(step.date) : "Pendente"}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
 
         {/* status banner */}
         {isDone ? (
