@@ -607,13 +607,13 @@ export default function SmallSurgeryEditPage() {
               <div className="flex items-center gap-2">
                 <div className="flex flex-col items-end gap-0.5">
                   <label className="text-[10px] text-[var(--gray-500)]">Preço (MT)</label>
-                  <input type="number" step="0.01" value={estimatedPrice} onChange={e => setEstimatedPrice(e.target.value)}
-                    className="h-6 w-24 rounded border border-white/30 bg-white/40 px-2 text-right text-[11px] text-[var(--text)] backdrop-blur-sm focus:outline-none focus:ring-1 focus:ring-violet-400 dark:bg-white/[0.06]" />
+                  <input type="number" step="0.01" value={estimatedPrice} readOnly
+                    className="h-6 w-24 rounded border border-white/30 bg-white/20 px-2 text-right text-[11px] text-[var(--text)] opacity-70 backdrop-blur-sm dark:bg-white/[0.04]" />
                 </div>
                 <div className="flex flex-col items-end gap-0.5">
                   <label className="text-[10px] text-[var(--gray-500)]">IVA (%)</label>
-                  <input type="number" step="0.01" value={vatPct} onChange={e => setVatPct(e.target.value)}
-                    className="h-6 w-16 rounded border border-white/30 bg-white/40 px-2 text-right text-[11px] text-[var(--text)] backdrop-blur-sm focus:outline-none focus:ring-1 focus:ring-violet-400 dark:bg-white/[0.06]" />
+                  <input type="number" step="0.01" value={vatPct} readOnly
+                    className="h-6 w-16 rounded border border-white/30 bg-white/20 px-2 text-right text-[11px] text-[var(--text)] opacity-70 backdrop-blur-sm dark:bg-white/[0.04]" />
                 </div>
                 <div className="h-6 w-px bg-[var(--gray-200)] dark:bg-white/10" />
               </div>
