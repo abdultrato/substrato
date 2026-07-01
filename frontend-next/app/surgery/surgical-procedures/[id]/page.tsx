@@ -347,7 +347,7 @@ export default function SurgicalProcedureDetailPage() {
           <div className="px-4 py-3 pl-5">
             <div className="mb-2 flex items-center justify-between gap-2">
               <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--gray-500)]">
-                <Package size={13} /><span>Materiais e produtos (Farmácia)</span>
+                <Package size={13} /><span>Materiais e produtos</span>
               </div>
               {materials.length > 0 && (
                 <span className="rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[9px] font-semibold text-amber-700 dark:border-amber-700/30 dark:bg-amber-900/20 dark:text-amber-300">
