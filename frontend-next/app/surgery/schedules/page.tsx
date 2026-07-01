@@ -167,6 +167,21 @@ interface Surgery {
   scheduled_for: string
   started_at: string | null
   ended_at: string | null
+  procedures_price_total: string | null
+  procedures_vat_percentage: string | null
+  estimated_price: string | null
+  vat_percentage: string | null
+}
+
+function calcPrice(s: Surgery): { base: number; vat: number; total: number } | null {
+  const base = parseFloat(s.procedures_price_total || s.estimated_price || "0")
+  const vat = parseFloat(s.procedures_vat_percentage || s.vat_percentage || "0")
+  if (!base) return null
+  return { base, vat, total: base * (1 + vat / 100) }
+}
+
+function fmtMT(n: number) {
+  return n.toLocaleString("pt-PT", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " MT"
 }
 
 export default function SurgerySchedulesPage() {
@@ -367,6 +382,11 @@ export default function SurgerySchedulesPage() {
                                   {s.surgeon_names[0].name}
                                 </p>
                               )}
+                              {height >= 76 && (() => { const p = calcPrice(s); return p ? (
+                                <p className="mt-0.5 pl-3 text-[9px] font-semibold leading-tight text-teal-600 dark:text-teal-400">
+                                  {fmtMT(p.total)}{p.vat > 0 ? ` (c/ ${p.vat}% IVA)` : ""}
+                                </p>
+                              ) : null })()}
                             </div>
                             <div className="flex items-center justify-between">
                               <span className="text-[9px] tabular-nums text-[var(--gray-400)]">
@@ -435,6 +455,11 @@ export default function SurgerySchedulesPage() {
 
                 {/* badges */}
                 <div className="flex shrink-0 flex-col items-end gap-1">
+                  {(() => { const p = calcPrice(s); return p ? (
+                    <span className="text-[11px] font-semibold tabular-nums text-teal-600 dark:text-teal-400">
+                      {fmtMT(p.total)}
+                    </span>
+                  ) : null })()}
                   <span className={`rounded-full border px-2 py-0.5 text-[9px] font-semibold ${PRIORITY_BADGE[s.priority] || "border-slate-200 bg-slate-50 text-slate-500"}`}>
                     {PRIORITY_LABEL[s.priority] || s.priority || "—"}
                   </span>
