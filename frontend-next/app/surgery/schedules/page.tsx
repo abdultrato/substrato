@@ -98,6 +98,61 @@ const MIN_PX = 2
 const HOUR_PX = 60 * MIN_PX
 const TIMELINE_START = 7 * 60 // 7h
 
+// Assign each surgery a column index and total column count so overlapping
+// surgeries share the horizontal space instead of stacking on top of each other.
+interface LayoutBlock {
+  id: number
+  startMin: number
+  endMin: number
+  col: number
+  totalCols: number
+}
+
+function buildLayout(surgeries: Surgery[]): Map<number, LayoutBlock> {
+  // sort by start time
+  const items = surgeries.map(s => ({
+    id: s.id,
+    startMin: minuteOfDay(s.scheduled_for),
+    endMin: s.ended_at ? minuteOfDay(s.ended_at) : minuteOfDay(s.scheduled_for) + 60,
+  })).sort((a, b) => a.startMin - b.startMin)
+
+  // greedy column assignment
+  const cols: number[] = [] // cols[i] = endMin of last item placed in column i
+  const assigned: { id: number; col: number }[] = []
+
+  for (const item of items) {
+    let placed = false
+    for (let c = 0; c < cols.length; c++) {
+      if (cols[c] <= item.startMin) {
+        cols[c] = item.endMin
+        assigned.push({ id: item.id, col: c })
+        placed = true
+        break
+      }
+    }
+    if (!placed) {
+      assigned.push({ id: item.id, col: cols.length })
+      cols.push(item.endMin)
+    }
+  }
+
+  // for each item, totalCols = max col index among items that overlap with it + 1
+  const colMap = new Map(assigned.map(a => [a.id, a.col]))
+  const result = new Map<number, LayoutBlock>()
+
+  for (const item of items) {
+    const myCol = colMap.get(item.id)!
+    // find all items that overlap this one
+    const overlapping = items.filter(
+      o => o.id !== item.id && o.startMin < item.endMin && o.endMin > item.startMin
+    )
+    const maxCol = Math.max(myCol, ...overlapping.map(o => colMap.get(o.id)!))
+    result.set(item.id, { ...item, col: myCol, totalCols: maxCol + 1 })
+  }
+
+  return result
+}
+
 interface Surgery {
   id: number
   custom_id: string
@@ -252,79 +307,86 @@ export default function SurgerySchedulesPage() {
           </div>
         ) : view === "timeline" ? (
           /* ── TIMELINE VIEW ── */
-          <div className={`overflow-auto ${GLASS}`}>
-            <div className="relative" style={{ minHeight: `${HOURS.length * HOUR_PX}px` }}>
-              {/* hour rows */}
-              {HOURS.map(h => (
-                <div key={h} className="absolute left-0 right-0 border-t border-white/20 dark:border-white/10"
-                  style={{ top: `${(h - 7) * HOUR_PX}px` }}>
-                  <span className="absolute left-2 -translate-y-1/2 text-[10px] text-[var(--gray-400)] tabular-nums">
-                    {String(h).padStart(2, "0")}:00
-                  </span>
-                </div>
-              ))}
+          (() => {
+            const layout = buildLayout(surgeries)
+            return (
+              <div className={`overflow-auto ${GLASS}`}>
+                <div className="relative" style={{ minHeight: `${HOURS.length * HOUR_PX}px` }}>
+                  {/* hour rows */}
+                  {HOURS.map(h => (
+                    <div key={h} className="absolute left-0 right-0 border-t border-white/20 dark:border-white/10"
+                      style={{ top: `${(h - 7) * HOUR_PX}px` }}>
+                      <span className="absolute left-2 -translate-y-1/2 text-[10px] text-[var(--gray-400)] tabular-nums">
+                        {String(h).padStart(2, "0")}:00
+                      </span>
+                    </div>
+                  ))}
 
-              {/* now line */}
-              {nowMinute !== null && nowMinute >= TIMELINE_START && nowMinute <= (TIMELINE_START + HOURS.length * 60) && (
-                <div ref={nowRef} className="absolute left-0 right-0 z-20 flex items-center"
-                  style={{ top: `${(nowMinute - TIMELINE_START) * MIN_PX}px` }}>
-                  <span className="ml-12 h-2 w-2 rounded-full bg-red-500 shadow-sm" />
-                  <span className="flex-1 border-t border-red-500/60" />
-                  <span className="mr-2 text-[10px] font-semibold text-red-500 tabular-nums">
-                    {String(Math.floor(nowMinute / 60)).padStart(2, "0")}:{String(nowMinute % 60).padStart(2, "0")}
-                  </span>
-                </div>
-              )}
+                  {/* now line */}
+                  {nowMinute !== null && nowMinute >= TIMELINE_START && nowMinute <= (TIMELINE_START + HOURS.length * 60) && (
+                    <div ref={nowRef} className="absolute left-0 right-0 z-20 flex items-center"
+                      style={{ top: `${(nowMinute - TIMELINE_START) * MIN_PX}px` }}>
+                      <span className="ml-16 h-2 w-2 rounded-full bg-red-500 shadow-sm" />
+                      <span className="flex-1 border-t border-red-500/60" />
+                      <span className="mr-2 text-[10px] font-semibold text-red-500 tabular-nums">
+                        {String(Math.floor(nowMinute / 60)).padStart(2, "0")}:{String(nowMinute % 60).padStart(2, "0")}
+                      </span>
+                    </div>
+                  )}
 
-              {/* surgery blocks */}
-              <div className="ml-16 mr-2">
-                {surgeries.map(s => {
-                  const startMin = minuteOfDay(s.scheduled_for)
-                  const endMin = s.ended_at ? minuteOfDay(s.ended_at) : startMin + 60
-                  const top = Math.max(0, startMin - TIMELINE_START) * MIN_PX
-                  const height = Math.max(32, (endMin - startMin) * MIN_PX)
-                  const colorClass = STATUS_COLOR[s.status] || "border-l-slate-400 bg-slate-50/60"
+                  {/* surgery blocks — positioned with column layout to avoid overlap */}
+                  <div className="absolute inset-0 ml-16 mr-2">
+                    {surgeries.map(s => {
+                      const block = layout.get(s.id)!
+                      const top = Math.max(0, block.startMin - TIMELINE_START) * MIN_PX
+                      const height = Math.max(36, (block.endMin - block.startMin) * MIN_PX)
+                      const colW = 100 / block.totalCols
+                      const left = `${block.col * colW}%`
+                      const width = `calc(${colW}% - 4px)`
+                      const colorClass = STATUS_COLOR[s.status] || "border-l-slate-400 bg-slate-50/60"
 
-                  return (
-                    <Link key={s.id} href={`/surgery/small-surgeries/${s.id}`}
-                      className={`absolute left-0 right-0 rounded-lg border-l-4 px-2.5 py-1.5 transition hover:brightness-95 ${colorClass}`}
-                      style={{ top: `${top}px`, height: `${height}px` }}>
-                      <div className="flex items-start justify-between gap-1">
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-1.5">
-                            <span className={`mt-0.5 h-2 w-2 shrink-0 rounded-full ${STATUS_DOT[s.status] || "bg-slate-400"}`} />
-                            <span className="truncate text-[11px] font-semibold text-foreground">
-                              {s.patient_name}
-                            </span>
+                      return (
+                        <Link key={s.id} href={`/surgery/small-surgeries/${s.id}`}
+                          className={`absolute rounded-lg border-l-4 px-2 py-1 transition hover:z-10 hover:brightness-95 ${colorClass}`}
+                          style={{ top: `${top}px`, height: `${height}px`, left, width }}>
+                          <div className="flex h-full flex-col justify-between overflow-hidden">
+                            <div>
+                              <div className="flex items-center gap-1">
+                                <span className={`mt-0.5 h-1.5 w-1.5 shrink-0 rounded-full ${STATUS_DOT[s.status] || "bg-slate-400"}`} />
+                                <span className="truncate text-[10px] font-semibold leading-tight text-foreground">
+                                  {s.patient_name}
+                                </span>
+                              </div>
+                              {height >= 44 && (
+                                <p className="mt-0.5 truncate pl-3 text-[9px] leading-tight text-[var(--gray-500)]">
+                                  {(s.procedure_names || []).slice(0, 1).join(", ") || s.procedure || "—"}
+                                </p>
+                              )}
+                              {height >= 60 && s.surgeon_names?.length > 0 && (
+                                <p className="mt-0.5 truncate pl-3 text-[9px] leading-tight text-[var(--gray-400)]">
+                                  {s.surgeon_names[0].name}
+                                </p>
+                              )}
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <span className="text-[9px] tabular-nums text-[var(--gray-400)]">
+                                {fmtTime(s.scheduled_for)}
+                              </span>
+                              {s.priority && height >= 44 && (
+                                <span className={`rounded border px-1 text-[8px] font-semibold leading-tight ${PRIORITY_BADGE[s.priority] || ""}`}>
+                                  {PRIORITY_LABEL[s.priority] || s.priority}
+                                </span>
+                              )}
+                            </div>
                           </div>
-                          {height >= 48 && (
-                            <p className="mt-0.5 truncate pl-3.5 text-[10px] text-[var(--gray-500)]">
-                              {(s.procedure_names || []).slice(0, 2).join(", ") || s.procedure || "—"}
-                            </p>
-                          )}
-                          {height >= 64 && s.surgeon_names?.length > 0 && (
-                            <p className="mt-0.5 truncate pl-3.5 text-[10px] text-[var(--gray-400)]">
-                              {s.surgeon_names[0].name}
-                            </p>
-                          )}
-                        </div>
-                        <div className="flex shrink-0 flex-col items-end gap-0.5">
-                          <span className="text-[10px] tabular-nums text-[var(--gray-400)]">
-                            {fmtTime(s.scheduled_for)}
-                          </span>
-                          {s.priority && (
-                            <span className={`rounded border px-1 py-0 text-[8px] font-semibold ${PRIORITY_BADGE[s.priority] || ""}`}>
-                              {PRIORITY_LABEL[s.priority] || s.priority}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </Link>
-                  )
-                })}
+                        </Link>
+                      )
+                    })}
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
+            )
+          })()
         ) : (
           /* ── LIST VIEW ── */
           <div className="space-y-2">
