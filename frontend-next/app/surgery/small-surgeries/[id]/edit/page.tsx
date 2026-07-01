@@ -618,7 +618,7 @@ export default function SmallSurgeryEditPage() {
         body: JSON.stringify({
           patient,
           procedures: procedures.map(p => p.id),
-          surgeons: surgeons.map(s => s.id),
+          surgeons: surgeons.map(s => Number(s.id)),
           specialty: specialty ?? null,
           ward: operatingRoom ?? null,
           preoperative_diagnosis: preDiag,

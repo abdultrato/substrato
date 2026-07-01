@@ -153,10 +153,12 @@ class BaseSurgerySerializer(LegacyAliasSerializerMixin, serializers.ModelSeriali
     surgeon_names = serializers.SerializerMethodField(method_name="get_surgeon_names")
     # M2M — use global queryset so cross-tenant users (HR doctors) are accepted
     surgeons = serializers.PrimaryKeyRelatedField(
-        many=True, queryset=get_user_model()._default_manager.all(), required=False,
+        many=True, queryset=get_user_model()._base_manager.all(), required=False,
     )
     operating_room_name = serializers.CharField(source="operating_room.name", read_only=True)
     ward_name = serializers.CharField(source="ward.name", read_only=True)
+    preoperative_diagnosis = serializers.CharField(allow_blank=True, allow_null=True, required=False, default="")
+    postoperative_diagnosis = serializers.CharField(allow_blank=True, allow_null=True, required=False, default="")
     procedure_names = serializers.SerializerMethodField(method_name="get_procedure_names")
     invoice_id = serializers.SerializerMethodField(method_name="get_invoice_id")
     invoice_code = serializers.SerializerMethodField(method_name="get_invoice_code")
@@ -186,6 +188,10 @@ class BaseSurgerySerializer(LegacyAliasSerializerMixin, serializers.ModelSeriali
 
     def validate(self, attrs):
         attrs = super().validate(attrs)
+        # coerce null diag fields to empty string
+        for f in ("preoperative_diagnosis", "postoperative_diagnosis"):
+            if attrs.get(f) is None:
+                attrs[f] = ""
         procedures = attrs.get("procedures") or []
         procedure_text = str(attrs.get("procedure") or "").strip()
 
