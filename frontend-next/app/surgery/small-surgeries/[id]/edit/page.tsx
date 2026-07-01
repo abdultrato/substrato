@@ -142,7 +142,7 @@ function DropdownPortal({ anchorRef, portalRef, open, children }: {
     <div
       ref={portalRef}
       style={{ position: "fixed", top: pos.top, left: pos.left, width: pos.width, zIndex: 9999 }}
-      className="rounded-lg border border-violet-200 bg-white shadow-xl dark:border-white/20 dark:bg-[var(--surface-1)]"
+      className="rounded-lg border border-violet-200 bg-white shadow-xl backdrop-blur-md dark:border-white/20 dark:bg-zinc-900/90"
     >
       {children}
     </div>,
