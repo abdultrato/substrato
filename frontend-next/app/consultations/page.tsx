@@ -626,6 +626,15 @@ export default function ConsultationsPage() {
 
   const isRescheduled = (c: ConsultationRow) => Boolean(c.reschedule_count && c.reschedule_count > 0)
 
+  // Atrasada: consulta em aberto cuja hora agendada já passou (ainda não realizada).
+  const isOverdue = useCallback((c: ConsultationRow) => {
+    if (c.status === "CONCLUIDA" || c.status === "CANCELADA" || c.status === "PAGA") return false
+    if (!c.scheduled_for) return false
+    const ts = new Date(c.scheduled_for).getTime()
+    if (Number.isNaN(ts)) return false
+    return ts < nowTick
+  }, [nowTick])
+
   // Fonte única de verdade da coluna/estado de cada consulta. Colunas e badge
   // derivam daqui, para nunca divergirem (ex.: re-agendada iminente nunca cai
   // em "Marcadas" com badge "Re-agendada"). Precedência: concluída/cancelada/
@@ -693,21 +702,35 @@ export default function ConsultationsPage() {
     const accent = accentOf(r)
     const initial = (r.patient_name || "?").trim().charAt(0).toUpperCase()
     const badge = statusBadge(r)
+    const overdue = isOverdue(r)
 
     return (
       <button
         key={r.id}
         type="button"
         onClick={() => setDetailRow(r)}
-        className="group relative flex w-full items-start gap-1.5 overflow-hidden rounded-lg border border-white/20 bg-white/40 p-1.5 pl-2.5 text-left shadow-sm backdrop-blur-sm transition hover:-translate-y-px hover:border-white/40 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 dark:border-white/10 dark:bg-white/[0.04]"
+        className="group relative flex w-full items-start gap-1.5 rounded-lg border border-white/20 bg-white/40 p-1.5 pl-2.5 text-left shadow-sm backdrop-blur-sm transition hover:-translate-y-px hover:border-white/40 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 dark:border-white/10 dark:bg-white/[0.04]"
       >
-        <span className={`absolute left-0 top-0 h-full w-1 ${accent}`} />
+        <span className={`absolute left-0 top-0 h-full w-1 rounded-l-lg ${accent}`} />
+        {overdue ? (
+          <span className="group/info absolute right-1 top-1 z-20">
+            <span className="flex h-4 w-4 items-center justify-center rounded-full bg-amber-400 text-white shadow-sm ring-1 ring-amber-500/40">
+              <Info size={11} />
+            </span>
+            <span
+              role="tooltip"
+              className="pointer-events-none absolute right-0 top-5 z-30 hidden w-max max-w-[12rem] rounded-md border border-amber-300 bg-amber-50 px-2 py-1 text-[10px] font-semibold text-amber-800 shadow-lg group-hover/info:block dark:border-amber-500/40 dark:bg-amber-900/40 dark:text-amber-200"
+            >
+              {t("Consulta atrasada — hora agendada já passou.", "Overdue consultation — scheduled time has passed.")}
+            </span>
+          </span>
+        ) : null}
         <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-[11px] font-bold text-white shadow-sm ${accent}`}>
           {initial}
         </span>
         {/* Coluna do nome: nome, especialidade e rodapé (preço + estado) alinhados à mesma esquerda */}
         <div className="min-w-0 flex-1">
-          <div className="truncate text-xs font-semibold leading-tight text-foreground">{r.patient_name || "-"}</div>
+          <div className={`truncate text-xs font-semibold leading-tight text-foreground ${overdue ? "pr-5" : ""}`}>{r.patient_name || "-"}</div>
           <div className="truncate text-[10px] leading-tight text-muted-foreground">{r.specialty_name || r.type || "-"}</div>
           <div className="mt-1 flex items-center justify-between gap-1.5">
             <span className="text-[10px] font-bold text-emerald-700 tabular-nums dark:text-emerald-400">
@@ -720,7 +743,7 @@ export default function ConsultationsPage() {
         </div>
       </button>
     )
-  }, [accentOf, statusBadge])
+  }, [accentOf, isOverdue, statusBadge, t])
 
   const renderConsultationColumn = useCallback((
     title: string,
