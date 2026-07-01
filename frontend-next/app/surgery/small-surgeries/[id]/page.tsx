@@ -10,6 +10,7 @@ import {
   CheckCircle2,
   Clock3,
   CreditCard,
+  Package,
   Scissors,
   Stethoscope,
   User,
@@ -125,12 +126,23 @@ export default function SmallSurgeryDetailPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [marking, setMarking] = useState(false)
+  const [consumptions, setConsumptions] = useState<{ id: number; product_name: string; quantity: string; unit_cost: string }[]>([])
 
   const load = useCallback(async () => {
     setLoading(true); setError(null)
     try {
-      const res = await apiFetch<Record<string, any>>(`/surgery/small_surgery/${id}/`, { clientCache: safeRefreshToken === 0 })
+      const [res, cons] = await Promise.all([
+        apiFetch<Record<string, any>>(`/surgery/small_surgery/${id}/`, { clientCache: safeRefreshToken === 0 }),
+        apiFetch<any>(`/surgery/consumos/?surgery=${id}&limit=100`),
+      ])
       setData(res)
+      const consList: any[] = Array.isArray(cons) ? cons : (cons.results || [])
+      setConsumptions(consList.map((c: any) => ({
+        id: c.id,
+        product_name: c.product_name || c.material_name || `#${c.product}`,
+        quantity: String(c.quantity || "1"),
+        unit_cost: String(c.unit_cost || c.charged_price || "0.00"),
+      })))
     } catch (e: any) { setError(e?.message || "Erro ao carregar.") }
     finally { setLoading(false) }
   }, [id, safeRefreshToken])
@@ -316,6 +328,45 @@ export default function SmallSurgeryDetailPage() {
                 <div className="flex items-center gap-2 rounded-lg border border-white/20 bg-white/20 px-2.5 py-2 dark:bg-white/[0.03]">
                   <Building2 size={11} className="shrink-0 text-[var(--gray-400)]" />
                   <span className="text-[12px] font-medium text-[var(--text)]">{data.ward_name}</span>
+                </div>
+              </SurfaceCard>
+            </div>
+          )}
+
+          {consumptions.length > 0 && (
+            <div style={{ breakInside: "avoid", marginBottom: "0.75rem" }}>
+              <SurfaceCard title="Materiais e produtos" icon={<Package size={13} />} accent="bg-amber-400">
+                <div className="flex flex-col gap-1">
+                  {consumptions.map(c => {
+                    const total = parseFloat(c.unit_cost) * parseFloat(c.quantity)
+                    return (
+                      <div key={c.id} className="flex items-center justify-between gap-2 rounded-lg border border-white/20 bg-white/20 px-2.5 py-1.5 dark:bg-white/[0.03]">
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <Package size={11} className="shrink-0 text-amber-400" />
+                          <span className="truncate text-[12px] font-medium text-[var(--text)]">{c.product_name}</span>
+                          {parseFloat(c.quantity) > 1 && (
+                            <span className="shrink-0 rounded-full bg-amber-200/60 px-1.5 py-px text-[9px] font-bold text-amber-700 dark:bg-amber-800/30 dark:text-amber-300">×{c.quantity}</span>
+                          )}
+                        </div>
+                        {total > 0 && (
+                          <span className="shrink-0 text-[11px] font-semibold text-teal-600 dark:text-teal-400">
+                            {total.toLocaleString("pt-PT", { minimumFractionDigits: 2 })} MT
+                          </span>
+                        )}
+                      </div>
+                    )
+                  })}
+                  {(() => {
+                    const grand = consumptions.reduce((s, c) => s + parseFloat(c.unit_cost) * parseFloat(c.quantity), 0)
+                    return grand > 0 ? (
+                      <div className="mt-1 flex items-center justify-between rounded-lg border border-amber-200/50 bg-amber-50/40 px-3 py-1.5 dark:border-amber-700/20 dark:bg-amber-900/10">
+                        <span className="text-[10px] font-semibold uppercase tracking-wide text-[var(--gray-500)]">Total materiais</span>
+                        <span className="text-[12px] font-semibold text-amber-700 dark:text-amber-300">
+                          {grand.toLocaleString("pt-PT", { minimumFractionDigits: 2 })} MT
+                        </span>
+                      </div>
+                    ) : null
+                  })()}
                 </div>
               </SurfaceCard>
             </div>
