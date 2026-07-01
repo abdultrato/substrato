@@ -25,7 +25,7 @@ export default function ActionTile({
     >
       <span
         aria-hidden
-        className="pointer-events-none flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground shadow-sm transition-colors group-hover:bg-[var(--primary-100)] group-hover:text-[var(--primary-600)] dark:group-hover:bg-[var(--primary-900)] dark:group-hover:text-[var(--primary-300)]"
+        className="pointer-events-none flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground shadow-sm transition-colors group-hover:bg-[var(--primary-100)] group-hover:text-orange-600 dark:group-hover:bg-[var(--primary-900)] dark:group-hover:text-orange-500"
       >
         <Icon size={14} strokeWidth={2} />
       </span>
