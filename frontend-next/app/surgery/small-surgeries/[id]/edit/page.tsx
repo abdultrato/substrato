@@ -792,32 +792,31 @@ export default function SmallSurgeryEditPage() {
           <SurfaceCard title="7 · Estado e agendamento" icon={<CalendarClock size={13} />} accent="bg-emerald-400">
             <div className="grid grid-cols-7 gap-3">
               <FieldRow label="Estado">
-                <select className={selectCls} value={status} onChange={e => setStatus(e.target.value)}>
-                  {STATUS_CHOICES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
-                </select>
+                <div className="w-full rounded-lg border border-white/20 bg-white/20 px-2.5 py-1.5 text-[12px] text-[var(--text)] opacity-70 dark:bg-white/[0.04]">
+                  {STATUS_CHOICES.find(c => c.value === status)?.label || status || "—"}
+                </div>
               </FieldRow>
               <FieldRow label="Prioridade">
-                <select className={selectCls} value={priority} onChange={e => setPriority(e.target.value)}>
-                  {PRIORITY_CHOICES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
-                </select>
+                <div className="w-full rounded-lg border border-white/20 bg-white/20 px-2.5 py-1.5 text-[12px] text-[var(--text)] opacity-70 dark:bg-white/[0.04]">
+                  {PRIORITY_CHOICES.find(c => c.value === priority)?.label || priority || "—"}
+                </div>
               </FieldRow>
               <FieldRow label="Classificação">
-                <select className={selectCls} value={classification} onChange={e => setClassification(e.target.value)}>
-                  <option value="">—</option>
-                  {CLASSIFICATION_CHOICES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
-                </select>
+                <div className="w-full rounded-lg border border-white/20 bg-white/20 px-2.5 py-1.5 text-[12px] text-[var(--text)] opacity-70 dark:bg-white/[0.04]">
+                  {CLASSIFICATION_CHOICES.find(c => c.value === classification)?.label || classification || "—"}
+                </div>
               </FieldRow>
               <FieldRow label="Agendada para">
-                <input type="datetime-local" className={inputCls} value={scheduledFor} onChange={e => setScheduledFor(e.target.value)} />
+                <input type="datetime-local" readOnly className={`${inputCls} opacity-70`} value={scheduledFor} />
               </FieldRow>
               <FieldRow label="Iniciada em">
-                <input type="datetime-local" className={inputCls} value={startedAt} onChange={e => setStartedAt(e.target.value)} />
+                <input type="datetime-local" readOnly className={`${inputCls} opacity-70`} value={startedAt} />
               </FieldRow>
               <FieldRow label="Terminada em">
-                <input type="datetime-local" className={inputCls} value={endedAt} onChange={e => setEndedAt(e.target.value)} />
+                <input type="datetime-local" readOnly className={`${inputCls} opacity-70`} value={endedAt} />
               </FieldRow>
               <FieldRow label="Concluída em">
-                <input type="datetime-local" className={inputCls} value={completedAt} onChange={e => setCompletedAt(e.target.value)} />
+                <input type="datetime-local" readOnly className={`${inputCls} opacity-70`} value={completedAt} />
               </FieldRow>
             </div>
           </SurfaceCard>
