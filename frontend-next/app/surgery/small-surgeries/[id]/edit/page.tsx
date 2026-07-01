@@ -384,6 +384,76 @@ function TeamMemberRow({
   )
 }
 
+function SurgeonMultiSelect({ selected, onChange }: {
+  selected: { id: number; name: string }[]
+  onChange: (items: { id: number; name: string }[]) => void
+}) {
+  const [query, setQuery] = useState("")
+  const [results, setResults] = useState<any[]>([])
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+  const portalRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function handle(e: MouseEvent) {
+      const t = e.target as Node
+      if (ref.current?.contains(t) || portalRef.current?.contains(t)) return
+      setOpen(false)
+    }
+    document.addEventListener("mousedown", handle)
+    return () => document.removeEventListener("mousedown", handle)
+  }, [])
+
+  const search = useCallback(async (q: string) => {
+    try {
+      const d = await apiFetch<any>(`/consultations/doctors/?search=${encodeURIComponent(q)}&limit=20`)
+      setResults(Array.isArray(d) ? d : (d.results || []))
+    } catch { setResults([]) }
+  }, [])
+
+  useEffect(() => { if (open) search(query) }, [query, open, search])
+
+  return (
+    <FieldRow label="Cirurgiões">
+      <div ref={ref}>
+        {selected.length > 0 && (
+          <div className="mb-1.5 flex flex-wrap gap-1">
+            {selected.map(s => (
+              <span key={s.id} className="inline-flex items-center gap-1 rounded-md border border-emerald-300/60 bg-emerald-50/80 px-2 py-0.5 text-[11px] font-medium text-emerald-700 dark:border-emerald-700/40 dark:bg-emerald-900/20 dark:text-emerald-300">
+                {s.name}
+                <button type="button" onClick={() => onChange(selected.filter(x => x.id !== s.id))} className="hover:text-rose-500"><X size={9} /></button>
+              </span>
+            ))}
+          </div>
+        )}
+        <div className={`${inputCls} flex cursor-pointer items-center justify-between gap-1`}
+          onClick={() => setOpen(o => !o)}>
+          <span className="text-[var(--gray-400)]">{selected.length > 0 ? "Adicionar cirurgião..." : "Pesquisar cirurgião..."}</span>
+          <Search size={11} className="text-[var(--gray-400)]" />
+        </div>
+        <DropdownPortal anchorRef={ref} portalRef={portalRef} open={open}>
+          <div className="border-b border-violet-100 px-2 py-1.5 dark:border-white/10">
+            <input autoFocus className="w-full bg-transparent text-[12px] text-[var(--text)] outline-none placeholder-[var(--gray-400)]"
+              placeholder="Pesquisar médico..." value={query} onChange={e => setQuery(e.target.value)} />
+          </div>
+          <div className="max-h-56 overflow-y-auto">
+            {results.filter(r => !selected.find(s => s.id === r.id)).length === 0
+              ? <div className="px-3 py-3 text-center text-[11px] text-[var(--gray-400)]">Sem resultados</div>
+              : results.filter(r => !selected.find(s => s.id === r.id)).map(item => (
+                <div key={item.id}
+                  className="flex cursor-pointer items-center gap-2 px-3 py-2 text-[12px] hover:bg-violet-50 dark:hover:bg-white/10"
+                  onMouseDown={e => { e.preventDefault(); onChange([...selected, { id: item.id, name: item.name }]); setOpen(false) }}>
+                  <Stethoscope size={11} className="shrink-0 text-[var(--gray-400)]" />
+                  <span className="text-[var(--text)]">{item.name}</span>
+                </div>
+              ))}
+          </div>
+        </DropdownPortal>
+      </div>
+    </FieldRow>
+  )
+}
+
 /* ── main page ────────────────────────────────────────────────── */
 
 type TeamMember = {
@@ -411,9 +481,8 @@ export default function SmallSurgeryEditPage() {
   // 2 — procedures (multi)
   const [procedures, setProcedures] = useState<{ id: number; name: string; base_price?: string }[]>([])
 
-  // 3 — surgeon + specialty (from RH/consultations)
-  const [surgeon, setSurgeon] = useState<number | null>(null)
-  const [surgeonLabel, setSurgeonLabel] = useState("")
+  // 3 — surgeons (M2M) + specialty
+  const [surgeons, setSurgeons] = useState<{ id: number; name: string }[]>([])
   const [specialty, setSpecialty] = useState<number | null>(null)
   const [specialtyLabel, setSpecialtyLabel] = useState("")
 
@@ -461,8 +530,7 @@ export default function SmallSurgeryEditPage() {
       setPatient(d.patient ?? null)
       setPatientLabel(d.patient_name || "")
       setProcedures((d.procedures || []).map((pid: number) => ({ id: pid, name: `#${pid}` })))
-      setSurgeon(d.surgeon ?? null)
-      setSurgeonLabel(d.surgeon_name || "")
+      setSurgeons((d.surgeon_names || []).map((s: any) => ({ id: s.id, name: s.name })))
       setSpecialty(d.specialty ?? null)
       setSpecialtyLabel(d.specialty_name || "")
       setOperatingRoom(d.operating_room ?? null)
@@ -550,7 +618,7 @@ export default function SmallSurgeryEditPage() {
         body: JSON.stringify({
           patient,
           procedures: procedures.map(p => p.id),
-          surgeon: surgeon ?? null,
+          surgeons: surgeons.map(s => s.id),
           specialty: specialty ?? null,
           operating_room: operatingRoom ?? null,
           preoperative_diagnosis: preDiag,
@@ -573,7 +641,7 @@ export default function SmallSurgeryEditPage() {
     } finally {
       setSaving(false)
     }
-  }, [id, patient, procedures, surgeon, specialty, operatingRoom, preDiag, posDiag, status, priority, classification, scheduledFor, startedAt, endedAt, completedAt, estimatedPrice, vatPct, router])
+  }, [id, patient, procedures, surgeons, specialty, operatingRoom, preDiag, posDiag, status, priority, classification, scheduledFor, startedAt, endedAt, completedAt, estimatedPrice, vatPct, router])
 
   if (loading) {
     return (
@@ -662,15 +730,8 @@ export default function SmallSurgeryEditPage() {
               ) : null}
             </SurfaceCard>
 
-            <SurfaceCard title="3 · Cirurgião e especialidade" icon={<Stethoscope size={13} />} accent="bg-emerald-400">
-              <SearchSelect
-                label="Cirurgião"
-                placeholder="Pesquisar médico..."
-                endpoint="/consultations/doctors/"
-                labelField="name"
-                value={surgeon}
-                onChange={(v, lbl) => { setSurgeon(v); setSurgeonLabel(lbl) }}
-              />
+            <SurfaceCard title="3 · Cirurgiões e especialidade" icon={<Stethoscope size={13} />} accent="bg-emerald-400">
+              <SurgeonMultiSelect selected={surgeons} onChange={setSurgeons} />
               <SearchSelect
                 label="Especialidade"
                 placeholder="Pesquisar especialidade..."

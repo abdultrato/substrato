@@ -149,6 +149,7 @@ class BaseSurgerySerializer(LegacyAliasSerializerMixin, serializers.ModelSeriali
     surgical_request_code = serializers.CharField(source="surgical_request.custom_id", read_only=True)
     specialty_name = serializers.CharField(source="specialty.name", read_only=True)
     surgeon_name = serializers.SerializerMethodField(method_name="get_surgeon_name")
+    surgeon_names = serializers.SerializerMethodField(method_name="get_surgeon_names")
     operating_room_name = serializers.CharField(source="operating_room.name", read_only=True)
     procedure_names = serializers.SerializerMethodField(method_name="get_procedure_names")
     invoice_id = serializers.SerializerMethodField(method_name="get_invoice_id")
@@ -168,6 +169,7 @@ class BaseSurgerySerializer(LegacyAliasSerializerMixin, serializers.ModelSeriali
             "surgical_request_code",
             "specialty_name",
             "surgeon_name",
+            "surgeon_names",
             "operating_room_name",
             "procedure_names",
             "invoice_id",
@@ -198,6 +200,15 @@ class BaseSurgerySerializer(LegacyAliasSerializerMixin, serializers.ModelSeriali
             return (u.get_full_name() or "").strip() or u.username
         except Exception:
             return getattr(u, "username", "")
+
+    def get_surgeon_names(self, obj: Surgery) -> list[dict]:
+        try:
+            return [
+                {"id": u.id, "name": (u.get_full_name() or "").strip() or u.username}
+                for u in obj.surgeons.all()
+            ]
+        except Exception:
+            return []
 
     def get_procedure_names(self, obj: Surgery) -> list[str]:
         try:

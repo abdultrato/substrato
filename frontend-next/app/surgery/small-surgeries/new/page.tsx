@@ -274,6 +274,82 @@ function ProcedureMultiSelect({ selected, onChange }: {
   )
 }
 
+function SurgeonMultiSelect({ selected, onChange }: {
+  selected: { id: number; name: string }[]
+  onChange: (items: { id: number; name: string }[]) => void
+}) {
+  const [query, setQuery] = useState("")
+  const [results, setResults] = useState<any[]>([])
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+  const portalRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function handle(e: MouseEvent) {
+      const t = e.target as Node
+      if (ref.current?.contains(t) || portalRef.current?.contains(t)) return
+      setOpen(false)
+    }
+    document.addEventListener("mousedown", handle)
+    return () => document.removeEventListener("mousedown", handle)
+  }, [])
+
+  const search = useCallback(async (q: string) => {
+    try {
+      const d = await apiFetch<any>(`/consultations/doctors/?search=${encodeURIComponent(q)}&limit=20`)
+      setResults(Array.isArray(d) ? d : (d.results || []))
+    } catch { setResults([]) }
+  }, [])
+
+  useEffect(() => { if (open) search(query) }, [query, open, search])
+
+  function toggle(item: any) {
+    const exists = selected.find(s => s.id === item.id)
+    if (exists) onChange(selected.filter(s => s.id !== item.id))
+    else onChange([...selected, { id: item.id, name: item.name }])
+  }
+
+  return (
+    <FieldRow label="Cirurgiões">
+      <div ref={ref}>
+        {selected.length > 0 && (
+          <div className="mb-2 flex flex-wrap gap-1.5">
+            {selected.map(s => (
+              <span key={s.id} className="inline-flex items-center gap-1 rounded-md border border-emerald-300/60 bg-emerald-50/80 px-2 py-0.5 text-[11px] font-medium text-emerald-700 dark:border-emerald-700/40 dark:bg-emerald-900/20 dark:text-emerald-300">
+                {s.name}
+                <button type="button" onClick={() => onChange(selected.filter(x => x.id !== s.id))} className="hover:text-rose-500"><X size={9} /></button>
+              </span>
+            ))}
+          </div>
+        )}
+        <div className={`${inputCls} flex cursor-pointer items-center justify-between gap-1`}
+          onClick={() => setOpen(o => !o)}>
+          <span className="text-[var(--gray-400)]">{selected.length > 0 ? "Adicionar cirurgião..." : "Pesquisar cirurgião..."}</span>
+          <Search size={11} className="text-[var(--gray-400)]" />
+        </div>
+        <DropdownPortal anchorRef={ref} portalRef={portalRef} open={open}>
+          <div className="border-b border-violet-100 px-2 py-1.5 dark:border-white/10">
+            <input autoFocus className="w-full bg-transparent text-[12px] text-[var(--text)] outline-none placeholder-[var(--gray-400)]"
+              placeholder="Pesquisar médico..." value={query} onChange={e => setQuery(e.target.value)} />
+          </div>
+          <div className="max-h-56 overflow-y-auto">
+            {results.filter(r => !selected.find(s => s.id === r.id)).length === 0
+              ? <div className="px-3 py-3 text-center text-[11px] text-[var(--gray-400)]">Sem resultados</div>
+              : results.filter(r => !selected.find(s => s.id === r.id)).map(item => (
+                <div key={item.id}
+                  className="flex cursor-pointer items-center gap-2 px-3 py-2 text-[12px] hover:bg-violet-50 dark:hover:bg-white/10"
+                  onMouseDown={e => { e.preventDefault(); toggle(item) }}>
+                  <Stethoscope size={11} className="shrink-0 text-[var(--gray-400)]" />
+                  <span className="text-[var(--text)]">{item.name}</span>
+                </div>
+              ))}
+          </div>
+        </DropdownPortal>
+      </div>
+    </FieldRow>
+  )
+}
+
 /* ── step progress bar ──────────────────────────────────────────── */
 
 function StepBar({ current }: { current: number }) {
@@ -335,8 +411,7 @@ export default function SmallSurgeryNewPage() {
   const [surgerySize, setSurgerySize] = useState("PEQUENA")
 
   // step 2
-  const [surgeon, setSurgeon] = useState<number | null>(null)
-  const [surgeonLabel, setSurgeonLabel] = useState("")
+  const [surgeons, setSurgeons] = useState<{ id: number; name: string }[]>([])
   const [specialty, setSpecialty] = useState<number | null>(null)
   const [specialtyLabel, setSpecialtyLabel] = useState("")
   const [operatingRoom, setOperatingRoom] = useState<number | null>(null)
@@ -405,7 +480,7 @@ export default function SmallSurgeryNewPage() {
         body: JSON.stringify({
           patient,
           procedures: procedures.map(p => p.id),
-          surgeon: surgeon ?? null,
+          surgeons: surgeons.map(s => s.id),
           specialty: specialty ?? null,
           operating_room: operatingRoom ?? null,
           preoperative_diagnosis: preDiag || null,
@@ -421,7 +496,7 @@ export default function SmallSurgeryNewPage() {
       setError(e?.message || "Erro ao criar cirurgia.")
       setSaving(false)
     }
-  }, [patient, procedures, surgeon, specialty, operatingRoom, preDiag, posDiag, priority, surgerySize, scheduledFor, router])
+  }, [patient, procedures, surgeons, specialty, operatingRoom, preDiag, posDiag, priority, surgerySize, scheduledFor, router])
 
   /* ── render ── */
 
@@ -564,9 +639,7 @@ export default function SmallSurgeryNewPage() {
                 </div>
               </div>
 
-              <SearchSelect label="Cirurgião" placeholder="Pesquisar médico..."
-                endpoint="/consultations/doctors/" labelField="name"
-                value={surgeon} onChange={(v, l) => { setSurgeon(v); setSurgeonLabel(l) }} />
+              <SurgeonMultiSelect selected={surgeons} onChange={setSurgeons} />
 
               <SearchSelect label="Especialidade" placeholder="Pesquisar especialidade..."
                 endpoint="/consultations/specialty/" labelField="name"
@@ -718,7 +791,7 @@ export default function SmallSurgeryNewPage() {
                     : null} />
                   <ReviewRow label="Prioridade" value={PRIORITY_CHOICES.find(p => p.value === priority)?.label} />
                   <ReviewRow label="Tipo de cirurgia" value={SURGERY_SIZE_CHOICES.find(c => c.value === surgerySize)?.label} />
-                  <ReviewRow label="Cirurgião" value={surgeonLabel || null} />
+                  <ReviewRow label="Cirurgiões" value={surgeons.length > 0 ? surgeons.map(s => s.name).join(", ") : null} />
                   <ReviewRow label="Especialidade" value={specialtyLabel || null} />
                   <ReviewRow label="Bloco" value={operatingRoomLabel || null} />
                   <ReviewRow label="Equipa" value={team.length > 0 ? `${team.length} membro(s)` : null} />

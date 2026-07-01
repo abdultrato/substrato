@@ -108,12 +108,18 @@ class Surgery(NoNameCoreModel):
     surgeon = models.ForeignKey(
         User,
         db_column="surgeon_id",
-        verbose_name="Cirurgião",
+        verbose_name="Cirurgião principal (legado)",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
         related_name="cirurgias_realizadas",
         db_index=True,
+    )
+    surgeons = models.ManyToManyField(
+        User,
+        verbose_name="Cirurgiões",
+        blank=True,
+        related_name="cirurgias_como_cirurgiao",
     )
     operating_room = models.ForeignKey(
         "cirurgia.OperatingRoom",
@@ -265,7 +271,7 @@ class Surgery(NoNameCoreModel):
             raise ValidationError({"patient": "Paciente e cirurgia devem pertencer ao mesmo tenant."})
 
         if self.surgeon_id and self.tenant_id and self.surgeon.tenant_id != self.tenant_id:
-            raise ValidationError({"surgeon": "Cirurgião e surgery devem pertencer ao mesmo tenant."})
+            raise ValidationError({"surgeon": "Cirurgião principal e cirurgia devem pertencer ao mesmo tenant."})
         if self.surgical_request_id and self.tenant_id and self.surgical_request.tenant_id != self.tenant_id:
             raise ValidationError({"surgical_request": "Pedido cirúrgico e cirurgia devem pertencer ao mesmo tenant."})
         if self.surgical_request_id and self.patient_id != self.surgical_request.patient_id:
