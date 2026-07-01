@@ -24,7 +24,7 @@ import { apiFetch } from "@/lib/api"
 import { GROUPS } from "@/lib/rbac"
 import { routeParamToString } from "@/lib/routeParams"
 
-const GLASS = "rounded-xl border border-white/20 bg-white/30 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]"
+const GLASS = "rounded-xl border border-violet-200 bg-white/30 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]"
 
 /* ── helpers ──────────────────────────────────────────────────── */
 
