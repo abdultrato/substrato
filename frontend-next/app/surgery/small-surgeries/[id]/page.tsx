@@ -241,11 +241,10 @@ export default function SmallSurgeryDetailPage() {
           </div>
         </section>
 
-        {/* masonry 2 cols */}
-        <div className="flex items-start gap-3">
-          {/* col esquerda */}
-          <div className="flex min-w-0 flex-1 flex-col gap-3">
+        {/* masonry — CSS columns so cards flow naturally into the shortest column */}
+        <div style={{ columns: "2", columnGap: "0.75rem" }}>
 
+          <div style={{ breakInside: "avoid", marginBottom: "0.75rem" }}>
             <SurfaceCard title="Paciente" icon={<User size={13} />} accent="bg-sky-400">
               <div className="grid gap-2">
                 <Field label="Nome" value={data.patient_name} />
@@ -254,34 +253,9 @@ export default function SmallSurgeryDetailPage() {
                 {data.surgery_size && <Field label="Tipo de cirurgia" value={SURGERY_SIZE_LABEL[data.surgery_size] || data.surgery_size} />}
               </div>
             </SurfaceCard>
-
-            {surgeonNames.length > 0 && (
-              <SurfaceCard title="Cirurgiões" icon={<Stethoscope size={13} />} accent="bg-emerald-400">
-                <div className="flex flex-col gap-1.5">
-                  {surgeonNames.map(s => (
-                    <div key={s.id} className="flex items-center gap-2 rounded-lg border border-white/20 bg-white/20 px-2.5 py-1.5 dark:bg-white/[0.03]">
-                      <Stethoscope size={11} className="shrink-0 text-[var(--gray-400)]" />
-                      <span className="text-[12px] font-medium text-[var(--text)]">{s.name}</span>
-                    </div>
-                  ))}
-                </div>
-              </SurfaceCard>
-            )}
-
-            {(data.preoperative_diagnosis || data.postoperative_diagnosis) && (
-              <SurfaceCard title="Diagnósticos" icon={<Stethoscope size={13} />} accent="bg-amber-400">
-                <div className="grid gap-2">
-                  {data.preoperative_diagnosis && <Field label="Pré-operatório" value={data.preoperative_diagnosis} />}
-                  {data.postoperative_diagnosis && <Field label="Pós-operatório" value={data.postoperative_diagnosis} />}
-                </div>
-              </SurfaceCard>
-            )}
-
           </div>
 
-          {/* col direita */}
-          <div className="flex min-w-0 flex-1 flex-col gap-3">
-
+          <div style={{ breakInside: "avoid", marginBottom: "0.75rem" }}>
             <SurfaceCard title="Procedimentos" icon={<Scissors size={13} />} accent="bg-violet-400">
               <div className="flex flex-col gap-1.5">
                 {procedureNames.length > 0
@@ -295,16 +269,24 @@ export default function SmallSurgeryDetailPage() {
                 }
               </div>
             </SurfaceCard>
+          </div>
 
-            {data.ward_name && (
-              <SurfaceCard title="Bloco operatório" icon={<Building2 size={13} />} accent="bg-cyan-400">
-                <div className="flex items-center gap-2 rounded-lg border border-white/20 bg-white/20 px-2.5 py-2 dark:bg-white/[0.03]">
-                  <Building2 size={11} className="shrink-0 text-[var(--gray-400)]" />
-                  <span className="text-[12px] font-medium text-[var(--text)]">{data.ward_name}</span>
+          {surgeonNames.length > 0 && (
+            <div style={{ breakInside: "avoid", marginBottom: "0.75rem" }}>
+              <SurfaceCard title="Cirurgiões" icon={<Stethoscope size={13} />} accent="bg-emerald-400">
+                <div className="flex flex-col gap-1.5">
+                  {surgeonNames.map(s => (
+                    <div key={s.id} className="flex items-center gap-2 rounded-lg border border-white/20 bg-white/20 px-2.5 py-1.5 dark:bg-white/[0.03]">
+                      <Stethoscope size={11} className="shrink-0 text-[var(--gray-400)]" />
+                      <span className="text-[12px] font-medium text-[var(--text)]">{s.name}</span>
+                    </div>
+                  ))}
                 </div>
               </SurfaceCard>
-            )}
+            </div>
+          )}
 
+          <div style={{ breakInside: "avoid", marginBottom: "0.75rem" }}>
             <SurfaceCard title="Financeiro" icon={<CreditCard size={13} />} accent="bg-teal-400">
               <div className="grid gap-2">
                 {estimatedPrice > 0 ? (
@@ -326,7 +308,31 @@ export default function SmallSurgeryDetailPage() {
                 {data.invoice_code && <Field label="Fatura" value={data.invoice_code} />}
               </div>
             </SurfaceCard>
+          </div>
 
+          {data.ward_name && (
+            <div style={{ breakInside: "avoid", marginBottom: "0.75rem" }}>
+              <SurfaceCard title="Bloco operatório" icon={<Building2 size={13} />} accent="bg-cyan-400">
+                <div className="flex items-center gap-2 rounded-lg border border-white/20 bg-white/20 px-2.5 py-2 dark:bg-white/[0.03]">
+                  <Building2 size={11} className="shrink-0 text-[var(--gray-400)]" />
+                  <span className="text-[12px] font-medium text-[var(--text)]">{data.ward_name}</span>
+                </div>
+              </SurfaceCard>
+            </div>
+          )}
+
+          {(data.preoperative_diagnosis || data.postoperative_diagnosis) && (
+            <div style={{ breakInside: "avoid", marginBottom: "0.75rem" }}>
+              <SurfaceCard title="Diagnósticos" icon={<Stethoscope size={13} />} accent="bg-amber-400">
+                <div className="grid gap-2">
+                  {data.preoperative_diagnosis && <Field label="Pré-operatório" value={data.preoperative_diagnosis} />}
+                  {data.postoperative_diagnosis && <Field label="Pós-operatório" value={data.postoperative_diagnosis} />}
+                </div>
+              </SurfaceCard>
+            </div>
+          )}
+
+          <div style={{ breakInside: "avoid", marginBottom: "0.75rem" }}>
             <SurfaceCard title="Auditoria" icon={<CalendarClock size={13} />} accent="bg-slate-400">
               <div className="grid gap-2">
                 <Field label="Código" value={code} mono />
@@ -334,8 +340,8 @@ export default function SmallSurgeryDetailPage() {
                 <Field label="Atualizado em" value={fmtDate(data.updated_at)} />
               </div>
             </SurfaceCard>
-
           </div>
+
         </div>
 
         {/* cronologia full-width */}
