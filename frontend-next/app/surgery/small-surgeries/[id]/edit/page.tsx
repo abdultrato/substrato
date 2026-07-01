@@ -465,6 +465,10 @@ type TeamMember = {
   role: string
 }
 
+type MatItem = { id: number; name: string; type: string; sale_price: string; qty: number }
+const MAT_TYPE_LABEL: Record<string, string> = { CONS: "Consumível", FARM: "Farmácia", MED: "Medicamento", OUT: "Outro" }
+function fmtMT(n: number) { return n.toLocaleString("pt-PT", { minimumFractionDigits: 2 }) + " MT" }
+
 export default function SmallSurgeryEditPage() {
   const params = useParams()
   const id = routeParamToString((params as any)?.id)
@@ -518,9 +522,6 @@ export default function SmallSurgeryEditPage() {
   const [vatPct, setVatPct] = useState("16.00")
 
   // 8 — materials
-  type MatItem = { id: number; name: string; type: string; sale_price: string; qty: number }
-  const TYPE_LABEL: Record<string, string> = { CONS: "Consumível", FARM: "Farmácia", MED: "Medicamento", OUT: "Outro" }
-  function fmtMT(n: number) { return n.toLocaleString("pt-PT", { minimumFractionDigits: 2 }) + " MT" }
   const [materials, setMaterials] = useState<MatItem[]>([])
   const [matQuery, setMatQuery] = useState("")
   const [matResults, setMatResults] = useState<Omit<MatItem, "qty">[]>([])
@@ -935,7 +936,7 @@ export default function SmallSurgeryEditPage() {
                   <div className="mt-1.5 flex items-center gap-2 rounded-lg border border-amber-300 bg-amber-50/80 px-3 py-2 dark:border-amber-700/40 dark:bg-amber-900/15">
                     <div className="flex-1 min-w-0">
                       <p className="truncate text-[12px] font-semibold text-amber-900 dark:text-amber-200">{pending.name}</p>
-                      <p className="text-[10px] text-amber-700/70">{TYPE_LABEL[pending.type] || pending.type} · {fmtMT(parseFloat(pending.sale_price || "0"))} / un.</p>
+                      <p className="text-[10px] text-amber-700/70">{MAT_TYPE_LABEL[pending.type] || pending.type} · {fmtMT(parseFloat(pending.sale_price || "0"))} / un.</p>
                     </div>
                     <div className="flex items-center gap-1.5 shrink-0">
                       <label className="text-[10px] font-semibold text-amber-700 dark:text-amber-300">Qtd.</label>
@@ -971,7 +972,7 @@ export default function SmallSurgeryEditPage() {
                           className={`flex w-full items-center justify-between gap-3 px-3 py-2 text-left first:rounded-t-xl last:rounded-b-xl transition ${already ? "cursor-default opacity-40" : "hover:bg-amber-50/60 dark:hover:bg-amber-900/10"}`}>
                           <div className="flex flex-col gap-0.5">
                             <span className="text-[12px] font-medium text-foreground">{item.name}</span>
-                            <span className="text-[10px] text-[var(--gray-400)]">{TYPE_LABEL[item.type] || item.type}</span>
+                            <span className="text-[10px] text-[var(--gray-400)]">{MAT_TYPE_LABEL[item.type] || item.type}</span>
                           </div>
                           <div className="flex shrink-0 items-center gap-2">
                             <span className="text-[11px] font-semibold text-teal-600 dark:text-teal-400">{fmtMT(parseFloat(item.sale_price || "0"))}</span>
