@@ -176,21 +176,6 @@ function SectionCard({
   )
 }
 
-function Field({
-  label,
-  children,
-}: {
-  label: string
-  children: React.ReactNode
-}) {
-  return (
-    <div className="space-y-1.5">
-      <label className="text-xs font-semibold text-foreground">{label}</label>
-      {children}
-    </div>
-  )
-}
-
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function ConsultationsPage() {
@@ -221,6 +206,7 @@ export default function ConsultationsPage() {
   const [specialties, setSpecialties] = useState<Specialty[]>([])
 
   const [scheduleFormOpen, setScheduleFormOpen] = useState(false)
+  const [detailRow, setDetailRow] = useState<ConsultationRow | null>(null)
   const [patientId, setPatientId] = useState("")
   const [doctorId, setDoctorId] = useState("")
   const [specialtyId, setSpecialtyId] = useState("")
@@ -302,6 +288,11 @@ export default function ConsultationsPage() {
     const id = setInterval(() => setNowTick(Date.now()), 30 * 1000)
     return () => clearInterval(id)
   }, [])
+
+  // Mantém o modal de detalhe sincronizado com a lista após recargas/ações.
+  useEffect(() => {
+    setDetailRow((prev) => (prev ? consultations.find((c) => c.id === prev.id) ?? null : prev))
+  }, [consultations])
 
   async function createConsultation(e: any) {
     e.preventDefault()
@@ -652,6 +643,15 @@ export default function ConsultationsPage() {
     [consultations]
   )
 
+  const statusBadge = useCallback((r: ConsultationRow) => {
+    if (r.status === "CONCLUIDA") return { label: t("Realizada", "Completed"), cls: "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-700/30 dark:bg-emerald-900/20 dark:text-emerald-400" }
+    if (r.status === "CANCELADA") return { label: t("Cancelada", "Cancelled"), cls: "border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-700/30 dark:bg-rose-900/20 dark:text-rose-400" }
+    if (r.status === "PAGA") return { label: t("Paga", "Paid"), cls: "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-700/30 dark:bg-emerald-900/20 dark:text-emerald-400" }
+    if (isRescheduled(r)) return { label: t("Re-agendada", "Rescheduled"), cls: "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-700/30 dark:bg-amber-900/20 dark:text-amber-400" }
+    if (isDueSoon(r)) return { label: t("Marcada", "Walk-in"), cls: "border-violet-200 bg-violet-50 text-violet-700 dark:border-violet-700/30 dark:bg-violet-900/20 dark:text-violet-400" }
+    return { label: t("Agendada", "Scheduled"), cls: "border-sky-200 bg-sky-50 text-sky-700 dark:border-sky-700/30 dark:bg-sky-900/20 dark:text-sky-400" }
+  }, [isDueSoon, t])
+
   const formatScheduleTypeLabel = useCallback((value?: string) => {
     if (value === "FIM_SEMANA") return t("Fim de semana", "Weekend")
     if (value === "FORA_EXPEDIENTE") return t("Fora de expediente", "After hours")
@@ -659,15 +659,9 @@ export default function ConsultationsPage() {
     return t("Normal", "Normal")
   }, [t])
 
+  // Face do cartão: info mínima (paciente + especialidade + estado). O cartão
+  // inteiro é clicável e abre o modal de detalhes com todas as ações.
   const renderConsultationCard = useCallback((r: ConsultationRow) => {
-    const isProformaInvoice = r.invoice_origin === "PRO"
-    const invoiceIssued = r.invoice_status === "EMIT" || r.invoice_status === "PAGA"
-    const canPrepareInvoice = canInvoice && r.status !== "CANCELADA" && !isProformaInvoice && (!r.invoice_status || r.invoice_status === "RASC")
-    const canReviewProformaInvoice = canInvoice && r.status !== "CANCELADA" && isProformaInvoice && r.invoice_status === "RASC"
-    const hasPendingCreditNote = Boolean(r.has_pending_credit_note_request)
-    const canRequestCreditNote = canWrite && (r.status === "CONCLUIDA" || invoiceIssued) && !hasPendingCreditNote
-    const loadingReview = invoiceReviewLoading === r.id
-
     const accent =
       r.status === "CONCLUIDA" ? "bg-emerald-500"
       : r.status === "CANCELADA" ? "bg-rose-500"
@@ -675,190 +669,31 @@ export default function ConsultationsPage() {
       : isDueSoon(r) ? "bg-violet-500"
       : "bg-sky-500"
     const initial = (r.patient_name || "?").trim().charAt(0).toUpperCase()
+    const badge = statusBadge(r)
 
     return (
-      <div
+      <button
         key={r.id}
-        className="group relative overflow-hidden rounded-xl border border-white/20 bg-white/40 p-3 pl-3.5 shadow-sm backdrop-blur-sm transition hover:-translate-y-px hover:shadow-md dark:border-white/10 dark:bg-white/[0.04]"
+        type="button"
+        onClick={() => setDetailRow(r)}
+        className="group relative w-full overflow-hidden rounded-xl border border-white/20 bg-white/40 p-2.5 pl-3 text-left shadow-sm backdrop-blur-sm transition hover:-translate-y-px hover:border-white/40 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 dark:border-white/10 dark:bg-white/[0.04]"
       >
         <span className={`absolute left-0 top-0 h-full w-1 ${accent}`} />
-        <div className="flex items-start justify-between gap-2">
-          <div className="flex min-w-0 items-center gap-2">
-            <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-xs font-bold text-white shadow-sm ${accent}`}>
-              {initial}
-            </span>
-            <div className="min-w-0">
-              <div className="truncate text-sm font-semibold text-foreground">{r.patient_name || "-"}</div>
-              <div className="font-mono text-[10px] text-muted-foreground">{r.custom_id || r.id}</div>
-            </div>
+        <div className="flex items-center gap-2">
+          <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-xs font-bold text-white shadow-sm ${accent}`}>
+            {initial}
+          </span>
+          <div className="min-w-0 flex-1">
+            <div className="truncate text-sm font-semibold text-foreground">{r.patient_name || "-"}</div>
+            <div className="truncate text-[11px] text-muted-foreground">{r.specialty_name || r.type || "-"}</div>
           </div>
-          <span className="shrink-0 rounded-lg border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs font-bold text-emerald-700 tabular-nums dark:border-emerald-700/30 dark:bg-emerald-900/20 dark:text-emerald-400">
-            <MoneyValue value={r.price} />
+          <span className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-semibold ${badge.cls}`}>
+            {badge.label}
           </span>
         </div>
-
-        <div className="mt-2 space-y-1 text-[11px] text-muted-foreground">
-          <div className="flex items-center gap-1.5">
-            <Stethoscope size={12} className="shrink-0 text-muted-foreground/70" />
-            <span className="truncate font-medium text-foreground">{r.specialty_name || r.type || "-"}</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <User size={12} className="shrink-0 text-muted-foreground/70" />
-            <span className="truncate">{r.doctor_name || t("Sem médico atribuído", "No doctor assigned")}</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <CalendarClock size={12} className="shrink-0 text-muted-foreground/70" />
-            <span className="truncate">{fmtDate(r.scheduled_for)}</span>
-            <span className="ml-auto shrink-0 rounded-full bg-muted px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-muted-foreground">
-              {formatScheduleTypeLabel(r.schedule_type)}
-            </span>
-          </div>
-        </div>
-
-        {/* Invoice info */}
-        <div className="mt-2 flex flex-wrap items-center gap-1.5 border-t border-border/40 pt-2">
-          {r.invoice_code ? (
-            <span className="text-[11px] font-semibold text-foreground">{r.invoice_code}</span>
-          ) : (
-            <span className="text-[11px] text-muted-foreground">{t("Sem fatura", "No invoice")}</span>
-          )}
-          {r.invoice_status ? (
-            <span className="rounded-md border border-border bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
-              {r.invoice_status}
-            </span>
-          ) : null}
-          {isProformaInvoice ? (
-            <span className="rounded-md border border-violet-200 bg-violet-50 px-1.5 py-0.5 text-[10px] font-semibold text-violet-700 dark:border-violet-700/30 dark:bg-violet-900/20 dark:text-violet-400">
-              {t("Proforma", "Proforma")}
-            </span>
-          ) : null}
-        </div>
-
-        {/* Invoice actions */}
-        {canPrepareInvoice ? (
-          <div className="mt-1.5 grid grid-cols-2 gap-1.5">
-            <button
-              type="button"
-              onClick={() => openInvoiceReview(r, "draft")}
-              disabled={loadingReview}
-              className="flex items-center justify-center gap-1 rounded-lg border border-border bg-card px-2 py-1.5 text-[11px] font-semibold text-foreground transition hover:bg-muted disabled:opacity-50"
-            >
-              <FileText size={11} />
-              {r.invoice_id ? t("Rever rascunho", "Review draft") : t("Rascunho", "Draft")}
-            </button>
-            <button
-              type="button"
-              onClick={() => openInvoiceReview(r, "issue")}
-              disabled={loadingReview}
-              className="flex items-center justify-center gap-1 rounded-lg border border-emerald-200 bg-emerald-50 px-2 py-1.5 text-[11px] font-semibold text-emerald-800 transition hover:bg-emerald-100 disabled:opacity-50 dark:border-emerald-700/30 dark:bg-emerald-900/20 dark:text-emerald-400"
-            >
-              <Receipt size={11} />
-              {t("Original", "Issue")}
-            </button>
-          </div>
-        ) : null}
-        {canReviewProformaInvoice ? (
-          <button
-            type="button"
-            onClick={() => openInvoiceReview(r, "proforma")}
-            disabled={loadingReview}
-            className="mt-1.5 flex w-full items-center justify-center gap-1 rounded-lg border border-violet-200 bg-violet-50 px-2 py-1.5 text-[11px] font-semibold text-violet-800 transition hover:bg-violet-100 disabled:opacity-50 dark:border-violet-700/30 dark:bg-violet-900/20 dark:text-violet-400"
-          >
-            <FileText size={11} />
-            {t("Rever proforma", "Review proforma")}
-          </button>
-        ) : null}
-        {r.invoice_id ? (
-          <button
-            type="button"
-            onClick={() => openConsultationInvoicePdf(Number(r.invoice_id))}
-            disabled={invoicePdfId === Number(r.invoice_id)}
-            className="mt-1.5 flex w-full items-center justify-center gap-1.5 rounded-lg border border-border bg-card px-2 py-1.5 text-[11px] font-medium text-foreground transition hover:bg-muted disabled:opacity-50"
-          >
-            <PdfActionLabel loading={invoicePdfId === Number(r.invoice_id)} loadingLabel={t("PDF...", "PDF...")}>
-              {t("PDF Fatura", "Invoice PDF")}
-            </PdfActionLabel>
-          </button>
-        ) : null}
-
-        {/* Credit note */}
-        {hasPendingCreditNote ? (
-          <div className="mt-1.5 flex items-start gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-2 py-1.5 dark:border-amber-700/30 dark:bg-amber-900/20">
-            <Info size={11} className="mt-0.5 shrink-0 text-amber-500" />
-            <div className="min-w-0">
-              <p className="text-[11px] font-semibold text-amber-800 dark:text-amber-400">{t("Nota de crédito solicitada", "Credit note requested")}</p>
-              <p className="text-[10px] text-amber-700 dark:text-amber-500">{t("Aguardando Contabilidade.", "Awaiting Accounting.")}</p>
-            </div>
-          </div>
-        ) : canRequestCreditNote ? (
-          <button
-            type="button"
-            onClick={() => openCreditNoteModal(r)}
-            className="mt-1.5 flex w-full items-center justify-center gap-1 rounded-lg border border-amber-200 bg-amber-50 px-2 py-1.5 text-[11px] font-semibold text-amber-800 transition hover:bg-amber-100 dark:border-amber-700/30 dark:bg-amber-900/20 dark:text-amber-400"
-          >
-            {t("Solicitar nota de crédito", "Request credit note")}
-          </button>
-        ) : null}
-
-        {/* Cancel / reschedule */}
-        {canWrite && (r.status === "MARCADA" || (r.status !== "CANCELADA" && r.status !== "CONCLUIDA" && r.status !== "PAGA")) ? (
-          <div className="mt-1.5 flex flex-wrap gap-1.5 border-t border-border/40 pt-1.5">
-            <button
-              type="button"
-              onClick={() => openRescheduleModal(r)}
-              className="inline-flex items-center rounded-lg border border-border bg-card px-2 py-1 text-[11px] font-medium text-foreground transition hover:bg-muted"
-            >
-              {t("Remarcar", "Reschedule")}
-            </button>
-            <ConfirmDialog
-              title={t("Cancelar consulta", "Cancel consultation")}
-              message={t("Cancelar esta consulta?", "Cancel this consultation?")}
-              confirmText={t("Cancelar consulta", "Cancel consultation")}
-              onConfirm={() => cancelConsultation(r.id)}
-            >
-              <button
-                type="button"
-                className="inline-flex items-center rounded-lg border border-red-200 bg-white px-2 py-1 text-[11px] font-medium text-red-700 transition hover:bg-red-50 dark:bg-red-900/10 dark:text-red-400"
-              >
-                {t("Cancelar", "Cancel")}
-              </button>
-            </ConfirmDialog>
-          </div>
-        ) : canWrite && r.status === "PAGA" && hasPendingCreditNote ? (
-          <div className="mt-1.5 border-t border-border/40 pt-1.5">
-            <ConfirmDialog
-              title={t("Cancelar nota de crédito solicitada", "Cancel credit note request")}
-              message={t("Cancelar o pedido de nota de crédito pendente?", "Cancel the pending credit note request?")}
-              confirmText={t("Cancelar pedido", "Cancel request")}
-              danger
-              onConfirm={() => cancelCreditNoteRequest(r.id)}
-            >
-              <button
-                type="button"
-                className="inline-flex items-center rounded-lg border border-red-200 bg-white px-2 py-1 text-[11px] font-medium text-red-700 transition hover:bg-red-50 dark:bg-red-900/10 dark:text-red-400"
-              >
-                {t("Cancelar nota de crédito", "Cancel credit note")}
-              </button>
-            </ConfirmDialog>
-          </div>
-        ) : null}
-      </div>
+      </button>
     )
-  }, [
-    canInvoice,
-    canWrite,
-    cancelConsultation,
-    cancelCreditNoteRequest,
-    completeConsultation,
-    formatScheduleTypeLabel,
-    invoicePdfId,
-    invoiceReviewLoading,
-    openConsultationInvoicePdf,
-    openCreditNoteModal,
-    openInvoiceReview,
-    openRescheduleModal,
-    t,
-  ])
+  }, [isDueSoon, statusBadge])
 
   const renderConsultationColumn = useCallback((
     title: string,
@@ -1068,6 +903,156 @@ export default function ConsultationsPage() {
           {renderConsultationColumn(t("Realizadas", "Completed"), completedConsultations, CheckCircle2)}
         </div>
       </div>
+
+      {/* Detail modal — info completa + todas as ações */}
+      {detailRow ? (() => {
+        const r = detailRow
+        const isProformaInvoice = r.invoice_origin === "PRO"
+        const invoiceIssued = r.invoice_status === "EMIT" || r.invoice_status === "PAGA"
+        const canPrepareInvoice = canInvoice && r.status !== "CANCELADA" && !isProformaInvoice && (!r.invoice_status || r.invoice_status === "RASC")
+        const canReviewProformaInvoice = canInvoice && r.status !== "CANCELADA" && isProformaInvoice && r.invoice_status === "RASC"
+        const hasPendingCreditNote = Boolean(r.has_pending_credit_note_request)
+        const canRequestCreditNote = canWrite && (r.status === "CONCLUIDA" || invoiceIssued) && !hasPendingCreditNote
+        const canCompleteConsultation = canWrite && r.status === "MARCADA"
+        const canCancelReschedule = canWrite && (r.status === "MARCADA" || (r.status !== "CANCELADA" && r.status !== "CONCLUIDA" && r.status !== "PAGA"))
+        const loadingReview = invoiceReviewLoading === r.id
+        const badge = statusBadge(r)
+        // Botão base: padding igual em todos + borda branca de 1px.
+        const btn = "inline-flex items-center justify-center gap-1.5 rounded-lg border border-white/70 px-3 py-2 text-xs font-semibold shadow-sm transition disabled:opacity-50"
+        return (
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-black/50 backdrop-blur-[1px]" onClick={() => setDetailRow(null)} />
+            <div className="relative flex max-h-[92vh] w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--card)] shadow-2xl">
+              {/* Header */}
+              <div className="flex items-start justify-between gap-2 border-b border-[var(--border)] px-4 py-3">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <h3 className="truncate text-sm font-semibold text-foreground">{r.patient_name || "-"}</h3>
+                    <span className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-semibold ${badge.cls}`}>{badge.label}</span>
+                  </div>
+                  <p className="mt-0.5 font-mono text-[11px] text-muted-foreground">{r.custom_id || r.id}</p>
+                </div>
+                <button type="button" onClick={() => setDetailRow(null)} className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-muted-foreground transition hover:bg-muted hover:text-foreground" aria-label={t("Fechar", "Close")}>
+                  <X size={16} />
+                </button>
+              </div>
+
+              {/* Body */}
+              <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-3">
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  {[
+                    { icon: Stethoscope, label: t("Especialidade", "Specialty"), value: r.specialty_name || r.type || "-" },
+                    { icon: User, label: t("Médico", "Doctor"), value: r.doctor_name || t("Sem médico", "No doctor") },
+                    { icon: CalendarClock, label: t("Data", "Date"), value: fmtDate(r.scheduled_for) },
+                    { icon: Info, label: t("Horário", "Schedule"), value: formatScheduleTypeLabel(r.schedule_type) },
+                  ].map((f, i) => (
+                    <div key={i} className="rounded-lg border border-border/60 bg-muted/30 px-2.5 py-1.5">
+                      <div className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                        <f.icon size={11} /> {f.label}
+                      </div>
+                      <div className="mt-0.5 truncate font-medium text-foreground">{f.value}</div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="flex items-center justify-between rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 dark:border-emerald-700/30 dark:bg-emerald-900/20">
+                  <span className="text-xs font-semibold text-emerald-800 dark:text-emerald-400">{t("Preço c/ IVA", "Price incl. VAT")}</span>
+                  <span className="text-sm font-bold text-emerald-700 tabular-nums dark:text-emerald-400"><MoneyValue value={r.price} /></span>
+                </div>
+
+                {/* Fatura */}
+                <div className="flex flex-wrap items-center gap-1.5">
+                  {r.invoice_code ? (
+                    <span className="text-xs font-semibold text-foreground">{r.invoice_code}</span>
+                  ) : (
+                    <span className="text-xs text-muted-foreground">{t("Sem fatura", "No invoice")}</span>
+                  )}
+                  {r.invoice_status ? (
+                    <span className="rounded-md border border-border bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">{r.invoice_status}</span>
+                  ) : null}
+                  {isProformaInvoice ? (
+                    <span className="rounded-md border border-violet-200 bg-violet-50 px-1.5 py-0.5 text-[10px] font-semibold text-violet-700 dark:border-violet-700/30 dark:bg-violet-900/20 dark:text-violet-400">{t("Proforma", "Proforma")}</span>
+                  ) : null}
+                </div>
+
+                {hasPendingCreditNote ? (
+                  <div className="flex items-start gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-2 dark:border-amber-700/30 dark:bg-amber-900/20">
+                    <Info size={12} className="mt-0.5 shrink-0 text-amber-500" />
+                    <div className="min-w-0">
+                      <p className="text-[11px] font-semibold text-amber-800 dark:text-amber-400">{t("Nota de crédito solicitada", "Credit note requested")}</p>
+                      <p className="text-[10px] text-amber-700 dark:text-amber-500">{t("Aguardando Contabilidade.", "Awaiting Accounting.")}</p>
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+
+              {/* Ações — todos os botões com padding igual e borda branca */}
+              <div className="grid grid-cols-2 gap-1.5 border-t border-[var(--border)] px-4 py-3">
+                {canCompleteConsultation ? (
+                  <button type="button" onClick={() => completeConsultation(r.id)} className={`${btn} bg-emerald-600 text-white hover:bg-emerald-700`}>
+                    <CheckCircle2 size={13} /> {t("Concluir", "Complete")}
+                  </button>
+                ) : null}
+                {canCancelReschedule ? (
+                  <button type="button" onClick={() => { openRescheduleModal(r); setDetailRow(null) }} className={`${btn} bg-card text-foreground hover:bg-muted`}>
+                    <CalendarX2 size={13} /> {t("Remarcar", "Reschedule")}
+                  </button>
+                ) : null}
+                {canPrepareInvoice ? (
+                  <>
+                    <button type="button" onClick={() => { openInvoiceReview(r, "draft"); setDetailRow(null) }} disabled={loadingReview} className={`${btn} bg-card text-foreground hover:bg-muted`}>
+                      <FileText size={13} /> {r.invoice_id ? t("Rever rascunho", "Review draft") : t("Rascunho", "Draft")}
+                    </button>
+                    <button type="button" onClick={() => { openInvoiceReview(r, "issue"); setDetailRow(null) }} disabled={loadingReview} className={`${btn} bg-emerald-600 text-white hover:bg-emerald-700`}>
+                      <Receipt size={13} /> {t("Emitir fatura", "Issue invoice")}
+                    </button>
+                  </>
+                ) : null}
+                {canReviewProformaInvoice ? (
+                  <button type="button" onClick={() => { openInvoiceReview(r, "proforma"); setDetailRow(null) }} disabled={loadingReview} className={`${btn} bg-violet-600 text-white hover:bg-violet-700`}>
+                    <FileText size={13} /> {t("Rever proforma", "Review proforma")}
+                  </button>
+                ) : null}
+                {r.invoice_id ? (
+                  <button type="button" onClick={() => openConsultationInvoicePdf(Number(r.invoice_id))} disabled={invoicePdfId === Number(r.invoice_id)} className={`${btn} bg-card text-foreground hover:bg-muted`}>
+                    <PdfActionLabel loading={invoicePdfId === Number(r.invoice_id)} loadingLabel={t("PDF...", "PDF...")}>{t("PDF Fatura", "Invoice PDF")}</PdfActionLabel>
+                  </button>
+                ) : null}
+                {canRequestCreditNote ? (
+                  <button type="button" onClick={() => { openCreditNoteModal(r); setDetailRow(null) }} className={`${btn} bg-amber-500 text-white hover:bg-amber-600`}>
+                    {t("Nota de crédito", "Credit note")}
+                  </button>
+                ) : null}
+                {canCancelReschedule ? (
+                  <ConfirmDialog
+                    title={t("Cancelar consulta", "Cancel consultation")}
+                    message={t("Cancelar esta consulta?", "Cancel this consultation?")}
+                    confirmText={t("Cancelar consulta", "Cancel consultation")}
+                    onConfirm={() => { cancelConsultation(r.id); setDetailRow(null) }}
+                  >
+                    <button type="button" className={`${btn} bg-rose-600 text-white hover:bg-rose-700`}>
+                      <X size={13} /> {t("Cancelar", "Cancel")}
+                    </button>
+                  </ConfirmDialog>
+                ) : null}
+                {canWrite && r.status === "PAGA" && hasPendingCreditNote ? (
+                  <ConfirmDialog
+                    title={t("Cancelar nota de crédito solicitada", "Cancel credit note request")}
+                    message={t("Cancelar o pedido de nota de crédito pendente?", "Cancel the pending credit note request?")}
+                    confirmText={t("Cancelar pedido", "Cancel request")}
+                    danger
+                    onConfirm={() => { cancelCreditNoteRequest(r.id); setDetailRow(null) }}
+                  >
+                    <button type="button" className={`${btn} bg-rose-600 text-white hover:bg-rose-700`}>
+                      {t("Cancelar NC", "Cancel CN")}
+                    </button>
+                  </ConfirmDialog>
+                ) : null}
+              </div>
+            </div>
+          </div>
+        )
+      })() : null}
 
       {/* Reschedule modal */}
       {rescheduleModalOpen ? (
