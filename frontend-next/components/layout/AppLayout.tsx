@@ -8,6 +8,7 @@ import Sidebar from "./Sidebar"
 import Header from "./Header"
 import Footer from "./Footer"
 import ModuleSubNav from "./ModuleSubNav"
+import SectionSubNav from "./SectionSubNav"
 import AccessDenied from "@/components/auth/AccessDenied"
 import AutoTranslateTree from "@/components/i18n/AutoTranslateTree"
 import { useLanguage } from "@/hooks/useLanguage"
@@ -312,10 +313,15 @@ export default function AppLayout ( {
 
                     <div
                         className={`overflow-hidden transition-all duration-300 ease-in-out ${
-                            subNavVisible ? "max-h-20 opacity-100" : "max-h-0 opacity-0 pointer-events-none"
+                            subNavVisible ? "max-h-32 opacity-100" : "max-h-0 opacity-0 pointer-events-none"
                         }`}
                     >
-                        {subNav ?? <ModuleSubNav />}
+                        {subNav ?? (
+                            <>
+                                <SectionSubNav />
+                                <ModuleSubNav />
+                            </>
+                        )}
                     </div>
                 </div>
 

@@ -278,31 +278,30 @@ export default function Header({ user, onMenuClick, scrolledDown = false }: Prop
                     ref={navScrollerRef}
                     className="flex min-w-0 flex-1 snap-x items-center gap-1 overflow-x-auto scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
                 >
-                    {sectionedItems.map((section) => (
-                        <div key={section.label} className="flex shrink-0 snap-start items-center gap-1">
-                            <span className="px-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                    {sectionedItems.map((section) => {
+                        // Só as secções principais no topo; os módulos de cada
+                        // secção surgem no subcabeçalho (SectionSubNav) quando ativa.
+                        const target = section.items[0]
+                        if (!target) return null
+                        const active = section.items.some(
+                            (item) =>
+                                pathname === item.href ||
+                                (item.href !== "/" && pathname?.startsWith(item.href + "/")),
+                        )
+                        return (
+                            <Link
+                                key={section.label}
+                                href={target.href}
+                                className={`inline-flex h-6 shrink-0 snap-start items-center rounded-md border px-2.5 text-xs font-semibold transition-colors ${
+                                    active
+                                        ? "border-primary/40 bg-primary-soft text-foreground"
+                                        : "border-transparent text-foreground-2 hover:border-border hover:bg-muted hover:text-foreground"
+                                }`}
+                            >
                                 {t(section.label, section.labelEn)}
-                            </span>
-                            {section.items.map((item) => {
-                                const active =
-                                    pathname === item.href ||
-                                    (item.href !== "/" && pathname?.startsWith(item.href + "/"))
-                                return (
-                                    <Link
-                                        key={`${section.label}:${item.href}`}
-                                        href={item.href}
-                                        className={`inline-flex h-6 shrink-0 items-center rounded-md border px-2 text-xs font-semibold transition-colors ${
-                                            active
-                                                ? "border-primary/40 bg-primary-soft text-foreground"
-                                                : "border-transparent text-foreground-2 hover:border-border hover:bg-muted hover:text-foreground"
-                                        }`}
-                                    >
-                                        {t(item.label, item.labelEn || item.label)}
-                                    </Link>
-                                )
-                            })}
-                        </div>
-                    ))}
+                            </Link>
+                        )
+                    })}
                 </div>
 
                 <button
