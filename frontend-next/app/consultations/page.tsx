@@ -626,31 +626,59 @@ export default function ConsultationsPage() {
 
   const isRescheduled = (c: ConsultationRow) => Boolean(c.reschedule_count && c.reschedule_count > 0)
 
+  // Fonte única de verdade da coluna/estado de cada consulta. Colunas e badge
+  // derivam daqui, para nunca divergirem (ex.: re-agendada iminente nunca cai
+  // em "Marcadas" com badge "Re-agendada"). Precedência: concluída/cancelada/
+  // paga > marcada (iminente) > re-agendada > agendada.
+  type ConsultationBucket = "completed" | "cancelled" | "paid" | "marked" | "rescheduled" | "scheduled"
+  const bucketOf = useCallback((c: ConsultationRow): ConsultationBucket => {
+    if (c.status === "CONCLUIDA") return "completed"
+    if (c.status === "CANCELADA") return "cancelled"
+    if (c.status === "PAGA") return "paid"
+    // A partir daqui só estados "MARCADA" (ou equivalentes em aberto).
+    if (isDueSoon(c)) return "marked"
+    if (isRescheduled(c)) return "rescheduled"
+    return "scheduled"
+  }, [isDueSoon])
+
   const markedConsultations = useMemo(
-    () => consultations.filter((c) => c.status === "MARCADA" && isDueSoon(c)),
-    [consultations, isDueSoon]
+    () => consultations.filter((c) => bucketOf(c) === "marked"),
+    [consultations, bucketOf]
   )
   const scheduledConsultations = useMemo(
-    () => consultations.filter((c) => c.status === "MARCADA" && !isRescheduled(c) && !isDueSoon(c)),
-    [consultations, isDueSoon]
+    () => consultations.filter((c) => bucketOf(c) === "scheduled"),
+    [consultations, bucketOf]
   )
   const rescheduledConsultations = useMemo(
-    () => consultations.filter((c) => c.status === "MARCADA" && isRescheduled(c) && !isDueSoon(c)),
-    [consultations, isDueSoon]
+    () => consultations.filter((c) => bucketOf(c) === "rescheduled"),
+    [consultations, bucketOf]
   )
   const completedConsultations = useMemo(
-    () => consultations.filter((c) => c.status === "CONCLUIDA"),
-    [consultations]
+    () => consultations.filter((c) => bucketOf(c) === "completed"),
+    [consultations, bucketOf]
   )
 
   const statusBadge = useCallback((r: ConsultationRow) => {
-    if (r.status === "CONCLUIDA") return { label: t("Realizada", "Completed"), cls: "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-700/30 dark:bg-emerald-900/20 dark:text-emerald-400" }
-    if (r.status === "CANCELADA") return { label: t("Cancelada", "Cancelled"), cls: "border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-700/30 dark:bg-rose-900/20 dark:text-rose-400" }
-    if (r.status === "PAGA") return { label: t("Paga", "Paid"), cls: "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-700/30 dark:bg-emerald-900/20 dark:text-emerald-400" }
-    if (isRescheduled(r)) return { label: t("Re-agendada", "Rescheduled"), cls: "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-700/30 dark:bg-amber-900/20 dark:text-amber-400" }
-    if (isDueSoon(r)) return { label: t("Marcada", "Walk-in"), cls: "border-violet-200 bg-violet-50 text-violet-700 dark:border-violet-700/30 dark:bg-violet-900/20 dark:text-violet-400" }
-    return { label: t("Agendada", "Scheduled"), cls: "border-sky-200 bg-sky-50 text-sky-700 dark:border-sky-700/30 dark:bg-sky-900/20 dark:text-sky-400" }
-  }, [isDueSoon, t])
+    switch (bucketOf(r)) {
+      case "completed": return { label: t("Realizada", "Completed"), cls: "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-700/30 dark:bg-emerald-900/20 dark:text-emerald-400" }
+      case "cancelled": return { label: t("Cancelada", "Cancelled"), cls: "border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-700/30 dark:bg-rose-900/20 dark:text-rose-400" }
+      case "paid": return { label: t("Paga", "Paid"), cls: "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-700/30 dark:bg-emerald-900/20 dark:text-emerald-400" }
+      case "rescheduled": return { label: t("Re-agendada", "Rescheduled"), cls: "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-700/30 dark:bg-amber-900/20 dark:text-amber-400" }
+      case "marked": return { label: t("Marcada", "Walk-in"), cls: "border-violet-200 bg-violet-50 text-violet-700 dark:border-violet-700/30 dark:bg-violet-900/20 dark:text-violet-400" }
+      default: return { label: t("Agendada", "Scheduled"), cls: "border-sky-200 bg-sky-50 text-sky-700 dark:border-sky-700/30 dark:bg-sky-900/20 dark:text-sky-400" }
+    }
+  }, [bucketOf, t])
+
+  const accentOf = useCallback((r: ConsultationRow): string => {
+    switch (bucketOf(r)) {
+      case "completed":
+      case "paid": return "bg-emerald-500"
+      case "cancelled": return "bg-rose-500"
+      case "rescheduled": return "bg-amber-500"
+      case "marked": return "bg-violet-500"
+      default: return "bg-sky-500"
+    }
+  }, [bucketOf])
 
   const formatScheduleTypeLabel = useCallback((value?: string) => {
     if (value === "FIM_SEMANA") return t("Fim de semana", "Weekend")
@@ -662,12 +690,7 @@ export default function ConsultationsPage() {
   // Face do cartão: info mínima (paciente + especialidade + estado). O cartão
   // inteiro é clicável e abre o modal de detalhes com todas as ações.
   const renderConsultationCard = useCallback((r: ConsultationRow) => {
-    const accent =
-      r.status === "CONCLUIDA" ? "bg-emerald-500"
-      : r.status === "CANCELADA" ? "bg-rose-500"
-      : isRescheduled(r) ? "bg-amber-500"
-      : isDueSoon(r) ? "bg-violet-500"
-      : "bg-sky-500"
+    const accent = accentOf(r)
     const initial = (r.patient_name || "?").trim().charAt(0).toUpperCase()
     const badge = statusBadge(r)
 
@@ -688,12 +711,18 @@ export default function ConsultationsPage() {
             <div className="truncate text-[10px] leading-tight text-muted-foreground">{r.specialty_name || r.type || "-"}</div>
           </div>
         </div>
-        <span className={`absolute bottom-1 right-1.5 rounded-full border px-1.5 py-0 text-[9px] font-semibold ${badge.cls}`}>
-          {badge.label}
-        </span>
+        {/* Rodapé: preço alinhado com o nome (mesma coluna) e estado à direita */}
+        <div className="absolute inset-x-1.5 bottom-1 flex items-center justify-between gap-1.5 pl-[2.125rem]">
+          <span className="text-[10px] font-bold text-emerald-700 tabular-nums dark:text-emerald-400">
+            <MoneyValue value={r.price} />
+          </span>
+          <span className={`rounded-full border px-1.5 py-0 text-[9px] font-semibold ${badge.cls}`}>
+            {badge.label}
+          </span>
+        </div>
       </button>
     )
-  }, [isDueSoon, statusBadge])
+  }, [accentOf, statusBadge])
 
   const renderConsultationColumn = useCallback((
     title: string,
@@ -919,12 +948,7 @@ export default function ConsultationsPage() {
         const badge = statusBadge(r)
         // Botão base: padding igual em todos + borda branca de 1px.
         const btn = "inline-flex items-center justify-center gap-1.5 rounded-lg border border-white/70 px-3 py-2 text-xs font-semibold shadow-sm transition disabled:opacity-50"
-        const accent =
-          r.status === "CONCLUIDA" ? "bg-emerald-500"
-          : r.status === "CANCELADA" ? "bg-rose-500"
-          : isRescheduled(r) ? "bg-amber-500"
-          : isDueSoon(r) ? "bg-violet-500"
-          : "bg-sky-500"
+        const accent = accentOf(r)
         const initial = (r.patient_name || "?").trim().charAt(0).toUpperCase()
         return (
           <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
