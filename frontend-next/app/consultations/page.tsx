@@ -27,6 +27,7 @@ import {
   Receipt,
   Stethoscope,
   User,
+  X,
 } from "lucide-react"
 
 type Patient = { id: number; name?: string }
@@ -138,16 +139,18 @@ function SectionCard({
   icon: Icon,
   title,
   count,
+  onClose,
   children,
 }: {
   icon: React.ElementType
   title: string
   count?: number
+  onClose?: () => void
   children: React.ReactNode
 }) {
   return (
     <section className="rounded-xl border border-white/20 bg-white/25 shadow-sm backdrop-blur-sm dark:bg-white/5 dark:border-white/10">
-      <div className="flex items-center gap-2 border-b border-border/60 px-4 py-2.5">
+      <div className="flex items-center gap-2 border-b border-border/60 px-3 py-2">
         <span className="flex h-6 w-6 items-center justify-center rounded-md bg-[var(--primary-600)]/10 text-[var(--primary-700)] dark:text-[var(--primary-400)]">
           <Icon size={13} />
         </span>
@@ -157,8 +160,18 @@ function SectionCard({
             {count}
           </span>
         )}
+        {onClose ? (
+          <button
+            type="button"
+            onClick={onClose}
+            className={`flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground transition hover:bg-muted hover:text-foreground ${count === undefined ? "ml-auto" : ""}`}
+            aria-label="Fechar"
+          >
+            <X size={14} />
+          </button>
+        ) : null}
       </div>
-      <div className="p-4">{children}</div>
+      <div className="p-3">{children}</div>
     </section>
   )
 }
@@ -207,6 +220,7 @@ export default function ConsultationsPage() {
   const [doctors, setDoctors] = useState<Doctor[]>([])
   const [specialties, setSpecialties] = useState<Specialty[]>([])
 
+  const [scheduleFormOpen, setScheduleFormOpen] = useState(false)
   const [patientId, setPatientId] = useState("")
   const [doctorId, setDoctorId] = useState("")
   const [specialtyId, setSpecialtyId] = useState("")
@@ -878,10 +892,10 @@ export default function ConsultationsPage() {
         GROUPS.CONTABILIDADE,
       ]}
     >
-      <div className="space-y-3">
+      <div className="space-y-1.5">
 
         {/* Header */}
-        <div className="relative overflow-hidden rounded-xl border border-white/20 bg-white/30 px-4 py-3 shadow-sm backdrop-blur-sm dark:bg-white/5 dark:border-white/10">
+        <div className="relative overflow-hidden rounded-xl border border-white/20 bg-white/30 px-4 py-2.5 shadow-sm backdrop-blur-sm dark:bg-white/5 dark:border-white/10">
           <h1 className="text-lg font-bold text-foreground">{t("Consultas", "Consultations")}</h1>
           <p className="text-[11px] text-muted-foreground">{t("Gestão do fluxo de consultas médicas", "Medical consultation flow management")}</p>
         </div>
@@ -892,16 +906,32 @@ export default function ConsultationsPage() {
           </div>
         ) : null}
 
+        {/* Form — colapsado: só o botão; ao clicar, abre o cartão completo */}
+        {canWrite && !scheduleFormOpen ? (
+          <button
+            type="button"
+            onClick={() => setScheduleFormOpen(true)}
+            className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-indigo-600 px-4 py-2 text-xs font-semibold text-white shadow-md shadow-violet-500/30 transition hover:from-violet-700 hover:to-indigo-700"
+          >
+            <CalendarPlus size={13} />
+            {t("Marcar consulta", "Schedule consultation")}
+          </button>
+        ) : null}
+
         {/* Form */}
-        {canWrite ? (
-          <SectionCard icon={CalendarPlus} title={t("Marcar consulta", "Schedule consultation")}>
+        {canWrite && scheduleFormOpen ? (
+          <SectionCard
+            icon={CalendarPlus}
+            title={t("Marcar consulta", "Schedule consultation")}
+            onClose={() => setScheduleFormOpen(false)}
+          >
             {formError ? (
               <div className="mb-3 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800 dark:border-red-800/40 dark:bg-red-900/15 dark:text-red-300">
                 {formError}
               </div>
             ) : null}
-            <form onSubmit={createConsultation} className="space-y-3">
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <form onSubmit={createConsultation} className="space-y-2">
+              <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
                 <div className="space-y-1">
                   <label className="text-[11px] font-semibold text-muted-foreground">{t("Paciente", "Patient")}</label>
                   <SearchableSelect
@@ -986,7 +1016,9 @@ export default function ConsultationsPage() {
               </div>
             </form>
           </SectionCard>
-        ) : (
+        ) : null}
+
+        {!canWrite ? (
           <SectionCard icon={Building2} title={t("Modo leitura", "Read-only mode")}>
             <p className="text-sm text-muted-foreground">
               {t(
@@ -995,10 +1027,10 @@ export default function ConsultationsPage() {
               )}
             </p>
           </SectionCard>
-        )}
+        ) : null}
 
         {/* Columns */}
-        <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-1.5 md:grid-cols-2 lg:grid-cols-4">
           {renderConsultationColumn(t("Marcadas", "Walk-in"), markedConsultations, CalendarCheck2)}
           {renderConsultationColumn(t("Agendadas", "Scheduled"), scheduledConsultations, CalendarClock)}
           {renderConsultationColumn(t("Re-agendadas", "Rescheduled"), rescheduledConsultations, CalendarX2)}
