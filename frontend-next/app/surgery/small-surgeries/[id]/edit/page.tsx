@@ -664,7 +664,7 @@ export default function SmallSurgeryEditPage() {
 
             <SurfaceCard title="3 · Cirurgião e especialidade" icon={<Stethoscope size={13} />} accent="bg-emerald-400">
               <SearchSelect
-                label="Cirurgião (médico de RH)"
+                label="Cirurgião"
                 placeholder="Pesquisar médico..."
                 endpoint="/consultations/doctors/"
                 labelField="name"
@@ -672,7 +672,7 @@ export default function SmallSurgeryEditPage() {
                 onChange={(v, lbl) => { setSurgeon(v); setSurgeonLabel(lbl) }}
               />
               <SearchSelect
-                label="Especialidade (de RH)"
+                label="Especialidade"
                 placeholder="Pesquisar especialidade..."
                 endpoint="/consultations/specialty/"
                 labelField="name"
