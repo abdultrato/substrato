@@ -135,7 +135,7 @@ export default function SurgicalProcedureDetailPage() {
               <div className="flex items-center gap-2 border-r border-white/30 pr-3 dark:border-white/10">
                 <button type="button" onClick={() => setActive(v => !v)}
                   className={`relative h-5 w-9 shrink-0 rounded-full transition-colors ${active ? "bg-emerald-500" : "bg-slate-300 dark:bg-slate-600"}`}>
-                  <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform ${active ? "translate-x-4" : "translate-x-0.5"}`} />
+                  <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform ${active ? "translate-x-[18px]" : "translate-x-0.5"}`} />
                 </button>
                 <span className="text-[11px] font-medium text-foreground">{active ? "Activo" : "Inactivo"}</span>
               </div>
@@ -196,7 +196,7 @@ export default function SurgicalProcedureDetailPage() {
               <div className="mt-3 flex items-center gap-2">
                 <button type="button" onClick={() => setAppliesVat(v => !v)}
                   className={`relative h-5 w-9 rounded-full transition-colors ${appliesVat ? "bg-teal-500" : "bg-slate-300 dark:bg-slate-600"}`}>
-                  <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform ${appliesVat ? "translate-x-4" : "translate-x-0.5"}`} />
+                  <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform ${appliesVat ? "translate-x-[18px]" : "translate-x-0.5"}`} />
                 </button>
                 <span className="text-[12px] text-foreground">Aplicar IVA por defeito</span>
               </div>
