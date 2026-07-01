@@ -849,7 +849,9 @@ export default function ConsultationsPage() {
           {t("Nenhuma consulta.", "No consultations.")}
         </div>
       ) : (
-        <div className="space-y-2">{rows.map(renderConsultationCard)}</div>
+        <div className="max-h-[calc(100vh-15rem)] space-y-2 overflow-y-auto overscroll-contain pr-1 [scrollbar-width:thin]">
+          {rows.map(renderConsultationCard)}
+        </div>
       )}
     </SectionCard>
   ), [loading, renderConsultationCard, t])
