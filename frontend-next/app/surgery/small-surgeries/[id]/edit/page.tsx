@@ -8,7 +8,7 @@ import {
   ArrowLeft,
   CalendarClock,
   CheckCircle2,
-  CreditCard,
+
   Loader2,
   Save,
   Scissors,
@@ -445,8 +445,6 @@ export default function SmallSurgeryEditPage() {
   const [completedAt, setCompletedAt] = useState("")
 
   // 8 — financial
-  const [estimatedPrice, setEstimatedPrice] = useState("0.00")
-  const [vatPct, setVatPct] = useState("16.00")
 
   const toDatetimeLocal = (v: any) => {
     if (!v) return ""
@@ -476,8 +474,7 @@ export default function SmallSurgeryEditPage() {
       setStartedAt(toDatetimeLocal(d.started_at))
       setEndedAt(toDatetimeLocal(d.ended_at))
       setCompletedAt(toDatetimeLocal(d.completed_at))
-      setEstimatedPrice(d.estimated_price || "0.00")
-      setVatPct(d.vat_percentage || "16.00")
+
 
       // Load procedure names if IDs exist
       if (d.procedures?.length) {
@@ -562,8 +559,7 @@ export default function SmallSurgeryEditPage() {
           started_at: startedAt ? new Date(startedAt).toISOString() : null,
           ended_at: endedAt ? new Date(endedAt).toISOString() : null,
           completed_at: completedAt ? new Date(completedAt).toISOString() : null,
-          estimated_price: estimatedPrice,
-          vat_percentage: vatPct,
+
         }),
       })
       setSuccess(true)
@@ -573,7 +569,7 @@ export default function SmallSurgeryEditPage() {
     } finally {
       setSaving(false)
     }
-  }, [id, patient, procedures, surgeon, specialty, operatingRoom, preDiag, posDiag, status, priority, classification, scheduledFor, startedAt, endedAt, completedAt, estimatedPrice, vatPct, router])
+  }, [id, patient, procedures, surgeon, specialty, operatingRoom, preDiag, posDiag, status, priority, classification, scheduledFor, startedAt, endedAt, completedAt, router])
 
   if (loading) {
     return (
@@ -808,18 +804,6 @@ export default function SmallSurgeryEditPage() {
               </FieldRow>
             </div>
           </SurfaceCard>
-
-          {/* 8 · Financeiro — compacto à direita */}
-          <div className="w-48 shrink-0">
-            <SurfaceCard title="8 · Financeiro" icon={<CreditCard size={13} />} accent="bg-teal-400">
-              <FieldRow label="Preço (MT)">
-                <input type="number" step="0.01" className={inputCls} value={estimatedPrice} onChange={e => setEstimatedPrice(e.target.value)} />
-              </FieldRow>
-              <FieldRow label="IVA (%)">
-                <input type="number" step="0.01" className={inputCls} value={vatPct} onChange={e => setVatPct(e.target.value)} />
-              </FieldRow>
-            </SurfaceCard>
-          </div>
 
         </div>
 
