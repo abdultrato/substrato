@@ -586,15 +586,20 @@ export default function SmallSurgeryEditPage() {
         })))
       }
 
-      // Load team
+      // Load team — deduplicate by employeeId, keep last role
       const teamData = await apiFetch<any>(`/surgery/equipa_cirurgica/?surgery=${id}&limit=50`)
       const teamList: any[] = Array.isArray(teamData) ? teamData : (teamData.results || [])
-      setTeam(teamList.map((t: any) => ({
-        tempId: String(t.id),
-        employeeId: t.employee,
-        employeeName: t.employee_name || `#${t.employee}`,
-        role: t.role || "ASSISTANT_SURGEON",
-      })))
+      const seen = new Map<number, TeamMember>()
+      for (const t of teamList) {
+        const empId = t.employee
+        if (empId) seen.set(empId, {
+          tempId: String(t.id),
+          employeeId: empId,
+          employeeName: t.employee_name || `#${empId}`,
+          role: t.role || "ASSISTANT_SURGEON",
+        })
+      }
+      setTeam(Array.from(seen.values()))
     } catch (e: any) {
       setError(e?.message || "Erro ao carregar.")
     } finally {
@@ -617,12 +622,15 @@ export default function SmallSurgeryEditPage() {
   }, [teamQuery, addingTeam])
 
   function addTeamMember(emp: any) {
-    setTeam(prev => [...prev, {
-      tempId: `new-${Date.now()}`,
-      employeeId: emp.id,
-      employeeName: emp.name,
-      role: teamRole,
-    }])
+    setTeam(prev => {
+      if (prev.some(m => m.employeeId === emp.id)) return prev  // already in team
+      return [...prev, {
+        tempId: `new-${Date.now()}`,
+        employeeId: emp.id,
+        employeeName: emp.name,
+        role: teamRole,
+      }]
+    })
     setTeamQuery("")
     setAddingTeam(false)
   }
@@ -866,9 +874,9 @@ export default function SmallSurgeryEditPage() {
                       </div>
                       <DropdownPortal anchorRef={teamInputRef} portalRef={teamPortalRef} open={addingTeam && (teamResults.length > 0 || teamQuery.length > 0)}>
                         <div className="max-h-96 overflow-y-auto">
-                          {teamResults.length === 0
+                          {teamResults.filter(r => !team.some(m => m.employeeId === r.id)).length === 0
                             ? <div className="px-3 py-2 text-[11px] text-[var(--gray-400)]">Sem resultados</div>
-                            : teamResults.map(emp => (
+                            : teamResults.filter(r => !team.some(m => m.employeeId === r.id)).map(emp => (
                               <div
                                 key={emp.id}
                                 className="flex cursor-pointer items-center gap-2 px-3 py-1.5 text-[12px] hover:bg-[var(--primary-50)] dark:hover:bg-white/10"
