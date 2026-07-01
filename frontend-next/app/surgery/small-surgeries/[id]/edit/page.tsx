@@ -1,33 +1,32 @@
 "use client"
 
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import {
   ArrowLeft,
   CalendarClock,
+  CheckCircle2,
   CreditCard,
   Loader2,
   Save,
   Scissors,
+  Search,
   Stethoscope,
+  Trash2,
   User,
+  Users,
+  X,
 } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
-import { SearchableRelationSelect } from "@/components/form/AutoForm"
-import type { RelationTarget } from "@/lib/resources/relationOptions"
 import { apiFetch } from "@/lib/api"
 import { GROUPS } from "@/lib/rbac"
 import { routeParamToString } from "@/lib/routeParams"
 
 const GLASS = "rounded-xl border border-white/20 bg-white/30 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]"
 
-const T_PATIENT: RelationTarget = { endpoint: "/clinical/patient/", labelFields: ["name", "document_number", "custom_id"] }
-const T_SURGEON: RelationTarget = { endpoint: "/consultations/doctors/", labelFields: ["name", "custom_id"] }
-const T_ROOM: RelationTarget = { endpoint: "/surgery/centro_cirurgico/", labelFields: ["name", "custom_id"] }
-const T_SPECIALTY: RelationTarget = { endpoint: "/consultations/specialties/", labelFields: ["name"] }
-const T_REQUEST: RelationTarget = { endpoint: "/surgery/pedido_cirurgico/", labelFields: ["custom_id", "id"] }
+/* ── helpers ──────────────────────────────────────────────────── */
 
 const STATUS_CHOICES = [
   { value: "DRAFT", label: "Rascunho" },
@@ -68,6 +67,18 @@ const CLASSIFICATION_CHOICES = [
   { value: "COMPLEX", label: "Complexa" },
 ]
 
+const TEAM_ROLES = [
+  { value: "SURGEON", label: "Cirurgião principal" },
+  { value: "ASSISTANT_SURGEON", label: "Cirurgião assistente" },
+  { value: "ANESTHESIOLOGIST", label: "Anestesista" },
+  { value: "SCRUB_NURSE", label: "Enfermeiro instrumentista" },
+  { value: "CIRCULATING_NURSE", label: "Enfermeiro circulante" },
+  { value: "TECHNICIAN", label: "Técnico cirúrgico" },
+  { value: "OBSERVER", label: "Observador" },
+]
+
+/* ── sub-components ───────────────────────────────────────────── */
+
 function SurfaceCard({ title, icon, accent = "bg-sky-400", children }: {
   title: string; icon: React.ReactNode; accent?: string; children: React.ReactNode
 }) {
@@ -96,6 +107,250 @@ function FieldRow({ label, children }: { label: string; children: React.ReactNod
 const inputCls = "w-full rounded-lg border border-white/30 bg-white/40 px-2.5 py-1.5 text-[12px] text-[var(--text)] placeholder-[var(--gray-400)] backdrop-blur-sm focus:border-[var(--primary-400)] focus:outline-none dark:border-white/10 dark:bg-white/[0.06]"
 const selectCls = `${inputCls} cursor-pointer`
 
+/* Searchable single-select dropdown */
+function SearchSelect({
+  label, placeholder, endpoint, labelField = "name", value, onChange,
+}: {
+  label: string
+  placeholder: string
+  endpoint: string
+  labelField?: string
+  value: number | null
+  onChange: (id: number | null, label: string) => void
+}) {
+  const [query, setQuery] = useState("")
+  const [results, setResults] = useState<any[]>([])
+  const [open, setOpen] = useState(false)
+  const [selectedLabel, setSelectedLabel] = useState("")
+  const ref = useRef<HTMLDivElement>(null)
+
+  // close on outside click
+  useEffect(() => {
+    function handle(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener("mousedown", handle)
+    return () => document.removeEventListener("mousedown", handle)
+  }, [])
+
+  const search = useCallback(async (q: string) => {
+    try {
+      const d = await apiFetch<any>(`${endpoint}?search=${encodeURIComponent(q)}&limit=20`)
+      const r = Array.isArray(d) ? d : (d.results || [])
+      setResults(r)
+    } catch { setResults([]) }
+  }, [endpoint])
+
+  useEffect(() => {
+    if (open) search(query)
+  }, [query, open, search])
+
+  function select(item: any) {
+    const lbl = [item[labelField], item.custom_id].filter(Boolean).join(" — ")
+    setSelectedLabel(lbl)
+    onChange(item.id, lbl)
+    setOpen(false)
+    setQuery("")
+  }
+
+  function clear(e: React.MouseEvent) {
+    e.stopPropagation()
+    setSelectedLabel("")
+    onChange(null, "")
+  }
+
+  return (
+    <FieldRow label={label}>
+      <div ref={ref} className="relative">
+        <div
+          className={`${inputCls} flex cursor-pointer items-center justify-between gap-1`}
+          onClick={() => setOpen(o => !o)}
+        >
+          {value && selectedLabel
+            ? <span className="truncate text-[var(--text)]">{selectedLabel}</span>
+            : <span className="text-[var(--gray-400)]">{placeholder}</span>}
+          <div className="flex shrink-0 items-center gap-1">
+            {value ? (
+              <button type="button" onClick={clear} className="text-[var(--gray-400)] hover:text-rose-500">
+                <X size={11} />
+              </button>
+            ) : null}
+            <Search size={11} className="text-[var(--gray-400)]" />
+          </div>
+        </div>
+        {open && (
+          <div className="absolute z-50 mt-1 w-full rounded-lg border border-white/30 bg-white/90 shadow-lg backdrop-blur-sm dark:bg-[var(--surface-2)]/95">
+            <div className="border-b border-white/20 px-2 py-1.5">
+              <input
+                autoFocus
+                className="w-full bg-transparent text-[12px] text-[var(--text)] outline-none placeholder-[var(--gray-400)]"
+                placeholder="Pesquisar..."
+                value={query}
+                onChange={e => setQuery(e.target.value)}
+              />
+            </div>
+            <div className="max-h-48 overflow-y-auto">
+              {results.length === 0
+                ? <div className="px-3 py-2 text-[11px] text-[var(--gray-400)]">Sem resultados</div>
+                : results.map(item => (
+                  <div
+                    key={item.id}
+                    className={`cursor-pointer px-3 py-1.5 text-[12px] hover:bg-[var(--primary-50)] dark:hover:bg-white/10 ${item.id === value ? "font-semibold text-[var(--primary-600)]" : "text-[var(--text)]"}`}
+                    onClick={() => select(item)}
+                  >
+                    {item[labelField] || item.name}
+                    {item.custom_id ? <span className="ml-1 text-[10px] text-[var(--gray-400)]">{item.custom_id}</span> : null}
+                  </div>
+                ))
+              }
+            </div>
+          </div>
+        )}
+      </div>
+    </FieldRow>
+  )
+}
+
+/* Multi-select for procedures */
+function ProcedureMultiSelect({
+  selected, onChange,
+}: {
+  selected: { id: number; name: string; base_price?: string }[]
+  onChange: (items: { id: number; name: string; base_price?: string }[]) => void
+}) {
+  const [query, setQuery] = useState("")
+  const [results, setResults] = useState<any[]>([])
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function handle(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener("mousedown", handle)
+    return () => document.removeEventListener("mousedown", handle)
+  }, [])
+
+  const search = useCallback(async (q: string) => {
+    try {
+      const d = await apiFetch<any>(`/surgery/surgical_procedure/?search=${encodeURIComponent(q)}&limit=30`)
+      const r = Array.isArray(d) ? d : (d.results || [])
+      setResults(r)
+    } catch { setResults([]) }
+  }, [])
+
+  useEffect(() => { if (open) search(query) }, [query, open, search])
+
+  function toggle(item: any) {
+    const exists = selected.find(s => s.id === item.id)
+    if (exists) {
+      onChange(selected.filter(s => s.id !== item.id))
+    } else {
+      onChange([...selected, { id: item.id, name: item.name, base_price: item.base_price }])
+    }
+  }
+
+  function remove(id: number) {
+    onChange(selected.filter(s => s.id !== id))
+  }
+
+  return (
+    <FieldRow label="Procedimentos cirúrgicos">
+      <div ref={ref} className="relative">
+        {/* selected chips */}
+        {selected.length > 0 && (
+          <div className="mb-1.5 flex flex-wrap gap-1">
+            {selected.map(s => (
+              <span key={s.id} className="inline-flex items-center gap-1 rounded-md border border-violet-300/60 bg-violet-50/80 px-2 py-0.5 text-[11px] font-medium text-violet-700 dark:border-violet-700/40 dark:bg-violet-900/20 dark:text-violet-300">
+                {s.name}
+                <button type="button" onClick={() => remove(s.id)} className="hover:text-rose-500"><X size={9} /></button>
+              </span>
+            ))}
+          </div>
+        )}
+        <div
+          className={`${inputCls} flex cursor-pointer items-center justify-between gap-1`}
+          onClick={() => setOpen(o => !o)}
+        >
+          <span className="text-[var(--gray-400)]">Adicionar procedimento...</span>
+          <Search size={11} className="text-[var(--gray-400)]" />
+        </div>
+        {open && (
+          <div className="absolute z-50 mt-1 w-full rounded-lg border border-white/30 bg-white/90 shadow-lg backdrop-blur-sm dark:bg-[var(--surface-2)]/95">
+            <div className="border-b border-white/20 px-2 py-1.5">
+              <input
+                autoFocus
+                className="w-full bg-transparent text-[12px] text-[var(--text)] outline-none placeholder-[var(--gray-400)]"
+                placeholder="Pesquisar procedimento..."
+                value={query}
+                onChange={e => setQuery(e.target.value)}
+              />
+            </div>
+            <div className="max-h-52 overflow-y-auto">
+              {results.length === 0
+                ? <div className="px-3 py-2 text-[11px] text-[var(--gray-400)]">Sem resultados</div>
+                : results.map(item => {
+                  const isSelected = !!selected.find(s => s.id === item.id)
+                  return (
+                    <div
+                      key={item.id}
+                      className={`flex cursor-pointer items-center gap-2 px-3 py-1.5 text-[12px] hover:bg-[var(--primary-50)] dark:hover:bg-white/10 ${isSelected ? "bg-violet-50/60 dark:bg-violet-900/20" : ""}`}
+                      onClick={() => toggle(item)}
+                    >
+                      <span className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border ${isSelected ? "border-violet-500 bg-violet-500 text-white" : "border-[var(--gray-300)]"}`}>
+                        {isSelected ? <CheckCircle2 size={10} /> : null}
+                      </span>
+                      <span className={isSelected ? "font-semibold text-violet-700 dark:text-violet-300" : "text-[var(--text)]"}>
+                        {item.name}
+                      </span>
+                      {item.base_price ? <span className="ml-auto text-[10px] text-[var(--gray-400)]">{item.base_price} MT</span> : null}
+                    </div>
+                  )
+                })
+              }
+            </div>
+          </div>
+        )}
+      </div>
+    </FieldRow>
+  )
+}
+
+/* Team member row */
+function TeamMemberRow({
+  member, onRemove, onChangeRole,
+}: {
+  member: { tempId: string; employeeId: number | null; employeeName: string; role: string }
+  onRemove: () => void
+  onChangeRole: (role: string) => void
+}) {
+  return (
+    <div className="flex items-center gap-2 rounded-lg border border-white/20 bg-white/20 px-2 py-1.5 dark:bg-white/[0.03]">
+      <User size={12} className="shrink-0 text-[var(--gray-400)]" />
+      <span className="flex-1 truncate text-[12px] text-[var(--text)]">{member.employeeName || "—"}</span>
+      <select
+        className="rounded border border-white/20 bg-transparent px-1.5 py-0.5 text-[11px] text-[var(--gray-500)] focus:outline-none"
+        value={member.role}
+        onChange={e => onChangeRole(e.target.value)}
+      >
+        {TEAM_ROLES.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
+      </select>
+      <button type="button" onClick={onRemove} className="text-[var(--gray-400)] hover:text-rose-500">
+        <Trash2 size={11} />
+      </button>
+    </div>
+  )
+}
+
+/* ── main page ────────────────────────────────────────────────── */
+
+type TeamMember = {
+  tempId: string
+  employeeId: number | null
+  employeeName: string
+  role: string
+}
+
 export default function SmallSurgeryEditPage() {
   const params = useParams()
   const id = routeParamToString((params as any)?.id)
@@ -105,16 +360,38 @@ export default function SmallSurgeryEditPage() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
+  const [code, setCode] = useState("")
 
-  // form state
+  // 1 — patient
   const [patient, setPatient] = useState<number | null>(null)
+  const [patientLabel, setPatientLabel] = useState("")
+
+  // 2 — procedures (multi)
+  const [procedures, setProcedures] = useState<{ id: number; name: string; base_price?: string }[]>([])
+
+  // 3 — surgeon + specialty (from RH/consultations)
   const [surgeon, setSurgeon] = useState<number | null>(null)
-  const [operatingRoom, setOperatingRoom] = useState<number | null>(null)
+  const [surgeonLabel, setSurgeonLabel] = useState("")
   const [specialty, setSpecialty] = useState<number | null>(null)
-  const [procedure, setProcedure] = useState("")
-  const [description, setDescription] = useState("")
+  const [specialtyLabel, setSpecialtyLabel] = useState("")
+
+  // 4 — operating room (bloco — from nursing/ward)
+  const [operatingRoom, setOperatingRoom] = useState<number | null>(null)
+  const [operatingRoomLabel, setOperatingRoomLabel] = useState("")
+
+  // 5 — surgical team
+  const [team, setTeam] = useState<TeamMember[]>([])
+  const [addingTeam, setAddingTeam] = useState(false)
+  const [teamQuery, setTeamQuery] = useState("")
+  const [teamResults, setTeamResults] = useState<any[]>([])
+  const [teamRole, setTeamRole] = useState("ASSISTANT_SURGEON")
+  const teamRef = useRef<HTMLDivElement>(null)
+
+  // 6 — diagnoses
   const [preDiag, setPreDiag] = useState("")
   const [posDiag, setPosDiag] = useState("")
+
+  // 7 — status + dates
   const [status, setStatus] = useState("DRAFT")
   const [priority, setPriority] = useState("ELECTIVE")
   const [classification, setClassification] = useState("")
@@ -122,9 +399,10 @@ export default function SmallSurgeryEditPage() {
   const [startedAt, setStartedAt] = useState("")
   const [endedAt, setEndedAt] = useState("")
   const [completedAt, setCompletedAt] = useState("")
+
+  // 8 — financial
   const [estimatedPrice, setEstimatedPrice] = useState("0.00")
   const [vatPct, setVatPct] = useState("16.00")
-  const [code, setCode] = useState("")
 
   const toDatetimeLocal = (v: any) => {
     if (!v) return ""
@@ -132,17 +410,19 @@ export default function SmallSurgeryEditPage() {
   }
 
   const load = useCallback(async () => {
-    setLoading(true)
-    setError(null)
+    setLoading(true); setError(null)
     try {
       const d = await apiFetch<Record<string, any>>(`/surgery/small_surgery/${id}/`)
       setCode(d.custom_id || `#${d.id}`)
       setPatient(d.patient ?? null)
+      setPatientLabel(d.patient_name || "")
+      setProcedures((d.procedures || []).map((pid: number) => ({ id: pid, name: `#${pid}` })))
       setSurgeon(d.surgeon ?? null)
-      setOperatingRoom(d.operating_room ?? null)
+      setSurgeonLabel(d.surgeon_name || "")
       setSpecialty(d.specialty ?? null)
-      setProcedure(d.procedure || "")
-      setDescription(d.description || "")
+      setSpecialtyLabel(d.specialty_name || "")
+      setOperatingRoom(d.operating_room ?? null)
+      setOperatingRoomLabel(d.operating_room_name || "")
       setPreDiag(d.preoperative_diagnosis || "")
       setPosDiag(d.postoperative_diagnosis || "")
       setStatus(d.status || "DRAFT")
@@ -154,6 +434,27 @@ export default function SmallSurgeryEditPage() {
       setCompletedAt(toDatetimeLocal(d.completed_at))
       setEstimatedPrice(d.estimated_price || "0.00")
       setVatPct(d.vat_percentage || "16.00")
+
+      // Load procedure names if IDs exist
+      if (d.procedures?.length) {
+        const procs = await apiFetch<any>(`/surgery/surgical_procedure/?limit=100`)
+        const all: any[] = Array.isArray(procs) ? procs : (procs.results || [])
+        const mapped = d.procedures.map((pid: number) => {
+          const found = all.find((p: any) => p.id === pid)
+          return found ? { id: found.id, name: found.name, base_price: found.base_price } : { id: pid, name: `#${pid}` }
+        })
+        setProcedures(mapped)
+      }
+
+      // Load team
+      const teamData = await apiFetch<any>(`/surgery/equipa_cirurgica/?surgery=${id}&limit=50`)
+      const teamList: any[] = Array.isArray(teamData) ? teamData : (teamData.results || [])
+      setTeam(teamList.map((t: any) => ({
+        tempId: String(t.id),
+        employeeId: t.employee,
+        employeeName: t.employee_name || `#${t.employee}`,
+        role: t.role || "ASSISTANT_SURGEON",
+      })))
     } catch (e: any) {
       setError(e?.message || "Erro ao carregar.")
     } finally {
@@ -163,20 +464,49 @@ export default function SmallSurgeryEditPage() {
 
   useEffect(() => { load() }, [load])
 
+  // team member search
+  useEffect(() => {
+    if (!addingTeam) return
+    const t = setTimeout(async () => {
+      try {
+        const d = await apiFetch<any>(`/consultations/doctors/?search=${encodeURIComponent(teamQuery)}&limit=20`)
+        setTeamResults(Array.isArray(d) ? d : (d.results || []))
+      } catch { setTeamResults([]) }
+    }, 200)
+    return () => clearTimeout(t)
+  }, [teamQuery, addingTeam])
+
+  function addTeamMember(emp: any) {
+    setTeam(prev => [...prev, {
+      tempId: `new-${Date.now()}`,
+      employeeId: emp.id,
+      employeeName: emp.name,
+      role: teamRole,
+    }])
+    setTeamQuery("")
+    setAddingTeam(false)
+  }
+
+  // close team picker on outside click
+  useEffect(() => {
+    function handle(e: MouseEvent) {
+      if (teamRef.current && !teamRef.current.contains(e.target as Node)) setAddingTeam(false)
+    }
+    document.addEventListener("mousedown", handle)
+    return () => document.removeEventListener("mousedown", handle)
+  }, [])
+
   const save = useCallback(async () => {
-    setSaving(true)
-    setError(null)
-    setSuccess(false)
+    setSaving(true); setError(null); setSuccess(false)
     try {
       await apiFetch(`/surgery/small_surgery/${id}/`, {
         method: "PATCH",
         body: JSON.stringify({
           patient,
+          procedures: procedures.map(p => p.id),
           surgeon: surgeon ?? null,
-          operating_room: operatingRoom ?? null,
           specialty: specialty ?? null,
-          procedure,
-          description,
+          operating_room: operatingRoom ?? null,
           preoperative_diagnosis: preDiag,
           postoperative_diagnosis: posDiag,
           status,
@@ -197,7 +527,7 @@ export default function SmallSurgeryEditPage() {
     } finally {
       setSaving(false)
     }
-  }, [id, patient, surgeon, operatingRoom, specialty, procedure, description, preDiag, posDiag, status, priority, classification, scheduledFor, startedAt, endedAt, completedAt, estimatedPrice, vatPct, router])
+  }, [id, patient, procedures, surgeon, specialty, operatingRoom, preDiag, posDiag, status, priority, classification, scheduledFor, startedAt, endedAt, completedAt, estimatedPrice, vatPct, router])
 
   if (loading) {
     return (
@@ -248,135 +578,201 @@ export default function SmallSurgeryEditPage() {
         </section>
 
         {error ? (
-          <div className="rounded-xl border border-rose-300/50 bg-rose-50/60 px-4 py-3 text-sm text-rose-800">
+          <div className="rounded-xl border border-rose-300/50 bg-rose-50/60 px-4 py-3 text-sm text-rose-800 dark:border-rose-700/40 dark:bg-rose-900/20 dark:text-rose-300">
             {error}
           </div>
         ) : null}
 
-        {/* fluxo linear — 1 coluna, ordem de preenchimento cirúrgico */}
-        <div className="flex flex-col gap-3">
+        {/* ── 1 · Paciente ── */}
+        <SurfaceCard title="1 · Paciente" icon={<User size={13} />} accent="bg-sky-400">
+          <SearchSelect
+            label="Paciente *"
+            placeholder="Pesquisar paciente..."
+            endpoint="/clinical/patient/"
+            labelField="name"
+            value={patient}
+            onChange={(v, lbl) => { setPatient(v); setPatientLabel(lbl) }}
+          />
+          {patientLabel && patient ? (
+            <div className="text-[11px] text-[var(--gray-500)]">Seleccionado: <span className="font-medium text-foreground">{patientLabel}</span></div>
+          ) : null}
+        </SurfaceCard>
 
-          {/* 1 — Paciente e equipa */}
-          <SurfaceCard title="1 · Paciente e equipa" icon={<User size={13} />} accent="bg-sky-400">
-            <div className="grid grid-cols-2 gap-3">
-              <FieldRow label="Paciente *">
-                <SearchableRelationSelect
-                  fieldName="patient"
-                  target={T_PATIENT}
-                  value={patient}
-                  onChange={(v) => setPatient(v as number)}
-                  placeholder="Pesquisar paciente..."
-                />
-              </FieldRow>
-              <FieldRow label="Cirurgião">
-                <SearchableRelationSelect
-                  fieldName="surgeon"
-                  target={T_SURGEON}
-                  value={surgeon}
-                  onChange={(v) => setSurgeon(v as number | null)}
-                  placeholder="Pesquisar cirurgião..."
-                />
-              </FieldRow>
-              <FieldRow label="Sala operatória">
-                <SearchableRelationSelect
-                  fieldName="operating_room"
-                  target={T_ROOM}
-                  value={operatingRoom}
-                  onChange={(v) => setOperatingRoom(v as number | null)}
-                  placeholder="Pesquisar sala..."
-                />
-              </FieldRow>
-              <FieldRow label="Especialidade">
-                <SearchableRelationSelect
-                  fieldName="specialty"
-                  target={T_SPECIALTY}
-                  value={specialty}
-                  onChange={(v) => setSpecialty(v as number | null)}
-                  placeholder="Pesquisar especialidade..."
-                />
-              </FieldRow>
+        {/* ── 2 · Procedimentos ── */}
+        <SurfaceCard title="2 · Procedimentos cirúrgicos" icon={<Scissors size={13} />} accent="bg-violet-400">
+          <ProcedureMultiSelect selected={procedures} onChange={setProcedures} />
+          {procedures.length === 0 && (
+            <p className="text-[11px] text-[var(--gray-400)]">Nenhum procedimento selecionado — pesquise e clique para adicionar.</p>
+          )}
+        </SurfaceCard>
+
+        {/* ── 3 · Cirurgião e especialidade ── */}
+        <SurfaceCard title="3 · Cirurgião e especialidade" icon={<Stethoscope size={13} />} accent="bg-emerald-400">
+          <div className="grid grid-cols-2 gap-3">
+            <SearchSelect
+              label="Cirurgião (médico de RH)"
+              placeholder="Pesquisar médico..."
+              endpoint="/consultations/doctors/"
+              labelField="name"
+              value={surgeon}
+              onChange={(v, lbl) => { setSurgeon(v); setSurgeonLabel(lbl) }}
+            />
+            <SearchSelect
+              label="Especialidade (de RH)"
+              placeholder="Pesquisar especialidade..."
+              endpoint="/consultations/specialty/"
+              labelField="name"
+              value={specialty}
+              onChange={(v, lbl) => { setSpecialty(v); setSpecialtyLabel(lbl) }}
+            />
+          </div>
+        </SurfaceCard>
+
+        {/* ── 4 · Bloco operatório ── */}
+        <SurfaceCard title="4 · Bloco operatório (enfermaria)" icon={<Scissors size={13} />} accent="bg-cyan-400">
+          <SearchSelect
+            label="Bloco / Sala operatória"
+            placeholder="Pesquisar sala na enfermaria..."
+            endpoint="/nursing/ward/"
+            labelField="name"
+            value={operatingRoom}
+            onChange={(v, lbl) => { setOperatingRoom(v); setOperatingRoomLabel(lbl) }}
+          />
+        </SurfaceCard>
+
+        {/* ── 5 · Equipa cirúrgica ── */}
+        <SurfaceCard title="5 · Equipa cirúrgica" icon={<Users size={13} />} accent="bg-indigo-400">
+          <div className="flex flex-col gap-2">
+            {team.length === 0 && (
+              <p className="text-[11px] text-[var(--gray-400)]">Sem membros adicionados — clique em "+ Adicionar" para incluir profissionais.</p>
+            )}
+            {team.map(m => (
+              <TeamMemberRow
+                key={m.tempId}
+                member={m}
+                onRemove={() => setTeam(prev => prev.filter(t => t.tempId !== m.tempId))}
+                onChangeRole={role => setTeam(prev => prev.map(t => t.tempId === m.tempId ? { ...t, role } : t))}
+              />
+            ))}
+
+            {/* add member picker */}
+            <div ref={teamRef} className="relative">
+              {!addingTeam ? (
+                <button
+                  type="button"
+                  onClick={() => { setAddingTeam(true); setTeamQuery("") }}
+                  className="inline-flex items-center gap-1.5 rounded-md border border-dashed border-[var(--gray-300)] px-3 py-1.5 text-[11px] text-[var(--gray-500)] hover:border-[var(--primary-400)] hover:text-[var(--primary-600)]"
+                >
+                  + Adicionar membro da equipa
+                </button>
+              ) : (
+                <div className="rounded-lg border border-white/30 bg-white/40 p-2 backdrop-blur-sm dark:bg-white/[0.06]">
+                  <div className="mb-1.5 flex items-center gap-2">
+                    <select
+                      className="rounded border border-white/20 bg-transparent px-1.5 py-0.5 text-[11px] text-[var(--text)] focus:outline-none"
+                      value={teamRole}
+                      onChange={e => setTeamRole(e.target.value)}
+                    >
+                      {TEAM_ROLES.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
+                    </select>
+                    <button type="button" onClick={() => setAddingTeam(false)} className="ml-auto text-[var(--gray-400)] hover:text-rose-500">
+                      <X size={12} />
+                    </button>
+                  </div>
+                  <input
+                    autoFocus
+                    className={`${inputCls} mb-1`}
+                    placeholder="Pesquisar profissional..."
+                    value={teamQuery}
+                    onChange={e => setTeamQuery(e.target.value)}
+                  />
+                  <div className="max-h-40 overflow-y-auto rounded-md border border-white/20">
+                    {teamResults.length === 0
+                      ? <div className="px-3 py-2 text-[11px] text-[var(--gray-400)]">Sem resultados</div>
+                      : teamResults.map(emp => (
+                        <div
+                          key={emp.id}
+                          className="flex cursor-pointer items-center gap-2 px-3 py-1.5 text-[12px] hover:bg-[var(--primary-50)] dark:hover:bg-white/10"
+                          onClick={() => addTeamMember(emp)}
+                        >
+                          <User size={11} className="text-[var(--gray-400)]" />
+                          <span className="text-[var(--text)]">{emp.name}</span>
+                          {emp.role_name ? <span className="ml-auto text-[10px] text-[var(--gray-400)]">{emp.role_name}</span> : null}
+                        </div>
+                      ))
+                    }
+                  </div>
+                </div>
+              )}
             </div>
-          </SurfaceCard>
+          </div>
+        </SurfaceCard>
 
-          {/* 2 — Procedimento */}
-          <SurfaceCard title="2 · Procedimento" icon={<Scissors size={13} />} accent="bg-violet-400">
-            <div className="grid grid-cols-2 gap-3">
-              <div className="col-span-2">
-                <FieldRow label="Procedimento">
-                  <input className={inputCls} value={procedure} onChange={e => setProcedure(e.target.value)} placeholder="Nome do procedimento" />
-                </FieldRow>
-              </div>
-              <div className="col-span-2">
-                <FieldRow label="Descrição">
-                  <textarea className={`${inputCls} resize-none`} rows={2} value={description} onChange={e => setDescription(e.target.value)} placeholder="Descrição livre" />
-                </FieldRow>
-              </div>
-              <FieldRow label="Prioridade">
-                <select className={selectCls} value={priority} onChange={e => setPriority(e.target.value)}>
-                  {PRIORITY_CHOICES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+        {/* ── 6 · Diagnósticos ── */}
+        <SurfaceCard title="6 · Diagnósticos" icon={<Stethoscope size={13} />} accent="bg-amber-400">
+          <div className="grid grid-cols-2 gap-3">
+            <FieldRow label="Diagnóstico pré-operatório">
+              <textarea className={`${inputCls} resize-none`} rows={3} value={preDiag} onChange={e => setPreDiag(e.target.value)} placeholder="Diagnóstico antes da cirurgia" />
+            </FieldRow>
+            <FieldRow label="Diagnóstico pós-operatório">
+              <textarea className={`${inputCls} resize-none`} rows={3} value={posDiag} onChange={e => setPosDiag(e.target.value)} placeholder="Diagnóstico após a cirurgia" />
+            </FieldRow>
+          </div>
+        </SurfaceCard>
+
+        {/* ── 7 · Estado e agendamento ── */}
+        <SurfaceCard title="7 · Estado e agendamento" icon={<CalendarClock size={13} />} accent="bg-emerald-400">
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
+            <div className="col-span-2 lg:col-span-1">
+              <FieldRow label="Estado">
+                <select className={selectCls} value={status} onChange={e => setStatus(e.target.value)}>
+                  {STATUS_CHOICES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
                 </select>
               </FieldRow>
-              <FieldRow label="Classificação">
-                <select className={selectCls} value={classification} onChange={e => setClassification(e.target.value)}>
-                  <option value="">—</option>
-                  {CLASSIFICATION_CHOICES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
-                </select>
-              </FieldRow>
             </div>
-          </SurfaceCard>
-
-          {/* 3 — Diagnósticos */}
-          <SurfaceCard title="3 · Diagnósticos" icon={<Stethoscope size={13} />} accent="bg-amber-400">
-            <div className="grid grid-cols-2 gap-3">
-              <FieldRow label="Diagnóstico pré-operatório">
-                <textarea className={`${inputCls} resize-none`} rows={3} value={preDiag} onChange={e => setPreDiag(e.target.value)} placeholder="Diagnóstico antes da cirurgia" />
-              </FieldRow>
-              <FieldRow label="Diagnóstico pós-operatório">
-                <textarea className={`${inputCls} resize-none`} rows={3} value={posDiag} onChange={e => setPosDiag(e.target.value)} placeholder="Diagnóstico após a cirurgia" />
-              </FieldRow>
-            </div>
-          </SurfaceCard>
-
-          {/* 4 — Estado + Datas (inline, mesmo card de contexto temporal) */}
-          <SurfaceCard title="4 · Estado e agendamento" icon={<CalendarClock size={13} />} accent="bg-emerald-400">
-            <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
-              <div className="col-span-2 lg:col-span-1">
-                <FieldRow label="Estado">
-                  <select className={selectCls} value={status} onChange={e => setStatus(e.target.value)}>
-                    {STATUS_CHOICES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
-                  </select>
-                </FieldRow>
-              </div>
-              <FieldRow label="Agendada para">
-                <input type="datetime-local" className={inputCls} value={scheduledFor} onChange={e => setScheduledFor(e.target.value)} />
-              </FieldRow>
-              <FieldRow label="Iniciada em">
-                <input type="datetime-local" className={inputCls} value={startedAt} onChange={e => setStartedAt(e.target.value)} />
-              </FieldRow>
+            <FieldRow label="Prioridade">
+              <select className={selectCls} value={priority} onChange={e => setPriority(e.target.value)}>
+                {PRIORITY_CHOICES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+              </select>
+            </FieldRow>
+            <FieldRow label="Classificação">
+              <select className={selectCls} value={classification} onChange={e => setClassification(e.target.value)}>
+                <option value="">—</option>
+                {CLASSIFICATION_CHOICES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+              </select>
+            </FieldRow>
+            <FieldRow label="Agendada para">
+              <input type="datetime-local" className={inputCls} value={scheduledFor} onChange={e => setScheduledFor(e.target.value)} />
+            </FieldRow>
+            <FieldRow label="Iniciada em">
+              <input type="datetime-local" className={inputCls} value={startedAt} onChange={e => setStartedAt(e.target.value)} />
+            </FieldRow>
+            <div className="col-span-2 lg:col-span-1">
               <FieldRow label="Terminada em">
                 <input type="datetime-local" className={inputCls} value={endedAt} onChange={e => setEndedAt(e.target.value)} />
               </FieldRow>
+            </div>
+            <div className="col-span-2 lg:col-span-1">
               <FieldRow label="Concluída em">
                 <input type="datetime-local" className={inputCls} value={completedAt} onChange={e => setCompletedAt(e.target.value)} />
               </FieldRow>
             </div>
-          </SurfaceCard>
+          </div>
+        </SurfaceCard>
 
-          {/* 5 — Financeiro */}
-          <SurfaceCard title="5 · Financeiro" icon={<CreditCard size={13} />} accent="bg-teal-400">
-            <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-              <FieldRow label="Preço estimado (MT)">
-                <input type="number" step="0.01" className={inputCls} value={estimatedPrice} onChange={e => setEstimatedPrice(e.target.value)} />
-              </FieldRow>
-              <FieldRow label="IVA (%)">
-                <input type="number" step="0.01" className={inputCls} value={vatPct} onChange={e => setVatPct(e.target.value)} />
-              </FieldRow>
-            </div>
-          </SurfaceCard>
+        {/* ── 8 · Financeiro ── */}
+        <SurfaceCard title="8 · Financeiro" icon={<CreditCard size={13} />} accent="bg-teal-400">
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+            <FieldRow label="Preço estimado (MT)">
+              <input type="number" step="0.01" className={inputCls} value={estimatedPrice} onChange={e => setEstimatedPrice(e.target.value)} />
+            </FieldRow>
+            <FieldRow label="IVA (%)">
+              <input type="number" step="0.01" className={inputCls} value={vatPct} onChange={e => setVatPct(e.target.value)} />
+            </FieldRow>
+          </div>
+        </SurfaceCard>
 
-        </div>
-
-        {/* acções rodapé */}
+        {/* footer actions */}
         <div className="flex justify-end gap-2 pb-4">
           <Link
             href={`/surgery/small-surgeries/${id}`}
