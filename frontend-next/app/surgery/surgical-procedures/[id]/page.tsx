@@ -188,7 +188,7 @@ export default function SurgicalProcedureDetailPage() {
         }),
       })
       setSaved(true)
-      setTimeout(() => setSaved(false), 2000)
+      setTimeout(() => router.push("/surgery/surgical-procedures"), 800)
     } catch (err: any) {
       try {
         const d = JSON.parse(err?.message || "{}")
