@@ -919,20 +919,33 @@ export default function ConsultationsPage() {
         const badge = statusBadge(r)
         // Botão base: padding igual em todos + borda branca de 1px.
         const btn = "inline-flex items-center justify-center gap-1.5 rounded-lg border border-white/70 px-3 py-2 text-xs font-semibold shadow-sm transition disabled:opacity-50"
+        const accent =
+          r.status === "CONCLUIDA" ? "bg-emerald-500"
+          : r.status === "CANCELADA" ? "bg-rose-500"
+          : isRescheduled(r) ? "bg-amber-500"
+          : isDueSoon(r) ? "bg-violet-500"
+          : "bg-sky-500"
+        const initial = (r.patient_name || "?").trim().charAt(0).toUpperCase()
         return (
           <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-            <div className="absolute inset-0 bg-black/50 backdrop-blur-[1px]" onClick={() => setDetailRow(null)} />
-            <div className="relative flex max-h-[92vh] w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--card)] shadow-2xl">
+            <div className="absolute inset-0 bg-black/50 backdrop-blur-[2px]" onClick={() => setDetailRow(null)} />
+            <div className="relative flex max-h-[92vh] w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-white/20 bg-white/40 shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-white/[0.06]">
+              <span className={`absolute left-0 top-0 z-10 h-full w-1 ${accent}`} />
               {/* Header */}
-              <div className="flex items-start justify-between gap-2 border-b border-[var(--border)] px-4 py-3">
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2">
-                    <h3 className="truncate text-sm font-semibold text-foreground">{r.patient_name || "-"}</h3>
-                    <span className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-semibold ${badge.cls}`}>{badge.label}</span>
+              <div className="flex items-start justify-between gap-2 border-b border-white/20 px-4 py-3 pl-5 dark:border-white/10">
+                <div className="flex min-w-0 items-center gap-2.5">
+                  <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-sm font-bold text-white shadow-md ${accent}`}>
+                    {initial}
+                  </span>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <h3 className="truncate text-sm font-bold text-foreground">{r.patient_name || "-"}</h3>
+                      <span className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-semibold ${badge.cls}`}>{badge.label}</span>
+                    </div>
+                    <p className="mt-0.5 font-mono text-[11px] text-muted-foreground">{r.custom_id || r.id}</p>
                   </div>
-                  <p className="mt-0.5 font-mono text-[11px] text-muted-foreground">{r.custom_id || r.id}</p>
                 </div>
-                <button type="button" onClick={() => setDetailRow(null)} className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-muted-foreground transition hover:bg-muted hover:text-foreground" aria-label={t("Fechar", "Close")}>
+                <button type="button" onClick={() => setDetailRow(null)} className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-muted-foreground transition hover:bg-white/40 hover:text-foreground dark:hover:bg-white/10" aria-label={t("Fechar", "Close")}>
                   <X size={16} />
                 </button>
               </div>
@@ -946,7 +959,7 @@ export default function ConsultationsPage() {
                     { icon: CalendarClock, label: t("Data", "Date"), value: fmtDate(r.scheduled_for) },
                     { icon: Info, label: t("Horário", "Schedule"), value: formatScheduleTypeLabel(r.schedule_type) },
                   ].map((f, i) => (
-                    <div key={i} className="rounded-lg border border-border/60 bg-muted/30 px-2.5 py-1.5">
+                    <div key={i} className="rounded-lg border border-white/20 bg-white/40 px-2.5 py-1.5 dark:border-white/10 dark:bg-white/[0.03]">
                       <div className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
                         <f.icon size={11} /> {f.label}
                       </div>
@@ -987,7 +1000,7 @@ export default function ConsultationsPage() {
               </div>
 
               {/* Ações — todos os botões com padding igual e borda branca */}
-              <div className="grid grid-cols-2 gap-1.5 border-t border-[var(--border)] px-4 py-3">
+              <div className="grid grid-cols-2 gap-1.5 border-t border-white/20 px-4 py-3 dark:border-white/10">
                 {canCompleteConsultation ? (
                   <button type="button" onClick={() => completeConsultation(r.id)} className={`${btn} bg-emerald-600 text-white hover:bg-emerald-700`}>
                     <CheckCircle2 size={13} /> {t("Concluir", "Complete")}
