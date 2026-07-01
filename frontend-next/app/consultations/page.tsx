@@ -699,26 +699,24 @@ export default function ConsultationsPage() {
         key={r.id}
         type="button"
         onClick={() => setDetailRow(r)}
-        className="group relative w-full overflow-hidden rounded-lg border border-white/20 bg-white/40 p-1.5 pb-4 pl-2.5 text-left shadow-sm backdrop-blur-sm transition hover:-translate-y-px hover:border-white/40 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 dark:border-white/10 dark:bg-white/[0.04]"
+        className="group relative flex w-full items-start gap-1.5 overflow-hidden rounded-lg border border-white/20 bg-white/40 p-1.5 pl-2.5 text-left shadow-sm backdrop-blur-sm transition hover:-translate-y-px hover:border-white/40 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 dark:border-white/10 dark:bg-white/[0.04]"
       >
         <span className={`absolute left-0 top-0 h-full w-1 ${accent}`} />
-        <div className="flex items-center gap-1.5">
-          <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-[11px] font-bold text-white shadow-sm ${accent}`}>
-            {initial}
-          </span>
-          <div className="min-w-0 flex-1">
-            <div className="truncate text-xs font-semibold leading-tight text-foreground">{r.patient_name || "-"}</div>
-            <div className="truncate text-[10px] leading-tight text-muted-foreground">{r.specialty_name || r.type || "-"}</div>
+        <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-[11px] font-bold text-white shadow-sm ${accent}`}>
+          {initial}
+        </span>
+        {/* Coluna do nome: nome, especialidade e rodapé (preço + estado) alinhados à mesma esquerda */}
+        <div className="min-w-0 flex-1">
+          <div className="truncate text-xs font-semibold leading-tight text-foreground">{r.patient_name || "-"}</div>
+          <div className="truncate text-[10px] leading-tight text-muted-foreground">{r.specialty_name || r.type || "-"}</div>
+          <div className="mt-1 flex items-center justify-between gap-1.5">
+            <span className="text-[10px] font-bold text-emerald-700 tabular-nums dark:text-emerald-400">
+              <MoneyValue value={r.price} />
+            </span>
+            <span className={`rounded-full border px-1.5 py-0 text-[9px] font-semibold ${badge.cls}`}>
+              {badge.label}
+            </span>
           </div>
-        </div>
-        {/* Rodapé: preço alinhado com o nome (mesma coluna) e estado à direita */}
-        <div className="absolute inset-x-1.5 bottom-1 flex items-center justify-between gap-1.5 pl-[2.125rem]">
-          <span className="text-[10px] font-bold text-emerald-700 tabular-nums dark:text-emerald-400">
-            <MoneyValue value={r.price} />
-          </span>
-          <span className={`rounded-full border px-1.5 py-0 text-[9px] font-semibold ${badge.cls}`}>
-            {badge.label}
-          </span>
         </div>
       </button>
     )
