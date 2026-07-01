@@ -7,9 +7,11 @@ import Link from "next/link"
 import {
   ArrowLeft,
   CalendarClock,
+  Check,
   CheckCircle2,
-
   Loader2,
+  Package,
+  Plus,
   Save,
   Scissors,
   Search,
@@ -515,7 +517,21 @@ export default function SmallSurgeryEditPage() {
   const [estimatedPrice, setEstimatedPrice] = useState("0.00")
   const [vatPct, setVatPct] = useState("16.00")
 
-  // 8 — financial
+  // 8 — materials
+  type MatItem = { id: number; name: string; type: string; sale_price: string; qty: number }
+  const TYPE_LABEL: Record<string, string> = { CONS: "Consumível", FARM: "Farmácia", MED: "Medicamento", OUT: "Outro" }
+  function fmtMT(n: number) { return n.toLocaleString("pt-PT", { minimumFractionDigits: 2 }) + " MT" }
+  const [materials, setMaterials] = useState<MatItem[]>([])
+  const [matQuery, setMatQuery] = useState("")
+  const [matResults, setMatResults] = useState<Omit<MatItem, "qty">[]>([])
+  const [matOpen, setMatOpen] = useState(false)
+  const [matLoading, setMatLoading] = useState(false)
+  const [matRect, setMatRect] = useState<DOMRect | null>(null)
+  const [pending, setPending] = useState<Omit<MatItem, "qty"> | null>(null)
+  const [pendingQty, setPendingQty] = useState("1")
+  const matRef = useRef<HTMLDivElement>(null)
+  const qtyRef = useRef<HTMLInputElement>(null)
+  const matTimer = useRef<ReturnType<typeof setTimeout>>()
 
   const toDatetimeLocal = (v: any) => {
     if (!v) return ""
@@ -529,7 +545,6 @@ export default function SmallSurgeryEditPage() {
       setCode(d.custom_id || `#${d.id}`)
       setPatient(d.patient ?? null)
       setPatientLabel(d.patient_name || "")
-      setProcedures((d.procedures || []).map((pid: number) => ({ id: pid, name: `#${pid}` })))
       setSurgeons((d.surgeon_names || []).map((s: any) => ({ id: s.id, name: s.name })))
       setSpecialty(d.specialty ?? null)
       setSpecialtyLabel(d.specialty_name || "")
@@ -547,15 +562,27 @@ export default function SmallSurgeryEditPage() {
       setEstimatedPrice(d.estimated_price || "0.00")
       setVatPct(d.vat_percentage || "16.00")
 
-      // Load procedure names if IDs exist
-      if (d.procedures?.length) {
-        const procs = await apiFetch<any>(`/surgery/surgical_procedure/?limit=100`)
+      // Load procedure names — fetch all and match by ID
+      const procedureIds: number[] = d.procedures || []
+      if (procedureIds.length) {
+        const procs = await apiFetch<any>(`/surgery/surgical_procedure/?limit=200&ordering=name`)
         const all: any[] = Array.isArray(procs) ? procs : (procs.results || [])
-        const mapped = d.procedures.map((pid: number) => {
+        const mapped = procedureIds.map((pid: number) => {
           const found = all.find((p: any) => p.id === pid)
           return found ? { id: found.id, name: found.name, base_price: found.base_price } : { id: pid, name: `#${pid}` }
         })
         setProcedures(mapped)
+      } else {
+        setProcedures([])
+      }
+
+      // Load materials via procedure_names_detail or surgery materials endpoint
+      const matDetail = d.surgery_materials_detail || d.default_materials_detail || []
+      if (matDetail.length) {
+        setMaterials(matDetail.map((m: any) => ({
+          id: m.id, name: m.name, type: m.type || "OUT",
+          sale_price: m.sale_price || "0.00", qty: m.qty ?? m.quantity ?? 1,
+        })))
       }
 
       // Load team
@@ -609,6 +636,55 @@ export default function SmallSurgeryEditPage() {
     document.addEventListener("mousedown", handle)
     return () => document.removeEventListener("mousedown", handle)
   }, [])
+
+  // materials search
+  useEffect(() => {
+    clearTimeout(matTimer.current)
+    if (!matQuery.trim()) { setMatResults([]); setMatOpen(false); return }
+    matTimer.current = setTimeout(async () => {
+      setMatLoading(true)
+      try {
+        const res = await apiFetch<any>(`/pharmacy/product/?search=${encodeURIComponent(matQuery)}&limit=20`)
+        const list = (res.results ?? res ?? []).map((p: any) => ({
+          id: p.id, name: p.name, type: p.type || "OUT", sale_price: p.sale_price || "0.00",
+        }))
+        setMatResults(list)
+        if (list.length > 0) {
+          const rect = matRef.current?.getBoundingClientRect()
+          if (rect) setMatRect(rect)
+          setMatOpen(true)
+        }
+      } catch { setMatResults([]) }
+      finally { setMatLoading(false) }
+    }, 280)
+  }, [matQuery])
+
+  useEffect(() => {
+    if (!matOpen) return
+    const handler = (e: MouseEvent) => {
+      if (matRef.current && !matRef.current.contains(e.target as Node)) setMatOpen(false)
+    }
+    document.addEventListener("mousedown", handler)
+    return () => document.removeEventListener("mousedown", handler)
+  }, [matOpen])
+
+  useEffect(() => {
+    if (pending) { setPendingQty("1"); setTimeout(() => qtyRef.current?.select(), 50) }
+  }, [pending])
+
+  function confirmAdd() {
+    if (!pending) return
+    const qty = Math.max(1, parseInt(pendingQty) || 1)
+    setMaterials(prev => {
+      const exists = prev.find(m => m.id === pending.id)
+      return exists ? prev.map(m => m.id === pending.id ? { ...m, qty } : m) : [...prev, { ...pending, qty }]
+    })
+    setPending(null); setMatQuery(""); setMatResults([]); setMatOpen(false)
+  }
+
+  function removeMaterial(itemId: number) {
+    setMaterials(prev => prev.filter(m => m.id !== itemId))
+  }
 
   const save = useCallback(async () => {
     setSaving(true); setError(null); setSuccess(false)
@@ -834,7 +910,101 @@ export default function SmallSurgeryEditPage() {
               />
             </SurfaceCard>
 
-            <SurfaceCard title="6 · Diagnósticos" icon={<Stethoscope size={13} />} accent="bg-amber-400">
+            {/* Materials card */}
+            <SurfaceCard title="6 · Materiais e produtos" icon={<Package size={13} />} accent="bg-amber-400">
+              <div ref={matRef} className="relative">
+                <div className="flex h-8 items-center gap-2 rounded-lg border border-white/30 bg-white/40 px-2.5 backdrop-blur-sm focus-within:border-amber-400 dark:border-white/10 dark:bg-white/[0.06]">
+                  <Search size={11} className="shrink-0 text-[var(--gray-400)]" />
+                  <input
+                    value={matQuery}
+                    onChange={e => setMatQuery(e.target.value)}
+                    onFocus={() => {
+                      if (matResults.length > 0) {
+                        const rect = matRef.current?.getBoundingClientRect()
+                        if (rect) setMatRect(rect)
+                        setMatOpen(true)
+                      }
+                    }}
+                    placeholder="Pesquisar produto de farmácia..."
+                    className="flex-1 bg-transparent text-[12px] text-[var(--text)] placeholder-[var(--gray-400)] focus:outline-none"
+                  />
+                  {matLoading && <span className="h-3 w-3 animate-spin rounded-full border border-amber-400 border-t-transparent bg-transparent" />}
+                </div>
+
+                {pending && (
+                  <div className="mt-1.5 flex items-center gap-2 rounded-lg border border-amber-300 bg-amber-50/80 px-3 py-2 dark:border-amber-700/40 dark:bg-amber-900/15">
+                    <div className="flex-1 min-w-0">
+                      <p className="truncate text-[12px] font-semibold text-amber-900 dark:text-amber-200">{pending.name}</p>
+                      <p className="text-[10px] text-amber-700/70">{TYPE_LABEL[pending.type] || pending.type} · {fmtMT(parseFloat(pending.sale_price || "0"))} / un.</p>
+                    </div>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <label className="text-[10px] font-semibold text-amber-700 dark:text-amber-300">Qtd.</label>
+                      <input
+                        ref={qtyRef}
+                        type="number" min="1" step="1"
+                        value={pendingQty}
+                        onChange={e => setPendingQty(e.target.value)}
+                        onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); confirmAdd() } if (e.key === "Escape") setPending(null) }}
+                        className="w-14 rounded-md border border-amber-300 bg-white px-2 py-1 text-center text-[12px] font-semibold focus:border-amber-500 focus:outline-none dark:border-amber-700/50 dark:bg-slate-900/40"
+                      />
+                    </div>
+                    <button type="button" onClick={confirmAdd}
+                      className="inline-flex h-7 items-center gap-1 rounded-md bg-amber-500 px-2.5 text-[11px] font-semibold text-white hover:bg-amber-600">
+                      <Plus size={11} /> Adicionar
+                    </button>
+                    <button type="button" onClick={() => setPending(null)}
+                      className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-white/20 text-[var(--gray-400)] hover:bg-white/20">
+                      <X size={11} />
+                    </button>
+                  </div>
+                )}
+
+                {matOpen && matRect && matResults.length > 0 && typeof document !== "undefined" && createPortal(
+                  <div style={{ position: "fixed", top: matRect.bottom + 4, left: matRect.left, width: matRect.width, zIndex: 9999 }}
+                    className="rounded-xl border border-border bg-card shadow-xl">
+                    {matResults.map(item => {
+                      const already = materials.some(m => m.id === item.id)
+                      return (
+                        <button key={item.id} type="button"
+                          onMouseDown={e => { e.preventDefault(); setMatOpen(false); setPending(item) }}
+                          disabled={already}
+                          className={`flex w-full items-center justify-between gap-3 px-3 py-2 text-left first:rounded-t-xl last:rounded-b-xl transition ${already ? "cursor-default opacity-40" : "hover:bg-amber-50/60 dark:hover:bg-amber-900/10"}`}>
+                          <div className="flex flex-col gap-0.5">
+                            <span className="text-[12px] font-medium text-foreground">{item.name}</span>
+                            <span className="text-[10px] text-[var(--gray-400)]">{TYPE_LABEL[item.type] || item.type}</span>
+                          </div>
+                          <div className="flex shrink-0 items-center gap-2">
+                            <span className="text-[11px] font-semibold text-teal-600 dark:text-teal-400">{fmtMT(parseFloat(item.sale_price || "0"))}</span>
+                            {already && <Check size={12} className="text-emerald-500" />}
+                          </div>
+                        </button>
+                      )
+                    })}
+                  </div>,
+                  document.body
+                )}
+              </div>
+
+              {materials.length > 0 ? (
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {materials.map(m => (
+                    <div key={m.id} className="flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 dark:border-amber-700/30 dark:bg-amber-900/10">
+                      <span className="text-[11px] font-medium text-amber-800 dark:text-amber-300">{m.name}</span>
+                      {m.qty > 1 && <span className="rounded-full bg-amber-200/60 px-1.5 py-px text-[9px] font-bold text-amber-700 dark:bg-amber-800/30">×{m.qty}</span>}
+                      <span className="text-[9px] text-amber-600/70">{fmtMT(parseFloat(m.sale_price || "0") * m.qty)}</span>
+                      <button type="button" onClick={() => removeMaterial(m.id)}
+                        className="ml-0.5 rounded-full p-0.5 text-amber-600 hover:bg-amber-200/60 hover:text-amber-800">
+                        <X size={10} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="mt-1 text-[11px] text-[var(--gray-400)]">Pesquise acima para adicionar materiais.</p>
+              )}
+            </SurfaceCard>
+
+            <SurfaceCard title="7 · Diagnósticos" icon={<Stethoscope size={13} />} accent="bg-amber-400">
               <FieldRow label="Diagnóstico pré-operatório">
                 <textarea className={`${inputCls} resize-none`} rows={3} value={preDiag} onChange={e => setPreDiag(e.target.value)} placeholder="Diagnóstico antes da cirurgia" />
               </FieldRow>
