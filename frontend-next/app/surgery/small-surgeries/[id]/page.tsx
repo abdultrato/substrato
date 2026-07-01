@@ -278,9 +278,9 @@ export default function SmallSurgeryDetailPage() {
         ) : null}
 
         {/* masonry 2 cols */}
-        <div className="flex flex-wrap items-start gap-3">
+        <div className="grid grid-cols-2 items-start gap-3">
           {/* col esquerda */}
-          <div className="flex min-w-0 flex-1 basis-56 flex-col gap-3">
+          <div className="flex flex-col gap-3">
 
             <SurfaceCard title="Paciente" icon={<User size={13} />} accent="bg-sky-400">
               <div className="grid gap-1.5">
@@ -310,7 +310,7 @@ export default function SmallSurgeryDetailPage() {
           </div>
 
           {/* col direita */}
-          <div className="flex min-w-0 flex-1 basis-56 flex-col gap-3">
+          <div className="flex flex-col gap-3">
 
             <SurfaceCard title="Estado e datas" icon={<Clock3 size={13} />} accent={statusAccent(status)}>
               <div className="grid gap-1.5">
