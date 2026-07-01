@@ -428,6 +428,8 @@ export default function SmallSurgeryEditPage() {
   const [teamResults, setTeamResults] = useState<any[]>([])
   const [teamRole, setTeamRole] = useState("ASSISTANT_SURGEON")
   const teamRef = useRef<HTMLDivElement>(null)
+  const teamInputRef = useRef<HTMLDivElement>(null)
+  const teamPortalRef = useRef<HTMLDivElement>(null)
 
   // 6 — diagnoses
   const [preDiag, setPreDiag] = useState("")
@@ -532,7 +534,9 @@ export default function SmallSurgeryEditPage() {
   // close team picker on outside click
   useEffect(() => {
     function handle(e: MouseEvent) {
-      if (teamRef.current && !teamRef.current.contains(e.target as Node)) setAddingTeam(false)
+      const t = e.target as Node
+      if (teamRef.current?.contains(t) || teamPortalRef.current?.contains(t)) return
+      setAddingTeam(false)
     }
     document.addEventListener("mousedown", handle)
     return () => document.removeEventListener("mousedown", handle)
@@ -700,29 +704,33 @@ export default function SmallSurgeryEditPage() {
                           <X size={12} />
                         </button>
                       </div>
-                      <input
-                        autoFocus
-                        className={`${inputCls} mb-1`}
-                        placeholder="Pesquisar profissional..."
-                        value={teamQuery}
-                        onChange={e => setTeamQuery(e.target.value)}
-                      />
-                      <div className="max-h-40 overflow-y-auto rounded-md border border-white/20">
-                        {teamResults.length === 0
-                          ? <div className="px-3 py-2 text-[11px] text-[var(--gray-400)]">Sem resultados</div>
-                          : teamResults.map(emp => (
-                            <div
-                              key={emp.id}
-                              className="flex cursor-pointer items-center gap-2 px-3 py-1.5 text-[12px] hover:bg-[var(--primary-50)] dark:hover:bg-white/10"
-                              onClick={() => addTeamMember(emp)}
-                            >
-                              <User size={11} className="text-[var(--gray-400)]" />
-                              <span className="text-[var(--text)]">{emp.name}</span>
-                              {emp.role_name ? <span className="ml-auto text-[10px] text-[var(--gray-400)]">{emp.role_name}</span> : null}
-                            </div>
-                          ))
-                        }
+                      <div ref={teamInputRef}>
+                        <input
+                          autoFocus
+                          className={`${inputCls} mb-1`}
+                          placeholder="Pesquisar profissional..."
+                          value={teamQuery}
+                          onChange={e => setTeamQuery(e.target.value)}
+                        />
                       </div>
+                      <DropdownPortal anchorRef={teamInputRef} portalRef={teamPortalRef} open={addingTeam && (teamResults.length > 0 || teamQuery.length > 0)}>
+                        <div className="max-h-96 overflow-y-auto">
+                          {teamResults.length === 0
+                            ? <div className="px-3 py-2 text-[11px] text-[var(--gray-400)]">Sem resultados</div>
+                            : teamResults.map(emp => (
+                              <div
+                                key={emp.id}
+                                className="flex cursor-pointer items-center gap-2 px-3 py-1.5 text-[12px] hover:bg-[var(--primary-50)] dark:hover:bg-white/10"
+                                onMouseDown={e => { e.preventDefault(); addTeamMember(emp) }}
+                              >
+                                <User size={11} className="text-[var(--gray-400)]" />
+                                <span className="text-[var(--text)]">{emp.name}</span>
+                                {emp.role_name ? <span className="ml-auto text-[10px] text-[var(--gray-400)]">{emp.role_name}</span> : null}
+                              </div>
+                            ))
+                          }
+                        </div>
+                      </DropdownPortal>
                     </div>
                   )}
                 </div>
