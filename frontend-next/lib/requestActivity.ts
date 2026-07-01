@@ -29,6 +29,7 @@ export type RequestActivityEvent =
 type Subscriber = (event: RequestActivityEvent) => void
 
 let subscribers: Subscriber[] = []
+const activeAbortHandlers = new Map<string, () => void>()
 
 function normalizeMethod(method?: string): HttpMethod {
   const value = (method || "GET").toUpperCase()
@@ -259,6 +260,7 @@ export function beginRequestActivity(url: string, method?: string): RequestActiv
 }
 
 export function finishRequestActivity(startEvent: RequestActivityStartEvent) {
+  activeAbortHandlers.delete(startEvent.id)
   const endedAt = Date.now()
   emit({
     phase: "finish",
@@ -266,4 +268,16 @@ export function finishRequestActivity(startEvent: RequestActivityStartEvent) {
     endedAt,
     durationMs: Math.max(0, endedAt - startEvent.startedAt),
   })
+}
+
+export function registerRequestAbortHandler(id: string, abort: () => void) {
+  activeAbortHandlers.set(id, abort)
+  return () => activeAbortHandlers.delete(id)
+}
+
+export function abortActiveRequests() {
+  const handlers = Array.from(activeAbortHandlers.values())
+  activeAbortHandlers.clear()
+  handlers.forEach((abort) => abort())
+  return handlers.length
 }

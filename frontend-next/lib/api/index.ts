@@ -1,5 +1,9 @@
 import { logout as clearSession } from "../session"
-import { beginRequestActivity, finishRequestActivity } from "../requestActivity"
+import {
+  beginRequestActivity,
+  finishRequestActivity,
+  registerRequestAbortHandler,
+} from "../requestActivity"
 import { reportFrontendApiError, reportFrontendTelemetry } from "../monitoring/telemetry"
 import { getCurrentLanguage, toBackendLanguage } from "../language"
 import { canonicalizeEndpointPath } from "@/lib/openapi/endpointResolver"
@@ -285,6 +289,10 @@ export async function apiFetch<T = any>(
 
   async function runRequest(trackActivity = true): Promise<T> {
     const requestActivity = trackActivity ? beginRequestActivity(rewritten, method) : null
+    const activityController = requestActivity ? new AbortController() : null
+    const unregisterAbort = requestActivity && activityController
+      ? registerRequestAbortHandler(requestActivity.id, () => activityController.abort())
+      : null
 
     try {
       // Use o signal fornecido ou crie um novo controller
@@ -295,7 +303,9 @@ export async function apiFetch<T = any>(
         // Use o signal fornecido ou crie um novo controller a cada tentativa
         const shouldCreateController = !options.signal
         const controller = shouldCreateController ? new AbortController() : undefined
-        const signal = options.signal || controller?.signal
+        const signals = [options.signal, controller?.signal, activityController?.signal]
+          .filter((value): value is AbortSignal => Boolean(value))
+        const signal = signals.length > 1 ? AbortSignal.any(signals) : signals[0]
 
         let timer: ReturnType<typeof setTimeout> | undefined = undefined
 
@@ -324,6 +334,11 @@ export async function apiFetch<T = any>(
               // limpeza e log para diagnóstico
               if (timer) {
                 clearTimeout(timer)
+              }
+              if (activityController?.signal.aborted || options.signal?.aborted) {
+                const aborted = new Error("Requisição abortada pelo utilizador.")
+                ;(aborted as any).name = "AbortError"
+                throw aborted
               }
               console.warn(`[apiFetch] AbortError on attempt ${attempt + 1}/${maxRetries + 1} for ${rewritten}`)
               // se ainda restam tentativas, esperar um pequeno backoff e tentar de novo
@@ -360,6 +375,11 @@ export async function apiFetch<T = any>(
               } catch (err) {
                 if ((err as any)?.name === "AbortError") {
                   lastErr = err
+                  if (activityController?.signal.aborted || options.signal?.aborted) {
+                    const aborted = new Error("Requisição abortada pelo utilizador.")
+                    ;(aborted as any).name = "AbortError"
+                    throw aborted
+                  }
                   if (attempt < maxRetries) {
                     const backoff = 200 * (attempt + 1)
                     await new Promise((r) => setTimeout(r, backoff))
@@ -414,6 +434,7 @@ export async function apiFetch<T = any>(
       if (lastErr) throw lastErr
       throw new Error("Falha ao processar a requisição.")
     } finally {
+      unregisterAbort?.()
       if (requestActivity) finishRequestActivity(requestActivity)
     }
   }

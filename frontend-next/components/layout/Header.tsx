@@ -10,9 +10,9 @@ import { useLanguage } from "@/hooks/useLanguage"
 import { useSafeDataRefresh } from "@/hooks/useSafeDataRefresh"
 import { useWorkspaceScope } from "@/hooks/useWorkspaceScope"
 import { userHasAnyGroup } from "@/lib/rbac"
-import { AlignJustify, ChevronDown, ChevronLeft, ChevronRight, LogOut, Moon, RefreshCw, Settings, Sun, User } from "lucide-react"
+import { AlignJustify, ChevronDown, ChevronLeft, ChevronRight, LogOut, Moon, RefreshCw, Settings, Sun, User, X } from "lucide-react"
 import { NAV_ITEMS, NAV_SECTIONS, type NavItem } from "@/components/layout/Sidebar"
-import RequestActivityIndicator from "@/components/ui/RequestActivityIndicator"
+import { abortActiveRequests, subscribeRequestActivity } from "@/lib/requestActivity"
 
 interface Props {
     user: SessionUser | null
@@ -30,6 +30,8 @@ export default function Header({ user, onMenuClick, scrolledDown = false }: Prop
     const [open, setOpen] = useState(false)
     const [canScrollLeft, setCanScrollLeft] = useState(false)
     const [canScrollRight, setCanScrollRight] = useState(false)
+    const [activeRequestCount, setActiveRequestCount] = useState(0)
+    const activeRequestIdsRef = useRef(new Set<string>())
     const menuRef = useRef<HTMLDivElement>(null)
     const navScrollerRef = useRef<HTMLDivElement>(null)
 
@@ -103,6 +105,14 @@ export default function Header({ user, onMenuClick, scrolledDown = false }: Prop
 
     // fechar ao clicar fora
     useEffect(() => {
+        return subscribeRequestActivity((event) => {
+            if (event.phase === "start") activeRequestIdsRef.current.add(event.id)
+            else activeRequestIdsRef.current.delete(event.id)
+            setActiveRequestCount(activeRequestIdsRef.current.size)
+        })
+    }, [])
+
+    useEffect(() => {
         function handleClick(e: MouseEvent) {
             if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
                 setOpen(false)
@@ -127,7 +137,8 @@ export default function Header({ user, onMenuClick, scrolledDown = false }: Prop
     }, [sectionedItems, updateNavScrollState])
 
     return (
-        <header className="overflow-visible border-b border-border bg-card/95 text-sm leading-none shadow-sm backdrop-blur">
+        <header className="relative overflow-visible border-b border-border/70 bg-gradient-to-r from-card/95 via-card/90 to-primary/[0.04] text-sm leading-none shadow-[0_1px_12px_rgba(15,23,42,0.07)] backdrop-blur-xl dark:from-card/95 dark:via-card/90 dark:to-primary/[0.07]">
+            <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/35 to-transparent" />
             <div className="flex h-11 flex-nowrap items-center justify-between gap-2 px-2 sm:gap-2 sm:px-3">
                 <div className="flex min-w-0 flex-1 items-center gap-2">
                     <button
@@ -141,11 +152,11 @@ export default function Header({ user, onMenuClick, scrolledDown = false }: Prop
                     </button>
                     <Link
                         href="/"
-                        className="group flex min-w-0 items-center gap-2 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring/25"
+                        className="group flex min-w-0 items-center gap-2 rounded-lg px-1 outline-none transition-colors hover:bg-primary/[0.05] focus-visible:ring-2 focus-visible:ring-ring/25"
                         title={t("Ir para o dashboard", "Go to dashboard")}
                     >
                         <div
-                            className="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-md transition-transform group-hover:scale-105"
+                            className="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-primary/15 bg-primary/[0.06] shadow-sm transition-transform group-hover:scale-105"
                             aria-hidden
                         >
                             <span
@@ -165,15 +176,29 @@ export default function Header({ user, onMenuClick, scrolledDown = false }: Prop
                 </div>
 
                 <div className="ml-auto flex items-center gap-2">
-                    <RequestActivityIndicator />
                     <button
                         type="button"
-                        onClick={() => void refreshNow("manual")}
-                        disabled={isRefreshing}
-                        className="relative inline-flex h-9 w-9 items-center justify-center rounded-md border border-border bg-background text-foreground-2 shadow-sm transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/25 disabled:cursor-wait disabled:opacity-70"
-                        aria-label={t("Atualizar dados sem recarregar", "Refresh data without reloading")}
+                        onClick={() => {
+                            if (activeRequestCount > 0 || isRefreshing) {
+                                abortActiveRequests()
+                                return
+                            }
+                            void refreshNow("manual")
+                        }}
+                        className={`group relative inline-flex h-9 w-9 items-center justify-center overflow-hidden rounded-lg border shadow-sm transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30 ${
+                            activeRequestCount > 0 || isRefreshing
+                                ? "border-rose-400/50 bg-rose-500/10 text-rose-600 hover:border-rose-500/70 hover:bg-rose-500/15 dark:text-rose-300"
+                                : "border-border/80 bg-background/80 text-foreground-2 hover:-translate-y-px hover:border-primary/35 hover:bg-primary/8 hover:text-primary hover:shadow-md"
+                        }`}
+                        aria-label={
+                            activeRequestCount > 0 || isRefreshing
+                                ? t("Abortar ação em processamento", "Abort action in progress")
+                                : t("Atualizar dados sem recarregar", "Refresh data without reloading")
+                        }
                         title={
-                            hasUnsavedInput
+                            activeRequestCount > 0 || isRefreshing
+                                ? t("Clique para abortar a ação em processamento", "Click to abort the action in progress")
+                                : hasUnsavedInput
                                 ? t(
                                     "Atualizar dados em segundo plano sem perder campos ainda não gravados",
                                     "Refresh data in the background without losing unsaved fields"
@@ -183,8 +208,20 @@ export default function Header({ user, onMenuClick, scrolledDown = false }: Prop
                                   : t("Atualizar dados sem recarregar", "Refresh data without reloading")
                         }
                     >
-                        <RefreshCw size={15} className={isRefreshing ? "animate-spin" : ""} />
-                        {hasUnsavedInput ? (
+                        {activeRequestCount > 0 || isRefreshing ? (
+                            <>
+                                <RefreshCw size={22} className="absolute animate-spin opacity-35" strokeWidth={1.5} />
+                                <X size={15} className="relative z-10" strokeWidth={2.4} />
+                                {activeRequestCount > 1 ? (
+                                    <span className="absolute right-0.5 top-0.5 min-w-3 rounded-full bg-rose-500 px-0.5 text-center text-[8px] font-bold leading-3 text-white">
+                                        {activeRequestCount > 9 ? "9+" : activeRequestCount}
+                                    </span>
+                                ) : null}
+                            </>
+                        ) : (
+                            <RefreshCw size={15} className="transition-transform duration-300 group-hover:rotate-45" />
+                        )}
+                        {hasUnsavedInput && activeRequestCount === 0 && !isRefreshing ? (
                             <span className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-amber-300" />
                         ) : null}
                     </button>
@@ -192,7 +229,7 @@ export default function Header({ user, onMenuClick, scrolledDown = false }: Prop
                     <button
                         type="button"
                         onClick={toggleTheme}
-                        className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-border bg-background text-foreground-2 shadow-sm transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/25"
+                        className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border/80 bg-background/80 text-foreground-2 shadow-sm transition-all hover:-translate-y-px hover:border-primary/30 hover:bg-primary/[0.06] hover:text-foreground hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/25"
                         aria-label={isDark ? t("Mudar para modo claro", "Switch to light mode") : t("Mudar para modo escuro", "Switch to dark mode")}
                         title={isDark ? t("Modo claro", "Light mode") : t("Modo escuro", "Dark mode")}
                     >
@@ -202,7 +239,7 @@ export default function Header({ user, onMenuClick, scrolledDown = false }: Prop
                     <div className="relative" ref={menuRef}>
                         <button
                             onClick={toggle}
-                            className="flex min-h-9 items-center gap-2 rounded-md border border-transparent px-1.5 text-sm leading-tight text-foreground-2 transition-colors hover:border-border hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/25"
+                            className="flex min-h-9 items-center gap-2 rounded-lg border border-transparent bg-background/30 px-1.5 text-sm leading-tight text-foreground-2 transition-all hover:border-primary/20 hover:bg-primary/[0.05] hover:text-foreground hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/25"
                         >
                             {fotoUrl ? (
                                 <>
@@ -260,7 +297,7 @@ export default function Header({ user, onMenuClick, scrolledDown = false }: Prop
             </div>
 
             <div className={`overflow-hidden transition-all duration-300 ease-in-out ${scrolledDown ? "max-h-0 opacity-0 pointer-events-none" : "max-h-12 opacity-100"}`}>
-            <div className="flex h-7 items-center gap-0.5 border-t border-border/70 bg-card/90 px-1">
+            <div className="flex h-7 items-center gap-0.5 border-t border-border/50 bg-background/35 px-1 shadow-inner">
                 <button
                     type="button"
                     onClick={() => scrollHeaderNav("left")}
@@ -294,8 +331,8 @@ export default function Header({ user, onMenuClick, scrolledDown = false }: Prop
                                 href={target.href}
                                 className={`inline-flex h-6 shrink-0 snap-start items-center rounded-md border px-2.5 text-xs font-semibold transition-colors ${
                                     active
-                                        ? "border-primary/40 bg-primary-soft text-foreground"
-                                        : "border-transparent text-foreground-2 hover:border-border hover:bg-muted hover:text-foreground"
+                                        ? "border-primary/35 bg-gradient-to-b from-primary/15 to-primary/8 text-primary shadow-sm"
+                                        : "border-transparent text-foreground-2 hover:border-primary/20 hover:bg-primary/[0.05] hover:text-foreground"
                                 }`}
                             >
                                 {t(section.label, section.labelEn)}
