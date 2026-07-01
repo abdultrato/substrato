@@ -588,7 +588,7 @@ export default function SmallSurgeryEditPage() {
       <div className="mx-auto w-full max-w-5xl space-y-3 px-1">
 
         {/* header */}
-        <section className={`relative overflow-hidden ${GLASS} h-[72px]`}>
+        <section className={`relative overflow-hidden ${GLASS}`}>
           <span className="absolute left-0 top-0 h-full w-1 bg-violet-500" />
           <div className="flex h-full items-center justify-between gap-3 px-4 py-3 pl-5">
             <div className="min-w-0">
@@ -603,7 +603,20 @@ export default function SmallSurgeryEditPage() {
               </div>
               <h1 className="mt-0.5 font-display text-base font-semibold text-foreground">Editar cirurgia</h1>
             </div>
-            <div className="flex shrink-0 items-center gap-2">
+            <div className="flex shrink-0 items-center gap-3">
+              <div className="flex items-center gap-2">
+                <div className="flex flex-col items-end gap-0.5">
+                  <label className="text-[10px] text-[var(--gray-500)]">Preço (MT)</label>
+                  <input type="number" step="0.01" value={estimatedPrice} onChange={e => setEstimatedPrice(e.target.value)}
+                    className="h-6 w-24 rounded border border-white/30 bg-white/40 px-2 text-right text-[11px] text-[var(--text)] backdrop-blur-sm focus:outline-none focus:ring-1 focus:ring-violet-400 dark:bg-white/[0.06]" />
+                </div>
+                <div className="flex flex-col items-end gap-0.5">
+                  <label className="text-[10px] text-[var(--gray-500)]">IVA (%)</label>
+                  <input type="number" step="0.01" value={vatPct} onChange={e => setVatPct(e.target.value)}
+                    className="h-6 w-16 rounded border border-white/30 bg-white/40 px-2 text-right text-[11px] text-[var(--text)] backdrop-blur-sm focus:outline-none focus:ring-1 focus:ring-violet-400 dark:bg-white/[0.06]" />
+                </div>
+                <div className="h-6 w-px bg-[var(--gray-200)] dark:bg-white/10" />
+              </div>
               <button
                 onClick={save}
                 disabled={saving || success}
@@ -647,14 +660,6 @@ export default function SmallSurgeryEditPage() {
               {patientLabel && patient ? (
                 <div className="text-[11px] text-[var(--gray-500)]">Seleccionado: <span className="font-medium text-foreground">{patientLabel}</span></div>
               ) : null}
-              <div className="mt-2 grid grid-cols-2 gap-2">
-                <FieldRow label="Preço (MT)">
-                  <input type="number" step="0.01" className={inputCls} value={estimatedPrice} onChange={e => setEstimatedPrice(e.target.value)} />
-                </FieldRow>
-                <FieldRow label="IVA (%)">
-                  <input type="number" step="0.01" className={inputCls} value={vatPct} onChange={e => setVatPct(e.target.value)} />
-                </FieldRow>
-              </div>
             </SurfaceCard>
 
             <SurfaceCard title="3 · Cirurgião e especialidade" icon={<Stethoscope size={13} />} accent="bg-emerald-400">
