@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState } from "react"
 import {
   Search, RotateCcw, BarChart2,
   Clock, XCircle, CheckCircle2,
-  Stethoscope, AlertTriangle, ChevronLeft, User,
+  AlertTriangle, ChevronLeft, Info,
 } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
@@ -17,6 +17,7 @@ import { useLanguage } from "@/hooks/useLanguage"
 import useDebounce from "@/hooks/useDebounce"
 import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { apiFetchList } from "@/lib/api"
+import { abbreviateMiddleNames } from "@/lib/formatName"
 import { canonicalCollectionPath } from "@/lib/openapi/endpointResolver"
 import { hasOpenApiMethod } from "@/lib/openapi/writeContract"
 import { buildRecordDetailHref } from "@/lib/resources/recordIdentity"
@@ -103,6 +104,22 @@ function getStatusLabel(status: string): string {
   return map[status] || status
 }
 
+function statusAccent(status: string): { bar: string; badge: string } {
+  if (STATUS_CANCELLED.includes(status)) return { bar: "bg-rose-500", badge: "border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-700/30 dark:bg-rose-900/20 dark:text-rose-400" }
+  if (STATUS_ATTENDED.includes(status)) return { bar: "bg-emerald-500", badge: "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-700/30 dark:bg-emerald-900/20 dark:text-emerald-400" }
+  return { bar: "bg-amber-500", badge: "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-700/30 dark:bg-amber-900/20 dark:text-amber-400" }
+}
+
+/** Consulta em aberto (agendada/pendente) cuja hora já passou. */
+function rowIsOverdue(row: Row): boolean {
+  const s = getStatus(row)
+  if (!STATUS_SCHEDULED.includes(s)) return false
+  const raw = row?.scheduled_at || row?.data_consulta
+  if (!raw) return false
+  const ts = new Date(raw).getTime()
+  return !Number.isNaN(ts) && ts < Date.now()
+}
+
 type CardProps = { row: Row; href: string }
 
 function ConsultationCard({ row, href }: CardProps) {
@@ -115,44 +132,59 @@ function ConsultationCard({ row, href }: CardProps) {
   const statusLabel = getStatusLabel(status)
   const { status: pStatus, display: pDisplay } = rowPriority(row)
   const isUrgent   = row?.is_urgent || row?.urgente
+  const accent     = statusAccent(status)
+  const overdue    = rowIsOverdue(row)
+  const initial    = (patient || "?").trim().charAt(0).toUpperCase()
 
   return (
     <Link
       href={href}
-      className="group block rounded-lg border border-white/30 bg-transparent backdrop-blur-sm px-2.5 py-2 shadow-sm ring-1 ring-black/5 transition-all duration-200 hover:border-[var(--primary-300)] hover:bg-white/20 hover:shadow-md hover:ring-[var(--primary-200)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-400)]"
+      className="group relative flex items-start gap-1.5 rounded-lg border border-white/20 bg-white/40 p-1.5 pl-2.5 shadow-sm backdrop-blur-sm transition hover:-translate-y-px hover:border-white/40 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 dark:border-white/10 dark:bg-white/[0.04]"
     >
-      <div className="flex items-center justify-between gap-1.5">
-        <span className="font-mono text-[11px] font-semibold text-[var(--primary-700)] group-hover:text-[var(--primary-800)]">
-          {code}
-        </span>
-        {isUrgent && (
-          <span title="Urgente" className="flex items-center gap-0.5 rounded border border-red-300 bg-red-50 px-1 py-px text-[9px] font-semibold text-red-700">
-            <AlertTriangle size={9} />
-            Urgente
+      <span className={`absolute left-0 top-0 h-full w-1 rounded-l-lg ${accent.bar}`} />
+
+      {overdue ? (
+        <span className="group/info absolute right-1 top-1 z-20">
+          <span className="flex h-4 w-4 items-center justify-center rounded-full bg-amber-400 text-white shadow-sm ring-1 ring-amber-500/40">
+            <Info size={11} />
           </span>
-        )}
-      </div>
+          <span role="tooltip" className="pointer-events-none absolute right-0 top-5 z-30 hidden w-max max-w-[12rem] rounded-md border border-amber-300 bg-amber-50 px-2 py-1 text-[10px] font-semibold text-amber-800 shadow-lg group-hover/info:block dark:border-amber-500/40 dark:bg-amber-900/40 dark:text-amber-200">
+            Consulta atrasada — hora agendada já passou.
+          </span>
+        </span>
+      ) : null}
 
-      <p className="mt-0.5 text-xs font-medium text-[var(--text)] leading-snug line-clamp-1">
-        {patient}
-      </p>
+      <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-[11px] font-bold text-white shadow-sm ${accent.bar}`}>
+        {initial}
+      </span>
 
-      {(doctor || specialty) && (
-        <div className="mt-0.5 flex items-center gap-1 text-[10px] text-[var(--gray-500)] line-clamp-1">
-          <User size={9} />
-          <span>{[doctor, specialty].filter(Boolean).join(" · ")}</span>
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-1">
+          <span className={`truncate text-xs font-semibold leading-tight text-[var(--text)] ${overdue ? "pr-5" : ""}`}>
+            {abbreviateMiddleNames(patient) || "—"}
+          </span>
+          {isUrgent && (
+            <span title="Urgente" className="flex shrink-0 items-center gap-0.5 rounded border border-red-300 bg-red-50 px-1 py-px text-[8px] font-semibold text-red-700">
+              <AlertTriangle size={8} />
+            </span>
+          )}
         </div>
-      )}
 
-      <div className="mt-1 flex items-center gap-1.5 flex-wrap">
-        {(pStatus || pDisplay) ? (
-          <ManchesterBadge status={pStatus} display={pDisplay} />
-        ) : null}
-        <span className="ml-auto text-[10px] text-[var(--gray-400)]">{date}</span>
-      </div>
+        <div className="truncate text-[10px] leading-tight text-[var(--gray-500)]">
+          {[doctor, specialty].filter(Boolean).join(" · ") || <span className="font-mono">{code}</span>}
+        </div>
 
-      <div className="mt-1 border-t border-white/30 pt-1 text-[9px] font-medium text-[var(--gray-400)]">
-        {statusLabel}
+        <div className="mt-1 flex items-center justify-between gap-1.5">
+          <span className="min-w-0 truncate text-[9px] text-[var(--gray-400)]">
+            {date}
+          </span>
+          <div className="flex shrink-0 items-center gap-1">
+            {(pStatus || pDisplay) ? <ManchesterBadge status={pStatus} display={pDisplay} /> : null}
+            <span className={`rounded-full border px-1.5 py-0 text-[9px] font-semibold ${accent.badge}`}>
+              {statusLabel}
+            </span>
+          </div>
+        </div>
       </div>
     </Link>
   )
@@ -331,7 +363,7 @@ export default function ConsultationsBoardPage() {
   if (loading) return null
 
   return (
-    <AppLayout requiredGroups={requiredGroupsForResourceGroup("consultations")} subNav={<ConsultationsSubNav />}>
+    <AppLayout fullWidth requiredGroups={requiredGroupsForResourceGroup("consultations")} subNav={<ConsultationsSubNav />}>
       <div className="w-full space-y-1.5 px-1">
         <PageHeader
           title="Consultas Médicas"
@@ -382,7 +414,7 @@ export default function ConsultationsBoardPage() {
         {loadingData ? (
           <div className="text-sm text-[var(--gray-500)]">{t("Carregando...", "Loading...")}</div>
         ) : (
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+          <div className="grid grid-cols-1 gap-1.5 md:grid-cols-3">
             <BoardColumn
               title="Pendentes / Agendadas"
               icon={<Clock size={14} className="text-amber-600" />}
