@@ -512,7 +512,21 @@ export default function SmallSurgeryEditPage() {
   const teamInputRef = useRef<HTMLDivElement>(null)
   const teamPortalRef = useRef<HTMLDivElement>(null)
 
-  // 6 — diagnoses
+  // 6 — consumptions (SurgicalConsumption)
+  type Consumption = { id: number; product: number; product_name: string; quantity: string; unit_cost: string }
+  const [consumptions, setConsumptions] = useState<Consumption[]>([])
+  const [matQuery, setMatQuery] = useState("")
+  const [matResults, setMatResults] = useState<{ id: number; name: string; type: string; sale_price: string }[]>([])
+  const [matOpen, setMatOpen] = useState(false)
+  const [matLoading, setMatLoading] = useState(false)
+  const [matRect, setMatRect] = useState<DOMRect | null>(null)
+  const [pending, setPending] = useState<{ id: number; name: string; sale_price: string } | null>(null)
+  const [pendingQty, setPendingQty] = useState("1")
+  const matRef = useRef<HTMLDivElement>(null)
+  const qtyRef = useRef<HTMLInputElement>(null)
+  const matTimer = useRef<ReturnType<typeof setTimeout>>()
+
+  // 7 — diagnoses
   const [preDiag, setPreDiag] = useState("")
   const [posDiag, setPosDiag] = useState("")
 
@@ -591,6 +605,17 @@ export default function SmallSurgeryEditPage() {
           sale_price: m.sale_price || "0.00", qty: m.qty ?? m.quantity ?? 1,
         })))
       }
+
+      // Load consumptions
+      const consData = await apiFetch<any>(`/surgery/consumos/?surgery=${id}&limit=100`)
+      const consList: any[] = Array.isArray(consData) ? consData : (consData.results || [])
+      setConsumptions(consList.map((c: any) => ({
+        id: c.id,
+        product: c.product,
+        product_name: c.product_name || c.material_name || `#${c.product}`,
+        quantity: c.quantity || "1",
+        unit_cost: c.unit_cost || c.charged_price || "0.00",
+      })))
 
       // Load team from surgeons M2M (what the PATCH actually saves)
       const surgeonNames: { id: number; name: string }[] = d.surgeon_names || []
@@ -697,6 +722,60 @@ export default function SmallSurgeryEditPage() {
 
   function removeMaterial(itemId: number) {
     setMaterials(prev => prev.filter(m => m.id !== itemId))
+  }
+
+  // materials search
+  useEffect(() => {
+    clearTimeout(matTimer.current)
+    if (!matQuery.trim()) { setMatResults([]); setMatOpen(false); return }
+    matTimer.current = setTimeout(async () => {
+      setMatLoading(true)
+      try {
+        const res = await apiFetch<any>(`/pharmacy/product/?search=${encodeURIComponent(matQuery)}&limit=20`)
+        const list = (res.results ?? res ?? []).map((p: any) => ({ id: p.id, name: p.name, type: p.type || "OUT", sale_price: p.sale_price || "0.00" }))
+        setMatResults(list)
+        if (list.length > 0) {
+          const rect = matRef.current?.getBoundingClientRect()
+          if (rect) setMatRect(rect)
+          setMatOpen(true)
+        }
+      } catch { setMatResults([]) }
+      finally { setMatLoading(false) }
+    }, 280)
+  }, [matQuery])
+
+  useEffect(() => {
+    if (!matOpen) return
+    const h = (e: MouseEvent) => { if (matRef.current && !matRef.current.contains(e.target as Node)) setMatOpen(false) }
+    document.addEventListener("mousedown", h)
+    return () => document.removeEventListener("mousedown", h)
+  }, [matOpen])
+
+  useEffect(() => {
+    if (pending) { setPendingQty("1"); setTimeout(() => qtyRef.current?.select(), 50) }
+  }, [pending])
+
+  async function confirmAdd() {
+    if (!pending) return
+    const qty = Math.max(1, parseInt(pendingQty) || 1)
+    try {
+      const res = await apiFetch<any>(`/surgery/consumos/`, {
+        method: "POST",
+        body: JSON.stringify({ surgery: Number(id), product: pending.id, quantity: qty, unit_cost: pending.sale_price }),
+      })
+      setConsumptions(prev => [...prev, {
+        id: res.id, product: pending.id,
+        product_name: pending.name, quantity: String(qty), unit_cost: pending.sale_price,
+      }])
+    } catch { /* show nothing — could add error toast */ }
+    setPending(null); setMatQuery(""); setMatResults([]); setMatOpen(false)
+  }
+
+  async function removeConsumption(cid: number) {
+    try {
+      await apiFetch(`/surgery/consumos/${cid}/`, { method: "DELETE" })
+      setConsumptions(prev => prev.filter(c => c.id !== cid))
+    } catch { /* ignore */ }
   }
 
   const save = useCallback(async () => {
@@ -926,7 +1005,85 @@ export default function SmallSurgeryEditPage() {
               />
             </SurfaceCard>
 
-            <SurfaceCard title="6 · Diagnósticos" icon={<Stethoscope size={13} />} accent="bg-amber-400">
+            <SurfaceCard title="6 · Materiais e produtos" icon={<Package size={13} />} accent="bg-amber-400">
+              <div ref={matRef} className="relative">
+                <div className="flex h-8 items-center gap-2 rounded-lg border border-white/30 bg-white/40 px-2.5 backdrop-blur-sm focus-within:border-amber-400 dark:border-white/10 dark:bg-white/[0.06]">
+                  <Search size={11} className="shrink-0 text-[var(--gray-400)]" />
+                  <input value={matQuery} onChange={e => setMatQuery(e.target.value)}
+                    onFocus={() => { if (matResults.length > 0) { const r = matRef.current?.getBoundingClientRect(); if (r) { setMatRect(r); setMatOpen(true) } } }}
+                    placeholder="Pesquisar produto de farmácia..."
+                    className="flex-1 bg-transparent text-[12px] text-[var(--text)] placeholder-[var(--gray-400)] focus:outline-none" />
+                  {matLoading && <span className="h-3 w-3 animate-spin rounded-full border border-amber-400 border-t-transparent bg-transparent" />}
+                </div>
+
+                {pending && (
+                  <div className="mt-1.5 flex items-center gap-2 rounded-lg border border-amber-300 bg-amber-50/80 px-3 py-2 dark:border-amber-700/40 dark:bg-amber-900/15">
+                    <div className="flex-1 min-w-0">
+                      <p className="truncate text-[12px] font-semibold text-amber-900 dark:text-amber-200">{pending.name}</p>
+                      <p className="text-[10px] text-amber-700/70">{fmtMT(parseFloat(pending.sale_price || "0"))} / un.</p>
+                    </div>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <label className="text-[10px] font-semibold text-amber-700 dark:text-amber-300">Qtd.</label>
+                      <input ref={qtyRef} type="number" min="1" step="1" value={pendingQty}
+                        onChange={e => setPendingQty(e.target.value)}
+                        onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); confirmAdd() } if (e.key === "Escape") setPending(null) }}
+                        className="w-14 rounded-md border border-amber-300 bg-white px-2 py-1 text-center text-[12px] font-semibold focus:border-amber-500 focus:outline-none dark:border-amber-700/50 dark:bg-slate-900/40" />
+                    </div>
+                    <button type="button" onClick={confirmAdd}
+                      className="inline-flex h-7 items-center gap-1 rounded-md bg-amber-500 px-2.5 text-[11px] font-semibold text-white hover:bg-amber-600">
+                      <Plus size={11} /> Adicionar
+                    </button>
+                    <button type="button" onClick={() => setPending(null)}
+                      className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-white/20 text-[var(--gray-400)] hover:bg-white/20">
+                      <X size={11} />
+                    </button>
+                  </div>
+                )}
+
+                {matOpen && matRect && matResults.length > 0 && typeof document !== "undefined" && createPortal(
+                  <div style={{ position: "fixed", top: matRect.bottom + 4, left: matRect.left, width: matRect.width, zIndex: 9999 }}
+                    className="rounded-xl border border-border bg-card shadow-xl">
+                    {matResults.filter(r => !consumptions.some(c => c.product === r.id)).map(item => (
+                      <button key={item.id} type="button"
+                        onMouseDown={e => { e.preventDefault(); setMatOpen(false); setPending(item) }}
+                        className="flex w-full items-center justify-between gap-3 px-3 py-2 text-left first:rounded-t-xl last:rounded-b-xl hover:bg-amber-50/60 dark:hover:bg-amber-900/10">
+                        <div className="flex flex-col gap-0.5">
+                          <span className="text-[12px] font-medium text-foreground">{item.name}</span>
+                          <span className="text-[10px] text-[var(--gray-400)]">{MAT_TYPE_LABEL[item.type] || item.type}</span>
+                        </div>
+                        <span className="text-[11px] font-semibold text-teal-600 dark:text-teal-400">{fmtMT(parseFloat(item.sale_price || "0"))}</span>
+                      </button>
+                    ))}
+                    {matResults.filter(r => !consumptions.some(c => c.product === r.id)).length === 0 && (
+                      <div className="px-3 py-2 text-[11px] text-[var(--gray-400)]">Sem resultados</div>
+                    )}
+                  </div>,
+                  document.body
+                )}
+              </div>
+
+              {consumptions.length > 0 ? (
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {consumptions.map(c => (
+                    <div key={c.id} className="flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 dark:border-amber-700/30 dark:bg-amber-900/10">
+                      <span className="text-[11px] font-medium text-amber-800 dark:text-amber-300">{c.product_name}</span>
+                      {parseFloat(c.quantity) > 1 && (
+                        <span className="rounded-full bg-amber-200/60 px-1.5 py-px text-[9px] font-bold text-amber-700 dark:bg-amber-800/30">×{c.quantity}</span>
+                      )}
+                      <span className="text-[9px] text-amber-600/70">{fmtMT(parseFloat(c.unit_cost || "0") * parseFloat(c.quantity || "1"))}</span>
+                      <button type="button" onClick={() => removeConsumption(c.id)}
+                        className="ml-0.5 rounded-full p-0.5 text-amber-600 hover:bg-amber-200/60 hover:text-amber-800">
+                        <X size={10} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="mt-1 text-[11px] text-[var(--gray-400)]">Pesquise acima para adicionar materiais.</p>
+              )}
+            </SurfaceCard>
+
+            <SurfaceCard title="8 · Diagnósticos" icon={<Stethoscope size={13} />} accent="bg-rose-400">
               <FieldRow label="Diagnóstico pré-operatório">
                 <textarea className={`${inputCls} resize-none`} rows={3} value={preDiag} onChange={e => setPreDiag(e.target.value)} placeholder="Diagnóstico antes da cirurgia" />
               </FieldRow>
@@ -941,8 +1098,8 @@ export default function SmallSurgeryEditPage() {
         {/* ── 7+8 · full-width row no fundo ── */}
         <div className="flex items-start gap-3">
 
-          {/* 7 · Estado e agendamento — ocupa o espaço disponível */}
-          <SurfaceCard title="7 · Estado e agendamento" icon={<CalendarClock size={13} />} accent="bg-emerald-400">
+          {/* 9 · Estado e agendamento — ocupa o espaço disponível */}
+          <SurfaceCard title="9 · Estado e agendamento" icon={<CalendarClock size={13} />} accent="bg-emerald-400">
             <div className="grid grid-cols-7 gap-3">
               <FieldRow label="Estado">
                 <div className="w-full rounded-lg border border-white/20 bg-white/20 px-2.5 py-1.5 text-[12px] text-[var(--text)] opacity-70 dark:bg-white/[0.04]">
