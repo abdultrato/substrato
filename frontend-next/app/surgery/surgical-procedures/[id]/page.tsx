@@ -230,7 +230,7 @@ export default function SurgicalProcedureDetailPage() {
           </div>
         </section>
 
-        <form onSubmit={handleSave} className="space-y-3">
+        <form id="proc-form" onSubmit={handleSave} className="space-y-3">
 
           {/* identificação */}
           <section className={`relative overflow-hidden ${GLASS}`}>
@@ -299,23 +299,6 @@ export default function SurgicalProcedureDetailPage() {
           {errors._ && (
             <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-[12px] text-rose-700">{errors._}</div>
           )}
-
-          <div className="flex items-center justify-between pb-2">
-            <button type="button" onClick={handleDelete} disabled={deleting}
-              className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-rose-200 bg-rose-50 px-3 text-[12px] font-medium text-rose-600 hover:bg-rose-100 disabled:opacity-50">
-              <Trash2 size={13} />
-              {deleting ? "A eliminar..." : "Eliminar"}
-            </button>
-            <button type="submit" disabled={saving}
-              className={`inline-flex h-9 items-center gap-2 rounded-lg border px-5 text-[12px] font-semibold transition disabled:opacity-50 ${
-                saved
-                  ? "border-emerald-300 bg-emerald-50 text-emerald-700"
-                  : "border-violet-300 bg-violet-600 text-white hover:bg-violet-700"
-              }`}>
-              <Check size={14} />
-              {saving ? "A guardar..." : saved ? "Guardado!" : "Guardar alterações"}
-            </button>
-          </div>
         </form>
 
         {/* materiais / produtos de farmácia */}
@@ -427,7 +410,23 @@ export default function SurgicalProcedureDetailPage() {
           </div>
         </section>
 
-        <div className="pb-4" />
+        {/* action bar — after all cards */}
+        <div className="flex items-center justify-between pb-4">
+          <button type="button" onClick={handleDelete} disabled={deleting}
+            className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-rose-200 bg-rose-50 px-3 text-[12px] font-medium text-rose-600 hover:bg-rose-100 disabled:opacity-50">
+            <Trash2 size={13} />
+            {deleting ? "A eliminar..." : "Eliminar"}
+          </button>
+          <button type="submit" form="proc-form" disabled={saving}
+            className={`inline-flex h-9 items-center gap-2 rounded-lg border px-5 text-[12px] font-semibold transition disabled:opacity-50 ${
+              saved
+                ? "border-emerald-300 bg-emerald-50 text-emerald-700"
+                : "border-violet-300 bg-violet-600 text-white hover:bg-violet-700"
+            }`}>
+            <Check size={14} />
+            {saving ? "A guardar..." : saved ? "Guardado!" : "Guardar alterações"}
+          </button>
+        </div>
       </div>
     </AppLayout>
   )
