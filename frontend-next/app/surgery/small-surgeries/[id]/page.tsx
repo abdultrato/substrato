@@ -379,22 +379,6 @@ export default function SmallSurgeryDetailPage() {
           </div>
         </section>
 
-        {/* status banner */}
-        {isDone ? (
-          <section className="rounded-xl border border-emerald-300/50 bg-emerald-50/55 p-4 text-sm text-emerald-800 backdrop-blur-sm dark:border-emerald-900/40 dark:bg-emerald-900/20 dark:text-emerald-200">
-            <div className="flex items-start gap-2">
-              <CheckCircle2 size={16} className="mt-0.5 shrink-0" />
-              <p>Cirurgia marcada como realizada. Pode prosseguir para relatório operatório e faturação.</p>
-            </div>
-          </section>
-        ) : (
-          <section className="rounded-xl border border-sky-300/50 bg-sky-50/55 p-4 text-sm text-sky-800 backdrop-blur-sm dark:border-sky-900/40 dark:bg-sky-900/20 dark:text-sky-200">
-            <div className="flex items-start gap-2">
-              <ClipboardList size={16} className="mt-0.5 shrink-0" />
-              <p>Cirurgia pendente. Quando concluída, clique em <strong>Marcar realizada</strong> para actualizar o estado.</p>
-            </div>
-          </section>
-        )}
       </div>
     </AppLayout>
   )
