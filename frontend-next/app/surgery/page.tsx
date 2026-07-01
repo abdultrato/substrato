@@ -118,7 +118,7 @@ export default function SurgeryPage() {
                     </div>
                 ) : null}
 
-                <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-5">
+                <div className="grid auto-rows-fr grid-cols-5 gap-2">
                     <MetricCard label="Pedidos cirúrgicos" value={loading ? "..." : requests} accentClass="border-l-red-500" />
                     <MetricCard label="Avaliações pré-op." value={loading ? "..." : preoperativeAssessments} accentClass="border-l-amber-500" />
                     <MetricCard label="Pequenas cirurgias" value={loading ? "..." : smallSurgeries} accentClass="border-l-blue-500" />
