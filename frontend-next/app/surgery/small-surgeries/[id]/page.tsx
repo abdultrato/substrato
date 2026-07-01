@@ -131,6 +131,7 @@ export default function SmallSurgeryDetailPage() {
   const load = useCallback(async () => {
     setLoading(true); setError(null)
     try {
+      await apiFetch<any>(`/surgery/small_surgery/${id}/sync-consumptions/`, { method: "POST" }).catch(() => {})
       const [res, cons] = await Promise.all([
         apiFetch<Record<string, any>>(`/surgery/small_surgery/${id}/`, { clientCache: safeRefreshToken === 0 }),
         apiFetch<any>(`/surgery/consumos/?surgery=${id}&limit=100`),

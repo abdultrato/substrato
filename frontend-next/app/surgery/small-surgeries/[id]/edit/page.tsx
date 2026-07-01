@@ -594,7 +594,8 @@ export default function SmallSurgeryEditPage() {
         })))
       }
 
-      // Load consumptions
+      // Sync default materials from procedures then fetch consumptions
+      await apiFetch<any>(`/surgery/small_surgery/${id}/sync-consumptions/`, { method: "POST" }).catch(() => {})
       const consData = await apiFetch<any>(`/surgery/consumos/?surgery=${id}&limit=100`)
       const consList: any[] = Array.isArray(consData) ? consData : (consData.results || [])
       setConsumptions(consList.map((c: any) => ({

@@ -348,14 +348,72 @@ class SurgerySerializer(BaseSurgerySerializer):
         model = Surgery
 
 
+def _sync_procedure_consumptions(surgery_instance) -> None:
+    """Add default_materials from all procedures as SurgicalConsumption rows.
+
+    Only adds missing items — never removes manually added consumptions.
+    """
+    from apps.surgery.models import SurgicalProcedureMaterial
+
+    existing_product_ids = set(
+        surgery_instance.consumptions.values_list("product_id", flat=True)
+    )
+
+    to_create = []
+    seen: set[int] = set()
+    for proc in surgery_instance.procedures.prefetch_related("material_entries__product").all():
+        for entry in proc.material_entries.select_related("product").all():
+            pid = entry.product_id
+            if pid in existing_product_ids or pid in seen:
+                continue
+            seen.add(pid)
+            to_create.append(
+                SurgicalConsumption(
+                    surgery=surgery_instance,
+                    product_id=pid,
+                    quantity=entry.quantity,
+                    unit_cost=entry.product.sale_price or 0,
+                )
+            )
+
+    if to_create:
+        SurgicalConsumption.objects.bulk_create(to_create, ignore_conflicts=True)
+
+
 class SmallSurgerySerializer(BaseSurgerySerializer):
     class Meta(BaseSurgerySerializer.Meta):
         model = SmallSurgery
+
+    def update(self, instance, validated_data):
+        had_procedures = set(instance.procedures.values_list("id", flat=True))
+        instance = super().update(instance, validated_data)
+        new_procedures = set(instance.procedures.values_list("id", flat=True))
+        if new_procedures != had_procedures:
+            _sync_procedure_consumptions(instance)
+        return instance
+
+    def create(self, validated_data):
+        instance = super().create(validated_data)
+        _sync_procedure_consumptions(instance)
+        return instance
 
 
 class LargeSurgerySerializer(BaseSurgerySerializer):
     class Meta(BaseSurgerySerializer.Meta):
         model = LargeSurgery
+
+    def update(self, instance, validated_data):
+        had_procedures = set(instance.procedures.values_list("id", flat=True))
+        instance = super().update(instance, validated_data)
+        new_procedures = set(instance.procedures.values_list("id", flat=True))
+        if new_procedures != had_procedures:
+            _sync_procedure_consumptions(instance)
+        return instance
+
+    def create(self, validated_data):
+        instance = super().create(validated_data)
+        _sync_procedure_consumptions(instance)
+        return instance
 
 
 class SurgicalRequestSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer):

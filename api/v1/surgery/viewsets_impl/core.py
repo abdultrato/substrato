@@ -150,12 +150,30 @@ class SmallSurgeryViewSet(BaseSurgeryViewSet):
     filterset_class = SmallSurgeryFilter
     fixed_surgery_size = Surgery.Size.SMALL
 
+    @action(detail=True, methods=["post"], url_path="sync-consumptions", url_name="sync-consumptions")
+    def sync_consumptions(self, request, pk=None):
+        from api.v1.surgery.serializers import _sync_procedure_consumptions, SurgicalConsumptionSerializer
+        instance = self.get_object()
+        _sync_procedure_consumptions(instance)
+        consumptions = instance.consumptions.select_related("product").order_by("-consumed_at")
+        serializer = SurgicalConsumptionSerializer(consumptions, many=True, context={"request": request})
+        return Response(serializer.data)
+
 
 class LargeSurgeryViewSet(BaseSurgeryViewSet):
     queryset = LargeSurgery.objects.select_related("patient", "surgical_request", "specialty", "surgeon", "operating_room").prefetch_related("procedures").all()
     serializer_class = LargeSurgerySerializer
     filterset_class = LargeSurgeryFilter
     fixed_surgery_size = Surgery.Size.LARGE
+
+    @action(detail=True, methods=["post"], url_path="sync-consumptions", url_name="sync-consumptions")
+    def sync_consumptions(self, request, pk=None):
+        from api.v1.surgery.serializers import _sync_procedure_consumptions, SurgicalConsumptionSerializer
+        instance = self.get_object()
+        _sync_procedure_consumptions(instance)
+        consumptions = instance.consumptions.select_related("product").order_by("-consumed_at")
+        serializer = SurgicalConsumptionSerializer(consumptions, many=True, context={"request": request})
+        return Response(serializer.data)
 
 
 class SurgicalProcedureViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
