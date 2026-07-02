@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { ArrowLeft, Check, CreditCard, Scissors } from "lucide-react"
+import { ArrowLeft, Check, CreditCard, Scissors, Stethoscope } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
 import { apiFetch } from "@/lib/api"
@@ -12,6 +12,29 @@ import { GROUPS } from "@/lib/rbac"
 const GLASS = "rounded-xl border border-violet-200 bg-white/30 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]"
 const INPUT = "w-full rounded-lg border border-border bg-card px-3 py-2 text-[13px] text-foreground placeholder:text-muted-foreground focus:border-violet-400 focus:outline-none focus:ring-1 focus:ring-violet-200 dark:focus:ring-violet-800"
 const LABEL = "block text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--gray-500)] mb-1"
+
+type SurgeryType = "PEQUENA" | "GRANDE" | "AMBAS"
+
+const SURGERY_TYPE_OPTIONS: { value: SurgeryType; label: string; description: string; color: string }[] = [
+  {
+    value: "PEQUENA",
+    label: "Pequena cirurgia",
+    description: "Procedimentos de baixa complexidade, ambulatório ou internamento curto.",
+    color: "blue",
+  },
+  {
+    value: "GRANDE",
+    label: "Grande cirurgia",
+    description: "Procedimentos de alta complexidade com bloco operatório e internamento.",
+    color: "violet",
+  },
+  {
+    value: "AMBAS",
+    label: "Ambas",
+    description: "Aplicável a pequenas e grandes cirurgias.",
+    color: "slate",
+  },
+]
 
 export default function NewSurgicalProcedurePage() {
   const router = useRouter()
@@ -22,6 +45,7 @@ export default function NewSurgicalProcedurePage() {
   const [vatPct, setVatPct] = useState("5")
   const [appliesVat, setAppliesVat] = useState(true)
   const [active, setActive] = useState(true)
+  const [surgeryType, setSurgeryType] = useState<SurgeryType>("AMBAS")
   const [saving, setSaving] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
 
@@ -47,6 +71,7 @@ export default function NewSurgicalProcedurePage() {
           vat_percentage: vatPct || "0",
           applies_vat_by_default: appliesVat,
           active,
+          surgery_type: surgeryType,
         }),
       })
       router.push(`/surgery/surgical-procedures/${res.id}`)
@@ -90,6 +115,7 @@ export default function NewSurgicalProcedurePage() {
 
         <form onSubmit={handleSubmit} className="space-y-3">
 
+          {/* identificação */}
           <section className={`relative overflow-hidden ${GLASS}`}>
             <span className="absolute left-0 top-0 h-full w-1 bg-violet-400" />
             <div className="px-4 py-3 pl-5">
@@ -107,10 +133,22 @@ export default function NewSurgicalProcedurePage() {
                   <textarea rows={3} value={description} onChange={e => setDescription(e.target.value)}
                     className={`${INPUT} resize-none`} placeholder="Descrição do procedimento..." />
                 </div>
+                {/* estado activo inline */}
+                <div className="flex items-center justify-between rounded-lg border border-border bg-card/60 px-3 py-2">
+                  <div>
+                    <p className="text-[12px] font-semibold text-foreground">Procedimento activo</p>
+                    <p className="text-[10px] text-[var(--gray-500)]">Inactivos não aparecem na selecção de cirurgias</p>
+                  </div>
+                  <button type="button" onClick={() => setActive(v => !v)}
+                    className={`relative h-5 w-9 shrink-0 rounded-full transition-colors ${active ? "bg-emerald-500" : "bg-slate-300 dark:bg-slate-600"}`}>
+                    <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-all ${active ? "left-[18px]" : "left-0.5"}`} />
+                  </button>
+                </div>
               </div>
             </div>
           </section>
 
+          {/* financeiro */}
           <section className={`relative overflow-hidden ${GLASS}`}>
             <span className="absolute left-0 top-0 h-full w-1 bg-teal-400" />
             <div className="px-4 py-3 pl-5">
@@ -150,17 +188,51 @@ export default function NewSurgicalProcedurePage() {
             </div>
           </section>
 
+          {/* tipo de cirurgia */}
           <section className={`relative overflow-hidden ${GLASS}`}>
-            <span className={`absolute left-0 top-0 h-full w-1 ${active ? "bg-emerald-400" : "bg-slate-400"}`} />
-            <div className="flex items-center justify-between px-4 py-3 pl-5">
-              <div>
-                <p className="text-[12px] font-semibold text-foreground">Procedimento activo</p>
-                <p className="text-[10px] text-[var(--gray-500)]">Procedimentos inactivos não aparecem na selecção de cirurgias</p>
+            <span className="absolute left-0 top-0 h-full w-1 bg-sky-400" />
+            <div className="px-4 py-3 pl-5">
+              <div className="mb-3 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--gray-500)]">
+                <Stethoscope size={13} /><span>Tipo de cirurgia</span>
               </div>
-              <button type="button" onClick={() => setActive(v => !v)}
-                className={`relative h-5 w-9 shrink-0 rounded-full transition-colors ${active ? "bg-emerald-500" : "bg-slate-300 dark:bg-slate-600"}`}>
-                <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-all ${active ? "left-[18px]" : "left-0.5"}`} />
-              </button>
+              <div className="grid gap-2 sm:grid-cols-3">
+                {SURGERY_TYPE_OPTIONS.map(opt => {
+                  const selected = surgeryType === opt.value
+                  const colorMap: Record<string, string> = {
+                    blue: selected
+                      ? "border-blue-400 bg-blue-50/60 dark:border-blue-600/50 dark:bg-blue-900/15"
+                      : "border-border bg-card/50 hover:border-blue-300 hover:bg-blue-50/30 dark:hover:border-blue-700/40",
+                    violet: selected
+                      ? "border-violet-400 bg-violet-50/60 dark:border-violet-600/50 dark:bg-violet-900/15"
+                      : "border-border bg-card/50 hover:border-violet-300 hover:bg-violet-50/30 dark:hover:border-violet-700/40",
+                    slate: selected
+                      ? "border-slate-400 bg-slate-50/60 dark:border-slate-500/50 dark:bg-slate-800/20"
+                      : "border-border bg-card/50 hover:border-slate-300 hover:bg-slate-50/30 dark:hover:border-slate-600/40",
+                  }
+                  const dotMap: Record<string, string> = {
+                    blue: "bg-blue-500",
+                    violet: "bg-violet-500",
+                    slate: "bg-slate-400",
+                  }
+                  return (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => setSurgeryType(opt.value)}
+                      className={`flex flex-col gap-1 rounded-xl border p-3 text-left transition ${colorMap[opt.color]}`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${dotMap[opt.color]} ${selected ? "opacity-100" : "opacity-30"}`} />
+                        <span className={`text-[12px] font-semibold ${selected ? "text-foreground" : "text-[var(--gray-500)]"}`}>
+                          {opt.label}
+                        </span>
+                        {selected && <Check size={11} className="ml-auto shrink-0 text-emerald-500" />}
+                      </div>
+                      <p className="text-[10px] leading-relaxed text-[var(--gray-400)]">{opt.description}</p>
+                    </button>
+                  )
+                })}
+              </div>
             </div>
           </section>
 

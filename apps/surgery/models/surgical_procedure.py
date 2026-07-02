@@ -38,6 +38,21 @@ class SurgicalProcedure(CoreModel):
 
     prefix = "PCIR"
 
+    SURGERY_TYPE_CHOICES = [
+        ("PEQUENA", "Pequena cirurgia"),
+        ("GRANDE", "Grande cirurgia"),
+        ("AMBAS", "Ambas"),
+    ]
+
+    surgery_type = models.CharField(
+        db_column="surgery_type",
+        verbose_name="Tipo de cirurgia",
+        max_length=10,
+        choices=SURGERY_TYPE_CHOICES,
+        default="AMBAS",
+        db_index=True,
+    )
+
     description = models.TextField(
 
         db_column="description",

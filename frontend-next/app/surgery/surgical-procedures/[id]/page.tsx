@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
-import { ArrowLeft, Check, CreditCard, Package, Plus, Scissors, Search, Trash2, X } from "lucide-react"
+import { ArrowLeft, Check, CreditCard, Package, Plus, Scissors, Search, Stethoscope, Trash2, X } from "lucide-react"
 import { createPortal } from "react-dom"
 
 import AppLayout from "@/components/layout/AppLayout"
@@ -16,6 +16,13 @@ const INPUT = "w-full rounded-lg border border-border bg-card px-3 py-2 text-[13
 const LABEL = "block text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--gray-500)] mb-1"
 
 type MatItem = { id: number; name: string; type: string; sale_price: string; qty: number }
+type SurgeryType = "PEQUENA" | "GRANDE" | "AMBAS"
+
+const SURGERY_TYPE_OPTIONS: { value: SurgeryType; label: string; description: string; color: string }[] = [
+  { value: "PEQUENA", label: "Pequena cirurgia", description: "Baixa complexidade, ambulatório ou internamento curto.", color: "blue" },
+  { value: "GRANDE", label: "Grande cirurgia", description: "Alta complexidade com bloco operatório e internamento.", color: "violet" },
+  { value: "AMBAS", label: "Ambas", description: "Aplicável a pequenas e grandes cirurgias.", color: "slate" },
+]
 
 const TYPE_LABEL: Record<string, string> = {
   CONS: "Consumível",
@@ -47,6 +54,7 @@ export default function SurgicalProcedureDetailPage() {
   const [vatPct, setVatPct] = useState("")
   const [appliesVat, setAppliesVat] = useState(true)
   const [active, setActive] = useState(true)
+  const [surgeryType, setSurgeryType] = useState<SurgeryType>("AMBAS")
 
   // materials
   const [materials, setMaterials] = useState<MatItem[]>([])
@@ -73,6 +81,7 @@ export default function SurgicalProcedureDetailPage() {
       setVatPct(res.vat_percentage || "")
       setAppliesVat(res.applies_vat_by_default ?? true)
       setActive(res.active ?? true)
+      setSurgeryType((res.surgery_type as SurgeryType) || "AMBAS")
       setMaterials(
         (res.default_materials_detail || []).map((m: any) => ({
           id: m.id,
@@ -187,6 +196,7 @@ export default function SurgicalProcedureDetailPage() {
           vat_percentage: vatPct || "0",
           applies_vat_by_default: appliesVat,
           active,
+          surgery_type: surgeryType,
         }),
       })
       setSaved(true)
@@ -333,6 +343,54 @@ export default function SurgicalProcedureDetailPage() {
                   <span className="text-[14px] font-bold text-teal-600 dark:text-teal-400">{fmtMT(procTotal)}</span>
                 </div>
               )}
+            </div>
+          </section>
+
+          {/* tipo de cirurgia */}
+          <section className={`relative overflow-hidden ${GLASS}`}>
+            <span className="absolute left-0 top-0 h-full w-1 bg-sky-400" />
+            <div className="px-4 py-3 pl-5">
+              <div className="mb-2 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--gray-500)]">
+                <Stethoscope size={13} /><span>Tipo de cirurgia</span>
+              </div>
+              <div className="grid gap-2 sm:grid-cols-3">
+                {SURGERY_TYPE_OPTIONS.map(opt => {
+                  const selected = surgeryType === opt.value
+                  const colorMap: Record<string, string> = {
+                    blue: selected
+                      ? "border-blue-400 bg-blue-50/60 dark:border-blue-600/50 dark:bg-blue-900/15"
+                      : "border-border bg-card/50 hover:border-blue-300 hover:bg-blue-50/30 dark:hover:border-blue-700/40",
+                    violet: selected
+                      ? "border-violet-400 bg-violet-50/60 dark:border-violet-600/50 dark:bg-violet-900/15"
+                      : "border-border bg-card/50 hover:border-violet-300 hover:bg-violet-50/30 dark:hover:border-violet-700/40",
+                    slate: selected
+                      ? "border-slate-400 bg-slate-50/60 dark:border-slate-500/50 dark:bg-slate-800/20"
+                      : "border-border bg-card/50 hover:border-slate-300 hover:bg-slate-50/30 dark:hover:border-slate-600/40",
+                  }
+                  const dotMap: Record<string, string> = {
+                    blue: "bg-blue-500",
+                    violet: "bg-violet-500",
+                    slate: "bg-slate-400",
+                  }
+                  return (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => setSurgeryType(opt.value)}
+                      className={`flex flex-col gap-1 rounded-xl border p-3 text-left transition ${colorMap[opt.color]}`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${dotMap[opt.color]} ${selected ? "opacity-100" : "opacity-30"}`} />
+                        <span className={`text-[12px] font-semibold ${selected ? "text-foreground" : "text-[var(--gray-500)]"}`}>
+                          {opt.label}
+                        </span>
+                        {selected && <Check size={11} className="ml-auto shrink-0 text-emerald-500" />}
+                      </div>
+                      <p className="text-[10px] leading-relaxed text-[var(--gray-400)]">{opt.description}</p>
+                    </button>
+                  )
+                })}
+              </div>
             </div>
           </section>
 
