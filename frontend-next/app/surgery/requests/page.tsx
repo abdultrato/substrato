@@ -7,7 +7,9 @@ import {
   CheckCircle2,
   ChevronRight,
   Clock3,
+  Package,
   Scissors,
+  Stethoscope,
   User,
 } from "lucide-react"
 import Link from "next/link"
@@ -17,11 +19,16 @@ import { apiFetch } from "@/lib/api"
 import { GROUPS } from "@/lib/rbac"
 import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 
+const GLASS = "rounded-xl border border-white/20 bg-white/30 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]"
+
 type Surgery = {
   id: number
   custom_id?: string
   patient_name?: string
   surgeon_name?: string
+  surgeon_names?: { id: number; name: string }[]
+  specialty_name?: string
+  ward_name?: string
   procedure?: string
   procedure_names?: string[]
   status: string
@@ -31,7 +38,9 @@ type Surgery = {
   started_at?: string | null
   ended_at?: string | null
   completed_at?: string | null
-  description?: string
+  estimated_price?: string
+  procedures_price_total?: string
+  vat_percentage?: string
   _source: "small" | "large" | "generic"
 }
 
@@ -39,176 +48,191 @@ const DONE_STATUSES = new Set([
   "SURGERY_COMPLETED", "CONCLUIDA", "CLOSED", "IN_RECOVERY", "RECOVERED",
   "REPORT_PENDING", "BILLING_PENDING",
 ])
-
 const CANCELLED_STATUSES = new Set(["CANCELADA", "CANCELLED"])
 
 const STATUS_LABEL: Record<string, string> = {
-  DRAFT: "Rascunho",
-  REQUESTED: "Solicitada",
-  UNDER_ASSESSMENT: "Em avaliação",
-  FINANCIAL_PENDING: "Financeiro pendente",
-  AUTHORIZED: "Autorizada",
-  AGENDADA: "Agendada",
-  PATIENT_CHECKED_IN: "Check-in",
-  PREOPERATIVE_PREPARATION: "Pré-op.",
-  PREPARED: "Preparada",
-  IN_OPERATING_ROOM: "Em sala",
-  ANESTHESIA_STARTED: "Anestesia",
-  SURGERY_STARTED: "Em curso",
-  EM_ANDAMENTO: "Em andamento",
-  SURGERY_COMPLETED: "Realizada",
-  CONCLUIDA: "Concluída",
-  IN_RECOVERY: "Recuperação",
-  RECOVERED: "Recuperado",
-  REPORT_PENDING: "Rel. pendente",
-  BILLING_PENDING: "Fat. pendente",
-  CLOSED: "Fechada",
-  POSTPONED: "Adiada",
-  CANCELADA: "Cancelada",
-  CANCELLED: "Cancelada",
+  DRAFT: "Rascunho", REQUESTED: "Solicitada", UNDER_ASSESSMENT: "Em avaliação",
+  FINANCIAL_PENDING: "Fin. pendente", AUTHORIZED: "Autorizada", AGENDADA: "Agendada",
+  PATIENT_CHECKED_IN: "Check-in", PREOPERATIVE_PREPARATION: "Pré-op.", PREPARED: "Preparada",
+  IN_OPERATING_ROOM: "Em sala", ANESTHESIA_STARTED: "Anestesia", SURGERY_STARTED: "Em curso",
+  EM_ANDAMENTO: "Em andamento", SURGERY_COMPLETED: "Realizada", CONCLUIDA: "Concluída",
+  IN_RECOVERY: "Recuperação", RECOVERED: "Recuperado", REPORT_PENDING: "Rel. pendente",
+  BILLING_PENDING: "Fat. pendente", CLOSED: "Fechada", POSTPONED: "Adiada",
+  CANCELADA: "Cancelada", CANCELLED: "Cancelada",
+}
+
+const STATUS_COLOR: Record<string, string> = {
+  DRAFT: "bg-gray-100 text-gray-600 dark:bg-white/10 dark:text-gray-300",
+  REQUESTED: "bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300",
+  UNDER_ASSESSMENT: "bg-sky-50 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300",
+  FINANCIAL_PENDING: "bg-orange-50 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300",
+  AUTHORIZED: "bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300",
+  AGENDADA: "bg-violet-50 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300",
+  PATIENT_CHECKED_IN: "bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300",
+  PREOPERATIVE_PREPARATION: "bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300",
+  PREPARED: "bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300",
+  IN_OPERATING_ROOM: "bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-200",
+  ANESTHESIA_STARTED: "bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-200",
+  SURGERY_STARTED: "bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-200",
+  EM_ANDAMENTO: "bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-200",
+  SURGERY_COMPLETED: "bg-teal-50 text-teal-700 dark:bg-teal-900/30 dark:text-teal-300",
+  CONCLUIDA: "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300",
+  IN_RECOVERY: "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300",
+  RECOVERED: "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300",
+  REPORT_PENDING: "bg-yellow-50 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300",
+  BILLING_PENDING: "bg-orange-50 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300",
+  CLOSED: "bg-gray-100 text-gray-600 dark:bg-white/10 dark:text-gray-300",
+  POSTPONED: "bg-purple-50 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300",
+  CANCELADA: "bg-rose-50 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300",
+  CANCELLED: "bg-rose-50 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300",
+}
+
+const STATUS_ACCENT: Record<string, string> = {
+  AGENDADA: "bg-violet-400", AUTHORIZED: "bg-indigo-400",
+  IN_OPERATING_ROOM: "bg-sky-500", SURGERY_STARTED: "bg-sky-500", EM_ANDAMENTO: "bg-sky-500",
+  SURGERY_COMPLETED: "bg-teal-400", CONCLUIDA: "bg-emerald-400",
+  CANCELADA: "bg-rose-400", CANCELLED: "bg-rose-400", POSTPONED: "bg-purple-400",
 }
 
 const PRIORITY_LABEL: Record<string, string> = {
-  EMERGENCY: "Emergência",
-  URGENT: "Urgente",
-  ELECTIVE: "Eletiva",
-  SCHEDULED: "Agendada",
+  EMERGENCY: "Emergência", URGENT: "Urgente", ELECTIVE: "Eletiva", SCHEDULED: "Agendada",
+}
+const PRIORITY_BADGE: Record<string, string> = {
+  EMERGENCY: "border-rose-300/70 bg-rose-50 text-rose-700 dark:bg-rose-900/20 dark:text-rose-300",
+  URGENT: "border-amber-300/70 bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-300",
+  ELECTIVE: "border-emerald-300/70 bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300",
+  SCHEDULED: "border-blue-300/70 bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300",
 }
 
-const SIZE_LABEL: Record<string, string> = {
-  PEQUENA: "Pequena",
-  GRANDE: "Grande",
-  MINOR: "Menor",
-  MAJOR: "Grande",
-}
-
-function statusBadge(status: string) {
-  if (DONE_STATUSES.has(status))
-    return "border-emerald-300/70 bg-emerald-50/80 text-emerald-700 dark:border-emerald-700/30 dark:bg-emerald-900/20 dark:text-emerald-300"
-  if (CANCELLED_STATUSES.has(status))
-    return "border-rose-300/70 bg-rose-50/80 text-rose-700 dark:border-rose-700/30 dark:bg-rose-900/20 dark:text-rose-300"
-  if (status === "IN_OPERATING_ROOM" || status === "SURGERY_STARTED" || status === "EM_ANDAMENTO")
-    return "border-sky-300/70 bg-sky-50/80 text-sky-700 dark:border-sky-700/30 dark:bg-sky-900/20 dark:text-sky-300"
-  if (status === "AUTHORIZED" || status === "AGENDADA")
-    return "border-violet-300/70 bg-violet-50/80 text-violet-700 dark:border-violet-700/30 dark:bg-violet-900/20 dark:text-violet-300"
-  return "border-amber-300/70 bg-amber-50/80 text-amber-700 dark:border-amber-700/30 dark:bg-amber-900/20 dark:text-amber-300"
-}
-
-function priorityBadge(priority: string) {
-  if (priority === "EMERGENCY")
-    return "border-red-300/70 bg-red-50/80 text-red-700 dark:border-red-700/30 dark:bg-red-900/20 dark:text-red-300"
-  if (priority === "URGENT")
-    return "border-orange-300/70 bg-orange-50/80 text-orange-700 dark:border-orange-700/30 dark:bg-orange-900/20 dark:text-orange-300"
-  return "border-slate-200/70 bg-slate-50/80 text-slate-600 dark:border-slate-700/30 dark:bg-slate-900/20 dark:text-slate-400"
+const SIZE_LABEL: Record<string, string> = { PEQUENA: "Pequena", GRANDE: "Grande" }
+const SIZE_BADGE: Record<string, string> = {
+  PEQUENA: "border-violet-200 bg-violet-50 text-violet-700 dark:border-violet-700/30 dark:bg-violet-900/20 dark:text-violet-300",
+  GRANDE: "border-indigo-200 bg-indigo-50 text-indigo-700 dark:border-indigo-700/30 dark:bg-indigo-900/20 dark:text-indigo-300",
 }
 
 function fmtDate(value: any) {
   if (!value) return null
   try {
     return new Intl.DateTimeFormat("pt-PT", {
-      day: "2-digit", month: "short", year: "numeric",
-      hour: "2-digit", minute: "2-digit",
+      day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit",
     }).format(new Date(value))
-  } catch {
-    return String(value)
-  }
+  } catch { return String(value) }
 }
 
-function SurgeryCard({
-  item,
-  onMarkDone,
-  marking,
-}: {
+function fmtMT(v: any) {
+  const n = parseFloat(v || "0")
+  if (!n) return null
+  return n.toLocaleString("pt-PT", { minimumFractionDigits: 2 }) + " MT"
+}
+
+function detailHref(item: Surgery) {
+  if (item._source === "large") return `/surgery/large-surgeries/${item.id}`
+  if (item._source === "small") return `/surgery/small-surgeries/${item.id}`
+  return item.surgery_size === "GRANDE"
+    ? `/surgery/large-surgeries/${item.id}`
+    : `/surgery/small-surgeries/${item.id}`
+}
+
+function SurgeryCard({ item, onMarkDone, marking }: {
   item: Surgery
   onMarkDone?: (item: Surgery) => void
   marking: boolean
 }) {
   const isDone = DONE_STATUSES.has(item.status)
-  const procedure = item.procedure || item.procedure_names?.[0] || "—"
-  const size = SIZE_LABEL[item.surgery_size || ""] || item.surgery_size || "—"
-  const editHref = item._source === "small"
-    ? `/surgery/small-surgeries/${item.id}`
-    : item._source === "large"
-      ? `/surgery/large-surgeries/${item.id}`
-      : `/surgery/surgeries/${item.id}`
+  const accent = STATUS_ACCENT[item.status] ?? (isDone ? "bg-emerald-400" : "bg-slate-400")
+  const statusCls = STATUS_COLOR[item.status] ?? "bg-gray-100 text-gray-600"
+
+  const procNames = item.procedure_names?.length
+    ? item.procedure_names.slice(0, 2).join(", ") + (item.procedure_names.length > 2 ? ` +${item.procedure_names.length - 2}` : "")
+    : item.procedure || "—"
+
+  const surgeonName = item.surgeon_names?.[0]?.name ?? item.surgeon_name
+  const extraSurgeons = (item.surgeon_names?.length ?? 0) > 1 ? ` +${item.surgeon_names!.length - 1}` : ""
+
+  const base = parseFloat(item.procedures_price_total || item.estimated_price || "0")
+  const vat = parseFloat(item.vat_percentage || "0")
+  const total = base > 0 ? base * (1 + vat / 100) : 0
 
   return (
-    <article className="relative overflow-hidden rounded-xl border border-white/20 bg-white/30 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]">
-      <span className={`absolute left-0 top-0 h-full w-1 ${isDone ? "bg-emerald-400" : "bg-sky-400"}`} />
-      <div className="flex min-w-0 items-start gap-3 px-3 py-2.5 pl-4">
-        <div className="min-w-0 flex-1">
-          {/* header */}
+    <Link href={detailHref(item)} className="group block">
+      <div className={`${GLASS} relative overflow-hidden p-3 transition-all hover:border-slate-300 hover:shadow-md dark:hover:border-white/20`}>
+        <span className={`absolute left-0 top-0 h-full w-1 ${accent} opacity-70 group-hover:opacity-100`} />
+        <div className="pl-3">
+
+          {/* badges row */}
           <div className="flex flex-wrap items-center gap-1.5">
-            <span className="text-[11px] font-semibold text-[var(--gray-500)]">
+            <span className="font-mono text-[10px] font-semibold tracking-wide text-slate-500 dark:text-slate-400">
               {item.custom_id || `#${item.id}`}
             </span>
-            <span className={`rounded-full border px-1.5 py-px text-[9px] font-semibold ${statusBadge(item.status)}`}>
+            <span className={`rounded-full px-2 py-0.5 text-[9px] font-semibold ${statusCls}`}>
               {STATUS_LABEL[item.status] || item.status}
             </span>
-            {item.priority ? (
-              <span className={`rounded-full border px-1.5 py-px text-[9px] font-semibold ${priorityBadge(item.priority)}`}>
+            {item.surgery_size && SIZE_LABEL[item.surgery_size] && (
+              <span className={`rounded-full border px-2 py-0.5 text-[9px] font-semibold ${SIZE_BADGE[item.surgery_size] || "border-gray-200 bg-gray-50 text-gray-600"}`}>
+                {SIZE_LABEL[item.surgery_size]}
+              </span>
+            )}
+            {item.priority && (
+              <span className={`rounded-full border px-2 py-0.5 text-[9px] font-semibold ${PRIORITY_BADGE[item.priority] || "border-slate-200 bg-slate-50 text-slate-600"}`}>
                 {PRIORITY_LABEL[item.priority] || item.priority}
               </span>
-            ) : null}
-            <span className="rounded-full border border-slate-200/70 bg-slate-50/80 px-1.5 py-px text-[9px] font-semibold text-slate-600 dark:border-slate-700/30 dark:bg-slate-900/20 dark:text-slate-400">
-              {size}
-            </span>
+            )}
+            <ChevronRight size={11} className="ml-auto shrink-0 text-[var(--gray-400)] transition group-hover:translate-x-0.5 group-hover:text-slate-500" />
           </div>
 
           {/* patient + procedure */}
-          <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5">
-            {item.patient_name ? (
-              <span className="flex items-center gap-1 text-[12px] font-semibold text-[var(--text)]">
-                <User size={11} className="shrink-0 text-sky-500" />
-                {item.patient_name}
-              </span>
-            ) : null}
-            {procedure !== "—" ? (
-              <span className="flex items-center gap-1 text-[11px] text-[var(--gray-500)]">
-                <Scissors size={10} className="shrink-0" />
-                {procedure}
-              </span>
-            ) : null}
-          </div>
+          <p className="mt-1.5 truncate text-[13px] font-semibold text-foreground">{item.patient_name || "—"}</p>
+          <p className="mt-0.5 truncate text-[11px] text-[var(--gray-500)]">{procNames}</p>
 
-          {/* dates */}
-          <div className="mt-0.5 flex flex-wrap gap-x-3 gap-y-0.5">
-            {item.scheduled_for ? (
-              <span className="flex items-center gap-1 text-[10px] text-[var(--gray-500)]">
+          {/* detail row */}
+          <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-[var(--gray-500)]">
+            {surgeonName && (
+              <span className="flex items-center gap-1">
+                <Stethoscope size={9} className="shrink-0" />
+                {surgeonName}{extraSurgeons}
+              </span>
+            )}
+            {item.specialty_name && (
+              <span className="flex items-center gap-1">
+                <User size={9} className="shrink-0" />
+                {item.specialty_name}
+              </span>
+            )}
+            {item.ward_name && (
+              <span className="flex items-center gap-1">
+                <Package size={9} className="shrink-0" />
+                {item.ward_name}
+              </span>
+            )}
+            {item.scheduled_for && (
+              <span className="flex items-center gap-1">
                 <CalendarClock size={9} className="shrink-0" />
-                Agendada: {fmtDate(item.scheduled_for)}
+                {fmtDate(item.scheduled_for)}
               </span>
-            ) : null}
-            {isDone && item.ended_at ? (
-              <span className="flex items-center gap-1 text-[10px] text-emerald-600 dark:text-emerald-400">
-                <CheckCircle2 size={9} className="shrink-0" />
-                Concluída: {fmtDate(item.ended_at)}
+            )}
+            {total > 0 && (
+              <span className="ml-auto font-semibold text-teal-600 dark:text-teal-400">
+                {fmtMT(total)}
               </span>
-            ) : null}
+            )}
           </div>
-        </div>
 
-        {/* actions */}
-        <div className="flex shrink-0 items-center gap-1.5 pt-0.5">
-          {!isDone && onMarkDone ? (
-            <button
-              onClick={() => onMarkDone(item)}
-              disabled={marking}
-              className="inline-flex h-7 items-center gap-1 rounded-md border border-emerald-300 bg-emerald-50 px-2.5 text-[11px] font-semibold text-emerald-700 transition hover:bg-emerald-100 disabled:opacity-50 dark:border-emerald-700/40 dark:bg-emerald-900/20 dark:text-emerald-300 dark:hover:bg-emerald-900/30"
-            >
-              <CheckCircle2 size={11} />
-              {marking ? "..." : "Marcar realizada"}
-            </button>
-          ) : null}
-          <Link
-            href={editHref}
-            className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-white/20 bg-white/30 text-[var(--gray-500)] transition hover:bg-white/50 dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10"
-          >
-            <ChevronRight size={13} />
-          </Link>
+          {/* mark done button */}
+          {!isDone && onMarkDone && (
+            <div className="mt-2 border-t border-white/30 pt-2 dark:border-white/10">
+              <button
+                onClick={e => { e.preventDefault(); onMarkDone(item) }}
+                disabled={marking}
+                className="inline-flex h-6 items-center gap-1 rounded-md border border-emerald-300 bg-emerald-50 px-2 text-[10px] font-semibold text-emerald-700 transition hover:bg-emerald-100 disabled:opacity-50 dark:border-emerald-700/40 dark:bg-emerald-900/20 dark:text-emerald-300"
+              >
+                <CheckCircle2 size={10} />
+                {marking ? "..." : "Marcar realizada"}
+              </button>
+            </div>
+          )}
         </div>
       </div>
-    </article>
+    </Link>
   )
 }
 
