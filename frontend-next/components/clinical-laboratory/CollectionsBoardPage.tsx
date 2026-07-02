@@ -161,7 +161,7 @@ function CollectionCard({
             </p>
           )}
         </div>
-        <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-white/60 px-1.5 py-0.5 text-[9px] font-medium text-[var(--gray-600)] dark:bg-white/10 dark:text-[var(--gray-300)]">
+        <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-white/60 px-1.5 py-0.5 text-[9px] font-medium text-[var(--gray-600)] dark:bg-white/10 dark:text-white">
           <span className={`h-1.5 w-1.5 rounded-full ${statusDot(row.status)}`} />
           {row.status_display || row.status || "Pendente"}
         </span>
