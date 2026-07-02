@@ -171,36 +171,94 @@ export default function NewSurgicalProcedurePage() {
         {/* header */}
         <section className={`relative overflow-hidden ${GLASS}`}>
           <span className="absolute left-0 top-0 h-full w-1 bg-violet-400" />
-          <div className="flex items-center justify-between gap-2 px-3 py-2 pl-4">
-            <div>
-              <div className="flex items-center gap-1 text-[10px] text-[var(--gray-500)]">
-                <Link href="/surgery" className="hover:text-foreground">Cirurgia</Link>
-                <span>/</span>
-                <Link href="/surgery/surgical-procedures" className="hover:text-foreground">Procedimentos</Link>
-                <span>/</span>
-                <span className="font-semibold text-foreground">Novo</span>
+          <div className="px-3 py-2 pl-4">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <div className="flex items-center gap-1 text-[10px] text-[var(--gray-500)]">
+                  <Link href="/surgery" className="hover:text-foreground">Cirurgia</Link>
+                  <span>/</span>
+                  <Link href="/surgery/surgical-procedures" className="hover:text-foreground">Procedimentos</Link>
+                  <span>/</span>
+                  <span className="font-semibold text-foreground">Novo</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <Scissors size={13} className="text-violet-500" />
+                  <h1 className="font-display text-sm font-semibold text-foreground">Novo procedimento cirúrgico</h1>
+                </div>
+                <p className="mt-1 text-[11px] text-[var(--gray-500)]">
+                  Defina a indicação do procedimento no catálogo e se ele fica activo para selecção nas cirurgias.
+                </p>
               </div>
-              <div className="flex items-center gap-1.5">
-                <Scissors size={13} className="text-violet-500" />
-                <h1 className="font-display text-sm font-semibold text-foreground">Novo procedimento cirúrgico</h1>
+              <div className="flex flex-wrap items-center justify-end gap-1.5">
+                {grandTotal > 0 && (
+                  <div className="mr-1 flex flex-col items-end border-r border-white/30 pr-2 dark:border-white/10">
+                    <span className="text-[9px] text-[var(--gray-500)]">Total estimado</span>
+                    <span className="text-[12px] font-bold text-teal-600 dark:text-teal-400">{fmtMT(grandTotal)}</span>
+                  </div>
+                )}
+                <Link href="/surgery/surgical-procedures"
+                  className="inline-flex h-7 items-center gap-1 rounded-md border border-border bg-card px-2.5 text-[11px] text-muted-foreground hover:bg-muted">
+                  <ArrowLeft size={11} /> Cancelar
+                </Link>
+                <button type="submit" form="new-proc-form" disabled={saving}
+                  className="inline-flex h-7 items-center gap-1.5 rounded-md border border-violet-300 bg-violet-600 px-3 text-[11px] font-semibold text-white transition hover:bg-violet-700 disabled:opacity-50">
+                  <Check size={12} />
+                  {saving ? "A criar..." : "Criar procedimento"}
+                </button>
+                <div className="inline-flex items-center gap-2 rounded-lg border border-border bg-card/70 px-2.5 py-1">
+                  <button
+                    type="button"
+                    aria-label={active ? "Marcar procedimento como inactivo" : "Marcar procedimento como activo"}
+                    onClick={() => setActive(v => !v)}
+                    className={`relative h-5 w-9 shrink-0 rounded-full transition-colors ${active ? "bg-emerald-500" : "bg-slate-300 dark:bg-slate-600"}`}
+                  >
+                    <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-all ${active ? "left-[18px]" : "left-0.5"}`} />
+                  </button>
+                  <div className="leading-tight">
+                    <p className="text-[11px] font-semibold text-foreground">{active ? "Activo" : "Inactivo"}</p>
+                    <p className="text-[9px] text-[var(--gray-500)]">
+                      {active ? "Disponível na selecção de cirurgias" : "Oculto na selecção de cirurgias"}
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
-            <div className="flex items-center gap-1.5">
-              {grandTotal > 0 && (
-                <div className="mr-1 flex flex-col items-end border-r border-white/30 pr-2 dark:border-white/10">
-                  <span className="text-[9px] text-[var(--gray-500)]">Total estimado</span>
-                  <span className="text-[12px] font-bold text-teal-600 dark:text-teal-400">{fmtMT(grandTotal)}</span>
-                </div>
-              )}
-              <Link href="/surgery/surgical-procedures"
-                className="inline-flex h-7 items-center gap-1 rounded-md border border-border bg-card px-2.5 text-[11px] text-muted-foreground hover:bg-muted">
-                <ArrowLeft size={11} /> Cancelar
-              </Link>
-              <button type="submit" form="new-proc-form" disabled={saving}
-                className="inline-flex h-7 items-center gap-1.5 rounded-md border border-violet-300 bg-violet-600 px-3 text-[11px] font-semibold text-white transition hover:bg-violet-700 disabled:opacity-50">
-                <Check size={12} />
-                {saving ? "A criar..." : "Criar procedimento"}
-              </button>
+            <div className="mt-2 border-t border-white/30 pt-2 dark:border-white/10">
+              <div className="mb-1.5 flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--gray-500)]">
+                <Stethoscope size={11} /><span>Indicação do procedimento</span>
+              </div>
+              <div className="grid gap-1 sm:grid-cols-3">
+                {SURGERY_TYPE_OPTIONS.map(opt => {
+                  const selected = surgeryType === opt.value
+                  const colorMap: Record<string, string> = {
+                    blue: selected
+                      ? "border-blue-400 bg-blue-50/60 dark:border-blue-600/50 dark:bg-blue-900/15"
+                      : "border-border bg-card/50 hover:border-blue-300 hover:bg-blue-50/30 dark:hover:border-blue-700/40",
+                    violet: selected
+                      ? "border-violet-400 bg-violet-50/60 dark:border-violet-600/50 dark:bg-violet-900/15"
+                      : "border-border bg-card/50 hover:border-violet-300 hover:bg-violet-50/30 dark:hover:border-violet-700/40",
+                    slate: selected
+                      ? "border-slate-400 bg-slate-50/60 dark:border-slate-500/50 dark:bg-slate-800/20"
+                      : "border-border bg-card/50 hover:border-slate-300 hover:bg-slate-50/30 dark:hover:border-slate-600/40",
+                  }
+                  const dotMap: Record<string, string> = {
+                    blue: "bg-blue-500", violet: "bg-violet-500", slate: "bg-slate-400",
+                  }
+                  return (
+                    <button key={opt.value} type="button" onClick={() => setSurgeryType(opt.value)}
+                      className={`flex flex-col gap-0.5 rounded-lg border p-2 text-left transition ${colorMap[opt.color]}`}>
+                      <div className="flex items-center gap-1.5">
+                        <span className={`h-2 w-2 shrink-0 rounded-full ${dotMap[opt.color]} ${selected ? "opacity-100" : "opacity-30"}`} />
+                        <span className={`text-[11px] font-semibold ${selected ? "text-foreground" : "text-[var(--gray-500)]"}`}>
+                          {opt.label}
+                        </span>
+                        {selected && <Check size={10} className="ml-auto shrink-0 text-emerald-500" />}
+                      </div>
+                      <p className="text-[10px] leading-snug text-[var(--gray-400)]">{opt.description}</p>
+                    </button>
+                  )
+                })}
+              </div>
             </div>
           </div>
         </section>
@@ -224,16 +282,6 @@ export default function NewSurgicalProcedurePage() {
                   <label className={LABEL}>Descrição</label>
                   <textarea rows={2} value={description} onChange={e => setDescription(e.target.value)}
                     className={`${INPUT} resize-none`} placeholder="Descrição do procedimento..." />
-                </div>
-                <div className="flex items-center justify-between rounded-lg border border-border bg-card/60 px-2.5 py-1.5">
-                  <div>
-                    <p className="text-[12px] font-semibold text-foreground">Procedimento activo</p>
-                    <p className="text-[10px] text-[var(--gray-500)]">Inactivos não aparecem na selecção de cirurgias</p>
-                  </div>
-                  <button type="button" onClick={() => setActive(v => !v)}
-                    className={`relative h-5 w-9 shrink-0 rounded-full transition-colors ${active ? "bg-emerald-500" : "bg-slate-300 dark:bg-slate-600"}`}>
-                    <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-all ${active ? "left-[18px]" : "left-0.5"}`} />
-                  </button>
                 </div>
               </div>
             </div>
@@ -433,48 +481,6 @@ export default function NewSurgicalProcedurePage() {
                   <span className="text-[14px] font-bold text-teal-600 dark:text-teal-400">{fmtMT(grandTotal)}</span>
                 </div>
               )}
-            </div>
-          </section>
-
-          {/* tipo de cirurgia */}
-          <section className={`relative overflow-hidden ${GLASS}`}>
-            <span className="absolute left-0 top-0 h-full w-1 bg-sky-400" />
-            <div className="px-3 py-2 pl-4">
-              <div className="mb-1.5 flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--gray-500)]">
-                <Stethoscope size={11} /><span>Tipo de cirurgia</span>
-              </div>
-              <div className="grid gap-1 sm:grid-cols-3">
-                {SURGERY_TYPE_OPTIONS.map(opt => {
-                  const selected = surgeryType === opt.value
-                  const colorMap: Record<string, string> = {
-                    blue: selected
-                      ? "border-blue-400 bg-blue-50/60 dark:border-blue-600/50 dark:bg-blue-900/15"
-                      : "border-border bg-card/50 hover:border-blue-300 hover:bg-blue-50/30 dark:hover:border-blue-700/40",
-                    violet: selected
-                      ? "border-violet-400 bg-violet-50/60 dark:border-violet-600/50 dark:bg-violet-900/15"
-                      : "border-border bg-card/50 hover:border-violet-300 hover:bg-violet-50/30 dark:hover:border-violet-700/40",
-                    slate: selected
-                      ? "border-slate-400 bg-slate-50/60 dark:border-slate-500/50 dark:bg-slate-800/20"
-                      : "border-border bg-card/50 hover:border-slate-300 hover:bg-slate-50/30 dark:hover:border-slate-600/40",
-                  }
-                  const dotMap: Record<string, string> = {
-                    blue: "bg-blue-500", violet: "bg-violet-500", slate: "bg-slate-400",
-                  }
-                  return (
-                    <button key={opt.value} type="button" onClick={() => setSurgeryType(opt.value)}
-                      className={`flex flex-col gap-0.5 rounded-lg border p-2 text-left transition ${colorMap[opt.color]}`}>
-                      <div className="flex items-center gap-1.5">
-                        <span className={`h-2 w-2 shrink-0 rounded-full ${dotMap[opt.color]} ${selected ? "opacity-100" : "opacity-30"}`} />
-                        <span className={`text-[11px] font-semibold ${selected ? "text-foreground" : "text-[var(--gray-500)]"}`}>
-                          {opt.label}
-                        </span>
-                        {selected && <Check size={10} className="ml-auto shrink-0 text-emerald-500" />}
-                      </div>
-                      <p className="text-[10px] leading-snug text-[var(--gray-400)]">{opt.description}</p>
-                    </button>
-                  )
-                })}
-              </div>
             </div>
           </section>
 

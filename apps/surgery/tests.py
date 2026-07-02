@@ -8,6 +8,8 @@ from django.core.exceptions import ValidationError
 from django.utils import timezone
 import pytest
 
+from api.v1.surgery.filters import SurgicalProcedureFilter
+from api.v1.surgery.serializers import SmallSurgerySerializer
 from apps.billing.models.invoice import Invoice
 from apps.clinical.models.patient import Patient
 from apps.human_resources.models import Employee
@@ -19,6 +21,7 @@ from apps.surgery.models import (
     SurgicalBillingItem,
     SurgicalConsumption,
     SurgicalMaterial,
+    SurgicalProcedure,
     SurgicalRequest,
     SurgicalSchedule,
 )
@@ -64,6 +67,10 @@ def _surgery(tenant=None, patient=None, **kwargs):
     }
     defaults.update(kwargs)
     return Surgery.objects.create(**defaults)
+
+
+class _FixedSmallSurgeryView:
+    fixed_surgery_size = Surgery.Size.SMALL
 
 
 @pytest.mark.django_db
@@ -235,3 +242,37 @@ def test_surgical_invoice_falls_back_to_procedures_and_consumptions():
     assert invoice.subtotal == Decimal("300.00")
     assert invoice.total == Decimal("348.00")
     assert surgery.consumptions.first().billing_status == SurgicalConsumption.BillingStatus.BILLED
+
+
+@pytest.mark.django_db
+def test_surgical_procedure_filter_for_surgery_size_includes_specific_and_ambas():
+    tenant = _tenant()
+    small = SurgicalProcedure.objects.create(tenant=tenant, name="Exérese simples", surgery_type="PEQUENA")
+    large = SurgicalProcedure.objects.create(tenant=tenant, name="Laparotomia", surgery_type="GRANDE")
+    both = SurgicalProcedure.objects.create(tenant=tenant, name="Sutura", surgery_type="AMBAS")
+
+    filtered_ids = list(
+        SurgicalProcedureFilter(
+            data={"for_surgery_size": Surgery.Size.SMALL},
+            queryset=SurgicalProcedure.objects.filter(tenant=tenant),
+        ).qs.values_list("id", flat=True)
+    )
+
+    assert small.id in filtered_ids
+    assert both.id in filtered_ids
+    assert large.id not in filtered_ids
+
+
+@pytest.mark.django_db
+def test_small_surgery_serializer_rejects_large_only_procedure():
+    tenant = _tenant()
+    patient = _patient(tenant)
+    procedure = SurgicalProcedure.objects.create(tenant=tenant, name="Laparotomia", surgery_type="GRANDE")
+
+    serializer = SmallSurgerySerializer(
+        data={"patient": patient.id, "procedures": [procedure.id]},
+        context={"view": _FixedSmallSurgeryView()},
+    )
+
+    assert not serializer.is_valid()
+    assert "procedures" in serializer.errors

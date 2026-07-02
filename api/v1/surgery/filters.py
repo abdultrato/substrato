@@ -1,5 +1,8 @@
 """FilterSets para recursos de Cirurgia na API v1."""
 
+import django_filters
+from django.db.models import Q
+
 from api.core.filters import SafeFilterSet
 from apps.surgery.models import (
     AnesthesiaRecord,
@@ -59,9 +62,19 @@ class LargeSurgeryFilter(SafeFilterSet):
 
 
 class SurgicalProcedureFilter(SafeFilterSet):
+    for_surgery_size = django_filters.CharFilter(method="filter_for_surgery_size")
+
     class Meta:
         model = SurgicalProcedure
-        fields = ["name", "active", "created_at"]
+        fields = ["name", "active", "created_at", "surgery_type"]
+
+    def filter_for_surgery_size(self, queryset, name, value):
+        normalized = str(value or "").strip().upper()
+        if normalized in {"PEQUENA", "GRANDE"}:
+            return queryset.filter(Q(surgery_type=normalized) | Q(surgery_type="AMBAS"))
+        if normalized == "AMBAS":
+            return queryset.filter(surgery_type="AMBAS")
+        return queryset
 
 
 class SurgicalRequestFilter(SafeFilterSet):

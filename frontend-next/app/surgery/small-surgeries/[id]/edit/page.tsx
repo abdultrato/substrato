@@ -70,6 +70,12 @@ const CLASSIFICATION_CHOICES = [
   { value: "COMPLEX", label: "Complexa" },
 ]
 
+const PROCEDURE_SURGERY_TYPE_LABELS: Record<string, string> = {
+  PEQUENA: "Pequena",
+  GRANDE: "Grande",
+  AMBAS: "Ambas",
+}
+
 const TEAM_ROLES = [
   { value: "SURGEON", label: "Cirurgião principal" },
   { value: "ASSISTANT_SURGEON", label: "Cirurgião assistente" },
@@ -262,10 +268,11 @@ function SearchSelect({
 
 /* Multi-select for procedures */
 function ProcedureMultiSelect({
-  selected, onChange,
+  selected, onChange, surgerySize,
 }: {
-  selected: { id: number; name: string; base_price?: string }[]
-  onChange: (items: { id: number; name: string; base_price?: string }[]) => void
+  selected: { id: number; name: string; base_price?: string; surgery_type?: string }[]
+  onChange: (items: { id: number; name: string; base_price?: string; surgery_type?: string }[]) => void
+  surgerySize: string
 }) {
   const [query, setQuery] = useState("")
   const [results, setResults] = useState<any[]>([])
@@ -283,22 +290,28 @@ function ProcedureMultiSelect({
     return () => document.removeEventListener("mousedown", handle)
   }, [])
 
-  const search = useCallback(async (q: string) => {
+  const search = useCallback(async (q: string, size: string) => {
     try {
-      const d = await apiFetch<any>(`/surgery/surgical_procedure/?search=${encodeURIComponent(q)}&limit=30`)
+      const params = new URLSearchParams({
+        limit: "30",
+        active: "true",
+        for_surgery_size: size,
+      })
+      if (q.trim()) params.set("search", q.trim())
+      const d = await apiFetch<any>(`/surgery/surgical_procedure/?${params.toString()}`)
       const r = Array.isArray(d) ? d : (d.results || [])
       setResults(r)
     } catch { setResults([]) }
   }, [])
 
-  useEffect(() => { if (open) search(query) }, [query, open, search])
+  useEffect(() => { if (open) search(query, surgerySize) }, [query, open, search, surgerySize])
 
   function toggle(item: any) {
     const exists = selected.find(s => s.id === item.id)
     if (exists) {
       onChange(selected.filter(s => s.id !== item.id))
     } else {
-      onChange([...selected, { id: item.id, name: item.name, base_price: item.base_price }])
+      onChange([...selected, { id: item.id, name: item.name, base_price: item.base_price, surgery_type: item.surgery_type }])
     }
   }
 
@@ -315,6 +328,7 @@ function ProcedureMultiSelect({
             {selected.map(s => (
               <span key={s.id} className="inline-flex items-center gap-1 rounded-md border border-violet-300/60 bg-violet-50/80 px-2 py-0.5 text-[11px] font-medium text-violet-700 dark:border-violet-700/40 dark:bg-violet-900/20 dark:text-violet-300">
                 {s.name}
+                {s.surgery_type ? <span className="opacity-60">{PROCEDURE_SURGERY_TYPE_LABELS[s.surgery_type] || s.surgery_type}</span> : null}
                 <button type="button" onClick={() => remove(s.id)} className="hover:text-rose-500"><X size={9} /></button>
               </span>
             ))}
@@ -354,6 +368,11 @@ function ProcedureMultiSelect({
                     <span className={isSelected ? "font-semibold text-violet-700 dark:text-violet-300" : "text-[var(--text)]"}>
                       {item.name}
                     </span>
+                    {item.surgery_type ? (
+                      <span className="rounded-full border border-violet-200/70 bg-violet-50 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-violet-700 dark:border-violet-700/40 dark:bg-violet-900/20 dark:text-violet-300">
+                        {PROCEDURE_SURGERY_TYPE_LABELS[item.surgery_type] || item.surgery_type}
+                      </span>
+                    ) : null}
                     {item.base_price ? <span className="ml-auto text-[10px] text-[var(--gray-400)]">{item.base_price} MT</span> : null}
                   </div>
                 )
@@ -491,7 +510,7 @@ export default function SmallSurgeryEditPage() {
   const [patientLabel, setPatientLabel] = useState("")
 
   // 2 — procedures (multi)
-  const [procedures, setProcedures] = useState<{ id: number; name: string; base_price?: string }[]>([])
+  const [procedures, setProcedures] = useState<{ id: number; name: string; base_price?: string; surgery_type?: string }[]>([])
 
   // 3 — surgeons (M2M) + specialty
   const [surgeons, setSurgeons] = useState<{ id: number; name: string }[]>([])
@@ -578,7 +597,9 @@ export default function SmallSurgeryEditPage() {
         const all: any[] = Array.isArray(procs) ? procs : (procs.results || [])
         const mapped = procedureIds.map((pid: number) => {
           const found = all.find((p: any) => p.id === pid)
-          return found ? { id: found.id, name: found.name, base_price: found.base_price } : { id: pid, name: `#${pid}` }
+          return found
+            ? { id: found.id, name: found.name, base_price: found.base_price, surgery_type: found.surgery_type }
+            : { id: pid, name: `#${pid}` }
         })
         setProcedures(mapped)
       } else {
@@ -855,7 +876,7 @@ export default function SmallSurgeryEditPage() {
             <SurfaceCard title="5 · Equipa cirúrgica" icon={<Users size={13} />} accent="bg-indigo-400">
               <div className="flex flex-col gap-2">
                 {team.length === 0 && (
-                  <p className="text-[11px] text-[var(--gray-400)]">Sem membros — clique em "+ Adicionar".</p>
+                  <p className="text-[11px] text-[var(--gray-400)]">Sem membros — clique em &quot;+ Adicionar&quot;.</p>
                 )}
                 {team.map(m => (
                   <TeamMemberRow
@@ -927,7 +948,7 @@ export default function SmallSurgeryEditPage() {
           <div className="flex min-w-0 flex-1 flex-col gap-3">
 
             <SurfaceCard title="2 · Procedimentos cirúrgicos" icon={<Scissors size={13} />} accent="bg-violet-400">
-              <ProcedureMultiSelect selected={procedures} onChange={setProcedures} />
+              <ProcedureMultiSelect selected={procedures} onChange={setProcedures} surgerySize="PEQUENA" />
               {procedures.length === 0 && (
                 <p className="text-[11px] text-[var(--gray-400)]">Pesquise e clique para adicionar procedimentos.</p>
               )}

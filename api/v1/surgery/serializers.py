@@ -192,18 +192,58 @@ class BaseSurgerySerializer(LegacyAliasSerializerMixin, serializers.ModelSeriali
             "invoice_status",
         )
 
+    def _effective_surgery_size(self, attrs) -> str:
+        if attrs.get("surgery_size"):
+            return str(attrs["surgery_size"])
+        view = self.context.get("view")
+        fixed_surgery_size = getattr(view, "fixed_surgery_size", None)
+        if fixed_surgery_size:
+            return str(fixed_surgery_size)
+        if self.instance and getattr(self.instance, "surgery_size", None):
+            return str(self.instance.surgery_size)
+        return ""
+
+    def _effective_procedures(self, attrs) -> list[SurgicalProcedure]:
+        if "procedures" in attrs:
+            return list(attrs.get("procedures") or [])
+        if self.instance is not None:
+            return list(self.instance.procedures.all())
+        return []
+
     def validate(self, attrs):
         attrs = super().validate(attrs)
         # coerce null diag fields to empty string
         for f in ("preoperative_diagnosis", "postoperative_diagnosis"):
             if attrs.get(f) is None:
                 attrs[f] = ""
-        procedures = attrs.get("procedures") or []
+        procedures = self._effective_procedures(attrs)
         procedure_text = str(attrs.get("procedure") or "").strip()
+        surgery_size = self._effective_surgery_size(attrs)
 
         if procedures and not procedure_text:
             names = [str(getattr(item, "name", "") or item).strip() for item in procedures]
             attrs["procedure"] = ", ".join(name for name in names if name)[:160]
+
+        if procedures and surgery_size in {Surgery.Size.SMALL, Surgery.Size.LARGE}:
+            invalid = [
+                procedure
+                for procedure in procedures
+                if getattr(procedure, "surgery_type", "AMBAS") not in {surgery_size, "AMBAS"}
+            ]
+            if invalid:
+                incompatible_names = ", ".join(
+                    str(getattr(procedure, "name", procedure)).strip() or f"#{getattr(procedure, 'pk', '?')}"
+                    for procedure in invalid
+                )
+                raise serializers.ValidationError(
+                    {
+                        "procedures": (
+                            f"Os procedimentos selecionados não são compatíveis com "
+                            f"{'pequena cirurgia' if surgery_size == Surgery.Size.SMALL else 'grande cirurgia'}: "
+                            f"{incompatible_names}."
+                        )
+                    }
+                )
 
         if self.instance is None and not str(attrs.get("procedure") or "").strip() and not procedures:
             raise serializers.ValidationError(
