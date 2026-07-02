@@ -228,49 +228,47 @@ export default function SmallSurgeriesListPage() {
               </div>
             </div>
 
-            {/* search + num */}
-            <div className="mt-2 flex gap-2">
-              <div className="relative flex-1">
+            {/* search + status scroll + num */}
+            <div className="mt-2 flex items-center gap-2">
+              <div className="relative shrink-0 w-44">
                 <Search size={11} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--gray-400)]" />
                 <input
                   className="w-full rounded-lg border border-border bg-card/60 py-1.5 pl-7 pr-3 text-[12px] placeholder-[var(--gray-400)] focus:border-violet-400 focus:outline-none focus:ring-1 focus:ring-violet-200 dark:focus:ring-violet-800"
-                  placeholder="Pesquisar por código, procedimento ou paciente..."
+                  placeholder="Pesquisar..."
                   value={search}
                   onChange={e => setSearch(e.target.value)}
                 />
               </div>
+
+              {/* chips inline scroll */}
+              <div className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                {STATUS_FILTER_OPTIONS.map(s => {
+                  const active = statusFilter === s;
+                  const baseCls = STATUS_COLOR[s] ?? "bg-gray-100 text-gray-600";
+                  return (
+                    <button key={s} type="button" onClick={() => toggleStatus(s)}
+                      className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold transition ${
+                        active ? baseCls + " ring-2 ring-offset-1 ring-violet-400" : "bg-card border border-border text-[var(--gray-500)] hover:border-violet-300 hover:text-violet-600"
+                      }`}>
+                      {STATUS_LABEL[s] ?? s}
+                    </button>
+                  );
+                })}
+                {statusFilter && (
+                  <button type="button" onClick={() => setStatusFilter(null)}
+                    className="shrink-0 rounded-full border border-rose-200 bg-rose-50 px-2 py-0.5 text-[10px] font-semibold text-rose-600 hover:bg-rose-100">
+                    × limpar
+                  </button>
+                )}
+              </div>
+
               <input
                 type="number" min="1" max="999"
-                className="w-20 rounded-lg border border-border bg-card/60 py-1.5 px-2.5 text-[12px] text-center text-foreground placeholder-[var(--gray-400)] focus:border-violet-400 focus:outline-none focus:ring-1 focus:ring-violet-200 dark:focus:ring-violet-800"
+                className="w-16 shrink-0 rounded-lg border border-border bg-card/60 py-1.5 px-2 text-[12px] text-center text-foreground placeholder-[var(--gray-400)] focus:border-violet-400 focus:outline-none focus:ring-1 focus:ring-violet-200 dark:focus:ring-violet-800"
                 placeholder="Nº"
                 value={numFilter}
-                onChange={e => {
-                  const v = e.target.value.replace(/\D/g, "").slice(0, 3);
-                  setNumFilter(v);
-                }}
+                onChange={e => setNumFilter(e.target.value.replace(/\D/g, "").slice(0, 3))}
               />
-            </div>
-
-            {/* status chips */}
-            <div className="mt-2 flex flex-wrap gap-1">
-              {STATUS_FILTER_OPTIONS.map(s => {
-                const active = statusFilter === s;
-                const baseCls = STATUS_COLOR[s] ?? "bg-gray-100 text-gray-600";
-                return (
-                  <button key={s} type="button" onClick={() => toggleStatus(s)}
-                    className={`rounded-full px-2 py-0.5 text-[10px] font-semibold transition ${
-                      active ? baseCls + " ring-2 ring-offset-1 ring-violet-400" : "bg-card border border-border text-[var(--gray-500)] hover:border-violet-300 hover:text-violet-600"
-                    }`}>
-                    {STATUS_LABEL[s] ?? s}
-                  </button>
-                );
-              })}
-              {statusFilter && (
-                <button type="button" onClick={() => setStatusFilter(null)}
-                  className="rounded-full border border-rose-200 bg-rose-50 px-2 py-0.5 text-[10px] font-semibold text-rose-600 hover:bg-rose-100">
-                  × limpar
-                </button>
-              )}
             </div>
           </div>
         </section>
