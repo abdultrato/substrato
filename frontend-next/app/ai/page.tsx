@@ -992,87 +992,6 @@ export default function AiOperationalPage() {
   const bottomRef = useRef<HTMLDivElement | null>(null)
   const composerRef = useRef<HTMLTextAreaElement | null>(null)
 
-  const promptGroups = useMemo(
-    () => [
-      {
-        title: t("Contar e comparar", "Count and compare"),
-        description: t("Use datas naturais ou intervalos.", "Use natural dates or ranges."),
-        icon: CalendarDays,
-        prompts: [
-          t("Quantos pacientes deram entrada hoje?", "How many patients were admitted today?"),
-          t("Quantos estudantes foram criados este mês?", "How many students were created this month?"),
-          t("Quantos equipamentos foram criados nos últimos 7 dias?", "How many equipment records were created in the last 7 days?"),
-        ],
-      },
-      {
-        title: t("Pesquisar registos", "Search records"),
-        description: t("Código, nome, referência ou parte do texto.", "Code, name, reference or partial text."),
-        icon: Search,
-        prompts: [
-          t("Mostre equipamento código EQ-SQL-001", "Show equipment code EQ-SQL-001"),
-          t("Liste pacientes com nome Paciente", "List patients named Patient"),
-          t("Mostre erros do sistema dos últimos 7 dias", "Show system errors from the last 7 days"),
-        ],
-      },
-      {
-        title: t("Stock histórico", "Historical stock"),
-        description: t("A IA reconstrói o saldo até à data.", "The AI reconstructs balance up to the date."),
-        icon: PackageSearch,
-        prompts: [
-          t("Qual era o stock de medicação Paracetamol ontem?", "What was the Paracetamol medication stock yesterday?"),
-          t("Qual era o estoque de medicação K no dia 2026-05-11?", "What was the medication K stock on 2026-05-11?"),
-        ],
-      },
-      {
-        title: t("Criar por conversa", "Create by conversation"),
-        description: t("A escrita fica pendente até confirmação.", "Writes stay pending until confirmation."),
-        icon: UserPlus,
-        prompts: [
-          t("Crie um paciente chamado Paciente Teste.", "Create a patient called Test Patient."),
-          t("Crie equipamento nome Centrífuga X número de série EQ-001.", "Create equipment named Centrifuge X serial number EQ-001."),
-        ],
-      },
-      {
-        title: t("Perguntas previstas", "Predicted questions"),
-        description: t("Ajuda, correcção de escrita e atalhos.", "Help, typo correction and shortcuts."),
-        icon: Lightbulb,
-        prompts: [
-          t("Que perguntas posso fazer?", "What can I ask?"),
-          t("A IA entende erros de ortografia?", "Does the AI understand typos?"),
-          t("Como funciona o CRUD por IA?", "How does AI CRUD work?"),
-        ],
-      },
-      {
-        title: t("Relatórios e prioridades", "Reports and priorities"),
-        description: t("Para o Centro de comando e visão executiva.", "For Command Center and executive view."),
-        icon: FileText,
-        prompts: [
-          t("Gere relatório operacional dos últimos 30 dias.", "Generate an operational report for the last 30 days."),
-          t("Quais alertas activos existem agora?", "What active alerts exist now?"),
-          t("Quem sou eu neste sistema?", "Who am I in this system?"),
-        ],
-      },
-    ],
-    [t]
-  )
-
-  const draftHint = useMemo(() => {
-    const normalized = composer.trim().toLowerCase()
-    if (!normalized) return null
-    if (/(crie|criar|inserir|adicione|alterar|remover|create|update|delete)/.test(normalized)) {
-      return t("Fluxo detectado: alteração com confirmação obrigatória.", "Detected flow: change with mandatory confirmation.")
-    }
-    if (/(relat[oó]rio|report|pdf|csv|export)/.test(normalized)) {
-      return t("Fluxo detectado: relatório operacional.", "Detected flow: operational report.")
-    }
-    if (/(stock|estoque|saldo)/.test(normalized)) {
-      return t("Fluxo detectado: stock histórico ou actual.", "Detected flow: historical or current stock.")
-    }
-    if (/(quantos|quantas|listar|mostre|buscar|pesquisar|show|list|search)/.test(normalized)) {
-      return t("Fluxo detectado: pesquisa segura de dados.", "Detected flow: secure data search.")
-    }
-    return t("Inclua módulo, período, código ou acção para melhorar a precisão.", "Include module, period, code or action to improve precision.")
-  }, [composer, t])
 
   useEffect(() => {
     if (typeof window === "undefined") return
@@ -1306,353 +1225,85 @@ export default function AiOperationalPage() {
     void recordSuggestionFeedback(suggestion, event, messageId)
   }
 
-  const aside = (
-    <AiContextAside
-      tools={tools}
-      sessions={sessions}
-      investigations={investigations}
-      loading={toolsLoading}
-    />
-  )
-
   return (
-    <AppLayout rightAside={aside} rightAsideWidth="22rem">
-      <div className="space-y-5">
-        <PageHeader
-          title={t("IA Operacional", "Operational AI")}
-          subtitle={t(
-            "Copiloto auditável para contexto pessoal, investigação segura de dados e CRUD conversacional com confirmação.",
-            "Auditable copilot for personal context, secure data investigation and confirmable conversational CRUD."
-          )}
-          actions={
-            <div className="flex flex-wrap gap-2">
-              <Link
-                href="/ai/investigations"
-                className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-3 py-1.5 text-sm font-medium text-foreground shadow-sm transition hover:bg-muted"
-              >
-                <Lightbulb size={15} />
-                {t("Investigações", "Investigations")}
-              </Link>
-              <Link
-                href="/ai/tasks"
-                className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-3 py-1.5 text-sm font-medium text-foreground shadow-sm transition hover:bg-muted"
-              >
-                <ClipboardCheck size={15} />
-                {t("Tarefas da IA", "AI Tasks")}
-              </Link>
-              <Link
-                href="/monitoring/command-center"
-                className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-3 py-1.5 text-sm font-medium text-foreground shadow-sm transition hover:bg-muted"
-              >
-                <ExternalLink size={15} />
-                {t("Abrir Centro de comando", "Open Command Center")}
-              </Link>
-            </div>
-          }
-        />
-
-        <div className="overflow-hidden rounded-3xl border border-border bg-[radial-gradient(circle_at_top_left,rgba(22,101,52,0.18),transparent_34%),linear-gradient(135deg,rgba(2,6,23,0.95),rgba(15,23,42,0.86))] p-4 text-white shadow-sm">
-          <div className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
-            <div>
-              <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-semibold text-white/80">
-                <BrainCircuit size={15} />
-                {t("Modo operacional com confirmação", "Operational mode with confirmation")}
-              </div>
-              <h2 className="mt-4 font-display text-2xl font-semibold tracking-tight">
-                {t("Identifica-o pelo login e só consulta ou altera o que o seu perfil permite.", "It identifies you by login and only queries or changes what your profile allows.")}
-              </h2>
-              <p className="mt-2 max-w-2xl text-sm leading-relaxed text-white/70">
-                {t(
-                  "Pergunte quem está autenticado, que dados pode investigar ou peça para criar/alterar registos. Escrita só acontece depois de confirmação e nova validação no backend.",
-                  "Ask who is authenticated, what data can be investigated or request record creation/updates. Writes only happen after confirmation and backend revalidation."
-                )}
-              </p>
-            </div>
-
-            <div className="grid gap-2 sm:grid-cols-3 lg:grid-cols-1">
-              <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/10 p-3">
-                <span
-                  aria-hidden
-                  className="pointer-events-none absolute inset-y-0 right-2 w-10"
-                  style={{
-                    background: "#ffffff",
-                    opacity: 0.08,
-                    WebkitMaskImage: `url("${lucideToDataUrl(Lock)}")`,
-                    WebkitMaskRepeat: "no-repeat",
-                    WebkitMaskSize: "contain",
-                    WebkitMaskPosition: "center",
-                    maskImage: `url("${lucideToDataUrl(Lock)}")`,
-                    maskRepeat: "no-repeat",
-                    maskSize: "contain",
-                    maskPosition: "center",
-                  }}
-                />
-                <div className="relative text-xs font-semibold uppercase tracking-wide text-white/60">
-                  Cliente
-                </div>
-                <div className="relative mt-1 text-sm font-semibold">{t("Escopo actual", "Current scope")}</div>
-              </div>
-              <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/10 p-3">
-                <span
-                  aria-hidden
-                  className="pointer-events-none absolute inset-y-0 right-2 w-10"
-                  style={{
-                    background: "#ffffff",
-                    opacity: 0.08,
-                    WebkitMaskImage: `url("${lucideToDataUrl(TerminalSquare)}")`,
-                    WebkitMaskRepeat: "no-repeat",
-                    WebkitMaskSize: "contain",
-                    WebkitMaskPosition: "center",
-                    maskImage: `url("${lucideToDataUrl(TerminalSquare)}")`,
-                    maskRepeat: "no-repeat",
-                    maskSize: "contain",
-                    maskPosition: "center",
-                  }}
-                />
-                <div className="relative text-xs font-semibold uppercase tracking-wide text-white/60">
-                  Gateway
-                </div>
-                <div className="relative mt-1 text-sm font-semibold">local</div>
-              </div>
-              <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/10 p-3">
-                <span
-                  aria-hidden
-                  className="pointer-events-none absolute inset-y-0 right-2 w-10"
-                  style={{
-                    background: "#ffffff",
-                    opacity: 0.08,
-                    WebkitMaskImage: `url("${lucideToDataUrl(Sparkles)}")`,
-                    WebkitMaskRepeat: "no-repeat",
-                    WebkitMaskSize: "contain",
-                    WebkitMaskPosition: "center",
-                    maskImage: `url("${lucideToDataUrl(Sparkles)}")`,
-                    maskRepeat: "no-repeat",
-                    maskSize: "contain",
-                    maskPosition: "center",
-                  }}
-                />
-                <div className="relative text-xs font-semibold uppercase tracking-wide text-white/60">
-                  {t("Fluxo seguro", "Secure flow")}
-                </div>
-                <div className="relative mt-1 text-sm font-semibold">{t("CRUD + RBAC", "CRUD + RBAC")}</div>
-              </div>
-            </div>
+    <AppLayout>
+      <div className="mx-auto flex h-[calc(100vh-8rem)] max-w-3xl flex-col gap-2">
+        {/* Cabeçalho mínimo */}
+        <div className="flex items-center gap-2">
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-indigo-600 text-white shadow-sm">
+            <Bot size={16} />
+          </span>
+          <div className="min-w-0">
+            <h1 className="text-sm font-bold leading-tight text-foreground">{t("IA Operacional", "Operational AI")}</h1>
+            <p className="truncate text-[11px] text-muted-foreground">{t("Assistente por texto, com o seu perfil e permissões.", "Text assistant, scoped to your profile and permissions.")}</p>
           </div>
         </div>
 
-        <Card title={t("Conversa operacional", "Operational conversation")}>
-          <div className="mb-4 grid gap-3 md:grid-cols-2 xl:grid-cols-6">
-            {promptGroups.map((group) => {
-              const iconUrl = lucideToDataUrl(group.icon)
+        {/* Conversa */}
+        <div className="flex min-h-0 flex-1 flex-col rounded-2xl border border-white/20 bg-white/30 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]">
+          <div className="min-h-0 flex-1 space-y-2 overflow-y-auto p-3">
+            {!messages.length && !loading ? (
+              <div className="flex h-full flex-col items-center justify-center gap-1 text-center">
+                <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-violet-500/10 text-violet-600 dark:text-violet-400">
+                  <Bot size={20} />
+                </span>
+                <p className="text-sm font-medium text-foreground">{t("Escreva a sua pergunta", "Type your question")}</p>
+                <p className="max-w-xs text-xs text-muted-foreground">{t("A IA responde em texto, respeitando o seu perfil.", "The AI replies in text, respecting your profile.")}</p>
+              </div>
+            ) : null}
+
+            {messages.map((message) => {
+              const isUser = message.role === "user"
+              const isError = message.role === "error"
               return (
-                <div key={group.title} className="relative overflow-hidden rounded-2xl border border-border bg-background/70 p-3">
-                  <span
-                    aria-hidden
-                    className="pointer-events-none absolute inset-0"
-                    style={{
-                      background: "#1e293b",
-                      opacity: 0.09,
-                      WebkitMaskImage: `url("${iconUrl}")`,
-                      WebkitMaskRepeat: "no-repeat",
-                      WebkitMaskSize: "52%",
-                      WebkitMaskPosition: "center 30%",
-                      maskImage: `url("${iconUrl}")`,
-                      maskRepeat: "no-repeat",
-                      maskSize: "52%",
-                      maskPosition: "center 30%",
-                    }}
-                  />
-                  <p className="relative text-sm font-semibold text-foreground">{group.title}</p>
-                  <div className="mt-3 space-y-1.5">
-                    {group.prompts.map((prompt) => (
-                      <button
-                        key={prompt}
-                        type="button"
-                        onClick={() => void sendMessage(prompt)}
-                        className="block w-full rounded-xl border border-border bg-card px-2.5 py-2 text-left text-xs font-medium text-foreground shadow-sm transition hover:-translate-y-0.5 hover:bg-muted"
-                      >
-                        {prompt}
-                      </button>
-                    ))}
-                  </div>
+                <div
+                  key={message.id}
+                  className={`w-fit max-w-[85%] whitespace-pre-wrap rounded-2xl px-3 py-2 text-sm leading-relaxed ${
+                    isUser
+                      ? "ml-auto bg-gradient-to-br from-violet-600 to-indigo-600 text-white"
+                      : isError
+                        ? "mr-auto border border-rose-200 bg-rose-50 text-rose-800 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-100"
+                        : "mr-auto border border-white/20 bg-white/60 text-foreground dark:border-white/10 dark:bg-white/[0.06]"
+                  }`}
+                >
+                  {message.content}
                 </div>
               )
             })}
+
+            {loading ? (
+              <div className="mr-auto flex w-fit items-center gap-1.5 rounded-2xl border border-white/20 bg-white/60 px-3 py-2 text-xs text-muted-foreground dark:border-white/10 dark:bg-white/[0.06]">
+                <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-violet-500 [animation-delay:-0.2s]" />
+                <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-violet-500 [animation-delay:-0.1s]" />
+                <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-violet-500" />
+              </div>
+            ) : null}
+            <div ref={bottomRef} />
           </div>
 
-          <div className="flex min-h-[30rem] flex-col">
-            <div className="flex-1 space-y-3 overflow-y-auto pr-1">
-              {!messages.length ? (
-                <div className="rounded-2xl border border-dashed border-border bg-muted/30 p-5">
-                  <div className="flex items-start gap-3">
-                    <span className="relative inline-flex h-10 w-10 shrink-0 rounded-2xl bg-gray-100 dark:bg-primary/10">
-                      <span
-                        aria-hidden
-                        className="pointer-events-none absolute inset-0 rounded-2xl"
-                        style={{
-                          background: "var(--color-primary, #6366f1)",
-                          opacity: 0.55,
-                          WebkitMaskImage: `url("${lucideToDataUrl(Bot)}")`,
-                          WebkitMaskRepeat: "no-repeat",
-                          WebkitMaskSize: "60%",
-                          WebkitMaskPosition: "center",
-                          maskImage: `url("${lucideToDataUrl(Bot)}")`,
-                          maskRepeat: "no-repeat",
-                          maskSize: "60%",
-                          maskPosition: "center",
-                        }}
-                      />
-                    </span>
-                    <div>
-                      <div className="font-semibold text-foreground">
-                        {t("Comece por uma pergunta operacional.", "Start with an operational question.")}
-                      </div>
-                      <p className="mt-1 text-sm text-muted-foreground">
-                        {t(
-                          "A IA pergunta o que falta, prepara acções confirmáveis e recusa recursos fora do seu perfil.",
-                          "The AI asks for missing data, prepares confirmable actions and refuses resources outside your profile."
-                        )}
-                      </p>
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        {promptGroups.flatMap((group) => group.prompts).slice(0, 7).map((question) => (
-                          <button
-                            key={question}
-                            type="button"
-                            onClick={() => void sendMessage(question)}
-                            className="rounded-full border border-border bg-card px-3 py-1 text-xs font-medium text-foreground shadow-sm transition hover:bg-muted"
-                          >
-                            {question}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ) : null}
-
-              {messages.map((message) => {
-                const isUser = message.role === "user"
-                const isError = message.role === "error"
-                return (
-                  <div
-                    key={message.id}
-                    className={`rounded-2xl border p-3 ${
-                      isUser
-                        ? "ml-auto max-w-[82%] border-primary/20 bg-primary text-primary-foreground"
-                        : isError
-                          ? "border-rose-200 bg-rose-50 text-rose-800 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-100"
-                          : "mr-auto max-w-[92%] border-border bg-background"
-                    }`}
-                  >
-                    <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide opacity-75">
-                      {isUser ? t("Utilizador", "User") : isError ? t("Erro", "Error") : t("IA Operacional", "Operational AI")}
-                    </div>
-                    <div className="whitespace-pre-wrap text-sm leading-relaxed">{message.content}</div>
-
-                    {message.conversation?.status === "needs_clarification" && message.conversation.options?.length ? (
-                      <div className="mt-3 rounded-2xl border border-border bg-muted/30 p-3">
-                        <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                          <Lightbulb size={14} />
-                          {t("Responder com uma opção", "Reply with an option")}
-                        </div>
-                        <div className="flex flex-wrap gap-2">
-                          {message.conversation.options.map((option) => (
-                            <button
-                              key={option}
-                              type="button"
-                              onClick={() => void sendMessage(option)}
-                              className="rounded-full border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground shadow-sm transition hover:bg-background"
-                            >
-                              {option}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    ) : null}
-
-                    <AiLearnedResolutionPanel
-                      resolution={message.conversation?.learned_clarification_resolution}
-                      feedback={message.learnedResolutionFeedback}
-                      onFeedback={(event) => void recordLearnedResolutionFeedback(message, event)}
-                    />
-                    <AiUnderstandingTracePanel trace={message.conversation?.understanding_trace} />
-                    <AiNaturalBridgePanel
-                      bridge={message.schema?.natural_bridge || message.conversation?.natural_bridge}
-                      onAsk={handleAskRecommended}
-                    />
-                    <AiStructuredResultPanel schema={message.schema} onAsk={handleAskRecommended} />
-                    <AiKnowledgeBasePanel schema={message.schema} onAsk={handleAskRecommended} />
-                    <AiProactiveGuidancePanel
-                      guidance={message.proactiveGuidance || message.schema?.proactive_guidance}
-                      onSelect={(suggestion) => handleAskProactive(suggestion, message.messageId)}
-                      onFeedback={(suggestion, event) => handleProactiveFeedback(suggestion, event, message.messageId)}
-                    />
-
-                    <AiInvestigationPanel
-                      investigation={message.investigation || null}
-                      onAsk={handleAskRecommended}
-                    />
-                    <AiToolTrace calls={message.toolCalls || []} />
-                    <AiEvidencePanel sources={message.sources || []} />
-                    <AiActionPanel
-                      actions={message.suggestedActions || []}
-                      confirmingId={confirmingActionId}
-                      results={actionResults}
-                      onConfirm={handleConfirmAction}
-                    />
-                  </div>
-                )
-              })}
-
-              {loading ? (
-                <div className="mr-auto max-w-[92%] rounded-2xl border border-border bg-background p-3">
-                  <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                    <span className="h-2 w-2 animate-pulse rounded-full bg-primary" />
-                    {t("A consultar fontes internas e gravar auditoria...", "Querying internal sources and recording audit...")}
-                  </div>
-                </div>
-              ) : null}
-
-              <div ref={bottomRef} />
-            </div>
-
-            <form onSubmit={handleSubmit} className="mt-4 border-t border-border pt-3">
-              {draftHint ? (
-                <div className="mb-2 flex flex-wrap items-center gap-2 rounded-2xl border border-border bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
-                  <Badge variant="info">{t("Leitura da IA", "AI read")}</Badge>
-                  <span>{draftHint}</span>
-                </div>
-              ) : null}
+          {/* Composer */}
+          <form onSubmit={handleSubmit} className="border-t border-white/20 p-2 dark:border-white/10">
+            <div className="flex items-end gap-2">
               <TextAreaInput
                 ref={composerRef}
                 value={composer}
                 onChange={(event) => setComposer(event.target.value)}
-                rows={3}
-                placeholder={t(
-                  "Ex.: Crie um paciente chamado Paciente Teste, contacto +258 84 000 0000",
-                  "Example: Create a patient called Test Patient, phone +258 84 000 0000"
-                )}
+                rows={1}
+                placeholder={t("Escreva uma mensagem…", "Type a message…")}
+                className="max-h-32 min-h-[2.5rem] flex-1 resize-none"
                 onKeyDown={(event) => {
-                  if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
+                  if (event.key === "Enter" && !event.shiftKey) {
+                    event.preventDefault()
                     void handleSubmit()
                   }
                 }}
               />
-              <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                <p className="text-xs text-muted-foreground">
-                  {t(
-                    "Ctrl+Enter envia. Acções de escrita ficam pendentes até confirmar no botão gerado pela IA.",
-                    "Ctrl+Enter sends. Write actions remain pending until confirmed with the AI-generated button."
-                  )}
-                </p>
-                <Button type="submit" loading={loading} disabled={!composer.trim()}>
-                  <Send size={15} />
-                  {t("Enviar", "Send")}
-                </Button>
-              </div>
-            </form>
-          </div>
-        </Card>
+              <Button type="submit" loading={loading} disabled={!composer.trim()}>
+                <Send size={15} />
+              </Button>
+            </div>
+          </form>
+        </div>
       </div>
     </AppLayout>
   )
