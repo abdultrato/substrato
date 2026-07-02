@@ -144,7 +144,7 @@ export default function LabReceptionPage() {
     setError(null)
     try {
       const { items } = await apiFetchList<LabRequest>(
-        "/clinical/labrequest/?type=LAB&status=pendente&colhida=true",
+        "/clinical/labrequest/?type=LAB&status=pendente",
         { page: 1, pageSize: 200, clientCache: false }
       )
       setRows(items)
