@@ -594,7 +594,7 @@ export default function NewPreoperativeAssessmentPage() {
               />
             </div>
 
-            {/* pedidos do paciente — auto-loaded */}
+            {/* pedidos do paciente — auto-loaded; fallback to surgeries when no formal requests exist */}
             <div className="mt-3">
               <FieldRow label="Pedido cirúrgico">
                 {!patient ? (
@@ -605,11 +605,11 @@ export default function NewPreoperativeAssessmentPage() {
                   <div className="flex items-center gap-1.5 rounded-lg border border-border bg-card/40 px-3 py-2.5 text-[11px] text-[var(--gray-400)]">
                     <Loader2 size={11} className="animate-spin" /> A carregar pedidos...
                   </div>
-                ) : patientRequests.length === 0 ? (
+                ) : patientRequests.length === 0 && patientSurgeries.length === 0 ? (
                   <div className="rounded-lg border border-dashed border-amber-200 bg-amber-50/40 px-3 py-2.5 text-[11px] text-amber-600 dark:border-amber-700/30 dark:bg-amber-900/10 dark:text-amber-400">
-                    Nenhum pedido cirúrgico encontrado para este paciente.
+                    Nenhum pedido ou cirurgia encontrada para este paciente. Campo opcional.
                   </div>
-                ) : (
+                ) : patientRequests.length > 0 ? (
                   <div className="grid gap-1.5 sm:grid-cols-2">
                     {patientRequests.map((req) => {
                       const active = surgicalRequest?.id === req.id
@@ -626,11 +626,41 @@ export default function NewPreoperativeAssessmentPage() {
                           </span>
                           <span>
                             <span className="block font-semibold text-foreground">{req.custom_id}</span>
-                            <span className="block text-[10px] text-[var(--gray-500)]">{req.status} {req.priority ? `· ${req.priority}` : ""}</span>
+                            <span className="block text-[10px] text-[var(--gray-500)]">{req.status}{req.priority ? ` · ${req.priority}` : ""}</span>
                           </span>
                         </button>
                       )
                     })}
+                  </div>
+                ) : (
+                  /* no formal requests — show surgeries as selectable context */
+                  <div className="space-y-1.5">
+                    <p className="text-[10px] text-amber-600 dark:text-amber-400">
+                      Sem pedidos formais — seleccione uma cirurgia como referência (opcional):
+                    </p>
+                    <div className="grid gap-1.5 sm:grid-cols-2">
+                      {patientSurgeries.map((surg) => {
+                        const active = surgicalRequest?.id === surg.id
+                        const proc = surg.procedure_names?.[0] || surg.procedure || "—"
+                        return (
+                          <button key={surg.id} type="button"
+                            onClick={() => setSurgicalRequest(active ? null : { id: surg.id, label: surg.custom_id })}
+                            className={`flex items-start gap-2 rounded-lg border px-3 py-2 text-left text-[11px] transition ${
+                              active
+                                ? "border-sky-400 bg-sky-50 text-sky-800 dark:border-sky-600/50 dark:bg-sky-900/20 dark:text-sky-200"
+                                : "border-border bg-card/60 hover:border-sky-300"
+                            }`}>
+                            <span className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full ${active ? "bg-sky-500 text-white" : "border-2 border-[var(--gray-300)]"}`}>
+                              {active && <Check size={9} />}
+                            </span>
+                            <span>
+                              <span className="block font-semibold text-foreground">{surg.custom_id}</span>
+                              <span className="block truncate text-[10px] text-[var(--gray-500)]">{proc} · {surg.status}</span>
+                            </span>
+                          </button>
+                        )
+                      })}
+                    </div>
                   </div>
                 )}
               </FieldRow>
