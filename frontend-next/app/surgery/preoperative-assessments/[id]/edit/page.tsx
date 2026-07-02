@@ -539,7 +539,7 @@ export default function EditPreoperativeAssessmentPage() {
             <div className="mt-3 grid gap-3 sm:grid-cols-2">
               <SearchSelect
                 label="Pedido cirúrgico"
-                endpoint="/surgery/pedido_cirurgico/"
+                endpoint="/surgery/surgical_request/"
                 value={surgicalRequest}
                 onChange={setSurgicalRequest}
                 placeholder="Pesquisar pedido cirúrgico..."
@@ -547,7 +547,7 @@ export default function EditPreoperativeAssessmentPage() {
               />
               <SearchSelect
                 label="Cirurgia proposta"
-                endpoint="/surgery/cirurgia/"
+                endpoint="/surgery/surgery/"
                 value={proposedSurgery}
                 onChange={setProposedSurgery}
                 placeholder="Pesquisar cirurgia..."

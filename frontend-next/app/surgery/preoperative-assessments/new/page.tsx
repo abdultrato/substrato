@@ -600,9 +600,9 @@ export default function NewPreoperativeAssessmentPage() {
 
     async function loadPatientContext() {
       const requestQueries = [
-        `/surgery/pedido_cirurgico/?patient=${patient.id}&page=1&page_size=200&ordering=-created_at`,
+        `/surgery/surgical_request/?patient=${patient.id}&page=1&page_size=200&ordering=-created_at`,
         patientSearchTerm
-          ? `/surgery/pedido_cirurgico/?search=${encodeURIComponent(patientSearchTerm)}&page=1&page_size=200&ordering=-created_at`
+          ? `/surgery/surgical_request/?search=${encodeURIComponent(patientSearchTerm)}&page=1&page_size=200&ordering=-created_at`
           : null,
       ].filter(Boolean) as string[]
 
