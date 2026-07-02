@@ -365,7 +365,7 @@ export default function SurgeryRequestsPage() {
         ) : displayed.length === 0 ? (
           emptyMsg(tab)
         ) : (
-          <div className="space-y-2">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
             {displayed.map((item) => (
               <SurgeryCard
                 key={`${item._source}-${item.id}`}
