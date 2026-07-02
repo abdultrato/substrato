@@ -979,24 +979,43 @@ export default function NewPreoperativeAssessmentPage() {
                 </div>
               ) : (
                 <div className="flex flex-wrap gap-1.5">
-                  {contextProcedures.map((procedure) => (
-                    <button
-                      key={procedure.key}
-                      type="button"
-                      onClick={() => setSelectedProcedureKeys((previous) =>
-                        previous.includes(procedure.key)
-                          ? previous.filter((key) => key !== procedure.key)
-                          : [...previous, procedure.key]
-                      )}
-                      className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[10px] font-semibold transition ${
-                        selectedProcedureKeys.includes(procedure.key)
-                          ? "border-sky-400 bg-sky-50 text-sky-700 dark:border-sky-600/50 dark:bg-sky-900/20 dark:text-sky-200"
-                          : "border-slate-200 bg-slate-50 text-slate-700 hover:border-sky-300 dark:border-white/10 dark:bg-white/[0.05] dark:text-slate-200"
-                      }`}
-                    >
-                      {procedure.label}
-                    </button>
-                  ))}
+                  {contextProcedures.map((procedure) => {
+                    const selected = selectedProcedureKeys.includes(procedure.key)
+                    return (
+                      <button
+                        key={procedure.key}
+                        type="button"
+                        aria-pressed={selected}
+                        onClick={() => setSelectedProcedureKeys((previous) =>
+                          selected
+                            ? previous.filter((key) => key !== procedure.key)
+                            : [...previous, procedure.key]
+                        )}
+                        className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-semibold transition ${
+                          selected
+                            ? "border-sky-400 bg-sky-50 text-sky-700 shadow-sm shadow-sky-200/70 dark:border-sky-600/50 dark:bg-sky-900/20 dark:text-sky-200 dark:shadow-none"
+                            : "border-slate-200 bg-slate-50 text-slate-700 hover:border-sky-300 hover:bg-sky-50/70 dark:border-white/10 dark:bg-white/[0.05] dark:text-slate-200 dark:hover:bg-sky-900/10"
+                        }`}
+                        title={selected ? "Clique para remover a selecção" : "Clique para seleccionar este procedimento"}
+                      >
+                        <span
+                          className={`inline-flex h-4 w-4 items-center justify-center rounded-full transition ${
+                            selected
+                              ? "bg-sky-500 text-white"
+                              : "border border-slate-300 text-transparent dark:border-white/20"
+                          }`}
+                        >
+                          <Check size={9} />
+                        </span>
+                        <span>{procedure.label}</span>
+                        {selected ? (
+                          <span className="inline-flex h-4 w-4 items-center justify-center rounded-full border border-sky-300/70 bg-white/80 text-sky-600 dark:border-sky-500/40 dark:bg-sky-950/30 dark:text-sky-200">
+                            <X size={9} />
+                          </span>
+                        ) : null}
+                      </button>
+                    )
+                  })}
                 </div>
               )}
             </div>
