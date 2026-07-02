@@ -53,7 +53,7 @@ const STEPS = [
   { id: 3, label: "Exames e conclusão", icon: <ClipboardCheck size={12} /> },
 ]
 
-type SearchValue = { id: number; label: string }
+type SearchValue = { id: number; label: string; meta?: string }
 
 function listRows(payload: any): any[] {
   return Array.isArray(payload) ? payload : (payload?.results || [])
@@ -308,6 +308,174 @@ function SearchSelect({
   )
 }
 
+function MultiSearchSelect({
+  label,
+  endpoint,
+  values,
+  onChange,
+  placeholder,
+  extraParams,
+  getOptionLabel,
+  getOptionMeta,
+}: {
+  label: string
+  endpoint: string
+  values: SearchValue[]
+  onChange: (values: SearchValue[]) => void
+  placeholder?: string
+  extraParams?: Record<string, string>
+  getOptionLabel?: (item: any) => string
+  getOptionMeta?: (item: any) => string
+}) {
+  const [query, setQuery] = useState("")
+  const [options, setOptions] = useState<any[]>([])
+  const [open, setOpen] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+  const portalRef = useRef<HTMLDivElement>(null)
+
+  const selectedIds = useMemo(() => new Set(values.map((item) => item.id)), [values])
+
+  const buildLabel = useCallback((item: any) => {
+    if (getOptionLabel) return getOptionLabel(item)
+    return item?.name || item?.display_name || item?.full_name || item?.custom_id || `#${item?.id}`
+  }, [getOptionLabel])
+
+  const buildMeta = useCallback((item: any) => {
+    if (getOptionMeta) return getOptionMeta(item)
+    return [item?.custom_id, item?.code].filter(Boolean).join(" · ")
+  }, [getOptionMeta])
+
+  const search = useCallback(async (searchText: string) => {
+    setLoading(true)
+    try {
+      const params = new URLSearchParams({
+        limit: "20",
+        ...(extraParams ?? {}),
+      })
+      if (searchText.trim()) params.set("search", searchText.trim())
+      const response = await apiFetch<any>(`${endpoint}?${params.toString()}`)
+      setOptions(Array.isArray(response) ? response : (response.results || []))
+    } catch {
+      setOptions([])
+    } finally {
+      setLoading(false)
+    }
+  }, [endpoint, extraParams])
+
+  useEffect(() => {
+    if (!open) return
+    const timer = setTimeout(() => { search(query) }, 250)
+    return () => clearTimeout(timer)
+  }, [open, query, search])
+
+  useEffect(() => {
+    function handle(event: MouseEvent) {
+      const target = event.target as Node
+      if (ref.current?.contains(target) || portalRef.current?.contains(target)) return
+      setOpen(false)
+    }
+    document.addEventListener("mousedown", handle)
+    return () => document.removeEventListener("mousedown", handle)
+  }, [])
+
+  function addOption(item: any) {
+    if (selectedIds.has(item.id)) return
+    onChange([
+      ...values,
+      {
+        id: item.id,
+        label: buildLabel(item),
+        meta: buildMeta(item) || undefined,
+      },
+    ])
+    setQuery("")
+    setOpen(false)
+  }
+
+  function removeOption(id: number) {
+    onChange(values.filter((item) => item.id !== id))
+  }
+
+  const visibleOptions = options.filter((item) => !selectedIds.has(item.id))
+
+  return (
+    <FieldRow label={label}>
+      <div ref={ref} className="space-y-2">
+        <div
+          className={`${inputCls} flex items-center gap-2`}
+          onClick={() => setOpen(true)}
+        >
+          <Search size={10} className="shrink-0 text-[var(--gray-400)]" />
+          <input
+            value={query}
+            onChange={(event) => {
+              setQuery(event.target.value)
+              setOpen(true)
+            }}
+            onFocus={() => setOpen(true)}
+            placeholder={placeholder || `Pesquisar ${label.toLowerCase()}...`}
+            className="w-full bg-transparent text-[12px] text-[var(--text)] outline-none placeholder-[var(--gray-400)]"
+          />
+          {loading ? <Loader2 size={11} className="shrink-0 animate-spin text-[var(--gray-400)]" /> : null}
+        </div>
+
+        {values.length > 0 ? (
+          <div className="flex flex-wrap gap-1.5">
+            {values.map((item) => (
+              <span
+                key={item.id}
+                className="inline-flex items-center gap-1 rounded-full border border-violet-200 bg-violet-50 px-2 py-1 text-[10px] text-violet-700 dark:border-violet-700/40 dark:bg-violet-900/20 dark:text-violet-200"
+              >
+                <span className="max-w-[180px] truncate">{item.label}</span>
+                {item.meta ? <span className="text-violet-500/80 dark:text-violet-300/80">{item.meta}</span> : null}
+                <button
+                  type="button"
+                  onClick={() => removeOption(item.id)}
+                  className="rounded-full p-0.5 transition hover:bg-violet-100 dark:hover:bg-violet-800/40"
+                >
+                  <X size={9} />
+                </button>
+              </span>
+            ))}
+          </div>
+        ) : (
+          <div className="rounded-lg border border-dashed border-border bg-card/30 px-3 py-2 text-[11px] text-[var(--gray-400)]">
+            Nenhum item seleccionado.
+          </div>
+        )}
+
+        <DropdownPortal anchorRef={ref} portalRef={portalRef} open={open}>
+          <div className="max-h-56 overflow-y-auto">
+            {loading ? (
+              <div className="px-3 py-2 text-[11px] text-[var(--gray-500)]">Carregando...</div>
+            ) : visibleOptions.length === 0 ? (
+              <div className="px-3 py-2 text-[11px] text-[var(--gray-400)]">Sem resultados</div>
+            ) : (
+              visibleOptions.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  onMouseDown={(event) => {
+                    event.preventDefault()
+                    addOption(item)
+                  }}
+                  className="flex w-full flex-col items-start gap-0.5 px-3 py-2 text-left text-[12px] transition hover:bg-amber-50/70 dark:hover:bg-white/10"
+                >
+                  <span className="truncate text-[var(--text)]">{buildLabel(item)}</span>
+                  {buildMeta(item) ? (
+                    <span className="truncate text-[10px] text-[var(--gray-400)]">{buildMeta(item)}</span>
+                  ) : null}
+                </button>
+              ))
+            )}
+          </div>
+        </DropdownPortal>
+      </div>
+    </FieldRow>
+  )
+}
+
 function StepBar({ step }: { step: number }) {
   return (
     <div className="flex flex-wrap items-center gap-2">
@@ -406,11 +574,12 @@ export default function NewPreoperativeAssessmentPage() {
   const [anestheticEvaluation, setAnestheticEvaluation] = useState("")
   const [status, setStatus] = useState("PENDING")
 
-  const [requiredExams, setRequiredExams] = useState("")
   const [examResultsReviewed, setExamResultsReviewed] = useState(false)
   const [fitForSurgery, setFitForSurgery] = useState<boolean | null>(null)
   const [consentSigned, setConsentSigned] = useState(false)
   const [observations, setObservations] = useState("")
+  const [selectedLaboratoryExams, setSelectedLaboratoryExams] = useState<SearchValue[]>([])
+  const [selectedMedicalExams, setSelectedMedicalExams] = useState<SearchValue[]>([])
 
   const patientSearchTerm = useMemo(
     () => normalizePatientText(patient?.label || ""),
@@ -502,22 +671,67 @@ export default function NewPreoperativeAssessmentPage() {
       if (surgicalRequest) body.surgical_request = surgicalRequest.id
       if (proposedSurgery) body.proposed_surgery = proposedSurgery.id
       if (evaluator) body.evaluator = evaluator.id
-      if (requiredExams.trim()) {
-        try {
-          body.required_exams = JSON.parse(requiredExams)
-        } catch {
-          body.required_exams = requiredExams
-            .split(",")
-            .map((item) => item.trim())
-            .filter(Boolean)
-        }
-      }
+
+      // store exam labels in required_exams JSONField
+      const examLabels = [
+        ...selectedLaboratoryExams.map((t) => `LAB: ${t.label}`),
+        ...selectedMedicalExams.map((e) => `MED: ${e.label}`),
+      ]
+      if (examLabels.length) body.required_exams = examLabels
 
       const response = await apiFetch<any>("/surgery/avaliacao_pre_operatoria/", {
         method: "POST",
         body: JSON.stringify(body),
       })
-      router.push(`/surgery/preoperative-assessments/${response.id}`)
+
+      const assessmentId = response.id
+      const indication = `Pré-operatório — avaliação ${response.custom_id || assessmentId}`
+
+      // create lab order + items (reception → enfermagem → laboratório)
+      if (selectedLaboratoryExams.length && patient?.id) {
+        try {
+          const labOrder = await apiFetch<any>("/clinical_laboratory/order/", {
+            method: "POST",
+            body: JSON.stringify({
+              patient: patient.id,
+              requesting_physician: evaluator?.id ?? undefined,
+              clinical_indication: indication,
+              origin: "INTERNAL",
+              priority: "ROUTINE",
+            }),
+          })
+          await Promise.all(
+            selectedLaboratoryExams.map((exam) =>
+              apiFetch("/clinical_laboratory/order_item/", {
+                method: "POST",
+                body: JSON.stringify({ order: labOrder.id, test: exam.id }),
+              }).catch(() => null)
+            )
+          )
+        } catch { /* non-fatal */ }
+      }
+
+      // create specialty diagnostic order per protocol (encaminhamento)
+      if (selectedMedicalExams.length && patient?.id) {
+        await Promise.all(
+          selectedMedicalExams.map((exam) =>
+            apiFetch("/specialty_diagnostics/order/", {
+              method: "POST",
+              body: JSON.stringify({
+                patient: patient.id,
+                requesting_doctor: evaluator?.id ?? undefined,
+                protocol: exam.id,
+                modality: exam.meta || "OTHER",
+                clinical_indication: indication,
+                priority: "ROUTINE",
+                status: "PENDING",
+              }),
+            }).catch(() => null)
+          )
+        )
+      }
+
+      router.push(`/surgery/preoperative-assessments/${assessmentId}`)
     } catch (err: any) {
       setError(err?.message || "Erro ao guardar avaliação pré-operatória.")
       setSaving(false)
@@ -793,19 +1007,40 @@ export default function NewPreoperativeAssessmentPage() {
         {step === 3 ? (
           <SurfaceCard
             title="3 · Exames e conclusão"
-            subtitle="Exames necessários, consentimento, aptidão e observações finais."
+            subtitle="Exames médicos, exames laboratoriais, consentimento, aptidão e observações finais."
             icon={<ClipboardCheck size={13} />}
             accent="bg-violet-400"
           >
-            <FieldRow label="Exames necessários">
-              <textarea
-                rows={3}
-                className={textareaCls}
-                value={requiredExams}
-                onChange={(event) => setRequiredExams(event.target.value)}
-                placeholder="Hemograma, coagulação, ECG, Rx tórax... ou JSON se precisar."
+            <div className="grid gap-3 sm:grid-cols-2">
+              <MultiSearchSelect
+                label="Exames laboratoriais"
+                endpoint="/clinical_laboratory/test/"
+                values={selectedLaboratoryExams}
+                onChange={setSelectedLaboratoryExams}
+                placeholder="Pesquisar exame laboratorial..."
+                extraParams={{ active: "true" }}
+                getOptionLabel={(item) => item?.name || item?.code || `#${item?.id}`}
+                getOptionMeta={(item) => [
+                  item?.code,
+                  item?.sector_name,
+                  item?.sample_type,
+                ].filter(Boolean).join(" · ")}
               />
-            </FieldRow>
+              <MultiSearchSelect
+                label="Exames médicos"
+                endpoint="/specialty_diagnostics/protocol/"
+                values={selectedMedicalExams}
+                onChange={setSelectedMedicalExams}
+                placeholder="Pesquisar exame (ECG, Holter, Ecocardiograma…)"
+                getOptionLabel={(item) => item?.name || item?.code || `#${item?.id}`}
+                getOptionMeta={(item) => item?.modality || "OTHER"}
+              />
+            </div>
+
+            <div className="mt-3 rounded-xl border border-violet-200/60 bg-violet-50/50 px-3 py-2.5 text-[11px] text-violet-700 dark:border-violet-800/30 dark:bg-violet-900/10 dark:text-violet-200">
+              Ao guardar, os exames seleccionados geram automaticamente requisições no fluxo clínico já existente.
+              Os laboratoriais seguem para receção, enfermagem e laboratório; os médicos ficam na fila de requisições clínicas para encaminhamento.
+            </div>
 
             <div className="mt-3 grid gap-2 sm:grid-cols-2">
               <BoolCard
@@ -893,6 +1128,14 @@ export default function NewPreoperativeAssessmentPage() {
                     <span className="text-right font-semibold text-foreground">
                       {STATUS_OPTIONS.find((option) => option.value === status)?.label || status}
                     </span>
+                  </div>
+                  <div className="flex items-start justify-between gap-2">
+                    <span className="text-[var(--gray-500)]">Exames LAB</span>
+                    <span className="text-right font-semibold text-foreground">{selectedLaboratoryExams.length}</span>
+                  </div>
+                  <div className="flex items-start justify-between gap-2">
+                    <span className="text-[var(--gray-500)]">Exames MED</span>
+                    <span className="text-right font-semibold text-foreground">{selectedMedicalExams.length}</span>
                   </div>
                   <div className="flex items-start justify-between gap-2">
                     <span className="text-[var(--gray-500)]">Aptidão</span>
