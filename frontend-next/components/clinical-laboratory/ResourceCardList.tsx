@@ -9,6 +9,7 @@ import { apiFetchList } from "@/lib/api";
 import { countForm } from "@/lib/i18n/plural";
 import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh";
 import { requiredGroupsForResourceGroup } from "@/lib/resourcesAccess";
+import { ChevronLeft } from "lucide-react";
 
 // ── Shared visual helpers (padrão do catálogo: tests/panels) ────────────────────
 
@@ -156,46 +157,56 @@ export default function ResourceCardList<T extends { id: number }>({
     <AppLayout requiredGroups={requiredGroupsForResourceGroup("clinical_laboratory")}>
       <div className="space-y-3">
 
-        {/* Header */}
-        <div className="relative overflow-hidden rounded-xl border border-white/20 bg-white/30 px-4 py-3 shadow-sm backdrop-blur-sm dark:bg-white/5 dark:border-white/10">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--primary-600)]/10 text-[var(--primary-700)] dark:text-[var(--primary-400)]">
-                <Icon size={16} />
-              </span>
-              <div>
-                <h1 className="text-lg font-bold leading-tight text-foreground">{title}</h1>
-                <p className="text-[11px] text-muted-foreground">
-                  {loading ? "Carregando…" : `${total.toLocaleString("pt-PT")} ${countForm(total, { one: singular, other: plural })}`}
-                </p>
+        {/* Hero */}
+        <section className="relative overflow-hidden rounded-xl border border-sky-200/50 bg-gradient-to-br from-sky-50/80 via-white/60 to-cyan-50/60 shadow-sm backdrop-blur-sm dark:border-sky-800/30 dark:from-sky-950/30 dark:via-slate-900/40 dark:to-cyan-950/20">
+          <span className="absolute left-0 top-0 h-full w-1 bg-sky-400" />
+          <div className="px-4 py-3 pl-5">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <Icon size={15} className="text-sky-500" />
+                <div>
+                  <h1 className="font-display text-sm font-bold text-foreground leading-tight">{title}</h1>
+                  <p className="text-[10px] text-[var(--gray-500)]">
+                    {loading
+                      ? <><Loader2 size={9} className="inline animate-spin mr-1" />A carregar...</>
+                      : `${total.toLocaleString("pt-PT")} ${countForm(total, { one: singular, other: plural })}`}
+                  </p>
+                </div>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <Link href="/clinical-laboratory"
+                  className="inline-flex h-8 items-center gap-1 rounded-lg border border-white/40 bg-white/30 px-2.5 text-[11px] text-[var(--gray-700)] backdrop-blur-sm transition hover:bg-white/50 dark:border-white/10 dark:text-[var(--gray-300)] dark:hover:bg-white/10">
+                  <ChevronLeft size={11} /> Voltar
+                </Link>
+                {/* inline search */}
+                <div className="flex items-center gap-1.5 rounded-lg border border-white/50 bg-white/50 px-2.5 py-1.5 backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.06]">
+                  <Search size={11} className="shrink-0 text-[var(--gray-400)]" />
+                  <input type="text" value={search} onChange={(e) => setSearch(e.target.value)}
+                    placeholder={searchPlaceholder}
+                    className="w-44 bg-transparent text-[11px] text-[var(--text)] outline-none placeholder:text-[var(--gray-400)]" />
+                  {search && (
+                    <button type="button" onClick={() => setSearch("")}
+                      className="text-[10px] text-[var(--gray-400)] hover:text-foreground">×</button>
+                  )}
+                </div>
+                {filters.map((f) => (
+                  <select key={f.key} value={filterValues[f.key] ?? ""}
+                    onChange={(e) => setFilterValues((prev) => ({ ...prev, [f.key]: e.target.value }))}
+                    className="h-8 rounded-lg border border-white/40 bg-white/30 px-2.5 text-[11px] text-[var(--gray-700)] backdrop-blur-sm outline-none dark:border-white/10 dark:bg-white/[0.06] dark:text-[var(--gray-300)]">
+                    <option value="">{f.allLabel}</option>
+                    {f.options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                  </select>
+                ))}
+                {newLabel && (
+                  <Link href={`${basePath}/new`}
+                    className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-indigo-600 px-3 text-[11px] font-semibold text-white shadow-md shadow-violet-500/30 transition hover:from-violet-700 hover:to-indigo-700">
+                    <Plus size={13} /> {newLabel}
+                  </Link>
+                )}
               </div>
             </div>
-            {newLabel && (
-              <Link href={`${basePath}/new`}
-                className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-indigo-600 px-3 text-xs font-semibold text-white shadow-md shadow-violet-500/30 transition hover:from-violet-700 hover:to-indigo-700">
-                <Plus size={13} /> {newLabel}
-              </Link>
-            )}
           </div>
-        </div>
-
-        {/* Filter bar */}
-        <div className="flex flex-wrap gap-2">
-          <div className="relative flex-1 min-w-[180px]">
-            <Search size={12} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
-            <input type="text" value={search} onChange={(e) => setSearch(e.target.value)}
-              placeholder={searchPlaceholder}
-              className="h-8 w-full rounded-lg border border-border bg-card pl-7 pr-3 text-xs text-foreground outline-none transition focus:border-violet-500 focus:ring-2 focus:ring-violet-500/25" />
-          </div>
-          {filters.map((f) => (
-            <select key={f.key} value={filterValues[f.key] ?? ""}
-              onChange={(e) => setFilterValues((prev) => ({ ...prev, [f.key]: e.target.value }))}
-              className="h-8 rounded-lg border border-border bg-card px-2.5 text-xs text-foreground outline-none transition focus:border-violet-500">
-              <option value="">{f.allLabel}</option>
-              {f.options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-            </select>
-          ))}
-        </div>
+        </section>
 
         {error && (
           <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-2.5 text-sm text-red-800 dark:border-red-800/40 dark:bg-red-900/15 dark:text-red-300">

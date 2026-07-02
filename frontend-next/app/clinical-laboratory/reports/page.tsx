@@ -1,11 +1,10 @@
 "use client"
 
 import Link from "next/link"
-import { ChevronDown, Search, SlidersHorizontal } from "lucide-react"
+import { ChevronDown, ChevronLeft, FileText, Loader2, Search, SlidersHorizontal } from "lucide-react"
 import { useCallback, useEffect, useMemo, useState } from "react"
 
 import AppLayout from "@/components/layout/AppLayout"
-import PageHeader from "@/components/ui/PageHeader"
 import { apiFetch, apiFetchList } from "@/lib/api"
 import { formatCount } from "@/lib/i18n/plural"
 import { getClinicalStatusLabel } from "@/lib/clinicalStatus"
@@ -25,7 +24,7 @@ type LabRequest = {
   validated_at?: string
 }
 
-// ─── Search filters ─────────────────────────────────────────────────────────
+// ─── Search filters ──────────────────────────────────────────────────────────
 
 type SearchFilters = {
   search: string
@@ -44,32 +43,16 @@ type SearchFilters = {
 }
 
 const EMPTY_FILTERS: SearchFilters = {
-  search: "",
-  reqNumber: "",
-  patientName: "",
-  docNumber: "",
-  birthDate: "",
-  gender: "",
-  priority: "",
-  type: "",
-  critical: "",
-  exam: "",
-  physician: "",
-  dateFrom: "",
-  dateTo: "",
+  search: "", reqNumber: "", patientName: "", docNumber: "",
+  birthDate: "", gender: "", priority: "", type: "",
+  critical: "", exam: "", physician: "", dateFrom: "", dateTo: "",
 }
 
 const PRIORITY_OPTIONS: [string, string][] = [
-  ["", "Todas"],
-  ["NAO_URGENTE", "Não urgente"],
-  ["NORMAL", "Normal"],
-  ["ROTINA", "Rotina"],
-  ["POUCO_URGENTE", "Pouco urgente"],
-  ["PRIORITARIO", "Prioritário"],
-  ["URGENTE", "Urgente"],
-  ["MUITO_URGENTE", "Muito urgente"],
-  ["URGENTISSIMO", "Urgentíssimo"],
-  ["EMERGENCIA", "Emergência"],
+  ["", "Todas"], ["NAO_URGENTE", "Não urgente"], ["NORMAL", "Normal"],
+  ["ROTINA", "Rotina"], ["POUCO_URGENTE", "Pouco urgente"], ["PRIORITARIO", "Prioritário"],
+  ["URGENTE", "Urgente"], ["MUITO_URGENTE", "Muito urgente"],
+  ["URGENTISSIMO", "Urgentíssimo"], ["EMERGENCIA", "Emergência"],
 ]
 
 function isFiltersEmpty(f: SearchFilters): boolean {
@@ -94,23 +77,52 @@ function buildParams(f: SearchFilters): URLSearchParams {
   return p
 }
 
-// ─── Board columns ──────────────────────────────────────────────────────────
+// ─── Board columns ───────────────────────────────────────────────────────────
 
 type ColumnKey = "today" | "yesterday" | "month" | "older"
 
 type ColumnConfig = {
   key: ColumnKey
   title: string
-  header: string
+  headerCls: string
   badge: string
-  top: string
+  colBg: string
+  leftBar: string
 }
 
 const COLUMNS: ColumnConfig[] = [
-  { key: "today", title: "Resultados de hoje", header: "text-sky-700", badge: "bg-sky-100 text-sky-800", top: "border-t-2 border-t-sky-400" },
-  { key: "yesterday", title: "Resultados de ontem", header: "text-indigo-700", badge: "bg-indigo-100 text-indigo-800", top: "border-t-2 border-t-indigo-400" },
-  { key: "month", title: "Resultados deste mês", header: "text-amber-700", badge: "bg-amber-100 text-amber-800", top: "border-t-2 border-t-amber-400" },
-  { key: "older", title: "Resultados mais antigos", header: "text-slate-600", badge: "bg-slate-100 text-slate-700", top: "border-t-2 border-t-slate-400" },
+  {
+    key: "today",
+    title: "Hoje",
+    headerCls: "text-sky-700 dark:text-sky-300",
+    badge: "bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-200",
+    colBg: "from-sky-50/60 via-white/50 to-cyan-50/40 border-sky-200/50 dark:from-sky-950/30 dark:via-slate-900/30 dark:to-cyan-950/20 dark:border-sky-800/30",
+    leftBar: "bg-sky-400",
+  },
+  {
+    key: "yesterday",
+    title: "Ontem",
+    headerCls: "text-indigo-700 dark:text-indigo-300",
+    badge: "bg-indigo-100 text-indigo-800 dark:bg-indigo-900/40 dark:text-indigo-200",
+    colBg: "from-indigo-50/60 via-white/50 to-violet-50/40 border-indigo-200/50 dark:from-indigo-950/30 dark:via-slate-900/30 dark:to-violet-950/20 dark:border-indigo-800/30",
+    leftBar: "bg-indigo-400",
+  },
+  {
+    key: "month",
+    title: "Este mês",
+    headerCls: "text-amber-700 dark:text-amber-300",
+    badge: "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200",
+    colBg: "from-amber-50/60 via-white/50 to-yellow-50/40 border-amber-200/50 dark:from-amber-950/30 dark:via-slate-900/30 dark:to-yellow-950/20 dark:border-amber-800/30",
+    leftBar: "bg-amber-400",
+  },
+  {
+    key: "older",
+    title: "Mais antigos",
+    headerCls: "text-slate-600 dark:text-slate-400",
+    badge: "bg-slate-100 text-slate-700 dark:bg-slate-800/60 dark:text-slate-300",
+    colBg: "from-slate-50/60 via-white/50 to-gray-50/40 border-slate-200/50 dark:from-slate-900/30 dark:via-slate-900/30 dark:to-gray-950/20 dark:border-slate-700/30",
+    leftBar: "bg-slate-400",
+  },
 ]
 
 function laudoDate(row: LabRequest): string | undefined {
@@ -133,13 +145,12 @@ function makeBucketer() {
   }
 }
 
-// ─── Search panel ───────────────────────────────────────────────────────────
+// ─── Search panel ────────────────────────────────────────────────────────────
 
 const INPUT_CLS =
-  "h-7 w-full rounded border border-white/30 bg-white/35 px-2 text-xs text-[var(--text)] backdrop-blur-sm placeholder:text-[var(--gray-400)] focus:border-[var(--primary-400)] focus:outline-none dark:border-white/10 dark:bg-white/5"
+  "h-7 w-full rounded-lg border border-white/30 bg-white/35 px-2 text-[11px] text-[var(--text)] backdrop-blur-sm placeholder:text-[var(--gray-400)] focus:border-sky-400 focus:outline-none dark:border-white/10 dark:bg-white/5"
 const LABEL_CLS = "block text-[10px] font-semibold uppercase tracking-wide text-[var(--gray-500)] mb-0.5"
 
-// Campos sempre visíveis na barra rápida; o resto fica em "Filtros avançados".
 const QUICK_KEYS: (keyof SearchFilters)[] = ["search", "reqNumber", "patientName"]
 const ADVANCED_KEYS = (Object.keys(EMPTY_FILTERS) as (keyof SearchFilters)[]).filter(
   (k) => !QUICK_KEYS.includes(k),
@@ -150,12 +161,7 @@ function countActive(f: SearchFilters, keys: (keyof SearchFilters)[]): number {
 }
 
 function SearchPanel({
-  filters,
-  onChange,
-  onSearch,
-  onClear,
-  total,
-  loading,
+  filters, onChange, onSearch, onClear, total, loading,
 }: {
   filters: SearchFilters
   onChange: (f: SearchFilters) => void
@@ -177,14 +183,13 @@ function SearchPanel({
   const anyActive = !isFiltersEmpty(filters)
 
   return (
-    <div className="rounded-xl border border-white/20 bg-white/15 px-3 py-2 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/5">
-      {/* Barra rápida — sempre visível */}
+    <div className="relative overflow-hidden rounded-xl border border-sky-200/40 bg-white/20 px-4 py-3 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]">
       <div className="flex flex-wrap items-end gap-2">
         <div className="min-w-[180px] flex-1">
-          <label className={LABEL_CLS}>Pesquisa livre (código, paciente, documento, empresa…)</label>
+          <label className={LABEL_CLS}>Pesquisa livre</label>
           <div className="relative">
-            <Search size={13} className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-[var(--gray-400)]" />
-            <input type="search" value={filters.search} onChange={(e) => set("search", e.target.value)} onKeyDown={handleKey} placeholder="Escreva qualquer termo…" className={`${INPUT_CLS} pl-7`} />
+            <Search size={11} className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-[var(--gray-400)]" />
+            <input type="search" value={filters.search} onChange={(e) => set("search", e.target.value)} onKeyDown={handleKey} placeholder="Código, paciente, documento…" className={`${INPUT_CLS} pl-6`} />
           </div>
         </div>
         <div className="w-32 sm:w-40">
@@ -193,41 +198,47 @@ function SearchPanel({
         </div>
         <div className="w-36 sm:w-48">
           <label className={LABEL_CLS}>Nome do paciente</label>
-          <input value={filters.patientName} onChange={(e) => set("patientName", e.target.value)} onKeyDown={handleKey} placeholder="ex: João, nunes…" className={INPUT_CLS} />
+          <input value={filters.patientName} onChange={(e) => set("patientName", e.target.value)} onKeyDown={handleKey} placeholder="ex: João…" className={INPUT_CLS} />
         </div>
 
         <button
           type="button"
           onClick={() => setExpanded((v) => !v)}
           aria-expanded={expanded}
-          className="inline-flex h-7 items-center gap-1.5 rounded border border-white/30 bg-white/25 px-2.5 text-xs font-medium text-[var(--gray-700)] backdrop-blur-sm hover:bg-white/40 dark:border-white/10 dark:bg-white/5 dark:text-[var(--gray-300)]"
+          className="inline-flex h-7 items-center gap-1.5 rounded-lg border border-white/30 bg-white/25 px-2.5 text-[11px] font-medium text-[var(--gray-700)] backdrop-blur-sm hover:bg-white/40 dark:border-white/10 dark:bg-white/5 dark:text-[var(--gray-300)]"
         >
-          <SlidersHorizontal size={13} />
+          <SlidersHorizontal size={11} />
           Filtros avançados
-          {advancedCount > 0 ? (
-            <span className="inline-flex min-w-4 items-center justify-center rounded-full bg-[var(--primary-600)] px-1 text-[10px] font-semibold text-white">
+          {advancedCount > 0 && (
+            <span className="inline-flex min-w-4 items-center justify-center rounded-full bg-sky-500 px-1 text-[9px] font-semibold text-white">
               {advancedCount}
             </span>
-          ) : null}
-          <ChevronDown size={13} className={`transition-transform ${expanded ? "rotate-180" : ""}`} />
+          )}
+          <ChevronDown size={11} className={`transition-transform ${expanded ? "rotate-180" : ""}`} />
         </button>
 
+        {anyActive && (
+          <button type="button" onClick={onClear}
+            className="h-7 rounded-lg border border-white/30 bg-white/25 px-2.5 text-[11px] font-medium text-[var(--gray-700)] backdrop-blur-sm hover:bg-white/40 dark:border-white/10 dark:bg-white/5 dark:text-[var(--gray-300)]">
+            Limpar
+          </button>
+        )}
+
         <span className="ml-auto self-center whitespace-nowrap text-[11px] text-[var(--gray-500)]">
-          {loading ? "A procurar…" : formatCount(total, { one: "laudo", other: "laudos" })}
+          {loading ? <><Loader2 size={10} className="inline animate-spin mr-1" />A procurar…</> : formatCount(total, { one: "laudo", other: "laudos" })}
         </span>
       </div>
 
-      {/* Filtros avançados — recolhíveis */}
-      {expanded ? (
-        <div className="mt-2 border-t border-white/20 pt-2 dark:border-white/10">
-          <div className="grid grid-cols-2 gap-x-2 gap-y-1.5 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6">
+      {expanded && (
+        <div className="mt-3 border-t border-white/20 pt-3 dark:border-white/10">
+          <div className="grid grid-cols-2 gap-x-2 gap-y-2 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6">
             <div>
               <label className={LABEL_CLS}>Nº documento</label>
               <input value={filters.docNumber} onChange={(e) => set("docNumber", e.target.value)} onKeyDown={handleKey} placeholder="BI / passaporte" className={INPUT_CLS} />
             </div>
             <div>
               <label className={LABEL_CLS}>Data de nascimento</label>
-              <input type="date" value={filters.birthDate} onChange={(e) => set("birthDate", e.target.value)} onKeyDown={handleKey} className={INPUT_CLS} />
+              <input type="date" value={filters.birthDate} onChange={(e) => set("birthDate", e.target.value)} className={INPUT_CLS} />
             </div>
             <div>
               <label className={LABEL_CLS}>Sexo</label>
@@ -240,9 +251,7 @@ function SearchPanel({
             <div>
               <label className={LABEL_CLS}>Prioridade</label>
               <select value={filters.priority} onChange={(e) => set("priority", e.target.value)} className={INPUT_CLS}>
-                {PRIORITY_OPTIONS.map(([v, label]) => (
-                  <option key={v} value={v}>{label}</option>
-                ))}
+                {PRIORITY_OPTIONS.map(([v, label]) => <option key={v} value={v}>{label}</option>)}
               </select>
             </div>
             <div>
@@ -271,36 +280,23 @@ function SearchPanel({
             </div>
             <div>
               <label className={LABEL_CLS}>Validado — de</label>
-              <input type="date" value={filters.dateFrom} onChange={(e) => set("dateFrom", e.target.value)} onKeyDown={handleKey} className={INPUT_CLS} />
+              <input type="date" value={filters.dateFrom} onChange={(e) => set("dateFrom", e.target.value)} className={INPUT_CLS} />
             </div>
             <div>
               <label className={LABEL_CLS}>Validado — até</label>
-              <input type="date" value={filters.dateTo} onChange={(e) => set("dateTo", e.target.value)} onKeyDown={handleKey} className={INPUT_CLS} />
-            </div>
-            <div className="flex items-end">
-              <button
-                type="button"
-                onClick={onClear}
-                disabled={!anyActive}
-                className="h-7 w-full rounded border border-white/30 bg-white/25 px-3 text-xs font-medium text-[var(--gray-700)] backdrop-blur-sm hover:bg-white/40 disabled:cursor-default disabled:opacity-40 disabled:hover:bg-white/25 dark:border-white/10 dark:bg-white/5 dark:text-[var(--gray-300)]"
-              >
-                Limpar
-              </button>
+              <input type="date" value={filters.dateTo} onChange={(e) => set("dateTo", e.target.value)} className={INPUT_CLS} />
             </div>
           </div>
         </div>
-      ) : null}
+      )}
     </div>
   )
 }
 
-// ─── Smart card ─────────────────────────────────────────────────────────────
+// ─── Report Card ─────────────────────────────────────────────────────────────
 
-function SmartCard({
-  row,
-  onNotify,
-  busy,
-  notified,
+function ReportCard({
+  row, onNotify, busy, notified,
 }: {
   row: LabRequest
   onNotify: (row: LabRequest) => void
@@ -315,48 +311,49 @@ function SmartCard({
   }
 
   return (
-    <div className="space-y-1.5 rounded-lg border border-white/20 bg-white/20 px-3 py-2.5 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/5">
-      <div className="flex items-start justify-between gap-2">
-        <Link
-          href={`/requests/${row.id}`}
-          className="text-sm font-semibold text-[var(--primary-700)] hover:underline dark:text-[var(--primary-400)]"
-        >
-          {row.custom_id}
+    <div className="group relative flex flex-col overflow-hidden rounded-xl border border-white/50 bg-white/30 shadow-sm backdrop-blur-sm transition hover:border-white/70 hover:bg-white/50 hover:shadow-md dark:border-white/10 dark:bg-white/[0.04] dark:hover:border-white/20 dark:hover:bg-white/[0.08]">
+
+      {/* código + prioridade */}
+      <div className="flex items-center justify-between gap-2 px-3 pt-2.5 pb-1.5">
+        <Link href={`/requests/${row.id}`}
+          className="font-mono text-[10px] font-bold text-sky-700 hover:underline dark:text-sky-300 truncate">
+          {row.custom_id ?? `#${row.id}`}
         </Link>
-        {priority ? (
-          <span className="shrink-0 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
+        {priority && (
+          <span className="shrink-0 inline-flex items-center rounded-full bg-amber-100 px-1.5 py-0.5 text-[9px] font-semibold text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
             {priority}
           </span>
-        ) : null}
+        )}
       </div>
 
-      <div className="truncate text-xs text-[var(--text)]">
-        {row.patient_name}
-        {meta ? <span className="text-[10px] text-[var(--gray-500)]"> · {meta}</span> : null}
+      {/* paciente */}
+      <div className="border-t border-white/40 px-3 py-2 dark:border-white/10">
+        <p className="truncate text-[12px] font-semibold text-foreground leading-snug">
+          {row.patient_name || "—"}
+        </p>
+        {meta && <p className="mt-0.5 text-[10px] text-[var(--gray-500)]">{meta}</p>}
       </div>
 
-      <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
-        <button
-          type="button"
-          onClick={openPdf}
-          className="inline-flex h-7 items-center rounded bg-[var(--primary-600)] px-2.5 text-[10px] font-semibold text-white hover:bg-[var(--primary-700)]"
-        >
-          Imprimir resultado
+      {/* acções */}
+      <div className="flex items-center gap-1.5 border-t border-white/40 px-3 py-2 dark:border-white/10">
+        <button type="button" onClick={openPdf}
+          className="inline-flex h-6 items-center gap-1 rounded-lg bg-sky-600 px-2.5 text-[9px] font-semibold text-white shadow-sm transition hover:bg-sky-700">
+          Imprimir PDF
         </button>
-        <button
-          type="button"
-          onClick={() => onNotify(row)}
-          disabled={busy}
-          className="inline-flex h-7 items-center rounded border border-[var(--border)] px-2.5 text-[10px] font-medium text-[var(--gray-700)] hover:bg-[var(--gray-100)] disabled:opacity-60 dark:text-[var(--gray-300)]"
-        >
-          {busy ? "A notificar..." : notified ? "✓ Notificado" : "Notificar paciente"}
+        <button type="button" onClick={() => onNotify(row)} disabled={busy}
+          className={`inline-flex h-6 items-center gap-1 rounded-lg border px-2.5 text-[9px] font-medium shadow-sm transition disabled:opacity-60 ${
+            notified
+              ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800/40 dark:bg-emerald-900/20 dark:text-emerald-300"
+              : "border-white/40 bg-white/30 text-[var(--gray-700)] hover:bg-white/50 dark:border-white/10 dark:bg-white/[0.06] dark:text-[var(--gray-300)]"
+          }`}>
+          {busy ? <><Loader2 size={9} className="animate-spin" /> A notificar…</> : notified ? "✓ Notificado" : "Notificar"}
         </button>
       </div>
     </div>
   )
 }
 
-// ─── Page ───────────────────────────────────────────────────────────────────
+// ─── Page ────────────────────────────────────────────────────────────────────
 
 export default function LabReportsPage() {
   const safeRefreshToken = useSafeDataRefreshSignal()
@@ -386,16 +383,12 @@ export default function LabReportsPage() {
     }
   }, [])
 
-  useEffect(() => {
-    load(debouncedFilters)
-  }, [load, debouncedFilters, safeRefreshToken])
+  useEffect(() => { load(debouncedFilters) }, [load, debouncedFilters, safeRefreshToken])
 
   const buckets = useMemo(() => {
     const bucketer = makeBucketer()
     const grouped: Record<ColumnKey, LabRequest[]> = { today: [], yesterday: [], month: [], older: [] }
-    for (const row of rows) {
-      grouped[bucketer(row)].push(row)
-    }
+    for (const row of rows) grouped[bucketer(row)].push(row)
     return grouped
   }, [rows])
 
@@ -420,49 +413,86 @@ export default function LabReportsPage() {
     load(EMPTY_FILTERS)
   }
 
-  return (
-    <AppLayout>
-      <div className="w-full space-y-3">
-        <PageHeader title="Laudos" />
+  const total = rows.length
 
+  return (
+    <AppLayout fullWidth>
+      <div className="w-full min-w-0 max-w-none space-y-3 px-1 py-1">
+
+        {/* ── Hero ── */}
+        <section className="relative overflow-hidden rounded-xl border border-sky-200/50 bg-gradient-to-br from-sky-50/80 via-white/60 to-cyan-50/60 shadow-sm backdrop-blur-sm dark:border-sky-800/30 dark:from-sky-950/30 dark:via-slate-900/40 dark:to-cyan-950/20">
+          <span className="absolute left-0 top-0 h-full w-1 bg-sky-400" />
+          <div className="px-4 py-3 pl-5">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <FileText size={15} className="text-sky-500" />
+                <div>
+                  <h1 className="font-display text-sm font-bold text-foreground leading-tight">Laudos</h1>
+                  <p className="text-[10px] text-[var(--gray-500)]">
+                    {loading
+                      ? <><Loader2 size={9} className="inline animate-spin mr-1" />A carregar...</>
+                      : total > 0
+                        ? formatCount(total, { one: "laudo", other: "laudos" })
+                        : "Sem laudos"}
+                  </p>
+                </div>
+              </div>
+              <Link href="/clinical-laboratory"
+                className="inline-flex h-8 items-center gap-1 rounded-lg border border-white/40 bg-white/30 px-2.5 text-[11px] text-[var(--gray-700)] backdrop-blur-sm transition hover:bg-white/50 dark:border-white/10 dark:text-[var(--gray-300)] dark:hover:bg-white/10">
+                <ChevronLeft size={11} /> Voltar
+              </Link>
+            </div>
+          </div>
+        </section>
+
+        {/* ── Search panel ── */}
         <SearchPanel
           filters={filters}
           onChange={setFilters}
           onSearch={() => load(filters)}
           onClear={handleClear}
-          total={rows.length}
+          total={total}
           loading={loading}
         />
 
+        {/* ── Error ── */}
         {error && (
-          <div className="rounded border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-800 dark:border-red-800/40 dark:bg-red-900/15 dark:text-red-300">
+          <div className="flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50/70 px-4 py-2.5 text-[12px] text-rose-800 dark:border-rose-800/40 dark:bg-rose-900/15 dark:text-rose-300">
             {error}
           </div>
         )}
 
+        {/* ── Kanban board ── */}
         {loading && rows.length === 0 ? (
-          <p className="text-sm text-[var(--gray-400)]">A carregar...</p>
+          <div className="flex items-center justify-center gap-2 py-16 text-[12px] text-[var(--gray-400)]">
+            <Loader2 size={16} className="animate-spin" /> A carregar laudos...
+          </div>
         ) : (
-          <div className={`grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4 ${loading ? "opacity-60" : ""}`}>
-            {COLUMNS.map((column) => {
-              const items = buckets[column.key]
+          <div className={`grid w-full min-w-0 grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-4 transition-opacity ${loading ? "opacity-60" : ""}`} style={{ height: "calc(100vh - 220px)" }}>
+            {COLUMNS.map((col) => {
+              const items = buckets[col.key]
               return (
-                <section key={column.key} className={`flex flex-col rounded-xl border border-white/20 bg-white/15 p-2 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/5 ${column.top}`}>
-                  <div className="flex items-center justify-between gap-2 px-1 pb-2 pt-1">
-                    <h2 className={`text-xs font-semibold uppercase tracking-wide ${column.header}`}>{column.title}</h2>
-                    <span className={`inline-flex min-w-5 items-center justify-center rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${column.badge}`}>
+                <section key={col.key}
+                  className={`relative flex min-h-0 flex-col overflow-hidden rounded-xl border bg-gradient-to-br shadow-sm backdrop-blur-sm ${col.colBg}`}>
+                  <span className={`absolute left-0 top-0 h-full w-1 ${col.leftBar}`} />
+
+                  <div className="flex shrink-0 items-center justify-between gap-2 px-3 pb-2.5 pl-4 pt-3">
+                    <h2 className={`text-[10px] font-bold uppercase tracking-widest ${col.headerCls}`}>
+                      {col.title}
+                    </h2>
+                    <span className={`inline-flex min-w-5 items-center justify-center rounded-full px-1.5 py-0.5 text-[9px] font-bold ${col.badge}`}>
                       {items.length}
                     </span>
                   </div>
 
-                  <div className="flex-1 space-y-2 overflow-y-auto pr-1 max-h-[calc(100vh-260px)] [scrollbar-width:thin]">
+                  <div className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto px-3 pb-3 pl-4 [scrollbar-width:thin]">
                     {items.length === 0 ? (
-                      <div className="rounded-md border border-dashed border-[var(--border)] px-3 py-6 text-center text-xs text-[var(--gray-500)]">
+                      <div className="rounded-xl border border-dashed border-white/60 px-3 py-6 text-center text-[10px] text-[var(--gray-400)] dark:border-white/10">
                         Sem laudos.
                       </div>
                     ) : (
                       items.map((row) => (
-                        <SmartCard
+                        <ReportCard
                           key={row.id}
                           row={row}
                           onNotify={handleNotify}

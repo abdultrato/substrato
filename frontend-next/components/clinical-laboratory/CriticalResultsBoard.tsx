@@ -9,6 +9,7 @@ import {
   ArrowUpRight,
   Bell,
   CheckCircle2,
+  ChevronLeft,
   Clock,
   Phone,
   RefreshCw,
@@ -297,31 +298,49 @@ export default function CriticalResultsBoard() {
 
   return (
     <AppLayout>
-      {/* Header */}
-      <div className="mb-3 flex flex-col gap-2 border-b border-white/30 pb-3 dark:border-white/10 md:flex-row md:items-center md:justify-between">
-        <div className="flex items-center gap-2">
-          <div className="grid h-8 w-8 place-items-center rounded-lg bg-rose-500/15 text-rose-600 backdrop-blur-sm dark:text-rose-400">
-            <ShieldAlert size={18} />
+      {/* Hero */}
+      <section className="relative mb-3 overflow-hidden rounded-xl border border-rose-200/50 bg-gradient-to-br from-rose-50/80 via-white/60 to-red-50/60 shadow-sm backdrop-blur-sm dark:border-rose-800/30 dark:from-rose-950/30 dark:via-slate-900/40 dark:to-red-950/20">
+        <span className="absolute left-0 top-0 h-full w-1 bg-rose-500" />
+        <div className="px-4 py-3 pl-5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <ShieldAlert size={15} className="text-rose-500" />
+              <div>
+                <h1 className="font-display text-sm font-bold text-foreground leading-tight">{t("Resultados críticos", "Critical results")}</h1>
+                <p className="text-[10px] text-[var(--gray-500)]">
+                  <span className="relative mr-1 inline-flex h-1.5 w-1.5 align-middle">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                    <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                  </span>
+                  {t("ao vivo", "live")} · {all.length} {t("registos", "records")}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Link href="/clinical-laboratory"
+                className="inline-flex h-8 items-center gap-1 rounded-lg border border-white/40 bg-white/30 px-2.5 text-[11px] text-[var(--gray-700)] backdrop-blur-sm transition hover:bg-white/50 dark:border-white/10 dark:text-[var(--gray-300)] dark:hover:bg-white/10">
+                <ChevronLeft size={11} /> Voltar
+              </Link>
+              <div className="relative">
+                <Search size={11} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--gray-400)]" />
+                <input
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder={t("Pesquisar paciente, requisição…", "Search patient, requisition…")}
+                  className="h-8 w-52 rounded-lg border border-white/50 bg-white/50 pl-7 pr-3 text-[11px] text-[var(--text)] backdrop-blur-sm outline-none placeholder-[var(--gray-400)] focus:border-sky-400 dark:border-white/10 dark:bg-white/[0.06]"
+                />
+              </div>
+              <button
+                type="button"
+                onClick={() => query.refetch()}
+                className="inline-flex h-8 items-center gap-1 rounded-lg border border-white/40 bg-white/30 px-2.5 text-[11px] text-[var(--gray-700)] backdrop-blur-sm transition hover:bg-white/50 dark:border-white/10 dark:text-[var(--gray-300)] dark:hover:bg-white/10"
+              >
+                <RefreshCw size={11} className={query.isFetching ? "animate-spin" : ""} /> {t("Atualizar", "Refresh")}
+              </button>
+            </div>
           </div>
-          <h1 className="font-display text-base font-semibold text-foreground">{t("Resultados críticos", "Critical results")}</h1>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="inline-flex items-center gap-1 text-[11px] text-[var(--gray-500)]">
-            <span className="relative flex h-1.5 w-1.5">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
-            </span>
-            {t("ao vivo", "live")}
-          </span>
-          <button
-            type="button"
-            onClick={() => query.refetch()}
-            className={`inline-flex h-8 items-center gap-1 rounded-md px-2.5 text-xs font-medium text-[var(--gray-700)] transition hover:bg-white/70 dark:text-[var(--gray-300)] dark:hover:bg-white/10 ${GLASS_SOFT}`}
-          >
-            <RefreshCw size={13} className={query.isFetching ? "animate-spin" : ""} /> {t("Atualizar", "Refresh")}
-          </button>
-        </div>
-      </div>
+      </section>
 
       {/* Live patient-safety banner */}
       {pending.length > 0 ? (
@@ -362,21 +381,10 @@ export default function CriticalResultsBoard() {
       </div>
 
       {/* Controls */}
-      <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex flex-wrap items-center gap-2">
-          {tab("pending", t("Pendentes", "Pending"), pending.length)}
-          {tab("confirmed", t("Confirmados", "Confirmed"), confirmed.length)}
-          {tab("all", t("Todos", "All"), all.length)}
-        </div>
-        <div className="relative w-full sm:w-72">
-          <Search className="pointer-events-none absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder={t("Pesquisar paciente, requisição, exame...", "Search patient, requisition, test...")}
-            className="h-9 w-full rounded-md border border-white/40 bg-white/50 py-2 pl-8 pr-3 text-sm text-foreground shadow-sm outline-none backdrop-blur-sm focus-visible:border-ring dark:border-white/10 dark:bg-white/5"
-          />
-        </div>
+      <div className="mb-3 flex flex-wrap items-center gap-2">
+        {tab("pending", t("Pendentes", "Pending"), pending.length)}
+        {tab("confirmed", t("Confirmados", "Confirmed"), confirmed.length)}
+        {tab("all", t("Todos", "All"), all.length)}
       </div>
 
       {actionError ? (
