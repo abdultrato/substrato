@@ -156,8 +156,11 @@ function SampleCard({
       }}
       className="group flex cursor-pointer flex-col overflow-hidden rounded-xl border border-white/50 bg-white/30 shadow-sm backdrop-blur-sm transition hover:border-white/70 hover:bg-white/50 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 dark:border-white/10 dark:bg-white/[0.04] dark:hover:border-white/20 dark:hover:bg-white/[0.08]"
     >
+      {/* ── topo colorido ── */}
+      <div className={`h-0.5 w-full ${statusDot(row.status)}`} />
+
       {/* ── código + status ── */}
-      <div className="flex items-center justify-between gap-2 px-3 pt-2.5 pb-1.5">
+      <div className="flex items-center justify-between gap-2 px-3 pt-2 pb-1.5">
         <div className="min-w-0">
           <p className="truncate font-mono text-[10px] font-bold text-sky-700 dark:text-sky-300">
             {row.barcode || row.custom_id || `#${row.id}`}
@@ -376,9 +379,12 @@ export default function SamplesBoardPage() {
                   <span className={`absolute left-0 top-0 h-full w-1 ${col.leftBar}`} />
 
                   <div className="flex items-center justify-between gap-2 px-3 pb-2.5 pl-4 pt-3">
-                    <h2 className={`text-[10px] font-bold uppercase tracking-widest ${col.headerCls}`}>
-                      {col.title}
-                    </h2>
+                    <div className="flex items-center gap-1.5">
+                      <span className={`h-2 w-2 rounded-full ${col.leftBar}`} />
+                      <h2 className={`text-[10px] font-bold uppercase tracking-widest ${col.headerCls}`}>
+                        {col.title}
+                      </h2>
+                    </div>
                     <span className={`inline-flex min-w-5 items-center justify-center rounded-full px-1.5 py-0.5 text-[9px] font-bold ${col.badge}`}>
                       {items.length}
                     </span>
@@ -386,7 +392,7 @@ export default function SamplesBoardPage() {
 
                   <div className="flex flex-col gap-2 overflow-y-auto px-3 pb-3 pl-4 max-h-[calc(100vh-130px)] [scrollbar-width:thin]">
                     {items.length === 0 ? (
-                      <div className="rounded-xl border border-dashed border-white/60 px-3 py-6 text-center text-[10px] text-[var(--gray-400)] dark:border-white/10">
+                      <div className="rounded-xl border border-dashed border-white/50 px-3 py-8 text-center text-[10px] text-[var(--gray-400)] dark:border-white/10">
                         Sem amostras.
                       </div>
                     ) : (
