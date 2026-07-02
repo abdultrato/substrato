@@ -265,6 +265,8 @@ export default function LargeSurgeriesListPage() {
               </div>
             </div>
 
+            <div className="mt-2 border-t border-white/20 dark:border-white/10" />
+
             {/* search + estado + num */}
             <div className="mt-2 flex items-center gap-2">
               <div className="relative flex-1">
