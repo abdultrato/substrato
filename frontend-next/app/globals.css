@@ -873,3 +873,25 @@ nav[data-no-scroll-arrows]::-webkit-scrollbar-thumb:hover {
 .manchester-emergency-border {
   animation: manchester-border-flash 0.9s step-start infinite;
 }
+
+/* ── Overlay de acesso (login): ACESSO GARANTIDO / NEGADO ── */
+@keyframes accessPop {
+  0%   { opacity: 0; transform: scale(0.86); filter: blur(6px); letter-spacing: 0.25em; }
+  55%  { opacity: 1; transform: scale(1.04); filter: blur(0); }
+  100% { opacity: 1; transform: scale(1); filter: blur(0); letter-spacing: 0.06em; }
+}
+@keyframes accessLine {
+  0%   { transform: scaleX(0); opacity: 0; }
+  60%  { transform: scaleX(1); opacity: 1; }
+  100% { transform: scaleX(1); opacity: 1; }
+}
+.animate-access-pop {
+  animation: accessPop 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.animate-access-line {
+  animation: accessLine 0.6s 0.15s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-access-pop,
+  .animate-access-line { animation: none; }
+}

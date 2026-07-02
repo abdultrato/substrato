@@ -2,7 +2,7 @@
 import "./globals.css";
 
 import type { Metadata, Viewport } from "next";
-import { Inter, Plus_Jakarta_Sans } from "next/font/google";
+import { Bebas_Neue, Inter, Plus_Jakarta_Sans } from "next/font/google";
 import { AuthProvider } from "@/hooks/useAuth";
 import Providers from "./providers";
 
@@ -18,6 +18,13 @@ const plusJakarta = Plus_Jakarta_Sans({
   subsets: ["latin"],
   display: "swap",
   variable: "--font-jakarta",
+});
+// Bebas Neue — usada em destaques dramáticos (ex.: overlay de acesso no login).
+const bebasNeue = Bebas_Neue({
+  subsets: ["latin"],
+  weight: "400",
+  display: "swap",
+  variable: "--font-bebas",
 });
 
 function metadataBaseUrl(): URL {
@@ -95,7 +102,7 @@ export default function RootLayout({
     <html
       lang="pt"
       suppressHydrationWarning
-      className={`${inter.variable} ${plusJakarta.variable}`}
+      className={`${inter.variable} ${plusJakarta.variable} ${bebasNeue.variable}`}
     >
       <head suppressHydrationWarning>
         <script

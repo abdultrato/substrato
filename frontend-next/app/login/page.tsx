@@ -106,6 +106,7 @@ export default function LoginPage() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const [info, setInfo] = useState("");
+    const [access, setAccess] = useState<null | "granted" | "denied">(null);
 
     const [user, setUser] = useState("");
     const [pass, setPass] = useState("");
@@ -134,7 +135,10 @@ export default function LoginPage() {
         try {
             const sessionUser = await login(user, pass);
             if (!sessionUser) {
+                setAccess("denied");
                 setError(t("Falha ao obter sessão. Tente novamente.", "Failed to retrieve session."));
+                setLoading(false);
+                window.setTimeout(() => setAccess(null), 1600);
                 return;
             }
             signIn(sessionUser);
@@ -144,11 +148,15 @@ export default function LoginPage() {
                     : null;
             // Retoma a última página: ?next= (expiração/guard) ou registo local.
             const next = isSafeInternalPath(rawNext) ? rawNext : getLastVisitedPath();
-            router.push(next || getDefaultWorkspaceHref(sessionUser));
+            const target = next || getDefaultWorkspaceHref(sessionUser);
+            // Mostra o overlay "ACESSO GARANTIDO" com elegância antes de redirecionar.
+            setAccess("granted");
+            window.setTimeout(() => router.push(target), 1300);
         } catch (err) {
+            setAccess("denied");
             setError(err instanceof Error ? err.message : t("Utilizador ou palavra-passe inválidos.", "Invalid credentials."));
-        } finally {
             setLoading(false);
+            window.setTimeout(() => setAccess(null), 1600);
         }
     }
 
@@ -442,6 +450,33 @@ export default function LoginPage() {
                     )}
                 </div>
             </div>
+
+            {/* ─── Overlay de acesso: ACESSO GARANTIDO / NEGADO ─── */}
+            {access && (
+                <div
+                    className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-md"
+                    role="alert"
+                    aria-live="assertive"
+                >
+                    <div className="animate-access-pop select-none px-6 text-center">
+                        <div
+                            className="font-[family-name:var(--font-bebas)] uppercase leading-none tracking-[0.06em]"
+                            style={{ fontSize: "clamp(3.5rem, 16vw, 11rem)" }}
+                        >
+                            {access === "granted" ? (
+                                <span className="bg-gradient-to-b from-violet-400 via-violet-500 to-fuchsia-600 bg-clip-text text-transparent [text-shadow:0_0_60px_rgba(139,92,246,0.45)]">
+                                    {t("Acesso garantido", "Access granted")}
+                                </span>
+                            ) : (
+                                <span className="bg-gradient-to-b from-rose-400 via-rose-500 to-red-600 bg-clip-text text-transparent [text-shadow:0_0_60px_rgba(244,63,94,0.45)]">
+                                    {t("Acesso negado", "Access denied")}
+                                </span>
+                            )}
+                        </div>
+                        <div className={`mx-auto mt-4 h-0.5 w-40 origin-center animate-access-line rounded-full ${access === "granted" ? "bg-violet-500/70" : "bg-rose-500/70"}`} />
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
