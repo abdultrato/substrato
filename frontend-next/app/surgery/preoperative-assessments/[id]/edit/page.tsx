@@ -53,6 +53,8 @@ const STEPS = [
 ]
 
 type SearchValue = { id: number; label: string; meta?: string }
+type SurgicalContextValue = { kind: "request" | "surgery"; id: number; label: string }
+type ProcedureSummary = { key: string; label: string }
 
 /* ── helpers ── */
 function listRows(payload: any): any[] {
@@ -81,6 +83,50 @@ function normalizePatientText(value: string): string {
 function rowMatchesPatient(row: any, patientId: number, patientName: string): boolean {
   if (Number(row?.patient) === patientId) return true
   return normalizePatientText(row?.patient_name || "") === patientName
+}
+
+function splitProcedureText(value: string): string[] {
+  return String(value || "")
+    .split(",")
+    .map((chunk) => chunk.trim())
+    .filter(Boolean)
+}
+
+function buildProcedureSummaries(surgeries: any[], requestedProcedure?: string): ProcedureSummary[] {
+  const summaries: ProcedureSummary[] = []
+  const seen = new Set<string>()
+
+  function push(label: string, id?: number | string) {
+    const clean = String(label || "").trim()
+    if (!clean) return
+    const key = id ? `id:${id}` : `text:${clean.toLowerCase()}`
+    if (seen.has(key)) return
+    seen.add(key)
+    summaries.push({ key, label: clean })
+  }
+
+  for (const surgery of surgeries) {
+    const procedureIds = Array.isArray(surgery?.procedures) ? surgery.procedures : []
+    const names = Array.isArray(surgery?.procedure_names) && surgery.procedure_names.length
+      ? surgery.procedure_names
+      : splitProcedureText(surgery?.procedure || "")
+
+    if (names.length) {
+      names.forEach((name: string, index: number) => push(name, procedureIds[index]))
+      continue
+    }
+
+    if (surgery?.procedure) push(surgery.procedure)
+  }
+
+  splitProcedureText(requestedProcedure || "").forEach((name) => push(name))
+  return summaries
+}
+
+function labelSurgerySize(value: string): string {
+  if (value === "GRANDE") return "Grande"
+  if (value === "PEQUENA") return "Pequena"
+  return value || ""
 }
 
 function FieldRow({ label, children, required }: { label: string; children: React.ReactNode; required?: boolean }) {
@@ -367,14 +413,13 @@ export default function EditPreoperativeAssessmentPage() {
   /* step 1 */
   const [patient,         setPatient]         = useState<SearchValue | null>(null)
   const [evaluator,       setEvaluator]       = useState<SearchValue | null>(null)
-  const [surgicalRequest, setSurgicalRequest] = useState<SearchValue | null>(null)
-  const [surgicalRequestSource, setSurgicalRequestSource] = useState<"request" | "surgery" | null>(null)
-  const [proposedSurgery, setProposedSurgery] = useState<SearchValue | null>(null)
+  const [selectedContext, setSelectedContext] = useState<SurgicalContextValue | null>(null)
   const [assessedAt,      setAssessedAt]      = useState("")
   const [status,          setStatus]          = useState("PENDING")
   const [patientRequests, setPatientRequests] = useState<any[]>([])
-  const [patientSurgeries, setPatientSurgeries] = useState<any[]>([])
+  const [scheduledSurgeries, setScheduledSurgeries] = useState<any[]>([])
   const [loadingContext, setLoadingContext] = useState(false)
+  const [selectedSurgeries, setSelectedSurgeries] = useState<SearchValue[]>([])
 
   /* step 2 */
   const [asaClass,             setAsaClass]             = useState("UNKNOWN")
@@ -394,6 +439,51 @@ export default function EditPreoperativeAssessmentPage() {
     () => normalizePatientText(patient?.label || ""),
     [patient?.label]
   )
+  const requestLookup = useMemo(
+    () => new Map(patientRequests.map((request) => [request.id, request])),
+    [patientRequests]
+  )
+  const requestOptions = useMemo(() => {
+    const seen = new Set<number>()
+    const options: any[] = []
+
+    for (const surgery of scheduledSurgeries) {
+      const requestId = Number(surgery?.surgical_request)
+      if (!requestId || seen.has(requestId)) continue
+      seen.add(requestId)
+      options.push(
+        requestLookup.get(requestId) ?? {
+          id: requestId,
+          custom_id: surgery?.surgical_request_code || `#${requestId}`,
+          requested_procedure: surgery?.procedure || "",
+          clinical_diagnosis: "",
+          status: "AGENDADA",
+          priority: surgery?.priority || "",
+        }
+      )
+    }
+
+    return options
+  }, [requestLookup, scheduledSurgeries])
+  const standaloneSurgeries = useMemo(
+    () => scheduledSurgeries.filter((surgery) => !Number(surgery?.surgical_request)),
+    [scheduledSurgeries]
+  )
+  const selectedRequestRow = useMemo(() => {
+    if (selectedContext?.kind !== "request") return null
+    return requestLookup.get(selectedContext.id) ?? requestOptions.find((request) => request.id === selectedContext.id) ?? null
+  }, [selectedContext, requestLookup, requestOptions])
+  const contextSurgeries = useMemo(() => {
+    if (!selectedContext) return []
+    if (selectedContext.kind === "request") {
+      return scheduledSurgeries.filter((surgery) => Number(surgery?.surgical_request) === selectedContext.id)
+    }
+    return scheduledSurgeries.filter((surgery) => Number(surgery?.id) === selectedContext.id)
+  }, [selectedContext, scheduledSurgeries])
+  const contextProcedures = useMemo(
+    () => buildProcedureSummaries(contextSurgeries, selectedRequestRow?.requested_procedure),
+    [contextSurgeries, selectedRequestRow?.requested_procedure]
+  )
 
   /* load existing data */
   useEffect(() => {
@@ -403,13 +493,17 @@ export default function EditPreoperativeAssessmentPage() {
         if (d.patient && d.patient_name)             setPatient({ id: d.patient, label: d.patient_name })
         if (d.evaluator && d.evaluator_name)         setEvaluator({ id: d.evaluator, label: d.evaluator_name })
         if (d.surgical_request && d.surgical_request_code) {
-          setSurgicalRequest({ id: d.surgical_request, label: d.surgical_request_code })
-          setSurgicalRequestSource("request")
+          setSelectedContext({ kind: "request", id: d.surgical_request, label: d.surgical_request_code })
+        } else if (d.proposed_surgery && d.proposed_surgery_code) {
+          setSelectedContext({ kind: "surgery", id: d.proposed_surgery, label: d.proposed_surgery_code })
         } else {
-          setSurgicalRequest(null)
-          setSurgicalRequestSource(null)
+          setSelectedContext(null)
         }
-        if (d.proposed_surgery && d.proposed_surgery_code) setProposedSurgery({ id: d.proposed_surgery, label: d.proposed_surgery_code })
+        setSelectedSurgeries(
+          d.proposed_surgery && d.proposed_surgery_code
+            ? [{ id: d.proposed_surgery, label: d.proposed_surgery_code }]
+            : []
+        )
         if (d.assessed_at) setAssessedAt(d.assessed_at.slice(0, 16))
         setStatus(d.status || "PENDING")
         setAsaClass(d.asa_class || "UNKNOWN")
@@ -452,14 +546,13 @@ export default function EditPreoperativeAssessmentPage() {
     const previousPatientId = previousPatientIdRef.current
 
     if (previousPatientId !== undefined && previousPatientId !== currentPatientId) {
-      setSurgicalRequest(null)
-      setSurgicalRequestSource(null)
-      setProposedSurgery(null)
+      setSelectedContext(null)
+      setSelectedSurgeries([])
     }
 
     previousPatientIdRef.current = currentPatientId
     setPatientRequests([])
-    setPatientSurgeries([])
+    setScheduledSurgeries([])
 
     if (!patient?.id) return
 
@@ -467,39 +560,21 @@ export default function EditPreoperativeAssessmentPage() {
     setLoadingContext(true)
 
     async function loadPatientContext() {
-      const requestQueries = [
-        `/surgery/surgical_request/?patient=${patient.id}&page=1&page_size=200&ordering=-created_at`,
-        patientSearchTerm
-          ? `/surgery/surgical_request/?search=${encodeURIComponent(patientSearchTerm)}&page=1&page_size=200&ordering=-created_at`
-          : null,
-      ].filter(Boolean) as string[]
-
-      const surgeryQueries = [
-        `/surgery/surgery/?patient=${patient.id}&page=1&page_size=200&ordering=-created_at`,
-        patientSearchTerm
-          ? `/surgery/surgery/?search=${encodeURIComponent(patientSearchTerm)}&page=1&page_size=200&ordering=-created_at`
-          : null,
-      ].filter(Boolean) as string[]
-
       try {
-        const [requestPayloads, surgeryPayloads] = await Promise.all([
-          Promise.all(requestQueries.map((url) => apiFetch<any>(url).catch(() => null))),
-          Promise.all(surgeryQueries.map((url) => apiFetch<any>(url).catch(() => null))),
+        const [requestPayload, surgeryPayload] = await Promise.all([
+          apiFetch<any>(`/surgery/surgical_request/?patient=${patient.id}&page_size=200&ordering=-created_at`).catch(() => null),
+          apiFetch<any>(`/surgery/surgery/?patient=${patient.id}&page_size=200&ordering=-scheduled_for&status=AGENDADA`).catch(() => null),
         ])
 
         if (!active) return
 
-        setPatientRequests(uniqueRowsById(
-          requestPayloads
-            .flatMap((payload) => listRows(payload))
-            .filter((row) => rowMatchesPatient(row, patient.id, patientSearchTerm))
-        ))
-
-        setPatientSurgeries(uniqueRowsById(
-          surgeryPayloads
-            .flatMap((payload) => listRows(payload))
-            .filter((row) => rowMatchesPatient(row, patient.id, patientSearchTerm))
-        ))
+        setPatientRequests(
+          uniqueRowsById(listRows(requestPayload).filter((row) => rowMatchesPatient(row, patient.id, patientSearchTerm)))
+            .filter((row) => !["CANCELLED", "REJECTED"].includes(String(row?.status || "")))
+        )
+        setScheduledSurgeries(
+          uniqueRowsById(listRows(surgeryPayload).filter((row) => rowMatchesPatient(row, patient.id, patientSearchTerm)))
+        )
       } finally {
         if (active) setLoadingContext(false)
       }
@@ -513,14 +588,6 @@ export default function EditPreoperativeAssessmentPage() {
       active = false
     }
   }, [patient?.id, patientSearchTerm])
-
-  useEffect(() => {
-    if (surgicalRequest || patientRequests.length > 0 || !proposedSurgery) return
-    const matchingSurgery = patientSurgeries.find((row) => row.id === proposedSurgery.id)
-    if (!matchingSurgery) return
-    setSurgicalRequest({ id: matchingSurgery.id, label: matchingSurgery.custom_id || proposedSurgery.label })
-    setSurgicalRequestSource("surgery")
-  }, [patientRequests, patientSurgeries, proposedSurgery, surgicalRequest])
 
   const canNext1 = !!patient
   const canNext2 = !!asaClass && !!status
@@ -543,14 +610,8 @@ export default function EditPreoperativeAssessmentPage() {
       }
       if (patient)         body.patient          = patient.id
       if (evaluator)       body.evaluator        = evaluator.id
-      if (surgicalRequest && surgicalRequestSource === "request") {
-        body.surgical_request = surgicalRequest.id
-      }
-      if (proposedSurgery) {
-        body.proposed_surgery = proposedSurgery.id
-      } else if (surgicalRequest && surgicalRequestSource === "surgery") {
-        body.proposed_surgery = surgicalRequest.id
-      }
+      body.surgical_request = selectedContext?.kind === "request" ? selectedContext.id : null
+      body.proposed_surgery = selectedSurgeries[0]?.id ?? null
       // send exam PKs — backend syncs LabRequest/MedicalRequest automatically
       body.laboratory_exams = selectedLabExams.filter(e => e.id > 0).map(e => e.id)
       body.medical_exams    = selectedMedExams.filter(e => e.id > 0).map(e => e.id)
@@ -629,7 +690,7 @@ export default function EditPreoperativeAssessmentPage() {
 
         {/* ── STEP 1: paciente + pedido + cirurgia ── */}
         {step === 1 && (
-          <SurfaceCard title="1 · Paciente e pedido" subtitle="Seleccione o paciente — pedidos e cirurgias são carregados automaticamente." icon={<User size={13} />} accent="bg-sky-400">
+          <SurfaceCard title="1 · Paciente e pedido" subtitle="Seleccione o paciente; depois escolha o pedido ou cirurgia marcada e, em seguida, as cirurgias do contexto." icon={<User size={13} />} accent="bg-sky-400">
             <div className="grid gap-3 sm:grid-cols-2">
               <SearchSelect
                 label="Paciente"
@@ -651,139 +712,196 @@ export default function EditPreoperativeAssessmentPage() {
             </div>
 
             <div className="mt-3">
-              <FieldRow label="Pedido cirúrgico">
-                {!patient ? (
+              <div className="mb-1 flex items-center gap-2">
+                <span className="text-[9px] font-semibold uppercase tracking-[0.14em] text-[var(--gray-500)]">Pedidos e cirurgias agendadas</span>
+                {loadingContext && <Loader2 size={10} className="animate-spin text-[var(--gray-400)]" />}
+              </div>
+              {!patient ? (
+                <div className="rounded-lg border border-dashed border-border bg-card/40 px-3 py-2.5 text-[11px] text-[var(--gray-400)]">
+                  Seleccione um paciente para ver os pedidos e cirurgias não realizadas.
+                </div>
+              ) : loadingContext ? (
+                <div className="flex items-center gap-1.5 rounded-lg border border-border bg-card/40 px-3 py-2.5 text-[11px] text-[var(--gray-400)]">
+                  <Loader2 size={11} className="animate-spin" /> A carregar contexto cirúrgico...
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {requestOptions.length > 0 ? (
+                    <div className="space-y-1.5">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--gray-500)]">
+                        Pedidos com cirurgias marcadas
+                      </p>
+                      <div className="grid gap-1.5 sm:grid-cols-2">
+                        {requestOptions.map((request) => {
+                          const selected = selectedContext?.kind === "request" && selectedContext.id === request.id
+                          return (
+                            <button
+                              key={request.id}
+                              type="button"
+                              onClick={() => {
+                                setSelectedSurgeries([])
+                                setSelectedContext(selected ? null : { kind: "request", id: request.id, label: request.custom_id })
+                              }}
+                              className={`flex items-start gap-2 rounded-lg border px-3 py-2 text-left text-[11px] transition ${
+                                selected ? "border-sky-400 bg-sky-50 dark:border-sky-600/50 dark:bg-sky-900/20" : "border-border bg-card/60 hover:border-sky-300"
+                              }`}
+                            >
+                              <span className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full ${selected ? "bg-sky-500 text-white" : "border-2 border-[var(--gray-300)]"}`}>
+                                {selected && <Check size={9} />}
+                              </span>
+                              <span>
+                                <span className="block font-semibold text-foreground">{request.custom_id}</span>
+                                <span className="block text-[10px] text-[var(--gray-500)]">
+                                  {[request.requested_procedure || request.clinical_diagnosis, request.status, request.priority].filter(Boolean).join(" · ")}
+                                </span>
+                              </span>
+                            </button>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  ) : null}
+
+                  {standaloneSurgeries.length > 0 ? (
+                    <div className="space-y-1.5">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--gray-500)]">
+                        Cirurgias marcadas sem pedido formal
+                      </p>
+                      <div className="grid gap-1.5 sm:grid-cols-2">
+                        {standaloneSurgeries.map((surgery) => {
+                          const selected = selectedContext?.kind === "surgery" && selectedContext.id === surgery.id
+                          const firstProcedure = surgery?.procedure_names?.[0] || surgery?.procedure || "—"
+                          return (
+                            <button
+                              key={surgery.id}
+                              type="button"
+                              onClick={() => {
+                                setSelectedSurgeries([])
+                                setSelectedContext(selected ? null : { kind: "surgery", id: surgery.id, label: surgery.custom_id })
+                              }}
+                              className={`flex items-start gap-2 rounded-lg border px-3 py-2 text-left text-[11px] transition ${
+                                selected ? "border-amber-400 bg-amber-50 dark:border-amber-600/50 dark:bg-amber-900/20" : "border-border bg-card/60 hover:border-amber-300"
+                              }`}
+                            >
+                              <span className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full ${selected ? "bg-amber-500 text-white" : "border-2 border-[var(--gray-300)]"}`}>
+                                {selected && <Check size={9} />}
+                              </span>
+                              <span>
+                                <span className="block font-semibold text-foreground">{surgery.custom_id}</span>
+                                <span className="block truncate text-[10px] text-[var(--gray-500)]">
+                                  {[firstProcedure, labelSurgerySize(surgery?.surgery_size), surgery?.status].filter(Boolean).join(" · ")}
+                                </span>
+                              </span>
+                            </button>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  ) : null}
+
+                  {requestOptions.length === 0 && standaloneSurgeries.length === 0 ? (
+                    <div className="rounded-lg border border-dashed border-amber-200 bg-amber-50/40 px-3 py-2.5 text-[11px] text-amber-600 dark:border-amber-700/30 dark:bg-amber-900/10 dark:text-amber-400">
+                      Nenhum pedido com cirurgia marcada nem cirurgia agendada foi encontrado para este paciente.
+                    </div>
+                  ) : null}
+                </div>
+              )}
+            </div>
+
+            <div className="mt-3">
+              <FieldRow label="Procedimentos do contexto seleccionado">
+                {!selectedContext ? (
                   <div className="rounded-lg border border-dashed border-border bg-card/40 px-3 py-2.5 text-[11px] text-[var(--gray-400)]">
-                    Seleccione um paciente para ver os pedidos cirúrgicos.
+                    Seleccione primeiro um pedido ou uma cirurgia marcada para ver os procedimentos correspondentes.
                   </div>
-                ) : loadingContext ? (
-                  <div className="flex items-center gap-1.5 rounded-lg border border-border bg-card/40 px-3 py-2.5 text-[11px] text-[var(--gray-400)]">
-                    <Loader2 size={11} className="animate-spin" /> A carregar pedidos...
-                  </div>
-                ) : patientRequests.length === 0 && patientSurgeries.length === 0 ? (
+                ) : contextProcedures.length === 0 ? (
                   <div className="rounded-lg border border-dashed border-amber-200 bg-amber-50/40 px-3 py-2.5 text-[11px] text-amber-600 dark:border-amber-700/30 dark:bg-amber-900/10 dark:text-amber-400">
-                    Nenhum pedido ou cirurgia encontrada para este paciente. Campo opcional.
-                  </div>
-                ) : patientRequests.length > 0 ? (
-                  <div className="grid gap-1.5 sm:grid-cols-2">
-                    {patientRequests.map((req) => {
-                      const active = surgicalRequestSource === "request" && surgicalRequest?.id === req.id
-                      return (
-                        <button
-                          key={req.id}
-                          type="button"
-                          onClick={() => {
-                            if (active) {
-                              setSurgicalRequest(null)
-                              setSurgicalRequestSource(null)
-                              return
-                            }
-                            setSurgicalRequest({ id: req.id, label: req.custom_id })
-                            setSurgicalRequestSource("request")
-                          }}
-                          className={`flex items-start gap-2 rounded-lg border px-3 py-2 text-left text-[11px] transition ${
-                            active
-                              ? "border-sky-400 bg-sky-50 text-sky-800 dark:border-sky-600/50 dark:bg-sky-900/20 dark:text-sky-200"
-                              : "border-border bg-card/60 hover:border-sky-300"
-                          }`}
-                        >
-                          <span className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full ${active ? "bg-sky-500 text-white" : "border-2 border-[var(--gray-300)]"}`}>
-                            {active && <Check size={9} />}
-                          </span>
-                          <span>
-                            <span className="block font-semibold text-foreground">{req.custom_id}</span>
-                            <span className="block text-[10px] text-[var(--gray-500)]">{req.status}{req.priority ? ` · ${req.priority}` : ""}</span>
-                          </span>
-                        </button>
-                      )
-                    })}
+                    Nenhum procedimento cirúrgico foi encontrado neste contexto.
                   </div>
                 ) : (
-                  <div className="space-y-1.5">
-                    <p className="text-[10px] text-amber-600 dark:text-amber-400">
-                      Sem pedidos formais — seleccione uma cirurgia como referência (opcional):
-                    </p>
-                    <div className="grid gap-1.5 sm:grid-cols-2">
-                      {patientSurgeries.map((surg) => {
-                        const active = surgicalRequestSource === "surgery" && surgicalRequest?.id === surg.id
-                        const proc = surg.procedure_names?.[0] || surg.procedure || "—"
-                        return (
-                          <button
-                            key={surg.id}
-                            type="button"
-                            onClick={() => {
-                              if (active) {
-                                setSurgicalRequest(null)
-                                setSurgicalRequestSource(null)
-                                return
-                              }
-                              setSurgicalRequest({ id: surg.id, label: surg.custom_id })
-                              setSurgicalRequestSource("surgery")
-                            }}
-                            className={`flex items-start gap-2 rounded-lg border px-3 py-2 text-left text-[11px] transition ${
-                              active
-                                ? "border-sky-400 bg-sky-50 text-sky-800 dark:border-sky-600/50 dark:bg-sky-900/20 dark:text-sky-200"
-                                : "border-border bg-card/60 hover:border-sky-300"
-                            }`}
-                          >
-                            <span className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full ${active ? "bg-sky-500 text-white" : "border-2 border-[var(--gray-300)]"}`}>
-                              {active && <Check size={9} />}
-                            </span>
-                            <span>
-                              <span className="block font-semibold text-foreground">{surg.custom_id}</span>
-                              <span className="block truncate text-[10px] text-[var(--gray-500)]">{proc} · {surg.status}</span>
-                            </span>
-                          </button>
-                        )
-                      })}
-                    </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {contextProcedures.map((procedure) => (
+                      <span
+                        key={procedure.key}
+                        className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[10px] font-semibold text-slate-700 dark:border-white/10 dark:bg-white/[0.05] dark:text-slate-200"
+                      >
+                        {procedure.label}
+                      </span>
+                    ))}
                   </div>
                 )}
               </FieldRow>
             </div>
 
             <div className="mt-3">
-              <FieldRow label="Cirurgia proposta">
+              <FieldRow label={selectedContext?.kind === "request" ? "Cirurgias do pedido seleccionado" : "Cirurgias do contexto seleccionado"}>
                 {!patient ? (
                   <div className="rounded-lg border border-dashed border-border bg-card/40 px-3 py-2.5 text-[11px] text-[var(--gray-400)]">
-                    Seleccione um paciente para ver as cirurgias disponíveis.
+                    Seleccione um paciente para ver as cirurgias.
                   </div>
-                ) : loadingContext ? (
-                  <div className="flex items-center gap-1.5 rounded-lg border border-border bg-card/40 px-3 py-2.5 text-[11px] text-[var(--gray-400)]">
-                    <Loader2 size={11} className="animate-spin" /> A carregar cirurgias...
+                ) : !selectedContext ? (
+                  <div className="rounded-lg border border-dashed border-border bg-card/40 px-3 py-2.5 text-[11px] text-[var(--gray-400)]">
+                    Seleccione primeiro um pedido ou uma cirurgia marcada para abrir a selecção de cirurgias.
                   </div>
-                ) : patientSurgeries.length === 0 ? (
+                ) : contextSurgeries.length === 0 ? (
                   <div className="rounded-lg border border-dashed border-amber-200 bg-amber-50/40 px-3 py-2.5 text-[11px] text-amber-600 dark:border-amber-700/30 dark:bg-amber-900/10 dark:text-amber-400">
-                    Nenhuma cirurgia encontrada para este paciente.
+                    Nenhuma cirurgia agendada foi encontrada neste contexto.
                   </div>
                 ) : (
-                  <div className="grid gap-1.5 sm:grid-cols-2">
-                    {patientSurgeries.map((surg) => {
-                      const active = proposedSurgery?.id === surg.id
-                      const proc = surg.procedure_names?.[0] || surg.procedure || "—"
-                      const size = surg.surgery_size === "GRANDE" ? "Grande" : surg.surgery_size === "PEQUENA" ? "Pequena" : surg.surgery_size || ""
-                      return (
+                  <>
+                    {contextSurgeries.length > 1 ? (
+                      <div className="mb-2 flex justify-end">
                         <button
-                          key={surg.id}
                           type="button"
-                          onClick={() => setProposedSurgery(active ? null : { id: surg.id, label: surg.custom_id })}
-                          className={`flex items-start gap-2 rounded-lg border px-3 py-2 text-left text-[11px] transition ${
-                            active
-                              ? "border-violet-400 bg-violet-50 text-violet-800 dark:border-violet-600/50 dark:bg-violet-900/20 dark:text-violet-200"
-                              : "border-border bg-card/60 hover:border-violet-300"
-                          }`}
+                          onClick={() => {
+                            const allSelected = contextSurgeries.every((surgery) => selectedSurgeries.some((item) => item.id === surgery.id))
+                            setSelectedSurgeries(
+                              allSelected
+                                ? []
+                                : contextSurgeries.map((surgery) => ({ id: surgery.id, label: surgery.custom_id }))
+                            )
+                          }}
+                          className="text-[10px] font-semibold text-sky-600 hover:underline dark:text-sky-400"
                         >
-                          <span className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full ${active ? "bg-violet-500 text-white" : "border-2 border-[var(--gray-300)]"}`}>
-                            {active && <Check size={9} />}
-                          </span>
-                          <span>
-                            <span className="block font-semibold text-foreground">{surg.custom_id}</span>
-                            <span className="block truncate text-[10px] text-[var(--gray-500)]">{proc}{size ? ` · ${size}` : ""} · {surg.status}</span>
-                          </span>
+                          {contextSurgeries.every((surgery) => selectedSurgeries.some((item) => item.id === surgery.id))
+                            ? "Desseleccionar todas"
+                            : "Seleccionar todas"}
                         </button>
-                      )
-                    })}
-                  </div>
+                      </div>
+                    ) : null}
+
+                    <div className="grid gap-1.5 sm:grid-cols-2">
+                      {contextSurgeries.map((surgery) => {
+                        const selected = selectedSurgeries.some((item) => item.id === surgery.id)
+                        const firstProcedure = surgery?.procedure_names?.[0] || surgery?.procedure || "—"
+                        const size = labelSurgerySize(surgery?.surgery_size)
+                        return (
+                          <button
+                            key={surgery.id}
+                            type="button"
+                            onClick={() => setSelectedSurgeries((previous) =>
+                              selected
+                                ? previous.filter((item) => item.id !== surgery.id)
+                                : [...previous, { id: surgery.id, label: surgery.custom_id }]
+                            )}
+                            className={`flex items-start gap-2 rounded-lg border px-3 py-2 text-left text-[11px] transition ${
+                              selected ? "border-violet-400 bg-violet-50 text-violet-800 dark:border-violet-600/50 dark:bg-violet-900/20 dark:text-violet-200" : "border-border bg-card/60 hover:border-violet-300"
+                            }`}
+                          >
+                            <span className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full ${selected ? "bg-violet-500 text-white" : "border-2 border-[var(--gray-300)]"}`}>
+                              {selected && <Check size={9} />}
+                            </span>
+                            <span>
+                              <span className="block font-semibold text-foreground">{surgery.custom_id}</span>
+                              <span className="block truncate text-[10px] text-[var(--gray-500)]">
+                                {[firstProcedure, size, surgery?.status].filter(Boolean).join(" · ")}
+                              </span>
+                            </span>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </>
                 )}
               </FieldRow>
             </div>
