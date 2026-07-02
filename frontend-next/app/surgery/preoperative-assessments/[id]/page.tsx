@@ -103,6 +103,44 @@ function ExamBadge({ name, meta, color }: { name: string; meta?: string; color: 
   )
 }
 
+function RequestBox({
+  code,
+  href,
+  tone,
+}: {
+  code: string
+  href?: string | null
+  tone: "sky" | "violet"
+}) {
+  const palette = tone === "sky"
+    ? {
+        wrapper: "border-sky-300/70 bg-sky-100/80 dark:border-sky-700/40 dark:bg-sky-900/20",
+        label: "text-sky-900 dark:text-sky-100",
+        code: "bg-sky-700 text-white dark:bg-sky-500 dark:text-slate-950",
+        link: "text-sky-800 hover:text-sky-900 dark:text-sky-200 dark:hover:text-white",
+      }
+    : {
+        wrapper: "border-violet-300/70 bg-violet-100/80 dark:border-violet-700/40 dark:bg-violet-900/20",
+        label: "text-violet-900 dark:text-violet-100",
+        code: "bg-violet-700 text-white dark:bg-violet-500 dark:text-slate-950",
+        link: "text-violet-800 hover:text-violet-900 dark:text-violet-200 dark:hover:text-white",
+      }
+
+  return (
+    <div className={`mt-2 flex items-center gap-2 rounded-lg border px-2.5 py-1.5 text-[11px] ${palette.wrapper}`}>
+      <span className={`font-medium ${palette.label}`}>Requisição:</span>
+      <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 font-semibold shadow-sm ${palette.code}`}>
+        {code}
+      </span>
+      {href ? (
+        <Link href={href} className={`ml-auto inline-flex items-center gap-1 font-semibold transition ${palette.link}`}>
+          Ver pedido <ExternalLink size={10} />
+        </Link>
+      ) : null}
+    </div>
+  )
+}
+
 export default function PreoperativeAssessmentDetailPage() {
   const { id } = useParams<{ id: string }>()
   const [data, setData] = useState<any>(null)
@@ -311,16 +349,11 @@ export default function PreoperativeAssessmentDetailPage() {
               ))}
             </div>
             {labRequest && (
-              <div className="mt-2 flex items-center gap-2 rounded-lg border border-sky-200/60 bg-sky-50/40 px-2.5 py-1.5 text-[11px]">
-                <span className="text-[var(--gray-500)]">Requisição:</span>
-                <span className="font-semibold text-sky-700">{labRequest.code}</span>
-                {labRequest.id && (
-                  <Link href={`/clinical_laboratory/orders/${labRequest.id}`}
-                    className="ml-auto inline-flex items-center gap-1 text-sky-600 hover:underline">
-                    Ver pedido <ExternalLink size={10} />
-                  </Link>
-                )}
-              </div>
+              <RequestBox
+                code={labRequest.code}
+                href={labRequest.id ? `/clinical_laboratory/orders/${labRequest.id}` : null}
+                tone="sky"
+              />
             )}
           </SectionCard>
         ) : null}
@@ -338,16 +371,11 @@ export default function PreoperativeAssessmentDetailPage() {
               ))}
             </div>
             {medRequest && (
-              <div className="mt-2 flex items-center gap-2 rounded-lg border border-violet-200/60 bg-violet-50/40 px-2.5 py-1.5 text-[11px]">
-                <span className="text-[var(--gray-500)]">Requisição:</span>
-                <span className="font-semibold text-violet-700">{medRequest.code}</span>
-                {medRequest.id && (
-                  <Link href={`/specialty_diagnostics/orders/${medRequest.id}`}
-                    className="ml-auto inline-flex items-center gap-1 text-violet-600 hover:underline">
-                    Ver pedido <ExternalLink size={10} />
-                  </Link>
-                )}
-              </div>
+              <RequestBox
+                code={medRequest.code}
+                href={medRequest.id ? `/specialty_diagnostics/orders/${medRequest.id}` : null}
+                tone="violet"
+              />
             )}
           </SectionCard>
         ) : null}
