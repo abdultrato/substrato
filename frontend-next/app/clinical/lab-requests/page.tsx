@@ -123,7 +123,7 @@ export default function LabRequestsListPage() {
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <Link href="/clinical"
+                <Link href="/clinical-laboratory"
                   className="inline-flex h-8 items-center gap-1 rounded-lg border border-white/40 bg-white/30 px-2.5 text-[11px] text-[var(--gray-700)] backdrop-blur-sm transition hover:bg-white/50 dark:border-white/10 dark:text-[var(--gray-300)] dark:hover:bg-white/10">
                   <ChevronLeft size={11} /> Voltar
                 </Link>
