@@ -10,30 +10,15 @@ import { apiFetch } from "@/lib/api"
 import { GROUPS } from "@/lib/rbac"
 
 const GLASS = "rounded-xl border border-violet-200 bg-white/30 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]"
-const INPUT = "w-full rounded-lg border border-border bg-card px-3 py-2 text-[13px] text-foreground placeholder:text-muted-foreground focus:border-violet-400 focus:outline-none focus:ring-1 focus:ring-violet-200 dark:focus:ring-violet-800"
-const LABEL = "block text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--gray-500)] mb-1"
+const INPUT = "w-full rounded-lg border border-border bg-card px-2.5 py-1.5 text-[13px] text-foreground placeholder:text-muted-foreground focus:border-violet-400 focus:outline-none focus:ring-1 focus:ring-violet-200 dark:focus:ring-violet-800"
+const LABEL = "block text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--gray-500)] mb-0.5"
 
 type SurgeryType = "PEQUENA" | "GRANDE" | "AMBAS"
 
 const SURGERY_TYPE_OPTIONS: { value: SurgeryType; label: string; description: string; color: string }[] = [
-  {
-    value: "PEQUENA",
-    label: "Pequena cirurgia",
-    description: "Procedimentos de baixa complexidade, ambulatório ou internamento curto.",
-    color: "blue",
-  },
-  {
-    value: "GRANDE",
-    label: "Grande cirurgia",
-    description: "Procedimentos de alta complexidade com bloco operatório e internamento.",
-    color: "violet",
-  },
-  {
-    value: "AMBAS",
-    label: "Ambas",
-    description: "Aplicável a pequenas e grandes cirurgias.",
-    color: "slate",
-  },
+  { value: "PEQUENA", label: "Pequena cirurgia", description: "Baixa complexidade, ambulatório ou internamento curto.", color: "blue" },
+  { value: "GRANDE", label: "Grande cirurgia", description: "Alta complexidade com bloco operatório e internamento.", color: "violet" },
+  { value: "AMBAS", label: "Ambas", description: "Aplicável a pequenas e grandes cirurgias.", color: "slate" },
 ]
 
 export default function NewSurgicalProcedurePage() {
@@ -87,26 +72,26 @@ export default function NewSurgicalProcedurePage() {
 
   return (
     <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.ENFERMAGEM, GROUPS.MEDICINA]}>
-      <div className="mx-auto w-full max-w-2xl space-y-3 px-1">
+      <div className="mx-auto w-full max-w-2xl space-y-1 px-1">
 
         {/* header */}
         <section className={`relative overflow-hidden ${GLASS}`}>
           <span className="absolute left-0 top-0 h-full w-1 bg-violet-400" />
-          <div className="flex items-center justify-between gap-3 px-4 py-3 pl-5">
+          <div className="flex items-center justify-between gap-2 px-3 py-2 pl-4">
             <div>
-              <div className="flex items-center gap-1.5 text-[10px] text-[var(--gray-500)]">
+              <div className="flex items-center gap-1 text-[10px] text-[var(--gray-500)]">
                 <Link href="/surgery" className="hover:text-foreground">Cirurgia</Link>
                 <span>/</span>
                 <Link href="/surgery/surgical-procedures" className="hover:text-foreground">Procedimentos</Link>
                 <span>/</span>
                 <span className="font-semibold text-foreground">Novo</span>
               </div>
-              <div className="mt-0.5 flex items-center gap-2">
-                <Scissors size={14} className="text-violet-500" />
-                <h1 className="font-display text-base font-semibold text-foreground">Novo procedimento cirúrgico</h1>
+              <div className="flex items-center gap-1.5">
+                <Scissors size={13} className="text-violet-500" />
+                <h1 className="font-display text-sm font-semibold text-foreground">Novo procedimento cirúrgico</h1>
               </div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5">
               <Link href="/surgery/surgical-procedures"
                 className="inline-flex h-7 items-center gap-1 rounded-md border border-border bg-card px-2.5 text-[11px] text-muted-foreground hover:bg-muted">
                 <ArrowLeft size={11} /> Cancelar
@@ -120,28 +105,27 @@ export default function NewSurgicalProcedurePage() {
           </div>
         </section>
 
-        <form id="new-proc-form" onSubmit={handleSubmit} className="space-y-3">
+        <form id="new-proc-form" onSubmit={handleSubmit} className="space-y-1">
 
           {/* identificação */}
           <section className={`relative overflow-hidden ${GLASS}`}>
             <span className="absolute left-0 top-0 h-full w-1 bg-violet-400" />
-            <div className="px-4 py-3 pl-5">
-              <div className="mb-3 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--gray-500)]">
-                <Scissors size={13} /><span>Identificação</span>
+            <div className="px-3 py-2 pl-4">
+              <div className="mb-1.5 flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--gray-500)]">
+                <Scissors size={11} /><span>Identificação</span>
               </div>
-              <div className="grid gap-3">
+              <div className="grid gap-1.5">
                 <div>
                   <label className={LABEL}>Nome *</label>
                   <input value={name} onChange={e => setName(e.target.value)} className={INPUT} placeholder="Ex: Apendicectomia" />
-                  {errors.name && <p className="mt-1 text-[11px] text-rose-500">{errors.name}</p>}
+                  {errors.name && <p className="mt-0.5 text-[11px] text-rose-500">{errors.name}</p>}
                 </div>
                 <div>
                   <label className={LABEL}>Descrição</label>
-                  <textarea rows={3} value={description} onChange={e => setDescription(e.target.value)}
+                  <textarea rows={2} value={description} onChange={e => setDescription(e.target.value)}
                     className={`${INPUT} resize-none`} placeholder="Descrição do procedimento..." />
                 </div>
-                {/* estado activo inline */}
-                <div className="flex items-center justify-between rounded-lg border border-border bg-card/60 px-3 py-2">
+                <div className="flex items-center justify-between rounded-lg border border-border bg-card/60 px-2.5 py-1.5">
                   <div>
                     <p className="text-[12px] font-semibold text-foreground">Procedimento activo</p>
                     <p className="text-[10px] text-[var(--gray-500)]">Inactivos não aparecem na selecção de cirurgias</p>
@@ -158,16 +142,16 @@ export default function NewSurgicalProcedurePage() {
           {/* financeiro */}
           <section className={`relative overflow-hidden ${GLASS}`}>
             <span className="absolute left-0 top-0 h-full w-1 bg-teal-400" />
-            <div className="px-4 py-3 pl-5">
-              <div className="mb-3 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--gray-500)]">
-                <CreditCard size={13} /><span>Financeiro</span>
+            <div className="px-3 py-2 pl-4">
+              <div className="mb-1.5 flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--gray-500)]">
+                <CreditCard size={11} /><span>Financeiro</span>
               </div>
-              <div className="grid gap-3 sm:grid-cols-2">
+              <div className="grid gap-1.5 sm:grid-cols-2">
                 <div>
                   <label className={LABEL}>Preço base (MT) *</label>
                   <input type="number" min="0" step="0.01" value={basePrice} onChange={e => setBasePrice(e.target.value)}
                     className={INPUT} placeholder="0.00" />
-                  {errors.basePrice && <p className="mt-1 text-[11px] text-rose-500">{errors.basePrice}</p>}
+                  {errors.basePrice && <p className="mt-0.5 text-[11px] text-rose-500">{errors.basePrice}</p>}
                 </div>
                 <div>
                   <label className={LABEL}>IVA (%)</label>
@@ -175,19 +159,17 @@ export default function NewSurgicalProcedurePage() {
                     className={INPUT} placeholder="5" />
                 </div>
               </div>
-
-              <div className="mt-3 flex items-center gap-2">
+              <div className="mt-1.5 flex items-center gap-2">
                 <button type="button" onClick={() => setAppliesVat(v => !v)}
                   className={`relative h-5 w-9 rounded-full transition-colors ${appliesVat ? "bg-teal-500" : "bg-slate-300 dark:bg-slate-600"}`}>
                   <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-all ${appliesVat ? "left-[18px]" : "left-0.5"}`} />
                 </button>
                 <span className="text-[12px] text-foreground">Aplicar IVA por defeito</span>
               </div>
-
               {base > 0 && appliesVat && vat > 0 && (
-                <div className="mt-3 flex items-center justify-between rounded-lg border border-teal-200/50 bg-teal-50/40 px-3 py-2 dark:border-teal-700/20 dark:bg-teal-900/10">
+                <div className="mt-1.5 flex items-center justify-between rounded-lg border border-teal-200/50 bg-teal-50/40 px-2.5 py-1.5 dark:border-teal-700/20 dark:bg-teal-900/10">
                   <span className="text-[10px] font-semibold uppercase tracking-wide text-[var(--gray-500)]">Total c/ IVA ({vat}%)</span>
-                  <span className="text-[14px] font-bold text-teal-600 dark:text-teal-400">
+                  <span className="text-[13px] font-bold text-teal-600 dark:text-teal-400">
                     {total.toLocaleString("pt-PT", { minimumFractionDigits: 2 })} MT
                   </span>
                 </div>
@@ -198,11 +180,11 @@ export default function NewSurgicalProcedurePage() {
           {/* tipo de cirurgia */}
           <section className={`relative overflow-hidden ${GLASS}`}>
             <span className="absolute left-0 top-0 h-full w-1 bg-sky-400" />
-            <div className="px-4 py-3 pl-5">
-              <div className="mb-3 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--gray-500)]">
-                <Stethoscope size={13} /><span>Tipo de cirurgia</span>
+            <div className="px-3 py-2 pl-4">
+              <div className="mb-1.5 flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--gray-500)]">
+                <Stethoscope size={11} /><span>Tipo de cirurgia</span>
               </div>
-              <div className="grid gap-2 sm:grid-cols-3">
+              <div className="grid gap-1 sm:grid-cols-3">
                 {SURGERY_TYPE_OPTIONS.map(opt => {
                   const selected = surgeryType === opt.value
                   const colorMap: Record<string, string> = {
@@ -226,16 +208,16 @@ export default function NewSurgicalProcedurePage() {
                       key={opt.value}
                       type="button"
                       onClick={() => setSurgeryType(opt.value)}
-                      className={`flex flex-col gap-1 rounded-xl border p-3 text-left transition ${colorMap[opt.color]}`}
+                      className={`flex flex-col gap-0.5 rounded-lg border p-2 text-left transition ${colorMap[opt.color]}`}
                     >
-                      <div className="flex items-center gap-2">
-                        <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${dotMap[opt.color]} ${selected ? "opacity-100" : "opacity-30"}`} />
-                        <span className={`text-[12px] font-semibold ${selected ? "text-foreground" : "text-[var(--gray-500)]"}`}>
+                      <div className="flex items-center gap-1.5">
+                        <span className={`h-2 w-2 shrink-0 rounded-full ${dotMap[opt.color]} ${selected ? "opacity-100" : "opacity-30"}`} />
+                        <span className={`text-[11px] font-semibold ${selected ? "text-foreground" : "text-[var(--gray-500)]"}`}>
                           {opt.label}
                         </span>
-                        {selected && <Check size={11} className="ml-auto shrink-0 text-emerald-500" />}
+                        {selected && <Check size={10} className="ml-auto shrink-0 text-emerald-500" />}
                       </div>
-                      <p className="text-[10px] leading-relaxed text-[var(--gray-400)]">{opt.description}</p>
+                      <p className="text-[10px] leading-snug text-[var(--gray-400)]">{opt.description}</p>
                     </button>
                   )
                 })}
@@ -244,7 +226,7 @@ export default function NewSurgicalProcedurePage() {
           </section>
 
           {errors._ && (
-            <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-[12px] text-rose-700">{errors._}</div>
+            <div className="rounded-lg border border-rose-200 bg-rose-50 px-2.5 py-1.5 text-[12px] text-rose-700">{errors._}</div>
           )}
         </form>
       </div>
