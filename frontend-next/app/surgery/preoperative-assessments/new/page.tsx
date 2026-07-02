@@ -668,12 +668,14 @@ export default function NewPreoperativeAssessmentPage() {
       }
 
       if (fitForSurgery !== null) body.fit_for_surgery = fitForSurgery
-      if (surgicalRequest) body.surgical_request = surgicalRequest.id
-      if (proposedSurgery) body.proposed_surgery = proposedSurgery.id
       if (evaluator) body.evaluator = evaluator.id
-      body.laboratory_exams = selectedLaboratoryExams.map((item) => item.id)
-      body.medical_exams = selectedMedicalExams.map((item) => item.id)
-
+      // when no formal requests exist, surgicalRequest holds a surgery id (fallback)
+      if (patientRequests.length === 0 && surgicalRequest) {
+        body.proposed_surgery = proposedSurgery?.id ?? surgicalRequest.id
+      } else {
+        if (surgicalRequest) body.surgical_request = surgicalRequest.id
+        if (proposedSurgery) body.proposed_surgery = proposedSurgery.id
+      }
       const response = await apiFetch<any>("/surgery/avaliacao_pre_operatoria/", {
         method: "POST",
         body: JSON.stringify(body),
