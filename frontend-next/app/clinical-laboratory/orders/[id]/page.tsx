@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { useCallback, useEffect, useState } from "react"
-import { useParams } from "next/navigation"
+import { useParams, useRouter } from "next/navigation"
 import {
   AlertCircle,
   ArrowLeft,
@@ -121,26 +121,37 @@ const GLASS = "rounded-xl border border-[var(--border)] bg-white/30 shadow-sm ba
 
 export default function LabOrderDetailPage() {
   const params = useParams()
+  const router = useRouter()
   const id = routeParamToString((params as any)?.id)
   const [record, setRecord] = useState<LabOrder | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [feedback, setFeedback] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+  const [redirectingLegacy, setRedirectingLegacy] = useState(false)
 
   const load = useCallback(async () => {
     if (!id) return
     setLoading(true)
     setError(null)
+    setRedirectingLegacy(false)
     try {
       const data = await apiFetch<LabOrder>(`/clinical_laboratory/order/${id}/`, { clientCache: false })
       setRecord(data)
     } catch (e: any) {
+      try {
+        const request = await apiFetch<Record<string, any>>(`/clinical/lab-requests/${id}/`, { clientCache: false })
+        if (String(request?.type || "").toUpperCase() === "LAB") {
+          setRedirectingLegacy(true)
+          router.replace(`/clinical/lab-requests/${id}`)
+          return
+        }
+      } catch {}
       setError(e?.message || "Erro ao carregar a ordem.")
     } finally {
       setLoading(false)
     }
-  }, [id])
+  }, [id, router])
 
   useEffect(() => { load() }, [load])
 
@@ -249,7 +260,11 @@ export default function LabOrderDetailPage() {
           </div>
         )}
 
-        {loading && !record ? (
+        {redirectingLegacy ? (
+          <div className={`${GLASS} flex items-center gap-2 px-4 py-6 text-[12px] text-[var(--gray-400)]`}>
+            <Loader2 size={14} className="animate-spin" /> A redirecionar para a requisição clínica...
+          </div>
+        ) : loading && !record ? (
           <div className={`${GLASS} flex items-center gap-2 px-4 py-6 text-[12px] text-[var(--gray-400)]`}>
             <Loader2 size={14} className="animate-spin" /> A carregar ordem...
           </div>
