@@ -1,6 +1,49 @@
 from __future__ import annotations
 
+import re
 from typing import Any
+
+# Linhas de rodapé "de auditoria" que eram anexadas a todas as respostas. O
+# utilizador achou-as ruído — removemos do texto mostrado, mantendo a resposta
+# natural. (A auditoria real continua nos registos do backend, não no chat.)
+_FOOTER_LINE_PREFIXES = (
+    "evidência interna usada",
+    "evidencia interna usada",
+    "internal evidence used",
+    "limitação",
+    "limitacao",
+    "limitation",
+    "próximo passo sugerido",
+    "proximo passo sugerido",
+    "próximos passos sugeridos",
+    "proximos passos sugeridos",
+    "suggested next step",
+    "suggested next steps",
+)
+
+
+def strip_audit_footer(answer: str) -> str:
+    """Remove as linhas de rodapé de evidência/limitação/próximo passo.
+
+    Mantém intacto o corpo útil da resposta; apenas descarta as linhas finais
+    (e linhas em branco adjacentes) cujo início corresponde a um dos prefixos.
+    """
+
+    if not answer:
+        return answer or ""
+    lines = answer.replace("\r\n", "\n").split("\n")
+
+    def _is_footer(line: str) -> bool:
+        norm = line.strip().lstrip("-•*").strip().lower()
+        # tolera markdown (**Limitação:**) e dois-pontos
+        norm = norm.replace("*", "").replace("#", "").strip()
+        return any(norm.startswith(prefix) for prefix in _FOOTER_LINE_PREFIXES)
+
+    kept = [ln for ln in lines if not _is_footer(ln)]
+    # Colapsa 3+ linhas em branco resultantes e apara o fim.
+    text = "\n".join(kept)
+    text = re.sub(r"\n{3,}", "\n\n", text).strip()
+    return text
 
 
 def build_natural_bridge(
@@ -59,7 +102,7 @@ def build_natural_bridge(
 def polish_natural_answer(*, answer: str, bridge: dict[str, Any] | None, language: str) -> str:
     """Replaces repetitive opening boilerplate with the bridge lead, preserving evidence and limits."""
 
-    answer = answer or ""
+    answer = strip_audit_footer(answer or "")
     bridge = bridge or {}
     lead = str(bridge.get("lead") or "").strip()
     if bridge.get("status") != "connected" or not lead or _should_keep_answer_unchanged(answer=answer, language=language):

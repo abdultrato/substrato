@@ -12,7 +12,7 @@ from apps.billing.models import Invoice
 from apps.payments.models import Payment
 from security.permissions.rbac import GROUPS as RBAC_GROUPS
 
-from .base import AiTool, AiToolContext
+from .base import AiTool, AiToolContext, format_money
 from .command_center import coerce_int
 
 
@@ -34,6 +34,7 @@ class FinancialOperationalSummaryTool(AiTool):
         confirmed_payment_total = payments_qs.filter(status=Payment.Status.CONFIRMED).aggregate(
             total=Coalesce(Sum("value"), Decimal("0.00"))
         )["total"]
+        currency = str(getattr(getattr(tenant, "configuracao", None), "currency", "") or "MZN") or "MZN"
 
         return {
             "summary": {
@@ -43,8 +44,8 @@ class FinancialOperationalSummaryTool(AiTool):
                     {"label_pt": "Faturas emitidas", "label_en": "Issued invoices", "value": invoices_qs.exclude(status=Invoice.Status.DRAFT).count()},
                     {"label_pt": "Faturas pagas", "label_en": "Paid invoices", "value": invoices_qs.filter(status=Invoice.Status.PAID).count()},
                     {"label_pt": "Faturas pendentes", "label_en": "Pending invoices", "value": invoices_qs.exclude(status__in=[Invoice.Status.PAID, Invoice.Status.CANCELED]).count()},
-                    {"label_pt": "Total faturado", "label_en": "Invoiced total", "value": str(invoice_total)},
-                    {"label_pt": "Pagamentos confirmados", "label_en": "Confirmed payments", "value": str(confirmed_payment_total)},
+                    {"label_pt": "Total faturado", "label_en": "Invoiced total", "value": format_money(invoice_total, currency=currency)},
+                    {"label_pt": "Pagamentos confirmados", "label_en": "Confirmed payments", "value": format_money(confirmed_payment_total, currency=currency)},
                     {"label_pt": "Pagamentos falhados", "label_en": "Failed payments", "value": payments_qs.filter(status=Payment.Status.FAILED).count()},
                 ],
                 "invoice_status": list(invoices_qs.values("status").annotate(total=Count("id")).order_by("-total", "status")),

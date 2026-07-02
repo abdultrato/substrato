@@ -306,6 +306,42 @@ function formatValue(value: unknown) {
   return String(value)
 }
 
+/**
+ * Revela o texto letra a letra (efeito de chatbot). Só anima quando `animate`
+ * é true (mensagens novas); caso contrário mostra o texto completo de imediato.
+ * Chama `onTick` a cada avanço para manter o scroll no fim.
+ */
+function Typewriter({ text, animate, onTick }: { text: string; animate: boolean; onTick?: () => void }) {
+  const [shown, setShown] = useState(animate ? "" : text)
+  useEffect(() => {
+    if (!animate) {
+      setShown(text)
+      return
+    }
+    let i = 0
+    setShown("")
+    // Ritmo natural: avança alguns caracteres por tick para textos longos.
+    const step = text.length > 400 ? 4 : text.length > 120 ? 2 : 1
+    const id = window.setInterval(() => {
+      i = Math.min(text.length, i + step)
+      setShown(text.slice(0, i))
+      onTick?.()
+      if (i >= text.length) window.clearInterval(id)
+    }, 18)
+    return () => window.clearInterval(id)
+    // Anima uma vez por texto/mensagem.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [text, animate])
+
+  const typing = animate && shown.length < text.length
+  return (
+    <>
+      {shown}
+      {typing ? <span className="ml-0.5 inline-block h-3.5 w-[2px] translate-y-0.5 animate-pulse bg-current align-baseline" /> : null}
+    </>
+  )
+}
+
 function AiStructuredResultPanel({ schema, onAsk }: { schema?: AiResponseSchema; onAsk?: (question: string) => void }) {
   const { t, language } = useLanguage()
   const cards = schema?.cards || []
@@ -989,6 +1025,8 @@ export default function AiOperationalPage() {
   const [investigations, setInvestigations] = useState<AiInvestigation[]>([])
   const [confirmingActionId, setConfirmingActionId] = useState<number | null>(null)
   const [actionResults, setActionResults] = useState<Record<number, AiSuggestedAction>>({})
+  // Id da mensagem da IA acabada de chegar — só essa é revelada letra a letra.
+  const [streamingId, setStreamingId] = useState<string | null>(null)
   const bottomRef = useRef<HTMLDivElement | null>(null)
   const composerRef = useRef<HTMLTextAreaElement | null>(null)
 
@@ -1057,6 +1095,7 @@ export default function AiOperationalPage() {
       })
 
       setSessionId(response.session_id)
+      setStreamingId(`assistant-${response.message_id}`)
       setMessages((current) => [
         ...current,
         {
@@ -1227,28 +1266,28 @@ export default function AiOperationalPage() {
 
   return (
     <AppLayout>
-      <div className="mx-auto flex h-[calc(100vh-8rem)] max-w-3xl flex-col gap-2">
-        {/* Cabeçalho mínimo */}
-        <div className="flex items-center gap-2">
+      <div className="mx-auto flex h-[calc(100vh-8rem)] max-w-7xl flex-col gap-3">
+        <div className="flex items-center gap-2 rounded-2xl border border-white/20 bg-white/30 px-3 py-2 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]">
           <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-indigo-600 text-white shadow-sm">
             <Bot size={16} />
           </span>
           <div className="min-w-0">
             <h1 className="text-sm font-bold leading-tight text-foreground">{t("IA Operacional", "Operational AI")}</h1>
-            <p className="truncate text-[11px] text-muted-foreground">{t("Assistente por texto, com o seu perfil e permissões.", "Text assistant, scoped to your profile and permissions.")}</p>
+            <p className="truncate text-[11px] text-muted-foreground">
+              {t("Assistente auditável, com contexto do projecto, ferramentas internas e permissões reais.", "Auditable assistant with project context, internal tools, and real permissions.")}
+            </p>
           </div>
         </div>
 
-        {/* Conversa */}
-        <div className="flex min-h-0 flex-1 flex-col rounded-2xl border border-white/20 bg-white/30 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]">
-          <div className="min-h-0 flex-1 space-y-2 overflow-y-auto p-3">
+        <div className="grid min-h-0 flex-1 gap-3 xl:grid-cols-[minmax(0,1fr)_20rem]">
+          <div className="flex min-h-0 flex-1 flex-col rounded-2xl border border-white/20 bg-white/30 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]">
+            <div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-3">
             {!messages.length && !loading ? (
               <div className="flex h-full flex-col items-center justify-center gap-1 text-center">
                 <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-violet-500/10 text-violet-600 dark:text-violet-400">
                   <Bot size={20} />
                 </span>
                 <p className="text-sm font-medium text-foreground">{t("Escreva a sua pergunta", "Type your question")}</p>
-                <p className="max-w-xs text-xs text-muted-foreground">{t("A IA responde em texto, respeitando o seu perfil.", "The AI replies in text, respecting your profile.")}</p>
               </div>
             ) : null}
 
@@ -1256,17 +1295,27 @@ export default function AiOperationalPage() {
               const isUser = message.role === "user"
               const isError = message.role === "error"
               return (
-                <div
-                  key={message.id}
-                  className={`w-fit max-w-[85%] whitespace-pre-wrap rounded-2xl px-3 py-2 text-sm leading-relaxed ${
-                    isUser
-                      ? "ml-auto bg-gradient-to-br from-violet-600 to-indigo-600 text-white"
-                      : isError
-                        ? "mr-auto border border-rose-200 bg-rose-50 text-rose-800 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-100"
-                        : "mr-auto border border-white/20 bg-white/60 text-foreground dark:border-white/10 dark:bg-white/[0.06]"
-                  }`}
-                >
-                  {message.content}
+                <div key={message.id} className={isUser ? "ml-auto w-full max-w-[85%]" : "mr-auto w-full max-w-[92%]"}>
+                  <div
+                    className={`whitespace-pre-wrap rounded-2xl px-3 py-2 text-sm leading-relaxed ${
+                      isUser
+                        ? "bg-gradient-to-br from-violet-600 to-indigo-600 text-white"
+                        : isError
+                          ? "border border-rose-200 bg-rose-50 text-rose-800 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-100"
+                          : "border border-white/20 bg-white/60 text-foreground dark:border-white/10 dark:bg-white/[0.06]"
+                    }`}
+                  >
+                    {!isUser && !isError ? (
+                      <Typewriter
+                        text={message.content}
+                        animate={message.id === streamingId}
+                        onTick={() => bottomRef.current?.scrollIntoView({ behavior: "auto", block: "end" })}
+                      />
+                    ) : (
+                      message.content
+                    )}
+                  </div>
+
                 </div>
               )
             })}
@@ -1279,30 +1328,39 @@ export default function AiOperationalPage() {
               </div>
             ) : null}
             <div ref={bottomRef} />
+            </div>
+
+            <form onSubmit={handleSubmit} className="border-t border-white/20 p-2 dark:border-white/10">
+              <div className="flex items-end gap-2">
+                <TextAreaInput
+                  ref={composerRef}
+                  value={composer}
+                  onChange={(event) => setComposer(event.target.value)}
+                  rows={1}
+                  placeholder={t("Escreva uma mensagem…", "Type a message…")}
+                  className="max-h-32 min-h-[2.5rem] flex-1 resize-none"
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" && !event.shiftKey) {
+                      event.preventDefault()
+                      void handleSubmit()
+                    }
+                  }}
+                />
+                <Button type="submit" loading={loading} disabled={!composer.trim()}>
+                  <Send size={15} />
+                </Button>
+              </div>
+            </form>
           </div>
 
-          {/* Composer */}
-          <form onSubmit={handleSubmit} className="border-t border-white/20 p-2 dark:border-white/10">
-            <div className="flex items-end gap-2">
-              <TextAreaInput
-                ref={composerRef}
-                value={composer}
-                onChange={(event) => setComposer(event.target.value)}
-                rows={1}
-                placeholder={t("Escreva uma mensagem…", "Type a message…")}
-                className="max-h-32 min-h-[2.5rem] flex-1 resize-none"
-                onKeyDown={(event) => {
-                  if (event.key === "Enter" && !event.shiftKey) {
-                    event.preventDefault()
-                    void handleSubmit()
-                  }
-                }}
-              />
-              <Button type="submit" loading={loading} disabled={!composer.trim()}>
-                <Send size={15} />
-              </Button>
-            </div>
-          </form>
+          <aside className="hidden min-h-0 overflow-hidden rounded-2xl border border-white/20 bg-white/30 shadow-sm backdrop-blur-sm xl:block dark:border-white/10 dark:bg-white/[0.04]">
+            <AiContextAside
+              tools={tools}
+              sessions={sessions}
+              investigations={investigations}
+              loading={toolsLoading}
+            />
+          </aside>
         </div>
       </div>
     </AppLayout>
