@@ -15,7 +15,7 @@ const GLASS = "rounded-xl border border-violet-200 bg-white/30 shadow-sm backdro
 const INPUT = "w-full rounded-lg border border-border bg-card px-3 py-2 text-[13px] text-foreground placeholder:text-muted-foreground focus:border-violet-400 focus:outline-none focus:ring-1 focus:ring-violet-200 dark:focus:ring-violet-800"
 const LABEL = "block text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--gray-500)] mb-1"
 
-type MatItem = { id: number; name: string; type: string; sale_price: string; qty: number }
+type MatItem = { id: number; name: string; type: string; sale_price: string; vat_percentage: string; applies_vat_by_default: boolean; qty: number }
 type SurgeryType = "PEQUENA" | "GRANDE" | "AMBAS"
 
 const SURGERY_TYPE_OPTIONS: { value: SurgeryType; label: string; description: string; color: string }[] = [
@@ -88,6 +88,8 @@ export default function SurgicalProcedureDetailPage() {
           name: m.name,
           type: m.type || "OUT",
           sale_price: m.sale_price || "0.00",
+          vat_percentage: m.vat_percentage || "0.00",
+          applies_vat_by_default: m.applies_vat_by_default ?? true,
           qty: m.qty ?? 1,
         }))
       )
@@ -110,6 +112,8 @@ export default function SurgicalProcedureDetailPage() {
           name: p.name,
           type: p.type || "OUT",
           sale_price: p.sale_price || "0.00",
+          vat_percentage: p.vat_percentage || "0.00",
+          applies_vat_by_default: p.applies_vat_by_default ?? true,
         }))
         setMatResults(list)
         if (list.length > 0) {
@@ -225,8 +229,10 @@ export default function SurgicalProcedureDetailPage() {
   const base = parseFloat(basePrice || "0")
   const vat = parseFloat(vatPct || "0")
   const procTotal = appliesVat ? base * (1 + vat / 100) : base
-  // materials total (qty × unit price, same vat)
-  const matTotal = materials.reduce((s, m) => s + parseFloat(m.sale_price || "0") * m.qty, 0)
+  const matTotal = materials.reduce((s, m) => {
+    const unitVat = m.applies_vat_by_default ? parseFloat(m.vat_percentage || "0") : 0
+    return s + parseFloat(m.sale_price || "0") * m.qty * (1 + unitVat / 100)
+  }, 0)
   const grandTotal = procTotal + matTotal
 
   if (loading) return (
@@ -416,7 +422,7 @@ export default function SurgicalProcedureDetailPage() {
 
             {/* search input */}
             <div ref={matRef} className="relative">
-              <div className="flex h-8 items-center gap-2 rounded-lg border border-border bg-card px-2.5 focus-within:border-amber-400 focus-within:ring-1 focus-within:ring-amber-200 dark:focus-within:ring-amber-800">
+              <div className="flex h-7 items-center gap-2 rounded-lg border border-border bg-card px-2.5 focus-within:border-amber-400 focus-within:ring-1 focus-within:ring-amber-200 dark:focus-within:ring-amber-800">
                 <Search size={11} className="shrink-0 text-[var(--gray-400)]" />
                 <input
                   value={matQuery}
@@ -431,86 +437,67 @@ export default function SurgicalProcedureDetailPage() {
                   placeholder="Pesquisar produto de farmácia..."
                   className="flex-1 bg-transparent text-[12px] text-foreground placeholder:text-muted-foreground focus:outline-none"
                 />
-                {matLoading && (
-                  <span className="h-3 w-3 animate-spin rounded-full border border-amber-400 border-t-transparent bg-transparent" />
-                )}
+                {matLoading && <span className="h-3 w-3 animate-spin rounded-full border border-amber-400 border-t-transparent" />}
               </div>
 
-              {/* inline qty picker — appears inside the card */}
+              {/* qty picker */}
               {pending && (
-                <div className="mt-1.5 flex items-center gap-2 rounded-lg border border-amber-300 bg-amber-50/80 px-3 py-2 dark:border-amber-700/40 dark:bg-amber-900/15">
-                  <div className="flex-1 min-w-0">
+                <div className="mt-1 flex items-center gap-2 rounded-lg border border-amber-300 bg-amber-50/80 px-2.5 py-1.5 dark:border-amber-700/40 dark:bg-amber-900/15">
+                  <div className="min-w-0 flex-1">
                     <p className="truncate text-[12px] font-semibold text-amber-900 dark:text-amber-200">{pending.name}</p>
                     <p className="text-[10px] text-amber-700/70 dark:text-amber-400/70">
                       {TYPE_LABEL[pending.type] || pending.type} · {fmtMT(parseFloat(pending.sale_price || "0"))} / un.
+                      {pending.applies_vat_by_default && parseFloat(pending.vat_percentage) > 0
+                        ? ` + IVA ${pending.vat_percentage}%`
+                        : " · isento IVA"}
                     </p>
                   </div>
-                  <div className="flex items-center gap-1.5 shrink-0">
+                  <div className="flex shrink-0 items-center gap-1.5">
                     <label className="text-[10px] font-semibold text-amber-700 dark:text-amber-300">Qtd.</label>
-                    <input
-                      ref={qtyRef}
-                      type="number"
-                      min="1"
-                      step="1"
-                      value={pendingQty}
-                      onChange={e => setPendingQty(e.target.value)}
+                    <input ref={qtyRef} type="number" min="1" step="1"
+                      value={pendingQty} onChange={e => setPendingQty(e.target.value)}
                       onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); confirmAdd() } if (e.key === "Escape") setPending(null) }}
-                      className="w-14 rounded-md border border-amber-300 bg-white px-2 py-1 text-center text-[12px] font-semibold text-foreground focus:border-amber-500 focus:outline-none dark:border-amber-700/50 dark:bg-slate-900/40"
+                      className="w-12 rounded-md border border-amber-300 bg-white px-2 py-0.5 text-center text-[12px] font-semibold text-foreground focus:border-amber-500 focus:outline-none dark:border-amber-700/50 dark:bg-slate-900/40"
                     />
                   </div>
-                  <button
-                    type="button"
-                    onClick={confirmAdd}
-                    className="inline-flex h-7 items-center gap-1 rounded-md bg-amber-500 px-2.5 text-[11px] font-semibold text-white hover:bg-amber-600"
-                  >
-                    <Plus size={11} /> Adicionar
+                  <button type="button" onClick={confirmAdd}
+                    className="inline-flex h-6 items-center gap-1 rounded-md bg-amber-500 px-2 text-[11px] font-semibold text-white hover:bg-amber-600">
+                    <Plus size={10} /> Adicionar
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => setPending(null)}
-                    className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-border text-muted-foreground hover:bg-muted"
-                  >
-                    <X size={11} />
+                  <button type="button" onClick={() => setPending(null)}
+                    className="inline-flex h-6 w-6 items-center justify-center rounded-md border border-border text-muted-foreground hover:bg-muted">
+                    <X size={10} />
                   </button>
                 </div>
               )}
 
               {/* portal dropdown */}
               {matOpen && matRect && matResults.length > 0 && typeof document !== "undefined" && createPortal(
-                <div
-                  style={{
-                    position: "fixed",
-                    top: matRect.bottom + 4,
-                    left: matRect.left,
-                    width: matRect.width,
-                    zIndex: 9999,
-                  }}
-                  className="rounded-xl border border-border bg-card shadow-xl"
-                >
+                <div style={{ position: "fixed", top: matRect.bottom + 4, left: matRect.left, width: matRect.width, zIndex: 9999 }}
+                  className="rounded-xl border border-border bg-card shadow-xl">
                   {matResults.map(item => {
                     const already = materials.some(m => m.id === item.id)
+                    const unitVat = item.applies_vat_by_default ? parseFloat(item.vat_percentage || "0") : 0
+                    const unitTotal = parseFloat(item.sale_price || "0") * (1 + unitVat / 100)
                     return (
-                      <button
-                        key={item.id}
-                        type="button"
-                        onMouseDown={e => {
-                          e.preventDefault()
-                          setMatOpen(false)
-                          setPending(item)
-                        }}
+                      <button key={item.id} type="button"
+                        onMouseDown={e => { e.preventDefault(); setMatOpen(false); setPending(item) }}
                         disabled={already}
-                        className={`flex w-full items-center justify-between gap-3 px-3 py-2 text-left first:rounded-t-xl last:rounded-b-xl transition ${
+                        className={`flex w-full items-center justify-between gap-3 px-3 py-1.5 text-left first:rounded-t-xl last:rounded-b-xl transition ${
                           already ? "cursor-default opacity-40" : "hover:bg-amber-50/60 dark:hover:bg-amber-900/10"
-                        }`}
-                      >
+                        }`}>
                         <div className="flex flex-col gap-0.5">
                           <span className="text-[12px] font-medium text-foreground">{item.name}</span>
-                          <span className="text-[10px] text-[var(--gray-400)]">{TYPE_LABEL[item.type] || item.type}</span>
+                          <span className="text-[10px] text-[var(--gray-400)]">
+                            {TYPE_LABEL[item.type] || item.type}
+                            {unitVat > 0 ? ` · IVA ${unitVat}%` : " · isento IVA"}
+                          </span>
                         </div>
                         <div className="flex shrink-0 items-center gap-2">
-                          <span className="text-[11px] font-semibold text-teal-600 dark:text-teal-400">
-                            {fmtMT(parseFloat(item.sale_price || "0"))}
-                          </span>
+                          <div className="flex flex-col items-end">
+                            <span className="text-[11px] font-semibold text-teal-600 dark:text-teal-400">{fmtMT(unitTotal)}</span>
+                            {unitVat > 0 && <span className="text-[9px] text-[var(--gray-400)]">{fmtMT(parseFloat(item.sale_price || "0"))} s/ IVA</span>}
+                          </div>
                           {already && <Check size={12} className="text-emerald-500" />}
                         </div>
                       </button>
@@ -521,33 +508,37 @@ export default function SurgicalProcedureDetailPage() {
               )}
             </div>
 
-            {/* chips */}
+            {/* lista */}
             {materials.length > 0 ? (
-              <div className="mt-2.5 flex flex-wrap gap-1.5">
-                {materials.map(m => (
-                  <div key={m.id}
-                    className="flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 dark:border-amber-700/30 dark:bg-amber-900/10">
-                    <span className="text-[11px] font-medium text-amber-800 dark:text-amber-300">{m.name}</span>
-                    {m.qty > 1 && (
-                      <span className="rounded-full bg-amber-200/60 px-1.5 py-px text-[9px] font-bold text-amber-700 dark:bg-amber-800/30 dark:text-amber-300">
-                        ×{m.qty}
-                      </span>
-                    )}
-                    <span className="text-[9px] text-amber-600/70 dark:text-amber-400/60">
-                      {fmtMT(parseFloat(m.sale_price || "0") * m.qty)}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => removeMaterial(m.id)}
-                      className="ml-0.5 rounded-full p-0.5 text-amber-600 hover:bg-amber-200/60 hover:text-amber-800 dark:text-amber-400 dark:hover:bg-amber-800/30"
-                    >
-                      <X size={10} />
-                    </button>
-                  </div>
-                ))}
+              <div className="mt-1.5 space-y-1">
+                {materials.map(m => {
+                  const unitVat = m.applies_vat_by_default ? parseFloat(m.vat_percentage || "0") : 0
+                  const lineTotal = parseFloat(m.sale_price || "0") * m.qty * (1 + unitVat / 100)
+                  return (
+                    <div key={m.id}
+                      className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50/60 px-2.5 py-1 dark:border-amber-700/30 dark:bg-amber-900/10">
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-[12px] font-medium text-amber-800 dark:text-amber-300">{m.name}</p>
+                        <p className="text-[10px] text-amber-600/70 dark:text-amber-400/60">
+                          {fmtMT(parseFloat(m.sale_price || "0"))} × {m.qty}
+                          {unitVat > 0 ? ` + IVA ${unitVat}%` : " · isento IVA"}
+                        </p>
+                      </div>
+                      <span className="shrink-0 text-[11px] font-semibold text-teal-600 dark:text-teal-400">{fmtMT(lineTotal)}</span>
+                      <button type="button" onClick={() => removeMaterial(m.id)}
+                        className="shrink-0 rounded-full p-0.5 text-amber-600 hover:bg-amber-200/60 hover:text-amber-800 dark:text-amber-400 dark:hover:bg-amber-800/30">
+                        <X size={10} />
+                      </button>
+                    </div>
+                  )
+                })}
+                <div className="flex items-center justify-between rounded-lg border border-amber-200/50 bg-amber-50/40 px-2.5 py-1 dark:border-amber-700/20 dark:bg-amber-900/10">
+                  <span className="text-[10px] font-semibold uppercase tracking-wide text-[var(--gray-500)]">Subtotal materiais c/ IVA</span>
+                  <span className="text-[12px] font-bold text-amber-600 dark:text-amber-400">{fmtMT(matTotal)}</span>
+                </div>
               </div>
             ) : (
-              <p className="mt-2.5 text-[11px] text-[var(--gray-400)]">
+              <p className="mt-1.5 text-[11px] text-[var(--gray-400)]">
                 Nenhum material associado. Pesquise acima para adicionar produtos de farmácia.
               </p>
             )}

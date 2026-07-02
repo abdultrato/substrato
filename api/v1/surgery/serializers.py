@@ -295,6 +295,8 @@ class SurgicalProcedureSerializer(LegacyAliasSerializerMixin, serializers.ModelS
                     "name": e.product.name,
                     "type": e.product.type,
                     "sale_price": str(e.product.sale_price or "0.00"),
+                    "vat_percentage": str(e.product.vat_percentage or "0.00"),
+                    "applies_vat_by_default": e.product.applies_vat_by_default,
                     "qty": e.quantity,
                 }
                 for e in entries
@@ -302,19 +304,24 @@ class SurgicalProcedureSerializer(LegacyAliasSerializerMixin, serializers.ModelS
         except Exception:
             return []
 
-    def update(self, instance, validated_data):
+    def _get_materials_input(self):
         request = self.context.get("request")
-        materials_input = None
         if request and request.data:
-            raw = request.data.get("default_materials_detail")
-            if raw is not None:
-                materials_input = raw
+            return request.data.get("default_materials_detail")
+        return None
 
-        instance = super().update(instance, validated_data)
-
+    def create(self, validated_data):
+        materials_input = self._get_materials_input()
+        instance = super().create(validated_data)
         if materials_input is not None:
             self._sync_materials(instance, materials_input)
+        return instance
 
+    def update(self, instance, validated_data):
+        materials_input = self._get_materials_input()
+        instance = super().update(instance, validated_data)
+        if materials_input is not None:
+            self._sync_materials(instance, materials_input)
         return instance
 
     def _sync_materials(self, instance, materials_input):
