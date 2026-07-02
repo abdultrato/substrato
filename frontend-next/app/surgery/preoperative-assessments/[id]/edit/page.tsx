@@ -523,6 +523,10 @@ export default function EditPreoperativeAssessmentPage() {
       return selectedProcedureKeys.some((key) => surgeryKeys.includes(key))
     })
   }, [contextSurgeries, selectedProcedureKeys])
+  const singleVisibleSurgery = useMemo(
+    () => filteredContextSurgeries.length === 1 ? filteredContextSurgeries[0] : null,
+    [filteredContextSurgeries]
+  )
 
   /* load existing data */
   useEffect(() => {
@@ -640,6 +644,14 @@ export default function EditPreoperativeAssessmentPage() {
       return next.length === previous.length ? previous : next
     })
   }, [filteredContextSurgeries])
+
+  useEffect(() => {
+    if (!singleVisibleSurgery) return
+    setSelectedSurgeries((previous) => {
+      if (previous.length === 1 && previous[0]?.id === singleVisibleSurgery.id) return previous
+      return [{ id: singleVisibleSurgery.id, label: singleVisibleSurgery.custom_id }]
+    })
+  }, [singleVisibleSurgery])
 
   const canNext1 = !!patient
   const canNext2 = !!asaClass && !!status
@@ -915,7 +927,9 @@ export default function EditPreoperativeAssessmentPage() {
             </div>
 
             <div className="mt-3">
-              <FieldRow label={selectedContext?.kind === "request" ? "Cirurgias do pedido seleccionado" : "Cirurgias do contexto seleccionado"}>
+              <FieldRow label={filteredContextSurgeries.length === 1
+                ? (selectedContext?.kind === "request" ? "Cirurgia do pedido seleccionada" : "Cirurgia do contexto seleccionada")
+                : (selectedContext?.kind === "request" ? "Cirurgias do pedido seleccionado" : "Cirurgias do contexto seleccionado")}>
                 {!patient ? (
                   <div className="rounded-lg border border-dashed border-border bg-card/40 px-3 py-2.5 text-[11px] text-[var(--gray-400)]">
                     Seleccione um paciente para ver as cirurgias.
@@ -927,6 +941,27 @@ export default function EditPreoperativeAssessmentPage() {
                 ) : filteredContextSurgeries.length === 0 ? (
                   <div className="rounded-lg border border-dashed border-amber-200 bg-amber-50/40 px-3 py-2.5 text-[11px] text-amber-600 dark:border-amber-700/30 dark:bg-amber-900/10 dark:text-amber-400">
                     Nenhuma cirurgia corresponde aos procedimentos seleccionados neste contexto.
+                  </div>
+                ) : singleVisibleSurgery ? (
+                  <div className="rounded-xl border border-violet-200/70 bg-violet-50/60 px-3 py-2.5 text-[11px] dark:border-violet-700/30 dark:bg-violet-900/10">
+                    <div className="flex items-start gap-2">
+                      <span className="mt-0.5 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-violet-500 text-white">
+                        <Check size={9} />
+                      </span>
+                      <span>
+                        <span className="block font-semibold text-foreground">{singleVisibleSurgery.custom_id}</span>
+                        <span className="block text-[10px] text-[var(--gray-500)]">
+                          {[
+                            singleVisibleSurgery?.procedure_names?.[0] || singleVisibleSurgery?.procedure || "—",
+                            labelSurgerySize(singleVisibleSurgery?.surgery_size),
+                            singleVisibleSurgery?.status,
+                          ].filter(Boolean).join(" · ")}
+                        </span>
+                        <span className="mt-1 block text-[10px] text-violet-700 dark:text-violet-300">
+                          Seleccionada automaticamente por ser a unica cirurgia visivel neste contexto.
+                        </span>
+                      </span>
+                    </div>
                   </div>
                 ) : (
                   <>
