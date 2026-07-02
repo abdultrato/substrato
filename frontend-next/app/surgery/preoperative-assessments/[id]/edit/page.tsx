@@ -54,7 +54,7 @@ const STEPS = [
 
 type SearchValue = { id: number; label: string; meta?: string }
 type SurgicalContextValue = { kind: "request" | "surgery"; id: number; label: string }
-type ProcedureSummary = { key: string; label: string }
+type ProcedureSummary = { key: string; label: string; matchKeys: string[] }
 
 /* ── helpers ── */
 function listRows(payload: any): any[] {
@@ -92,6 +92,16 @@ function splitProcedureText(value: string): string[] {
     .filter(Boolean)
 }
 
+function normalizeProcedureText(value: string): string {
+  return String(value || "").trim().toLowerCase()
+}
+
+function buildProcedureKey(label: string, id?: number | string): string {
+  const cleanId = id === undefined || id === null || id === "" ? null : String(id)
+  if (cleanId) return `id:${cleanId}`
+  return `text:${normalizeProcedureText(label)}`
+}
+
 function buildProcedureSummaries(surgeries: any[], requestedProcedure?: string): ProcedureSummary[] {
   const summaries: ProcedureSummary[] = []
   const seen = new Set<string>()
@@ -99,10 +109,11 @@ function buildProcedureSummaries(surgeries: any[], requestedProcedure?: string):
   function push(label: string, id?: number | string) {
     const clean = String(label || "").trim()
     if (!clean) return
-    const key = id ? `id:${id}` : `text:${clean.toLowerCase()}`
+    const key = buildProcedureKey(clean, id)
     if (seen.has(key)) return
     seen.add(key)
-    summaries.push({ key, label: clean })
+    const matchKeys = Array.from(new Set([key, buildProcedureKey(clean)]))
+    summaries.push({ key, label: clean, matchKeys })
   }
 
   for (const surgery of surgeries) {
@@ -121,6 +132,26 @@ function buildProcedureSummaries(surgeries: any[], requestedProcedure?: string):
 
   splitProcedureText(requestedProcedure || "").forEach((name) => push(name))
   return summaries
+}
+
+function getSurgeryProcedureKeys(surgery: any): string[] {
+  const procedureIds = Array.isArray(surgery?.procedures) ? surgery.procedures : []
+  const names = Array.isArray(surgery?.procedure_names) && surgery.procedure_names.length
+    ? surgery.procedure_names
+    : splitProcedureText(surgery?.procedure || "")
+  const keys = new Set<string>()
+
+  if (names.length) {
+    names.forEach((name: string, index: number) => {
+      const id = procedureIds[index]
+      keys.add(buildProcedureKey(name, id))
+      keys.add(buildProcedureKey(name))
+    })
+  } else if (surgery?.procedure) {
+    splitProcedureText(surgery.procedure).forEach((name) => keys.add(buildProcedureKey(name)))
+  }
+
+  return Array.from(keys)
 }
 
 function labelSurgerySize(value: string): string {
@@ -420,6 +451,7 @@ export default function EditPreoperativeAssessmentPage() {
   const [scheduledSurgeries, setScheduledSurgeries] = useState<any[]>([])
   const [loadingContext, setLoadingContext] = useState(false)
   const [selectedSurgeries, setSelectedSurgeries] = useState<SearchValue[]>([])
+  const [selectedProcedureKeys, setSelectedProcedureKeys] = useState<string[]>([])
 
   /* step 2 */
   const [asaClass,             setAsaClass]             = useState("UNKNOWN")
@@ -484,6 +516,13 @@ export default function EditPreoperativeAssessmentPage() {
     () => buildProcedureSummaries(contextSurgeries, selectedRequestRow?.requested_procedure),
     [contextSurgeries, selectedRequestRow?.requested_procedure]
   )
+  const filteredContextSurgeries = useMemo(() => {
+    if (selectedProcedureKeys.length === 0) return contextSurgeries
+    return contextSurgeries.filter((surgery) => {
+      const surgeryKeys = getSurgeryProcedureKeys(surgery)
+      return selectedProcedureKeys.some((key) => surgeryKeys.includes(key))
+    })
+  }, [contextSurgeries, selectedProcedureKeys])
 
   /* load existing data */
   useEffect(() => {
@@ -548,6 +587,7 @@ export default function EditPreoperativeAssessmentPage() {
     if (previousPatientId !== undefined && previousPatientId !== currentPatientId) {
       setSelectedContext(null)
       setSelectedSurgeries([])
+      setSelectedProcedureKeys([])
     }
 
     previousPatientIdRef.current = currentPatientId
@@ -588,6 +628,18 @@ export default function EditPreoperativeAssessmentPage() {
       active = false
     }
   }, [patient?.id, patientSearchTerm])
+
+  useEffect(() => {
+    setSelectedProcedureKeys([])
+  }, [selectedContext?.kind, selectedContext?.id])
+
+  useEffect(() => {
+    const allowedIds = new Set(filteredContextSurgeries.map((surgery) => surgery.id))
+    setSelectedSurgeries((previous) => {
+      const next = previous.filter((item) => allowedIds.has(item.id))
+      return next.length === previous.length ? previous : next
+    })
+  }, [filteredContextSurgeries])
 
   const canNext1 = !!patient
   const canNext2 = !!asaClass && !!status
@@ -821,12 +873,22 @@ export default function EditPreoperativeAssessmentPage() {
                 ) : (
                   <div className="flex flex-wrap gap-1.5">
                     {contextProcedures.map((procedure) => (
-                      <span
+                      <button
                         key={procedure.key}
-                        className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[10px] font-semibold text-slate-700 dark:border-white/10 dark:bg-white/[0.05] dark:text-slate-200"
+                        type="button"
+                        onClick={() => setSelectedProcedureKeys((previous) =>
+                          previous.includes(procedure.key)
+                            ? previous.filter((key) => key !== procedure.key)
+                            : [...previous, procedure.key]
+                        )}
+                        className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[10px] font-semibold transition ${
+                          selectedProcedureKeys.includes(procedure.key)
+                            ? "border-sky-400 bg-sky-50 text-sky-700 dark:border-sky-600/50 dark:bg-sky-900/20 dark:text-sky-200"
+                            : "border-slate-200 bg-slate-50 text-slate-700 hover:border-sky-300 dark:border-white/10 dark:bg-white/[0.05] dark:text-slate-200"
+                        }`}
                       >
                         {procedure.label}
-                      </span>
+                      </button>
                     ))}
                   </div>
                 )}
@@ -843,27 +905,27 @@ export default function EditPreoperativeAssessmentPage() {
                   <div className="rounded-lg border border-dashed border-border bg-card/40 px-3 py-2.5 text-[11px] text-[var(--gray-400)]">
                     Seleccione primeiro um pedido ou uma cirurgia marcada para abrir a selecção de cirurgias.
                   </div>
-                ) : contextSurgeries.length === 0 ? (
+                ) : filteredContextSurgeries.length === 0 ? (
                   <div className="rounded-lg border border-dashed border-amber-200 bg-amber-50/40 px-3 py-2.5 text-[11px] text-amber-600 dark:border-amber-700/30 dark:bg-amber-900/10 dark:text-amber-400">
-                    Nenhuma cirurgia agendada foi encontrada neste contexto.
+                    Nenhuma cirurgia corresponde aos procedimentos seleccionados neste contexto.
                   </div>
                 ) : (
                   <>
-                    {contextSurgeries.length > 1 ? (
+                    {filteredContextSurgeries.length > 1 ? (
                       <div className="mb-2 flex justify-end">
                         <button
                           type="button"
                           onClick={() => {
-                            const allSelected = contextSurgeries.every((surgery) => selectedSurgeries.some((item) => item.id === surgery.id))
+                            const allSelected = filteredContextSurgeries.every((surgery) => selectedSurgeries.some((item) => item.id === surgery.id))
                             setSelectedSurgeries(
                               allSelected
                                 ? []
-                                : contextSurgeries.map((surgery) => ({ id: surgery.id, label: surgery.custom_id }))
+                                : filteredContextSurgeries.map((surgery) => ({ id: surgery.id, label: surgery.custom_id }))
                             )
                           }}
                           className="text-[10px] font-semibold text-sky-600 hover:underline dark:text-sky-400"
                         >
-                          {contextSurgeries.every((surgery) => selectedSurgeries.some((item) => item.id === surgery.id))
+                          {filteredContextSurgeries.every((surgery) => selectedSurgeries.some((item) => item.id === surgery.id))
                             ? "Desseleccionar todas"
                             : "Seleccionar todas"}
                         </button>
@@ -871,7 +933,7 @@ export default function EditPreoperativeAssessmentPage() {
                     ) : null}
 
                     <div className="grid gap-1.5 sm:grid-cols-2">
-                      {contextSurgeries.map((surgery) => {
+                      {filteredContextSurgeries.map((surgery) => {
                         const selected = selectedSurgeries.some((item) => item.id === surgery.id)
                         const firstProcedure = surgery?.procedure_names?.[0] || surgery?.procedure || "—"
                         const size = labelSurgerySize(surgery?.surgery_size)
