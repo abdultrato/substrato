@@ -41,8 +41,6 @@ type ColumnConfig = {
   colBg: string
 }
 
-// ─── Column config ────────────────────────────────────────────────────────────
-
 const SAMPLE_COLUMNS: ColumnConfig[] = [
   {
     key: "a_receber",
@@ -120,12 +118,6 @@ function statusDot(status?: string) {
   }
 }
 
-function conditionDot(condition?: string) {
-  return (condition || "").trim().toUpperCase() === "ADEQUADA"
-    ? "bg-emerald-400"
-    : "bg-rose-400"
-}
-
 // ─── Sample Card ──────────────────────────────────────────────────────────────
 
 function SampleCard({
@@ -154,17 +146,14 @@ function SampleCard({
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") { e.preventDefault(); router.push(target) }
       }}
-      className="group flex cursor-pointer flex-col overflow-hidden rounded-xl border border-white/50 bg-white/30 shadow-sm backdrop-blur-sm transition hover:border-white/70 hover:bg-white/50 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 dark:border-white/10 dark:bg-white/[0.04] dark:hover:border-white/20 dark:hover:bg-white/[0.08]"
+      className="group relative flex cursor-pointer flex-col overflow-hidden rounded-xl border border-white/50 bg-white/30 shadow-sm backdrop-blur-sm transition hover:border-white/70 hover:bg-white/50 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 dark:border-white/10 dark:bg-white/[0.04] dark:hover:border-white/20 dark:hover:bg-white/[0.08]"
     >
-      {/* ── topo colorido ── */}
-      <div className={`h-0.5 w-full ${statusDot(row.status)}`} />
-
       {/* ── código + status ── */}
-      <div className="flex items-center justify-between gap-2 px-3 pt-2 pb-1.5">
+      <div className="flex items-center justify-between gap-2 px-3 pt-2.5 pb-1.5">
         <div className="min-w-0">
-          <p className="truncate font-mono text-[10px] font-bold text-sky-700 dark:text-sky-300">
+          <span className="font-mono text-[10px] font-bold text-sky-700 dark:text-sky-300">
             {row.barcode || row.custom_id || `#${row.id}`}
-          </p>
+          </span>
           {row.order_custom_id && (
             <p className="truncate text-[9px] text-[var(--gray-400)]">
               Pedido {row.order_custom_id}
@@ -200,7 +189,7 @@ function SampleCard({
           )}
           {row.condition_display && (
             <span className="inline-flex items-center gap-1 rounded-full bg-white/60 px-1.5 py-0.5 text-[9px] font-medium text-[var(--gray-600)] dark:bg-white/10 dark:text-white">
-              <span className={`h-1.5 w-1.5 rounded-full ${conditionDot(row.condition)}`} />
+              <span className={`h-1.5 w-1.5 rounded-full ${(row.condition || "").trim().toUpperCase() === "ADEQUADA" ? "bg-emerald-400" : "bg-rose-400"}`} />
               {row.condition_display}
             </span>
           )}
@@ -221,9 +210,11 @@ function SampleCard({
               type="button"
               onClick={(e) => { e.stopPropagation(); onReceive() }}
               disabled={busyAction !== null}
-              className="inline-flex h-6 items-center rounded-lg bg-sky-600 px-2.5 text-[9px] font-semibold text-white shadow-sm transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex h-6 shrink-0 items-center gap-1 rounded-lg bg-sky-600 px-2.5 text-[9px] font-semibold text-white shadow-sm transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {busyAction === "receive" ? <Loader2 size={9} className="animate-spin" /> : "Receber"}
+              {busyAction === "receive"
+                ? <><Loader2 size={9} className="animate-spin" /> A receber...</>
+                : "Receber"}
             </button>
           )}
           {canAccept && (
@@ -231,9 +222,11 @@ function SampleCard({
               type="button"
               onClick={(e) => { e.stopPropagation(); onAccept() }}
               disabled={busyAction !== null}
-              className="inline-flex h-6 items-center rounded-lg bg-emerald-600 px-2.5 text-[9px] font-semibold text-white shadow-sm transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex h-6 shrink-0 items-center gap-1 rounded-lg bg-emerald-600 px-2.5 text-[9px] font-semibold text-white shadow-sm transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {busyAction === "accept" ? <Loader2 size={9} className="animate-spin" /> : "Aceitar"}
+              {busyAction === "accept"
+                ? <><Loader2 size={9} className="animate-spin" /> A aceitar...</>
+                : "Aceitar"}
             </button>
           )}
         </div>
@@ -309,7 +302,7 @@ export default function SamplesBoardPage() {
     <AppLayout>
       <div className="mx-auto w-full max-w-4xl space-y-4 px-1 py-1">
 
-        {/* ── Hero ── */}
+        {/* ── Hero header ── */}
         <section className="relative overflow-hidden rounded-xl border border-sky-200/50 bg-gradient-to-br from-sky-50/80 via-white/60 to-cyan-50/60 shadow-sm backdrop-blur-sm dark:border-sky-800/30 dark:from-sky-950/30 dark:via-slate-900/40 dark:to-cyan-950/20">
           <span className="absolute left-0 top-0 h-full w-1 bg-sky-400" />
           <div className="px-4 py-3 pl-5">
@@ -331,7 +324,6 @@ export default function SamplesBoardPage() {
                   </p>
                 </div>
               </div>
-
               <div className="flex items-center gap-2">
                 <Link href="/clinical-laboratory"
                   className="inline-flex h-8 items-center gap-1 rounded-lg border border-white/40 bg-white/30 px-2.5 text-[11px] text-[var(--gray-700)] backdrop-blur-sm transition hover:bg-white/50 dark:border-white/10 dark:text-[var(--gray-300)] dark:hover:bg-white/10">
@@ -362,7 +354,7 @@ export default function SamplesBoardPage() {
           </div>
         )}
 
-        {/* ── Kanban ── */}
+        {/* ── Kanban board ── */}
         {loading && rows.length === 0 ? (
           <div className="flex items-center justify-center gap-2 py-16 text-[12px] text-[var(--gray-400)]">
             <Loader2 size={16} className="animate-spin" /> A carregar amostras...
@@ -379,12 +371,9 @@ export default function SamplesBoardPage() {
                   <span className={`absolute left-0 top-0 h-full w-1 ${col.leftBar}`} />
 
                   <div className="flex items-center justify-between gap-2 px-3 pb-2.5 pl-4 pt-3">
-                    <div className="flex items-center gap-1.5">
-                      <span className={`h-2 w-2 rounded-full ${col.leftBar}`} />
-                      <h2 className={`text-[10px] font-bold uppercase tracking-widest ${col.headerCls}`}>
-                        {col.title}
-                      </h2>
-                    </div>
+                    <h2 className={`text-[10px] font-bold uppercase tracking-widest ${col.headerCls}`}>
+                      {col.title}
+                    </h2>
                     <span className={`inline-flex min-w-5 items-center justify-center rounded-full px-1.5 py-0.5 text-[9px] font-bold ${col.badge}`}>
                       {items.length}
                     </span>
@@ -392,7 +381,7 @@ export default function SamplesBoardPage() {
 
                   <div className="flex flex-col gap-2 overflow-y-auto px-3 pb-3 pl-4 max-h-[calc(100vh-130px)] [scrollbar-width:thin]">
                     {items.length === 0 ? (
-                      <div className="rounded-xl border border-dashed border-white/50 px-3 py-8 text-center text-[10px] text-[var(--gray-400)] dark:border-white/10">
+                      <div className="rounded-xl border border-dashed border-white/60 px-3 py-6 text-center text-[10px] text-[var(--gray-400)] dark:border-white/10">
                         Sem amostras.
                       </div>
                     ) : (
