@@ -463,7 +463,7 @@ export default function NewPreoperativeAssessmentPage() {
               </div>
               <div className="mt-1 flex items-center gap-1.5">
                 <Stethoscope size={13} className="text-amber-500" />
-                <h1 className="font-display text-sm font-semibold text-foreground">Nova avaliação pré-operatória</h1>
+                <h1 className="font-display text-sm font-semibold text-foreground">Registar avaliação pré-operatória</h1>
               </div>
               <p className="mt-1 max-w-xl text-[11px] text-[var(--gray-500)]">
                 Registe a aptidão clínica e anestésica do paciente antes da cirurgia, no mesmo padrão visual dos restantes fluxos do módulo.
