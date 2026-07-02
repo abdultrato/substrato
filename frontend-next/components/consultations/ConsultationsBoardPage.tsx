@@ -11,6 +11,7 @@ import {
 
 import AppLayout from "@/components/layout/AppLayout"
 import ManchesterBadge from "@/components/ui/ManchesterBadge"
+import PageSizeInput from "@/components/ui/PageSizeInput"
 import useAuthGuard from "@/hooks/useAuthGuard"
 import { useLanguage } from "@/hooks/useLanguage"
 import useDebounce from "@/hooks/useDebounce"
@@ -300,7 +301,7 @@ export default function ConsultationsBoardPage() {
   const { t } = useLanguage()
   const [search, setSearch]       = useState("")
   const [page, setPage]           = useState(1)
-  const [pageSize]                = useState(100)
+  const [pageSize, setPageSize]   = useState(100)
   const [data, setData]           = useState<Row[]>([])
   const [totalItems, setTotalItems] = useState(0)
   const [loadingData, setLoadingData] = useState(true)
@@ -318,7 +319,7 @@ export default function ConsultationsBoardPage() {
     return `${url.pathname}${url.search}`
   }, [debouncedSearch, normalizedEndpoint])
 
-  useEffect(() => { setPage(1) }, [requestUrl])
+  useEffect(() => { setPage(1) }, [requestUrl, pageSize])
 
   useEffect(() => {
     if (!canList) return
@@ -403,6 +404,12 @@ export default function ConsultationsBoardPage() {
                   <XCircle size={15} />
                 </button>
               )}
+            </div>
+
+            {/* Itens por página (1–999) */}
+            <div className="flex shrink-0 items-center gap-1" title={t("Itens por página", "Items per page")}>
+              <PageSizeInput value={pageSize} onChange={setPageSize} ariaLabel={t("Itens por página", "Items per page")} />
+              <span className="text-[11px] text-muted-foreground">/{t("pág", "pg")}</span>
             </div>
 
             <Link
