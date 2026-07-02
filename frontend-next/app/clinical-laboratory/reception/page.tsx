@@ -103,53 +103,59 @@ function ReceptionCard({
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") { e.preventDefault(); router.push(target) }
       }}
-      className="group relative flex cursor-pointer flex-col gap-1.5 overflow-hidden rounded-xl border border-white/50 bg-white/30 px-3 py-2.5 shadow-sm backdrop-blur-sm transition hover:border-white/70 hover:bg-white/50 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 dark:border-white/10 dark:bg-white/[0.04] dark:hover:border-white/20 dark:hover:bg-white/[0.08]"
+      className="group relative flex cursor-pointer flex-col overflow-hidden rounded-xl border border-white/50 bg-white/30 shadow-sm backdrop-blur-sm transition hover:border-white/70 hover:bg-white/50 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 dark:border-white/10 dark:bg-white/[0.04] dark:hover:border-white/20 dark:hover:bg-white/[0.08]"
     >
-      <div className="flex items-start justify-between gap-2">
+      {/* ── top: código + alerta ── */}
+      <div className="flex items-center justify-between gap-2 px-3 pt-2.5 pb-1.5">
         <span className="font-mono text-[10px] font-bold text-sky-700 dark:text-sky-300">
           {row.custom_id ?? `#${row.id}`}
         </span>
-        {counts.rejected > 0 && (
-          <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-rose-500" aria-label="Tem amostras rejeitadas" />
-        )}
-      </div>
-
-      {(row.patient_name || row.patient_age || row.patient_gender) && (
-        <div className="truncate leading-tight">
-          {row.patient_name && (
-            <span className="text-[12px] font-semibold text-foreground">{row.patient_name}</span>
+        <div className="flex items-center gap-1">
+          {priority && (
+            <span className="inline-flex items-center rounded-full bg-amber-100 px-1.5 py-0.5 text-[9px] font-semibold text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
+              {priority}
+            </span>
           )}
-          {(() => {
-            const meta = [row.patient_age, genderLabel(row.patient_gender)].filter(Boolean).join(" · ")
-            return meta ? (
-              <span className="ml-1 text-[10px] text-[var(--gray-500)]">{meta}</span>
-            ) : null
-          })()}
+          {counts.rejected > 0 && (
+            <AlertTriangle className="h-3 w-3 shrink-0 text-rose-500" />
+          )}
         </div>
-      )}
-
-      <div className="flex flex-wrap gap-1">
-        {priority && (
-          <span className="inline-flex items-center rounded-full bg-amber-100 px-1.5 py-0.5 text-[9px] font-semibold text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
-            {priority}
-          </span>
-        )}
-        <span className="inline-flex items-center rounded-full bg-emerald-100 px-1.5 py-0.5 text-[9px] font-semibold text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300">
-          {counts.received}/{counts.total} {countForm(counts.total, { one: "amostra recebida", other: "amostras recebidas" })}
-        </span>
-        {counts.rejected > 0 && (
-          <span className="inline-flex items-center rounded-full bg-rose-100 px-1.5 py-0.5 text-[9px] font-semibold text-rose-800 dark:bg-rose-900/30 dark:text-rose-300">
-            {counts.rejected} {counts.rejected === 1 ? "rejeitada" : "rejeitadas"}
-          </span>
-        )}
-        {counts.pending > 0 && (
-          <span className="inline-flex items-center rounded-full bg-sky-100 px-1.5 py-0.5 text-[9px] font-semibold text-sky-800 dark:bg-sky-900/30 dark:text-sky-300">
-            {counts.pending} por conferir
-          </span>
-        )}
       </div>
 
-      <div className="mt-auto flex items-end justify-between gap-2">
+      {/* ── paciente ── */}
+      <div className="border-t border-white/40 px-3 py-2 dark:border-white/10">
+        <p className="truncate text-[12px] font-semibold text-foreground leading-snug">
+          {row.patient_name || "—"}
+        </p>
+        {(() => {
+          const meta = [row.patient_age, genderLabel(row.patient_gender)].filter(Boolean).join(" · ")
+          return meta ? (
+            <p className="mt-0.5 text-[10px] text-[var(--gray-500)]">{meta}</p>
+          ) : null
+        })()}
+      </div>
+
+      {/* ── contagens ── */}
+      <div className="border-t border-white/40 px-3 py-2 dark:border-white/10">
+        <div className="flex flex-wrap gap-1">
+          <span className="inline-flex items-center rounded-full bg-emerald-100 px-1.5 py-0.5 text-[9px] font-semibold text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300">
+            {counts.received}/{counts.total} {countForm(counts.total, { one: "recebida", other: "recebidas" })}
+          </span>
+          {counts.rejected > 0 && (
+            <span className="inline-flex items-center rounded-full bg-rose-100 px-1.5 py-0.5 text-[9px] font-semibold text-rose-800 dark:bg-rose-900/30 dark:text-rose-300">
+              {counts.rejected} {counts.rejected === 1 ? "rejeitada" : "rejeitadas"}
+            </span>
+          )}
+          {counts.pending > 0 && (
+            <span className="inline-flex items-center rounded-full bg-sky-100 px-1.5 py-0.5 text-[9px] font-semibold text-sky-800 dark:bg-sky-900/30 dark:text-sky-300">
+              {counts.pending} por conferir
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* ── rodapé: data + botão ── */}
+      <div className="flex items-center justify-between gap-2 border-t border-white/40 px-3 py-2 dark:border-white/10">
         <span className="text-[9px] text-[var(--gray-400)]">Colhida {fmt(row.collected_at)}</span>
         {counts.pending > 0 && counts.rejected === 0 && (
           <button

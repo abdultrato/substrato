@@ -53,7 +53,10 @@ export function getItemStatus(item: RequestItem): ItemStatus {
 }
 
 export function labItemsOf(row: LabRequest) {
-  return (row.items ?? []).filter((i) => i.exam_name || i.medical_exam_name)
+  // include all items regardless of whether exam_name is populated —
+  // items linked via LabTest (new model) arrive with exam_name=null but still
+  // carry sample_status and count towards reception totals
+  return row.items ?? []
 }
 
 export function countsByStatus(items: RequestItem[]) {
