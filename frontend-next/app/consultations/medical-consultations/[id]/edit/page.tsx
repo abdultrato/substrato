@@ -178,9 +178,12 @@ export default function MedicalConsultationEditPage() {
       <div className="mx-auto max-w-3xl space-y-1.5">
         <Link
           href={id ? `/consultations/medical-consultations/${id}` : "/consultations/medical-consultations"}
-          className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground transition hover:text-foreground"
+          className="group inline-flex items-center gap-2 rounded-lg border border-white/20 bg-white/40 py-1.5 pl-1.5 pr-3 text-xs font-semibold text-foreground shadow-sm backdrop-blur-sm transition hover:border-white/40 hover:bg-white/60 dark:border-white/10 dark:bg-white/[0.04] dark:hover:bg-white/[0.08]"
         >
-          <ArrowLeft size={13} /> {t("Voltar ao detalhe", "Back to detail")}
+          <span className="flex h-6 w-6 items-center justify-center rounded-md bg-indigo-500/10 text-indigo-600 transition group-hover:-translate-x-0.5 dark:text-indigo-400">
+            <ArrowLeft size={14} />
+          </span>
+          {t("Voltar ao detalhe", "Back to detail")}
         </Link>
 
         {loading ? (
