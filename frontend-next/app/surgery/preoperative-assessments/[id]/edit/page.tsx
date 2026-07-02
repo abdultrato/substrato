@@ -337,9 +337,12 @@ export default function EditPreoperativeAssessmentPage() {
   const [original, setOriginal] = useState<any>(null)
 
   /* step 1 */
-  const [evaluator, setEvaluator]   = useState<SearchValue | null>(null)
-  const [assessedAt, setAssessedAt] = useState("")
-  const [status, setStatus]         = useState("PENDING")
+  const [patient,         setPatient]         = useState<SearchValue | null>(null)
+  const [evaluator,       setEvaluator]       = useState<SearchValue | null>(null)
+  const [surgicalRequest, setSurgicalRequest] = useState<SearchValue | null>(null)
+  const [proposedSurgery, setProposedSurgery] = useState<SearchValue | null>(null)
+  const [assessedAt,      setAssessedAt]      = useState("")
+  const [status,          setStatus]          = useState("PENDING")
 
   /* step 2 */
   const [asaClass,             setAsaClass]             = useState("UNKNOWN")
@@ -360,7 +363,10 @@ export default function EditPreoperativeAssessmentPage() {
     apiFetch<any>(`/surgery/avaliacao_pre_operatoria/${id}/`)
       .then(d => {
         setOriginal(d)
-        if (d.evaluator_name && d.evaluator) setEvaluator({ id: d.evaluator, label: d.evaluator_name })
+        if (d.patient && d.patient_name)             setPatient({ id: d.patient, label: d.patient_name })
+        if (d.evaluator && d.evaluator_name)         setEvaluator({ id: d.evaluator, label: d.evaluator_name })
+        if (d.surgical_request && d.surgical_request_code) setSurgicalRequest({ id: d.surgical_request, label: d.surgical_request_code })
+        if (d.proposed_surgery && d.proposed_surgery_code) setProposedSurgery({ id: d.proposed_surgery, label: d.proposed_surgery_code })
         if (d.assessed_at) setAssessedAt(d.assessed_at.slice(0, 16))
         setStatus(d.status || "PENDING")
         setAsaClass(d.asa_class || "UNKNOWN")
@@ -417,42 +423,18 @@ export default function EditPreoperativeAssessmentPage() {
         observations: observations || null,
         assessed_at: assessedAt || null,
       }
-      if (evaluator) body.evaluator = evaluator.id
-
-      // rebuild required_exams
-      const examLabels = [
-        ...selectedLabExams.filter(e => e.id > 0).map(e => `LAB: ${e.label}`),
-        ...selectedMedExams.filter(e => e.id > 0).map(e => `MED: ${e.label}`),
-      ]
-      if (examLabels.length) body.required_exams = examLabels
+      if (patient)         body.patient          = patient.id
+      if (evaluator)       body.evaluator        = evaluator.id
+      if (surgicalRequest) body.surgical_request = surgicalRequest.id
+      if (proposedSurgery) body.proposed_surgery = proposedSurgery.id
+      // send exam PKs — backend syncs LabRequest/MedicalRequest automatically
+      body.laboratory_exams = selectedLabExams.filter(e => e.id > 0).map(e => e.id)
+      body.medical_exams    = selectedMedExams.filter(e => e.id > 0).map(e => e.id)
 
       await apiFetch(`/surgery/avaliacao_pre_operatoria/${id}/`, {
         method: "PATCH",
         body: JSON.stringify(body),
       })
-
-      // create new lab order if new real lab exams were added
-      const newLabExams = selectedLabExams.filter(e => e.id > 0)
-      if (newLabExams.length && original?.patient) {
-        try {
-          const labOrder = await apiFetch<any>("/clinical_laboratory/order/", {
-            method: "POST",
-            body: JSON.stringify({
-              patient: original.patient,
-              requesting_physician: evaluator?.id ?? original.evaluator ?? undefined,
-              clinical_indication: `Pré-operatório — avaliação ${original.custom_id || id} (actualização)`,
-              origin: "INTERNAL",
-              priority: "ROUTINE",
-            }),
-          })
-          await Promise.all(newLabExams.map(exam =>
-            apiFetch("/clinical_laboratory/order_item/", {
-              method: "POST",
-              body: JSON.stringify({ order: labOrder.id, test: exam.id }),
-            }).catch(() => null)
-          ))
-        } catch { /* non-fatal */ }
-      }
 
       router.push(`/surgery/preoperative-assessments/${id}`)
     } catch (err: any) {
@@ -544,17 +526,34 @@ export default function EditPreoperativeAssessmentPage() {
                 <input type="datetime-local" className={inputCls} value={assessedAt} onChange={e => setAssessedAt(e.target.value)} />
               </FieldRow>
             </div>
-            {/* read-only context */}
-            {(original?.surgical_request_code || original?.proposed_surgery_code) && (
-              <div className="mt-3 grid gap-2 rounded-lg border border-sky-200/60 bg-sky-50/40 p-2.5 text-[11px] dark:border-sky-800/30 dark:bg-sky-900/10 sm:grid-cols-2">
-                {original.surgical_request_code && (
-                  <div><span className="text-[var(--gray-500)]">Pedido: </span><span className="font-semibold">{original.surgical_request_code}</span></div>
-                )}
-                {original.proposed_surgery_code && (
-                  <div><span className="text-[var(--gray-500)]">Cirurgia: </span><span className="font-semibold">{original.proposed_surgery_code}</span></div>
-                )}
-              </div>
-            )}
+            <div className="mt-3">
+              <SearchSelect
+                label="Paciente"
+                endpoint="/patients/patients/"
+                value={patient}
+                onChange={setPatient}
+                placeholder="Pesquisar paciente..."
+                getOptionLabel={(item) => [item?.name, item?.custom_id].filter(Boolean).join(" - ")}
+              />
+            </div>
+            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+              <SearchSelect
+                label="Pedido cirúrgico"
+                endpoint="/surgery/pedido_cirurgico/"
+                value={surgicalRequest}
+                onChange={setSurgicalRequest}
+                placeholder="Pesquisar pedido cirúrgico..."
+                getOptionLabel={(item) => item?.custom_id ?? item?.code ?? `#${item?.id}`}
+              />
+              <SearchSelect
+                label="Cirurgia proposta"
+                endpoint="/surgery/cirurgia/"
+                value={proposedSurgery}
+                onChange={setProposedSurgery}
+                placeholder="Pesquisar cirurgia..."
+                getOptionLabel={(item) => item?.custom_id ?? item?.procedure_name ?? `#${item?.id}`}
+              />
+            </div>
           </SurfaceCard>
         )}
 
@@ -611,12 +610,12 @@ export default function EditPreoperativeAssessmentPage() {
               />
               <MultiSearchSelect
                 label="Exames médicos"
-                endpoint="/specialty_diagnostics/protocol/"
+                endpoint="/clinical/medicalexam/"
                 values={selectedMedExams.filter(e => e.id > 0)}
                 onChange={setSelectedMedExams}
                 placeholder="Pesquisar exame médico..."
-                getOptionLabel={item => item?.name || item?.code || `#${item?.id}`}
-                getOptionMeta={item => item?.modality || "OTHER"}
+                getOptionLabel={item => item?.name || item?.custom_id || `#${item?.id}`}
+                getOptionMeta={item => [item?.method, item?.sector].filter(Boolean).join(" · ")}
               />
             </div>
 

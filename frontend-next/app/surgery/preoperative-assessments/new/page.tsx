@@ -676,6 +676,10 @@ export default function NewPreoperativeAssessmentPage() {
         if (surgicalRequest) body.surgical_request = surgicalRequest.id
         if (proposedSurgery) body.proposed_surgery = proposedSurgery.id
       }
+      // exams: send PKs — backend creates LabRequest + MedicalRequest automatically
+      if (selectedLaboratoryExams.length) body.laboratory_exams = selectedLaboratoryExams.map(e => e.id)
+      if (selectedMedicalExams.length)    body.medical_exams    = selectedMedicalExams.map(e => e.id)
+
       const response = await apiFetch<any>("/surgery/avaliacao_pre_operatoria/", {
         method: "POST",
         body: JSON.stringify(body),
