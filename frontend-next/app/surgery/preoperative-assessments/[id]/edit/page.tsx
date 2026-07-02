@@ -663,17 +663,17 @@ export default function EditPreoperativeAssessmentPage() {
       const body: Record<string, any> = {
         status,
         asa_class: asaClass,
-        surgical_risk: surgicalRisk || null,
-        medical_evaluation: medicalEvaluation || null,
-        anesthetic_evaluation: anestheticEvaluation || null,
+        surgical_risk: surgicalRisk,
+        medical_evaluation: medicalEvaluation,
+        anesthetic_evaluation: anestheticEvaluation,
         exam_results_reviewed: examResultsReviewed,
-        fit_for_surgery: fitForSurgery,
         consent_signed: consentSigned,
-        observations: observations || null,
+        observations,
         assessed_at: assessedAt || null,
       }
       if (patient)         body.patient          = patient.id
       if (evaluator)       body.evaluator        = evaluator.id
+      if (fitForSurgery !== null) body.fit_for_surgery = fitForSurgery
       body.surgical_request = selectedContext?.kind === "request" ? selectedContext.id : null
       body.proposed_surgery = selectedSurgeries[0]?.id ?? null
       // send exam PKs — backend syncs LabRequest/MedicalRequest automatically
