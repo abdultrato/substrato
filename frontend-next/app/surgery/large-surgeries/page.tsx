@@ -6,6 +6,7 @@ import AppLayout from "@/components/layout/AppLayout";
 import { GROUPS } from "@/lib/rbac";
 import { apiFetch } from "@/lib/api";
 import {
+  ArrowLeft,
   Scissors,
   User,
   Stethoscope,
@@ -224,13 +225,19 @@ export default function LargeSurgeriesListPage() {
                 </div>
                 <h1 className="font-display text-sm font-semibold text-foreground">Grandes cirurgias</h1>
               </div>
-              <Link
-                href="/surgery/large-surgeries/new"
-                className="inline-flex h-7 items-center gap-1.5 rounded-md border border-indigo-300 bg-indigo-50 px-3 text-[11px] font-semibold text-indigo-700 transition hover:bg-indigo-100 dark:border-indigo-700/40 dark:bg-indigo-900/20 dark:text-indigo-300"
-              >
-                <Plus size={11} />
-                Nova cirurgia
-              </Link>
+              <div className="flex items-center gap-1.5">
+                <Link href="/surgery"
+                  className="inline-flex h-7 items-center gap-1 rounded-md border border-border bg-card px-2.5 text-[11px] text-muted-foreground hover:bg-muted">
+                  <ArrowLeft size={11} /> Voltar
+                </Link>
+                <Link
+                  href="/surgery/large-surgeries/new"
+                  className="inline-flex h-7 items-center gap-1.5 rounded-md border border-indigo-300 bg-indigo-50 px-3 text-[11px] font-semibold text-indigo-700 transition hover:bg-indigo-100 dark:border-indigo-700/40 dark:bg-indigo-900/20 dark:text-indigo-300"
+                >
+                  <Plus size={11} />
+                  Nova cirurgia
+                </Link>
+              </div>
             </div>
             <div className="relative mt-2">
               <Search size={11} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--gray-400)]" />
