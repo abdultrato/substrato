@@ -26,7 +26,7 @@ export type ResourceFormConfig = {
   labels?: Record<string, string>
   placeholders?: Record<string, string>
   hints?: Record<string, string>
-  widgets?: Record<string, "textarea">
+  widgets?: Record<string, "textarea" | "json">
   etapas?: AutoFormStep[]
   lembrarCampos?: string[]
 }
@@ -4370,6 +4370,9 @@ function surgeryScheduleConfig(): ResourceFormConfig {
 function surgeryOperatingRoomConfig(): ResourceFormConfig {
   return {
     esconderCampos: [...SURGERY_INTERNAL_FIELDS, ...SURGERY_COMPUTED_FIELDS],
+    mostrarSe: {
+      blocked_reason: { campo: "status", igualA: "BLOCKED" },
+    },
     labels: {
       name: "Nome da sala",
       code: "Código",
@@ -4386,8 +4389,26 @@ function surgeryOperatingRoomConfig(): ResourceFormConfig {
     },
     widgets: {
       equipment_notes: "textarea",
+      working_hours: "json",
       blocked_reason: "textarea",
       notes: "textarea",
+    },
+    placeholders: {
+      name: "Ex.: Bloco operatório 2",
+      code: "Ex.: BO-02",
+      location: "Ex.: Piso 2, ala cirúrgica",
+      cleaning_class: "Ex.: Classe A",
+      equipment_notes: "Liste mesa cirúrgica, foco, ventilador, monitores, aspirador e outros equipamentos.",
+      working_hours: '{\n  "monday": "07:00-19:00",\n  "tuesday": "07:00-19:00",\n  "emergency": "24/7"\n}',
+      blocked_reason: "Explique o motivo da indisponibilidade da sala.",
+      notes: "Observações operacionais, fluxo, preparação ou restrições adicionais.",
+    },
+    hints: {
+      capacity: "Número máximo de pacientes/uso simultâneo suportado pela sala.",
+      sterile: "Marque se a sala está pronta para receber procedimento imediatamente.",
+      equipment_notes: "Descreva os equipamentos realmente disponíveis nesta sala.",
+      working_hours: "Informe um JSON simples com dias/turnos ou janelas especiais.",
+      blocked_reason: "Obrigatório quando o estado for Bloqueada.",
     },
     ordenarCampos: [
       "name", "code", "room_type", "status", "location",

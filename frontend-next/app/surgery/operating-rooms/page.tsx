@@ -3,6 +3,8 @@
 import Link from "next/link"
 import { useEffect, useMemo, useState } from "react"
 import {
+  Clock3,
+  Clipboard,
   DoorOpen,
   Lock,
   MapPin,
@@ -14,12 +16,14 @@ import {
 } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
+import AutoForm from "@/components/form/AutoForm"
 import PageSizeInput from "@/components/ui/PageSizeInput"
 import useAuthGuard from "@/hooks/useAuthGuard"
 import useDebounce from "@/hooks/useDebounce"
 import { useLanguage } from "@/hooks/useLanguage"
-import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
+import { useSafeDataRefresh, useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { apiFetchList } from "@/lib/api"
+import { getResourceFormConfig } from "@/lib/resources/resourceFormConfig"
 import { buildRecordDetailHref } from "@/lib/resources/recordIdentity"
 import { requiredGroupsForResourceGroup } from "@/lib/resourcesAccess"
 
@@ -59,6 +63,28 @@ function statusOf(row: Row): string {
   return String(row?.status || "").toUpperCase()
 }
 
+function workingHoursSummary(value: any, t: (pt: string, en: string) => string): string {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return ""
+  const entries = Object.entries(value)
+    .filter(([, hours]) => hours !== null && hours !== undefined && String(hours).trim() !== "")
+    .slice(0, 2)
+    .map(([day, hours]) => `${day}: ${String(hours)}`)
+  if (!entries.length) return ""
+  const suffix = Object.keys(value).length > entries.length ? ` +${Object.keys(value).length - entries.length}` : ""
+  return `${t("Horário", "Hours")}: ${entries.join(" · ")}${suffix}`
+}
+
+function equipmentSummary(value: any): string {
+  const text = String(value || "").trim()
+  if (!text) return ""
+  const items = text
+    .split(/\r?\n|,|;/)
+    .map((item) => item.trim())
+    .filter(Boolean)
+  if (!items.length) return ""
+  return items.slice(0, 2).join(" · ") + (items.length > 2 ? ` +${items.length - 2}` : "")
+}
+
 function RoomCard({ row, href, t }: { row: Row; href: string; t: (pt: string, en: string) => string }) {
   const st = STATUSES[statusOf(row)] || STATUSES.INACTIVE
   const type = ROOM_TYPES[String(row?.room_type || "").toUpperCase()]
@@ -66,6 +92,8 @@ function RoomCard({ row, href, t }: { row: Row; href: string; t: (pt: string, en
   const sterile = Boolean(row?.sterile)
   const blocked = statusOf(row) === "BLOCKED"
   const live = ["IN_USE", "OCCUPIED"].includes(statusOf(row))
+  const hours = workingHoursSummary(row?.working_hours, t)
+  const equipment = equipmentSummary(row?.equipment_notes)
 
   return (
     <Link
@@ -118,6 +146,19 @@ function RoomCard({ row, href, t }: { row: Row; href: string; t: (pt: string, en
           <span className="line-clamp-2">{row.blocked_reason}</span>
         </div>
       ) : null}
+
+      {hours ? (
+        <div className="mt-2 inline-flex max-w-full items-start gap-1.5 rounded-lg bg-slate-500/8 px-2 py-1 text-[10px] text-muted-foreground">
+          <Clock3 size={11} className="mt-px shrink-0" />
+          <span className="line-clamp-2">{hours}</span>
+        </div>
+      ) : null}
+
+      {equipment ? (
+        <div className="mt-1 text-[10px] text-muted-foreground line-clamp-2">
+          {equipment}
+        </div>
+      ) : null}
     </Link>
   )
 }
@@ -125,7 +166,9 @@ function RoomCard({ row, href, t }: { row: Row; href: string; t: (pt: string, en
 export default function SurgeryOperatingRoomsListPage() {
   const { loading: authLoading } = useAuthGuard()
   const { t } = useLanguage()
+  const { refreshNow, isRefreshing } = useSafeDataRefresh()
   const safeRefreshToken = useSafeDataRefreshSignal()
+  const [formSeed, setFormSeed] = useState(0)
 
   const [data, setData] = useState<Row[]>([])
   const [loading, setLoading] = useState(true)
@@ -167,6 +210,13 @@ export default function SurgeryOperatingRoomsListPage() {
     return s
   }, [data])
 
+  const availabilityStats = useMemo(() => ({
+    total: data.length,
+    available: data.filter((row) => statusOf(row) === "AVAILABLE").length,
+    blocked: data.filter((row) => statusOf(row) === "BLOCKED").length,
+    sterile: data.filter((row) => Boolean(row?.sterile)).length,
+  }), [data])
+
   // Só mostra chips de tipos que existem nos dados, para não poluir.
   const presentTypes = useMemo(() => {
     const set = new Set(data.map((r) => String(r?.room_type || "").toUpperCase()).filter(Boolean))
@@ -194,6 +244,11 @@ export default function SurgeryOperatingRoomsListPage() {
   function rowHref(row: Row): string {
     return buildRecordDetailHref(ROUTE_BASE, row) ?? `${ROUTE_BASE}/${row.id}`
   }
+
+  const formConfig = useMemo(
+    () => getResourceFormConfig("surgery", "centro_cirurgico", ENDPOINT),
+    []
+  )
 
   if (authLoading) return null
 
@@ -291,6 +346,82 @@ export default function SurgeryOperatingRoomsListPage() {
               </button>
             ) : null}
           </div>
+        </section>
+
+        <section className="grid gap-1.5 xl:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)]">
+          <div className={`${GLASS} overflow-hidden`}>
+            <div className="flex items-center justify-between gap-3 border-b border-white/20 px-4 py-3 dark:border-white/10">
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-md shadow-emerald-500/20">
+                    <Clipboard size={17} />
+                  </span>
+                  <div className="min-w-0">
+                    <h2 className="text-sm font-bold text-foreground">{t("Novo bloco operatório", "New operating room")}</h2>
+                    <p className="text-[11px] text-muted-foreground">
+                      {t("Cadastre a sala com identificação, disponibilidade, esterilização, equipamentos e horário real.", "Register the room with identification, availability, sterilization, equipment and real schedule.")}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[10px] font-semibold text-emerald-700 dark:border-emerald-700/30 dark:bg-emerald-900/20 dark:text-emerald-400">
+                {t("Criação inline", "Inline create")}
+              </span>
+            </div>
+            <div className="px-4 py-4">
+              <AutoForm
+                key={formSeed}
+                endpoint={ENDPOINT}
+                method="post"
+                submitLabel={t("Criar bloco operatório", "Create operating room")}
+                config={formConfig}
+                onSuccess={() => {
+                  setFormSeed((value) => value + 1)
+                  void refreshNow("mutation")
+                }}
+              />
+            </div>
+          </div>
+
+          <aside className="grid gap-1.5">
+            <div className={`${GLASS} p-4`}>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                {t("Disponibilidade atual", "Current availability")}
+              </p>
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                <div className="rounded-xl border border-emerald-200 bg-emerald-50/80 p-3 dark:border-emerald-700/30 dark:bg-emerald-900/15">
+                  <div className="text-[10px] font-semibold uppercase text-emerald-700 dark:text-emerald-400">{t("Disponíveis", "Available")}</div>
+                  <div className="mt-1 text-2xl font-bold text-emerald-900 dark:text-emerald-100">{availabilityStats.available}</div>
+                </div>
+                <div className="rounded-xl border border-rose-200 bg-rose-50/80 p-3 dark:border-rose-700/30 dark:bg-rose-900/15">
+                  <div className="text-[10px] font-semibold uppercase text-rose-700 dark:text-rose-400">{t("Bloqueadas", "Blocked")}</div>
+                  <div className="mt-1 text-2xl font-bold text-rose-900 dark:text-rose-100">{availabilityStats.blocked}</div>
+                </div>
+                <div className="rounded-xl border border-sky-200 bg-sky-50/80 p-3 dark:border-sky-700/30 dark:bg-sky-900/15">
+                  <div className="text-[10px] font-semibold uppercase text-sky-700 dark:text-sky-400">{t("Esterilizadas", "Sterile")}</div>
+                  <div className="mt-1 text-2xl font-bold text-sky-900 dark:text-sky-100">{availabilityStats.sterile}</div>
+                </div>
+                <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-3 dark:border-slate-700/30 dark:bg-slate-900/15">
+                  <div className="text-[10px] font-semibold uppercase text-slate-700 dark:text-slate-400">{t("Total", "Total")}</div>
+                  <div className="mt-1 text-2xl font-bold text-slate-900 dark:text-slate-100">{availabilityStats.total}</div>
+                </div>
+              </div>
+              {isRefreshing ? (
+                <p className="mt-3 text-[11px] text-muted-foreground">{t("A atualizar lista após alteração…", "Refreshing list after change…")}</p>
+              ) : null}
+            </div>
+
+            <div className={`${GLASS} p-4`}>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                {t("Checklist do bloco", "Room checklist")}
+              </p>
+              <div className="mt-3 space-y-2 text-[11px] text-muted-foreground">
+                <p>{t("Identificação operacional: nome, código único, tipo de sala e localização física.", "Operational identity: name, unique code, room type and physical location.")}</p>
+                <p>{t("Estado assistencial: disponibilidade, capacidade, esterilização e classe de limpeza.", "Clinical state: availability, capacity, sterilization and cleaning class.")}</p>
+                <p>{t("Prontidão técnica: equipamentos disponíveis, horário de funcionamento e motivo de bloqueio quando aplicável.", "Technical readiness: available equipment, working hours and blocking reason when applicable.")}</p>
+              </div>
+            </div>
+          </aside>
         </section>
 
         {error ? (

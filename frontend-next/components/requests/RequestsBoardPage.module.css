@@ -5,7 +5,7 @@
 
 /* Cabeçalho — topo arredondado, sem borda inferior */
 .columnHeader {
-  border-radius: 12px 12px 0 0;
+  border-radius: 10px 10px 0 0;
   border: 1px solid var(--col-border);
   border-bottom: none;
   box-shadow: 0 3px 10px -2px rgba(0, 0, 0, 0.07);
@@ -17,12 +17,12 @@
 /* Corpo da coluna com scroll independente */
 .columnBody {
   flex: 1;
-  border-radius: 0 0 12px 12px;
+  border-radius: 0 0 10px 10px;
   border: 1px solid var(--col-border);
   border-top: none;
-  max-height: var(--col-max-height, calc(100vh - 185px));
+  max-height: var(--col-max-height, calc(100vh - 178px));
   min-height: 160px;
-  padding: 7px 7px 10px;
+  padding: 4px 4px 6px;
   overflow-y: auto;
 }
 

@@ -1,16 +1,18 @@
 "use client"
 
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { Plus, FlaskConical, Clock, CheckCircle2, XCircle, Pencil, Loader2, Search, RotateCcw } from "lucide-react"
 import ManchesterBadge from "@/components/ui/ManchesterBadge"
+import PageSizeInput from "@/components/ui/PageSizeInput"
 import { getManchesterMeta } from "@/lib/manchesterTriage"
 import { useCallback, useEffect, useRef, useState } from "react"
 
 import AppLayout from "@/components/layout/AppLayout"
-import PageHeader from "@/components/ui/PageHeader"
 import useAuthGuard from "@/hooks/useAuthGuard"
 import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { apiFetch, apiFetchList } from "@/lib/api"
+import { abbreviateMiddleNames } from "@/lib/formatName"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -65,6 +67,12 @@ function urgencyAccent(status?: string): string {
 function priorityBadge(status?: string, display?: string) {
   if (!status && !display) return null
   return <ManchesterBadge status={status} display={display} />
+}
+
+function shortName(value?: string | null): string {
+  const raw = String(value || "").trim()
+  if (!raw) return "—"
+  return abbreviateMiddleNames(raw)
 }
 
 // ─── Edit Modal ───────────────────────────────────────────────────────────────
@@ -170,7 +178,7 @@ function EditModal({
         <div className="flex items-center justify-between border-b border-[var(--border)] px-4 py-3">
           <div>
             <p className="font-semibold text-[var(--text)]">Editar requisição</p>
-            <p className="text-xs text-[var(--gray-500)]">{req.custom_id} · {req.patient_name}</p>
+            <p className="text-xs text-[var(--gray-500)]">{req.custom_id} · {shortName(req.patient_name)}</p>
           </div>
           <button
             type="button"
@@ -182,7 +190,7 @@ function EditModal({
           </button>
         </div>
 
-        <div className="flex flex-col gap-4 overflow-y-auto p-4">
+        <div className="flex flex-col gap-3 overflow-y-auto p-3">
           {/* Current items */}
           <div>
             <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-[var(--gray-500)]">
@@ -303,24 +311,33 @@ function RequestCard({
   onEdit?: (row: LabRequest) => void
   busyId: number | null
 }) {
+  const router = useRouter()
   const busy = busyId === row.id
   const isPending = row.status === "pendente" && !row.validated_at
   const exams = row.items?.map((i) => i.exam_name ?? i.medical_exam_name).filter(Boolean) ?? []
 
   return (
-    <div className={`group relative flex flex-col gap-2 rounded-xl border border-[var(--border)] border-l-4 bg-[var(--card)] px-3 py-2.5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${urgencyAccent(row.clinical_status)}`}>
-
-      {/* Clicável — navega para detalhe */}
-      <Link href={`/requests/${row.id}`} className="absolute inset-0 rounded-xl" aria-label={`Ver requisição ${row.custom_id}`} />
+    <div
+      role="link"
+      tabIndex={0}
+      onClick={() => router.push(`/requests/${row.id}`)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault()
+          router.push(`/requests/${row.id}`)
+        }
+      }}
+      className={`group relative flex cursor-pointer flex-col gap-1.5 rounded-xl border border-[var(--border)] border-l-4 bg-[var(--card)] px-2.5 py-2 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${urgencyAccent(row.clinical_status)}`}
+    >
 
       {/* Header */}
-      <div className="relative flex items-start justify-between gap-2">
+      <div className="relative flex items-start justify-between gap-1.5">
         <div className="min-w-0">
           <span className="font-mono text-[11px] font-bold text-[var(--primary-700)]">{row.custom_id}</span>
-          <p className="mt-0.5 truncate text-xs font-semibold text-[var(--text)]">{row.patient_name}</p>
+          <p className="mt-0.5 truncate text-xs font-semibold text-[var(--text)]">{shortName(row.patient_name)}</p>
           {row.patient_age ? <p className="text-[10px] text-[var(--gray-500)]">{row.patient_age}</p> : null}
         </div>
-        <div className="flex shrink-0 flex-col items-end gap-1">
+        <div className="flex shrink-0 flex-col items-end gap-0.5">
           <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${row.type === "LAB" ? "bg-sky-100 text-sky-700" : "bg-violet-100 text-violet-700"}`}>
             {row.type === "LAB" ? "LAB" : "MED"}
           </span>
@@ -330,7 +347,7 @@ function RequestCard({
 
       {/* Exames como pills */}
       {exams.length > 0 ? (
-        <div className="relative flex flex-wrap gap-1">
+        <div className="relative flex flex-wrap gap-0.5">
           {exams.slice(0, 3).map((name, i) => (
             <span key={i} className="inline-flex items-center gap-0.5 rounded-full border border-[var(--primary-200)] bg-[var(--primary-50)] px-1.5 py-0.5 text-[10px] font-medium text-[var(--primary-700)]">
               <FlaskConical size={8} />
@@ -346,17 +363,17 @@ function RequestCard({
       ) : null}
 
       {/* Footer */}
-      <div className="relative flex items-center justify-between gap-2">
+      <div className="relative flex items-center justify-between gap-1.5">
         <span className="flex items-center gap-1 text-[10px] text-[var(--gray-400)]">
           <Clock size={9} />
           {fmt(row.created_at)}
         </span>
 
         {isPending ? (
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-0.5">
             <button
               type="button"
-              onClick={(e) => { e.preventDefault(); onCancel?.(row) }}
+              onClick={(e) => { e.stopPropagation(); onCancel?.(row) }}
               disabled={busy}
               className="inline-flex h-6 items-center gap-1 rounded-full border border-red-200 bg-white px-2 text-[10px] font-medium text-red-600 transition hover:bg-red-50 disabled:opacity-50"
             >
@@ -365,7 +382,7 @@ function RequestCard({
             </button>
             <button
               type="button"
-              onClick={(e) => { e.preventDefault(); onEdit?.(row) }}
+              onClick={(e) => { e.stopPropagation(); onEdit?.(row) }}
               disabled={busy}
               className="inline-flex h-6 items-center gap-1 rounded-full border border-[var(--border)] bg-white px-2 text-[10px] font-medium text-[var(--gray-700)] transition hover:bg-[var(--gray-100)] disabled:opacity-50"
             >
@@ -374,7 +391,7 @@ function RequestCard({
             </button>
             <button
               type="button"
-              onClick={(e) => { e.preventDefault(); onValidate?.(row) }}
+              onClick={(e) => { e.stopPropagation(); onValidate?.(row) }}
               disabled={busy}
               className="inline-flex h-6 items-center gap-1 rounded-full bg-[var(--primary-600)] px-2.5 text-[10px] font-semibold text-white transition hover:bg-[var(--primary-700)] disabled:opacity-60"
             >
@@ -406,8 +423,8 @@ function Column({
   accent: { header: string; badge: string }
 }) {
   return (
-    <div className="flex flex-col">
-      <div className={`mb-2.5 flex items-center gap-2 rounded-xl border px-3 py-2 ${accent.header}`}>
+    <div className="flex min-h-0 flex-col">
+      <div className={`mb-1.5 flex items-center gap-1.5 rounded-xl border px-2.5 py-1.5 ${accent.header}`}>
         <span className="text-sm font-semibold">{title}</span>
         {!loading ? (
           <span className={`ml-auto rounded-full px-2.5 py-0.5 text-xs font-bold ${accent.badge}`}>
@@ -420,7 +437,9 @@ function Column({
       ) : count === 0 ? (
         <p className="rounded-lg border border-dashed border-[var(--border)] px-3 py-6 text-center text-xs text-[var(--gray-400)]">{empty}</p>
       ) : (
-        <div className="space-y-2">{children}</div>
+        <div className="min-h-0 space-y-1 overflow-y-auto pr-0.5 [scrollbar-width:thin]" style={{ maxHeight: "calc(100vh - 232px)" }}>
+          {children}
+        </div>
       )}
     </div>
   )
@@ -443,6 +462,7 @@ export default function PendingRequestsPage() {
   const [globalError, setGlobalError] = useState<string | null>(null)
   const [editRow, setEditRow] = useState<LabRequest | null>(null)
   const [search, setSearch] = useState("")
+  const [pageSize, setPageSize] = useState(12)
 
   const loadAll = useCallback(async () => {
     setLoadingPending(true)
@@ -529,6 +549,10 @@ export default function PendingRequestsPage() {
     )
   }
 
+  function visibleRows(rows: LabRequest[]): LabRequest[] {
+    return filterRows(rows).slice(0, pageSize)
+  }
+
   function handleSaved(updated: LabRequest) {
     setPending((prev) => prev.map((r) => (r.id === updated.id ? updated : r)))
     setEditRow(null)
@@ -537,10 +561,23 @@ export default function PendingRequestsPage() {
 
   return (
     <AppLayout>
-      <div className="mx-auto w-full max-w-6xl space-y-4">
-        <PageHeader
-          title="Fila de requisições"
-          actions={
+      <div className="mx-auto w-full max-w-6xl space-y-2">
+        <section className="relative overflow-hidden rounded-xl border border-white/20 bg-white/30 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]">
+          <span className="absolute left-0 top-0 h-full w-1 bg-sky-500" />
+          <span className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-sky-400/40 to-transparent" />
+          <div className="flex flex-wrap items-center gap-1.5 px-3 py-2 pl-4">
+            <div className="flex min-w-0 items-center gap-1.5">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500 to-blue-600 text-white shadow-md shadow-sky-500/20">
+                <FlaskConical size={17} />
+              </span>
+              <div className="min-w-0">
+                <h1 className="text-lg font-bold leading-tight text-foreground">Fila de requisições</h1>
+                <p className="text-[11px] text-muted-foreground">
+                  {filterRows(pending).length + filterRows(canceled).length + filterRows(validated).length} itens visíveis
+                </p>
+              </div>
+            </div>
+
             <Link
               href="/requests/new"
               className="group/btn inline-flex h-8 items-center gap-1.5 rounded-full border border-[var(--primary-400)] bg-gradient-to-br from-[var(--primary-500)] to-[var(--primary-700)] px-3.5 text-xs font-semibold text-white shadow-md shadow-[var(--primary-900)]/20 transition-all duration-150 hover:from-[var(--primary-600)] hover:to-[var(--primary-800)] hover:text-white hover:shadow-lg hover:shadow-[var(--primary-900)]/30 active:scale-95"
@@ -548,8 +585,33 @@ export default function PendingRequestsPage() {
               <Plus size={13} strokeWidth={2.5} className="transition-transform duration-150 group-hover/btn:rotate-90" />
               Nova requisição
             </Link>
-          }
-        />
+
+            <div className="relative ml-auto min-w-[220px] flex-1 sm:max-w-sm">
+              <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--gray-400)]" />
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Pesquisar por código, paciente ou exame…"
+                className="w-full rounded-lg border border-white/30 bg-white/50 py-1.5 pl-8 pr-8 text-xs text-foreground shadow-sm backdrop-blur-sm transition placeholder:text-[var(--gray-400)] hover:border-[var(--primary-400)] focus:border-[var(--primary-500)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-100)] dark:border-white/10 dark:bg-white/10"
+              />
+              {search ? (
+                <button
+                  type="button"
+                  onClick={() => setSearch("")}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-[var(--gray-500)] transition hover:text-[var(--text)]"
+                  aria-label="Limpar pesquisa"
+                >
+                  <RotateCcw size={12} />
+                </button>
+              ) : null}
+            </div>
+
+            <div className="flex shrink-0 items-center gap-1" title="Itens por coluna">
+              <PageSizeInput value={pageSize} onChange={setPageSize} ariaLabel="Itens por coluna" min={1} max={50} />
+              <span className="text-[11px] text-muted-foreground">/col</span>
+            </div>
+          </div>
+        </section>
 
         {feedback ? (
           <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm text-emerald-800 dark:border-emerald-800/40 dark:bg-emerald-900/15 dark:text-emerald-300">
@@ -562,30 +624,7 @@ export default function PendingRequestsPage() {
           </div>
         ) : null}
 
-        {/* Barra de pesquisa */}
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="relative flex-1 min-w-[200px] max-w-sm">
-            <Search className="pointer-events-none absolute left-2.5 top-2.5 h-4 w-4 text-[var(--gray-400)]" />
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Pesquisar por código, paciente ou exame…"
-              className="w-full rounded-md border border-[var(--border)] bg-transparent py-2 pl-8 pr-3 text-sm text-[var(--text)] transition-colors placeholder:text-[var(--gray-400)] hover:border-[var(--primary-400)] focus:border-[var(--primary-500)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-100)]"
-            />
-          </div>
-          {search ? (
-            <button
-              type="button"
-              onClick={() => setSearch("")}
-              className="inline-flex h-9 items-center gap-1 rounded-md border border-[var(--border)] bg-transparent px-2.5 text-xs font-semibold text-[var(--gray-700)] shadow-sm transition hover:border-[var(--primary-300)] hover:bg-[var(--gray-100)]"
-            >
-              <RotateCcw size={12} />
-              Limpar
-            </button>
-          ) : null}
-        </div>
-
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+        <div className="grid min-h-0 grid-cols-1 gap-2 md:grid-cols-3">
           {/* Coluna 1 — Pendentes */}
           <Column
             title="Pendentes"
@@ -594,7 +633,7 @@ export default function PendingRequestsPage() {
             empty="Sem requisições pendentes."
             accent={{ header: "border-amber-200 bg-amber-50 text-amber-800", badge: "bg-amber-100 text-amber-700" }}
           >
-            {filterRows(pending).map((row) => (
+            {visibleRows(pending).map((row) => (
               <RequestCard
                 key={row.id}
                 row={row}
@@ -614,7 +653,7 @@ export default function PendingRequestsPage() {
             empty="Sem requisições canceladas."
             accent={{ header: "border-red-200 bg-red-50 text-red-800", badge: "bg-red-100 text-red-700" }}
           >
-            {filterRows(canceled).map((row) => (
+            {visibleRows(canceled).map((row) => (
               <RequestCard key={row.id} row={row} busyId={null} />
             ))}
           </Column>
@@ -627,7 +666,7 @@ export default function PendingRequestsPage() {
             empty="Nenhuma requisição encaminhada."
             accent={{ header: "border-emerald-200 bg-emerald-50 text-emerald-800", badge: "bg-emerald-100 text-emerald-700" }}
           >
-            {filterRows(validated).map((row) => (
+            {visibleRows(validated).map((row) => (
               <RequestCard key={row.id} row={row} busyId={null} />
             ))}
           </Column>

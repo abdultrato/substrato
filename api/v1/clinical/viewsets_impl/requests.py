@@ -94,6 +94,8 @@ class LabRequestViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin,
                 "requesting_company",
                 "external_executing_company",
                 "requesting_physician",
+                "requesting_physician__profession",
+                "requesting_physician__role",
                 "occupational_profile",
             )
             .prefetch_related(

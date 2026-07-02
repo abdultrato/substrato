@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import { useEffect, useMemo, useState } from "react"
 import { Search, Stethoscope, User, X } from "lucide-react"
 
@@ -19,30 +20,36 @@ const ENDPOINT = "/consultations/doctors/"
 const GLASS =
   "rounded-xl border border-white/20 bg-white/30 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]"
 
-// Paleta estável por médico (cor derivada do id) para os avatares.
-const AVATAR_TONES = [
-  "from-sky-500 to-blue-600",
-  "from-emerald-500 to-teal-600",
-  "from-violet-500 to-purple-600",
-  "from-amber-500 to-orange-600",
-  "from-rose-500 to-pink-600",
-  "from-indigo-500 to-blue-600",
-  "from-cyan-500 to-sky-600",
-  "from-fuchsia-500 to-pink-600",
+// Paleta estável por médico (cor derivada do id): gradiente do avatar + barra
+// lateral com a mesma família de cor.
+const AVATAR_TONES: { grad: string; bar: string }[] = [
+  { grad: "from-sky-500 to-blue-600", bar: "bg-sky-500" },
+  { grad: "from-emerald-500 to-teal-600", bar: "bg-emerald-500" },
+  { grad: "from-violet-500 to-purple-600", bar: "bg-violet-500" },
+  { grad: "from-amber-500 to-orange-600", bar: "bg-amber-500" },
+  { grad: "from-rose-500 to-pink-600", bar: "bg-rose-500" },
+  { grad: "from-indigo-500 to-blue-600", bar: "bg-indigo-500" },
+  { grad: "from-cyan-500 to-sky-600", bar: "bg-cyan-500" },
+  { grad: "from-fuchsia-500 to-pink-600", bar: "bg-fuchsia-500" },
 ]
 
-function toneFor(id: any): string {
+function toneFor(id: any): { grad: string; bar: string } {
   const n = Number(id) || String(id).split("").reduce((a, c) => a + c.charCodeAt(0), 0)
   return AVATAR_TONES[Math.abs(n) % AVATAR_TONES.length]
 }
 
-function DoctorCard({ row, t }: { row: Row; t: (pt: string, en: string) => string }) {
+function DoctorCard({ row, href, t }: { row: Row; href: string; t: (pt: string, en: string) => string }) {
   const name = String(row?.name || `${t("Médico", "Doctor")} ${row?.id}`)
   const initial = name.trim().charAt(0).toUpperCase() || "?"
   const subtitle = row?.role_name || row?.profession_name || ""
+  const tone = toneFor(row?.id)
   return (
-    <div className={`group relative overflow-hidden ${GLASS} flex items-center gap-2 p-2 transition hover:-translate-y-px hover:border-white/40 hover:shadow-md`}>
-      <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br ${toneFor(row?.id)} text-sm font-bold text-white shadow-sm`}>
+    <Link
+      href={href}
+      className={`group relative flex items-center gap-2 overflow-hidden ${GLASS} p-2 pl-3 transition hover:-translate-y-px hover:border-white/40 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30`}
+    >
+      <span className={`absolute left-0 top-0 h-full w-1 rounded-l-xl ${tone.bar}`} />
+      <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br ${tone.grad} text-sm font-bold text-white shadow-sm`}>
         {initial}
       </span>
       <div className="min-w-0 flex-1">
@@ -58,7 +65,7 @@ function DoctorCard({ row, t }: { row: Row; t: (pt: string, en: string) => strin
           <div className="mt-0.5 font-mono text-[10px] text-muted-foreground">{row?.custom_id || `#${row?.id}`}</div>
         )}
       </div>
-    </div>
+    </Link>
   )
 }
 
@@ -219,7 +226,7 @@ export default function ConsultationsDoctorsListPage() {
           <>
             <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
               {visible.map((row) => (
-                <DoctorCard key={row.id} row={row} t={t} />
+                <DoctorCard key={row.id} row={row} href={`/consultations/doctors/${row.id}`} t={t} />
               ))}
             </div>
             {filtered.length > pageSize ? (

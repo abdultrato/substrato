@@ -997,6 +997,21 @@ class LabRequestSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializ
     patient_gender = serializers.CharField(source="patient.gender", read_only=True)
     occupational_profile_name = serializers.CharField(source="occupational_profile.name", read_only=True)
     requesting_physician_name = serializers.CharField(source="requesting_physician.name", read_only=True)
+    requesting_physician_profession_name = serializers.CharField(
+        source="requesting_physician.profession.name",
+        read_only=True,
+        default=None,
+    )
+    requesting_physician_role_name = serializers.CharField(
+        source="requesting_physician.role.name",
+        read_only=True,
+        default=None,
+    )
+    requesting_physician_document_number = serializers.CharField(
+        source="requesting_physician.document_number",
+        read_only=True,
+        default=None,
+    )
     patient_age = serializers.SerializerMethodField()
     clinical_status_display = serializers.CharField(source="get_clinical_status_display", read_only=True)
     requesting_company_name = serializers.CharField(source="requesting_company.name", read_only=True)
@@ -1092,6 +1107,9 @@ class LabRequestSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializ
             "external_executing_company_name",
             "occupational_profile_name",
             "requesting_physician_name",
+            "requesting_physician_profession_name",
+            "requesting_physician_role_name",
+            "requesting_physician_document_number",
             "patient_age",
             "clinical_status_display",
             "validated_at",

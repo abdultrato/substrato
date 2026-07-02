@@ -16,6 +16,7 @@ import useAuthGuard from "@/hooks/useAuthGuard"
 import { useLanguage } from "@/hooks/useLanguage"
 import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { apiFetch } from "@/lib/api"
+import { abbreviateMiddleNames } from "@/lib/formatName"
 import { requiredGroupsForResourceGroup } from "@/lib/resourcesAccess"
 import { RequestsSubNav } from "./RequestsBoardPage"
 
@@ -59,9 +60,9 @@ function SectionCard({ icon, title, accent = "bg-[var(--primary-600)]", classNam
   icon: React.ReactNode; title: string; accent?: string; className?: string; children: React.ReactNode
 }) {
   return (
-    <div className={`relative flex flex-col gap-2 overflow-hidden rounded-xl ${GLASS} p-3 pl-4 ${className}`}>
+    <div className={`relative flex flex-col gap-1.5 overflow-hidden rounded-lg ${GLASS} px-2.5 py-2 pl-3.5 ${className}`}>
       <span className={`absolute left-0 top-0 h-full w-1 ${accent}`} />
-      <div className="flex items-center gap-1.5 border-b border-border/50 pb-2">
+      <div className="flex items-center gap-1.5 border-b border-border/50 pb-1.5">
         <span className="text-[var(--primary-600)]">{icon}</span>
         <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{title}</span>
       </div>
@@ -72,8 +73,8 @@ function SectionCard({ icon, title, accent = "bg-[var(--primary-600)]", classNam
 
 function Row({ label, value }: { label: string; value: React.ReactNode }) {
   return (
-    <div className="flex items-start gap-2">
-      <span className="w-28 shrink-0 text-[11px] text-muted-foreground">{label}</span>
+    <div className="flex items-start gap-1.5">
+      <span className="w-24 shrink-0 text-[11px] text-muted-foreground">{label}</span>
       <span className="min-w-0 text-xs font-medium text-foreground">{value || "—"}</span>
     </div>
   )
@@ -81,7 +82,7 @@ function Row({ label, value }: { label: string; value: React.ReactNode }) {
 
 function ExamPill({ name }: { name: string }) {
   return (
-    <span className="inline-flex items-center gap-1 rounded-full border border-[var(--primary-200)] bg-[var(--primary-50)] px-2 py-0.5 text-[11px] font-medium text-[var(--primary-700)]">
+    <span className="inline-flex items-center gap-1 rounded-full border border-[var(--primary-200)] bg-[var(--primary-50)] px-1.5 py-0.5 text-[10px] font-medium text-[var(--primary-700)]">
       <FlaskConical size={9} />
       {name}
     </span>
@@ -96,7 +97,7 @@ function SampleCard({ item }: { item: any }) {
   const hours   = item?.fasting_hours
 
   return (
-    <div className="flex items-start gap-2 rounded-lg border border-white/20 bg-white/40 px-2.5 py-2 text-[11px] backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]">
+    <div className="flex items-start gap-1.5 rounded-lg border border-white/20 bg-white/40 px-2 py-1.5 text-[11px] backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]">
       <Droplets size={13} className="mt-0.5 shrink-0 text-sky-500" />
       <div className="min-w-0">
         <p className="font-semibold text-foreground">{name}</p>
@@ -175,12 +176,20 @@ export default function RequestDetailPage() {
 
   /* derived values */
   const code            = val(r, "custom_id", "id_custom", "codigo") || `#${r.id}`
-  const patientName     = val(r, "patient_name", "paciente_nome") || "—"
+  const patientNameFull = val(r, "patient_name", "paciente_nome") || "—"
+  const patientName     = patientNameFull === "—" ? patientNameFull : abbreviateMiddleNames(String(patientNameFull))
   const patientCode     = val(r, "patient_code", "paciente_codigo")
   const company         = val(r, "requesting_company_name", "empresa_solicitante_nome")
   const extCompany      = val(r, "external_executing_company_name", "empresa_executora_externa_nome")
-  const physician       = val(r, "requesting_physician_name")
-  const analystName     = val(r, "analyst_name")
+  const physicianRaw    = val(r, "requesting_physician_name")
+  const physicianProfessionRaw = val(r, "requesting_physician_profession_name")
+  const physicianRoleRaw = val(r, "requesting_physician_role_name")
+  const physicianDocument = val(r, "requesting_physician_document_number")
+  const analystRaw      = val(r, "analyst_name")
+  const physician       = physicianRaw ? abbreviateMiddleNames(String(physicianRaw)) : physicianRaw
+  const physicianProfession = physicianProfessionRaw ? String(physicianProfessionRaw) : physicianProfessionRaw
+  const physicianRole   = physicianRoleRaw ? String(physicianRoleRaw) : physicianRoleRaw
+  const analystName     = analystRaw ? abbreviateMiddleNames(String(analystRaw)) : analystRaw
   const reqType         = val(r, "type", "tipo")
   const status          = val(r, "status", "estado") || ""
   const clinicalStatus  = val(r, "clinical_status", "status_clinico") || ""
@@ -214,26 +223,26 @@ export default function RequestDetailPage() {
 
   return (
     <AppLayout requiredGroups={requiredGroupsForResourceGroup("clinical")} subNav={<RequestsSubNav />}>
-      <div className="w-full space-y-3 px-1">
+      <div className="w-full space-y-2 px-1">
 
         {/* ── HERO ────────────────────────────────────────── */}
-        <div className={`flex flex-col gap-2 rounded-xl ${GLASS} px-4 py-3 md:flex-row md:items-start md:justify-between`}>
-          <div className="flex min-w-0 flex-col gap-1.5">
+        <div className={`flex flex-col gap-1.5 rounded-lg ${GLASS} px-3 py-2.5 md:flex-row md:items-start md:justify-between`}>
+          <div className="flex min-w-0 flex-col gap-1">
             {/* breadcrumb */}
-            <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+            <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
               <Link href="/requests" className="hover:text-foreground transition-colors">Requisições</Link>
               <span>/</span>
               <span className="font-semibold text-foreground">{code}</span>
             </div>
 
             {/* title row */}
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap items-center gap-1.5">
               <h1 className="text-base font-bold text-foreground">{patientName}</h1>
               {patientCode ? <span className="text-xs text-muted-foreground">{patientCode}</span> : null}
             </div>
 
             {/* badge row */}
-            <div className="flex flex-wrap items-center gap-1.5">
+            <div className="flex flex-wrap items-center gap-1">
               <span className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[11px] font-semibold ${sm.color}`}>
                 <span className={`h-1.5 w-1.5 rounded-full ${sm.dot}`} />
                 {sm.label}
@@ -247,7 +256,7 @@ export default function RequestDetailPage() {
           </div>
 
           {/* action buttons (header level) */}
-          <div className="flex shrink-0 flex-wrap items-center gap-1.5">
+          <div className="flex shrink-0 flex-wrap items-center gap-1">
             <Link
               href={`/requests/${id}/edit`}
               className="inline-flex h-7 items-center gap-1 rounded-md border border-border bg-background px-2.5 text-xs font-medium text-foreground-2 shadow-sm transition hover:bg-muted hover:text-foreground"
@@ -271,76 +280,69 @@ export default function RequestDetailPage() {
           </div>
         </div>
 
-        {/* ── 3-COLUMN GRID ────────────────────────────────── */}
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+        {/* ── Masonry details ─────────────────────────────── */}
+        <div className="columns-1 gap-2 lg:columns-2 xl:columns-3 [&>*]:mb-2 [&>*]:break-inside-avoid">
+          <SectionCard icon={<User size={13} />} title="Paciente" accent="bg-sky-500">
+            <Row label="Nome"   value={patientNameFull} />
+            <Row label="Código" value={patientCode} />
+          </SectionCard>
 
-          {/* col 1 — Paciente + Requisitante */}
-          <div className="flex flex-col gap-3">
-            <SectionCard icon={<User size={13} />} title="Paciente" accent="bg-sky-500">
-              <Row label="Nome"   value={patientName} />
-              <Row label="Código" value={patientCode} />
-            </SectionCard>
-
-            {(company || physician || extCompany || analystName) ? (
-              <SectionCard icon={<Building2 size={13} />} title="Requisitante" accent="bg-indigo-500">
+          {(company || physician || physicianProfession || physicianRole || physicianDocument || extCompany || analystName) ? (
+            <SectionCard icon={<Building2 size={13} />} title="Requisitante" accent="bg-indigo-500">
                 {company     ? <Row label="Empresa"       value={company} />     : null}
                 {physician   ? <Row label="Médico"        value={physician} />   : null}
+                {physicianProfession ? <Row label="Especialidade" value={physicianProfession} /> : null}
+                {physicianRole ? <Row label="Cargo" value={physicianRole} /> : null}
+                {physicianDocument ? <Row label="N.º profissional" value={physicianDocument} /> : null}
                 {extCompany  ? <Row label="Exec. externa" value={extCompany} />  : null}
                 {analystName ? <Row label="Analista"      value={analystName} /> : null}
               </SectionCard>
-            ) : null}
+          ) : null}
 
-            <SectionCard icon={<CalendarClock size={13} />} title="Datas" accent="bg-teal-500">
-              <Row label="Criada em"   value={fmtDate(createdAt)} />
-              <Row label="Validada em" value={fmtDate(validatedAt)} />
-              <Row label="Coletada em" value={fmtDate(collectedAt)} />
+          <SectionCard icon={<CalendarClock size={13} />} title="Datas" accent="bg-teal-500">
+            <Row label="Criada em"   value={fmtDate(createdAt)} />
+            <Row label="Validada em" value={fmtDate(validatedAt)} />
+            <Row label="Coletada em" value={fmtDate(collectedAt)} />
+          </SectionCard>
+
+          <SectionCard icon={<Clock size={13} />} title="Estado clínico" accent="bg-rose-500">
+            <ManchesterBadge status={clinicalStatus} display={clinicalDisplay} className="px-3 py-2 text-xs rounded-lg" />
+            {hasCritical ? (
+              <div className="flex items-start gap-1.5 rounded-lg border border-red-200 bg-red-50/70 px-3 py-2 text-[11px] text-red-800 backdrop-blur-sm">
+                <AlertTriangle size={12} className="mt-0.5 shrink-0" />
+                <span>Esta requisição possui pelo menos um resultado crítico que requer atenção imediata.</span>
+              </div>
+            ) : null}
+          </SectionCard>
+
+          {tests.length > 0 ? (
+            <SectionCard icon={<FlaskConical size={13} />} title={`Exames (${tests.length})`} accent="bg-violet-500">
+              <div className="flex flex-wrap gap-0.5">
+                {tests.map((item: any, i: number) => {
+                  const name = val(item, "test_name", "exam_name", "medical_exam_name", "name", "nome") || `Exame ${i + 1}`
+                  return <ExamPill key={i} name={name} />
+                })}
+              </div>
             </SectionCard>
-          </div>
-
-          {/* col 2 — Exames + Amostras */}
-          <div className="flex flex-col gap-3">
-            {tests.length > 0 ? (
-              <SectionCard icon={<FlaskConical size={13} />} title={`Exames (${tests.length})`} accent="bg-violet-500">
-                <div className="flex flex-wrap gap-1">
-                  {tests.map((item: any, i: number) => {
-                    const name = val(item, "test_name", "exam_name", "medical_exam_name", "name", "nome") || `Exame ${i + 1}`
-                    return <ExamPill key={i} name={name} />
-                  })}
-                </div>
-              </SectionCard>
-            ) : (
-              <SectionCard icon={<FlaskConical size={13} />} title="Exames" accent="bg-violet-500">
-                <p className="text-[11px] text-muted-foreground">Nenhum exame registado.</p>
-              </SectionCard>
-            )}
-
-            {samples.length > 0 ? (
-              <SectionCard icon={<TestTube2 size={13} />} title={`Amostras (${samples.length})`} accent="bg-cyan-500">
-                <div className="flex flex-col gap-1.5">
-                  {samples.map((s: any, i: number) => <SampleCard key={i} item={s} />)}
-                </div>
-              </SectionCard>
-            ) : null}
-
-            {r?.notes || r?.observacoes ? (
-              <SectionCard icon={<FileText size={13} />} title="Observações" accent="bg-amber-500">
-                <p className="whitespace-pre-wrap text-xs text-foreground">{r.notes || r.observacoes}</p>
-              </SectionCard>
-            ) : null}
-          </div>
-
-          {/* col 3 — Estado clínico */}
-          <div className="flex flex-col gap-3">
-            <SectionCard icon={<Clock size={13} />} title="Estado clínico" accent="bg-rose-500">
-              <ManchesterBadge status={clinicalStatus} display={clinicalDisplay} className="px-3 py-2 text-xs rounded-lg" />
-              {hasCritical ? (
-                <div className="flex items-start gap-1.5 rounded-lg border border-red-200 bg-red-50/70 px-3 py-2 text-[11px] text-red-800 backdrop-blur-sm">
-                  <AlertTriangle size={12} className="mt-0.5 shrink-0" />
-                  <span>Esta requisição possui pelo menos um resultado crítico que requer atenção imediata.</span>
-                </div>
-              ) : null}
+          ) : (
+            <SectionCard icon={<FlaskConical size={13} />} title="Exames" accent="bg-violet-500">
+              <p className="text-[11px] text-muted-foreground">Nenhum exame registado.</p>
             </SectionCard>
-          </div>
+          )}
+
+          {samples.length > 0 ? (
+            <SectionCard icon={<TestTube2 size={13} />} title={`Amostras (${samples.length})`} accent="bg-cyan-500">
+              <div className="flex flex-col gap-1">
+                {samples.map((s: any, i: number) => <SampleCard key={i} item={s} />)}
+              </div>
+            </SectionCard>
+          ) : null}
+
+          {r?.notes || r?.observacoes ? (
+            <SectionCard icon={<FileText size={13} />} title="Observações" accent="bg-amber-500">
+              <p className="whitespace-pre-wrap text-xs text-foreground">{r.notes || r.observacoes}</p>
+            </SectionCard>
+          ) : null}
         </div>
 
         {/* ── Linha do tempo (largura total) ──────────────── */}

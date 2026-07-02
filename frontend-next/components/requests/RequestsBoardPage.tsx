@@ -4,15 +4,15 @@ import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import styles from "./RequestsBoardPage.module.css"
 import { useEffect, useMemo, useState } from "react"
-import { Search, RotateCcw, BarChart2, Clock, XCircle, CheckCircle2, FlaskConical, AlertTriangle, ChevronLeft, Microscope, Hourglass } from "lucide-react"
+import { Search, RotateCcw, BarChart2, Clock, XCircle, CheckCircle2, FlaskConical, AlertTriangle, ChevronLeft, Microscope, Hourglass, ClipboardList } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
-import PageHeader from "@/components/ui/PageHeader"
 import useAuthGuard from "@/hooks/useAuthGuard"
 import { useLanguage } from "@/hooks/useLanguage"
 import useDebounce from "@/hooks/useDebounce"
 import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { apiFetchAll } from "@/lib/api"
+import { abbreviateMiddleNames } from "@/lib/formatName"
 import { canonicalCollectionPath } from "@/lib/openapi/endpointResolver"
 import { hasOpenApiMethod } from "@/lib/openapi/writeContract"
 import { buildRecordDetailHref } from "@/lib/resources/recordIdentity"
@@ -33,7 +33,7 @@ function getStatus(row: Row): string {
 }
 
 function getPatientName(row: Row): string {
-  return (
+  const raw = (
     row?.patient_name ||
     row?.paciente_nome ||
     row?.nome_paciente ||
@@ -41,6 +41,7 @@ function getPatientName(row: Row): string {
     row?.patient?.nome ||
     "—"
   )
+  return raw === "—" ? raw : abbreviateMiddleNames(String(raw))
 }
 
 function getCode(row: Row): string {
@@ -94,6 +95,21 @@ function getStatusLabel(status: string): string {
   return map[status] || status
 }
 
+function statusTone(status: string) {
+  switch (status) {
+    case "pendente":
+      return { grad: "from-amber-500 to-orange-600", bar: "bg-amber-500", badge: "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-700/30 dark:bg-amber-900/20 dark:text-amber-300" }
+    case "em_analise":
+      return { grad: "from-sky-500 to-blue-600", bar: "bg-sky-500", badge: "border-sky-200 bg-sky-50 text-sky-700 dark:border-sky-700/30 dark:bg-sky-900/20 dark:text-sky-300" }
+    case "aguardando_validacao":
+      return { grad: "from-violet-500 to-indigo-600", bar: "bg-violet-500", badge: "border-violet-200 bg-violet-50 text-violet-700 dark:border-violet-700/30 dark:bg-violet-900/20 dark:text-violet-300" }
+    case "validado":
+      return { grad: "from-emerald-500 to-teal-600", bar: "bg-emerald-500", badge: "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-700/30 dark:bg-emerald-900/20 dark:text-emerald-300" }
+    default:
+      return { grad: "from-rose-500 to-pink-600", bar: "bg-rose-500", badge: "border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-700/30 dark:bg-rose-900/20 dark:text-rose-300" }
+  }
+}
+
 type CardProps = {
   row: Row
   href: string
@@ -108,41 +124,62 @@ function RequestCard({ row, href }: CardProps) {
   const hasCritical = row?.has_critical_result || row?.possui_resultado_critico
   const status = getStatus(row)
   const statusLabel = getStatusLabel(status)
+  const tone = statusTone(status)
 
   return (
     <Link
       href={href}
-      className="group block rounded-lg border border-white/30 bg-transparent backdrop-blur-sm px-2.5 py-2 shadow-sm ring-1 ring-black/5 transition-all duration-200 hover:border-[var(--primary-300)] hover:bg-white/20 hover:shadow-md hover:ring-[var(--primary-200)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-400)]"
+      className="group relative block overflow-hidden rounded-lg border border-white/20 bg-white/30 px-2 py-1.5 pl-3 shadow-sm backdrop-blur-sm transition hover:-translate-y-px hover:border-white/40 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-400)] dark:border-white/10 dark:bg-white/[0.04]"
     >
-      <div className="flex items-center justify-between gap-1.5">
-        <span className="font-mono text-[11px] font-semibold text-[var(--primary-700)] group-hover:text-[var(--primary-800)]">
-          {code}
+      <span className={`absolute left-0 top-0 h-full w-1 ${tone.bar}`} />
+
+      <div className="flex items-start gap-2">
+        <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br ${tone.grad} text-white shadow-sm`}>
+          <FlaskConical size={14} />
         </span>
-        {hasCritical && (
-          <span title="Resultado crítico" className="flex items-center gap-0.5 rounded border border-red-300 bg-red-50 px-1 py-px text-[9px] font-semibold text-red-700">
-            <AlertTriangle size={9} />
-            Crítico
-          </span>
-        )}
-      </div>
 
-      <p className="mt-0.5 text-xs font-medium text-[var(--text)] leading-snug line-clamp-1">
-        {patientName}
-      </p>
+        <div className="min-w-0 flex-1">
+          <div className="truncate text-[12px] font-bold leading-tight text-foreground">{patientName}</div>
 
-      <div className="mt-1 flex items-center gap-1.5 flex-wrap">
-        {(cStatus || cDisplay) ? (
-          <ManchesterBadge status={cStatus} display={cDisplay} />
-        ) : null}
-        <span className="flex items-center gap-0.5 text-[10px] text-[var(--gray-500)]">
-          <FlaskConical size={10} />
-          {itemCount}
-        </span>
-        <span className="ml-auto text-[10px] text-[var(--gray-400)]">{date}</span>
-      </div>
+          <div className="mt-1 flex items-center justify-between gap-1 text-[10px]">
+            <span className="inline-flex min-w-0 items-center gap-1 rounded-full border border-white/20 bg-white/35 px-1.5 py-0.5 font-mono text-muted-foreground dark:border-white/10 dark:bg-white/[0.03]">
+              <span className="truncate">{code}</span>
+              <span className="text-[9px] text-muted-foreground/70">•</span>
+              <span className="inline-flex shrink-0 items-center gap-0.5">
+                <FlaskConical size={9} />
+                {itemCount}
+              </span>
+            </span>
 
-      <div className="mt-1 border-t border-white/30 pt-1 text-[9px] font-medium text-[var(--gray-400)]">
-        {statusLabel}
+            {hasCritical ? (
+              <span title="Resultado crítico" className="inline-flex shrink-0 items-center gap-0.5 rounded-full border border-red-200 bg-red-50 px-1.5 py-0.5 text-[9px] font-semibold text-red-700 dark:border-red-700/30 dark:bg-red-900/20 dark:text-red-300">
+                <AlertTriangle size={9} />
+                {`Crítico`}
+              </span>
+            ) : (
+              <span className={`inline-flex shrink-0 rounded-full border px-1.5 py-0.5 text-[9px] font-semibold ${tone.badge}`}>
+                {statusLabel}
+              </span>
+            )}
+          </div>
+
+          <div className="mt-1 flex items-center justify-between gap-1">
+            {(cStatus || cDisplay) ? (
+              <ManchesterBadge status={cStatus} display={cDisplay} className="shrink-0 px-1.5 text-[9px]" />
+            ) : (
+              <span className={`inline-flex shrink-0 rounded-full border px-1.5 py-0.5 text-[9px] font-semibold ${tone.badge}`}>
+                {statusLabel}
+              </span>
+            )}
+            <span className="truncate text-[9px] text-muted-foreground">{date}</span>
+          </div>
+
+          {(row?.notes || row?.descricao || row?.description) ? (
+            <p className="mt-1 line-clamp-1 text-[10px] text-muted-foreground">
+              {String(row?.notes || row?.descricao || row?.description)}
+            </p>
+          ) : null}
+        </div>
       </div>
     </Link>
   )
@@ -176,21 +213,21 @@ function BoardColumn({ title, icon, rows, colorTokens, emptyText, rowHref }: Col
 
   // eslint-disable-next-line react/forbid-dom-props
   return (
-    <div className="flex flex-col" style={cssVars}>
+    <div className="flex flex-col rounded-lg border border-white/20 bg-white/20 p-0.5 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.03]" style={cssVars}>
       {/* Cabeçalho com topo arredondado */}
-      <div className={`${styles.columnHeader} flex items-center gap-2 px-3 py-2 ${colorTokens.bg} ${colorTokens.text}`}>
+      <div className={`${styles.columnHeader} flex items-center gap-1.5 px-2 py-1.5 ${colorTokens.bg} ${colorTokens.text}`}>
         {icon}
-        <span className="text-sm font-semibold tracking-wide">{title}</span>
-        <span className={`ml-auto rounded-full px-2.5 py-0.5 text-xs font-bold ${colorTokens.countBg} ${colorTokens.countText}`}>
+        <span className="text-xs font-semibold tracking-wide">{title}</span>
+        <span className={`ml-auto rounded-full px-2 py-0.5 text-[10px] font-bold ${colorTokens.countBg} ${colorTokens.countText}`}>
           {rows.length}
         </span>
       </div>
 
       {/* Corpo da coluna com scroll independente */}
       <div className={styles.columnBody}>
-        <div className="flex flex-col gap-1.5">
+        <div className="flex flex-col gap-1">
           {rows.length === 0 ? (
-            <p className="rounded-lg border border-dashed border-[var(--border)] px-3 py-8 text-center text-xs text-[var(--gray-400)]">
+            <p className="rounded-lg border border-dashed border-[var(--border)] px-2 py-6 text-center text-[11px] text-[var(--gray-400)]">
               {emptyText}
             </p>
           ) : (
@@ -323,6 +360,15 @@ export default function RequestsBoardPage() {
     return map
   }, [data])
 
+  const stats = useMemo(() => ({
+    total: data.length,
+    pending: (byStatus.get("pendente") ?? []).length,
+    analysing: (byStatus.get("em_analise") ?? []).length,
+    validated: (byStatus.get("validado") ?? []).length,
+    cancelled: STATUS_CANCELLED.reduce((acc, status) => acc + (byStatus.get(status) ?? []).length, 0),
+    critical: data.filter((row) => row?.has_critical_result || row?.possui_resultado_critico).length,
+  }), [byStatus, data])
+
   const columns: ColumnDef[] = useMemo(() => {
     const pipeline: ColumnDef[] = [
       {
@@ -381,25 +427,117 @@ export default function RequestsBoardPage() {
   }
 
   const reportHref = `/reports?endpoint=${encodeURIComponent(normalizedEndpoint)}&group=${encodeURIComponent("Área Clínica")}&resource=${encodeURIComponent("Requisição")}`
-  const gridColsClass = columns.length >= 5 ? "xl:grid-cols-5" : "xl:grid-cols-4"
+  const visibleCount = columns.reduce((acc, col) => acc + columnRows(col).length, 0)
 
   if (loading) return null
 
   return (
-    <AppLayout requiredGroups={requiredGroupsForResourceGroup("clinical")} subNav={<RequestsSubNav />}>
-      <div className="w-full space-y-1.5 px-1">
-        <PageHeader
-          title="Área Clínica / Requisição"
-          actions={
+    <AppLayout fullWidth requiredGroups={requiredGroupsForResourceGroup("clinical")} subNav={<RequestsSubNav />}>
+      <div className="w-full space-y-1">
+        <section className="relative overflow-hidden rounded-xl border border-white/20 bg-white/30 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]">
+          <span className="absolute left-0 top-0 h-full w-1 bg-sky-500" />
+          <span className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-sky-400/40 to-transparent" />
+          <div className="flex flex-wrap items-center gap-2 px-3 py-2 pl-4">
+            <div className="flex min-w-0 items-center gap-2">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500 to-blue-600 text-white shadow-md shadow-sky-500/20">
+                <ClipboardList size={17} />
+              </span>
+              <div className="min-w-0">
+                <h1 className="text-lg font-bold leading-tight text-foreground">{t("Requisições clínicas", "Clinical requests")}</h1>
+                <p className="text-[11px] text-muted-foreground">
+                  {loadingData ? t("A carregar…", "Loading…") : `${visibleCount} ${t("itens visíveis", "visible items")}`}
+                </p>
+              </div>
+            </div>
+
             <Link
               href={reportHref}
-              className="inline-flex items-center gap-1.5 rounded-md border border-[var(--primary-200)] bg-[var(--primary-50)] px-3 py-1.5 text-xs font-semibold text-[var(--primary-700)] shadow-sm transition hover:bg-[var(--primary-100)] h-9"
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-gradient-to-r from-sky-600 to-blue-600 px-4 py-2 text-xs font-semibold text-white shadow-md shadow-sky-500/25 transition hover:brightness-110"
             >
-              <BarChart2 size={12} />
+              <BarChart2 size={14} />
               {t("Ver relatório", "View report")}
             </Link>
-          }
-        />
+
+            <div className="relative ml-auto min-w-[180px] flex-1 sm:max-w-sm">
+              <Search size={14} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder={t("Código, paciente, estado ou descrição…", "Code, patient, status or description…")}
+                className="w-full rounded-lg border border-white/30 bg-white/50 py-1.5 pl-8 pr-7 text-xs text-foreground shadow-sm backdrop-blur-sm transition placeholder:text-muted-foreground hover:border-sky-400 focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500/25 dark:border-white/10 dark:bg-white/10"
+              />
+              {search ? (
+                <button
+                  type="button"
+                  aria-label={t("Limpar", "Clear")}
+                  onClick={() => setSearch("")}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground transition hover:text-foreground"
+                >
+                  <XCircle size={14} />
+                </button>
+              ) : null}
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-1 border-t border-white/20 px-3 py-1.5 pl-4 dark:border-white/10">
+            <span className="mr-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{t("Estado", "Status")}</span>
+            {[
+              { active: !showCancelled, label: t("Pipeline activo", "Active pipeline"), count: stats.total - stats.cancelled, cls: "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-700/30 dark:bg-emerald-900/20 dark:text-emerald-300" },
+              { active: showCancelled, label: t("Canceladas visíveis", "Cancelled visible"), count: stats.cancelled, cls: "border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-700/30 dark:bg-rose-900/20 dark:text-rose-300" },
+              { active: false, label: t("Críticas", "Critical"), count: stats.critical, cls: "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-700/30 dark:bg-amber-900/20 dark:text-amber-300" },
+            ].map((item) => (
+              <span key={item.label} className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold ${item.cls} ${item.active ? "ring-2 ring-current/15" : ""}`}>
+                {item.label}
+                <span className="rounded-full bg-black/5 px-1 tabular-nums dark:bg-white/10">{item.count}</span>
+              </span>
+            ))}
+            <button
+              type="button"
+              onClick={() => setShowCancelled((v) => !v)}
+              className={`ml-auto inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold transition ${
+                showCancelled
+                  ? "border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 dark:border-rose-700/30 dark:bg-rose-900/20 dark:text-rose-300"
+                  : "border-white/30 bg-white/40 text-foreground hover:bg-white/60 dark:border-white/10 dark:bg-white/10"
+              }`}
+            >
+              <XCircle size={11} />
+              {showCancelled ? t("Ocultar canceladas", "Hide cancelled") : t("Mostrar canceladas", "Show cancelled")}
+            </button>
+            {(search || showCancelled) ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setSearch("")
+                  setShowCancelled(false)
+                }}
+                className="inline-flex items-center gap-1 rounded-full border border-white/30 bg-white/40 px-2 py-0.5 text-[10px] font-semibold text-foreground transition hover:bg-white/60 dark:border-white/10 dark:bg-white/10"
+              >
+                <RotateCcw size={11} /> {t("Limpar", "Clear")}
+              </button>
+            ) : null}
+          </div>
+        </section>
+
+        <section className="grid grid-cols-5 gap-0.5">
+          {[
+            { label: t("Total", "Total"), count: stats.total, bar: "bg-sky-500" },
+            { label: t("Pendentes", "Pending"), count: stats.pending, bar: "bg-amber-500" },
+            { label: t("Em análise", "Analysing"), count: stats.analysing, bar: "bg-blue-500" },
+            { label: t("Validadas", "Validated"), count: stats.validated, bar: "bg-emerald-500" },
+            { label: t("Críticas", "Critical"), count: stats.critical, bar: "bg-rose-500" },
+          ].map((item) => (
+            <div
+              key={item.label}
+              className="relative min-w-0 overflow-hidden rounded-lg border border-white/20 bg-white/30 px-2 py-1.5 text-left shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]"
+            >
+              <span className={`absolute left-0 top-0 h-full w-1 ${item.bar}`} />
+              <div className="pl-1.5">
+                <div className="truncate text-[9px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">{item.label}</div>
+                <div className="mt-0.5 truncate text-lg font-bold leading-none text-foreground">{item.count}</div>
+              </div>
+            </div>
+          ))}
+        </section>
 
         {error && (
           <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
@@ -407,65 +545,26 @@ export default function RequestsBoardPage() {
           </div>
         )}
 
-        {/* Barra de pesquisa minimalista – fundo 100% transparente */}
-        <div className="flex flex-wrap items-center gap-2 bg-transparent">
-          <div className="relative flex-1 min-w-[200px] max-w-sm">
-            <Search className="pointer-events-none absolute left-2.5 top-2.5 h-4 w-4 text-[var(--gray-400)]" />
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder={t(
-                "Pesquise em requisição por código, nome, estado ou descrição",
-                "Search by code, name, status or description"
-              )}
-              className="w-full rounded-md border border-[var(--border)] bg-transparent py-2 pl-8 pr-3 text-sm text-[var(--text)] transition-colors duration-150 placeholder:text-[var(--gray-400)] hover:border-[var(--primary-400)] focus:border-[var(--primary-500)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-100)]"
-            />
-          </div>
-
-          <div className="text-xs text-[var(--gray-500)]">
-            <span>Total: {data.length}</span>
-          </div>
-
-          <button
-            type="button"
-            onClick={() => setShowCancelled((v) => !v)}
-            aria-pressed={showCancelled}
-            className={`inline-flex h-8 items-center gap-1 rounded-md border px-2.5 text-xs font-semibold shadow-sm transition-all duration-150 ${
-              showCancelled
-                ? "border-red-300 bg-red-50 text-red-700 hover:bg-red-100"
-                : "border-[var(--border)] bg-transparent text-[var(--gray-700)] hover:border-[var(--primary-300)] hover:bg-[var(--gray-100)] hover:text-[var(--text)]"
-            }`}
-          >
-            <XCircle size={12} />
-            {showCancelled ? t("Ocultar canceladas", "Hide cancelled") : t("Mostrar canceladas", "Show cancelled")}
-          </button>
-
-          <button
-            type="button"
-            onClick={() => { setSearch(""); setShowCancelled(false) }}
-            className="inline-flex h-8 items-center gap-1 rounded-md border border-[var(--border)] bg-transparent px-2.5 text-xs font-semibold text-[var(--gray-700)] shadow-sm transition-all duration-150 hover:border-[var(--primary-300)] hover:bg-[var(--gray-100)] hover:text-[var(--text)]"
-          >
-            <RotateCcw size={12} />
-            {t("Limpar filtros", "Clear filters")}
-          </button>
-        </div>
-
         {/* Board: colunas por etapa do pipeline (totais reais por estado) */}
         {loadingData ? (
-          <div className="text-sm text-[var(--gray-500)]">{t("Carregando...", "Loading...")}</div>
+          <div className="rounded-xl border border-white/20 bg-white/30 px-4 py-8 text-sm text-muted-foreground shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]">
+            {t("Carregando...", "Loading...")}
+          </div>
         ) : (
-          <div className={`grid grid-cols-1 gap-3 sm:grid-cols-2 ${gridColsClass}`}>
-            {columns.map((col) => (
-              <BoardColumn
-                key={col.key}
-                title={col.title}
-                icon={col.icon}
-                rows={columnRows(col)}
-                colorTokens={col.colorTokens}
-                emptyText={col.emptyText}
-                rowHref={rowHref}
-              />
-            ))}
+          <div className="overflow-x-auto [scrollbar-width:thin]">
+            <div className={`grid min-w-[920px] gap-1 ${columns.length >= 5 ? "grid-cols-5" : "grid-cols-4"}`}>
+              {columns.map((col) => (
+                <BoardColumn
+                  key={col.key}
+                  title={col.title}
+                  icon={col.icon}
+                  rows={columnRows(col)}
+                  colorTokens={col.colorTokens}
+                  emptyText={col.emptyText}
+                  rowHref={rowHref}
+                />
+              ))}
+            </div>
           </div>
         )}
       </div>

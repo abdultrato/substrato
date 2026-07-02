@@ -27,6 +27,24 @@ type RuntimeFormSpec = {
   submitFields: FormField[]
 }
 
+function parseJsonFieldValue(raw: string): Record<string, any> | any[] {
+  try {
+    const parsed = JSON.parse(raw)
+    if (parsed && typeof parsed === "object") return parsed
+  } catch {}
+  throw new Error("Informe um JSON válido.")
+}
+
+function serializeJsonFieldValue(value: any): string {
+  if (value === null || value === undefined || value === "") return ""
+  if (typeof value === "string") return value
+  try {
+    return JSON.stringify(value, null, 2)
+  } catch {
+    return String(value)
+  }
+}
+
 export type AutoFormProps = {
   endpoint: string
   method: Method
@@ -593,6 +611,26 @@ function fieldToZod(field: FormField): z.ZodTypeAny {
             : z.string()
       }
       break
+    case "json":
+      base = z.string().superRefine((value, ctx) => {
+        const text = String(value ?? "").trim()
+        if (!text) {
+          if (required) {
+            ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Campo obrigatório" })
+          }
+          return
+        }
+        try {
+          parseJsonFieldValue(text)
+        } catch (error: any) {
+          ctx.addIssue({ code: z.ZodIssueCode.custom, message: error?.message || "Informe um JSON válido." })
+        }
+      }).transform((value) => {
+        const text = String(value ?? "").trim()
+        if (!text) return {}
+        return parseJsonFieldValue(text)
+      })
+      break
     case "array-string":
       base = required ? z.array(z.string()).min(1, "Informe pelo menos um valor") : z.array(z.string())
       break
@@ -616,7 +654,7 @@ function renderInput(
     readOnly?: boolean
     placeholder?: string
     translate?: (value: string) => string
-    widget?: "textarea"
+    widget?: "textarea" | "json"
     relationOptions?: RelationOption[]
     relationLoading?: boolean
     relationTarget?: RelationTarget
@@ -737,6 +775,18 @@ function renderInput(
           })}
         </select>
       )
+    case "json":
+      return (
+        <textarea
+          value={serializeJsonFieldValue(value)}
+          onChange={(e) => onChange(e.target.value)}
+          className={`${common} ${stateClass} min-h-[132px] resize-y font-mono text-[12px]`}
+          placeholder={placeholder || '{ "monday": "07:00-19:00" }'}
+          disabled={disabled}
+          rows={6}
+          spellCheck={false}
+        />
+      )
     case "array-string":
       return (
         <input
@@ -789,6 +839,7 @@ function inferFormFieldTypeFromMetadata(rawType?: string): FormField["type"] {
   if (t === "date") return "date"
   if (t === "datetime") return "datetime"
   if (t === "choice") return "select"
+  if (t === "json" || t === "jsonfield" || t === "dict") return "json"
   if (t === "list") return "array-string"
   return "text"
 }

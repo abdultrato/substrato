@@ -27,6 +27,7 @@ export type FormField = {
     | "date"
     | "datetime"
     | "select"
+    | "json"
     | "array-string"
     // M2M / array de FKs (ex.: painel.tests) — renderizado como seletor de
     // múltiplos (pesquisar + adicionar/remover).
@@ -119,6 +120,7 @@ function mapType(prop: any): FormField["type"] {
   if (t === "boolean") return "boolean"
   if (t === "integer") return "integer"
   if (t === "number") return "number"
+  if (t === "object") return "json"
   if (t === "array" && prop.items?.type === "string") return "array-string"
   if (t === "array" && (prop.items?.type === "integer" || prop.items?.type === "number")) {
     return "array-relation"

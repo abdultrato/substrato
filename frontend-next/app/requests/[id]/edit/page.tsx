@@ -74,21 +74,24 @@ type LabRequestDetail = {
 function SectionCard({
   icon: Icon,
   title,
+  accent = "bg-[var(--primary-600)]",
   children,
 }: {
   icon: React.ElementType;
   title: string;
+  accent?: string;
   children: React.ReactNode;
 }) {
   return (
-    <section className="relative z-0 rounded-xl border border-white/20 bg-white/25 shadow-sm backdrop-blur-sm focus-within:z-50 dark:bg-white/5 dark:border-white/10">
-      <div className="flex items-center gap-2 border-b border-border/60 px-4 py-2.5">
+    <section className="relative z-0 rounded-lg border border-white/20 bg-white/25 shadow-sm backdrop-blur-sm focus-within:z-50 dark:bg-white/5 dark:border-white/10">
+      <span className={`absolute left-0 top-0 h-full w-1 ${accent}`} />
+      <div className="flex items-center gap-1.5 border-b border-border/60 px-3 py-2 pl-4">
         <span className="flex h-6 w-6 items-center justify-center rounded-md bg-[var(--primary-600)]/10 text-[var(--primary-700)] dark:text-[var(--primary-400)]">
           <Icon size={13} />
         </span>
         <h2 className="text-xs font-semibold text-foreground">{title}</h2>
       </div>
-      <div className="space-y-4 p-4">{children}</div>
+      <div className="space-y-3 p-3">{children}</div>
     </section>
   );
 }
@@ -107,7 +110,7 @@ function Field({
   children: React.ReactNode;
 }) {
   return (
-    <div className="space-y-1.5">
+    <div className="space-y-1">
       <label className="text-xs font-semibold text-foreground">
         {label}
         {required && <span className="ml-0.5 text-red-500">*</span>}
@@ -248,9 +251,9 @@ export default function EditRequestPage() {
   if (loading) {
     return (
       <AppLayout requiredGroups={EDIT_GROUPS}>
-        <div className="space-y-3">
+        <div className="space-y-2">
           <div className="h-16 animate-pulse rounded-xl border border-white/20 bg-white/25 dark:bg-white/5 dark:border-white/10" />
-          <div className="grid gap-3 lg:grid-cols-2">
+          <div className="grid gap-2 lg:grid-cols-2">
             {[...Array(4)].map((_, i) => (
               <div key={i} className="h-40 animate-pulse rounded-xl border border-white/20 bg-white/25 dark:bg-white/5 dark:border-white/10" />
             ))}
@@ -263,7 +266,7 @@ export default function EditRequestPage() {
   if (loadError) {
     return (
       <AppLayout requiredGroups={EDIT_GROUPS}>
-        <div className="space-y-3">
+        <div className="space-y-2">
           <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-6 text-center text-sm text-red-800 dark:border-red-800/40 dark:bg-red-900/15 dark:text-red-300">
             {loadError}
           </div>
@@ -275,21 +278,22 @@ export default function EditRequestPage() {
 
   return (
     <AppLayout requiredGroups={EDIT_GROUPS}>
-      <form onSubmit={handleSubmit} noValidate className="space-y-3">
+      <form onSubmit={handleSubmit} noValidate className="space-y-2">
 
         {/* Header */}
-        <div className="relative overflow-hidden rounded-xl border border-white/20 bg-white/30 px-4 py-3 shadow-sm backdrop-blur-sm dark:bg-white/5 dark:border-white/10">
-          <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="relative overflow-hidden rounded-lg border border-white/20 bg-white/30 px-3 py-2.5 shadow-sm backdrop-blur-sm dark:bg-white/5 dark:border-white/10">
+          <span className="absolute left-0 top-0 h-full w-1 bg-violet-500" />
+          <div className="flex flex-wrap items-center justify-between gap-2 pl-1">
             <div>
               <h1 className="text-lg font-bold leading-tight text-foreground">Editar requisição</h1>
               <p className="text-[11px] text-muted-foreground">{customId}</p>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5">
               {backButton}
               <button
                 type="submit"
                 disabled={saving}
-                className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-indigo-600 px-4 text-xs font-semibold text-white shadow-md shadow-violet-500/30 transition hover:from-violet-700 hover:to-indigo-700 disabled:opacity-60"
+                className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-indigo-600 px-3 text-xs font-semibold text-white shadow-md shadow-violet-500/30 transition hover:from-violet-700 hover:to-indigo-700 disabled:opacity-60"
               >
                 {saving ? <Loader2 size={13} className="animate-spin" /> : <Save size={13} />}
                 Guardar
@@ -299,15 +303,15 @@ export default function EditRequestPage() {
         </div>
 
         {saveError ? (
-          <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-sm text-red-800 dark:border-red-800/40 dark:bg-red-900/15 dark:text-red-300">
+          <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800 dark:border-red-800/40 dark:bg-red-900/15 dark:text-red-300">
             {saveError}
           </div>
         ) : null}
 
-        <div className="grid gap-3 lg:grid-cols-2">
+        <div className="grid gap-2 lg:grid-cols-2">
 
           {/* Paciente e médico */}
-          <SectionCard icon={User} title="Paciente e médico">
+          <SectionCard icon={User} title="Paciente e médico" accent="bg-sky-500">
             <Field label="Paciente" required error={errors.patient}>
               <SearchableRelationSelect
                 fieldName="patient"
@@ -333,7 +337,7 @@ export default function EditRequestPage() {
           </SectionCard>
 
           {/* Exames */}
-          <SectionCard icon={FlaskConical} title="Exames solicitados">
+          <SectionCard icon={FlaskConical} title="Exames solicitados" accent="bg-violet-500">
             <Field
               label="Exames"
               required
@@ -353,9 +357,9 @@ export default function EditRequestPage() {
           </SectionCard>
 
           {/* Medicina Ocupacional */}
-          <SectionCard icon={Stethoscope} title="Medicina ocupacional">
+          <SectionCard icon={Stethoscope} title="Medicina ocupacional" accent="bg-emerald-500">
             <Field label="Tipo de requisição">
-              <label className="flex cursor-pointer items-center gap-2.5 rounded-lg border border-border bg-background px-3.5 py-2.5 transition hover:border-violet-400">
+              <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-border bg-background px-3 py-2 transition hover:border-violet-400">
                 <input
                   type="checkbox"
                   checked={isOccupational}
@@ -387,7 +391,7 @@ export default function EditRequestPage() {
           </SectionCard>
 
           {/* Registo */}
-          <SectionCard icon={Building2} title="Registo">
+          <SectionCard icon={Building2} title="Registo" accent="bg-amber-500">
             <Field label="Empresa solicitante">
               <SearchableRelationSelect
                 fieldName="requesting_company"
@@ -403,7 +407,7 @@ export default function EditRequestPage() {
               <select
                 value={clinicalStatus}
                 onChange={(e) => setClinicalStatus(e.target.value)}
-                className="w-full rounded-lg border border-border bg-background px-3.5 py-2.5 text-sm text-foreground shadow-sm outline-none transition focus:border-violet-500 focus:ring-2 focus:ring-violet-500/25"
+                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground shadow-sm outline-none transition focus:border-violet-500 focus:ring-2 focus:ring-violet-500/25"
               >
                 <option value="">— Sem prioridade —</option>
                 <option value="NAO_URGENTE">Não urgente</option>

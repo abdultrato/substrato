@@ -16,7 +16,7 @@ export default function ManchesterBadge({
 
   return (
     <span
-      className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-bold ${meta.badgeClass} ${meta.animClass} ${className}`}
+      className={`inline-flex items-center whitespace-nowrap rounded-full border px-2 py-0.5 text-[10px] font-bold leading-none ${meta.badgeClass} ${meta.animClass} ${className}`}
     >
       {meta.label}
     </span>
