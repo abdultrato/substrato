@@ -248,6 +248,7 @@ const COMMON_LABELS: LabelsByField = {
   fasting_hours: "Jejum (horas)",
   exams: "Exames",
   medical_exams: "Exames médicos",
+  laboratory_exams: "Exames laboratoriais",
   samples: "Amostras",
   sample_details: "Detalhes das amostras",
   sample_options: "Opções de amostra",

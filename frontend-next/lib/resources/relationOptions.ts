@@ -98,6 +98,7 @@ const RELATION_TARGETS: Record<string, RelationTarget> = {
   // M2M `exams` das requisições laboratoriais — multi-seleção por pesquisa.
   exams: { endpoint: "/clinical_laboratory/test/", labelFields: ["name", "code", ...DEFAULT_LABEL_FIELDS], staticFilters: { active: true } },
   medical_exams: { endpoint: "/clinical/medicalexam/", labelFields: ["name", "code", ...DEFAULT_LABEL_FIELDS] },
+  laboratory_exams: { endpoint: "/clinical_laboratory/test/", labelFields: ["name", "code", ...DEFAULT_LABEL_FIELDS] },
   // Bandeja de exames do perfil profissional (medicina ocupacional).
   occupational_profile: { endpoint: "/clinical/occupational_profile/", labelFields: ["name", "profession", ...DEFAULT_LABEL_FIELDS] },
   examination: { endpoint: "/education/examination/", labelFields: ["title", "custom_id", ...DEFAULT_LABEL_FIELDS] },

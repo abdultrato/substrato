@@ -671,67 +671,14 @@ export default function NewPreoperativeAssessmentPage() {
       if (surgicalRequest) body.surgical_request = surgicalRequest.id
       if (proposedSurgery) body.proposed_surgery = proposedSurgery.id
       if (evaluator) body.evaluator = evaluator.id
-
-      // store exam labels in required_exams JSONField
-      const examLabels = [
-        ...selectedLaboratoryExams.map((t) => `LAB: ${t.label}`),
-        ...selectedMedicalExams.map((e) => `MED: ${e.label}`),
-      ]
-      if (examLabels.length) body.required_exams = examLabels
+      body.laboratory_exams = selectedLaboratoryExams.map((item) => item.id)
+      body.medical_exams = selectedMedicalExams.map((item) => item.id)
 
       const response = await apiFetch<any>("/surgery/avaliacao_pre_operatoria/", {
         method: "POST",
         body: JSON.stringify(body),
       })
-
-      const assessmentId = response.id
-      const indication = `Pré-operatório — avaliação ${response.custom_id || assessmentId}`
-
-      // create lab order + items (reception → enfermagem → laboratório)
-      if (selectedLaboratoryExams.length && patient?.id) {
-        try {
-          const labOrder = await apiFetch<any>("/clinical_laboratory/order/", {
-            method: "POST",
-            body: JSON.stringify({
-              patient: patient.id,
-              requesting_physician: evaluator?.id ?? undefined,
-              clinical_indication: indication,
-              origin: "INTERNAL",
-              priority: "ROUTINE",
-            }),
-          })
-          await Promise.all(
-            selectedLaboratoryExams.map((exam) =>
-              apiFetch("/clinical_laboratory/order_item/", {
-                method: "POST",
-                body: JSON.stringify({ order: labOrder.id, test: exam.id }),
-              }).catch(() => null)
-            )
-          )
-        } catch { /* non-fatal */ }
-      }
-
-      // create specialty diagnostic order per protocol (encaminhamento)
-      if (selectedMedicalExams.length && patient?.id) {
-        await Promise.all(
-          selectedMedicalExams.map((exam) =>
-            apiFetch("/specialty_diagnostics/order/", {
-              method: "POST",
-              body: JSON.stringify({
-                patient: patient.id,
-                requesting_doctor: evaluator?.id ?? undefined,
-                protocol: exam.id,
-                modality: exam.meta || "OTHER",
-                clinical_indication: indication,
-                priority: "ROUTINE",
-                status: "PENDING",
-              }),
-            }).catch(() => null)
-          )
-        )
-      }
-
-      router.push(`/surgery/preoperative-assessments/${assessmentId}`)
+      router.push(`/surgery/preoperative-assessments/${response.id}`)
     } catch (err: any) {
       setError(err?.message || "Erro ao guardar avaliação pré-operatória.")
       setSaving(false)
@@ -1028,12 +975,15 @@ export default function NewPreoperativeAssessmentPage() {
               />
               <MultiSearchSelect
                 label="Exames médicos"
-                endpoint="/specialty_diagnostics/protocol/"
+                endpoint="/clinical/medicalexam/"
                 values={selectedMedicalExams}
                 onChange={setSelectedMedicalExams}
-                placeholder="Pesquisar exame (ECG, Holter, Ecocardiograma…)"
-                getOptionLabel={(item) => item?.name || item?.code || `#${item?.id}`}
-                getOptionMeta={(item) => item?.modality || "OTHER"}
+                placeholder="Pesquisar exame médico..."
+                getOptionLabel={(item) => item?.name || item?.custom_id || `#${item?.id}`}
+                getOptionMeta={(item) => [
+                  item?.method,
+                  item?.sector,
+                ].filter(Boolean).join(" · ")}
               />
             </div>
 

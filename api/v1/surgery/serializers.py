@@ -1,9 +1,13 @@
 """Serializers DRF para cirurgias, bloco operatório e procedimentos cirúrgicos."""
 
 from django.apps import apps
+from django.db import transaction
 from rest_framework import serializers
 
 from api.v1.compat import LegacyAliasSerializerMixin
+from apps.clinical.models.lab_request import LabRequest
+from apps.clinical.models.medical_exam import MedicalExam
+from apps.clinical_laboratory.models import LabTest
 from apps.surgery.models import (
     AnesthesiaRecord,
     LargeSurgery,
@@ -27,6 +31,7 @@ from apps.surgery.models import (
     SurgicalSpecimen,
     SurgicalTeamMember,
 )
+from domain.clinical.result_state import ResultState
 
 CORE_READ_ONLY_FIELDS = (
     "id",
@@ -498,6 +503,24 @@ class PreoperativeAssessmentSerializer(LegacyAliasSerializerMixin, serializers.M
     surgical_request_code = serializers.CharField(source="surgical_request.custom_id", read_only=True)
     proposed_surgery_code = serializers.CharField(source="proposed_surgery.custom_id", read_only=True)
     evaluator_name = serializers.CharField(source="evaluator.name", read_only=True)
+    laboratory_exams = serializers.PrimaryKeyRelatedField(
+        many=True,
+        queryset=LabTest.objects.all(),
+        required=False,
+        write_only=True,
+    )
+    medical_exams = serializers.PrimaryKeyRelatedField(
+        many=True,
+        queryset=MedicalExam.objects.all(),
+        required=False,
+        write_only=True,
+    )
+    laboratory_exams_details = serializers.SerializerMethodField()
+    medical_exams_details = serializers.SerializerMethodField()
+    laboratory_request_id = serializers.SerializerMethodField()
+    laboratory_request_code = serializers.SerializerMethodField()
+    medical_request_id = serializers.SerializerMethodField()
+    medical_request_code = serializers.SerializerMethodField()
     legacy_input_aliases = {
         **BASE_ALIASES,
         "paciente": "patient",
@@ -514,6 +537,10 @@ class PreoperativeAssessmentSerializer(LegacyAliasSerializerMixin, serializers.M
         "risco_cirúrgico": "surgical_risk",
         "exames_necessarios": "required_exams",
         "exames_necessários": "required_exams",
+        "exames_laboratoriais": "laboratory_exams",
+        "exame_laboratorial": "laboratory_exams",
+        "exames_medicos": "medical_exams",
+        "exames_médicos": "medical_exams",
         "exames_revistos": "exam_results_reviewed",
         "apto_para_cirurgia": "fit_for_surgery",
         "consentimento_assinado": "consent_signed",
@@ -532,6 +559,290 @@ class PreoperativeAssessmentSerializer(LegacyAliasSerializerMixin, serializers.M
             "surgical_request_code",
             "proposed_surgery_code",
             "evaluator_name",
+            "laboratory_exams_details",
+            "medical_exams_details",
+            "laboratory_request_id",
+            "laboratory_request_code",
+            "medical_request_id",
+            "medical_request_code",
+        )
+
+    @staticmethod
+    def _normalize_required_exams_payload(value):
+        payload = {
+            "laboratory_exams": [],
+            "medical_exams": [],
+            "laboratory_request": None,
+            "medical_request": None,
+        }
+        if isinstance(value, dict):
+            payload["laboratory_exams"] = list(value.get("laboratory_exams") or [])
+            payload["medical_exams"] = list(value.get("medical_exams") or [])
+            payload["laboratory_request"] = value.get("laboratory_request")
+            payload["medical_request"] = value.get("medical_request")
+            legacy_value = value.get("legacy_required_exams")
+            if legacy_value not in (None, "", [], {}):
+                payload["legacy_required_exams"] = legacy_value
+            return payload
+        if value not in (None, "", [], {}):
+            payload["legacy_required_exams"] = value
+        return payload
+
+    @staticmethod
+    def _lab_test_summary(test):
+        return {
+            "id": test.id,
+            "custom_id": test.custom_id,
+            "code": getattr(test, "code", ""),
+            "name": test.name,
+            "sector_name": getattr(getattr(test, "sector", None), "name", None),
+            "sample_type": getattr(test, "sample_type", "") or "",
+        }
+
+    @staticmethod
+    def _medical_exam_summary(exam):
+        return {
+            "id": exam.id,
+            "custom_id": exam.custom_id,
+            "name": exam.name,
+            "method": getattr(exam, "method", None),
+            "sector": getattr(exam, "sector", None),
+        }
+
+    @staticmethod
+    def _request_summary(request):
+        if request is None:
+            return None
+        return {
+            "id": request.id,
+            "custom_id": request.custom_id,
+            "type": request.type,
+            "status": request.status,
+            "validated_at": request.validated_at,
+            "collected_at": request.collected_at,
+        }
+
+    def _required_exams_payload(self, obj):
+        return self._normalize_required_exams_payload(getattr(obj, "required_exams", None))
+
+    def _linked_request(self, obj, field_name, expected_type):
+        request_payload = self._required_exams_payload(obj).get(field_name)
+        request_id = request_payload.get("id") if isinstance(request_payload, dict) else None
+        if not request_id:
+            return None
+        return LabRequest.objects.filter(
+            pk=request_id,
+            patient_id=obj.patient_id,
+            type=expected_type,
+        ).first()
+
+    def _request_item_queryset(self, request, *, medical=False):
+        if request is None:
+            return request
+        if medical:
+            return request.items.filter(deleted=False, medical_exam__isnull=False).select_related("medical_exam")
+        return request.items.filter(deleted=False, exam__isnull=False).select_related("exam")
+
+    def _current_laboratory_exams(self, obj):
+        request = self._linked_request(obj, "laboratory_request", LabRequest.Type.LABORATORY)
+        if request is not None:
+            return [item.exam for item in self._request_item_queryset(request, medical=False) if item.exam is not None]
+        exam_ids = [
+            item.get("id")
+            for item in self._required_exams_payload(obj).get("laboratory_exams") or []
+            if isinstance(item, dict) and item.get("id")
+        ]
+        if not exam_ids:
+            return []
+        mapped = {exam.id: exam for exam in LabTest.objects.filter(id__in=exam_ids)}
+        return [mapped[exam_id] for exam_id in exam_ids if exam_id in mapped]
+
+    def _current_medical_exams(self, obj):
+        request = self._linked_request(obj, "medical_request", LabRequest.Type.MEDICAL_EXAM)
+        if request is not None:
+            return [item.medical_exam for item in self._request_item_queryset(request, medical=True) if item.medical_exam is not None]
+        exam_ids = [
+            item.get("id")
+            for item in self._required_exams_payload(obj).get("medical_exams") or []
+            if isinstance(item, dict) and item.get("id")
+        ]
+        if not exam_ids:
+            return []
+        mapped = {exam.id: exam for exam in MedicalExam.objects.filter(id__in=exam_ids)}
+        return [mapped[exam_id] for exam_id in exam_ids if exam_id in mapped]
+
+    def get_laboratory_exams_details(self, obj):
+        return [self._lab_test_summary(test) for test in self._current_laboratory_exams(obj)]
+
+    def get_medical_exams_details(self, obj):
+        return [self._medical_exam_summary(exam) for exam in self._current_medical_exams(obj)]
+
+    def get_laboratory_request_id(self, obj):
+        request = self._linked_request(obj, "laboratory_request", LabRequest.Type.LABORATORY)
+        return request.id if request is not None else None
+
+    def get_laboratory_request_code(self, obj):
+        request = self._linked_request(obj, "laboratory_request", LabRequest.Type.LABORATORY)
+        return request.custom_id if request is not None else None
+
+    def get_medical_request_id(self, obj):
+        request = self._linked_request(obj, "medical_request", LabRequest.Type.MEDICAL_EXAM)
+        return request.id if request is not None else None
+
+    def get_medical_request_code(self, obj):
+        request = self._linked_request(obj, "medical_request", LabRequest.Type.MEDICAL_EXAM)
+        return request.custom_id if request is not None else None
+
+    def _resolve_requesting_physician(self, validated_data, instance=None):
+        if "evaluator" in validated_data:
+            return validated_data.get("evaluator")
+        if instance is not None and instance.evaluator_id:
+            return instance.evaluator
+
+        if "surgical_request" in validated_data:
+            surgical_request = validated_data.get("surgical_request")
+            if surgical_request is not None:
+                return getattr(surgical_request, "requesting_doctor", None)
+
+        if instance is not None and instance.surgical_request_id:
+            return getattr(instance.surgical_request, "requesting_doctor", None)
+
+        return None
+
+    @staticmethod
+    def _can_rewrite_request(request):
+        return (
+            request is not None
+            and request.status == ResultState.PENDING
+            and not request.validated_at
+            and not request.collected_at
+        )
+
+    def _sync_request_items(self, request, desired_exams, *, medical=False):
+        desired_ids = {exam.id for exam in desired_exams}
+        current_items = list(self._request_item_queryset(request, medical=medical))
+        current_ids = {
+            (item.medical_exam_id if medical else item.exam_id)
+            for item in current_items
+            if (item.medical_exam_id if medical else item.exam_id) is not None
+        }
+
+        for item in current_items:
+            item_exam_id = item.medical_exam_id if medical else item.exam_id
+            if item_exam_id not in desired_ids:
+                item.delete()
+
+        for exam in desired_exams:
+            if exam.id in current_ids:
+                continue
+            if medical:
+                request.add_medical_exam(exam)
+            else:
+                request.add_exam(exam)
+
+    def _sync_clinical_request(self, *, obj, exams, request_field, request_type, requesting_physician, medical=False):
+        request = self._linked_request(obj, request_field, request_type)
+
+        if request is not None and request.status == ResultState.CANCELED:
+            request = None
+
+        if not exams:
+            if request is None:
+                return None
+            if not self._can_rewrite_request(request):
+                raise serializers.ValidationError(
+                    {request_field: "Não é possível remover exames já encaminhados para o fluxo clínico."}
+                )
+            request.cancelar()
+            return None
+
+        if request is None:
+            request = LabRequest.objects.create(
+                patient=obj.patient,
+                type=request_type,
+                requesting_physician=requesting_physician,
+            )
+        elif not self._can_rewrite_request(request):
+            current_ids = {
+                (item.medical_exam_id if medical else item.exam_id)
+                for item in self._request_item_queryset(request, medical=medical)
+                if (item.medical_exam_id if medical else item.exam_id) is not None
+            }
+            desired_ids = {exam.id for exam in exams}
+            physician_id = getattr(requesting_physician, "id", None)
+            if current_ids != desired_ids or request.requesting_physician_id != physician_id:
+                raise serializers.ValidationError(
+                    {request_field: "Não é possível alterar exames já encaminhados para receção/enfermagem/laboratório."}
+                )
+            return request
+
+        if request.requesting_physician_id != getattr(requesting_physician, "id", None):
+            request.requesting_physician = requesting_physician
+            request.save(update_fields=["requesting_physician", "updated_at"])
+
+        self._sync_request_items(request, exams, medical=medical)
+        return request
+
+    def _sync_required_exam_requests(self, obj, *, laboratory_exams, medical_exams, requesting_physician):
+        laboratory_request = self._sync_clinical_request(
+            obj=obj,
+            exams=list(laboratory_exams),
+            request_field="laboratory_request",
+            request_type=LabRequest.Type.LABORATORY,
+            requesting_physician=requesting_physician,
+            medical=False,
+        )
+        medical_request = self._sync_clinical_request(
+            obj=obj,
+            exams=list(medical_exams),
+            request_field="medical_request",
+            request_type=LabRequest.Type.MEDICAL_EXAM,
+            requesting_physician=requesting_physician,
+            medical=True,
+        )
+
+        obj.required_exams = {
+            "laboratory_exams": [self._lab_test_summary(test) for test in laboratory_exams],
+            "medical_exams": [self._medical_exam_summary(exam) for exam in medical_exams],
+            "laboratory_request": self._request_summary(laboratory_request),
+            "medical_request": self._request_summary(medical_request),
+        }
+        obj.save(update_fields=["required_exams", "updated_at"])
+        return obj
+
+    @transaction.atomic
+    def create(self, validated_data):
+        laboratory_exams = validated_data.pop("laboratory_exams", None)
+        medical_exams = validated_data.pop("medical_exams", None)
+        instance = super().create(validated_data)
+
+        if laboratory_exams is None and medical_exams is None:
+            return instance
+
+        return self._sync_required_exam_requests(
+            instance,
+            laboratory_exams=list(laboratory_exams or []),
+            medical_exams=list(medical_exams or []),
+            requesting_physician=self._resolve_requesting_physician(validated_data, instance=instance),
+        )
+
+    @transaction.atomic
+    def update(self, instance, validated_data):
+        laboratory_exams = validated_data.pop("laboratory_exams", serializers.empty)
+        medical_exams = validated_data.pop("medical_exams", serializers.empty)
+        instance = super().update(instance, validated_data)
+
+        if laboratory_exams is serializers.empty and medical_exams is serializers.empty:
+            return instance
+
+        current_laboratory_exams = self._current_laboratory_exams(instance)
+        current_medical_exams = self._current_medical_exams(instance)
+
+        return self._sync_required_exam_requests(
+            instance,
+            laboratory_exams=list(current_laboratory_exams if laboratory_exams is serializers.empty else laboratory_exams),
+            medical_exams=list(current_medical_exams if medical_exams is serializers.empty else medical_exams),
+            requesting_physician=self._resolve_requesting_physician(validated_data, instance=instance),
         )
 
 

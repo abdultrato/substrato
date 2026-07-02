@@ -4135,7 +4135,7 @@ function surgeryRequestConfig(): ResourceFormConfig {
 
 function surgeryPreoperativeConfig(): ResourceFormConfig {
   return {
-    esconderCampos: [...SURGERY_INTERNAL_FIELDS, ...SURGERY_COMPUTED_FIELDS, "assessed_at"],
+    esconderCampos: [...SURGERY_INTERNAL_FIELDS, ...SURGERY_COMPUTED_FIELDS, "assessed_at", "required_exams"],
     labels: {
       patient: "Paciente",
       surgical_request: "Pedido cirúrgico",
@@ -4145,7 +4145,12 @@ function surgeryPreoperativeConfig(): ResourceFormConfig {
       anesthetic_evaluation: "Avaliação anestésica",
       asa_class: "Classificação ASA",
       surgical_risk: "Risco cirúrgico",
-      required_exams: "Exames necessários",
+      laboratory_exams: "Exames laboratoriais",
+      medical_exams: "Exames médicos",
+      laboratory_exams_details: "Exames laboratoriais",
+      medical_exams_details: "Exames médicos",
+      laboratory_request_code: "Pedido laboratorial",
+      medical_request_code: "Pedido de exames médicos",
       exam_results_reviewed: "Exames revistos",
       fit_for_surgery: "Apto para cirurgia",
       consent_signed: "Consentimento assinado",
@@ -4160,7 +4165,8 @@ function surgeryPreoperativeConfig(): ResourceFormConfig {
     ordenarCampos: [
       "patient", "surgical_request", "proposed_surgery", "evaluator",
       "asa_class", "surgical_risk", "medical_evaluation", "anesthetic_evaluation",
-      "required_exams", "exam_results_reviewed", "fit_for_surgery", "consent_signed",
+      "laboratory_exams", "medical_exams", "laboratory_request_code", "medical_request_code",
+      "exam_results_reviewed", "fit_for_surgery", "consent_signed",
       "status", "observations",
     ],
     etapas: [
@@ -4177,7 +4183,7 @@ function surgeryPreoperativeConfig(): ResourceFormConfig {
       {
         titulo: "Exames e aptidão",
         descricao: "Exames obrigatórios, consentimento e aptidão",
-        campos: ["required_exams", "exam_results_reviewed", "fit_for_surgery", "consent_signed", "status"],
+        campos: ["laboratory_exams", "medical_exams", "exam_results_reviewed", "fit_for_surgery", "consent_signed", "status"],
       },
       {
         titulo: "Observações",

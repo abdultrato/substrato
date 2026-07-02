@@ -8,13 +8,18 @@ from django.core.exceptions import ValidationError
 from django.utils import timezone
 import pytest
 
+from api.v1.surgery.serializers import PreoperativeAssessmentSerializer
 from api.v1.surgery.filters import SurgicalProcedureFilter
 from api.v1.surgery.serializers import SmallSurgerySerializer
 from apps.billing.models.invoice import Invoice
+from apps.clinical.models.lab_request import LabRequest
+from apps.clinical.models.medical_exam import MedicalExam
 from apps.clinical.models.patient import Patient
+from apps.clinical_laboratory.models import LabSector, LabTest
 from apps.human_resources.models import Employee
 from apps.surgery.models import (
     OperatingRoom,
+    PreoperativeAssessment,
     Surgery,
     SurgeryProcedureItem,
     SurgicalAuthorization,
@@ -26,6 +31,8 @@ from apps.surgery.models import (
     SurgicalSchedule,
 )
 from apps.tenants.models.tenant import Tenant
+from core.constants.medical_exam.medical_exam_method import MedicalExamMethod
+from core.constants.medical_exam.medical_exam_sector import MedicalExamSector
 
 
 def _tenant():
@@ -67,6 +74,31 @@ def _surgery(tenant=None, patient=None, **kwargs):
     }
     defaults.update(kwargs)
     return Surgery.objects.create(**defaults)
+
+
+def _lab_test(tenant, code="LAB-T"):
+    sector = LabSector.objects.create(
+        tenant=tenant,
+        name=f"Sector {code}",
+        code=code,
+    )
+    return LabTest.objects.create(
+        tenant=tenant,
+        name=f"Exame {code}",
+        code=code,
+        sector=sector,
+        price=Decimal("120.00"),
+    )
+
+
+def _medical_exam(tenant, name="Ecografia pré-op."):
+    return MedicalExam.objects.create(
+        tenant=tenant,
+        name=name,
+        price=Decimal("250.00"),
+        method=MedicalExamMethod.ULTRASSONOGRAFIA,
+        sector=MedicalExamSector.RADIOLOGIA,
+    )
 
 
 class _FixedSmallSurgeryView:
@@ -276,3 +308,41 @@ def test_small_surgery_serializer_rejects_large_only_procedure():
 
     assert not serializer.is_valid()
     assert "procedures" in serializer.errors
+
+
+@pytest.mark.django_db
+def test_preoperative_assessment_serializer_creates_lab_and_medical_requests():
+    tenant = _tenant()
+    patient = _patient(tenant)
+    evaluator = _employee(tenant, "Avaliador Pré-op.")
+    lab_test = _lab_test(tenant, "HEMO")
+    medical_exam = _medical_exam(tenant)
+
+    serializer = PreoperativeAssessmentSerializer(data={
+        "patient": patient.id,
+        "evaluator": evaluator.id,
+        "status": PreoperativeAssessment.Status.REQUIRES_EXAMS,
+        "laboratory_exams": [lab_test.id],
+        "medical_exams": [medical_exam.id],
+    })
+
+    assert serializer.is_valid(), serializer.errors
+    assessment = serializer.save()
+
+    lab_request = LabRequest.objects.get(
+        patient=patient,
+        type=LabRequest.Type.LABORATORY,
+    )
+    medical_request = LabRequest.objects.get(
+        patient=patient,
+        type=LabRequest.Type.MEDICAL_EXAM,
+    )
+
+    assert lab_request.requesting_physician == evaluator
+    assert medical_request.requesting_physician == evaluator
+    assert list(lab_request.items.values_list("exam_id", flat=True)) == [lab_test.id]
+    assert list(medical_request.items.values_list("medical_exam_id", flat=True)) == [medical_exam.id]
+    assert assessment.required_exams["laboratory_request"]["id"] == lab_request.id
+    assert assessment.required_exams["medical_request"]["id"] == medical_request.id
+    assert assessment.required_exams["laboratory_exams"][0]["id"] == lab_test.id
+    assert assessment.required_exams["medical_exams"][0]["id"] == medical_exam.id

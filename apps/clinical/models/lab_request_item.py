@@ -269,7 +269,11 @@ class LabRequestItem(TenantPropagationMixin, ScopedPositionMixin, NoNameCoreMode
         fields = getattr(exam_base, "fields", None) or getattr(exam_base, "campos", None)
         if fields is None:
             return
-        fields_queryset = fields.all().order_by("sequence", "id")
+        field_model = getattr(fields, "model", None)
+        if field_model is not None and any(f.name == "sequence" for f in field_model._meta.fields):
+            fields_queryset = fields.all().order_by("sequence", "id")
+        else:
+            fields_queryset = fields.all().order_by("position", "id")
 
         items = []
         next_position = (
