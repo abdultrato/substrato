@@ -248,7 +248,6 @@ export default function LargeSurgeryDetailPage() {
                   <Field label="Nome" value={data.patient_name} />
                 </div>
                 {data.specialty_name && <Field label="Especialidade" value={data.specialty_name} />}
-                {data.classification && <Field label="Classificação" value={CLASS_LABEL[data.classification] || data.classification} />}
               </div>
             </SurfaceCard>
           </div>

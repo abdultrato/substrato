@@ -264,8 +264,6 @@ export default function SmallSurgeryDetailPage() {
                   <Field label="Nome" value={data.patient_name} />
                 </div>
                 {data.specialty_name && <Field label="Especialidade" value={data.specialty_name} />}
-                {data.classification && <Field label="Classificação" value={CLASS_LABEL[data.classification] || data.classification} />}
-                {data.surgery_size && <Field label="Tipo de cirurgia" value={SURGERY_SIZE_LABEL[data.surgery_size] || data.surgery_size} />}
               </div>
             </SurfaceCard>
           </div>
