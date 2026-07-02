@@ -320,7 +320,7 @@ export default function NewPreoperativeAssessmentPage() {
                     <Stethoscope size={18} className="text-amber-700 dark:text-amber-300" strokeWidth={1.8} />
                   </span>
                   <h1 className="font-display text-2xl font-bold tracking-tight text-foreground">
-                    Nova avaliação pré-operatória
+                    Registar avaliação pré-operatória
                   </h1>
                 </div>
                 <p className="mt-1 max-w-lg text-[11px] text-muted-foreground">
