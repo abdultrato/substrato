@@ -7,10 +7,7 @@ import {
   CheckCircle2,
   ChevronRight,
   Clock3,
-  Package,
   Scissors,
-  Stethoscope,
-  User,
 } from "lucide-react"
 import Link from "next/link"
 
@@ -146,13 +143,6 @@ function SurgeryCard({ item, onMarkDone, marking }: {
     ? item.procedure_names.slice(0, 2).join(", ") + (item.procedure_names.length > 2 ? ` +${item.procedure_names.length - 2}` : "")
     : item.procedure || "—"
 
-  const surgeonName = item.surgeon_names?.[0]?.name ?? item.surgeon_name
-  const extraSurgeons = (item.surgeon_names?.length ?? 0) > 1 ? ` +${item.surgeon_names!.length - 1}` : ""
-
-  const base = parseFloat(item.procedures_price_total || item.estimated_price || "0")
-  const vat = parseFloat(item.vat_percentage || "0")
-  const total = base > 0 ? base * (1 + vat / 100) : 0
-
   return (
     <Link href={detailHref(item)} className="group block">
       <div className={`${GLASS} relative overflow-hidden p-3 transition-all hover:border-slate-300 hover:shadow-md dark:hover:border-white/20`}>
@@ -184,50 +174,11 @@ function SurgeryCard({ item, onMarkDone, marking }: {
           <p className="mt-1.5 truncate text-[13px] font-semibold text-foreground">{item.patient_name || "—"}</p>
           <p className="mt-0.5 truncate text-[11px] text-[var(--gray-500)]">{procNames}</p>
 
-          {/* detail row */}
-          <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-[var(--gray-500)]">
-            {surgeonName && (
-              <span className="flex items-center gap-1">
-                <Stethoscope size={9} className="shrink-0" />
-                {surgeonName}{extraSurgeons}
-              </span>
-            )}
-            {item.specialty_name && (
-              <span className="flex items-center gap-1">
-                <User size={9} className="shrink-0" />
-                {item.specialty_name}
-              </span>
-            )}
-            {item.ward_name && (
-              <span className="flex items-center gap-1">
-                <Package size={9} className="shrink-0" />
-                {item.ward_name}
-              </span>
-            )}
-            {item.scheduled_for && (
-              <span className="flex items-center gap-1">
-                <CalendarClock size={9} className="shrink-0" />
-                {fmtDate(item.scheduled_for)}
-              </span>
-            )}
-            {total > 0 && (
-              <span className="ml-auto font-semibold text-teal-600 dark:text-teal-400">
-                {fmtMT(total)}
-              </span>
-            )}
-          </div>
-
-          {/* mark done button */}
-          {!isDone && onMarkDone && (
-            <div className="mt-2 border-t border-white/30 pt-2 dark:border-white/10">
-              <button
-                onClick={e => { e.preventDefault(); onMarkDone(item) }}
-                disabled={marking}
-                className="inline-flex h-6 items-center gap-1 rounded-md border border-emerald-300 bg-emerald-50 px-2 text-[10px] font-semibold text-emerald-700 transition hover:bg-emerald-100 disabled:opacity-50 dark:border-emerald-700/40 dark:bg-emerald-900/20 dark:text-emerald-300"
-              >
-                <CheckCircle2 size={10} />
-                {marking ? "..." : "Marcar realizada"}
-              </button>
+          {/* date only */}
+          {item.scheduled_for && (
+            <div className="mt-1.5 flex items-center gap-1 text-[10px] text-[var(--gray-400)]">
+              <CalendarClock size={9} className="shrink-0" />
+              {fmtDate(item.scheduled_for)}
             </div>
           )}
         </div>
