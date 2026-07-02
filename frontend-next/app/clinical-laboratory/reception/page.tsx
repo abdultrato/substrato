@@ -103,7 +103,7 @@ function ReceptionCard({
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") { e.preventDefault(); router.push(target) }
       }}
-      className="group relative flex cursor-pointer flex-col overflow-hidden rounded-xl border border-white/50 bg-white/30 shadow-sm backdrop-blur-sm transition hover:border-white/70 hover:bg-white/50 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 dark:border-white/10 dark:bg-white/[0.04] dark:hover:border-white/20 dark:hover:bg-white/[0.08]"
+      className="group relative flex w-4/5 cursor-pointer flex-col overflow-hidden rounded-xl border border-white/50 bg-white/30 shadow-sm backdrop-blur-sm transition hover:border-white/70 hover:bg-white/50 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 dark:border-white/10 dark:bg-white/[0.04] dark:hover:border-white/20 dark:hover:bg-white/[0.08]"
     >
       {/* ── top: código + alerta ── */}
       <div className="flex items-center justify-between gap-2 px-3 pt-2.5 pb-1.5">
@@ -324,7 +324,7 @@ export default function LabReceptionPage() {
                   </div>
 
                   {/* cards */}
-                  <div className="flex flex-col gap-1.5 overflow-y-auto px-3 pb-3 pl-4 max-h-[calc(100vh-130px)] [scrollbar-width:thin]">
+                  <div className="flex flex-col items-center gap-1.5 overflow-y-auto px-3 pb-3 pl-4 max-h-[calc(100vh-130px)] [scrollbar-width:thin]">
                     {items.length === 0 ? (
                       <div className="rounded-xl border border-dashed border-white/60 px-3 py-6 text-center text-[10px] text-[var(--gray-400)] dark:border-white/10">
                         Sem requisições.
