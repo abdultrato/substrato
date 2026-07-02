@@ -3,50 +3,126 @@
 import Link from "next/link"
 import { useCallback, useEffect, useState } from "react"
 import { useParams } from "next/navigation"
+import {
+  AlertCircle,
+  ArrowLeft,
+  ArrowRight,
+  Beaker,
+  Building2,
+  CalendarDays,
+  CheckCircle2,
+  ChevronRight,
+  ClipboardList,
+  Clock,
+  ExternalLink,
+  FileText,
+  FlaskConical,
+  Loader2,
+  Send,
+  Stethoscope,
+  User,
+} from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
 import { apiFetch } from "@/lib/api"
-import { getClinicalStatusLabel } from "@/lib/clinicalStatus"
 import { routeParamToString } from "@/lib/routeParams"
-import { genderLabel } from "@/components/clinical-laboratory/ReceptionWorkflow"
 
-type RequestItem = {
+/* ── types ── */
+type OrderItem = {
   id: number
-  exam_name?: string
-  exam_custom_id?: string
-  exam_method?: string
-  medical_exam_name?: string
+  code?: string
+  test_id?: number
+  test_name?: string
+  test_code?: string
+  sector?: number
+  sector_name?: string
+  sector_code?: string
+  price?: string
+  status?: string
 }
 
-type LabRequest = {
+type Sector = { id: number; name: string; code: string }
+
+type LabOrder = {
   id: number
   custom_id?: string
+  patient?: number
   patient_name?: string
-  patient_age?: string
-  patient_gender?: string
-  clinical_status?: string
-  clinical_status_display?: string
+  requesting_physician?: number
+  requesting_physician_name?: string
+  requesting_company?: number
+  requesting_company_name?: string
+  origin?: string
+  priority?: string
+  clinical_indication?: string
+  diagnosis?: string
   status?: string
-  type: "LAB" | "MED"
-  collected_at?: string
-  items?: RequestItem[]
+  payment_status?: string
+  requested_at?: string
+  created_at?: string
+  updated_at?: string
+  sectors?: Sector[]
+  requested_tests?: OrderItem[]
 }
 
-function fmt(v?: string) {
-  if (!v) return "-"
+/* ── helpers ── */
+function fmt(v?: string | null) {
+  if (!v) return null
   const d = new Date(v)
   if (isNaN(d.getTime())) return v
   return d.toLocaleString("pt-PT", { dateStyle: "short", timeStyle: "short" })
 }
 
-function examRows(row: LabRequest) {
-  return (row.items ?? []).filter((i) => i.exam_name || i.medical_exam_name)
+const STATUS_META: Record<string, { label: string; cls: string }> = {
+  SOLICITADO:    { label: "Solicitado",    cls: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-200" },
+  EM_ANALISE:    { label: "Em análise",    cls: "bg-sky-100 text-sky-800 dark:bg-sky-900/30 dark:text-sky-200" },
+  CONCLUIDO:     { label: "Concluído",     cls: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-200" },
+  CANCELADO:     { label: "Cancelado",     cls: "bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-200" },
+  AGUARDANDO:    { label: "Aguardando",    cls: "bg-violet-100 text-violet-800 dark:bg-violet-900/30 dark:text-violet-200" },
 }
+
+const PRIORITY_META: Record<string, { label: string; cls: string }> = {
+  URGENTE: { label: "Urgente", cls: "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300" },
+  ROTINA:  { label: "Rotina",  cls: "bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-slate-300" },
+  NORMAL:  { label: "Normal",  cls: "bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-slate-300" },
+}
+
+const PAYMENT_META: Record<string, { label: string; cls: string }> = {
+  PENDENTE: { label: "Pagamento pendente", cls: "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/20 dark:text-amber-300 dark:border-amber-700/40" },
+  PAGO:     { label: "Pago",               cls: "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-700/40" },
+  ISENTO:   { label: "Isento",             cls: "bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-900/20 dark:text-sky-300 dark:border-sky-700/40" },
+}
+
+const ITEM_STATUS_META: Record<string, { dot: string }> = {
+  SOLICITADO:  { dot: "bg-amber-400" },
+  EM_ANALISE:  { dot: "bg-sky-400" },
+  CONCLUIDO:   { dot: "bg-emerald-500" },
+  CANCELADO:   { dot: "bg-rose-400" },
+}
+
+function Pill({ label, cls }: { label: string; cls: string }) {
+  return <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ${cls}`}>{label}</span>
+}
+
+function InfoRow({ icon, label, value }: { icon: React.ReactNode; label: string; value?: string | null }) {
+  if (!value) return null
+  return (
+    <div className="flex items-start gap-2">
+      <span className="mt-0.5 shrink-0 text-[var(--gray-400)]">{icon}</span>
+      <div>
+        <div className="text-[9px] font-semibold uppercase tracking-[0.14em] text-[var(--gray-400)]">{label}</div>
+        <div className="text-[12px] text-[var(--text)]">{value}</div>
+      </div>
+    </div>
+  )
+}
+
+const GLASS = "rounded-xl border border-[var(--border)] bg-white/30 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]"
 
 export default function LabOrderDetailPage() {
   const params = useParams()
   const id = routeParamToString((params as any)?.id)
-  const [record, setRecord] = useState<LabRequest | null>(null)
+  const [record, setRecord] = useState<LabOrder | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [feedback, setFeedback] = useState<string | null>(null)
@@ -57,169 +133,293 @@ export default function LabOrderDetailPage() {
     setLoading(true)
     setError(null)
     try {
-      const data = await apiFetch<LabRequest>(`/clinical/labrequest/${id}/`, { clientCache: false })
+      const data = await apiFetch<LabOrder>(`/clinical_laboratory/order/${id}/`, { clientCache: false })
       setRecord(data)
     } catch (e: any) {
-      setError(e?.message || "Erro ao carregar o pedido.")
+      setError(e?.message || "Erro ao carregar a ordem.")
     } finally {
       setLoading(false)
     }
   }, [id])
 
-  useEffect(() => {
-    load()
-  }, [load])
+  useEffect(() => { load() }, [load])
 
-  async function handleIniciar() {
+  async function handleAutorizar() {
     if (!record?.id) return
-    setBusy(true)
-    setError(null)
-    setFeedback(null)
+    setBusy(true); setError(null); setFeedback(null)
     try {
-      await apiFetch(`/clinical/labrequest/${record.id}/iniciar-processamento/`, { method: "POST" })
-      setFeedback(`${record.custom_id} enviada para lista de trabalho.`)
+      await apiFetch(`/clinical_laboratory/order/${record.id}/autorizar/`, { method: "POST" })
+      setFeedback("Ordem autorizada e enviada para processamento.")
       await load()
-    } catch (e: any) {
-      setError(e?.message || "Falha ao iniciar processamento.")
-    } finally {
-      setBusy(false)
-    }
+    } catch (e: any) { setError(e?.message || "Falha ao autorizar.") }
+    finally { setBusy(false) }
   }
 
-  async function handleTransferir() {
+  async function handleCancelar() {
     if (!record?.id) return
-    setBusy(true)
-    setError(null)
-    setFeedback(null)
+    if (!confirm("Confirma o cancelamento desta ordem?")) return
+    setBusy(true); setError(null); setFeedback(null)
     try {
-      await apiFetch(`/clinical/labrequest/${record.id}/transferir-analise/`, {
-        method: "POST",
-        body: JSON.stringify({}),
-      })
-      setFeedback(`${record.custom_id} transferida para análise externa.`)
+      await apiFetch(`/clinical_laboratory/order/${record.id}/cancelar/`, { method: "POST" })
+      setFeedback("Ordem cancelada.")
       await load()
-    } catch (e: any) {
-      setError(e?.message || "Falha ao transferir análise.")
-    } finally {
-      setBusy(false)
-    }
+    } catch (e: any) { setError(e?.message || "Falha ao cancelar.") }
+    finally { setBusy(false) }
   }
 
-  const exams = record ? examRows(record) : []
-  const meta = record ? [record.patient_age, genderLabel(record.patient_gender)].filter(Boolean).join(" · ") : ""
-  const isPending = (record?.status || "").trim().toLowerCase() === "pendente"
+  const statusMeta = STATUS_META[record?.status || ""] ?? { label: record?.status || "—", cls: "bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-slate-300" }
+  const priorityMeta = PRIORITY_META[record?.priority || ""] ?? null
+  const paymentMeta = PAYMENT_META[record?.payment_status || ""] ?? null
+  const tests = record?.requested_tests ?? []
+  const sectors = record?.sectors ?? []
+  const canAutorizar = ["SOLICITADO", "AGUARDANDO"].includes(record?.status || "")
+  const canCancelar = !["CANCELADO", "CONCLUIDO"].includes(record?.status || "")
+
+  /* group tests by sector */
+  const bySector = tests.reduce<Record<string, OrderItem[]>>((acc, t) => {
+    const key = t.sector_name || "Sem sector"
+    ;(acc[key] ??= []).push(t)
+    return acc
+  }, {})
 
   return (
     <AppLayout>
-      <div className="mx-auto w-full max-w-3xl space-y-3">
-        <nav className="flex items-center gap-1.5 text-xs text-[var(--gray-500)]">
-          <Link href="/clinical-laboratory/orders" className="hover:underline">Pedidos</Link>
-          <span aria-hidden>›</span>
-          <span className="font-semibold text-[var(--text)]">{record?.custom_id ?? id}</span>
-        </nav>
+      <div className="mx-auto w-full max-w-3xl space-y-3 px-1 py-1">
 
-        {feedback && (
-          <div className="rounded border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-800 dark:border-emerald-800/40 dark:bg-emerald-900/15 dark:text-emerald-300">
-            {feedback}
-          </div>
-        )}
-        {error && (
-          <div className="rounded border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-800 dark:border-red-800/40 dark:bg-red-900/15 dark:text-red-300">
-            {error}
-          </div>
-        )}
+        {/* ── hero header ── */}
+        <section className="relative overflow-hidden rounded-xl border border-sky-200/50 bg-gradient-to-br from-sky-50/80 via-white/60 to-cyan-50/60 shadow-sm backdrop-blur-sm dark:border-sky-800/30 dark:from-sky-950/30 dark:via-slate-900/40 dark:to-cyan-950/20">
+          <span className="absolute left-0 top-0 h-full w-1 bg-sky-400" />
+          <div className="px-4 py-4 pl-5">
 
-        {loading ? (
-          <p className="text-sm text-[var(--gray-400)]">Carregando...</p>
-        ) : !record ? (
-          <p className="text-sm text-[var(--gray-400)]">Pedido não encontrado.</p>
-        ) : (
-          <article className="overflow-hidden rounded border border-[var(--border)] bg-transparent">
-            <div className="flex items-start justify-between gap-2 px-3 pt-3">
-              <div className="min-w-0">
-                <p className="text-sm font-semibold text-[var(--text)]">
-                  {record.patient_name}
-                  {meta ? <span className="text-[11px] font-normal text-[var(--gray-500)]"> · {meta}</span> : null}
-                </p>
-              </div>
-              <div className="flex shrink-0 flex-col items-end gap-1">
-                <span className={`rounded px-1.5 py-0.5 text-[10px] font-medium ${
-                  record.type === "LAB"
-                    ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
-                    : "bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300"
-                }`}>
-                  {record.type}
-                </span>
-                {getClinicalStatusLabel(record.clinical_status, record.clinical_status_display) && (
-                  <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
-                    {getClinicalStatusLabel(record.clinical_status, record.clinical_status_display)}
-                  </span>
+            {/* breadcrumb */}
+            <nav className="mb-2 flex items-center gap-1 text-[10px] text-[var(--gray-500)]">
+              <Link href="/clinical-laboratory" className="hover:text-foreground">Laboratório</Link>
+              <ChevronRight size={10} />
+              <Link href="/clinical-laboratory/orders" className="hover:text-foreground">Ordens</Link>
+              <ChevronRight size={10} />
+              <span className="font-semibold text-foreground">{record?.custom_id ?? id}</span>
+            </nav>
+
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <div className="flex items-center gap-2">
+                  <FlaskConical size={15} className="text-sky-500" />
+                  <h1 className="font-display text-base font-bold text-foreground">
+                    {record?.custom_id ?? `Ordem #${id}`}
+                  </h1>
+                  {loading && <Loader2 size={12} className="animate-spin text-[var(--gray-400)]" />}
+                </div>
+                {record?.patient_name && (
+                  <p className="mt-0.5 text-[12px] text-[var(--gray-600)] dark:text-[var(--gray-400)]">
+                    <User size={10} className="mr-1 inline" />{record.patient_name}
+                  </p>
                 )}
-                <span className="text-[10px] text-[var(--gray-400)]">Colhida {fmt(record.collected_at)}</span>
+              </div>
+
+              {/* pills */}
+              <div className="flex flex-wrap items-center gap-1.5">
+                <Pill label={statusMeta.label} cls={statusMeta.cls} />
+                {priorityMeta && <Pill label={priorityMeta.label} cls={priorityMeta.cls} />}
+                {record?.origin && <Pill label={record.origin} cls="bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-slate-300" />}
               </div>
             </div>
 
-            {exams.length > 0 && (
-              <div className="mx-3 mt-2.5 overflow-hidden border border-[var(--border)]">
-                <table className="w-full table-fixed border-collapse text-[11px]">
-                  <colgroup>
-                    <col className="w-[22%]" />
-                    <col className="w-[50%]" />
-                    <col className="w-[28%]" />
-                  </colgroup>
-                  <thead>
-                    <tr className="border-b border-[var(--border)]">
-                      <th className="px-3 py-1.5 text-left text-[10px] font-semibold uppercase tracking-wide text-[var(--gray-500)]">Código</th>
-                      <th className="px-3 py-1.5 text-left text-[10px] font-semibold uppercase tracking-wide text-[var(--gray-500)]">Exame</th>
-                      <th className="px-3 py-1.5 text-left text-[10px] font-semibold uppercase tracking-wide text-[var(--gray-500)]">Método</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-[var(--border)]">
-                    {exams.map((item) => (
-                      <tr key={item.id}>
-                        <td className="truncate px-3 py-1.5 font-mono text-[10px] text-[var(--gray-500)]">{item.exam_custom_id ?? "—"}</td>
-                        <td className="truncate px-3 py-1.5 font-medium text-[var(--text)]">{item.exam_name ?? item.medical_exam_name ?? "—"}</td>
-                        <td className="truncate px-3 py-1.5 text-[var(--gray-500)]">{item.exam_method ?? "—"}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+            {/* requested_at */}
+            {record?.requested_at && (
+              <p className="mt-2 flex items-center gap-1 text-[10px] text-[var(--gray-500)]">
+                <CalendarDays size={10} />
+                Solicitada em {fmt(record.requested_at)}
+                {record.updated_at && record.updated_at !== record.created_at && (
+                  <> · actualizada {fmt(record.updated_at)}</>
+                )}
+              </p>
+            )}
+          </div>
+        </section>
+
+        {/* ── feedback / error ── */}
+        {feedback && (
+          <div className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50/70 px-4 py-2.5 text-[12px] text-emerald-800 dark:border-emerald-800/40 dark:bg-emerald-900/15 dark:text-emerald-300">
+            <CheckCircle2 size={13} /> {feedback}
+          </div>
+        )}
+        {error && (
+          <div className="flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50/70 px-4 py-2.5 text-[12px] text-rose-800 dark:border-rose-800/40 dark:bg-rose-900/15 dark:text-rose-300">
+            <AlertCircle size={13} /> {error}
+          </div>
+        )}
+
+        {loading && !record ? (
+          <div className={`${GLASS} flex items-center gap-2 px-4 py-6 text-[12px] text-[var(--gray-400)]`}>
+            <Loader2 size={14} className="animate-spin" /> A carregar ordem...
+          </div>
+        ) : !record ? (
+          <div className={`${GLASS} px-4 py-6 text-center text-[12px] text-[var(--gray-400)]`}>
+            Ordem não encontrada.
+          </div>
+        ) : (
+          <>
+            {/* ── two-col info grid ── */}
+            <div className="grid gap-3 sm:grid-cols-2">
+
+              {/* patient + requester card */}
+              <section className={`${GLASS} space-y-3 px-4 py-3`}>
+                <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--gray-500)]">
+                  <User size={11} /> Paciente e solicitante
+                </div>
+                <InfoRow icon={<User size={11} />} label="Paciente" value={record.patient_name} />
+                <InfoRow icon={<Stethoscope size={11} />} label="Médico solicitante" value={record.requesting_physician_name} />
+                <InfoRow icon={<Building2 size={11} />} label="Entidade" value={record.requesting_company_name} />
+              </section>
+
+              {/* clinical info card */}
+              <section className={`${GLASS} space-y-3 px-4 py-3`}>
+                <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--gray-500)]">
+                  <ClipboardList size={11} /> Informação clínica
+                </div>
+                <InfoRow icon={<FileText size={11} />} label="Indicação clínica" value={record.clinical_indication || null} />
+                <InfoRow icon={<FileText size={11} />} label="Diagnóstico" value={record.diagnosis || null} />
+                {!record.clinical_indication && !record.diagnosis && (
+                  <p className="text-[11px] text-[var(--gray-400)]">Sem indicação clínica registada.</p>
+                )}
+                {/* payment status */}
+                {paymentMeta && (
+                  <span className={`inline-flex items-center rounded-lg border px-2.5 py-1 text-[10px] font-semibold ${paymentMeta.cls}`}>
+                    {paymentMeta.label}
+                  </span>
+                )}
+              </section>
+            </div>
+
+            {/* ── sectors strip ── */}
+            {sectors.length > 0 && (
+              <section className={`${GLASS} px-4 py-3`}>
+                <div className="mb-2 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--gray-500)]">
+                  <Beaker size={11} /> Sectores envolvidos
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {sectors.map((s) => (
+                    <span key={s.id} className="inline-flex items-center gap-1 rounded-full border border-sky-200 bg-sky-50/70 px-2.5 py-1 text-[11px] font-medium text-sky-800 dark:border-sky-700/40 dark:bg-sky-900/20 dark:text-sky-200">
+                      <span className="font-mono text-[10px] opacity-70">{s.code}</span> {s.name}
+                    </span>
+                  ))}
+                </div>
+              </section>
             )}
 
-            {isPending ? (
-              <div className="mt-3 flex items-center justify-end gap-2 border-t border-[var(--border)] px-3 py-2">
-                <button
-                  type="button"
-                  onClick={handleTransferir}
-                  disabled={busy}
-                  className="h-7 rounded border border-[var(--border)] px-3 text-[11px] text-[var(--gray-700)] hover:bg-[var(--gray-100)] disabled:opacity-60 dark:text-[var(--gray-300)]"
-                >
-                  Transferir análise
-                </button>
-                <button
-                  type="button"
-                  onClick={handleIniciar}
-                  disabled={busy}
-                  className="h-7 rounded bg-[var(--primary-600)] px-3 text-[11px] font-semibold text-white hover:bg-[var(--primary-700)] disabled:opacity-60"
-                >
-                  {busy ? "A processar..." : "Iniciar processamento"}
-                </button>
-              </div>
+            {/* ── tests by sector ── */}
+            {tests.length > 0 ? (
+              <section className={`${GLASS} px-4 py-3`}>
+                <div className="mb-3 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--gray-500)]">
+                  <FlaskConical size={11} /> Análises solicitadas
+                  <span className="ml-auto rounded-full bg-sky-100 px-2 py-0.5 text-[10px] font-bold text-sky-700 dark:bg-sky-900/30 dark:text-sky-300">
+                    {tests.length}
+                  </span>
+                </div>
+
+                <div className="space-y-3">
+                  {Object.entries(bySector).map(([sector, items]) => (
+                    <div key={sector}>
+                      <div className="mb-1.5 flex items-center gap-1.5">
+                        <span className="h-px flex-1 bg-[var(--border)]" />
+                        <span className="text-[9px] font-semibold uppercase tracking-[0.14em] text-[var(--gray-400)]">{sector}</span>
+                        <span className="h-px flex-1 bg-[var(--border)]" />
+                      </div>
+                      <div className="overflow-hidden rounded-lg border border-[var(--border)]">
+                        <table className="w-full table-fixed text-[11px]">
+                          <colgroup>
+                            <col className="w-[18%]" />
+                            <col className="w-[44%]" />
+                            <col className="w-[22%]" />
+                            <col className="w-[16%]" />
+                          </colgroup>
+                          <thead>
+                            <tr className="border-b border-[var(--border)] bg-[var(--gray-50)]/60 dark:bg-white/[0.03]">
+                              <th className="px-3 py-1.5 text-left text-[9px] font-semibold uppercase tracking-wide text-[var(--gray-500)]">Código</th>
+                              <th className="px-3 py-1.5 text-left text-[9px] font-semibold uppercase tracking-wide text-[var(--gray-500)]">Análise</th>
+                              <th className="px-3 py-1.5 text-left text-[9px] font-semibold uppercase tracking-wide text-[var(--gray-500)]">Estado</th>
+                              <th className="px-3 py-1.5 text-right text-[9px] font-semibold uppercase tracking-wide text-[var(--gray-500)]">Preço</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-[var(--border)]">
+                            {items.map((item) => {
+                              const dot = ITEM_STATUS_META[item.status || ""]?.dot ?? "bg-slate-300"
+                              return (
+                                <tr key={item.id} className="hover:bg-sky-50/30 dark:hover:bg-sky-900/10 transition">
+                                  <td className="truncate px-3 py-2 font-mono text-[10px] text-[var(--gray-500)]">
+                                    {item.test_code ?? item.code ?? "—"}
+                                  </td>
+                                  <td className="truncate px-3 py-2 font-medium text-[var(--text)]">{item.test_name ?? "—"}</td>
+                                  <td className="px-3 py-2">
+                                    <span className="flex items-center gap-1">
+                                      <span className={`h-1.5 w-1.5 rounded-full ${dot}`} />
+                                      <span className="truncate text-[var(--gray-500)]">{item.status ?? "—"}</span>
+                                    </span>
+                                  </td>
+                                  <td className="px-3 py-2 text-right text-[var(--gray-500)]">
+                                    {item.price ? `${Number(item.price).toFixed(2)} MT` : "—"}
+                                  </td>
+                                </tr>
+                              )
+                            })}
+                          </tbody>
+                          {/* total */}
+                          {items.some(i => i.price) && (
+                            <tfoot>
+                              <tr className="border-t border-[var(--border)] bg-[var(--gray-50)]/60 dark:bg-white/[0.03]">
+                                <td colSpan={3} className="px-3 py-1.5 text-right text-[9px] font-semibold uppercase tracking-wide text-[var(--gray-500)]">Subtotal</td>
+                                <td className="px-3 py-1.5 text-right text-[11px] font-bold text-foreground">
+                                  {items.reduce((sum, i) => sum + Number(i.price || 0), 0).toFixed(2)} MT
+                                </td>
+                              </tr>
+                            </tfoot>
+                          )}
+                        </table>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
             ) : (
-              <div className="mt-3 flex items-center justify-between gap-2 border-t border-[var(--border)] px-3 py-2">
-                <span className="text-[10px] font-medium text-[var(--gray-500)]">
-                  Pedido já encaminhado para processamento.
-                </span>
-                <Link
-                  href="/clinical-laboratory/worklists"
-                  className="flex h-7 items-center rounded bg-[var(--primary-600)] px-3 text-[11px] font-semibold text-white hover:bg-[var(--primary-700)]"
-                >
-                  Ver em Listas de trabalho →
-                </Link>
-              </div>
+              <section className={`${GLASS} px-4 py-4 text-center text-[11px] text-[var(--gray-400)]`}>
+                Nenhuma análise registada nesta ordem.
+              </section>
             )}
-          </article>
+
+            {/* ── actions footer ── */}
+            <section className={`${GLASS} flex items-center justify-between gap-2 px-4 py-3`}>
+              <Link href="/clinical-laboratory/orders"
+                className="inline-flex h-7 items-center gap-1 rounded-md border border-[var(--border)] bg-card px-2.5 text-[11px] text-muted-foreground transition hover:bg-muted">
+                <ArrowLeft size={11} /> Voltar
+              </Link>
+
+              <div className="flex items-center gap-2">
+                {canCancelar && (
+                  <button type="button" onClick={handleCancelar} disabled={busy}
+                    className="inline-flex h-7 items-center gap-1.5 rounded-md border border-rose-200 bg-rose-50/70 px-3 text-[11px] font-semibold text-rose-700 transition hover:bg-rose-100 disabled:opacity-60 dark:border-rose-700/40 dark:bg-rose-900/20 dark:text-rose-300">
+                    Cancelar ordem
+                  </button>
+                )}
+                {canAutorizar ? (
+                  <button type="button" onClick={handleAutorizar} disabled={busy}
+                    className="inline-flex h-7 items-center gap-1.5 rounded-md bg-sky-600 px-3 text-[11px] font-semibold text-white transition hover:bg-sky-700 disabled:opacity-60">
+                    {busy ? <Loader2 size={11} className="animate-spin" /> : <Send size={11} />}
+                    {busy ? "A processar..." : "Autorizar ordem"}
+                  </button>
+                ) : record?.status === "CONCLUIDO" ? (
+                  <Link href="/clinical-laboratory/worklists"
+                    className="inline-flex h-7 items-center gap-1.5 rounded-md bg-emerald-600 px-3 text-[11px] font-semibold text-white transition hover:bg-emerald-700">
+                    Ver resultados <ArrowRight size={11} />
+                  </Link>
+                ) : (
+                  <Link href="/clinical-laboratory/worklists"
+                    className="inline-flex h-7 items-center gap-1.5 rounded-md bg-sky-600 px-3 text-[11px] font-semibold text-white transition hover:bg-sky-700">
+                    Ver lista de trabalho <ArrowRight size={11} />
+                  </Link>
+                )}
+              </div>
+            </section>
+          </>
         )}
       </div>
     </AppLayout>
