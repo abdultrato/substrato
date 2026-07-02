@@ -176,16 +176,6 @@ export default function MedicalConsultationEditPage() {
   return (
     <AppLayout fullWidth requiredGroups={requiredGroupsForResourceGroup("consultations")}>
       <div className="mx-auto max-w-3xl space-y-1.5">
-        <Link
-          href={id ? `/consultations/medical-consultations/${id}` : "/consultations/medical-consultations"}
-          className="group inline-flex items-center gap-2 rounded-lg border border-white/20 bg-white/40 py-1.5 pl-1.5 pr-3 text-xs font-semibold text-foreground shadow-sm backdrop-blur-sm transition hover:border-white/40 hover:bg-white/60 dark:border-white/10 dark:bg-white/[0.04] dark:hover:bg-white/[0.08]"
-        >
-          <span className="flex h-6 w-6 items-center justify-center rounded-md bg-indigo-500/10 text-indigo-600 transition group-hover:-translate-x-0.5 dark:text-indigo-400">
-            <ArrowLeft size={14} />
-          </span>
-          {t("Voltar ao detalhe", "Back to detail")}
-        </Link>
-
         {loading ? (
           <div className={`${GLASS} px-4 py-6 text-sm text-muted-foreground`}>{t("A carregar…", "Loading…")}</div>
         ) : error ? (
@@ -195,14 +185,25 @@ export default function MedicalConsultationEditPage() {
             {/* Hero */}
             <section className={`relative overflow-hidden ${GLASS}`}>
               <span className="absolute left-0 top-0 h-full w-1 bg-indigo-500" />
-              <div className="flex items-center gap-2.5 px-4 py-3 pl-5">
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white shadow-md shadow-indigo-500/20">
-                  <Stethoscope size={17} />
-                </span>
-                <div className="min-w-0">
-                  <h1 className="text-lg font-bold leading-tight text-foreground">{t("Editar consulta", "Edit consultation")}</h1>
-                  <p className="truncate font-mono text-[11px] text-muted-foreground">{row.custom_id || `#${row.id}`} · {abbreviateMiddleNames(row.patient_name)}</p>
+              <div className="flex items-center justify-between gap-2.5 px-4 py-3 pl-5">
+                <div className="flex min-w-0 items-center gap-2.5">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white shadow-md shadow-indigo-500/20">
+                    <Stethoscope size={17} />
+                  </span>
+                  <div className="min-w-0">
+                    <h1 className="text-lg font-bold leading-tight text-foreground">{t("Editar consulta", "Edit consultation")}</h1>
+                    <p className="truncate font-mono text-[11px] text-muted-foreground">{row.custom_id || `#${row.id}`} · {abbreviateMiddleNames(row.patient_name)}</p>
+                  </div>
                 </div>
+                <Link
+                  href={id ? `/consultations/medical-consultations/${id}` : "/consultations/medical-consultations"}
+                  className="group inline-flex shrink-0 items-center gap-2 self-center rounded-lg border border-white/20 bg-white/40 py-1.5 pl-1.5 pr-3 text-xs font-semibold text-foreground shadow-sm backdrop-blur-sm transition hover:border-white/40 hover:bg-white/60 dark:border-white/10 dark:bg-white/[0.04] dark:hover:bg-white/[0.08]"
+                >
+                  <span className="flex h-6 w-6 items-center justify-center rounded-md bg-indigo-500/10 text-indigo-600 transition group-hover:-translate-x-0.5 dark:text-indigo-400">
+                    <ArrowLeft size={14} />
+                  </span>
+                  {t("Voltar ao detalhe", "Back to detail")}
+                </Link>
               </div>
             </section>
 
@@ -282,7 +283,7 @@ export default function MedicalConsultationEditPage() {
                   <TextAreaInput value={description} onChange={(e) => setDescription(e.target.value)} rows={3} placeholder={t("Notas da consulta (opcional)", "Consultation notes (optional)")} />
                 </div>
 
-                <div className="flex items-center justify-end gap-2 border-t border-white/20 pt-3 dark:border-white/10">
+                <div className="flex items-center justify-between gap-2 border-t border-white/20 pt-3 dark:border-white/10">
                   <Link
                     href={`/consultations/medical-consultations/${id}`}
                     className="inline-flex items-center rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground transition hover:bg-muted"
