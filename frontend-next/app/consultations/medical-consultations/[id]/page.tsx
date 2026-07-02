@@ -211,17 +211,6 @@ export default function MedicalConsultationDetailPage() {
     <AppLayout fullWidth requiredGroups={requiredGroupsForResourceGroup("consultations")}>
       <div className="space-y-1.5">
 
-        {/* Back */}
-        <Link
-          href="/consultations/medical-consultations"
-          className="group inline-flex items-center gap-2 rounded-lg border border-white/20 bg-white/40 py-1.5 pl-1.5 pr-3 text-xs font-semibold text-foreground shadow-sm backdrop-blur-sm transition hover:border-white/40 hover:bg-white/60 dark:border-white/10 dark:bg-white/[0.04] dark:hover:bg-white/[0.08]"
-        >
-          <span className="flex h-6 w-6 items-center justify-center rounded-md bg-indigo-500/10 text-indigo-600 transition group-hover:-translate-x-0.5 dark:text-indigo-400">
-            <ArrowLeft size={14} />
-          </span>
-          {t("Consultas médicas", "Medical consultations")}
-        </Link>
-
         {loading ? (
           <div className={`${GLASS} px-4 py-6 text-sm text-muted-foreground`}>{t("A carregar…", "Loading…")}</div>
         ) : error ? (
@@ -257,42 +246,55 @@ export default function MedicalConsultationDetailPage() {
                 </div>
               </div>
 
-              {/* Ações — dentro do cartão do cabeçalho */}
-              {canWrite && isOpen ? (
-                <div className="flex flex-wrap items-center gap-1.5 border-t border-white/20 px-4 py-2 pl-5 dark:border-white/10">
-                  <Link
-                    href={`/consultations/medical-consultations/${id}/edit`}
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-white/70 bg-white/50 px-3 py-1.5 text-xs font-semibold text-foreground shadow-sm transition hover:bg-white/70 dark:bg-white/10 dark:hover:bg-white/20"
-                  >
-                    <Pencil size={13} /> {t("Editar", "Edit")}
-                  </Link>
-                  <button
-                    type="button"
-                    onClick={openReschedule}
-                    disabled={busy}
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-white/70 bg-amber-500 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-amber-600 disabled:opacity-50"
-                  >
-                    <CalendarX2 size={13} /> {t("Re-agendar", "Reschedule")}
-                  </button>
-                  <ConfirmDialog
-                    title={t("Cancelar consulta", "Cancel consultation")}
-                    message={t("Cancelar esta consulta?", "Cancel this consultation?")}
-                    confirmText={t("Cancelar consulta", "Cancel consultation")}
-                    onConfirm={cancelConsultation}
-                    disabled={busy}
-                  >
+              {/* Rodapé do cartão — ações à esquerda, voltar no canto inf. direito */}
+              <div className="flex flex-wrap items-center gap-1.5 border-t border-white/20 px-4 py-2 pl-5 dark:border-white/10">
+                {canWrite && isOpen ? (
+                  <>
+                    <Link
+                      href={`/consultations/medical-consultations/${id}/edit`}
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-white/70 bg-white/50 px-3 py-1.5 text-xs font-semibold text-foreground shadow-sm transition hover:bg-white/70 dark:bg-white/10 dark:hover:bg-white/20"
+                    >
+                      <Pencil size={13} /> {t("Editar", "Edit")}
+                    </Link>
                     <button
                       type="button"
+                      onClick={openReschedule}
                       disabled={busy}
-                      className="inline-flex items-center gap-1.5 rounded-lg border border-white/70 bg-rose-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-rose-700 disabled:opacity-50"
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-white/70 bg-amber-500 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-amber-600 disabled:opacity-50"
                     >
-                      <XCircle size={13} /> {t("Cancelar", "Cancel")}
+                      <CalendarX2 size={13} /> {t("Re-agendar", "Reschedule")}
                     </button>
-                  </ConfirmDialog>
-                  {busy ? <Loader2 size={14} className="animate-spin text-muted-foreground" /> : null}
-                  {actionError ? <span className="text-[11px] font-medium text-rose-600 dark:text-rose-400">{actionError}</span> : null}
-                </div>
-              ) : null}
+                    <ConfirmDialog
+                      title={t("Cancelar consulta", "Cancel consultation")}
+                      message={t("Cancelar esta consulta?", "Cancel this consultation?")}
+                      confirmText={t("Cancelar consulta", "Cancel consultation")}
+                      onConfirm={cancelConsultation}
+                      disabled={busy}
+                    >
+                      <button
+                        type="button"
+                        disabled={busy}
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-white/70 bg-rose-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-rose-700 disabled:opacity-50"
+                      >
+                        <XCircle size={13} /> {t("Cancelar", "Cancel")}
+                      </button>
+                    </ConfirmDialog>
+                    {busy ? <Loader2 size={14} className="animate-spin text-muted-foreground" /> : null}
+                    {actionError ? <span className="text-[11px] font-medium text-rose-600 dark:text-rose-400">{actionError}</span> : null}
+                  </>
+                ) : null}
+
+                {/* Voltar — quadrante inferior direito do cartão de nome */}
+                <Link
+                  href="/consultations/medical-consultations"
+                  className="group ml-auto inline-flex items-center gap-2 rounded-lg border border-white/20 bg-white/40 py-1.5 pl-1.5 pr-3 text-xs font-semibold text-foreground shadow-sm backdrop-blur-sm transition hover:border-white/40 hover:bg-white/60 dark:border-white/10 dark:bg-white/[0.04] dark:hover:bg-white/[0.08]"
+                >
+                  <span className="flex h-6 w-6 items-center justify-center rounded-md bg-indigo-500/10 text-indigo-600 transition group-hover:-translate-x-0.5 dark:text-indigo-400">
+                    <ArrowLeft size={14} />
+                  </span>
+                  {t("Consultas médicas", "Medical consultations")}
+                </Link>
+              </div>
             </section>
 
             {/* Info grid */}
