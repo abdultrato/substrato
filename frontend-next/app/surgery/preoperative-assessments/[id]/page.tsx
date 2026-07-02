@@ -351,7 +351,7 @@ export default function PreoperativeAssessmentDetailPage() {
             {labRequest && (
               <RequestBox
                 code={labRequest.code}
-                href={labRequest.id ? `/clinical_laboratory/orders/${labRequest.id}` : null}
+                href={labRequest.id ? `/clinical-laboratory/orders/${labRequest.id}` : null}
                 tone="sky"
               />
             )}
@@ -373,7 +373,7 @@ export default function PreoperativeAssessmentDetailPage() {
             {medRequest && (
               <RequestBox
                 code={medRequest.code}
-                href={medRequest.id ? `/specialty_diagnostics/orders/${medRequest.id}` : null}
+                href={medRequest.id ? `/specialty-diagnostics/exams/${medRequest.id}` : null}
                 tone="violet"
               />
             )}
