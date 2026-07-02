@@ -1,8 +1,8 @@
 "use client"
 
 import Link from "next/link"
-import { useCallback, useEffect, useMemo, useState } from "react"
-import { AlertCircle, ChevronLeft, FlaskConical, Loader2 } from "lucide-react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { AlertCircle, ChevronLeft, FlaskConical, Loader2, Search } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
 import { apiFetchList } from "@/lib/api"
@@ -71,7 +71,7 @@ function RejectionCard({ row, columnKey }: { row: Rejection; columnKey: ColumnKe
   const details = [row.reasons_text, row.note].filter(Boolean).join(" — ")
 
   return (
-    <div className="group relative flex flex-col overflow-hidden rounded-xl border border-white/50 bg-white/30 shadow-sm backdrop-blur-sm transition hover:border-white/70 hover:bg-white/50 hover:shadow-md dark:border-white/10 dark:bg-white/[0.04] dark:hover:border-white/20 dark:hover:bg-white/[0.08]">
+    <div className="group relative flex w-4/5 flex-col overflow-hidden rounded-xl border border-white/50 bg-white/30 shadow-sm backdrop-blur-sm transition hover:border-white/70 hover:bg-white/50 hover:shadow-md dark:border-white/10 dark:bg-white/[0.04] dark:hover:border-white/20 dark:hover:bg-white/[0.08]">
       <div className="flex items-start justify-between gap-2 px-3 pt-2.5 pb-1.5">
         <Link
           href={`/clinical-laboratory/reception/${row.request}`}
@@ -124,6 +124,9 @@ export default function LabRejectionsPage() {
   const [rows, setRows] = useState<Rejection[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [search, setSearch] = useState("")
+  const [query, setQuery] = useState("")
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -146,13 +149,41 @@ export default function LabRejectionsPage() {
     load()
   }, [load, safeRefreshToken])
 
+  function handleSearch(value: string) {
+    setSearch(value)
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(() => setQuery(value.trim().toLocaleLowerCase()), 350)
+  }
+
+  const filteredRows = useMemo(() => {
+    if (!query) return rows
+    return rows.filter((row) => {
+      const haystack = [
+        row.request_custom_id,
+        String(row.request),
+        row.patient_name,
+        row.exam_name,
+        row.reasons_text,
+        row.note,
+        row.status_display,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLocaleLowerCase()
+
+      return haystack.includes(query)
+    })
+  }, [query, rows])
+
   const buckets = useMemo(() => {
     const grouped: Record<ColumnKey, Rejection[]> = { pendente: [], resolvida: [] }
-    for (const row of rows) {
+    for (const row of filteredRows) {
       grouped[normalizeStatus(row.status)].push(row)
     }
     return grouped
-  }, [rows])
+  }, [filteredRows])
+
+  const total = filteredRows.length
 
   return (
     <AppLayout fullWidth>
@@ -170,18 +201,43 @@ export default function LabRejectionsPage() {
                   <p className="text-[10px] text-[var(--gray-500)]">
                     {loading
                       ? <><Loader2 size={9} className="mr-1 inline animate-spin" />A carregar...</>
-                      : rows.length > 0
-                        ? `${rows.length} rejeição${rows.length !== 1 ? "ões" : ""} registada${rows.length !== 1 ? "s" : ""}`
-                        : "Sem rejeições registadas"}
+                      : total > 0
+                        ? `${total} rejeição${total !== 1 ? "ões" : ""} ${query ? "encontrada" : "registada"}${total !== 1 ? "s" : ""}`
+                        : query
+                          ? "Sem rejeições para esta pesquisa"
+                          : "Sem rejeições registadas"}
                   </p>
                 </div>
               </div>
-              <Link
-                href="/clinical-laboratory"
-                className="inline-flex h-8 items-center gap-1 rounded-lg border border-white/40 bg-white/30 px-2.5 text-[11px] text-[var(--gray-700)] backdrop-blur-sm transition hover:bg-white/50 dark:border-white/10 dark:text-[var(--gray-300)] dark:hover:bg-white/10"
-              >
-                <ChevronLeft size={11} /> Voltar
-              </Link>
+              <div className="flex items-center gap-2">
+                <Link
+                  href="/clinical-laboratory"
+                  className="inline-flex h-8 items-center gap-1 rounded-lg border border-white/40 bg-white/30 px-2.5 text-[11px] text-[var(--gray-700)] backdrop-blur-sm transition hover:bg-white/50 dark:border-white/10 dark:text-[var(--gray-300)] dark:hover:bg-white/10"
+                >
+                  <ChevronLeft size={11} /> Voltar
+                </Link>
+                <div className="flex items-center gap-1.5 rounded-lg border border-white/50 bg-white/50 px-2.5 py-1.5 backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.06]">
+                  <Search size={11} className="shrink-0 text-[var(--gray-400)]" />
+                  <input
+                    value={search}
+                    onChange={(e) => handleSearch(e.target.value)}
+                    placeholder="Pesquisar paciente, código..."
+                    className="w-40 bg-transparent text-[11px] text-[var(--text)] outline-none placeholder-[var(--gray-400)]"
+                  />
+                  {search && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSearch("")
+                        setQuery("")
+                      }}
+                      className="text-[10px] text-[var(--gray-400)] hover:text-foreground"
+                    >
+                      ×
+                    </button>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         </section>
@@ -219,10 +275,10 @@ export default function LabRejectionsPage() {
                     </span>
                   </div>
 
-                  <div className="flex flex-1 flex-col gap-1.5 overflow-y-auto px-3 pb-3 pl-4 max-h-[calc(100vh-130px)] [scrollbar-width:thin]">
+                  <div className="flex flex-1 flex-col items-center gap-1.5 overflow-y-auto px-3 pb-3 pl-4 max-h-[calc(100vh-130px)] [scrollbar-width:thin]">
                     {items.length === 0 ? (
-                      <div className="rounded-xl border border-dashed border-white/60 px-3 py-6 text-center text-[10px] text-[var(--gray-400)] dark:border-white/10">
-                        Sem rejeições.
+                      <div className="w-full rounded-xl border border-dashed border-white/60 px-3 py-6 text-center text-[10px] text-[var(--gray-400)] dark:border-white/10">
+                        {query ? "Sem rejeições para esta pesquisa." : "Sem rejeições."}
                       </div>
                     ) : (
                       items.map((row) => (
