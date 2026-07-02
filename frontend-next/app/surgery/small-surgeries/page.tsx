@@ -55,12 +55,6 @@ const PRIORITY_DOT: Record<string, string> = {
   EMERGENCY: "bg-rose-500",
 };
 
-const CLASS_LABEL: Record<string, string> = {
-  MINOR: "Minor",
-  INTERMEDIATE: "Intermédia",
-  MAJOR: "Major",
-  COMPLEX: "Complexa",
-};
 
 function formatDate(iso: string | null) {
   if (!iso) return null;
@@ -87,7 +81,6 @@ function SurgeryCard({ s }: { s: Surgery }) {
   const statusCls = STATUS_COLOR[s.status] ?? "bg-gray-100 text-gray-600";
   const priorityDot = PRIORITY_DOT[s.priority] ?? "bg-gray-400";
   const priorityLabel = PRIORITY_LABEL[s.priority] ?? s.priority;
-  const classLabel = CLASS_LABEL[s.classification] ?? s.classification;
 
   return (
     <Link href={`/surgery/small-surgeries/${s.id}`} className="group block">
@@ -142,11 +135,9 @@ function SurgeryCard({ s }: { s: Surgery }) {
               <span className={`inline-block h-2 w-2 rounded-full ${priorityDot}`} />
               {priorityLabel}
             </span>
-            {classLabel ? (
-              <span className="rounded border border-[var(--gray-200)] px-1.5 py-0.5 text-[10px] text-[var(--gray-500)] dark:border-white/10">
-                {classLabel}
-              </span>
-            ) : null}
+            <span className="rounded border border-violet-200 bg-violet-50 px-1.5 py-0.5 text-[10px] font-semibold text-violet-600 dark:border-violet-700/30 dark:bg-violet-900/20 dark:text-violet-300">
+              Pequena cirurgia
+            </span>
             {parseFloat(s.estimated_price) > 0 ? (
               <span className="ml-auto text-[10px] font-medium text-[var(--gray-500)]">
                 {parseFloat(s.estimated_price).toLocaleString("pt-PT")} MT
