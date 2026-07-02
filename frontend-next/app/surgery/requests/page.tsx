@@ -144,10 +144,10 @@ function SurgeryCard({ item, onMarkDone, marking }: {
     : item.procedure || "—"
 
   return (
-    <Link href={detailHref(item)} className="group block">
-      <div className={`${GLASS} relative overflow-hidden p-3 transition-all hover:border-slate-300 hover:shadow-md dark:hover:border-white/20`}>
+    <Link href={detailHref(item)} className="group flex h-full flex-col">
+      <div className={`${GLASS} relative flex h-full min-h-[108px] flex-col overflow-hidden p-3 transition-all hover:border-slate-300 hover:shadow-md dark:hover:border-white/20`}>
         <span className={`absolute left-0 top-0 h-full w-1 ${accent} opacity-70 group-hover:opacity-100`} />
-        <div className="pl-3">
+        <div className="flex flex-1 flex-col pl-3">
 
           {/* badges row */}
           <div className="flex flex-wrap items-center gap-1.5">
@@ -174,13 +174,11 @@ function SurgeryCard({ item, onMarkDone, marking }: {
           <p className="mt-1.5 truncate text-[13px] font-semibold text-foreground">{item.patient_name || "—"}</p>
           <p className="mt-0.5 truncate text-[11px] text-[var(--gray-500)]">{procNames}</p>
 
-          {/* date only */}
-          {item.scheduled_for && (
-            <div className="mt-1.5 flex items-center gap-1 text-[10px] text-[var(--gray-400)]">
-              <CalendarClock size={9} className="shrink-0" />
-              {fmtDate(item.scheduled_for)}
-            </div>
-          )}
+          {/* date pinned to bottom */}
+          <div className="mt-auto pt-2 flex items-center gap-1 text-[10px] text-[var(--gray-400)]">
+            <CalendarClock size={9} className="shrink-0" />
+            {item.scheduled_for ? fmtDate(item.scheduled_for) : "—"}
+          </div>
         </div>
       </div>
     </Link>
@@ -340,7 +338,7 @@ export default function SurgeryRequestsPage() {
         ) : displayed.length === 0 ? (
           emptyMsg(tab)
         ) : (
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-1 items-stretch gap-2 sm:grid-cols-2 lg:grid-cols-4">
             {displayed.map((item) => (
               <SurgeryCard
                 key={`${item._source}-${item.id}`}
