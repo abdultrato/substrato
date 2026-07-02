@@ -183,17 +183,30 @@ function SurgeryCard({ s }: { s: Surgery }) {
   );
 }
 
+const STATUS_FILTER_OPTIONS = [
+  "DRAFT", "REQUESTED", "UNDER_ASSESSMENT", "FINANCIAL_PENDING", "AUTHORIZED",
+  "AGENDADA", "PATIENT_CHECKED_IN", "PREOPERATIVE_PREPARATION", "PREPARED",
+  "IN_OPERATING_ROOM", "ANESTHESIA_STARTED", "SURGERY_STARTED", "EM_ANDAMENTO",
+  "SURGERY_COMPLETED", "CONCLUIDA", "IN_RECOVERY", "RECOVERED",
+  "REPORT_PENDING", "BILLING_PENDING", "CLOSED", "POSTPONED", "CANCELADA",
+];
+
 export default function LargeSurgeriesListPage() {
   const [items, setItems] = useState<Surgery[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string | null>(null);
+  const [numFilter, setNumFilter] = useState("");
 
-  const load = useCallback(async (q: string) => {
+  const load = useCallback(async (q: string, status: string | null, num: string) => {
     setLoading(true); setError(null);
     try {
-      const params = q ? `?search=${encodeURIComponent(q)}&limit=100` : "?limit=100";
-      const d = await apiFetch<any>(`/surgery/large_surgery/${params}`);
+      const p = new URLSearchParams({ limit: "200" });
+      if (q) p.set("search", q);
+      if (status) p.set("status", status);
+      if (num && /^\d{1,3}$/.test(num)) p.set("id", num);
+      const d = await apiFetch<any>(`/surgery/large_surgery/?${p}`);
       setItems(d.results ?? d);
     } catch (e: any) {
       setError(e?.message || "Erro ao carregar.");
@@ -202,12 +215,14 @@ export default function LargeSurgeriesListPage() {
     }
   }, []);
 
-  useEffect(() => { load(""); }, [load]);
+  useEffect(() => { load("", null, ""); }, [load]);
 
   useEffect(() => {
-    const t = setTimeout(() => load(search), 300);
+    const t = setTimeout(() => load(search, statusFilter, numFilter), 300);
     return () => clearTimeout(t);
-  }, [search, load]);
+  }, [search, statusFilter, numFilter, load]);
+
+  const toggleStatus = (s: string) => setStatusFilter(prev => prev === s ? null : s);
 
   return (
     <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.ENFERMAGEM, GROUPS.MEDICINA]}>
@@ -216,6 +231,7 @@ export default function LargeSurgeriesListPage() {
         <section className={`relative overflow-hidden ${GLASS}`}>
           <span className="absolute left-0 top-0 h-full w-1 bg-indigo-500" />
           <div className="px-3 py-2 pl-4">
+            {/* top row */}
             <div className="flex items-center justify-between gap-3">
               <div>
                 <div className="flex items-center gap-1 text-[10px] text-[var(--gray-500)]">
@@ -230,31 +246,63 @@ export default function LargeSurgeriesListPage() {
                   className="inline-flex h-7 items-center gap-1 rounded-md border border-border bg-card px-2.5 text-[11px] text-muted-foreground hover:bg-muted">
                   <ArrowLeft size={11} /> Voltar
                 </Link>
-                <Link
-                  href="/surgery/large-surgeries/new"
-                  className="inline-flex h-7 items-center gap-1.5 rounded-md border border-indigo-300 bg-indigo-50 px-3 text-[11px] font-semibold text-indigo-700 transition hover:bg-indigo-100 dark:border-indigo-700/40 dark:bg-indigo-900/20 dark:text-indigo-300"
-                >
-                  <Plus size={11} />
-                  Nova cirurgia
+                <Link href="/surgery/large-surgeries/new"
+                  className="inline-flex h-7 items-center gap-1.5 rounded-md border border-indigo-300 bg-indigo-50 px-3 text-[11px] font-semibold text-indigo-700 transition hover:bg-indigo-100 dark:border-indigo-700/40 dark:bg-indigo-900/20 dark:text-indigo-300">
+                  <Plus size={11} /> Nova cirurgia
                 </Link>
               </div>
             </div>
-            <div className="relative mt-2">
-              <Search size={11} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--gray-400)]" />
+
+            {/* search + num */}
+            <div className="mt-2 flex gap-2">
+              <div className="relative flex-1">
+                <Search size={11} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--gray-400)]" />
+                <input
+                  className="w-full rounded-lg border border-border bg-card/60 py-1.5 pl-7 pr-3 text-[12px] placeholder-[var(--gray-400)] focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-200 dark:focus:ring-indigo-800"
+                  placeholder="Pesquisar por código, procedimento ou paciente..."
+                  value={search}
+                  onChange={e => setSearch(e.target.value)}
+                />
+              </div>
               <input
-                className="w-full rounded-lg border border-border bg-card/60 py-1.5 pl-7 pr-3 text-[12px] placeholder-[var(--gray-400)] focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-200 dark:focus:ring-indigo-800"
-                placeholder="Pesquisar por código, procedimento ou paciente..."
-                value={search}
-                onChange={e => setSearch(e.target.value)}
+                type="number" min="1" max="999"
+                className="w-20 rounded-lg border border-border bg-card/60 py-1.5 px-2.5 text-[12px] text-center text-foreground placeholder-[var(--gray-400)] focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-200 dark:focus:ring-indigo-800"
+                placeholder="Nº"
+                value={numFilter}
+                onChange={e => {
+                  const v = e.target.value.replace(/\D/g, "").slice(0, 3);
+                  setNumFilter(v);
+                }}
               />
+            </div>
+
+            {/* status chips */}
+            <div className="mt-2 flex flex-wrap gap-1">
+              {STATUS_FILTER_OPTIONS.map(s => {
+                const active = statusFilter === s;
+                const baseCls = STATUS_COLOR[s] ?? "bg-gray-100 text-gray-600";
+                return (
+                  <button key={s} type="button" onClick={() => toggleStatus(s)}
+                    className={`rounded-full px-2 py-0.5 text-[10px] font-semibold transition ${
+                      active ? baseCls + " ring-2 ring-offset-1 ring-indigo-400" : "bg-card border border-border text-[var(--gray-500)] hover:border-indigo-300 hover:text-indigo-600"
+                    }`}>
+                    {STATUS_LABEL[s] ?? s}
+                  </button>
+                );
+              })}
+              {statusFilter && (
+                <button type="button" onClick={() => setStatusFilter(null)}
+                  className="rounded-full border border-rose-200 bg-rose-50 px-2 py-0.5 text-[10px] font-semibold text-rose-600 hover:bg-rose-100">
+                  × limpar
+                </button>
+              )}
             </div>
           </div>
         </section>
 
         {loading ? (
           <div className="flex items-center justify-center gap-2 py-12 text-sm text-[var(--gray-500)]">
-            <Loader2 size={16} className="animate-spin" />
-            Carregando...
+            <Loader2 size={16} className="animate-spin" /> Carregando...
           </div>
         ) : error ? (
           <div className="flex items-center gap-2 rounded-xl border border-rose-300/50 bg-rose-50/60 px-4 py-3 text-sm text-rose-700 dark:border-rose-700/40 dark:bg-rose-900/20 dark:text-rose-300">
