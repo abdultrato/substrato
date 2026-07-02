@@ -6,6 +6,7 @@ import { useCallback, useEffect, useMemo, useState } from "react"
 import AppLayout from "@/components/layout/AppLayout"
 import MoneyValue from "@/components/ui/MoneyValue"
 import PdfActionLabel from "@/components/ui/PdfActionLabel"
+import PageSizeInput from "@/components/ui/PageSizeInput"
 import ConfirmDialog from "@/components/ui/ConfirmDialog"
 import SearchableSelect from "@/components/ui/SearchableSelect"
 import { useAuth } from "@/hooks/useAuth"
@@ -26,6 +27,7 @@ import {
   Info,
   Loader2,
   Receipt,
+  Search,
   Stethoscope,
   User,
   X,
@@ -207,6 +209,8 @@ export default function ConsultationsPage() {
   const [specialties, setSpecialties] = useState<Specialty[]>([])
 
   const [scheduleFormOpen, setScheduleFormOpen] = useState(false)
+  const [pageSize, setPageSize] = useState(10)
+  const [busca, setBusca] = useState("")
   const [detailRow, setDetailRow] = useState<ConsultationRow | null>(null)
   const [patientId, setPatientId] = useState("")
   const [doctorId, setDoctorId] = useState("")
@@ -651,23 +655,6 @@ export default function ConsultationsPage() {
     return "scheduled"
   }, [isDueSoon])
 
-  const markedConsultations = useMemo(
-    () => consultations.filter((c) => bucketOf(c) === "marked"),
-    [consultations, bucketOf]
-  )
-  const scheduledConsultations = useMemo(
-    () => consultations.filter((c) => bucketOf(c) === "scheduled"),
-    [consultations, bucketOf]
-  )
-  const rescheduledConsultations = useMemo(
-    () => consultations.filter((c) => bucketOf(c) === "rescheduled"),
-    [consultations, bucketOf]
-  )
-  const completedConsultations = useMemo(
-    () => consultations.filter((c) => bucketOf(c) === "completed"),
-    [consultations, bucketOf]
-  )
-
   const statusBadge = useCallback((r: ConsultationRow) => {
     switch (bucketOf(r)) {
       case "completed": return { label: t("Realizada", "Completed"), cls: "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-700/30 dark:bg-emerald-900/20 dark:text-emerald-400" }
@@ -678,6 +665,39 @@ export default function ConsultationsPage() {
       default: return { label: t("Agendada", "Scheduled"), cls: "border-sky-200 bg-sky-50 text-sky-700 dark:border-sky-700/30 dark:bg-sky-900/20 dark:text-sky-400" }
     }
   }, [bucketOf, t])
+
+  // Filtra por nome do paciente, especialidade e estado (rótulo) da consulta.
+  const consultationsFiltradas = useMemo(() => {
+    const q = busca.trim().toLowerCase()
+    if (!q) return consultations
+    return consultations.filter((c) => {
+      const haystack = [
+        c.patient_name,
+        c.specialty_name,
+        c.type,
+        c.status,
+        statusBadge(c).label,
+      ].map((v) => String(v ?? "").toLowerCase()).join(" ")
+      return haystack.includes(q)
+    })
+  }, [consultations, busca, statusBadge])
+
+  const markedConsultations = useMemo(
+    () => consultationsFiltradas.filter((c) => bucketOf(c) === "marked"),
+    [consultationsFiltradas, bucketOf]
+  )
+  const scheduledConsultations = useMemo(
+    () => consultationsFiltradas.filter((c) => bucketOf(c) === "scheduled"),
+    [consultationsFiltradas, bucketOf]
+  )
+  const rescheduledConsultations = useMemo(
+    () => consultationsFiltradas.filter((c) => bucketOf(c) === "rescheduled"),
+    [consultationsFiltradas, bucketOf]
+  )
+  const completedConsultations = useMemo(
+    () => consultationsFiltradas.filter((c) => bucketOf(c) === "completed"),
+    [consultationsFiltradas, bucketOf]
+  )
 
   const accentOf = useCallback((r: ConsultationRow): string => {
     switch (bucketOf(r)) {
@@ -764,11 +784,16 @@ export default function ConsultationsPage() {
         </div>
       ) : (
         <div className="max-h-[calc(100vh-15rem)] space-y-2 overflow-y-auto overscroll-contain pr-1 [scrollbar-width:thin]">
-          {rows.map(renderConsultationCard)}
+          {rows.slice(0, pageSize).map(renderConsultationCard)}
+          {rows.length > pageSize ? (
+            <div className="pt-0.5 text-center text-[10px] text-muted-foreground">
+              {t("A mostrar", "Showing")} {pageSize} {t("de", "of")} {rows.length}
+            </div>
+          ) : null}
         </div>
       )}
     </SectionCard>
-  ), [loading, renderConsultationCard, t])
+  ), [loading, pageSize, renderConsultationCard, t])
 
   useEffect(() => {
     let mounted = true
@@ -817,16 +842,42 @@ export default function ConsultationsPage() {
             <h1 className="text-lg font-bold text-foreground">{t("Consultas", "Consultations")}</h1>
             <p className="text-[11px] text-muted-foreground">{t("Gestão do fluxo de consultas médicas", "Medical consultation flow management")}</p>
           </div>
-          {canWrite && !scheduleFormOpen ? (
-            <button
-              type="button"
-              onClick={() => setScheduleFormOpen(true)}
-              className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-indigo-600 px-4 py-2 text-xs font-semibold text-white shadow-md shadow-violet-500/30 transition hover:from-violet-700 hover:to-indigo-700"
-            >
-              <CalendarPlus size={13} />
-              {t("Marcar consulta", "Schedule consultation")}
-            </button>
-          ) : null}
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Motor de busca: paciente, especialidade ou estado */}
+            <div className="relative min-w-[180px] flex-1 sm:max-w-xs">
+              <Search size={14} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <input
+                value={busca}
+                onChange={(e) => setBusca(e.target.value)}
+                placeholder={t("Paciente, especialidade ou estado…", "Patient, specialty or status…")}
+                className="w-full rounded-lg border border-white/30 bg-white/50 py-1.5 pl-8 pr-7 text-xs text-foreground shadow-sm backdrop-blur-sm transition placeholder:text-muted-foreground hover:border-violet-400 focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500/25 dark:border-white/10 dark:bg-white/10"
+              />
+              {busca && (
+                <button
+                  type="button"
+                  aria-label={t("Limpar pesquisa", "Clear search")}
+                  onClick={() => setBusca("")}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground transition hover:text-foreground"
+                >
+                  <X size={14} />
+                </button>
+              )}
+            </div>
+            <div className="flex shrink-0 items-center gap-1" title={t("Itens por coluna", "Items per column")}>
+              <PageSizeInput value={pageSize} onChange={setPageSize} ariaLabel={t("Itens por coluna", "Items per column")} />
+              <span className="text-[11px] text-muted-foreground">/{t("col", "col")}</span>
+            </div>
+            {canWrite && !scheduleFormOpen ? (
+              <button
+                type="button"
+                onClick={() => setScheduleFormOpen(true)}
+                className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-indigo-600 px-4 py-2 text-xs font-semibold text-white shadow-md shadow-violet-500/30 transition hover:from-violet-700 hover:to-indigo-700"
+              >
+                <CalendarPlus size={13} />
+                {t("Marcar consulta", "Schedule consultation")}
+              </button>
+            ) : null}
+          </div>
         </div>
 
         {errorMessage ? (
