@@ -214,34 +214,35 @@ export default function LargeSurgeriesListPage() {
 
         <section className={`relative overflow-hidden ${GLASS}`}>
           <span className="absolute left-0 top-0 h-full w-1 bg-indigo-500" />
-          <div className="flex items-center justify-between gap-3 px-3 py-2 pl-4">
-            <div>
-              <div className="flex items-center gap-1 text-[10px] text-[var(--gray-500)]">
-                <Link href="/surgery" className="hover:text-foreground">Cirurgia</Link>
-                <span>/</span>
-                <span className="font-semibold text-foreground">Grandes cirurgias</span>
+          <div className="px-3 py-2 pl-4">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <div className="flex items-center gap-1 text-[10px] text-[var(--gray-500)]">
+                  <Link href="/surgery" className="hover:text-foreground">Cirurgia</Link>
+                  <span>/</span>
+                  <span className="font-semibold text-foreground">Grandes cirurgias</span>
+                </div>
+                <h1 className="font-display text-sm font-semibold text-foreground">Grandes cirurgias</h1>
               </div>
-              <h1 className="font-display text-sm font-semibold text-foreground">Grandes cirurgias</h1>
+              <Link
+                href="/surgery/large-surgeries/new"
+                className="inline-flex h-7 items-center gap-1.5 rounded-md border border-indigo-300 bg-indigo-50 px-3 text-[11px] font-semibold text-indigo-700 transition hover:bg-indigo-100 dark:border-indigo-700/40 dark:bg-indigo-900/20 dark:text-indigo-300"
+              >
+                <Plus size={11} />
+                Nova cirurgia
+              </Link>
             </div>
-            <Link
-              href="/surgery/large-surgeries/new"
-              className="inline-flex h-7 items-center gap-1.5 rounded-md border border-indigo-300 bg-indigo-50 px-3 text-[11px] font-semibold text-indigo-700 transition hover:bg-indigo-100 dark:border-indigo-700/40 dark:bg-indigo-900/20 dark:text-indigo-300"
-            >
-              <Plus size={11} />
-              Nova cirurgia
-            </Link>
+            <div className="relative mt-2">
+              <Search size={11} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--gray-400)]" />
+              <input
+                className="w-full rounded-lg border border-border bg-card/60 py-1.5 pl-7 pr-3 text-[12px] placeholder-[var(--gray-400)] focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-200 dark:focus:ring-indigo-800"
+                placeholder="Pesquisar por código, procedimento ou paciente..."
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+              />
+            </div>
           </div>
         </section>
-
-        <div className="relative">
-          <Search size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--gray-400)]" />
-          <input
-            className="w-full rounded-xl border border-indigo-200 bg-white/30 py-1.5 pl-8 pr-3 text-[12px] placeholder-[var(--gray-400)] backdrop-blur-sm focus:border-indigo-400 focus:outline-none dark:border-white/10 dark:bg-white/[0.04]"
-            placeholder="Pesquisar por código, procedimento ou paciente..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-          />
-        </div>
 
         {loading ? (
           <div className="flex items-center justify-center gap-2 py-12 text-sm text-[var(--gray-500)]">
