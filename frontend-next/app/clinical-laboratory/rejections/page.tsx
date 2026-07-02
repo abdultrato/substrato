@@ -2,9 +2,9 @@
 
 import Link from "next/link"
 import { useCallback, useEffect, useMemo, useState } from "react"
+import { AlertCircle, ChevronLeft, FlaskConical, Loader2 } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
-import PageHeader from "@/components/ui/PageHeader"
 import { apiFetchList } from "@/lib/api"
 import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 
@@ -29,9 +29,10 @@ type ColumnConfig = {
   key: ColumnKey
   title: string
   hint: string
-  header: string
+  headerCls: string
   badge: string
-  top: string
+  colBg: string
+  leftBar: string
 }
 
 const COLUMNS: ColumnConfig[] = [
@@ -39,17 +40,19 @@ const COLUMNS: ColumnConfig[] = [
     key: "pendente",
     title: "Rejeições pendentes",
     hint: "Enviadas à enfermagem, ainda sem reconferência/recepção.",
-    header: "text-amber-700",
-    badge: "bg-amber-100 text-amber-800",
-    top: "border-t-2 border-t-amber-400",
+    headerCls: "text-amber-700 dark:text-amber-300",
+    badge: "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200",
+    colBg: "from-amber-50/60 via-white/50 to-yellow-50/40 border-amber-200/50 dark:from-amber-950/30 dark:via-slate-900/30 dark:to-yellow-950/20 dark:border-amber-800/30",
+    leftBar: "bg-amber-400",
   },
   {
     key: "resolvida",
     title: "Rejeições resolvidas",
     hint: "Amostra reconferida e recebida sem nova rejeição.",
-    header: "text-emerald-700",
-    badge: "bg-emerald-100 text-emerald-800",
-    top: "border-t-2 border-t-emerald-400",
+    headerCls: "text-emerald-700 dark:text-emerald-300",
+    badge: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200",
+    colBg: "from-emerald-50/60 via-white/50 to-teal-50/40 border-emerald-200/50 dark:from-emerald-950/30 dark:via-slate-900/30 dark:to-teal-950/20 dark:border-emerald-800/30",
+    leftBar: "bg-emerald-400",
   },
 ]
 
@@ -62,6 +65,58 @@ function fmt(value?: string): string {
 
 function normalizeStatus(value?: string): ColumnKey {
   return (value || "").trim().toLocaleLowerCase() === "resolvida" ? "resolvida" : "pendente"
+}
+
+function RejectionCard({ row, columnKey }: { row: Rejection; columnKey: ColumnKey }) {
+  const details = [row.reasons_text, row.note].filter(Boolean).join(" — ")
+
+  return (
+    <div className="group relative flex flex-col overflow-hidden rounded-xl border border-white/50 bg-white/30 shadow-sm backdrop-blur-sm transition hover:border-white/70 hover:bg-white/50 hover:shadow-md dark:border-white/10 dark:bg-white/[0.04] dark:hover:border-white/20 dark:hover:bg-white/[0.08]">
+      <div className="flex items-start justify-between gap-2 px-3 pt-2.5 pb-1.5">
+        <Link
+          href={`/clinical-laboratory/reception/${row.request}`}
+          className="font-mono text-[10px] font-bold text-sky-700 hover:underline dark:text-sky-300"
+        >
+          {row.request_custom_id || `REQ-${row.request}`}
+        </Link>
+        {row.exam_name ? (
+          <span className="shrink-0 rounded-full bg-slate-100 px-1.5 py-0.5 text-[9px] font-semibold text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+            {row.exam_name}
+          </span>
+        ) : null}
+      </div>
+
+      <div className="border-t border-white/40 px-3 py-2 dark:border-white/10">
+        <p className="truncate text-[12px] font-semibold leading-snug text-foreground">
+          {row.patient_name || "—"}
+        </p>
+      </div>
+
+      {details ? (
+        <div className="border-t border-white/40 px-3 py-2 dark:border-white/10">
+          <div className="rounded-lg border border-rose-200 bg-rose-50 px-2 py-1.5 text-[10px] text-rose-800 dark:border-rose-800/40 dark:bg-rose-900/20 dark:text-rose-200">
+            <span className="font-semibold">Motivo:</span> {details}
+          </div>
+        </div>
+      ) : null}
+
+      <div className="flex items-center justify-between gap-2 border-t border-white/40 px-3 py-2 dark:border-white/10">
+        <span className="text-[9px] text-[var(--gray-400)]">
+          Rejeitada em {fmt(row.created_at)}
+          {columnKey === "resolvida" ? ` · Resolvida em ${fmt(row.resolved_at)}` : ""}
+        </span>
+        <span
+          className={`inline-flex items-center rounded-full px-1.5 py-0.5 text-[9px] font-semibold ${
+            columnKey === "resolvida"
+              ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300"
+              : "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300"
+          }`}
+        >
+          {row.status_display || (columnKey === "resolvida" ? "Resolvida" : "Pendente")}
+        </span>
+      </div>
+    </div>
+  )
 }
 
 export default function LabRejectionsPage() {
@@ -100,79 +155,78 @@ export default function LabRejectionsPage() {
   }, [rows])
 
   return (
-    <AppLayout>
-      <div className="mx-auto w-full max-w-5xl space-y-3">
-        <PageHeader title="Rejeições de Amostras" />
+    <AppLayout fullWidth>
+      <div className="w-full min-w-0 max-w-none space-y-3 px-1 py-1">
+        <section className="relative overflow-hidden rounded-xl border border-sky-200/50 bg-gradient-to-br from-sky-50/80 via-white/60 to-cyan-50/60 shadow-sm backdrop-blur-sm dark:border-sky-800/30 dark:from-sky-950/30 dark:via-slate-900/40 dark:to-cyan-950/20">
+          <span className="absolute left-0 top-0 h-full w-1 bg-sky-400" />
+          <div className="px-4 py-3 pl-5">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <FlaskConical size={15} className="text-sky-500" />
+                <div>
+                  <h1 className="font-display text-sm font-bold leading-tight text-foreground">
+                    Rejeições de Amostras
+                  </h1>
+                  <p className="text-[10px] text-[var(--gray-500)]">
+                    {loading
+                      ? <><Loader2 size={9} className="mr-1 inline animate-spin" />A carregar...</>
+                      : rows.length > 0
+                        ? `${rows.length} rejeição${rows.length !== 1 ? "ões" : ""} registada${rows.length !== 1 ? "s" : ""}`
+                        : "Sem rejeições registadas"}
+                  </p>
+                </div>
+              </div>
+              <Link
+                href="/clinical-laboratory"
+                className="inline-flex h-8 items-center gap-1 rounded-lg border border-white/40 bg-white/30 px-2.5 text-[11px] text-[var(--gray-700)] backdrop-blur-sm transition hover:bg-white/50 dark:border-white/10 dark:text-[var(--gray-300)] dark:hover:bg-white/10"
+              >
+                <ChevronLeft size={11} /> Voltar
+              </Link>
+            </div>
+          </div>
+        </section>
 
         {error && (
-          <div className="rounded border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
-            {error}
+          <div className="flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50/70 px-4 py-2.5 text-[12px] text-rose-800 dark:border-rose-800/40 dark:bg-rose-900/15 dark:text-rose-300">
+            <AlertCircle size={13} className="shrink-0" /> {error}
           </div>
         )}
 
         {loading ? (
-          <p className="text-sm text-[var(--gray-400)]">Carregando...</p>
+          <div className="flex items-center justify-center gap-2 py-16 text-[12px] text-[var(--gray-400)]">
+            <Loader2 size={16} className="animate-spin" /> A carregar rejeições...
+          </div>
         ) : (
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+          <div className="grid w-full min-w-0 grid-cols-1 gap-2 md:grid-cols-2">
             {COLUMNS.map((column) => {
               const items = buckets[column.key]
               return (
                 <section
                   key={column.key}
-                  className={`flex flex-col rounded-lg bg-[var(--card)]/40 p-2 ${column.top}`}
+                  className={`relative flex flex-col overflow-hidden rounded-xl border bg-gradient-to-br shadow-sm backdrop-blur-sm ${column.colBg}`}
                 >
-                  <div className="flex items-baseline justify-between gap-2 px-1 pb-2 pt-1">
+                  <span className={`absolute left-0 top-0 h-full w-1 ${column.leftBar}`} />
+
+                  <div className="flex items-baseline justify-between gap-2 px-3 pb-2.5 pl-4 pt-3">
                     <div className="min-w-0">
-                      <h2 className={`text-xs font-semibold uppercase tracking-wide ${column.header}`}>{column.title}</h2>
+                      <h2 className={`text-[10px] font-bold uppercase tracking-widest ${column.headerCls}`}>
+                        {column.title}
+                      </h2>
                       <p className="text-[10px] text-[var(--gray-500)]">{column.hint}</p>
                     </div>
-                    <span className={`inline-flex min-w-5 shrink-0 items-center justify-center rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${column.badge}`}>
+                    <span className={`inline-flex min-w-5 shrink-0 items-center justify-center rounded-full px-1.5 py-0.5 text-[9px] font-bold ${column.badge}`}>
                       {items.length}
                     </span>
                   </div>
 
-                  <div className="flex-1 space-y-2 overflow-y-auto pr-1 max-h-[calc(100vh-200px)] [scrollbar-width:thin]">
+                  <div className="flex flex-1 flex-col gap-1.5 overflow-y-auto px-3 pb-3 pl-4 max-h-[calc(100vh-130px)] [scrollbar-width:thin]">
                     {items.length === 0 ? (
-                      <div className="rounded-md border border-dashed border-[var(--border)] px-3 py-6 text-center text-xs text-[var(--gray-500)]">
+                      <div className="rounded-xl border border-dashed border-white/60 px-3 py-6 text-center text-[10px] text-[var(--gray-400)] dark:border-white/10">
                         Sem rejeições.
                       </div>
                     ) : (
                       items.map((row) => (
-                        <div
-                          key={row.id}
-                          className="space-y-1 rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-2.5 shadow-sm"
-                        >
-                          <div className="flex items-start justify-between gap-2">
-                            <Link
-                              href={`/clinical-laboratory/reception/${row.request}`}
-                              className="text-sm font-semibold text-[var(--primary-700)] hover:underline dark:text-[var(--primary-400)]"
-                            >
-                              {row.request_custom_id || `REQ ${row.request}`}
-                            </Link>
-                            {row.exam_name ? (
-                              <span className="shrink-0 rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-700 dark:bg-slate-700 dark:text-slate-100">
-                                {row.exam_name}
-                              </span>
-                            ) : null}
-                          </div>
-
-                          {row.patient_name ? (
-                            <div className="truncate text-xs text-[var(--text)]">{row.patient_name}</div>
-                          ) : null}
-
-                          {row.reasons_text ? (
-                            <div className="rounded border border-rose-200 bg-rose-50 px-2 py-1 text-[10px] text-rose-800 dark:border-rose-800/40 dark:bg-rose-900/20 dark:text-rose-200">
-                              <span className="font-semibold">Motivo: </span>
-                              {row.reasons_text}
-                              {row.note ? ` — ${row.note}` : ""}
-                            </div>
-                          ) : null}
-
-                          <div className="text-[10px] text-[var(--gray-400)]">
-                            Rejeitada em {fmt(row.created_at)}
-                            {column.key === "resolvida" ? ` · Resolvida em ${fmt(row.resolved_at)}` : ""}
-                          </div>
-                        </div>
+                        <RejectionCard key={row.id} row={row} columnKey={column.key} />
                       ))
                     )}
                   </div>
