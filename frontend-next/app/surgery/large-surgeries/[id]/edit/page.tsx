@@ -681,12 +681,10 @@ export default function LargeSurgeryEditPage() {
           </div>
         ) : null}
 
-        {/* masonry 2 colunas */}
-        <div className="flex items-start gap-3">
+        {/* masonry CSS columns */}
+        <div style={{ columns: "2", columnGap: "0.75rem" }}>
 
-          {/* col esquerda */}
-          <div className="flex min-w-0 flex-1 flex-col gap-3">
-
+          <div style={{ breakInside: "avoid", marginBottom: "0.75rem" }}>
             <SurfaceCard title="1 · Paciente" icon={<User size={13} />} accent="bg-sky-400">
               <SearchSelect label="Paciente *" placeholder="Pesquisar paciente..."
                 endpoint="/clinical/patient/" labelField="name"
@@ -696,7 +694,18 @@ export default function LargeSurgeryEditPage() {
                 <div className="text-[11px] text-[var(--gray-500)]">Seleccionado: <span className="font-medium text-foreground">{patientLabel}</span></div>
               ) : null}
             </SurfaceCard>
+          </div>
 
+          <div style={{ breakInside: "avoid", marginBottom: "0.75rem" }}>
+            <SurfaceCard title="2 · Procedimentos cirúrgicos" icon={<Scissors size={13} />} accent="bg-indigo-400">
+              <ProcedureMultiSelect selected={procedures} onChange={setProcedures} />
+              {procedures.length === 0 && (
+                <p className="text-[11px] text-[var(--gray-400)]">Pesquise e clique para adicionar procedimentos.</p>
+              )}
+            </SurfaceCard>
+          </div>
+
+          <div style={{ breakInside: "avoid", marginBottom: "0.75rem" }}>
             <SurfaceCard title="3 · Cirurgiões e especialidade" icon={<Stethoscope size={13} />} accent="bg-emerald-400">
               <SurgeonMultiSelect selected={surgeons} onChange={setSurgeons} />
               <SearchSelect label="Especialidade" placeholder="Pesquisar especialidade..."
@@ -704,7 +713,18 @@ export default function LargeSurgeryEditPage() {
                 value={specialty} initialLabel={specialtyLabel}
                 onChange={(v, lbl) => { setSpecialty(v); setSpecialtyLabel(lbl) }} />
             </SurfaceCard>
+          </div>
 
+          <div style={{ breakInside: "avoid", marginBottom: "0.75rem" }}>
+            <SurfaceCard title="4 · Bloco operatório" icon={<Scissors size={13} />} accent="bg-cyan-400">
+              <SearchSelect label="Bloco / Sala operatória" placeholder="Pesquisar sala na enfermaria..."
+                endpoint="/nursing/ward/" labelField="name"
+                value={operatingRoom} initialLabel={operatingRoomLabel}
+                onChange={(v, lbl) => { setOperatingRoom(v); setOperatingRoomLabel(lbl) }} />
+            </SurfaceCard>
+          </div>
+
+          <div style={{ breakInside: "avoid", marginBottom: "0.75rem" }}>
             <SurfaceCard title="5 · Equipa cirúrgica" icon={<Users size={13} />} accent="bg-violet-400">
               <div className="flex flex-col gap-2">
                 {team.length === 0 && (
@@ -754,26 +774,9 @@ export default function LargeSurgeryEditPage() {
                 </div>
               </div>
             </SurfaceCard>
-
           </div>
 
-          {/* col direita */}
-          <div className="flex min-w-0 flex-1 flex-col gap-3">
-
-            <SurfaceCard title="2 · Procedimentos cirúrgicos" icon={<Scissors size={13} />} accent="bg-indigo-400">
-              <ProcedureMultiSelect selected={procedures} onChange={setProcedures} />
-              {procedures.length === 0 && (
-                <p className="text-[11px] text-[var(--gray-400)]">Pesquise e clique para adicionar procedimentos.</p>
-              )}
-            </SurfaceCard>
-
-            <SurfaceCard title="4 · Bloco operatório" icon={<Scissors size={13} />} accent="bg-cyan-400">
-              <SearchSelect label="Bloco / Sala operatória" placeholder="Pesquisar sala na enfermaria..."
-                endpoint="/nursing/ward/" labelField="name"
-                value={operatingRoom} initialLabel={operatingRoomLabel}
-                onChange={(v, lbl) => { setOperatingRoom(v); setOperatingRoomLabel(lbl) }} />
-            </SurfaceCard>
-
+          <div style={{ breakInside: "avoid", marginBottom: "0.75rem" }}>
             <SurfaceCard title="6 · Materiais e produtos" icon={<Package size={13} />} accent="bg-amber-400">
               <div ref={matRef} className="relative">
                 <div className="flex h-8 items-center gap-2 rounded-lg border border-white/30 bg-white/40 px-2.5 backdrop-blur-sm focus-within:border-amber-400 dark:border-white/10 dark:bg-white/[0.06]">
@@ -851,7 +854,9 @@ export default function LargeSurgeryEditPage() {
                 <p className="mt-1 text-[11px] text-[var(--gray-400)]">Pesquise acima para adicionar materiais.</p>
               )}
             </SurfaceCard>
+          </div>
 
+          <div style={{ breakInside: "avoid", marginBottom: "0.75rem" }}>
             <SurfaceCard title="8 · Diagnósticos" icon={<Stethoscope size={13} />} accent="bg-rose-400">
               <FieldRow label="Diagnóstico pré-operatório">
                 <textarea className={`${inputCls} resize-none`} rows={3} value={preDiag} onChange={e => setPreDiag(e.target.value)} placeholder="Diagnóstico antes da cirurgia" />
@@ -860,8 +865,8 @@ export default function LargeSurgeryEditPage() {
                 <textarea className={`${inputCls} resize-none`} rows={3} value={posDiag} onChange={e => setPosDiag(e.target.value)} placeholder="Diagnóstico após a cirurgia" />
               </FieldRow>
             </SurfaceCard>
-
           </div>
+
         </div>
 
         {/* 9 · Estado e agendamento — full-width */}
