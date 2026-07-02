@@ -10,6 +10,7 @@ import {
   ChevronDown,
   ChevronRight,
   ClipboardCheck,
+  Layers,
   Loader2,
   Plus,
   Search,
@@ -213,112 +214,139 @@ export default function PreoperativeAssessmentsPage() {
     <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.ENFERMAGEM, GROUPS.MEDICINA]}>
       <div className="mx-auto w-full max-w-7xl space-y-2 px-1 py-1">
 
-        {/* header */}
-        <section className={`relative overflow-hidden ${GLASS}`}>
-          <span className="absolute left-0 top-0 h-full w-1 bg-amber-500" />
-          <div className="px-3 py-2 pl-4">
-            <div className="flex items-center justify-between gap-3">
+        {/* ── HERO HEADER ─────────────────────────────────────────── */}
+        <header className="relative overflow-hidden rounded-2xl border border-white/30 bg-gradient-to-br from-amber-50/80 via-white/60 to-amber-100/40 shadow-sm backdrop-blur-md dark:border-white/10 dark:from-amber-900/20 dark:via-slate-800/40 dark:to-slate-900/60">
+          <span className="pointer-events-none absolute -right-6 -top-6 select-none text-[120px] leading-none opacity-[0.05] dark:opacity-[0.07]" aria-hidden>🩺</span>
+
+          <div className="relative px-5 pt-4 pb-0">
+            {/* breadcrumb */}
+            <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+              <Layers size={9} className="shrink-0" />
+              <Link href="/surgery" className="hover:text-foreground">Cirurgia</Link>
+              <span>/</span>
+              <span className="font-semibold text-foreground">Avaliações pré-operatórias</span>
+            </div>
+
+            {/* title row */}
+            <div className="mt-1.5 flex items-start justify-between gap-4">
               <div>
-                <div className="flex items-center gap-1 text-[10px] text-[var(--gray-500)]">
-                  <Link href="/surgery" className="hover:text-foreground">Cirurgia</Link>
-                  <span>/</span>
-                  <span className="font-semibold text-foreground">Avaliações pré-operatórias</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <h1 className="font-display text-sm font-semibold text-foreground">Avaliações pré-operatórias</h1>
+                <div className="flex items-center gap-2.5">
+                  <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-500/15 dark:bg-amber-400/10">
+                    <Stethoscope size={18} className="text-amber-700 dark:text-amber-300" strokeWidth={1.8} />
+                  </span>
+                  <h1 className="font-display text-2xl font-bold tracking-tight text-foreground">
+                    Avaliações pré-operatórias
+                  </h1>
                   {!loading && (
-                    <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[9px] font-semibold text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">
+                    <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-[11px] font-semibold text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">
                       {items.length}
                     </span>
                   )}
                 </div>
+                <p className="mt-1 max-w-xl text-[11px] text-muted-foreground">
+                  Aptidão clínica e anestésica, classe ASA, exames obrigatórios e consentimento informado.
+                </p>
               </div>
-              <div className="flex items-center gap-1.5">
+
+              {/* actions */}
+              <div className="flex shrink-0 items-center gap-1.5">
                 <Link href="/surgery"
-                  className="inline-flex h-7 items-center gap-1 rounded-md border border-border bg-card px-2.5 text-[11px] text-muted-foreground hover:bg-muted">
-                  <ArrowLeft size={11} /> Voltar
+                  className="inline-flex h-7 items-center gap-1 rounded-lg border border-border bg-card/70 px-2.5 text-[11px] text-muted-foreground transition hover:bg-muted hover:text-foreground">
+                  <ArrowLeft size={11} /> Cirurgia
                 </Link>
                 <Link href="/surgery/preoperative-assessments/new"
-                  className="inline-flex h-7 items-center gap-1.5 rounded-md border border-amber-300 bg-amber-50 px-3 text-[11px] font-semibold text-amber-700 transition hover:bg-amber-100 dark:border-amber-700/40 dark:bg-amber-900/20 dark:text-amber-300">
+                  className="inline-flex h-7 items-center gap-1.5 rounded-lg bg-amber-600 px-3 text-[11px] font-semibold text-white transition hover:bg-amber-700 dark:bg-amber-500/80 dark:hover:bg-amber-500">
                   <Plus size={11} /> Nova avaliação
                 </Link>
               </div>
             </div>
+          </div>
 
-            <div className="mt-2 border-t border-white/20 dark:border-white/10" />
+          {/* KPI + filters strip */}
+          <div className="mt-3 border-t border-white/30 dark:border-white/10 px-5 py-3 flex flex-wrap items-center gap-2">
+            {/* KPI pills */}
+            <span className="inline-flex items-center gap-2 rounded-lg border border-emerald-200 bg-white/50 px-3 py-1.5 text-[11px] shadow-sm backdrop-blur-sm dark:border-emerald-800/40 dark:bg-white/[0.05]">
+              <span className="font-display text-lg font-bold tabular-nums text-emerald-700 dark:text-emerald-300 leading-none">
+                {loading ? <span className="inline-block h-4 w-5 animate-pulse rounded bg-emerald-200/60" /> : fit}
+              </span>
+              <span className="flex items-center gap-1 font-semibold uppercase tracking-wide text-emerald-600 dark:text-emerald-400">
+                <CheckCircle2 size={10} /> Apto{fit !== 1 ? "s" : ""}
+              </span>
+            </span>
+            <span className="inline-flex items-center gap-2 rounded-lg border border-rose-200 bg-white/50 px-3 py-1.5 text-[11px] shadow-sm backdrop-blur-sm dark:border-rose-800/40 dark:bg-white/[0.05]">
+              <span className="font-display text-lg font-bold tabular-nums text-rose-700 dark:text-rose-300 leading-none">
+                {loading ? <span className="inline-block h-4 w-5 animate-pulse rounded bg-rose-200/60" /> : unfit}
+              </span>
+              <span className="flex items-center gap-1 font-semibold uppercase tracking-wide text-rose-600 dark:text-rose-400">
+                <XCircle size={10} /> Inapto{unfit !== 1 ? "s" : ""}
+              </span>
+            </span>
+            <span className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white/50 px-3 py-1.5 text-[11px] shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.05]">
+              <span className="font-display text-lg font-bold tabular-nums text-gray-600 dark:text-gray-300 leading-none">
+                {loading ? <span className="inline-block h-4 w-5 animate-pulse rounded bg-gray-200/60" /> : pending}
+              </span>
+              <span className="font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                Pendente{pending !== 1 ? "s" : ""}
+              </span>
+            </span>
 
-            {/* summary chips */}
-            {!loading && (
-              <div className="mt-2 flex flex-wrap items-center gap-2">
-                <span className="inline-flex items-center gap-1 rounded-lg border border-emerald-200 bg-emerald-50/80 px-2.5 py-1 text-[10px] font-semibold text-emerald-700 dark:border-emerald-800/40 dark:bg-emerald-900/20 dark:text-emerald-300">
-                  <CheckCircle2 size={10} /> {fit} apto{fit !== 1 ? "s" : ""}
-                </span>
-                <span className="inline-flex items-center gap-1 rounded-lg border border-rose-200 bg-rose-50/80 px-2.5 py-1 text-[10px] font-semibold text-rose-700 dark:border-rose-800/40 dark:bg-rose-900/20 dark:text-rose-300">
-                  <XCircle size={10} /> {unfit} inapto{unfit !== 1 ? "s" : ""}
-                </span>
-                <span className="inline-flex items-center gap-1 rounded-lg border border-gray-200 bg-gray-50/80 px-2.5 py-1 text-[10px] font-semibold text-gray-600 dark:border-white/10 dark:bg-white/5 dark:text-gray-400">
-                  <User size={10} /> {pending} pendente{pending !== 1 ? "s" : ""}
-                </span>
-              </div>
-            )}
+            {/* search */}
+            <div className="relative ml-auto min-w-52 flex-1 max-w-xs">
+              <Search size={11} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--gray-400)]" />
+              <input
+                className="w-full rounded-lg border border-border bg-white/60 py-1.5 pl-7 pr-3 text-[12px] placeholder-[var(--gray-400)] focus:border-amber-400 focus:outline-none focus:ring-1 focus:ring-amber-200 dark:bg-white/[0.06] dark:focus:ring-amber-800"
+                placeholder="Pesquisar..."
+                value={search} onChange={e => setSearch(e.target.value)}
+              />
+            </div>
 
-            {/* filters */}
-            <div className="mt-2 flex flex-wrap items-center gap-2">
-              <div className="relative flex-1 min-w-40">
-                <Search size={11} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--gray-400)]" />
-                <input
-                  className="w-full rounded-lg border border-border bg-card/60 py-1.5 pl-7 pr-3 text-[12px] placeholder-[var(--gray-400)] focus:border-amber-400 focus:outline-none focus:ring-1 focus:ring-amber-200 dark:focus:ring-amber-800"
-                  placeholder="Pesquisar por paciente, avaliador ou código..."
-                  value={search} onChange={e => setSearch(e.target.value)}
-                />
-              </div>
-
-              <div ref={statusRef} className="relative shrink-0">
-                <button type="button" onClick={() => setStatusOpen(v => !v)}
-                  className={`inline-flex h-[34px] items-center gap-1.5 rounded-lg border px-2.5 text-[12px] transition ${
-                    statusFilter
-                      ? (STATUS_COLOR[statusFilter] ?? "") + " border-transparent"
-                      : "border-border bg-card/60 text-[var(--gray-500)] hover:border-amber-300"
-                  }`}>
-                  {statusFilter ? STATUS_LABEL[statusFilter] : "Estado"}
-                  <ChevronDown size={11} className={`transition-transform ${statusOpen ? "rotate-180" : ""}`} />
-                </button>
-                {statusOpen && (
-                  <div className="absolute right-0 top-[calc(100%+4px)] z-50 w-48 rounded-xl border border-border bg-card shadow-xl">
-                    {statusFilter && (
-                      <button type="button" onClick={() => { setStatusFilter(null); setStatusOpen(false) }}
-                        className="flex w-full items-center gap-2 border-b border-border px-3 py-1.5 text-[11px] font-semibold text-rose-500 hover:bg-rose-50/60 rounded-t-xl">
-                        × Limpar
+            {/* estado dropdown */}
+            <div ref={statusRef} className="relative shrink-0">
+              <button type="button" onClick={() => setStatusOpen(v => !v)}
+                className={`inline-flex h-[34px] items-center gap-1.5 rounded-lg border px-2.5 text-[12px] transition ${
+                  statusFilter
+                    ? (STATUS_COLOR[statusFilter] ?? "") + " border-transparent"
+                    : "border-border bg-white/60 text-[var(--gray-500)] hover:border-amber-300 dark:bg-white/[0.06]"
+                }`}>
+                {statusFilter ? STATUS_LABEL[statusFilter] : "Estado"}
+                <ChevronDown size={11} className={`transition-transform ${statusOpen ? "rotate-180" : ""}`} />
+              </button>
+              {statusOpen && (
+                <div className="absolute right-0 top-[calc(100%+4px)] z-50 w-48 rounded-xl border border-border bg-card shadow-xl">
+                  {statusFilter && (
+                    <button type="button" onClick={() => { setStatusFilter(null); setStatusOpen(false) }}
+                      className="flex w-full items-center gap-2 border-b border-border px-3 py-1.5 text-[11px] font-semibold text-rose-500 hover:bg-rose-50/60 rounded-t-xl">
+                      × Limpar
+                    </button>
+                  )}
+                  {STATUS_OPTIONS.map(s => {
+                    const active = statusFilter === s
+                    const dot = STATUS_COLOR[s]?.match(/bg-\S+/)?.[0] ?? "bg-gray-300"
+                    return (
+                      <button key={s} type="button"
+                        onClick={() => { setStatusFilter(active ? null : s); setStatusOpen(false) }}
+                        className={`flex w-full items-center gap-2 px-3 py-1.5 text-left text-[12px] first:rounded-t-xl last:rounded-b-xl transition ${
+                          active ? "bg-amber-50 font-semibold dark:bg-white/10" : "hover:bg-muted"
+                        }`}>
+                        <span className={`h-2 w-2 shrink-0 rounded-full ${dot}`} />
+                        {STATUS_LABEL[s]}
+                        {active && <span className="ml-auto text-[10px] text-amber-500">✓</span>}
                       </button>
-                    )}
-                    {STATUS_OPTIONS.map(s => {
-                      const active = statusFilter === s
-                      const dot = STATUS_COLOR[s]?.match(/bg-\S+/)?.[0] ?? "bg-gray-300"
-                      return (
-                        <button key={s} type="button"
-                          onClick={() => { setStatusFilter(active ? null : s); setStatusOpen(false) }}
-                          className={`flex w-full items-center gap-2 px-3 py-1.5 text-left text-[12px] first:rounded-t-xl last:rounded-b-xl transition ${
-                            active ? "bg-amber-50 font-semibold dark:bg-white/10" : "hover:bg-muted"
-                          }`}>
-                          <span className={`h-2 w-2 shrink-0 rounded-full ${dot}`} />
-                          {STATUS_LABEL[s]}
-                          {active && <span className="ml-auto text-[10px] text-amber-500">✓</span>}
-                        </button>
-                      )
-                    })}
-                  </div>
-                )}
-              </div>
-
-              {statusFilter && (
-                <button type="button" onClick={() => setStatusFilter(null)}
-                  className="h-[34px] shrink-0 rounded-lg border border-rose-200 bg-rose-50 px-2.5 text-[11px] font-semibold text-rose-600 hover:bg-rose-100 dark:border-rose-700/30 dark:bg-rose-900/10 dark:text-rose-300">
-                  Limpar
-                </button>
+                    )
+                  })}
+                </div>
               )}
             </div>
+
+            {statusFilter && (
+              <button type="button" onClick={() => setStatusFilter(null)}
+                className="h-[34px] shrink-0 rounded-lg border border-rose-200 bg-rose-50 px-2.5 text-[11px] font-semibold text-rose-600 hover:bg-rose-100 dark:border-rose-700/30 dark:bg-rose-900/10 dark:text-rose-300">
+                Limpar
+              </button>
+            )}
           </div>
-        </section>
+        </header>
+        {/* ── /HERO HEADER ─────────────────────────────────────────── */}
 
         {/* list */}
         {loading ? (
