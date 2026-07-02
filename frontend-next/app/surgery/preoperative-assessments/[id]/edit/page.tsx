@@ -160,6 +160,11 @@ function labelSurgerySize(value: string): string {
   return value || ""
 }
 
+function sameStringArray(left: string[], right: string[]): boolean {
+  if (left.length !== right.length) return false
+  return left.every((value, index) => value === right[index])
+}
+
 function FieldRow({ label, children, required }: { label: string; children: React.ReactNode; required?: boolean }) {
   return (
     <div className="flex flex-col gap-0.5">
@@ -467,6 +472,7 @@ export default function EditPreoperativeAssessmentPage() {
   const [consentSigned,       setConsentSigned]       = useState(false)
   const [observations,        setObservations]        = useState("")
   const previousPatientIdRef = useRef<number | null | undefined>(undefined)
+  const hydratedSavedSelectionRef = useRef(false)
   const patientSearchTerm = useMemo(
     () => normalizePatientText(patient?.label || ""),
     [patient?.label]
@@ -527,9 +533,16 @@ export default function EditPreoperativeAssessmentPage() {
     () => filteredContextSurgeries.length === 1 ? filteredContextSurgeries[0] : null,
     [filteredContextSurgeries]
   )
+  const selectContext = useCallback((nextContext: SurgicalContextValue | null) => {
+    hydratedSavedSelectionRef.current = true
+    setSelectedContext(nextContext)
+    setSelectedSurgeries([])
+    setSelectedProcedureKeys([])
+  }, [])
 
   /* load existing data */
   useEffect(() => {
+    hydratedSavedSelectionRef.current = false
     apiFetch<any>(`/surgery/avaliacao_pre_operatoria/${id}/`)
       .then(d => {
         setOriginal(d)
@@ -634,8 +647,69 @@ export default function EditPreoperativeAssessmentPage() {
   }, [patient?.id, patientSearchTerm])
 
   useEffect(() => {
-    setSelectedProcedureKeys([])
-  }, [selectedContext?.kind, selectedContext?.id])
+    if (!original || !patient?.id || loadingContext || hydratedSavedSelectionRef.current) return
+
+    const savedSurgeryId = Number(original?.proposed_surgery || 0)
+    const savedRequestId = Number(original?.surgical_request || 0)
+    const matchingSurgery = savedSurgeryId
+      ? scheduledSurgeries.find((surgery) => Number(surgery?.id) === savedSurgeryId) ?? null
+      : null
+
+    let nextContext: SurgicalContextValue | null = null
+    if (savedRequestId) {
+      nextContext = {
+        kind: "request",
+        id: savedRequestId,
+        label: original?.surgical_request_code || requestLookup.get(savedRequestId)?.custom_id || `#${savedRequestId}`,
+      }
+    } else if (savedSurgeryId) {
+      nextContext = {
+        kind: "surgery",
+        id: savedSurgeryId,
+        label: original?.proposed_surgery_code || matchingSurgery?.custom_id || `#${savedSurgeryId}`,
+      }
+    }
+
+    const nextSelectedSurgeries = savedSurgeryId
+      ? [{ id: savedSurgeryId, label: original?.proposed_surgery_code || matchingSurgery?.custom_id || `#${savedSurgeryId}` }]
+      : []
+
+    let nextProcedureKeys: string[] = []
+    if (nextContext && matchingSurgery) {
+      const targetSurgeries = nextContext.kind === "request"
+        ? scheduledSurgeries.filter((surgery) => Number(surgery?.surgical_request) === nextContext.id)
+        : scheduledSurgeries.filter((surgery) => Number(surgery?.id) === nextContext.id)
+      const targetRequest = nextContext.kind === "request"
+        ? requestLookup.get(nextContext.id) ?? requestOptions.find((request) => request.id === nextContext.id) ?? null
+        : null
+      const availableProcedures = buildProcedureSummaries(targetSurgeries, targetRequest?.requested_procedure)
+      const surgeryKeys = new Set(getSurgeryProcedureKeys(matchingSurgery))
+
+      nextProcedureKeys = availableProcedures
+        .filter((procedure) => procedure.matchKeys.some((key) => surgeryKeys.has(key)))
+        .map((procedure) => procedure.key)
+    }
+
+    setSelectedContext((current) => {
+      if (!nextContext) return null
+      if (current?.kind === nextContext.kind && current.id === nextContext.id && current.label === nextContext.label) return current
+      return nextContext
+    })
+    setSelectedSurgeries((current) => {
+      const alreadyLoaded = current.length === nextSelectedSurgeries.length
+        && current.every((item, index) => item.id === nextSelectedSurgeries[index]?.id && item.label === nextSelectedSurgeries[index]?.label)
+      return alreadyLoaded ? current : nextSelectedSurgeries
+    })
+    setSelectedProcedureKeys((current) => sameStringArray(current, nextProcedureKeys) ? current : nextProcedureKeys)
+    hydratedSavedSelectionRef.current = true
+  }, [
+    loadingContext,
+    original,
+    patient?.id,
+    requestLookup,
+    requestOptions,
+    scheduledSurgeries,
+  ])
 
   useEffect(() => {
     const allowedIds = new Set(filteredContextSurgeries.map((surgery) => surgery.id))
@@ -803,8 +877,7 @@ export default function EditPreoperativeAssessmentPage() {
                               key={request.id}
                               type="button"
                               onClick={() => {
-                                setSelectedSurgeries([])
-                                setSelectedContext(selected ? null : { kind: "request", id: request.id, label: request.custom_id })
+                                selectContext(selected ? null : { kind: "request", id: request.id, label: request.custom_id })
                               }}
                               className={`flex items-start gap-2 rounded-lg border px-3 py-2 text-left text-[11px] transition ${
                                 selected ? "border-sky-400 bg-sky-50 dark:border-sky-600/50 dark:bg-sky-900/20" : "border-border bg-card/60 hover:border-sky-300"
@@ -840,8 +913,7 @@ export default function EditPreoperativeAssessmentPage() {
                               key={surgery.id}
                               type="button"
                               onClick={() => {
-                                setSelectedSurgeries([])
-                                setSelectedContext(selected ? null : { kind: "surgery", id: surgery.id, label: surgery.custom_id })
+                                selectContext(selected ? null : { kind: "surgery", id: surgery.id, label: surgery.custom_id })
                               }}
                               className={`flex items-start gap-2 rounded-lg border px-3 py-2 text-left text-[11px] transition ${
                                 selected ? "border-amber-400 bg-amber-50 dark:border-amber-600/50 dark:bg-amber-900/20" : "border-border bg-card/60 hover:border-amber-300"
