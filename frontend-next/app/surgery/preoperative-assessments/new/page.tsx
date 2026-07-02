@@ -367,6 +367,11 @@ export default function NewPreoperativeAssessmentPage() {
   const [evaluator, setEvaluator] = useState<SearchValue | null>(null)
   const [assessedAt, setAssessedAt] = useState("")
 
+  // auto-loaded lists keyed to selected patient
+  const [patientRequests, setPatientRequests] = useState<any[]>([])
+  const [patientSurgeries, setPatientSurgeries] = useState<any[]>([])
+  const [loadingContext, setLoadingContext] = useState(false)
+
   const [asaClass, setAsaClass] = useState("UNKNOWN")
   const [surgicalRisk, setSurgicalRisk] = useState("")
   const [medicalEvaluation, setMedicalEvaluation] = useState("")
@@ -379,26 +384,22 @@ export default function NewPreoperativeAssessmentPage() {
   const [consentSigned, setConsentSigned] = useState(false)
   const [observations, setObservations] = useState("")
 
-  const previousPatientId = useRef<number | null>(null)
-
+  // when patient changes, reload related pedidos + cirurgias
   useEffect(() => {
-    const currentPatientId = patient?.id ?? null
-    if (previousPatientId.current !== null && previousPatientId.current !== currentPatientId) {
-      setSurgicalRequest(null)
-      setProposedSurgery(null)
-    }
-    previousPatientId.current = currentPatientId
+    setSurgicalRequest(null)
+    setProposedSurgery(null)
+    setPatientRequests([])
+    setPatientSurgeries([])
+    if (!patient?.id) return
+    setLoadingContext(true)
+    Promise.all([
+      apiFetch<any>(`/surgery/pedido_cirurgico/?patient=${patient.id}&limit=50`),
+      apiFetch<any>(`/surgery/surgery/?patient=${patient.id}&limit=50`),
+    ]).then(([reqs, surgs]) => {
+      setPatientRequests(Array.isArray(reqs) ? reqs : (reqs.results ?? []))
+      setPatientSurgeries(Array.isArray(surgs) ? surgs : (surgs.results ?? []))
+    }).catch(() => {}).finally(() => setLoadingContext(false))
   }, [patient?.id])
-
-  const requestFilters = useMemo(
-    () => (patient?.id ? { patient: String(patient.id) } : undefined),
-    [patient?.id]
-  )
-
-  const proposedSurgeryFilters = useMemo(
-    () => (patient?.id ? { patient: String(patient.id) } : undefined),
-    [patient?.id]
-  )
 
   const canNextStepOne = !!patient
   const canNextStepTwo = !!asaClass && !!status
@@ -493,7 +494,7 @@ export default function NewPreoperativeAssessmentPage() {
         {step === 1 ? (
           <SurfaceCard
             title="1 · Paciente e pedido"
-            subtitle="Paciente, avaliador, pedido cirúrgico e cirurgia proposta."
+            subtitle="Seleccione o paciente — pedidos e cirurgias são carregados automaticamente."
             icon={<User size={13} />}
             accent="bg-sky-400"
           >
@@ -515,38 +516,99 @@ export default function NewPreoperativeAssessmentPage() {
                 placeholder="Pesquisar médico avaliador..."
                 getOptionLabel={(item) => [item?.name, item?.profession_name].filter(Boolean).join(" - ")}
               />
-              <SearchSelect
-                label="Pedido cirúrgico"
-                endpoint="/surgery/pedido_cirurgico/"
-                value={surgicalRequest}
-                onChange={setSurgicalRequest}
-                placeholder="Pesquisar pedido..."
-                extraParams={requestFilters}
-                getOptionLabel={(item) => [item?.custom_id, item?.patient_name, item?.status].filter(Boolean).join(" - ")}
-              />
-              <SearchSelect
-                label="Cirurgia proposta"
-                endpoint="/surgery/surgery/"
-                value={proposedSurgery}
-                onChange={setProposedSurgery}
-                placeholder="Pesquisar cirurgia..."
-                extraParams={proposedSurgeryFilters}
-                getOptionLabel={(item) => [item?.custom_id, item?.patient_name, item?.procedure].filter(Boolean).join(" - ")}
-              />
             </div>
 
-            <div className="mt-3 grid gap-3 sm:grid-cols-[minmax(0,1fr)_220px]">
-              <FieldRow label="Avaliado em">
-                <input
-                  type="datetime-local"
-                  className={inputCls}
-                  value={assessedAt}
-                  onChange={(event) => setAssessedAt(event.target.value)}
-                />
+            {/* pedidos do paciente — auto-loaded */}
+            <div className="mt-3">
+              <FieldRow label="Pedido cirúrgico">
+                {!patient ? (
+                  <div className="rounded-lg border border-dashed border-border bg-card/40 px-3 py-2.5 text-[11px] text-[var(--gray-400)]">
+                    Seleccione um paciente para ver os pedidos cirúrgicos.
+                  </div>
+                ) : loadingContext ? (
+                  <div className="flex items-center gap-1.5 rounded-lg border border-border bg-card/40 px-3 py-2.5 text-[11px] text-[var(--gray-400)]">
+                    <Loader2 size={11} className="animate-spin" /> A carregar pedidos...
+                  </div>
+                ) : patientRequests.length === 0 ? (
+                  <div className="rounded-lg border border-dashed border-amber-200 bg-amber-50/40 px-3 py-2.5 text-[11px] text-amber-600 dark:border-amber-700/30 dark:bg-amber-900/10 dark:text-amber-400">
+                    Nenhum pedido cirúrgico encontrado para este paciente.
+                  </div>
+                ) : (
+                  <div className="grid gap-1.5 sm:grid-cols-2">
+                    {patientRequests.map((req) => {
+                      const active = surgicalRequest?.id === req.id
+                      return (
+                        <button key={req.id} type="button"
+                          onClick={() => setSurgicalRequest(active ? null : { id: req.id, label: req.custom_id })}
+                          className={`flex items-start gap-2 rounded-lg border px-3 py-2 text-left text-[11px] transition ${
+                            active
+                              ? "border-sky-400 bg-sky-50 text-sky-800 dark:border-sky-600/50 dark:bg-sky-900/20 dark:text-sky-200"
+                              : "border-border bg-card/60 hover:border-sky-300"
+                          }`}>
+                          <span className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full ${active ? "bg-sky-500 text-white" : "border-2 border-[var(--gray-300)]"}`}>
+                            {active && <Check size={9} />}
+                          </span>
+                          <span>
+                            <span className="block font-semibold text-foreground">{req.custom_id}</span>
+                            <span className="block text-[10px] text-[var(--gray-500)]">{req.status} {req.priority ? `· ${req.priority}` : ""}</span>
+                          </span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                )}
               </FieldRow>
-              <div className="rounded-lg border border-sky-200/60 bg-sky-50/50 px-3 py-2 text-[11px] text-sky-700 dark:border-sky-800/30 dark:bg-sky-900/10 dark:text-sky-300">
-                Depois de escolher o paciente, os campos de pedido e cirurgia passam a respeitar esse contexto.
-              </div>
+            </div>
+
+            {/* cirurgias do paciente — auto-loaded */}
+            <div className="mt-3">
+              <FieldRow label="Cirurgia proposta">
+                {!patient ? (
+                  <div className="rounded-lg border border-dashed border-border bg-card/40 px-3 py-2.5 text-[11px] text-[var(--gray-400)]">
+                    Seleccione um paciente para ver as cirurgias disponíveis.
+                  </div>
+                ) : loadingContext ? (
+                  <div className="flex items-center gap-1.5 rounded-lg border border-border bg-card/40 px-3 py-2.5 text-[11px] text-[var(--gray-400)]">
+                    <Loader2 size={11} className="animate-spin" /> A carregar cirurgias...
+                  </div>
+                ) : patientSurgeries.length === 0 ? (
+                  <div className="rounded-lg border border-dashed border-amber-200 bg-amber-50/40 px-3 py-2.5 text-[11px] text-amber-600 dark:border-amber-700/30 dark:bg-amber-900/10 dark:text-amber-400">
+                    Nenhuma cirurgia encontrada para este paciente.
+                  </div>
+                ) : (
+                  <div className="grid gap-1.5 sm:grid-cols-2">
+                    {patientSurgeries.map((surg) => {
+                      const active = proposedSurgery?.id === surg.id
+                      const proc = surg.procedure_names?.[0] || surg.procedure || "—"
+                      const size = surg.surgery_size === "GRANDE" ? "Grande" : surg.surgery_size === "PEQUENA" ? "Pequena" : surg.surgery_size || ""
+                      return (
+                        <button key={surg.id} type="button"
+                          onClick={() => setProposedSurgery(active ? null : { id: surg.id, label: surg.custom_id })}
+                          className={`flex items-start gap-2 rounded-lg border px-3 py-2 text-left text-[11px] transition ${
+                            active
+                              ? "border-violet-400 bg-violet-50 text-violet-800 dark:border-violet-600/50 dark:bg-violet-900/20 dark:text-violet-200"
+                              : "border-border bg-card/60 hover:border-violet-300"
+                          }`}>
+                          <span className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full ${active ? "bg-violet-500 text-white" : "border-2 border-[var(--gray-300)]"}`}>
+                            {active && <Check size={9} />}
+                          </span>
+                          <span>
+                            <span className="block font-semibold text-foreground">{surg.custom_id}</span>
+                            <span className="block truncate text-[10px] text-[var(--gray-500)]">{proc}{size ? ` · ${size}` : ""} · {surg.status}</span>
+                          </span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                )}
+              </FieldRow>
+            </div>
+
+            <div className="mt-3">
+              <FieldRow label="Avaliado em">
+                <input type="datetime-local" className={inputCls} value={assessedAt}
+                  onChange={(e) => setAssessedAt(e.target.value)} />
+              </FieldRow>
             </div>
           </SurfaceCard>
         ) : null}
