@@ -106,14 +106,21 @@ export default function NewSurgicalProcedurePage() {
                 <h1 className="font-display text-base font-semibold text-foreground">Novo procedimento cirúrgico</h1>
               </div>
             </div>
-            <Link href="/surgery/surgical-procedures"
-              className="inline-flex h-7 items-center gap-1 rounded-md border border-border bg-card px-2.5 text-[11px] text-muted-foreground hover:bg-muted">
-              <ArrowLeft size={11} /> Cancelar
-            </Link>
+            <div className="flex items-center gap-2">
+              <Link href="/surgery/surgical-procedures"
+                className="inline-flex h-7 items-center gap-1 rounded-md border border-border bg-card px-2.5 text-[11px] text-muted-foreground hover:bg-muted">
+                <ArrowLeft size={11} /> Cancelar
+              </Link>
+              <button type="submit" form="new-proc-form" disabled={saving}
+                className="inline-flex h-7 items-center gap-1.5 rounded-md border border-violet-300 bg-violet-600 px-3 text-[11px] font-semibold text-white transition hover:bg-violet-700 disabled:opacity-50">
+                <Check size={12} />
+                {saving ? "A criar..." : "Criar procedimento"}
+              </button>
+            </div>
           </div>
         </section>
 
-        <form onSubmit={handleSubmit} className="space-y-3">
+        <form id="new-proc-form" onSubmit={handleSubmit} className="space-y-3">
 
           {/* identificação */}
           <section className={`relative overflow-hidden ${GLASS}`}>
@@ -239,14 +246,6 @@ export default function NewSurgicalProcedurePage() {
           {errors._ && (
             <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-[12px] text-rose-700">{errors._}</div>
           )}
-
-          <div className="flex justify-end pb-4">
-            <button type="submit" disabled={saving}
-              className="inline-flex h-9 items-center gap-2 rounded-lg border border-violet-300 bg-violet-600 px-5 text-[12px] font-semibold text-white transition hover:bg-violet-700 disabled:opacity-50">
-              <Check size={14} />
-              {saving ? "A criar..." : "Criar procedimento"}
-            </button>
-          </div>
         </form>
       </div>
     </AppLayout>
