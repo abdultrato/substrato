@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { useEffect, useState, useCallback } from "react"
+import { useEffect, useState, useCallback, useRef } from "react"
 import {
   AlertCircle,
   ChevronLeft,
@@ -66,6 +66,7 @@ export default function LabRequestsListPage() {
   const [query, setQuery] = useState("")
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const load = useCallback(async () => {
     setLoading(true); setError(null)
@@ -84,10 +85,19 @@ export default function LabRequestsListPage() {
 
   useEffect(() => { load() }, [load])
 
-  function handleSearch(e: React.FormEvent) {
-    e.preventDefault()
+  function handleSearchChange(value: string) {
+    setSearch(value)
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(() => {
+      setPage(1)
+      setQuery(value)
+    }, 350)
+  }
+
+  function clearSearch() {
+    setSearch("")
+    setQuery("")
     setPage(1)
-    setQuery(search)
   }
 
   const totalPages = Math.max(1, Math.ceil(count / PAGE_SIZE))
@@ -96,48 +106,47 @@ export default function LabRequestsListPage() {
     <AppLayout>
       <div className="mx-auto w-full max-w-5xl space-y-3 px-1 py-1">
 
-        {/* ── header ── */}
+        {/* ── header + search ── */}
         <section className="relative overflow-hidden rounded-xl border border-sky-200/50 bg-gradient-to-br from-sky-50/80 via-white/60 to-cyan-50/60 shadow-sm backdrop-blur-sm dark:border-sky-800/30 dark:from-sky-950/30 dark:via-slate-900/40 dark:to-cyan-950/20">
           <span className="absolute left-0 top-0 h-full w-1 bg-sky-400" />
-          <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-4 pl-5">
-            <div>
+          <div className="px-4 py-3 pl-5">
+            <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="flex items-center gap-2">
                 <FlaskConical size={15} className="text-sky-500" />
-                <h1 className="font-display text-base font-bold text-foreground">Pedidos laboratoriais</h1>
-                {loading && <Loader2 size={12} className="animate-spin text-[var(--gray-400)]" />}
+                <div>
+                  <h1 className="font-display text-sm font-bold text-foreground leading-tight">Pedidos laboratoriais</h1>
+                  <p className="text-[10px] text-[var(--gray-500)]">
+                    {loading ? <Loader2 size={9} className="inline animate-spin mr-1" /> : null}
+                    {count > 0 ? `${count} pedido${count !== 1 ? "s" : ""}` : "Sem pedidos"}
+                    {query ? ` · "${query}"` : ""}
+                  </p>
+                </div>
               </div>
-              <p className="mt-0.5 text-[11px] text-[var(--gray-500)]">
-                {count > 0 ? `${count} pedido${count !== 1 ? "s" : ""}` : "Sem pedidos"}
-                {query ? ` · filtrado por "${query}"` : ""}
-              </p>
+              <div className="flex items-center gap-2">
+                {/* search inline */}
+                <div className="flex items-center gap-1.5 rounded-lg border border-white/50 bg-white/50 px-2.5 py-1.5 backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.06]">
+                  <Search size={11} className="shrink-0 text-[var(--gray-400)]" />
+                  <input
+                    value={search}
+                    onChange={e => handleSearchChange(e.target.value)}
+                    placeholder="Pesquisar paciente, código, médico..."
+                    className="w-48 bg-transparent text-[11px] text-[var(--text)] outline-none placeholder-[var(--gray-400)]"
+                  />
+                  {search && (
+                    <button type="button" onClick={clearSearch}
+                      className="text-[var(--gray-400)] hover:text-foreground">
+                      <span className="text-[10px]">×</span>
+                    </button>
+                  )}
+                </div>
+                <Link href="/clinical/lab-requests/new"
+                  className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-sky-600 px-3 text-[11px] font-semibold text-white shadow-sm transition hover:bg-sky-700">
+                  <Plus size={12} /> Novo pedido
+                </Link>
+              </div>
             </div>
-            <Link href="/clinical/lab-requests/new"
-              className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-sky-600 px-3 text-[11px] font-semibold text-white shadow-sm transition hover:bg-sky-700">
-              <Plus size={12} /> Novo pedido
-            </Link>
           </div>
         </section>
-
-        {/* ── search ── */}
-        <form onSubmit={handleSearch} className={`${GLASS} flex items-center gap-2 px-3 py-2`}>
-          <Search size={13} className="shrink-0 text-[var(--gray-400)]" />
-          <input
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            placeholder="Pesquisar por paciente, código, médico..."
-            className="flex-1 bg-transparent text-[12px] text-[var(--text)] outline-none placeholder-[var(--gray-400)]"
-          />
-          {query && (
-            <button type="button" onClick={() => { setSearch(""); setQuery(""); setPage(1) }}
-              className="text-[10px] text-[var(--gray-400)] hover:text-foreground">
-              Limpar
-            </button>
-          )}
-          <button type="submit"
-            className="h-6 rounded-md bg-sky-600 px-2.5 text-[10px] font-semibold text-white hover:bg-sky-700">
-            Pesquisar
-          </button>
-        </form>
 
         {/* ── error ── */}
         {error && (
