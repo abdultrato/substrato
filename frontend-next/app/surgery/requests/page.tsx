@@ -319,7 +319,7 @@ export default function SurgeryRequestsPage() {
 
   return (
     <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.ENFERMAGEM, GROUPS.MEDICINA, GROUPS.RECEPCAO]}>
-      <div className="mx-auto w-full max-w-5xl space-y-3 px-1">
+      <div className="mx-auto w-full max-w-7xl space-y-3 px-1">
         {/* header */}
         <section className="relative overflow-hidden rounded-xl border border-white/20 bg-white/30 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]">
           <span className="absolute left-0 top-0 h-full w-1 bg-sky-500" />
