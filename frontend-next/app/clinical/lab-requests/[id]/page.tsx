@@ -164,8 +164,6 @@ export default function LabRequestDetailPage() {
   const statusKey = (record?.status || "").toLowerCase()
   const statusMeta = STATUS_META[statusKey] ?? { label: record?.status || "—", cls: "bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-slate-300", accent: "bg-slate-400" }
   const items = record?.items ?? []
-  const isPending = statusKey === "pendente"
-  const isValidatable = ["em_analise", "concluido"].includes(statusKey)
   const hasValidated = statusKey === "validado"
 
   const samples = Array.from(new Set(
@@ -228,27 +226,59 @@ export default function LabRequestDetailPage() {
               </div>
             </div>
 
-            <div className="mt-2 flex flex-wrap items-center gap-3 text-[10px] text-[var(--gray-500)]">
-              {record?.created_at && (
-                <span className="flex items-center gap-1">
-                  <CalendarDays size={10} /> Criado {fmt(record.created_at)}
-                </span>
-              )}
-              {record?.collected_at && (
-                <span className="flex items-center gap-1">
-                  <Droplets size={10} /> Colhido {fmt(record.collected_at)}
-                </span>
-              )}
-              {record?.validated_at && (
-                <span className="flex items-center gap-1">
-                  <CheckCircle2 size={10} /> Validado {fmt(record.validated_at)}
-                </span>
-              )}
-              {record?.requires_fasting && (
-                <span className="flex items-center gap-1 text-amber-600 dark:text-amber-400">
-                  <Clock size={10} /> Jejum {record.fasting_hours ? `${record.fasting_hours}h` : "necessário"}
-                </span>
-              )}
+            <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+              <div className="flex flex-wrap items-center gap-2 text-[10px] text-[var(--gray-500)]">
+                {record?.created_at && (
+                  <span className="flex items-center gap-1">
+                    <CalendarDays size={10} /> Criado {fmt(record.created_at)}
+                  </span>
+                )}
+                {record?.collected_at && (
+                  <span className="flex items-center gap-1">
+                    <Droplets size={10} /> Colhido {fmt(record.collected_at)}
+                  </span>
+                )}
+                {record?.validated_at && (
+                  <span className="flex items-center gap-1">
+                    <CheckCircle2 size={10} /> Validado {fmt(record.validated_at)}
+                  </span>
+                )}
+                {record?.requires_fasting && (
+                  <span className="flex items-center gap-1 text-amber-600 dark:text-amber-400">
+                    <Clock size={10} /> Jejum {record.fasting_hours ? `${record.fasting_hours}h` : "necessário"}
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                <Link href="/clinical/lab-requests"
+                  className="inline-flex h-7 items-center gap-1 rounded-md border border-white/40 bg-white/30 px-2.5 text-[11px] text-[var(--gray-700)] backdrop-blur-sm transition hover:bg-white/50 dark:border-white/10 dark:text-[var(--gray-300)] dark:hover:bg-white/10">
+                  <ArrowLeft size={11} /> Voltar
+                </Link>
+                {record?.status && (
+                  <>
+                    {(record.status || "").toLowerCase() === "pendente" && (
+                      <button type="button" onClick={handleTransferir} disabled={busy}
+                        className="inline-flex h-7 items-center gap-1.5 rounded-md border border-indigo-300/60 bg-indigo-50/80 px-3 text-[11px] font-semibold text-indigo-700 backdrop-blur-sm transition hover:bg-indigo-100 disabled:opacity-60 dark:border-indigo-700/40 dark:bg-indigo-900/30 dark:text-indigo-300">
+                        {busy ? <Loader2 size={11} className="animate-spin" /> : <ExternalLink size={11} />}
+                        Transferir análise
+                      </button>
+                    )}
+                    {["em_analise", "concluido"].includes((record.status || "").toLowerCase()) && (
+                      <button type="button" onClick={handleValidar} disabled={busy}
+                        className="inline-flex h-7 items-center gap-1.5 rounded-md bg-sky-600/90 px-3 text-[11px] font-semibold text-white backdrop-blur-sm transition hover:bg-sky-700 disabled:opacity-60">
+                        {busy ? <Loader2 size={11} className="animate-spin" /> : <Send size={11} />}
+                        {busy ? "A processar..." : "Validar resultados"}
+                      </button>
+                    )}
+                    {(record.status || "").toLowerCase() === "validado" && (
+                      <Link href="/clinical-laboratory/worklists"
+                        className="inline-flex h-7 items-center gap-1.5 rounded-md bg-emerald-600/90 px-3 text-[11px] font-semibold text-white backdrop-blur-sm transition hover:bg-emerald-700">
+                        Ver resultados <ArrowRight size={11} />
+                      </Link>
+                    )}
+                  </>
+                )}
+              </div>
             </div>
           </div>
         </section>
@@ -379,50 +409,14 @@ export default function LabRequestDetailPage() {
               </section>
             )}
 
-            {/* ── worklist link if validated ── */}
             {hasValidated && (
               <section className={`${GLASS} flex items-center gap-3 px-4 py-3`}>
                 <CheckCircle2 size={14} className="text-emerald-500" />
                 <span className="flex-1 text-[12px] text-[var(--gray-600)] dark:text-[var(--gray-400)]">
                   Resultados validados. Disponíveis na lista de trabalho.
                 </span>
-                <Link href="/clinical-laboratory/worklists"
-                  className="inline-flex h-7 items-center gap-1.5 rounded-md bg-emerald-600 px-3 text-[11px] font-semibold text-white transition hover:bg-emerald-700">
-                  Ver resultados <ArrowRight size={11} />
-                </Link>
               </section>
             )}
-
-            {/* ── footer actions ── */}
-            <section className={`${GLASS} flex items-center justify-between gap-2 px-4 py-3`}>
-              <Link href="/clinical/lab-requests"
-                className="inline-flex h-7 items-center gap-1 rounded-md border border-[var(--border)] bg-card px-2.5 text-[11px] text-muted-foreground transition hover:bg-muted">
-                <ArrowLeft size={11} /> Voltar
-              </Link>
-
-              <div className="flex items-center gap-2">
-                {isPending && (
-                  <button type="button" onClick={handleTransferir} disabled={busy}
-                    className="inline-flex h-7 items-center gap-1.5 rounded-md border border-indigo-200 bg-indigo-50/70 px-3 text-[11px] font-semibold text-indigo-700 transition hover:bg-indigo-100 disabled:opacity-60 dark:border-indigo-700/40 dark:bg-indigo-900/20 dark:text-indigo-300">
-                    {busy ? <Loader2 size={11} className="animate-spin" /> : <ExternalLink size={11} />}
-                    Transferir análise
-                  </button>
-                )}
-                {isValidatable && (
-                  <button type="button" onClick={handleValidar} disabled={busy}
-                    className="inline-flex h-7 items-center gap-1.5 rounded-md bg-sky-600 px-3 text-[11px] font-semibold text-white transition hover:bg-sky-700 disabled:opacity-60">
-                    {busy ? <Loader2 size={11} className="animate-spin" /> : <Send size={11} />}
-                    {busy ? "A processar..." : "Validar resultados"}
-                  </button>
-                )}
-                {!isPending && !isValidatable && !hasValidated && (
-                  <Link href="/clinical-laboratory/worklists"
-                    className="inline-flex h-7 items-center gap-1.5 rounded-md bg-sky-600 px-3 text-[11px] font-semibold text-white transition hover:bg-sky-700">
-                    Lista de trabalho <ArrowRight size={11} />
-                  </Link>
-                )}
-              </div>
-            </section>
           </>
         )}
       </div>
