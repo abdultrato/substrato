@@ -193,6 +193,8 @@ export default function SurgerySchedulesPage() {
   const [surgeries, setSurgeries] = useState<Surgery[]>([])
   const [loading, setLoading] = useState(true)
   const [view, setView] = useState<"timeline" | "list">("timeline")
+  const [kpiFilter, setKpiFilter] = useState<string | null>(null)
+  const filteredRef = useRef<HTMLDivElement>(null)
   const nowRef = useRef<HTMLDivElement>(null)
 
   const load = useCallback(async () => {
@@ -294,17 +296,22 @@ export default function SurgerySchedulesPage() {
             </div>
           </div>
 
-          {/* KPI strip */}
+          {/* KPI strip — clicável, filtra e scroll para a lista abaixo */}
           <div className="grid grid-cols-3 divide-x divide-white/30 border-t border-white/20 dark:divide-white/10 dark:border-white/10">
             {[
-              { label: "Em curso", count: active.length, color: "text-sky-600 dark:text-sky-400" },
-              { label: "Agendadas", count: upcoming.length, color: "text-violet-600 dark:text-violet-400" },
-              { label: "Realizadas hoje", count: done.length, color: "text-emerald-600 dark:text-emerald-400" },
+              { label: "Em curso", key: "active", count: active.length, color: "text-sky-600 dark:text-sky-400", activeRing: "ring-sky-400/40" },
+              { label: "Agendadas", key: "upcoming", count: upcoming.length, color: "text-violet-600 dark:text-violet-400", activeRing: "ring-violet-400/40" },
+              { label: "Realizadas hoje", key: "done", count: done.length, color: "text-emerald-600 dark:text-emerald-400", activeRing: "ring-emerald-400/40" },
             ].map(k => (
-              <div key={k.label} className="flex flex-col items-center py-2">
+              <button key={k.key} type="button"
+                onClick={() => {
+                  setKpiFilter(prev => prev === k.key ? null : k.key)
+                  setTimeout(() => filteredRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 80)
+                }}
+                className={`flex flex-col items-center py-2 transition hover:bg-white/20 dark:hover:bg-white/[0.04] ${kpiFilter === k.key ? `ring-2 ${k.activeRing}` : ""}`}>
                 <span className={`text-lg font-semibold ${k.color}`}>{k.count}</span>
                 <span className="text-[9px] font-medium uppercase tracking-wide text-[var(--gray-500)]">{k.label}</span>
-              </div>
+              </button>
             ))}
           </div>
         </section>
@@ -471,6 +478,75 @@ export default function SurgerySchedulesPage() {
             ))}
           </div>
         )}
+        {/* painel filtrado por KPI */}
+        {kpiFilter && (() => {
+          const groups: Record<string, Surgery[]> = { active, upcoming, done }
+          const items = groups[kpiFilter] || []
+          const labels: Record<string, string> = { active: "Em curso", upcoming: "Agendadas", done: "Realizadas hoje" }
+          const sizeHref = (s: Surgery) =>
+            s.surgery_size === "GRANDE"
+              ? `/surgery/large-surgeries/${s.id}`
+              : `/surgery/small-surgeries/${s.id}`
+          return (
+            <div ref={filteredRef} className="space-y-1.5">
+              <div className="flex items-center justify-between px-1">
+                <span className="text-[11px] font-semibold uppercase tracking-wide text-[var(--gray-500)]">
+                  {labels[kpiFilter]} — {items.length} cirurgia{items.length !== 1 ? "s" : ""}
+                </span>
+                <button type="button" onClick={() => setKpiFilter(null)}
+                  className="text-[11px] text-[var(--gray-400)] hover:text-foreground">✕ Fechar</button>
+              </div>
+              {items.length === 0 ? (
+                <div className={`flex items-center justify-center py-8 text-sm text-[var(--gray-400)] ${GLASS}`}>
+                  Nenhuma cirurgia neste grupo.
+                </div>
+              ) : items.map(s => (
+                <Link key={s.id} href={sizeHref(s)}
+                  className={`relative flex items-center gap-3 overflow-hidden rounded-xl border-l-4 px-3 py-2.5 transition hover:brightness-95 ${STATUS_COLOR[s.status] || "border-l-slate-400 bg-slate-50/60"} border border-white/30 shadow-sm backdrop-blur-sm dark:border-white/10`}>
+                  <div className="flex w-12 shrink-0 flex-col items-center">
+                    <Clock size={11} className="mb-0.5 text-[var(--gray-400)]" />
+                    <span className="text-[12px] font-semibold tabular-nums text-foreground">{fmtTime(s.scheduled_for)}</span>
+                  </div>
+                  <span className="h-10 w-px bg-white/30 dark:bg-white/10" />
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-1.5">
+                      <span className={`h-2 w-2 shrink-0 rounded-full ${STATUS_DOT[s.status] || "bg-slate-400"}`} />
+                      <span className="font-medium text-[13px] text-foreground truncate">{s.patient_name}</span>
+                      <span className="text-[10px] text-[var(--gray-400)] shrink-0">{s.custom_id}</span>
+                    </div>
+                    <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 pl-3.5">
+                      {(s.procedure_names?.length > 0 || s.procedure) && (
+                        <span className="flex items-center gap-1 text-[10px] text-[var(--gray-500)]">
+                          <Scissors size={9} className="text-violet-400" />
+                          {(s.procedure_names || []).slice(0, 2).join(", ") || s.procedure}
+                        </span>
+                      )}
+                      {s.surgeon_names?.length > 0 && (
+                        <span className="flex items-center gap-1 text-[10px] text-[var(--gray-500)]">
+                          <Stethoscope size={9} className="text-emerald-400" />
+                          {s.surgeon_names[0].name}
+                          {s.surgeon_names.length > 1 && ` +${s.surgeon_names.length - 1}`}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex shrink-0 flex-col items-end gap-1">
+                    {(() => { const p = calcPrice(s); return p ? (
+                      <span className="text-[11px] font-semibold tabular-nums text-teal-600 dark:text-teal-400">{fmtMT(p.total)}</span>
+                    ) : null })()}
+                    <span className={`rounded-full border px-2 py-0.5 text-[9px] font-semibold ${PRIORITY_BADGE[s.priority] || "border-slate-200 bg-slate-50 text-slate-500"}`}>
+                      {PRIORITY_LABEL[s.priority] || s.priority || "—"}
+                    </span>
+                    <span className="text-[10px] font-medium text-[var(--gray-500)]">
+                      {STATUS_LABEL[s.status] || s.status}
+                    </span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )
+        })()}
+
       </div>
     </AppLayout>
   )
