@@ -242,8 +242,8 @@ export default function LabReceptionPage() {
   const total = rows.length
 
   return (
-    <AppLayout>
-      <div className="mx-auto w-full max-w-4xl space-y-4 px-1 py-1">
+    <AppLayout fullWidth>
+      <div className="w-full min-w-0 max-w-none space-y-3 px-1 py-1">
 
         {/* ── Hero header ── */}
         <section className="relative overflow-hidden rounded-xl border border-sky-200/50 bg-gradient-to-br from-sky-50/80 via-white/60 to-cyan-50/60 shadow-sm backdrop-blur-sm dark:border-sky-800/30 dark:from-sky-950/30 dark:via-slate-900/40 dark:to-cyan-950/20">
@@ -302,7 +302,7 @@ export default function LabReceptionPage() {
             <Loader2 size={16} className="animate-spin" /> A carregar requisições...
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
+          <div className="grid w-full min-w-0 grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-4">
             {RECEPTION_COLUMNS.map((col) => {
               const items = buckets[col.key]
               return (
@@ -324,7 +324,7 @@ export default function LabReceptionPage() {
                   </div>
 
                   {/* cards */}
-                  <div className="flex flex-col gap-2 overflow-y-auto px-3 pb-3 pl-4 max-h-[calc(100vh-130px)] [scrollbar-width:thin]">
+                  <div className="flex flex-col gap-1.5 overflow-y-auto px-3 pb-3 pl-4 max-h-[calc(100vh-130px)] [scrollbar-width:thin]">
                     {items.length === 0 ? (
                       <div className="rounded-xl border border-dashed border-white/60 px-3 py-6 text-center text-[10px] text-[var(--gray-400)] dark:border-white/10">
                         Sem requisições.
