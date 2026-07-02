@@ -55,6 +55,34 @@ const STEPS = [
 
 type SearchValue = { id: number; label: string }
 
+function listRows(payload: any): any[] {
+  return Array.isArray(payload) ? payload : (payload?.results || [])
+}
+
+function uniqueRowsById(rows: any[]): any[] {
+  const seen = new Set<number>()
+  const result: any[] = []
+  for (const row of rows) {
+    const id = Number(row?.id)
+    if (!id || seen.has(id)) continue
+    seen.add(id)
+    result.push(row)
+  }
+  return result
+}
+
+function normalizePatientText(value: string): string {
+  return String(value || "")
+    .split(" - ")[0]
+    .trim()
+    .toLowerCase()
+}
+
+function rowMatchesPatient(row: any, patientId: number, patientName: string): boolean {
+  if (Number(row?.patient) === patientId) return true
+  return normalizePatientText(row?.patient_name || "") === patientName
+}
+
 function FieldRow({ label, children, required }: { label: string; children: React.ReactNode; required?: boolean }) {
   return (
     <div className="flex flex-col gap-0.5">
@@ -384,22 +412,70 @@ export default function NewPreoperativeAssessmentPage() {
   const [consentSigned, setConsentSigned] = useState(false)
   const [observations, setObservations] = useState("")
 
+  const patientSearchTerm = useMemo(
+    () => normalizePatientText(patient?.label || ""),
+    [patient?.label]
+  )
+
   // when patient changes, reload related pedidos + cirurgias
   useEffect(() => {
     setSurgicalRequest(null)
     setProposedSurgery(null)
     setPatientRequests([])
     setPatientSurgeries([])
+
     if (!patient?.id) return
+
+    let active = true
     setLoadingContext(true)
-    Promise.all([
-      apiFetch<any>(`/surgery/pedido_cirurgico/?patient=${patient.id}&limit=50`),
-      apiFetch<any>(`/surgery/surgery/?patient=${patient.id}&limit=50`),
-    ]).then(([reqs, surgs]) => {
-      setPatientRequests(Array.isArray(reqs) ? reqs : (reqs.results ?? []))
-      setPatientSurgeries(Array.isArray(surgs) ? surgs : (surgs.results ?? []))
-    }).catch(() => {}).finally(() => setLoadingContext(false))
-  }, [patient?.id])
+
+    async function loadPatientContext() {
+      const requestQueries = [
+        `/surgery/pedido_cirurgico/?patient=${patient.id}&page=1&page_size=200&ordering=-created_at`,
+        patientSearchTerm
+          ? `/surgery/pedido_cirurgico/?search=${encodeURIComponent(patientSearchTerm)}&page=1&page_size=200&ordering=-created_at`
+          : null,
+      ].filter(Boolean) as string[]
+
+      const surgeryQueries = [
+        `/surgery/surgery/?patient=${patient.id}&page=1&page_size=200&ordering=-created_at`,
+        patientSearchTerm
+          ? `/surgery/surgery/?search=${encodeURIComponent(patientSearchTerm)}&page=1&page_size=200&ordering=-created_at`
+          : null,
+      ].filter(Boolean) as string[]
+
+      try {
+        const [requestPayloads, surgeryPayloads] = await Promise.all([
+          Promise.all(requestQueries.map((url) => apiFetch<any>(url).catch(() => null))),
+          Promise.all(surgeryQueries.map((url) => apiFetch<any>(url).catch(() => null))),
+        ])
+
+        if (!active) return
+
+        setPatientRequests(uniqueRowsById(
+          requestPayloads
+            .flatMap((payload) => listRows(payload))
+            .filter((row) => rowMatchesPatient(row, patient.id, patientSearchTerm))
+        ))
+
+        setPatientSurgeries(uniqueRowsById(
+          surgeryPayloads
+            .flatMap((payload) => listRows(payload))
+            .filter((row) => rowMatchesPatient(row, patient.id, patientSearchTerm))
+        ))
+      } finally {
+        if (active) setLoadingContext(false)
+      }
+    }
+
+    loadPatientContext().catch(() => {
+      if (active) setLoadingContext(false)
+    })
+
+    return () => {
+      active = false
+    }
+  }, [patient?.id, patientSearchTerm])
 
   const canNextStepOne = !!patient
   const canNextStepTwo = !!asaClass && !!status
