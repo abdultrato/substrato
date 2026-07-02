@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { createPortal } from "react-dom"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
@@ -8,93 +8,137 @@ import {
   AlertCircle,
   ArrowLeft,
   ArrowRight,
-  CalendarClock,
   Check,
   CheckCircle2,
   ClipboardCheck,
-  ClipboardList,
   FileText,
-  Layers,
   Loader2,
-  Save,
   Search,
   Stethoscope,
   User,
+  X,
   XCircle,
 } from "lucide-react"
+
 import AppLayout from "@/components/layout/AppLayout"
 import { apiFetch } from "@/lib/api"
 import { GROUPS } from "@/lib/rbac"
 
-/* ── constants ─────────────────────────────────────────────────── */
-
 const GLASS = "rounded-xl border border-amber-200/60 bg-white/30 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]"
 const inputCls = "w-full rounded-lg border border-white/30 bg-white/40 px-2.5 py-1.5 text-[12px] text-[var(--text)] placeholder-[var(--gray-400)] backdrop-blur-sm focus:border-amber-400 focus:outline-none dark:border-white/10 dark:bg-white/[0.06]"
-const textareaCls = inputCls + " resize-none"
+const textareaCls = `${inputCls} resize-none`
 
 const ASA_OPTIONS = [
-  { value: "ASA_I",   label: "ASA I",   desc: "Paciente saudável" },
-  { value: "ASA_II",  label: "ASA II",  desc: "Doença sistémica ligeira" },
-  { value: "ASA_III", label: "ASA III", desc: "Doença sistémica grave" },
-  { value: "ASA_IV",  label: "ASA IV",  desc: "Risco de vida constante" },
-  { value: "ASA_V",   label: "ASA V",   desc: "Moribundo, sem cirurgia morre" },
-  { value: "ASA_VI",  label: "ASA VI",  desc: "Morte cerebral, dador" },
-  { value: "UNKNOWN", label: "Desconhecido", desc: "" },
+  { value: "ASA_I", label: "ASA I", description: "Paciente saudável." },
+  { value: "ASA_II", label: "ASA II", description: "Doença sistémica ligeira." },
+  { value: "ASA_III", label: "ASA III", description: "Doença sistémica grave." },
+  { value: "ASA_IV", label: "ASA IV", description: "Risco de vida constante." },
+  { value: "ASA_V", label: "ASA V", description: "Moribundo sem cirurgia." },
+  { value: "ASA_VI", label: "ASA VI", description: "Morte cerebral, dador." },
+  { value: "UNKNOWN", label: "Desconhecido", description: "Classificação ainda não definida." },
 ]
 
-const ASA_COLOR: Record<string, string> = {
-  ASA_I:   "border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-700/40 dark:bg-emerald-900/20 dark:text-emerald-300",
-  ASA_II:  "border-lime-300 bg-lime-50 text-lime-700 dark:border-lime-700/40 dark:bg-lime-900/20 dark:text-lime-300",
-  ASA_III: "border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-700/40 dark:bg-amber-900/20 dark:text-amber-300",
-  ASA_IV:  "border-orange-300 bg-orange-50 text-orange-700 dark:border-orange-700/40 dark:bg-orange-900/20 dark:text-orange-300",
-  ASA_V:   "border-rose-300 bg-rose-50 text-rose-700 dark:border-rose-700/40 dark:bg-rose-900/20 dark:text-rose-300",
-  ASA_VI:  "border-rose-400 bg-rose-100 text-rose-800 dark:border-rose-600/40 dark:bg-rose-900/30 dark:text-rose-200",
-  UNKNOWN: "border-gray-200 bg-gray-50 text-gray-500 dark:border-white/10 dark:bg-white/5 dark:text-gray-400",
-}
-
 const STATUS_OPTIONS = [
-  { value: "PENDING",           label: "Pendente" },
-  { value: "IN_PROGRESS",       label: "Em curso" },
-  { value: "FIT",               label: "Apto" },
+  { value: "PENDING", label: "Pendente" },
+  { value: "IN_PROGRESS", label: "Em curso" },
+  { value: "FIT", label: "Apto" },
   { value: "TEMPORARILY_UNFIT", label: "Temporariamente inapto" },
-  { value: "UNFIT",             label: "Inapto" },
-  { value: "REQUIRES_EXAMS",    label: "Requer exames" },
+  { value: "UNFIT", label: "Inapto" },
+  { value: "REQUIRES_EXAMS", label: "Requer exames" },
 ]
 
 const STEPS = [
-  { id: 1, label: "Paciente & pedido",    icon: <User size={14} /> },
-  { id: 2, label: "Avaliação clínica",    icon: <Stethoscope size={14} /> },
-  { id: 3, label: "Exames & conclusão",   icon: <ClipboardCheck size={14} /> },
+  { id: 1, label: "Paciente e pedido", icon: <User size={12} /> },
+  { id: 2, label: "Avaliação clínica", icon: <Stethoscope size={12} /> },
+  { id: 3, label: "Exames e conclusão", icon: <ClipboardCheck size={12} /> },
 ]
 
-/* ── helpers ────────────────────────────────────────────────────── */
+type SearchValue = { id: number; label: string }
 
 function FieldRow({ label, children, required }: { label: string; children: React.ReactNode; required?: boolean }) {
   return (
     <div className="flex flex-col gap-0.5">
       <label className="text-[9px] font-semibold uppercase tracking-[0.14em] text-[var(--gray-500)]">
-        {label}{required && <span className="ml-0.5 text-rose-500">*</span>}
+        {label}
+        {required ? <span className="ml-0.5 text-rose-500">*</span> : null}
       </label>
       {children}
     </div>
   )
 }
 
-function DropdownPortal({ anchorRef, open, children }: {
+function SurfaceCard({
+  title,
+  subtitle,
+  icon,
+  accent,
+  children,
+}: {
+  title: string
+  subtitle?: string
+  icon: React.ReactNode
+  accent: string
+  children: React.ReactNode
+}) {
+  return (
+    <section className={`relative overflow-hidden ${GLASS}`}>
+      <span className={`absolute left-0 top-0 h-full w-1 ${accent}`} />
+      <div className="px-3 py-3 pl-4">
+        <div className="mb-3 flex items-start gap-2">
+          <span className="mt-0.5 text-[var(--gray-500)]">{icon}</span>
+          <div>
+            <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--gray-500)]">{title}</div>
+            {subtitle ? <p className="mt-0.5 text-[11px] text-[var(--gray-400)]">{subtitle}</p> : null}
+          </div>
+        </div>
+        {children}
+      </div>
+    </section>
+  )
+}
+
+function DropdownPortal({
+  anchorRef,
+  portalRef,
+  open,
+  children,
+}: {
   anchorRef: React.RefObject<HTMLDivElement | null>
+  portalRef: React.RefObject<HTMLDivElement | null>
   open: boolean
   children: React.ReactNode
 }) {
-  const [pos, setPos] = useState({ top: 0, left: 0, width: 0 })
+  const [pos, setPos] = useState<{ top: number; left: number; width: number } | null>(null)
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => { setMounted(true) }, [])
+
   useEffect(() => {
-    if (open && anchorRef.current) {
-      const r = anchorRef.current.getBoundingClientRect()
-      setPos({ top: r.bottom + window.scrollY + 4, left: r.left + window.scrollX, width: r.width })
+    if (!open || !anchorRef.current) return
+
+    function update() {
+      if (!anchorRef.current) return
+      const rect = anchorRef.current.getBoundingClientRect()
+      setPos({ top: rect.bottom + 4, left: rect.left, width: rect.width })
     }
-  }, [open, anchorRef])
-  if (!open || typeof document === "undefined") return null
+
+    update()
+    window.addEventListener("scroll", update, true)
+    window.addEventListener("resize", update)
+    return () => {
+      window.removeEventListener("scroll", update, true)
+      window.removeEventListener("resize", update)
+    }
+  }, [anchorRef, open])
+
+  if (!open || !mounted || !pos) return null
+
   return createPortal(
-    <div style={{ position: "absolute", top: pos.top, left: pos.left, width: pos.width, zIndex: 9999 }}>
+    <div
+      ref={portalRef}
+      style={{ position: "fixed", top: pos.top, left: pos.left, width: pos.width, zIndex: 9999 }}
+      className="rounded-xl border border-amber-200 bg-white shadow-xl backdrop-blur-md dark:border-white/20 dark:bg-zinc-900/90"
+    >
       {children}
     </div>,
     document.body
@@ -102,91 +146,132 @@ function DropdownPortal({ anchorRef, open, children }: {
 }
 
 function SearchSelect({
-  label, endpoint, valueKey = "id", labelKey = "name", value, onChange, required, placeholder,
+  label,
+  endpoint,
+  value,
+  onChange,
+  required,
+  placeholder,
   extraParams,
+  getOptionLabel,
 }: {
-  label: string; endpoint: string; valueKey?: string; labelKey?: string
-  value: { id: number; label: string } | null
-  onChange: (v: { id: number; label: string } | null) => void
-  required?: boolean; placeholder?: string
+  label: string
+  endpoint: string
+  value: SearchValue | null
+  onChange: (value: SearchValue | null) => void
+  required?: boolean
+  placeholder?: string
   extraParams?: Record<string, string>
+  getOptionLabel?: (item: any) => string
 }) {
-  const [q, setQ] = useState("")
-  const [opts, setOpts] = useState<any[]>([])
+  const [query, setQuery] = useState("")
+  const [options, setOptions] = useState<any[]>([])
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
+  const portalRef = useRef<HTMLDivElement>(null)
 
-  const search = useCallback(async (query: string) => {
+  const buildLabel = useCallback((item: any) => {
+    if (getOptionLabel) return getOptionLabel(item)
+    return item?.name || item?.display_name || item?.full_name || item?.custom_id || `#${item?.id}`
+  }, [getOptionLabel])
+
+  const search = useCallback(async (searchText: string) => {
     setLoading(true)
     try {
-      const p = new URLSearchParams({ limit: "20", ...(query ? { search: query } : {}), ...extraParams })
-      const d = await apiFetch<any>(`${endpoint}?${p}`)
-      setOpts(d.results ?? d)
-    } catch { setOpts([]) }
-    finally { setLoading(false) }
+      const params = new URLSearchParams({
+        limit: "20",
+        ...(extraParams ?? {}),
+      })
+      if (searchText.trim()) params.set("search", searchText.trim())
+      const response = await apiFetch<any>(`${endpoint}?${params.toString()}`)
+      setOptions(Array.isArray(response) ? response : (response.results || []))
+    } catch {
+      setOptions([])
+    } finally {
+      setLoading(false)
+    }
   }, [endpoint, extraParams])
 
-  useEffect(() => { if (open) search(q) }, [open])
   useEffect(() => {
-    const t = setTimeout(() => { if (open) search(q) }, 300)
-    return () => clearTimeout(t)
-  }, [q])
+    if (!open) return
+    const timer = setTimeout(() => { search(query) }, 250)
+    return () => clearTimeout(timer)
+  }, [open, query, search])
 
   useEffect(() => {
-    const h = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false) }
-    document.addEventListener("mousedown", h)
-    return () => document.removeEventListener("mousedown", h)
+    function handle(event: MouseEvent) {
+      const target = event.target as Node
+      if (ref.current?.contains(target) || portalRef.current?.contains(target)) return
+      setOpen(false)
+    }
+    document.addEventListener("mousedown", handle)
+    return () => document.removeEventListener("mousedown", handle)
   }, [])
 
-  const getLabel = (o: any) => {
-    if (labelKey === "name") return o.name || o.display_name || o.full_name || `#${o.id}`
-    return o[labelKey] || `#${o.id}`
+  function selectOption(item: any) {
+    onChange({ id: item.id, label: buildLabel(item) })
+    setOpen(false)
+    setQuery("")
   }
 
   return (
     <FieldRow label={label} required={required}>
-      <div ref={ref} className="relative">
+      <div ref={ref}>
         <div
-          onClick={() => setOpen(v => !v)}
           className={`${inputCls} flex cursor-pointer items-center justify-between gap-2`}
+          onClick={() => setOpen((current) => !current)}
         >
           <span className={value ? "text-foreground" : "text-[var(--gray-400)]"}>
-            {value ? value.label : (placeholder || `Seleccionar ${label.toLowerCase()}...`)}
+            {value?.label || placeholder || `Selecionar ${label.toLowerCase()}...`}
           </span>
-          <Search size={10} className="shrink-0 text-[var(--gray-400)]" />
+          <div className="flex items-center gap-1">
+            {value ? (
+              <button
+                type="button"
+                onClick={(event) => {
+                  event.stopPropagation()
+                  onChange(null)
+                  setOpen(false)
+                }}
+                className="rounded-full p-0.5 text-[var(--gray-400)] transition hover:bg-white/60 hover:text-rose-500 dark:hover:bg-white/10"
+              >
+                <X size={10} />
+              </button>
+            ) : null}
+            <Search size={10} className="shrink-0 text-[var(--gray-400)]" />
+          </div>
         </div>
-        <DropdownPortal anchorRef={ref} open={open}>
-          <div className="rounded-xl border border-border bg-card shadow-xl">
-            <div className="p-1.5">
-              <input
-                autoFocus
-                className="w-full rounded-lg border border-border bg-card px-2.5 py-1.5 text-[12px] focus:outline-none"
-                placeholder="Pesquisar..."
-                value={q} onChange={e => setQ(e.target.value)}
-              />
-            </div>
-            <div className="max-h-48 overflow-y-auto">
-              {loading
-                ? <div className="px-3 py-2 text-[11px] text-[var(--gray-500)]">Carregando...</div>
-                : opts.length === 0
-                  ? <div className="px-3 py-2 text-[11px] text-[var(--gray-400)]">Sem resultados</div>
-                  : opts.map(o => (
-                      <button key={o[valueKey]} type="button"
-                        onClick={() => { onChange({ id: o[valueKey], label: getLabel(o) }); setOpen(false); setQ("") }}
-                        className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-[12px] hover:bg-muted first:rounded-t-xl last:rounded-b-xl">
-                        {getLabel(o)}
-                      </button>
-                    ))
-              }
-            </div>
-            {value && (
-              <div className="border-t border-border p-1.5">
-                <button type="button" onClick={() => { onChange(null); setOpen(false) }}
-                  className="flex w-full items-center gap-1.5 rounded-lg px-3 py-1.5 text-[11px] font-semibold text-rose-500 hover:bg-rose-50/60">
-                  <XCircle size={11} /> Limpar
+
+        <DropdownPortal anchorRef={ref} portalRef={portalRef} open={open}>
+          <div className="border-b border-amber-100 px-2 py-1.5 dark:border-white/10">
+            <input
+              autoFocus
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Pesquisar..."
+              className="w-full bg-transparent text-[12px] text-[var(--text)] outline-none placeholder-[var(--gray-400)]"
+            />
+          </div>
+          <div className="max-h-56 overflow-y-auto">
+            {loading ? (
+              <div className="px-3 py-2 text-[11px] text-[var(--gray-500)]">Carregando...</div>
+            ) : options.length === 0 ? (
+              <div className="px-3 py-2 text-[11px] text-[var(--gray-400)]">Sem resultados</div>
+            ) : (
+              options.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  onMouseDown={(event) => {
+                    event.preventDefault()
+                    selectOption(item)
+                  }}
+                  className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-[12px] transition hover:bg-amber-50/70 dark:hover:bg-white/10"
+                >
+                  <span className="truncate text-[var(--text)]">{buildLabel(item)}</span>
                 </button>
-              </div>
+              ))
             )}
           </div>
         </DropdownPortal>
@@ -195,33 +280,38 @@ function SearchSelect({
   )
 }
 
-/* ── step indicator ─────────────────────────────────────────────── */
-
 function StepBar({ step }: { step: number }) {
   return (
-    <div className="flex items-center gap-0">
-      {STEPS.map((s, i) => {
-        const done = step > s.id
-        const active = step === s.id
+    <div className="flex flex-wrap items-center gap-2">
+      {STEPS.map((item, index) => {
+        const done = step > item.id
+        const active = step === item.id
         return (
-          <div key={s.id} className="flex items-center">
-            <div className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-semibold transition-all ${
-              done    ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300"
-              : active ? "bg-amber-500 text-white shadow-sm"
-              : "text-[var(--gray-400)]"
-            }`}>
-              <span className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[9px] ${
-                done    ? "bg-amber-500 text-white"
-                : active ? "bg-white/30 text-white"
-                : "bg-[var(--gray-200)] text-[var(--gray-500)] dark:bg-white/10"
-              }`}>
-                {done ? <Check size={9} /> : s.id}
+          <div key={item.id} className="flex items-center gap-2">
+            <div
+              className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-semibold transition ${
+                done
+                  ? "bg-amber-100 text-amber-700 dark:bg-amber-900/25 dark:text-amber-300"
+                  : active
+                    ? "bg-amber-500 text-white shadow-sm"
+                    : "bg-white/40 text-[var(--gray-500)] dark:bg-white/[0.05]"
+              }`}
+            >
+              <span
+                className={`inline-flex h-4 w-4 items-center justify-center rounded-full text-[9px] ${
+                  done
+                    ? "bg-amber-500 text-white"
+                    : active
+                      ? "bg-white/25 text-white"
+                      : "bg-white/70 text-[var(--gray-500)] dark:bg-white/10"
+                }`}
+              >
+                {done ? <Check size={9} /> : item.id}
               </span>
-              {s.label}
+              {item.icon}
+              {item.label}
             </div>
-            {i < STEPS.length - 1 && (
-              <div className={`mx-1 h-px w-6 ${step > s.id ? "bg-amber-400" : "bg-[var(--gray-200)] dark:bg-white/10"}`} />
-            )}
+            {index < STEPS.length - 1 ? <span className="h-px w-5 bg-amber-200 dark:bg-white/10" /> : null}
           </div>
         )
       })}
@@ -229,7 +319,41 @@ function StepBar({ step }: { step: number }) {
   )
 }
 
-/* ── main page ──────────────────────────────────────────────────── */
+function BoolCard({
+  label,
+  description,
+  checked,
+  onToggle,
+}: {
+  label: string
+  description: string
+  checked: boolean
+  onToggle: () => void
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      className={`flex items-start gap-2 rounded-xl border p-3 text-left transition ${
+        checked
+          ? "border-emerald-300 bg-emerald-50/70 text-emerald-700 dark:border-emerald-700/40 dark:bg-emerald-900/20 dark:text-emerald-300"
+          : "border-white/30 bg-white/25 text-[var(--gray-600)] hover:border-amber-300 dark:border-white/10 dark:bg-white/[0.03]"
+      }`}
+    >
+      <span
+        className={`mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full ${
+          checked ? "bg-emerald-500 text-white" : "border-2 border-[var(--gray-300)] dark:border-white/20"
+        }`}
+      >
+        {checked ? <Check size={11} /> : null}
+      </span>
+      <span className="min-w-0">
+        <span className="block text-[12px] font-semibold">{label}</span>
+        <span className="block text-[10px] opacity-75">{description}</span>
+      </span>
+    </button>
+  )
+}
 
 export default function NewPreoperativeAssessmentPage() {
   const router = useRouter()
@@ -237,34 +361,54 @@ export default function NewPreoperativeAssessmentPage() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  /* step 1 */
-  const [patient, setPatient] = useState<{ id: number; label: string } | null>(null)
-  const [surgicalRequest, setSurgicalRequest] = useState<{ id: number; label: string } | null>(null)
-  const [proposedSurgery, setProposedSurgery] = useState<{ id: number; label: string } | null>(null)
-  const [evaluator, setEvaluator] = useState<{ id: number; label: string } | null>(null)
+  const [patient, setPatient] = useState<SearchValue | null>(null)
+  const [surgicalRequest, setSurgicalRequest] = useState<SearchValue | null>(null)
+  const [proposedSurgery, setProposedSurgery] = useState<SearchValue | null>(null)
+  const [evaluator, setEvaluator] = useState<SearchValue | null>(null)
   const [assessedAt, setAssessedAt] = useState("")
 
-  /* step 2 */
-  const [asaClass, setAsaClass] = useState("")
+  const [asaClass, setAsaClass] = useState("UNKNOWN")
   const [surgicalRisk, setSurgicalRisk] = useState("")
   const [medicalEvaluation, setMedicalEvaluation] = useState("")
   const [anestheticEvaluation, setAnestheticEvaluation] = useState("")
   const [status, setStatus] = useState("PENDING")
 
-  /* step 3 */
   const [requiredExams, setRequiredExams] = useState("")
   const [examResultsReviewed, setExamResultsReviewed] = useState(false)
   const [fitForSurgery, setFitForSurgery] = useState<boolean | null>(null)
   const [consentSigned, setConsentSigned] = useState(false)
   const [observations, setObservations] = useState("")
 
-  const canNext1 = !!patient
-  const canNext2 = !!asaClass && !!status
+  const previousPatientId = useRef<number | null>(null)
+
+  useEffect(() => {
+    const currentPatientId = patient?.id ?? null
+    if (previousPatientId.current !== null && previousPatientId.current !== currentPatientId) {
+      setSurgicalRequest(null)
+      setProposedSurgery(null)
+    }
+    previousPatientId.current = currentPatientId
+  }, [patient?.id])
+
+  const requestFilters = useMemo(
+    () => (patient?.id ? { patient: String(patient.id) } : undefined),
+    [patient?.id]
+  )
+
+  const proposedSurgeryFilters = useMemo(
+    () => (patient?.id ? { patient: String(patient.id) } : undefined),
+    [patient?.id]
+  )
+
+  const canNextStepOne = !!patient
+  const canNextStepTwo = !!asaClass && !!status
 
   async function submit() {
-    setSaving(true); setError(null)
+    setSaving(true)
+    setError(null)
+
     try {
-      const body: any = {
+      const body: Record<string, any> = {
         patient: patient?.id,
         status,
         asa_class: asaClass || undefined,
@@ -272,310 +416,369 @@ export default function NewPreoperativeAssessmentPage() {
         medical_evaluation: medicalEvaluation || undefined,
         anesthetic_evaluation: anestheticEvaluation || undefined,
         exam_results_reviewed: examResultsReviewed,
-        fit_for_surgery: fitForSurgery,
         consent_signed: consentSigned,
         observations: observations || undefined,
         assessed_at: assessedAt || undefined,
       }
+
+      if (fitForSurgery !== null) body.fit_for_surgery = fitForSurgery
       if (surgicalRequest) body.surgical_request = surgicalRequest.id
       if (proposedSurgery) body.proposed_surgery = proposedSurgery.id
       if (evaluator) body.evaluator = evaluator.id
       if (requiredExams.trim()) {
-        try { body.required_exams = JSON.parse(requiredExams) }
-        catch { body.required_exams = requiredExams.split(",").map(s => s.trim()).filter(Boolean) }
+        try {
+          body.required_exams = JSON.parse(requiredExams)
+        } catch {
+          body.required_exams = requiredExams
+            .split(",")
+            .map((item) => item.trim())
+            .filter(Boolean)
+        }
       }
-      const d = await apiFetch<any>("/surgery/avaliacao_pre_operatoria/", {
-        method: "POST", body: JSON.stringify(body),
+
+      const response = await apiFetch<any>("/surgery/avaliacao_pre_operatoria/", {
+        method: "POST",
+        body: JSON.stringify(body),
       })
-      router.push(`/surgery/preoperative-assessments/${d.id}`)
-    } catch (e: any) {
-      setError(e?.message || "Erro ao guardar.")
+      router.push(`/surgery/preoperative-assessments/${response.id}`)
+    } catch (err: any) {
+      setError(err?.message || "Erro ao guardar avaliação pré-operatória.")
       setSaving(false)
     }
   }
 
   return (
     <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.ENFERMAGEM, GROUPS.MEDICINA]}>
-      <div className="mx-auto w-full max-w-3xl space-y-3 px-1 py-1">
-
-        {/* ── HERO HEADER ─────────────────────────────────────── */}
-        <header className="relative overflow-hidden rounded-2xl border border-white/30 bg-gradient-to-br from-amber-50/80 via-white/60 to-amber-100/40 shadow-sm backdrop-blur-md dark:border-white/10 dark:from-amber-900/20 dark:via-slate-800/40 dark:to-slate-900/60">
-          <span className="pointer-events-none absolute -right-6 -top-6 select-none text-[120px] leading-none opacity-[0.05] dark:opacity-[0.07]" aria-hidden>🩺</span>
-          <div className="relative px-5 pt-4 pb-4">
-            {/* breadcrumb */}
-            <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
-              <Layers size={9} className="shrink-0" />
-              <Link href="/surgery" className="hover:text-foreground">Cirurgia</Link>
-              <span>/</span>
-              <Link href="/surgery/preoperative-assessments" className="hover:text-foreground">Avaliações pré-op.</Link>
-              <span>/</span>
-              <span className="font-semibold text-foreground">Nova avaliação</span>
-            </div>
-
-            {/* title row */}
-            <div className="mt-1.5 flex items-start justify-between gap-4">
-              <div>
-                <div className="flex items-center gap-2.5">
-                  <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-500/15 dark:bg-amber-400/10">
-                    <Stethoscope size={18} className="text-amber-700 dark:text-amber-300" strokeWidth={1.8} />
-                  </span>
-                  <h1 className="font-display text-2xl font-bold tracking-tight text-foreground">
-                    Registar avaliação pré-operatória
-                  </h1>
-                </div>
-                <p className="mt-1 max-w-lg text-[11px] text-muted-foreground">
-                  Avaliação de aptidão clínica e anestésica antes da intervenção cirúrgica.
-                </p>
+      <div className="mx-auto w-full max-w-2xl space-y-2 px-1 py-1">
+        <section className={`relative overflow-hidden ${GLASS}`}>
+          <span className="absolute left-0 top-0 h-full w-1 bg-amber-400" />
+          <div className="flex flex-col gap-2 px-3 py-3 pl-4 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <div className="flex items-center gap-1 text-[10px] text-[var(--gray-500)]">
+                <Link href="/surgery" className="hover:text-foreground">Cirurgia</Link>
+                <span>/</span>
+                <Link href="/surgery/preoperative-assessments" className="hover:text-foreground">Avaliações pré-op.</Link>
+                <span>/</span>
+                <span className="font-semibold text-foreground">Nova</span>
               </div>
-              <div className="flex shrink-0 items-center gap-1.5">
-                <Link href="/surgery/preoperative-assessments"
-                  className="inline-flex h-7 items-center gap-1 rounded-lg border border-border bg-card/70 px-2.5 text-[11px] text-muted-foreground transition hover:bg-muted">
-                  <ArrowLeft size={11} /> Voltar
-                </Link>
+              <div className="mt-1 flex items-center gap-1.5">
+                <Stethoscope size={13} className="text-amber-500" />
+                <h1 className="font-display text-sm font-semibold text-foreground">Nova avaliação pré-operatória</h1>
               </div>
+              <p className="mt-1 max-w-xl text-[11px] text-[var(--gray-500)]">
+                Registe a aptidão clínica e anestésica do paciente antes da cirurgia, no mesmo padrão visual dos restantes fluxos do módulo.
+              </p>
             </div>
-
-            {/* step bar */}
-            <div className="mt-3 border-t border-white/30 pt-3 dark:border-white/10">
-              <StepBar step={step} />
+            <div className="flex items-center gap-1.5">
+              <Link
+                href="/surgery/preoperative-assessments"
+                className="inline-flex h-7 items-center gap-1 rounded-md border border-border bg-card px-2.5 text-[11px] text-muted-foreground transition hover:bg-muted"
+              >
+                <ArrowLeft size={11} /> Cancelar
+              </Link>
             </div>
           </div>
-        </header>
-        {/* ── /HERO HEADER ─────────────────────────────────── */}
+        </section>
 
-        {error && (
-          <div className="flex items-center gap-2 rounded-xl border border-rose-300/50 bg-rose-50/70 px-4 py-2.5 text-sm text-rose-700">
+        <section className={`${GLASS} px-3 py-2.5`}>
+          <StepBar step={step} />
+        </section>
+
+        {error ? (
+          <div className="flex items-center gap-2 rounded-xl border border-rose-300/50 bg-rose-50/70 px-4 py-3 text-sm text-rose-700 dark:border-rose-700/40 dark:bg-rose-900/20 dark:text-rose-300">
             <AlertCircle size={14} /> {error}
           </div>
-        )}
+        ) : null}
 
-        {/* ── STEP 1: Paciente & pedido ─────────────────────── */}
-        {step === 1 && (
-          <section className={`${GLASS} p-4 space-y-3`}>
-            <p className="flex items-center gap-1.5 text-[11px] font-semibold text-amber-700 dark:text-amber-300">
-              <User size={13} /> Paciente & pedido cirúrgico
-            </p>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        {step === 1 ? (
+          <SurfaceCard
+            title="1 · Paciente e pedido"
+            subtitle="Paciente, avaliador, pedido cirúrgico e cirurgia proposta."
+            icon={<User size={13} />}
+            accent="bg-sky-400"
+          >
+            <div className="grid gap-3 sm:grid-cols-2">
               <SearchSelect
-                label="Paciente" required
-                endpoint="/patients/patient/"
-                labelKey="name"
-                value={patient} onChange={setPatient}
-                placeholder="Seleccionar paciente..."
+                label="Paciente"
+                endpoint="/clinical/patient/"
+                value={patient}
+                onChange={setPatient}
+                required
+                placeholder="Pesquisar paciente..."
+                getOptionLabel={(item) => [item?.name, item?.document_number].filter(Boolean).join(" - ")}
               />
               <SearchSelect
-                label="Avaliador (médico)"
-                endpoint="/staff/staff/"
-                labelKey="name"
-                value={evaluator} onChange={setEvaluator}
-                placeholder="Seleccionar médico..."
+                label="Avaliador"
+                endpoint="/consultations/doctors/"
+                value={evaluator}
+                onChange={setEvaluator}
+                placeholder="Pesquisar médico avaliador..."
+                getOptionLabel={(item) => [item?.name, item?.profession_name].filter(Boolean).join(" - ")}
               />
               <SearchSelect
                 label="Pedido cirúrgico"
                 endpoint="/surgery/pedido_cirurgico/"
-                labelKey="custom_id"
-                valueKey="id"
-                value={surgicalRequest} onChange={setSurgicalRequest}
-                placeholder="Seleccionar pedido..."
+                value={surgicalRequest}
+                onChange={setSurgicalRequest}
+                placeholder="Pesquisar pedido..."
+                extraParams={requestFilters}
+                getOptionLabel={(item) => [item?.custom_id, item?.patient_name, item?.status].filter(Boolean).join(" - ")}
               />
               <SearchSelect
                 label="Cirurgia proposta"
                 endpoint="/surgery/surgery/"
-                labelKey="custom_id"
-                valueKey="id"
-                value={proposedSurgery} onChange={setProposedSurgery}
-                placeholder="Seleccionar cirurgia..."
+                value={proposedSurgery}
+                onChange={setProposedSurgery}
+                placeholder="Pesquisar cirurgia..."
+                extraParams={proposedSurgeryFilters}
+                getOptionLabel={(item) => [item?.custom_id, item?.patient_name, item?.procedure].filter(Boolean).join(" - ")}
               />
             </div>
-            <FieldRow label="Data da avaliação">
-              <input type="datetime-local" className={inputCls} value={assessedAt}
-                onChange={e => setAssessedAt(e.target.value)} />
-            </FieldRow>
-          </section>
-        )}
 
-        {/* ── STEP 2: Avaliação clínica ─────────────────────── */}
-        {step === 2 && (
-          <section className={`${GLASS} p-4 space-y-4`}>
-            <p className="flex items-center gap-1.5 text-[11px] font-semibold text-amber-700 dark:text-amber-300">
-              <Stethoscope size={13} /> Avaliação clínica & anestésica
-            </p>
+            <div className="mt-3 grid gap-3 sm:grid-cols-[minmax(0,1fr)_220px]">
+              <FieldRow label="Avaliado em">
+                <input
+                  type="datetime-local"
+                  className={inputCls}
+                  value={assessedAt}
+                  onChange={(event) => setAssessedAt(event.target.value)}
+                />
+              </FieldRow>
+              <div className="rounded-lg border border-sky-200/60 bg-sky-50/50 px-3 py-2 text-[11px] text-sky-700 dark:border-sky-800/30 dark:bg-sky-900/10 dark:text-sky-300">
+                Depois de escolher o paciente, os campos de pedido e cirurgia passam a respeitar esse contexto.
+              </div>
+            </div>
+          </SurfaceCard>
+        ) : null}
 
-            {/* ASA selector */}
-            <FieldRow label="Classe ASA" required>
-              <div className="grid grid-cols-4 gap-1.5 sm:grid-cols-7">
-                {ASA_OPTIONS.map(o => (
-                  <button key={o.value} type="button"
-                    onClick={() => setAsaClass(o.value)}
-                    title={o.desc}
-                    className={`rounded-lg border px-2 py-2 text-center text-[10px] font-semibold transition ${
-                      asaClass === o.value
-                        ? (ASA_COLOR[o.value] ?? "border-amber-300 bg-amber-50 text-amber-700") + " ring-2 ring-amber-300/50"
-                        : "border-border bg-card/60 text-[var(--gray-500)] hover:border-amber-300"
-                    }`}>
-                    {o.label}
-                    {o.desc && <span className="mt-0.5 block text-[8px] font-normal opacity-70 leading-tight">{o.desc.split(" ").slice(0, 3).join(" ")}</span>}
-                  </button>
-                ))}
+        {step === 2 ? (
+          <SurfaceCard
+            title="2 · Avaliação clínica"
+            subtitle="Classificação ASA, risco cirúrgico e parecer clínico."
+            icon={<Stethoscope size={13} />}
+            accent="bg-emerald-400"
+          >
+            <FieldRow label="Classificação ASA" required>
+              <div className="grid gap-2 sm:grid-cols-3">
+                {ASA_OPTIONS.map((option) => {
+                  const selected = asaClass === option.value
+                  return (
+                    <button
+                      key={option.value}
+                      type="button"
+                      onClick={() => setAsaClass(option.value)}
+                      className={`rounded-lg border px-3 py-2 text-left transition ${
+                        selected
+                          ? "border-amber-400 bg-amber-50 text-amber-800 dark:border-amber-600/60 dark:bg-amber-900/20 dark:text-amber-200"
+                          : "border-white/30 bg-white/25 hover:border-amber-300 dark:border-white/10 dark:bg-white/[0.03]"
+                      }`}
+                    >
+                      <div className={`text-[11px] font-semibold ${selected ? "text-amber-800 dark:text-amber-200" : "text-foreground"}`}>{option.label}</div>
+                      <div className="mt-0.5 text-[10px] text-[var(--gray-500)]">{option.description}</div>
+                    </button>
+                  )
+                })}
               </div>
             </FieldRow>
 
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div className="mt-3 grid gap-3 sm:grid-cols-2">
               <FieldRow label="Risco cirúrgico">
-                <input className={inputCls} placeholder="ex: Baixo, Moderado, Alto..."
-                  value={surgicalRisk} onChange={e => setSurgicalRisk(e.target.value)} />
+                <input
+                  className={inputCls}
+                  placeholder="Ex.: Baixo, moderado, alto..."
+                  value={surgicalRisk}
+                  onChange={(event) => setSurgicalRisk(event.target.value)}
+                />
               </FieldRow>
               <FieldRow label="Estado da avaliação" required>
-                <select className={inputCls} value={status} onChange={e => setStatus(e.target.value)}>
-                  {STATUS_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                <select className={inputCls} value={status} onChange={(event) => setStatus(event.target.value)}>
+                  {STATUS_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>{option.label}</option>
+                  ))}
                 </select>
               </FieldRow>
             </div>
 
-            <FieldRow label="Avaliação médica">
-              <textarea rows={3} className={textareaCls} placeholder="Observações da avaliação médica..."
-                value={medicalEvaluation} onChange={e => setMedicalEvaluation(e.target.value)} />
+            <div className="mt-3 grid gap-3">
+              <FieldRow label="Avaliação médica">
+                <textarea
+                  rows={4}
+                  className={textareaCls}
+                  value={medicalEvaluation}
+                  onChange={(event) => setMedicalEvaluation(event.target.value)}
+                  placeholder="Resumo clínico, comorbilidades e factores de risco..."
+                />
+              </FieldRow>
+              <FieldRow label="Avaliação anestésica">
+                <textarea
+                  rows={4}
+                  className={textareaCls}
+                  value={anestheticEvaluation}
+                  onChange={(event) => setAnestheticEvaluation(event.target.value)}
+                  placeholder="Via aérea, necessidade anestésica, recomendações e precauções..."
+                />
+              </FieldRow>
+            </div>
+          </SurfaceCard>
+        ) : null}
+
+        {step === 3 ? (
+          <SurfaceCard
+            title="3 · Exames e conclusão"
+            subtitle="Exames necessários, consentimento, aptidão e observações finais."
+            icon={<ClipboardCheck size={13} />}
+            accent="bg-violet-400"
+          >
+            <FieldRow label="Exames necessários">
+              <textarea
+                rows={3}
+                className={textareaCls}
+                value={requiredExams}
+                onChange={(event) => setRequiredExams(event.target.value)}
+                placeholder="Hemograma, coagulação, ECG, Rx tórax... ou JSON se precisar."
+              />
             </FieldRow>
-            <FieldRow label="Avaliação anestésica">
-              <textarea rows={3} className={textareaCls} placeholder="Observações da avaliação anestésica..."
-                value={anestheticEvaluation} onChange={e => setAnestheticEvaluation(e.target.value)} />
-            </FieldRow>
-          </section>
-        )}
 
-        {/* ── STEP 3: Exames & conclusão ────────────────────── */}
-        {step === 3 && (
-          <section className={`${GLASS} p-4 space-y-4`}>
-            <p className="flex items-center gap-1.5 text-[11px] font-semibold text-amber-700 dark:text-amber-300">
-              <ClipboardCheck size={13} /> Exames & conclusão
-            </p>
+            <div className="mt-3 grid gap-2 sm:grid-cols-2">
+              <BoolCard
+                label="Exames revistos"
+                description="Confirma que os resultados laboratoriais e complementares já foram analisados."
+                checked={examResultsReviewed}
+                onToggle={() => setExamResultsReviewed((current) => !current)}
+              />
+              <BoolCard
+                label="Consentimento assinado"
+                description="Marca o consentimento informado como obtido antes do procedimento."
+                checked={consentSigned}
+                onToggle={() => setConsentSigned((current) => !current)}
+              />
+            </div>
 
-            <FieldRow label="Exames necessários (separados por vírgula ou JSON)">
-              <textarea rows={2} className={textareaCls}
-                placeholder="ex: Hemograma, Coagulação, ECG, Rx tórax..."
-                value={requiredExams} onChange={e => setRequiredExams(e.target.value)} />
-            </FieldRow>
+            <div className="mt-3 rounded-xl border border-white/30 bg-white/25 p-3 dark:border-white/10 dark:bg-white/[0.03]">
+              <div className="mb-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--gray-500)]">Aptidão para cirurgia</div>
+              <div className="grid gap-2 sm:grid-cols-3">
+                <button
+                  type="button"
+                  onClick={() => setFitForSurgery(true)}
+                  className={`rounded-lg border px-3 py-2 text-[11px] font-semibold transition ${
+                    fitForSurgery === true
+                      ? "border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-700/40 dark:bg-emerald-900/20 dark:text-emerald-300"
+                      : "border-white/30 bg-white/25 text-[var(--gray-600)] hover:border-emerald-300 dark:border-white/10 dark:bg-white/[0.03]"
+                  }`}
+                >
+                  <span className="inline-flex items-center gap-1"><CheckCircle2 size={11} /> Apto</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFitForSurgery(false)}
+                  className={`rounded-lg border px-3 py-2 text-[11px] font-semibold transition ${
+                    fitForSurgery === false
+                      ? "border-rose-300 bg-rose-50 text-rose-700 dark:border-rose-700/40 dark:bg-rose-900/20 dark:text-rose-300"
+                      : "border-white/30 bg-white/25 text-[var(--gray-600)] hover:border-rose-300 dark:border-white/10 dark:bg-white/[0.03]"
+                  }`}
+                >
+                  <span className="inline-flex items-center gap-1"><XCircle size={11} /> Inapto</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFitForSurgery(null)}
+                  className={`rounded-lg border px-3 py-2 text-[11px] font-semibold transition ${
+                    fitForSurgery === null
+                      ? "border-slate-300 bg-slate-50 text-slate-700 dark:border-white/20 dark:bg-white/10 dark:text-slate-200"
+                      : "border-white/30 bg-white/25 text-[var(--gray-600)] hover:border-slate-300 dark:border-white/10 dark:bg-white/[0.03]"
+                  }`}
+                >
+                  Não definido
+                </button>
+              </div>
+            </div>
 
-            {/* boolean toggles */}
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-              {/* exam results reviewed */}
-              <button type="button" onClick={() => setExamResultsReviewed(v => !v)}
-                className={`flex items-center gap-2 rounded-xl border p-3 text-left text-[12px] font-semibold transition ${
-                  examResultsReviewed
-                    ? "border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-700/40 dark:bg-emerald-900/20 dark:text-emerald-300"
-                    : "border-border bg-card/60 text-[var(--gray-500)] hover:border-amber-300"
-                }`}>
-                <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full ${
-                  examResultsReviewed ? "bg-emerald-500 text-white" : "border-2 border-[var(--gray-300)]"
-                }`}>
-                  {examResultsReviewed && <Check size={11} />}
-                </span>
-                Exames revistos
-              </button>
-
-              {/* consent signed */}
-              <button type="button" onClick={() => setConsentSigned(v => !v)}
-                className={`flex items-center gap-2 rounded-xl border p-3 text-left text-[12px] font-semibold transition ${
-                  consentSigned
-                    ? "border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-700/40 dark:bg-emerald-900/20 dark:text-emerald-300"
-                    : "border-border bg-card/60 text-[var(--gray-500)] hover:border-amber-300"
-                }`}>
-                <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full ${
-                  consentSigned ? "bg-emerald-500 text-white" : "border-2 border-[var(--gray-300)]"
-                }`}>
-                  {consentSigned && <Check size={11} />}
-                </span>
-                Consentimento assinado
-              </button>
-
-              {/* fit for surgery — tri-state */}
-              <div className="flex flex-col gap-1 rounded-xl border border-border bg-card/60 p-3">
-                <span className="text-[9px] font-semibold uppercase tracking-wide text-[var(--gray-500)]">Apto para cirurgia</span>
-                <div className="flex gap-1.5">
-                  <button type="button" onClick={() => setFitForSurgery(true)}
-                    className={`flex flex-1 items-center justify-center gap-1 rounded-lg border py-1.5 text-[11px] font-semibold transition ${
-                      fitForSurgery === true
-                        ? "border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-700/40 dark:bg-emerald-900/20"
-                        : "border-border text-[var(--gray-500)] hover:border-emerald-300"
-                    }`}>
-                    <CheckCircle2 size={11} /> Sim
-                  </button>
-                  <button type="button" onClick={() => setFitForSurgery(false)}
-                    className={`flex flex-1 items-center justify-center gap-1 rounded-lg border py-1.5 text-[11px] font-semibold transition ${
-                      fitForSurgery === false
-                        ? "border-rose-300 bg-rose-50 text-rose-700 dark:border-rose-700/40 dark:bg-rose-900/20"
-                        : "border-border text-[var(--gray-500)] hover:border-rose-300"
-                    }`}>
-                    <XCircle size={11} /> Não
-                  </button>
-                  <button type="button" onClick={() => setFitForSurgery(null)}
-                    className={`flex flex-1 items-center justify-center gap-1 rounded-lg border py-1.5 text-[11px] font-semibold transition ${
-                      fitForSurgery === null
-                        ? "border-gray-300 bg-gray-50 text-gray-600 dark:border-white/20 dark:bg-white/10"
-                        : "border-border text-[var(--gray-500)] hover:border-gray-300"
-                    }`}>
-                    — N/D
-                  </button>
+            <div className="mt-3 grid gap-3 sm:grid-cols-[minmax(0,1fr)_220px]">
+              <FieldRow label="Observações clínicas">
+                <textarea
+                  rows={4}
+                  className={textareaCls}
+                  value={observations}
+                  onChange={(event) => setObservations(event.target.value)}
+                  placeholder="Notas finais, exames pendentes, cuidados adicionais e condicionantes..."
+                />
+              </FieldRow>
+              <div className="rounded-xl border border-violet-200/60 bg-violet-50/50 p-3 dark:border-violet-800/30 dark:bg-violet-900/10">
+                <div className="mb-2 flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--gray-500)]">
+                  <FileText size={11} /> Resumo
+                </div>
+                <div className="space-y-1 text-[11px]">
+                  <div className="flex items-start justify-between gap-2">
+                    <span className="text-[var(--gray-500)]">Paciente</span>
+                    <span className="text-right font-semibold text-foreground">{patient?.label || "—"}</span>
+                  </div>
+                  <div className="flex items-start justify-between gap-2">
+                    <span className="text-[var(--gray-500)]">Avaliador</span>
+                    <span className="text-right font-semibold text-foreground">{evaluator?.label || "—"}</span>
+                  </div>
+                  <div className="flex items-start justify-between gap-2">
+                    <span className="text-[var(--gray-500)]">ASA</span>
+                    <span className="text-right font-semibold text-foreground">{asaClass || "—"}</span>
+                  </div>
+                  <div className="flex items-start justify-between gap-2">
+                    <span className="text-[var(--gray-500)]">Estado</span>
+                    <span className="text-right font-semibold text-foreground">
+                      {STATUS_OPTIONS.find((option) => option.value === status)?.label || status}
+                    </span>
+                  </div>
+                  <div className="flex items-start justify-between gap-2">
+                    <span className="text-[var(--gray-500)]">Aptidão</span>
+                    <span className="text-right font-semibold text-foreground">
+                      {fitForSurgery === true ? "Apto" : fitForSurgery === false ? "Inapto" : "Não definido"}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
+          </SurfaceCard>
+        ) : null}
 
-            <FieldRow label="Observações">
-              <textarea rows={3} className={textareaCls} placeholder="Notas adicionais sobre a avaliação..."
-                value={observations} onChange={e => setObservations(e.target.value)} />
-            </FieldRow>
+        <section className={`${GLASS} px-3 py-2.5`}>
+          <div className="flex items-center justify-between gap-3">
+            {step > 1 ? (
+              <button
+                type="button"
+                onClick={() => setStep((current) => current - 1)}
+                className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-border bg-card px-3 text-[12px] text-muted-foreground transition hover:bg-muted"
+              >
+                <ArrowLeft size={13} /> Anterior
+              </button>
+            ) : (
+              <Link
+                href="/surgery/preoperative-assessments"
+                className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-border bg-card px-3 text-[12px] text-muted-foreground transition hover:bg-muted"
+              >
+                <ArrowLeft size={13} /> Cancelar
+              </Link>
+            )}
 
-            {/* summary */}
-            <div className="rounded-xl border border-white/30 bg-white/30 p-3 dark:border-white/10 dark:bg-white/[0.04]">
-              <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--gray-500)]">Resumo</p>
-              <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-[11px]">
-                <span className="text-[var(--gray-500)]">Paciente</span>
-                <span className="font-semibold text-foreground truncate">{patient?.label || "—"}</span>
-                <span className="text-[var(--gray-500)]">Avaliador</span>
-                <span className="font-semibold text-foreground truncate">{evaluator?.label || "—"}</span>
-                <span className="text-[var(--gray-500)]">Classe ASA</span>
-                <span className="font-semibold text-foreground">{asaClass || "—"}</span>
-                <span className="text-[var(--gray-500)]">Estado</span>
-                <span className="font-semibold text-foreground">{STATUS_OPTIONS.find(o => o.value === status)?.label || "—"}</span>
-                <span className="text-[var(--gray-500)]">Aptidão</span>
-                <span className="font-semibold text-foreground">
-                  {fitForSurgery === true ? "✓ Apto" : fitForSurgery === false ? "✗ Inapto" : "— Não definido"}
-                </span>
-              </div>
-            </div>
-          </section>
-        )}
-
-        {/* ── navigation ───────────────────────────────────── */}
-        <div className="flex items-center justify-between gap-3">
-          {step > 1 ? (
-            <button type="button" onClick={() => setStep(s => s - 1)}
-              className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-border bg-card px-3 text-[12px] text-muted-foreground transition hover:bg-muted">
-              <ArrowLeft size={13} /> Anterior
-            </button>
-          ) : (
-            <Link href="/surgery/preoperative-assessments"
-              className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-border bg-card px-3 text-[12px] text-muted-foreground transition hover:bg-muted">
-              <ArrowLeft size={13} /> Cancelar
-            </Link>
-          )}
-
-          {step < STEPS.length ? (
-            <button type="button"
-              disabled={step === 1 ? !canNext1 : step === 2 ? !canNext2 : false}
-              onClick={() => setStep(s => s + 1)}
-              className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-amber-600 px-4 text-[12px] font-semibold text-white transition hover:bg-amber-700 disabled:opacity-40 dark:bg-amber-500/80 dark:hover:bg-amber-500">
-              Seguinte <ArrowRight size={13} />
-            </button>
-          ) : (
-            <button type="button" disabled={saving || !canNext1 || !canNext2} onClick={submit}
-              className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-amber-600 px-4 text-[12px] font-semibold text-white transition hover:bg-amber-700 disabled:opacity-40 dark:bg-amber-500/80 dark:hover:bg-amber-500">
-              {saving ? <Loader2 size={13} className="animate-spin" /> : <Save size={13} />}
-              {saving ? "A guardar..." : "Guardar avaliação"}
-            </button>
-          )}
-        </div>
-
+            {step < STEPS.length ? (
+              <button
+                type="button"
+                disabled={step === 1 ? !canNextStepOne : !canNextStepTwo}
+                onClick={() => setStep((current) => current + 1)}
+                className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-amber-600 px-4 text-[12px] font-semibold text-white transition hover:bg-amber-700 disabled:opacity-40 dark:bg-amber-500/80 dark:hover:bg-amber-500"
+              >
+                Seguinte <ArrowRight size={13} />
+              </button>
+            ) : (
+              <button
+                type="button"
+                disabled={saving || !canNextStepOne || !canNextStepTwo}
+                onClick={submit}
+                className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-amber-600 px-4 text-[12px] font-semibold text-white transition hover:bg-amber-700 disabled:opacity-40 dark:bg-amber-500/80 dark:hover:bg-amber-500"
+              >
+                {saving ? <Loader2 size={13} className="animate-spin" /> : <Check size={13} />}
+                {saving ? "A guardar..." : "Guardar avaliação"}
+              </button>
+            )}
+          </div>
+        </section>
       </div>
     </AppLayout>
   )
