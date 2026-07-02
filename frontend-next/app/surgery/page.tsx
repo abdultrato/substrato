@@ -52,11 +52,11 @@ function KpiPill({
     href?: string
 }) {
     const inner = (
-        <div className={`flex items-center gap-2 rounded-lg border bg-white/40 px-3 py-1.5 shadow-sm backdrop-blur-sm transition dark:bg-white/[0.05] ${accent} ${href ? "hover:bg-white/60 dark:hover:bg-white/[0.09] cursor-pointer" : ""}`}>
-            <span className="font-display text-lg font-bold tabular-nums text-foreground leading-none">
+        <div className={`inline-flex items-center gap-2 rounded-lg border bg-white/40 px-3 py-1.5 shadow-sm backdrop-blur-sm transition dark:bg-white/[0.05] ${accent} ${href ? "hover:bg-white/60 dark:hover:bg-white/[0.09] cursor-pointer" : ""}`}>
+            <span className="font-display text-lg font-bold tabular-nums text-foreground leading-none shrink-0">
                 {loading ? <span className="inline-block h-4 w-6 animate-pulse rounded bg-current opacity-20" /> : value}
             </span>
-            <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground leading-tight max-w-[72px]">{label}</span>
+            <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground leading-tight whitespace-nowrap">{label}</span>
         </div>
     )
     if (href) return <Link href={href}>{inner}</Link>
