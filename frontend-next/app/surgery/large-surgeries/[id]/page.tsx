@@ -174,7 +174,7 @@ export default function LargeSurgeryDetailPage() {
 
   return (
     <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.ENFERMAGEM, GROUPS.MEDICINA]}>
-      <div className="mx-auto w-full max-w-5xl space-y-3 px-1">
+      <div className="mx-auto w-full max-w-5xl space-y-1.5 px-1">
 
         {/* header */}
         <section className={`relative overflow-hidden ${GLASS}`}>
@@ -239,9 +239,9 @@ export default function LargeSurgeryDetailPage() {
         </section>
 
         {/* masonry */}
-        <div style={{ columns: "2", columnGap: "0.75rem" }}>
+        <div style={{ columns: "2", columnGap: "0.5rem" }}>
 
-          <div style={{ breakInside: "avoid", marginBottom: "0.75rem" }}>
+          <div style={{ breakInside: "avoid", marginBottom: "0.5rem" }}>
             <SurfaceCard title="Paciente" icon={<User size={13} />} accent="bg-sky-400">
               <div className="grid grid-cols-2 gap-x-4 gap-y-2">
                 <div className="col-span-2">
@@ -252,7 +252,7 @@ export default function LargeSurgeryDetailPage() {
             </SurfaceCard>
           </div>
 
-          <div style={{ breakInside: "avoid", marginBottom: "0.75rem" }}>
+          <div style={{ breakInside: "avoid", marginBottom: "0.5rem" }}>
             <SurfaceCard title="Procedimentos" icon={<Scissors size={13} />} accent="bg-indigo-400">
               <div className="flex flex-col gap-1.5">
                 {procedureNames.length > 0
@@ -269,7 +269,7 @@ export default function LargeSurgeryDetailPage() {
           </div>
 
           {surgeonNames.length > 0 && (
-            <div style={{ breakInside: "avoid", marginBottom: "0.75rem" }}>
+            <div style={{ breakInside: "avoid", marginBottom: "0.5rem" }}>
               <SurfaceCard title="Cirurgiões" icon={<Stethoscope size={13} />} accent="bg-emerald-400">
                 <div className="flex flex-col gap-1.5">
                   {surgeonNames.map(s => (
@@ -283,7 +283,7 @@ export default function LargeSurgeryDetailPage() {
             </div>
           )}
 
-          <div style={{ breakInside: "avoid", marginBottom: "0.75rem" }}>
+          <div style={{ breakInside: "avoid", marginBottom: "0.5rem" }}>
             <SurfaceCard title="Financeiro" icon={<CreditCard size={13} />} accent="bg-teal-400">
               <div className="grid gap-2">
                 {estimatedPrice > 0 ? (
@@ -308,7 +308,7 @@ export default function LargeSurgeryDetailPage() {
           </div>
 
           {data.ward_name && (
-            <div style={{ breakInside: "avoid", marginBottom: "0.75rem" }}>
+            <div style={{ breakInside: "avoid", marginBottom: "0.5rem" }}>
               <SurfaceCard title="Bloco operatório" icon={<Building2 size={13} />} accent="bg-cyan-400">
                 <div className="flex items-center gap-2 rounded-lg border border-white/20 bg-white/20 px-2.5 py-2 dark:bg-white/[0.03]">
                   <Building2 size={11} className="shrink-0 text-[var(--gray-400)]" />
@@ -319,7 +319,7 @@ export default function LargeSurgeryDetailPage() {
           )}
 
           {consumptions.length > 0 && (
-            <div style={{ breakInside: "avoid", marginBottom: "0.75rem" }}>
+            <div style={{ breakInside: "avoid", marginBottom: "0.5rem" }}>
               <SurfaceCard title="Materiais e produtos" icon={<Package size={13} />} accent="bg-amber-400">
                 <div className="flex flex-col gap-1">
                   {consumptions.map(c => {
@@ -358,7 +358,7 @@ export default function LargeSurgeryDetailPage() {
           )}
 
           {(data.preoperative_diagnosis || data.postoperative_diagnosis) && (
-            <div style={{ breakInside: "avoid", marginBottom: "0.75rem" }}>
+            <div style={{ breakInside: "avoid", marginBottom: "0.5rem" }}>
               <SurfaceCard title="Diagnósticos" icon={<Stethoscope size={13} />} accent="bg-violet-400">
                 <div className="grid gap-2">
                   {data.preoperative_diagnosis && <Field label="Pré-operatório" value={data.preoperative_diagnosis} />}
@@ -368,7 +368,7 @@ export default function LargeSurgeryDetailPage() {
             </div>
           )}
 
-          <div style={{ breakInside: "avoid", marginBottom: "0.75rem" }}>
+          <div style={{ breakInside: "avoid", marginBottom: "0.5rem" }}>
             <SurfaceCard title="Auditoria" icon={<CalendarClock size={13} />} accent="bg-slate-400">
               <div className="grid gap-2">
                 <Field label="Código" value={code} mono />
