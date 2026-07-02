@@ -1,8 +1,9 @@
 "use client"
 
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
-import { AlertCircle, AlertTriangle, FlaskConical, Loader2 } from "lucide-react"
+import Link from "next/link"
+import { AlertCircle, AlertTriangle, ChevronLeft, FlaskConical, Loader2, Search } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
 import { apiFetch, apiFetchList } from "@/lib/api"
@@ -105,7 +106,7 @@ function ReceptionCard({
       className="group relative flex cursor-pointer flex-col gap-1.5 overflow-hidden rounded-xl border border-white/50 bg-white/30 px-3 py-2.5 shadow-sm backdrop-blur-sm transition hover:border-white/70 hover:bg-white/50 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 dark:border-white/10 dark:bg-white/[0.04] dark:hover:border-white/20 dark:hover:bg-white/[0.08]"
     >
       <div className="flex items-start justify-between gap-2">
-        <span className="font-mono text-[11px] font-bold text-foreground">
+        <span className="font-mono text-[10px] font-bold text-sky-700 dark:text-sky-300">
           {row.custom_id ?? `#${row.id}`}
         </span>
         {counts.rejected > 0 && (
@@ -113,15 +114,19 @@ function ReceptionCard({
         )}
       </div>
 
-      <div className="truncate">
-        <span className="text-[11px] font-medium text-foreground">{row.patient_name ?? "—"}</span>
-        {(() => {
-          const meta = [row.patient_age, genderLabel(row.patient_gender)].filter(Boolean).join(" · ")
-          return meta ? (
-            <span className="ml-1 text-[10px] text-[var(--gray-500)]">{meta}</span>
-          ) : null
-        })()}
-      </div>
+      {(row.patient_name || row.patient_age || row.patient_gender) && (
+        <div className="truncate leading-tight">
+          {row.patient_name && (
+            <span className="text-[12px] font-semibold text-foreground">{row.patient_name}</span>
+          )}
+          {(() => {
+            const meta = [row.patient_age, genderLabel(row.patient_gender)].filter(Boolean).join(" · ")
+            return meta ? (
+              <span className="ml-1 text-[10px] text-[var(--gray-500)]">{meta}</span>
+            ) : null
+          })()}
+        </div>
+      )}
 
       <div className="flex flex-wrap gap-1">
         {priority && (
@@ -172,13 +177,18 @@ export default function LabReceptionPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [busyId, setBusyId] = useState<number | null>(null)
+  const [search, setSearch] = useState("")
+  const [query, setQuery] = useState("")
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const load = useCallback(async () => {
     setLoading(true)
     setError(null)
     try {
+      const params = new URLSearchParams({ type: "LAB", status: "pendente" })
+      if (query) params.set("search", query)
       const { items } = await apiFetchList<LabRequest>(
-        "/clinical/labrequest/?type=LAB&status=pendente",
+        `/clinical/labrequest/?${params}`,
         { page: 1, pageSize: 200, clientCache: false }
       )
       setRows(items)
@@ -187,7 +197,13 @@ export default function LabReceptionPage() {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [query])
+
+  function handleSearch(value: string) {
+    setSearch(value)
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(() => setQuery(value), 350)
+  }
 
   useEffect(() => { load() }, [load, safeRefreshToken])
 
@@ -221,26 +237,47 @@ export default function LabReceptionPage() {
 
   return (
     <AppLayout>
-      <div className="mx-auto w-full max-w-[1400px] space-y-4 px-1 py-1">
+      <div className="mx-auto w-full max-w-4xl space-y-4 px-1 py-1">
 
         {/* ── Hero header ── */}
         <section className="relative overflow-hidden rounded-xl border border-sky-200/50 bg-gradient-to-br from-sky-50/80 via-white/60 to-cyan-50/60 shadow-sm backdrop-blur-sm dark:border-sky-800/30 dark:from-sky-950/30 dark:via-slate-900/40 dark:to-cyan-950/20">
           <span className="absolute left-0 top-0 h-full w-1 bg-sky-400" />
           <div className="px-4 py-3 pl-5">
-            <div className="flex items-center gap-2">
-              <FlaskConical size={15} className="text-sky-500" />
-              <div>
-                <h1 className="font-display text-sm font-bold text-foreground leading-tight">
-                  Recepção de Amostras
-                </h1>
-                <p className="text-[10px] text-[var(--gray-500)]">
-                  {loading
-                    ? <><Loader2 size={9} className="inline animate-spin mr-1" />A carregar...</>
-                    : total > 0
-                      ? `${total} requisição${total !== 1 ? "ões" : ""} pendente${total !== 1 ? "s" : ""}`
-                      : "Sem requisições pendentes"
-                  }
-                </p>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <FlaskConical size={15} className="text-sky-500" />
+                <div>
+                  <h1 className="font-display text-sm font-bold text-foreground leading-tight">
+                    Recepção de Amostras
+                  </h1>
+                  <p className="text-[10px] text-[var(--gray-500)]">
+                    {loading
+                      ? <><Loader2 size={9} className="inline animate-spin mr-1" />A carregar...</>
+                      : total > 0
+                        ? `${total} requisição${total !== 1 ? "ões" : ""} pendente${total !== 1 ? "s" : ""}`
+                        : "Sem requisições pendentes"
+                    }
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Link href="/clinical-laboratory"
+                  className="inline-flex h-8 items-center gap-1 rounded-lg border border-white/40 bg-white/30 px-2.5 text-[11px] text-[var(--gray-700)] backdrop-blur-sm transition hover:bg-white/50 dark:border-white/10 dark:text-[var(--gray-300)] dark:hover:bg-white/10">
+                  <ChevronLeft size={11} /> Voltar
+                </Link>
+                <div className="flex items-center gap-1.5 rounded-lg border border-white/50 bg-white/50 px-2.5 py-1.5 backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.06]">
+                  <Search size={11} className="shrink-0 text-[var(--gray-400)]" />
+                  <input
+                    value={search}
+                    onChange={e => handleSearch(e.target.value)}
+                    placeholder="Pesquisar paciente, código..."
+                    className="w-40 bg-transparent text-[11px] text-[var(--text)] outline-none placeholder-[var(--gray-400)]"
+                  />
+                  {search && (
+                    <button type="button" onClick={() => { setSearch(""); setQuery("") }}
+                      className="text-[var(--gray-400)] hover:text-foreground text-[10px]">×</button>
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -281,7 +318,7 @@ export default function LabReceptionPage() {
                   </div>
 
                   {/* cards */}
-                  <div className="flex flex-col gap-2 overflow-y-auto px-3 pb-3 pl-4 max-h-[calc(100vh-210px)] [scrollbar-width:thin]">
+                  <div className="flex flex-col gap-2 overflow-y-auto px-3 pb-3 pl-4 max-h-[calc(100vh-130px)] [scrollbar-width:thin]">
                     {items.length === 0 ? (
                       <div className="rounded-xl border border-dashed border-white/60 px-3 py-6 text-center text-[10px] text-[var(--gray-400)] dark:border-white/10">
                         Sem requisições.
