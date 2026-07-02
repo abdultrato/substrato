@@ -253,17 +253,17 @@ export default function LabRejectionsPage() {
             <Loader2 size={16} className="animate-spin" /> A carregar rejeições...
           </div>
         ) : (
-          <div className="grid w-full min-w-0 grid-cols-1 gap-2 md:grid-cols-2">
+          <div className="grid w-full min-w-0 grid-cols-1 gap-2 md:grid-cols-2" style={{ height: "calc(100vh - 148px)" }}>
             {COLUMNS.map((column) => {
               const items = buckets[column.key]
               return (
                 <section
                   key={column.key}
-                  className={`relative flex flex-col overflow-hidden rounded-xl border bg-gradient-to-br shadow-sm backdrop-blur-sm ${column.colBg}`}
+                  className={`relative flex min-h-0 flex-col overflow-hidden rounded-xl border bg-gradient-to-br shadow-sm backdrop-blur-sm ${column.colBg}`}
                 >
                   <span className={`absolute left-0 top-0 h-full w-1 ${column.leftBar}`} />
 
-                  <div className="flex items-baseline justify-between gap-2 px-3 pb-2.5 pl-4 pt-3">
+                  <div className="flex shrink-0 items-baseline justify-between gap-2 px-3 pb-2.5 pl-4 pt-3">
                     <div className="min-w-0">
                       <h2 className={`text-[10px] font-bold uppercase tracking-widest ${column.headerCls}`}>
                         {column.title}
@@ -275,9 +275,9 @@ export default function LabRejectionsPage() {
                     </span>
                   </div>
 
-                  <div className="flex flex-1 flex-col items-center gap-1.5 overflow-y-auto px-3 pb-3 pl-4 max-h-[calc(100vh-130px)] [scrollbar-width:thin]">
+                  <div className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto px-3 pb-3 pl-4 [scrollbar-width:thin]">
                     {items.length === 0 ? (
-                      <div className="w-full rounded-xl border border-dashed border-white/60 px-3 py-6 text-center text-[10px] text-[var(--gray-400)] dark:border-white/10">
+                      <div className="rounded-xl border border-dashed border-white/60 px-3 py-6 text-center text-[10px] text-[var(--gray-400)] dark:border-white/10">
                         {query ? "Sem rejeições para esta pesquisa." : "Sem rejeições."}
                       </div>
                     ) : (
