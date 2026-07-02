@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import Link from "next/link";
 import AppLayout from "@/components/layout/AppLayout";
 import { GROUPS } from "@/lib/rbac";
 import { apiFetch } from "@/lib/api";
 import {
   ArrowLeft,
+  ChevronDown,
   Scissors,
   User,
   Stethoscope,
@@ -198,6 +199,17 @@ export default function LargeSurgeriesListPage() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
   const [numFilter, setNumFilter] = useState("");
+  const [statusOpen, setStatusOpen] = useState(false);
+  const statusRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!statusOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (statusRef.current && !statusRef.current.contains(e.target as Node)) setStatusOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [statusOpen]);
 
   const load = useCallback(async (q: string, status: string | null, num: string) => {
     setLoading(true); setError(null);
@@ -253,37 +265,54 @@ export default function LargeSurgeriesListPage() {
               </div>
             </div>
 
-            {/* search + status scroll + num */}
+            {/* search + estado + num */}
             <div className="mt-2 flex items-center gap-2">
-              <div className="relative shrink-0 w-44">
+              <div className="relative flex-1">
                 <Search size={11} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--gray-400)]" />
                 <input
                   className="w-full rounded-lg border border-border bg-card/60 py-1.5 pl-7 pr-3 text-[12px] placeholder-[var(--gray-400)] focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-200 dark:focus:ring-indigo-800"
-                  placeholder="Pesquisar..."
+                  placeholder="Pesquisar por código, procedimento ou paciente..."
                   value={search}
                   onChange={e => setSearch(e.target.value)}
                 />
               </div>
 
-              {/* chips inline scroll */}
-              <div className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                {STATUS_FILTER_OPTIONS.map(s => {
-                  const active = statusFilter === s;
-                  const baseCls = STATUS_COLOR[s] ?? "bg-gray-100 text-gray-600";
-                  return (
-                    <button key={s} type="button" onClick={() => toggleStatus(s)}
-                      className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold transition ${
-                        active ? baseCls + " ring-2 ring-offset-1 ring-indigo-400" : "bg-card border border-border text-[var(--gray-500)] hover:border-indigo-300 hover:text-indigo-600"
-                      }`}>
-                      {STATUS_LABEL[s] ?? s}
-                    </button>
-                  );
-                })}
-                {statusFilter && (
-                  <button type="button" onClick={() => setStatusFilter(null)}
-                    className="shrink-0 rounded-full border border-rose-200 bg-rose-50 px-2 py-0.5 text-[10px] font-semibold text-rose-600 hover:bg-rose-100">
-                    × limpar
-                  </button>
+              {/* estado dropdown */}
+              <div ref={statusRef} className="relative shrink-0">
+                <button type="button" onClick={() => setStatusOpen(v => !v)}
+                  className={`inline-flex h-[34px] items-center gap-1.5 rounded-lg border px-2.5 text-[12px] transition ${
+                    statusFilter
+                      ? (STATUS_COLOR[statusFilter] ?? "bg-card border-border text-foreground") + " border-transparent"
+                      : "border-border bg-card/60 text-[var(--gray-500)] hover:border-indigo-300 hover:text-indigo-600"
+                  }`}>
+                  {statusFilter ? STATUS_LABEL[statusFilter] : "Estado"}
+                  <ChevronDown size={11} className={`transition-transform ${statusOpen ? "rotate-180" : ""}`} />
+                </button>
+                {statusOpen && (
+                  <div className="absolute right-0 top-[calc(100%+4px)] z-50 w-44 rounded-xl border border-border bg-card shadow-xl">
+                    {statusFilter && (
+                      <button type="button"
+                        onClick={() => { setStatusFilter(null); setStatusOpen(false); }}
+                        className="flex w-full items-center gap-2 border-b border-border px-3 py-1.5 text-[11px] font-semibold text-rose-500 hover:bg-rose-50/60">
+                        × Limpar filtro
+                      </button>
+                    )}
+                    {STATUS_FILTER_OPTIONS.map(s => {
+                      const active = statusFilter === s;
+                      const colorCls = STATUS_COLOR[s] ?? "text-gray-600";
+                      return (
+                        <button key={s} type="button"
+                          onClick={() => { setStatusFilter(active ? null : s); setStatusOpen(false); }}
+                          className={`flex w-full items-center gap-2 px-3 py-1.5 text-left text-[12px] first:rounded-t-xl last:rounded-b-xl transition ${
+                            active ? "bg-indigo-50 font-semibold text-indigo-700 dark:bg-indigo-900/20" : "hover:bg-muted"
+                          }`}>
+                          <span className={`h-2 w-2 shrink-0 rounded-full ${STATUS_COLOR[s]?.match(/bg-\S+/)?.[0] ?? "bg-gray-300"}`} />
+                          <span className="flex-1">{STATUS_LABEL[s] ?? s}</span>
+                          {active && <span className="text-[10px] text-indigo-500">✓</span>}
+                        </button>
+                      );
+                    })}
+                  </div>
                 )}
               </div>
 
