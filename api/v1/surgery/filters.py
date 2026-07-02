@@ -32,6 +32,8 @@ BASE_FIELDS = ["tenant", "custom_id", "deleted", "created_at", "updated_at"]
 
 
 class SurgeryFilter(SafeFilterSet):
+    scheduled_date = django_filters.DateFilter(field_name="scheduled_for", lookup_expr="date")
+
     class Meta:
         model = Surgery
         fields = [
@@ -50,12 +52,16 @@ class SurgeryFilter(SafeFilterSet):
 
 
 class SmallSurgeryFilter(SafeFilterSet):
+    scheduled_date = django_filters.DateFilter(field_name="scheduled_for", lookup_expr="date")
+
     class Meta:
         model = SmallSurgery
         fields = SurgeryFilter.Meta.fields
 
 
 class LargeSurgeryFilter(SafeFilterSet):
+    scheduled_date = django_filters.DateFilter(field_name="scheduled_for", lookup_expr="date")
+
     class Meta:
         model = LargeSurgery
         fields = SurgeryFilter.Meta.fields
