@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   AlertTriangle,
@@ -9,15 +9,109 @@ import {
   Loader2,
   MapPin,
   Save,
+  Search,
   Shield,
+  X,
   Zap,
 } from "lucide-react";
 
 import AppLayout from "@/components/layout/AppLayout";
-import RelationSelect from "@/components/ui/RelationSelect";
-import { apiFetch } from "@/lib/api";
+import { apiFetch, apiFetchList } from "@/lib/api";
 import useAuthGuard from "@/hooks/useAuthGuard";
 import { GROUPS } from "@/lib/rbac";
+import { relationOptionsFromRows } from "@/lib/resources/relationOptions";
+import type { RelationTarget } from "@/lib/resources/relationOptions";
+
+const T_USER: RelationTarget = {
+  endpoint: "/identity/user/",
+  labelFields: ["username", "first_name", "last_name"],
+};
+const T_INCIDENT: RelationTarget = {
+  endpoint: "/clinical_laboratory/exposure_incident/",
+  labelFields: ["custom_id"],
+};
+
+function RelationSelect({
+  value, onChange, target, placeholder,
+}: {
+  value: number | null;
+  onChange: (v: number | null, label: string) => void;
+  target: RelationTarget;
+  placeholder?: string;
+}) {
+  const [query,     setQuery]     = useState("");
+  const [label,     setLabel]     = useState("");
+  const [open,      setOpen]      = useState(false);
+  const [results,   setResults]   = useState<{ value: string; label: string }[]>([]);
+  const [searching, setSearching] = useState(false);
+  const debRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lbId   = useId();
+
+  function search(q: string) {
+    setQuery(q); setOpen(true);
+    if (debRef.current) clearTimeout(debRef.current);
+    debRef.current = setTimeout(async () => {
+      setSearching(true);
+      try {
+        const { items } = await apiFetchList<Record<string, any>>(target.endpoint, {
+          page: 1, pageSize: 20,
+          query: { ...(target.staticFilters ?? {}), ...(q.trim() ? { search: q.trim() } : {}) },
+        });
+        setResults(relationOptionsFromRows(items, target));
+      } catch { setResults([]); }
+      finally { setSearching(false); }
+    }, 250);
+  }
+
+  function select(opt: { value: string; label: string }) {
+    onChange(Number(opt.value), opt.label);
+    setLabel(opt.label); setQuery(""); setOpen(false);
+  }
+  function clear() { onChange(null, ""); setLabel(""); }
+
+  return (
+    <div className="space-y-1.5">
+      {value !== null && (
+        <span className="inline-flex items-center gap-1 rounded-full border border-cyan-200 bg-cyan-50 px-2 py-0.5 text-[10px] font-medium text-cyan-700 dark:border-cyan-700/40 dark:bg-cyan-900/20 dark:text-cyan-300">
+          {label}
+          <button type="button" onClick={clear} className="ml-0.5 text-cyan-400 hover:text-cyan-600 transition">
+            <X size={9} />
+          </button>
+        </span>
+      )}
+      {value === null && (
+        <div className="relative z-[999]">
+          <Search size={11} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+          <input type="text" value={query}
+            onChange={(e) => search(e.target.value)}
+            onFocus={() => { setOpen(true); if (!query) search(""); }}
+            onBlur={() => setTimeout(() => setOpen(false), 150)}
+            placeholder={placeholder}
+            className="w-full rounded-md border border-border bg-background py-1.5 pl-7 pr-3 text-xs text-foreground outline-none transition focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20"
+          />
+          {searching && <Loader2 size={11} className="absolute right-2.5 top-1/2 -translate-y-1/2 animate-spin text-muted-foreground" />}
+          {open && (
+            <div id={lbId} role="listbox"
+              className="absolute left-0 right-0 z-[999] mt-1 overflow-hidden rounded-lg border border-border bg-card shadow-lg">
+              {results.length === 0
+                ? <p className="px-3 py-2 text-[11px] text-muted-foreground">{searching ? "A pesquisar…" : "Nenhum resultado."}</p>
+                : <ul className="max-h-48 overflow-y-auto divide-y divide-border/40">
+                    {results.map((opt) => (
+                      <li key={opt.value}>
+                        <button type="button" onMouseDown={() => select(opt)}
+                          className="flex w-full items-center px-3 py-1.5 text-left text-xs text-foreground transition hover:bg-muted">
+                          {opt.label}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
 
 const EDIT_GROUPS = [GROUPS.ADMIN, GROUPS.LABORATORIO];
 
@@ -290,10 +384,9 @@ export default function NewSpillPage() {
                   {staffExposed && (
                     <Field label="Incidente de exposição associado" hint="Se já foi criado um registo">
                       <RelationSelect
-                        endpoint="/clinical_laboratory/exposure_incident/"
+                        target={T_INCIDENT}
                         value={exposureIncidentId}
                         onChange={(id) => setExposureIncidentId(id)}
-                        labelKey="custom_id"
                         placeholder="Procurar incidente…"
                       />
                     </Field>
