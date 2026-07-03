@@ -284,7 +284,6 @@ export default function NewQualityDocumentPage() {
   const router = useRouter();
   const safeRefreshToken = useSafeDataRefreshSignal();
 
-  const [code, setCode] = useState("");
   const [title, setTitle] = useState("");
   const [docType, setDocType] = useState("");
   const [status, setStatus] = useState("RASCUNHO");
@@ -308,7 +307,6 @@ export default function NewQualityDocumentPage() {
 
   function validate() {
     const e: Record<string, string> = {};
-    if (!code.trim()) e.code = "Código obrigatório.";
     if (!title.trim()) e.title = "Título obrigatório.";
     if (!docType) e.docType = "Tipo de documento obrigatório.";
     setErrors(e);
@@ -323,7 +321,6 @@ export default function NewQualityDocumentPage() {
       const data = await apiFetch<{ id?: number }>("/clinical_laboratory/quality_document/", {
         method: "POST",
         body: JSON.stringify({
-          code: code.trim(),
           title: title.trim(),
           document_type: docType,
           status,
@@ -374,9 +371,6 @@ export default function NewQualityDocumentPage() {
                 {title.trim() || "Novo documento"}
               </h1>
               <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
-                {code.trim() && (
-                  <span className="font-mono text-[10px] text-muted-foreground">{code}</span>
-                )}
                 {currentDocType && (
                   <span className="inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-[10px] font-medium text-blue-700 dark:border-blue-700/40 dark:bg-blue-900/20 dark:text-blue-300">
                     {currentDocType.label}
@@ -417,14 +411,6 @@ export default function NewQualityDocumentPage() {
 
           {/* Identificação */}
           <Card icon={FileText} title="Identificação" accent="bg-blue-500">
-            <Field label="Código" required error={errors.code}
-              hint="Ex.: POP-LAB-001, MANUAL-QLD-01">
-              <input type="text" value={code}
-                onChange={(e) => { setCode(e.target.value); if (e.target.value.trim()) setErrors((p) => ({ ...p, code: "" })); }}
-                placeholder="POP-LAB-001"
-                className={`${inputCls} ${errors.code ? "border-red-300 focus:border-red-400" : ""}`}
-              />
-            </Field>
             <Field label="Título" required error={errors.title}>
               <input type="text" value={title}
                 onChange={(e) => { setTitle(e.target.value); if (e.target.value.trim()) setErrors((p) => ({ ...p, title: "" })); }}
