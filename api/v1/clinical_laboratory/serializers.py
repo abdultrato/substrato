@@ -457,7 +457,28 @@ class AcidFastSmearSerializer(serializers.ModelSerializer):
 
 # --- Gestão da Qualidade ---
 class QualityDocumentSerializer(serializers.ModelSerializer):
+    sector_detail   = serializers.SerializerMethodField(read_only=True)
+    owner_detail    = serializers.SerializerMethodField(read_only=True)
+    approver_detail = serializers.SerializerMethodField(read_only=True)
     Meta = _meta(QualityDocument)
+
+    def get_sector_detail(self, obj):
+        s = obj.sector
+        return {"id": s.id, "name": str(s)} if s else None
+
+    def get_owner_detail(self, obj):
+        u = obj.owner
+        if not u:
+            return None
+        name = (u.get_full_name() if callable(getattr(u, "get_full_name", None)) else "") or u.username
+        return {"id": u.id, "name": name}
+
+    def get_approver_detail(self, obj):
+        u = obj.approved_by
+        if not u:
+            return None
+        name = (u.get_full_name() if callable(getattr(u, "get_full_name", None)) else "") or u.username
+        return {"id": u.id, "name": name}
 
 
 class NonconformitySerializer(serializers.ModelSerializer):
