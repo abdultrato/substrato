@@ -593,7 +593,16 @@ class SpillResponseRecordSerializer(serializers.ModelSerializer):
 
 
 class VaccinationRecordSerializer(serializers.ModelSerializer):
+    staff_detail = serializers.SerializerMethodField()
+
     Meta = _meta(VaccinationRecord)
+
+    def get_staff_detail(self, obj):
+        u = obj.staff
+        if not u:
+            return None
+        name = (u.get_full_name() or "") or u.username
+        return {"id": u.id, "name": name}
 
 
 class BiosafetyInspectionSerializer(serializers.ModelSerializer):
