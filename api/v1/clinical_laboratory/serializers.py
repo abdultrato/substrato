@@ -580,4 +580,12 @@ class VaccinationRecordSerializer(serializers.ModelSerializer):
 
 
 class BiosafetyInspectionSerializer(serializers.ModelSerializer):
+    inspector_detail = serializers.SerializerMethodField(read_only=True)
     Meta = _meta(BiosafetyInspection)
+
+    def get_inspector_detail(self, obj):
+        u = obj.inspector
+        if not u:
+            return None
+        name = (u.get_full_name() if callable(getattr(u, "get_full_name", None)) else "") or u.username
+        return {"id": u.id, "name": name}
