@@ -38,6 +38,14 @@ class BiologicalHazard(NoNameCoreModel):
 
     prefix = "BHAZ"
 
+    class HazardType(models.TextChoices):
+        VIRUS = "VIRUS", "Vírus"
+        BACTERIA = "BACTERIA", "Bactéria"
+        FUNGUS = "FUNGO", "Fungo"
+        PARASITE = "PARASITA", "Parasita"
+        PRION = "PRIAO", "Príon"
+        OTHER = "OUTRO", "Outro"
+
     class RiskGroup(models.TextChoices):
         RG1 = "RG1", "Grupo de risco 1"
         RG2 = "RG2", "Grupo de risco 2"
@@ -51,7 +59,11 @@ class BiologicalHazard(NoNameCoreModel):
         NB4 = "NB4", "NB-4 — Nível de biossegurança 4"
 
     name = models.CharField("Agente/perigo", db_column="name", max_length=160)
-    hazard_type = models.CharField("Tipo", db_column="hazard_type", max_length=80, blank=True, default="")
+    hazard_type = models.CharField(
+        "Tipo de perigo", db_column="hazard_type",
+        max_length=10, choices=HazardType.choices,
+        blank=True, default="",
+    )
     risk_group = models.CharField("Grupo de risco", db_column="risk_group", max_length=4,
                                   choices=RiskGroup.choices, default=RiskGroup.RG2, db_index=True)
     transmission_routes = models.ManyToManyField(
