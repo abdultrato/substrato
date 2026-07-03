@@ -14,6 +14,25 @@ from core.models.base import NoNameCoreModel
 USER = settings.AUTH_USER_MODEL
 
 
+class TransmissionRoute(NoNameCoreModel):
+    """Via de transmissão de agente biológico (catálogo partilhado)."""
+
+    prefix = "BTRV"
+
+    name = models.CharField("Nome", db_column="name", max_length=80)
+    description = models.TextField("Descrição", db_column="description", blank=True, default="")
+    active = models.BooleanField("Ativo", db_column="active", default=True, db_index=True)
+
+    class Meta:
+        db_table = "laboratorio_bio_via_transmissao"
+        verbose_name = "Via de transmissão"
+        verbose_name_plural = "Vias de transmissão"
+        ordering = ["name"]
+
+    def __str__(self) -> str:
+        return self.name
+
+
 class BiologicalHazard(NoNameCoreModel):
     """Registo de perigo biológico (agente, grupo de risco, via, contenção)."""
 
@@ -25,15 +44,34 @@ class BiologicalHazard(NoNameCoreModel):
         RG3 = "RG3", "Grupo de risco 3"
         RG4 = "RG4", "Grupo de risco 4"
 
+    class ContainmentLevel(models.TextChoices):
+        NB1 = "NB1", "NB-1 — Nível de biossegurança 1"
+        NB2 = "NB2", "NB-2 — Nível de biossegurança 2"
+        NB3 = "NB3", "NB-3 — Nível de biossegurança 3"
+        NB4 = "NB4", "NB-4 — Nível de biossegurança 4"
+
     name = models.CharField("Agente/perigo", db_column="name", max_length=160)
     hazard_type = models.CharField("Tipo", db_column="hazard_type", max_length=80, blank=True, default="")
     risk_group = models.CharField("Grupo de risco", db_column="risk_group", max_length=4,
                                   choices=RiskGroup.choices, default=RiskGroup.RG2, db_index=True)
-    transmission_route = models.CharField("Via de transmissão", db_column="transmission_route",
-                                          max_length=160, blank=True, default="")
-    required_ppe = models.CharField("EPI requerido", db_column="required_ppe", max_length=200, blank=True, default="")
-    containment_level = models.CharField("Nível de contenção", db_column="containment_level",
-                                         max_length=20, blank=True, default="")
+    transmission_routes = models.ManyToManyField(
+        "laboratorio.TransmissionRoute",
+        verbose_name="Vias de transmissão",
+        related_name="hazards",
+        blank=True,
+        db_table="laboratorio_bio_perigo_vias",
+    )
+    required_ppe_items = models.ManyToManyField(
+        "laboratorio.PPEItem",
+        verbose_name="EPI requerido",
+        related_name="hazards",
+        blank=True,
+        db_table="laboratorio_bio_perigo_epi",
+    )
+    containment_level = models.CharField(
+        "Nível de contenção", db_column="containment_level",
+        max_length=4, choices=ContainmentLevel.choices, blank=True, default="",
+    )
     handling_notes = models.TextField("Manipulação", db_column="handling_notes", blank=True, default="")
     active = models.BooleanField("Ativo", db_column="active", default=True, db_index=True)
 

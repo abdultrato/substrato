@@ -56,6 +56,7 @@ from apps.clinical_laboratory.models import (
     LabRiskAssessment,
     ManagementReview,
     BiologicalHazard,
+    TransmissionRoute,
     ExposureIncident,
     PPEItem,
     PPEDistribution,
@@ -80,6 +81,7 @@ from .serializers import (
     LabRiskAssessmentSerializer,
     ManagementReviewSerializer,
     BiologicalHazardSerializer,
+    TransmissionRouteSerializer,
     ExposureIncidentSerializer,
     PPEItemSerializer,
     PPEDistributionSerializer,
@@ -546,11 +548,18 @@ class ManagementReviewViewSet(ValidatedSearchOrderingMixin, TenantScopedQueryset
 
 
 # --- Biossegurança ---
+class TransmissionRouteViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
+    queryset = TransmissionRoute.objects.all()
+    serializer_class = TransmissionRouteSerializer
+    search_fields = ["custom_id", "name", "description"]
+    ordering_fields = ["name", "active", "created_at"]
+
+
 class BiologicalHazardViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
-    queryset = BiologicalHazard.objects.all()
+    queryset = BiologicalHazard.objects.prefetch_related("transmission_routes", "required_ppe_items").all()
     serializer_class = BiologicalHazardSerializer
-    search_fields = ["custom_id", "name", "transmission_route"]
-    ordering_fields = ["name", "risk_group", "active", "created_at"]
+    search_fields = ["custom_id", "name", "hazard_type"]
+    ordering_fields = ["name", "risk_group", "containment_level", "active", "created_at"]
 
 
 class ExposureIncidentViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
@@ -644,6 +653,7 @@ VIEWSET_MAP = {
     "risk_assessment": LabRiskAssessmentViewSet,
     "management_review": ManagementReviewViewSet,
     # Biossegurança
+    "transmission_route": TransmissionRouteViewSet,
     "hazard": BiologicalHazardViewSet,
     "exposure_incident": ExposureIncidentViewSet,
     "ppe": PPEItemViewSet,

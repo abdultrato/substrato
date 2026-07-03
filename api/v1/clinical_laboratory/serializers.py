@@ -38,6 +38,7 @@ from apps.clinical_laboratory.models import (
     LabRiskAssessment,
     ManagementReview,
     BiologicalHazard,
+    TransmissionRoute,
     ExposureIncident,
     PPEItem,
     PPEDistribution,
@@ -499,17 +500,42 @@ class ManagementReviewSerializer(serializers.ModelSerializer):
     Meta = _meta(ManagementReview)
 
 
-# --- Biossegurança ---
-class BiologicalHazardSerializer(serializers.ModelSerializer):
-    Meta = _meta(BiologicalHazard)
-
-
 class ExposureIncidentSerializer(serializers.ModelSerializer):
     Meta = _meta(ExposureIncident)
 
 
 class PPEItemSerializer(serializers.ModelSerializer):
     Meta = _meta(PPEItem)
+
+
+# --- Biossegurança ---
+class TransmissionRouteSerializer(serializers.ModelSerializer):
+    Meta = _meta(TransmissionRoute)
+
+
+class BiologicalHazardSerializer(serializers.ModelSerializer):
+    transmission_routes = serializers.PrimaryKeyRelatedField(
+        many=True, queryset=TransmissionRoute.objects.all(), required=False,
+    )
+    transmission_routes_detail = TransmissionRouteSerializer(
+        source="transmission_routes", many=True, read_only=True,
+    )
+    required_ppe_items = serializers.PrimaryKeyRelatedField(
+        many=True, queryset=PPEItem.objects.all(), required=False,
+    )
+    required_ppe_items_detail = PPEItemSerializer(
+        source="required_ppe_items", many=True, read_only=True,
+    )
+    containment_level_display = serializers.CharField(
+        source="get_containment_level_display", read_only=True,
+    )
+
+    class Meta:
+        model = BiologicalHazard
+        fields = "__all__"
+        read_only_fields = CORE_READ_ONLY_FIELDS + [
+            "transmission_routes_detail", "required_ppe_items_detail", "containment_level_display",
+        ]
 
 
 class PPEDistributionSerializer(serializers.ModelSerializer):

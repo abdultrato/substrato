@@ -1366,6 +1366,7 @@ from .models_quality import (  # noqa: E402,F401
 )
 from .models_biosafety import (  # noqa: E402,F401
     BiologicalHazard,
+    TransmissionRoute,
     BiosafetyInspection,
     DecontaminationRecord,
     ExposureIncident,
