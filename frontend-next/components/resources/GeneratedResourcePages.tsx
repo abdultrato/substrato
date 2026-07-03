@@ -4,7 +4,7 @@ import Link from "next/link"
 import { useMemo, useState, type ReactNode } from "react"
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation"
 import { useQuery } from "@tanstack/react-query"
-import { Activity, ArrowLeft, BookOpenCheck, Building2, ClipboardList, HeartPulse, Landmark, Package2, Pencil, Scale, Stethoscope, Trash2 } from "lucide-react"
+import { Activity, ArrowLeft, BookOpenCheck, Building2, ChevronLeft, ClipboardList, HeartPulse, Landmark, Package2, Pencil, Scale, Stethoscope, Trash2 } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
 import AutoForm from "@/components/form/AutoForm"
@@ -317,7 +317,7 @@ export function GeneratedResourceCreatePage({
     <AppLayout requiredGroups={ctx.requiredGroups}>
       <div className={`mx-auto w-full px-1 ${isNursingProcedure ? "max-w-4xl space-y-2" : isNursingMaterial ? "max-w-5xl space-y-3" : "max-w-6xl space-y-2.5"}`}>
         {/* Header */}
-        <section className={`relative overflow-hidden ${GLASS} ${isNursingProcedure || isNursingMaterial ? "min-h-[64px]" : "h-[80px]"}`}>
+        <section className={`relative overflow-hidden ${isNursingProcedure || isNursingMaterial ? `${GLASS} min-h-[64px]` : "rounded-xl border border-sky-200/50 bg-gradient-to-br from-sky-50/80 via-white/60 to-cyan-50/60 shadow-sm backdrop-blur-sm dark:border-sky-800/30 dark:from-sky-950/30 dark:via-slate-900/40 dark:to-cyan-950/20 h-[72px]"}`}>
           {isNursingProcedure ? (
             <>
               <div className="pointer-events-none absolute -right-8 -top-16 h-36 w-36 rounded-full bg-violet-500/10 blur-2xl" />
@@ -366,23 +366,22 @@ export function GeneratedResourceCreatePage({
             </>
           ) : (
             <>
-              <span className="absolute left-0 top-0 h-full w-1 bg-[var(--primary-500)]" />
+              <span className="absolute left-0 top-0 h-full w-1 bg-sky-400" />
               <div className="flex h-full items-center justify-between gap-3 px-4 py-3 pl-5">
                 <div className="min-w-0">
-                  <div className="flex items-center gap-1.5 text-[10px] text-[var(--gray-500)]">
-                    <Link href={basePath} className="transition-colors hover:text-foreground">{resourceLabel + "s"}</Link>
+                  <h1 className="font-display text-sm font-bold text-foreground leading-tight">{createActionLabel}</h1>
+                  <div className="flex items-center gap-1 text-[10px] text-[var(--gray-500)]">
+                    <Link href={basePath} className="transition-colors hover:text-foreground">{resourceLabel}</Link>
                     <span>/</span>
-                    <span className="font-semibold text-foreground">{createActionLabel}</span>
+                    <span>{t("Novo", "New")}</span>
                   </div>
                 </div>
-                <div className="flex min-w-0 flex-1 items-center justify-end gap-2 overflow-x-auto">
-                  <Link
-                    href={basePath}
-                    className="inline-flex h-9 items-center rounded-md border border-[var(--border)] bg-[var(--card)] px-3 text-sm font-medium text-[var(--gray-700)] shadow-sm transition-all duration-150 hover:border-[var(--primary-300)] hover:bg-[var(--gray-100)] hover:text-[var(--text)]"
-                  >
-                    {t("Voltar", "Back")}
-                  </Link>
-                </div>
+                <Link
+                  href={basePath}
+                  className="inline-flex h-8 items-center gap-1 rounded-lg border border-white/40 bg-white/30 px-2.5 text-[11px] text-[var(--gray-700)] backdrop-blur-sm transition hover:bg-white/50 dark:border-white/10 dark:text-[var(--gray-300)] dark:hover:bg-white/10"
+                >
+                  <ChevronLeft size={11} /> {t("Voltar", "Back")}
+                </Link>
               </div>
             </>
           )}

@@ -2,12 +2,11 @@
 
 import Link from "next/link"
 import { useEffect, useMemo, useState, type ReactNode } from "react"
-import { Search, RotateCcw, BarChart2, Plus } from "lucide-react"
+import { BarChart2, ChevronLeft, Loader2, Plus, RotateCcw, Search } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
 import ResourceActionPanel from "@/components/resources/ResourceActionPanel"
 import DataTable from "@/components/ui/DataTable"
-import PageHeader from "@/components/ui/PageHeader"
 import Pagination from "@/components/ui/Pagination"
 import useAuthGuard from "@/hooks/useAuthGuard"
 import { useAuth } from "@/hooks/useAuth"
@@ -622,36 +621,93 @@ export default function ResourceListPage({
   return (
     <AppLayout requiredGroups={requiredGroups}>
       <div className="mx-auto w-full max-w-6xl space-y-2.5">
-        <section className="relative overflow-hidden rounded-xl border border-white/20 bg-white/30 px-3 py-2 pl-4 shadow-sm backdrop-blur-md dark:border-white/10 dark:bg-white/10">
-          <span className="absolute left-0 top-0 h-full w-1.5 bg-[var(--primary-500)]" />
-          <PageHeader
-            title={title}
-            subtitle={subtitle}
-            actions={
-              <>
-                {createHref ? (
-                  !isIdentityUserResource || canCreateIdentityUsers ? (
-                    <Link
-                      href={createHref}
-                      className="inline-flex h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg bg-gradient-to-r from-[var(--primary-600)] to-[var(--primary-500)] px-3.5 text-sm font-semibold leading-tight text-white shadow-sm shadow-[var(--primary-500)]/25 transition-all duration-150 hover:shadow-md hover:brightness-105"
-                    >
-                      <Plus size={15} strokeWidth={2.5} />
-                      {createActionLabel}
-                    </Link>
-                  ) : null
-                ) : null}
+        {/* Glassmorphism hero with inline search */}
+        <section className="relative overflow-hidden rounded-xl border border-sky-200/50 bg-gradient-to-br from-sky-50/80 via-white/60 to-cyan-50/60 shadow-sm backdrop-blur-sm dark:border-sky-800/30 dark:from-sky-950/30 dark:via-slate-900/40 dark:to-cyan-950/20">
+          <span className="absolute left-0 top-0 h-full w-1 bg-sky-400" />
+          <div className="px-4 py-3 pl-5">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              {/* Title */}
+              <div className="flex items-center gap-2">
+                <div>
+                  <h1 className="font-display text-sm font-bold text-foreground leading-tight">{resolvedResourceLabel}</h1>
+                  <p className="text-[10px] text-[var(--gray-500)]">{subtitle || resolvedGroupLabel}</p>
+                </div>
+              </div>
 
+              {/* Controls row */}
+              <div className="flex flex-wrap items-center gap-2">
+                {/* Back */}
+                <Link
+                  href={`/${normalizedEndpoint.split("/")[1] ?? ""}`}
+                  className="inline-flex h-8 items-center gap-1 rounded-lg border border-white/40 bg-white/30 px-2.5 text-[11px] text-[var(--gray-700)] backdrop-blur-sm transition hover:bg-white/50 dark:border-white/10 dark:text-[var(--gray-300)] dark:hover:bg-white/10"
+                >
+                  <ChevronLeft size={11} /> {t("Voltar", "Back")}
+                </Link>
+
+                {/* Search */}
+                <div className="flex items-center gap-1.5 rounded-lg border border-white/50 bg-white/50 px-2.5 py-1.5 backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.06]">
+                  <Search size={11} className="shrink-0 text-[var(--gray-400)]" />
+                  <input
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder={t(
+                      `Pesquisar ${resolvedResourceLabel.toLocaleLowerCase("pt")}…`,
+                      `Search ${resolvedResourceLabel.toLowerCase()}…`
+                    )}
+                    className="w-40 bg-transparent text-[11px] text-[var(--text)] outline-none placeholder:text-[var(--gray-400)]"
+                  />
+                  {search && (
+                    <button type="button" onClick={() => setSearch("")}
+                      className="text-[10px] text-[var(--gray-400)] hover:text-foreground">×</button>
+                  )}
+                </div>
+
+                {/* Status filter */}
+                {statusOptions.length > 0 && (
+                  <select
+                    aria-label={t("Estado", "Status")}
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value)}
+                    className="h-8 rounded-lg border border-white/40 bg-white/30 px-2.5 text-[11px] text-[var(--gray-700)] backdrop-blur-sm outline-none dark:border-white/10 dark:bg-white/[0.06] dark:text-[var(--gray-300)]"
+                  >
+                    <option value="">{t("Todos os estados", "All statuses")}</option>
+                    {statusOptions.map((statusValue) => (
+                      <option key={statusValue} value={statusValue}>{tr(statusValue)}</option>
+                    ))}
+                  </select>
+                )}
+
+                {/* Clear */}
+                {(search || statusFilter) && (
+                  <button
+                    type="button"
+                    onClick={() => { setSearch(""); setStatusFilter(""); setPageSize(20); setPage(1); }}
+                    className="inline-flex h-8 items-center gap-1 rounded-lg border border-white/40 bg-white/30 px-2.5 text-[11px] text-[var(--gray-700)] backdrop-blur-sm transition hover:bg-white/50 dark:border-white/10 dark:text-[var(--gray-300)] dark:hover:bg-white/10"
+                  >
+                    <RotateCcw size={11} /> {t("Limpar", "Clear")}
+                  </button>
+                )}
+
+                {/* Report */}
                 <Link
                   href={`/reports?endpoint=${encodeURIComponent(normalizedEndpoint)}&group=${encodeURIComponent(resolvedGroupLabel)}&resource=${encodeURIComponent(resolvedResourceLabel)}`}
-                  className="inline-flex h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg border border-[var(--primary-300)]/60 bg-[var(--primary-500)]/15 px-3.5 text-sm font-semibold text-[var(--primary-700)] shadow-sm backdrop-blur-sm transition hover:bg-[var(--primary-500)]/25 dark:text-[var(--primary-200)]"
+                  className="inline-flex h-8 items-center gap-1 rounded-lg border border-white/40 bg-white/30 px-2.5 text-[11px] text-[var(--gray-700)] backdrop-blur-sm transition hover:bg-white/50 dark:border-white/10 dark:text-[var(--gray-300)] dark:hover:bg-white/10"
                 >
-                  <BarChart2 size={14} />
-                  {t("Ver relatório", "View report")}
+                  <BarChart2 size={11} /> {t("Relatório", "Report")}
                 </Link>
-              </>
-            }
-          />
 
+                {/* Create */}
+                {createHref && (!isIdentityUserResource || canCreateIdentityUsers) && (
+                  <Link
+                    href={createHref}
+                    className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-gradient-to-r from-[var(--primary-600)] to-[var(--primary-500)] px-3 text-[11px] font-semibold text-white shadow-md shadow-[var(--primary-500)]/30 transition hover:brightness-105"
+                  >
+                    <Plus size={13} /> {createActionLabel}
+                  </Link>
+                )}
+              </div>
+            </div>
+          </div>
         </section>
 
         {error && (
@@ -666,74 +722,6 @@ export default function ResourceListPage({
           searchTerm={debouncedSearch}
           statusFilter={statusFilter}
         />
-
-        <div className="relative overflow-hidden rounded-xl border border-white/20 bg-white/20 p-2 pl-3.5 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/5">
-          <span className="absolute left-0 top-0 h-full w-1.5 bg-[var(--primary-500)]" />
-          <div className="flex flex-nowrap items-end gap-2">
-            <label className="min-w-0 flex-1">
-              <div className="relative">
-                <Search className="pointer-events-none absolute left-2.5 top-2.5 h-4 w-4 text-[var(--gray-400)]" />
-                <input
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder={t(
-                    `Pesquise em ${resolvedResourceLabel.toLocaleLowerCase("pt")} por código, nome, estado ou descrição`,
-                    `Search ${resolvedResourceLabel.toLowerCase()} by code, name, status or description`
-                  )}
-                  className="w-full rounded-md border border-white/30 bg-white/55 py-2 pl-8 pr-3 text-sm text-[var(--text)] shadow-sm backdrop-blur-sm transition-colors duration-150 placeholder:text-[var(--gray-400)] hover:border-[var(--primary-400)] focus:border-[var(--primary-500)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-100)] dark:border-white/10 dark:bg-white/10"
-                />
-              </div>
-            </label>
-
-            <label className="w-32 shrink-0 sm:w-40">
-              <select
-                aria-label={t("Estado (na página)", "Status (on page)")}
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="w-full rounded-md border border-white/30 bg-white/55 px-3 py-2 text-sm text-[var(--text)] shadow-sm backdrop-blur-sm transition-colors duration-150 hover:border-[var(--primary-400)] focus:border-[var(--primary-500)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-100)] dark:border-white/10 dark:bg-white/10"
-              >
-                <option value="">{t("Todos", "All")}</option>
-                {statusOptions.map((statusValue) => (
-                  <option key={statusValue} value={statusValue}>
-                    {tr(statusValue)}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <label className="w-24 shrink-0 sm:w-28">
-              <input
-                type="number"
-                inputMode="numeric"
-                aria-label={t("Por página", "Per page")}
-                title={t("Por página", "Per page")}
-                min={1}
-                max={999}
-                value={pageSize}
-                onChange={(e) => {
-                  const raw = Number(e.target.value)
-                  if (!Number.isFinite(raw)) return
-                  setPageSize(Math.max(1, Math.min(999, Math.round(raw))))
-                }}
-                className="w-full rounded-md border border-white/30 bg-white/55 px-3 py-2 text-sm text-[var(--text)] shadow-sm backdrop-blur-sm transition-colors duration-150 hover:border-[var(--primary-400)] focus:border-[var(--primary-500)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-100)] dark:border-white/10 dark:bg-white/10"
-              />
-            </label>
-
-            <button
-              type="button"
-              onClick={() => {
-                setSearch("")
-                setStatusFilter("")
-                setPageSize(20)
-                setPage(1)
-              }}
-              className="inline-flex h-[38px] shrink-0 items-center gap-1 whitespace-nowrap rounded-md border border-white/30 bg-white/45 px-3 text-xs font-semibold text-[var(--gray-700)] shadow-sm backdrop-blur-sm transition-all duration-150 hover:border-[var(--primary-300)] hover:bg-white/60 hover:text-[var(--text)] dark:border-white/10 dark:bg-white/10 dark:text-[var(--gray-200)] dark:hover:bg-white/15"
-            >
-              <RotateCcw size={12} />
-              {t("Limpar", "Clear")}
-            </button>
-          </div>
-        </div>
 
         {loadingData ? (
           <div className="text-sm text-[var(--gray-500)]">{t("Carregando...", "Loading...")}</div>
