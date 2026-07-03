@@ -66,9 +66,9 @@ const SOURCE_WAREHOUSE = "WHS"
 const GLASS =
   "rounded-xl border border-white/20 bg-white/30 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]"
 const FIELD =
-  "mt-1 w-full rounded-lg border border-border bg-background/60 px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-indigo-500/40 transition"
+  "mt-0.5 w-full rounded-md border border-border bg-background/60 px-2 py-1 text-[13px] text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-indigo-500/40 transition"
 const READONLY_FIELD =
-  "mt-1 w-full rounded-lg border border-white/20 bg-white/20 px-3 py-2 text-sm text-foreground dark:border-white/10 dark:bg-white/[0.05]"
+  "mt-0.5 w-full rounded-md border border-white/20 bg-white/20 px-2 py-1 text-[13px] text-foreground dark:border-white/10 dark:bg-white/[0.05]"
 
 function SectionCard({
   title,
@@ -86,10 +86,10 @@ function SectionCard({
   return (
     <section className={`relative ${GLASS}`}>
       <span className={`absolute left-0 top-0 h-full w-1 rounded-l-xl ${accent}`} />
-      <div className="px-4 py-3 pl-5">
-        <div className="mb-3 flex items-start gap-2">
-          <span className={`mt-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${accent} text-white shadow-sm`}>
-            <Icon size={14} />
+      <div className="px-2.5 py-2 pl-3.5">
+        <div className="mb-1.5 flex items-start gap-1.5">
+          <span className={`mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-md ${accent} text-white shadow-sm`}>
+            <Icon size={12} />
           </span>
           <div className="min-w-0">
             <h2 className="text-xs font-semibold leading-tight text-foreground">{title}</h2>
@@ -317,23 +317,23 @@ export default function CriarRequisicaoMateriaisPage() {
 
   return (
     <AppLayout requiredGroups={requiredGroups}>
-      <div className="space-y-3 px-1">
+      <div className="space-y-1.5 px-0.5">
         <section className={`relative overflow-hidden ${GLASS}`}>
           <span className="absolute left-0 top-0 h-full w-1 bg-indigo-500" />
-          <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 pl-5">
-            <div className="flex min-w-0 items-center gap-2">
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-blue-600 text-white shadow-md shadow-indigo-500/20">
-                <PackageSearch size={17} />
+          <div className="flex flex-wrap items-center justify-between gap-1.5 px-2.5 py-2 pl-3.5">
+            <div className="flex min-w-0 items-center gap-1.5">
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-blue-600 text-white shadow-md shadow-indigo-500/20">
+                <PackageSearch size={15} />
               </span>
               <div>
-                <h1 className="text-lg font-bold leading-tight text-foreground">Criar requisição de materiais</h1>
+                <h1 className="text-base font-bold leading-tight text-foreground">Criar requisição de materiais</h1>
               </div>
             </div>
             <Link
               href="/pharmacy/material-requests"
-              className="inline-flex items-center gap-2 rounded-lg border border-white/20 bg-white/20 px-3 py-2 text-sm font-semibold text-foreground transition hover:border-indigo-500/30 hover:bg-white/30 dark:border-white/10 dark:bg-white/[0.06] dark:hover:bg-white/[0.1]"
+              className="inline-flex items-center gap-1 rounded-md border border-white/20 bg-white/20 px-2 py-1 text-[13px] font-semibold text-foreground transition hover:border-indigo-500/30 hover:bg-white/30 dark:border-white/10 dark:bg-white/[0.06] dark:hover:bg-white/[0.1]"
             >
-              <ArrowLeft size={14} />
+              <ArrowLeft size={13} />
               Voltar
             </Link>
           </div>
@@ -351,11 +351,11 @@ export default function CriarRequisicaoMateriaisPage() {
           accent="bg-indigo-500"
         >
           {loadingLots ? (
-            <div className="flex h-20 items-center justify-center text-muted-foreground">
+            <div className="flex h-16 items-center justify-center text-muted-foreground">
               <Loader2 size={18} className="animate-spin" />
             </div>
           ) : (
-            <div className="grid gap-3 md:grid-cols-2">
+            <div className="grid gap-1.5 md:grid-cols-2">
               <div>
                 <label className="block text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
                   Setor solicitante
@@ -405,11 +405,11 @@ export default function CriarRequisicaoMateriaisPage() {
           accent="bg-violet-500"
         >
           {loadingLots ? (
-            <div className="flex h-20 items-center justify-center text-muted-foreground">
+            <div className="flex h-16 items-center justify-center text-muted-foreground">
               <Loader2 size={18} className="animate-spin" />
             </div>
           ) : hasSelectableStock ? (
-            <div className="space-y-3">
+            <div className="space-y-1.5">
               {items.map((it, idx) => {
                 const product = !isWarehouseSource && it.productId ? productById.get(it.productId) : null
                 const warehouseItem =
@@ -440,9 +440,9 @@ export default function CriarRequisicaoMateriaisPage() {
                   ? (warehouseItem ? formatWarehouseItemLabel(warehouseItem) : "")
                   : (product ? formatProductLabel(product) : "")
                 return (
-                  <div key={idx} className="rounded-xl border border-white/20 bg-white/15 p-3 dark:border-white/10 dark:bg-white/[0.03]">
-                    <div className="flex flex-nowrap items-center gap-3 overflow-x-auto">
-                    <div className="relative min-w-[18rem] flex-[1.35] self-center">
+                  <div key={idx} className="rounded-md border border-white/20 bg-white/15 p-2 dark:border-white/10 dark:bg-white/[0.03]">
+                    <div className="flex flex-nowrap items-center gap-1.5 overflow-x-auto">
+                    <div className="relative min-w-[12rem] flex-[1.1] self-center">
                       <input
                         ref={(node) => {
                           searchInputRefs.current[idx] = node
@@ -465,7 +465,7 @@ export default function CriarRequisicaoMateriaisPage() {
                         disabled={submitting}
                       />
                       {mounted && activeSearchIndex === idx && it.searchQuery.trim() && !selectedLabel ? createPortal(
-                        <div data-search-dropdown="true" style={searchDropdownStyle} className="max-h-56 overflow-auto rounded-lg border border-white/20 bg-white/95 shadow-xl backdrop-blur dark:border-white/10 dark:bg-slate-950/95">
+                        <div data-search-dropdown="true" style={searchDropdownStyle} className="max-h-48 overflow-auto rounded-md border border-white/20 bg-white/95 shadow-xl backdrop-blur dark:border-white/10 dark:bg-slate-950/95">
                           {(isWarehouseSource ? filteredWarehouseOptions : filteredProductOptions).slice(0, 8).map((option) => {
                             const optionId = option.id
                             const optionLabel = isWarehouseSource
@@ -492,22 +492,22 @@ export default function CriarRequisicaoMateriaisPage() {
                                     setActiveSearchIndex(null)
                                   }
                                 }
-                                className="block w-full border-b border-white/10 px-3 py-2 text-left text-sm text-foreground transition hover:bg-white/60 last:border-b-0 dark:hover:bg-white/10"
+                                className="block w-full border-b border-white/10 px-2.5 py-1.5 text-left text-[13px] text-foreground transition hover:bg-white/60 last:border-b-0 dark:hover:bg-white/10"
                               >
                                 {optionLabel}
                               </button>
                             )
                           })}
                           {(isWarehouseSource ? filteredWarehouseOptions : filteredProductOptions).length === 0 ? (
-                            <div className="px-3 py-2 text-sm text-muted-foreground">Nenhum resultado.</div>
+                            <div className="px-2.5 py-1.5 text-[13px] text-muted-foreground">Nenhum resultado.</div>
                           ) : null}
                         </div>,
                         document.body
                       ) : null}
                     </div>
-                    <div className="min-w-[20rem] flex-[1.55] self-center">
-                      <div className="rounded-lg border border-white/20 bg-white/20 px-3 py-2 dark:border-white/10 dark:bg-white/[0.05]">
-                        <div className="flex items-center justify-between gap-2">
+                    <div className="min-w-[12rem] flex-[1.05] self-center">
+                      <div className="rounded-md border border-white/20 bg-white/20 px-2 py-1 dark:border-white/10 dark:bg-white/[0.05]">
+                        <div className="flex items-center justify-between gap-1.5">
                           <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
                             {isWarehouseSource ? "Item selecionado" : "Produto selecionado"}
                           </span>
@@ -527,12 +527,12 @@ export default function CriarRequisicaoMateriaisPage() {
                             </button>
                           ) : null}
                         </div>
-                        <div className="mt-1 flex items-center justify-between gap-2">
-                          <div className={`min-w-0 text-sm ${selectedLabel ? "text-foreground" : "text-muted-foreground"}`}>
+                        <div className="mt-0.5 flex items-center justify-between gap-1.5">
+                          <div className={`min-w-0 text-[13px] ${selectedLabel ? "text-foreground" : "text-muted-foreground"}`}>
                             {selectedLabel || (isWarehouseSource ? "Nenhum item selecionado" : "Nenhum produto selecionado")}
                           </div>
                           {product && (stockByProductId.get(product.id) || 0) <= 0 ? (
-                            <div className="shrink-0 text-xs font-medium text-amber-700">
+                            <div className="shrink-0 text-[11px] font-medium text-amber-700">
                               Sem saldo em estoque
                             </div>
                           ) : null}
@@ -540,7 +540,7 @@ export default function CriarRequisicaoMateriaisPage() {
                       </div>
                     </div>
 
-                    <div className="min-w-[5.5rem] w-[5.5rem] shrink-0 self-center">
+                    <div className="min-w-[4.25rem] w-[4.25rem] shrink-0 self-center">
                       <input
                         type="number"
                         min={1}
@@ -554,16 +554,16 @@ export default function CriarRequisicaoMateriaisPage() {
                         aria-label="Quantidade"
                       />
                       {available !== null ? (
-                        <div className="mt-1 text-xs text-[var(--gray-500)]">Disponível: {available}</div>
+                        <div className="mt-0.5 text-[11px] text-[var(--gray-500)]">Disponível: {available}</div>
                       ) : null}
                     </div>
 
-                    <div className="min-w-[3.5rem] shrink-0 self-center">
+                    <div className="min-w-[3rem] shrink-0 self-center">
                       <button
                         type="button"
                         onClick={() => removeItem(idx)}
                         disabled={submitting || items.length <= 1}
-                        className="flex w-full items-center justify-center rounded-lg border border-white/20 bg-white/20 px-2.5 py-2 text-sm font-semibold text-foreground transition hover:bg-white/30 disabled:opacity-60 dark:border-white/10 dark:bg-white/[0.05] dark:hover:bg-white/[0.1]"
+                        className="flex w-full items-center justify-center rounded-md border border-white/20 bg-white/20 px-1.5 py-1 text-sm font-semibold text-foreground transition hover:bg-white/30 disabled:opacity-60 dark:border-white/10 dark:bg-white/[0.05] dark:hover:bg-white/[0.1]"
                         title="Remover"
                         aria-label="Remover item"
                       >
@@ -575,23 +575,23 @@ export default function CriarRequisicaoMateriaisPage() {
                 )
               })}
 
-              <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="flex flex-wrap items-center justify-between gap-1">
                 <button
                   type="button"
                   onClick={addItem}
                   disabled={submitting}
-                  className="inline-flex items-center gap-2 rounded-lg border border-white/20 bg-white/20 px-3 py-2 text-sm font-semibold text-foreground transition hover:bg-white/30 disabled:opacity-60 dark:border-white/10 dark:bg-white/[0.06] dark:hover:bg-white/[0.1]"
+                  className="inline-flex items-center gap-1 rounded-md border border-white/20 bg-white/20 px-2 py-1 text-[13px] font-semibold text-foreground transition hover:bg-white/30 disabled:opacity-60 dark:border-white/10 dark:bg-white/[0.06] dark:hover:bg-white/[0.1]"
                 >
-                  <PlusCircle size={14} />
+                  <PlusCircle size={13} />
                   Adicionar item
                 </button>
                 <button
                   type="button"
                   onClick={submit}
                   disabled={submitting}
-                  className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-indigo-600 to-blue-600 px-3 py-2 text-sm font-semibold text-white transition hover:from-indigo-500 hover:to-blue-500 disabled:opacity-60"
+                  className="inline-flex items-center gap-1 rounded-md bg-gradient-to-r from-indigo-600 to-blue-600 px-2 py-1 text-[13px] font-semibold text-white transition hover:from-indigo-500 hover:to-blue-500 disabled:opacity-60"
                 >
-                  {submitting ? <Loader2 size={14} className="animate-spin" /> : <PackageSearch size={14} />}
+                  {submitting ? <Loader2 size={13} className="animate-spin" /> : <PackageSearch size={13} />}
                   {submitting ? "Criando…" : "Criar requisição"}
                 </button>
               </div>

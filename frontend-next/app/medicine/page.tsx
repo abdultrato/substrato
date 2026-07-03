@@ -17,7 +17,6 @@ import {
 import type { LucideIcon } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
-import PageHeader from "@/components/ui/PageHeader"
 import MetricCard from "@/components/ui/MetricCard"
 import ActionTile from "@/components/ui/ActionTile"
 import { apiFetch, extractTotalCount } from "@/lib/api"
@@ -142,20 +141,33 @@ export default function MedicinaPage() {
 
   return (
     <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.MEDICINA]}>
-      <div className="space-y-6">
-        <PageHeader
-          title="Medicina"
-          actions={
-            podeVerAdmin ? (
+      <div className="space-y-3">
+        <section className="relative overflow-hidden rounded-xl border border-white/20 bg-white/30 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]">
+          <span className="absolute left-0 top-0 h-full w-1 bg-sky-500" />
+          <span className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-sky-400/40 to-transparent" />
+          <div className="flex flex-wrap items-center gap-2 px-3 py-2 pl-4">
+            <div className="flex min-w-0 items-center gap-2">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500 to-cyan-600 text-white shadow-md shadow-sky-500/20">
+                <Stethoscope size={17} />
+              </span>
+              <div className="min-w-0">
+                <h1 className="text-lg font-bold leading-tight text-foreground">Medicina</h1>
+                <p className="text-[11px] text-muted-foreground">
+                  {loading ? "A carregar…" : `${pacientes} pacientes · ${requisicoes} requisições`}
+                </p>
+              </div>
+            </div>
+
+            {podeVerAdmin ? (
               <Link
                 href="/admin/clinical/"
-                className="inline-flex items-center rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50"
+                className="ml-auto inline-flex h-9 items-center rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50"
               >
                 Abrir na Administração
               </Link>
-            ) : null
-          }
-        />
+            ) : null}
+          </div>
+        </section>
 
         {erro ? (
           <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
@@ -163,7 +175,7 @@ export default function MedicinaPage() {
           </div>
         ) : null}
 
-        <div className="flex flex-nowrap gap-3 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="flex flex-nowrap gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <div className="min-w-[160px] flex-1 basis-0">
             <MetricCard label="Pacientes" value={loading ? "..." : pacientes} />
           </div>
@@ -178,7 +190,7 @@ export default function MedicinaPage() {
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-3">
+        <div className="flex flex-wrap gap-2">
           {medicineActionTiles.map((tile) => (
             <div
               key={tile.href}

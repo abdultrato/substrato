@@ -27,7 +27,15 @@ ALLOWED_FILE_NAMES = {
 ALLOWED_SUFFIXES = {".md", ".py", ".ts", ".tsx", ".js", ".json", ".yml", ".yaml", ".txt"}
 SEARCH_ROOTS = (
     "docs",
+    "application",
     "apps/ai_assistant",
+    "apps/reception",
+    "apps/pharmacy",
+    "apps/clinical",
+    "apps/billing",
+    "apps/payments",
+    "apps/warehouse",
+    "apps/insurer",
     "platform",
     "api",
     "security",
@@ -131,12 +139,14 @@ def search_project_context(*, query: str, active_module: str = "", limit: int = 
         return []
 
     matches: list[ProjectContextMatch] = []
+    normalized_active_module = _normalize(active_module)
     for file_path in iter_project_files():
         content = _read_text(file_path)
         if not content:
             continue
         relative = _relative_path(file_path)
         file_score = _score_text(relative, terms) * 2.0
+        file_score += _path_priority_boost(relative=relative, active_module=normalized_active_module)
         for chunk in _chunks(relative=relative, content=content):
             score = file_score + _score_text(chunk["search_text"], terms)
             if score <= 0:
@@ -337,6 +347,8 @@ def _docs_status() -> dict[str, Any]:
         "docs/frontend/architecture.md",
         "docs/roadmap_2026.md",
         "docs/security_baseline.md",
+        "docs/ai/modules/reception.md",
+        "docs/ai/modules/pharmacy.md",
         str(PROJECT_MEMORY_PATH),
         str(AGENTS_CONFIG_PATH),
     ]
@@ -465,6 +477,28 @@ def _kind_for_path(path: str) -> str:
     if path.endswith((".yml", ".yaml", ".json", ".toml")) or path in ALLOWED_FILE_NAMES:
         return "configuration"
     return "project_context"
+
+
+def _path_priority_boost(*, relative: str, active_module: str) -> float:
+    if not active_module:
+        return 0.0
+
+    normalized_relative = str(relative or "").lower().replace("\\", "/").strip()
+    boost = 0.0
+    if normalized_relative == f"docs/ai/modules/{active_module}.md":
+        boost += 20.0
+    elif normalized_relative.startswith("docs/ai/modules/"):
+        boost += 4.0
+
+    module_markers = (
+        f"/{active_module}/",
+        f"apps/{active_module}/",
+        f"application/{active_module}/",
+        f"api/v1/{active_module}/",
+    )
+    if any(marker in normalized_relative for marker in module_markers):
+        boost += 5.0
+    return boost
 
 
 def _title_for_content(content: str, *, fallback: str) -> str:

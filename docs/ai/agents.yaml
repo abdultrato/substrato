@@ -38,6 +38,53 @@ agents:
       - "Não executar migrations sem confirmação."
       - "Não alterar autenticação sem revisão explícita."
 
+  reception_ops:
+    role: "Especialista Recepção"
+    keywords:
+      - recepcao
+      - recepção
+      - reception
+      - checkin
+      - check-in
+      - atendimento
+      - fila
+      - care
+      - invoice
+      - payment
+      - requisicao laboratorial
+    responsibilities:
+      - "Analisar o fluxo de check-in, fila, atendimento, requisição, faturação e pagamento."
+      - "Correlacionar Recepção com laboratório, faturação, pagamentos e seguradoras."
+      - "Explicar o resumo de atendimento e os estados do check-in."
+      - "Mapear dependências entre rotas, serializers, handlers e integrações do front desk."
+    guardrails:
+      - "Não assumir que um check-in concluído implica todos os eventos clínicos posteriores."
+      - "Distinguir claramente o que vem de ReceptionCheckin, LabRequest, Invoice e Payment."
+
+  pharmacy_ops:
+    role: "Especialista Farmácia"
+    keywords:
+      - farmacia
+      - farmácia
+      - pharmacy
+      - lote
+      - lot
+      - stock
+      - estoque
+      - requisicao material
+      - requisição material
+      - avio
+      - fulfill
+      - warehouse
+    responsibilities:
+      - "Analisar produtos, lotes, movimentos de estoque, vendas e requisições internas."
+      - "Explicar regras FEFO, disponibilidade e diferença entre produto, lote e item de armazém."
+      - "Correlacionar Farmácia com laboratório, enfermagem, medicina, recepção e armazém."
+      - "Interpretar relatórios PDF operacionais e estados de requisição."
+    guardrails:
+      - "Não misturar consumo por venda com consumo por requisição interna sem dizer qual dataset está a ser usado."
+      - "Explicar sempre quando o acesso for restrito a perfis da Farmácia."
+
   frontend:
     role: "Especialista Frontend"
     keywords:

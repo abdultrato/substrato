@@ -2,9 +2,10 @@
 
 import { Suspense, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { ClipboardList, Loader2, Pill, Plus, Search, StickyNote, X } from "lucide-react";
+import { ArrowLeft, ClipboardList, Loader2, Pill, Plus, Search, StickyNote, X } from "lucide-react";
 
 import AppLayout from "@/components/layout/AppLayout";
+import PageSizeInput from "@/components/ui/PageSizeInput";
 import { apiFetch } from "@/lib/api";
 import { GROUPS } from "@/lib/rbac";
 
@@ -91,7 +92,7 @@ function PrescriptionsListInner() {
   const [search, setSearch] = useState("");
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
-  const pageSize = 20;
+  const [pageSize, setPageSize] = useState(20);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -108,7 +109,7 @@ function PrescriptionsListInner() {
       }
     } catch { setItems([]); }
     finally { setLoading(false); }
-  }, [search, page]);
+  }, [search, page, pageSize]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -121,31 +122,17 @@ function PrescriptionsListInner() {
         {/* ── Cabeçalho ── */}
         <section className={`relative overflow-hidden ${GLASS}`}>
           <span className="absolute left-0 top-0 h-full w-1 bg-violet-500" />
-          <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 pl-5">
-            <div className="flex min-w-0 items-center gap-2">
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-violet-600 to-purple-600 text-white shadow-md shadow-violet-500/20">
-                <Pill size={17} />
-              </span>
-              <div>
-                <h1 className="text-lg font-bold leading-tight text-foreground">Prescrições</h1>
-                <p className="text-[11px] text-muted-foreground">
-                  {loading ? "A carregar…" : `${total} item${total !== 1 ? "s" : ""}`}
-                </p>
-              </div>
-            </div>
-            <Link href="/medical-records/prescription-items/new"
-              className="inline-flex h-9 items-center gap-1.5 rounded-md bg-gradient-to-br from-violet-600 to-purple-600 px-4 text-sm font-semibold text-white shadow-sm shadow-violet-500/20 transition hover:opacity-90">
-              <Plus size={15} /> Nova prescrição
+          <span className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-violet-400/40 to-transparent" />
+          <div className="flex flex-wrap items-center gap-3 px-4 py-3 pl-5">
+            <Link
+              href="/medical-records"
+              className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-md border border-white/20 bg-white/10 px-3 text-sm font-medium text-foreground backdrop-blur-sm transition hover:bg-white/20"
+            >
+              <ArrowLeft size={14} />
+              Voltar
             </Link>
-          </div>
-        </section>
 
-        {/* ── Filtro ── */}
-        <section className={`relative ${GLASS}`}>
-          <span className="absolute left-0 top-0 h-full w-1 rounded-l-xl bg-slate-400" />
-          <div className="px-4 py-3 pl-5">
-            <label className="mb-1 block text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Pesquisar</label>
-            <div className="relative">
+            <div className="relative min-w-[220px] flex-1 sm:max-w-sm">
               <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
               <input
                 type="text"
@@ -161,6 +148,26 @@ function PrescriptionsListInner() {
                 </button>
               )}
             </div>
+
+            <div className="flex min-w-0 items-center gap-2">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-violet-600 to-purple-600 text-white shadow-md shadow-violet-500/20">
+                <Pill size={17} />
+              </span>
+              <div>
+                <h1 className="text-lg font-bold leading-tight text-foreground">Prescrições</h1>
+                <p className="text-[11px] text-muted-foreground">
+                  {loading ? "A carregar…" : `${total} item${total !== 1 ? "s" : ""}`}
+                </p>
+              </div>
+            </div>
+            <div className="flex shrink-0 items-center gap-1" title="Itens por página">
+              <PageSizeInput value={pageSize} onChange={(value) => { setPageSize(value); setPage(1); }} ariaLabel="Itens por página" min={1} max={100} />
+              <span className="text-[11px] text-muted-foreground">/pág</span>
+            </div>
+            <Link href="/medical-records/prescription-items/new"
+              className="ml-auto inline-flex h-9 shrink-0 items-center gap-1.5 rounded-md bg-gradient-to-br from-violet-600 to-purple-600 px-4 text-sm font-semibold text-white shadow-sm shadow-violet-500/20 transition hover:opacity-90">
+              <Plus size={15} /> Nova prescrição
+            </Link>
           </div>
         </section>
 

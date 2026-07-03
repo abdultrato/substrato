@@ -131,6 +131,7 @@ export default function ProntuarioCardexPage() {
         {/* ── Cabeçalho ── */}
         <section className={`relative overflow-hidden ${GLASS}`}>
           <span className="absolute left-0 top-0 h-full w-1 bg-violet-500" />
+          <span className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-violet-400/40 to-transparent" />
           <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 pl-5">
             <div className="flex min-w-0 items-center gap-2">
               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-violet-600 to-purple-600 text-white shadow-md shadow-violet-500/20">
@@ -148,12 +149,8 @@ export default function ProntuarioCardexPage() {
               <Plus size={15} /> Novo cardex
             </Link>
           </div>
-        </section>
 
-        {/* ── Filtros ── */}
-        <section className={`relative ${GLASS}`}>
-          <span className="absolute left-0 top-0 h-full w-1 rounded-l-xl bg-slate-400" />
-          <div className="flex flex-wrap items-end gap-3 px-4 py-3 pl-5">
+          <div className="flex flex-wrap items-end gap-3 border-t border-white/20 px-4 py-3 pl-5 dark:border-white/10">
             <div className="min-w-[200px] flex-1">
               <label className="mb-1 block text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Pesquisar</label>
               <div className="relative">

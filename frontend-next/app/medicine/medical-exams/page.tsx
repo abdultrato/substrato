@@ -3,10 +3,10 @@
 import { isNotFoundLikeError } from "@/lib/errors/api-error"
 import Link from "next/link"
 import { useEffect, useMemo, useState } from "react"
+import { ClipboardList, Stethoscope } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
 import DataTable from "@/components/ui/DataTable"
-import PageHeader from "@/components/ui/PageHeader"
 import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { apiFetchList } from "@/lib/api"
 import { useAuth } from "@/hooks/useAuth"
@@ -72,21 +72,33 @@ export default function ExamesMedicosPage() {
 
   return (
     <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.MEDICINA]}>
-      <div className="space-y-6">
-        <PageHeader
-          title="Exames médicos"
-          subtitle="Catálogo de exames médicos (imagem/diagnóstico), conforme backend."
-          actions={
-            podeVerAdmin ? (
+      <div className="space-y-3">
+        <section className="relative overflow-hidden rounded-xl border border-white/20 bg-white/30 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]">
+          <span className="absolute left-0 top-0 h-full w-1 bg-sky-500" />
+          <span className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-sky-400/40 to-transparent" />
+          <div className="flex flex-wrap items-center gap-2 px-3 py-2 pl-4">
+            <div className="flex min-w-0 items-center gap-2">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500 to-cyan-600 text-white shadow-md shadow-sky-500/20">
+                <Stethoscope size={17} />
+              </span>
+              <div className="min-w-0">
+                <h1 className="text-lg font-bold leading-tight text-foreground">Exames médicos</h1>
+                <p className="text-[11px] text-muted-foreground">
+                  {loading ? "A carregar…" : `${totalItems} exames no catálogo`}
+                </p>
+              </div>
+            </div>
+
+            {podeVerAdmin ? (
               <Link
                 href="/admin/clinical/medicalexam/"
-                className="inline-flex items-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50"
+                className="ml-auto inline-flex h-9 items-center rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50"
               >
                 Abrir na Administração
               </Link>
-            ) : null
-          }
-        />
+            ) : null}
+          </div>
+        </section>
 
         {erro ? (
           <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
@@ -94,8 +106,11 @@ export default function ExamesMedicosPage() {
           </div>
         ) : null}
 
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="text-sm text-slate-600">Total: {totalItems}</div>
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-white/20 bg-white/20 px-3 py-2 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.03]">
+          <div className="inline-flex items-center gap-1.5 text-sm text-slate-600 dark:text-slate-300">
+            <ClipboardList size={14} />
+            Total: {totalItems}
+          </div>
           <label className="flex items-center gap-2 text-sm text-slate-700">
             <span>Por página</span>
             <select
@@ -112,7 +127,7 @@ export default function ExamesMedicosPage() {
         </div>
 
         {loading ? (
-          <div className="text-sm text-gray-500">Carregando...</div>
+          <div className="rounded-xl border border-white/20 bg-white/20 px-4 py-8 text-sm text-gray-500 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.03]">Carregando...</div>
         ) : (
           <>
             <DataTable<ExameMedicoRow>
@@ -127,7 +142,6 @@ export default function ExamesMedicosPage() {
     </AppLayout>
   )
 }
-
 
 
 

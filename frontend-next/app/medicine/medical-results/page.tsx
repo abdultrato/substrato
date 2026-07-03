@@ -2,10 +2,11 @@
 import { isNotFoundLikeError } from "@/lib/errors/api-error"
 
 import { useCallback, useEffect, useMemo, useState } from "react"
+import Link from "next/link"
+import { ImagePlus, UploadCloud } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
 import Card from "@/components/ui/Card"
-import PageHeader from "@/components/ui/PageHeader"
 import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { apiFetch, apiFetchList } from "@/lib/api"
 import {
@@ -203,11 +204,32 @@ export default function MedicalResultsPage() {
 
   return (
     <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.MEDICINA]}>
-      <div className="space-y-6">
-        <PageHeader
-          title="Resultados médicos"
-          subtitle="Lance laudos e imagens para exames de diagnóstico."
-        />
+      <div className="space-y-3">
+        <section className="relative overflow-hidden rounded-xl border border-white/20 bg-white/30 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]">
+          <span className="absolute left-0 top-0 h-full w-1 bg-sky-500" />
+          <span className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-sky-400/40 to-transparent" />
+          <div className="flex flex-wrap items-center gap-2 px-3 py-2 pl-4">
+            <div className="flex min-w-0 items-center gap-2">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500 to-cyan-600 text-white shadow-md shadow-sky-500/20">
+                <ImagePlus size={17} />
+              </span>
+              <div className="min-w-0">
+                <h1 className="text-lg font-bold leading-tight text-foreground">Resultados médicos</h1>
+                <p className="text-[11px] text-muted-foreground">
+                  {loading ? "A carregar…" : `${files.length} arquivo${files.length !== 1 ? "s" : ""} registado${files.length !== 1 ? "s" : ""}`}
+                </p>
+              </div>
+            </div>
+
+            <Link
+              href="/medicine/medical-exams"
+              className="ml-auto inline-flex h-9 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50"
+            >
+              <UploadCloud size={14} />
+              Catálogo de exames
+            </Link>
+          </div>
+        </section>
 
         <Card title="Enviar arquivo">
           <form onSubmit={handleSubmit} className="grid gap-3">
@@ -370,6 +392,5 @@ function normalizeMedicalFile(raw: any): MedicalFileRow {
     request: raw?.request,
   }
 }
-
 
 

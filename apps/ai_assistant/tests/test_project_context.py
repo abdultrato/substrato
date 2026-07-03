@@ -7,6 +7,10 @@ from apps.ai_assistant.services.project_context import build_project_context_pay
 from apps.ai_assistant.services.registry import AiToolRegistry
 
 
+def _normalized_paths(payload) -> list[str]:
+    return [str(item["path"]).replace("\\", "/") for item in payload["project_context"]["matches"]]
+
+
 def test_project_context_payload_uses_memory_agents_and_sources() -> None:
     payload = build_project_context_payload(
         query="explique a arquitetura da IA deste projeto",
@@ -51,4 +55,34 @@ def test_gateway_builds_project_context_answer() -> None:
 
     assert "contexto real do projeto" in answer
     assert "Agentes especialistas relevantes" in answer
-    assert "Evidência interna usada" in answer
+    assert "Fontes do projeto encontradas" in answer
+
+
+def test_project_context_finds_reception_module_dossier() -> None:
+    payload = build_project_context_payload(
+        query="catalogue endpoint por endpoint da recepção, checkin, care e pagamento",
+        active_module="reception",
+    )
+
+    paths = _normalized_paths(payload)
+
+    assert any(path == "docs/ai/modules/reception.md" for path in paths)
+    assert any(
+        agent.get("key") in {"reception_ops", "backend"}
+        for agent in payload["project_context"]["agents"]
+    )
+
+
+def test_project_context_finds_pharmacy_module_dossier() -> None:
+    payload = build_project_context_payload(
+        query="como funciona farmacia, lotes, requisicao material, avio e warehouse",
+        active_module="pharmacy",
+    )
+
+    paths = _normalized_paths(payload)
+
+    assert any(path == "docs/ai/modules/pharmacy.md" for path in paths)
+    assert any(
+        agent.get("key") in {"pharmacy_ops", "backend"}
+        for agent in payload["project_context"]["agents"]
+    )
