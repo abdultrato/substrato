@@ -153,21 +153,21 @@ export default function ClinicalLaboratoryHubPage() {
       <div className="space-y-4">
 
         {/* ── Hero ── */}
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-teal-600 via-cyan-600 to-sky-700 px-6 py-6 shadow-lg">
-          {/* decorative circles */}
-          <span className="pointer-events-none absolute -right-10 -top-10 h-52 w-52 rounded-full bg-white/5" />
-          <span className="pointer-events-none absolute -bottom-8 right-24 h-36 w-36 rounded-full bg-white/5" />
+        <div className="relative overflow-hidden rounded-2xl border border-teal-200/60 bg-gradient-to-br from-teal-50/80 via-cyan-50/70 to-sky-100/60 px-6 py-6 shadow-sm backdrop-blur-md dark:border-teal-700/30 dark:bg-gradient-to-br dark:from-teal-950/60 dark:via-cyan-950/50 dark:to-sky-950/60">
+          {/* decorative circles — light */}
+          <span className="pointer-events-none absolute -right-10 -top-10 h-52 w-52 rounded-full bg-teal-300/20 dark:bg-teal-400/10" />
+          <span className="pointer-events-none absolute -bottom-8 right-24 h-36 w-36 rounded-full bg-cyan-300/20 dark:bg-cyan-400/10" />
 
           <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-4">
-              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white/15 shadow-inner backdrop-blur-sm">
-                <FlaskConical size={28} className="text-white" strokeWidth={1.8} />
+              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-teal-500/15 shadow-inner backdrop-blur-sm dark:bg-teal-400/10">
+                <FlaskConical size={28} className="text-teal-700 dark:text-teal-300" strokeWidth={1.8} />
               </div>
               <div>
-                <h1 className="font-display text-2xl font-bold text-white leading-tight">
+                <h1 className="font-display text-2xl font-bold leading-tight text-teal-900 dark:text-teal-100">
                   Laboratório Clínico
                 </h1>
-                <p className="mt-0.5 text-sm text-teal-100/80">
+                <p className="mt-0.5 text-sm text-teal-700/70 dark:text-teal-300/60">
                   LIS · {PHASES.reduce((n, p) => n + p.items.length, 0)} funcionalidades
                 </p>
               </div>
@@ -176,7 +176,7 @@ export default function ClinicalLaboratoryHubPage() {
             {podeAdmin ? (
               <Link
                 href="/admin/clinical_laboratory/"
-                className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-white/15 px-3 py-1.5 text-xs font-medium text-white backdrop-blur-sm transition hover:bg-white/25"
+                className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-teal-300/50 bg-teal-100/60 px-3 py-1.5 text-xs font-medium text-teal-800 backdrop-blur-sm transition hover:bg-teal-200/60 dark:border-teal-600/40 dark:bg-teal-800/30 dark:text-teal-200 dark:hover:bg-teal-700/40"
               >
                 <ShieldCheck size={13} />
                 Admin
@@ -191,9 +191,9 @@ export default function ClinicalLaboratoryHubPage() {
               { label: "Pedidos",             value: loading ? "…" : counts.pedidos },
               { label: "Amostras",            value: loading ? "…" : counts.amostras },
             ].map(({ label, value }) => (
-              <div key={label} className="rounded-xl bg-white/10 px-3 py-2 backdrop-blur-sm">
-                <div className="text-[10px] font-semibold uppercase tracking-wide text-teal-100/70">{label}</div>
-                <div className="font-display text-xl font-bold text-white tabular-nums">{value}</div>
+              <div key={label} className="rounded-xl border border-teal-200/50 bg-white/40 px-3 py-2 backdrop-blur-sm dark:border-teal-700/30 dark:bg-teal-900/30">
+                <div className="text-[10px] font-semibold uppercase tracking-wide text-teal-600/80 dark:text-teal-400/70">{label}</div>
+                <div className="font-display text-xl font-bold tabular-nums text-teal-900 dark:text-teal-100">{value}</div>
               </div>
             ))}
           </div>
