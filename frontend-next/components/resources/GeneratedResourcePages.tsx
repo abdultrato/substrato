@@ -4,7 +4,7 @@ import Link from "next/link"
 import { useMemo, useState, type ReactNode } from "react"
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation"
 import { useQuery } from "@tanstack/react-query"
-import { Activity, ArrowLeft, BookOpenCheck, Building2, ChevronLeft, ClipboardList, HeartPulse, Landmark, Package2, Pencil, Scale, Stethoscope, Trash2 } from "lucide-react"
+import { Activity, ArrowLeft, BookOpenCheck, Building2, ClipboardList, HeartPulse, Landmark, Package2, Pencil, Plus, Scale, Stethoscope, Trash2 } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
 import AutoForm from "@/components/form/AutoForm"
@@ -317,7 +317,7 @@ export function GeneratedResourceCreatePage({
     <AppLayout requiredGroups={ctx.requiredGroups}>
       <div className={`mx-auto w-full px-1 ${isNursingProcedure ? "max-w-4xl space-y-2" : isNursingMaterial ? "max-w-5xl space-y-3" : "max-w-6xl space-y-2.5"}`}>
         {/* Header */}
-        <section className={`relative overflow-hidden ${isNursingProcedure || isNursingMaterial ? `${GLASS} min-h-[64px]` : "rounded-xl border border-sky-200/50 bg-gradient-to-br from-sky-50/80 via-white/60 to-cyan-50/60 shadow-sm backdrop-blur-sm dark:border-sky-800/30 dark:from-sky-950/30 dark:via-slate-900/40 dark:to-cyan-950/20 h-[72px]"}`}>
+        <section className={`relative overflow-hidden ${GLASS} ${isNursingProcedure || isNursingMaterial ? "min-h-[64px]" : ""}`}>
           {isNursingProcedure ? (
             <>
               <div className="pointer-events-none absolute -right-8 -top-16 h-36 w-36 rounded-full bg-violet-500/10 blur-2xl" />
@@ -366,21 +366,25 @@ export function GeneratedResourceCreatePage({
             </>
           ) : (
             <>
-              <span className="absolute left-0 top-0 h-full w-1 bg-sky-400" />
-              <div className="flex h-full items-center justify-between gap-3 px-4 py-3 pl-5">
-                <div className="min-w-0">
-                  <h1 className="font-display text-sm font-bold text-foreground leading-tight">{createActionLabel}</h1>
-                  <div className="flex items-center gap-1 text-[10px] text-[var(--gray-500)]">
-                    <Link href={basePath} className="transition-colors hover:text-foreground">{resourceLabel}</Link>
-                    <span>/</span>
-                    <span>{t("Novo", "New")}</span>
+              <span className="absolute left-0 top-0 h-full w-1 bg-indigo-500" />
+              <div className="flex items-center justify-between gap-2.5 px-4 py-3 pl-5">
+                <div className="flex min-w-0 items-center gap-2.5">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white shadow-md shadow-indigo-500/20">
+                    <Plus size={17} />
+                  </span>
+                  <div className="min-w-0">
+                    <h1 className="text-lg font-bold leading-tight text-foreground">{createActionLabel}</h1>
+                    <p className="font-mono text-[11px] text-muted-foreground">{resourceLabel}</p>
                   </div>
                 </div>
                 <Link
                   href={basePath}
-                  className="inline-flex h-8 items-center gap-1 rounded-lg border border-white/40 bg-white/30 px-2.5 text-[11px] text-[var(--gray-700)] backdrop-blur-sm transition hover:bg-white/50 dark:border-white/10 dark:text-[var(--gray-300)] dark:hover:bg-white/10"
+                  className="group inline-flex shrink-0 items-center gap-2 self-center rounded-lg border border-white/20 bg-white/40 py-1.5 pl-1.5 pr-3 text-xs font-semibold text-foreground shadow-sm backdrop-blur-sm transition hover:border-white/40 hover:bg-white/60 dark:border-white/10 dark:bg-white/[0.04] dark:hover:bg-white/[0.08]"
                 >
-                  <ChevronLeft size={11} /> {t("Voltar", "Back")}
+                  <span className="flex h-6 w-6 items-center justify-center rounded-md bg-indigo-500/10 text-indigo-600 transition group-hover:-translate-x-0.5 dark:text-indigo-400">
+                    <ArrowLeft size={14} />
+                  </span>
+                  {t("Voltar", "Back")}
                 </Link>
               </div>
             </>
@@ -393,7 +397,7 @@ export function GeneratedResourceCreatePage({
               ? ""
               : isNursingMaterial
                 ? "relative overflow-hidden rounded-xl border border-emerald-200/30 bg-white/25 shadow-lg shadow-slate-900/5 backdrop-blur-2xl dark:border-emerald-800/20 dark:bg-white/[0.04]"
-                : "relative overflow-hidden rounded-xl border border-white/50 bg-white/30 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04] [&_input:not([type=checkbox])]:!border-white/40 [&_input:not([type=checkbox])]:!bg-white/60 [&_select]:!border-white/40 [&_select]:!bg-white/60 [&_textarea]:!border-white/40 [&_textarea]:!bg-white/60"
+                : GLASS
           }
         >
           {isNursingMaterial ? (
@@ -402,12 +406,8 @@ export function GeneratedResourceCreatePage({
               <div className="pointer-events-none absolute right-0 top-0 h-24 w-24 rounded-full bg-emerald-400/10 blur-2xl" />
             </>
           ) : null}
-          <div className={isNursingProcedure ? "" : isNursingMaterial ? "relative px-4 py-4 sm:px-5" : "px-4 py-4"}>
-            {!isNursingProcedure && !isNursingMaterial ? (
-              <div className="mb-3 flex items-center gap-2 border-b border-white/40 pb-3 dark:border-white/10">
-                <h2 className="text-sm font-semibold text-foreground">{t("Dados do", "Data for")} {resourceLabel}</h2>
-              </div>
-            ) : null}
+          <div className={isNursingProcedure ? "" : isNursingMaterial ? "relative px-4 py-4 sm:px-5" : "p-4"}>
+            {!isNursingProcedure && !isNursingMaterial ? null : null}
             {isNursingMaterial ? (
               <div className="mb-4 flex flex-wrap items-center justify-between gap-2 border-b border-white/30 pb-3 dark:border-white/10">
                 <div>
