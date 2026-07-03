@@ -238,7 +238,7 @@ export default function BiosafetyInspectionListPage() {
         )}
 
         {/* ── List ──────────────────────────────────────────────── */}
-        <div className="space-y-1.5">
+        <div className="grid gap-1.5 sm:grid-cols-2">
           {items.map((insp) => {
             const bar   = STATUS_BAR[insp.status]   ?? "bg-slate-400";
             const sClr  = STATUS_COLOR[insp.status] ?? "border-border bg-muted text-foreground";
