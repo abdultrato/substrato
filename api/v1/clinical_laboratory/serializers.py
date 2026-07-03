@@ -585,7 +585,21 @@ class WasteRecordSerializer(serializers.ModelSerializer):
 
 
 class DecontaminationRecordSerializer(serializers.ModelSerializer):
+    performed_by_detail = serializers.SerializerMethodField()
+    verified_by_detail  = serializers.SerializerMethodField()
+
     Meta = _meta(DecontaminationRecord)
+
+    def _user_ref(self, u):
+        if not u:
+            return None
+        return {"id": u.id, "name": (u.get_full_name() or "") or u.username}
+
+    def get_performed_by_detail(self, obj):
+        return self._user_ref(obj.performed_by)
+
+    def get_verified_by_detail(self, obj):
+        return self._user_ref(obj.verified_by)
 
 
 class SpillResponseRecordSerializer(serializers.ModelSerializer):
