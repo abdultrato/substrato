@@ -47,6 +47,14 @@ const STATUS_CHOICES = [
   { value: "ARQUIVADO",  label: "Arquivado" },
 ];
 
+const STATUS_BAR: Record<string, string> = {
+  RASCUNHO:   "bg-slate-300",
+  EM_REVISAO: "bg-amber-400",
+  APROVADO:   "bg-blue-500",
+  ATIVO:      "bg-emerald-500",
+  OBSOLETO:   "bg-orange-500",
+  ARQUIVADO:  "bg-slate-400",
+};
 const STATUS_COLOR: Record<string, string> = {
   RASCUNHO:   "border-slate-200 bg-slate-50 text-slate-600 dark:border-slate-700/40 dark:bg-slate-800/30 dark:text-slate-300",
   EM_REVISAO: "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-700/40 dark:bg-amber-900/20 dark:text-amber-300",
@@ -62,9 +70,9 @@ const T_SECTOR: RelationTarget = {
   endpoint: "/clinical_laboratory/sector/",
   labelFields: ["name", "code"],
 };
-const T_USER: RelationTarget = {
-  endpoint: "/identity/user/",
-  labelFields: ["first_name", "last_name", "username"],
+const T_EMPLOYEE: RelationTarget = {
+  endpoint: "/human_resources/employee/",
+  labelFields: ["name", "custom_id"],
 };
 
 // ── FK single-select com pesquisa ─────────────────────────────────────────────
@@ -72,8 +80,12 @@ const T_USER: RelationTarget = {
 function RelationSelect({
   value, onChange, target, placeholder, safeRefreshToken, error,
 }: {
-  value: number | null; onChange: (v: number | null, label: string) => void;
-  target: RelationTarget; placeholder?: string; safeRefreshToken?: number; error?: string;
+  value: number | null;
+  onChange: (v: number | null, label: string) => void;
+  target: RelationTarget;
+  placeholder?: string;
+  safeRefreshToken?: number;
+  error?: string;
 }) {
   const [query, setQuery] = useState("");
   const [label, setLabel] = useState("");
@@ -107,11 +119,9 @@ function RelationSelect({
   }
   function clear() { onChange(null, ""); setLabel(""); setQuery(""); }
 
-  const hasValue = value !== null;
-
   return (
     <div className="space-y-1.5">
-      {hasValue && (
+      {value !== null && (
         <div className="flex flex-wrap gap-1">
           <span className="inline-flex items-center gap-1 rounded-full border border-violet-200 bg-violet-50 px-2 py-0.5 text-[10px] font-medium text-violet-700 dark:border-violet-700/40 dark:bg-violet-900/20 dark:text-violet-300">
             {label}
@@ -121,8 +131,9 @@ function RelationSelect({
           </span>
         </div>
       )}
-      {!hasValue && (
-        <div className="relative">
+      {value === null && (
+        /* z-[999] no wrapper garante que o dropdown não fica oculto pelo card */
+        <div className="relative z-[999]">
           <Search size={11} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <input
             type="text" value={query}
@@ -134,11 +145,12 @@ function RelationSelect({
           />
           {searching && <Loader2 size={11} className="absolute right-2.5 top-1/2 -translate-y-1/2 animate-spin text-muted-foreground" />}
           {open && (
-            <div id={listboxId} role="listbox" className="absolute z-50 mt-1 w-full overflow-hidden rounded-lg border border-border bg-card shadow-lg">
+            <div id={listboxId} role="listbox"
+              className="absolute left-0 right-0 z-[999] mt-1 overflow-hidden rounded-lg border border-border bg-card shadow-lg">
               {results.length === 0 ? (
                 <p className="px-3 py-2 text-[11px] text-muted-foreground">{searching ? "A pesquisar…" : "Nenhum resultado."}</p>
               ) : (
-                <ul className="max-h-40 overflow-y-auto divide-y divide-border/40">
+                <ul className="max-h-48 overflow-y-auto divide-y divide-border/40">
                   {results.map((opt) => (
                     <li key={opt.value}>
                       <button type="button" onMouseDown={() => select(opt)}
@@ -171,15 +183,13 @@ function ChipSingleSelect({
   const [open, setOpen] = useState(false);
   const listboxId = useId();
 
-  const filtered = useMemo(() =>
-    options.filter((o) => o.label.toLowerCase().includes(query.toLowerCase())),
-    [options, query]
+  const filtered = useMemo(
+    () => options.filter((o) => o.label.toLowerCase().includes(query.toLowerCase())),
+    [options, query],
   );
   const selected = options.find((o) => o.value === value) ?? null;
 
-  function select(opt: { value: string; label: string }) {
-    onChange(opt.value); setQuery(""); setOpen(false);
-  }
+  function select(opt: { value: string; label: string }) { onChange(opt.value); setQuery(""); setOpen(false); }
   function clear() { onChange(""); setQuery(""); }
 
   return (
@@ -195,7 +205,7 @@ function ChipSingleSelect({
         </div>
       )}
       {!selected && (
-        <div className="relative">
+        <div className="relative z-[999]">
           <Search size={11} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <input type="text" value={query}
             onChange={(e) => { setQuery(e.target.value); setOpen(true); }}
@@ -205,11 +215,12 @@ function ChipSingleSelect({
             className={`w-full rounded-md border bg-background py-1.5 pl-7 pr-3 text-xs text-foreground outline-none transition focus:ring-2 focus:ring-violet-500/25 ${error ? "border-red-300 focus:border-red-400" : "border-border focus:border-violet-500"}`}
           />
           {open && (
-            <div id={listboxId} role="listbox" className="absolute z-50 mt-1 w-full overflow-hidden rounded-lg border border-border bg-card shadow-lg">
+            <div id={listboxId} role="listbox"
+              className="absolute left-0 right-0 z-[999] mt-1 overflow-hidden rounded-lg border border-border bg-card shadow-lg">
               {filtered.length === 0
                 ? <p className="px-3 py-2 text-[11px] text-muted-foreground">Nenhum resultado.</p>
                 : (
-                  <ul className="max-h-40 overflow-y-auto divide-y divide-border/40">
+                  <ul className="max-h-48 overflow-y-auto divide-y divide-border/40">
                     {filtered.map((opt) => (
                       <li key={opt.value}>
                         <button type="button" onMouseDown={() => select(opt)}
@@ -235,8 +246,9 @@ function Card({ icon: Icon, title, children, accent }: {
   icon: React.ElementType; title: string; children: React.ReactNode; accent?: string;
 }) {
   return (
-    <section className="relative z-0 overflow-hidden rounded-xl border border-white/20 bg-white/25 shadow-sm backdrop-blur-sm focus-within:z-50 dark:bg-white/5 dark:border-white/10">
-      {accent && <span className={`absolute inset-y-0 left-0 w-1 ${accent}`} />}
+    /* overflow-visible para que dropdowns de campos filhos não sejam cortados */
+    <section className="relative z-0 overflow-visible rounded-xl border border-white/20 bg-white/25 shadow-sm backdrop-blur-sm focus-within:z-50 dark:bg-white/5 dark:border-white/10">
+      {accent && <span className={`absolute inset-y-0 left-0 w-1 rounded-l-xl ${accent}`} />}
       <div className="flex items-center gap-1.5 border-b border-border/50 px-3 py-1.5 pl-4">
         <Icon size={11} className="text-[var(--primary-600)] dark:text-[var(--primary-400)]" />
         <h2 className="text-[11px] font-semibold text-foreground">{title}</h2>
@@ -275,7 +287,6 @@ export default function NewQualityDocumentPage() {
   const [code, setCode] = useState("");
   const [title, setTitle] = useState("");
   const [docType, setDocType] = useState("");
-  const [version, setVersion] = useState("1.0");
   const [status, setStatus] = useState("RASCUNHO");
   const [sector, setSector] = useState<number | null>(null);
   const [sectorLabel, setSectorLabel] = useState("");
@@ -300,7 +311,6 @@ export default function NewQualityDocumentPage() {
     if (!code.trim()) e.code = "Código obrigatório.";
     if (!title.trim()) e.title = "Título obrigatório.";
     if (!docType) e.docType = "Tipo de documento obrigatório.";
-    if (!version.trim()) e.version = "Versão obrigatória.";
     setErrors(e);
     return Object.keys(e).length === 0;
   }
@@ -316,7 +326,6 @@ export default function NewQualityDocumentPage() {
           code: code.trim(),
           title: title.trim(),
           document_type: docType,
-          version: version.trim(),
           status,
           sector: sector ?? null,
           owner: owner ?? null,
@@ -346,13 +355,7 @@ export default function NewQualityDocumentPage() {
             <div className="absolute -right-8 -top-8 h-28 w-28 rounded-full bg-blue-500/10 blur-2xl" />
             <div className="absolute -bottom-6 left-8 h-20 w-20 rounded-full bg-indigo-500/10 blur-2xl" />
           </div>
-          {status && <span className={`absolute inset-y-0 left-0 w-1 rounded-l-xl ${
-            status === "ATIVO" ? "bg-emerald-500" :
-            status === "APROVADO" ? "bg-blue-500" :
-            status === "EM_REVISAO" ? "bg-amber-400" :
-            status === "OBSOLETO" ? "bg-orange-500" :
-            status === "ARQUIVADO" ? "bg-slate-400" : "bg-slate-300"
-          }`} />}
+          <span className={`absolute inset-y-0 left-0 w-1 rounded-l-xl ${STATUS_BAR[status] ?? "bg-slate-300"}`} />
 
           <div className="relative flex flex-wrap items-center gap-3 px-4 py-3">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 shadow-md shadow-blue-500/30">
@@ -384,6 +387,9 @@ export default function NewQualityDocumentPage() {
                     {currentStatus.label}
                   </span>
                 )}
+                <span className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[10px] font-medium text-slate-500 dark:border-slate-700/40 dark:bg-slate-800/30 dark:text-slate-400">
+                  v1.0
+                </span>
               </div>
             </div>
 
@@ -426,12 +432,10 @@ export default function NewQualityDocumentPage() {
                 className={`${inputCls} ${errors.title ? "border-red-300 focus:border-red-400" : ""}`}
               />
             </Field>
-            <Field label="Versão" required error={errors.version}>
-              <input type="text" value={version}
-                onChange={(e) => { setVersion(e.target.value); if (e.target.value.trim()) setErrors((p) => ({ ...p, version: "" })); }}
-                placeholder="1.0"
-                className={`${inputCls} ${errors.version ? "border-red-300 focus:border-red-400" : ""}`}
-              />
+            <Field label="Versão" hint="Atribuída automaticamente pelo sistema. Incrementa a cada edição guardada.">
+              <div className={`${inputCls} cursor-not-allowed bg-muted text-muted-foreground`}>
+                1.0
+              </div>
             </Field>
           </Card>
 
@@ -464,14 +468,17 @@ export default function NewQualityDocumentPage() {
             </Field>
           </Card>
 
-          {/* Responsáveis */}
+          {/* Responsáveis — herdados de RH */}
           <Card icon={User} title="Responsáveis" accent="bg-violet-500">
+            <p className="text-[10px] text-muted-foreground pb-0.5">
+              Seleccione colaboradores do registo de Recursos Humanos.
+            </p>
             <Field label="Proprietário">
               <RelationSelect
                 value={owner}
                 onChange={(v, l) => { setOwner(v); setOwnerLabel(l); }}
-                target={T_USER}
-                placeholder="Pesquisar utilizador…"
+                target={T_EMPLOYEE}
+                placeholder="Pesquisar colaborador (RH)…"
                 safeRefreshToken={safeRefreshToken}
               />
             </Field>
@@ -479,8 +486,8 @@ export default function NewQualityDocumentPage() {
               <RelationSelect
                 value={approvedBy}
                 onChange={(v, l) => { setApprovedBy(v); setApprovedByLabel(l); }}
-                target={T_USER}
-                placeholder="Pesquisar utilizador…"
+                target={T_EMPLOYEE}
+                placeholder="Pesquisar colaborador (RH)…"
                 safeRefreshToken={safeRefreshToken}
               />
             </Field>
@@ -522,16 +529,17 @@ export default function NewQualityDocumentPage() {
             </Card>
           </div>
 
-          {/* Estados disponíveis — referência full width */}
+          {/* Estados — referência clicável full width */}
           <div className="lg:col-span-2">
-            <Card icon={Tag} title="Estado — referência">
+            <Card icon={Tag} title="Estado — clique para selecionar">
               <div className="grid gap-1.5 sm:grid-cols-3 lg:grid-cols-6">
                 {STATUS_CHOICES.map(({ value, label }) => {
                   const isActive = status === value;
                   return (
                     <button key={value} type="button" onClick={() => setStatus(value)}
-                      className={`rounded-lg border px-2.5 py-2 text-left text-[11px] transition focus:outline-none focus:ring-2 focus:ring-violet-500/30 ${isActive ? STATUS_COLOR[value] + " ring-1 ring-current/30" : "border-border bg-background hover:bg-muted"}`}>
-                      <span className={`block font-semibold ${isActive ? "" : "text-foreground"}`}>{label}</span>
+                      className={`relative overflow-hidden rounded-lg border px-2.5 py-2 text-left text-[11px] transition focus:outline-none focus:ring-2 focus:ring-violet-500/30 ${isActive ? STATUS_COLOR[value] + " ring-1 ring-current/30" : "border-border bg-background hover:bg-muted"}`}>
+                      <span className={`absolute inset-y-0 left-0 w-0.5 ${STATUS_BAR[value]}`} />
+                      <span className={`block pl-1 font-semibold ${isActive ? "" : "text-foreground"}`}>{label}</span>
                     </button>
                   );
                 })}
