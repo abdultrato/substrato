@@ -36,6 +36,15 @@ const T_ROUTES: RelationTarget = {
   staticFilters: { active: true },
 };
 
+const HAZARD_TYPE_CHOICES = [
+  { value: "VIRUS",    label: "Vírus" },
+  { value: "BACTERIA", label: "Bactéria" },
+  { value: "FUNGO",    label: "Fungo" },
+  { value: "PARASITA", label: "Parasita" },
+  { value: "PRIAO",    label: "Príon" },
+  { value: "OUTRO",    label: "Outro" },
+];
+
 const CONTAINMENT_CHOICES = [
   { value: "", label: "— Não especificado —" },
   { value: "NB1", label: "NB-1 — Nível de biossegurança 1" },
@@ -149,6 +158,80 @@ function ChipMultiSelect({
           </div>
         )}
       </div>
+      {error && <p className="text-[10px] font-medium text-red-600 dark:text-red-400">{error}</p>}
+    </div>
+  );
+}
+
+// ── Single-select com filtro local (TextChoices) ───────────────────────────────
+
+function ChipSingleSelect({
+  value, onChange, options, placeholder, error,
+}: {
+  value: string; onChange: (v: string) => void;
+  options: { value: string; label: string }[];
+  placeholder?: string; error?: string;
+}) {
+  const [query, setQuery] = useState("");
+  const [open, setOpen] = useState(false);
+  const listboxId = useId();
+
+  const filtered = options.filter((o) =>
+    o.label.toLowerCase().includes(query.toLowerCase())
+  );
+  const selected = options.find((o) => o.value === value) ?? null;
+
+  function select(opt: { value: string; label: string }) {
+    onChange(opt.value);
+    setQuery("");
+    setOpen(false);
+  }
+  function clear() { onChange(""); setQuery(""); }
+
+  return (
+    <div className="space-y-1.5">
+      {selected && (
+        <div className="flex flex-wrap gap-1">
+          <span className="inline-flex items-center gap-1 rounded-full border border-violet-200 bg-violet-50 px-2 py-0.5 text-[10px] font-medium text-violet-700 dark:border-violet-700/40 dark:bg-violet-900/20 dark:text-violet-300">
+            {selected.label}
+            <button type="button" onClick={clear} className="ml-0.5 text-violet-400 hover:text-red-500 transition">
+              <X size={9} />
+            </button>
+          </span>
+        </div>
+      )}
+      {!selected && (
+        <div className="relative">
+          <Search size={11} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+          <input
+            type="text" value={query}
+            onChange={(e) => { setQuery(e.target.value); setOpen(true); }}
+            onFocus={() => setOpen(true)}
+            onBlur={() => setTimeout(() => setOpen(false), 150)}
+            placeholder={placeholder}
+            className={`w-full rounded-md border bg-background py-1.5 pl-7 pr-3 text-xs text-foreground outline-none transition focus:ring-2 focus:ring-violet-500/25 ${error ? "border-red-300 focus:border-red-400" : "border-border focus:border-violet-500"}`}
+          />
+          {open && (
+            <div id={listboxId} role="listbox"
+              className="absolute z-50 mt-1 w-full overflow-hidden rounded-lg border border-border bg-card shadow-lg">
+              {filtered.length === 0 ? (
+                <p className="px-3 py-2 text-[11px] text-muted-foreground">Nenhum resultado.</p>
+              ) : (
+                <ul className="max-h-40 overflow-y-auto divide-y divide-border/40">
+                  {filtered.map((opt) => (
+                    <li key={opt.value}>
+                      <button type="button" onMouseDown={() => select(opt)}
+                        className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs text-foreground transition hover:bg-muted">
+                        {opt.label}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
+        </div>
+      )}
       {error && <p className="text-[10px] font-medium text-red-600 dark:text-red-400">{error}</p>}
     </div>
   );
@@ -336,12 +419,11 @@ export default function NewHazardPage() {
               />
             </Field>
             <Field label="Tipo de perigo">
-              <input
-                type="text"
+              <ChipSingleSelect
                 value={hazardType}
-                onChange={(e) => setHazardType(e.target.value)}
-                placeholder="Ex.: Vírus, Bactéria, Fungo, Parasita…"
-                className={inputCls}
+                onChange={setHazardType}
+                options={HAZARD_TYPE_CHOICES}
+                placeholder="Pesquisar tipo de perigo…"
               />
             </Field>
             <Field label="Grupo de risco" required>
