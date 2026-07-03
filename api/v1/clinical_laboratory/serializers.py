@@ -578,6 +578,27 @@ class BiologicalHazardSerializer(serializers.ModelSerializer):
 
 class PPEDistributionSerializer(serializers.ModelSerializer):
     Meta = _meta(PPEDistribution)
+    ppe_detail = serializers.SerializerMethodField()
+    staff_detail = serializers.SerializerMethodField()
+    distributed_by_detail = serializers.SerializerMethodField()
+
+    def _user_ref(self, u):
+        if not u:
+            return None
+        name = (u.get_full_name() or "").strip() or u.username
+        return {"id": u.id, "name": name}
+
+    def get_ppe_detail(self, obj):
+        p = obj.ppe
+        if not p:
+            return None
+        return {"id": p.id, "name": p.name, "category": p.category, "unit": p.unit}
+
+    def get_staff_detail(self, obj):
+        return self._user_ref(obj.staff)
+
+    def get_distributed_by_detail(self, obj):
+        return self._user_ref(obj.distributed_by)
 
 
 class WasteRecordSerializer(serializers.ModelSerializer):
