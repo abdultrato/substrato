@@ -393,7 +393,7 @@ export function GeneratedResourceCreatePage({
               ? ""
               : isNursingMaterial
                 ? "relative overflow-hidden rounded-xl border border-emerald-200/30 bg-white/25 shadow-lg shadow-slate-900/5 backdrop-blur-2xl dark:border-emerald-800/20 dark:bg-white/[0.04]"
-                : GLASS
+                : "relative overflow-hidden rounded-xl border border-white/50 bg-white/30 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04] [&_input:not([type=checkbox])]:!border-white/40 [&_input:not([type=checkbox])]:!bg-white/60 [&_select]:!border-white/40 [&_select]:!bg-white/60 [&_textarea]:!border-white/40 [&_textarea]:!bg-white/60"
           }
         >
           {isNursingMaterial ? (
@@ -402,11 +402,11 @@ export function GeneratedResourceCreatePage({
               <div className="pointer-events-none absolute right-0 top-0 h-24 w-24 rounded-full bg-emerald-400/10 blur-2xl" />
             </>
           ) : null}
-          <div className={isNursingProcedure ? "" : isNursingMaterial ? "relative px-4 py-4 sm:px-5" : "px-4 py-3"}>
+          <div className={isNursingProcedure ? "" : isNursingMaterial ? "relative px-4 py-4 sm:px-5" : "px-4 py-4"}>
             {!isNursingProcedure && !isNursingMaterial ? (
-              <h2 className="mb-2 text-lg font-semibold text-foreground">
-                {t("Dados do", "Data for")} {resourceLabel}
-              </h2>
+              <div className="mb-3 flex items-center gap-2 border-b border-white/40 pb-3 dark:border-white/10">
+                <h2 className="text-sm font-semibold text-foreground">{t("Dados do", "Data for")} {resourceLabel}</h2>
+              </div>
             ) : null}
             {isNursingMaterial ? (
               <div className="mb-4 flex flex-wrap items-center justify-between gap-2 border-b border-white/30 pb-3 dark:border-white/10">

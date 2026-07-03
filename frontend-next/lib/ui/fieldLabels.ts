@@ -1211,6 +1211,95 @@ const EDUCATION_LABELS: Record<string, LabelsByField> = {
   },
 }
 
+const BIOSAFETY_LABELS: Record<string, LabelsByField> = {
+  hazard: {
+    name: "Nome",
+    hazard_type: "Tipo de perigo",
+    risk_group: "Grupo de risco",
+    transmission_route: "Via de transmissão",
+    required_ppe: "EPI necessário",
+    containment_level: "Nível de contenção",
+    handling_notes: "Notas de manuseamento",
+    active: "Ativo",
+  },
+  "exposure-incident": {
+    type: "Tipo de exposição",
+    severity: "Gravidade",
+    date_of_exposure: "Data da exposição",
+    description: "Descrição do incidente",
+    body_part: "Parte do corpo exposta",
+    source_known: "Fonte conhecida",
+    post_exposure_prophylaxis: "Profilaxia pós-exposição",
+    follow_up_required: "Requer acompanhamento",
+    reported_by: "Reportado por",
+    notes: "Observações",
+  },
+  ppe: {
+    name: "Nome do EPI",
+    category: "Categoria",
+    size: "Tamanho",
+    quantity_in_stock: "Quantidade em stock",
+    minimum_stock_level: "Nível mínimo de stock",
+    supplier: "Fornecedor",
+    expiry_date: "Data de validade",
+    active: "Ativo",
+  },
+  "ppe-distribution": {
+    ppe: "EPI",
+    quantity: "Quantidade",
+    distributed_to: "Distribuído a",
+    sector: "Sector",
+    distribution_date: "Data de distribuição",
+    notes: "Observações",
+  },
+  waste: {
+    waste_type: "Tipo de resíduo",
+    quantity: "Quantidade (kg)",
+    unit: "Unidade",
+    disposal_method: "Método de eliminação",
+    disposal_date: "Data de eliminação",
+    notes: "Observações",
+  },
+  decontamination: {
+    target: "Superfície/equipamento",
+    method: "Método de descontaminação",
+    agent: "Agente descontaminante",
+    date: "Data",
+    performed_by: "Realizado por",
+    notes: "Observações",
+  },
+  spill: {
+    spill_type: "Tipo de derrame",
+    volume: "Volume estimado (mL)",
+    location: "Localização",
+    date: "Data",
+    response_actions: "Ações de resposta",
+    notes: "Observações",
+  },
+  vaccination: {
+    vaccine: "Vacina",
+    dose: "Dose",
+    date_administered: "Data de administração",
+    next_due_date: "Próxima dose",
+    administered_by: "Administrado por",
+    notes: "Observações",
+  },
+  inspection: {
+    date: "Data da inspeção",
+    inspector: "Inspetor",
+    checklist: "Checklist",
+    result: "Resultado",
+    notes: "Observações",
+    next_inspection_date: "Próxima inspeção",
+  },
+}
+
+function biosafetyResourceKeyFromEndpoint(endpoint?: string): string | null {
+  const e = normalizeEndpoint(endpoint)
+  const m = e.match(/\/clinical_laboratory\/(hazard|exposure.incident|ppe|ppe.distribution|waste|decontamination|spill|vaccination|inspection)(?:\/|$)/i)
+  return m?.[1]?.toLowerCase().replace(/_/g, "-") || null
+}
+
 const BLOODBANK_LABELS: Record<string, LabelsByField> = {
   storage: {
     name: "Nome",
@@ -1641,6 +1730,11 @@ export function fieldLabel(opts: {
   const name = String(opts.name || "")
   const title = typeof opts.title === "string" ? opts.title.trim() : ""
   const normalizedName = normalizeFieldKey(name)
+
+  const biosafetyKey = biosafetyResourceKeyFromEndpoint(opts.endpoint)
+  if (biosafetyKey && BIOSAFETY_LABELS[biosafetyKey]?.[name]) {
+    return BIOSAFETY_LABELS[biosafetyKey][name]
+  }
 
   const resourceKey = bloodbankResourceKeyFromEndpoint(opts.endpoint)
   if (resourceKey && BLOODBANK_LABELS[resourceKey]?.[name]) {
