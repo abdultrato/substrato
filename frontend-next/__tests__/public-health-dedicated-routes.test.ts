@@ -20,8 +20,14 @@ const routeChecks = [
 
 // Resources whose list page is a dedicated custom page (not the generic PublicHealthListPage).
 const CUSTOM_LIST_KEYS = new Set<string>(["lot", "vaccine"])
-// Resources whose create/detail/edit pages are dedicated custom pages.
-const CUSTOM_ROUTE_KEYS = new Set<string>(["lot"])
+// Individual create/detail/edit routes that are dedicated custom pages, keyed by `${key}:${suffix}`.
+const CUSTOM_ROUTES = new Set<string>([
+  "lot:new/page.tsx",
+  "lot:[id]/page.tsx",
+  "lot:[id]/edit/page.tsx",
+  "vaccine:[id]/page.tsx",
+  "vaccine:[id]/edit/page.tsx",
+])
 
 function filePath(relativePath: string) {
   return resolve(process.cwd(), relativePath)
@@ -66,8 +72,8 @@ describe("public health dedicated routes", () => {
         expect(existsSync(filePath(routePath))).toBe(true)
 
         const source = readRoute(routePath)
-        // Some resources use dedicated custom create/detail/edit pages instead of the generic resource pages.
-        if (CUSTOM_ROUTE_KEYS.has(resource.key)) {
+        // Some routes use dedicated custom create/detail/edit pages instead of the generic resource pages.
+        if (CUSTOM_ROUTES.has(`${resource.key}:${check.suffix}`)) {
           expect(source).toContain(`/public_health/${resource.key}/`)
           expect(source).not.toContain("resourceKey=")
         } else {
