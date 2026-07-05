@@ -27,6 +27,7 @@ const CUSTOM_ROUTES = new Set<string>([
   "lot:[id]/edit/page.tsx",
   "vaccine:[id]/page.tsx",
   "vaccine:[id]/edit/page.tsx",
+  "campaign:[id]/page.tsx",
 ])
 
 function filePath(relativePath: string) {
