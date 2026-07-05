@@ -9,7 +9,6 @@ import {
   CalendarDays,
   CheckCircle2,
   Clock,
-  Filter,
   Loader2,
   Plus,
   Search,
@@ -23,7 +22,7 @@ import { GROUPS } from "@/lib/rbac";
 
 const VIEW_GROUPS = [GROUPS.ADMIN, GROUPS.LABORATORIO];
 
-// ── Metadata ──────────────────────────────────────────────────────────────────
+// ── Status metadata ───────────────────────────────────────────────────────────
 
 const STATUS_LABEL: Record<string, string> = {
   PLANEADA:  "Planeada",
@@ -31,10 +30,10 @@ const STATUS_LABEL: Record<string, string> = {
   EXPIRADA:  "Expirada",
 };
 
-const STATUS_COLOR: Record<string, string> = {
-  PLANEADA:  "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-700/40 dark:bg-amber-900/20 dark:text-amber-300",
-  CONCLUIDA: "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-700/40 dark:bg-emerald-900/20 dark:text-emerald-300",
-  EXPIRADA:  "border-red-200 bg-red-50 text-red-700 dark:border-red-700/40 dark:bg-red-900/20 dark:text-red-300",
+const STATUS_BADGE: Record<string, string> = {
+  PLANEADA:  "bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-300",
+  CONCLUIDA: "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300",
+  EXPIRADA:  "bg-red-50 text-red-700 dark:bg-red-900/15 dark:text-red-300",
 };
 
 const STATUS_DOT: Record<string, string> = {
@@ -43,11 +42,21 @@ const STATUS_DOT: Record<string, string> = {
   EXPIRADA:  "bg-red-500",
 };
 
-const STATUS_BAR: Record<string, string> = {
+const STATUS_TOP: Record<string, string> = {
   PLANEADA:  "bg-amber-400",
   CONCLUIDA: "bg-emerald-500",
   EXPIRADA:  "bg-red-500",
 };
+
+// Rotating accent tones for card icons
+const TONES = [
+  { icon: "bg-violet-100 text-violet-600 dark:bg-violet-900/30 dark:text-violet-300" },
+  { icon: "bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-300" },
+  { icon: "bg-sky-100 text-sky-600 dark:bg-sky-900/30 dark:text-sky-300" },
+  { icon: "bg-teal-100 text-teal-600 dark:bg-teal-900/30 dark:text-teal-300" },
+  { icon: "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-300" },
+  { icon: "bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-300" },
+];
 
 const STATUSES = Object.entries(STATUS_LABEL);
 
@@ -65,7 +74,6 @@ type Training = {
   competency_verified: boolean;
   status: string;
   staff_display?: string;
-  staff?: number;
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -79,9 +87,7 @@ function fmtDate(d: string | null) {
 
 function isExpiringSoon(expiry: string | null): boolean {
   if (!expiry) return false;
-  const exp = new Date(expiry);
-  const today = new Date();
-  const diff = (exp.getTime() - today.getTime()) / (1000 * 60 * 60 * 24);
+  const diff = (new Date(expiry).getTime() - Date.now()) / 86400000;
   return diff >= 0 && diff <= 30;
 }
 
@@ -96,7 +102,7 @@ export default function TrainingRecordListPage() {
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
   const [page, setPage] = useState(1);
-  const PAGE_SIZE = 20;
+  const PAGE_SIZE = 30;
 
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -126,13 +132,12 @@ export default function TrainingRecordListPage() {
   useEffect(() => { setPage(1); }, [debouncedSearch, filterStatus]);
 
   const totalPages = Math.ceil(total / PAGE_SIZE);
-
-  function clearFilters() { setSearch(""); setFilterStatus(""); setPage(1); }
   const hasFilters = !!(search || filterStatus);
+  function clearFilters() { setSearch(""); setFilterStatus(""); setPage(1); }
 
   return (
     <AppLayout requiredGroups={VIEW_GROUPS}>
-      <div className="mx-auto w-[90%] space-y-2">
+      <div className="mx-auto w-[90%] space-y-3">
 
         {/* ── Hero ──────────────────────────────────────────────── */}
         <div className="relative overflow-hidden rounded-xl border border-white/20 bg-white/30 shadow-sm backdrop-blur-sm dark:bg-white/5 dark:border-white/10">
@@ -184,7 +189,7 @@ export default function TrainingRecordListPage() {
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Pesquisar título, formador, colaborador…"
+              placeholder="Pesquisar título, formador…"
               className="w-full rounded-lg border border-border bg-card py-1.5 pl-7 pr-3 text-xs text-foreground outline-none transition focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20"
             />
             {search && (
@@ -235,86 +240,77 @@ export default function TrainingRecordListPage() {
           </div>
         )}
 
-        {/* ── Lista ─────────────────────────────────────────────── */}
-        <div className="space-y-1.5">
-          {trainings.map((t) => {
-            const bar  = STATUS_BAR[t.status]   ?? "bg-slate-400";
-            const sClr = STATUS_COLOR[t.status] ?? "border-border bg-muted text-foreground";
-            const sDot = STATUS_DOT[t.status]   ?? "bg-slate-400";
-            const sLbl = STATUS_LABEL[t.status] ?? t.status;
-            const trainDate = fmtDate(t.training_date);
+        {/* ── Grid de cards ─────────────────────────────────────── */}
+        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 3xl:grid-cols-6">
+          {trainings.map((t, idx) => {
+            const tone       = TONES[idx % TONES.length];
+            const topBar     = STATUS_TOP[t.status]   ?? "bg-slate-400";
+            const badgeCls   = STATUS_BADGE[t.status] ?? "bg-muted text-foreground";
+            const dotCls     = STATUS_DOT[t.status]   ?? "bg-slate-400";
+            const sLbl       = STATUS_LABEL[t.status] ?? t.status;
+            const trainDate  = fmtDate(t.training_date);
             const expiryDate = fmtDate(t.expiry_date);
-            const expiringSoon = isExpiringSoon(t.expiry_date);
+            const expiring   = isExpiringSoon(t.expiry_date);
 
             return (
               <Link
                 key={t.id}
                 href={`/clinical-laboratory/quality-management/trainings/${t.id}`}
-                className="group relative flex items-start gap-3 overflow-hidden rounded-xl border border-white/20 bg-white/25 px-4 py-3 shadow-sm backdrop-blur-sm transition hover:bg-white/40 hover:shadow-md dark:bg-white/5 dark:border-white/10 dark:hover:bg-white/10"
+                className="group relative overflow-hidden rounded-xl border border-border/70 bg-card/80 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md hover:border-violet-300/60 dark:hover:border-violet-700/40"
               >
-                <span className={`absolute inset-y-0 left-0 w-1 rounded-l-xl ${bar} transition-all group-hover:w-[3px]`} />
+                {/* top accent bar */}
+                <span className={`absolute inset-x-0 top-0 h-0.5 ${topBar}`} />
 
-                <div className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border ${sClr}`}>
-                  <BookOpen size={14} />
-                </div>
-
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-1.5">
-                    <span className={`inline-flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-[9px] font-medium ${sClr}`}>
-                      <span className={`h-1.5 w-1.5 rounded-full ${sDot}`} />
-                      {sLbl}
+                <div className="flex flex-col gap-2 p-3 pt-3.5">
+                  {/* icon + badges row */}
+                  <div className="flex items-start gap-2">
+                    <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${tone.icon}`}>
+                      <BookOpen size={13} />
                     </span>
-
-                    {t.training_type && (
-                      <span className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-[9px] font-medium text-slate-600 dark:border-slate-700/40 dark:bg-slate-800/30 dark:text-slate-300">
-                        {t.training_type}
+                    <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1">
+                      <span className={`inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[9px] font-medium ${badgeCls}`}>
+                        <span className={`h-1.5 w-1.5 rounded-full ${dotCls}`} />
+                        {sLbl}
                       </span>
-                    )}
-
-                    {t.competency_verified && (
-                      <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-1.5 py-0.5 text-[9px] font-medium text-emerald-700 dark:border-emerald-700/40 dark:bg-emerald-900/20 dark:text-emerald-300">
-                        <CheckCircle2 size={9} /> Competência verificada
-                      </span>
-                    )}
-
-                    {expiringSoon && (
-                      <span className="inline-flex items-center gap-1 rounded-full border border-orange-200 bg-orange-50 px-1.5 py-0.5 text-[9px] font-medium text-orange-700 dark:border-orange-700/40 dark:bg-orange-900/20 dark:text-orange-300">
-                        <Clock size={9} /> A expirar em breve
-                      </span>
-                    )}
-
-                    <span className="font-mono text-[9px] text-muted-foreground">{t.custom_id}</span>
+                      {t.competency_verified && (
+                        <span className="inline-flex items-center gap-0.5 rounded-full bg-emerald-50 px-1.5 py-0.5 text-[9px] font-medium text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300">
+                          <CheckCircle2 size={8} /> Verificada
+                        </span>
+                      )}
+                    </div>
                   </div>
 
-                  <p className="mt-0.5 truncate text-xs font-semibold text-foreground group-hover:text-violet-700 dark:group-hover:text-violet-300">
+                  {/* title */}
+                  <p className="line-clamp-2 text-[11px] font-semibold leading-snug text-foreground group-hover:text-violet-700 dark:group-hover:text-violet-300">
                     {t.title}
                   </p>
 
-                  <div className="mt-1 flex flex-wrap items-center gap-3">
-                    {t.staff_display && (
-                      <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
-                        <User size={9} /> {t.staff_display}
-                      </span>
+                  {/* meta */}
+                  <div className="space-y-0.5">
+                    {t.training_type && (
+                      <p className="truncate text-[10px] text-muted-foreground">
+                        <span className="font-medium">Tipo:</span> {t.training_type}
+                      </p>
                     )}
                     {t.trainer && (
-                      <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
-                        <Award size={9} /> {t.trainer}
-                      </span>
+                      <p className="flex items-center gap-1 truncate text-[10px] text-muted-foreground">
+                        <Award size={9} className="shrink-0" /> {t.trainer}
+                      </p>
                     )}
                     {trainDate && (
-                      <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
-                        <CalendarDays size={9} /> {trainDate}
-                      </span>
+                      <p className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                        <CalendarDays size={9} className="shrink-0" /> {trainDate}
+                      </p>
                     )}
                     {expiryDate && (
-                      <span className={`flex items-center gap-1 text-[10px] ${expiringSoon ? "font-semibold text-orange-600 dark:text-orange-400" : "text-muted-foreground"}`}>
-                        <Clock size={9} /> Validade: {expiryDate}
-                      </span>
-                    )}
-                    {t.certificate && (
-                      <span className="font-mono text-[9px] text-muted-foreground">Cert: {t.certificate}</span>
+                      <p className={`flex items-center gap-1 text-[10px] ${expiring ? "font-semibold text-orange-600 dark:text-orange-400" : "text-muted-foreground"}`}>
+                        <Clock size={9} className="shrink-0" /> Validade: {expiryDate}
+                      </p>
                     )}
                   </div>
+
+                  {/* id chip */}
+                  <span className="self-start font-mono text-[9px] text-muted-foreground/60">{t.custom_id}</span>
                 </div>
               </Link>
             );
@@ -341,11 +337,8 @@ export default function TrainingRecordListPage() {
                   : page >= totalPages - 3 ? totalPages - 6 + i
                   : page - 3 + i;
                 return (
-                  <button
-                    key={pg}
-                    onClick={() => setPage(pg)}
-                    className={`rounded-md border px-2.5 py-1 text-xs font-medium transition ${pg === page ? "border-violet-500 bg-violet-600 text-white" : "border-border bg-card text-foreground hover:bg-muted"}`}
-                  >
+                  <button key={pg} onClick={() => setPage(pg)}
+                    className={`rounded-md border px-2.5 py-1 text-xs font-medium transition ${pg === page ? "border-violet-500 bg-violet-600 text-white" : "border-border bg-card text-foreground hover:bg-muted"}`}>
                     {pg}
                   </button>
                 );
