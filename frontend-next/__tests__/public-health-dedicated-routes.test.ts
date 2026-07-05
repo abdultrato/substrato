@@ -27,12 +27,27 @@ function readRoute(relativePath: string) {
 }
 
 describe("public health dedicated routes", () => {
+  it("renders the hub dashboard with the normalized card contract", () => {
+    const source = readFileSync(filePath("components/public-health/PublicHealthHubPage.tsx"), "utf-8")
+
+    expect(source).toContain("dashboard.cards.map")
+    expect(source).toContain("normalizeCard")
+    expect(source).toContain("buildLegacyCards")
+    expect(source).not.toContain("QueuePanel")
+    expect(source).not.toContain("PANEL_THEMES")
+  })
+
   it("uses dedicated list pages instead of generic resource redirects", () => {
     for (const resource of resources) {
       const source = readRoute(`app/public-health/${resource.segment}/page.tsx`)
 
-      expect(source).toContain("PublicHealthListPage")
-      expect(source).toContain(`resourceKey="${resource.key}"`)
+      if (resource.key === "lot") {
+        expect(source).toContain("LotsListPage")
+        expect(source).toContain("/public_health/lot/")
+      } else {
+        expect(source).toContain("PublicHealthListPage")
+        expect(source).toContain(`resourceKey="${resource.key}"`)
+      }
       expect(source).not.toContain("redirect(")
       expect(source).not.toContain("/resources/public_health")
     }
@@ -46,8 +61,14 @@ describe("public health dedicated routes", () => {
         expect(existsSync(filePath(routePath))).toBe(true)
 
         const source = readRoute(routePath)
-        expect(source).toContain(check.component)
-        expect(source).toContain(`resourceKey="${resource.key}"`)
+        // Lots use dedicated custom create/detail/edit pages instead of the generic resource pages.
+        if (resource.key === "lot") {
+          expect(source).toContain("/public_health/lot/")
+          expect(source).not.toContain("resourceKey=")
+        } else {
+          expect(source).toContain(check.component)
+          expect(source).toContain(`resourceKey="${resource.key}"`)
+        }
         expect(source).not.toContain("GeneratedResource")
         expect(source).not.toContain("/resources/public_health")
       }
