@@ -18,6 +18,11 @@ const routeChecks = [
   { suffix: "[id]/edit/page.tsx", component: "PublicHealthEditPage" },
 ] as const
 
+// Resources whose list page is a dedicated custom page (not the generic PublicHealthListPage).
+const CUSTOM_LIST_KEYS = new Set<string>(["lot", "vaccine"])
+// Resources whose create/detail/edit pages are dedicated custom pages.
+const CUSTOM_ROUTE_KEYS = new Set<string>(["lot"])
+
 function filePath(relativePath: string) {
   return resolve(process.cwd(), relativePath)
 }
@@ -41,9 +46,9 @@ describe("public health dedicated routes", () => {
     for (const resource of resources) {
       const source = readRoute(`app/public-health/${resource.segment}/page.tsx`)
 
-      if (resource.key === "lot") {
-        expect(source).toContain("LotsListPage")
-        expect(source).toContain("/public_health/lot/")
+      if (CUSTOM_LIST_KEYS.has(resource.key)) {
+        expect(source).toContain(`/public_health/${resource.key}/`)
+        expect(source).not.toContain("resourceKey=")
       } else {
         expect(source).toContain("PublicHealthListPage")
         expect(source).toContain(`resourceKey="${resource.key}"`)
@@ -61,9 +66,9 @@ describe("public health dedicated routes", () => {
         expect(existsSync(filePath(routePath))).toBe(true)
 
         const source = readRoute(routePath)
-        // Lots use dedicated custom create/detail/edit pages instead of the generic resource pages.
-        if (resource.key === "lot") {
-          expect(source).toContain("/public_health/lot/")
+        // Some resources use dedicated custom create/detail/edit pages instead of the generic resource pages.
+        if (CUSTOM_ROUTE_KEYS.has(resource.key)) {
+          expect(source).toContain(`/public_health/${resource.key}/`)
           expect(source).not.toContain("resourceKey=")
         } else {
           expect(source).toContain(check.component)
