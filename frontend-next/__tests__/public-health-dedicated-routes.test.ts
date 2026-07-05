@@ -19,7 +19,7 @@ const routeChecks = [
 ] as const
 
 // Resources whose list page is a dedicated custom page (not the generic PublicHealthListPage).
-const CUSTOM_LIST_KEYS = new Set<string>(["lot", "vaccine", "campaign"])
+const CUSTOM_LIST_KEYS = new Set<string>(["lot", "vaccine", "campaign", "target"])
 // Individual create/detail/edit routes that are dedicated custom pages, keyed by `${key}:${suffix}`.
 const CUSTOM_ROUTES = new Set<string>([
   "lot:new/page.tsx",
@@ -29,6 +29,7 @@ const CUSTOM_ROUTES = new Set<string>([
   "vaccine:[id]/edit/page.tsx",
   "campaign:[id]/page.tsx",
   "campaign:[id]/edit/page.tsx",
+  "target:new/page.tsx",
 ])
 
 function filePath(relativePath: string) {

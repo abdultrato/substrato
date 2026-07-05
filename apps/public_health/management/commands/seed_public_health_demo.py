@@ -24,6 +24,7 @@ from apps.public_health.models import (
     ImmunizationRecord,
     PublicHealthNotification,
     VaccinationCampaign,
+    VaccinationCampaignTarget,
     VaccineLot,
     VaccineProduct,
 )
@@ -126,6 +127,32 @@ class Command(BaseCommand):
             },
         )
         self.stdout.write(f"  campanha ativa: {campaign.name}")
+
+        # ── Metas por região ─────────────────────────────────────
+        # (região, distrito, idade min/max meses, população, meta doses, aplicadas)
+        target_specs = [
+            ("Maputo Província", "Matola", 9, 60, 4000, 3500, 3100),
+            ("Maputo Província", "Boane", 9, 60, 1500, 1200, 500),
+            ("Maputo Província", "Marracuene", 9, 60, 2000, 1800, 1600),
+            ("Gaza", "Xai-Xai", 9, 60, 2500, 2000, 900),
+            ("Inhambane", "Maxixe", 9, 60, 2000, 1500, 300),
+        ]
+        for region, district, age_min, age_max, population, target_doses, administered in target_specs:
+            target, created = VaccinationCampaignTarget.objects.get_or_create(
+                tenant=tenant,
+                campaign=campaign,
+                region=region,
+                district=district,
+                age_min_months=age_min,
+                age_max_months=age_max,
+                defaults={
+                    "target_population": population,
+                    "target_doses": target_doses,
+                    "administered_doses": administered,
+                },
+            )
+            if created:
+                self.stdout.write(f"  + meta {region} / {district}")
 
         # ── Imunizações com reforços vencidos ────────────────────
         booster_lot = lots["HEPB-2401"]
