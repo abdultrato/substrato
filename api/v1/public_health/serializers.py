@@ -376,8 +376,34 @@ class PublicHealthNotificationQueueSerializer(serializers.Serializer):
     error_message = serializers.CharField(allow_blank=True)
 
 
+class PublicHealthDashboardCardItemSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    title = serializers.CharField(allow_blank=True)
+    subtitle = serializers.CharField(allow_blank=True)
+    href = serializers.CharField()
+    status = serializers.CharField(allow_blank=True)
+    status_tone = serializers.ChoiceField(choices=("default", "success", "warning", "danger", "info"))
+    meta = serializers.ListField(child=serializers.CharField(), required=False)
+
+
+class PublicHealthDashboardCardSerializer(serializers.Serializer):
+    key = serializers.CharField()
+    title = serializers.CharField()
+    title_en = serializers.CharField()
+    subtitle = serializers.CharField()
+    subtitle_en = serializers.CharField()
+    href = serializers.CharField()
+    icon = serializers.CharField()
+    tone = serializers.ChoiceField(choices=("default", "success", "warning", "danger", "info"))
+    count = serializers.IntegerField()
+    empty_message = serializers.CharField()
+    empty_message_en = serializers.CharField()
+    items = PublicHealthDashboardCardItemSerializer(many=True)
+
+
 class PublicHealthDashboardSerializer(serializers.Serializer):
     summary = PublicHealthDashboardSummarySerializer()
+    cards = PublicHealthDashboardCardSerializer(many=True)
     stock_risks = PublicHealthStockRiskSerializer(many=True)
     campaign_progress = PublicHealthCampaignProgressSerializer(many=True)
     booster_queue = PublicHealthBoosterDueSerializer(many=True)

@@ -95,6 +95,72 @@ def _stock_risk_label(lot: VaccineLot, today):
     return ", ".join(reasons) or "Acompanhar"
 
 
+def _join_card_parts(*parts):
+    return " · ".join(str(part) for part in parts if part not in (None, ""))
+
+
+def _stock_risk_tone(risk: str) -> str:
+    text = (risk or "").lower()
+    if any(term in text for term in ("expirado", "quebra", "sem doses", "recolhido")):
+        return "danger"
+    if any(term in text for term in ("baixo", "validade", "quarentena")):
+        return "warning"
+    return "info"
+
+
+def _notification_tone(status: str) -> str:
+    if status in {PublicHealthNotification.Status.FAILED, PublicHealthNotification.Status.REJECTED}:
+        return "danger"
+    if status == PublicHealthNotification.Status.PENDING:
+        return "warning"
+    if status in {PublicHealthNotification.Status.SENT, PublicHealthNotification.Status.ACCEPTED}:
+        return "success"
+    return "info"
+
+
+def _coverage_tone(value) -> str:
+    try:
+        coverage = float(value or 0)
+    except (TypeError, ValueError):
+        return "info"
+    if coverage >= 80:
+        return "success"
+    if coverage < 50:
+        return "warning"
+    return "info"
+
+
+def _card(
+    *,
+    key,
+    title,
+    title_en,
+    subtitle,
+    subtitle_en,
+    href,
+    icon,
+    tone,
+    count,
+    empty_message,
+    empty_message_en,
+    items,
+):
+    return {
+        "key": key,
+        "title": title,
+        "title_en": title_en,
+        "subtitle": subtitle,
+        "subtitle_en": subtitle_en,
+        "href": href,
+        "icon": icon,
+        "tone": tone,
+        "count": count,
+        "empty_message": empty_message,
+        "empty_message_en": empty_message_en,
+        "items": items,
+    }
+
+
 class PublicHealthDashboardViewSet(ViewSet):
     permission_classes = [IsAuthenticated]
     http_method_names = ["get", "head", "options"]
@@ -146,13 +212,34 @@ class PublicHealthDashboardViewSet(ViewSet):
         cold_chain_breach_qs = lots_qs.filter(cold_chain_status=VaccineLot.ColdChainStatus.BREACH)
         expired_lots_qs = lots_qs.filter(expiration_date__lt=today)
 
-        stock_risk_qs = lots_qs.filter(
+        stock_risk_qs_base = lots_qs.filter(
             Q(expiration_date__lt=today)
             | Q(expiration_date__lte=today + timedelta(days=30))
             | Q(doses_available__lte=10)
             | Q(cold_chain_status=VaccineLot.ColdChainStatus.BREACH)
             | Q(status__in=[VaccineLot.Status.QUARANTINED, VaccineLot.Status.RECALLED, VaccineLot.Status.EXPIRED])
-        ).order_by("expiration_date", "doses_available", "lot_number")[:8]
+        )
+        stock_risk_total = stock_risk_qs_base.count()
+        stock_risk_qs = stock_risk_qs_base.order_by("expiration_date", "doses_available", "lot_number")[:8]
+
+        stock_risks = []
+        for lot in stock_risk_qs:
+            risk = _stock_risk_label(lot, today)
+            stock_risks.append(
+                {
+                    "id": lot.id,
+                    "custom_id": lot.custom_id or "",
+                    "vaccine_name": getattr(lot.vaccine, "name", "") or "",
+                    "lot_number": lot.lot_number or "",
+                    "status": lot.status,
+                    "expiration_date": lot.expiration_date,
+                    "doses_available": lot.doses_available,
+                    "reserved_doses": lot.reserved_doses,
+                    "cold_chain_status": lot.cold_chain_status,
+                    "storage_location": lot.storage_location or "",
+                    "risk": risk,
+                }
+            )
 
         campaign_progress = []
         for campaign in active_campaigns_qs.order_by("end_date", "-start_date", "name")[:8]:
@@ -188,6 +275,185 @@ class PublicHealthDashboardViewSet(ViewSet):
                 }
             )
 
+        aefi_queue = [
+            {
+                "id": event.id,
+                "custom_id": event.custom_id or "",
+                "patient_name": getattr(event.patient, "name", "") or "",
+                "vaccine_name": getattr(event.vaccine, "name", "") or "",
+                "severity": event.severity,
+                "status": event.status,
+                "serious": event.serious,
+                "reported_at": event.reported_at,
+                "investigation_due_at": event.investigation_due_at,
+            }
+            for event in open_serious_aefi_qs.order_by("investigation_due_at", "-reported_at")[:8]
+        ]
+        notification_queue = [
+            {
+                "id": notification.id,
+                "custom_id": notification.custom_id or "",
+                "official_system": notification.official_system,
+                "event_type": notification.event_type,
+                "status": notification.status,
+                "external_reference": notification.external_reference or "",
+                "attempt_count": notification.attempt_count,
+                "next_retry_at": notification.next_retry_at,
+                "error_message": notification.error_message or "",
+            }
+            for notification in pending_notifications_qs.filter(
+                Q(next_retry_at__isnull=True) | Q(next_retry_at__lte=now)
+            ).order_by("next_retry_at", "-created_at")[:8]
+        ]
+
+        cards = [
+            _card(
+                key="stock_risks",
+                title="Lotes em risco",
+                title_en="Lots at risk",
+                subtitle="Stock, validade, quarentena e cadeia fria.",
+                subtitle_en="Stock, expiry, quarantine and cold chain.",
+                href="/public-health/lots",
+                icon="PackageCheck",
+                tone="danger",
+                count=stock_risk_total,
+                empty_message="Sem lotes em risco.",
+                empty_message_en="No lots at risk.",
+                items=[
+                    {
+                        "id": item["id"],
+                        "title": _join_card_parts(
+                            item["vaccine_name"] or "Vacina",
+                            item["lot_number"] or item["custom_id"] or item["id"],
+                        ),
+                        "subtitle": _join_card_parts(
+                            f"Validade {item['expiration_date']}",
+                            f"{item['doses_available']} doses",
+                            item["storage_location"] or "-",
+                        ),
+                        "href": f"/public-health/lots/{item['id']}",
+                        "status": item["risk"] or item["status"] or "",
+                        "status_tone": _stock_risk_tone(item["risk"]),
+                    }
+                    for item in stock_risks
+                ],
+            ),
+            _card(
+                key="campaign_progress",
+                title="Campanhas ativas",
+                title_en="Active campaigns",
+                subtitle="Cobertura de doses e região alvo.",
+                subtitle_en="Dose coverage and target region.",
+                href="/public-health/campaigns",
+                icon="ClipboardList",
+                tone="info",
+                count=active_campaigns_qs.count(),
+                empty_message="Sem campanha ativa.",
+                empty_message_en="No active campaign.",
+                items=[
+                    {
+                        "id": item["id"],
+                        "title": item["name"] or item["custom_id"] or str(item["id"]),
+                        "subtitle": _join_card_parts(
+                            item["vaccine_name"] or "-",
+                            item["target_region"] or "-",
+                            f"{item['administered_doses']}/{item['target_doses']} doses",
+                        ),
+                        "href": f"/public-health/campaigns/{item['id']}",
+                        "status": f"{item['coverage_percent']:.2f}%",
+                        "status_tone": _coverage_tone(item["coverage_percent"]),
+                    }
+                    for item in campaign_progress
+                ],
+            ),
+            _card(
+                key="booster_queue",
+                title="Reforços vencidos",
+                title_en="Overdue boosters",
+                subtitle="Pacientes com próxima dose em atraso.",
+                subtitle_en="Patients with overdue next dose.",
+                href="/public-health/immunizations",
+                icon="Syringe",
+                tone="warning",
+                count=due_boosters_qs.count(),
+                empty_message="Sem reforços vencidos.",
+                empty_message_en="No overdue boosters.",
+                items=[
+                    {
+                        "id": item["id"],
+                        "title": item["patient_name"] or item["custom_id"] or str(item["id"]),
+                        "subtitle": _join_card_parts(
+                            item["vaccine_name"] or "-",
+                            f"dose {item['dose_number']}",
+                            f"vence {item['next_due_date']}",
+                        ),
+                        "href": f"/public-health/immunizations/{item['id']}",
+                        "status": f"{item['days_overdue']} dias",
+                        "status_tone": "warning" if item["days_overdue"] else "info",
+                    }
+                    for item in booster_queue
+                ],
+            ),
+            _card(
+                key="aefi_queue",
+                title="AEFI em investigação",
+                title_en="AEFI under investigation",
+                subtitle="Eventos graves ainda abertos.",
+                subtitle_en="Serious events still open.",
+                href="/public-health/adverse-events",
+                icon="Bell",
+                tone="danger",
+                count=open_serious_aefi_qs.count(),
+                empty_message="Sem AEFI grave aberto.",
+                empty_message_en="No open serious AEFI.",
+                items=[
+                    {
+                        "id": item["id"],
+                        "title": item["patient_name"] or item["custom_id"] or str(item["id"]),
+                        "subtitle": _join_card_parts(
+                            item["vaccine_name"] or "-",
+                            item["reported_at"].isoformat() if item["reported_at"] else "",
+                            f"investigar até {item['investigation_due_at'].isoformat()}"
+                            if item["investigation_due_at"]
+                            else "",
+                        ),
+                        "href": f"/public-health/adverse-events/{item['id']}",
+                        "status": item["severity"] or item["status"] or "",
+                        "status_tone": "danger" if item["serious"] else "warning",
+                    }
+                    for item in aefi_queue
+                ],
+            ),
+            _card(
+                key="notification_queue",
+                title="Notificações oficiais pendentes",
+                title_en="Pending official notifications",
+                subtitle="Integração com e-SUS, SIPNI, DHIS2 ou sistema oficial configurado.",
+                subtitle_en="Integration with e-SUS, SIPNI, DHIS2 or configured official system.",
+                href="/public-health/notifications",
+                icon="FileText",
+                tone="warning",
+                count=pending_notifications_qs.count(),
+                empty_message="Sem notificação oficial pendente.",
+                empty_message_en="No pending official notification.",
+                items=[
+                    {
+                        "id": item["id"],
+                        "title": _join_card_parts(item["official_system"] or "-", item["event_type"] or "-"),
+                        "subtitle": _join_card_parts(
+                            item["external_reference"] or item["custom_id"] or item["id"],
+                            f"tentativas {item['attempt_count']}",
+                            item["next_retry_at"].isoformat() if item["next_retry_at"] else "",
+                        ),
+                        "href": f"/public-health/notifications/{item['id']}",
+                        "status": item["status"] or "",
+                        "status_tone": _notification_tone(item["status"]),
+                    }
+                    for item in notification_queue
+                ],
+            ),
+        ]
+
         payload = {
             "summary": {
                 "vaccines": vaccines_qs.count(),
@@ -201,54 +467,12 @@ class PublicHealthDashboardViewSet(ViewSet):
                 "cold_chain_breaches": cold_chain_breach_qs.count(),
                 "expired_lots": expired_lots_qs.count(),
             },
-            "stock_risks": [
-                {
-                    "id": lot.id,
-                    "custom_id": lot.custom_id or "",
-                    "vaccine_name": getattr(lot.vaccine, "name", "") or "",
-                    "lot_number": lot.lot_number or "",
-                    "status": lot.status,
-                    "expiration_date": lot.expiration_date,
-                    "doses_available": lot.doses_available,
-                    "reserved_doses": lot.reserved_doses,
-                    "cold_chain_status": lot.cold_chain_status,
-                    "storage_location": lot.storage_location or "",
-                    "risk": _stock_risk_label(lot, today),
-                }
-                for lot in stock_risk_qs
-            ],
+            "cards": cards,
+            "stock_risks": stock_risks,
             "campaign_progress": campaign_progress,
             "booster_queue": booster_queue,
-            "aefi_queue": [
-                {
-                    "id": event.id,
-                    "custom_id": event.custom_id or "",
-                    "patient_name": getattr(event.patient, "name", "") or "",
-                    "vaccine_name": getattr(event.vaccine, "name", "") or "",
-                    "severity": event.severity,
-                    "status": event.status,
-                    "serious": event.serious,
-                    "reported_at": event.reported_at,
-                    "investigation_due_at": event.investigation_due_at,
-                }
-                for event in open_serious_aefi_qs.order_by("investigation_due_at", "-reported_at")[:8]
-            ],
-            "notification_queue": [
-                {
-                    "id": notification.id,
-                    "custom_id": notification.custom_id or "",
-                    "official_system": notification.official_system,
-                    "event_type": notification.event_type,
-                    "status": notification.status,
-                    "external_reference": notification.external_reference or "",
-                    "attempt_count": notification.attempt_count,
-                    "next_retry_at": notification.next_retry_at,
-                    "error_message": notification.error_message or "",
-                }
-                for notification in pending_notifications_qs.filter(
-                    Q(next_retry_at__isnull=True) | Q(next_retry_at__lte=now)
-                ).order_by("next_retry_at", "-created_at")[:8]
-            ],
+            "aefi_queue": aefi_queue,
+            "notification_queue": notification_queue,
         }
         return Response(PublicHealthDashboardSerializer(instance=payload).data)
 

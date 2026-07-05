@@ -355,3 +355,18 @@ def test_public_health_api_exposes_vaccines_lots_campaigns_immunizations_aefi_an
     assert dashboard_payload["campaign_progress"][0]["coverage_percent"] == "1.00"
     assert dashboard_payload["aefi_queue"][0]["id"] == adverse_event_payload["id"]
     assert dashboard_payload["notification_queue"][0]["external_reference"] == "SIPNI-AEFI-FLU-001"
+    cards = {card["key"]: card for card in dashboard_payload["cards"]}
+    assert set(cards) == {
+        "stock_risks",
+        "campaign_progress",
+        "booster_queue",
+        "aefi_queue",
+        "notification_queue",
+    }
+    assert cards["stock_risks"]["href"] == "/public-health/lots"
+    assert cards["stock_risks"]["items"] == []
+    assert cards["campaign_progress"]["count"] == 1
+    assert cards["campaign_progress"]["items"][0]["href"] == f"/public-health/campaigns/{campaign_payload['id']}"
+    assert cards["campaign_progress"]["items"][0]["status"] == "1.00%"
+    assert cards["aefi_queue"]["items"][0]["status_tone"] == "danger"
+    assert cards["notification_queue"]["items"][0]["status"] == "PENDING"
