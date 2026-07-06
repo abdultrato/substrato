@@ -9,7 +9,7 @@ from core.models.base import CoreModel  # Modelo base com campos comuns
 
 
 class Account(CoreModel):
-    """Conta contábil usada nos lançamentos."""
+    """Conta em contabilidade usada nos lançamentos."""
 
     prefix = "CNT"  # Prefixo para IDs amigáveis
     # Alias direto para facilitar acesso via Conta.Tipo.*
