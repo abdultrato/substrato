@@ -401,52 +401,56 @@ export default function PacienteDetalhePage() {
               {donations.length === 0 ? (
                 <p className="px-4 py-5 text-center text-[11px] text-muted-foreground">Nenhuma doação registada.</p>
               ) : (
-                <div className="space-y-2 p-3">
-                  {donations.map((item) => (
-                    <button key={item.id} type="button"
-                      onClick={() => router.push(`/bloodbank/blood-donations/${item.id}`)}
-                      className="w-full text-left">
-                      <div className="relative overflow-hidden rounded-lg border border-white/30 bg-white/30 shadow-sm backdrop-blur-sm transition hover:bg-white/50 dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10">
-                        <span className={`absolute inset-y-0 left-0 w-1 rounded-l-lg ${
-                          item.status === "COM" ? "bg-emerald-500" :
-                          item.status === "SCR" ? "bg-amber-500"   :
-                          item.status === "CAN" ? "bg-red-500"     : "bg-slate-400"
-                        }`} />
-                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 px-3 py-2 pl-4">
-                          <span className="font-mono text-[11px] font-bold text-foreground">
-                            {item.bag_identifier || item.custom_id || `#${item.id}`}
-                          </span>
-                          {item.collected_at && (
-                            <span className="text-[10px] text-muted-foreground">{fmtDate(item.collected_at)}</span>
-                          )}
-                          {item.donation_type && (
-                            <span className="text-[10px] text-muted-foreground">
-                              {DONATION_TYPE[item.donation_type] ?? item.donation_type}
+                <div className="grid grid-cols-2 gap-2 p-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+                  {donations.map((item) => {
+                    const accentCls =
+                      item.status === "COM" ? "bg-emerald-500" :
+                      item.status === "SCR" ? "bg-amber-500"   :
+                      item.status === "CAN" ? "bg-red-500"     : "bg-slate-400";
+                    const screenColor =
+                      item.screening_status === "APR"
+                        ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-600/30 dark:bg-emerald-900/20 dark:text-emerald-300"
+                        : item.screening_status === "REJ"
+                        ? "border-red-200 bg-red-50 text-red-700 dark:border-red-600/30 dark:bg-red-900/20 dark:text-red-300"
+                        : "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-600/30 dark:bg-amber-900/20 dark:text-amber-300";
+                    return (
+                      <button key={item.id} type="button"
+                        onClick={() => router.push(`/bloodbank/blood-donations/${item.id}`)}
+                        className="group text-left">
+                        <div className="relative h-full overflow-hidden rounded-lg border border-white/30 bg-white/30 shadow-sm backdrop-blur-sm transition group-hover:bg-white/50 dark:border-white/10 dark:bg-white/5 dark:group-hover:bg-white/10">
+                          <span className={`absolute inset-x-0 top-0 h-1 rounded-t-lg ${accentCls}`} />
+                          <div className="flex flex-col gap-1 px-2.5 pb-2 pt-3">
+                            <span className="truncate font-mono text-[10px] font-bold leading-tight text-foreground">
+                              {item.bag_identifier || item.custom_id || `#${item.id}`}
                             </span>
-                          )}
-                          {item.volume_ml && (
-                            <span className="text-[10px] text-muted-foreground">{item.volume_ml} mL</span>
-                          )}
-                          <span className="ml-auto flex items-center gap-1.5">
-                            {item.screening_status && (
-                              <Chip color={
-                                item.screening_status === "APR"
-                                  ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-600/30 dark:bg-emerald-900/20 dark:text-emerald-300"
-                                  : item.screening_status === "REJ"
-                                  ? "border-red-200 bg-red-50 text-red-700 dark:border-red-600/30 dark:bg-red-900/20 dark:text-red-300"
-                                  : "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-600/30 dark:bg-amber-900/20 dark:text-amber-300"
-                              }>{SCREENING_STATUS[item.screening_status] ?? item.screening_status}</Chip>
+                            {item.collected_at && (
+                              <span className="text-[9px] text-muted-foreground">{fmtDate(item.collected_at)}</span>
                             )}
-                            {item.status && (
-                              <Chip color={STATUS_CHIP[item.status] ?? "border-border bg-muted text-muted-foreground"}>
-                                {DONATION_STATUS[item.status] ?? item.status}
-                              </Chip>
-                            )}
-                          </span>
+                            <div className="flex flex-wrap gap-1">
+                              {item.donation_type && (
+                                <span className="text-[8px] text-muted-foreground">{DONATION_TYPE[item.donation_type] ?? item.donation_type}</span>
+                              )}
+                              {item.volume_ml && (
+                                <span className="text-[8px] text-muted-foreground">{item.volume_ml} mL</span>
+                              )}
+                            </div>
+                            <div className="flex flex-col gap-1 pt-0.5">
+                              {item.screening_status && (
+                                <span className={`rounded-full border px-1.5 py-0.5 text-center text-[8px] font-semibold ${screenColor}`}>
+                                  {SCREENING_STATUS[item.screening_status] ?? item.screening_status}
+                                </span>
+                              )}
+                              {item.status && (
+                                <span className={`rounded-full border px-1.5 py-0.5 text-center text-[8px] font-semibold ${STATUS_CHIP[item.status] ?? "border-border bg-muted text-muted-foreground"}`}>
+                                  {DONATION_STATUS[item.status] ?? item.status}
+                                </span>
+                              )}
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    </button>
-                  ))}
+                      </button>
+                    );
+                  })}
                 </div>
               )}
             </section>

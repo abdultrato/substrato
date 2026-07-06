@@ -261,42 +261,48 @@ export default function BloodDonorDetailsPage() {
                   Nenhuma doação registada para este doador.
                 </p>
               ) : (
-                <div className="space-y-2 p-3">
-                  {donations.map((item) => (
-                    <button key={String(item.id)} type="button"
-                      onClick={() => router.push(`/bloodbank/blood-donations/${item.id}`)}
-                      className="w-full text-left">
-                      <div className="relative overflow-hidden rounded-lg border border-white/30 bg-white/30 shadow-sm backdrop-blur-sm transition hover:bg-white/50 dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10">
-                        <span className={`absolute inset-y-0 left-0 w-1 rounded-l-lg ${STATUS_CHIP[String(item.status || "")].includes("emerald") ? "bg-emerald-500" : STATUS_CHIP[String(item.status || "")].includes("amber") ? "bg-amber-500" : STATUS_CHIP[String(item.status || "")].includes("red") ? "bg-red-500" : "bg-slate-400"}`} />
-                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 px-3 py-2 pl-4">
-                          <span className="font-mono text-[11px] font-bold text-foreground">
-                            {String(item.bag_identifier || item.custom_id || `#${item.id}`)}
-                          </span>
-                          {(item.collected_at || item.created_at) && (
-                            <span className="text-[10px] text-muted-foreground">
-                              {fmtDate(String(item.collected_at || item.created_at))}
+                <div className="grid grid-cols-2 gap-2 p-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+                  {donations.map((item) => {
+                    const st = String(item.status || "")
+                    const accentCls = st === "COM" ? "bg-emerald-500" : st === "SCR" ? "bg-amber-500" : st === "CAN" ? "bg-red-500" : "bg-slate-400"
+                    return (
+                      <button key={String(item.id)} type="button"
+                        onClick={() => router.push(`/bloodbank/blood-donations/${item.id}`)}
+                        className="group text-left">
+                        <div className="relative overflow-hidden rounded-lg border border-white/30 bg-white/30 shadow-sm backdrop-blur-sm transition group-hover:bg-white/50 dark:border-white/10 dark:bg-white/5 dark:group-hover:bg-white/10 h-full">
+                          <span className={`absolute inset-x-0 top-0 h-1 rounded-t-lg ${accentCls}`} />
+                          <div className="flex flex-col gap-1 px-2.5 pb-2 pt-3">
+                            <span className="font-mono text-[10px] font-bold leading-tight text-foreground truncate">
+                              {String(item.bag_identifier || item.custom_id || `#${item.id}`)}
                             </span>
-                          )}
-                          {item.donation_type && (
-                            <span className="text-[10px] text-muted-foreground">
-                              {DONATION_TYPE[String(item.donation_type)] || String(item.donation_type)}
-                            </span>
-                          )}
-                          {item.volume_ml && (
-                            <span className="text-[10px] text-muted-foreground">{String(item.volume_ml)} mL</span>
-                          )}
-                          <span className="ml-auto flex items-center gap-1.5">
-                            <span className={`rounded-full border px-2 py-0.5 text-[9px] font-semibold ${SCREEN_CHIP[String(item.screening_status || "")] ?? "border-border bg-muted text-muted-foreground"}`}>
-                              {SCREENING_STATUS[String(item.screening_status || "")] || String(item.screening_status || "—")}
-                            </span>
-                            <span className={`rounded-full border px-2 py-0.5 text-[9px] font-semibold ${STATUS_CHIP[String(item.status || "")] ?? "border-border bg-muted text-muted-foreground"}`}>
-                              {DONATION_STATUS[String(item.status || "")] || String(item.status || "—")}
-                            </span>
-                          </span>
+                            {(item.collected_at || item.created_at) && (
+                              <span className="text-[9px] text-muted-foreground">
+                                {fmtDate(String(item.collected_at || item.created_at))}
+                              </span>
+                            )}
+                            <div className="flex flex-wrap gap-1 pt-0.5">
+                              {item.donation_type && (
+                                <span className="text-[8px] text-muted-foreground">
+                                  {DONATION_TYPE[String(item.donation_type)] || String(item.donation_type)}
+                                </span>
+                              )}
+                              {item.volume_ml && (
+                                <span className="text-[8px] text-muted-foreground">{String(item.volume_ml)} mL</span>
+                              )}
+                            </div>
+                            <div className="flex flex-col gap-1 pt-0.5">
+                              <span className={`rounded-full border px-1.5 py-0.5 text-center text-[8px] font-semibold ${SCREEN_CHIP[String(item.screening_status || "")] ?? "border-border bg-muted text-muted-foreground"}`}>
+                                {SCREENING_STATUS[String(item.screening_status || "")] || String(item.screening_status || "—")}
+                              </span>
+                              <span className={`rounded-full border px-1.5 py-0.5 text-center text-[8px] font-semibold ${STATUS_CHIP[String(item.status || "")] ?? "border-border bg-muted text-muted-foreground"}`}>
+                                {DONATION_STATUS[String(item.status || "")] || String(item.status || "—")}
+                              </span>
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    </button>
-                  ))}
+                      </button>
+                    )
+                  })}
                 </div>
               )}
             </section>
