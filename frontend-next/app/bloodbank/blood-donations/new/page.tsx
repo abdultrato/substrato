@@ -398,7 +398,7 @@ function NewDonationWizard() {
 
                 </div>
 
-                <div className="flex flex-wrap items-end gap-6">
+                <div className="flex items-end justify-between gap-4">
                   <div className="space-y-1">
                     <label className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Grupo sanguíneo</label>
                     {bloodTypeLocked ? (
