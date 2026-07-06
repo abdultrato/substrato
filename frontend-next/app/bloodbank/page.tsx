@@ -116,19 +116,17 @@ export default function BloodBankPage() {
           if (!map[did]) map[did] = d
         }
 
-        // 2. Fetch patients: by donation donor IDs + is_blood_donor flag (union, dedup)
-        const idList = [...donorIdSet].join(",")
-        const [byIds, byFlag] = await Promise.all([
-          idList
-            ? apiFetch<{ results?: DonorRow[] }>(`/clinical/patient/?id__in=${idList}&page_size=200&ordering=name`, { clientCache: safeRefreshToken === 0 })
-            : Promise.resolve({ results: [] as DonorRow[] }),
+        // 2. Fetch each donor patient individually (id__in may not be supported)
+        const uniqueIds = [...donorIdSet]
+        const [byFlag, ...byIdResults] = await Promise.all([
           apiFetch<{ results?: DonorRow[] }>("/clinical/patient/?is_blood_donor=true&page_size=200&ordering=name", { clientCache: safeRefreshToken === 0 }),
+          ...uniqueIds.map((id) => apiFetch<DonorRow>(`/clinical/patient/${id}/`, { clientCache: safeRefreshToken === 0 }).catch(() => null)),
         ])
         if (!mounted) return
 
         const seen = new Set<string>()
         const donorItems: DonorRow[] = []
-        for (const p of [...(byIds.results ?? []), ...(byFlag.results ?? [])]) {
+        for (const p of [...(byFlag.results ?? []), ...(byIdResults.filter(Boolean) as DonorRow[])]) {
           const key = String((p as Record<string, unknown>).id)
           if (!seen.has(key)) { seen.add(key); donorItems.push(p) }
         }
