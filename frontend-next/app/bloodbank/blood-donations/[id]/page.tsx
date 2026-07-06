@@ -87,7 +87,7 @@ function StatusPill({ opts, value, onChange }: {
 
 function TestSelect({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
   return (
-    <div className="flex items-center justify-between gap-4 py-1">
+    <div className="flex items-center justify-between gap-4 py-0.5">
       <span className="text-[11px] text-muted-foreground">{label}</span>
       <div className="relative">
         <select
@@ -134,8 +134,8 @@ function Select({ value, onChange, opts }: { value: string; onChange: (v: string
   );
 }
 
-function Card({ title, accent, icon: Icon, children }: {
-  title: string; accent: string; icon: React.ElementType; children: React.ReactNode;
+function Card({ title, accent, icon: Icon, children, compact }: {
+  title: string; accent: string; icon: React.ElementType; children: React.ReactNode; compact?: boolean;
 }) {
   return (
     <section className="relative overflow-hidden rounded-xl border border-white/20 bg-white/25 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/5">
@@ -144,7 +144,7 @@ function Card({ title, accent, icon: Icon, children }: {
         <Icon size={11} className="text-muted-foreground" />
         <h2 className="text-[11px] font-semibold text-foreground">{title}</h2>
       </div>
-      <div className="space-y-3 p-3 pl-4">{children}</div>
+      <div className={compact ? "px-3 py-1.5 pl-4" : "space-y-3 p-3 pl-4"}>{children}</div>
     </section>
   );
 }
@@ -374,13 +374,13 @@ export default function BloodDonationDetailPage() {
         </div>
 
         {/* ── Linha 2: Rastreio serológico ────────────────────── */}
-        <Card title="Rastreio serológico" accent="bg-gradient-to-b from-violet-500 to-purple-600" icon={FlaskConical}>
-          <div className="grid gap-0 divide-y divide-border/30">
-            <TestSelect label="VIH"             value={form.hiv_test}                onChange={v => set("hiv_test", v)} />
-            <TestSelect label="Sífilis (RPR)"   value={form.syphilis_rpr_test}       onChange={v => set("syphilis_rpr_test", v)} />
-            <TestSelect label="Hepatite B"      value={form.hepatitis_b_hbsag_test}  onChange={v => set("hepatitis_b_hbsag_test", v)} />
+        <Card title="Rastreio serológico" accent="bg-gradient-to-b from-violet-500 to-purple-600" icon={FlaskConical} compact>
+          <div className="divide-y divide-border/30">
+            <TestSelect label="VIH"             value={form.hiv_test}                  onChange={v => set("hiv_test", v)} />
+            <TestSelect label="Sífilis (RPR)"   value={form.syphilis_rpr_test}         onChange={v => set("syphilis_rpr_test", v)} />
+            <TestSelect label="Hepatite B"      value={form.hepatitis_b_hbsag_test}    onChange={v => set("hepatitis_b_hbsag_test", v)} />
             <TestSelect label="Hepatite C"      value={form.hepatitis_c_anti_hcv_test} onChange={v => set("hepatitis_c_anti_hcv_test", v)} />
-            <TestSelect label="Malária"         value={form.malaria_test}            onChange={v => set("malaria_test", v)} />
+            <TestSelect label="Malária"         value={form.malaria_test}              onChange={v => set("malaria_test", v)} />
           </div>
         </Card>
 
