@@ -27,6 +27,14 @@ def _donor(tenant):
     )
 
 
+def _years_ago(years: int) -> datetime.date:
+    today = timezone.localdate()
+    try:
+        return today.replace(year=today.year - years)
+    except ValueError:
+        return today.replace(month=2, day=28, year=today.year - years)
+
+
 def _donation(tenant, *, positive_hiv=False):
     neg = BloodDonation.TestResult.NEGATIVE
     return BloodDonation.objects.create(
@@ -102,3 +110,78 @@ def test_cancel_blocks_completion():
         BloodDonationWorkflowService.complete_collection(donation)
     with pytest.raises(ValidationError):
         BloodDonationWorkflowService.cancel(donation)
+
+
+@pytest.mark.django_db
+def test_donation_rejects_donor_younger_than_16():
+    tenant = _tenant()
+    donor = Patient.objects.create(
+        tenant=tenant,
+        name="Doador Jovem",
+        document_number=f"BB-{uuid4().hex[:6]}",
+        birth_date=_years_ago(15),
+    )
+
+    with pytest.raises(ValidationError, match="Idade minima para doacao de sangue: 16 anos."):
+        BloodDonation.objects.create(
+            tenant=tenant,
+            donor=donor,
+            bag_identifier=f"BAG-{uuid4().hex[:8]}",
+            blood_type=BloodDonation._meta.get_field("blood_type").default,
+            donor_weight_kg=70,
+            hemoglobin_g_dl=14,
+            collected_at=timezone.now(),
+            hiv_test=BloodDonation.TestResult.NEGATIVE,
+            syphilis_rpr_test=BloodDonation.TestResult.NEGATIVE,
+            hepatitis_b_hbsag_test=BloodDonation.TestResult.NEGATIVE,
+            hepatitis_c_anti_hcv_test=BloodDonation.TestResult.NEGATIVE,
+            malaria_test=BloodDonation.TestResult.NEGATIVE,
+        )
+
+
+@pytest.mark.django_db
+def test_donation_rejects_donor_older_than_54():
+    tenant = _tenant()
+    donor = Patient.objects.create(
+        tenant=tenant,
+        name="Doador Senior",
+        document_number=f"BB-{uuid4().hex[:6]}",
+        birth_date=_years_ago(55),
+    )
+
+    with pytest.raises(ValidationError, match="Idade maxima para doacao de sangue: 54 anos."):
+        BloodDonation.objects.create(
+            tenant=tenant,
+            donor=donor,
+            bag_identifier=f"BAG-{uuid4().hex[:8]}",
+            blood_type=BloodDonation._meta.get_field("blood_type").default,
+            donor_weight_kg=70,
+            hemoglobin_g_dl=14,
+            collected_at=timezone.now(),
+            hiv_test=BloodDonation.TestResult.NEGATIVE,
+            syphilis_rpr_test=BloodDonation.TestResult.NEGATIVE,
+            hepatitis_b_hbsag_test=BloodDonation.TestResult.NEGATIVE,
+            hepatitis_c_anti_hcv_test=BloodDonation.TestResult.NEGATIVE,
+            malaria_test=BloodDonation.TestResult.NEGATIVE,
+        )
+
+
+@pytest.mark.django_db
+def test_donation_rejects_weight_below_50kg():
+    tenant = _tenant()
+
+    with pytest.raises(ValidationError, match="Peso minimo para doacao: 50 kg."):
+        BloodDonation.objects.create(
+            tenant=tenant,
+            donor=_donor(tenant),
+            bag_identifier=f"BAG-{uuid4().hex[:8]}",
+            blood_type=BloodDonation._meta.get_field("blood_type").default,
+            donor_weight_kg=49,
+            hemoglobin_g_dl=14,
+            collected_at=timezone.now(),
+            hiv_test=BloodDonation.TestResult.NEGATIVE,
+            syphilis_rpr_test=BloodDonation.TestResult.NEGATIVE,
+            hepatitis_b_hbsag_test=BloodDonation.TestResult.NEGATIVE,
+            hepatitis_c_anti_hcv_test=BloodDonation.TestResult.NEGATIVE,
+            malaria_test=BloodDonation.TestResult.NEGATIVE,
+        )

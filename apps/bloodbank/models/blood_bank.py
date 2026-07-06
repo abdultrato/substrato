@@ -383,10 +383,10 @@ class BloodDonation(NoNameCoreModel):
                     )
 
         if self.donor_id:
-            # Elegibilidade minima para doacao: 16 anos.
+            # Elegibilidade etaria para doacao: entre 16 e 54 anos.
             birth_date = getattr(self.donor, "birth_date", None)
             if not birth_date:
-                raise ValidationError({"donor": "Doador sem data de nascimento. Informe para validar idade minima."})
+                raise ValidationError({"donor": "Doador sem data de nascimento. Informe para validar a elegibilidade etaria."})
 
             collected_date = None
             if isinstance(self.collected_at, datetime.datetime):
@@ -403,6 +403,8 @@ class BloodDonation(NoNameCoreModel):
                     years -= 1
                 if years < 16:
                     raise ValidationError({"donor": "Idade minima para doacao de sangue: 16 anos."})
+                if years > 54:
+                    raise ValidationError({"donor": "Idade maxima para doacao de sangue: 54 anos."})
 
         if self.processed_at and self.collected_at and self.processed_at < self.collected_at:
             raise ValidationError({"processed_at": "Processamento nao pode ser anterior a coleta."})
@@ -1367,5 +1369,4 @@ class BloodStorageMaintenance(NoNameCoreModel):
 
         if self.status == self.MaintenanceStatus.COMPLETED and not self.performed_at:
             raise ValidationError({"performed_at": "Informe a data de execucao para manutencao concluida."})
-
 
