@@ -608,6 +608,14 @@ class CompetencyAssessmentSerializer(serializers.ModelSerializer):
 
 
 class CustomerComplaintSerializer(serializers.ModelSerializer):
+    nonconformity_display = serializers.SerializerMethodField()
+
+    def get_nonconformity_display(self, obj):
+        nc = obj.nonconformity
+        if not nc:
+            return None
+        return {"id": nc.id, "label": nc.custom_id or f"NC #{nc.id}"}
+
     Meta = _meta(CustomerComplaint)
 
 

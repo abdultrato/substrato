@@ -606,6 +606,7 @@ class CompetencyAssessmentViewSet(ValidatedSearchOrderingMixin, TenantScopedQuer
 class CustomerComplaintViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
     queryset = CustomerComplaint.objects.select_related("nonconformity").all()
     serializer_class = CustomerComplaintSerializer
+    filterset_fields = ["status"]
     search_fields = ["custom_id", "code", "description", "source"]
     ordering_fields = ["received_at", "status", "created_at"]
 
