@@ -262,7 +262,7 @@ export default function Header({ user, onMenuClick, scrolledDown = false }: Prop
                         </button>
 
                         {open && (
-                            <div className="absolute right-0 z-50 mt-1.5 w-56 max-w-[calc(100vw-1rem)] rounded-lg border border-border bg-card p-1 text-foreground shadow-lg">
+                            <div className="absolute right-0 z-[9999] mt-1.5 w-56 max-w-[calc(100vw-1rem)] rounded-lg border border-border bg-card p-1 text-foreground shadow-lg">
                                 <Link
                                     href="/profile"
                                     onClick={() => setOpen(false)}

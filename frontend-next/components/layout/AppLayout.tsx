@@ -253,7 +253,7 @@ export default function AppLayout ( {
                     className="flex h-screen min-w-0 flex-col md:ml-16 md:mr-[var(--layout-right)]"
                     style={contentFrameStyle}
                 >
-                    <div className="sticky top-0 z-40 shrink-0">
+                    <div className="sticky top-0 z-[200] shrink-0">
                         <Header user={user} onMenuClick={handleMenuClick} />
                     </div>
 
@@ -311,7 +311,7 @@ export default function AppLayout ( {
                 className="flex h-screen min-w-0 flex-col md:ml-16 md:mr-[var(--layout-right)]"
                 style={contentFrameStyle}
             >
-                <div className="sticky top-0 z-40 shrink-0">
+                <div className="sticky top-0 z-[200] shrink-0">
                     <Header user={user} onMenuClick={handleMenuClick} scrolledDown={!subNavVisible} />
 
                     <div

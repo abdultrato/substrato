@@ -431,6 +431,7 @@ export default function TrainingRecordDetailPage() {
   const [marking, setMarking] = useState(false);
   const [showReplica, setShowReplica] = useState(false);
   const [attachments, setAttachments] = useState<{ id: number; original_name: string; file_url: string }[]>([]);
+  const [replications, setReplications] = useState<{ id: number; custom_id: string; replicator_display?: string; replication_date: string | null }[]>([]);
 
   const load = useCallback(() => {
     if (!id) return;
@@ -440,6 +441,9 @@ export default function TrainingRecordDetailPage() {
         setRec(data);
         apiFetch<any>(`/clinical_laboratory/training_attachment/?training=${id}`)
           .then((resp) => setAttachments(resp?.results ?? resp?.items ?? []))
+          .catch(() => {});
+        apiFetch<any>(`/clinical_laboratory/training_replication/?original=${id}`)
+          .then((resp) => setReplications(resp?.results ?? resp?.items ?? []))
           .catch(() => {});
       })
       .catch((e) => setError(e?.message ?? "Erro ao carregar registo."))
@@ -586,6 +590,7 @@ export default function TrainingRecordDetailPage() {
             <Row label="Colaborador">
               {rec.staff_display ?? (rec.staff ? `#${rec.staff}` : "—")}
             </Row>
+            <Row label="Formador / Moderador">{rec.trainer || "—"}</Row>
             <Row label="Competência verificada">
               {rec.competency_verified ? (
                 <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-medium text-emerald-700 dark:border-emerald-700/40 dark:bg-emerald-900/20 dark:text-emerald-300">
@@ -668,6 +673,32 @@ export default function TrainingRecordDetailPage() {
                 ))}
               </ul>
             </SectionCard>
+          )}
+
+          {/* Réplicas */}
+          {replications.length > 0 && (
+            <div className="lg:col-span-2">
+              <SectionCard icon={Copy} title={`Réplicas realizadas (${replications.length})`} accent="bg-violet-500">
+                <div className="space-y-1">
+                  {replications.map((r) => (
+                    <Link key={r.id}
+                      href={`/clinical-laboratory/quality-management/trainings/replications/${r.id}`}
+                      className="flex items-center justify-between rounded-lg border border-border/50 bg-background px-3 py-2 transition hover:border-violet-300 hover:bg-violet-50/50 dark:hover:border-violet-700/40 dark:hover:bg-violet-900/10">
+                      <div className="flex items-center gap-2">
+                        <Copy size={11} className="shrink-0 text-violet-600 dark:text-violet-400" />
+                        <span className="text-[11px] font-medium text-foreground">
+                          {r.replicator_display ?? `Réplica #${r.id}`}
+                        </span>
+                        <span className="font-mono text-[9px] text-muted-foreground">{r.custom_id}</span>
+                      </div>
+                      <span className="text-[10px] text-muted-foreground">
+                        {r.replication_date ? fmtDate(r.replication_date) : "—"}
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+              </SectionCard>
+            </div>
           )}
 
           {/* Ciclo de vida — full width */}

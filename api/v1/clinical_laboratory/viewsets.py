@@ -529,7 +529,7 @@ class StaffTrainingRecordViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
     @action(detail=True, methods=["post"], url_path="marcar-realizada", url_name="marcar_realizada")
     def marcar_realizada(self, request, pk=None):
         obj = self.get_object()
-        obj.status = StaffTrainingRecord.Status.CONCLUIDA
+        obj.status = StaffTrainingRecord.Status.COMPLETED
         obj.save(update_fields=["status", "updated_at"])
         return Response(self.get_serializer(obj).data)
 
