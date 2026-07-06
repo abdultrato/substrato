@@ -3,20 +3,23 @@
 import Link from "next/link"
 import { useEffect, useMemo, useState, type ReactNode } from "react"
 import {
+  Activity,
   AlertTriangle,
   ArrowRight,
   Bell,
   ClipboardCheck,
   ClipboardList,
   FileText,
+  Loader2,
   MapPin,
   PackageCheck,
+  Search,
+  ShieldCheck,
   Syringe,
   type LucideIcon,
 } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
-import WorkspaceHub from "@/components/workspace/WorkspaceHub"
 import { useLanguage } from "@/hooks/useLanguage"
 import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { apiFetch } from "@/lib/api"
@@ -160,25 +163,156 @@ const EMPTY_DASHBOARD: PublicHealthDashboard = {
   notification_queue: [],
 }
 
+/* ── Module definitions ──────────────────────────────────────────── */
+
+type ModuleDef = {
+  title: string
+  description: string
+  href: string
+  icon: LucideIcon
+  grad: string
+  glow: string
+  bar: string
+  blob1: string
+  blob2: string
+  iconBg: string
+  keywords: string
+}
+
+const MODULES: ModuleDef[] = [
+  {
+    title: "Vacinas",
+    description: "Produtos vacinais, doenças alvo, doses requeridas, reforços e cadeia fria.",
+    href: "/public-health/vaccines",
+    icon: Syringe,
+    grad: "from-emerald-500 to-teal-600",
+    glow: "shadow-emerald-500/30",
+    bar: "bg-gradient-to-b from-emerald-500 to-teal-600",
+    blob1: "bg-emerald-500/10",
+    blob2: "bg-teal-500/10",
+    iconBg: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-300",
+    keywords: "vacinas imunobiologicos produtos",
+  },
+  {
+    title: "Lotes e stock",
+    description: "Validade, doses disponíveis, quarentena, recolha e quebra de cadeia fria.",
+    href: "/public-health/lots",
+    icon: PackageCheck,
+    grad: "from-amber-500 to-orange-600",
+    glow: "shadow-amber-500/30",
+    bar: "bg-gradient-to-b from-amber-500 to-orange-600",
+    blob1: "bg-amber-500/10",
+    blob2: "bg-orange-500/10",
+    iconBg: "bg-amber-500/15 text-amber-700 dark:text-amber-300",
+    keywords: "lotes stock doses validade",
+  },
+  {
+    title: "Campanhas",
+    description: "Campanhas de gripe, HPV, COVID, rotina, surto ou vacinação escolar.",
+    href: "/public-health/campaigns",
+    icon: ClipboardList,
+    grad: "from-blue-500 to-indigo-600",
+    glow: "shadow-blue-500/30",
+    bar: "bg-gradient-to-b from-blue-500 to-indigo-600",
+    blob1: "bg-blue-500/10",
+    blob2: "bg-indigo-500/10",
+    iconBg: "bg-blue-500/15 text-blue-600 dark:text-blue-300",
+    keywords: "campanhas vacinacao cobertura gripe hpv covid",
+  },
+  {
+    title: "Metas por região",
+    description: "População alvo, distrito, faixa etária, doses planeadas e cobertura.",
+    href: "/public-health/targets",
+    icon: MapPin,
+    grad: "from-indigo-500 to-purple-600",
+    glow: "shadow-indigo-500/30",
+    bar: "bg-gradient-to-b from-indigo-500 to-purple-600",
+    blob1: "bg-indigo-500/10",
+    blob2: "bg-purple-500/10",
+    iconBg: "bg-indigo-500/15 text-indigo-600 dark:text-indigo-300",
+    keywords: "metas regiao populacao distrito cobertura",
+  },
+  {
+    title: "Registos de imunização",
+    description: "Histórico vacinal, lote rastreável, dose aplicada e próxima data de reforço.",
+    href: "/public-health/immunizations",
+    icon: ClipboardCheck,
+    grad: "from-teal-500 to-cyan-600",
+    glow: "shadow-teal-500/30",
+    bar: "bg-gradient-to-b from-teal-500 to-cyan-600",
+    blob1: "bg-teal-500/10",
+    blob2: "bg-cyan-500/10",
+    iconBg: "bg-teal-500/15 text-teal-600 dark:text-teal-300",
+    keywords: "imunizacao registos vacinal historico reforco",
+  },
+  {
+    title: "Eventos adversos",
+    description: "AEFI, gravidade, investigação, sintomas, desfecho e causalidade.",
+    href: "/public-health/adverse-events",
+    icon: AlertTriangle,
+    grad: "from-orange-500 to-red-600",
+    glow: "shadow-orange-500/30",
+    bar: "bg-gradient-to-b from-orange-500 to-red-600",
+    blob1: "bg-orange-500/10",
+    blob2: "bg-red-500/10",
+    iconBg: "bg-orange-500/15 text-orange-700 dark:text-orange-300",
+    keywords: "aefi eventos adversos gravidade investigacao",
+  },
+  {
+    title: "Notificações oficiais",
+    description: "Integração e-SUS, SIPNI, DHIS2 ou sistemas oficiais customizados.",
+    href: "/public-health/notifications",
+    icon: Bell,
+    grad: "from-violet-500 to-purple-600",
+    glow: "shadow-violet-500/30",
+    bar: "bg-gradient-to-b from-violet-500 to-purple-600",
+    blob1: "bg-violet-500/10",
+    blob2: "bg-purple-500/10",
+    iconBg: "bg-violet-500/15 text-violet-600 dark:text-violet-300",
+    keywords: "notificacoes esus sipni dhis2 oficial",
+  },
+]
+
+/* ── Metric definitions ──────────────────────────────────────────── */
+
+type MetricDef = {
+  label: string
+  getValue: (s: PublicHealthSummary) => number
+  bar: string
+  chip: string
+  alertIf?: (n: number) => boolean
+}
+
+const METRIC_DEFS: MetricDef[] = [
+  { label: "Vacinas",            getValue: (s) => s.vaccines,           bar: "bg-emerald-500", chip: "text-emerald-700 dark:text-emerald-300" },
+  { label: "Lotes ativos",       getValue: (s) => s.active_lots,        bar: "bg-amber-500",   chip: "text-amber-700   dark:text-amber-300"   },
+  { label: "Campanhas ativas",   getValue: (s) => s.active_campaigns,   bar: "bg-blue-500",    chip: "text-blue-700    dark:text-blue-300"    },
+  { label: "Imunizações (30d)",  getValue: (s) => s.immunizations_30d,  bar: "bg-teal-500",    chip: "text-teal-700    dark:text-teal-300"    },
+  { label: "Reforços vencidos",  getValue: (s) => s.due_boosters,       bar: "bg-orange-500",  chip: "text-orange-700  dark:text-orange-300",  alertIf: (n) => n > 0 },
+  { label: "AEFI graves",        getValue: (s) => s.serious_aefi_open,  bar: "bg-red-500",     chip: "text-red-700     dark:text-red-300",     alertIf: (n) => n > 0 },
+  { label: "Notif. pendentes",   getValue: (s) => s.pending_notifications, bar: "bg-violet-500", chip: "text-violet-700 dark:text-violet-300", alertIf: (n) => n > 0 },
+  { label: "Riscos de stock",    getValue: (s) => s.low_stock_lots + s.cold_chain_breaches + s.expired_lots, bar: "bg-rose-500", chip: "text-rose-700 dark:text-rose-300", alertIf: (n) => n > 0 },
+]
+
+/* ── Main component ──────────────────────────────────────────────── */
+
 export default function PublicHealthHubPage() {
   const { t } = useLanguage()
   const safeRefreshToken = useSafeDataRefreshSignal()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [dashboard, setDashboard] = useState<PublicHealthDashboard>(EMPTY_DASHBOARD)
+  const [search, setSearch] = useState("")
 
   useEffect(() => {
     let mounted = true
-
     async function load() {
       try {
-        setLoading(true)
-        setError(null)
+        setLoading(true); setError(null)
         const payload = await apiFetch<PublicHealthDashboard>("/public_health/dashboard/", {
           clientCache: safeRefreshToken === 0,
           clientCacheTtlMs: 30000,
         })
-
         if (!mounted) return
         setDashboard(normalizeDashboard(payload))
       } catch (e: any) {
@@ -192,89 +326,138 @@ export default function PublicHealthHubPage() {
         if (mounted) setLoading(false)
       }
     }
-
     load()
-    return () => {
-      mounted = false
-    }
+    return () => { mounted = false }
   }, [safeRefreshToken, t])
 
-  const metricValue = useMemo(() => (loading ? "..." : null), [loading])
   const summary = dashboard.summary
+
+  const filteredModules = useMemo(() => {
+    const q = search.toLowerCase().trim()
+    if (!q) return MODULES
+    return MODULES.filter(
+      (m) => m.title.toLowerCase().includes(q) || m.description.toLowerCase().includes(q) || m.keywords.includes(q)
+    )
+  }, [search])
 
   return (
     <AppLayout requiredGroups={PUBLIC_HEALTH_GROUPS}>
-      <div className="space-y-6">
-        {error ? (
-          <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+      <div className="mx-auto w-[90%] space-y-2">
+
+        {/* ── Hero ──────────────────────────────────────────────── */}
+        <div className="relative overflow-hidden rounded-xl border border-white/20 bg-white/30 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/5">
+          <div className="pointer-events-none absolute inset-0">
+            <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-emerald-500/10 blur-2xl" />
+            <div className="absolute -bottom-10 left-8 h-32 w-32 rounded-full bg-teal-500/10 blur-2xl" />
+            <div className="absolute right-1/3 top-0 h-24 w-24 rounded-full bg-cyan-500/8 blur-2xl" />
+          </div>
+          <span className="absolute inset-y-0 left-0 w-1 rounded-l-xl bg-gradient-to-b from-emerald-500 to-teal-600" />
+
+          {/* Title row */}
+          <div className="relative flex flex-wrap items-center gap-3 px-4 py-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 shadow-md shadow-emerald-500/30">
+              <Activity size={20} className="text-white" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="text-[10px] font-medium text-muted-foreground">Sistema de Saúde</div>
+              <h1 className="text-base font-bold leading-tight text-foreground">Saúde Pública</h1>
+              <div className="mt-0.5 text-[10px] text-muted-foreground">
+                {MODULES.length} módulos · vigilância epidemiológica e vacinação
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Link href="/public-health/vaccines"
+                className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-border bg-card px-3 text-xs font-medium text-foreground transition hover:bg-muted">
+                Recursos
+                <ArrowRight size={12} />
+              </Link>
+              <Link href="/admin/saude_publica/"
+                className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-border bg-card px-3 text-xs font-medium text-foreground transition hover:bg-muted">
+                <ShieldCheck size={13} />
+                Admin
+              </Link>
+            </div>
+          </div>
+
+          {/* Search inside hero */}
+          <div className="relative border-t border-white/20 px-4 py-2 dark:border-white/10">
+            <Search size={11} className="pointer-events-none absolute left-7 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Filtrar módulos: vacinas, campanhas, imunização, eventos adversos…"
+              className="w-full rounded-lg border border-white/30 bg-white/40 py-1.5 pl-7 pr-3 text-xs outline-none transition placeholder:text-muted-foreground focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20 dark:border-white/10 dark:bg-white/5"
+            />
+          </div>
+        </div>
+
+        {error && (
+          <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-800/40 dark:bg-amber-900/15 dark:text-amber-300">
             {error}
           </div>
-        ) : null}
+        )}
 
-        <WorkspaceHub
-          title="Saúde Pública"
-          adminHref="/admin/saude_publica/"
-          secondaryCta={{ href: "/public-health/vaccines", label: t("Recursos de Saúde Pública", "Public health resources") }}
-          metrics={[
-            { label: "Vacinas", value: metricValue || summary.vaccines },
-            { label: "Lotes ativos", value: metricValue || summary.active_lots },
-            { label: "Campanhas ativas", value: metricValue || summary.active_campaigns },
-            { label: "Imunizações 30d", value: metricValue || summary.immunizations_30d },
-            { label: "Reforços vencidos", value: metricValue || summary.due_boosters },
-            { label: "AEFI graves", value: metricValue || summary.serious_aefi_open },
-            { label: "Notificações pendentes", value: metricValue || summary.pending_notifications },
-            {
-              label: "Riscos de stock",
-              value: metricValue || (summary.low_stock_lots + summary.cold_chain_breaches + summary.expired_lots),
-              hint: t("Stock baixo, validade ou cadeia fria.", "Low stock, expiry or cold chain."),
-            },
-          ]}
-          actions={[
-            {
-              title: "Vacinas",
-              description: t("Produtos vacinais, doenças alvo, doses requeridas, reforços e cadeia fria.", "Vaccine products, target diseases, required doses, boosters and cold chain."),
-              href: "/public-health/vaccines",
-              icon: Syringe,
-            },
-            {
-              title: "Lotes e stock",
-              description: t("Validade, doses disponíveis, quarentena, recolha e quebra de cadeia fria.", "Expiry, available doses, quarantine, recall and cold-chain breach."),
-              href: "/public-health/lots",
-              icon: PackageCheck,
-            },
-            {
-              title: "Campanhas",
-              description: t("Campanhas de gripe, HPV, COVID, rotina, surto ou vacinação escolar.", "Flu, HPV, COVID, routine, outbreak or school vaccination campaigns."),
-              href: "/public-health/campaigns",
-              icon: ClipboardList,
-            },
-            {
-              title: "Metas por região",
-              description: t("População alvo, distrito, faixa etária, doses planeadas e cobertura.", "Target population, district, age range, planned doses and coverage."),
-              href: "/public-health/targets",
-              icon: MapPin,
-            },
-            {
-              title: "Registos de imunização",
-              description: t("Histórico vacinal, lote rastreável, dose aplicada e próxima data de reforço.", "Vaccine history, traceable lot, administered dose and next booster date."),
-              href: "/public-health/immunizations",
-              icon: ClipboardCheck,
-            },
-            {
-              title: "Eventos adversos",
-              description: t("AEFI, gravidade, investigação, sintomas, desfecho e causalidade.", "AEFI, severity, investigation, symptoms, outcome and causality."),
-              href: "/public-health/adverse-events",
-              icon: Bell,
-            },
-            {
-              title: "Notificações oficiais",
-              description: t("Integração e-SUS, SIPNI, DHIS2 ou sistemas oficiais customizados.", "Integration with e-SUS, SIPNI, DHIS2 or custom official systems."),
-              href: "/public-health/notifications",
-              icon: FileText,
-            },
-          ]}
-        />
+        {/* ── Metrics ───────────────────────────────────────────── */}
+        <div className="grid grid-cols-4 gap-1.5 xl:grid-cols-8">
+          {METRIC_DEFS.map((def) => {
+            const val = loading ? null : def.getValue(summary)
+            const isAlert = !loading && def.alertIf && val !== null && def.alertIf(val)
+            return (
+              <div key={def.label}
+                className={`relative overflow-hidden rounded-xl border border-white/20 bg-white/25 px-2.5 py-2 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/5 ${isAlert ? "ring-1 ring-red-400/40" : ""}`}>
+                <span className={`absolute inset-y-0 left-0 w-1 rounded-l-xl ${def.bar}`} />
+                <div className="pl-1">
+                  <div className={`text-base font-bold tabular-nums leading-none ${def.chip}`}>
+                    {loading ? <span className="inline-block h-4 w-8 animate-pulse rounded bg-current/20" /> : val}
+                  </div>
+                  <div className="mt-0.5 text-[9px] leading-tight text-muted-foreground">{def.label}</div>
+                  {isAlert && <div className="mt-0.5 text-[9px] font-semibold text-red-600 dark:text-red-400">⚠ atenção</div>}
+                </div>
+              </div>
+            )
+          })}
+        </div>
 
+        {/* ── Module cards ──────────────────────────────────────── */}
+        {filteredModules.length === 0 ? (
+          <div className="rounded-xl border border-dashed border-border py-12 text-center text-sm text-muted-foreground">
+            Nenhum módulo encontrado para &ldquo;{search}&rdquo;.
+          </div>
+        ) : (
+          <div className="grid gap-1.5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {filteredModules.map((mod) => {
+              const Icon = mod.icon
+              return (
+                <Link key={mod.href} href={mod.href}
+                  className="group relative overflow-hidden rounded-xl border border-white/20 bg-white/25 shadow-sm backdrop-blur-sm transition hover:bg-white/40 hover:shadow-md dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10">
+                  {/* blobs */}
+                  <div className="pointer-events-none absolute inset-0 opacity-0 transition group-hover:opacity-100">
+                    <div className={`absolute -right-6 -top-6 h-20 w-20 rounded-full blur-2xl ${mod.blob1}`} />
+                    <div className={`absolute -bottom-4 left-4 h-14 w-14 rounded-full blur-2xl ${mod.blob2}`} />
+                  </div>
+                  {/* accent bar */}
+                  <span className={`absolute inset-y-0 left-0 w-1 rounded-l-xl ${mod.bar}`} />
+
+                  <div className="relative flex items-start gap-2.5 px-3 py-3 pl-4">
+                    <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br ${mod.grad} shadow-md ${mod.glow} transition group-hover:scale-105`}>
+                      <Icon size={17} className="text-white" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between gap-1">
+                        <p className="text-[12px] font-semibold leading-tight text-foreground">{mod.title}</p>
+                        <ArrowRight size={11} className="shrink-0 text-muted-foreground transition group-hover:translate-x-0.5 group-hover:text-foreground" />
+                      </div>
+                      <p className="mt-0.5 text-[10px] leading-snug text-muted-foreground line-clamp-2">{mod.description}</p>
+                    </div>
+                  </div>
+                </Link>
+              )
+            })}
+          </div>
+        )}
+
+        {/* ── Dashboard operational cards ───────────────────────── */}
         <div className="grid gap-1.5 xl:grid-cols-2">
           {dashboard.cards.map((card) => {
             const definition = cardDefinition(card.key)
@@ -285,10 +468,13 @@ export default function PublicHealthHubPage() {
             )
           })}
         </div>
+
       </div>
     </AppLayout>
   )
 }
+
+/* ── RBAC ────────────────────────────────────────────────────────── */
 
 export const PUBLIC_HEALTH_GROUPS = [
   GROUPS.ADMIN,
@@ -300,6 +486,8 @@ export const PUBLIC_HEALTH_GROUPS = [
   GROUPS.SAUDE_PUBLICA,
 ]
 
+/* ── Normalisation helpers ───────────────────────────────────────── */
+
 function normalizeDashboard(payload?: Partial<PublicHealthDashboard> | null): PublicHealthDashboard {
   const raw = (payload || {}) as any
   const dashboard: PublicHealthDashboard = {
@@ -310,10 +498,8 @@ function normalizeDashboard(payload?: Partial<PublicHealthDashboard> | null): Pu
     booster_queue: listFrom<BoosterDue>(raw.booster_queue, raw.overdue_boosters, raw.reforcos_vencidos, raw.reforços_vencidos),
     aefi_queue: listFrom<AefiQueueItem>(raw.aefi_queue, raw.aefi_under_investigation, raw.aefi_em_investigacao, raw.aefi_em_investigação),
     notification_queue: listFrom<NotificationQueueItem>(
-      raw.notification_queue,
-      raw.pending_notifications,
-      raw.notificacoes_pendentes,
-      raw.notificações_pendentes
+      raw.notification_queue, raw.pending_notifications,
+      raw.notificacoes_pendentes, raw.notificações_pendentes
     ),
   }
   const incomingCards = listFrom<PublicHealthDashboardCard>(raw.cards, raw.cartoes, raw.cartões)
@@ -323,16 +509,16 @@ function normalizeDashboard(payload?: Partial<PublicHealthDashboard> | null): Pu
 
 function normalizeSummary(raw: Record<string, unknown>): PublicHealthSummary {
   return {
-    vaccines: numberFrom(raw.vaccines, raw.vacinas),
-    active_lots: numberFrom(raw.active_lots, raw.lotes_ativos),
-    active_campaigns: numberFrom(raw.active_campaigns, raw.campanhas_ativas),
-    immunizations_30d: numberFrom(raw.immunizations_30d, raw.imunizacoes_30d, raw.imunizações_30d),
-    due_boosters: numberFrom(raw.due_boosters, raw.overdue_boosters, raw.reforcos_vencidos, raw.reforços_vencidos),
-    serious_aefi_open: numberFrom(raw.serious_aefi_open, raw.aefi_graves, raw.aefi_em_investigacao, raw.aefi_em_investigação),
+    vaccines:              numberFrom(raw.vaccines,              raw.vacinas),
+    active_lots:           numberFrom(raw.active_lots,           raw.lotes_ativos),
+    active_campaigns:      numberFrom(raw.active_campaigns,      raw.campanhas_ativas),
+    immunizations_30d:     numberFrom(raw.immunizations_30d,     raw.imunizacoes_30d,    raw.imunizações_30d),
+    due_boosters:          numberFrom(raw.due_boosters,          raw.overdue_boosters,   raw.reforcos_vencidos, raw.reforços_vencidos),
+    serious_aefi_open:     numberFrom(raw.serious_aefi_open,     raw.aefi_graves,        raw.aefi_em_investigacao, raw.aefi_em_investigação),
     pending_notifications: numberFrom(raw.pending_notifications, raw.notificacoes_pendentes, raw.notificações_pendentes),
-    low_stock_lots: numberFrom(raw.low_stock_lots, raw.lotes_stock_baixo, raw.lotes_estoque_baixo),
-    cold_chain_breaches: numberFrom(raw.cold_chain_breaches, raw.quebras_cadeia_fria),
-    expired_lots: numberFrom(raw.expired_lots, raw.lotes_expirados, raw.lotes_vencidos),
+    low_stock_lots:        numberFrom(raw.low_stock_lots,        raw.lotes_stock_baixo,  raw.lotes_estoque_baixo),
+    cold_chain_breaches:   numberFrom(raw.cold_chain_breaches,   raw.quebras_cadeia_fria),
+    expired_lots:          numberFrom(raw.expired_lots,          raw.lotes_expirados,    raw.lotes_vencidos),
   }
 }
 
@@ -343,18 +529,17 @@ function normalizeCard(card: PublicHealthDashboardCard): PublicHealthDashboardCa
   const items = listFrom<PublicHealthDashboardCardItem>(raw.items, raw.itens, raw.rows).map((item) =>
     normalizeCardItem(item, definition.href)
   )
-
   return {
     key,
-    title: textFrom(raw.title, raw.titulo, definition.title),
-    title_en: textFrom(raw.title_en, raw.titleEn, definition.titleEn),
-    subtitle: textFrom(raw.subtitle, raw.subtitulo, definition.subtitle),
-    subtitle_en: textFrom(raw.subtitle_en, raw.subtitleEn, definition.subtitleEn),
-    href: textFrom(raw.href, raw.url, definition.href),
-    icon: textFrom(raw.icon, raw.icone, definition.iconName),
-    tone: normalizeTone(raw.tone, raw.tom) || definition.tone,
-    count: numberFrom(raw.count, raw.total, items.length),
-    empty_message: textFrom(raw.empty_message, raw.emptyMessage, raw.mensagem_vazia, definition.empty),
+    title:         textFrom(raw.title,         raw.titulo,      definition.title),
+    title_en:      textFrom(raw.title_en,       raw.titleEn,     definition.titleEn),
+    subtitle:      textFrom(raw.subtitle,       raw.subtitulo,   definition.subtitle),
+    subtitle_en:   textFrom(raw.subtitle_en,    raw.subtitleEn,  definition.subtitleEn),
+    href:          textFrom(raw.href,           raw.url,         definition.href),
+    icon:          textFrom(raw.icon,           raw.icone,       definition.iconName),
+    tone:          normalizeTone(raw.tone, raw.tom) || definition.tone,
+    count:         numberFrom(raw.count, raw.total, items.length),
+    empty_message: textFrom(raw.empty_message,  raw.emptyMessage, raw.mensagem_vazia, definition.empty),
     empty_message_en: textFrom(raw.empty_message_en, raw.emptyMessageEn, definition.emptyEn),
     items,
   }
@@ -363,73 +548,58 @@ function normalizeCard(card: PublicHealthDashboardCard): PublicHealthDashboardCa
 function normalizeCardItem(item: PublicHealthDashboardCardItem, fallbackHref: string): PublicHealthDashboardCardItem {
   const raw = (item || {}) as any
   return {
-    id: raw.id ?? raw.pk ?? raw.key ?? raw.chave ?? `${fallbackHref}-${raw.title || raw.titulo || "item"}`,
-    title: textFrom(raw.title, raw.titulo),
-    subtitle: textFrom(raw.subtitle, raw.subtitulo),
-    href: textFrom(raw.href, raw.url, fallbackHref),
-    status: textFrom(raw.status, raw.estado, raw.situacao, raw.situação),
+    id:          raw.id ?? raw.pk ?? raw.key ?? raw.chave ?? `${fallbackHref}-${raw.title || raw.titulo || "item"}`,
+    title:       textFrom(raw.title,       raw.titulo),
+    subtitle:    textFrom(raw.subtitle,    raw.subtitulo),
+    href:        textFrom(raw.href,        raw.url, fallbackHref),
+    status:      textFrom(raw.status,      raw.estado, raw.situacao, raw.situação),
     status_tone: normalizeTone(raw.status_tone, raw.statusTone, raw.tone, raw.tom) || "default",
-    meta: listFrom<string>(raw.meta),
+    meta:        listFrom<string>(raw.meta),
   }
 }
 
 function buildLegacyCards(dashboard: PublicHealthDashboard): PublicHealthDashboardCard[] {
   return [
-    legacyCard(
-      "stock_risks",
-      dashboard.stock_risks.map((item) => ({
-        id: item.id,
-        title: `${item.vaccine_name || "Vacina"} · ${item.lot_number || item.custom_id || item.id}`,
-        subtitle: `${formatDate(item.expiration_date)} · ${item.doses_available ?? 0} doses · ${item.storage_location || "-"}`,
-        href: `/public-health/lots/${item.id}`,
-        status: item.risk || item.status || "-",
-        status_tone: riskVariant(item.risk),
-      }))
-    ),
-    legacyCard(
-      "campaign_progress",
-      dashboard.campaign_progress.map((item) => ({
-        id: item.id,
-        title: item.name || item.custom_id || String(item.id),
-        subtitle: `${item.vaccine_name || "-"} · ${item.target_region || "-"} · ${item.administered_doses ?? 0}/${item.target_doses ?? 0} doses`,
-        href: `/public-health/campaigns/${item.id}`,
-        status: formatPercent(item.coverage_percent),
-        status_tone: coverageVariant(item.coverage_percent),
-      }))
-    ),
-    legacyCard(
-      "booster_queue",
-      dashboard.booster_queue.map((item) => ({
-        id: item.id,
-        title: item.patient_name || item.custom_id || String(item.id),
-        subtitle: `${item.vaccine_name || "-"} · dose ${item.dose_number ?? "-"} · vence ${formatDate(item.next_due_date)}`,
-        href: `/public-health/immunizations/${item.id}`,
-        status: `${item.days_overdue || 0} dias`,
-        status_tone: item.days_overdue ? "warning" : "info",
-      }))
-    ),
-    legacyCard(
-      "aefi_queue",
-      dashboard.aefi_queue.map((item) => ({
-        id: item.id,
-        title: item.patient_name || item.custom_id || String(item.id),
-        subtitle: `${item.vaccine_name || "-"} · ${formatDateTime(item.reported_at)} · investigar até ${formatDateTime(item.investigation_due_at)}`,
-        href: `/public-health/adverse-events/${item.id}`,
-        status: item.severity || item.status || "-",
-        status_tone: item.serious ? "danger" : "warning",
-      }))
-    ),
-    legacyCard(
-      "notification_queue",
-      dashboard.notification_queue.map((item) => ({
-        id: item.id,
-        title: `${item.official_system || "-"} · ${item.event_type || "-"}`,
-        subtitle: `${item.external_reference || item.custom_id || item.id} · tentativas ${item.attempt_count ?? 0} · ${formatDateTime(item.next_retry_at)}`,
-        href: `/public-health/notifications/${item.id}`,
-        status: item.status || "-",
-        status_tone: notificationVariant(item.status),
-      }))
-    ),
+    legacyCard("stock_risks",        dashboard.stock_risks.map((item) => ({
+      id: item.id,
+      title: `${item.vaccine_name || "Vacina"} · ${item.lot_number || item.custom_id || item.id}`,
+      subtitle: `${formatDate(item.expiration_date)} · ${item.doses_available ?? 0} doses · ${item.storage_location || "-"}`,
+      href: `/public-health/lots/${item.id}`,
+      status: item.risk || item.status || "-",
+      status_tone: riskVariant(item.risk),
+    }))),
+    legacyCard("campaign_progress",  dashboard.campaign_progress.map((item) => ({
+      id: item.id,
+      title: item.name || item.custom_id || String(item.id),
+      subtitle: `${item.vaccine_name || "-"} · ${item.target_region || "-"} · ${item.administered_doses ?? 0}/${item.target_doses ?? 0} doses`,
+      href: `/public-health/campaigns/${item.id}`,
+      status: formatPercent(item.coverage_percent),
+      status_tone: coverageVariant(item.coverage_percent),
+    }))),
+    legacyCard("booster_queue",      dashboard.booster_queue.map((item) => ({
+      id: item.id,
+      title: item.patient_name || item.custom_id || String(item.id),
+      subtitle: `${item.vaccine_name || "-"} · dose ${item.dose_number ?? "-"} · vence ${formatDate(item.next_due_date)}`,
+      href: `/public-health/immunizations/${item.id}`,
+      status: `${item.days_overdue || 0} dias`,
+      status_tone: item.days_overdue ? "warning" : "info",
+    }))),
+    legacyCard("aefi_queue",         dashboard.aefi_queue.map((item) => ({
+      id: item.id,
+      title: item.patient_name || item.custom_id || String(item.id),
+      subtitle: `${item.vaccine_name || "-"} · ${formatDateTime(item.reported_at)} · investigar até ${formatDateTime(item.investigation_due_at)}`,
+      href: `/public-health/adverse-events/${item.id}`,
+      status: item.severity || item.status || "-",
+      status_tone: item.serious ? "danger" : "warning",
+    }))),
+    legacyCard("notification_queue", dashboard.notification_queue.map((item) => ({
+      id: item.id,
+      title: `${item.official_system || "-"} · ${item.event_type || "-"}`,
+      subtitle: `${item.external_reference || item.custom_id || item.id} · tentativas ${item.attempt_count ?? 0} · ${formatDateTime(item.next_retry_at)}`,
+      href: `/public-health/notifications/${item.id}`,
+      status: item.status || "-",
+      status_tone: notificationVariant(item.status),
+    }))),
   ]
 }
 
@@ -437,38 +607,37 @@ function legacyCard(key: string, items: PublicHealthDashboardCardItem[]): Public
   const definition = cardDefinition(key)
   return {
     key,
-    title: definition.title,
-    title_en: definition.titleEn,
-    subtitle: definition.subtitle,
-    subtitle_en: definition.subtitleEn,
-    href: definition.href,
-    icon: definition.iconName,
-    tone: definition.tone,
-    count: items.length,
-    empty_message: definition.empty,
+    title:           definition.title,
+    title_en:        definition.titleEn,
+    subtitle:        definition.subtitle,
+    subtitle_en:     definition.subtitleEn,
+    href:            definition.href,
+    icon:            definition.iconName,
+    tone:            definition.tone,
+    count:           items.length,
+    empty_message:   definition.empty,
     empty_message_en: definition.emptyEn,
     items,
   }
 }
 
+/* ── Formatters ──────────────────────────────────────────────────── */
+
 function formatDate(value?: string | null): string {
   if (!value) return "-"
   const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return value
-  return date.toLocaleDateString()
+  return Number.isNaN(date.getTime()) ? value : date.toLocaleDateString()
 }
 
 function formatDateTime(value?: string | null): string {
   if (!value) return "-"
   const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return value
-  return date.toLocaleString()
+  return Number.isNaN(date.getTime()) ? value : date.toLocaleString()
 }
 
 function formatPercent(value?: string | number): string {
   const parsed = Number(value ?? 0)
-  if (!Number.isFinite(parsed)) return "0%"
-  return `${parsed.toFixed(2)}%`
+  return Number.isFinite(parsed) ? `${parsed.toFixed(2)}%` : "0%"
 }
 
 function numberFrom(...values: unknown[]): number {
@@ -526,136 +695,89 @@ function coverageVariant(value?: string | number): Tone {
   return "info"
 }
 
+/* ── Card definitions ────────────────────────────────────────────── */
+
 type CardDefinition = {
-  title: string
-  titleEn: string
-  subtitle: string
-  subtitleEn: string
-  href: string
-  iconName: string
-  icon: LucideIcon
-  tone: Tone
-  empty: string
-  emptyEn: string
-  spanClass?: string
+  title: string; titleEn: string; subtitle: string; subtitleEn: string
+  href: string; iconName: string; icon: LucideIcon; tone: Tone
+  empty: string; emptyEn: string; spanClass?: string
 }
 
 const CARD_DEFINITIONS: Record<string, CardDefinition> = {
   stock_risks: {
-    title: "Lotes em risco",
-    titleEn: "Lots at risk",
-    subtitle: "Stock, validade, quarentena e cadeia fria.",
-    subtitleEn: "Stock, expiry, quarantine and cold chain.",
-    href: "/public-health/lots",
-    iconName: "PackageCheck",
-    icon: PackageCheck,
-    tone: "danger",
-    empty: "Sem lotes em risco.",
-    emptyEn: "No lots at risk.",
+    title: "Lotes em risco",          titleEn: "Lots at risk",
+    subtitle: "Stock, validade, quarentena e cadeia fria.", subtitleEn: "Stock, expiry, quarantine and cold chain.",
+    href: "/public-health/lots",      iconName: "PackageCheck", icon: PackageCheck, tone: "danger",
+    empty: "Sem lotes em risco.",     emptyEn: "No lots at risk.",
   },
   campaign_progress: {
-    title: "Campanhas ativas",
-    titleEn: "Active campaigns",
-    subtitle: "Cobertura de doses e região alvo.",
-    subtitleEn: "Dose coverage and target region.",
-    href: "/public-health/campaigns",
-    iconName: "ClipboardList",
-    icon: ClipboardList,
-    tone: "info",
-    empty: "Sem campanha ativa.",
-    emptyEn: "No active campaign.",
+    title: "Campanhas ativas",        titleEn: "Active campaigns",
+    subtitle: "Cobertura de doses e região alvo.",         subtitleEn: "Dose coverage and target region.",
+    href: "/public-health/campaigns", iconName: "ClipboardList", icon: ClipboardList, tone: "info",
+    empty: "Sem campanha ativa.",     emptyEn: "No active campaign.",
   },
   booster_queue: {
-    title: "Reforços vencidos",
-    titleEn: "Overdue boosters",
-    subtitle: "Pacientes com próxima dose em atraso.",
-    subtitleEn: "Patients with overdue next dose.",
-    href: "/public-health/immunizations",
-    iconName: "Syringe",
-    icon: Syringe,
-    tone: "warning",
-    empty: "Sem reforços vencidos.",
-    emptyEn: "No overdue boosters.",
+    title: "Reforços vencidos",       titleEn: "Overdue boosters",
+    subtitle: "Pacientes com próxima dose em atraso.",     subtitleEn: "Patients with overdue next dose.",
+    href: "/public-health/immunizations", iconName: "Syringe", icon: Syringe, tone: "warning",
+    empty: "Sem reforços vencidos.",  emptyEn: "No overdue boosters.",
   },
   aefi_queue: {
-    title: "AEFI em investigação",
-    titleEn: "AEFI under investigation",
-    subtitle: "Eventos graves ainda abertos.",
-    subtitleEn: "Serious events still open.",
-    href: "/public-health/adverse-events",
-    iconName: "Bell",
-    icon: Bell,
-    tone: "danger",
-    empty: "Sem AEFI grave aberto.",
-    emptyEn: "No open serious AEFI.",
+    title: "AEFI em investigação",    titleEn: "AEFI under investigation",
+    subtitle: "Eventos graves ainda abertos.",             subtitleEn: "Serious events still open.",
+    href: "/public-health/adverse-events", iconName: "Bell", icon: Bell, tone: "danger",
+    empty: "Sem AEFI grave aberto.",  emptyEn: "No open serious AEFI.",
   },
   notification_queue: {
-    title: "Notificações oficiais pendentes",
-    titleEn: "Pending official notifications",
-    subtitle: "Integração com e-SUS, SIPNI, DHIS2 ou sistema oficial configurado.",
-    subtitleEn: "Integration with e-SUS, SIPNI, DHIS2 or configured official system.",
-    href: "/public-health/notifications",
-    iconName: "FileText",
-    icon: FileText,
-    tone: "warning",
-    empty: "Sem notificação oficial pendente.",
-    emptyEn: "No pending official notification.",
+    title: "Notificações pendentes",  titleEn: "Pending official notifications",
+    subtitle: "Integração com e-SUS, SIPNI, DHIS2 ou sistema oficial configurado.", subtitleEn: "Integration with e-SUS, SIPNI, DHIS2 or configured official system.",
+    href: "/public-health/notifications", iconName: "FileText", icon: FileText, tone: "warning",
+    empty: "Sem notificação pendente.", emptyEn: "No pending official notification.",
     spanClass: "xl:col-span-2",
   },
 }
 
 const FALLBACK_CARD_DEFINITION: CardDefinition = {
-  title: "Pendências",
-  titleEn: "Pending items",
-  subtitle: "Itens operacionais para acompanhamento.",
-  subtitleEn: "Operational items to track.",
-  href: "/public-health",
-  iconName: "AlertTriangle",
-  icon: AlertTriangle,
-  tone: "default",
-  empty: "Sem itens pendentes.",
-  emptyEn: "No pending items.",
+  title: "Pendências",       titleEn: "Pending items",
+  subtitle: "Itens operacionais para acompanhamento.", subtitleEn: "Operational items to track.",
+  href: "/public-health",    iconName: "AlertTriangle", icon: AlertTriangle, tone: "default",
+  empty: "Sem itens.",       emptyEn: "No items.",
 }
 
 const ICON_BY_NAME: Record<string, LucideIcon> = {
-  AlertTriangle,
-  Bell,
-  ClipboardList,
-  FileText,
-  PackageCheck,
-  Syringe,
+  AlertTriangle, Bell, ClipboardList, FileText, PackageCheck, Syringe,
 }
 
-const TONE_CLASSES: Record<Tone, { accent: string; icon: string; badge: string; pill: string }> = {
+const TONE_CLASSES: Record<Tone, { bar: string; icon: string; badge: string; pill: string }> = {
   default: {
-    accent: "border-l-slate-400 dark:border-l-slate-500",
-    icon: "bg-slate-500/15 text-slate-600 dark:text-slate-300",
+    bar:   "bg-gradient-to-b from-slate-400 to-slate-500",
+    icon:  "bg-slate-500/15 text-slate-600 dark:text-slate-300",
     badge: "border-slate-200 bg-slate-50 text-slate-700 dark:border-slate-700/40 dark:bg-slate-900/20 dark:text-slate-300",
-    pill: "border-slate-200 bg-slate-50 text-slate-700 dark:border-slate-700/40 dark:bg-slate-900/20 dark:text-slate-300",
+    pill:  "border-slate-200 bg-slate-50 text-slate-700 dark:border-slate-700/40 dark:bg-slate-900/20 dark:text-slate-300",
   },
   success: {
-    accent: "border-l-emerald-500 dark:border-l-emerald-400",
-    icon: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-300",
+    bar:   "bg-gradient-to-b from-emerald-500 to-teal-600",
+    icon:  "bg-emerald-500/15 text-emerald-600 dark:text-emerald-300",
     badge: "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-700/40 dark:bg-emerald-900/20 dark:text-emerald-300",
-    pill: "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-700/40 dark:bg-emerald-900/20 dark:text-emerald-300",
+    pill:  "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-700/40 dark:bg-emerald-900/20 dark:text-emerald-300",
   },
   warning: {
-    accent: "border-l-amber-500 dark:border-l-amber-400",
-    icon: "bg-amber-500/15 text-amber-700 dark:text-amber-300",
+    bar:   "bg-gradient-to-b from-amber-500 to-orange-600",
+    icon:  "bg-amber-500/15 text-amber-700 dark:text-amber-300",
     badge: "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-700/40 dark:bg-amber-900/20 dark:text-amber-300",
-    pill: "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-700/40 dark:bg-amber-900/20 dark:text-amber-300",
+    pill:  "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-700/40 dark:bg-amber-900/20 dark:text-amber-300",
   },
   danger: {
-    accent: "border-l-red-500 dark:border-l-red-400",
-    icon: "bg-red-500/15 text-red-600 dark:text-red-300",
+    bar:   "bg-gradient-to-b from-red-500 to-rose-600",
+    icon:  "bg-red-500/15 text-red-600 dark:text-red-300",
     badge: "border-red-200 bg-red-50 text-red-700 dark:border-red-700/40 dark:bg-red-900/20 dark:text-red-300",
-    pill: "border-red-200 bg-red-50 text-red-700 dark:border-red-700/40 dark:bg-red-900/20 dark:text-red-300",
+    pill:  "border-red-200 bg-red-50 text-red-700 dark:border-red-700/40 dark:bg-red-900/20 dark:text-red-300",
   },
   info: {
-    accent: "border-l-blue-500 dark:border-l-blue-400",
-    icon: "bg-blue-500/15 text-blue-600 dark:text-blue-300",
+    bar:   "bg-gradient-to-b from-blue-500 to-indigo-600",
+    icon:  "bg-blue-500/15 text-blue-600 dark:text-blue-300",
     badge: "border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-700/40 dark:bg-blue-900/20 dark:text-blue-300",
-    pill: "border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-700/40 dark:bg-blue-900/20 dark:text-blue-300",
+    pill:  "border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-700/40 dark:bg-blue-900/20 dark:text-blue-300",
   },
 }
 
@@ -667,11 +789,13 @@ function cardIcon(card: PublicHealthDashboardCard, definition: CardDefinition): 
   return ICON_BY_NAME[card.icon || ""] || definition.icon
 }
 
+/* ── Dashboard card ──────────────────────────────────────────────── */
+
 function DashboardCard({ card, loading }: { card: PublicHealthDashboardCard; loading: boolean }) {
   const { t } = useLanguage()
   const definition = cardDefinition(card.key)
   const tone = normalizeTone(card.tone) || definition.tone
-  const toneClasses = TONE_CLASSES[tone]
+  const tc = TONE_CLASSES[tone]
   const Icon = cardIcon(card, definition)
   const href = card.href || definition.href
   const items = card.items || []
@@ -681,34 +805,31 @@ function DashboardCard({ card, loading }: { card: PublicHealthDashboardCard; loa
   const emptyMessage = t(card.empty_message || definition.empty, card.empty_message_en || definition.emptyEn)
 
   return (
-    <section
-      className={`h-full overflow-hidden rounded-xl border-t border-r border-b border-white/20 border-l-4 bg-white/30 px-3 py-3 shadow-sm backdrop-blur-sm dark:border-t-white/10 dark:border-r-white/10 dark:border-b-white/10 dark:bg-white/5 ${toneClasses.accent}`}
-    >
-      <div className="flex items-center gap-2.5">
-        <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${toneClasses.icon}`}>
-          <Icon size={16} strokeWidth={2} />
+    <section className="relative h-full overflow-hidden rounded-xl border border-white/20 bg-white/25 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/5">
+      <span className={`absolute inset-y-0 left-0 w-1 rounded-l-xl ${tc.bar}`} />
+
+      <div className="flex items-center gap-2.5 border-b border-border/50 px-3 py-2 pl-4">
+        <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${tc.icon}`}>
+          <Icon size={14} strokeWidth={2} />
         </span>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5">
-            <h3 className="truncate text-sm font-semibold text-foreground">{title}</h3>
-            {!loading ? (
-              <span className={`inline-flex items-center rounded-full border px-1.5 py-0.5 text-[9px] font-bold tabular-nums ${toneClasses.badge}`}>
+            <h3 className="truncate text-[12px] font-semibold text-foreground">{title}</h3>
+            {!loading && (
+              <span className={`inline-flex items-center rounded-full border px-1.5 py-0.5 text-[9px] font-bold tabular-nums ${tc.badge}`}>
                 {count}
               </span>
-            ) : null}
+            )}
           </div>
-          <p className="mt-0.5 truncate text-[10px] text-muted-foreground">{subtitle}</p>
+          <p className="truncate text-[10px] text-muted-foreground">{subtitle}</p>
         </div>
-        <Link
-          href={href}
-          className="inline-flex shrink-0 items-center gap-1 text-[11px] font-semibold text-primary no-underline hover:underline"
-        >
-          {t("Abrir", "Open")}
-          <ArrowRight size={12} strokeWidth={2} />
+        <Link href={href}
+          className="inline-flex shrink-0 items-center gap-1 text-[11px] font-semibold text-primary no-underline hover:underline">
+          Abrir <ArrowRight size={12} strokeWidth={2} />
         </Link>
       </div>
 
-      <div className="mt-2.5 space-y-1">
+      <div className="space-y-1 p-2 pl-3">
         {loading ? (
           <DashboardCardSkeleton />
         ) : items.length ? (
@@ -726,8 +847,8 @@ function DashboardCard({ card, loading }: { card: PublicHealthDashboardCard; loa
 function DashboardCardSkeleton() {
   return (
     <div className="space-y-1">
-      {[0, 1, 2].map((item) => (
-        <div key={item} className="h-10 animate-pulse rounded-lg bg-white/35 dark:bg-white/10" />
+      {[0, 1, 2].map((i) => (
+        <div key={i} className="h-10 animate-pulse rounded-lg bg-white/35 dark:bg-white/10" />
       ))}
     </div>
   )
@@ -741,28 +862,16 @@ function DashboardCardRow({ item }: { item: PublicHealthDashboardCardItem }) {
         <div className="truncate text-[11px] font-semibold text-foreground">{item.title || "-"}</div>
         <div className="mt-0.5 truncate text-[10px] text-muted-foreground">{item.subtitle || "-"}</div>
       </div>
-      {item.status ? <StatusPill tone={tone}>{item.status}</StatusPill> : null}
+      {item.status ? (
+        <span className={`shrink-0 rounded-full border px-1.5 py-0.5 text-[9px] font-semibold ${TONE_CLASSES[tone].pill}`}>
+          {item.status}
+        </span>
+      ) : null}
     </div>
   )
 
-  const className =
-    "block rounded-lg border border-white/20 bg-white/25 px-2.5 py-2 shadow-sm transition hover:border-[var(--primary-300)]/60 hover:bg-white/45 dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10"
+  const cls = "block rounded-lg border border-white/20 bg-white/25 px-2.5 py-2 shadow-sm transition hover:border-white/40 hover:bg-white/45 dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10"
 
-  if (item.href) {
-    return (
-      <Link href={item.href} className={className}>
-        {content}
-      </Link>
-    )
-  }
-
-  return <div className={className}>{content}</div>
-}
-
-function StatusPill({ tone, children }: { tone: Tone; children: ReactNode }) {
-  return (
-    <span className={`shrink-0 rounded-full border px-1.5 py-0.5 text-[9px] font-semibold ${TONE_CLASSES[tone].pill}`}>
-      {children}
-    </span>
-  )
+  if (item.href) return <Link href={item.href} className={cls}>{content}</Link>
+  return <div className={cls}>{content}</div>
 }
