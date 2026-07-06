@@ -51,6 +51,8 @@ from apps.clinical_laboratory.models import (
     AuditFinding,
     QualityIndicator,
     StaffTrainingRecord,
+    TrainingReplication,
+    TrainingAttachment,
     CompetencyAssessment,
     CustomerComplaint,
     LabRiskAssessment,
@@ -76,6 +78,8 @@ from .serializers import (
     AuditFindingSerializer,
     QualityIndicatorSerializer,
     StaffTrainingRecordSerializer,
+    TrainingReplicationSerializer,
+    TrainingAttachmentSerializer,
     CompetencyAssessmentSerializer,
     CustomerComplaintSerializer,
     LabRiskAssessmentSerializer,
@@ -428,6 +432,10 @@ class QualityDocumentViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetM
     search_fields = ["custom_id", "code", "title"]
     ordering_fields = ["code", "status", "document_type", "review_date", "created_at"]
 
+    def perform_update(self, serializer):
+        serializer.save()
+        serializer.instance.increment_version()
+
     @action(detail=True, methods=["post"], url_path="aprovar", url_name="aprovar")
     def aprovar(self, request, pk=None):
         document = self.get_object()
@@ -513,10 +521,42 @@ class QualityIndicatorViewSet(ValidatedSearchOrderingMixin, TenantScopedQueryset
 
 
 class StaffTrainingRecordViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
-    queryset = StaffTrainingRecord.objects.select_related("staff").all()
+    queryset = StaffTrainingRecord.objects.select_related("staff").prefetch_related("participants").all()
     serializer_class = StaffTrainingRecordSerializer
     search_fields = ["custom_id", "title", "trainer"]
     ordering_fields = ["training_date", "expiry_date", "status", "created_at"]
+
+    @action(detail=True, methods=["post"], url_path="marcar-realizada", url_name="marcar_realizada")
+    def marcar_realizada(self, request, pk=None):
+        obj = self.get_object()
+        obj.status = StaffTrainingRecord.Status.CONCLUIDA
+        obj.save(update_fields=["status", "updated_at"])
+        return Response(self.get_serializer(obj).data)
+
+
+class TrainingReplicationViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
+    queryset = TrainingReplication.objects.select_related("original", "replicator").prefetch_related("participants").all()
+    serializer_class = TrainingReplicationSerializer
+    search_fields = ["custom_id", "original__title"]
+    ordering_fields = ["replication_date", "created_at"]
+    filterset_fields = ["original"]
+
+
+class TrainingAttachmentViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
+    queryset = TrainingAttachment.objects.select_related("training").all()
+    serializer_class = TrainingAttachmentSerializer
+    filterset_fields = ["training"]
+    ordering_fields = ["created_at"]
+    parser_classes_override = None  # accept multipart for file uploads
+
+    def get_parsers(self):
+        from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
+        return [MultiPartParser(), FormParser(), JSONParser()]
+
+    def perform_create(self, serializer):
+        file = self.request.FILES.get("file")
+        original_name = file.name if file else ""
+        serializer.save(original_name=original_name)
 
 
 class CompetencyAssessmentViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
@@ -648,6 +688,8 @@ VIEWSET_MAP = {
     "audit_finding": AuditFindingViewSet,
     "quality_indicator": QualityIndicatorViewSet,
     "training_record": StaffTrainingRecordViewSet,
+    "training_replication": TrainingReplicationViewSet,
+    "training_attachment": TrainingAttachmentViewSet,
     "competency": CompetencyAssessmentViewSet,
     "complaint": CustomerComplaintViewSet,
     "risk_assessment": LabRiskAssessmentViewSet,

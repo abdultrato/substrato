@@ -9,10 +9,10 @@ import {
   CalendarDays,
   CheckCircle2,
   Clock,
+  Hash,
   Loader2,
   Plus,
   Search,
-  User,
   X,
 } from "lucide-react";
 
@@ -48,7 +48,6 @@ const STATUS_TOP: Record<string, string> = {
   EXPIRADA:  "bg-red-500",
 };
 
-// Rotating accent tones for card icons
 const TONES = [
   { icon: "bg-violet-100 text-violet-600 dark:bg-violet-900/30 dark:text-violet-300" },
   { icon: "bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-300" },
@@ -59,6 +58,7 @@ const TONES = [
 ];
 
 const STATUSES = Object.entries(STATUS_LABEL);
+const PAGE_SIZE_OPTS = [12, 24, 48, 96];
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -99,41 +99,47 @@ export default function TrainingRecordListPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const [search, setSearch] = useState("");
+  const [search, setSearch]           = useState("");
   const [filterStatus, setFilterStatus] = useState("");
-  const [page, setPage] = useState(1);
-  const PAGE_SIZE = 30;
+  const [filterCustomId, setFilterCustomId] = useState("");
+  const [page, setPage]               = useState(1);
+  const [pageSize, setPageSize]       = useState(24);
 
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch]     = useState("");
+  const [debouncedCustomId, setDebouncedCustomId] = useState("");
 
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => setDebouncedSearch(search), 300);
-  }, [search]);
+    debounceRef.current = setTimeout(() => {
+      setDebouncedSearch(search);
+      setDebouncedCustomId(filterCustomId);
+    }, 300);
+  }, [search, filterCustomId]);
 
   const fetchData = useCallback(async () => {
     setLoading(true); setError(null);
     try {
       const q: Record<string, string> = {};
-      if (debouncedSearch) q.search = debouncedSearch;
-      if (filterStatus) q.status = filterStatus;
+      if (debouncedSearch)   q.search     = debouncedSearch;
+      if (filterStatus)      q.status     = filterStatus;
+      if (debouncedCustomId) q.custom_id  = debouncedCustomId;
       const { items, meta } = await apiFetchList<Training>(
         "/clinical_laboratory/training_record/",
-        { page, pageSize: PAGE_SIZE, query: q },
+        { page, pageSize, query: q },
       );
       setTrainings(items); setTotal(meta.total ?? 0);
     } catch (e: any) {
       setError(e?.message ?? "Erro ao carregar registos de formação.");
     } finally { setLoading(false); }
-  }, [debouncedSearch, filterStatus, page]);
+  }, [debouncedSearch, filterStatus, debouncedCustomId, page, pageSize]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
-  useEffect(() => { setPage(1); }, [debouncedSearch, filterStatus]);
+  useEffect(() => { setPage(1); }, [debouncedSearch, filterStatus, debouncedCustomId, pageSize]);
 
-  const totalPages = Math.ceil(total / PAGE_SIZE);
-  const hasFilters = !!(search || filterStatus);
-  function clearFilters() { setSearch(""); setFilterStatus(""); setPage(1); }
+  const totalPages = Math.ceil(total / pageSize);
+  const hasFilters = !!(search || filterStatus || filterCustomId);
+  function clearFilters() { setSearch(""); setFilterStatus(""); setFilterCustomId(""); setPage(1); }
 
   return (
     <AppLayout requiredGroups={VIEW_GROUPS}>
@@ -183,6 +189,7 @@ export default function TrainingRecordListPage() {
 
         {/* ── Filtros ────────────────────────────────────────────── */}
         <div className="flex flex-wrap items-center gap-2">
+          {/* texto livre: título/formador */}
           <div className="relative min-w-[200px] flex-1">
             <Search size={11} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <input
@@ -199,6 +206,24 @@ export default function TrainingRecordListPage() {
             )}
           </div>
 
+          {/* número/código */}
+          <div className="relative w-36">
+            <Hash size={11} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <input
+              type="text"
+              value={filterCustomId}
+              onChange={(e) => setFilterCustomId(e.target.value)}
+              placeholder="Nº  ex: QTR-0001"
+              className="w-full rounded-lg border border-border bg-card py-1.5 pl-7 pr-3 text-xs text-foreground outline-none transition focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20"
+            />
+            {filterCustomId && (
+              <button onClick={() => setFilterCustomId("")} className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                <X size={10} />
+              </button>
+            )}
+          </div>
+
+          {/* estado */}
           <select
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
@@ -206,6 +231,17 @@ export default function TrainingRecordListPage() {
           >
             <option value="">Todos os estados</option>
             {STATUSES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+          </select>
+
+          {/* por página */}
+          <select
+            value={pageSize}
+            onChange={(e) => setPageSize(Number(e.target.value))}
+            className="rounded-lg border border-border bg-card py-1.5 pl-2.5 pr-6 text-xs text-foreground outline-none transition focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20"
+          >
+            {PAGE_SIZE_OPTS.map((n) => (
+              <option key={n} value={n}>{n} / página</option>
+            ))}
           </select>
 
           {hasFilters && (
@@ -258,11 +294,9 @@ export default function TrainingRecordListPage() {
                 href={`/clinical-laboratory/quality-management/trainings/${t.id}`}
                 className="group relative overflow-hidden rounded-xl border border-border/70 bg-card/80 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md hover:border-violet-300/60 dark:hover:border-violet-700/40"
               >
-                {/* top accent bar */}
                 <span className={`absolute inset-x-0 top-0 h-0.5 ${topBar}`} />
 
                 <div className="flex flex-col gap-2 p-3 pt-3.5">
-                  {/* icon + badges row */}
                   <div className="flex items-start gap-2">
                     <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${tone.icon}`}>
                       <BookOpen size={13} />
@@ -280,12 +314,10 @@ export default function TrainingRecordListPage() {
                     </div>
                   </div>
 
-                  {/* title */}
                   <p className="line-clamp-2 text-[11px] font-semibold leading-snug text-foreground group-hover:text-violet-700 dark:group-hover:text-violet-300">
                     {t.title}
                   </p>
 
-                  {/* meta */}
                   <div className="space-y-0.5">
                     {t.training_type && (
                       <p className="truncate text-[10px] text-muted-foreground">
@@ -309,7 +341,6 @@ export default function TrainingRecordListPage() {
                     )}
                   </div>
 
-                  {/* id chip */}
                   <span className="self-start font-mono text-[9px] text-muted-foreground/60">{t.custom_id}</span>
                 </div>
               </Link>

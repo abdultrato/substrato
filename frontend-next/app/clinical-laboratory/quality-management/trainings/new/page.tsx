@@ -9,8 +9,12 @@ import {
   CalendarDays,
   CheckCircle2,
   Loader2,
+  MessageSquare,
+  Paperclip,
   Save,
   Search,
+  Trash2,
+  Users,
   User,
   X,
 } from "lucide-react";
@@ -61,7 +65,7 @@ const T_USER: RelationTarget = {
   labelFields: ["name", "username"],
 };
 
-// ── RelationSelect (FK com pesquisa) ──────────────────────────────────────────
+// ── RelationSelect (FK) ───────────────────────────────────────────────────────
 
 function RelationSelect({
   value, onChange, target, placeholder, safeRefreshToken, error,
@@ -155,7 +159,106 @@ function RelationSelect({
   );
 }
 
-// ── ChipSingleSelect (TextChoices) ────────────────────────────────────────────
+// ── MultiRelationSelect (M2M) ─────────────────────────────────────────────────
+
+function MultiRelationSelect({
+  values, onChange, target, placeholder, safeRefreshToken,
+}: {
+  values: { id: number; label: string }[];
+  onChange: (v: { id: number; label: string }[]) => void;
+  target: RelationTarget;
+  placeholder?: string;
+  safeRefreshToken?: number;
+}) {
+  const [query, setQuery] = useState("");
+  const [open, setOpen] = useState(false);
+  const [results, setResults] = useState<{ value: string; label: string }[]>([]);
+  const [searching, setSearching] = useState(false);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const listboxId = useId();
+  const selectedIds = new Set(values.map((v) => v.id));
+
+  function search(q: string) {
+    setQuery(q); setOpen(true);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(async () => {
+      setSearching(true);
+      try {
+        const { items } = await apiFetchList<Record<string, any>>(target.endpoint, {
+          page: 1, pageSize: 20,
+          query: { ...(target.staticFilters ?? {}), ...(q.trim() ? { search: q.trim() } : {}) },
+          clientCache: safeRefreshToken === 0,
+          clientCacheTtlMs: 30000,
+        });
+        setResults(relationOptionsFromRows(items, target));
+      } catch { setResults([]); }
+      finally { setSearching(false); }
+    }, 250);
+  }
+
+  function select(opt: { value: string; label: string }) {
+    const id = Number(opt.value);
+    if (!selectedIds.has(id)) {
+      onChange([...values, { id, label: opt.label }]);
+    }
+    setQuery(""); setOpen(false);
+  }
+  function remove(id: number) { onChange(values.filter((v) => v.id !== id)); }
+
+  return (
+    <div className="space-y-1.5">
+      {values.length > 0 && (
+        <div className="flex flex-wrap gap-1">
+          {values.map((v) => (
+            <span key={v.id} className="inline-flex items-center gap-1 rounded-full border border-indigo-200 bg-indigo-50 px-2 py-0.5 text-[10px] font-medium text-indigo-700 dark:border-indigo-700/40 dark:bg-indigo-900/20 dark:text-indigo-300">
+              {v.label}
+              <button type="button" onClick={() => remove(v.id)} className="ml-0.5 text-indigo-400 hover:text-red-500 transition">
+                <X size={9} />
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
+      <div className="relative z-[999]">
+        <Search size={11} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+        <input
+          type="text" value={query}
+          onChange={(e) => search(e.target.value)}
+          onFocus={() => { setOpen(true); if (!query) search(""); }}
+          onBlur={() => setTimeout(() => setOpen(false), 150)}
+          placeholder={placeholder}
+          className="w-full rounded-md border border-border bg-background py-1.5 pl-7 pr-3 text-xs text-foreground outline-none transition focus:border-violet-500 focus:ring-2 focus:ring-violet-500/25"
+        />
+        {searching && <Loader2 size={11} className="absolute right-2.5 top-1/2 -translate-y-1/2 animate-spin text-muted-foreground" />}
+        {open && (
+          <div id={listboxId} role="listbox"
+            className="absolute left-0 right-0 z-[999] mt-1 overflow-hidden rounded-lg border border-border bg-card shadow-lg">
+            {results.length === 0 ? (
+              <p className="px-3 py-2 text-[11px] text-muted-foreground">{searching ? "A pesquisar…" : "Nenhum resultado."}</p>
+            ) : (
+              <ul className="max-h-48 overflow-y-auto divide-y divide-border/40">
+                {results.map((opt) => {
+                  const already = selectedIds.has(Number(opt.value));
+                  return (
+                    <li key={opt.value}>
+                      <button type="button" onMouseDown={() => select(opt)} disabled={already}
+                        className={`flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs transition ${already ? "cursor-default text-muted-foreground" : "text-foreground hover:bg-muted"}`}>
+                        {already && <CheckCircle2 size={10} className="text-emerald-500" />}
+                        {opt.label}
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── ChipSingleSelect ───────────────────────────────────────────────────────────
 
 function ChipSingleSelect({
   value, onChange, options, placeholder, error,
@@ -266,7 +369,6 @@ export default function NewTrainingRecordPage() {
   const router = useRouter();
   const safeRefreshToken = useSafeDataRefreshSignal();
 
-  // fields
   const [title, setTitle]                       = useState("");
   const [trainingType, setTrainingType]         = useState("");
   const [trainer, setTrainer]                   = useState("");
@@ -277,6 +379,9 @@ export default function NewTrainingRecordPage() {
   const [status, setStatus]                     = useState("CONCLUIDA");
   const [staff, setStaff]                       = useState<number | null>(null);
   const [staffLabel, setStaffLabel]             = useState("");
+  const [participants, setParticipants]         = useState<{ id: number; label: string }[]>([]);
+  const [notes, setNotes]                       = useState("");
+  const [pendingFiles, setPendingFiles]         = useState<File[]>([]);
 
   const [errors, setErrors]     = useState<Record<string, string>>({});
   const [saving, setSaving]     = useState(false);
@@ -286,8 +391,8 @@ export default function NewTrainingRecordPage() {
 
   function validate() {
     const e: Record<string, string> = {};
-    if (!title.trim())   e.title = "Título obrigatório.";
-    if (staff === null)  e.staff = "Colaborador obrigatório.";
+    if (!title.trim())  e.title = "Título obrigatório.";
+    if (staff === null) e.staff = "Colaborador obrigatório.";
     setErrors(e);
     return Object.keys(e).length === 0;
   }
@@ -300,18 +405,27 @@ export default function NewTrainingRecordPage() {
       const data = await apiFetch<{ id?: number }>("/clinical_laboratory/training_record/", {
         method: "POST",
         body: JSON.stringify({
-          title:                title.trim(),
-          training_type:        trainingType,
-          trainer:              trainer.trim(),
-          training_date:        trainingDate || null,
-          expiry_date:          expiryDate || null,
-          certificate:          certificate.trim(),
-          competency_verified:  competencyVerified,
+          title:               title.trim(),
+          training_type:       trainingType,
+          trainer:             trainer.trim(),
+          training_date:       trainingDate || null,
+          expiry_date:         expiryDate || null,
+          certificate:         certificate.trim(),
+          competency_verified: competencyVerified,
           status,
-          staff:                staff ?? undefined,
+          staff:               staff ?? undefined,
+          participants:        participants.map((p) => p.id),
+          notes:               notes.trim(),
         }),
       });
       if (!data?.id) throw new Error("Resposta inesperada do servidor.");
+      for (const file of pendingFiles) {
+        const fd = new FormData();
+        fd.append("training", String(data.id));
+        fd.append("file", file);
+        fd.append("original_name", file.name);
+        await apiFetch("/clinical_laboratory/training_attachment/", { method: "POST", body: fd }).catch(() => {});
+      }
       router.push(`/clinical-laboratory/quality-management/trainings/${data.id}`);
     } catch (err: any) {
       setSaveError(err?.message || "Erro ao criar registo de formação.");
@@ -475,6 +589,67 @@ export default function NewTrainingRecordPage() {
                 className={inputCls}
               />
             </Field>
+          </Card>
+
+          {/* ── Participantes ─────────────────────────────────── */}
+          <Card icon={Users} title="Participantes" accent="bg-purple-500">
+            <p className="text-[10px] text-muted-foreground pb-0.5">
+              Outros colaboradores que participaram nesta formação.
+            </p>
+            <MultiRelationSelect
+              values={participants}
+              onChange={setParticipants}
+              target={T_USER}
+              placeholder="Pesquisar participante…"
+              safeRefreshToken={safeRefreshToken}
+            />
+          </Card>
+
+          {/* ── Observações ───────────────────────────────────── */}
+          <Card icon={MessageSquare} title="Observações" accent="bg-slate-400">
+            <Field label="Notas / observações" hint="Informações adicionais não previstas nos campos acima.">
+              <textarea
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="Observações livres sobre a formação…"
+                rows={4}
+                className={`${inputCls} resize-y`}
+              />
+            </Field>
+          </Card>
+
+          {/* ── Instrumentos / Anexos ─────────────────────────── */}
+          <Card icon={Paperclip} title="Instrumentos de formação" accent="bg-rose-400">
+            <p className="text-[10px] text-muted-foreground pb-0.5">
+              Adicione PDFs, imagens, vídeos, ZIPs ou outros ficheiros de apoio.
+            </p>
+            <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-border bg-background px-3 py-2 text-[11px] text-muted-foreground transition hover:border-violet-400 hover:bg-muted">
+              <Paperclip size={12} />
+              <span>Selecionar ficheiros…</span>
+              <input type="file" multiple className="sr-only"
+                onChange={(e) => {
+                  if (e.target.files) {
+                    setPendingFiles((prev) => [...prev, ...Array.from(e.target.files!)]);
+                    e.target.value = "";
+                  }
+                }}
+              />
+            </label>
+            {pendingFiles.length > 0 && (
+              <ul className="mt-1.5 space-y-1">
+                {pendingFiles.map((f, i) => (
+                  <li key={i} className="flex items-center gap-2 rounded-md border border-border bg-background px-2.5 py-1.5 text-[10px]">
+                    <Paperclip size={10} className="shrink-0 text-muted-foreground" />
+                    <span className="min-w-0 flex-1 truncate text-foreground">{f.name}</span>
+                    <span className="shrink-0 text-muted-foreground">{(f.size / 1024).toFixed(0)} KB</span>
+                    <button type="button" onClick={() => setPendingFiles((p) => p.filter((_, j) => j !== i))}
+                      className="shrink-0 text-muted-foreground transition hover:text-red-500">
+                      <Trash2 size={10} />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
           </Card>
 
           {/* ── Estado — chips clicáveis full width ───────────── */}

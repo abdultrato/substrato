@@ -33,6 +33,8 @@ from apps.clinical_laboratory.models import (
     AuditFinding,
     QualityIndicator,
     StaffTrainingRecord,
+    TrainingReplication,
+    TrainingAttachment,
     CompetencyAssessment,
     CustomerComplaint,
     LabRiskAssessment,
@@ -503,6 +505,7 @@ class QualityIndicatorSerializer(serializers.ModelSerializer):
 
 class StaffTrainingRecordSerializer(serializers.ModelSerializer):
     staff_display = serializers.SerializerMethodField()
+    participants_display = serializers.SerializerMethodField()
 
     def get_staff_display(self, obj):
         u = obj.staff
@@ -511,7 +514,56 @@ class StaffTrainingRecordSerializer(serializers.ModelSerializer):
         full = f"{u.first_name} {u.last_name}".strip()
         return full or u.username
 
-    Meta = _meta(StaffTrainingRecord)
+    def get_participants_display(self, obj):
+        out = []
+        for u in obj.participants.all():
+            full = f"{u.first_name} {u.last_name}".strip()
+            out.append({"id": u.id, "label": full or u.username})
+        return out
+
+    class Meta:
+        model = StaffTrainingRecord
+        fields = "__all__"
+        read_only_fields = CORE_READ_ONLY_FIELDS
+
+
+class TrainingAttachmentSerializer(serializers.ModelSerializer):
+    file_url = serializers.SerializerMethodField()
+
+    def get_file_url(self, obj):
+        request = self.context.get("request")
+        if obj.file and request:
+            return request.build_absolute_uri(obj.file.url)
+        return obj.file.url if obj.file else None
+
+    class Meta:
+        model = TrainingAttachment
+        fields = "__all__"
+        read_only_fields = CORE_READ_ONLY_FIELDS
+
+
+class TrainingReplicationSerializer(serializers.ModelSerializer):
+    replicator_display = serializers.SerializerMethodField()
+    participants_display = serializers.SerializerMethodField()
+
+    def get_replicator_display(self, obj):
+        u = obj.replicator
+        if not u:
+            return None
+        full = f"{u.first_name} {u.last_name}".strip()
+        return full or u.username
+
+    def get_participants_display(self, obj):
+        out = []
+        for u in obj.participants.all():
+            full = f"{u.first_name} {u.last_name}".strip()
+            out.append({"id": u.id, "label": full or u.username})
+        return out
+
+    class Meta:
+        model = TrainingReplication
+        fields = "__all__"
+        read_only_fields = CORE_READ_ONLY_FIELDS
 
 
 class CompetencyAssessmentSerializer(serializers.ModelSerializer):

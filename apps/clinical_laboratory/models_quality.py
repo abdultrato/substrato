@@ -68,6 +68,21 @@ class QualityDocument(NoNameCoreModel):
         ordering = ["code"]
         indexes = [models.Index(fields=["tenant", "document_type", "status"])]
 
+    def increment_version(self) -> str:
+        """Bump semântico: 1.0→1.1, 1.9→2.0, 2.9→3.0."""
+        try:
+            major, minor = self.version.split(".")
+            major, minor = int(major), int(minor)
+        except (ValueError, AttributeError):
+            major, minor = 1, 0
+        if minor >= 9:
+            major, minor = major + 1, 0
+        else:
+            minor += 1
+        self.version = f"{major}.{minor}"
+        type(self).objects.filter(pk=self.pk).update(version=self.version)
+        return self.version
+
     def approve(self, *, by=None):
         self.status = self.Status.APPROVED
         self.approved_by = by or self.approved_by
@@ -349,6 +364,9 @@ class StaffTrainingRecord(NoNameCoreModel):
                                               default=False)
     status = models.CharField("Estado", max_length=10, choices=Status.choices,
                               default=Status.COMPLETED, db_index=True)
+    participants = models.ManyToManyField(USER, verbose_name="Participantes",
+                                         related_name="training_participations", blank=True)
+    notes = models.TextField("Observações", blank=True, default="")
 
     class Meta:
         db_table = "laboratorio_qm_formacao"
@@ -363,6 +381,51 @@ class StaffTrainingRecord(NoNameCoreModel):
 
     def __str__(self) -> str:
         return f"{self.title} ({self.staff_id})"
+
+
+class TrainingReplication(NoNameCoreModel):
+    """Réplica de uma formação — replicador transmite conteúdo a novos participantes."""
+
+    prefix = "QREP"
+
+    original = models.ForeignKey(StaffTrainingRecord, verbose_name="Formação original",
+                                 on_delete=models.PROTECT, related_name="replications")
+    replicator = models.ForeignKey(USER, verbose_name="Replicante",
+                                   on_delete=models.PROTECT, related_name="+")
+    participants = models.ManyToManyField(USER, verbose_name="Participantes da réplica",
+                                          related_name="replication_participations", blank=True)
+    replication_date = models.DateField("Data da réplica", null=True, blank=True)
+    notes = models.TextField("Observações", blank=True, default="")
+
+    class Meta:
+        db_table = "laboratorio_qm_formacao_replica"
+        verbose_name = "Réplica de formação"
+        verbose_name_plural = "Réplicas de formação"
+        ordering = ["-replication_date"]
+
+    def __str__(self) -> str:
+        return f"Réplica de {self.original_id} por {self.replicator_id}"
+
+
+class TrainingAttachment(NoNameCoreModel):
+    """Anexo de uma formação (PDF, imagem, zip, vídeo, etc.)."""
+
+    prefix = "QATT"
+
+    training = models.ForeignKey(StaffTrainingRecord, verbose_name="Formação",
+                                 on_delete=models.CASCADE, related_name="attachments")
+    file = models.FileField("Ficheiro", upload_to="trainings/attachments/%Y/%m/")
+    original_name = models.CharField("Nome original", max_length=255, blank=True, default="")
+    description = models.CharField("Descrição", max_length=255, blank=True, default="")
+
+    class Meta:
+        db_table = "laboratorio_qm_formacao_anexo"
+        verbose_name = "Anexo de formação"
+        verbose_name_plural = "Anexos de formação"
+        ordering = ["created_at"]
+
+    def __str__(self) -> str:
+        return self.original_name or str(self.file)
 
 
 class CompetencyAssessment(NoNameCoreModel):

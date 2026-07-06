@@ -1363,6 +1363,8 @@ from .models_quality import (  # noqa: E402,F401
     QualityDocument,
     QualityIndicator,
     StaffTrainingRecord,
+    TrainingReplication,
+    TrainingAttachment,
 )
 from .models_biosafety import (  # noqa: E402,F401
     BiologicalHazard,
