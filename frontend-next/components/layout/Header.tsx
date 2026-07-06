@@ -137,7 +137,7 @@ export default function Header({ user, onMenuClick, scrolledDown = false }: Prop
     }, [sectionedItems, updateNavScrollState])
 
     return (
-        <header className="relative overflow-visible border-b border-border/70 bg-gradient-to-r from-card/95 via-card/90 to-primary/[0.04] text-sm leading-none shadow-[0_1px_12px_rgba(15,23,42,0.07)] backdrop-blur-xl dark:from-card/95 dark:via-card/90 dark:to-primary/[0.07]">
+        <header className="relative z-[999] overflow-visible border-b border-border/70 bg-gradient-to-r from-card/95 via-card/90 to-primary/[0.04] text-sm leading-none shadow-[0_1px_12px_rgba(15,23,42,0.07)] backdrop-blur-xl dark:from-card/95 dark:via-card/90 dark:to-primary/[0.07]">
             <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/35 to-transparent" />
             <div className="flex h-11 flex-nowrap items-center justify-between gap-2 px-2 sm:gap-2 sm:px-3">
                 <div className="flex min-w-0 flex-1 items-center gap-2">
