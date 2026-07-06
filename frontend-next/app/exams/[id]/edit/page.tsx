@@ -105,9 +105,10 @@ function resolveNumericReferencePayload(row: FieldRow, value: string) {
   return value || null;
 }
 
-function RelationSelect({ value, onChange, target, placeholder }: {
+function RelationSelect({ value, onChange, target, placeholder, initialLabel = "" }: {
   value: number | null; onChange: (v: number | null, label: string) => void;
   target: RelationTarget; placeholder?: string;
+  initialLabel?: string;
 }) {
   const [query, setQuery]   = useState("");
   const [label, setLabel]   = useState("");
@@ -116,6 +117,14 @@ function RelationSelect({ value, onChange, target, placeholder }: {
   const [busy, setBusy]     = useState(false);
   const debRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lbId = useId();
+
+  useEffect(() => {
+    if (value !== null) {
+      setLabel(initialLabel);
+      return;
+    }
+    setLabel("");
+  }, [initialLabel, value]);
 
   function search(q: string) {
     setQuery(q); setOpen(true);
@@ -410,6 +419,7 @@ export default function EditExamPage() {
                 <Field label="Amostra principal" required error={errors.sample_type}>
                   <RelationSelect target={T_SAMPLE} value={sampleTypeId}
                     onChange={(v, lbl) => { setSampleTypeId(v); setSampleTypeLabel(lbl); setErrors((p) => ({ ...p, sample_type: "" })); }}
+                    initialLabel={sampleTypeLabel}
                     placeholder="Pesquisar amostra…" />
                 </Field>
                 <Field label="Tempo de resposta (h)" required error={errors.tat}>
