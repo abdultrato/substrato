@@ -241,7 +241,7 @@ export default function BloodDonationDetailPage() {
 
   async function save() {
     if (!form || !idStr) return;
-    setSaving(true); setSaved(false);
+    setSaving(true);
     try {
       const payload: Record<string, unknown> = {
         status: form.status,
