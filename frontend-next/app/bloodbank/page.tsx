@@ -95,7 +95,7 @@ export default function BloodBankPage() {
         setListLoading(true); setListError(null)
         const [patientsRes, donationsRes] = await Promise.all([
           apiFetch<{ results?: DonorRow[] }>("/clinical/patient/?is_blood_donor=true&page_size=200&ordering=name", { clientCache: safeRefreshToken === 0 }),
-          apiFetch<{ results?: DonationRow[] }>("/blood-donations/?page_size=400&ordering=-collected_at", { clientCache: safeRefreshToken === 0 }),
+          apiFetch<{ results?: DonationRow[] }>("/bloodbank/donation/?page_size=400&ordering=-collected_at", { clientCache: safeRefreshToken === 0 }),
         ])
         if (!mounted) return
         const donorItems = Array.isArray(patientsRes?.results) ? patientsRes.results : []
