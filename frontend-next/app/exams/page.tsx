@@ -23,7 +23,6 @@ const LIST_GROUPS = [
   GROUPS.ENFERMAGEM, GROUPS.LABORATORIO, GROUPS.RECEPCAO,
 ];
 
-const PAGE_SIZES = [12, 24, 48, 96];
 const DEFAULT_PAGE_SIZE = 24;
 
 interface LabExam {
@@ -190,11 +189,16 @@ export default function ExamsListPage() {
                   {SECTOR_FILTERS.map((f) => <option key={f.value} value={f.value}>{f.label}</option>)}
                 </select>
               </div>
-              <div className="relative">
-                <select value={pageSize} onChange={(e) => handlePageSize(Number(e.target.value))}
-                  className="appearance-none rounded-lg border border-border bg-card py-1.5 pl-3 pr-6 text-xs text-foreground outline-none transition focus:border-sky-400">
-                  {PAGE_SIZES.map((n) => <option key={n} value={n}>{n} por página</option>)}
-                </select>
+              <div className="flex items-center gap-1.5 rounded-lg border border-border bg-card px-2.5 py-1.5">
+                <input
+                  type="number" min="1" max="999" value={pageSize}
+                  onChange={(e) => {
+                    const v = Math.max(1, Math.min(999, Number(e.target.value) || 1));
+                    handlePageSize(v);
+                  }}
+                  className="w-12 bg-transparent text-center text-xs text-foreground outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                />
+                <span className="whitespace-nowrap text-xs text-muted-foreground">por página</span>
               </div>
             </div>
           </div>
