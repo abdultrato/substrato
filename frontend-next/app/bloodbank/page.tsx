@@ -86,6 +86,7 @@ export default function BloodBankPage() {
   const [page, setPage]                           = useState(1)
   const [pageSize, setPageSize]                   = useState(DEFAULT_PAGE_SIZE)
   const [pageSizeInput, setPageSizeInput]         = useState(String(DEFAULT_PAGE_SIZE))
+  const [ageFilter, setAgeFilter]                 = useState("")
   const [bloodTypeFilter, setBloodTypeFilter]     = useState("")
   const [dateFilter, setDateFilter]               = useState("")
   const [donors, setDonors]                       = useState<DonorRow[]>([])
@@ -163,17 +164,19 @@ export default function BloodBankPage() {
 
   useEffect(() => {
     setPage(1)
-  }, [debouncedSearch, bloodTypeFilter, dateFilter, pageSize])
+  }, [debouncedSearch, ageFilter, bloodTypeFilter, dateFilter, pageSize])
 
   const filteredDonors = useMemo(() => donors.filter((donor) => {
     const d = donor as Record<string, unknown>
     const latestDonation = donationMap[String(d.id)] as Record<string, unknown> | null
     const text = [d.custom_id, d.id, d.name, d.contact, d.email, d.document_number].filter(Boolean).join(" ").toLowerCase()
+    const numericAge = parseInt(ageLabel(d.birth_date as string), 10)
     const searchOk = !debouncedSearch.trim() || text.includes(debouncedSearch.trim().toLowerCase())
+    const ageOk = !ageFilter || (!Number.isNaN(numericAge) && numericAge === Math.max(0, parseInt(ageFilter, 10) || 0))
     const btOk = !bloodTypeFilter || String(d.blood_type || "") === bloodTypeFilter
     const dateOk = !dateFilter || toDateVal(String(latestDonation?.collected_at ?? latestDonation?.created_at ?? "")) === dateFilter
-    return searchOk && btOk && dateOk
-  }), [bloodTypeFilter, debouncedSearch, donationMap, donors, dateFilter])
+    return searchOk && ageOk && btOk && dateOk
+  }), [ageFilter, bloodTypeFilter, debouncedSearch, donationMap, donors, dateFilter])
 
   const totalPages = Math.max(1, Math.ceil(filteredDonors.length / pageSize))
   const currentPage = Math.min(page, totalPages)
@@ -237,6 +240,15 @@ export default function BloodBankPage() {
                 }}
                 placeholder="12/pág"
                 className="w-[96px] rounded-lg border border-white/30 bg-white/40 px-2.5 py-1.5 text-xs text-foreground outline-none transition focus:border-rose-400 focus:ring-2 focus:ring-rose-400/20 dark:border-white/10 dark:bg-white/5 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+              />
+              <input
+                type="number"
+                min="0"
+                max="130"
+                value={ageFilter}
+                onChange={(e) => setAgeFilter(e.target.value)}
+                placeholder="Idade"
+                className="w-[88px] rounded-lg border border-white/30 bg-white/40 px-2.5 py-1.5 text-xs text-foreground outline-none transition focus:border-rose-400 focus:ring-2 focus:ring-rose-400/20 dark:border-white/10 dark:bg-white/5 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
               />
               <select value={bloodTypeFilter} onChange={(e) => setBloodTypeFilter(e.target.value)}
                 className="rounded-lg border border-border bg-card py-1.5 pl-2.5 pr-4 text-xs text-foreground outline-none transition focus:border-rose-400">
