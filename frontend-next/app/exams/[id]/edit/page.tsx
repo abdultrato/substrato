@@ -66,11 +66,35 @@ const UNITS = [
   "densidade","células/campo","sem unidade",
 ];
 
+const BOTTLE_TYPE_LABELS: Record<string, string> = {
+  TUBO_SECO: "Tubo seco (soro)",
+  TUBO_EDTA: "Tubo EDTA",
+  TUBO_CITRATO: "Tubo citrato",
+  TUBO_FLUORETO: "Tubo fluoreto",
+  FRASCO_URINA: "Frasco de urina",
+  FRASCO_FEZES: "Frasco de fezes",
+  FRASCO_ESTERIL: "Frasco estéril",
+  HEMOCULTURA: "Frasco de hemocultura",
+  OUTRO: "Outro",
+};
+
 interface LabExam {
   id: number; custom_id: string; name: string;
   turnaround_hours: number; price: string; vat_percentage: string;
   applies_vat_by_default: boolean; method: string; sector: string;
   sample_type: number | null; sample_type_name: string | null;
+}
+
+interface SampleCollectionProfile {
+  id: number;
+  name: string;
+  bottle_type: string;
+  bottle_type_display?: string;
+  cap_color?: string;
+  minimum_volume_ml?: string;
+  fasting_required?: boolean;
+  fasting_hours?: number;
+  storage_temperature?: string;
 }
 
 interface FieldRow {
@@ -103,6 +127,11 @@ function resolveUnitForPayload(row: FieldRow) {
 function resolveNumericReferencePayload(row: FieldRow, value: string) {
   if (isUnitOptionalType(row.type)) return null;
   return value || null;
+}
+
+function bottleTypeLabel(profile: SampleCollectionProfile | null) {
+  if (!profile) return "—";
+  return profile.bottle_type_display || BOTTLE_TYPE_LABELS[profile.bottle_type] || profile.bottle_type || "—";
 }
 
 function RelationSelect({ value, onChange, target, placeholder, initialLabel = "" }: {
@@ -229,6 +258,7 @@ export default function EditExamPage() {
   const [tat, setTat]         = useState("24");
   const [sampleTypeId, setSampleTypeId] = useState<number | null>(null);
   const [sampleTypeLabel, setSampleTypeLabel] = useState("");
+  const [sampleProfile, setSampleProfile] = useState<SampleCollectionProfile | null>(null);
   const [fields, setFields]   = useState<FieldRow[]>([]);
   const [deletedFieldIds, setDeletedFieldIds] = useState<number[]>([]);
 
@@ -270,6 +300,16 @@ export default function EditExamPage() {
     }).catch(() => setSaveError("Erro ao carregar exame."))
       .finally(() => setLoadingData(false));
   }, [id]);
+
+  useEffect(() => {
+    if (!sampleTypeId) {
+      setSampleProfile(null);
+      return;
+    }
+    apiFetch<SampleCollectionProfile>(`/clinical/samples/${sampleTypeId}/`)
+      .then(setSampleProfile)
+      .catch(() => setSampleProfile(null));
+  }, [sampleTypeId]);
 
   function addField() { setFields((prev) => [...prev, emptyRow()]); }
   function removeField(key: string) {
@@ -425,6 +465,24 @@ export default function EditExamPage() {
                 <Field label="Tempo de resposta (h)" required error={errors.tat}>
                   <input type="number" min="1" value={tat} onChange={(e) => setTat(e.target.value)}
                     className="w-full rounded-md border border-border bg-background px-2.5 py-1.5 text-xs text-foreground outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-400/20" />
+                </Field>
+              </Card>
+
+              <Card title="Tipo de frasco e coleta" accent="bg-gradient-to-b from-amber-500 to-orange-600">
+                <Field label="Tipo de frasco">
+                  <input type="text" value={bottleTypeLabel(sampleProfile)} readOnly className="w-full rounded-md border border-border bg-muted/40 px-2.5 py-1.5 text-xs text-foreground outline-none" />
+                </Field>
+                <Field label="Cor da tampa">
+                  <input type="text" value={sampleProfile?.cap_color || "—"} readOnly className="w-full rounded-md border border-border bg-muted/40 px-2.5 py-1.5 text-xs text-foreground outline-none" />
+                </Field>
+                <Field label="Volume mínimo">
+                  <input type="text" value={sampleProfile?.minimum_volume_ml ? `${sampleProfile.minimum_volume_ml} mL` : "—"} readOnly className="w-full rounded-md border border-border bg-muted/40 px-2.5 py-1.5 text-xs text-foreground outline-none" />
+                </Field>
+                <Field label="Jejum">
+                  <input type="text" value={sampleProfile ? (sampleProfile.fasting_required ? `${sampleProfile.fasting_hours || 0} h` : "Não") : "—"} readOnly className="w-full rounded-md border border-border bg-muted/40 px-2.5 py-1.5 text-xs text-foreground outline-none" />
+                </Field>
+                <Field label="Conservação">
+                  <input type="text" value={sampleProfile?.storage_temperature || "—"} readOnly className="w-full rounded-md border border-border bg-muted/40 px-2.5 py-1.5 text-xs text-foreground outline-none" />
                 </Field>
               </Card>
 

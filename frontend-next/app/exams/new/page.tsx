@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
@@ -22,6 +22,35 @@ import type { RelationTarget } from "@/lib/resources/relationOptions";
 const CREATE_GROUPS = [GROUPS.ADMIN, GROUPS.LABORATORIO];
 
 const T_SAMPLE: RelationTarget = { endpoint: "/clinical/samples/", labelFields: ["name"] };
+
+interface SampleCollectionProfile {
+  id: number;
+  name: string;
+  bottle_type: string;
+  bottle_type_display?: string;
+  cap_color?: string;
+  minimum_volume_ml?: string;
+  fasting_required?: boolean;
+  fasting_hours?: number;
+  storage_temperature?: string;
+}
+
+const BOTTLE_TYPE_LABELS: Record<string, string> = {
+  TUBO_SECO: "Tubo seco (soro)",
+  TUBO_EDTA: "Tubo EDTA",
+  TUBO_CITRATO: "Tubo citrato",
+  TUBO_FLUORETO: "Tubo fluoreto",
+  FRASCO_URINA: "Frasco de urina",
+  FRASCO_FEZES: "Frasco de fezes",
+  FRASCO_ESTERIL: "Frasco estéril",
+  HEMOCULTURA: "Frasco de hemocultura",
+  OUTRO: "Outro",
+};
+
+function bottleTypeLabel(profile: SampleCollectionProfile | null) {
+  if (!profile) return "—";
+  return profile.bottle_type_display || BOTTLE_TYPE_LABELS[profile.bottle_type] || profile.bottle_type || "—";
+}
 
 const SECTORS = [
   ["Hematologia", "Hematologia"], ["Bioquimica", "Bioquímica"],
@@ -227,11 +256,22 @@ export default function NewExamPage() {
   const [appliesVat, setAppliesVat] = useState(true);
   const [tat, setTat]         = useState("24");
   const [sampleTypeId, setSampleTypeId] = useState<number | null>(null);
+  const [sampleProfile, setSampleProfile] = useState<SampleCollectionProfile | null>(null);
   const [examFields, setExamFields] = useState<DraftExamField[]>([createEmptyExamField()]);
 
   const [errors, setErrors]   = useState<Record<string, string>>({});
   const [saving, setSaving]   = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!sampleTypeId) {
+      setSampleProfile(null);
+      return;
+    }
+    apiFetch<SampleCollectionProfile>(`/clinical/samples/${sampleTypeId}/`)
+      .then(setSampleProfile)
+      .catch(() => setSampleProfile(null));
+  }, [sampleTypeId]);
 
   function validate() {
     const e: Record<string, string> = {};
@@ -394,6 +434,64 @@ export default function NewExamPage() {
               <Field label="Tempo de resposta (horas)" required error={errors.tat}>
                 <input type="number" min="1" value={tat} onChange={(e) => setTat(e.target.value)} className={inputCls} />
               </Field>
+            </Card>
+          </div>
+
+          <div className="mb-2 break-inside-avoid">
+            <Card title="Tipo de frasco e coleta" accent="bg-gradient-to-b from-amber-500 to-orange-600">
+              {!sampleTypeId ? (
+                <p className="text-xs text-muted-foreground">
+                  Selecione a amostra principal para expor o frasco de coleta correspondente.
+                </p>
+              ) : !sampleProfile ? (
+                <div className="flex items-center gap-2 py-2 text-xs text-muted-foreground">
+                  <Loader2 size={13} className="animate-spin" />
+                  A carregar dados da coleta…
+                </div>
+              ) : (
+                <>
+                  <Field label="Tipo de frasco">
+                    <input
+                      type="text"
+                      value={bottleTypeLabel(sampleProfile)}
+                      readOnly
+                      className={`${inputCls} bg-muted/40`}
+                    />
+                  </Field>
+                  <Field label="Cor da tampa">
+                    <input
+                      type="text"
+                      value={sampleProfile.cap_color || "—"}
+                      readOnly
+                      className={`${inputCls} bg-muted/40`}
+                    />
+                  </Field>
+                  <Field label="Volume mínimo (mL)">
+                    <input
+                      type="text"
+                      value={sampleProfile.minimum_volume_ml || "—"}
+                      readOnly
+                      className={`${inputCls} bg-muted/40`}
+                    />
+                  </Field>
+                  <Field label="Jejum">
+                    <input
+                      type="text"
+                      value={sampleProfile.fasting_required ? `${sampleProfile.fasting_hours || 0} h` : "Não"}
+                      readOnly
+                      className={`${inputCls} bg-muted/40`}
+                    />
+                  </Field>
+                  <Field label="Conservação">
+                    <input
+                      type="text"
+                      value={sampleProfile.storage_temperature || "—"}
+                      readOnly
+                      className={`${inputCls} bg-muted/40`}
+                    />
+                  </Field>
+                </>
+              )}
             </Card>
           </div>
 

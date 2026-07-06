@@ -25,6 +25,34 @@ const DETAIL_GROUPS = [
 ];
 
 interface SampleDetail { id: number; name: string; }
+interface SampleCollectionProfile {
+  id: number;
+  name: string;
+  bottle_type: string;
+  bottle_type_display?: string;
+  cap_color?: string;
+  minimum_volume_ml?: string;
+  fasting_required?: boolean;
+  fasting_hours?: number;
+  storage_temperature?: string;
+}
+
+const BOTTLE_TYPE_LABELS: Record<string, string> = {
+  TUBO_SECO: "Tubo seco (soro)",
+  TUBO_EDTA: "Tubo EDTA",
+  TUBO_CITRATO: "Tubo citrato",
+  TUBO_FLUORETO: "Tubo fluoreto",
+  FRASCO_URINA: "Frasco de urina",
+  FRASCO_FEZES: "Frasco de fezes",
+  FRASCO_ESTERIL: "Frasco estéril",
+  HEMOCULTURA: "Frasco de hemocultura",
+  OUTRO: "Outro",
+};
+
+function bottleTypeLabel(profile: SampleCollectionProfile | null) {
+  if (!profile) return "—";
+  return profile.bottle_type_display || BOTTLE_TYPE_LABELS[profile.bottle_type] || profile.bottle_type || "—";
+}
 
 interface ExamField {
   id: number;
@@ -121,6 +149,7 @@ export default function ExamDetailPage() {
 
   const [exam, setExam]       = useState<LabExam | null>(null);
   const [fields, setFields]   = useState<ExamField[]>([]);
+  const [sampleProfile, setSampleProfile] = useState<SampleCollectionProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError]     = useState<string | null>(null);
 
@@ -133,6 +162,13 @@ export default function ExamDetailPage() {
       .then(([examData, { items }]) => {
         setExam(examData);
         setFields([...items].sort((a, b) => (a.position ?? 0) - (b.position ?? 0)));
+        if (examData.sample_type) {
+          apiFetch<SampleCollectionProfile>(`/clinical/samples/${examData.sample_type}/`)
+            .then(setSampleProfile)
+            .catch(() => setSampleProfile(null));
+        } else {
+          setSampleProfile(null);
+        }
       })
       .catch(() => setError("Exame não encontrado."))
       .finally(() => setLoading(false));
@@ -251,6 +287,16 @@ export default function ExamDetailPage() {
                 } />
               )}
               <Row label="Tempo de resposta" value={`${exam.turnaround_hours} horas`} />
+            </div>
+          </Card>
+
+          <Card icon={TestTube2} title="Tipo de frasco e coleta" accent="bg-gradient-to-b from-amber-500 to-orange-600">
+            <div className="space-y-0.5">
+              <Row label="Tipo de frasco" value={bottleTypeLabel(sampleProfile)} />
+              <Row label="Cor da tampa" value={sampleProfile?.cap_color || "—"} />
+              <Row label="Volume mínimo" value={sampleProfile?.minimum_volume_ml ? `${sampleProfile.minimum_volume_ml} mL` : "—"} />
+              <Row label="Jejum" value={sampleProfile ? (sampleProfile.fasting_required ? `${sampleProfile.fasting_hours || 0} h` : "Não") : "—"} />
+              <Row label="Conservação" value={sampleProfile?.storage_temperature || "—"} />
             </div>
           </Card>
 
