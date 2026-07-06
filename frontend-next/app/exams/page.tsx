@@ -128,7 +128,7 @@ export default function ExamsListPage() {
       if (q.trim())  query.search = q.trim();
       if (sector)    query.sector = sector;
       const { items: rows, meta } = await apiFetchList<LabExam>(
-        "/clinical/lab-exams/", { page: p, pageSize: ps, query }
+        "/clinical/lab-exams/", { page: p, pageSize: ps, query, clientPaginate: true }
       );
       setItems(rows); setTotal(meta.total ?? 0);
     } catch { setItems([]); setTotal(0); }
