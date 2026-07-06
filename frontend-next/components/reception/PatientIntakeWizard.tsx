@@ -310,10 +310,10 @@ const STEP_DEFINITIONS: Array<{ key: StepKey; label: string; icon: typeof Clipbo
 ]
 
 const inputCls =
-  "w-full rounded-lg border border-[var(--border)] bg-card/60 px-3 py-2 text-sm text-[var(--text)] shadow-sm outline-none transition placeholder:text-[var(--gray-400)] hover:border-[var(--primary-400)] focus:border-[var(--primary-500)] focus:ring-2 focus:ring-[var(--primary-300)] disabled:bg-muted/45 disabled:text-[var(--gray-500)]"
+  "w-full rounded-xl border border-white/25 bg-white/45 px-3 py-2 text-sm text-[var(--text)] shadow-sm backdrop-blur-sm outline-none transition placeholder:text-[var(--gray-400)] hover:border-[var(--primary-300)] hover:bg-white/60 focus:border-[var(--primary-500)] focus:bg-white/70 focus:ring-2 focus:ring-[var(--primary-200)] dark:border-white/10 dark:bg-white/[0.06] dark:hover:bg-white/[0.10] dark:focus:bg-white/[0.12] disabled:bg-white/20 disabled:text-[var(--gray-500)] dark:disabled:bg-white/[0.03]"
 
 const compactInputCls =
-  "w-full rounded-md border border-[var(--border)] bg-card/60 px-2.5 py-1.5 text-xs text-[var(--text)] shadow-sm outline-none transition placeholder:text-[var(--gray-400)] hover:border-[var(--primary-400)] focus:border-[var(--primary-500)] focus:ring-2 focus:ring-[var(--primary-300)] disabled:bg-muted/45 disabled:text-[var(--gray-500)]"
+  "w-full rounded-lg border border-white/25 bg-white/42 px-2.5 py-1.5 text-xs text-[var(--text)] shadow-sm backdrop-blur-sm outline-none transition placeholder:text-[var(--gray-400)] hover:border-[var(--primary-300)] hover:bg-white/58 focus:border-[var(--primary-500)] focus:bg-white/68 focus:ring-2 focus:ring-[var(--primary-200)] dark:border-white/10 dark:bg-white/[0.06] dark:hover:bg-white/[0.10] dark:focus:bg-white/[0.12] disabled:bg-white/20 disabled:text-[var(--gray-500)] dark:disabled:bg-white/[0.03]"
 
 function phoneDigits(value: string) {
   return value.replace(/\D/g, "")
@@ -451,8 +451,8 @@ function Field({
 
 function SectionTitle({ icon: Icon, title }: { icon: typeof ClipboardList; title: string }) {
   return (
-    <div className="flex items-center gap-2 border-b border-[var(--border)] pb-2">
-      <span className="flex h-7 w-7 items-center justify-center rounded-md border border-[var(--border)] bg-[var(--gray-100)] text-[var(--primary-700)]">
+    <div className="flex items-center gap-2 border-b border-white/20 pb-2 dark:border-white/10">
+      <span className="flex h-7 w-7 items-center justify-center rounded-lg border border-white/25 bg-white/45 text-[var(--primary-700)] shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.06] dark:text-[var(--primary-300)]">
         <Icon size={15} />
       </span>
       <h3 className="text-sm font-semibold text-[var(--text)]">{title}</h3>
@@ -479,7 +479,7 @@ function ToggleRow({
     tone === "rose" ? "text-rose-500" : tone === "amber" ? "text-amber-500" : "text-[var(--primary-700)]"
 
   return (
-    <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-[var(--border)] bg-[var(--gray-100)] px-3 py-2.5 transition hover:border-[var(--primary-300)]">
+    <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-white/20 bg-white/30 px-3 py-2.5 shadow-sm backdrop-blur-sm transition hover:border-[var(--primary-300)] hover:bg-white/45 dark:border-white/10 dark:bg-white/[0.05] dark:hover:bg-white/[0.09]">
       <input
         type="checkbox"
         checked={checked}
@@ -518,12 +518,12 @@ function PurposeCard({
       className={`flex items-start gap-3 rounded-lg border px-3 py-3 text-left transition ${
         active
           ? "border-[var(--primary-500)] bg-[var(--primary-600)] text-white shadow-sm"
-          : "border-[var(--border)] bg-[var(--card)] text-[var(--gray-700)] hover:border-[var(--primary-300)]"
+          : "border-white/20 bg-white/30 text-[var(--gray-700)] shadow-sm backdrop-blur-sm hover:border-[var(--primary-300)] hover:bg-white/45 dark:border-white/10 dark:bg-white/[0.05] dark:text-[var(--gray-200)] dark:hover:bg-white/[0.09]"
       }`}
     >
       <span
         className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md ${
-          active ? "bg-white/15" : "bg-[var(--gray-100)] text-[var(--primary-700)]"
+          active ? "bg-white/15" : "bg-white/45 text-[var(--primary-700)] dark:bg-white/[0.06] dark:text-[var(--primary-300)]"
         }`}
       >
         <Icon size={18} />
@@ -1148,7 +1148,7 @@ export function PatientIntakeWizard({
   return (
     <ModalShell title={isEditMode ? "Editar paciente" : "Registar paciente"} onClose={onClose}>
       <div className="grid min-h-0 flex-1 grid-cols-1 md:grid-cols-[230px_minmax(0,1fr)]">
-        <aside className="border-b border-[var(--border)] bg-muted/45 p-3 backdrop-blur-sm md:border-b-0 md:border-r">
+        <aside className="border-b border-white/20 bg-white/18 p-3 backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.03] md:border-b-0 md:border-r">
           <div className="flex gap-2 overflow-x-auto md:flex-col md:overflow-visible">
             {steps.map((definition, index) => {
               const Icon = definition.icon
@@ -1160,17 +1160,17 @@ export function PatientIntakeWizard({
                   type="button"
                   onClick={() => index <= step && setStep(index)}
                   disabled={index > step}
-                  className={`flex min-w-[150px] items-center gap-2 rounded-lg border px-2.5 py-2 text-left text-xs transition md:min-w-0 ${
+                  className={`flex min-w-[150px] items-center gap-2 rounded-xl border px-2.5 py-2 text-left text-xs transition md:min-w-0 ${
                     active
                       ? "border-[var(--primary-500)] bg-[var(--primary-600)] text-white"
                       : complete
-                        ? "border-emerald-200 bg-emerald-50/75 text-emerald-800"
-                        : "border-[var(--border)] bg-card/55 text-[var(--gray-700)] disabled:opacity-60"
+                        ? "border-emerald-200 bg-emerald-50/80 text-emerald-800 shadow-sm dark:border-emerald-700/30 dark:bg-emerald-900/20 dark:text-emerald-300"
+                        : "border-white/20 bg-white/30 text-[var(--gray-700)] shadow-sm backdrop-blur-sm disabled:opacity-60 dark:border-white/10 dark:bg-white/[0.05] dark:text-[var(--gray-200)]"
                   }`}
                 >
                   <span
                     className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md ${
-                      active ? "bg-white/15" : complete ? "bg-emerald-100/80" : "bg-muted/55"
+                      active ? "bg-white/15" : complete ? "bg-emerald-100/80" : "bg-white/45 dark:bg-white/[0.06]"
                     }`}
                   >
                     {complete ? <CheckCircle2 size={15} /> : <Icon size={15} />}
@@ -1194,7 +1194,7 @@ export function PatientIntakeWizard({
             </div>
           ) : null}
 
-          <div className="flex items-center justify-between gap-3 border-t border-[var(--border)] px-4 py-3 sm:px-5">
+          <div className="flex items-center justify-between gap-3 border-t border-white/20 px-4 py-3 dark:border-white/10 sm:px-5">
             <button
               type="button"
               onClick={() => {
@@ -1202,7 +1202,7 @@ export function PatientIntakeWizard({
                 setStep((current) => Math.max(0, current - 1))
               }}
               disabled={step === 0}
-              className="inline-flex h-9 items-center rounded-lg border border-[var(--border)] bg-card/55 px-3 text-xs font-semibold text-[var(--gray-700)] transition hover:bg-muted/55 disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex h-9 items-center rounded-lg border border-white/20 bg-white/30 px-3 text-xs font-semibold text-[var(--gray-700)] shadow-sm backdrop-blur-sm transition hover:bg-white/45 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/10 dark:bg-white/[0.05] dark:text-[var(--gray-200)] dark:hover:bg-white/[0.09]"
             >
               Anterior
             </button>
@@ -1251,7 +1251,7 @@ export function PatientIntakeWizard({
           </div>
 
           {isOccupational || isClinical ? (
-            <div className="space-y-3 rounded-lg border border-[var(--border)] bg-muted/45 p-3 backdrop-blur-sm">
+            <div className="space-y-3 rounded-xl border border-white/20 bg-white/24 p-3 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]">
               <h4 className="text-xs font-semibold uppercase tracking-wide text-[var(--gray-500)]">
                 Detalhes — {purposeLabel(data.visit_purpose)}
               </h4>
@@ -1963,8 +1963,8 @@ function ModalShell({ title, onClose, children }: { title: string; onClose: () =
   return (
     <div className="fixed inset-0 z-[9999] flex items-start justify-center overflow-hidden p-3 pt-10 sm:p-6 sm:pt-12">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative flex max-h-[calc(100vh-4rem)] w-full max-w-5xl flex-col overflow-hidden rounded-xl border border-[var(--border)] bg-card/78 shadow-2xl backdrop-blur-xl supports-[backdrop-filter]:bg-card/72">
-        <div className="flex shrink-0 items-center justify-between border-b border-[var(--border)] px-4 py-3">
+      <div className="relative flex max-h-[calc(100vh-4rem)] w-full max-w-5xl flex-col overflow-hidden rounded-2xl border border-white/20 bg-white/35 shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-white/[0.06] supports-[backdrop-filter]:bg-white/30 dark:supports-[backdrop-filter]:bg-white/[0.05]">
+        <div className="flex shrink-0 items-center justify-between border-b border-white/20 px-4 py-3 dark:border-white/10">
           <div>
             <h2 className="text-sm font-semibold text-[var(--text)]">{title}</h2>
           </div>
@@ -1972,7 +1972,7 @@ function ModalShell({ title, onClose, children }: { title: string; onClose: () =
             type="button"
             onClick={onClose}
             aria-label="Fechar"
-            className="rounded-lg p-1 text-[var(--gray-500)] transition hover:bg-[var(--gray-100)] hover:text-[var(--text)]"
+            className="rounded-lg p-1 text-[var(--gray-500)] transition hover:bg-white/50 hover:text-[var(--text)] dark:hover:bg-white/[0.08]"
           >
             <X size={16} />
           </button>
@@ -1985,7 +1985,7 @@ function ModalShell({ title, onClose, children }: { title: string; onClose: () =
 
 function SummaryGroup({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="space-y-2 rounded-lg border border-[var(--border)] bg-muted/45 p-3 backdrop-blur-sm">
+    <section className="space-y-2 rounded-xl border border-white/20 bg-white/24 p-3 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]">
       <h4 className="text-xs font-semibold uppercase text-[var(--gray-500)]">{title}</h4>
       <div className="divide-y divide-[var(--border)]">{children}</div>
     </section>
