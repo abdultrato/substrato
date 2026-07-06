@@ -21,6 +21,7 @@ import {
   displayLabel,
   fmtDateTime,
   sectorLabel,
+  splitRootCauseTrace,
 } from "../_components";
 
 const VIEW_GROUPS = [GROUPS.ADMIN, GROUPS.LABORATORIO];
@@ -66,6 +67,7 @@ export default function NonconformityDetailPage() {
   const bar = SEVERITY_BAR[rec.severity] ?? "bg-slate-400";
   const severity = SEVERITY_COLOR[rec.severity] ?? "border-border bg-muted text-foreground";
   const status = STATUS_COLOR[rec.status] ?? "border-border bg-muted text-foreground";
+  const investigation = splitRootCauseTrace(rec.root_cause);
 
   return (
     <AppLayout requiredGroups={VIEW_GROUPS}>
@@ -124,8 +126,16 @@ export default function NonconformityDetailPage() {
           </SectionCard>
 
           <SectionCard icon={ShieldAlert} title="Causa raiz" accent="bg-slate-400">
-            {rec.root_cause ? <p className="whitespace-pre-wrap text-[11px] leading-relaxed text-foreground">{rec.root_cause}</p> : <p className="text-[11px] text-muted-foreground">Sem causa raiz registada.</p>}
+            {investigation.rootCause ? <p className="whitespace-pre-wrap text-[11px] leading-relaxed text-foreground">{investigation.rootCause}</p> : <p className="text-[11px] text-muted-foreground">Sem causa raiz registada.</p>}
           </SectionCard>
+
+          {investigation.traceability && (
+            <div className="lg:col-span-2">
+              <SectionCard icon={ClipboardList} title="Rastreabilidade da origem" accent="bg-red-500">
+                <p className="whitespace-pre-wrap text-[11px] leading-relaxed text-foreground">{investigation.traceability}</p>
+              </SectionCard>
+            </div>
+          )}
 
           <SectionCard icon={UserCircle} title="Auditoria do registo" accent="bg-slate-400">
             <Row label="Criado em">{fmtDateTime(rec.created_at)}</Row>

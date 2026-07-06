@@ -66,6 +66,42 @@ export const T_SECTOR: RelationTarget = {
   staticFilters: { active: true },
 };
 
+export const T_ORDER: RelationTarget = {
+  endpoint: "/clinical_laboratory/order/",
+  labelFields: ["custom_id", "patient_name", "created_at"],
+};
+
+export const T_TEST: RelationTarget = {
+  endpoint: "/clinical_laboratory/test/",
+  labelFields: ["name", "code", "custom_id"],
+  staticFilters: { active: true },
+};
+
+export const T_RESULT: RelationTarget = {
+  endpoint: "/clinical_laboratory/result/",
+  labelFields: ["custom_id", "value", "unit", "flag"],
+};
+
+export const T_SAMPLE: RelationTarget = {
+  endpoint: "/clinical_laboratory/sample/",
+  labelFields: ["custom_id", "sample_type", "status"],
+};
+
+export const T_EQUIPMENT: RelationTarget = {
+  endpoint: "/equipment/equipment/",
+  labelFields: ["name", "serial_number", "custom_id"],
+};
+
+export const T_TEST_FIELD: RelationTarget = {
+  endpoint: "/clinical_laboratory/test_field/",
+  labelFields: ["name", "code", "unit", "custom_id"],
+};
+
+export const T_EXPOSURE_INCIDENT: RelationTarget = {
+  endpoint: "/clinical_laboratory/exposure_incident/",
+  labelFields: ["custom_id", "incident_type", "incident_at"],
+};
+
 export type DisplayValue = string | { id?: number; label?: string; name?: string; code?: string; username?: string; email?: string } | null;
 
 export type Nonconformity = {
@@ -112,6 +148,22 @@ export function toDateInput(d: string | null | undefined) {
   if (Number.isNaN(parsed.getTime())) return "";
   const local = new Date(parsed.getTime() - parsed.getTimezoneOffset() * 60000);
   return local.toISOString().slice(0, 16);
+}
+
+const TRACE_MARKER = "Rastreabilidade da origem:";
+
+export function splitRootCauseTrace(value: string | null | undefined) {
+  const text = value ?? "";
+  const markerIndex = text.indexOf(TRACE_MARKER);
+  if (markerIndex < 0) return { rootCause: text.trim(), traceability: "" };
+  return {
+    rootCause: text.slice(0, markerIndex).trim(),
+    traceability: text.slice(markerIndex).trim(),
+  };
+}
+
+export function composeRootCauseTrace(rootCause: string, traceability: string) {
+  return [rootCause.trim(), traceability.trim()].filter(Boolean).join("\n\n");
 }
 
 export function Card({ icon: Icon, title, children, accent }: {

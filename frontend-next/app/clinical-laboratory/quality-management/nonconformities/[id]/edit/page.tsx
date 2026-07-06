@@ -19,9 +19,18 @@ import {
   SOURCE_CHOICES,
   STATUS_CHOICES,
   STATUS_COLOR,
+  T_EQUIPMENT,
+  T_EXPOSURE_INCIDENT,
+  T_ORDER,
+  T_RESULT,
+  T_SAMPLE,
   T_SECTOR,
+  T_TEST,
+  T_TEST_FIELD,
+  composeRootCauseTrace,
   inputCls,
   sectorLabel,
+  splitRootCauseTrace,
   toDateInput,
 } from "../../_components";
 
@@ -44,6 +53,21 @@ export default function EditNonconformityPage() {
   const [rootCause, setRootCause] = useState("");
   const [patientImpact, setPatientImpact] = useState(false);
   const [status, setStatus] = useState("ABERTA");
+  const [order, setOrder] = useState<number | null>(null);
+  const [orderLabel, setOrderLabel] = useState("");
+  const [exam, setExam] = useState<number | null>(null);
+  const [examLabel, setExamLabel] = useState("");
+  const [result, setResult] = useState<number | null>(null);
+  const [resultLabel, setResultLabel] = useState("");
+  const [sample, setSample] = useState<number | null>(null);
+  const [sampleLabel, setSampleLabel] = useState("");
+  const [equipment, setEquipment] = useState<number | null>(null);
+  const [equipmentLabel, setEquipmentLabel] = useState("");
+  const [analyte, setAnalyte] = useState<number | null>(null);
+  const [analyteLabel, setAnalyteLabel] = useState("");
+  const [exposureIncident, setExposureIncident] = useState<number | null>(null);
+  const [exposureIncidentLabel, setExposureIncidentLabel] = useState("");
+  const [traceNotes, setTraceNotes] = useState("");
   const [loadingRec, setLoadingRec] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -65,7 +89,9 @@ export default function EditNonconformityPage() {
         setDescription(rec.description ?? "");
         setSeverity(rec.severity ?? "MENOR");
         setImmediateAction(rec.immediate_action ?? "");
-        setRootCause(rec.root_cause ?? "");
+        const investigation = splitRootCauseTrace(rec.root_cause);
+        setRootCause(investigation.rootCause);
+        setTraceNotes(investigation.traceability);
         setPatientImpact(Boolean(rec.patient_impact));
         setStatus(rec.status ?? "ABERTA");
       })
@@ -76,8 +102,35 @@ export default function EditNonconformityPage() {
   function validate() {
     const next: Record<string, string> = {};
     if (!description.trim()) next.description = "Descrição obrigatória.";
+    if (patientImpact && !order && !exam && !result && !sample && !traceNotes.trim()) next.patientImpact = "Informe pelo menos uma referência do impacto no paciente ou descreva a cadeia.";
+    if (source === "EQUIPAMENTO" && !equipment && !traceNotes.trim()) next.equipment = "Equipamento obrigatório para NC de equipamento.";
+    if (source === "FALHA_QC" && !analyte && !exam && !traceNotes.trim()) next.analyte = "Informe o analito/campo, o exame ou descreva a cadeia.";
+    if (source === "EXPOSICAO" && !sector && !exposureIncident && !traceNotes.trim()) next.incident = "Informe o sector, o incidente ou descreva a cadeia.";
     setErrors(next);
     return Object.keys(next).length === 0;
+  }
+
+  function traceabilityLines() {
+    if (traceNotes.trim().startsWith("Rastreabilidade da origem:")) return traceNotes.trim();
+    const lines = ["Rastreabilidade da origem:"];
+    if (patientImpact) {
+      lines.push("- Impacto no paciente: sim");
+      if (order) lines.push(`  - Requisição: ${orderLabel} (#${order})`);
+      if (exam) lines.push(`  - Exame: ${examLabel} (#${exam})`);
+      if (result) lines.push(`  - Resultado: ${resultLabel} (#${result})`);
+      if (sample) lines.push(`  - Amostra: ${sampleLabel} (#${sample})`);
+    }
+    if (source === "EQUIPAMENTO" && equipment) lines.push(`- Equipamento relacionado: ${equipmentLabel} (#${equipment})`);
+    if (source === "FALHA_QC") {
+      if (analyte) lines.push(`- Analito/campo de exame: ${analyteLabel} (#${analyte})`);
+      if (exam) lines.push(`- Tipo de exame: ${examLabel} (#${exam})`);
+    }
+    if (source === "EXPOSICAO") {
+      if (exposureIncident) lines.push(`- Incidente de exposição: ${exposureIncidentLabel} (#${exposureIncident})`);
+      if (sector) lines.push(`- Sector do incidente: #${sector}`);
+    }
+    if (traceNotes.trim()) lines.push(`- Cadeia raiz-fruto: ${traceNotes.trim()}`);
+    return lines.length > 1 ? lines.join("\n") : "";
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -85,18 +138,22 @@ export default function EditNonconformityPage() {
     if (!validate()) return;
     setSaving(true); setSaveError(null);
     try {
+      const traceability = traceabilityLines();
+      const compactRef = sourceRef.trim()
+        || (patientImpact && orderLabel ? orderLabel : "")
+        || (equipmentLabel || analyteLabel || exposureIncidentLabel).slice(0, 80);
       await apiFetch(`/clinical_laboratory/nonconformity/${id}/`, {
         method: "PATCH",
         body: JSON.stringify({
           code: code.trim(),
           sector,
           source,
-          source_ref: sourceRef.trim(),
+          source_ref: compactRef.slice(0, 80),
           detected_at: detectedAt ? new Date(detectedAt).toISOString() : null,
           description: description.trim(),
           severity,
           immediate_action: immediateAction.trim(),
-          root_cause: rootCause.trim(),
+          root_cause: composeRootCauseTrace(rootCause, traceability),
           patient_impact: patientImpact,
           status,
         }),
@@ -162,9 +219,9 @@ export default function EditNonconformityPage() {
 
         <div className="grid gap-1.5 lg:grid-cols-2">
           <Card icon={FileWarning} title="Identificação" accent="bg-rose-500">
-            <Field label="Código interno">
-              <input value={code} onChange={(e) => setCode(e.target.value)} placeholder="Opcional" className={inputCls} />
-            </Field>
+            <div className="rounded-lg border border-dashed border-rose-200 bg-rose-50/60 px-3 py-2 text-[11px] font-medium text-rose-700 dark:border-rose-800/40 dark:bg-rose-900/15 dark:text-rose-300">
+              Código interno automático: <span className="font-mono">{code || customId || "gerado pelo sistema"}</span>
+            </div>
             <Field label="Sector">
               <RelationSelect value={sector} onChange={(v, l) => { setSector(v); setSectorName(l); }} target={T_SECTOR} placeholder="Pesquisar sector..." initialLabel={sectorName} />
             </Field>
@@ -199,8 +256,65 @@ export default function EditNonconformityPage() {
                 <input type="checkbox" checked={patientImpact} onChange={(e) => setPatientImpact(e.target.checked)} className="h-4 w-4 rounded border-border accent-rose-600" />
                 Impacto no paciente
               </label>
+              {errors.patientImpact && <p className="text-[10px] font-medium text-red-600 dark:text-red-400">{errors.patientImpact}</p>}
             </Card>
           </div>
+
+          {patientImpact && (
+            <div className="lg:col-span-2">
+              <Card icon={ClipboardList} title="Rastreabilidade do impacto no paciente" accent="bg-red-500">
+                <div className="grid gap-1.5 md:grid-cols-2">
+                  <Field label="Requisição em causa">
+                    <RelationSelect value={order} onChange={(v, l) => { setOrder(v); setOrderLabel(l); }} target={T_ORDER} placeholder="Pesquisar requisição..." />
+                  </Field>
+                  <Field label="Exame em causa">
+                    <RelationSelect value={exam} onChange={(v, l) => { setExam(v); setExamLabel(l); }} target={T_TEST} placeholder="Pesquisar exame..." />
+                  </Field>
+                  <Field label="Resultado em causa">
+                    <RelationSelect value={result} onChange={(v, l) => { setResult(v); setResultLabel(l); }} target={T_RESULT} placeholder="Pesquisar resultado..." />
+                  </Field>
+                  <Field label="Amostra em causa">
+                    <RelationSelect value={sample} onChange={(v, l) => { setSample(v); setSampleLabel(l); }} target={T_SAMPLE} placeholder="Pesquisar amostra..." />
+                  </Field>
+                </div>
+              </Card>
+            </div>
+          )}
+
+          {source === "EQUIPAMENTO" && (
+            <div className="lg:col-span-2">
+              <Card icon={ShieldAlert} title="Equipamento em causa" accent="bg-orange-500">
+                <Field label="Equipamento cadastrado" required error={errors.equipment}>
+                  <RelationSelect value={equipment} onChange={(v, l) => { setEquipment(v); setEquipmentLabel(l); }} target={T_EQUIPMENT} placeholder="Pesquisar equipamento..." />
+                </Field>
+              </Card>
+            </div>
+          )}
+
+          {source === "FALHA_QC" && (
+            <div className="lg:col-span-2">
+              <Card icon={ShieldAlert} title="Controlo de qualidade" accent="bg-amber-400">
+                <div className="grid gap-1.5 md:grid-cols-2">
+                  <Field label="Analito/campo do exame" error={errors.analyte}>
+                    <RelationSelect value={analyte} onChange={(v, l) => { setAnalyte(v); setAnalyteLabel(l); }} target={T_TEST_FIELD} placeholder="Pesquisar analito..." />
+                  </Field>
+                  <Field label="Tipo de exame">
+                    <RelationSelect value={exam} onChange={(v, l) => { setExam(v); setExamLabel(l); }} target={T_TEST} placeholder="Pesquisar tipo de exame..." />
+                  </Field>
+                </div>
+              </Card>
+            </div>
+          )}
+
+          {source === "EXPOSICAO" && (
+            <div className="lg:col-span-2">
+              <Card icon={ShieldAlert} title="Incidente por sector" accent="bg-violet-500">
+                <Field label="Incidente de exposição" error={errors.incident}>
+                  <RelationSelect value={exposureIncident} onChange={(v, l) => { setExposureIncident(v); setExposureIncidentLabel(l); }} target={T_EXPOSURE_INCIDENT} placeholder="Pesquisar incidente..." />
+                </Field>
+              </Card>
+            </div>
+          )}
 
           <Card icon={ClipboardList} title="Investigação" accent="bg-slate-400">
             <Field label="Ação imediata">
@@ -208,6 +322,9 @@ export default function EditNonconformityPage() {
             </Field>
             <Field label="Causa raiz">
               <textarea value={rootCause} onChange={(e) => setRootCause(e.target.value)} rows={4} className={`${inputCls} resize-y`} />
+            </Field>
+            <Field label="Cadeia de rastreabilidade raiz-fruto">
+              <textarea value={traceNotes} onChange={(e) => setTraceNotes(e.target.value)} rows={3} placeholder="Ex: origem operacional -> falha imediata -> efeito observado -> consequência." className={`${inputCls} resize-y`} />
             </Field>
           </Card>
 
