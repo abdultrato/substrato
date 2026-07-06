@@ -406,7 +406,6 @@ function NewDonationWizard() {
                         <span className="inline-flex items-center gap-1.5 rounded-full border border-rose-200 bg-rose-50 px-3 py-1 text-[11px] font-bold text-rose-700 dark:border-rose-700/40 dark:bg-rose-900/20 dark:text-rose-300">
                           <Droplets size={11} /> {form.blood_type === "UNK" ? "Desconhecido" : form.blood_type}
                         </span>
-                        <span className="text-[9px] text-muted-foreground">Herdado do registo</span>
                       </div>
                     </div>
                   ) : (
