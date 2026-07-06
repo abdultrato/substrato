@@ -115,6 +115,7 @@ export default function ExamsListPage() {
   const [total, setTotal]               = useState(0);
   const [page, setPage]                 = useState(1);
   const [pageSize, setPageSize]         = useState(DEFAULT_PAGE_SIZE);
+  const [pageSizeInput, setPageSizeInput] = useState(String(DEFAULT_PAGE_SIZE));
   const [loading, setLoading]           = useState(true);
   const [search, setSearch]             = useState("");
   const [filterSector, setFilterSector] = useState("");
@@ -142,7 +143,11 @@ export default function ExamsListPage() {
     debRef.current = setTimeout(() => load(1, v, filterSector, pageSize), 300);
   }
   function handleSector(v: string) { setFilterSector(v); setPage(1); load(1, search, v, pageSize); }
-  function handlePageSize(v: number) { setPageSize(v); setPage(1); load(1, search, filterSector, v); }
+  function applyPageSize() {
+    const v = Math.max(1, Math.min(999, parseInt(pageSizeInput, 10) || 1));
+    setPageSizeInput(String(v));
+    if (v !== pageSize) { setPageSize(v); setPage(1); load(1, search, filterSector, v); }
+  }
 
   const totalPages = Math.ceil(total / pageSize);
 
@@ -191,11 +196,11 @@ export default function ExamsListPage() {
               </div>
               <div className="flex items-center gap-1.5 rounded-lg border border-border bg-card px-2.5 py-1.5">
                 <input
-                  type="number" min="1" max="999" value={pageSize}
-                  onChange={(e) => {
-                    const v = Math.max(1, Math.min(999, Number(e.target.value) || 1));
-                    handlePageSize(v);
-                  }}
+                  type="number" min="1" max="999"
+                  value={pageSizeInput}
+                  onChange={(e) => setPageSizeInput(e.target.value)}
+                  onBlur={applyPageSize}
+                  onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); applyPageSize(); } }}
                   className="w-12 bg-transparent text-center text-xs text-foreground outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                 />
                 <span className="whitespace-nowrap text-xs text-muted-foreground">por página</span>
