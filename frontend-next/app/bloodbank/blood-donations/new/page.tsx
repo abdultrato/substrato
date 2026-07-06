@@ -411,14 +411,15 @@ function NewDonationWizard() {
                   )}
                 </div>
 
-                <div className="space-y-1">
-                  <label className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Tipo de doador</label>
-                  <Pills opts={DONOR_ROLE_OPTS} value={form.donor_role} onChange={v => set("donor_role", v)} />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Tipo de colheita</label>
-                  <Pills opts={DONATION_TYPE_OPTS} value={form.donation_type} onChange={v => set("donation_type", v)} />
+                <div className="flex flex-wrap gap-6">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Tipo de doador</label>
+                    <Pills opts={DONOR_ROLE_OPTS} value={form.donor_role} onChange={v => set("donor_role", v)} />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Tipo de colheita</label>
+                    <Pills opts={DONATION_TYPE_OPTS} value={form.donation_type} onChange={v => set("donation_type", v)} />
+                  </div>
                 </div>
               </>
             )}
