@@ -18,7 +18,7 @@ import AppLayout from "@/components/layout/AppLayout";
 import Pagination from "@/components/ui/Pagination";
 import useAuthGuard from "@/hooks/useAuthGuard";
 import useDebounce from "@/hooks/useDebounce";
-import { apiFetchList } from "@/lib/api";
+import { apiFetchAll } from "@/lib/api";
 import { GROUPS } from "@/lib/rbac";
 
 const GLASS_CARD =
@@ -126,9 +126,33 @@ function screeningClasses(status?: string | null) {
   }
 }
 
+function screeningCardClasses(status?: string | null) {
+  switch (status) {
+    case "APR":
+      return {
+        shell:
+          "border-emerald-200/80 bg-gradient-to-br from-emerald-50/95 via-white to-cyan-50/85 dark:border-emerald-700/40 dark:bg-[linear-gradient(135deg,rgba(6,78,59,0.30),rgba(15,23,42,0.92),rgba(8,145,178,0.18))]",
+        bar: "from-emerald-500 via-teal-500 to-cyan-500",
+      };
+    case "REJ":
+      return {
+        shell:
+          "border-rose-200/80 bg-gradient-to-br from-rose-50/95 via-white to-amber-50/85 dark:border-rose-700/40 dark:bg-[linear-gradient(135deg,rgba(127,29,29,0.28),rgba(15,23,42,0.92),rgba(120,53,15,0.18))]",
+        bar: "from-rose-500 via-pink-500 to-amber-500",
+      };
+    default:
+      return {
+        shell:
+          "border-amber-200/80 bg-gradient-to-br from-amber-50/95 via-white to-sky-50/85 dark:border-amber-700/40 dark:bg-[linear-gradient(135deg,rgba(120,53,15,0.24),rgba(15,23,42,0.92),rgba(14,116,144,0.18))]",
+        bar: "from-amber-500 via-orange-500 to-sky-500",
+      };
+  }
+}
+
 export default function BloodbankBloodDonationsListPage() {
   const { loading } = useAuthGuard();
 
+  const [allItems, setAllItems] = useState<DonationRow[]>([]);
   const [items, setItems] = useState<DonationRow[]>([]);
   const [totalItems, setTotalItems] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
@@ -139,8 +163,6 @@ export default function BloodbankBloodDonationsListPage() {
   const [statusFilter, setStatusFilter] = useState("");
   const [typeFilter, setTypeFilter] = useState("");
   const [listLoading, setListLoading] = useState(true);
-  const [summaryLoading, setSummaryLoading] = useState(true);
-  const [summaryItems, setSummaryItems] = useState<DonationRow[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   const debouncedSearch = useDebounce(search, 300);
@@ -163,30 +185,14 @@ export default function BloodbankBloodDonationsListPage() {
       try {
         setListLoading(true);
         setError(null);
-        const { items: rows, meta } = await apiFetchList<DonationRow>("/bloodbank/donation/", {
-          page,
-          pageSize,
-          query: {
-            ...(debouncedSearch.trim() ? { search: debouncedSearch.trim() } : {}),
-            ...(statusFilter ? { status: statusFilter } : {}),
-            ...(typeFilter ? { donation_type: typeFilter } : {}),
-          },
-        });
+        const rows = await apiFetchAll<DonationRow>("/bloodbank/donation/", { pageSize: 200, maxPages: 20 });
 
         if (!mounted) return;
 
-        const total = meta.total ?? rows.length;
-        const pages = meta.totalPages ?? Math.max(1, Math.ceil((total || 0) / pageSize));
-
-        setItems(rows);
-        setTotalItems(total || 0);
-        setTotalPages(pages);
-        if (page > pages) setPage(pages);
+        setAllItems(rows);
       } catch (err: any) {
         if (!mounted) return;
-        setItems([]);
-        setTotalItems(0);
-        setTotalPages(1);
+        setAllItems([]);
         setError(err?.message || "Falha ao carregar as doações de sangue.");
       } finally {
         if (mounted) setListLoading(false);
@@ -197,54 +203,62 @@ export default function BloodbankBloodDonationsListPage() {
     return () => {
       mounted = false;
     };
-  }, [debouncedSearch, page, statusFilter, typeFilter, pageSize]);
+  }, []);
+
+  const filteredItems = useMemo(() => {
+    const normalizedSearch = debouncedSearch
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .trim();
+
+    return allItems.filter((item) => {
+      if (statusFilter && item.status !== statusFilter) return false;
+      if (typeFilter && item.donation_type !== typeFilter) return false;
+      if (!normalizedSearch) return true;
+
+      const haystack = [
+        item.custom_id,
+        item.bag_identifier,
+        item.status,
+        item.donation_type,
+        item.blood_type,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase();
+
+      return haystack.includes(normalizedSearch);
+    });
+  }, [allItems, debouncedSearch, statusFilter, typeFilter]);
 
   useEffect(() => {
-    let mounted = true;
+    const total = filteredItems.length;
+    const pages = Math.max(1, Math.ceil(total / pageSize));
+    const currentPage = Math.min(page, pages);
+    const start = (currentPage - 1) * pageSize;
 
-    async function loadSummary() {
-      try {
-        setSummaryLoading(true);
-        const { items: rows, meta } = await apiFetchList<DonationRow>("/bloodbank/donation/", {
-          page: 1,
-          pageSize: 200,
-          query: {
-            ...(debouncedSearch.trim() ? { search: debouncedSearch.trim() } : {}),
-            ...(statusFilter ? { status: statusFilter } : {}),
-            ...(typeFilter ? { donation_type: typeFilter } : {}),
-          },
-          clientPaginate: false,
-        });
-
-        if (!mounted) return;
-
-        const total = meta.total ?? rows.length;
-        setSummaryItems(rows);
-        setTotalItems(total || 0);
-      } finally {
-        if (mounted) setSummaryLoading(false);
-      }
-    }
-
-    loadSummary();
-    return () => {
-      mounted = false;
-    };
-  }, [debouncedSearch, statusFilter, typeFilter]);
+    setItems(filteredItems.slice(start, start + pageSize));
+    setTotalItems(total);
+    setTotalPages(pages);
+    if (page !== currentPage) setPage(currentPage);
+  }, [filteredItems, page, pageSize]);
 
   const summary = useMemo(() => {
     let triagem = 0;
     let concluidas = 0;
     let volume = 0;
 
-    for (const item of summaryItems) {
+    for (const item of filteredItems) {
       if (item.status === "SCR") triagem += 1;
       if (item.status === "COM") concluidas += 1;
       volume += Number(item.volume_ml || 0);
     }
 
     return { triagem, concluidas, volume };
-  }, [summaryItems]);
+  }, [filteredItems]);
 
   if (loading) return null;
 
@@ -335,13 +349,13 @@ export default function BloodbankBloodDonationsListPage() {
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
                   placeholder="Pesquisar por código, bolsa ou referência..."
-                  className="h-9 w-full rounded-xl border border-white/30 bg-white/45 py-2 pl-9 pr-3 text-sm text-foreground outline-none backdrop-blur-sm transition focus:border-rose-400 focus:ring-2 focus:ring-rose-400/20 dark:border-white/10 dark:bg-white/[0.08]"
+                  className="h-9 w-full rounded-xl border border-slate-300/90 bg-white/88 py-2 pl-9 pr-3 text-sm text-slate-900 outline-none backdrop-blur-sm transition focus:border-rose-400 focus:ring-2 focus:ring-rose-400/20 dark:border-slate-600 dark:bg-slate-900/70 dark:text-slate-100"
                 />
               </div>
               <select
                 value={statusFilter}
                 onChange={(event) => setStatusFilter(event.target.value)}
-                className="h-9 min-w-0 rounded-xl border border-white/30 bg-white/45 px-3 text-sm text-foreground outline-none backdrop-blur-sm transition focus:border-rose-400 dark:border-white/10 dark:bg-white/[0.08]"
+                className="h-9 min-w-0 rounded-xl border border-slate-300/90 bg-white/88 px-3 text-sm text-slate-900 outline-none backdrop-blur-sm transition focus:border-rose-400 dark:border-slate-600 dark:bg-slate-900/70 dark:text-slate-100"
               >
                 {STATUS_OPTIONS.map((option) => (
                   <option key={option.value} value={option.value}>
@@ -352,7 +366,7 @@ export default function BloodbankBloodDonationsListPage() {
               <select
                 value={typeFilter}
                 onChange={(event) => setTypeFilter(event.target.value)}
-                className="h-9 min-w-0 rounded-xl border border-white/30 bg-white/45 px-3 text-sm text-foreground outline-none backdrop-blur-sm transition focus:border-cyan-400 dark:border-white/10 dark:bg-white/[0.08]"
+                className="h-9 min-w-0 rounded-xl border border-slate-300/90 bg-white/88 px-3 text-sm text-slate-900 outline-none backdrop-blur-sm transition focus:border-cyan-400 dark:border-slate-600 dark:bg-slate-900/70 dark:text-slate-100"
               >
                 {DONATION_TYPE_OPTIONS.map((option) => (
                   <option key={option.value} value={option.value}>
@@ -374,7 +388,7 @@ export default function BloodbankBloodDonationsListPage() {
                   }
                 }}
                 placeholder="10/pág"
-                className="h-9 min-w-0 rounded-xl border border-white/30 bg-white/45 px-3 text-sm text-foreground outline-none backdrop-blur-sm transition focus:border-cyan-400 dark:border-white/10 dark:bg-white/[0.08] [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                className="h-9 min-w-0 rounded-xl border border-slate-300/90 bg-white/88 px-3 text-sm text-slate-900 outline-none backdrop-blur-sm transition focus:border-cyan-400 dark:border-slate-600 dark:bg-slate-900/70 dark:text-slate-100 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
               />
             </div>
           </div>
@@ -397,15 +411,19 @@ export default function BloodbankBloodDonationsListPage() {
         ) : (
           <section className="columns-1 gap-1.5 sm:columns-2 2xl:columns-3 [column-fill:_balance]">
             {items.map((item) => (
+              (() => {
+                const screeningTone = screeningCardClasses(item.screening_status);
+                return (
               <Link
                 key={item.id}
                 href={`/bloodbank/blood-donations/${item.id}`}
-                className={`${GLASS_CARD} mb-1.5 block break-inside-avoid overflow-hidden transition hover:bg-white/40 hover:shadow-md dark:hover:bg-white/[0.07]`}
+                className={`relative mb-1.5 block break-inside-avoid overflow-hidden rounded-xl border shadow-sm transition hover:shadow-md ${screeningTone.shell}`}
               >
                 <div className="pointer-events-none absolute inset-0">
                   <div className="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-rose-500/8 blur-2xl" />
                   <div className="absolute -bottom-8 left-10 h-20 w-20 rounded-full bg-cyan-500/8 blur-2xl" />
                 </div>
+                <span className={`absolute inset-y-2 right-2 w-1 rounded-full bg-gradient-to-b ${screeningTone.bar}`} />
                 <div className="relative space-y-2 px-3 py-2.5">
                   <div className="flex flex-wrap items-start justify-between gap-2">
                     <div className="min-w-0">
@@ -460,6 +478,8 @@ export default function BloodbankBloodDonationsListPage() {
                   </div>
                 </div>
               </Link>
+                );
+              })()
             ))}
           </section>
         )}
