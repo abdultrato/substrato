@@ -10,6 +10,7 @@ import {
   Layers,
   Loader2,
   Package,
+  Plus,
   Search,
   Settings,
   Shield,
@@ -232,6 +233,10 @@ export default function BloodBankPage() {
                 {filteredDonors.length}
               </span>
             </div>
+            <Link href="/bloodbank/donors/new"
+              className="inline-flex h-7 items-center gap-1 rounded-lg bg-gradient-to-r from-rose-600 to-pink-600 px-3 text-[11px] font-semibold text-white shadow-sm shadow-rose-500/20 transition hover:from-rose-700 hover:to-pink-700">
+              <Plus size={11} /> Novo doador
+            </Link>
           </div>
 
           <div className="p-2">
