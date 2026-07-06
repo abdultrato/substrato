@@ -120,7 +120,7 @@ function SelField({ label, value, onChange, opts }: {
 }) {
   return (
     <div className="space-y-1">
-      <label className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{label}</label>
+      {label && <label className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{label}</label>}
       <div className="relative">
         <select value={value} onChange={e => onChange(e.target.value)}
           className="h-9 w-full appearance-none rounded-lg border border-border bg-card px-3 pr-8 text-[12px] text-foreground outline-none focus:border-rose-400 focus:ring-1 focus:ring-rose-400/30">
@@ -396,22 +396,21 @@ function NewDonationWizard() {
                   <TxtField label="Volume colhido (mL)" value={form.volume_ml}
                     onChange={v => set("volume_ml", v)} type="number" min="0" placeholder="450" />
 
-                  {bloodTypeLocked ? (
-                    <div className="space-y-1">
-                      <label className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Grupo sanguíneo</label>
-                      <div className="flex h-9 items-center gap-2">
+                </div>
+
+                <div className="flex flex-wrap items-end gap-6">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Grupo sanguíneo</label>
+                    {bloodTypeLocked ? (
+                      <div className="flex h-9 items-center">
                         <span className="inline-flex items-center gap-1.5 rounded-full border border-rose-200 bg-rose-50 px-3 py-1 text-[11px] font-bold text-rose-700 dark:border-rose-700/40 dark:bg-rose-900/20 dark:text-rose-300">
                           <Droplets size={11} /> {form.blood_type === "UNK" ? "Desconhecido" : form.blood_type}
                         </span>
                       </div>
-                    </div>
-                  ) : (
-                    <SelField label="Grupo sanguíneo" value={form.blood_type}
-                      onChange={v => set("blood_type", v)} opts={BLOOD_TYPE_OPTS} />
-                  )}
-                </div>
-
-                <div className="flex flex-wrap gap-6">
+                    ) : (
+                      <SelField label="" value={form.blood_type} onChange={v => set("blood_type", v)} opts={BLOOD_TYPE_OPTS} />
+                    )}
+                  </div>
                   <div className="space-y-1">
                     <label className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Tipo de doador</label>
                     <Pills opts={DONOR_ROLE_OPTS} value={form.donor_role} onChange={v => set("donor_role", v)} />
