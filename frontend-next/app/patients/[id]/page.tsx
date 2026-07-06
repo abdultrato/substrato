@@ -401,40 +401,52 @@ export default function PacienteDetalhePage() {
               {donations.length === 0 ? (
                 <p className="px-4 py-5 text-center text-[11px] text-muted-foreground">Nenhuma doação registada.</p>
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-[11px]">
-                    <thead>
-                      <tr className="border-b border-border/50 bg-white/10 dark:bg-white/5">
-                        <th className="px-4 py-1.5 text-left font-semibold text-foreground">Bolsa</th>
-                        <th className="px-3 py-1.5 text-left font-semibold text-foreground">Data</th>
-                        <th className="px-3 py-1.5 text-left font-semibold text-foreground">Tipo</th>
-                        <th className="px-3 py-1.5 text-left font-semibold text-foreground">Volume</th>
-                        <th className="px-3 py-1.5 text-left font-semibold text-foreground">Triagem</th>
-                        <th className="px-3 py-1.5 text-left font-semibold text-foreground">Estado</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-border/30">
-                      {donations.map((item) => (
-                        <tr key={item.id} className="cursor-pointer hover:bg-white/20 dark:hover:bg-white/5"
-                          onClick={() => router.push(`/bloodbank/blood-donations/${item.id}`)}>
-                          <td className="px-4 py-1.5 font-mono font-medium text-foreground">{item.bag_identifier || item.custom_id || `#${item.id}`}</td>
-                          <td className="px-3 py-1.5 text-muted-foreground">{fmtDate(item.collected_at) ?? "—"}</td>
-                          <td className="px-3 py-1.5 text-muted-foreground">{item.donation_type ? (DONATION_TYPE[item.donation_type] ?? item.donation_type) : "—"}</td>
-                          <td className="px-3 py-1.5 text-muted-foreground">{item.volume_ml ? `${item.volume_ml} mL` : "—"}</td>
-                          <td className="px-3 py-1.5">
-                            <Chip color={item.screening_status === "APR" ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-600/30 dark:bg-emerald-900/20 dark:text-emerald-300" : item.screening_status === "REJ" ? "border-red-200 bg-red-50 text-red-700 dark:border-red-600/30 dark:bg-red-900/20 dark:text-red-300" : "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-600/30 dark:bg-amber-900/20 dark:text-amber-300"}>
-                              {item.screening_status ? (SCREENING_STATUS[item.screening_status] ?? item.screening_status) : "—"}
-                            </Chip>
-                          </td>
-                          <td className="px-3 py-1.5">
-                            <Chip color={STATUS_CHIP[item.status ?? ""] ?? "border-border bg-muted text-muted-foreground"}>
-                              {item.status ? (DONATION_STATUS[item.status] ?? item.status) : "—"}
-                            </Chip>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                <div className="space-y-2 p-3">
+                  {donations.map((item) => (
+                    <button key={item.id} type="button"
+                      onClick={() => router.push(`/bloodbank/blood-donations/${item.id}`)}
+                      className="w-full text-left">
+                      <div className="relative overflow-hidden rounded-lg border border-white/30 bg-white/30 shadow-sm backdrop-blur-sm transition hover:bg-white/50 dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10">
+                        <span className={`absolute inset-y-0 left-0 w-1 rounded-l-lg ${
+                          item.status === "COM" ? "bg-emerald-500" :
+                          item.status === "SCR" ? "bg-amber-500"   :
+                          item.status === "CAN" ? "bg-red-500"     : "bg-slate-400"
+                        }`} />
+                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 px-3 py-2 pl-4">
+                          <span className="font-mono text-[11px] font-bold text-foreground">
+                            {item.bag_identifier || item.custom_id || `#${item.id}`}
+                          </span>
+                          {item.collected_at && (
+                            <span className="text-[10px] text-muted-foreground">{fmtDate(item.collected_at)}</span>
+                          )}
+                          {item.donation_type && (
+                            <span className="text-[10px] text-muted-foreground">
+                              {DONATION_TYPE[item.donation_type] ?? item.donation_type}
+                            </span>
+                          )}
+                          {item.volume_ml && (
+                            <span className="text-[10px] text-muted-foreground">{item.volume_ml} mL</span>
+                          )}
+                          <span className="ml-auto flex items-center gap-1.5">
+                            {item.screening_status && (
+                              <Chip color={
+                                item.screening_status === "APR"
+                                  ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-600/30 dark:bg-emerald-900/20 dark:text-emerald-300"
+                                  : item.screening_status === "REJ"
+                                  ? "border-red-200 bg-red-50 text-red-700 dark:border-red-600/30 dark:bg-red-900/20 dark:text-red-300"
+                                  : "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-600/30 dark:bg-amber-900/20 dark:text-amber-300"
+                              }>{SCREENING_STATUS[item.screening_status] ?? item.screening_status}</Chip>
+                            )}
+                            {item.status && (
+                              <Chip color={STATUS_CHIP[item.status] ?? "border-border bg-muted text-muted-foreground"}>
+                                {DONATION_STATUS[item.status] ?? item.status}
+                              </Chip>
+                            )}
+                          </span>
+                        </div>
+                      </div>
+                    </button>
+                  ))}
                 </div>
               )}
             </section>
