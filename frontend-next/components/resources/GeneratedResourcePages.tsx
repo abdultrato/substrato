@@ -4,7 +4,7 @@ import Link from "next/link"
 import { useMemo, useState, type ReactNode } from "react"
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation"
 import { useQuery } from "@tanstack/react-query"
-import { Activity, ArrowLeft, BookOpenCheck, Building2, ClipboardList, HeartPulse, Landmark, Package2, Pencil, Plus, Scale, Stethoscope, Trash2 } from "lucide-react"
+import { Activity, ArrowLeft, BookOpenCheck, Building2, ClipboardList, Droplet, FlaskConical, HeartPulse, Landmark, Package2, Pencil, Plus, Scale, Stethoscope, Trash2 } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
 import AutoForm from "@/components/form/AutoForm"
@@ -274,6 +274,7 @@ export function GeneratedResourceCreatePage({
   const createActionLabel = createResourceActionLabel(resourceLabel, language)
   const isNursingProcedure = presentation === "nursing-procedure"
   const isNursingMaterial = presentation === "nursing-material"
+  const isBloodDonation = ctx.normalizedEndpoint === "/bloodbank/donation/"
 
   // Glass styles copied from procedure detail page
   const GLASS =
@@ -317,7 +318,7 @@ export function GeneratedResourceCreatePage({
     <AppLayout requiredGroups={ctx.requiredGroups}>
       <div className={`mx-auto w-full px-1 ${isNursingProcedure ? "max-w-4xl space-y-2" : isNursingMaterial ? "max-w-5xl space-y-3" : "max-w-6xl space-y-2.5"}`}>
         {/* Header */}
-        <section className={`relative overflow-hidden ${GLASS} ${isNursingProcedure || isNursingMaterial ? "min-h-[64px]" : ""}`}>
+        <section className={`relative overflow-hidden ${GLASS} ${isNursingProcedure || isNursingMaterial || isBloodDonation ? "min-h-[64px]" : ""}`}>
           {isNursingProcedure ? (
             <>
               <div className="pointer-events-none absolute -right-8 -top-16 h-36 w-36 rounded-full bg-violet-500/10 blur-2xl" />
@@ -364,6 +365,29 @@ export function GeneratedResourceCreatePage({
                 </Link>
               </div>
             </>
+          ) : isBloodDonation ? (
+            <>
+              <span className="absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-rose-500 via-red-500 to-cyan-600" />
+              <div className="pointer-events-none absolute -right-10 -top-16 h-36 w-36 rounded-full bg-rose-500/12 blur-3xl" />
+              <div className="pointer-events-none absolute left-10 top-6 h-24 w-24 rounded-full bg-cyan-500/10 blur-2xl" />
+              <div className="relative flex min-h-[72px] flex-wrap items-center justify-between gap-3 px-4 py-3 pl-5">
+                <div className="flex min-w-0 items-center gap-3">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-rose-500 to-cyan-600 text-white shadow-md shadow-rose-500/25">
+                    <Droplet size={18} />
+                  </span>
+                  <div className="min-w-0">
+                    <h1 className="truncate text-lg font-bold leading-tight text-foreground">{createActionLabel}</h1>
+                    <p className="text-[11px] text-muted-foreground">Doação de sangue</p>
+                  </div>
+                </div>
+                <Link
+                  href={basePath}
+                  className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border border-white/25 bg-white/35 px-3 text-xs font-semibold text-foreground shadow-sm backdrop-blur-sm transition hover:bg-white/55 dark:border-white/10 dark:bg-white/[0.06] dark:hover:bg-white/[0.10]"
+                >
+                  <ArrowLeft size={13} /> {t("Voltar", "Back")}
+                </Link>
+              </div>
+            </>
           ) : (
             <>
               <span className="absolute left-0 top-0 h-full w-1 bg-indigo-500" />
@@ -397,6 +421,8 @@ export function GeneratedResourceCreatePage({
               ? ""
               : isNursingMaterial
                 ? "relative overflow-hidden rounded-xl border border-emerald-200/30 bg-white/25 shadow-lg shadow-slate-900/5 backdrop-blur-2xl dark:border-emerald-800/20 dark:bg-white/[0.04]"
+              : isBloodDonation
+                ? "relative overflow-hidden rounded-xl border border-rose-200/40 bg-white/28 shadow-lg shadow-rose-950/5 backdrop-blur-2xl dark:border-rose-900/30 dark:bg-white/[0.05]"
                 : GLASS
           }
         >
@@ -406,7 +432,23 @@ export function GeneratedResourceCreatePage({
               <div className="pointer-events-none absolute right-0 top-0 h-24 w-24 rounded-full bg-emerald-400/10 blur-2xl" />
             </>
           ) : null}
-          <div className={isNursingProcedure ? "" : isNursingMaterial ? "relative px-4 py-4 sm:px-5" : "p-4"}>
+          <div className={isNursingProcedure ? "" : isNursingMaterial ? "relative px-4 py-4 sm:px-5" : isBloodDonation ? "relative px-4 py-4 sm:px-5" : "p-4"}>
+            {isBloodDonation ? (
+              <>
+                <span className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-rose-500 via-red-500 to-cyan-500" />
+                <div className="mb-4 flex flex-wrap items-center justify-between gap-2 border-b border-white/30 pb-3 dark:border-white/10">
+                  <div>
+                    <h2 className="text-sm font-semibold text-foreground">Dados da doação</h2>
+                    <p className="mt-0.5 text-[11px] text-muted-foreground">
+                      Preencha os dados clínicos e operacionais do ciclo de captação.
+                    </p>
+                  </div>
+                  <span className="rounded-full border border-rose-200/70 bg-rose-50/70 px-2.5 py-1 text-[10px] font-semibold text-rose-700 dark:border-rose-700/30 dark:bg-rose-950/30 dark:text-rose-300">
+                    Banco de Sangue
+                  </span>
+                </div>
+              </>
+            ) : null}
             {!isNursingProcedure && !isNursingMaterial ? null : null}
             {isNursingMaterial ? (
               <div className="mb-4 flex flex-wrap items-center justify-between gap-2 border-b border-white/30 pb-3 dark:border-white/10">
@@ -592,6 +634,7 @@ export function GeneratedResourceDetailPage({
   const isLedgerEntry = ctx.normalizedEndpoint === "/accounting/entry/"
   const isLedgerMovement = ctx.normalizedEndpoint === "/accounting/movement/"
   const isReconciliation = ctx.normalizedEndpoint === "/accounting/financialreconciliation/" || ctx.normalizedEndpoint === "/accounting/financial-reconciliations/"
+  const isBloodDonation = ctx.normalizedEndpoint === "/bloodbank/donation/"
   const isNursingCard = isNursingEvolution || isNursingPrescription || isNursingVitalSign
   const isCardDetail = isNursingCard || isAccount || isBankAccount || isLedgerEntry || isLedgerMovement || isReconciliation
 
@@ -693,12 +736,32 @@ export function GeneratedResourceDetailPage({
 
   return (
     <AppLayout requiredGroups={ctx.requiredGroups}>
-      <div className="mx-auto w-full max-w-5xl space-y-4">
+      <div className={`mx-auto w-full space-y-4 ${isBloodDonation ? "max-w-[min(98vw,1280px)]" : "max-w-5xl"}`}>
         {!isCardDetail ? (
-          <PageHeader
-            title={primary ? primary : `${resourceLabel} #${id}`}
-            actions={detailActions}
-          />
+          isBloodDonation ? (
+            <section className="relative overflow-hidden rounded-xl border border-white/20 bg-white/30 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]">
+              <span className="absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-rose-500 via-red-500 to-cyan-600" />
+              <div className="pointer-events-none absolute -right-10 -top-12 h-36 w-36 rounded-full bg-rose-500/12 blur-3xl" />
+              <div className="pointer-events-none absolute left-16 top-10 h-24 w-24 rounded-full bg-cyan-500/10 blur-2xl" />
+              <div className="relative flex flex-wrap items-center justify-between gap-3 px-4 py-3 pl-5">
+                <div className="flex min-w-0 items-center gap-3">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-rose-500 to-cyan-600 text-white shadow-md shadow-rose-500/25">
+                    <Droplet size={18} />
+                  </span>
+                  <div className="min-w-0">
+                    <h1 className="truncate text-lg font-bold leading-tight text-foreground">{primary ? primary : `${resourceLabel} #${id}`}</h1>
+                    <p className="text-[11px] text-muted-foreground">Doação de sangue</p>
+                  </div>
+                </div>
+                <div className="flex min-w-0 flex-wrap items-center gap-2">{detailActions}</div>
+              </div>
+            </section>
+          ) : (
+            <PageHeader
+              title={primary ? primary : `${resourceLabel} #${id}`}
+              actions={detailActions}
+            />
+          )
         ) : null}
 
         {deleteError ? (
@@ -746,6 +809,23 @@ export function GeneratedResourceDetailPage({
             <LedgerMovementDetails endpoint={ctx.normalizedEndpoint} data={data} actions={nursingCardActions} />
           ) : isReconciliation ? (
             <FinancialReconciliationDetails endpoint={ctx.normalizedEndpoint} data={data} actions={nursingCardActions} />
+          ) : isBloodDonation ? (
+            <section className="relative overflow-hidden rounded-xl border border-rose-200/40 bg-white/28 shadow-lg shadow-rose-950/5 backdrop-blur-2xl dark:border-rose-900/30 dark:bg-white/[0.05]">
+              <span className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-rose-500 via-red-500 to-cyan-500" />
+              <div className="pointer-events-none absolute right-0 top-0 h-24 w-24 rounded-full bg-rose-400/10 blur-2xl" />
+              <div className="relative p-4 sm:p-5">
+                <div className="mb-4 flex flex-wrap items-center justify-between gap-2 border-b border-white/30 pb-3 dark:border-white/10">
+                  <div>
+                    <h2 className="text-sm font-semibold text-foreground">Resumo da doação</h2>
+                    <p className="mt-0.5 text-[11px] text-muted-foreground">Visualização detalhada dos dados clínicos e operacionais.</p>
+                  </div>
+                  <span className="rounded-full border border-rose-200/70 bg-rose-50/70 px-2.5 py-1 text-[10px] font-semibold text-rose-700 dark:border-rose-700/30 dark:bg-rose-950/30 dark:text-rose-300">
+                    Banco de Sangue
+                  </span>
+                </div>
+                <ResourceDetailsCard endpoint={ctx.normalizedEndpoint} data={data} />
+              </div>
+            </section>
           ) : (
             <ResourceDetailsCard endpoint={ctx.normalizedEndpoint} data={data} />
           )
@@ -946,11 +1026,12 @@ export function GeneratedResourceEditPage({ endpoint }: { endpoint: string }) {
   const isLedgerEntry = ctx.normalizedEndpoint === "/accounting/entry/"
   const isLedgerMovement = ctx.normalizedEndpoint === "/accounting/movement/"
   const isReconciliation = ctx.normalizedEndpoint === "/accounting/financialreconciliation/" || ctx.normalizedEndpoint === "/accounting/financial-reconciliations/"
+  const isBloodDonation = ctx.normalizedEndpoint === "/bloodbank/donation/"
   const isNursingCard = isNursingEvolution || isNursingPrescription || isNursingVitalSign || isBankAccount || isAccount || isLedgerEntry || isLedgerMovement || isReconciliation
 
   return (
     <AppLayout requiredGroups={ctx.requiredGroups}>
-      <div className="mx-auto w-full max-w-5xl space-y-4">
+      <div className={`mx-auto w-full space-y-4 ${isBloodDonation ? "max-w-[min(98vw,1280px)]" : "max-w-5xl"}`}>
         {isNursingCard ? (
           <section className="relative overflow-hidden rounded-xl border border-white/20 bg-white/30 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]">
             <span className="absolute left-0 top-0 h-full w-1 bg-[var(--primary-500)]" />
@@ -990,6 +1071,29 @@ export function GeneratedResourceEditPage({ endpoint }: { endpoint: string }) {
               </Link>
             </div>
           </section>
+        ) : isBloodDonation ? (
+          <section className="relative overflow-hidden rounded-xl border border-white/20 bg-white/30 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]">
+            <span className="absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-rose-500 via-red-500 to-cyan-600" />
+            <div className="pointer-events-none absolute -right-10 -top-12 h-36 w-36 rounded-full bg-rose-500/12 blur-3xl" />
+            <div className="pointer-events-none absolute left-16 top-10 h-24 w-24 rounded-full bg-cyan-500/10 blur-2xl" />
+            <div className="relative flex flex-wrap items-center justify-between gap-3 px-4 py-3 pl-5">
+              <div className="flex min-w-0 items-center gap-3">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-rose-500 to-cyan-600 text-white shadow-md shadow-rose-500/25">
+                  <FlaskConical size={18} />
+                </span>
+                <div className="min-w-0">
+                  <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{t("Editar doação", "Edit donation")}</p>
+                  <h2 className="truncate text-lg font-bold leading-tight text-foreground">{pickPrimaryLabel(data) || `${resourceLabel} #${id}`}</h2>
+                </div>
+              </div>
+              <Link
+                href={detailPath}
+                className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-white/25 bg-white/35 px-3 text-xs font-semibold text-foreground shadow-sm backdrop-blur-sm transition hover:bg-white/55 dark:border-white/10 dark:bg-white/[0.06] dark:hover:bg-white/[0.10]"
+              >
+                <ArrowLeft size={13} /> {t("Voltar", "Back")}
+              </Link>
+            </div>
+          </section>
         ) : (
           <PageHeader
             title={`${t("Editar", "Edit")} ${resourceLabel}`}
@@ -1004,15 +1108,42 @@ export function GeneratedResourceEditPage({ endpoint }: { endpoint: string }) {
           />
         )}
 
-        <AutoForm
-          endpoint={`${ctx.normalizedEndpoint}${id}/`}
-          method="put"
-          initialValues={data || {}}
-          submitLabel={t("Guardar alterações", "Save changes")}
-          config={getResourceFormConfig(ctx.groupKey, ctx.resourceKey, ctx.normalizedEndpoint)}
-          presentation={isNursingCard ? "nursing-system" : "default"}
-          onSuccess={() => router.push(detailPath)}
-        />
+        {isBloodDonation ? (
+          <section className="relative overflow-hidden rounded-xl border border-rose-200/40 bg-white/28 shadow-lg shadow-rose-950/5 backdrop-blur-2xl dark:border-rose-900/30 dark:bg-white/[0.05]">
+            <span className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-rose-500 via-red-500 to-cyan-500" />
+            <div className="pointer-events-none absolute right-0 top-0 h-24 w-24 rounded-full bg-rose-400/10 blur-2xl" />
+            <div className="relative px-4 py-4 sm:px-5">
+              <div className="mb-4 flex flex-wrap items-center justify-between gap-2 border-b border-white/30 pb-3 dark:border-white/10">
+                <div>
+                  <h2 className="text-sm font-semibold text-foreground">Atualizar doação</h2>
+                  <p className="mt-0.5 text-[11px] text-muted-foreground">Revise e ajuste os dados clínicos e operacionais do registo.</p>
+                </div>
+                <span className="rounded-full border border-rose-200/70 bg-rose-50/70 px-2.5 py-1 text-[10px] font-semibold text-rose-700 dark:border-rose-700/30 dark:bg-rose-950/30 dark:text-rose-300">
+                  Banco de Sangue
+                </span>
+              </div>
+              <AutoForm
+                endpoint={`${ctx.normalizedEndpoint}${id}/`}
+                method="put"
+                initialValues={data || {}}
+                submitLabel={t("Guardar alterações", "Save changes")}
+                config={getResourceFormConfig(ctx.groupKey, ctx.resourceKey, ctx.normalizedEndpoint)}
+                presentation="default"
+                onSuccess={() => router.push(detailPath)}
+              />
+            </div>
+          </section>
+        ) : (
+          <AutoForm
+            endpoint={`${ctx.normalizedEndpoint}${id}/`}
+            method="put"
+            initialValues={data || {}}
+            submitLabel={t("Guardar alterações", "Save changes")}
+            config={getResourceFormConfig(ctx.groupKey, ctx.resourceKey, ctx.normalizedEndpoint)}
+            presentation={isNursingCard ? "nursing-system" : "default"}
+            onSuccess={() => router.push(detailPath)}
+          />
+        )}
       </div>
     </AppLayout>
   )
