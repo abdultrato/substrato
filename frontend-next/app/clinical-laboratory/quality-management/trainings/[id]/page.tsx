@@ -640,7 +640,14 @@ export default function TrainingRecordDetailPage() {
   const [attachments, setAttachments] = useState<TrainingAttachment[]>([]);
   const [attachmentsLoading, setAttachmentsLoading] = useState(false);
   const [attachmentsError, setAttachmentsError] = useState<string | null>(null);
-  const [replications, setReplications] = useState<{ id: number; custom_id: string; replicator_display?: string; replication_date: string | null }[]>([]);
+  const [replications, setReplications] = useState<{
+    id: number;
+    custom_id: string;
+    replicator_display?: string;
+    replication_date: string | null;
+    notes?: string;
+    participants_display?: { id: number; label: string }[];
+  }[]>([]);
 
   const load = useCallback(() => {
     if (!id) return;
@@ -943,30 +950,74 @@ export default function TrainingRecordDetailPage() {
           </div>
 
           {/* Réplicas */}
-          {replications.length > 0 && (
-            <div className="lg:col-span-2">
-              <SectionCard icon={Copy} title={`Réplicas realizadas (${replications.length})`} accent="bg-violet-500">
-                <div className="space-y-1">
-                  {replications.map((r) => (
-                    <Link key={r.id}
-                      href={`/clinical-laboratory/quality-management/trainings/replications/${r.id}`}
-                      className="flex items-center justify-between rounded-lg border border-border/50 bg-background px-3 py-2 transition hover:border-violet-300 hover:bg-violet-50/50 dark:hover:border-violet-700/40 dark:hover:bg-violet-900/10">
-                      <div className="flex items-center gap-2">
-                        <Copy size={11} className="shrink-0 text-violet-600 dark:text-violet-400" />
-                        <span className="text-[11px] font-medium text-foreground">
-                          {r.replicator_display ?? `Réplica #${r.id}`}
-                        </span>
-                        <span className="font-mono text-[9px] text-muted-foreground">{r.custom_id}</span>
-                      </div>
-                      <span className="text-[10px] text-muted-foreground">
-                        {r.replication_date ? fmtDate(r.replication_date) : "—"}
-                      </span>
-                    </Link>
-                  ))}
+          {replications.map((r, idx) => (
+            <div key={r.id} className="lg:col-span-2">
+              <section className="relative overflow-hidden rounded-xl border border-white/20 bg-white/25 shadow-sm backdrop-blur-sm dark:bg-white/5 dark:border-white/10">
+                <span className="absolute inset-y-0 left-0 w-1 rounded-l-xl bg-violet-500" />
+
+                {/* Card header */}
+                <div className="flex items-center justify-between border-b border-border/50 px-4 py-2.5 pl-5">
+                  <div className="flex items-center gap-2">
+                    <Copy size={13} className="text-violet-600 dark:text-violet-400" />
+                    <h2 className="text-xs font-semibold text-foreground">
+                      Réplica {idx + 1}
+                      <span className="ml-1.5 font-mono text-[9px] font-normal text-muted-foreground">{r.custom_id}</span>
+                    </h2>
+                  </div>
+                  <Link
+                    href={`/clinical-laboratory/quality-management/trainings/replications/${r.id}`}
+                    className="inline-flex items-center gap-1 rounded-lg border border-violet-200 bg-violet-50 px-2 py-0.5 text-[10px] font-medium text-violet-700 transition hover:bg-violet-100 dark:border-violet-700/40 dark:bg-violet-900/20 dark:text-violet-300 dark:hover:bg-violet-900/40">
+                    Ver detalhes →
+                  </Link>
                 </div>
-              </SectionCard>
+
+                {/* Card body */}
+                <div className="grid gap-0 divide-y divide-border/30 p-0 pl-5">
+
+                  {/* Replicante + Data na mesma linha */}
+                  <div className="grid grid-cols-2 divide-x divide-border/30">
+                    <div className="flex flex-col gap-0.5 px-3 py-2.5">
+                      <span className="text-[10px] text-muted-foreground">Replicante</span>
+                      <span className="text-xs font-semibold text-foreground">
+                        {r.replicator_display ?? "—"}
+                      </span>
+                    </div>
+                    <div className="flex flex-col gap-0.5 px-3 py-2.5">
+                      <span className="text-[10px] text-muted-foreground">Data da réplica</span>
+                      <span className="text-xs font-semibold text-foreground">
+                        {r.replication_date ? fmtDate(r.replication_date) : <span className="text-muted-foreground font-normal">Não definida</span>}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Participantes */}
+                  <div className="px-3 py-2.5">
+                    <span className="mb-1.5 block text-[10px] text-muted-foreground">Participantes da réplica</span>
+                    {(r.participants_display ?? []).length === 0 ? (
+                      <span className="text-[11px] text-muted-foreground/60">Nenhum participante registado.</span>
+                    ) : (
+                      <div className="flex flex-wrap gap-1">
+                        {(r.participants_display ?? []).map((p) => (
+                          <span key={p.id}
+                            className="inline-flex items-center rounded-full border border-indigo-200 bg-indigo-50 px-2 py-0.5 text-[10px] font-medium text-indigo-700 dark:border-indigo-700/40 dark:bg-indigo-900/20 dark:text-indigo-300">
+                            {p.label}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Observações — só se existirem */}
+                  {r.notes && (
+                    <div className="px-3 py-2.5">
+                      <span className="mb-0.5 block text-[10px] text-muted-foreground">Observações</span>
+                      <p className="text-[11px] leading-relaxed text-foreground">{r.notes}</p>
+                    </div>
+                  )}
+                </div>
+              </section>
             </div>
-          )}
+          ))}
 
           {/* Ciclo de vida — full width */}
           <div className={rec.notes ? "lg:col-span-2" : "lg:col-span-2"}>
