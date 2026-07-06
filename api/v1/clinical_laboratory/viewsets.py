@@ -502,15 +502,17 @@ class CorrectiveActionViewSet(ValidatedSearchOrderingMixin, TenantScopedQueryset
 
 
 class InternalAuditViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
-    queryset = InternalAudit.objects.all()
+    queryset = InternalAudit.objects.select_related("auditor").prefetch_related("findings").all()
     serializer_class = InternalAuditSerializer
+    filterset_fields = ["status", "auditor"]
     search_fields = ["custom_id", "code", "area"]
     ordering_fields = ["audit_date", "status", "created_at"]
 
 
 class AuditFindingViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
-    queryset = AuditFinding.objects.select_related("audit").all()
+    queryset = AuditFinding.objects.select_related("audit", "nonconformity").all()
     serializer_class = AuditFindingSerializer
+    filterset_fields = ["audit", "finding_type"]
     search_fields = ["custom_id", "description", "clause"]
     ordering_fields = ["finding_type", "created_at"]
 

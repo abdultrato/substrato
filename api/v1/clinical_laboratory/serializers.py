@@ -493,6 +493,26 @@ class CorrectiveActionSerializer(serializers.ModelSerializer):
 
 
 class InternalAuditSerializer(serializers.ModelSerializer):
+    auditor_display = serializers.SerializerMethodField()
+    findings_count = serializers.SerializerMethodField()
+    findings_summary = serializers.SerializerMethodField()
+
+    def get_auditor_display(self, obj):
+        u = obj.auditor
+        if not u:
+            return None
+        full = f"{u.first_name} {u.last_name}".strip()
+        return full or u.username
+
+    def get_findings_count(self, obj):
+        return obj.findings.count()
+
+    def get_findings_summary(self, obj):
+        counts = {}
+        for f in obj.findings.all():
+            counts[f.finding_type] = counts.get(f.finding_type, 0) + 1
+        return counts
+
     Meta = _meta(InternalAudit)
 
 
