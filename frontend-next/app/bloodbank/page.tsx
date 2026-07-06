@@ -21,7 +21,7 @@ import useAuthGuard from "@/hooks/useAuthGuard"
 import useDebounce from "@/hooks/useDebounce"
 import { useAuth } from "@/hooks/useAuth"
 import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
-import { apiFetch } from "@/lib/api"
+import { apiFetch, apiFetchAll, apiFetchList } from "@/lib/api"
 import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
 
 type DonorRow = Record<string, unknown>
@@ -96,12 +96,12 @@ export default function BloodBankPage() {
         setListLoading(true); setListError(null)
 
         // 1. Load donations first to discover donor IDs
-        const donationsRes = await apiFetch<{ results?: DonationRow[] }>(
-          "/bloodbank/donation/?page_size=400&ordering=-collected_at",
-          { clientCache: safeRefreshToken === 0 },
-        )
+        const donationItems = await apiFetchAll<DonationRow>("/bloodbank/donation/", {
+          pageSize: 200,
+          maxPages: 20,
+          clientCache: safeRefreshToken === 0,
+        })
         if (!mounted) return
-        const donationItems = Array.isArray(donationsRes?.results) ? donationsRes.results : []
 
         // Build donation map keyed by donor ID (try all possible field names)
         const map: Record<string, DonationRow | null> = {}
@@ -120,14 +120,18 @@ export default function BloodBankPage() {
         // 2. Fetch each donor patient individually using /patients/{id}/
         const uniqueIds = [...donorIdSet]
         const [byFlag, ...byIdResults] = await Promise.all([
-          apiFetch<{ results?: DonorRow[] }>("/clinical/patient/?is_blood_donor=true&page_size=200&ordering=name", { clientCache: safeRefreshToken === 0 }),
+          apiFetchList<DonorRow>("/clinical/patient/", {
+            pageSize: 200,
+            query: { is_blood_donor: true, ordering: "name" },
+            clientCache: safeRefreshToken === 0,
+          }),
           ...uniqueIds.map((id) => apiFetch<DonorRow>(`/patients/${id}/`, { clientCache: safeRefreshToken === 0 }).catch(() => null)),
         ])
         if (!mounted) return
 
         const seen = new Set<string>()
         const donorItems: DonorRow[] = []
-        for (const p of [...(byFlag.results ?? []), ...(byIdResults.filter(Boolean) as DonorRow[])]) {
+        for (const p of [...(byFlag.items ?? []), ...(byIdResults.filter(Boolean) as DonorRow[])]) {
           const key = String((p as Record<string, unknown>).id)
           if (!seen.has(key)) { seen.add(key); donorItems.push(p) }
         }
