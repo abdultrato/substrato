@@ -93,18 +93,47 @@ export default function BloodBankPage() {
     async function loadData() {
       try {
         setListLoading(true); setListError(null)
-        const [patientsRes, donationsRes] = await Promise.all([
+
+        // 1. Load donations first to discover donor IDs
+        const donationsRes = await apiFetch<{ results?: DonationRow[] }>(
+          "/bloodbank/donation/?page_size=400&ordering=-collected_at",
+          { clientCache: safeRefreshToken === 0 },
+        )
+        if (!mounted) return
+        const donationItems = Array.isArray(donationsRes?.results) ? donationsRes.results : []
+
+        // Build donation map keyed by donor ID (try all possible field names)
+        const map: Record<string, DonationRow | null> = {}
+        const donorIdSet = new Set<string>()
+        for (const d of donationItems) {
+          const dd = d as Record<string, unknown>
+          const did = String(
+            dd.donor_id ?? dd.donor_pk ??
+            (dd.donor && typeof dd.donor === "object" ? (dd.donor as Record<string, unknown>).id : dd.donor) ?? ""
+          )
+          if (!did || did === "undefined") continue
+          donorIdSet.add(did)
+          if (!map[did]) map[did] = d
+        }
+
+        // 2. Fetch patients: by donation donor IDs + is_blood_donor flag (union, dedup)
+        const idList = [...donorIdSet].join(",")
+        const [byIds, byFlag] = await Promise.all([
+          idList
+            ? apiFetch<{ results?: DonorRow[] }>(`/clinical/patient/?id__in=${idList}&page_size=200&ordering=name`, { clientCache: safeRefreshToken === 0 })
+            : Promise.resolve({ results: [] as DonorRow[] }),
           apiFetch<{ results?: DonorRow[] }>("/clinical/patient/?is_blood_donor=true&page_size=200&ordering=name", { clientCache: safeRefreshToken === 0 }),
-          apiFetch<{ results?: DonationRow[] }>("/bloodbank/donation/?page_size=400&ordering=-collected_at", { clientCache: safeRefreshToken === 0 }),
         ])
         if (!mounted) return
-        const donorItems = Array.isArray(patientsRes?.results) ? patientsRes.results : []
-        const donationItems = Array.isArray(donationsRes?.results) ? donationsRes.results : []
-        const map: Record<string, DonationRow | null> = {}
-        for (const d of donationItems) {
-          const did = String((d as Record<string, unknown>)?.donor_id ?? (d as Record<string, unknown>)?.donor ?? "")
-          if (did && !map[did]) map[did] = d
+
+        const seen = new Set<string>()
+        const donorItems: DonorRow[] = []
+        for (const p of [...(byIds.results ?? []), ...(byFlag.results ?? [])]) {
+          const key = String((p as Record<string, unknown>).id)
+          if (!seen.has(key)) { seen.add(key); donorItems.push(p) }
         }
+        donorItems.sort((a, b) => String((a as Record<string, unknown>).name ?? "").localeCompare(String((b as Record<string, unknown>).name ?? "")))
+
         setDonors(donorItems); setDonationMap(map)
       } catch (e: unknown) {
         if (!mounted) return
