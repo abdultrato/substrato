@@ -386,9 +386,9 @@ class BloodDonation(NoNameCoreModel):
                     raise ValidationError(
                         {
                             "donor": (
-                                f"Nova doacao ainda nao permitida para este doador. "
-                                f"O intervalo minimo para sexo {gender_label} e de {minimum_interval_days} dias. "
-                                f"Faltam {remaining_days} dia(s) para liberar a proxima doacao, prevista para {next_ok:%Y-%m-%d}."
+                                f"Nova doação ainda não permitida para este doador. "
+                                f"O intervalo mínimo para sexo {gender_label} é de {minimum_interval_days} dias. "
+                                f"Faltam {remaining_days} dia(s) para liberar a próxima doação, prevista para {next_ok:%Y-%m-%d}."
                             )
                         }
                     )
