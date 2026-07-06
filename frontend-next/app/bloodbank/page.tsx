@@ -16,7 +16,6 @@ import {
 
 import AppLayout from "@/components/layout/AppLayout"
 import ActionTile from "@/components/ui/ActionTile"
-import PageHeader from "@/components/ui/PageHeader"
 import DataTable from "@/components/ui/DataTable"
 import Pagination from "@/components/ui/Pagination"
 import useAuthGuard from "@/hooks/useAuthGuard"
@@ -198,20 +197,41 @@ export default function BloodBankPage() {
   return (
     <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.LABORATORIO]}>
       <div className="mx-auto w-full max-w-6xl space-y-4">
-        <PageHeader
-          title="Banco de Sangue"
-          actions={
-            canViewAdmin ? (
-              <Link
-                href="/admin/bloodbank/"
-                className="inline-flex items-center gap-2 rounded-xl border border-white/20 bg-white/35 px-3 py-1.5 text-sm font-medium text-slate-800 shadow-sm backdrop-blur-sm transition hover:bg-white/55 dark:border-white/10 dark:bg-white/[0.05]"
-              >
-                <Shield size={16} />
-                Abrir na administração
-              </Link>
-            ) : null
-          }
-        />
+        <section className="relative overflow-hidden rounded-xl border border-white/20 bg-white/30 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]">
+          <div className="pointer-events-none absolute inset-0">
+            <div className="absolute -right-10 -top-10 h-32 w-32 rounded-full bg-rose-500/10 blur-2xl" />
+            <div className="absolute left-12 top-10 h-24 w-24 rounded-full bg-cyan-500/10 blur-2xl" />
+            <div className="absolute -bottom-10 right-20 h-28 w-28 rounded-full bg-violet-500/10 blur-2xl" />
+          </div>
+          <span className="absolute inset-y-0 left-0 w-1 rounded-l-xl bg-gradient-to-b from-rose-500 via-red-500 to-cyan-600" />
+
+          <div className="relative flex flex-wrap items-center gap-3 px-4 py-3">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-rose-500 to-cyan-600 shadow-md shadow-rose-500/20">
+              <Droplet size={22} className="text-white" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="text-[10px] text-muted-foreground">Hemoterapia / Gestão operacional</div>
+              <h1 className="text-lg font-bold leading-tight text-foreground">Banco de Sangue</h1>
+              <p className="mt-0.5 max-w-2xl text-xs text-muted-foreground">
+                Acompanhe doadores, unidades, transfusões, armazenamento e eventos críticos do ciclo hemoterápico.
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="rounded-lg border border-white/20 bg-white/20 px-3 py-1.5 text-[11px] text-slate-700 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.05] dark:text-slate-200">
+                {group?.resources?.length || 0} áreas operacionais
+              </div>
+              {canViewAdmin ? (
+                <Link
+                  href="/admin/bloodbank/"
+                  className="inline-flex items-center gap-2 rounded-xl border border-white/20 bg-white/35 px-3 py-1.5 text-sm font-medium text-slate-800 shadow-sm backdrop-blur-sm transition hover:bg-white/55 dark:border-white/10 dark:bg-white/[0.05]"
+                >
+                  <Shield size={16} />
+                  Abrir na administração
+                </Link>
+              ) : null}
+            </div>
+          </div>
+        </section>
 
         <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4">
           {group?.resources?.length ? (
