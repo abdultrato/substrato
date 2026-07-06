@@ -307,6 +307,29 @@ function NewDonationWizard() {
                 <p className="text-[11px] text-muted-foreground">Doador: <span className="font-semibold text-foreground">{donorName}</span></p>
               )}
             </div>
+
+            {/* Navegação dentro do hero */}
+            <div className="flex items-center gap-2">
+              <button type="button" onClick={prev} disabled={step === 0}
+                className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-border bg-card px-3 text-xs font-medium text-foreground transition hover:bg-muted disabled:opacity-40">
+                <ArrowLeft size={13} /> Anterior
+              </button>
+              <span className="text-[10px] text-muted-foreground whitespace-nowrap">
+                {step + 1} / {STEPS.length}
+              </span>
+              {step < STEPS.length - 1 ? (
+                <button type="button" onClick={next}
+                  className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-gradient-to-r from-rose-600 to-pink-600 px-3 text-xs font-semibold text-white shadow-md shadow-rose-500/20 transition hover:from-rose-700 hover:to-pink-700">
+                  Seguinte <ArrowRight size={13} />
+                </button>
+              ) : (
+                <button type="button" onClick={submit} disabled={submitting}
+                  className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-gradient-to-r from-rose-600 to-pink-600 px-3 text-xs font-semibold text-white shadow-md shadow-rose-500/20 transition hover:from-rose-700 hover:to-pink-700 disabled:opacity-60">
+                  {submitting ? <Loader2 size={13} className="animate-spin" /> : <Check size={13} />}
+                  Guardar
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
@@ -488,31 +511,6 @@ function NewDonationWizard() {
               </>
             )}
           </div>
-        </div>
-
-        {/* ── Navegação ─────────────────────────────────────────── */}
-        <div className="flex items-center justify-between">
-          <button type="button" onClick={prev} disabled={step === 0}
-            className="inline-flex h-9 items-center gap-2 rounded-lg border border-border bg-card px-4 text-sm font-medium text-foreground transition hover:bg-muted disabled:opacity-40">
-            <ArrowLeft size={14} /> Anterior
-          </button>
-
-          <span className="text-[11px] text-muted-foreground">
-            Etapa {step + 1} de {STEPS.length}
-          </span>
-
-          {step < STEPS.length - 1 ? (
-            <button type="button" onClick={next}
-              className="inline-flex h-9 items-center gap-2 rounded-lg bg-gradient-to-r from-rose-600 to-pink-600 px-4 text-sm font-semibold text-white shadow-md shadow-rose-500/20 transition hover:from-rose-700 hover:to-pink-700">
-              Seguinte <ArrowRight size={14} />
-            </button>
-          ) : (
-            <button type="button" onClick={submit} disabled={submitting}
-              className="inline-flex h-9 items-center gap-2 rounded-lg bg-gradient-to-r from-rose-600 to-pink-600 px-5 text-sm font-semibold text-white shadow-md shadow-rose-500/20 transition hover:from-rose-700 hover:to-pink-700 disabled:opacity-60">
-              {submitting ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
-              Registar doação
-            </button>
-          )}
         </div>
 
       </div>
