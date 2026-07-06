@@ -216,6 +216,61 @@ function fmtValue(
   return String(value)
 }
 
+type DetailSection = {
+  title: string
+  description: string
+  accent: string
+  fields: string[]
+}
+
+const BLOOD_DONATION_SECTIONS: DetailSection[] = [
+  {
+    title: "Identificação",
+    description: "Códigos e vínculo principal da doação.",
+    accent: "from-rose-500 via-red-500 to-pink-500",
+    fields: ["custom_id", "bag_identifier", "donor", "donor_role", "replacement_for", "collected_by"],
+  },
+  {
+    title: "Triagem e estado",
+    description: "Situação operacional e classificação hemoterápica.",
+    accent: "from-amber-500 via-orange-500 to-cyan-500",
+    fields: ["status", "screening_status", "blood_type", "donation_type", "collected_at", "processed_at", "volume_ml"],
+  },
+  {
+    title: "Sinais clínicos",
+    description: "Parâmetros vitais e elegibilidade do doador.",
+    accent: "from-cyan-500 via-sky-500 to-indigo-500",
+    fields: [
+      "donor_weight_kg",
+      "hemoglobin_g_dl",
+      "donor_height_cm",
+      "blood_pressure_systolic",
+      "blood_pressure_diastolic",
+      "pulse_bpm",
+      "temperature_c",
+    ],
+  },
+  {
+    title: "Resultados laboratoriais",
+    description: "Exames obrigatórios da triagem sorológica.",
+    accent: "from-emerald-500 via-teal-500 to-cyan-500",
+    fields: [
+      "hiv_test",
+      "syphilis_rpr_test",
+      "hepatitis_b_hbsag_test",
+      "hepatitis_c_anti_hcv_test",
+      "malaria_test",
+      "test_notes",
+    ],
+  },
+  {
+    title: "Observações",
+    description: "Notas clínicas e contraindicações relacionadas.",
+    accent: "from-violet-500 via-fuchsia-500 to-rose-500",
+    fields: ["contraindications", "notes"],
+  },
+]
+
 export default function ResourceDetailsCard({
   endpoint,
   data,
@@ -241,11 +296,73 @@ export default function ResourceDetailsCard({
   // Passa apenas os campos visíveis para não buscar relações ocultas.
   const visibleRecord = useMemo(() => Object.fromEntries(entries), [entries])
   const { resolve } = useRelationLabels(endpoint, useMemo(() => [visibleRecord], [visibleRecord]))
+  const normalizedEndpoint = canonicalCollectionPath(endpoint)
 
   function renderEntryValue(fieldName: string, value: any): string {
     return resolve(fieldName, value, (item) => fmtValue(fieldName, item, tr, endpoint), {
       more: (count) => `+${count} ${tr("itens")}`,
     })
+  }
+
+  if (normalizedEndpoint === "/bloodbank/donation/") {
+    const entryMap = new Map(entries)
+    const renderedSections = BLOOD_DONATION_SECTIONS.map((section) => ({
+      ...section,
+      items: section.fields
+        .filter((field) => entryMap.has(field))
+        .map((field) => ({
+          key: field,
+          value: renderEntryValue(field, entryMap.get(field)),
+        }))
+        .filter((item) => item.value && item.value !== "-"),
+    })).filter((section) => section.items.length > 0)
+
+    const covered = new Set(renderedSections.flatMap((section) => section.items.map((item) => item.key)))
+    const remainingItems = entries
+      .filter(([key]) => !covered.has(key))
+      .map(([key, value]) => ({ key, value: renderEntryValue(key, value) }))
+      .filter((item) => item.value && item.value !== "-")
+
+    if (remainingItems.length) {
+      renderedSections.push({
+        title: "Complementares",
+        description: "Campos adicionais do registo da doação.",
+        accent: "from-slate-500 via-slate-400 to-slate-300",
+        items: remainingItems,
+      })
+    }
+
+    return (
+      <div className="grid gap-3 lg:grid-cols-2">
+        {renderedSections.map((section) => (
+          <section
+            key={section.title}
+            className="relative overflow-hidden rounded-xl border border-white/25 bg-white/55 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]"
+          >
+            <span className={`absolute inset-x-0 top-0 h-1 bg-gradient-to-r ${section.accent}`} />
+            <div className="px-4 py-3">
+              <div className="mb-3 border-b border-white/30 pb-2 dark:border-white/10">
+                <h3 className="text-sm font-semibold text-foreground">{section.title}</h3>
+                <p className="mt-0.5 text-[11px] text-muted-foreground">{section.description}</p>
+              </div>
+              <div className="grid gap-2">
+                {section.items.map((item) => (
+                  <div
+                    key={item.key}
+                    className="rounded-lg border border-white/20 bg-white/50 px-3 py-2 dark:border-white/10 dark:bg-white/[0.04]"
+                  >
+                    <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                      {fieldLabel({ endpoint, name: item.key })}
+                    </div>
+                    <div className="mt-1 whitespace-pre-wrap text-sm text-foreground">{item.value}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+        ))}
+      </div>
+    )
   }
 
   return (
