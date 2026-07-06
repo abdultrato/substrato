@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
   ArrowLeft,
@@ -63,6 +63,14 @@ const TRAINING_TYPE_OPTS = [
 const T_USER: RelationTarget = {
   endpoint: "/identity/user/",
   labelFields: ["name", "username"],
+};
+
+type TrainingAttachment = {
+  id: number;
+  original_name?: string | null;
+  file?: string | null;
+  file_url?: string | null;
+  description?: string | null;
 };
 
 // ── RelationSelect ────────────────────────────────────────────────────────────
@@ -385,7 +393,9 @@ export default function EditTrainingRecordPage() {
   const [participants,        setParticipants]        = useState<{ id: number; label: string }[]>([]);
   const [notes,               setNotes]               = useState("");
   const [customId,            setCustomId]            = useState("");
-  const [attachments,         setAttachments]         = useState<{ id: number; original_name: string; file_url: string }[]>([]);
+  const [attachments,         setAttachments]         = useState<TrainingAttachment[]>([]);
+  const [attachmentsLoading,  setAttachmentsLoading]  = useState(false);
+  const [attachmentsError,    setAttachmentsError]    = useState<string | null>(null);
   const [pendingFiles,        setPendingFiles]        = useState<File[]>([]);
 
   const [loadingRec, setLoadingRec] = useState(true);
@@ -397,6 +407,23 @@ export default function EditTrainingRecordPage() {
   const MAX_TOTAL_MB = 9;
   const pendingMB = pendingFiles.reduce((s, f) => s + f.size, 0) / (1024 * 1024);
   const fileSizeOk = pendingMB <= MAX_TOTAL_MB;
+
+  const loadAttachments = useCallback(() => {
+    if (!id) return;
+    setAttachmentsLoading(true);
+    setAttachmentsError(null);
+    apiFetchList<TrainingAttachment>("/clinical_laboratory/training_attachment/", {
+      page: 1,
+      pageSize: 100,
+      query: { training: id },
+    })
+      .then(({ items }) => setAttachments(items))
+      .catch((e) => {
+        setAttachments([]);
+        setAttachmentsError(e?.message ?? "Erro ao carregar documentos do treinamento.");
+      })
+      .finally(() => setAttachmentsLoading(false));
+  }, [id]);
 
   // ── load ─────────────────────────────────────────────────────────
   useEffect(() => {
@@ -419,14 +446,11 @@ export default function EditTrainingRecordPage() {
         setParticipants(
           (rec.participants_display ?? []).map((p: any) => ({ id: p.id, label: p.label }))
         );
-        // load attachments separately
-        apiFetch<any>(`/clinical_laboratory/training_attachment/?training=${id}`)
-          .then((resp) => setAttachments(resp?.results ?? resp?.items ?? []))
-          .catch(() => {});
+        loadAttachments();
       })
       .catch((e) => setLoadError(e?.message ?? "Erro ao carregar registo."))
       .finally(() => setLoadingRec(false));
-  }, [id]);
+  }, [id, loadAttachments]);
 
   const currentStatus = STATUS_CHOICES.find((s) => s.value === status);
 
@@ -486,8 +510,13 @@ export default function EditTrainingRecordPage() {
   }
 
   async function deleteAttachment(attId: number) {
-    await apiFetch(`/clinical_laboratory/training_attachment/${attId}/`, { method: "DELETE" }).catch(() => {});
-    setAttachments((prev) => prev.filter((a) => a.id !== attId));
+    setAttachmentsError(null);
+    try {
+      await apiFetch(`/clinical_laboratory/training_attachment/${attId}/`, { method: "DELETE" });
+      setAttachments((prev) => prev.filter((a) => a.id !== attId));
+    } catch (e: any) {
+      setAttachmentsError(e?.message ?? "Erro ao remover documento do treinamento.");
+    }
   }
 
   if (loadingRec) {
@@ -695,68 +724,90 @@ export default function EditTrainingRecordPage() {
           </Card>
 
           {/* Instrumentos / Anexos */}
-          <Card icon={Paperclip} title="Instrumentos de formação" accent="bg-rose-400">
-            <div className="flex items-center justify-between pb-0.5">
-              <p className="text-[10px] text-muted-foreground">PDFs, imagens, vídeos, ZIPs — máx. {MAX_TOTAL_MB} MB por upload.</p>
-              {pendingFiles.length > 0 && (
-                <span className={`text-[10px] font-medium ${fileSizeOk ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>
-                  Novos: {pendingMB.toFixed(1)} / {MAX_TOTAL_MB} MB
-                </span>
+          <div className="lg:col-span-2">
+            <Card icon={Paperclip} title="Documentos para treinamento" accent="bg-rose-400">
+              <div className="flex items-center justify-between pb-0.5">
+                <p className="text-[10px] text-muted-foreground">PDFs, imagens, vídeos, ZIPs — máx. {MAX_TOTAL_MB} MB por upload.</p>
+                {pendingFiles.length > 0 && (
+                  <span className={`text-[10px] font-medium ${fileSizeOk ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>
+                    Novos: {pendingMB.toFixed(1)} / {MAX_TOTAL_MB} MB
+                  </span>
+                )}
+              </div>
+              {errors.files && (
+                <p className="text-[10px] font-medium text-red-600 dark:text-red-400">{errors.files}</p>
               )}
-            </div>
-            {errors.files && (
-              <p className="text-[10px] font-medium text-red-600 dark:text-red-400">{errors.files}</p>
-            )}
-            {/* existing attachments */}
-            {attachments.length > 0 && (
-              <ul className="mb-2 space-y-1">
-                {attachments.map((a) => (
-                  <li key={a.id} className="flex items-center gap-2 rounded-md border border-border bg-background px-2.5 py-1.5 text-[10px]">
-                    <Paperclip size={10} className="shrink-0 text-muted-foreground" />
-                    <a href={a.file_url} target="_blank" rel="noopener noreferrer"
-                      className="min-w-0 flex-1 truncate text-violet-600 underline-offset-2 hover:underline dark:text-violet-400">
-                      {a.original_name || a.file_url}
-                    </a>
-                    <button type="button" onClick={() => deleteAttachment(a.id)}
-                      className="shrink-0 text-muted-foreground transition hover:text-red-500">
-                      <Trash2 size={10} />
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-            {attachments.length === 0 && pendingFiles.length === 0 && (
-              <p className="mb-1.5 text-[10px] text-muted-foreground italic">Nenhum documento ainda.</p>
-            )}
-            <label className={`flex cursor-pointer items-center gap-2 rounded-lg border border-dashed bg-background px-3 py-2 text-[11px] text-muted-foreground transition hover:bg-muted ${!fileSizeOk ? "border-red-300 hover:border-red-400" : "border-border hover:border-violet-400"}`}>
-              <Paperclip size={12} />
-              <span>Selecionar ficheiros…</span>
-              <input type="file" multiple className="sr-only"
-                accept=".pdf,.png,.jpg,.jpeg,.gif,.webp,.mp4,.mov,.avi,.zip,.rar,.7z,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
-                onChange={(e) => {
-                  if (e.target.files) {
-                    setPendingFiles((prev) => [...prev, ...Array.from(e.target.files!)]);
-                    e.target.value = "";
-                  }
-                }}
-              />
-            </label>
-            {pendingFiles.length > 0 && (
-              <ul className="mt-1.5 space-y-1">
-                {pendingFiles.map((f, i) => (
-                  <li key={i} className="flex items-center gap-2 rounded-md border border-border bg-background px-2.5 py-1.5 text-[10px]">
-                    <Paperclip size={10} className="shrink-0 text-muted-foreground" />
-                    <span className="min-w-0 flex-1 truncate text-foreground">{f.name}</span>
-                    <span className="shrink-0 text-muted-foreground">{(f.size / 1024).toFixed(0)} KB</span>
-                    <button type="button" onClick={() => setPendingFiles((p) => p.filter((_, j) => j !== i))}
-                      className="shrink-0 text-muted-foreground transition hover:text-red-500">
-                      <Trash2 size={10} />
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </Card>
+              {attachmentsError && (
+                <div className="mb-2 flex items-center justify-between gap-2 rounded-md border border-red-200 bg-red-50 px-2.5 py-1.5 text-[10px] text-red-700 dark:border-red-800/40 dark:bg-red-900/15 dark:text-red-300">
+                  <span>{attachmentsError}</span>
+                  <button type="button" onClick={loadAttachments} className="shrink-0 font-medium underline-offset-2 hover:underline">
+                    Tentar novamente
+                  </button>
+                </div>
+              )}
+              {attachmentsLoading ? (
+                <div className="mb-2 flex items-center gap-2 rounded-md border border-border bg-background px-2.5 py-1.5 text-[10px] text-muted-foreground">
+                  <Loader2 size={10} className="animate-spin" />
+                  A carregar documentos existentes...
+                </div>
+              ) : attachments.length > 0 ? (
+                <ul className="mb-2 space-y-1">
+                  {attachments.map((a) => {
+                    const href = a.file_url || a.file || "";
+                    const label = a.original_name || a.description || href || `Documento #${a.id}`;
+                    return (
+                      <li key={a.id} className="flex items-center gap-2 rounded-md border border-border bg-background px-2.5 py-1.5 text-[10px]">
+                        <Paperclip size={10} className="shrink-0 text-muted-foreground" />
+                        {href ? (
+                          <a href={href} target="_blank" rel="noopener noreferrer"
+                            className="min-w-0 flex-1 truncate text-violet-600 underline-offset-2 hover:underline dark:text-violet-400">
+                            {label}
+                          </a>
+                        ) : (
+                          <span className="min-w-0 flex-1 truncate text-foreground">{label}</span>
+                        )}
+                        <button type="button" onClick={() => deleteAttachment(a.id)}
+                          aria-label={`Remover ${label}`}
+                          className="shrink-0 text-muted-foreground transition hover:text-red-500">
+                          <Trash2 size={10} />
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              ) : pendingFiles.length === 0 ? (
+                <p className="mb-1.5 text-[10px] text-muted-foreground italic">Nenhum documento ainda.</p>
+              ) : null}
+              <label className={`flex cursor-pointer items-center gap-2 rounded-lg border border-dashed bg-background px-3 py-2 text-[11px] text-muted-foreground transition hover:bg-muted ${!fileSizeOk ? "border-red-300 hover:border-red-400" : "border-border hover:border-violet-400"}`}>
+                <Paperclip size={12} />
+                <span>Selecionar ficheiros...</span>
+                <input type="file" multiple className="sr-only"
+                  accept=".pdf,.png,.jpg,.jpeg,.gif,.webp,.mp4,.mov,.avi,.zip,.rar,.7z,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
+                  onChange={(e) => {
+                    if (e.target.files) {
+                      setPendingFiles((prev) => [...prev, ...Array.from(e.target.files!)]);
+                      e.target.value = "";
+                    }
+                  }}
+                />
+              </label>
+              {pendingFiles.length > 0 && (
+                <ul className="mt-1.5 space-y-1">
+                  {pendingFiles.map((f, i) => (
+                    <li key={i} className="flex items-center gap-2 rounded-md border border-border bg-background px-2.5 py-1.5 text-[10px]">
+                      <Paperclip size={10} className="shrink-0 text-muted-foreground" />
+                      <span className="min-w-0 flex-1 truncate text-foreground">{f.name}</span>
+                      <span className="shrink-0 text-muted-foreground">{(f.size / 1024).toFixed(0)} KB</span>
+                      <button type="button" onClick={() => setPendingFiles((p) => p.filter((_, j) => j !== i))}
+                        className="shrink-0 text-muted-foreground transition hover:text-red-500">
+                        <Trash2 size={10} />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </Card>
+          </div>
 
           {/* Estado — chips clicáveis full width */}
           <div className="lg:col-span-2">
