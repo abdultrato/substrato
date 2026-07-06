@@ -29,6 +29,10 @@ import { findModuleGroup } from "@/lib/modules"
 import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
 
 type DonorRow = Record<string, any>
+type TileStyle = { icon: LucideIcon; accentClass: string; iconClass: string }
+
+const GLASS_CARD =
+  "relative overflow-hidden rounded-xl border border-white/20 bg-white/30 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]"
 
 function bloodTypeLabel(value: any): string {
   const v = String(value || "").trim()
@@ -128,13 +132,37 @@ export default function BloodBankPage() {
 
   if (loading) return null
 
-  const tiles: Record<string, { icon: LucideIcon }> = {
-    donation: { icon: Droplet },
-    unit: { icon: Layers },
-    transfusion: { icon: HeartPulse },
-    storage: { icon: Package },
-    stock_movement: { icon: ArrowLeftRight },
-    storage_maintenance: { icon: Settings },
+  const tiles: Record<string, TileStyle> = {
+    donation: {
+      icon: Droplet,
+      accentClass: "border-l-rose-500",
+      iconClass: "bg-rose-500/15 text-rose-600 group-hover:bg-rose-500/20 group-hover:text-rose-700 dark:text-rose-300",
+    },
+    unit: {
+      icon: Layers,
+      accentClass: "border-l-red-500",
+      iconClass: "bg-red-500/15 text-red-600 group-hover:bg-red-500/20 group-hover:text-red-700 dark:text-red-300",
+    },
+    transfusion: {
+      icon: HeartPulse,
+      accentClass: "border-l-pink-500",
+      iconClass: "bg-pink-500/15 text-pink-600 group-hover:bg-pink-500/20 group-hover:text-pink-700 dark:text-pink-300",
+    },
+    storage: {
+      icon: Package,
+      accentClass: "border-l-cyan-500",
+      iconClass: "bg-cyan-500/15 text-cyan-600 group-hover:bg-cyan-500/20 group-hover:text-cyan-700 dark:text-cyan-300",
+    },
+    stock_movement: {
+      icon: ArrowLeftRight,
+      accentClass: "border-l-amber-500",
+      iconClass: "bg-amber-500/15 text-amber-600 group-hover:bg-amber-500/20 group-hover:text-amber-700 dark:text-amber-300",
+    },
+    storage_maintenance: {
+      icon: Settings,
+      accentClass: "border-l-violet-500",
+      iconClass: "bg-violet-500/15 text-violet-600 group-hover:bg-violet-500/20 group-hover:text-violet-700 dark:text-violet-300",
+    },
   }
 
   const eventCreateLinks = [
@@ -169,14 +197,14 @@ export default function BloodBankPage() {
 
   return (
     <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.LABORATORIO]}>
-      <div className="mx-auto w-full max-w-6xl space-y-6">
+      <div className="mx-auto w-full max-w-6xl space-y-4">
         <PageHeader
           title="Banco de Sangue"
           actions={
             canViewAdmin ? (
               <Link
                 href="/admin/bloodbank/"
-                className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50"
+                className="inline-flex items-center gap-2 rounded-xl border border-white/20 bg-white/35 px-3 py-1.5 text-sm font-medium text-slate-800 shadow-sm backdrop-blur-sm transition hover:bg-white/55 dark:border-white/10 dark:bg-white/[0.05]"
               >
                 <Shield size={16} />
                 Abrir na administração
@@ -185,7 +213,7 @@ export default function BloodBankPage() {
           }
         />
 
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4">
           {group?.resources?.length ? (
             group.resources.map((resource) => (
               <ActionTile
@@ -193,18 +221,24 @@ export default function BloodBankPage() {
                 title={resource.label}
                 href={resourceRoutes[resource.key] || "/bloodbank"}
                 icon={tiles[resource.key]?.icon || Droplet}
+                accentClass={tiles[resource.key]?.accentClass}
+                iconClass={tiles[resource.key]?.iconClass}
               />
             ))
           ) : (
-            <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            <div className="rounded-xl border border-amber-200/70 bg-amber-50/80 px-3 py-2 text-sm text-amber-800 shadow-sm backdrop-blur-sm">
               Catálogo do módulo não encontrado. Contacte o administrador do sistema.
             </div>
           )}
         </div>
 
-        <section className="space-y-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+        <section className={`${GLASS_CARD} space-y-2 p-3`}>
+          <div className="pointer-events-none absolute inset-0">
+            <div className="absolute -right-10 -top-10 h-28 w-28 rounded-full bg-rose-500/10 blur-2xl" />
+            <div className="absolute -bottom-10 left-12 h-24 w-24 rounded-full bg-cyan-500/10 blur-2xl" />
+          </div>
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <h2 className="flex items-center gap-2 text-sm font-semibold text-slate-900">
+            <h2 className="relative flex items-center gap-2 text-sm font-semibold text-slate-900">
               <Droplet size={16} className="text-rose-500" />
               Doadores de sangue
             </h2>
@@ -214,13 +248,13 @@ export default function BloodBankPage() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Pesquisar…"
-                className="w-full rounded-lg border border-border bg-background/60 py-1.5 pl-7 pr-6 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:w-72 focus:ring-2 focus:ring-violet-500/40 transition-all"
+                className="w-full rounded-lg border border-white/30 bg-white/45 py-1.5 pl-7 pr-6 text-xs text-foreground shadow-sm backdrop-blur-sm placeholder:text-muted-foreground transition-all focus:outline-none focus:w-72 focus:ring-2 focus:ring-violet-500/40 dark:border-white/10 dark:bg-white/[0.08]"
               />
             </div>
           </div>
 
           {listErro ? (
-            <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+            <div className="rounded-xl border border-amber-200/70 bg-amber-50/85 px-3 py-2 text-sm text-amber-800 shadow-sm backdrop-blur-sm">
               {listErro}
             </div>
           ) : null}
@@ -245,18 +279,22 @@ export default function BloodBankPage() {
           )}
         </section>
 
-        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-          <h2 className="text-sm font-semibold text-slate-900">Criação de Eventos</h2>
-          <p className="mt-1 text-xs text-slate-600">
+        <div className={`${GLASS_CARD} p-3`}>
+          <div className="pointer-events-none absolute inset-0">
+            <div className="absolute -left-8 top-0 h-24 w-24 rounded-full bg-violet-500/10 blur-2xl" />
+            <div className="absolute right-10 bottom-0 h-24 w-24 rounded-full bg-amber-500/10 blur-2xl" />
+          </div>
+          <h2 className="relative text-sm font-semibold text-slate-900">Criação de Eventos</h2>
+          <p className="relative mt-1 text-xs text-slate-600">
             Use os atalhos abaixo para criar eventos operacionais do banco de sangue no frontend.
           </p>
 
-          <div className="mt-3 grid gap-3 md:grid-cols-3">
+          <div className="relative mt-2 grid gap-2 md:grid-cols-3">
             {eventCreateLinks.map((item) => (
               <Link
                 key={item.key}
                 href={item.href}
-                className="block rounded-xl border border-slate-200 bg-slate-50 p-3 text-slate-800 shadow-sm transition hover:border-slate-300 hover:bg-slate-100 hover:font-semibold"
+                className="block rounded-xl border border-white/20 bg-white/35 p-2.5 text-slate-800 shadow-sm backdrop-blur-sm transition hover:border-white/40 hover:bg-white/55 dark:border-white/10 dark:bg-white/[0.05]"
               >
                 <div className="text-sm font-semibold">{item.label}</div>
                 <div className="mt-1 text-xs text-slate-600">{item.description}</div>
