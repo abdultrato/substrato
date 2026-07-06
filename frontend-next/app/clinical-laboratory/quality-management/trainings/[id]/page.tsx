@@ -188,7 +188,7 @@ function MultiRelationSelect({
           ))}
         </div>
       )}
-      <div className="relative z-[999]">
+      <div className={`relative ${open ? "z-[9999]" : "z-[10]"}`}>
         <Search size={11} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
         <input type="text" value={query}
           onChange={(e) => search(e.target.value)}
@@ -200,7 +200,7 @@ function MultiRelationSelect({
         {searching && <Loader2 size={11} className="absolute right-2.5 top-1/2 -translate-y-1/2 animate-spin text-muted-foreground" />}
         {open && (
           <div id={listboxId} role="listbox"
-            className="absolute left-0 right-0 z-[999] mt-1 overflow-hidden rounded-lg border border-border bg-card shadow-lg">
+            className="absolute left-0 right-0 mt-1 overflow-hidden rounded-lg border border-border bg-card shadow-lg">
             {results.length === 0
               ? <p className="px-3 py-2 text-[11px] text-muted-foreground">{searching ? "A pesquisar…" : "Nenhum resultado."}</p>
               : (
@@ -276,7 +276,7 @@ function RelationSelectSingle({
         </div>
       )}
       {value === null && (
-        <div className="relative z-[999]">
+        <div className={`relative ${open ? "z-[9999]" : "z-[10]"}`}>
           <Search size={11} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <input type="text" value={query}
             onChange={(e) => search(e.target.value)}
@@ -288,7 +288,7 @@ function RelationSelectSingle({
           {searching && <Loader2 size={11} className="absolute right-2.5 top-1/2 -translate-y-1/2 animate-spin text-muted-foreground" />}
           {open && (
             <div id={listboxId} role="listbox"
-              className="absolute left-0 right-0 z-[999] mt-1 overflow-hidden rounded-lg border border-border bg-card shadow-lg">
+              className="absolute left-0 right-0 mt-1 overflow-hidden rounded-lg border border-border bg-card shadow-lg">
               {results.length === 0
                 ? <p className="px-3 py-2 text-[11px] text-muted-foreground">{searching ? "A pesquisar…" : "Nenhum resultado."}</p>
                 : (
