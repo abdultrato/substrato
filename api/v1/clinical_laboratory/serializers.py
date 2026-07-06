@@ -502,6 +502,15 @@ class QualityIndicatorSerializer(serializers.ModelSerializer):
 
 
 class StaffTrainingRecordSerializer(serializers.ModelSerializer):
+    staff_display = serializers.SerializerMethodField()
+
+    def get_staff_display(self, obj):
+        u = obj.staff
+        if not u:
+            return None
+        full = f"{u.first_name} {u.last_name}".strip()
+        return full or u.username
+
     Meta = _meta(StaffTrainingRecord)
 
 
