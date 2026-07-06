@@ -12,7 +12,6 @@ import {
   HeartPulse,
   Loader2,
   Phone,
-  Plus,
   User,
 } from "lucide-react"
 
@@ -215,14 +214,12 @@ export default function BloodDonorDetailsPage() {
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2">
-                  <Link href={`/bloodbank/blood-donations/new?donor=${donor.id}`}
-                    className={`inline-flex h-8 items-center gap-1.5 rounded-lg px-3 text-xs font-semibold shadow-md transition ${
-                      eligibilityBlock
-                        ? "border border-amber-300 bg-amber-50 text-amber-800 shadow-amber-200/40 hover:bg-amber-100 dark:border-amber-700/40 dark:bg-amber-900/20 dark:text-amber-200"
-                        : "bg-gradient-to-r from-rose-600 to-pink-600 text-white shadow-rose-500/20 hover:from-rose-700 hover:to-pink-700"
-                    }`}>
-                    <Plus size={13} /> {eligibilityBlock ? "Ver impedimento" : "Nova doação"}
-                  </Link>
+                  {!eligibilityBlock ? (
+                    <Link href={`/bloodbank/blood-donations/new?donor=${donor.id}`}
+                      className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-gradient-to-r from-rose-600 to-pink-600 px-3 text-xs font-semibold text-white shadow-md shadow-rose-500/20 transition hover:from-rose-700 hover:to-pink-700">
+                      Nova doação
+                    </Link>
+                  ) : null}
                   <Link href={`/patients/${donor.id}`}
                     className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-border bg-card px-3 text-xs font-medium text-foreground transition hover:bg-muted">
                     <Edit2 size={12} /> Ficha clínica
