@@ -494,6 +494,7 @@ class CorrectiveActionSerializer(serializers.ModelSerializer):
 
 class InternalAuditSerializer(serializers.ModelSerializer):
     auditor_display = serializers.SerializerMethodField()
+    sectors_display = serializers.SerializerMethodField()
     findings_count = serializers.SerializerMethodField()
     findings_summary = serializers.SerializerMethodField()
 
@@ -504,6 +505,9 @@ class InternalAuditSerializer(serializers.ModelSerializer):
         full = f"{u.first_name} {u.last_name}".strip()
         return full or u.username
 
+    def get_sectors_display(self, obj):
+        return [{"id": s.id, "label": s.name or s.code} for s in obj.sectors.all()]
+
     def get_findings_count(self, obj):
         return obj.findings.count()
 
@@ -513,7 +517,21 @@ class InternalAuditSerializer(serializers.ModelSerializer):
             counts[f.finding_type] = counts.get(f.finding_type, 0) + 1
         return counts
 
-    Meta = _meta(InternalAudit)
+    def create(self, validated_data):
+        instance = super().create(validated_data)
+        instance.sync_area_from_sectors()
+        return instance
+
+    def update(self, instance, validated_data):
+        instance = super().update(instance, validated_data)
+        instance.sync_area_from_sectors()
+        return instance
+
+    class Meta:
+        model = InternalAudit
+        fields = "__all__"
+        # code e area são automáticos/derivados — nunca editados diretamente.
+        read_only_fields = CORE_READ_ONLY_FIELDS + ["code", "area"]
 
 
 class AuditFindingSerializer(serializers.ModelSerializer):

@@ -88,6 +88,7 @@ type Audit = {
   status: string;
   auditor: number | null;
   auditor_display?: string | null;
+  sectors_display?: { id: number; label: string }[];
   findings_count?: number;
   created_at: string;
   updated_at: string;
@@ -293,8 +294,23 @@ export default function AuditDetailPage() {
 
           {/* Identificação */}
           <SectionCard icon={MapPin} title="Identificação" accent="bg-blue-500">
-            <Row label="Área auditada">{rec.area}</Row>
-            <Row label="Código interno">{rec.code || "—"}</Row>
+            <div className="border-b border-border/30 py-1.5">
+              <span className="text-[11px] text-muted-foreground">Sectores auditados</span>
+              {(rec.sectors_display ?? []).length > 0 ? (
+                <div className="mt-1 flex flex-wrap gap-1">
+                  {(rec.sectors_display ?? []).map((s) => (
+                    <span key={s.id} className="inline-flex items-center rounded-full border border-cyan-200 bg-cyan-50 px-2 py-0.5 text-[10px] font-medium text-cyan-700 dark:border-cyan-700/40 dark:bg-cyan-900/20 dark:text-cyan-300">
+                      {s.label}
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <p className="mt-1 text-xs font-medium text-foreground">{rec.area || "—"}</p>
+              )}
+            </div>
+            <Row label="Código interno">
+              <span className="font-mono text-[10px]">{rec.code || "—"}</span>
+            </Row>
             <Row label="Código">{rec.custom_id}</Row>
           </SectionCard>
 

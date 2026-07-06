@@ -254,7 +254,9 @@ class InternalAudit(NoNameCoreModel):
         CLOSED = "FECHADA", "Fechada"
 
     code = models.CharField("Código", db_column="code", max_length=40, blank=True, default="", db_index=True)
-    area = models.CharField("Área auditada", db_column="area", max_length=160)
+    area = models.CharField("Área auditada", db_column="area", max_length=300, blank=True, default="")
+    sectors = models.ManyToManyField("laboratorio.LabSector", verbose_name="Sectores auditados",
+                                     related_name="internal_audits", blank=True)
     auditor = models.ForeignKey(USER, db_column="auditor_id", verbose_name="Auditor",
                                 on_delete=models.PROTECT, related_name="+", null=True, blank=True)
     audit_date = models.DateField("Data", db_column="audit_date", default=timezone.localdate, db_index=True)
@@ -270,6 +272,23 @@ class InternalAudit(NoNameCoreModel):
         verbose_name_plural = "Auditorias internas"
         ordering = ["-audit_date"]
         indexes = [models.Index(fields=["tenant", "status"])]
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        # Código interno automático (não editável): AUD-<ano>-<pk zero-padded>.
+        if not self.code:
+            year = (self.audit_date or timezone.localdate()).year
+            code = f"AUD-{year}-{self.pk:04d}"
+            type(self).objects.filter(pk=self.pk).update(code=code)
+            self.code = code
+
+    def sync_area_from_sectors(self):
+        """Deriva o texto de ``area`` a partir dos sectores selecionados."""
+        names = [s.name or s.code for s in self.sectors.all()]
+        area = ", ".join(names)
+        if area and self.area != area:
+            self.area = area
+            type(self).objects.filter(pk=self.pk).update(area=area)
 
     def __str__(self) -> str:
         return f"{self.code or self.custom_id} - {self.area}"

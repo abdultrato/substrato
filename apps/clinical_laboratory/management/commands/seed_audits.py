@@ -123,6 +123,11 @@ class Command(BaseCommand):
         if not auditors:
             auditors = list(User.objects.filter(is_active=True).order_by("id")[:40])
 
+        from apps.clinical_laboratory.models import LabSector
+        sector_pool = list(LabSector.objects.filter(tenant=tenant, active=True).order_by("id"))
+        if not sector_pool:
+            sector_pool = list(LabSector.objects.filter(tenant=tenant).order_by("id"))
+
         today = timezone.localdate()
         areas = AREAS[:]
         rng.shuffle(areas)
@@ -160,6 +165,12 @@ class Command(BaseCommand):
                     "status": status,
                 },
             )
+            # sectores auditados (M2M) — 1 a 3 por auditoria; area deriva daqui
+            if sector_pool and not obj.sectors.exists():
+                n = rng.randint(1, min(3, len(sector_pool)))
+                obj.sectors.set(rng.sample(sector_pool, n))
+                obj.sync_area_from_sectors()
+
             if was_created:
                 created += 1
 

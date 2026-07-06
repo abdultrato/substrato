@@ -56,6 +56,102 @@ const STATUS_COLOR: Record<string, string> = {
 };
 
 const T_USER: RelationTarget = { endpoint: "/identity/user/", labelFields: ["name", "username"] };
+const T_SECTOR: RelationTarget = { endpoint: "/clinical_laboratory/sector/", labelFields: ["name", "code"], staticFilters: { active: true } };
+
+// ── MultiRelationSelect (M2M) ─────────────────────────────────────────────────
+
+function MultiRelationSelect({
+  values, onChange, target, placeholder, safeRefreshToken, error,
+}: {
+  values: { id: number; label: string }[];
+  onChange: (v: { id: number; label: string }[]) => void;
+  target: RelationTarget;
+  placeholder?: string;
+  safeRefreshToken?: number;
+  error?: string;
+}) {
+  const [query, setQuery] = useState("");
+  const [open, setOpen] = useState(false);
+  const [results, setResults] = useState<{ value: string; label: string }[]>([]);
+  const [searching, setSearching] = useState(false);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const listboxId = useId();
+  const selectedIds = new Set(values.map((v) => v.id));
+
+  function search(q: string) {
+    setQuery(q); setOpen(true);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(async () => {
+      setSearching(true);
+      try {
+        const { items } = await apiFetchList<Record<string, any>>(target.endpoint, {
+          page: 1, pageSize: 30,
+          query: { ...(target.staticFilters ?? {}), ...(q.trim() ? { search: q.trim() } : {}) },
+          clientCache: safeRefreshToken === 0,
+          clientCacheTtlMs: 30000,
+        });
+        setResults(relationOptionsFromRows(items, target));
+      } catch { setResults([]); }
+      finally { setSearching(false); }
+    }, 250);
+  }
+
+  function select(opt: { value: string; label: string }) {
+    const id = Number(opt.value);
+    if (!selectedIds.has(id)) onChange([...values, { id, label: opt.label }]);
+    setQuery(""); setOpen(false);
+  }
+  function remove(id: number) { onChange(values.filter((v) => v.id !== id)); }
+
+  return (
+    <div className="space-y-1.5">
+      {values.length > 0 && (
+        <div className="flex flex-wrap gap-1">
+          {values.map((v) => (
+            <span key={v.id} className="inline-flex items-center gap-1 rounded-full border border-cyan-200 bg-cyan-50 px-2 py-0.5 text-[10px] font-medium text-cyan-700 dark:border-cyan-700/40 dark:bg-cyan-900/20 dark:text-cyan-300">
+              {v.label}
+              <button type="button" onClick={() => remove(v.id)} className="ml-0.5 text-cyan-400 hover:text-red-500 transition"><X size={9} /></button>
+            </span>
+          ))}
+        </div>
+      )}
+      <div className={`relative ${open ? "z-[9999]" : "z-[10]"}`}>
+        <Search size={11} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+        <input type="text" value={query}
+          onChange={(e) => search(e.target.value)}
+          onFocus={() => { setOpen(true); if (!query) search(""); }}
+          onBlur={() => setTimeout(() => setOpen(false), 150)}
+          placeholder={placeholder}
+          className={`w-full rounded-md border bg-background py-1.5 pl-7 pr-3 text-xs text-foreground outline-none transition focus:ring-2 focus:ring-blue-500/25 ${error ? "border-red-300 focus:border-red-400" : "border-border focus:border-blue-500"}`}
+        />
+        {searching && <Loader2 size={11} className="absolute right-2.5 top-1/2 -translate-y-1/2 animate-spin text-muted-foreground" />}
+        {open && (
+          <div id={listboxId} role="listbox"
+            className="absolute left-0 right-0 mt-1 overflow-hidden rounded-lg border border-border bg-card shadow-lg">
+            {results.length === 0
+              ? <p className="px-3 py-2 text-[11px] text-muted-foreground">{searching ? "A pesquisar…" : "Nenhum sector."}</p>
+              : (
+                <ul className="max-h-48 overflow-y-auto divide-y divide-border/40">
+                  {results.map((opt) => {
+                    const already = selectedIds.has(Number(opt.value));
+                    return (
+                      <li key={opt.value}>
+                        <button type="button" onMouseDown={() => select(opt)} disabled={already}
+                          className={`flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs transition ${already ? "cursor-default text-muted-foreground" : "text-foreground hover:bg-muted"}`}>
+                          {already && <CheckCircle2 size={10} className="text-emerald-500" />}
+                          {opt.label}
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
 
 // ── RelationSelect ────────────────────────────────────────────────────────────
 
@@ -193,8 +289,7 @@ export default function NewAuditPage() {
   const router = useRouter();
   const safeRefreshToken = useSafeDataRefreshSignal();
 
-  const [code,        setCode]        = useState("");
-  const [area,        setArea]        = useState("");
+  const [sectors,     setSectors]     = useState<{ id: number; label: string }[]>([]);
   const [auditor,     setAuditor]     = useState<number | null>(null);
   const [auditDate,   setAuditDate]   = useState("");
   const [scope,       setScope]       = useState("");
@@ -207,10 +302,11 @@ export default function NewAuditPage() {
   const [saveError, setSaveError] = useState<string | null>(null);
 
   const currentStatus = STATUS_CHOICES.find((s) => s.value === status);
+  const areaPreview = sectors.map((s) => s.label).join(", ");
 
   function validate() {
     const e: Record<string, string> = {};
-    if (!area.trim()) e.area = "Área auditada obrigatória.";
+    if (sectors.length === 0) e.sectors = "Selecione pelo menos um sector.";
     setErrors(e);
     return Object.keys(e).length === 0;
   }
@@ -223,8 +319,7 @@ export default function NewAuditPage() {
       const created = await apiFetch<{ id: number }>("/clinical_laboratory/internal_audit/", {
         method: "POST",
         body: JSON.stringify({
-          code:       code.trim(),
-          area:       area.trim(),
+          sectors:    sectors.map((s) => s.id),
           auditor,
           audit_date: auditDate || undefined,
           scope:      scope.trim(),
@@ -266,7 +361,7 @@ export default function NewAuditPage() {
                 <span className="font-medium text-foreground">Nova</span>
               </div>
               <h1 className="text-base font-bold leading-tight text-foreground">
-                {area.trim() || "Nova auditoria interna"}
+                {areaPreview || "Nova auditoria interna"}
               </h1>
               <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
                 {currentStatus && (
@@ -300,22 +395,24 @@ export default function NewAuditPage() {
         <div className="grid gap-2 lg:grid-cols-2">
 
           {/* Identificação */}
-          <Card icon={MapPin} title="Identificação" accent="bg-blue-500">
-            <Field label="Área auditada" required error={errors.area}>
-              <input
-                type="text" value={area}
-                onChange={(e) => { setArea(e.target.value); if (e.target.value.trim()) setErrors((p) => ({ ...p, area: "" })); }}
-                placeholder="Ex: Pré-analítico, Microbiologia, Gestão documental…"
-                className={`${inputCls} ${errors.area ? "border-red-300 focus:border-red-400" : ""}`}
+          <Card icon={MapPin} title="Sectores auditados" accent="bg-blue-500">
+            <Field label="Sectores do laboratório" required
+              hint="Selecione um ou mais sectores. A área auditada é derivada dos sectores."
+              error={errors.sectors}>
+              <MultiRelationSelect
+                values={sectors}
+                onChange={(v) => { setSectors(v); if (v.length) setErrors((p) => ({ ...p, sectors: "" })); }}
+                target={T_SECTOR}
+                placeholder="Pesquisar sector…"
+                safeRefreshToken={safeRefreshToken}
+                error={errors.sectors}
               />
             </Field>
-            <Field label="Código interno" hint="Referência opcional da auditoria.">
-              <input
-                type="text" value={code}
-                onChange={(e) => setCode(e.target.value)}
-                placeholder="Ex: AUD-2026-004"
-                className={inputCls}
-              />
+            <Field label="Código interno">
+              <div className="flex items-center gap-2 rounded-md border border-dashed border-border bg-muted/40 px-2.5 py-1.5 text-xs text-muted-foreground">
+                <CheckCircle2 size={12} className="text-emerald-500" />
+                Gerado automaticamente ao guardar (ex: AUD-2026-0001)
+              </div>
             </Field>
           </Card>
 
