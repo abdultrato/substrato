@@ -44,7 +44,6 @@ const TEST_COLOR: Record<string, string> = {
 /* ── Tipos ───────────────────────────────────────────────────────────── */
 type FormState = {
   /* Etapa 1 */
-  bag_identifier: string;
   donor: string;
   donor_role: string;
   blood_type: string;
@@ -71,7 +70,6 @@ type FormState = {
 };
 
 const INITIAL: FormState = {
-  bag_identifier: "",
   donor: "",
   donor_role: "VOL",
   blood_type: "UNK",
@@ -191,17 +189,39 @@ function NewDonationWizard() {
 
   const [form, setForm] = useState<FormState>({ ...INITIAL, donor: donorParam });
   const [donorName, setDonorName] = useState<string>("");
+  const [bloodTypeLocked, setBloodTypeLocked] = useState(false);
   const [step, setStep] = useState(0);
   const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({});
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (donorParam) {
-      apiFetch<{ name?: string }>(`/patients/${donorParam}/`)
-        .then(p => setDonorName(p.name || ""))
-        .catch(() => {});
-    }
+    if (!donorParam) return;
+    (async () => {
+      try {
+        const patient = await apiFetch<{ name?: string; blood_type?: string }>(`/patients/${donorParam}/`);
+        setDonorName(patient.name || "");
+
+        // Verificar se o grupo sanguíneo já é conhecido pelo paciente
+        if (patient.blood_type && patient.blood_type !== "UNK") {
+          setForm(f => ({ ...f, blood_type: patient.blood_type! }));
+          setBloodTypeLocked(true);
+          return;
+        }
+
+        // Verificar doações anteriores para herdar o grupo sanguíneo
+        try {
+          const res = await apiFetch<{ results?: { blood_type?: string }[]; items?: { blood_type?: string }[] }>(
+            `/bloodbank/donation/?donor=${donorParam}&page_size=1&ordering=-collected_at`
+          );
+          const prev = (res?.results ?? res?.items ?? [])[0];
+          if (prev?.blood_type && prev.blood_type !== "UNK") {
+            setForm(f => ({ ...f, blood_type: prev.blood_type! }));
+            setBloodTypeLocked(true);
+          }
+        } catch { /* sem doações anteriores — selector fica aberto */ }
+      } catch { /* falha ao carregar paciente */ }
+    })();
   }, [donorParam]);
 
   function set<K extends keyof FormState>(key: K, value: FormState[K]) {
@@ -212,9 +232,8 @@ function NewDonationWizard() {
   function validateStep(s: number): boolean {
     const errs: Partial<Record<keyof FormState, string>> = {};
     if (s === 0) {
-      if (!form.bag_identifier.trim()) errs.bag_identifier = "Obrigatório";
-      if (!form.donor.trim())          errs.donor          = "Obrigatório";
-      if (!form.collected_at)          errs.collected_at   = "Obrigatório";
+      if (!form.donor.trim())  errs.donor        = "Obrigatório";
+      if (!form.collected_at)  errs.collected_at  = "Obrigatório";
     }
     setErrors(errs);
     return Object.keys(errs).length === 0;
@@ -230,7 +249,6 @@ function NewDonationWizard() {
     setSubmitting(true); setSubmitError(null);
     try {
       const payload: Record<string, unknown> = {
-        bag_identifier: form.bag_identifier,
         donor: Number(form.donor),
         donor_role: form.donor_role,
         blood_type: form.blood_type,
@@ -365,12 +383,11 @@ function NewDonationWizard() {
             {step === 0 && (
               <>
                 <h2 className="text-[12px] font-bold text-foreground">Dados da colheita</h2>
+                <p className="text-[10px] text-muted-foreground -mt-2">
+                  O identificador da bolsa é gerado automaticamente pelo sistema após o registo.
+                </p>
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                  <TxtField label="Identificador da bolsa *" value={form.bag_identifier}
-                    onChange={v => set("bag_identifier", v)} placeholder="DON-XXXXX" />
-                  {errors.bag_identifier && <p className="col-span-full -mt-2 text-[10px] text-red-600">{errors.bag_identifier}</p>}
-
-                  <TxtField label="Doador (ID) *" value={donorName || form.donor}
+                  <TxtField label="Doador *" value={donorName || form.donor}
                     onChange={v => set("donor", v)}
                     placeholder="ID do paciente" readOnly={!!donorParam} />
                   {errors.donor && <p className="col-span-full -mt-2 text-[10px] text-red-600">{errors.donor}</p>}
@@ -382,8 +399,20 @@ function NewDonationWizard() {
                   <TxtField label="Volume colhido (mL)" value={form.volume_ml}
                     onChange={v => set("volume_ml", v)} type="number" min="0" placeholder="450" />
 
-                  <SelField label="Grupo sanguíneo" value={form.blood_type}
-                    onChange={v => set("blood_type", v)} opts={BLOOD_TYPE_OPTS} />
+                  {bloodTypeLocked ? (
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Grupo sanguíneo</label>
+                      <div className="flex h-9 items-center gap-2">
+                        <span className="inline-flex items-center gap-1.5 rounded-full border border-rose-200 bg-rose-50 px-3 py-1 text-[11px] font-bold text-rose-700 dark:border-rose-700/40 dark:bg-rose-900/20 dark:text-rose-300">
+                          <Droplets size={11} /> {form.blood_type === "UNK" ? "Desconhecido" : form.blood_type}
+                        </span>
+                        <span className="text-[9px] text-muted-foreground">Herdado do registo</span>
+                      </div>
+                    </div>
+                  ) : (
+                    <SelField label="Grupo sanguíneo" value={form.blood_type}
+                      onChange={v => set("blood_type", v)} opts={BLOOD_TYPE_OPTS} />
+                  )}
                 </div>
 
                 <div className="space-y-1">
@@ -466,7 +495,6 @@ function NewDonationWizard() {
                   <div className="rounded-lg border border-white/30 bg-white/30 p-3 dark:border-white/10 dark:bg-white/5">
                     <p className="mb-2 text-[10px] font-bold uppercase tracking-wide text-rose-600 dark:text-rose-400">Colheita</p>
                     <div className="space-y-0.5">
-                      <SummaryRow label="Bolsa"       value={form.bag_identifier} />
                       <SummaryRow label="Doador"      value={donorName || form.donor} />
                       <SummaryRow label="Tipo doador" value={donorRoleLabel} />
                       <SummaryRow label="Colheita"    value={donationTypeLabel} />
