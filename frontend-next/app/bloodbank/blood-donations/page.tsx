@@ -24,7 +24,8 @@ import { GROUPS } from "@/lib/rbac";
 const GLASS_CARD =
   "relative overflow-hidden rounded-xl border border-white/20 bg-white/30 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]";
 
-const PAGE_SIZE = 18;
+const DEFAULT_PAGE_SIZE = 12;
+const PAGE_SIZE_OPTIONS = [6, 12, 18, 24, 36];
 
 type DonationRow = {
   id: number;
@@ -133,6 +134,7 @@ export default function BloodbankBloodDonationsListPage() {
   const [totalItems, setTotalItems] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [typeFilter, setTypeFilter] = useState("");
@@ -145,7 +147,7 @@ export default function BloodbankBloodDonationsListPage() {
 
   useEffect(() => {
     setPage(1);
-  }, [debouncedSearch, statusFilter, typeFilter]);
+  }, [debouncedSearch, statusFilter, typeFilter, pageSize]);
 
   useEffect(() => {
     let mounted = true;
@@ -156,7 +158,7 @@ export default function BloodbankBloodDonationsListPage() {
         setError(null);
         const { items: rows, meta } = await apiFetchList<DonationRow>("/bloodbank/donation/", {
           page,
-          pageSize: PAGE_SIZE,
+          pageSize,
           query: {
             ...(debouncedSearch.trim() ? { search: debouncedSearch.trim() } : {}),
             ...(statusFilter ? { status: statusFilter } : {}),
@@ -167,7 +169,7 @@ export default function BloodbankBloodDonationsListPage() {
         if (!mounted) return;
 
         const total = meta.total ?? rows.length;
-        const pages = meta.totalPages ?? Math.max(1, Math.ceil((total || 0) / PAGE_SIZE));
+        const pages = meta.totalPages ?? Math.max(1, Math.ceil((total || 0) / pageSize));
 
         setItems(rows);
         setTotalItems(total || 0);
@@ -188,7 +190,7 @@ export default function BloodbankBloodDonationsListPage() {
     return () => {
       mounted = false;
     };
-  }, [debouncedSearch, page, statusFilter, typeFilter]);
+  }, [debouncedSearch, page, statusFilter, typeFilter, pageSize]);
 
   useEffect(() => {
     let mounted = true;
@@ -241,7 +243,7 @@ export default function BloodbankBloodDonationsListPage() {
 
   return (
     <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.LABORATORIO]}>
-      <div className="mx-auto min-h-[calc(100vh-5rem)] w-full max-w-[min(98vw,1600px)] space-y-3 px-2 pb-4">
+      <div className="mx-auto min-h-[calc(100vh-5rem)] w-full max-w-[min(98vw,1600px)] space-y-2 px-2 pb-3">
         <section className={GLASS_CARD}>
           <div className="pointer-events-none absolute inset-0">
             <div className="absolute -right-12 -top-10 h-36 w-36 rounded-full bg-rose-500/10 blur-3xl" />
@@ -250,7 +252,7 @@ export default function BloodbankBloodDonationsListPage() {
           </div>
           <span className="absolute inset-y-0 left-0 w-1 rounded-l-xl bg-gradient-to-b from-rose-500 via-red-500 to-cyan-600" />
 
-          <div className="relative flex flex-wrap items-center gap-3 px-4 py-3">
+          <div className="relative flex flex-wrap items-center gap-2 px-3 py-2.5">
             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-rose-500 to-cyan-600 shadow-md shadow-rose-500/25">
               <Droplet size={22} className="text-white" />
             </div>
@@ -260,79 +262,79 @@ export default function BloodbankBloodDonationsListPage() {
             </div>
             <Link
               href="/bloodbank/blood-donations/new"
-              className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-gradient-to-r from-rose-600 to-cyan-600 px-4 text-sm font-semibold text-white shadow-md shadow-rose-500/25 transition hover:from-rose-700 hover:to-cyan-700"
+              className="inline-flex h-8 items-center gap-1.5 rounded-xl bg-gradient-to-r from-rose-600 to-cyan-600 px-3 text-sm font-semibold text-white shadow-md shadow-rose-500/25 transition hover:from-rose-700 hover:to-cyan-700"
             >
               <Plus size={15} />
               Nova doação
             </Link>
           </div>
 
-          <div className="relative border-t border-white/15 px-4 py-3 dark:border-white/10">
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 2xl:grid-cols-4">
-              <article className="relative min-w-0 rounded-xl border border-white/20 bg-white/22 p-3 shadow-sm backdrop-blur-sm">
+          <div className="relative border-t border-white/15 px-3 py-2.5 dark:border-white/10">
+            <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 2xl:grid-cols-4">
+              <article className="relative min-w-0 rounded-xl border border-white/20 bg-white/22 p-2.5 shadow-sm backdrop-blur-sm">
                 <span className="absolute inset-y-0 left-0 w-1 rounded-l-xl bg-rose-500" />
-                <div className="flex items-center gap-2">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-rose-500/15 text-rose-600">
+                <div className="flex items-center gap-1.5">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-500/15 text-rose-600">
                     <HeartHandshake size={18} />
                   </div>
                   <div className="min-w-0">
                     <div className="whitespace-nowrap text-[11px] text-muted-foreground">Registos nesta página</div>
-                    <div className="text-lg font-bold text-foreground">{items.length}</div>
+                    <div className="text-base font-bold text-foreground">{items.length}</div>
                   </div>
                 </div>
               </article>
-              <article className="relative min-w-0 rounded-xl border border-white/20 bg-white/22 p-3 shadow-sm backdrop-blur-sm">
+              <article className="relative min-w-0 rounded-xl border border-white/20 bg-white/22 p-2.5 shadow-sm backdrop-blur-sm">
                 <span className="absolute inset-y-0 left-0 w-1 rounded-l-xl bg-amber-500" />
-                <div className="flex items-center gap-2">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-500/15 text-amber-600">
+                <div className="flex items-center gap-1.5">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500/15 text-amber-600">
                     <Activity size={18} />
                   </div>
                   <div className="min-w-0">
                     <div className="whitespace-nowrap text-[11px] text-muted-foreground">Em triagem</div>
-                    <div className="text-lg font-bold text-foreground">{summary.triagem}</div>
+                    <div className="text-base font-bold text-foreground">{summary.triagem}</div>
                   </div>
                 </div>
               </article>
-              <article className="relative min-w-0 rounded-xl border border-white/20 bg-white/22 p-3 shadow-sm backdrop-blur-sm">
+              <article className="relative min-w-0 rounded-xl border border-white/20 bg-white/22 p-2.5 shadow-sm backdrop-blur-sm">
                 <span className="absolute inset-y-0 left-0 w-1 rounded-l-xl bg-emerald-500" />
-                <div className="flex items-center gap-2">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500/15 text-emerald-600">
+                <div className="flex items-center gap-1.5">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/15 text-emerald-600">
                     <CheckCircle2 size={18} />
                   </div>
                   <div className="min-w-0">
                     <div className="whitespace-nowrap text-[11px] text-muted-foreground">Concluídas</div>
-                    <div className="text-lg font-bold text-foreground">{summary.concluidas}</div>
+                    <div className="text-base font-bold text-foreground">{summary.concluidas}</div>
                   </div>
                 </div>
               </article>
-              <article className="relative min-w-0 rounded-xl border border-white/20 bg-white/22 p-3 shadow-sm backdrop-blur-sm">
+              <article className="relative min-w-0 rounded-xl border border-white/20 bg-white/22 p-2.5 shadow-sm backdrop-blur-sm">
                 <span className="absolute inset-y-0 left-0 w-1 rounded-l-xl bg-cyan-500" />
-                <div className="flex items-center gap-2">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-cyan-500/15 text-cyan-600">
+                <div className="flex items-center gap-1.5">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-cyan-500/15 text-cyan-600">
                     <FlaskConical size={18} />
                   </div>
                   <div className="min-w-0">
                     <div className="whitespace-nowrap text-[11px] text-muted-foreground">Volume visível</div>
-                    <div className="text-lg font-bold text-foreground">{summary.volume} mL</div>
+                    <div className="text-base font-bold text-foreground">{summary.volume} mL</div>
                   </div>
                 </div>
               </article>
             </div>
 
-            <div className="mt-2 grid grid-cols-1 gap-2 lg:grid-cols-[minmax(0,1.35fr)_minmax(180px,0.45fr)_minmax(180px,0.45fr)_auto]">
+            <div className="mt-1.5 grid grid-cols-1 gap-1.5 lg:grid-cols-[minmax(0,1.2fr)_minmax(160px,0.36fr)_minmax(160px,0.36fr)_minmax(120px,0.22fr)_auto]">
               <div className="relative min-w-0">
                 <Search size={13} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                 <input
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
                   placeholder="Pesquisar por código, bolsa ou referência..."
-                  className="h-10 w-full rounded-xl border border-white/30 bg-white/45 py-2 pl-9 pr-3 text-sm text-foreground outline-none backdrop-blur-sm transition focus:border-rose-400 focus:ring-2 focus:ring-rose-400/20 dark:border-white/10 dark:bg-white/[0.08]"
+                  className="h-9 w-full rounded-xl border border-white/30 bg-white/45 py-2 pl-9 pr-3 text-sm text-foreground outline-none backdrop-blur-sm transition focus:border-rose-400 focus:ring-2 focus:ring-rose-400/20 dark:border-white/10 dark:bg-white/[0.08]"
                 />
               </div>
               <select
                 value={statusFilter}
                 onChange={(event) => setStatusFilter(event.target.value)}
-                className="h-10 min-w-0 rounded-xl border border-white/30 bg-white/45 px-3 text-sm text-foreground outline-none backdrop-blur-sm transition focus:border-rose-400 dark:border-white/10 dark:bg-white/[0.08]"
+                className="h-9 min-w-0 rounded-xl border border-white/30 bg-white/45 px-3 text-sm text-foreground outline-none backdrop-blur-sm transition focus:border-rose-400 dark:border-white/10 dark:bg-white/[0.08]"
               >
                 {STATUS_OPTIONS.map((option) => (
                   <option key={option.value} value={option.value}>
@@ -343,7 +345,7 @@ export default function BloodbankBloodDonationsListPage() {
               <select
                 value={typeFilter}
                 onChange={(event) => setTypeFilter(event.target.value)}
-                className="h-10 min-w-0 rounded-xl border border-white/30 bg-white/45 px-3 text-sm text-foreground outline-none backdrop-blur-sm transition focus:border-cyan-400 dark:border-white/10 dark:bg-white/[0.08]"
+                className="h-9 min-w-0 rounded-xl border border-white/30 bg-white/45 px-3 text-sm text-foreground outline-none backdrop-blur-sm transition focus:border-cyan-400 dark:border-white/10 dark:bg-white/[0.08]"
               >
                 {DONATION_TYPE_OPTIONS.map((option) => (
                   <option key={option.value} value={option.value}>
@@ -351,7 +353,18 @@ export default function BloodbankBloodDonationsListPage() {
                   </option>
                 ))}
               </select>
-              <div className="flex items-center justify-center rounded-xl border border-white/20 bg-white/25 px-3 py-2 text-center text-xs text-muted-foreground backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.05]">
+              <select
+                value={pageSize}
+                onChange={(event) => setPageSize(Number(event.target.value))}
+                className="h-9 min-w-0 rounded-xl border border-white/30 bg-white/45 px-3 text-sm text-foreground outline-none backdrop-blur-sm transition focus:border-cyan-400 dark:border-white/10 dark:bg-white/[0.08]"
+              >
+                {PAGE_SIZE_OPTIONS.map((option) => (
+                  <option key={option} value={option}>
+                    {option}/pág
+                  </option>
+                ))}
+              </select>
+              <div className="flex items-center justify-center rounded-xl border border-white/20 bg-white/25 px-2.5 py-2 text-center text-xs text-muted-foreground backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.05]">
                 {summaryLoading ? "A carregar..." : `${totalItems} doações no total`}
               </div>
             </div>
@@ -365,26 +378,26 @@ export default function BloodbankBloodDonationsListPage() {
         ) : null}
 
         {listLoading ? (
-          <div className={`${GLASS_CARD} flex items-center justify-center py-20 text-muted-foreground`}>
+          <div className={`${GLASS_CARD} flex items-center justify-center py-16 text-muted-foreground`}>
             <Loader2 size={20} className="animate-spin" />
           </div>
         ) : items.length === 0 ? (
-          <div className={`${GLASS_CARD} px-4 py-16 text-center text-sm text-muted-foreground`}>
+          <div className={`${GLASS_CARD} px-3 py-12 text-center text-sm text-muted-foreground`}>
             Nenhuma doação encontrada com os filtros atuais.
           </div>
         ) : (
-          <section className="columns-1 gap-2 sm:columns-2 2xl:columns-3 [column-fill:_balance]">
+          <section className="columns-1 gap-1.5 sm:columns-2 2xl:columns-3 [column-fill:_balance]">
             {items.map((item) => (
               <Link
                 key={item.id}
                 href={`/bloodbank/blood-donations/${item.id}`}
-                className={`${GLASS_CARD} mb-2 block break-inside-avoid overflow-hidden transition hover:bg-white/40 hover:shadow-md dark:hover:bg-white/[0.07]`}
+                className={`${GLASS_CARD} mb-1.5 block break-inside-avoid overflow-hidden transition hover:bg-white/40 hover:shadow-md dark:hover:bg-white/[0.07]`}
               >
                 <div className="pointer-events-none absolute inset-0">
                   <div className="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-rose-500/8 blur-2xl" />
                   <div className="absolute -bottom-8 left-10 h-20 w-20 rounded-full bg-cyan-500/8 blur-2xl" />
                 </div>
-                <div className="relative space-y-3 px-4 py-3">
+                <div className="relative space-y-2 px-3 py-2.5">
                   <div className="flex flex-wrap items-start justify-between gap-2">
                     <div className="min-w-0">
                       <div className="font-mono text-[11px] text-muted-foreground">
@@ -407,27 +420,27 @@ export default function BloodbankBloodDonationsListPage() {
                     </span>
                   </div>
 
-                  <div className="grid gap-2 sm:grid-cols-2">
-                    <div className="rounded-xl border border-white/15 bg-white/20 px-3 py-2 backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]">
+                  <div className="grid gap-1.5 sm:grid-cols-2">
+                    <div className="rounded-xl border border-white/15 bg-white/20 px-2.5 py-1.5 backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]">
                       <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Tipo de doação</div>
                       <div className="mt-1 text-sm font-medium text-foreground">{formatDonationType(item.donation_type)}</div>
                     </div>
-                    <div className="rounded-xl border border-white/15 bg-white/20 px-3 py-2 backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]">
+                    <div className="rounded-xl border border-white/15 bg-white/20 px-2.5 py-1.5 backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]">
                       <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Perfil do doador</div>
                       <div className="mt-1 text-sm font-medium text-foreground">{formatDonorRole(item.donor_role)}</div>
                     </div>
-                    <div className="rounded-xl border border-white/15 bg-white/20 px-3 py-2 backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]">
+                    <div className="rounded-xl border border-white/15 bg-white/20 px-2.5 py-1.5 backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]">
                       <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Coleta</div>
                       <div className="mt-1 text-sm font-medium text-foreground">{formatDate(item.collected_at)}</div>
                     </div>
-                    <div className="rounded-xl border border-white/15 bg-white/20 px-3 py-2 backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]">
+                    <div className="rounded-xl border border-white/15 bg-white/20 px-2.5 py-1.5 backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]">
                       <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Volume</div>
                       <div className="mt-1 text-sm font-medium text-foreground">{item.volume_ml ? `${item.volume_ml} mL` : "Não informado"}</div>
                     </div>
                   </div>
 
-                  <div className="flex flex-wrap items-center justify-between gap-2 border-t border-white/15 pt-2 text-xs text-muted-foreground dark:border-white/10">
-                    <div className="flex flex-wrap items-center gap-3">
+                  <div className="flex flex-wrap items-center justify-between gap-1.5 border-t border-white/15 pt-1.5 text-xs text-muted-foreground dark:border-white/10">
+                    <div className="flex flex-wrap items-center gap-2">
                       <span>Hemoglobina: {item.hemoglobin_g_dl || "—"}</span>
                       <span>Peso: {item.donor_weight_kg ? `${item.donor_weight_kg} kg` : "—"}</span>
                     </div>
@@ -442,10 +455,10 @@ export default function BloodbankBloodDonationsListPage() {
           </section>
         )}
 
-        <div className={`${GLASS_CARD} p-3`}>
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div className={`${GLASS_CARD} p-2.5`}>
+          <div className="flex flex-col gap-1.5 sm:flex-row sm:items-center sm:justify-between">
             <div className="text-sm text-muted-foreground">
-              Página {page} de {totalPages} · {PAGE_SIZE} itens por página
+              Página {page} de {totalPages} · {pageSize} itens por página
             </div>
             <Pagination page={page} totalPages={totalPages} onChange={setPage} />
           </div>
