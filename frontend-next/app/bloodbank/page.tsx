@@ -111,16 +111,16 @@ export default function BloodBankPage() {
             dd.donor_id ?? dd.donor_pk ??
             (dd.donor && typeof dd.donor === "object" ? (dd.donor as Record<string, unknown>).id : dd.donor) ?? ""
           )
-          if (!did || did === "undefined") continue
+          if (!did || did === "undefined" || did === "null") continue
           donorIdSet.add(did)
           if (!map[did]) map[did] = d
         }
 
-        // 2. Fetch each donor patient individually (id__in may not be supported)
+        // 2. Fetch each donor patient individually using /patients/{id}/
         const uniqueIds = [...donorIdSet]
         const [byFlag, ...byIdResults] = await Promise.all([
           apiFetch<{ results?: DonorRow[] }>("/clinical/patient/?is_blood_donor=true&page_size=200&ordering=name", { clientCache: safeRefreshToken === 0 }),
-          ...uniqueIds.map((id) => apiFetch<DonorRow>(`/clinical/patient/${id}/`, { clientCache: safeRefreshToken === 0 }).catch(() => null)),
+          ...uniqueIds.map((id) => apiFetch<DonorRow>(`/patients/${id}/`, { clientCache: safeRefreshToken === 0 }).catch(() => null)),
         ])
         if (!mounted) return
 
