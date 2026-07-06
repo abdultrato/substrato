@@ -23,7 +23,8 @@ const LIST_GROUPS = [
   GROUPS.ENFERMAGEM, GROUPS.LABORATORIO, GROUPS.RECEPCAO,
 ];
 
-const PAGE_SIZE = 24;
+const PAGE_SIZES = [12, 24, 48, 96];
+const DEFAULT_PAGE_SIZE = 24;
 
 interface LabExam {
   id: number;
@@ -111,38 +112,40 @@ function fmtPrice(price: string) {
 export default function ExamsListPage() {
   useAuthGuard();
 
-  const [items, setItems]             = useState<LabExam[]>([]);
-  const [total, setTotal]             = useState(0);
-  const [page, setPage]               = useState(1);
-  const [loading, setLoading]         = useState(true);
-  const [search, setSearch]           = useState("");
+  const [items, setItems]               = useState<LabExam[]>([]);
+  const [total, setTotal]               = useState(0);
+  const [page, setPage]                 = useState(1);
+  const [pageSize, setPageSize]         = useState(DEFAULT_PAGE_SIZE);
+  const [loading, setLoading]           = useState(true);
+  const [search, setSearch]             = useState("");
   const [filterSector, setFilterSector] = useState("");
   const debRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const load = useCallback(async (p: number, q: string, sector: string) => {
+  const load = useCallback(async (p: number, q: string, sector: string, ps: number) => {
     setLoading(true);
     try {
       const query: Record<string, string> = {};
       if (q.trim())  query.search = q.trim();
       if (sector)    query.sector = sector;
       const { items: rows, meta } = await apiFetchList<LabExam>(
-        "/clinical/lab-exams/", { page: p, pageSize: PAGE_SIZE, query }
+        "/clinical/lab-exams/", { page: p, pageSize: ps, query }
       );
       setItems(rows); setTotal(meta.total ?? 0);
     } catch { setItems([]); setTotal(0); }
     finally { setLoading(false); }
   }, []);
 
-  useEffect(() => { load(page, search, filterSector); }, [page, load, filterSector]);
+  useEffect(() => { load(page, search, filterSector, pageSize); }, [page, load, filterSector, pageSize]);
 
   function handleSearch(v: string) {
     setSearch(v); setPage(1);
     if (debRef.current) clearTimeout(debRef.current);
-    debRef.current = setTimeout(() => load(1, v, filterSector), 300);
+    debRef.current = setTimeout(() => load(1, v, filterSector, pageSize), 300);
   }
-  function handleSector(v: string) { setFilterSector(v); setPage(1); load(1, search, v); }
+  function handleSector(v: string) { setFilterSector(v); setPage(1); load(1, search, v, pageSize); }
+  function handlePageSize(v: number) { setPageSize(v); setPage(1); load(1, search, filterSector, v); }
 
-  const totalPages = Math.ceil(total / PAGE_SIZE);
+  const totalPages = Math.ceil(total / pageSize);
 
   return (
     <AppLayout requiredGroups={LIST_GROUPS}>
@@ -185,6 +188,12 @@ export default function ExamsListPage() {
                 <select value={filterSector} onChange={(e) => handleSector(e.target.value)}
                   className="appearance-none rounded-lg border border-border bg-card py-1.5 pl-7 pr-6 text-xs text-foreground outline-none transition focus:border-sky-400">
                   {SECTOR_FILTERS.map((f) => <option key={f.value} value={f.value}>{f.label}</option>)}
+                </select>
+              </div>
+              <div className="relative">
+                <select value={pageSize} onChange={(e) => handlePageSize(Number(e.target.value))}
+                  className="appearance-none rounded-lg border border-border bg-card py-1.5 pl-3 pr-6 text-xs text-foreground outline-none transition focus:border-sky-400">
+                  {PAGE_SIZES.map((n) => <option key={n} value={n}>{n} por página</option>)}
                 </select>
               </div>
             </div>
@@ -247,7 +256,7 @@ export default function ExamsListPage() {
         {/* ── Pagination ────────────────────────────────────────── */}
         {totalPages > 1 && (
           <div className="flex items-center justify-between pt-1">
-            <span className="text-[11px] text-muted-foreground">Página {page} de {totalPages} · {total} exames</span>
+            <span className="text-[11px] text-muted-foreground">Página {page} de {totalPages} · {total} exames · {pageSize}/pág</span>
             <div className="flex items-center gap-1">
               <button disabled={page <= 1} onClick={() => setPage(page - 1)}
                 className="inline-flex h-7 w-7 items-center justify-center rounded-lg border border-border bg-card transition hover:bg-muted disabled:opacity-40">
