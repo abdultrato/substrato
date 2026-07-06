@@ -41,6 +41,57 @@ const TEST_COLOR: Record<string, string> = {
   INC: "border-orange-200 bg-orange-50 text-orange-700",
 };
 
+const ERROR_LABELS: Record<string, string> = {
+  "HIV test": "VIH",
+  "Syphilis rpr test": "Sífilis (RPR)",
+  "Hepatitis b hbsag test": "Hepatite B",
+  "Hepatitis c anti hcv test": "Hepatite C",
+  "Malaria test": "Malária",
+  "Doador peso (kg)": "Peso do doador",
+  "Hemoglobin g dl": "Hemoglobina",
+  donor: "Doador",
+}
+
+function parseDonationSubmitError(message: string): {
+  title: string
+  summary?: string
+  items: { label: string; message: string }[]
+} | null {
+  const raw = String(message || "").trim()
+  if (!raw) return null
+
+  const knownPairs = Object.keys(ERROR_LABELS)
+    .map((label) => {
+      const escaped = label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+      return raw.match(new RegExp(`${escaped}:\\s*([^]+?)(?=\\s+[A-ZÁÀÂÃÉÈÊÍÌÎÓÒÔÕÚÙÛÇ][^:]{1,40}:|$)`, "i"))
+        ? {
+            label: ERROR_LABELS[label],
+            message:
+              raw.match(new RegExp(`${escaped}:\\s*([^]+?)(?=\\s+[A-ZÁÀÂÃÉÈÊÍÌÎÓÒÔÕÚÙÛÇ][^:]{1,40}:|$)`, "i"))?.[1]?.trim() || "",
+          }
+        : null
+    })
+    .filter(Boolean) as { label: string; message: string }[]
+
+  if (knownPairs.length > 0) {
+    return {
+      title: "Triagem clínica incompleta para aprovação",
+      summary: "Antes de concluir esta doação, preencha os parâmetros obrigatórios e garanta resultados compatíveis com triagem aprovada.",
+      items: knownPairs,
+    }
+  }
+
+  if (raw.toLowerCase().includes("nova doacao ainda nao permitida")) {
+    return {
+      title: "Doador temporariamente impedido para nova doação",
+      summary: raw,
+      items: [],
+    }
+  }
+
+  return null
+}
+
 /* ── Tipos ───────────────────────────────────────────────────────────── */
 type FormState = {
   /* Etapa 1 */
@@ -190,6 +241,9 @@ function NewDonationWizard() {
   const [form, setForm] = useState<FormState>({ ...INITIAL, donor: donorParam });
   const [donorName, setDonorName] = useState<string>("");
   const [bloodTypeLocked, setBloodTypeLocked] = useState(false);
+  const [eligibilityBlock, setEligibilityBlock] = useState<{
+    message: string; lastDate: string; daysElapsed: number; daysRequired: number; releaseDate: string;
+  } | null>(null);
   const [step, setStep] = useState(0);
   const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({});
   const [submitting, setSubmitting] = useState(false);
@@ -199,27 +253,54 @@ function NewDonationWizard() {
     if (!donorParam) return;
     (async () => {
       try {
-        const patient = await apiFetch<{ name?: string; blood_type?: string }>(`/patients/${donorParam}/`);
+        const patient = await apiFetch<{ name?: string; blood_type?: string; gender?: string }>(`/patients/${donorParam}/`);
         setDonorName(patient.name || "");
 
         // Verificar se o grupo sanguíneo já é conhecido pelo paciente
         if (patient.blood_type && patient.blood_type !== "UNK") {
           setForm(f => ({ ...f, blood_type: patient.blood_type! }));
           setBloodTypeLocked(true);
-          return;
         }
 
-        // Verificar doações anteriores para herdar o grupo sanguíneo
+        // Verificar doações anteriores — herdar grupo sanguíneo e verificar elegibilidade
         try {
-          const res = await apiFetch<{ results?: { blood_type?: string }[]; items?: { blood_type?: string }[] }>(
+          const res = await apiFetch<{ results?: { blood_type?: string; collected_at?: string }[]; items?: { blood_type?: string; collected_at?: string }[] }>(
             `/bloodbank/donation/?donor=${donorParam}&page_size=1&ordering=-collected_at`
           );
           const prev = (res?.results ?? res?.items ?? [])[0];
-          if (prev?.blood_type && prev.blood_type !== "UNK") {
-            setForm(f => ({ ...f, blood_type: prev.blood_type! }));
-            setBloodTypeLocked(true);
+
+          // Herdar grupo sanguíneo da última doação se ainda não bloqueado
+          if (!patient.blood_type || patient.blood_type === "UNK") {
+            if (prev?.blood_type && prev.blood_type !== "UNK") {
+              setForm(f => ({ ...f, blood_type: prev.blood_type! }));
+              setBloodTypeLocked(true);
+            }
           }
-        } catch { /* sem doações anteriores — selector fica aberto */ }
+
+          // Verificar período de interdição
+          if (prev?.collected_at) {
+            const gender = (patient.gender || "").toLowerCase();
+            const isFemale = gender.includes("femin") || gender.includes("femenin");
+            const daysRequired = isFemale ? 120 : 90;
+            const lastDate = new Date(prev.collected_at);
+            const today = new Date();
+            const daysElapsed = Math.floor((today.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24));
+
+            if (daysElapsed < daysRequired) {
+              const releaseDate = new Date(lastDate);
+              releaseDate.setDate(releaseDate.getDate() + daysRequired);
+              setEligibilityBlock({
+                message: isFemale
+                  ? `Doadoras do sexo feminino devem aguardar 120 dias entre doações.`
+                  : `Doadores do sexo masculino devem aguardar 90 dias entre doações.`,
+                lastDate: lastDate.toLocaleDateString("pt-PT", { dateStyle: "long" }),
+                daysElapsed,
+                daysRequired,
+                releaseDate: releaseDate.toLocaleDateString("pt-PT", { dateStyle: "long" }),
+              });
+            }
+          }
+        } catch { /* sem doações anteriores */ }
       } catch { /* falha ao carregar paciente */ }
     })();
   }, [donorParam]);
@@ -295,6 +376,7 @@ function NewDonationWizard() {
   const donorRoleLabel = DONOR_ROLE_OPTS.find(o => o.value === form.donor_role)?.label ?? form.donor_role;
   const donationTypeLabel = DONATION_TYPE_OPTS.find(o => o.value === form.donation_type)?.label ?? form.donation_type;
   const bloodTypeLabel = form.blood_type === "UNK" ? "Desconhecido" : form.blood_type;
+  const parsedSubmitError = submitError ? parseDonationSubmitError(submitError) : null
 
   return (
     <AppLayout requiredGroups={ALLOWED}>
@@ -336,12 +418,12 @@ function NewDonationWizard() {
                 {step + 1} / {STEPS.length}
               </span>
               {step < STEPS.length - 1 ? (
-                <button type="button" onClick={next}
-                  className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-gradient-to-r from-rose-600 to-pink-600 px-3 text-xs font-semibold text-white shadow-md shadow-rose-500/20 transition hover:from-rose-700 hover:to-pink-700">
+                <button type="button" onClick={next} disabled={!!eligibilityBlock}
+                  className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-gradient-to-r from-rose-600 to-pink-600 px-3 text-xs font-semibold text-white shadow-md shadow-rose-500/20 transition hover:from-rose-700 hover:to-pink-700 disabled:opacity-40 disabled:cursor-not-allowed">
                   Seguinte <ArrowRight size={13} />
                 </button>
               ) : (
-                <button type="button" onClick={submit} disabled={submitting}
+                <button type="button" onClick={submit} disabled={submitting || !!eligibilityBlock}
                   className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-gradient-to-r from-rose-600 to-pink-600 px-3 text-xs font-semibold text-white shadow-md shadow-rose-500/20 transition hover:from-rose-700 hover:to-pink-700 disabled:opacity-60">
                   {submitting ? <Loader2 size={13} className="animate-spin" /> : <Check size={13} />}
                   Guardar
@@ -383,6 +465,35 @@ function NewDonationWizard() {
             {step === 0 && (
               <>
                 <h2 className="text-[12px] font-bold text-foreground">Dados da colheita</h2>
+
+                {eligibilityBlock && (
+                  <div className="relative overflow-hidden rounded-xl border border-amber-300 bg-amber-50 p-4 dark:border-amber-700/50 dark:bg-amber-900/20">
+                    <div className="flex items-start gap-3">
+                      <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-600 dark:bg-amber-800/40 dark:text-amber-300">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[12px] font-bold text-amber-800 dark:text-amber-200">Doador temporariamente inelegível</p>
+                        <p className="mt-0.5 text-[11px] text-amber-700 dark:text-amber-300">{eligibilityBlock.message}</p>
+                        <div className="mt-2 grid grid-cols-3 gap-3 text-[10px]">
+                          <div className="rounded-lg border border-amber-200 bg-white/60 px-2 py-1.5 dark:border-amber-700/40 dark:bg-amber-900/30">
+                            <p className="font-semibold text-amber-600 dark:text-amber-400">Última doação</p>
+                            <p className="font-bold text-amber-900 dark:text-amber-100">{eligibilityBlock.lastDate}</p>
+                          </div>
+                          <div className="rounded-lg border border-amber-200 bg-white/60 px-2 py-1.5 dark:border-amber-700/40 dark:bg-amber-900/30">
+                            <p className="font-semibold text-amber-600 dark:text-amber-400">Dias decorridos</p>
+                            <p className="font-bold text-amber-900 dark:text-amber-100">{eligibilityBlock.daysElapsed} de {eligibilityBlock.daysRequired} dias</p>
+                          </div>
+                          <div className="rounded-lg border border-amber-200 bg-white/60 px-2 py-1.5 dark:border-amber-700/40 dark:bg-amber-900/30">
+                            <p className="font-semibold text-amber-600 dark:text-amber-400">Apto a partir de</p>
+                            <p className="font-bold text-amber-900 dark:text-amber-100">{eligibilityBlock.releaseDate}</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                   <TxtField label="Doador *" value={donorName || form.donor}
                     onChange={v => set("donor", v)}
@@ -528,9 +639,33 @@ function NewDonationWizard() {
                 </div>
 
                 {submitError && (
-                  <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-[11px] text-red-700 dark:border-red-800/40 dark:bg-red-900/15 dark:text-red-300">
-                    {submitError}
-                  </div>
+                  parsedSubmitError ? (
+                    <div className="rounded-xl border border-red-200 bg-red-50/95 px-4 py-3 text-red-800 shadow-sm dark:border-red-800/40 dark:bg-red-900/15 dark:text-red-300">
+                      <div className="text-[11px] font-bold uppercase tracking-wide text-red-700 dark:text-red-300">
+                        {parsedSubmitError.title}
+                      </div>
+                      {parsedSubmitError.summary ? (
+                        <p className="mt-1 text-[11px] leading-relaxed">{parsedSubmitError.summary}</p>
+                      ) : null}
+                      {parsedSubmitError.items.length > 0 ? (
+                        <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                          {parsedSubmitError.items.map((item, index) => (
+                            <div
+                              key={`${item.label}-${index}`}
+                              className="rounded-lg border border-red-200/80 bg-white/65 px-3 py-2 text-[11px] shadow-sm dark:border-red-700/30 dark:bg-white/[0.05]"
+                            >
+                              <div className="font-semibold text-red-700 dark:text-red-300">{item.label}</div>
+                              <div className="mt-0.5 text-red-800/90 dark:text-red-200">{item.message}</div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : null}
+                    </div>
+                  ) : (
+                    <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-[11px] text-red-700 dark:border-red-800/40 dark:bg-red-900/15 dark:text-red-300">
+                      {submitError}
+                    </div>
+                  )
                 )}
               </>
             )}
