@@ -77,6 +77,14 @@ type Training = {
   updated_at: string;
 };
 
+type TrainingAttachment = {
+  id: number;
+  original_name?: string | null;
+  file?: string | null;
+  file_url?: string | null;
+  description?: string | null;
+};
+
 const T_USER: RelationTarget = { endpoint: "/identity/user/", labelFields: ["name", "username"] };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -430,7 +438,9 @@ export default function TrainingRecordDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [marking, setMarking] = useState(false);
   const [showReplica, setShowReplica] = useState(false);
-  const [attachments, setAttachments] = useState<{ id: number; original_name: string; file_url: string }[]>([]);
+  const [attachments, setAttachments] = useState<TrainingAttachment[]>([]);
+  const [attachmentsLoading, setAttachmentsLoading] = useState(false);
+  const [attachmentsError, setAttachmentsError] = useState<string | null>(null);
   const [replications, setReplications] = useState<{ id: number; custom_id: string; replicator_display?: string; replication_date: string | null }[]>([]);
 
   const load = useCallback(() => {
@@ -439,9 +449,19 @@ export default function TrainingRecordDetailPage() {
     apiFetch<Training>(`/clinical_laboratory/training_record/${id}/`)
       .then((data) => {
         setRec(data);
-        apiFetch<any>(`/clinical_laboratory/training_attachment/?training=${id}`)
-          .then((resp) => setAttachments(resp?.results ?? resp?.items ?? []))
-          .catch(() => {});
+        setAttachmentsLoading(true);
+        setAttachmentsError(null);
+        apiFetchList<TrainingAttachment>("/clinical_laboratory/training_attachment/", {
+          page: 1,
+          pageSize: 100,
+          query: { training: id },
+        })
+          .then(({ items }) => setAttachments(items))
+          .catch((e) => {
+            setAttachments([]);
+            setAttachmentsError(e?.message ?? "Erro ao carregar documentos do treinamento.");
+          })
+          .finally(() => setAttachmentsLoading(false));
         apiFetch<any>(`/clinical_laboratory/training_replication/?original=${id}`)
           .then((resp) => setReplications(resp?.results ?? resp?.items ?? []))
           .catch(() => {});
@@ -658,32 +678,59 @@ export default function TrainingRecordDetailPage() {
             </SectionCard>
           )}
 
-          {/* Anexos — sempre visível */}
-          <SectionCard icon={Paperclip} title="Instrumentos de formação" accent="bg-rose-400">
-            {attachments.length === 0 ? (
-              <div className="flex flex-col items-center gap-1.5 py-3 text-center">
-                <Paperclip size={20} className="text-muted-foreground/40" />
-                <p className="text-[11px] text-muted-foreground">Nenhum documento anexado.</p>
-                <Link
-                  href={`/clinical-laboratory/quality-management/trainings/${id}/edit`}
-                  className="text-[10px] text-violet-600 underline-offset-2 hover:underline dark:text-violet-400">
-                  Adicionar na edição
-                </Link>
-              </div>
-            ) : (
-              <ul className="space-y-1">
-                {attachments.map((a) => (
-                  <li key={a.id} className="flex items-center gap-2 text-[11px]">
-                    <Paperclip size={10} className="shrink-0 text-muted-foreground" />
-                    <a href={a.file_url} target="_blank" rel="noopener noreferrer"
-                      className="min-w-0 flex-1 truncate text-violet-600 underline-offset-2 hover:underline dark:text-violet-400">
-                      {a.original_name || a.file_url}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </SectionCard>
+          {/* Documentos — sempre visível */}
+          <div className="lg:col-span-2">
+            <SectionCard icon={Paperclip} title="Documentos para treinamento" accent="bg-rose-400">
+              {attachmentsLoading ? (
+                <div className="flex items-center justify-center gap-2 py-3 text-[11px] text-muted-foreground">
+                  <Loader2 size={12} className="animate-spin" />
+                  A carregar documentos...
+                </div>
+              ) : attachmentsError ? (
+                <div className="flex flex-col items-center gap-1.5 py-3 text-center">
+                  <Paperclip size={20} className="text-red-400/70" />
+                  <p className="text-[11px] text-red-600 dark:text-red-400">{attachmentsError}</p>
+                  <button
+                    type="button"
+                    onClick={load}
+                    className="text-[10px] text-violet-600 underline-offset-2 hover:underline dark:text-violet-400"
+                  >
+                    Tentar novamente
+                  </button>
+                </div>
+              ) : attachments.length === 0 ? (
+                <div className="flex flex-col items-center gap-1.5 py-3 text-center">
+                  <Paperclip size={20} className="text-muted-foreground/40" />
+                  <p className="text-[11px] text-muted-foreground">Nenhum documento anexado.</p>
+                  <Link
+                    href={`/clinical-laboratory/quality-management/trainings/${id}/edit`}
+                    className="text-[10px] text-violet-600 underline-offset-2 hover:underline dark:text-violet-400">
+                    Adicionar na edição
+                  </Link>
+                </div>
+              ) : (
+                <ul className="space-y-1">
+                  {attachments.map((a) => {
+                    const href = a.file_url || a.file || "";
+                    const label = a.original_name || a.description || href || `Documento #${a.id}`;
+                    return (
+                      <li key={a.id} className="flex items-center gap-2 rounded-md border border-border/50 bg-background px-2.5 py-1.5 text-[11px]">
+                        <Paperclip size={10} className="shrink-0 text-muted-foreground" />
+                        {href ? (
+                          <a href={href} target="_blank" rel="noopener noreferrer"
+                            className="min-w-0 flex-1 truncate text-violet-600 underline-offset-2 hover:underline dark:text-violet-400">
+                            {label}
+                          </a>
+                        ) : (
+                          <span className="min-w-0 flex-1 truncate text-foreground">{label}</span>
+                        )}
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </SectionCard>
+          </div>
 
           {/* Réplicas */}
           {replications.length > 0 && (
