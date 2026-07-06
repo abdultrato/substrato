@@ -1,12 +1,422 @@
 "use client";
 
-import { Suspense } from "react";
-import { GeneratedResourceListPage } from "@/components/resources/GeneratedResourcePages";
+import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
+import {
+  Activity,
+  ArrowRight,
+  CheckCircle2,
+  Droplet,
+  FlaskConical,
+  HeartHandshake,
+  Loader2,
+  Plus,
+  Search,
+} from "lucide-react";
+
+import AppLayout from "@/components/layout/AppLayout";
+import Pagination from "@/components/ui/Pagination";
+import useAuthGuard from "@/hooks/useAuthGuard";
+import useDebounce from "@/hooks/useDebounce";
+import { apiFetchList } from "@/lib/api";
+import { GROUPS } from "@/lib/rbac";
+
+const GLASS_CARD =
+  "relative overflow-hidden rounded-xl border border-white/20 bg-white/30 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]";
+
+const PAGE_SIZE = 18;
+
+type DonationRow = {
+  id: number;
+  custom_id?: string | null;
+  donor_role?: "VOL" | "REP" | string | null;
+  bag_identifier?: string | null;
+  blood_type?: "O-" | "O+" | "A-" | "A+" | "B-" | "B+" | "AB-" | "AB+" | "UNK" | string | null;
+  donation_type?: "WBL" | "APH" | string | null;
+  status?: "REG" | "SCR" | "COM" | "CAN" | string | null;
+  screening_status?: "PEN" | "APR" | "REJ" | string | null;
+  collected_at?: string | null;
+  processed_at?: string | null;
+  volume_ml?: number | null;
+  donor_weight_kg?: string | null;
+  hemoglobin_g_dl?: string | null;
+  donor?: number | null;
+};
+
+const DONATION_TYPE_OPTIONS = [
+  { value: "", label: "Todos os tipos" },
+  { value: "WBL", label: "Sangue total" },
+  { value: "APH", label: "Aférese" },
+];
+
+const STATUS_OPTIONS = [
+  { value: "", label: "Todos os estados" },
+  { value: "REG", label: "Registada" },
+  { value: "SCR", label: "Em triagem" },
+  { value: "COM", label: "Concluída" },
+  { value: "CAN", label: "Cancelada" },
+];
+
+function formatDonationType(value?: string | null) {
+  if (value === "WBL") return "Sangue total";
+  if (value === "APH") return "Aférese";
+  return "Tipo não definido";
+}
+
+function formatDonorRole(value?: string | null) {
+  if (value === "VOL") return "Voluntário";
+  if (value === "REP") return "Reposição";
+  return "Perfil não definido";
+}
+
+function formatStatus(value?: string | null) {
+  if (value === "REG") return "Registada";
+  if (value === "SCR") return "Em triagem";
+  if (value === "COM") return "Concluída";
+  if (value === "CAN") return "Cancelada";
+  return "Sem estado";
+}
+
+function formatScreeningStatus(value?: string | null) {
+  if (value === "PEN") return "Pendente";
+  if (value === "APR") return "Aprovada";
+  if (value === "REJ") return "Rejeitada";
+  return "Sem triagem";
+}
+
+function formatBloodType(value?: string | null) {
+  const normalized = String(value || "").trim();
+  return !normalized || normalized === "UNK" ? "Não definido" : normalized;
+}
+
+function formatDate(value?: string | null) {
+  if (!value) return "—";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "—";
+  return date.toLocaleString("pt-PT", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function statusClasses(status?: string | null) {
+  switch (status) {
+    case "COM":
+      return "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-700/40 dark:bg-emerald-900/20 dark:text-emerald-300";
+    case "SCR":
+      return "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-700/40 dark:bg-amber-900/20 dark:text-amber-300";
+    case "CAN":
+      return "border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-700/40 dark:bg-rose-900/20 dark:text-rose-300";
+    default:
+      return "border-cyan-200 bg-cyan-50 text-cyan-700 dark:border-cyan-700/40 dark:bg-cyan-900/20 dark:text-cyan-300";
+  }
+}
+
+function screeningClasses(status?: string | null) {
+  switch (status) {
+    case "APR":
+      return "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-700/40 dark:bg-emerald-900/20 dark:text-emerald-300";
+    case "REJ":
+      return "border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-700/40 dark:bg-rose-900/20 dark:text-rose-300";
+    default:
+      return "border-slate-200 bg-slate-50 text-slate-600 dark:border-slate-700/40 dark:bg-slate-900/20 dark:text-slate-300";
+  }
+}
 
 export default function BloodbankBloodDonationsListPage() {
+  const { loading } = useAuthGuard();
+
+  const [items, setItems] = useState<DonationRow[]>([]);
+  const [totalItems, setTotalItems] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [page, setPage] = useState(1);
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+  const [typeFilter, setTypeFilter] = useState("");
+  const [listLoading, setListLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const debouncedSearch = useDebounce(search, 300);
+
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch, statusFilter, typeFilter]);
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function loadDonations() {
+      try {
+        setListLoading(true);
+        setError(null);
+        const { items: rows, meta } = await apiFetchList<DonationRow>("/bloodbank/donation/", {
+          page,
+          pageSize: PAGE_SIZE,
+          query: {
+            ...(debouncedSearch.trim() ? { search: debouncedSearch.trim() } : {}),
+            ...(statusFilter ? { status: statusFilter } : {}),
+            ...(typeFilter ? { donation_type: typeFilter } : {}),
+          },
+        });
+
+        if (!mounted) return;
+
+        const total = meta.total ?? rows.length;
+        const pages = meta.totalPages ?? Math.max(1, Math.ceil((total || 0) / PAGE_SIZE));
+
+        setItems(rows);
+        setTotalItems(total || 0);
+        setTotalPages(pages);
+        if (page > pages) setPage(pages);
+      } catch (err: any) {
+        if (!mounted) return;
+        setItems([]);
+        setTotalItems(0);
+        setTotalPages(1);
+        setError(err?.message || "Falha ao carregar as doações de sangue.");
+      } finally {
+        if (mounted) setListLoading(false);
+      }
+    }
+
+    loadDonations();
+    return () => {
+      mounted = false;
+    };
+  }, [debouncedSearch, page, statusFilter, typeFilter]);
+
+  const summary = useMemo(() => {
+    let triagem = 0;
+    let concluidas = 0;
+    let aprovadas = 0;
+    let volume = 0;
+
+    for (const item of items) {
+      if (item.status === "SCR") triagem += 1;
+      if (item.status === "COM") concluidas += 1;
+      if (item.screening_status === "APR") aprovadas += 1;
+      volume += Number(item.volume_ml || 0);
+    }
+
+    return { triagem, concluidas, aprovadas, volume };
+  }, [items]);
+
+  if (loading) return null;
+
   return (
-    <Suspense fallback={<div className="p-4 text-sm text-[var(--gray-500)]">Carregando...</div>}>
-      <GeneratedResourceListPage endpoint="/bloodbank/donation/" />
-    </Suspense>
+    <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.LABORATORIO]}>
+      <div className="mx-auto w-[98vw] max-w-[1600px] space-y-3 px-2 pb-4">
+        <section className={GLASS_CARD}>
+          <div className="pointer-events-none absolute inset-0">
+            <div className="absolute -right-12 -top-10 h-36 w-36 rounded-full bg-rose-500/10 blur-3xl" />
+            <div className="absolute left-16 top-8 h-24 w-24 rounded-full bg-cyan-500/10 blur-2xl" />
+            <div className="absolute -bottom-10 right-28 h-28 w-28 rounded-full bg-amber-500/10 blur-3xl" />
+          </div>
+          <span className="absolute inset-y-0 left-0 w-1 rounded-l-xl bg-gradient-to-b from-rose-500 via-red-500 to-cyan-600" />
+
+          <div className="relative flex flex-wrap items-center gap-3 px-4 py-3">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-rose-500 to-cyan-600 shadow-md shadow-rose-500/25">
+              <Droplet size={22} className="text-white" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="text-[10px] text-muted-foreground">Hemoterapia / Captação e processamento</div>
+              <h1 className="text-lg font-bold leading-tight text-foreground">Doações de sangue</h1>
+              <p className="mt-0.5 max-w-3xl text-xs text-muted-foreground">
+                Acompanhe bolsas registadas, triagem, conclusão da coleta e o perfil operacional das doações sem recorrer ao layout genérico.
+              </p>
+            </div>
+            <Link
+              href="/bloodbank/blood-donations/new"
+              className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-gradient-to-r from-rose-600 to-cyan-600 px-4 text-sm font-semibold text-white shadow-md shadow-rose-500/25 transition hover:from-rose-700 hover:to-cyan-700"
+            >
+              <Plus size={15} />
+              Nova doação
+            </Link>
+          </div>
+        </section>
+
+        <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+          <article className={`${GLASS_CARD} p-3`}>
+            <div className="flex items-center gap-2">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-rose-500/15 text-rose-600">
+                <HeartHandshake size={18} />
+              </div>
+              <div>
+                <div className="text-[11px] text-muted-foreground">Registos nesta página</div>
+                <div className="text-lg font-bold text-foreground">{items.length}</div>
+              </div>
+            </div>
+          </article>
+          <article className={`${GLASS_CARD} p-3`}>
+            <div className="flex items-center gap-2">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-500/15 text-amber-600">
+                <Activity size={18} />
+              </div>
+              <div>
+                <div className="text-[11px] text-muted-foreground">Em triagem</div>
+                <div className="text-lg font-bold text-foreground">{summary.triagem}</div>
+              </div>
+            </div>
+          </article>
+          <article className={`${GLASS_CARD} p-3`}>
+            <div className="flex items-center gap-2">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500/15 text-emerald-600">
+                <CheckCircle2 size={18} />
+              </div>
+              <div>
+                <div className="text-[11px] text-muted-foreground">Concluídas</div>
+                <div className="text-lg font-bold text-foreground">{summary.concluidas}</div>
+              </div>
+            </div>
+          </article>
+          <article className={`${GLASS_CARD} p-3`}>
+            <div className="flex items-center gap-2">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-cyan-500/15 text-cyan-600">
+                <FlaskConical size={18} />
+              </div>
+              <div>
+                <div className="text-[11px] text-muted-foreground">Volume visível</div>
+                <div className="text-lg font-bold text-foreground">{summary.volume} mL</div>
+              </div>
+            </div>
+          </article>
+        </div>
+
+        <section className={`${GLASS_CARD} p-3`}>
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="relative min-w-[220px] flex-1">
+              <Search size={13} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <input
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder="Pesquisar por código, bolsa ou referência..."
+                className="h-10 w-full rounded-xl border border-white/30 bg-white/45 py-2 pl-9 pr-3 text-sm text-foreground outline-none backdrop-blur-sm transition focus:border-rose-400 focus:ring-2 focus:ring-rose-400/20 dark:border-white/10 dark:bg-white/[0.08]"
+              />
+            </div>
+            <select
+              value={statusFilter}
+              onChange={(event) => setStatusFilter(event.target.value)}
+              className="h-10 min-w-[190px] rounded-xl border border-white/30 bg-white/45 px-3 text-sm text-foreground outline-none backdrop-blur-sm transition focus:border-rose-400 dark:border-white/10 dark:bg-white/[0.08]"
+            >
+              {STATUS_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+            <select
+              value={typeFilter}
+              onChange={(event) => setTypeFilter(event.target.value)}
+              className="h-10 min-w-[190px] rounded-xl border border-white/30 bg-white/45 px-3 text-sm text-foreground outline-none backdrop-blur-sm transition focus:border-cyan-400 dark:border-white/10 dark:bg-white/[0.08]"
+            >
+              {DONATION_TYPE_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+            <div className="ml-auto rounded-xl border border-white/20 bg-white/25 px-3 py-2 text-xs text-muted-foreground backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.05]">
+              {totalItems} doações no total
+            </div>
+          </div>
+        </section>
+
+        {error ? (
+          <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-700/40 dark:bg-rose-900/20 dark:text-rose-300">
+            {error}
+          </div>
+        ) : null}
+
+        {listLoading ? (
+          <div className={`${GLASS_CARD} flex items-center justify-center py-20 text-muted-foreground`}>
+            <Loader2 size={20} className="animate-spin" />
+          </div>
+        ) : items.length === 0 ? (
+          <div className={`${GLASS_CARD} px-4 py-16 text-center text-sm text-muted-foreground`}>
+            Nenhuma doação encontrada com os filtros atuais.
+          </div>
+        ) : (
+          <section className="grid gap-2 lg:grid-cols-2 2xl:grid-cols-3">
+            {items.map((item) => (
+              <Link
+                key={item.id}
+                href={`/bloodbank/blood-donations/${item.id}`}
+                className={`${GLASS_CARD} block transition hover:bg-white/40 hover:shadow-md dark:hover:bg-white/[0.07]`}
+              >
+                <div className="pointer-events-none absolute inset-0">
+                  <div className="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-rose-500/8 blur-2xl" />
+                  <div className="absolute -bottom-8 left-10 h-20 w-20 rounded-full bg-cyan-500/8 blur-2xl" />
+                </div>
+                <div className="relative space-y-3 px-4 py-3">
+                  <div className="flex flex-wrap items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <div className="font-mono text-[11px] text-muted-foreground">
+                        {item.custom_id || `Doação #${item.id}`}
+                      </div>
+                      <h2 className="mt-0.5 text-sm font-semibold text-foreground">
+                        Bolsa {item.bag_identifier || "sem identificador"}
+                      </h2>
+                      <div className="mt-1 flex flex-wrap gap-1.5">
+                        <span className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${statusClasses(item.status)}`}>
+                          {formatStatus(item.status)}
+                        </span>
+                        <span className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${screeningClasses(item.screening_status)}`}>
+                          Triagem {formatScreeningStatus(item.screening_status)}
+                        </span>
+                      </div>
+                    </div>
+                    <span className="inline-flex items-center rounded-full border border-white/20 bg-white/30 px-2.5 py-1 text-[10px] font-semibold text-foreground backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.05]">
+                      {formatBloodType(item.blood_type)}
+                    </span>
+                  </div>
+
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    <div className="rounded-xl border border-white/15 bg-white/20 px-3 py-2 backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]">
+                      <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Tipo de doação</div>
+                      <div className="mt-1 text-sm font-medium text-foreground">{formatDonationType(item.donation_type)}</div>
+                    </div>
+                    <div className="rounded-xl border border-white/15 bg-white/20 px-3 py-2 backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]">
+                      <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Perfil do doador</div>
+                      <div className="mt-1 text-sm font-medium text-foreground">{formatDonorRole(item.donor_role)}</div>
+                    </div>
+                    <div className="rounded-xl border border-white/15 bg-white/20 px-3 py-2 backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]">
+                      <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Coleta</div>
+                      <div className="mt-1 text-sm font-medium text-foreground">{formatDate(item.collected_at)}</div>
+                    </div>
+                    <div className="rounded-xl border border-white/15 bg-white/20 px-3 py-2 backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]">
+                      <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Volume</div>
+                      <div className="mt-1 text-sm font-medium text-foreground">{item.volume_ml ? `${item.volume_ml} mL` : "Não informado"}</div>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap items-center justify-between gap-2 border-t border-white/15 pt-2 text-xs text-muted-foreground dark:border-white/10">
+                    <div className="flex flex-wrap items-center gap-3">
+                      <span>Hemoglobina: {item.hemoglobin_g_dl || "—"}</span>
+                      <span>Peso: {item.donor_weight_kg ? `${item.donor_weight_kg} kg` : "—"}</span>
+                    </div>
+                    <span className="inline-flex items-center gap-1 font-medium text-rose-700 dark:text-rose-300">
+                      Abrir detalhe
+                      <ArrowRight size={14} />
+                    </span>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </section>
+        )}
+
+        <div className={`${GLASS_CARD} p-3`}>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div className="text-sm text-muted-foreground">
+              Página {page} de {totalPages} · {PAGE_SIZE} itens por página
+            </div>
+            <Pagination page={page} totalPages={totalPages} onChange={setPage} />
+          </div>
+        </div>
+      </div>
+    </AppLayout>
   );
 }
