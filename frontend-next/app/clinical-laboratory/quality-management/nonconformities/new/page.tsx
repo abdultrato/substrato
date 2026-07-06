@@ -22,6 +22,7 @@ import {
   T_EXPOSURE_INCIDENT,
   T_ORDER,
   T_ORDER_ITEM,
+  T_PATIENT,
   T_RESULT,
   T_SAMPLE,
   T_SECTOR,
@@ -46,6 +47,8 @@ export default function NewNonconformityPage() {
   const [rootCause, setRootCause] = useState("");
   const [patientImpact, setPatientImpact] = useState(false);
   const [status, setStatus] = useState("ABERTA");
+  const [patient, setPatient] = useState<number | null>(null);
+  const [patientLabel, setPatientLabel] = useState("");
   const [order, setOrder] = useState<number | null>(null);
   const [orderLabel, setOrderLabel] = useState("");
   const [exam, setExam] = useState<number | null>(null);
@@ -65,6 +68,11 @@ export default function NewNonconformityPage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+
+  const orderTarget = useMemo(() => ({
+    ...T_ORDER,
+    staticFilters: { ...(patient ? { patient } : {}) },
+  }), [patient]);
 
   const orderItemTarget = useMemo(() => ({
     ...T_ORDER_ITEM,
@@ -93,7 +101,8 @@ export default function NewNonconformityPage() {
   function validate() {
     const next: Record<string, string> = {};
     if (!description.trim()) next.description = "Descrição obrigatória.";
-    if (patientImpact && !order && !exam && !result && !sample) next.patientImpact = "Informe pelo menos uma referência do impacto no paciente.";
+    if (patientImpact && !patient) next.patientImpact = "Informe o paciente em causa.";
+    if (patientImpact && patient && !order && !exam && !result && !sample) next.patientImpact = "Informe pelo menos uma referência clínica do impacto no paciente.";
     if (source === "EQUIPAMENTO" && !equipment) next.equipment = "Equipamento obrigatório para NC de equipamento.";
     if (source === "FALHA_QC" && !analyte && !exam) next.analyte = "Informe o analito/campo ou o exame do controlo de qualidade.";
     if (source === "EXPOSICAO" && !sector && !exposureIncident) next.incident = "Informe o sector ou o incidente de exposição.";
@@ -105,6 +114,15 @@ export default function NewNonconformityPage() {
     const d = new Date();
     const pad = (n: number) => String(n).padStart(2, "0");
     return `QNC-${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`;
+  }
+
+  function handlePatientChange(v: number | null, l: string) {
+    setPatient(v); setPatientLabel(l);
+    setOrder(null); setOrderLabel("");
+    setExam(null); setExamLabel(""); setExamTest(null);
+    setResult(null); setResultLabel("");
+    setAnalyte(null); setAnalyteLabel("");
+    setSample(null); setSampleLabel("");
   }
 
   function handleOrderChange(v: number | null, l: string) {
@@ -142,6 +160,14 @@ export default function NewNonconformityPage() {
         if (item?.order && !order) {
           setOrder(Number(item.order));
           setOrderLabel(String(rec?.order_custom_id || `Requisição #${item.order}`));
+          apiFetch<Record<string, any>>(`/clinical_laboratory/order/${item.order}/`)
+            .then((orderRec) => {
+              if (orderRec?.patient && !patient) {
+                setPatient(Number(orderRec.patient));
+                setPatientLabel(String(orderRec?.patient_name || rec?.patient_name || `Paciente #${orderRec.patient}`));
+              }
+            })
+            .catch(() => {});
         }
       }
       if (rec?.test_field) {
@@ -160,8 +186,10 @@ export default function NewNonconformityPage() {
     const lines = ["Rastreabilidade da origem:"];
     if (patientImpact) {
       lines.push(`- Impacto no paciente: sim`);
+      if (patient) lines.push(`  - Paciente: ${patientLabel} (#${patient})`);
       if (order) lines.push(`  - Requisição: ${orderLabel} (#${order})`);
       if (exam) lines.push(`  - Exame: ${examLabel} (#${exam})`);
+      if (analyte) lines.push(`  - Analito/campo de exame: ${analyteLabel} (#${analyte})`);
       if (result) lines.push(`  - Resultado: ${resultLabel} (#${result})`);
       if (sample) lines.push(`  - Amostra: ${sampleLabel} (#${sample})`);
     }
@@ -187,6 +215,7 @@ export default function NewNonconformityPage() {
       const traceability = traceabilityLines();
       const composedRootCause = composeRootCauseTrace(rootCause, traceability);
       const compactRef = sourceRef.trim()
+        || (patientImpact && patientLabel ? patientLabel : "")
         || (patientImpact && orderLabel ? orderLabel : "")
         || (equipmentLabel || analyteLabel || exposureIncidentLabel).slice(0, 80);
       const created = await apiFetch<{ id: number }>("/clinical_laboratory/nonconformity/", {
@@ -291,14 +320,20 @@ export default function NewNonconformityPage() {
             <div className="lg:col-span-2">
               <Card icon={ClipboardList} title="Rastreabilidade do impacto no paciente" accent="bg-red-500">
                 <div className="grid gap-1.5 md:grid-cols-2">
+                  <Field label="Paciente em causa">
+                    <RelationSelect value={patient} onChange={handlePatientChange} target={T_PATIENT} placeholder="Pesquisar paciente..." />
+                  </Field>
                   <Field label="Requisição em causa">
-                    <RelationSelect value={order} onChange={handleOrderChange} target={T_ORDER} placeholder="Pesquisar requisição..." />
+                    <RelationSelect value={order} onChange={handleOrderChange} target={orderTarget} placeholder="Pesquisar requisição..." disabled={!patient} disabledMessage="Selecione primeiro o paciente em causa." />
                   </Field>
                   <Field label="Exame em causa">
                     <RelationSelect value={exam} onChange={handleExamChange} target={orderItemTarget} placeholder="Pesquisar exame da requisição..." disabled={!order} disabledMessage="Selecione primeiro a requisição em causa." />
                   </Field>
+                  <Field label="Analito em causa">
+                    <RelationSelect value={analyte} onChange={(v, l) => { setAnalyte(v); setAnalyteLabel(l); setResult(null); setResultLabel(""); }} target={analyteTarget} placeholder="Pesquisar analito..." disabled={!exam || !examTest} disabledMessage="Selecione primeiro o exame da requisição." />
+                  </Field>
                   <Field label="Resultado em causa">
-                    <RelationSelect value={result} onChange={handleResultChange} target={resultTarget} placeholder="Pesquisar resultado..." disabled={!exam} disabledMessage="Selecione primeiro o exame da requisição." />
+                    <RelationSelect value={result} onChange={handleResultChange} target={resultTarget} placeholder="Pesquisar resultado..." disabled={!exam || !analyte} disabledMessage="Selecione primeiro o exame e o analito em causa." />
                   </Field>
                   <Field label="Amostra em causa">
                     <RelationSelect value={sample} onChange={(v, l) => { setSample(v); setSampleLabel(l); setResult(null); setResultLabel(""); }} target={sampleTarget} placeholder="Pesquisar amostra..." disabled={!order} disabledMessage="Selecione primeiro a requisição em causa." />

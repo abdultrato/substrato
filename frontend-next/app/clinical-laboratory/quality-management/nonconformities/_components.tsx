@@ -71,6 +71,11 @@ export const T_ORDER: RelationTarget = {
   labelFields: ["custom_id", "patient_name", "created_at"],
 };
 
+export const T_PATIENT: RelationTarget = {
+  endpoint: "/clinical/patient/",
+  labelFields: ["name", "document_number", "custom_id"],
+};
+
 export const T_ORDER_ITEM: RelationTarget = {
   endpoint: "/clinical_laboratory/order_item/",
   labelFields: ["test_name", "test_code", "custom_id"],
@@ -171,7 +176,7 @@ export function composeRootCauseTrace(rootCause: string, traceability: string) {
   return [rootCause.trim(), traceability.trim()].filter(Boolean).join("\n\n");
 }
 
-const TRACE_REF_LABELS = ["Requisição", "Exame", "Resultado", "Amostra", "Equipamento relacionado", "Analito/campo de exame", "Incidente de exposição"] as const;
+const TRACE_REF_LABELS = ["Paciente", "Requisição", "Exame", "Resultado", "Amostra", "Equipamento relacionado", "Analito/campo de exame", "Incidente de exposição"] as const;
 
 type TraceRefLabel = typeof TRACE_REF_LABELS[number];
 
