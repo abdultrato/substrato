@@ -18,6 +18,7 @@ import {
 import Link from "next/link"
 import { useParams } from "next/navigation"
 import { useEffect, useMemo, useState } from "react"
+import type { LucideIcon } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
 import DataTable from "@/components/ui/DataTable"
@@ -83,21 +84,26 @@ function genderLabel(value: any): string | undefined {
 function SectionCard({
   icon: Icon,
   title,
+  accentClass,
+  iconClass,
   children,
 }: {
   icon: React.ElementType
   title: string
+  accentClass: string
+  iconClass: string
   children: React.ReactNode
 }) {
   return (
-    <section className="rounded-xl border border-white/20 bg-white/25 shadow-sm backdrop-blur-sm dark:bg-white/5 dark:border-white/10">
-      <div className="flex items-center gap-2 border-b border-border/60 px-3 py-2">
-        <span className="flex h-6 w-6 items-center justify-center rounded-md bg-[var(--primary-600)]/10 text-[var(--primary-700)] dark:text-[var(--primary-400)]">
+    <section className="relative mb-2 break-inside-avoid overflow-hidden rounded-xl border border-white/20 bg-white/25 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/5">
+      <span className={`absolute inset-y-2 left-2 w-1 rounded-full ${accentClass}`} />
+      <div className="flex items-center gap-2 border-b border-border/50 px-3 py-2 pl-5">
+        <span className={`flex h-7 w-7 items-center justify-center rounded-lg border border-white/20 shadow-sm backdrop-blur-sm dark:border-white/10 ${iconClass}`}>
           <Icon size={13} />
         </span>
         <h2 className="text-xs font-semibold text-foreground">{title}</h2>
       </div>
-      <div className="p-3">{children}</div>
+      <div className="p-2.5 pl-5">{children}</div>
     </section>
   )
 }
@@ -110,6 +116,88 @@ function InfoRow({ label, value }: { label: string; value?: React.ReactNode }) {
       <span className="max-w-[62%] text-right font-medium text-foreground">{value}</span>
     </div>
   )
+}
+
+const CARD_STYLES: Record<string, { icon: LucideIcon; accentClass: string; iconClass: string }> = {
+  "Identificação": {
+    icon: User,
+    accentClass: "bg-gradient-to-b from-sky-400 via-cyan-400 to-blue-500",
+    iconClass: "bg-sky-500/15 text-sky-700 dark:bg-sky-400/10 dark:text-sky-300",
+  },
+  "Contacto e morada": {
+    icon: Wallet,
+    accentClass: "bg-gradient-to-b from-emerald-400 via-teal-400 to-cyan-500",
+    iconClass: "bg-emerald-500/15 text-emerald-700 dark:bg-emerald-400/10 dark:text-emerald-300",
+  },
+  "Acompanhante": {
+    icon: User,
+    accentClass: "bg-gradient-to-b from-fuchsia-400 via-pink-400 to-rose-500",
+    iconClass: "bg-rose-500/15 text-rose-700 dark:bg-rose-400/10 dark:text-rose-300",
+  },
+  "Dados clínicos": {
+    icon: Activity,
+    accentClass: "bg-gradient-to-b from-violet-400 via-purple-400 to-indigo-500",
+    iconClass: "bg-violet-500/15 text-violet-700 dark:bg-violet-400/10 dark:text-violet-300",
+  },
+  "Auditoria": {
+    icon: Receipt,
+    accentClass: "bg-gradient-to-b from-amber-300 via-orange-400 to-amber-500",
+    iconClass: "bg-amber-500/15 text-amber-700 dark:bg-amber-400/10 dark:text-amber-300",
+  },
+  Cardex: {
+    icon: ClipboardList,
+    accentClass: "bg-gradient-to-b from-blue-400 via-indigo-400 to-blue-600",
+    iconClass: "bg-blue-500/15 text-blue-700 dark:bg-blue-400/10 dark:text-blue-300",
+  },
+  Requisições: {
+    icon: FlaskConical,
+    accentClass: "bg-gradient-to-b from-cyan-400 via-sky-400 to-blue-500",
+    iconClass: "bg-cyan-500/15 text-cyan-700 dark:bg-cyan-400/10 dark:text-cyan-300",
+  },
+  Consultas: {
+    icon: Stethoscope,
+    accentClass: "bg-gradient-to-b from-emerald-400 via-lime-400 to-green-500",
+    iconClass: "bg-emerald-500/15 text-emerald-700 dark:bg-emerald-400/10 dark:text-emerald-300",
+  },
+  Procedimentos: {
+    icon: Activity,
+    accentClass: "bg-gradient-to-b from-orange-300 via-amber-400 to-orange-500",
+    iconClass: "bg-orange-500/15 text-orange-700 dark:bg-orange-400/10 dark:text-orange-300",
+  },
+  Internamentos: {
+    icon: BedDouble,
+    accentClass: "bg-gradient-to-b from-rose-300 via-pink-400 to-rose-500",
+    iconClass: "bg-rose-500/15 text-rose-700 dark:bg-rose-400/10 dark:text-rose-300",
+  },
+  "Farmácia": {
+    icon: Pill,
+    accentClass: "bg-gradient-to-b from-lime-300 via-green-400 to-emerald-500",
+    iconClass: "bg-lime-500/15 text-lime-700 dark:bg-lime-400/10 dark:text-lime-300",
+  },
+  Faturas: {
+    icon: FileText,
+    accentClass: "bg-gradient-to-b from-slate-300 via-slate-400 to-slate-500",
+    iconClass: "bg-slate-500/15 text-slate-700 dark:bg-slate-400/10 dark:text-slate-300",
+  },
+  Pagamentos: {
+    icon: CreditCard,
+    accentClass: "bg-gradient-to-b from-teal-300 via-cyan-400 to-sky-500",
+    iconClass: "bg-teal-500/15 text-teal-700 dark:bg-teal-400/10 dark:text-teal-300",
+  },
+  Recibos: {
+    icon: Receipt,
+    accentClass: "bg-gradient-to-b from-yellow-300 via-amber-400 to-orange-500",
+    iconClass: "bg-yellow-500/15 text-yellow-700 dark:bg-yellow-400/10 dark:text-yellow-300",
+  },
+}
+
+function themedCardProps(title: string) {
+  const entry = Object.entries(CARD_STYLES).find(([key]) => title.startsWith(key))?.[1]
+  return entry ?? {
+    icon: User,
+    accentClass: "bg-gradient-to-b from-sky-400 via-blue-400 to-indigo-500",
+    iconClass: "bg-sky-500/15 text-sky-700 dark:bg-sky-400/10 dark:text-sky-300",
+  }
 }
 
 export default function MedicalHistoryPage() {
@@ -419,8 +507,8 @@ export default function MedicalHistoryPage() {
               </div>
             ) : null}
 
-            <div className="grid items-start gap-3 lg:grid-cols-2">
-              <SectionCard icon={User} title="Identificação">
+            <div className="columns-1 gap-2 sm:columns-2 xl:columns-3">
+              <SectionCard title="Identificação" {...themedCardProps("Identificação")}>
                 <div className="divide-y divide-border/40">
                   <InfoRow label="Nome" value={patientName} />
                   <InfoRow label="Código" value={paciente.id_custom || paciente.custom_id} />
@@ -432,7 +520,7 @@ export default function MedicalHistoryPage() {
                 </div>
               </SectionCard>
 
-              <SectionCard icon={User} title="Contacto e morada">
+              <SectionCard title="Contacto e morada" {...themedCardProps("Contacto e morada")}>
                 <div className="divide-y divide-border/40">
                   <InfoRow label="Contacto" value={paciente.contacto || paciente.contact} />
                   <InfoRow label="E-mail" value={paciente.email} />
@@ -443,7 +531,7 @@ export default function MedicalHistoryPage() {
                 </div>
               </SectionCard>
 
-              <SectionCard icon={User} title="Acompanhante">
+              <SectionCard title="Acompanhante" {...themedCardProps("Acompanhante")}>
                 <div className="divide-y divide-border/40">
                   <InfoRow label="Acompanhante" value={patientCompanion} />
                   <InfoRow label="Contacto acomp." value={paciente.telefone_acompanhante || paciente.contacto_acompanhante || paciente.companion_contact} />
@@ -451,7 +539,7 @@ export default function MedicalHistoryPage() {
                 </div>
               </SectionCard>
 
-              <SectionCard icon={User} title="Dados clínicos">
+              <SectionCard title="Dados clínicos" {...themedCardProps("Dados clínicos")}>
                 <div className="divide-y divide-border/40">
                   <InfoRow label="Tipo sanguíneo" value={paciente.blood_type} />
                   <InfoRow label="Gestante" value={yesNo(paciente.gestante ?? paciente.pregnant)} />
@@ -463,7 +551,7 @@ export default function MedicalHistoryPage() {
                 </div>
               </SectionCard>
 
-              <SectionCard icon={User} title="Auditoria">
+              <SectionCard title="Auditoria" {...themedCardProps("Auditoria")}>
                 <div className="divide-y divide-border/40">
                   <InfoRow label="Criado em" value={fmtDate(paciente.criado_em || paciente.created_at)} />
                   <InfoRow label="Atualizado em" value={fmtDate(paciente.updated_at)} />
@@ -471,55 +559,55 @@ export default function MedicalHistoryPage() {
               </SectionCard>
 
               {cardex.length > 0 ? (
-                <SectionCard icon={ClipboardList} title={`Cardex (${cardex.length})`}>
+                <SectionCard title={`Cardex (${cardex.length})`} {...themedCardProps("Cardex")}>
                   <DataTable bare columns={cardexCols as any} data={cardex} emptyMessage="" />
                 </SectionCard>
               ) : null}
 
               {requisicoes.length > 0 ? (
-                <SectionCard icon={FlaskConical} title={`Requisições (${requisicoes.length})`}>
+                <SectionCard title={`Requisições (${requisicoes.length})`} {...themedCardProps("Requisições")}>
                   <DataTable bare columns={requisicoesCols as any} data={requisicoes} emptyMessage="" />
                 </SectionCard>
               ) : null}
 
               {consultas.length > 0 ? (
-                <SectionCard icon={Stethoscope} title={`Consultas (${consultas.length})`}>
+                <SectionCard title={`Consultas (${consultas.length})`} {...themedCardProps("Consultas")}>
                   <DataTable bare columns={consultasCols as any} data={consultas} emptyMessage="" />
                 </SectionCard>
               ) : null}
 
               {procedimentos.length > 0 ? (
-                <SectionCard icon={Activity} title={`Procedimentos (${procedimentos.length})`}>
+                <SectionCard title={`Procedimentos (${procedimentos.length})`} {...themedCardProps("Procedimentos")}>
                   <DataTable bare columns={procedimentosCols as any} data={procedimentos} emptyMessage="" />
                 </SectionCard>
               ) : null}
 
               {internamentos.length > 0 ? (
-                <SectionCard icon={BedDouble} title={`Internamentos (${internamentos.length})`}>
+                <SectionCard title={`Internamentos (${internamentos.length})`} {...themedCardProps("Internamentos")}>
                   <DataTable bare columns={internamentosCols as any} data={internamentos} emptyMessage="" />
                 </SectionCard>
               ) : null}
 
               {vendas.length > 0 ? (
-                <SectionCard icon={Pill} title={`Farmácia (${vendas.length})`}>
+                <SectionCard title={`Farmácia (${vendas.length})`} {...themedCardProps("Farmácia")}>
                   <DataTable bare columns={vendasCols as any} data={vendas} emptyMessage="" />
                 </SectionCard>
               ) : null}
 
               {faturas.length > 0 ? (
-                <SectionCard icon={FileText} title={`Faturas (${faturas.length})`}>
+                <SectionCard title={`Faturas (${faturas.length})`} {...themedCardProps("Faturas")}>
                   <DataTable bare columns={faturasCols as any} data={faturas} emptyMessage="" />
                 </SectionCard>
               ) : null}
 
               {pagamentos.length > 0 ? (
-                <SectionCard icon={CreditCard} title={`Pagamentos (${pagamentos.length})`}>
+                <SectionCard title={`Pagamentos (${pagamentos.length})`} {...themedCardProps("Pagamentos")}>
                   <DataTable bare columns={pagamentosCols as any} data={pagamentos} emptyMessage="" />
                 </SectionCard>
               ) : null}
 
               {recibos.length > 0 ? (
-                <SectionCard icon={Receipt} title={`Recibos (${recibos.length})`}>
+                <SectionCard title={`Recibos (${recibos.length})`} {...themedCardProps("Recibos")}>
                   <DataTable bare columns={recibosCols as any} data={recibos} emptyMessage="" />
                 </SectionCard>
               ) : null}
