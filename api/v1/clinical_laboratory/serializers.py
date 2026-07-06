@@ -535,6 +535,21 @@ class InternalAuditSerializer(serializers.ModelSerializer):
 
 
 class AuditFindingSerializer(serializers.ModelSerializer):
+    audit_display = serializers.SerializerMethodField()
+    nonconformity_display = serializers.SerializerMethodField()
+
+    def get_audit_display(self, obj):
+        a = obj.audit
+        if not a:
+            return None
+        return {"id": a.id, "label": a.area or a.code or a.custom_id, "code": a.code}
+
+    def get_nonconformity_display(self, obj):
+        nc = obj.nonconformity
+        if not nc:
+            return None
+        return {"id": nc.id, "label": nc.custom_id or f"NC #{nc.id}"}
+
     Meta = _meta(AuditFinding)
 
 
