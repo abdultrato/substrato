@@ -327,6 +327,12 @@ function NewDonationWizard() {
   function prev() { setStep(s => Math.max(s - 1, 0)); }
 
   const submit = useCallback(async () => {
+    if (eligibilityBlock) {
+      setSubmitError(
+        `Nova doação ainda não permitida para este doador. ${eligibilityBlock.message} Apto novamente em ${eligibilityBlock.releaseDate}.`
+      );
+      return;
+    }
     setSubmitting(true); setSubmitError(null);
     try {
       const payload: Record<string, unknown> = {
@@ -370,7 +376,7 @@ function NewDonationWizard() {
     } catch (e: unknown) {
       setSubmitError((e as { message?: string })?.message || "Erro ao registar doação.");
     } finally { setSubmitting(false); }
-  }, [form, router]);
+  }, [eligibilityBlock, form, router]);
 
   const testLabel: Record<string, string> = { NDO: "N/D", PEN: "Pendente", NEG: "Negativo", POS: "Positivo", INC: "Inconclusivo" };
   const donorRoleLabel = DONOR_ROLE_OPTS.find(o => o.value === form.donor_role)?.label ?? form.donor_role;
