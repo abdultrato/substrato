@@ -17,6 +17,7 @@ import {
 } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
+import Pagination from "@/components/ui/Pagination"
 import useAuthGuard from "@/hooks/useAuthGuard"
 import useDebounce from "@/hooks/useDebounce"
 import { useAuth } from "@/hooks/useAuth"
@@ -28,6 +29,7 @@ type DonorRow = Record<string, unknown>
 type DonationRow = Record<string, unknown>
 
 const BLOOD_TYPES = ["O-", "O+", "A-", "A+", "B-", "B+", "AB-", "AB+"]
+const DEFAULT_PAGE_SIZE = 12
 
 const TILES = [
   { key: "storage",            label: "Armazenamentos", Icon: Package,      href: "/bloodbank/blood-storages/",             accent: "from-cyan-500 to-sky-600",      bar: "bg-cyan-500",    icon: "bg-cyan-500/15 text-cyan-600 dark:text-cyan-300"    },
@@ -81,6 +83,9 @@ export default function BloodBankPage() {
   const safeRefreshToken = useSafeDataRefreshSignal()
 
   const [search, setSearch]                       = useState("")
+  const [page, setPage]                           = useState(1)
+  const [pageSize, setPageSize]                   = useState(DEFAULT_PAGE_SIZE)
+  const [pageSizeInput, setPageSizeInput]         = useState(String(DEFAULT_PAGE_SIZE))
   const [bloodTypeFilter, setBloodTypeFilter]     = useState("")
   const [dateFilter, setDateFilter]               = useState("")
   const [donors, setDonors]                       = useState<DonorRow[]>([])
@@ -88,6 +93,13 @@ export default function BloodBankPage() {
   const [listLoading, setListLoading]             = useState(true)
   const [listError, setListError]                 = useState<string | null>(null)
   const debouncedSearch = useDebounce(search, 250)
+
+  function applyPageSize(value: string) {
+    const parsed = Math.max(1, Math.min(999, parseInt(value, 10) || DEFAULT_PAGE_SIZE))
+    setPageSize(parsed)
+    setPageSizeInput(String(parsed))
+    setPage(1)
+  }
 
   useEffect(() => {
     let mounted = true
@@ -149,6 +161,10 @@ export default function BloodBankPage() {
     return () => { mounted = false }
   }, [safeRefreshToken])
 
+  useEffect(() => {
+    setPage(1)
+  }, [debouncedSearch, bloodTypeFilter, dateFilter, pageSize])
+
   const filteredDonors = useMemo(() => donors.filter((donor) => {
     const d = donor as Record<string, unknown>
     const latestDonation = donationMap[String(d.id)] as Record<string, unknown> | null
@@ -158,6 +174,13 @@ export default function BloodBankPage() {
     const dateOk = !dateFilter || toDateVal(String(latestDonation?.collected_at ?? latestDonation?.created_at ?? "")) === dateFilter
     return searchOk && btOk && dateOk
   }), [bloodTypeFilter, debouncedSearch, donationMap, donors, dateFilter])
+
+  const totalPages = Math.max(1, Math.ceil(filteredDonors.length / pageSize))
+  const currentPage = Math.min(page, totalPages)
+  const paginatedDonors = useMemo(() => {
+    const start = (currentPage - 1) * pageSize
+    return filteredDonors.slice(start, start + pageSize)
+  }, [currentPage, filteredDonors, pageSize])
 
   if (loading) return null
 
@@ -199,6 +222,22 @@ export default function BloodBankPage() {
                   placeholder="Pesquisar por nome, código, contacto ou documento…"
                   className="w-full rounded-lg border border-white/30 bg-white/40 py-1.5 pl-7 pr-3 text-xs outline-none transition placeholder:text-muted-foreground focus:border-rose-400 focus:ring-2 focus:ring-rose-400/20 dark:border-white/10 dark:bg-white/5" />
               </div>
+              <input
+                type="number"
+                min="1"
+                max="999"
+                value={pageSizeInput}
+                onChange={(e) => setPageSizeInput(e.target.value)}
+                onBlur={(e) => applyPageSize(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault()
+                    applyPageSize(pageSizeInput)
+                  }
+                }}
+                placeholder="12/pág"
+                className="w-[96px] rounded-lg border border-white/30 bg-white/40 px-2.5 py-1.5 text-xs text-foreground outline-none transition focus:border-rose-400 focus:ring-2 focus:ring-rose-400/20 dark:border-white/10 dark:bg-white/5 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+              />
               <select value={bloodTypeFilter} onChange={(e) => setBloodTypeFilter(e.target.value)}
                 className="rounded-lg border border-border bg-card py-1.5 pl-2.5 pr-4 text-xs text-foreground outline-none transition focus:border-rose-400">
                 <option value="">Todos os grupos</option>
@@ -259,11 +298,12 @@ export default function BloodBankPage() {
                 Nenhum doador encontrado para os filtros selecionados.
               </div>
             ) : (
+              <>
               <div className="grid gap-1.5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {filteredDonors.map((donorRaw, index) => {
+                {paginatedDonors.map((donorRaw, index) => {
                   const donor = donorRaw as Record<string, unknown>
                   const latestDonation = donationMap[String(donor.id)] as Record<string, unknown> | null
-                  const acc = DONOR_ACCENTS[index % DONOR_ACCENTS.length]
+                  const acc = DONOR_ACCENTS[((currentPage - 1) * pageSize + index) % DONOR_ACCENTS.length]
                   return (
                     <Link key={String(donor.id)} href={`/bloodbank/donors/${donor.id}`}
                       className="group relative block overflow-hidden rounded-xl border border-white/20 bg-white/25 shadow-sm backdrop-blur-sm transition hover:bg-white/40 hover:shadow-md dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10">
@@ -297,6 +337,13 @@ export default function BloodBankPage() {
                   )
                 })}
               </div>
+              <div className="mt-2 flex flex-col gap-1.5 sm:flex-row sm:items-center sm:justify-between">
+                <div className="text-xs text-muted-foreground">
+                  Página {currentPage} de {totalPages} · {pageSize} itens por página
+                </div>
+                <Pagination page={currentPage} totalPages={totalPages} onChange={setPage} />
+              </div>
+              </>
             )}
           </div>
         </div>
