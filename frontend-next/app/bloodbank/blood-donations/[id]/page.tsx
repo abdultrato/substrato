@@ -470,15 +470,6 @@ export default function BloodDonationDetailPage() {
           </div>
         </Card>
 
-        {/* Botão Guardar no fundo */}
-        <div className="flex justify-end">
-          <button type="button" onClick={save} disabled={saving}
-            className="inline-flex h-9 items-center gap-2 rounded-lg bg-gradient-to-r from-rose-600 to-pink-600 px-5 text-sm font-semibold text-white shadow-md shadow-rose-500/20 transition hover:from-rose-700 hover:to-pink-700 disabled:opacity-60">
-            {saving ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />}
-            Guardar alterações
-          </button>
-        </div>
-
       </div>
     </AppLayout>
   );
