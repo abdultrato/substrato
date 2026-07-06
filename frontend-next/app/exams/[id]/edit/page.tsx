@@ -100,6 +100,11 @@ function resolveUnitForPayload(row: FieldRow) {
   return row.unit || "sem unidade";
 }
 
+function resolveNumericReferencePayload(row: FieldRow, value: string) {
+  if (isUnitOptionalType(row.type)) return null;
+  return value || null;
+}
+
 function RelationSelect({ value, onChange, target, placeholder }: {
   value: number | null; onChange: (v: number | null, label: string) => void;
   target: RelationTarget; placeholder?: string;
@@ -309,10 +314,10 @@ export default function EditExamPage() {
         fields.map((f, pos) => {
           const body = JSON.stringify({
             exam: Number(id), name: f.name.trim(), type: f.type, unit: resolveUnitForPayload(f),
-            reference_min: f.reference_min || null,
-            reference_max: f.reference_max || null,
-            critical_min: f.critical_min || null,
-            critical_max: f.critical_max || null,
+            reference_min: resolveNumericReferencePayload(f, f.reference_min),
+            reference_max: resolveNumericReferencePayload(f, f.reference_max),
+            critical_min: resolveNumericReferencePayload(f, f.critical_min),
+            critical_max: resolveNumericReferencePayload(f, f.critical_max),
             position: pos + 1,
           });
           if (f.id) {
@@ -499,24 +504,28 @@ export default function EditExamPage() {
                             <input type="number" step="any" value={f.reference_min}
                               onChange={(e) => updateField(f._key, { reference_min: e.target.value })}
                               placeholder="—"
+                              disabled={isUnitOptionalType(f.type)}
                               className={`${inputCls} text-emerald-700 dark:text-emerald-400`} />
                           </td>
                           <td className="px-2 py-1 w-20">
                             <input type="number" step="any" value={f.reference_max}
                               onChange={(e) => updateField(f._key, { reference_max: e.target.value })}
                               placeholder="—"
+                              disabled={isUnitOptionalType(f.type)}
                               className={`${inputCls} text-emerald-700 dark:text-emerald-400`} />
                           </td>
                           <td className="px-2 py-1 w-20">
                             <input type="number" step="any" value={f.critical_min}
                               onChange={(e) => updateField(f._key, { critical_min: e.target.value })}
                               placeholder="—"
+                              disabled={isUnitOptionalType(f.type)}
                               className={`${inputCls} text-red-600 dark:text-red-400`} />
                           </td>
                           <td className="px-2 py-1 w-20">
                             <input type="number" step="any" value={f.critical_max}
                               onChange={(e) => updateField(f._key, { critical_max: e.target.value })}
                               placeholder="—"
+                              disabled={isUnitOptionalType(f.type)}
                               className={`${inputCls} text-red-600 dark:text-red-400`} />
                           </td>
                           <td className="px-2 py-1">
