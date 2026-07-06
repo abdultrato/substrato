@@ -383,9 +383,6 @@ function NewDonationWizard() {
             {step === 0 && (
               <>
                 <h2 className="text-[12px] font-bold text-foreground">Dados da colheita</h2>
-                <p className="text-[10px] text-muted-foreground -mt-2">
-                  O identificador da bolsa é gerado automaticamente pelo sistema após o registo.
-                </p>
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                   <TxtField label="Doador *" value={donorName || form.donor}
                     onChange={v => set("donor", v)}
