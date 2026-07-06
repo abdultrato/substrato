@@ -20,10 +20,11 @@ def _tenant():
     )
 
 
-def _donor(tenant):
+def _donor(tenant, *, gender="Masculino"):
     return Patient.objects.create(
         tenant=tenant, name="Doador", document_number=f"BB-{uuid4().hex[:6]}",
         birth_date=datetime.date(1990, 1, 1),
+        gender=gender,
     )
 
 
@@ -177,6 +178,82 @@ def test_donation_rejects_weight_below_50kg():
             bag_identifier=f"BAG-{uuid4().hex[:8]}",
             blood_type=BloodDonation._meta.get_field("blood_type").default,
             donor_weight_kg=49,
+            hemoglobin_g_dl=14,
+            collected_at=timezone.now(),
+            hiv_test=BloodDonation.TestResult.NEGATIVE,
+            syphilis_rpr_test=BloodDonation.TestResult.NEGATIVE,
+            hepatitis_b_hbsag_test=BloodDonation.TestResult.NEGATIVE,
+            hepatitis_c_anti_hcv_test=BloodDonation.TestResult.NEGATIVE,
+            malaria_test=BloodDonation.TestResult.NEGATIVE,
+        )
+
+
+@pytest.mark.django_db
+def test_donation_blocks_male_before_90_days_with_smart_message():
+    tenant = _tenant()
+    donor = _donor(tenant, gender="Masculino")
+    first_collection = timezone.now() - datetime.timedelta(days=89)
+
+    BloodDonation.objects.create(
+        tenant=tenant,
+        donor=donor,
+        bag_identifier=f"BAG-{uuid4().hex[:8]}",
+        blood_type=BloodDonation._meta.get_field("blood_type").default,
+        donor_weight_kg=70,
+        hemoglobin_g_dl=14,
+        collected_at=first_collection,
+        hiv_test=BloodDonation.TestResult.NEGATIVE,
+        syphilis_rpr_test=BloodDonation.TestResult.NEGATIVE,
+        hepatitis_b_hbsag_test=BloodDonation.TestResult.NEGATIVE,
+        hepatitis_c_anti_hcv_test=BloodDonation.TestResult.NEGATIVE,
+        malaria_test=BloodDonation.TestResult.NEGATIVE,
+    )
+
+    with pytest.raises(ValidationError, match="intervalo minimo para sexo masculino e de 90 dias"):
+        BloodDonation.objects.create(
+            tenant=tenant,
+            donor=donor,
+            bag_identifier=f"BAG-{uuid4().hex[:8]}",
+            blood_type=BloodDonation._meta.get_field("blood_type").default,
+            donor_weight_kg=70,
+            hemoglobin_g_dl=14,
+            collected_at=timezone.now(),
+            hiv_test=BloodDonation.TestResult.NEGATIVE,
+            syphilis_rpr_test=BloodDonation.TestResult.NEGATIVE,
+            hepatitis_b_hbsag_test=BloodDonation.TestResult.NEGATIVE,
+            hepatitis_c_anti_hcv_test=BloodDonation.TestResult.NEGATIVE,
+            malaria_test=BloodDonation.TestResult.NEGATIVE,
+        )
+
+
+@pytest.mark.django_db
+def test_donation_blocks_female_before_120_days_with_smart_message():
+    tenant = _tenant()
+    donor = _donor(tenant, gender="Femenino")
+    first_collection = timezone.now() - datetime.timedelta(days=119)
+
+    BloodDonation.objects.create(
+        tenant=tenant,
+        donor=donor,
+        bag_identifier=f"BAG-{uuid4().hex[:8]}",
+        blood_type=BloodDonation._meta.get_field("blood_type").default,
+        donor_weight_kg=70,
+        hemoglobin_g_dl=14,
+        collected_at=first_collection,
+        hiv_test=BloodDonation.TestResult.NEGATIVE,
+        syphilis_rpr_test=BloodDonation.TestResult.NEGATIVE,
+        hepatitis_b_hbsag_test=BloodDonation.TestResult.NEGATIVE,
+        hepatitis_c_anti_hcv_test=BloodDonation.TestResult.NEGATIVE,
+        malaria_test=BloodDonation.TestResult.NEGATIVE,
+    )
+
+    with pytest.raises(ValidationError, match="intervalo minimo para sexo feminino e de 120 dias"):
+        BloodDonation.objects.create(
+            tenant=tenant,
+            donor=donor,
+            bag_identifier=f"BAG-{uuid4().hex[:8]}",
+            blood_type=BloodDonation._meta.get_field("blood_type").default,
+            donor_weight_kg=70,
             hemoglobin_g_dl=14,
             collected_at=timezone.now(),
             hiv_test=BloodDonation.TestResult.NEGATIVE,

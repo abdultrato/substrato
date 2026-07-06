@@ -351,12 +351,15 @@ class BloodDonation(NoNameCoreModel):
             if errors:
                 raise ValidationError(errors)
 
-        # Regra geral: intervalo minimo entre doacoes (90 dias).
+        # Regra geral: intervalo minimo entre doacoes conforme sexo biologico.
         if self.donor_id and self.collected_at:
             try:
                 collected_date = timezone.localdate(self.collected_at)
             except Exception:
                 collected_date = self.collected_at.date()
+
+            donor_gender = str(getattr(self.donor, "gender", "") or "").strip().lower()
+            minimum_interval_days = 120 if donor_gender in {"femenino", "feminino", "f"} else 90
 
             last = (
                 BloodDonation.objects.filter(
@@ -376,10 +379,18 @@ class BloodDonation(NoNameCoreModel):
                 except Exception:
                     last_date = last.collected_at.date()
 
-                next_ok = last_date + datetime.timedelta(days=90)
+                next_ok = last_date + datetime.timedelta(days=minimum_interval_days)
                 if collected_date < next_ok:
+                    remaining_days = (next_ok - collected_date).days
+                    gender_label = "feminino" if minimum_interval_days == 120 else "masculino"
                     raise ValidationError(
-                        {"donor": f"Doador temporariamente inapto. Proxima doacao apos {next_ok:%Y-%m-%d}."}
+                        {
+                            "donor": (
+                                f"Nova doacao ainda nao permitida para este doador. "
+                                f"O intervalo minimo para sexo {gender_label} e de {minimum_interval_days} dias. "
+                                f"Faltam {remaining_days} dia(s) para liberar a proxima doacao, prevista para {next_ok:%Y-%m-%d}."
+                            )
+                        }
                     )
 
         if self.donor_id:
@@ -1369,4 +1380,3 @@ class BloodStorageMaintenance(NoNameCoreModel):
 
         if self.status == self.MaintenanceStatus.COMPLETED and not self.performed_at:
             raise ValidationError({"performed_at": "Informe a data de execucao para manutencao concluida."})
-
