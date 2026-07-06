@@ -71,6 +71,11 @@ export const T_ORDER: RelationTarget = {
   labelFields: ["custom_id", "patient_name", "created_at"],
 };
 
+export const T_ORDER_ITEM: RelationTarget = {
+  endpoint: "/clinical_laboratory/order_item/",
+  labelFields: ["test_name", "test_code", "custom_id"],
+};
+
 export const T_TEST: RelationTarget = {
   endpoint: "/clinical_laboratory/test/",
   labelFields: ["name", "code", "custom_id"],
@@ -79,12 +84,12 @@ export const T_TEST: RelationTarget = {
 
 export const T_RESULT: RelationTarget = {
   endpoint: "/clinical_laboratory/result/",
-  labelFields: ["custom_id", "value", "unit", "flag"],
+  labelFields: ["custom_id", "test_name", "field_name", "value", "unit", "flag"],
 };
 
 export const T_SAMPLE: RelationTarget = {
   endpoint: "/clinical_laboratory/sample/",
-  labelFields: ["custom_id", "sample_type", "status"],
+  labelFields: ["barcode", "sample_type_display", "status_display", "custom_id", "sample_type", "status"],
 };
 
 export const T_EQUIPMENT: RelationTarget = {
@@ -166,6 +171,22 @@ export function composeRootCauseTrace(rootCause: string, traceability: string) {
   return [rootCause.trim(), traceability.trim()].filter(Boolean).join("\n\n");
 }
 
+const TRACE_REF_LABELS = ["Requisição", "Exame", "Resultado", "Amostra", "Equipamento relacionado", "Analito/campo de exame", "Incidente de exposição"] as const;
+
+type TraceRefLabel = typeof TRACE_REF_LABELS[number];
+
+export function parseTraceReference(traceability: string, label: TraceRefLabel) {
+  const escaped = label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const match = traceability.match(new RegExp(`${escaped}:\\s*(.*?)\\s*\\(#(\\d+)\\)`, "u"));
+  if (!match) return { id: null as number | null, label: "" };
+  return { id: Number(match[2]), label: match[1].trim() };
+}
+
+export function parseTraceChainNote(traceability: string) {
+  const match = traceability.match(/(?:^|\n)- Cadeia raiz-fruto:\s*([\s\S]*)$/u);
+  return match?.[1]?.trim() ?? "";
+}
+
 export function Card({ icon: Icon, title, children, accent }: {
   icon: React.ElementType; title: string; children: React.ReactNode; accent?: string;
 }) {
@@ -220,13 +241,15 @@ export function Row({ label, children }: { label: string; children: React.ReactN
 }
 
 export function RelationSelect({
-  value, onChange, target, placeholder, initialLabel = "",
+  value, onChange, target, placeholder, initialLabel = "", disabled = false, disabledMessage = "Selecione o campo anterior primeiro.",
 }: {
   value: number | null;
   onChange: (v: number | null, label: string) => void;
   target: RelationTarget;
   placeholder?: string;
   initialLabel?: string;
+  disabled?: boolean;
+  disabledMessage?: string;
 }) {
   const [query, setQuery] = useState("");
   const [label, setLabel] = useState(initialLabel);
@@ -280,16 +303,19 @@ export function RelationSelect({
             type="text"
             value={query}
             onChange={(e) => search(e.target.value)}
-            onFocus={() => { setOpen(true); if (!query) search(""); }}
+            onFocus={() => { if (!disabled) { setOpen(true); if (!query) search(""); } }}
             onBlur={() => setTimeout(() => setOpen(false), 150)}
             placeholder={placeholder}
-            className="w-full rounded-md border border-border bg-background py-1.5 pl-7 pr-3 text-xs text-foreground outline-none transition focus:border-rose-500 focus:ring-2 focus:ring-rose-500/25"
+            disabled={disabled}
+            className="w-full rounded-md border border-border bg-background py-1.5 pl-7 pr-3 text-xs text-foreground outline-none transition focus:border-rose-500 focus:ring-2 focus:ring-rose-500/25 disabled:cursor-not-allowed disabled:opacity-60"
           />
           {searching && <Loader2 size={11} className="absolute right-2.5 top-1/2 -translate-y-1/2 animate-spin text-muted-foreground" />}
-          {open && (
+          {disabled ? (
+            <p className="mt-1 text-[10px] text-muted-foreground">{disabledMessage}</p>
+          ) : open && (
             <div id={listboxId} role="listbox" className="absolute left-0 right-0 mt-1 overflow-hidden rounded-lg border border-border bg-card shadow-lg">
               {results.length === 0 ? (
-                <p className="px-3 py-2 text-[11px] text-muted-foreground">{searching ? "A pesquisar..." : "Nenhum sector."}</p>
+                <p className="px-3 py-2 text-[11px] text-muted-foreground">{searching ? "A pesquisar..." : "Nenhum resultado."}</p>
               ) : (
                 <ul className="max-h-48 overflow-y-auto divide-y divide-border/40">
                   {results.map((opt) => (

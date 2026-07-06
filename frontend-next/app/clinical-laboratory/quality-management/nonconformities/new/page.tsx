@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, ClipboardList, FileText, FileWarning, Loader2, Save, ShieldAlert } from "lucide-react";
 
@@ -21,6 +21,7 @@ import {
   T_EQUIPMENT,
   T_EXPOSURE_INCIDENT,
   T_ORDER,
+  T_ORDER_ITEM,
   T_RESULT,
   T_SAMPLE,
   T_SECTOR,
@@ -49,6 +50,7 @@ export default function NewNonconformityPage() {
   const [orderLabel, setOrderLabel] = useState("");
   const [exam, setExam] = useState<number | null>(null);
   const [examLabel, setExamLabel] = useState("");
+  const [examTest, setExamTest] = useState<number | null>(null);
   const [result, setResult] = useState<number | null>(null);
   const [resultLabel, setResultLabel] = useState("");
   const [sample, setSample] = useState<number | null>(null);
@@ -63,6 +65,30 @@ export default function NewNonconformityPage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+
+  const orderItemTarget = useMemo(() => ({
+    ...T_ORDER_ITEM,
+    staticFilters: { ...(order ? { order } : {}) },
+  }), [order]);
+
+  const resultTarget = useMemo(() => ({
+    ...T_RESULT,
+    staticFilters: {
+      ...(exam ? { order_item: exam } : {}),
+      ...(analyte ? { test_field: analyte } : {}),
+      ...(sample ? { sample } : {}),
+    },
+  }), [exam, analyte, sample]);
+
+  const sampleTarget = useMemo(() => ({
+    ...T_SAMPLE,
+    staticFilters: { ...(order ? { order } : {}) },
+  }), [order]);
+
+  const analyteTarget = useMemo(() => ({
+    ...T_TEST_FIELD,
+    staticFilters: { ...(examTest ? { test: examTest, active: true } : { active: true }) },
+  }), [examTest]);
 
   function validate() {
     const next: Record<string, string> = {};
@@ -79,6 +105,55 @@ export default function NewNonconformityPage() {
     const d = new Date();
     const pad = (n: number) => String(n).padStart(2, "0");
     return `QNC-${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`;
+  }
+
+  function handleOrderChange(v: number | null, l: string) {
+    setOrder(v); setOrderLabel(l);
+    setExam(null); setExamLabel(""); setExamTest(null);
+    setResult(null); setResultLabel("");
+    setAnalyte(null); setAnalyteLabel("");
+    setSample(null); setSampleLabel("");
+  }
+
+  async function handleExamChange(v: number | null, l: string) {
+    setExam(v); setExamLabel(l);
+    setExamTest(null);
+    setResult(null); setResultLabel("");
+    setAnalyte(null); setAnalyteLabel("");
+    if (!v) return;
+    try {
+      const item = await apiFetch<Record<string, any>>(`/clinical_laboratory/order_item/${v}/`);
+      if (item?.test) setExamTest(Number(item.test));
+      setExamLabel(String(item?.test_name || item?.test_code || l || `Item #${v}`));
+    } catch {}
+  }
+
+  async function handleResultChange(v: number | null, l: string) {
+    setResult(v); setResultLabel(l);
+    if (!v) return;
+    try {
+      const rec = await apiFetch<Record<string, any>>(`/clinical_laboratory/result/${v}/`);
+      if (rec?.order_item) {
+        const itemId = Number(rec.order_item);
+        setExam(itemId);
+        const item = await apiFetch<Record<string, any>>(`/clinical_laboratory/order_item/${itemId}/`);
+        if (item?.test) setExamTest(Number(item.test));
+        setExamLabel(String(item?.test_name || item?.test_code || rec?.test_name || `Item #${itemId}`));
+        if (item?.order && !order) {
+          setOrder(Number(item.order));
+          setOrderLabel(String(rec?.order_custom_id || `Requisição #${item.order}`));
+        }
+      }
+      if (rec?.test_field) {
+        setAnalyte(Number(rec.test_field));
+        setAnalyteLabel(String(rec?.field_name || `Analito #${rec.test_field}`));
+      }
+      if (rec?.sample) {
+        setSample(Number(rec.sample));
+        setSampleLabel(String(rec?.sample_barcode || `Amostra #${rec.sample}`));
+      }
+      setResultLabel(String(l || [rec?.custom_id, rec?.test_name, rec?.field_name, rec?.value, rec?.unit].filter(Boolean).join(" - ")));
+    } catch {}
   }
 
   function traceabilityLines() {
@@ -217,16 +292,16 @@ export default function NewNonconformityPage() {
               <Card icon={ClipboardList} title="Rastreabilidade do impacto no paciente" accent="bg-red-500">
                 <div className="grid gap-1.5 md:grid-cols-2">
                   <Field label="Requisição em causa">
-                    <RelationSelect value={order} onChange={(v, l) => { setOrder(v); setOrderLabel(l); }} target={T_ORDER} placeholder="Pesquisar requisição..." />
+                    <RelationSelect value={order} onChange={handleOrderChange} target={T_ORDER} placeholder="Pesquisar requisição..." />
                   </Field>
                   <Field label="Exame em causa">
-                    <RelationSelect value={exam} onChange={(v, l) => { setExam(v); setExamLabel(l); }} target={T_TEST} placeholder="Pesquisar exame..." />
+                    <RelationSelect value={exam} onChange={handleExamChange} target={orderItemTarget} placeholder="Pesquisar exame da requisição..." disabled={!order} disabledMessage="Selecione primeiro a requisição em causa." />
                   </Field>
                   <Field label="Resultado em causa">
-                    <RelationSelect value={result} onChange={(v, l) => { setResult(v); setResultLabel(l); }} target={T_RESULT} placeholder="Pesquisar resultado..." />
+                    <RelationSelect value={result} onChange={handleResultChange} target={resultTarget} placeholder="Pesquisar resultado..." disabled={!exam} disabledMessage="Selecione primeiro o exame da requisição." />
                   </Field>
                   <Field label="Amostra em causa">
-                    <RelationSelect value={sample} onChange={(v, l) => { setSample(v); setSampleLabel(l); }} target={T_SAMPLE} placeholder="Pesquisar amostra..." />
+                    <RelationSelect value={sample} onChange={(v, l) => { setSample(v); setSampleLabel(l); setResult(null); setResultLabel(""); }} target={sampleTarget} placeholder="Pesquisar amostra..." disabled={!order} disabledMessage="Selecione primeiro a requisição em causa." />
                   </Field>
                 </div>
               </Card>
@@ -248,7 +323,7 @@ export default function NewNonconformityPage() {
               <Card icon={ShieldAlert} title="Controlo de qualidade" accent="bg-amber-400">
                 <div className="grid gap-1.5 md:grid-cols-2">
                   <Field label="Analito/campo do exame" error={errors.analyte}>
-                    <RelationSelect value={analyte} onChange={(v, l) => { setAnalyte(v); setAnalyteLabel(l); }} target={T_TEST_FIELD} placeholder="Pesquisar analito..." />
+                    <RelationSelect value={analyte} onChange={(v, l) => { setAnalyte(v); setAnalyteLabel(l); setResult(null); setResultLabel(""); }} target={analyteTarget} placeholder="Pesquisar analito..." disabled={patientImpact && !!exam && !examTest} disabledMessage="Carregando o exame da requisição." />
                   </Field>
                   <Field label="Tipo de exame">
                     <RelationSelect value={exam} onChange={(v, l) => { setExam(v); setExamLabel(l); }} target={T_TEST} placeholder="Pesquisar tipo de exame..." />

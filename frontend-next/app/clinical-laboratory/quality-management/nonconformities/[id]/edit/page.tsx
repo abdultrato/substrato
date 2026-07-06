@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, ClipboardList, FileText, FileWarning, Loader2, Save, ShieldAlert } from "lucide-react";
 
@@ -22,6 +22,7 @@ import {
   T_EQUIPMENT,
   T_EXPOSURE_INCIDENT,
   T_ORDER,
+  T_ORDER_ITEM,
   T_RESULT,
   T_SAMPLE,
   T_SECTOR,
@@ -29,6 +30,8 @@ import {
   T_TEST_FIELD,
   composeRootCauseTrace,
   inputCls,
+  parseTraceChainNote,
+  parseTraceReference,
   sectorLabel,
   splitRootCauseTrace,
   toDateInput,
@@ -57,6 +60,7 @@ export default function EditNonconformityPage() {
   const [orderLabel, setOrderLabel] = useState("");
   const [exam, setExam] = useState<number | null>(null);
   const [examLabel, setExamLabel] = useState("");
+  const [examTest, setExamTest] = useState<number | null>(null);
   const [result, setResult] = useState<number | null>(null);
   const [resultLabel, setResultLabel] = useState("");
   const [sample, setSample] = useState<number | null>(null);
@@ -73,6 +77,30 @@ export default function EditNonconformityPage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+
+  const orderItemTarget = useMemo(() => ({
+    ...T_ORDER_ITEM,
+    staticFilters: { ...(order ? { order } : {}) },
+  }), [order]);
+
+  const resultTarget = useMemo(() => ({
+    ...T_RESULT,
+    staticFilters: {
+      ...(exam ? { order_item: exam } : {}),
+      ...(analyte ? { test_field: analyte } : {}),
+      ...(sample ? { sample } : {}),
+    },
+  }), [exam, analyte, sample]);
+
+  const sampleTarget = useMemo(() => ({
+    ...T_SAMPLE,
+    staticFilters: { ...(order ? { order } : {}) },
+  }), [order]);
+
+  const analyteTarget = useMemo(() => ({
+    ...T_TEST_FIELD,
+    staticFilters: { ...(examTest ? { test: examTest, active: true } : { active: true }) },
+  }), [examTest]);
 
   useEffect(() => {
     if (!id) return;
@@ -91,9 +119,31 @@ export default function EditNonconformityPage() {
         setImmediateAction(rec.immediate_action ?? "");
         const investigation = splitRootCauseTrace(rec.root_cause);
         setRootCause(investigation.rootCause);
-        setTraceNotes(investigation.traceability);
+        const orderRef = parseTraceReference(investigation.traceability, "Requisição");
+        const examRef = parseTraceReference(investigation.traceability, "Exame");
+        const resultRef = parseTraceReference(investigation.traceability, "Resultado");
+        const sampleRef = parseTraceReference(investigation.traceability, "Amostra");
+        const equipmentRef = parseTraceReference(investigation.traceability, "Equipamento relacionado");
+        const analyteRef = parseTraceReference(investigation.traceability, "Analito/campo de exame");
+        const incidentRef = parseTraceReference(investigation.traceability, "Incidente de exposição");
+        setOrder(orderRef.id); setOrderLabel(orderRef.label);
+        setExam(examRef.id); setExamLabel(examRef.label);
+        setResult(resultRef.id); setResultLabel(resultRef.label);
+        setSample(sampleRef.id); setSampleLabel(sampleRef.label);
+        setEquipment(equipmentRef.id); setEquipmentLabel(equipmentRef.label);
+        setAnalyte(analyteRef.id); setAnalyteLabel(analyteRef.label);
+        setExposureIncident(incidentRef.id); setExposureIncidentLabel(incidentRef.label);
+        setTraceNotes(parseTraceChainNote(investigation.traceability));
         setPatientImpact(Boolean(rec.patient_impact));
         setStatus(rec.status ?? "ABERTA");
+        if (examRef.id) {
+          apiFetch<Record<string, any>>(`/clinical_laboratory/order_item/${examRef.id}/`)
+            .then((item) => {
+              if (item?.test) setExamTest(Number(item.test));
+              setExamLabel((prev) => prev || String(item?.test_name || item?.test_code || `Item #${examRef.id}`));
+            })
+            .catch(() => {});
+        }
       })
       .catch((e) => setLoadError(e?.message ?? "Erro ao carregar não conformidade."))
       .finally(() => setLoadingRec(false));
@@ -111,7 +161,6 @@ export default function EditNonconformityPage() {
   }
 
   function traceabilityLines() {
-    if (traceNotes.trim().startsWith("Rastreabilidade da origem:")) return traceNotes.trim();
     const lines = ["Rastreabilidade da origem:"];
     if (patientImpact) {
       lines.push("- Impacto no paciente: sim");
@@ -131,6 +180,55 @@ export default function EditNonconformityPage() {
     }
     if (traceNotes.trim()) lines.push(`- Cadeia raiz-fruto: ${traceNotes.trim()}`);
     return lines.length > 1 ? lines.join("\n") : "";
+  }
+
+  function handleOrderChange(v: number | null, l: string) {
+    setOrder(v); setOrderLabel(l);
+    setExam(null); setExamLabel(""); setExamTest(null);
+    setResult(null); setResultLabel("");
+    setAnalyte(null); setAnalyteLabel("");
+    setSample(null); setSampleLabel("");
+  }
+
+  async function handleExamChange(v: number | null, l: string) {
+    setExam(v); setExamLabel(l);
+    setExamTest(null);
+    setResult(null); setResultLabel("");
+    setAnalyte(null); setAnalyteLabel("");
+    if (!v) return;
+    try {
+      const item = await apiFetch<Record<string, any>>(`/clinical_laboratory/order_item/${v}/`);
+      if (item?.test) setExamTest(Number(item.test));
+      setExamLabel(String(item?.test_name || item?.test_code || l || `Item #${v}`));
+    } catch {}
+  }
+
+  async function handleResultChange(v: number | null, l: string) {
+    setResult(v); setResultLabel(l);
+    if (!v) return;
+    try {
+      const rec = await apiFetch<Record<string, any>>(`/clinical_laboratory/result/${v}/`);
+      if (rec?.order_item) {
+        const itemId = Number(rec.order_item);
+        setExam(itemId);
+        const item = await apiFetch<Record<string, any>>(`/clinical_laboratory/order_item/${itemId}/`);
+        if (item?.test) setExamTest(Number(item.test));
+        setExamLabel(String(item?.test_name || item?.test_code || rec?.test_name || `Item #${itemId}`));
+        if (item?.order && !order) {
+          setOrder(Number(item.order));
+          setOrderLabel(String(rec?.order_custom_id || `Requisição #${item.order}`));
+        }
+      }
+      if (rec?.test_field) {
+        setAnalyte(Number(rec.test_field));
+        setAnalyteLabel(String(rec?.field_name || `Analito #${rec.test_field}`));
+      }
+      if (rec?.sample) {
+        setSample(Number(rec.sample));
+        setSampleLabel(String(rec?.sample_barcode || `Amostra #${rec.sample}`));
+      }
+      setResultLabel(String(l || [rec?.custom_id, rec?.test_name, rec?.field_name, rec?.value, rec?.unit].filter(Boolean).join(" - ")));
+    } catch {}
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -265,16 +363,16 @@ export default function EditNonconformityPage() {
               <Card icon={ClipboardList} title="Rastreabilidade do impacto no paciente" accent="bg-red-500">
                 <div className="grid gap-1.5 md:grid-cols-2">
                   <Field label="Requisição em causa">
-                    <RelationSelect value={order} onChange={(v, l) => { setOrder(v); setOrderLabel(l); }} target={T_ORDER} placeholder="Pesquisar requisição..." />
+                    <RelationSelect value={order} onChange={handleOrderChange} target={T_ORDER} placeholder="Pesquisar requisição..." initialLabel={orderLabel} />
                   </Field>
                   <Field label="Exame em causa">
-                    <RelationSelect value={exam} onChange={(v, l) => { setExam(v); setExamLabel(l); }} target={T_TEST} placeholder="Pesquisar exame..." />
+                    <RelationSelect value={exam} onChange={handleExamChange} target={orderItemTarget} placeholder="Pesquisar exame da requisição..." initialLabel={examLabel} disabled={!order} disabledMessage="Selecione primeiro a requisição em causa." />
                   </Field>
                   <Field label="Resultado em causa">
-                    <RelationSelect value={result} onChange={(v, l) => { setResult(v); setResultLabel(l); }} target={T_RESULT} placeholder="Pesquisar resultado..." />
+                    <RelationSelect value={result} onChange={handleResultChange} target={resultTarget} placeholder="Pesquisar resultado..." initialLabel={resultLabel} disabled={!exam} disabledMessage="Selecione primeiro o exame da requisição." />
                   </Field>
                   <Field label="Amostra em causa">
-                    <RelationSelect value={sample} onChange={(v, l) => { setSample(v); setSampleLabel(l); }} target={T_SAMPLE} placeholder="Pesquisar amostra..." />
+                    <RelationSelect value={sample} onChange={(v, l) => { setSample(v); setSampleLabel(l); setResult(null); setResultLabel(""); }} target={sampleTarget} placeholder="Pesquisar amostra..." initialLabel={sampleLabel} disabled={!order} disabledMessage="Selecione primeiro a requisição em causa." />
                   </Field>
                 </div>
               </Card>
@@ -296,7 +394,7 @@ export default function EditNonconformityPage() {
               <Card icon={ShieldAlert} title="Controlo de qualidade" accent="bg-amber-400">
                 <div className="grid gap-1.5 md:grid-cols-2">
                   <Field label="Analito/campo do exame" error={errors.analyte}>
-                    <RelationSelect value={analyte} onChange={(v, l) => { setAnalyte(v); setAnalyteLabel(l); }} target={T_TEST_FIELD} placeholder="Pesquisar analito..." />
+                    <RelationSelect value={analyte} onChange={(v, l) => { setAnalyte(v); setAnalyteLabel(l); setResult(null); setResultLabel(""); }} target={analyteTarget} placeholder="Pesquisar analito..." initialLabel={analyteLabel} disabled={patientImpact && !!exam && !examTest} disabledMessage="Carregando o exame da requisição." />
                   </Field>
                   <Field label="Tipo de exame">
                     <RelationSelect value={exam} onChange={(v, l) => { setExam(v); setExamLabel(l); }} target={T_TEST} placeholder="Pesquisar tipo de exame..." />
