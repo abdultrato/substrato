@@ -270,52 +270,52 @@ export default function BloodbankBloodDonationsListPage() {
           </div>
 
           <div className="relative border-t border-white/15 px-3 py-2.5 dark:border-white/10">
-            <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 2xl:grid-cols-4">
-              <article className="relative min-w-0 rounded-xl border border-white/20 bg-white/22 p-2.5 shadow-sm backdrop-blur-sm">
+            <div className="grid grid-cols-4 gap-1">
+              <article className="relative min-w-0 overflow-hidden rounded-xl border border-white/20 bg-white/22 p-2 shadow-sm backdrop-blur-sm">
                 <span className="absolute inset-y-0 left-0 w-1 rounded-l-xl bg-rose-500" />
-                <div className="flex items-center gap-1.5">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-500/15 text-rose-600">
-                    <HeartHandshake size={18} />
+                <div className="flex flex-nowrap items-center gap-1.5">
+                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-rose-500/15 text-rose-600">
+                    <HeartHandshake size={16} />
                   </div>
                   <div className="min-w-0">
-                    <div className="whitespace-nowrap text-[11px] text-muted-foreground">Registos nesta página</div>
-                    <div className="text-base font-bold text-foreground">{items.length}</div>
+                    <div className="truncate whitespace-nowrap text-[10px] text-muted-foreground">Registos nesta página</div>
+                    <div className="truncate whitespace-nowrap text-sm font-bold text-foreground">{items.length}</div>
                   </div>
                 </div>
               </article>
-              <article className="relative min-w-0 rounded-xl border border-white/20 bg-white/22 p-2.5 shadow-sm backdrop-blur-sm">
+              <article className="relative min-w-0 overflow-hidden rounded-xl border border-white/20 bg-white/22 p-2 shadow-sm backdrop-blur-sm">
                 <span className="absolute inset-y-0 left-0 w-1 rounded-l-xl bg-amber-500" />
-                <div className="flex items-center gap-1.5">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500/15 text-amber-600">
-                    <Activity size={18} />
+                <div className="flex flex-nowrap items-center gap-1.5">
+                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-amber-500/15 text-amber-600">
+                    <Activity size={16} />
                   </div>
                   <div className="min-w-0">
-                    <div className="whitespace-nowrap text-[11px] text-muted-foreground">Em triagem</div>
-                    <div className="text-base font-bold text-foreground">{summary.triagem}</div>
+                    <div className="truncate whitespace-nowrap text-[10px] text-muted-foreground">Em triagem</div>
+                    <div className="truncate whitespace-nowrap text-sm font-bold text-foreground">{summary.triagem}</div>
                   </div>
                 </div>
               </article>
-              <article className="relative min-w-0 rounded-xl border border-white/20 bg-white/22 p-2.5 shadow-sm backdrop-blur-sm">
+              <article className="relative min-w-0 overflow-hidden rounded-xl border border-white/20 bg-white/22 p-2 shadow-sm backdrop-blur-sm">
                 <span className="absolute inset-y-0 left-0 w-1 rounded-l-xl bg-emerald-500" />
-                <div className="flex items-center gap-1.5">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/15 text-emerald-600">
-                    <CheckCircle2 size={18} />
+                <div className="flex flex-nowrap items-center gap-1.5">
+                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-emerald-500/15 text-emerald-600">
+                    <CheckCircle2 size={16} />
                   </div>
                   <div className="min-w-0">
-                    <div className="whitespace-nowrap text-[11px] text-muted-foreground">Concluídas</div>
-                    <div className="text-base font-bold text-foreground">{summary.concluidas}</div>
+                    <div className="truncate whitespace-nowrap text-[10px] text-muted-foreground">Concluídas</div>
+                    <div className="truncate whitespace-nowrap text-sm font-bold text-foreground">{summary.concluidas}</div>
                   </div>
                 </div>
               </article>
-              <article className="relative min-w-0 rounded-xl border border-white/20 bg-white/22 p-2.5 shadow-sm backdrop-blur-sm">
+              <article className="relative min-w-0 overflow-hidden rounded-xl border border-white/20 bg-white/22 p-2 shadow-sm backdrop-blur-sm">
                 <span className="absolute inset-y-0 left-0 w-1 rounded-l-xl bg-cyan-500" />
-                <div className="flex items-center gap-1.5">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-cyan-500/15 text-cyan-600">
-                    <FlaskConical size={18} />
+                <div className="flex flex-nowrap items-center gap-1.5">
+                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-cyan-500/15 text-cyan-600">
+                    <FlaskConical size={16} />
                   </div>
                   <div className="min-w-0">
-                    <div className="whitespace-nowrap text-[11px] text-muted-foreground">Volume visível</div>
-                    <div className="text-base font-bold text-foreground">{summary.volume} mL</div>
+                    <div className="truncate whitespace-nowrap text-[10px] text-muted-foreground">Volume visível</div>
+                    <div className="truncate whitespace-nowrap text-sm font-bold text-foreground">{summary.volume} mL</div>
                   </div>
                 </div>
               </article>
