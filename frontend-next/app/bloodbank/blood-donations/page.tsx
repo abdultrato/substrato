@@ -137,6 +137,8 @@ export default function BloodbankBloodDonationsListPage() {
   const [statusFilter, setStatusFilter] = useState("");
   const [typeFilter, setTypeFilter] = useState("");
   const [listLoading, setListLoading] = useState(true);
+  const [summaryLoading, setSummaryLoading] = useState(true);
+  const [summaryItems, setSummaryItems] = useState<DonationRow[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   const debouncedSearch = useDebounce(search, 300);
@@ -188,21 +190,52 @@ export default function BloodbankBloodDonationsListPage() {
     };
   }, [debouncedSearch, page, statusFilter, typeFilter]);
 
+  useEffect(() => {
+    let mounted = true;
+
+    async function loadSummary() {
+      try {
+        setSummaryLoading(true);
+        const { items: rows, meta } = await apiFetchList<DonationRow>("/bloodbank/donation/", {
+          page: 1,
+          pageSize: 200,
+          query: {
+            ...(debouncedSearch.trim() ? { search: debouncedSearch.trim() } : {}),
+            ...(statusFilter ? { status: statusFilter } : {}),
+            ...(typeFilter ? { donation_type: typeFilter } : {}),
+          },
+          clientPaginate: false,
+        });
+
+        if (!mounted) return;
+
+        const total = meta.total ?? rows.length;
+        setSummaryItems(rows);
+        setTotalItems(total || 0);
+      } finally {
+        if (mounted) setSummaryLoading(false);
+      }
+    }
+
+    loadSummary();
+    return () => {
+      mounted = false;
+    };
+  }, [debouncedSearch, statusFilter, typeFilter]);
+
   const summary = useMemo(() => {
     let triagem = 0;
     let concluidas = 0;
-    let aprovadas = 0;
     let volume = 0;
 
-    for (const item of items) {
+    for (const item of summaryItems) {
       if (item.status === "SCR") triagem += 1;
       if (item.status === "COM") concluidas += 1;
-      if (item.screening_status === "APR") aprovadas += 1;
       volume += Number(item.volume_ml || 0);
     }
 
-    return { triagem, concluidas, aprovadas, volume };
-  }, [items]);
+    return { triagem, concluidas, volume };
+  }, [summaryItems]);
 
   if (loading) return null;
 
@@ -224,9 +257,6 @@ export default function BloodbankBloodDonationsListPage() {
             <div className="min-w-0 flex-1">
               <div className="text-[10px] text-muted-foreground">Hemoterapia / Captação e processamento</div>
               <h1 className="text-lg font-bold leading-tight text-foreground">Doações de sangue</h1>
-              <p className="mt-0.5 max-w-3xl text-xs text-muted-foreground">
-                Acompanhe bolsas registadas, triagem, conclusão da coleta e o perfil operacional das doações sem recorrer ao layout genérico.
-              </p>
             </div>
             <Link
               href="/bloodbank/blood-donations/new"
@@ -236,90 +266,94 @@ export default function BloodbankBloodDonationsListPage() {
               Nova doação
             </Link>
           </div>
-        </section>
 
-        <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
-          <article className={`${GLASS_CARD} p-3`}>
-            <div className="flex items-center gap-2">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-rose-500/15 text-rose-600">
-                <HeartHandshake size={18} />
-              </div>
-              <div>
-                <div className="text-[11px] text-muted-foreground">Registos nesta página</div>
-                <div className="text-lg font-bold text-foreground">{items.length}</div>
-              </div>
+          <div className="relative border-t border-white/15 px-4 py-3 dark:border-white/10">
+            <div className="flex flex-nowrap items-stretch gap-2 overflow-x-auto pb-1">
+              <article className="relative min-w-[220px] flex-1 rounded-xl border border-white/20 bg-white/22 p-3 shadow-sm backdrop-blur-sm">
+                <span className="absolute inset-y-0 left-0 w-1 rounded-l-xl bg-rose-500" />
+                <div className="flex items-center gap-2">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-rose-500/15 text-rose-600">
+                    <HeartHandshake size={18} />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="whitespace-nowrap text-[11px] text-muted-foreground">Registos nesta página</div>
+                    <div className="text-lg font-bold text-foreground">{items.length}</div>
+                  </div>
+                </div>
+              </article>
+              <article className="relative min-w-[220px] flex-1 rounded-xl border border-white/20 bg-white/22 p-3 shadow-sm backdrop-blur-sm">
+                <span className="absolute inset-y-0 left-0 w-1 rounded-l-xl bg-amber-500" />
+                <div className="flex items-center gap-2">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-500/15 text-amber-600">
+                    <Activity size={18} />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="whitespace-nowrap text-[11px] text-muted-foreground">Em triagem</div>
+                    <div className="text-lg font-bold text-foreground">{summary.triagem}</div>
+                  </div>
+                </div>
+              </article>
+              <article className="relative min-w-[220px] flex-1 rounded-xl border border-white/20 bg-white/22 p-3 shadow-sm backdrop-blur-sm">
+                <span className="absolute inset-y-0 left-0 w-1 rounded-l-xl bg-emerald-500" />
+                <div className="flex items-center gap-2">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500/15 text-emerald-600">
+                    <CheckCircle2 size={18} />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="whitespace-nowrap text-[11px] text-muted-foreground">Concluídas</div>
+                    <div className="text-lg font-bold text-foreground">{summary.concluidas}</div>
+                  </div>
+                </div>
+              </article>
+              <article className="relative min-w-[220px] flex-1 rounded-xl border border-white/20 bg-white/22 p-3 shadow-sm backdrop-blur-sm">
+                <span className="absolute inset-y-0 left-0 w-1 rounded-l-xl bg-cyan-500" />
+                <div className="flex items-center gap-2">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-cyan-500/15 text-cyan-600">
+                    <FlaskConical size={18} />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="whitespace-nowrap text-[11px] text-muted-foreground">Volume visível</div>
+                    <div className="text-lg font-bold text-foreground">{summary.volume} mL</div>
+                  </div>
+                </div>
+              </article>
             </div>
-          </article>
-          <article className={`${GLASS_CARD} p-3`}>
-            <div className="flex items-center gap-2">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-500/15 text-amber-600">
-                <Activity size={18} />
-              </div>
-              <div>
-                <div className="text-[11px] text-muted-foreground">Em triagem</div>
-                <div className="text-lg font-bold text-foreground">{summary.triagem}</div>
-              </div>
-            </div>
-          </article>
-          <article className={`${GLASS_CARD} p-3`}>
-            <div className="flex items-center gap-2">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500/15 text-emerald-600">
-                <CheckCircle2 size={18} />
-              </div>
-              <div>
-                <div className="text-[11px] text-muted-foreground">Concluídas</div>
-                <div className="text-lg font-bold text-foreground">{summary.concluidas}</div>
-              </div>
-            </div>
-          </article>
-          <article className={`${GLASS_CARD} p-3`}>
-            <div className="flex items-center gap-2">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-cyan-500/15 text-cyan-600">
-                <FlaskConical size={18} />
-              </div>
-              <div>
-                <div className="text-[11px] text-muted-foreground">Volume visível</div>
-                <div className="text-lg font-bold text-foreground">{summary.volume} mL</div>
-              </div>
-            </div>
-          </article>
-        </div>
 
-        <section className={`${GLASS_CARD} p-3`}>
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="relative min-w-[220px] flex-1">
-              <Search size={13} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-              <input
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                placeholder="Pesquisar por código, bolsa ou referência..."
-                className="h-10 w-full rounded-xl border border-white/30 bg-white/45 py-2 pl-9 pr-3 text-sm text-foreground outline-none backdrop-blur-sm transition focus:border-rose-400 focus:ring-2 focus:ring-rose-400/20 dark:border-white/10 dark:bg-white/[0.08]"
-              />
-            </div>
-            <select
-              value={statusFilter}
-              onChange={(event) => setStatusFilter(event.target.value)}
-              className="h-10 min-w-[190px] rounded-xl border border-white/30 bg-white/45 px-3 text-sm text-foreground outline-none backdrop-blur-sm transition focus:border-rose-400 dark:border-white/10 dark:bg-white/[0.08]"
-            >
-              {STATUS_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-            <select
-              value={typeFilter}
-              onChange={(event) => setTypeFilter(event.target.value)}
-              className="h-10 min-w-[190px] rounded-xl border border-white/30 bg-white/45 px-3 text-sm text-foreground outline-none backdrop-blur-sm transition focus:border-cyan-400 dark:border-white/10 dark:bg-white/[0.08]"
-            >
-              {DONATION_TYPE_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-            <div className="ml-auto rounded-xl border border-white/20 bg-white/25 px-3 py-2 text-xs text-muted-foreground backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.05]">
-              {totalItems} doações no total
+            <div className="mt-2 flex flex-nowrap items-center gap-2 overflow-x-auto pb-1">
+              <div className="relative min-w-[320px] flex-1">
+                <Search size={13} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                <input
+                  value={search}
+                  onChange={(event) => setSearch(event.target.value)}
+                  placeholder="Pesquisar por código, bolsa ou referência..."
+                  className="h-10 w-full rounded-xl border border-white/30 bg-white/45 py-2 pl-9 pr-3 text-sm text-foreground outline-none backdrop-blur-sm transition focus:border-rose-400 focus:ring-2 focus:ring-rose-400/20 dark:border-white/10 dark:bg-white/[0.08]"
+                />
+              </div>
+              <select
+                value={statusFilter}
+                onChange={(event) => setStatusFilter(event.target.value)}
+                className="h-10 min-w-[190px] rounded-xl border border-white/30 bg-white/45 px-3 text-sm text-foreground outline-none backdrop-blur-sm transition focus:border-rose-400 dark:border-white/10 dark:bg-white/[0.08]"
+              >
+                {STATUS_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+              <select
+                value={typeFilter}
+                onChange={(event) => setTypeFilter(event.target.value)}
+                className="h-10 min-w-[190px] rounded-xl border border-white/30 bg-white/45 px-3 text-sm text-foreground outline-none backdrop-blur-sm transition focus:border-cyan-400 dark:border-white/10 dark:bg-white/[0.08]"
+              >
+                {DONATION_TYPE_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+              <div className="ml-auto whitespace-nowrap rounded-xl border border-white/20 bg-white/25 px-3 py-2 text-xs text-muted-foreground backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.05]">
+                {summaryLoading ? "A carregar..." : `${totalItems} doações no total`}
+              </div>
             </div>
           </div>
         </section>
