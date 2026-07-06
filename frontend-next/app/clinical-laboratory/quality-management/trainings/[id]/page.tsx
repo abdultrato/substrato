@@ -85,6 +85,15 @@ type TrainingAttachment = {
   description?: string | null;
 };
 
+type TrainingReplication = {
+  id: number;
+  custom_id: string;
+  replicator_display?: string;
+  replication_date: string | null;
+  notes?: string;
+  participants_display?: { id: number; label: string }[];
+};
+
 const T_USER: RelationTarget = { endpoint: "/identity/user/", labelFields: ["name", "username"] };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -640,14 +649,9 @@ export default function TrainingRecordDetailPage() {
   const [attachments, setAttachments] = useState<TrainingAttachment[]>([]);
   const [attachmentsLoading, setAttachmentsLoading] = useState(false);
   const [attachmentsError, setAttachmentsError] = useState<string | null>(null);
-  const [replications, setReplications] = useState<{
-    id: number;
-    custom_id: string;
-    replicator_display?: string;
-    replication_date: string | null;
-    notes?: string;
-    participants_display?: { id: number; label: string }[];
-  }[]>([]);
+  const [replications, setReplications] = useState<TrainingReplication[]>([]);
+  const [replicationsLoading, setReplicationsLoading] = useState(false);
+  const [replicationsError, setReplicationsError] = useState<string | null>(null);
 
   const load = useCallback(() => {
     if (!id) return;
@@ -668,9 +672,19 @@ export default function TrainingRecordDetailPage() {
             setAttachmentsError(e?.message ?? "Erro ao carregar documentos do treinamento.");
           })
           .finally(() => setAttachmentsLoading(false));
-        apiFetch<any>(`/clinical_laboratory/training_replication/?original=${id}`)
-          .then((resp) => setReplications(resp?.results ?? resp?.items ?? []))
-          .catch(() => {});
+        setReplicationsLoading(true);
+        setReplicationsError(null);
+        apiFetchList<TrainingReplication>("/clinical_laboratory/training_replication/", {
+          page: 1,
+          pageSize: 100,
+          query: { original: id, ordering: "replication_date" },
+        })
+          .then(({ items }) => setReplications(items))
+          .catch((e) => {
+            setReplications([]);
+            setReplicationsError(e?.message ?? "Erro ao carregar dados de réplica.");
+          })
+          .finally(() => setReplicationsLoading(false));
         apiFetch<any>(`/clinical_laboratory/training_attendance/?training=${id}`)
           .then((resp) => setAttendances(resp?.results ?? resp?.items ?? []))
           .catch(() => {});
@@ -714,6 +728,8 @@ export default function TrainingRecordDetailPage() {
   const expired  = rec.status === "EXPIRADA" || (days !== null && days < 0);
   const isPlaneada  = rec.status === "PLANEADA";
   const isConcluida = rec.status === "CONCLUIDA";
+  const firstReplication = replications[0] ?? null;
+  const otherReplications = replications.slice(1);
 
   return (
     <AppLayout requiredGroups={VIEW_GROUPS}>
@@ -949,8 +965,65 @@ export default function TrainingRecordDetailPage() {
             </SectionCard>
           </div>
 
-          {/* Réplicas */}
-          {replications.map((r, idx) => (
+          {/* Informação da réplica */}
+          <div className="lg:col-span-2">
+            <SectionCard icon={Copy} title="Informação da réplica (1ª réplica)" accent="bg-violet-500">
+              {replicationsLoading ? (
+                <div className="flex items-center justify-center gap-2 py-3 text-[11px] text-muted-foreground">
+                  <Loader2 size={12} className="animate-spin" />
+                  A carregar dados de réplica...
+                </div>
+              ) : replicationsError ? (
+                <div className="flex items-center justify-between gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-[11px] text-red-700 dark:border-red-800/40 dark:bg-red-900/15 dark:text-red-300">
+                  <span>{replicationsError}</span>
+                  <button type="button" onClick={load} className="shrink-0 font-medium underline-offset-2 hover:underline">
+                    Tentar novamente
+                  </button>
+                </div>
+              ) : !firstReplication ? (
+                <p className="text-[11px] text-muted-foreground">Nenhuma réplica registada.</p>
+              ) : (
+                <div className="space-y-3">
+                  <div className="grid gap-2 md:grid-cols-2">
+                    <Row label="Data da réplica">
+                      {firstReplication.replication_date ? fmtDate(firstReplication.replication_date) : "—"}
+                    </Row>
+                    <Row label="Replicante">
+                      {firstReplication.replicator_display || "—"}
+                    </Row>
+                  </div>
+
+                  <div className="space-y-1">
+                    <span className="block text-[11px] text-muted-foreground">Participantes</span>
+                    {(firstReplication.participants_display ?? []).length === 0 ? (
+                      <p className="text-[11px] text-muted-foreground">Nenhum participante registado.</p>
+                    ) : (
+                      <div className="flex flex-wrap gap-1">
+                        {(firstReplication.participants_display ?? []).map((p) => (
+                          <span key={p.id}
+                            className="inline-flex items-center rounded-full border border-indigo-200 bg-indigo-50 px-2 py-0.5 text-[10px] font-medium text-indigo-700 dark:border-indigo-700/40 dark:bg-indigo-900/20 dark:text-indigo-300">
+                            {p.label}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-2 border-t border-border/30 pt-2">
+                    <Link
+                      href={`/clinical-laboratory/quality-management/trainings/replications/${firstReplication.id}`}
+                      className="inline-flex items-center gap-1 rounded-lg border border-violet-200 bg-violet-50 px-2 py-1 text-[10px] font-medium text-violet-700 transition hover:bg-violet-100 dark:border-violet-700/40 dark:bg-violet-900/20 dark:text-violet-300 dark:hover:bg-violet-900/40">
+                      Ver detalhes
+                    </Link>
+                    <span className="font-mono text-[9px] text-muted-foreground">{firstReplication.custom_id}</span>
+                  </div>
+                </div>
+              )}
+            </SectionCard>
+          </div>
+
+          {/* Outras réplicas */}
+          {otherReplications.map((r, idx) => (
             <div key={r.id} className="lg:col-span-2">
               <section className="relative overflow-hidden rounded-xl border border-white/20 bg-white/25 shadow-sm backdrop-blur-sm dark:bg-white/5 dark:border-white/10">
                 <span className="absolute inset-y-0 left-0 w-1 rounded-l-xl bg-violet-500" />
@@ -960,7 +1033,7 @@ export default function TrainingRecordDetailPage() {
                   <div className="flex items-center gap-2">
                     <Copy size={13} className="text-violet-600 dark:text-violet-400" />
                     <h2 className="text-xs font-semibold text-foreground">
-                      Réplica {idx + 1}
+                      Réplica {idx + 2}
                       <span className="ml-1.5 font-mono text-[9px] font-normal text-muted-foreground">{r.custom_id}</span>
                     </h2>
                   </div>
