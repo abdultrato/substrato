@@ -1,11 +1,12 @@
 "use client";
-import { Suspense } from "react";
-import { GeneratedResourceDetailPage } from "@/components/resources/GeneratedResourcePages";
+
+import { useParams } from "next/navigation";
+
+import { routeParamToString } from "@/lib/routeParams";
+import CorrectiveActionDetail from "../_detail";
 
 export default function Page() {
-  return (
-    <Suspense fallback={<div className="p-4 text-sm text-[var(--gray-500)]">Carregando...</div>}>
-      <GeneratedResourceDetailPage endpoint="/clinical_laboratory/corrective_action/" />
-    </Suspense>
-  );
+  const params = useParams();
+  const id = routeParamToString((params as any)?.id);
+  return <CorrectiveActionDetail id={id} />;
 }
