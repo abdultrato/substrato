@@ -91,8 +91,12 @@ function emptyRow(): FieldRow {
   return { _key: newKey(), name: "", type: "NUMERICO", unit: "mg/dl", reference_min: "", reference_max: "", critical_min: "", critical_max: "" };
 }
 
+function isUnitOptionalType(type: string) {
+  return type === "QUALITATIVO" || type === "SEMIQUANTITATIVO" || type === "TEXTO";
+}
+
 function resolveUnitForPayload(row: FieldRow) {
-  if (row.type === "QUALITATIVO") return "sem unidade";
+  if (isUnitOptionalType(row.type)) return "sem unidade";
   return row.unit || "sem unidade";
 }
 
@@ -265,7 +269,7 @@ export default function EditExamPage() {
     setFields((prev) => prev.map((r) => {
       if (r._key !== key) return r;
       const next = { ...r, ...patch };
-      if (patch.type === "QUALITATIVO" && !patch.unit) next.unit = "sem unidade";
+      if (patch.type && isUnitOptionalType(patch.type) && !patch.unit) next.unit = "sem unidade";
       return next;
     }));
   }
@@ -483,9 +487,9 @@ export default function EditExamPage() {
                           </td>
                           <td className="px-2 py-1 min-w-[100px]">
                             <select
-                              value={f.type === "QUALITATIVO" ? "sem unidade" : f.unit}
+                              value={isUnitOptionalType(f.type) ? "sem unidade" : f.unit}
                               onChange={(e) => updateField(f._key, { unit: e.target.value })}
-                              disabled={f.type === "QUALITATIVO"}
+                              disabled={isUnitOptionalType(f.type)}
                               className={`${selectCls} disabled:cursor-not-allowed disabled:opacity-60`}
                             >
                               {UNITS.map((u) => <option key={u} value={u}>{u}</option>)}
