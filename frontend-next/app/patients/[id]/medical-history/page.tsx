@@ -420,8 +420,7 @@ export default function MedicalHistoryPage() {
             ) : null}
 
             <div className="grid items-start gap-3 lg:grid-cols-2">
-              {/* Paciente */}
-              <SectionCard icon={User} title="Paciente">
+              <SectionCard icon={User} title="Identificação">
                 <div className="divide-y divide-border/40">
                   <InfoRow label="Nome" value={patientName} />
                   <InfoRow label="Código" value={paciente.id_custom || paciente.custom_id} />
@@ -429,23 +428,43 @@ export default function MedicalHistoryPage() {
                   <InfoRow label="Género" value={genderLabel(paciente.genero || paciente.gender)} />
                   <InfoRow label="Idade" value={paciente.age_display} />
                   <InfoRow label="Data nasc." value={fmtDate(paciente.data_nascimento || paciente.birth_date)} />
-                  <InfoRow label="Tipo sanguíneo" value={paciente.blood_type} />
                   <InfoRow label="Raça / origem" value={paciente.raca_origem || paciente.race_origin} />
+                </div>
+              </SectionCard>
+
+              <SectionCard icon={User} title="Contacto e morada">
+                <div className="divide-y divide-border/40">
                   <InfoRow label="Contacto" value={paciente.contacto || paciente.contact} />
                   <InfoRow label="E-mail" value={paciente.email} />
                   <InfoRow label="Morada" value={patientAddress} />
                   <InfoRow label="Complemento" value={paciente.endereco_complemento || paciente.address_complement} />
                   <InfoRow label="Proveniência" value={paciente.proveniencia || paciente.provenance} />
                   <InfoRow label="Empresa" value={paciente.empresa_origem_nome || paciente.origin_company_name} />
+                </div>
+              </SectionCard>
+
+              <SectionCard icon={User} title="Acompanhante">
+                <div className="divide-y divide-border/40">
                   <InfoRow label="Acompanhante" value={patientCompanion} />
                   <InfoRow label="Contacto acomp." value={paciente.telefone_acompanhante || paciente.contacto_acompanhante || paciente.companion_contact} />
                   <InfoRow label="E-mail acomp." value={paciente.email_acompanhante || paciente.companion_email} />
+                </div>
+              </SectionCard>
+
+              <SectionCard icon={User} title="Dados clínicos">
+                <div className="divide-y divide-border/40">
+                  <InfoRow label="Tipo sanguíneo" value={paciente.blood_type} />
                   <InfoRow label="Gestante" value={yesNo(paciente.gestante ?? paciente.pregnant)} />
                   <InfoRow label="Idade gestacional" value={(paciente.idade_gestacional || paciente.gestational_age_weeks) ? `${paciente.idade_gestacional || paciente.gestational_age_weeks} semana(s)` : undefined} />
                   <InfoRow label="Doador de órgãos" value={yesNo(paciente.is_organ_donor)} />
                   <InfoRow label="Repositor inapto" value={yesNo(paciente.is_replacement_donor_inapt)} />
                   <InfoRow label="Motivo da inaptidão" value={paciente.replacement_donor_inapt_reason} />
                   <InfoRow label="Inapto em" value={fmtDate(paciente.replacement_donor_inapt_at)} />
+                </div>
+              </SectionCard>
+
+              <SectionCard icon={User} title="Auditoria">
+                <div className="divide-y divide-border/40">
                   <InfoRow label="Criado em" value={fmtDate(paciente.criado_em || paciente.created_at)} />
                   <InfoRow label="Atualizado em" value={fmtDate(paciente.updated_at)} />
                 </div>
