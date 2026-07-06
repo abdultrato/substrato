@@ -337,7 +337,7 @@ export default function ResourceDetailsCard({
         {renderedSections.map((section) => (
           <section
             key={section.title}
-            className="relative overflow-hidden rounded-xl border border-white/25 bg-white/55 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]"
+            className="relative overflow-hidden rounded-xl border border-white/20 bg-white/28 shadow-sm backdrop-blur-sm transition-colors duration-200 hover:bg-white/34 dark:border-white/10 dark:bg-white/[0.05] dark:hover:bg-white/[0.08]"
           >
             <span className={`absolute inset-x-0 top-0 h-1 bg-gradient-to-r ${section.accent}`} />
             <div className="px-4 py-3">
@@ -349,7 +349,7 @@ export default function ResourceDetailsCard({
                 {section.items.map((item) => (
                   <div
                     key={item.key}
-                    className="rounded-lg border border-white/20 bg-white/50 px-3 py-2 dark:border-white/10 dark:bg-white/[0.04]"
+                    className="rounded-lg border border-white/20 bg-white/26 px-3 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.22)] backdrop-blur-sm transition-colors duration-200 hover:bg-white/32 dark:border-white/10 dark:bg-white/[0.05] dark:hover:bg-white/[0.08]"
                   >
                     <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
                       {fieldLabel({ endpoint, name: item.key })}
