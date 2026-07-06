@@ -147,6 +147,11 @@ export default function PacienteDetalhePage() {
   const [error, setError]       = useState<string | null>(null);
   const [donations, setDonations] = useState<BloodDonation[]>([]);
 
+  useEffect(() => {
+    if (!idStr || !canViewHistory) return;
+    router.prefetch(`/patients/${idStr}/medical-history`);
+  }, [canViewHistory, idStr, router]);
+
   const carregar = useCallback(async () => {
     if (!idStr) return;
     try {
@@ -267,10 +272,10 @@ export default function PacienteDetalhePage() {
 
             <div className="flex flex-wrap items-center gap-2">
               {canViewHistory && (
-                <button type="button" onClick={() => router.push(`/patients/${idStr}/medical-history`)}
+                <Link href={`/patients/${idStr}/medical-history`} prefetch
                   className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-border bg-card px-3 text-xs font-medium text-foreground transition hover:bg-muted">
                   <FileText size={13} /> História clínica
-                </button>
+                </Link>
               )}
               {p.is_blood_donor && (
                 <Link href={`/bloodbank/donors/${p.id}`}

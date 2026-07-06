@@ -44,6 +44,9 @@ type ClinicalHistoryPayload = {
   recibos?: any[]
 }
 
+const HISTORY_LIMIT = 60
+const HISTORY_TIMEOUT_MS = 12000
+
 function fmtDate(value: any): string | undefined {
   if (!value) return undefined
   const d = new Date(value)
@@ -107,14 +110,22 @@ export default function MedicalHistoryPage() {
         setCarregando(true)
         setErro(null)
         const res = await apiFetch<ClinicalHistoryPayload>(
-          `/patients/${id}/clinical-history/?limit=200`,
-          { clientCache: safeRefreshToken === 0 }
+          `/patients/${id}/clinical-history/?limit=${HISTORY_LIMIT}`,
+          {
+            clientCache: safeRefreshToken === 0,
+            timeoutMs: HISTORY_TIMEOUT_MS,
+            retryOnTimeout: 0,
+          }
         )
         if (!mounted) return
         setPayload(res || null)
       } catch (e: any) {
         if (!mounted) return
-        setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao carregar história clínica."))
+        setErro(
+          isNotFoundLikeError(e)
+            ? "História clínica indisponível para este paciente no momento."
+            : (e?.message || "Falha ao carregar história clínica.")
+        )
       } finally {
         if (mounted) setCarregando(false)
       }
@@ -335,6 +346,10 @@ export default function MedicalHistoryPage() {
             {[...Array(4)].map((_, i) => (
               <div key={i} className="h-32 animate-pulse rounded-xl border border-white/20 bg-white/25 dark:bg-white/5 dark:border-white/10" />
             ))}
+          </div>
+        ) : !payload ? (
+          <div className="rounded-xl border border-white/20 bg-white/25 px-4 py-5 text-sm text-muted-foreground shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/5">
+            Nenhum histórico clínico pôde ser carregado para este paciente.
           </div>
         ) : (
           <>
