@@ -185,7 +185,7 @@ export default function BloodDonorDetailsPage() {
                     </span>
                     <span className="rounded-full border border-indigo-200/70 bg-indigo-50 px-2 py-0.5 text-[10px] font-semibold text-indigo-700 dark:border-indigo-400/20 dark:bg-indigo-900/20 dark:text-indigo-300">
                       <Droplet size={8} className="mr-0.5 inline" />
-                      {donations.length} doações
+                      {donations.length} {donations.length === 1 ? "doação" : "doações"}
                     </span>
                   </div>
                 </div>

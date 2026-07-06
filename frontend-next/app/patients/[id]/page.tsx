@@ -20,7 +20,7 @@ import {
 } from "lucide-react";
 
 import AppLayout from "@/components/layout/AppLayout";
-import { apiFetch } from "@/lib/api";
+import { apiFetch, apiFetchList } from "@/lib/api";
 import { isNotFoundLikeError } from "@/lib/errors/api-error";
 import useAuthGuard from "@/hooks/useAuthGuard";
 import { useAuth } from "@/hooks/useAuth";
@@ -155,10 +155,12 @@ export default function PacienteDetalhePage() {
       setPaciente(data);
       if (data.is_blood_donor) {
         try {
-          const res = await apiFetch<{ items?: BloodDonation[]; results?: BloodDonation[] }>(
-            `/bloodbank/donation/?donor=${idStr}&page_size=20&ordering=-collected_at`,
-          );
-          setDonations(res?.items ?? res?.results ?? []);
+          const res = await apiFetchList<BloodDonation>("/bloodbank/donation/", {
+            pageSize: 20,
+            query: { donor: idStr, ordering: "-collected_at" },
+            clientCache: safeRefreshToken === 0,
+          });
+          setDonations(Array.isArray(res?.items) ? res.items : []);
         } catch { setDonations([]); }
       }
     } catch (err: unknown) {
