@@ -61,6 +61,25 @@ function truncate(value: any, max = 80): string {
   return `${v.slice(0, Math.max(0, max - 3))}...`
 }
 
+function yesNo(value: any): string | undefined {
+  if (value === null || value === undefined || value === "") return undefined
+  return value ? "Sim" : "Não"
+}
+
+function joinText(parts: Array<any>): string | undefined {
+  const filtered = parts.map((item) => String(item ?? "").trim()).filter(Boolean)
+  return filtered.length ? filtered.join(", ") : undefined
+}
+
+function genderLabel(value: any): string | undefined {
+  const raw = String(value ?? "").trim()
+  if (!raw) return undefined
+  const normalized = raw.toLowerCase()
+  if (normalized === "f" || normalized === "femenino" || normalized === "feminino") return "Feminino"
+  if (normalized === "m" || normalized === "masculino") return "Masculino"
+  return raw
+}
+
 function SectionCard({
   icon: Icon,
   title,
@@ -168,6 +187,24 @@ export default function MedicalHistoryPage() {
   const faturas = ((payload as any)?.faturas || []) as any[]
   const pagamentos = ((payload as any)?.pagamentos || []) as any[]
   const recibos = ((payload as any)?.recibos || []) as any[]
+  const patientName = paciente.nome || paciente.name
+  const patientDocument = joinText([
+    paciente.tipo_documento || paciente.document_type,
+    paciente.numero_id || paciente.document_number,
+  ])
+  const patientAddress = joinText([
+    paciente.endereco_rua || paciente.address_street,
+    paciente.endereco_numero || paciente.address_number,
+    paciente.endereco_bairro || paciente.address_neighborhood,
+    paciente.endereco_cidade || paciente.address_city,
+    paciente.endereco_provincia || paciente.address_province,
+    paciente.endereco_codigo_postal || paciente.address_postal_code,
+    paciente.endereco_pais || paciente.address_country,
+  ]) || paciente.morada || paciente.address
+  const patientCompanion = joinText([
+    paciente.nome_acompanhante || paciente.companion_name,
+    paciente.parentesco_acompanhante || paciente.companion_relationship,
+  ])
 
   const cardexCols = useMemo(() => [
     { header: "Início", render: (r: any) => fmtDate(r.inicio_atendimento) || "—" },
@@ -386,13 +423,31 @@ export default function MedicalHistoryPage() {
               {/* Paciente */}
               <SectionCard icon={User} title="Paciente">
                 <div className="divide-y divide-border/40">
-                  <InfoRow label="Nome" value={paciente.nome} />
-                  <InfoRow label="Documento" value={[paciente.tipo_documento, paciente.numero_id].filter(Boolean).join(" ") || undefined} />
-                  <InfoRow label="Género" value={paciente.genero} />
+                  <InfoRow label="Nome" value={patientName} />
+                  <InfoRow label="Código" value={paciente.id_custom || paciente.custom_id} />
+                  <InfoRow label="Documento" value={patientDocument} />
+                  <InfoRow label="Género" value={genderLabel(paciente.genero || paciente.gender)} />
                   <InfoRow label="Idade" value={paciente.age_display} />
-                  <InfoRow label="Contacto" value={paciente.contacto} />
-                  <InfoRow label="Empresa" value={paciente.empresa_origem_nome} />
-                  <InfoRow label="Criado em" value={fmtDate(paciente.criado_em)} />
+                  <InfoRow label="Data nasc." value={fmtDate(paciente.data_nascimento || paciente.birth_date)} />
+                  <InfoRow label="Tipo sanguíneo" value={paciente.blood_type} />
+                  <InfoRow label="Raça / origem" value={paciente.raca_origem || paciente.race_origin} />
+                  <InfoRow label="Contacto" value={paciente.contacto || paciente.contact} />
+                  <InfoRow label="E-mail" value={paciente.email} />
+                  <InfoRow label="Morada" value={patientAddress} />
+                  <InfoRow label="Complemento" value={paciente.endereco_complemento || paciente.address_complement} />
+                  <InfoRow label="Proveniência" value={paciente.proveniencia || paciente.provenance} />
+                  <InfoRow label="Empresa" value={paciente.empresa_origem_nome || paciente.origin_company_name} />
+                  <InfoRow label="Acompanhante" value={patientCompanion} />
+                  <InfoRow label="Contacto acomp." value={paciente.telefone_acompanhante || paciente.contacto_acompanhante || paciente.companion_contact} />
+                  <InfoRow label="E-mail acomp." value={paciente.email_acompanhante || paciente.companion_email} />
+                  <InfoRow label="Gestante" value={yesNo(paciente.gestante ?? paciente.pregnant)} />
+                  <InfoRow label="Idade gestacional" value={(paciente.idade_gestacional || paciente.gestational_age_weeks) ? `${paciente.idade_gestacional || paciente.gestational_age_weeks} semana(s)` : undefined} />
+                  <InfoRow label="Doador de órgãos" value={yesNo(paciente.is_organ_donor)} />
+                  <InfoRow label="Repositor inapto" value={yesNo(paciente.is_replacement_donor_inapt)} />
+                  <InfoRow label="Motivo da inaptidão" value={paciente.replacement_donor_inapt_reason} />
+                  <InfoRow label="Inapto em" value={fmtDate(paciente.replacement_donor_inapt_at)} />
+                  <InfoRow label="Criado em" value={fmtDate(paciente.criado_em || paciente.created_at)} />
+                  <InfoRow label="Atualizado em" value={fmtDate(paciente.updated_at)} />
                 </div>
               </SectionCard>
 
