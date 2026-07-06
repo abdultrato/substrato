@@ -209,10 +209,10 @@ export default function PacienteDetalhePage() {
             setPaciente(data);
             if (data.is_blood_donor) {
                 try {
-                    const res = await apiFetch<{ results: BloodDonation[] }>(
-                        `/blood-donations/?donor=${idStr}&page_size=20&ordering=-collected_at`,
+                    const res = await apiFetch<{ items?: BloodDonation[]; results?: BloodDonation[] }>(
+                        `/bloodbank/donation/?donor=${idStr}&page_size=20&ordering=-collected_at`,
                     );
-                    setDonations(res?.results ?? []);
+                    setDonations(res?.items ?? res?.results ?? []);
                 } catch {
                     setDonations([]);
                 }

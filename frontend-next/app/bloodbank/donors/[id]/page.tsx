@@ -18,7 +18,7 @@ import {
 import AppLayout from "@/components/layout/AppLayout"
 import useAuthGuard from "@/hooks/useAuthGuard"
 import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
-import { apiFetch } from "@/lib/api"
+import { apiFetch, apiFetchList } from "@/lib/api"
 import { GROUPS } from "@/lib/rbac"
 
 type PatientDetail = Record<string, any>
@@ -116,12 +116,14 @@ export default function BloodDonorDetailsPage() {
       setError(null)
       const [patient, donationRes] = await Promise.all([
         apiFetch<PatientDetail>(`/patients/${id}/`, { clientCache: safeRefreshToken === 0 }),
-        apiFetch<{ results?: DonationRow[] }>(`/blood-donations/?donor=${id}&page_size=20&ordering=-collected_at`, {
+        apiFetchList<DonationRow>("/bloodbank/donation/", {
+          pageSize: 20,
+          query: { donor: id, ordering: "-collected_at" },
           clientCache: safeRefreshToken === 0,
         }),
       ])
       setDonor(patient)
-      setDonations(Array.isArray(donationRes?.results) ? donationRes.results : [])
+      setDonations(Array.isArray(donationRes?.items) ? donationRes.items : [])
     } catch (err: any) {
       setError(err?.message || "Erro ao carregar doador.")
     } finally {
