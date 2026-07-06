@@ -76,6 +76,16 @@ function ageLabel(v?: string | null) {
   return `${age} anos`
 }
 
+function ageYears(v?: string | null) {
+  if (!v) return null
+  const b = new Date(v)
+  if (isNaN(b.getTime())) return null
+  const t = new Date()
+  let age = t.getFullYear() - b.getFullYear()
+  if (t.getMonth() - b.getMonth() < 0 || (t.getMonth() === b.getMonth() && t.getDate() < b.getDate())) age--
+  return age
+}
+
 export default function BloodBankPage() {
   const { loading } = useAuthGuard()
   const { user } = useAuth()
@@ -146,6 +156,8 @@ export default function BloodBankPage() {
         const donorItems: DonorRow[] = []
         for (const p of [...(byFlag.items ?? []), ...(byIdResults.filter(Boolean) as DonorRow[])]) {
           const key = String((p as Record<string, unknown>).id)
+          const years = ageYears((p as Record<string, unknown>).birth_date as string | null)
+          if (years !== null && years > 54) continue
           if (!seen.has(key)) { seen.add(key); donorItems.push(p) }
         }
         donorItems.sort((a, b) => String((a as Record<string, unknown>).name ?? "").localeCompare(String((b as Record<string, unknown>).name ?? "")))

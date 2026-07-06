@@ -52,6 +52,18 @@ const ERROR_LABELS: Record<string, string> = {
   donor: "Doador",
 }
 
+function toLocalCalendarDate(value: string | Date) {
+  if (value instanceof Date) {
+    return new Date(value.getFullYear(), value.getMonth(), value.getDate())
+  }
+  const raw = String(value || "").trim()
+  if (!raw) return new Date(NaN)
+  const isoDate = raw.includes("T") ? raw.split("T")[0] : raw
+  const [year, month, day] = isoDate.split("-").map((part) => parseInt(part, 10))
+  if (!year || !month || !day) return new Date(raw)
+  return new Date(year, month - 1, day)
+}
+
 function parseDonationSubmitError(message: string): {
   title: string
   summary?: string
@@ -282,8 +294,8 @@ function NewDonationWizard() {
             const gender = (patient.gender || "").toLowerCase();
             const isFemale = gender.includes("femin") || gender.includes("femenin");
             const daysRequired = isFemale ? 120 : 90;
-            const lastDate = new Date(prev.collected_at);
-            const today = new Date();
+            const lastDate = toLocalCalendarDate(prev.collected_at);
+            const today = toLocalCalendarDate(new Date());
             const daysElapsed = Math.floor((today.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24));
 
             if (daysElapsed < daysRequired) {

@@ -346,6 +346,8 @@ class PatientSerializer(serializers.ModelSerializer):
             return None
 
     def get_is_blood_donor(self, obj):
+        if not obj.apto_como_doador_de_sangue_por_idade():
+            return False
         # Em listagem o viewset anota `blood_donation_count` para evitar N+1;
         # no detalhe/após criação recorre a uma única query de fallback.
         annotated = getattr(obj, "blood_donation_count", None)

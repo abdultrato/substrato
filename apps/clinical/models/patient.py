@@ -396,6 +396,10 @@ class Patient(CoreModel):
 
         return dias // 365
 
+    def apto_como_doador_de_sangue_por_idade(self) -> bool:
+        anos = self.idade_em_anos()
+        return anos is not None and 16 <= anos <= 54
+
     def eh_neonato(self) -> bool:
 
         dias = self.idade_em_dias()

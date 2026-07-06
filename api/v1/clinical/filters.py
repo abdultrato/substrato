@@ -167,9 +167,10 @@ class PatientFilter(SafeFilterSet):
         if value is None:
             return queryset
         donors = queryset.filter(blood_donations__deleted=False)
+        donors = [patient.pk for patient in donors.distinct() if patient.apto_como_doador_de_sangue_por_idade()]
         if value:
-            return donors.distinct()
-        return queryset.exclude(pk__in=donors.values("pk"))
+            return queryset.filter(pk__in=donors)
+        return queryset.exclude(pk__in=donors)
 
     class Meta:
         model = Patient
