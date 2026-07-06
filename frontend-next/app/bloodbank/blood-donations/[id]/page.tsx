@@ -6,7 +6,6 @@ import {
   Activity,
   ArrowLeft,
   Calendar,
-  CheckCircle2,
   ChevronDown,
   Droplets,
   FlaskConical,
@@ -218,7 +217,6 @@ export default function BloodDonationDetailPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving]   = useState(false);
   const [error, setError]     = useState<string | null>(null);
-  const [saved, setSaved]     = useState(false);
 
   const load = useCallback(async () => {
     if (!idStr) return;
@@ -272,8 +270,7 @@ export default function BloodDonationDetailPage() {
       if (form.pulse_bpm)                 payload.pulse_bpm = Number(form.pulse_bpm);
       if (form.temperature_c)             payload.temperature_c = form.temperature_c;
       await apiFetch(`/bloodbank/donation/${idStr}/`, { method: "PATCH", body: JSON.stringify(payload) });
-      setSaved(true);
-      setTimeout(() => setSaved(false), 3000);
+      router.back();
     } catch (e: unknown) {
       setError((e as { message?: string })?.message || "Erro ao guardar.");
     } finally { setSaving(false); }
@@ -348,11 +345,6 @@ export default function BloodDonationDetailPage() {
             </div>
 
             <div className="flex items-center gap-2">
-              {saved && (
-                <span className="inline-flex items-center gap-1 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700">
-                  <CheckCircle2 size={13} /> Guardado
-                </span>
-              )}
               <button type="button" onClick={save} disabled={saving}
                 className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-gradient-to-r from-rose-600 to-pink-600 px-3 text-xs font-semibold text-white shadow-md shadow-rose-500/20 transition hover:from-rose-700 hover:to-pink-700 disabled:opacity-60">
                 {saving ? <Loader2 size={13} className="animate-spin" /> : <Save size={13} />}
