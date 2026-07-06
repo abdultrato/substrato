@@ -63,7 +63,7 @@ const UNITS = [
   "mmol/l","mmol/mol","µmol/l","nmol/L","pmol/L","mEq/L","cel/mm3","x10³/µl","x10⁶/µL",
   "%","u/l","U/mL","UI/L","UI/mL","mUI/L","kU/L","p/µL","ph","fl","pg","mm/h",
   "ovos/g","parasitas/µL","parasitas/campo","cistos/campo","Ct","cópias/mL","log10",
-  "densidade","células/campo","",
+  "densidade","células/campo","sem unidade",
 ];
 
 interface LabExam {
@@ -89,6 +89,11 @@ let _keyCounter = 0;
 function newKey() { return `row-${++_keyCounter}`; }
 function emptyRow(): FieldRow {
   return { _key: newKey(), name: "", type: "NUMERICO", unit: "mg/dl", reference_min: "", reference_max: "", critical_min: "", critical_max: "" };
+}
+
+function resolveUnitForPayload(row: FieldRow) {
+  if (row.type === "QUALITATIVO") return "sem unidade";
+  return row.unit || "sem unidade";
 }
 
 function RelationSelect({ value, onChange, target, placeholder }: {
@@ -237,7 +242,7 @@ export default function EditExamPage() {
             id: f.id,
             name: f.name ?? "",
             type: f.type ?? "NUMERICO",
-            unit: f.unit ?? "",
+            unit: f.unit ?? "sem unidade",
             reference_min: f.reference_min ?? "",
             reference_max: f.reference_max ?? "",
             critical_min: f.critical_min ?? "",
@@ -257,7 +262,12 @@ export default function EditExamPage() {
     });
   }
   function updateField(key: string, patch: Partial<FieldRow>) {
-    setFields((prev) => prev.map((r) => r._key === key ? { ...r, ...patch } : r));
+    setFields((prev) => prev.map((r) => {
+      if (r._key !== key) return r;
+      const next = { ...r, ...patch };
+      if (patch.type === "QUALITATIVO" && !patch.unit) next.unit = "sem unidade";
+      return next;
+    }));
   }
 
   function validate() {
@@ -294,7 +304,7 @@ export default function EditExamPage() {
       await Promise.all(
         fields.map((f, pos) => {
           const body = JSON.stringify({
-            exam: Number(id), name: f.name.trim(), type: f.type, unit: f.unit,
+            exam: Number(id), name: f.name.trim(), type: f.type, unit: resolveUnitForPayload(f),
             reference_min: f.reference_min || null,
             reference_max: f.reference_max || null,
             critical_min: f.critical_min || null,
@@ -472,8 +482,13 @@ export default function EditExamPage() {
                             </select>
                           </td>
                           <td className="px-2 py-1 min-w-[100px]">
-                            <select value={f.unit} onChange={(e) => updateField(f._key, { unit: e.target.value })} className={selectCls}>
-                              {UNITS.map((u) => <option key={u} value={u}>{u || "—"}</option>)}
+                            <select
+                              value={f.type === "QUALITATIVO" ? "sem unidade" : f.unit}
+                              onChange={(e) => updateField(f._key, { unit: e.target.value })}
+                              disabled={f.type === "QUALITATIVO"}
+                              className={`${selectCls} disabled:cursor-not-allowed disabled:opacity-60`}
+                            >
+                              {UNITS.map((u) => <option key={u} value={u}>{u}</option>)}
                             </select>
                           </td>
                           <td className="px-2 py-1 w-20">
