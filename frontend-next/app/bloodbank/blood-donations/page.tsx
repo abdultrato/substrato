@@ -24,8 +24,7 @@ import { GROUPS } from "@/lib/rbac";
 const GLASS_CARD =
   "relative overflow-hidden rounded-xl border border-white/20 bg-white/30 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]";
 
-const DEFAULT_PAGE_SIZE = 12;
-const PAGE_SIZE_OPTIONS = [6, 12, 18, 24, 36];
+const DEFAULT_PAGE_SIZE = 10;
 
 type DonationRow = {
   id: number;
@@ -135,6 +134,7 @@ export default function BloodbankBloodDonationsListPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
+  const [pageSizeInput, setPageSizeInput] = useState(String(DEFAULT_PAGE_SIZE));
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [typeFilter, setTypeFilter] = useState("");
@@ -148,6 +148,13 @@ export default function BloodbankBloodDonationsListPage() {
   useEffect(() => {
     setPage(1);
   }, [debouncedSearch, statusFilter, typeFilter, pageSize]);
+
+  function applyPageSize(value: string) {
+    const parsed = Math.max(1, Math.min(999, parseInt(value, 10) || DEFAULT_PAGE_SIZE));
+    setPageSize(parsed);
+    setPageSizeInput(String(parsed));
+    setPage(1);
+  }
 
   useEffect(() => {
     let mounted = true;
@@ -321,7 +328,7 @@ export default function BloodbankBloodDonationsListPage() {
               </article>
             </div>
 
-            <div className="mt-1.5 grid grid-cols-1 gap-1.5 lg:grid-cols-[minmax(0,1.2fr)_minmax(160px,0.36fr)_minmax(160px,0.36fr)_minmax(120px,0.22fr)_auto]">
+            <div className="mt-1.5 grid grid-cols-1 gap-1.5 lg:grid-cols-[minmax(0,1.2fr)_minmax(160px,0.36fr)_minmax(160px,0.36fr)_minmax(120px,0.22fr)]">
               <div className="relative min-w-0">
                 <Search size={13} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                 <input
@@ -353,20 +360,22 @@ export default function BloodbankBloodDonationsListPage() {
                   </option>
                 ))}
               </select>
-              <select
-                value={pageSize}
-                onChange={(event) => setPageSize(Number(event.target.value))}
-                className="h-9 min-w-0 rounded-xl border border-white/30 bg-white/45 px-3 text-sm text-foreground outline-none backdrop-blur-sm transition focus:border-cyan-400 dark:border-white/10 dark:bg-white/[0.08]"
-              >
-                {PAGE_SIZE_OPTIONS.map((option) => (
-                  <option key={option} value={option}>
-                    {option}/pág
-                  </option>
-                ))}
-              </select>
-              <div className="flex items-center justify-center rounded-xl border border-white/20 bg-white/25 px-2.5 py-2 text-center text-xs text-muted-foreground backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.05]">
-                {summaryLoading ? "A carregar..." : `${totalItems} doações no total`}
-              </div>
+              <input
+                type="number"
+                min="1"
+                max="999"
+                value={pageSizeInput}
+                onChange={(event) => setPageSizeInput(event.target.value)}
+                onBlur={(event) => applyPageSize(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    event.preventDefault();
+                    applyPageSize(pageSizeInput);
+                  }
+                }}
+                placeholder="10/pág"
+                className="h-9 min-w-0 rounded-xl border border-white/30 bg-white/45 px-3 text-sm text-foreground outline-none backdrop-blur-sm transition focus:border-cyan-400 dark:border-white/10 dark:bg-white/[0.08] [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+              />
             </div>
           </div>
         </section>
