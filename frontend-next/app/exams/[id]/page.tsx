@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 
 import AppLayout from "@/components/layout/AppLayout";
-import { apiFetch } from "@/lib/api";
+import { apiFetch, apiFetchList } from "@/lib/api";
 import useAuthGuard from "@/hooks/useAuthGuard";
 import { GROUPS } from "@/lib/rbac";
 
@@ -28,15 +28,14 @@ interface SampleDetail { id: number; name: string; }
 
 interface ExamField {
   id: number;
-  analyte_name: string;
+  name: string;
   unit: string;
-  result_type: string;
+  type: string;
   reference_min?: string | null;
   reference_max?: string | null;
-  reference_text?: string | null;
   critical_min?: string | null;
   critical_max?: string | null;
-  order?: number;
+  position?: number;
 }
 
 interface LabExam {
@@ -53,7 +52,6 @@ interface LabExam {
   sample_type_name: string | null;
   sample_options: number[];
   sample_options_details: SampleDetail[];
-  fields?: ExamField[];
   created_at: string;
   updated_at: string;
 }
@@ -121,14 +119,21 @@ export default function ExamDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
 
-  const [exam, setExam]     = useState<LabExam | null>(null);
+  const [exam, setExam]       = useState<LabExam | null>(null);
+  const [fields, setFields]   = useState<ExamField[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError]   = useState<string | null>(null);
+  const [error, setError]     = useState<string | null>(null);
 
   useEffect(() => {
     if (!id) return;
-    apiFetch<LabExam>(`/clinical/lab-exams/${id}/`)
-      .then(setExam)
+    Promise.all([
+      apiFetch<LabExam>(`/clinical/lab-exams/${id}/`),
+      apiFetchList<ExamField>("/clinical/examfield/", { page: 1, pageSize: 200, query: { exam: id } }),
+    ])
+      .then(([examData, { items }]) => {
+        setExam(examData);
+        setFields([...items].sort((a, b) => (a.position ?? 0) - (b.position ?? 0)));
+      })
       .catch(() => setError("Exame não encontrado."))
       .finally(() => setLoading(false));
   }, [id]);
@@ -258,50 +263,52 @@ export default function ExamDetailPage() {
           </Card>
 
           {/* Analitos / campos de resultado */}
-          {exam.fields && exam.fields.length > 0 && (
-            <div className="lg:col-span-2">
-              <section className="relative overflow-hidden rounded-xl border border-white/20 bg-white/25 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/5">
-                <span className="absolute inset-y-0 left-0 w-1 rounded-l-xl bg-gradient-to-b from-indigo-500 to-violet-600" />
-                <div className="flex items-center gap-1.5 border-b border-border/50 px-3 py-1.5 pl-4">
-                  <ClipboardList size={11} className="text-indigo-600 dark:text-indigo-400" />
-                  <h2 className="text-[11px] font-semibold text-foreground">Analitos e valores de referência</h2>
-                  <span className="ml-auto rounded-full border border-indigo-200 bg-indigo-50 px-1.5 py-0.5 text-[9px] font-bold text-indigo-700 dark:border-indigo-700/40 dark:bg-indigo-900/20 dark:text-indigo-300">
-                    {exam.fields.length}
-                  </span>
-                </div>
+          <div className="lg:col-span-2">
+            <section className="relative overflow-hidden rounded-xl border border-white/20 bg-white/25 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/5">
+              <span className="absolute inset-y-0 left-0 w-1 rounded-l-xl bg-gradient-to-b from-indigo-500 to-violet-600" />
+              <div className="flex items-center gap-1.5 border-b border-border/50 px-3 py-1.5 pl-4">
+                <ClipboardList size={11} className="text-indigo-600 dark:text-indigo-400" />
+                <h2 className="text-[11px] font-semibold text-foreground">Analitos e valores de referência</h2>
+                <span className="ml-auto rounded-full border border-indigo-200 bg-indigo-50 px-1.5 py-0.5 text-[9px] font-bold text-indigo-700 dark:border-indigo-700/40 dark:bg-indigo-900/20 dark:text-indigo-300">
+                  {fields.length}
+                </span>
+              </div>
+              {fields.length === 0 ? (
+                <p className="px-4 py-5 text-center text-[11px] text-muted-foreground">Nenhum analito definido para este exame.</p>
+              ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full text-[11px]">
                     <thead>
                       <tr className="border-b border-border/50 bg-white/10 dark:bg-white/5">
-                        <th className="px-4 py-1.5 text-left font-semibold text-foreground">Analito</th>
+                        <th className="px-4 py-1.5 text-left font-semibold text-foreground">#</th>
+                        <th className="px-3 py-1.5 text-left font-semibold text-foreground">Analito</th>
                         <th className="px-3 py-1.5 text-left font-semibold text-foreground">Tipo</th>
                         <th className="px-3 py-1.5 text-left font-semibold text-foreground">Unidade</th>
-                        <th className="px-3 py-1.5 text-left font-semibold text-foreground">Ref. mín</th>
-                        <th className="px-3 py-1.5 text-left font-semibold text-foreground">Ref. máx</th>
-                        <th className="px-3 py-1.5 text-left font-semibold text-foreground text-red-600 dark:text-red-400">Crítico mín</th>
+                        <th className="px-3 py-1.5 text-left font-semibold text-emerald-600 dark:text-emerald-400">Ref. mín</th>
+                        <th className="px-3 py-1.5 text-left font-semibold text-emerald-600 dark:text-emerald-400">Ref. máx</th>
+                        <th className="px-3 py-1.5 text-left font-semibold text-red-600 dark:text-red-400">Crítico mín</th>
                         <th className="px-3 py-1.5 text-left font-semibold text-red-600 dark:text-red-400">Crítico máx</th>
-                        <th className="px-3 py-1.5 text-left font-semibold text-foreground">Ref. texto</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border/30">
-                      {exam.fields.sort((a, b) => (a.order ?? 0) - (b.order ?? 0)).map((f) => (
+                      {fields.map((f, i) => (
                         <tr key={f.id} className="hover:bg-white/20 dark:hover:bg-white/5">
-                          <td className="px-4 py-1.5 font-medium text-foreground">{f.analyte_name}</td>
-                          <td className="px-3 py-1.5 text-muted-foreground">{f.result_type}</td>
+                          <td className="px-4 py-1.5 text-center text-[10px] text-muted-foreground">{i + 1}</td>
+                          <td className="px-3 py-1.5 font-medium text-foreground">{f.name}</td>
+                          <td className="px-3 py-1.5 text-muted-foreground">{f.type}</td>
                           <td className="px-3 py-1.5 font-mono text-muted-foreground">{f.unit || "—"}</td>
                           <td className="px-3 py-1.5 text-emerald-700 dark:text-emerald-400">{f.reference_min ?? "—"}</td>
                           <td className="px-3 py-1.5 text-emerald-700 dark:text-emerald-400">{f.reference_max ?? "—"}</td>
                           <td className="px-3 py-1.5 font-semibold text-red-600 dark:text-red-400">{f.critical_min ?? "—"}</td>
                           <td className="px-3 py-1.5 font-semibold text-red-600 dark:text-red-400">{f.critical_max ?? "—"}</td>
-                          <td className="px-3 py-1.5 text-muted-foreground">{f.reference_text || "—"}</td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
                 </div>
-              </section>
-            </div>
-          )}
+              )}
+            </section>
+          </div>
 
         </div>
       </div>

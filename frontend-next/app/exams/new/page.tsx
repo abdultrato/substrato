@@ -309,7 +309,7 @@ export default function NewExamPage() {
       if (filledFields.length > 0) {
         await Promise.all(
           filledFields.map((field) =>
-            apiFetch("/clinical/lab-exam-fields/", {
+            apiFetch("/clinical/examfield/", {
               method: "POST",
               body: JSON.stringify({ ...field, exam: res.id }),
             })

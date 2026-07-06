@@ -6,8 +6,10 @@ import {
   ArrowLeft,
   FlaskConical,
   Loader2,
+  Plus,
   Save,
   Search,
+  Trash2,
   X,
 } from "lucide-react";
 
@@ -23,39 +25,45 @@ const EDIT_GROUPS = [GROUPS.ADMIN, GROUPS.LABORATORIO];
 const T_SAMPLE: RelationTarget = { endpoint: "/clinical/samples/", labelFields: ["name"] };
 
 const SECTORS = [
-  ["Hematologia", "Hematologia"], ["Bioquimica", "Bioquímica"],
-  ["Microbiologia", "Microbiologia"], ["Imunologia", "Imunologia"],
-  ["Serologia", "Serologia"], ["Parasitologia", "Parasitologia"],
-  ["BiologiaMolecular", "Biologia Molecular"], ["Virologia", "Virologia"],
-  ["Bacteriologia", "Bacteriologia"], ["Coagulacao", "Coagulação"],
-  ["Urinalise", "Urinálise"], ["Toxicologia", "Toxicologia"],
-  ["Hormonios", "Hormônios"], ["MarcadoresTumorais", "Marcadores Tumorais"],
-  ["LiquidosCorporais", "Líquidos Corporais"], ["Gasometria", "Gasometria"],
-  ["BancoSangue", "Banco de Sangue"], ["Outro", "Outro"],
+  ["Hematologia","Hematologia"],["Bioquimica","Bioquímica"],["Microbiologia","Microbiologia"],
+  ["Imunologia","Imunologia"],["Serologia","Serologia"],["Parasitologia","Parasitologia"],
+  ["BiologiaMolecular","Biologia Molecular"],["Virologia","Virologia"],["Bacteriologia","Bacteriologia"],
+  ["Coagulacao","Coagulação"],["Urinalise","Urinálise"],["Toxicologia","Toxicologia"],
+  ["Hormonios","Hormônios"],["MarcadoresTumorais","Marcadores Tumorais"],
+  ["LiquidosCorporais","Líquidos Corporais"],["Gasometria","Gasometria"],
+  ["BancoSangue","Banco de Sangue"],["Outro","Outro"],
 ];
 
 const METHODS = [
-  ["Enzimatico", "Enzimático"], ["EnzimaticoColorimetrico", "Enzimático Colorimétrico"],
-  ["Colorimetrico", "Colorimétrico"], ["CineticoUV", "Cinético UV"],
-  ["CineticoEnzimatico", "Cinético Enzimático"], ["Jaffe", "Jaffé Cinético"],
-  ["Biureto", "Biureto"], ["VerdeBromocresol", "Verde de Bromocresol"],
-  ["Imunoturbidimetria", "Imunoturbidimetria"], ["Nefelometrico", "Nefelométrico"],
-  ["ELISA", "ELISA"], ["Quimioluminescencia", "Quimioluminescência"],
-  ["Eletroquimioluminescencia", "Eletroquimioluminescência"],
-  ["Imunofluorescencia", "Imunofluorescência"], ["Imunoensaio", "Imunoensaio"],
-  ["HematologiaAutomatizada", "Hematologia Automatizada"],
-  ["CitometriaFluxo", "Citometria de Fluxo"], ["Coagulometria", "Coagulometria"],
-  ["MicroscopiaOptica", "Microscopia Óptica"], ["Microscopico", "Microscópico"],
-  ["Cultura", "Cultura"], ["Antibiograma", "Antibiograma"],
-  ["ColoracaoGram", "Coloração de Gram"], ["ColoracaoZiehl", "Ziehl-Neelsen"],
-  ["PCR", "PCR"], ["RT_PCR", "RT-PCR"], ["PCRTempoReal", "PCR em Tempo Real"],
-  ["NAAT", "NAAT"], ["Sequenciamento", "Sequenciamento"],
-  ["GotaEspessa", "Gota Espessa"], ["Imunocromatografia", "Imunocromatografia"],
-  ["FisicoQuimicoMicroscopia", "Físico-químico e Microscopia"],
-  ["TiraReagente", "Tira Reagente"], ["EletrodoIonSeletivo", "Eletrodo Íon Seletivo"],
-  ["HPLC", "HPLC"], ["Eletroforese", "Eletroforese"],
-  ["EspectrometriaMassa", "Espectrometria de Massa"], ["MALDI_TOF", "MALDI-TOF"],
-  ["Outro", "Outro"],
+  ["Enzimatico","Enzimático"],["EnzimaticoColorimetrico","Enzimático Colorimétrico"],
+  ["Colorimetrico","Colorimétrico"],["CineticoUV","Cinético UV"],["CineticoEnzimatico","Cinético Enzimático"],
+  ["Jaffe","Jaffé"],["Biureto","Biureto"],["VerdeBromocresol","Verde de Bromocresol"],
+  ["Imunoturbidimetria","Imunoturbidimetria"],["Nefelometrico","Nefelométrico"],
+  ["ELISA","ELISA"],["Quimioluminescencia","Quimioluminescência"],
+  ["Eletroquimioluminescencia","Eletroquimioluminescência"],["Imunofluorescencia","Imunofluorescência"],
+  ["Imunoensaio","Imunoensaio"],["HematologiaAutomatizada","Hematologia Automatizada"],
+  ["CitometriaFluxo","Citometria de Fluxo"],["Coagulometria","Coagulometria"],
+  ["MicroscopiaOptica","Microscopia Óptica"],["Microscopico","Microscópico"],
+  ["Cultura","Cultura"],["Antibiograma","Antibiograma"],["ColoracaoGram","Gram"],
+  ["ColoracaoZiehl","Ziehl-Neelsen"],["PCR","PCR"],["RT_PCR","RT-PCR"],
+  ["PCRTempoReal","PCR Tempo Real"],["NAAT","NAAT"],["Sequenciamento","Sequenciamento"],
+  ["GotaEspessa","Gota Espessa"],["Imunocromatografia","Imunocromatografia"],
+  ["FisicoQuimicoMicroscopia","Físico-químico + Microscopia"],["TiraReagente","Tira Reagente"],
+  ["EletrodoIonSeletivo","Eletrodo Íon Seletivo"],["HPLC","HPLC"],["Eletroforese","Eletroforese"],
+  ["EspectrometriaMassa","Espectrometria de Massa"],["MALDI_TOF","MALDI-TOF"],["Outro","Outro"],
+];
+
+const RESULT_TYPES = [
+  ["NUMERICO","Numérico"],["QUALITATIVO","Qualitativo"],
+  ["SEMIQUANTITATIVO","Semi-quantitativo"],["TEXTO","Texto livre"],
+];
+
+const UNITS = [
+  "g/dl","g/L","mg/dl","mg/L","mg/24h","µg/dL","µg/L","µg/mL","ng/mL","ng/dL","pg/mL",
+  "mmol/l","mmol/mol","µmol/l","nmol/L","pmol/L","mEq/L","cel/mm3","x10³/µl","x10⁶/µL",
+  "%","u/l","U/mL","UI/L","UI/mL","mUI/L","kU/L","p/µL","ph","fl","pg","mm/h",
+  "ovos/g","parasitas/µL","parasitas/campo","cistos/campo","Ct","cópias/mL","log10",
+  "densidade","células/campo","",
 ];
 
 interface LabExam {
@@ -63,12 +71,29 @@ interface LabExam {
   turnaround_hours: number; price: string; vat_percentage: string;
   applies_vat_by_default: boolean; method: string; sector: string;
   sample_type: number | null; sample_type_name: string | null;
-  sample_options: number[];
 }
 
-function RelationSelect({ value, onChange, target, placeholder, zIndex = "z-[30]" }: {
+interface FieldRow {
+  _key: string;
+  id?: number;
+  name: string;
+  type: string;
+  unit: string;
+  reference_min: string;
+  reference_max: string;
+  critical_min: string;
+  critical_max: string;
+}
+
+let _keyCounter = 0;
+function newKey() { return `row-${++_keyCounter}`; }
+function emptyRow(): FieldRow {
+  return { _key: newKey(), name: "", type: "NUMERICO", unit: "mg/dl", reference_min: "", reference_max: "", critical_min: "", critical_max: "" };
+}
+
+function RelationSelect({ value, onChange, target, placeholder }: {
   value: number | null; onChange: (v: number | null, label: string) => void;
-  target: RelationTarget; placeholder?: string; zIndex?: string;
+  target: RelationTarget; placeholder?: string;
 }) {
   const [query, setQuery]   = useState("");
   const [label, setLabel]   = useState("");
@@ -99,7 +124,7 @@ function RelationSelect({ value, onChange, target, placeholder, zIndex = "z-[30]
   function clear() { onChange(null, ""); setLabel(""); }
 
   return (
-    <div className="space-y-1.5">
+    <div className="space-y-1">
       {value !== null && (
         <span className="inline-flex items-center gap-1 rounded-full border border-sky-200 bg-sky-50 px-2 py-0.5 text-[10px] font-medium text-sky-700 dark:border-sky-700/40 dark:bg-sky-900/20 dark:text-sky-300">
           {label}
@@ -107,7 +132,7 @@ function RelationSelect({ value, onChange, target, placeholder, zIndex = "z-[30]
         </span>
       )}
       {value === null && (
-        <div className={`relative ${zIndex}`}>
+        <div className="relative z-[30]">
           <Search size={11} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <input type="text" value={query}
             onChange={(e) => search(e.target.value)}
@@ -163,8 +188,8 @@ function Field({ label, required, error, children }: {
   );
 }
 
-const inputCls = "w-full rounded-md border border-border bg-background px-2.5 py-1.5 text-xs text-foreground outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-400/20";
-const selectCls = "w-full rounded-md border border-border bg-card px-2.5 py-1.5 text-xs text-foreground outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-400/20";
+const inputCls = "w-full rounded-md border border-border bg-background px-2 py-1 text-xs text-foreground outline-none transition focus:border-sky-400 focus:ring-1 focus:ring-sky-400/20";
+const selectCls = "w-full rounded-md border border-border bg-card px-2 py-1 text-xs text-foreground outline-none transition focus:border-sky-400";
 
 export default function EditExamPage() {
   useAuthGuard();
@@ -172,15 +197,17 @@ export default function EditExamPage() {
   const router = useRouter();
 
   const [loadingData, setLoadingData] = useState(true);
-  const [name, setName] = useState("");
-  const [sector, setSector] = useState("Bioquimica");
-  const [method, setMethod] = useState("");
-  const [price, setPrice] = useState("");
-  const [vatPct, setVatPct] = useState("16.00");
+  const [name, setName]       = useState("");
+  const [sector, setSector]   = useState("Bioquimica");
+  const [method, setMethod]   = useState("");
+  const [price, setPrice]     = useState("");
+  const [vatPct, setVatPct]   = useState("16.00");
   const [appliesVat, setAppliesVat] = useState(true);
-  const [tat, setTat] = useState("24");
+  const [tat, setTat]         = useState("24");
   const [sampleTypeId, setSampleTypeId] = useState<number | null>(null);
   const [sampleTypeLabel, setSampleTypeLabel] = useState("");
+  const [fields, setFields]   = useState<FieldRow[]>([]);
+  const [deletedFieldIds, setDeletedFieldIds] = useState<number[]>([]);
 
   const [errors, setErrors]   = useState<Record<string, string>>({});
   const [saving, setSaving]   = useState(false);
@@ -188,27 +215,58 @@ export default function EditExamPage() {
 
   useEffect(() => {
     if (!id) return;
-    apiFetch<LabExam>(`/clinical/lab-exams/${id}/`)
-      .then((exam) => {
-        setName(exam.name ?? "");
-        setSector(exam.sector ?? "Bioquimica");
-        setMethod(exam.method ?? "");
-        setPrice(exam.price ?? "");
-        setVatPct(exam.vat_percentage ?? "16.00");
-        setAppliesVat(exam.applies_vat_by_default ?? true);
-        setTat(String(exam.turnaround_hours ?? 24));
-        if (exam.sample_type) { setSampleTypeId(exam.sample_type); setSampleTypeLabel(exam.sample_type_name ?? ""); }
-      })
-      .catch(() => setSaveError("Erro ao carregar exame."))
+    Promise.all([
+      apiFetch<LabExam>(`/clinical/lab-exams/${id}/`),
+      apiFetchList<{ id: number; name: string; type: string; unit: string; reference_min: string | null; reference_max: string | null; critical_min: string | null; critical_max: string | null; position: number }>(
+        "/clinical/examfield/", { page: 1, pageSize: 200, query: { exam: id } }
+      ),
+    ]).then(([exam, { items: fieldItems }]) => {
+      setName(exam.name ?? "");
+      setSector(exam.sector ?? "Bioquimica");
+      setMethod(exam.method ?? "");
+      setPrice(exam.price ?? "");
+      setVatPct(exam.vat_percentage ?? "16.00");
+      setAppliesVat(exam.applies_vat_by_default ?? true);
+      setTat(String(exam.turnaround_hours ?? 24));
+      if (exam.sample_type) { setSampleTypeId(exam.sample_type); setSampleTypeLabel(exam.sample_type_name ?? ""); }
+      setFields(
+        [...fieldItems]
+          .sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
+          .map((f) => ({
+            _key: newKey(),
+            id: f.id,
+            name: f.name ?? "",
+            type: f.type ?? "NUMERICO",
+            unit: f.unit ?? "",
+            reference_min: f.reference_min ?? "",
+            reference_max: f.reference_max ?? "",
+            critical_min: f.critical_min ?? "",
+            critical_max: f.critical_max ?? "",
+          }))
+      );
+    }).catch(() => setSaveError("Erro ao carregar exame."))
       .finally(() => setLoadingData(false));
   }, [id]);
+
+  function addField() { setFields((prev) => [...prev, emptyRow()]); }
+  function removeField(key: string) {
+    setFields((prev) => {
+      const row = prev.find((r) => r._key === key);
+      if (row?.id) setDeletedFieldIds((d) => [...d, row.id!]);
+      return prev.filter((r) => r._key !== key);
+    });
+  }
+  function updateField(key: string, patch: Partial<FieldRow>) {
+    setFields((prev) => prev.map((r) => r._key === key ? { ...r, ...patch } : r));
+  }
 
   function validate() {
     const e: Record<string, string> = {};
     if (!name.trim()) e.name = "Nome obrigatório.";
     if (!price || Number(price) <= 0) e.price = "Preço deve ser maior que zero.";
     if (!sampleTypeId) e.sample_type = "Amostra obrigatória.";
-    if (!tat || Number(tat) <= 0) e.tat = "Tempo de resposta deve ser maior que zero.";
+    if (!tat || Number(tat) <= 0) e.tat = "Tempo de resposta > 0.";
+    fields.forEach((f, i) => { if (!f.name.trim()) e[`field_${i}`] = "Nome do analito obrigatório."; });
     setErrors(e);
     return Object.keys(e).length === 0;
   }
@@ -221,16 +279,39 @@ export default function EditExamPage() {
       await apiFetch(`/clinical/lab-exams/${id}/`, {
         method: "PATCH",
         body: JSON.stringify({
-          name: name.trim(), sector, method,
-          price, vat_percentage: vatPct,
-          applies_vat_by_default: appliesVat,
-          turnaround_hours: Number(tat),
-          sample_type: sampleTypeId,
+          name: name.trim(), sector, method, price,
+          vat_percentage: vatPct, applies_vat_by_default: appliesVat,
+          turnaround_hours: Number(tat), sample_type: sampleTypeId,
         }),
       });
+
+      // Delete removed fields
+      await Promise.all(deletedFieldIds.map((fid) =>
+        apiFetch(`/clinical/examfield/${fid}/`, { method: "DELETE" }).catch(() => {})
+      ));
+
+      // Save fields (create or patch)
+      await Promise.all(
+        fields.map((f, pos) => {
+          const body = JSON.stringify({
+            exam: Number(id), name: f.name.trim(), type: f.type, unit: f.unit,
+            reference_min: f.reference_min || null,
+            reference_max: f.reference_max || null,
+            critical_min: f.critical_min || null,
+            critical_max: f.critical_max || null,
+            position: pos + 1,
+          });
+          if (f.id) {
+            return apiFetch(`/clinical/examfield/${f.id}/`, { method: "PATCH", body });
+          } else {
+            return apiFetch("/clinical/examfield/", { method: "POST", body });
+          }
+        })
+      );
+
       router.push(`/exams/${id}`);
     } catch (err: unknown) {
-      setSaveError((err as { message?: string })?.message || "Erro ao guardar exame.");
+      setSaveError((err as { message?: string })?.message || "Erro ao guardar.");
     } finally { setSaving(false); }
   }
 
@@ -280,60 +361,166 @@ export default function EditExamPage() {
             <Loader2 size={20} className="animate-spin" />
           </div>
         ) : (
-          <div className="grid gap-2 lg:grid-cols-2">
+          <>
+            <div className="grid gap-2 lg:grid-cols-3">
 
-            <Card title="Identificação" accent="bg-gradient-to-b from-sky-500 to-cyan-600">
-              <Field label="Nome do exame" required error={errors.name}>
-                <input type="text" value={name} onChange={(e) => setName(e.target.value)}
-                  placeholder="Ex.: Hemograma completo" className={inputCls} />
-              </Field>
-              <Field label="Setor">
-                <select value={sector} onChange={(e) => setSector(e.target.value)} className={selectCls}>
-                  {SECTORS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-                </select>
-              </Field>
-              <Field label="Método">
-                <select value={method} onChange={(e) => setMethod(e.target.value)} className={selectCls}>
-                  <option value="">— Seleccionar método —</option>
-                  {METHODS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-                </select>
-              </Field>
-            </Card>
+              {/* Identificação */}
+              <Card title="Identificação" accent="bg-gradient-to-b from-sky-500 to-cyan-600">
+                <Field label="Nome do exame" required error={errors.name}>
+                  <input type="text" value={name} onChange={(e) => setName(e.target.value)}
+                    placeholder="Ex.: Hemograma completo"
+                    className="w-full rounded-md border border-border bg-background px-2.5 py-1.5 text-xs text-foreground outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-400/20" />
+                </Field>
+                <Field label="Setor">
+                  <select value={sector} onChange={(e) => setSector(e.target.value)}
+                    className="w-full rounded-md border border-border bg-card px-2.5 py-1.5 text-xs text-foreground outline-none transition focus:border-sky-400">
+                    {SECTORS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+                  </select>
+                </Field>
+                <Field label="Método">
+                  <select value={method} onChange={(e) => setMethod(e.target.value)}
+                    className="w-full rounded-md border border-border bg-card px-2.5 py-1.5 text-xs text-foreground outline-none transition focus:border-sky-400">
+                    <option value="">— Método —</option>
+                    {METHODS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+                  </select>
+                </Field>
+              </Card>
 
-            <Card title="Amostra e TAT" accent="bg-cyan-500">
-              <Field label="Amostra principal" required error={errors.sample_type}>
-                <RelationSelect target={T_SAMPLE} value={sampleTypeId}
-                  onChange={(v, lbl) => { setSampleTypeId(v); setSampleTypeLabel(lbl); setErrors((p) => ({ ...p, sample_type: "" })); }}
-                  placeholder="Pesquisar amostra…" />
-                {sampleTypeId && !sampleTypeLabel && (
-                  <p className="text-[10px] text-muted-foreground">Amostra seleccionada (ID: {sampleTypeId})</p>
-                )}
-              </Field>
-              <Field label="Tempo de resposta (horas)" required error={errors.tat}>
-                <input type="number" min="1" value={tat} onChange={(e) => setTat(e.target.value)}
-                  className={inputCls} />
-              </Field>
-            </Card>
+              {/* Amostra e TAT */}
+              <Card title="Amostra e TAT" accent="bg-cyan-500">
+                <Field label="Amostra principal" required error={errors.sample_type}>
+                  <RelationSelect target={T_SAMPLE} value={sampleTypeId}
+                    onChange={(v, lbl) => { setSampleTypeId(v); setSampleTypeLabel(lbl); setErrors((p) => ({ ...p, sample_type: "" })); }}
+                    placeholder="Pesquisar amostra…" />
+                </Field>
+                <Field label="Tempo de resposta (h)" required error={errors.tat}>
+                  <input type="number" min="1" value={tat} onChange={(e) => setTat(e.target.value)}
+                    className="w-full rounded-md border border-border bg-background px-2.5 py-1.5 text-xs text-foreground outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-400/20" />
+                </Field>
+              </Card>
 
-            <Card title="Preço e facturação" accent="bg-gradient-to-b from-emerald-500 to-teal-600">
-              <Field label="Preço base (MT)" required error={errors.price}>
-                <input type="number" min="0.01" step="0.01" value={price}
-                  onChange={(e) => setPrice(e.target.value)} className={inputCls} />
-              </Field>
-              <Field label="IVA (%)">
-                <input type="number" min="0" max="100" step="0.01" value={vatPct}
-                  onChange={(e) => setVatPct(e.target.value)} className={inputCls} />
-              </Field>
-              <Field label="Aplicar IVA por padrão">
-                <label className="flex cursor-pointer items-center gap-2">
-                  <input type="checkbox" checked={appliesVat} onChange={(e) => setAppliesVat(e.target.checked)}
-                    className="h-4 w-4 rounded border-border accent-sky-600" />
-                  <span className="text-xs text-foreground">Sim, aplicar IVA por padrão</span>
-                </label>
-              </Field>
-            </Card>
+              {/* Preço */}
+              <Card title="Preço e IVA" accent="bg-gradient-to-b from-emerald-500 to-teal-600">
+                <Field label="Preço base (MT)" required error={errors.price}>
+                  <input type="number" min="0.01" step="0.01" value={price}
+                    onChange={(e) => setPrice(e.target.value)}
+                    className="w-full rounded-md border border-border bg-background px-2.5 py-1.5 text-xs text-foreground outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-400/20" />
+                </Field>
+                <Field label="IVA (%)">
+                  <input type="number" min="0" max="100" step="0.01" value={vatPct}
+                    onChange={(e) => setVatPct(e.target.value)}
+                    className="w-full rounded-md border border-border bg-background px-2.5 py-1.5 text-xs text-foreground outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-400/20" />
+                </Field>
+                <Field label="Aplicar IVA por padrão">
+                  <label className="flex cursor-pointer items-center gap-2">
+                    <input type="checkbox" checked={appliesVat} onChange={(e) => setAppliesVat(e.target.checked)}
+                      className="h-4 w-4 rounded border-border accent-sky-600" />
+                    <span className="text-xs text-foreground">Sim</span>
+                  </label>
+                </Field>
+              </Card>
+            </div>
 
-          </div>
+            {/* Analitos inline */}
+            <section className="relative overflow-visible rounded-xl border border-white/20 bg-white/25 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/5">
+              <span className="absolute inset-y-0 left-0 w-1 rounded-l-xl bg-gradient-to-b from-indigo-500 to-violet-600" />
+              <div className="flex items-center justify-between border-b border-border/50 px-3 py-1.5 pl-4">
+                <div className="flex items-center gap-2">
+                  <h2 className="text-[11px] font-semibold text-foreground">Analitos e valores de referência</h2>
+                  <span className="rounded-full border border-indigo-200 bg-indigo-50 px-1.5 py-0.5 text-[9px] font-bold text-indigo-700 dark:border-indigo-700/40 dark:bg-indigo-900/20 dark:text-indigo-300">
+                    {fields.length}
+                  </span>
+                </div>
+                <button type="button" onClick={addField}
+                  className="inline-flex items-center gap-1 rounded-lg border border-indigo-200 bg-indigo-50 px-2 py-1 text-[10px] font-semibold text-indigo-700 transition hover:bg-indigo-100 dark:border-indigo-700/40 dark:bg-indigo-900/20 dark:text-indigo-300 dark:hover:bg-indigo-900/40">
+                  <Plus size={10} /> Adicionar analito
+                </button>
+              </div>
+
+              {fields.length === 0 ? (
+                <div className="px-4 py-6 text-center text-[11px] text-muted-foreground">
+                  Nenhum analito definido. Clique em &ldquo;Adicionar analito&rdquo; para começar.
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-[11px]">
+                    <thead>
+                      <tr className="border-b border-border/50 bg-white/10 dark:bg-white/5">
+                        <th className="px-3 py-1.5 text-left font-semibold text-foreground">#</th>
+                        <th className="px-3 py-1.5 text-left font-semibold text-foreground">Nome do analito*</th>
+                        <th className="px-3 py-1.5 text-left font-semibold text-foreground">Tipo</th>
+                        <th className="px-3 py-1.5 text-left font-semibold text-foreground">Unidade</th>
+                        <th className="px-3 py-1.5 text-left font-semibold text-emerald-600 dark:text-emerald-400">Ref. mín</th>
+                        <th className="px-3 py-1.5 text-left font-semibold text-emerald-600 dark:text-emerald-400">Ref. máx</th>
+                        <th className="px-3 py-1.5 text-left font-semibold text-red-600 dark:text-red-400">Crit. mín</th>
+                        <th className="px-3 py-1.5 text-left font-semibold text-red-600 dark:text-red-400">Crit. máx</th>
+                        <th className="px-2 py-1.5" />
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border/30">
+                      {fields.map((f, i) => (
+                        <tr key={f._key} className={errors[`field_${i}`] ? "bg-red-50/30 dark:bg-red-900/10" : "hover:bg-white/20 dark:hover:bg-white/5"}>
+                          <td className="px-3 py-1 text-center text-[10px] text-muted-foreground">{i + 1}</td>
+                          <td className="px-2 py-1 min-w-[140px]">
+                            <input value={f.name} onChange={(e) => updateField(f._key, { name: e.target.value })}
+                              placeholder="Ex.: Hemoglobina" className={inputCls} />
+                            {errors[`field_${i}`] && <p className="text-[9px] text-red-500 mt-0.5">{errors[`field_${i}`]}</p>}
+                          </td>
+                          <td className="px-2 py-1 min-w-[120px]">
+                            <select value={f.type} onChange={(e) => updateField(f._key, { type: e.target.value })} className={selectCls}>
+                              {RESULT_TYPES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+                            </select>
+                          </td>
+                          <td className="px-2 py-1 min-w-[100px]">
+                            <select value={f.unit} onChange={(e) => updateField(f._key, { unit: e.target.value })} className={selectCls}>
+                              {UNITS.map((u) => <option key={u} value={u}>{u || "—"}</option>)}
+                            </select>
+                          </td>
+                          <td className="px-2 py-1 w-20">
+                            <input type="number" step="any" value={f.reference_min}
+                              onChange={(e) => updateField(f._key, { reference_min: e.target.value })}
+                              placeholder="—"
+                              className={`${inputCls} text-emerald-700 dark:text-emerald-400`} />
+                          </td>
+                          <td className="px-2 py-1 w-20">
+                            <input type="number" step="any" value={f.reference_max}
+                              onChange={(e) => updateField(f._key, { reference_max: e.target.value })}
+                              placeholder="—"
+                              className={`${inputCls} text-emerald-700 dark:text-emerald-400`} />
+                          </td>
+                          <td className="px-2 py-1 w-20">
+                            <input type="number" step="any" value={f.critical_min}
+                              onChange={(e) => updateField(f._key, { critical_min: e.target.value })}
+                              placeholder="—"
+                              className={`${inputCls} text-red-600 dark:text-red-400`} />
+                          </td>
+                          <td className="px-2 py-1 w-20">
+                            <input type="number" step="any" value={f.critical_max}
+                              onChange={(e) => updateField(f._key, { critical_max: e.target.value })}
+                              placeholder="—"
+                              className={`${inputCls} text-red-600 dark:text-red-400`} />
+                          </td>
+                          <td className="px-2 py-1">
+                            <button type="button" onClick={() => removeField(f._key)}
+                              className="inline-flex h-6 w-6 items-center justify-center rounded text-muted-foreground transition hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400">
+                              <Trash2 size={11} />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              <div className="border-t border-border/30 px-4 py-2">
+                <button type="button" onClick={addField}
+                  className="inline-flex items-center gap-1 text-[10px] font-medium text-indigo-600 transition hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300">
+                  <Plus size={10} /> Adicionar linha
+                </button>
+              </div>
+            </section>
+          </>
         )}
       </form>
     </AppLayout>
