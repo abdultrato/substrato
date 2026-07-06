@@ -556,7 +556,11 @@ class TrainingAttachmentViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerys
     def perform_create(self, serializer):
         file = self.request.FILES.get("file")
         original_name = file.name if file else ""
-        serializer.save(original_name=original_name)
+        tenant = self._get_request_tenant()
+        kwargs = {"original_name": original_name}
+        if tenant:
+            kwargs["tenant"] = tenant
+        serializer.save(**kwargs)
 
 
 class CompetencyAssessmentViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):

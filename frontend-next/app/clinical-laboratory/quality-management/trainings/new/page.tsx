@@ -387,12 +387,17 @@ export default function NewTrainingRecordPage() {
   const [saving, setSaving]     = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
+  const MAX_TOTAL_MB = 9;
+  const totalFilesMB = pendingFiles.reduce((s, f) => s + f.size, 0) / (1024 * 1024);
+  const fileSizeOk = totalFilesMB <= MAX_TOTAL_MB;
+
   const currentStatus = STATUS_CHOICES.find((s) => s.value === status);
 
   function validate() {
     const e: Record<string, string> = {};
     if (!title.trim())  e.title = "Título obrigatório.";
     if (staff === null) e.staff = "Colaborador obrigatório.";
+    if (!fileSizeOk)    e.files = `Tamanho total dos ficheiros excede ${MAX_TOTAL_MB} MB (actual: ${totalFilesMB.toFixed(1)} MB).`;
     setErrors(e);
     return Object.keys(e).length === 0;
   }
@@ -419,12 +424,20 @@ export default function NewTrainingRecordPage() {
         }),
       });
       if (!data?.id) throw new Error("Resposta inesperada do servidor.");
+      const uploadErrors: string[] = [];
       for (const file of pendingFiles) {
         const fd = new FormData();
         fd.append("training", String(data.id));
         fd.append("file", file);
         fd.append("original_name", file.name);
-        await apiFetch("/clinical_laboratory/training_attachment/", { method: "POST", body: fd }).catch(() => {});
+        try {
+          await apiFetch("/clinical_laboratory/training_attachment/", { method: "POST", body: fd });
+        } catch (ue: any) {
+          uploadErrors.push(`${file.name}: ${ue?.message ?? "erro"}`);
+        }
+      }
+      if (uploadErrors.length) {
+        setSaveError(`Registo criado, mas ${uploadErrors.length} ficheiro(s) falharam: ${uploadErrors.join("; ")}`);
       }
       router.push(`/clinical-laboratory/quality-management/trainings/${data.id}`);
     } catch (err: any) {
@@ -620,13 +633,22 @@ export default function NewTrainingRecordPage() {
 
           {/* ── Instrumentos / Anexos ─────────────────────────── */}
           <Card icon={Paperclip} title="Instrumentos de formação" accent="bg-rose-400">
-            <p className="text-[10px] text-muted-foreground pb-0.5">
-              Adicione PDFs, imagens, vídeos, ZIPs ou outros ficheiros de apoio.
-            </p>
-            <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-border bg-background px-3 py-2 text-[11px] text-muted-foreground transition hover:border-violet-400 hover:bg-muted">
+            <div className="flex items-center justify-between pb-0.5">
+              <p className="text-[10px] text-muted-foreground">PDFs, imagens, vídeos, ZIPs — máx. {MAX_TOTAL_MB} MB total.</p>
+              {pendingFiles.length > 0 && (
+                <span className={`text-[10px] font-medium ${fileSizeOk ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>
+                  {totalFilesMB.toFixed(1)} / {MAX_TOTAL_MB} MB
+                </span>
+              )}
+            </div>
+            {errors.files && (
+              <p className="text-[10px] font-medium text-red-600 dark:text-red-400">{errors.files}</p>
+            )}
+            <label className={`flex cursor-pointer items-center gap-2 rounded-lg border border-dashed bg-background px-3 py-2 text-[11px] text-muted-foreground transition hover:bg-muted ${!fileSizeOk ? "border-red-300 hover:border-red-400" : "border-border hover:border-violet-400"}`}>
               <Paperclip size={12} />
               <span>Selecionar ficheiros…</span>
               <input type="file" multiple className="sr-only"
+                accept=".pdf,.png,.jpg,.jpeg,.gif,.webp,.mp4,.mov,.avi,.zip,.rar,.7z,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
                 onChange={(e) => {
                   if (e.target.files) {
                     setPendingFiles((prev) => [...prev, ...Array.from(e.target.files!)]);
