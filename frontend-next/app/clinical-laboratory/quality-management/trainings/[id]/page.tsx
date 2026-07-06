@@ -1,12 +1,315 @@
 "use client";
 
-import { Suspense } from "react";
-import { GeneratedResourceDetailPage } from "@/components/resources/GeneratedResourcePages";
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { useParams, useRouter } from "next/navigation";
+import {
+  ArrowLeft,
+  Award,
+  BookOpen,
+  CalendarDays,
+  CheckCircle2,
+  Clock,
+  Pencil,
+  Shield,
+  User,
+} from "lucide-react";
 
-export default function ClinicalLaboratoryQualityManagementTrainingsDetailPage() {
+import AppLayout from "@/components/layout/AppLayout";
+import { apiFetch } from "@/lib/api";
+import { GROUPS } from "@/lib/rbac";
+
+const VIEW_GROUPS = [GROUPS.ADMIN, GROUPS.LABORATORIO];
+
+// ── Metadata ──────────────────────────────────────────────────────────────────
+
+const STATUS_LABEL: Record<string, string> = {
+  PLANEADA:  "Planeada",
+  CONCLUIDA: "Concluída",
+  EXPIRADA:  "Expirada",
+};
+
+const STATUS_COLOR: Record<string, string> = {
+  PLANEADA:  "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-700/40 dark:bg-amber-900/20 dark:text-amber-300",
+  CONCLUIDA: "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-700/40 dark:bg-emerald-900/20 dark:text-emerald-300",
+  EXPIRADA:  "border-red-200 bg-red-50 text-red-700 dark:border-red-700/40 dark:bg-red-900/20 dark:text-red-300",
+};
+
+const STATUS_DOT: Record<string, string> = {
+  PLANEADA:  "bg-amber-400",
+  CONCLUIDA: "bg-emerald-500",
+  EXPIRADA:  "bg-red-500",
+};
+
+const STATUS_BAR: Record<string, string> = {
+  PLANEADA:  "bg-amber-400",
+  CONCLUIDA: "bg-emerald-500",
+  EXPIRADA:  "bg-red-500",
+};
+
+// ── Types ─────────────────────────────────────────────────────────────────────
+
+type Training = {
+  id: number;
+  custom_id: string;
+  title: string;
+  training_type: string;
+  trainer: string;
+  training_date: string | null;
+  expiry_date: string | null;
+  certificate: string;
+  competency_verified: boolean;
+  status: string;
+  staff: number | null;
+  staff_display?: string;
+  created_at: string;
+  updated_at: string;
+};
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+function fmtDate(d: string | null) {
+  if (!d) return null;
+  return new Date(d.includes("T") ? d : d + "T00:00:00").toLocaleDateString("pt-MZ", {
+    day: "2-digit", month: "long", year: "numeric",
+  });
+}
+
+function fmtDateTime(d: string | null) {
+  if (!d) return null;
+  return new Date(d).toLocaleString("pt-MZ", {
+    day: "2-digit", month: "short", year: "numeric",
+    hour: "2-digit", minute: "2-digit",
+  });
+}
+
+function daysUntil(d: string | null): number | null {
+  if (!d) return null;
+  return Math.ceil((new Date(d).getTime() - Date.now()) / 86400000);
+}
+
+// ── UI helpers ────────────────────────────────────────────────────────────────
+
+function SectionCard({ icon: Icon, title, children, accent }: {
+  icon: React.ElementType; title: string; children: React.ReactNode; accent?: string;
+}) {
   return (
-    <Suspense fallback={<div className="p-4 text-sm text-[var(--gray-500)]">Carregando...</div>}>
-      <GeneratedResourceDetailPage endpoint="/clinical_laboratory/training_record/" />
-    </Suspense>
+    <section className="relative overflow-hidden rounded-xl border border-white/20 bg-white/25 shadow-sm backdrop-blur-sm dark:bg-white/5 dark:border-white/10">
+      {accent && <span className={`absolute inset-y-0 left-0 w-1 rounded-l-xl ${accent}`} />}
+      <div className="flex items-center gap-2 border-b border-border/50 px-4 py-2.5 pl-5">
+        <Icon size={13} className="text-[var(--primary-600)] dark:text-[var(--primary-400)]" />
+        <h2 className="text-xs font-semibold text-foreground">{title}</h2>
+      </div>
+      <div className="p-4 pl-5">{children}</div>
+    </section>
+  );
+}
+
+function Row({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="flex items-start justify-between gap-4 border-b border-border/30 py-1.5 last:border-0">
+      <span className="shrink-0 text-[11px] text-muted-foreground">{label}</span>
+      <span className="text-right text-xs font-medium text-foreground">{children ?? "—"}</span>
+    </div>
+  );
+}
+
+// ── Page ──────────────────────────────────────────────────────────────────────
+
+export default function TrainingRecordDetailPage() {
+  const { id } = useParams<{ id: string }>();
+  const router = useRouter();
+  const [rec, setRec] = useState<Training | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!id) return;
+    setLoading(true);
+    apiFetch<Training>(`/clinical_laboratory/training_record/${id}/`)
+      .then(setRec)
+      .catch((e) => setError(e?.message ?? "Erro ao carregar registo."))
+      .finally(() => setLoading(false));
+  }, [id]);
+
+  if (loading) {
+    return (
+      <AppLayout requiredGroups={VIEW_GROUPS}>
+        <div className="flex h-48 items-center justify-center">
+          <div className="h-6 w-6 animate-spin rounded-full border-2 border-violet-500 border-t-transparent" />
+        </div>
+      </AppLayout>
+    );
+  }
+
+  if (error || !rec) {
+    return (
+      <AppLayout requiredGroups={VIEW_GROUPS}>
+        <div className="mx-auto max-w-md rounded-xl border border-red-200 bg-red-50 p-6 text-center text-sm text-red-700 dark:border-red-800/40 dark:bg-red-900/15 dark:text-red-300">
+          {error ?? "Registo não encontrado."}
+        </div>
+      </AppLayout>
+    );
+  }
+
+  const bar      = STATUS_BAR[rec.status]   ?? "bg-slate-400";
+  const sClr     = STATUS_COLOR[rec.status] ?? "border-border bg-muted text-foreground";
+  const sDot     = STATUS_DOT[rec.status]   ?? "bg-slate-400";
+  const sLbl     = STATUS_LABEL[rec.status] ?? rec.status;
+  const days     = daysUntil(rec.expiry_date);
+  const expiring = days !== null && days >= 0 && days <= 30;
+  const expired  = rec.status === "EXPIRADA" || (days !== null && days < 0);
+
+  return (
+    <AppLayout requiredGroups={VIEW_GROUPS}>
+      <div className="mx-auto w-[90%] space-y-2">
+
+        {/* ── Hero ──────────────────────────────────────────────── */}
+        <div className="relative overflow-hidden rounded-xl border border-white/20 bg-white/30 shadow-sm backdrop-blur-sm dark:bg-white/5 dark:border-white/10">
+          <div className="pointer-events-none absolute inset-0">
+            <div className="absolute -right-10 -top-10 h-32 w-32 rounded-full bg-violet-500/10 blur-2xl" />
+            <div className="absolute -bottom-8 left-8 h-24 w-24 rounded-full bg-indigo-500/10 blur-2xl" />
+          </div>
+          <span className={`absolute inset-y-0 left-0 w-1 rounded-l-xl ${bar}`} />
+
+          <div className="relative flex flex-wrap items-center gap-4 px-5 py-4">
+            <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border-2 ${sClr} shadow-sm`}>
+              <BookOpen size={22} />
+            </div>
+
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                <Link href="/clinical-laboratory/quality-management/trainings" className="hover:underline">
+                  Registos de formação
+                </Link>
+                <span>/</span>
+                <span className="font-mono text-[9px]">{rec.custom_id}</span>
+              </div>
+              <h1 className="mt-0.5 text-lg font-bold leading-tight text-foreground">{rec.title}</h1>
+              <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium ${sClr}`}>
+                  <span className={`h-1.5 w-1.5 rounded-full ${sDot}`} />
+                  {sLbl}
+                </span>
+                {rec.training_type && (
+                  <span className="inline-flex items-center rounded-full border border-indigo-200 bg-indigo-50 px-2 py-0.5 text-[10px] font-medium text-indigo-700 dark:border-indigo-700/40 dark:bg-indigo-900/20 dark:text-indigo-300">
+                    {rec.training_type}
+                  </span>
+                )}
+                {rec.competency_verified && (
+                  <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-medium text-emerald-700 dark:border-emerald-700/40 dark:bg-emerald-900/20 dark:text-emerald-300">
+                    <CheckCircle2 size={9} /> Competência verificada
+                  </span>
+                )}
+                {expiring && !expired && (
+                  <span className="inline-flex items-center gap-1 rounded-full border border-orange-200 bg-orange-50 px-2 py-0.5 text-[10px] font-medium text-orange-700 dark:border-orange-700/40 dark:bg-orange-900/20 dark:text-orange-300">
+                    <Clock size={9} /> Expira em {days} dia{days !== 1 ? "s" : ""}
+                  </span>
+                )}
+                {expired && rec.status !== "EXPIRADA" && (
+                  <span className="inline-flex items-center gap-1 rounded-full border border-red-200 bg-red-50 px-2 py-0.5 text-[10px] font-medium text-red-700 dark:border-red-700/40 dark:bg-red-900/20 dark:text-red-300">
+                    <Clock size={9} /> Validade expirada
+                  </span>
+                )}
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button type="button" onClick={() => router.back()}
+                className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-border bg-card px-3 text-xs font-medium text-foreground transition hover:bg-muted">
+                <ArrowLeft size={13} /> Voltar
+              </button>
+              <Link href={`/clinical-laboratory/quality-management/trainings/${id}/edit`}
+                className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-indigo-600 px-4 text-xs font-semibold text-white shadow-md shadow-violet-500/30 transition hover:from-violet-700 hover:to-indigo-700">
+                <Pencil size={13} /> Editar
+              </Link>
+            </div>
+          </div>
+        </div>
+
+        {/* ── Grid de cards ─────────────────────────────────────── */}
+        <div className="grid gap-2 lg:grid-cols-2">
+
+          {/* Identificação */}
+          <SectionCard icon={BookOpen} title="Identificação" accent="bg-violet-500">
+            <Row label="Código">{rec.custom_id}</Row>
+            <Row label="Título">{rec.title}</Row>
+            <Row label="Tipo de formação">{rec.training_type || "—"}</Row>
+          </SectionCard>
+
+          {/* Colaborador */}
+          <SectionCard icon={User} title="Colaborador" accent="bg-indigo-500">
+            <Row label="Colaborador">
+              {rec.staff_display ?? (rec.staff ? `#${rec.staff}` : "—")}
+            </Row>
+            <Row label="Competência verificada">
+              {rec.competency_verified ? (
+                <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-medium text-emerald-700 dark:border-emerald-700/40 dark:bg-emerald-900/20 dark:text-emerald-300">
+                  <CheckCircle2 size={9} /> Sim
+                </span>
+              ) : (
+                <span className="text-[10px] text-muted-foreground">Não</span>
+              )}
+            </Row>
+          </SectionCard>
+
+          {/* Formador & Certificação */}
+          <SectionCard icon={Award} title="Formador e certificação" accent="bg-sky-500">
+            <Row label="Formador / entidade">{rec.trainer || "—"}</Row>
+            <Row label="Nº do certificado">
+              {rec.certificate
+                ? <span className="font-mono text-[10px]">{rec.certificate}</span>
+                : "—"}
+            </Row>
+          </SectionCard>
+
+          {/* Datas */}
+          <SectionCard icon={CalendarDays} title="Datas" accent="bg-teal-500">
+            <Row label="Data de formação">{fmtDate(rec.training_date) ?? "—"}</Row>
+            <Row label="Validade / expiração">
+              {rec.expiry_date ? (
+                <span className={expiring || expired ? "font-semibold text-orange-600 dark:text-orange-400" : ""}>
+                  {fmtDate(rec.expiry_date)}
+                  {days !== null && days >= 0 && (
+                    <span className="ml-1 text-[10px] text-muted-foreground">({days}d restantes)</span>
+                  )}
+                  {days !== null && days < 0 && (
+                    <span className="ml-1 text-[10px] text-red-500">({Math.abs(days)}d expirado)</span>
+                  )}
+                </span>
+              ) : "—"}
+            </Row>
+            <Row label="Criado em">
+              <span className="text-[10px] text-muted-foreground">{fmtDateTime(rec.created_at)}</span>
+            </Row>
+            <Row label="Última atualização">
+              <span className="text-[10px] text-muted-foreground">{fmtDateTime(rec.updated_at)}</span>
+            </Row>
+          </SectionCard>
+
+          {/* Ciclo de vida — full width */}
+          <div className="lg:col-span-2">
+            <SectionCard icon={Shield} title="Estado da formação" accent={bar}>
+              <div className="grid gap-1.5 sm:grid-cols-3">
+                {Object.entries(STATUS_LABEL).map(([value, label]) => {
+                  const isActive = rec.status === value;
+                  return (
+                    <div key={value}
+                      className={`relative overflow-hidden rounded-lg border px-3 py-2.5 text-[11px] transition ${isActive ? STATUS_COLOR[value] + " ring-1 ring-current/20" : "border-border bg-background opacity-40"}`}>
+                      <span className={`absolute inset-y-0 left-0 w-0.5 ${STATUS_DOT[value]}`} />
+                      <div className="flex items-center justify-between pl-2">
+                        <span className="font-semibold">{label}</span>
+                        {isActive && <CheckCircle2 size={11} className="shrink-0" />}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </SectionCard>
+          </div>
+
+        </div>
+      </div>
+    </AppLayout>
   );
 }
