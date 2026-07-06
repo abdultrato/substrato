@@ -130,8 +130,8 @@ export default function BloodBankPage() {
   if (loading) return null
 
   return (
-    <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.LABORATORIO]}>
-      <div className="mx-auto w-[98vw] max-w-[98vw] space-y-2 px-2">
+    <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.LABORATORIO]} fullWidth>
+      <div className="w-full space-y-2 px-2">
 
         {/* ── Hero ──────────────────────────────────────────────── */}
         <div className="relative overflow-hidden rounded-xl border border-white/20 bg-white/30 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/5">
