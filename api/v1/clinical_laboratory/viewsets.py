@@ -596,8 +596,9 @@ class TrainingAttendanceViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerys
 
 
 class CompetencyAssessmentViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
-    queryset = CompetencyAssessment.objects.select_related("staff", "related_test").all()
+    queryset = CompetencyAssessment.objects.select_related("staff", "assessed_by", "related_test").all()
     serializer_class = CompetencyAssessmentSerializer
+    filterset_fields = ["status", "staff", "related_test"]
     search_fields = ["custom_id", "area"]
     ordering_fields = ["assessment_date", "expiry_date", "status", "created_at"]
 

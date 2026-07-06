@@ -584,6 +584,26 @@ class TrainingReplicationSerializer(serializers.ModelSerializer):
 
 
 class CompetencyAssessmentSerializer(serializers.ModelSerializer):
+    staff_display = serializers.SerializerMethodField()
+    assessed_by_display = serializers.SerializerMethodField()
+    related_test_display = serializers.SerializerMethodField()
+
+    def _user_label(self, u):
+        if not u:
+            return None
+        full = f"{u.first_name} {u.last_name}".strip()
+        return full or u.username
+
+    def get_staff_display(self, obj):
+        return self._user_label(obj.staff)
+
+    def get_assessed_by_display(self, obj):
+        return self._user_label(obj.assessed_by)
+
+    def get_related_test_display(self, obj):
+        t = obj.related_test
+        return t.name if t else None
+
     Meta = _meta(CompetencyAssessment)
 
 
