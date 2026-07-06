@@ -17,6 +17,7 @@ import {
 import AppLayout from "@/components/layout/AppLayout";
 import { apiFetchList } from "@/lib/api";
 import { GROUPS } from "@/lib/rbac";
+import { indicatorStatusLabel } from "./_components";
 
 const VIEW_GROUPS = [GROUPS.ADMIN, GROUPS.LABORATORIO];
 
@@ -270,7 +271,7 @@ export default function QualityIndicatorsListPage() {
             const topBar = STATUS_TOP[indicator.status] ?? "bg-slate-400";
             const badgeCls = STATUS_BADGE[indicator.status] ?? "bg-muted text-foreground";
             const dotCls = STATUS_DOT[indicator.status] ?? "bg-slate-400";
-            const statusLabel = STATUS_LABEL[indicator.status] ?? indicator.status;
+            const statusLabel = indicatorStatusLabel(indicator.status, indicator.current_value, indicator.target_value);
             const progress = progressPercent(indicator.current_value, indicator.target_value);
 
             return (
