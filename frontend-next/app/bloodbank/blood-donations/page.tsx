@@ -241,7 +241,7 @@ export default function BloodbankBloodDonationsListPage() {
 
   return (
     <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.LABORATORIO]}>
-      <div className="mx-auto w-[98vw] max-w-[1600px] space-y-3 px-2 pb-4">
+      <div className="mx-auto min-h-[calc(100vh-5rem)] w-full max-w-[min(98vw,1600px)] space-y-3 px-2 pb-4">
         <section className={GLASS_CARD}>
           <div className="pointer-events-none absolute inset-0">
             <div className="absolute -right-12 -top-10 h-36 w-36 rounded-full bg-rose-500/10 blur-3xl" />
@@ -268,8 +268,8 @@ export default function BloodbankBloodDonationsListPage() {
           </div>
 
           <div className="relative border-t border-white/15 px-4 py-3 dark:border-white/10">
-            <div className="flex flex-nowrap items-stretch gap-2 overflow-x-auto pb-1">
-              <article className="relative min-w-[220px] flex-1 rounded-xl border border-white/20 bg-white/22 p-3 shadow-sm backdrop-blur-sm">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 2xl:grid-cols-4">
+              <article className="relative min-w-0 rounded-xl border border-white/20 bg-white/22 p-3 shadow-sm backdrop-blur-sm">
                 <span className="absolute inset-y-0 left-0 w-1 rounded-l-xl bg-rose-500" />
                 <div className="flex items-center gap-2">
                   <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-rose-500/15 text-rose-600">
@@ -281,7 +281,7 @@ export default function BloodbankBloodDonationsListPage() {
                   </div>
                 </div>
               </article>
-              <article className="relative min-w-[220px] flex-1 rounded-xl border border-white/20 bg-white/22 p-3 shadow-sm backdrop-blur-sm">
+              <article className="relative min-w-0 rounded-xl border border-white/20 bg-white/22 p-3 shadow-sm backdrop-blur-sm">
                 <span className="absolute inset-y-0 left-0 w-1 rounded-l-xl bg-amber-500" />
                 <div className="flex items-center gap-2">
                   <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-500/15 text-amber-600">
@@ -293,7 +293,7 @@ export default function BloodbankBloodDonationsListPage() {
                   </div>
                 </div>
               </article>
-              <article className="relative min-w-[220px] flex-1 rounded-xl border border-white/20 bg-white/22 p-3 shadow-sm backdrop-blur-sm">
+              <article className="relative min-w-0 rounded-xl border border-white/20 bg-white/22 p-3 shadow-sm backdrop-blur-sm">
                 <span className="absolute inset-y-0 left-0 w-1 rounded-l-xl bg-emerald-500" />
                 <div className="flex items-center gap-2">
                   <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500/15 text-emerald-600">
@@ -305,7 +305,7 @@ export default function BloodbankBloodDonationsListPage() {
                   </div>
                 </div>
               </article>
-              <article className="relative min-w-[220px] flex-1 rounded-xl border border-white/20 bg-white/22 p-3 shadow-sm backdrop-blur-sm">
+              <article className="relative min-w-0 rounded-xl border border-white/20 bg-white/22 p-3 shadow-sm backdrop-blur-sm">
                 <span className="absolute inset-y-0 left-0 w-1 rounded-l-xl bg-cyan-500" />
                 <div className="flex items-center gap-2">
                   <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-cyan-500/15 text-cyan-600">
@@ -319,8 +319,8 @@ export default function BloodbankBloodDonationsListPage() {
               </article>
             </div>
 
-            <div className="mt-2 flex flex-nowrap items-center gap-2 overflow-x-auto pb-1">
-              <div className="relative min-w-[320px] flex-1">
+            <div className="mt-2 grid grid-cols-1 gap-2 lg:grid-cols-[minmax(0,1.35fr)_minmax(180px,0.45fr)_minmax(180px,0.45fr)_auto]">
+              <div className="relative min-w-0">
                 <Search size={13} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                 <input
                   value={search}
@@ -332,7 +332,7 @@ export default function BloodbankBloodDonationsListPage() {
               <select
                 value={statusFilter}
                 onChange={(event) => setStatusFilter(event.target.value)}
-                className="h-10 min-w-[190px] rounded-xl border border-white/30 bg-white/45 px-3 text-sm text-foreground outline-none backdrop-blur-sm transition focus:border-rose-400 dark:border-white/10 dark:bg-white/[0.08]"
+                className="h-10 min-w-0 rounded-xl border border-white/30 bg-white/45 px-3 text-sm text-foreground outline-none backdrop-blur-sm transition focus:border-rose-400 dark:border-white/10 dark:bg-white/[0.08]"
               >
                 {STATUS_OPTIONS.map((option) => (
                   <option key={option.value} value={option.value}>
@@ -343,7 +343,7 @@ export default function BloodbankBloodDonationsListPage() {
               <select
                 value={typeFilter}
                 onChange={(event) => setTypeFilter(event.target.value)}
-                className="h-10 min-w-[190px] rounded-xl border border-white/30 bg-white/45 px-3 text-sm text-foreground outline-none backdrop-blur-sm transition focus:border-cyan-400 dark:border-white/10 dark:bg-white/[0.08]"
+                className="h-10 min-w-0 rounded-xl border border-white/30 bg-white/45 px-3 text-sm text-foreground outline-none backdrop-blur-sm transition focus:border-cyan-400 dark:border-white/10 dark:bg-white/[0.08]"
               >
                 {DONATION_TYPE_OPTIONS.map((option) => (
                   <option key={option.value} value={option.value}>
@@ -351,7 +351,7 @@ export default function BloodbankBloodDonationsListPage() {
                   </option>
                 ))}
               </select>
-              <div className="ml-auto whitespace-nowrap rounded-xl border border-white/20 bg-white/25 px-3 py-2 text-xs text-muted-foreground backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.05]">
+              <div className="flex items-center justify-center rounded-xl border border-white/20 bg-white/25 px-3 py-2 text-center text-xs text-muted-foreground backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.05]">
                 {summaryLoading ? "A carregar..." : `${totalItems} doações no total`}
               </div>
             </div>
@@ -373,12 +373,12 @@ export default function BloodbankBloodDonationsListPage() {
             Nenhuma doação encontrada com os filtros atuais.
           </div>
         ) : (
-          <section className="grid gap-2 lg:grid-cols-2 2xl:grid-cols-3">
+          <section className="columns-1 gap-2 sm:columns-2 2xl:columns-3 [column-fill:_balance]">
             {items.map((item) => (
               <Link
                 key={item.id}
                 href={`/bloodbank/blood-donations/${item.id}`}
-                className={`${GLASS_CARD} block transition hover:bg-white/40 hover:shadow-md dark:hover:bg-white/[0.07]`}
+                className={`${GLASS_CARD} mb-2 block break-inside-avoid overflow-hidden transition hover:bg-white/40 hover:shadow-md dark:hover:bg-white/[0.07]`}
               >
                 <div className="pointer-events-none absolute inset-0">
                   <div className="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-rose-500/8 blur-2xl" />
