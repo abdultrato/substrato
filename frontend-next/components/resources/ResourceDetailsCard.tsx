@@ -366,7 +366,7 @@ export default function ResourceDetailsCard({
   }
 
   return (
-    <div className="rounded-lg border border-border bg-card shadow-sm">
+    <div className="rounded-xl border border-white/20 bg-white/25 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.05]">
       <div className="grid gap-0 divide-y divide-border">
         {entries.map(([k, v]) => {
           const displayValue = renderEntryValue(k, v)

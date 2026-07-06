@@ -192,7 +192,7 @@ export default function ResourceDetailActionsPanel({
   }
 
   return (
-    <section className="rounded-lg border border-[var(--border)] bg-[var(--card)] p-2 shadow-sm">
+    <section className="rounded-xl border border-white/20 bg-white/25 p-2 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.05]">
       <div className="flex items-center gap-2">
         <div className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-[var(--gray-100)] text-[var(--primary-700)]"><Workflow size={14} /></div>
         <div>
