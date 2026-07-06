@@ -311,6 +311,187 @@ function RelationSelectSingle({
   );
 }
 
+// ── AttendanceModal ───────────────────────────────────────────────────────────
+
+function AttendanceModal({
+  trainingId,
+  trainingTitle,
+  participants,
+  onClose,
+  onDone,
+}: {
+  trainingId: number;
+  trainingTitle: string;
+  participants: { id: number; label: string }[];
+  onClose: () => void;
+  onDone: (updated: Training) => void;
+}) {
+  const [attendance, setAttendance] = useState<Record<number, boolean>>(
+    () => Object.fromEntries(participants.map((p) => [p.id, true]))
+  );
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  function toggle(id: number) {
+    setAttendance((prev) => ({ ...prev, [id]: !prev[id] }));
+  }
+
+  async function handleConfirm() {
+    setSaving(true); setError(null);
+    try {
+      const attendances = Object.entries(attendance).map(([pid, present]) => ({
+        participant_id: Number(pid),
+        present,
+      }));
+      const updated = await apiFetch<Training>(
+        `/clinical_laboratory/training_record/${trainingId}/marcar-realizada/`,
+        {
+          method: "POST",
+          body: JSON.stringify({ attendances }),
+        },
+      );
+      onDone(updated);
+    } catch (err: any) {
+      setError(err?.message || "Erro ao marcar como realizada.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  const presentCount = Object.values(attendance).filter(Boolean).length;
+  const total = participants.length;
+
+  return (
+    <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+      <div className="relative w-full max-w-md overflow-hidden rounded-2xl border border-white/20 bg-card shadow-2xl">
+
+        {/* Header */}
+        <div className="relative overflow-hidden border-b border-border/50 bg-gradient-to-r from-emerald-500/10 to-teal-500/10 px-5 py-4">
+          <div className="pointer-events-none absolute -right-6 -top-6 h-20 w-20 rounded-full bg-emerald-500/10 blur-xl" />
+          <div className="relative flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 shadow-md shadow-emerald-500/30">
+                <CheckCircle2 size={16} className="text-white" />
+              </div>
+              <div>
+                <h2 className="text-sm font-bold text-foreground">Marcar presença</h2>
+                <p className="text-[10px] text-muted-foreground">
+                  {presentCount} de {total} presentes
+                </p>
+              </div>
+            </div>
+            <button type="button" onClick={onClose}
+              className="rounded-lg p-1 text-muted-foreground transition hover:bg-muted hover:text-foreground">
+              <X size={16} />
+            </button>
+          </div>
+        </div>
+
+        {/* Subtitle */}
+        <div className="border-b border-border/30 bg-muted/30 px-5 py-2">
+          <p className="text-[10px] text-muted-foreground">
+            Formação: <span className="font-semibold text-foreground">{trainingTitle}</span>
+          </p>
+        </div>
+
+        {/* Body */}
+        <div className="px-5 py-3">
+          {error && (
+            <div className="mb-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-[11px] text-red-800 dark:border-red-800/40 dark:bg-red-900/15 dark:text-red-300">
+              {error}
+            </div>
+          )}
+
+          {participants.length === 0 ? (
+            <div className="flex flex-col items-center gap-2 py-6 text-center">
+              <Users size={24} className="text-muted-foreground/40" />
+              <p className="text-[11px] text-muted-foreground">
+                Nenhum participante registado nesta formação.
+              </p>
+              <p className="text-[10px] text-muted-foreground/70">
+                A formação será marcada como realizada sem registo de presenças.
+              </p>
+            </div>
+          ) : (
+            <>
+              {/* Select all / none */}
+              <div className="mb-2 flex items-center justify-between">
+                <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Participantes</span>
+                <div className="flex gap-2">
+                  <button type="button"
+                    onClick={() => setAttendance(Object.fromEntries(participants.map(p => [p.id, true])))}
+                    className="text-[10px] text-emerald-600 hover:underline dark:text-emerald-400">
+                    Todos presentes
+                  </button>
+                  <span className="text-muted-foreground">·</span>
+                  <button type="button"
+                    onClick={() => setAttendance(Object.fromEntries(participants.map(p => [p.id, false])))}
+                    className="text-[10px] text-red-500 hover:underline dark:text-red-400">
+                    Todos ausentes
+                  </button>
+                </div>
+              </div>
+
+              <ul className="max-h-64 space-y-1 overflow-y-auto pr-1">
+                {participants.map((p) => {
+                  const isPresent = attendance[p.id] ?? true;
+                  return (
+                    <li key={p.id}>
+                      <button type="button" onClick={() => toggle(p.id)}
+                        className={`flex w-full items-center gap-3 rounded-xl border px-3 py-2 text-left transition ${
+                          isPresent
+                            ? "border-emerald-200 bg-emerald-50 dark:border-emerald-700/40 dark:bg-emerald-900/15"
+                            : "border-border bg-background hover:bg-muted"
+                        }`}>
+                        <div className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition ${
+                          isPresent
+                            ? "border-emerald-500 bg-emerald-500"
+                            : "border-border bg-background"
+                        }`}>
+                          {isPresent && <CheckCircle2 size={11} className="text-white" />}
+                        </div>
+                        <span className={`text-xs font-medium ${isPresent ? "text-emerald-800 dark:text-emerald-300" : "text-muted-foreground"}`}>
+                          {p.label}
+                        </span>
+                        <span className={`ml-auto text-[9px] font-semibold uppercase tracking-wide ${
+                          isPresent ? "text-emerald-600 dark:text-emerald-400" : "text-red-400"
+                        }`}>
+                          {isPresent ? "Presente" : "Ausente"}
+                        </span>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            </>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="flex items-center justify-between border-t border-border/50 px-5 py-3">
+          {participants.length > 0 && (
+            <span className="text-[10px] text-muted-foreground">
+              <span className="font-semibold text-emerald-600 dark:text-emerald-400">{presentCount}</span>/{total} presentes
+            </span>
+          )}
+          {participants.length === 0 && <span />}
+          <div className="flex gap-2">
+            <button type="button" onClick={onClose}
+              className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-border bg-card px-3 text-xs font-medium text-foreground transition hover:bg-muted">
+              Cancelar
+            </button>
+            <button type="button" onClick={handleConfirm} disabled={saving}
+              className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-gradient-to-r from-emerald-500 to-teal-600 px-4 text-xs font-semibold text-white shadow-md shadow-emerald-500/30 transition hover:from-emerald-600 hover:to-teal-700 disabled:opacity-50">
+              {saving ? <Loader2 size={12} className="animate-spin" /> : <CheckCircle2 size={12} />}
+              Confirmar realização
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── ReplicaModal ──────────────────────────────────────────────────────────────
 
 function ReplicaModal({
@@ -354,23 +535,37 @@ function ReplicaModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+    <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
       <div className="relative w-full max-w-lg overflow-visible rounded-2xl border border-white/20 bg-card shadow-2xl">
-        <div className="flex items-center justify-between border-b border-border/50 px-5 py-3">
-          <div className="flex items-center gap-2">
-            <Copy size={15} className="text-violet-600" />
-            <h2 className="text-sm font-semibold text-foreground">Criar réplica de formação</h2>
+
+        {/* Header */}
+        <div className="relative overflow-hidden border-b border-border/50 bg-gradient-to-r from-violet-500/10 to-indigo-500/10 px-5 py-4">
+          <div className="pointer-events-none absolute -right-6 -top-6 h-20 w-20 rounded-full bg-violet-500/10 blur-xl" />
+          <div className="relative flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-indigo-600 shadow-md shadow-violet-500/30">
+                <Copy size={15} className="text-white" />
+              </div>
+              <div>
+                <h2 className="text-sm font-bold text-foreground">Criar réplica</h2>
+                <p className="text-[10px] text-muted-foreground">Nova sessão baseada nesta formação</p>
+              </div>
+            </div>
+            <button type="button" onClick={onClose}
+              className="rounded-lg p-1 text-muted-foreground transition hover:bg-muted hover:text-foreground">
+              <X size={16} />
+            </button>
           </div>
-          <button type="button" onClick={onClose} className="rounded-lg p-1 text-muted-foreground transition hover:bg-muted hover:text-foreground">
-            <X size={16} />
-          </button>
         </div>
 
-        <form onSubmit={handleCreate} className="space-y-4 p-5">
-          <p className="text-[11px] text-muted-foreground">
+        {/* Subtitle strip */}
+        <div className="border-b border-border/30 bg-muted/30 px-5 py-2">
+          <p className="text-[10px] text-muted-foreground">
             Réplica de <span className="font-semibold text-foreground">{trainingTitle}</span>
           </p>
+        </div>
 
+        <form onSubmit={handleCreate} className="space-y-3 p-5">
           {error && (
             <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-[11px] text-red-800 dark:border-red-800/40 dark:bg-red-900/15 dark:text-red-300">
               {error}
@@ -400,9 +595,11 @@ function ReplicaModal({
             />
           </div>
 
-          <div className="space-y-0.5">
-            <label className="text-[11px] font-semibold text-foreground">Data da réplica</label>
-            <input type="date" value={repDate} onChange={(e) => setRepDate(e.target.value)} className={inputCls} />
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-0.5">
+              <label className="text-[11px] font-semibold text-foreground">Data da réplica</label>
+              <input type="date" value={repDate} onChange={(e) => setRepDate(e.target.value)} className={inputCls} />
+            </div>
           </div>
 
           <div className="space-y-0.5">
@@ -411,7 +608,7 @@ function ReplicaModal({
               placeholder="Notas sobre esta réplica…" className={`${inputCls} resize-y`} />
           </div>
 
-          <div className="flex items-center justify-end gap-2 pt-2">
+          <div className="flex items-center justify-end gap-2 border-t border-border/30 pt-3">
             <button type="button" onClick={onClose}
               className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-border bg-card px-3 text-xs font-medium text-foreground transition hover:bg-muted">
               Cancelar
@@ -438,6 +635,8 @@ export default function TrainingRecordDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [marking, setMarking] = useState(false);
   const [showReplica, setShowReplica] = useState(false);
+  const [showAttendance, setShowAttendance] = useState(false);
+  const [attendances, setAttendances] = useState<{ id: number; participant: number; participant_display: { id: number; label: string } | null; present: boolean }[]>([]);
   const [attachments, setAttachments] = useState<TrainingAttachment[]>([]);
   const [attachmentsLoading, setAttachmentsLoading] = useState(false);
   const [attachmentsError, setAttachmentsError] = useState<string | null>(null);
@@ -465,6 +664,9 @@ export default function TrainingRecordDetailPage() {
         apiFetch<any>(`/clinical_laboratory/training_replication/?original=${id}`)
           .then((resp) => setReplications(resp?.results ?? resp?.items ?? []))
           .catch(() => {});
+        apiFetch<any>(`/clinical_laboratory/training_attendance/?training=${id}`)
+          .then((resp) => setAttendances(resp?.results ?? resp?.items ?? []))
+          .catch(() => {});
       })
       .catch((e) => setError(e?.message ?? "Erro ao carregar registo."))
       .finally(() => setLoading(false));
@@ -472,17 +674,8 @@ export default function TrainingRecordDetailPage() {
 
   useEffect(() => { load(); }, [load]);
 
-  async function marcarRealizada() {
-    if (!id) return;
-    setMarking(true);
-    try {
-      const updated = await apiFetch<Training>(
-        `/clinical_laboratory/training_record/${id}/marcar-realizada/`,
-        { method: "POST" },
-      );
-      setRec(updated);
-    } catch { /* ignore */ }
-    finally { setMarking(false); }
+  function marcarRealizada() {
+    setShowAttendance(true);
   }
 
   if (loading) {
@@ -656,18 +849,35 @@ export default function TrainingRecordDetailPage() {
             </Row>
           </SectionCard>
 
-          {/* Participantes */}
-          <SectionCard icon={Users} title="Participantes" accent="bg-purple-500">
+          {/* Participantes + Presenças */}
+          <SectionCard icon={Users} title="Participantes e presenças" accent="bg-purple-500">
             {(rec.participants_display ?? []).length === 0 ? (
               <p className="text-[11px] text-muted-foreground">Nenhum participante registado.</p>
             ) : (
-              <div className="flex flex-wrap gap-1 pt-0.5">
-                {(rec.participants_display ?? []).map((p) => (
-                  <span key={p.id} className="inline-flex items-center rounded-full border border-indigo-200 bg-indigo-50 px-2 py-0.5 text-[10px] font-medium text-indigo-700 dark:border-indigo-700/40 dark:bg-indigo-900/20 dark:text-indigo-300">
-                    {p.label}
-                  </span>
-                ))}
-              </div>
+              <ul className="space-y-1 pt-0.5">
+                {(rec.participants_display ?? []).map((p) => {
+                  const att = attendances.find((a) => a.participant === p.id);
+                  const hasRecord = !!att;
+                  const present = att?.present ?? null;
+                  return (
+                    <li key={p.id} className="flex items-center gap-2">
+                      <span className="min-w-0 flex-1 text-xs font-medium text-foreground">{p.label}</span>
+                      {hasRecord ? (
+                        <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-semibold ${
+                          present
+                            ? "border border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-700/40 dark:bg-emerald-900/20 dark:text-emerald-300"
+                            : "border border-red-200 bg-red-50 text-red-700 dark:border-red-700/40 dark:bg-red-900/20 dark:text-red-300"
+                        }`}>
+                          {present ? <CheckCircle2 size={9} /> : <X size={9} />}
+                          {present ? "Presente" : "Ausente"}
+                        </span>
+                      ) : (
+                        <span className="text-[9px] text-muted-foreground/60">Sem registo</span>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
             )}
           </SectionCard>
 
@@ -781,6 +991,20 @@ export default function TrainingRecordDetailPage() {
 
         </div>
       </div>
+
+      {showAttendance && (
+        <AttendanceModal
+          trainingId={rec.id}
+          trainingTitle={rec.title}
+          participants={rec.participants_display ?? []}
+          onClose={() => setShowAttendance(false)}
+          onDone={(updated) => {
+            setRec(updated);
+            setShowAttendance(false);
+            load();
+          }}
+        />
+      )}
 
       {showReplica && (
         <ReplicaModal

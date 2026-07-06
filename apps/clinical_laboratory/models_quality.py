@@ -594,3 +594,26 @@ class ManagementReview(NoNameCoreModel):
 
     def __str__(self) -> str:
         return f"{self.title} ({self.review_date})"
+
+
+class TrainingAttendance(NoNameCoreModel):
+    """Registo de presença de um participante numa formação."""
+
+    prefix = "QPRES"
+
+    training = models.ForeignKey(StaffTrainingRecord, verbose_name="Formação",
+                                 on_delete=models.CASCADE, related_name="attendances")
+    participant = models.ForeignKey(USER, verbose_name="Participante",
+                                   on_delete=models.CASCADE, related_name="training_attendances")
+    present = models.BooleanField("Presente", default=True)
+    notes = models.CharField("Obs.", max_length=255, blank=True, default="")
+
+    class Meta:
+        db_table = "laboratorio_qm_formacao_presenca"
+        verbose_name = "Presença em formação"
+        verbose_name_plural = "Presenças em formação"
+        unique_together = [("training", "participant")]
+        ordering = ["participant__first_name", "participant__last_name"]
+
+    def __str__(self) -> str:
+        return f"{self.participant_id} @ {self.training_id} ({'presente' if self.present else 'ausente'})"

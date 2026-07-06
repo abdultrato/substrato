@@ -35,6 +35,7 @@ from apps.clinical_laboratory.models import (
     StaffTrainingRecord,
     TrainingReplication,
     TrainingAttachment,
+    TrainingAttendance,
     CompetencyAssessment,
     CustomerComplaint,
     LabRiskAssessment,
@@ -538,6 +539,22 @@ class TrainingAttachmentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = TrainingAttachment
+        fields = "__all__"
+        read_only_fields = CORE_READ_ONLY_FIELDS
+
+
+class TrainingAttendanceSerializer(serializers.ModelSerializer):
+    participant_display = serializers.SerializerMethodField()
+
+    def get_participant_display(self, obj):
+        u = obj.participant
+        if not u:
+            return None
+        full = f"{u.first_name} {u.last_name}".strip()
+        return {"id": u.id, "label": full or u.username}
+
+    class Meta:
+        model = TrainingAttendance
         fields = "__all__"
         read_only_fields = CORE_READ_ONLY_FIELDS
 

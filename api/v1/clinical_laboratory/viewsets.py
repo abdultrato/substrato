@@ -53,6 +53,7 @@ from apps.clinical_laboratory.models import (
     StaffTrainingRecord,
     TrainingReplication,
     TrainingAttachment,
+    TrainingAttendance,
     CompetencyAssessment,
     CustomerComplaint,
     LabRiskAssessment,
@@ -80,6 +81,7 @@ from .serializers import (
     StaffTrainingRecordSerializer,
     TrainingReplicationSerializer,
     TrainingAttachmentSerializer,
+    TrainingAttendanceSerializer,
     CompetencyAssessmentSerializer,
     CustomerComplaintSerializer,
     LabRiskAssessmentSerializer,
@@ -528,9 +530,32 @@ class StaffTrainingRecordViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
 
     @action(detail=True, methods=["post"], url_path="marcar-realizada", url_name="marcar_realizada")
     def marcar_realizada(self, request, pk=None):
+        from django.db import transaction
         obj = self.get_object()
-        obj.status = StaffTrainingRecord.Status.COMPLETED
-        obj.save(update_fields=["status", "updated_at"])
+        attendances = request.data.get("attendances", [])  # [{participant_id, present}]
+
+        with transaction.atomic():
+            obj.status = StaffTrainingRecord.Status.COMPLETED
+            obj.save(update_fields=["status", "updated_at"])
+
+            tenant = self._get_request_tenant()
+            user = _current_user(request)
+            for entry in attendances:
+                pid = entry.get("participant_id")
+                present = bool(entry.get("present", True))
+                if not pid:
+                    continue
+                defaults = {"present": present}
+                if tenant:
+                    defaults["tenant"] = tenant
+                if user:
+                    defaults["created_by"] = user
+                    defaults["updated_by"] = user
+                TrainingAttendance.objects.update_or_create(
+                    training=obj, participant_id=pid,
+                    defaults=defaults,
+                )
+
         return Response(self.get_serializer(obj).data)
 
 
@@ -561,6 +586,13 @@ class TrainingAttachmentViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerys
         if tenant:
             kwargs["tenant"] = tenant
         serializer.save(**kwargs)
+
+
+class TrainingAttendanceViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
+    queryset = TrainingAttendance.objects.select_related("training", "participant").all()
+    serializer_class = TrainingAttendanceSerializer
+    filterset_fields = ["training", "participant", "present"]
+    ordering_fields = ["created_at"]
 
 
 class CompetencyAssessmentViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
@@ -694,6 +726,7 @@ VIEWSET_MAP = {
     "training_record": StaffTrainingRecordViewSet,
     "training_replication": TrainingReplicationViewSet,
     "training_attachment": TrainingAttachmentViewSet,
+    "training_attendance": TrainingAttendanceViewSet,
     "competency": CompetencyAssessmentViewSet,
     "complaint": CustomerComplaintViewSet,
     "risk_assessment": LabRiskAssessmentViewSet,
