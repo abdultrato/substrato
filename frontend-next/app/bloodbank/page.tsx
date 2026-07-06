@@ -181,16 +181,16 @@ export default function BloodBankPage() {
           </div>
         </div>
 
-        {/* ── Tiles (uma linha, nowrap) ────────────────────────── */}
-        <div className="grid grid-cols-6 gap-2">
+        {/* ── Tiles (uma linha, nowrap, largura pelo conteúdo) ── */}
+        <div className="flex flex-nowrap gap-2">
           {TILES.map(({ key, label, Icon, href, bar, icon }) => (
             <Link key={key} href={href}
-              className="group relative flex h-[68px] items-center gap-2.5 overflow-hidden rounded-xl border border-white/20 bg-white/25 px-3 shadow-sm backdrop-blur-sm transition hover:bg-white/40 dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10">
+              className="group relative flex h-[68px] shrink-0 items-center gap-2.5 overflow-hidden rounded-xl border border-white/20 bg-white/25 px-3 shadow-sm backdrop-blur-sm transition hover:bg-white/40 dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10">
               <span className={`absolute inset-y-0 left-0 w-1 ${bar}`} />
               <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${icon}`}>
                 <Icon size={16} />
               </span>
-              <span className="min-w-0 text-xs font-semibold leading-tight text-foreground">{label}</span>
+              <span className="whitespace-nowrap text-xs font-semibold text-foreground">{label}</span>
             </Link>
           ))}
         </div>
