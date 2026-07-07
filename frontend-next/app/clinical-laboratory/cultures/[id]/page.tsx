@@ -9,6 +9,7 @@ import {
   Clock3,
   FlaskConical,
   Loader2,
+  Lock,
   Microscope,
   Plus,
   RefreshCw,
@@ -201,6 +202,7 @@ export default function CultureDetailPage() {
   }
 
   const isPositiveFlow = culture.status === "POSITIVA" || culture.growth_observations?.some((obs) => obs.positive);
+  const isIncubating = culture.status === "INCUBACAO" || culture.status === "REINCUBACAO";
 
   return (
     <AppLayout requiredGroups={requiredGroupsForResourceGroup("clinical_laboratory")}>
@@ -242,24 +244,45 @@ export default function CultureDetailPage() {
               <div className="space-y-2">
                 {plates.map((plate, index) => (
                   <div key={plate.id} className="grid gap-2 rounded-lg border border-white/25 bg-white/20 p-2 backdrop-blur-sm md:grid-cols-[1fr_1fr_1fr_100px_32px] dark:border-white/10 dark:bg-white/[0.04]">
-                    <input value={plate.label} onChange={(event) => updatePlate(index, { label: event.target.value })} placeholder="Placa / identificação" className={inputClass} />
-                    <input value={plate.medium} onChange={(event) => updatePlate(index, { medium: event.target.value })} placeholder="Meio de cultura" className={inputClass} />
-                    <select value={plate.atmosphere} onChange={(event) => updatePlate(index, { atmosphere: event.target.value })} className={inputClass}>
+                    <input disabled={isIncubating} value={plate.label} onChange={(event) => updatePlate(index, { label: event.target.value })} placeholder="Placa / identificação" className={`${inputClass} disabled:cursor-not-allowed disabled:opacity-70`} />
+                    <input disabled={isIncubating} value={plate.medium} onChange={(event) => updatePlate(index, { medium: event.target.value })} placeholder="Meio de cultura" className={`${inputClass} disabled:cursor-not-allowed disabled:opacity-70`} />
+                    <select disabled={isIncubating} value={plate.atmosphere} onChange={(event) => updatePlate(index, { atmosphere: event.target.value })} className={`${inputClass} disabled:cursor-not-allowed disabled:opacity-70`}>
                       <option>Aeróbia</option>
                       <option>Anaeróbia</option>
                       <option>Microaerofilia</option>
                       <option>CO2 5%</option>
                     </select>
-                    <input value={plate.temperature_c} onChange={(event) => updatePlate(index, { temperature_c: event.target.value })} placeholder="°C" className={inputClass} />
-                    <button type="button" onClick={() => setPlates((rows) => rows.filter((_, i) => i !== index))} className="inline-flex h-8 items-center justify-center rounded-lg border border-white/30 bg-white/25 text-muted-foreground hover:text-red-600"><Trash2 size={14} /></button>
+                    <input disabled={isIncubating} value={plate.temperature_c} onChange={(event) => updatePlate(index, { temperature_c: event.target.value })} placeholder="°C" className={`${inputClass} disabled:cursor-not-allowed disabled:opacity-70`} />
+                    {isIncubating ? (
+                      <span className="inline-flex h-8 items-center justify-center text-muted-foreground/60" title="Placa em incubação — não editável"><Lock size={13} /></span>
+                    ) : (
+                      <button type="button" onClick={() => setPlates((rows) => rows.filter((_, i) => i !== index))} className="inline-flex h-8 items-center justify-center rounded-lg border border-white/30 bg-white/25 text-muted-foreground hover:text-red-600"><Trash2 size={14} /></button>
+                    )}
                   </div>
                 ))}
               </div>
               <div className="flex flex-wrap items-center gap-2">
-                <button onClick={() => setPlates((rows) => [...rows, newPlate()])} className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-white/40 bg-white/35 px-2.5 text-xs font-medium text-foreground shadow-sm backdrop-blur-sm"><Plus size={14} /> Placa</button>
-                <input value={hours} onChange={(event) => setHours(event.target.value)} placeholder="Horas de incubação" className={`${inputClass} max-w-40`} />
-                <button disabled={saving} onClick={() => submitAction("iniciar-incubacao", { plates, hours: Number(hours) || 24 })} className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-gradient-to-r from-teal-600 to-cyan-600 px-3 text-xs font-semibold text-white shadow-md shadow-teal-500/20 disabled:opacity-60">
-                  {saving ? <Loader2 size={14} className="animate-spin" /> : <Clock3 size={14} />} Iniciar incubação
+                {!isIncubating && (
+                  <>
+                    <button onClick={() => setPlates((rows) => [...rows, newPlate()])} className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-white/40 bg-white/35 px-2.5 text-xs font-medium text-foreground shadow-sm backdrop-blur-sm"><Plus size={14} /> Placa</button>
+                    <input value={hours} onChange={(event) => setHours(event.target.value)} placeholder="Horas de incubação" className={`${inputClass} max-w-40`} />
+                  </>
+                )}
+                <button
+                  disabled={saving || isIncubating}
+                  onClick={() => submitAction("iniciar-incubacao", { plates, hours: Number(hours) || 24 })}
+                  className={`inline-flex h-8 items-center gap-1.5 rounded-lg px-3 text-xs font-semibold text-white shadow-md disabled:opacity-100 ${
+                    isIncubating
+                      ? "cursor-default bg-gradient-to-r from-emerald-600 to-teal-600 shadow-emerald-500/20"
+                      : "bg-gradient-to-r from-teal-600 to-cyan-600 shadow-teal-500/20 disabled:opacity-60"
+                  }`}
+                >
+                  {saving ? (
+                    <Loader2 size={14} className="animate-spin" />
+                  ) : (
+                    <Clock3 size={14} className={isIncubating ? "animate-pulse" : ""} />
+                  )}
+                  {isIncubating ? "Em incubação" : "Iniciar incubação"}
                 </button>
               </div>
             </Card>
