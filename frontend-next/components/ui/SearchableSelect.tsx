@@ -121,7 +121,7 @@ export default function SearchableSelect({
       </button>
 
       {open ? (
-        <div className="absolute z-30 mt-1 w-full overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg">
+        <div className="absolute z-[80] mt-1 w-full overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg">
           <div className="border-b border-slate-100 p-2">
             <input
               ref={inputRef}

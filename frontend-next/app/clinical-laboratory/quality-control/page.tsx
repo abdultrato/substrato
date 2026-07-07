@@ -149,13 +149,20 @@ function parseDecimal(value: string): number | null {
 }
 
 // Espelha LaboratoryQualityControl.evaluate() do backend para pré-visualizar a conclusão.
-function previewDecision(form: FormState): QualityControl["decision"] {
-  if (form.result_mode === "NUMERICO") {
-    const expected = parseDecimal(form.expected_result);
-    const observed = parseDecimal(form.observed_result);
-    const min = parseDecimal(form.expected_min);
-    const max = parseDecimal(form.expected_max);
-    const tolerance = parseDecimal(form.tolerance);
+function evaluateQc(
+  mode: string,
+  expectedRaw: string,
+  observedRaw: string,
+  minRaw: string,
+  maxRaw: string,
+  toleranceRaw: string,
+): QualityControl["decision"] {
+  if (mode === "NUMERICO") {
+    const expected = parseDecimal(expectedRaw);
+    const observed = parseDecimal(observedRaw);
+    const min = parseDecimal(minRaw);
+    const max = parseDecimal(maxRaw);
+    const tolerance = parseDecimal(toleranceRaw);
     if (observed === null) return "INCOMPLETO";
     if (min !== null && observed < min) return "REJEITADO";
     if (max !== null && observed > max) return "REJEITADO";
@@ -163,10 +170,37 @@ function previewDecision(form: FormState): QualityControl["decision"] {
     if (min === null && max === null && tolerance === null && expected === null) return "REVISAO";
     return "APROVADO";
   }
-  if (!form.expected_result.trim() || !form.observed_result.trim()) return "INCOMPLETO";
-  return form.expected_result.trim().toLowerCase() === form.observed_result.trim().toLowerCase()
-    ? "APROVADO"
-    : "REJEITADO";
+  if (!expectedRaw.trim() || !observedRaw.trim()) return "INCOMPLETO";
+  return expectedRaw.trim().toLowerCase() === observedRaw.trim().toLowerCase() ? "APROVADO" : "REJEITADO";
+}
+
+function previewDecision(form: FormState): QualityControl["decision"] {
+  return evaluateQc(form.result_mode, form.expected_result, form.observed_result, form.expected_min, form.expected_max, form.tolerance);
+}
+
+type AnalyteRow = {
+  expected: string;
+  observed: string;
+  min: string;
+  max: string;
+  tolerance: string;
+  unit: string;
+};
+
+function buildAnalyteRows(fields: LabTestField[]): Record<number, AnalyteRow> {
+  return Object.fromEntries(
+    fields.map((field) => [
+      field.id,
+      {
+        expected: "",
+        observed: "",
+        min: field.reference_low || "",
+        max: field.reference_high || "",
+        tolerance: "",
+        unit: field.unit || "",
+      },
+    ]),
+  );
 }
 
 const decisionLabel: Record<QualityControl["decision"], string> = {
@@ -204,6 +238,16 @@ function Field({
 const inputCls =
   "w-full rounded-lg border border-border bg-background/85 px-2.5 py-1.5 text-xs text-foreground outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20";
 
+const rowInputCls =
+  "w-full rounded-md border border-border bg-background/85 px-1.5 py-1 text-[11px] text-foreground outline-none transition focus:border-teal-500 focus:ring-1 focus:ring-teal-500/20";
+
+const decisionDotClass: Record<QualityControl["decision"], string> = {
+  APROVADO: "bg-emerald-500",
+  REJEITADO: "bg-red-500",
+  REVISAO: "bg-amber-500",
+  INCOMPLETO: "bg-slate-400",
+};
+
 function FormSection({
   title,
   icon: Icon,
@@ -217,8 +261,11 @@ function FormSection({
   children: React.ReactNode;
   className?: string;
 }) {
+  // O backdrop-blur cria um stacking context por secção, por isso os dropdowns
+  // dos SearchableSelect ficariam atrás dos cartões seguintes no DOM;
+  // focus-within eleva a secção com o dropdown aberto acima das irmãs.
   return (
-    <section className={`relative z-20 overflow-visible rounded-lg border border-white/20 bg-white/40 px-2.5 py-2 pl-3.5 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04] ${className}`}>
+    <section className={`relative overflow-visible rounded-lg border border-white/20 bg-white/40 px-2.5 py-2 pl-3.5 shadow-sm backdrop-blur-sm focus-within:z-30 dark:border-white/10 dark:bg-white/[0.04] ${className}`}>
       <span className={`absolute left-0 top-0 h-full w-1 ${accentClass}`} />
       <div className="mb-2 flex items-center gap-1.5 border-b border-border/50 pb-1.5">
         <Icon size={13} className="text-foreground/70" />
@@ -247,6 +294,7 @@ export default function LaboratoryQualityControlPage() {
   const [controlType, setControlType] = useState("");
   const [page, setPage] = useState(1);
   const [form, setForm] = useState<FormState>(initialForm);
+  const [analyteRows, setAnalyteRows] = useState<Record<number, AnalyteRow>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -265,6 +313,9 @@ export default function LaboratoryQualityControlPage() {
   );
 
   const predictedDecision = useMemo(() => previewDecision(form), [form]);
+
+  // "Exame completo" num exame com analitos: uma linha de resultado por analito.
+  const batchMode = Boolean(form.test) && !form.test_field && fields.length > 0;
 
   const testOptions = useMemo<SearchableOption[]>(
     () =>
@@ -407,8 +458,16 @@ export default function LaboratoryQualityControlPage() {
     }).then(({ items }) => setFields(items)).catch(() => setFields([]));
   }, [form.test]);
 
+  useEffect(() => {
+    setAnalyteRows(buildAnalyteRows(fields));
+  }, [fields]);
+
   function update<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
+  }
+
+  function updateRow(fieldId: number, key: keyof AnalyteRow, value: string) {
+    setAnalyteRows((prev) => ({ ...prev, [fieldId]: { ...prev[fieldId], [key]: value } }));
   }
 
   function handleTestChange(value: string) {
@@ -449,24 +508,91 @@ export default function LaboratoryQualityControlPage() {
   function validate() {
     const next: Record<string, string> = {};
     if (!form.test) next.test = "Selecione o exame.";
-    if (!form.expected_result.trim()) next.expected_result = "Informe o resultado esperado.";
-    if (!form.observed_result.trim()) next.observed_result = "Informe o resultado obtido.";
-    if (form.result_mode === "NUMERICO") {
-      if (form.expected_result.trim() && parseDecimal(form.expected_result) === null)
-        next.expected_result = "Valor numérico inválido.";
-      if (form.observed_result.trim() && parseDecimal(form.observed_result) === null)
-        next.observed_result = "Valor numérico inválido.";
+    if (!batchMode) {
+      if (!form.expected_result.trim()) next.expected_result = "Informe o resultado esperado.";
+      if (!form.observed_result.trim()) next.observed_result = "Informe o resultado obtido.";
+      if (form.result_mode === "NUMERICO") {
+        if (form.expected_result.trim() && parseDecimal(form.expected_result) === null)
+          next.expected_result = "Valor numérico inválido.";
+        if (form.observed_result.trim() && parseDecimal(form.observed_result) === null)
+          next.observed_result = "Valor numérico inválido.";
+      }
     }
     setErrors(next);
     return Object.keys(next).length === 0;
   }
 
+  function validateBatchRows(): { field: LabTestField; row: AnalyteRow }[] | null {
+    const filled = fields
+      .map((field) => ({ field, row: analyteRows[field.id] }))
+      .filter(({ row }) => row && (row.expected.trim() || row.observed.trim()));
+    if (filled.length === 0) {
+      setError("Preencha resultado esperado e obtido em pelo menos um analito.");
+      return null;
+    }
+    for (const { field, row } of filled) {
+      if (!row.expected.trim() || !row.observed.trim()) {
+        setError(`Analito "${field.name}": preencha resultado esperado e obtido.`);
+        return null;
+      }
+      if (form.result_mode === "NUMERICO" && (parseDecimal(row.expected) === null || parseDecimal(row.observed) === null)) {
+        setError(`Analito "${field.name}": valor numérico inválido.`);
+        return null;
+      }
+    }
+    return filled;
+  }
+
   async function submit(event: React.FormEvent) {
     event.preventDefault();
     if (!validate()) return;
-    setSaving(true);
     setError(null);
     setSuccess(null);
+    if (batchMode) {
+      const filled = validateBatchRows();
+      if (!filled) return;
+      setSaving(true);
+      const saved: QualityControl[] = [];
+      try {
+        for (const { field, row } of filled) {
+          const payload = {
+            ...form,
+            test: Number(form.test),
+            test_field: field.id,
+            expiry_date: form.expiry_date || null,
+            expected_result: row.expected,
+            observed_result: row.observed,
+            expected_numeric: form.result_mode === "NUMERICO" ? decimalOrNull(row.expected) : null,
+            observed_numeric: form.result_mode === "NUMERICO" ? decimalOrNull(row.observed) : null,
+            expected_min: decimalOrNull(row.min),
+            expected_max: decimalOrNull(row.max),
+            tolerance: decimalOrNull(row.tolerance),
+            unit: row.unit,
+          };
+          saved.push(await apiFetch<QualityControl>(ENDPOINT, { method: "POST", body: JSON.stringify(payload) }));
+        }
+        setRecords((prev) => [...saved.slice().reverse(), ...prev]);
+        setCatalogRecords((prev) => [...saved.slice().reverse(), ...prev].slice(0, 500));
+        setTotal((value) => value + saved.length);
+        const ok = saved.filter((item) => item.decision === "APROVADO").length;
+        const bad = saved.filter((item) => item.decision === "REJEITADO").length;
+        setSuccess(`Registados ${saved.length} controlos (${ok} aprovados, ${bad} rejeitados).`);
+        setAnalyteRows(buildAnalyteRows(fields));
+      } catch (err: any) {
+        if (saved.length > 0) {
+          setRecords((prev) => [...saved.slice().reverse(), ...prev]);
+          setCatalogRecords((prev) => [...saved.slice().reverse(), ...prev].slice(0, 500));
+          setTotal((value) => value + saved.length);
+        }
+        setError(
+          `${err?.message || "Erro ao guardar controlo de qualidade."}${saved.length ? ` (${saved.length} de ${filled.length} analitos já registados)` : ""}`,
+        );
+      } finally {
+        setSaving(false);
+      }
+      return;
+    }
+    setSaving(true);
     try {
       const payload = {
         ...form,
@@ -607,7 +733,7 @@ export default function LaboratoryQualityControlPage() {
 
             <div className="grid gap-1.5">
               <div className="grid grid-cols-2 gap-1.5">
-                <FormSection title="Identificação do exame" icon={FlaskConical} accentClass="bg-sky-500/80">
+                <FormSection title="Identificação do exame" icon={FlaskConical} accentClass="bg-sky-500/80" className={batchMode ? "col-span-2" : ""}>
                   <div className="grid gap-2 md:grid-cols-2">
                     <Field label="Exame" error={errors.test}>
                       <SearchableSelect
@@ -647,27 +773,67 @@ export default function LaboratoryQualityControlPage() {
                   </div>
                 </FormSection>
 
-                <FormSection title="Resultado e critérios de aceitação" icon={Ruler} accentClass="bg-emerald-500/80">
-                  <div className="grid gap-2 md:grid-cols-2">
-                    <Field label="Resultado esperado" error={errors.expected_result}>
-                      <input value={form.expected_result} onChange={(event) => update("expected_result", event.target.value)} className={inputCls} />
-                    </Field>
-                    <Field label="Resultado obtido" error={errors.observed_result}>
-                      <input value={form.observed_result} onChange={(event) => update("observed_result", event.target.value)} className={inputCls} />
-                    </Field>
-                    <Field label="Mínimo aceitável">
-                      <input value={form.expected_min} onChange={(event) => update("expected_min", event.target.value)} className={inputCls} />
-                    </Field>
-                    <Field label="Máximo aceitável">
-                      <input value={form.expected_max} onChange={(event) => update("expected_max", event.target.value)} className={inputCls} />
-                    </Field>
-                    <Field label="Tolerância absoluta">
-                      <input value={form.tolerance} onChange={(event) => update("tolerance", event.target.value)} className={inputCls} />
-                    </Field>
-                    <Field label="Unidade">
-                      <input value={form.unit} onChange={(event) => update("unit", event.target.value)} className={inputCls} />
-                    </Field>
-                  </div>
+                <FormSection title="Resultado e critérios de aceitação" icon={Ruler} accentClass="bg-emerald-500/80" className={batchMode ? "col-span-2" : ""}>
+                  {batchMode ? (
+                    <div className="space-y-1">
+                      <p className="text-[10px] text-muted-foreground">
+                        Um controlo por analito; mínimo, máximo e unidade pré-preenchidos com a referência de cada campo.
+                      </p>
+                      <div className="grid grid-cols-[minmax(0,1.3fr)_repeat(5,minmax(0,1fr))_minmax(0,0.6fr)_14px] items-center gap-1 px-0.5 text-[10px] font-semibold uppercase text-muted-foreground">
+                        <span>Analito</span>
+                        <span>Esperado</span>
+                        <span>Obtido</span>
+                        <span>Mín</span>
+                        <span>Máx</span>
+                        <span>Tolerância</span>
+                        <span>Unid.</span>
+                        <span />
+                      </div>
+                      {fields.map((field) => {
+                        const row = analyteRows[field.id];
+                        if (!row) return null;
+                        const rowDecision = evaluateQc(form.result_mode, row.expected, row.observed, row.min, row.max, row.tolerance);
+                        return (
+                          <div key={field.id} className="grid grid-cols-[minmax(0,1.3fr)_repeat(5,minmax(0,1fr))_minmax(0,0.6fr)_14px] items-center gap-1">
+                            <span className="truncate text-[11px] text-foreground" title={`${field.code ? `${field.code} - ` : ""}${field.name}`}>
+                              {field.name}
+                            </span>
+                            <input value={row.expected} onChange={(event) => updateRow(field.id, "expected", event.target.value)} className={rowInputCls} />
+                            <input value={row.observed} onChange={(event) => updateRow(field.id, "observed", event.target.value)} className={rowInputCls} />
+                            <input value={row.min} onChange={(event) => updateRow(field.id, "min", event.target.value)} className={rowInputCls} />
+                            <input value={row.max} onChange={(event) => updateRow(field.id, "max", event.target.value)} className={rowInputCls} />
+                            <input value={row.tolerance} onChange={(event) => updateRow(field.id, "tolerance", event.target.value)} className={rowInputCls} />
+                            <input value={row.unit} onChange={(event) => updateRow(field.id, "unit", event.target.value)} className={rowInputCls} />
+                            <span
+                              title={row.observed.trim() ? decisionLabel[rowDecision] : ""}
+                              className={`h-2.5 w-2.5 justify-self-center rounded-full ${row.observed.trim() ? decisionDotClass[rowDecision] : "bg-border"}`}
+                            />
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="grid gap-2 md:grid-cols-2">
+                      <Field label="Resultado esperado" error={errors.expected_result}>
+                        <input value={form.expected_result} onChange={(event) => update("expected_result", event.target.value)} className={inputCls} />
+                      </Field>
+                      <Field label="Resultado obtido" error={errors.observed_result}>
+                        <input value={form.observed_result} onChange={(event) => update("observed_result", event.target.value)} className={inputCls} />
+                      </Field>
+                      <Field label="Mínimo aceitável">
+                        <input value={form.expected_min} onChange={(event) => update("expected_min", event.target.value)} className={inputCls} />
+                      </Field>
+                      <Field label="Máximo aceitável">
+                        <input value={form.expected_max} onChange={(event) => update("expected_max", event.target.value)} className={inputCls} />
+                      </Field>
+                      <Field label="Tolerância absoluta">
+                        <input value={form.tolerance} onChange={(event) => update("tolerance", event.target.value)} className={inputCls} />
+                      </Field>
+                      <Field label="Unidade">
+                        <input value={form.unit} onChange={(event) => update("unit", event.target.value)} className={inputCls} />
+                      </Field>
+                    </div>
+                  )}
                 </FormSection>
               </div>
 
