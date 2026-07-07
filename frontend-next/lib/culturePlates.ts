@@ -74,15 +74,14 @@ function suggestedContainer(medium: string): string {
 export function makeCulturePlate(overrides: Partial<CulturePlate> = {}): CulturePlate {
   const medium = overrides.medium ?? "";
   return {
-    id: (globalThis.crypto?.randomUUID?.() ?? String(Math.random())).slice(0, 12),
-    code: "",
+    id: overrides.id ?? (globalThis.crypto?.randomUUID?.() ?? String(Math.random())).slice(0, 12),
+    code: overrides.code ?? "",
     container: overrides.container ?? (medium ? suggestedContainer(medium) : "Placa de Petri"),
     medium,
     customMedium: overrides.customMedium ?? (medium ? !CULTURE_MEDIA.includes(medium) : false),
     consistency: overrides.consistency ?? (medium ? suggestedConsistency(medium) : "Sólido"),
     atmosphere: overrides.atmosphere ?? "Aeróbia",
     temperature_c: overrides.temperature_c ?? "37",
-    ...overrides,
   };
 }
 

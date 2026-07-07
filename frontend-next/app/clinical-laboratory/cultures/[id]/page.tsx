@@ -234,6 +234,22 @@ export default function CultureDetailPage() {
                 <p className="truncate text-xs text-muted-foreground">{culture.patient_name} • {culture.order_custom_id} • {culture.sample_barcode}</p>
               </div>
             </div>
+
+            {culture.incubation_expected_end_at && (
+              <div className={`flex shrink-0 items-center gap-2.5 rounded-xl border px-3 py-1.5 shadow-sm backdrop-blur-sm ${due ? "border-emerald-300/60 bg-emerald-50/60 dark:border-emerald-700/40 dark:bg-emerald-950/25" : "border-sky-300/50 bg-sky-50/55 dark:border-sky-800/40 dark:bg-sky-950/25"}`}>
+                <Clock3 size={18} className={`shrink-0 ${due ? "text-emerald-600 dark:text-emerald-400" : "text-sky-600 dark:text-sky-400"} ${isIncubating && !due ? "animate-pulse" : ""}`} />
+                <div className="leading-tight">
+                  <p className="text-[9px] font-semibold uppercase tracking-wide text-muted-foreground">{due ? "Pronto para leitura" : "Tempo restante"}</p>
+                  <p className="font-mono text-xl font-semibold tabular-nums text-foreground">{elapsedParts(remaining)}</p>
+                </div>
+                <div className="hidden border-l border-white/40 pl-2.5 text-[10px] leading-snug text-muted-foreground sm:block dark:border-white/10">
+                  <p>Acumulado {accumulatedNow.toFixed(1)}h</p>
+                  <p>Início {fmtDate(culture.incubation_started_at)}</p>
+                  <p>Leitura {fmtDate(culture.incubation_expected_end_at)}</p>
+                </div>
+              </div>
+            )}
+
             <div className="flex shrink-0 items-center gap-1.5">
               <button onClick={() => router.push("/clinical-laboratory/cultures")} className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-white/40 bg-white/35 px-2.5 text-xs font-medium text-foreground shadow-sm backdrop-blur-sm transition hover:bg-white/55 dark:border-white/10 dark:bg-white/5"><ArrowLeft size={14} /> Voltar</button>
               <button
@@ -387,18 +403,6 @@ export default function CultureDetailPage() {
           </div>
 
           <aside className="space-y-2">
-            <Card title="Cronômetro de incubação" icon={Clock3} accent="bg-gradient-to-b from-sky-500 to-indigo-600" iconTone="from-sky-600 to-indigo-600">
-              <div className="rounded-xl border border-white/25 bg-white/25 p-3 text-center backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]">
-                <p className="text-[11px] uppercase tracking-wide text-muted-foreground">{due ? "Pronto para leitura" : "Tempo restante"}</p>
-                <p className="mt-1 font-mono text-3xl font-semibold text-foreground">{culture.incubation_expected_end_at ? elapsedParts(remaining) : "--:--:--"}</p>
-                <p className="mt-1 text-xs text-muted-foreground">Acumulado: {accumulatedNow.toFixed(1)}h</p>
-              </div>
-              <div className="grid gap-1.5 text-xs text-muted-foreground">
-                <span className="rounded-lg border border-white/25 bg-white/20 px-2 py-1">Início: {fmtDate(culture.incubation_started_at)}</span>
-                <span className="rounded-lg border border-white/25 bg-white/20 px-2 py-1">Leitura prevista: {fmtDate(culture.incubation_expected_end_at)}</span>
-              </div>
-            </Card>
-
             <Card title="Observações" icon={Beaker} accent="bg-gradient-to-b from-emerald-500 to-teal-600" iconTone="from-emerald-600 to-teal-600">
               <div className="space-y-1.5">
                 {(culture.growth_observations || []).length === 0 ? <p className="text-xs text-muted-foreground">Sem observações registadas.</p> : culture.growth_observations.map((obs, index) => (
