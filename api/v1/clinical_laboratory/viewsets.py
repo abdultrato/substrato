@@ -167,6 +167,100 @@ class LaboratoryQualityControlViewSet(ValidatedSearchOrderingMixin, TenantScoped
     search_fields = ["custom_id", "test__name", "test__code", "material_name", "material_lot", "equipment"]
     ordering_fields = ["run_at", "decision", "status", "created_at"]
 
+    @action(detail=False, methods=["get"], url_path="report/pdf", url_name="report-pdf")
+    def report_pdf(self, request):
+        """PDF institucional do CQ de um exame: Levey-Jennings + tabela por analito."""
+        from django.http import HttpResponse
+        from django.utils.dateparse import parse_datetime
+
+        test_id = request.query_params.get("test")
+        if not test_id:
+            raise DRFValidationError({"test": "Parâmetro obrigatório."})
+
+        queryset = self.get_queryset().filter(test_id=test_id).order_by("run_at")
+
+        exact_filters = {
+            "material_lot": "Lote",
+            "material_name": "Material",
+            "control_type": "Tipo de controlo",
+            "result_mode": "Modo",
+            "equipment": "Equipamento",
+            "method": "Método",
+        }
+        header_filters: dict[str, str] = {}
+        for field, label in exact_filters.items():
+            value = request.query_params.get(field)
+            if value:
+                queryset = queryset.filter(**{field: value})
+                header_filters[label] = value
+
+        run_from = parse_datetime(request.query_params.get("run_from") or "")
+        run_to = parse_datetime(request.query_params.get("run_to") or "")
+        run_second = parse_datetime(request.query_params.get("run_second") or "")
+        if run_second and not (run_from or run_to):
+            from datetime import timedelta
+
+            run_from = run_second.replace(microsecond=0)
+            run_to = run_from + timedelta(seconds=1)
+        if run_from:
+            queryset = queryset.filter(run_at__gte=run_from)
+        if run_to:
+            queryset = queryset.filter(run_at__lte=run_to)
+        if run_from or run_to:
+            from django.utils import timezone as dj_timezone
+
+            def _fmt_local(value):
+                if value is None:
+                    return "…"
+                if dj_timezone.is_aware(value):
+                    value = dj_timezone.localtime(value)
+                return value.strftime("%d/%m/%Y %H:%M")
+
+            header_filters["Período"] = f"{_fmt_local(run_from)} — {_fmt_local(run_to)}"
+
+        field_name = (request.query_params.get("field_name") or "").strip()
+        records = list(queryset[:1000])
+        if field_name:
+            records = [r for r in records if (r.test_field.name if r.test_field else "Exame completo") == field_name]
+
+        test = records[0].test if records else LabTest.objects.filter(pk=test_id).first()
+        if test is None:
+            raise DRFValidationError({"test": "Exame não encontrado."})
+
+        analytes_map: dict[str, dict] = {}
+        for record in records:
+            name = record.test_field.name if record.test_field else "Exame completo"
+            entry = analytes_map.setdefault(name, {
+                "name": name,
+                "code": record.test_field.code if record.test_field else "",
+                "unit": (record.test_field.unit if record.test_field else "") or record.unit or "",
+                "records": [],
+            })
+            entry["records"].append({
+                "custom_id": record.custom_id,
+                "run_at": record.run_at,
+                "expected": record.expected_result,
+                "observed": record.observed_result,
+                "observed_numeric": record.observed_numeric,
+                "deviation": record.deviation,
+                "decision_display": record.get_decision_display(),
+            })
+
+        sections = request.query_params.get("sections") or "all"
+        payload = {
+            "test": {"code": test.code, "name": test.name, "method": test.method},
+            "filters": header_filters,
+            "sections": sections if sections in ("all", "grafico", "tabela") else "all",
+            "analytes": list(analytes_map.values()),
+        }
+
+        from tasks.generate_pdf.lab_qc_report_pdf_generator import generate_lab_qc_report_pdf
+
+        pdf_bytes, filename = generate_lab_qc_report_pdf(payload, request=request)
+        response = HttpResponse(pdf_bytes, content_type="application/pdf")
+        response["Content-Disposition"] = f'inline; filename="{filename}"'
+        return response
+
 
 class LabTestViewSet(_CatalogActivationMixin, ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
     queryset = LabTest.objects.select_related("sector").all()

@@ -136,25 +136,6 @@ function fmtChartValue(value: number) {
   return Number.isInteger(value) ? String(value) : value.toFixed(2);
 }
 
-function escapeHtml(value: string | number | null | undefined) {
-  return String(value ?? "")
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#39;");
-}
-
-function slug(value: string) {
-  return value
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "_")
-    .replace(/^_+|_+$/g, "")
-    .slice(0, 80) || "relatorio";
-}
-
 function latestOf(records: QualityControl[]) {
   return records.reduce<QualityControl | undefined>((latest, record) => {
     if (!latest) return record;
@@ -280,144 +261,34 @@ function LeveyJenningsChartView({ chart }: { chart: LeveyJenningsChart }) {
   );
 }
 
-function openPdfReport(filename: string, title: string, body: string) {
-  const html = `<!doctype html>
-<html>
-<head>
-  <meta charset="utf-8" />
-  <title>${escapeHtml(title)}</title>
-  <style>
-    @page { size: A4; margin: 14mm; }
-    * { box-sizing: border-box; }
-    body { font-family: Arial, Helvetica, sans-serif; color: #111827; margin: 0; font-size: 11px; }
-    header { border-bottom: 2px solid #0891b2; padding-bottom: 10px; margin-bottom: 14px; }
-    h1 { margin: 0; font-size: 18px; color: #0f172a; }
-    h2 { margin: 14px 0 8px; font-size: 13px; color: #0f172a; }
-    .meta { color: #475569; margin-top: 4px; }
-    .summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 12px 0; }
-    .box { border: 1px solid #cbd5e1; border-radius: 6px; padding: 7px; }
-    .label { color: #64748b; text-transform: uppercase; font-size: 8px; font-weight: 700; }
-    .value { margin-top: 3px; font-size: 13px; font-weight: 700; }
-    table { width: 100%; border-collapse: collapse; margin-top: 8px; }
-    th, td { border: 1px solid #cbd5e1; padding: 5px 6px; text-align: left; }
-    th { background: #ecfeff; color: #155e75; font-size: 9px; text-transform: uppercase; }
-    svg { width: 100%; height: auto; border: 1px solid #cbd5e1; border-radius: 8px; }
-    footer { margin-top: 14px; color: #64748b; font-size: 9px; }
-  </style>
-</head>
-<body>
-  <header>
-    <h1>${escapeHtml(title)}</h1>
-    <div class="meta">Gerado em ${escapeHtml(new Date().toLocaleString("pt-PT", { dateStyle: "short", timeStyle: "short" }))} · Gestão da Qualidade Laboratorial</div>
-  </header>
-  ${body}
-  <footer>Documento de apoio ao controlo de qualidade. Rever conforme POP/SGQ aplicável.</footer>
-  <script>
-    document.title = ${JSON.stringify(filename)};
-    window.onload = () => { window.focus(); window.print(); };
-  </script>
-</body>
-</html>`;
-  const win = window.open("", "_blank", "width=1100,height=800");
-  if (!win) {
-    const url = URL.createObjectURL(new Blob([html], { type: "text/html;charset=utf-8" }));
-    window.open(url, "_blank");
-    setTimeout(() => URL.revokeObjectURL(url), 60000);
-    return;
-  }
-  win.document.open();
-  win.document.write(html);
-  win.document.close();
-}
+const REPORT_FILTER_PARAMS = [
+  "run_from",
+  "run_to",
+  "run_second",
+  "material_lot",
+  "material_name",
+  "control_type",
+  "result_mode",
+  "equipment",
+  "method",
+] as const;
 
-function buildChartSvg(chart: LeveyJenningsChart) {
-  const width = 920;
-  const height = 360;
-  const pad = { top: 24, right: 28, bottom: 42, left: 62 };
-  const values = chart.points.map((point) => point.value);
-  const limitValues = chart.sd > 0
-    ? [chart.mean - chart.sd * 3, chart.mean - chart.sd * 2, chart.mean - chart.sd, chart.mean, chart.mean + chart.sd, chart.mean + chart.sd * 2, chart.mean + chart.sd * 3]
-    : [chart.mean];
-  const min = Math.min(...values, ...limitValues);
-  const max = Math.max(...values, ...limitValues);
-  const span = max - min || 1;
-  const yMin = min - span * 0.08;
-  const yMax = max + span * 0.08;
-  const plotW = width - pad.left - pad.right;
-  const plotH = height - pad.top - pad.bottom;
-  const x = (index: number) => pad.left + (chart.points.length === 1 ? plotW / 2 : (index / (chart.points.length - 1)) * plotW);
-  const y = (value: number) => pad.top + ((yMax - value) / (yMax - yMin)) * plotH;
-  const linePath = chart.points.map((point, index) => `${index === 0 ? "M" : "L"} ${x(index).toFixed(1)} ${y(point.value).toFixed(1)}`).join(" ");
-  const limits = chart.sd > 0
-    ? [
-        ["+3DP", chart.mean + chart.sd * 3, "#ef4444"],
-        ["+2DP", chart.mean + chart.sd * 2, "#f59e0b"],
-        ["+1DP", chart.mean + chart.sd, "#38bdf8"],
-        ["Media", chart.mean, "#10b981"],
-        ["-1DP", chart.mean - chart.sd, "#38bdf8"],
-        ["-2DP", chart.mean - chart.sd * 2, "#f59e0b"],
-        ["-3DP", chart.mean - chart.sd * 3, "#ef4444"],
-      ] as const
-    : [["Media", chart.mean, "#10b981"]] as const;
-
-  return `<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Grafico Levey-Jennings">
-    <rect width="${width}" height="${height}" fill="#ffffff" />
-    <line x1="${pad.left}" y1="${pad.top}" x2="${pad.left}" y2="${height - pad.bottom}" stroke="#94a3b8" />
-    <line x1="${pad.left}" y1="${height - pad.bottom}" x2="${width - pad.right}" y2="${height - pad.bottom}" stroke="#94a3b8" />
-    ${limits.map(([label, value, color]) => `<line x1="${pad.left}" y1="${y(value).toFixed(1)}" x2="${width - pad.right}" y2="${y(value).toFixed(1)}" stroke="${color}" stroke-dasharray="${label === "Media" ? "0" : "6 5"}" stroke-width="1.4" /><text x="${width - pad.right + 4}" y="${(y(value) + 3).toFixed(1)}" font-size="10" fill="${color}">${label}</text>`).join("")}
-    <path d="${linePath}" fill="none" stroke="#0891b2" stroke-width="3" />
-    ${chart.points.map((point, index) => `<circle cx="${x(index).toFixed(1)}" cy="${y(point.value).toFixed(1)}" r="4" fill="#0891b2" /><text x="${x(index).toFixed(1)}" y="${height - 20}" text-anchor="middle" font-size="10" fill="#475569">${escapeHtml(point.label)}</text>`).join("")}
-    <text x="12" y="18" font-size="11" fill="#475569">Obtido (${escapeHtml(chart.unit || "unidade")})</text>
-  </svg>`;
-}
-
-function generateChartPdf(group: AnalyteGroup, chart: LeveyJenningsChart, title: string) {
-  const reportTitle = `Grafico Levey-Jennings - ${group.name}`;
-  const body = `
-    <div class="meta">${escapeHtml(title)} · Analito: ${escapeHtml(group.name)}</div>
-    <div class="summary">
-      <div class="box"><div class="label">Pontos</div><div class="value">${chart.points.length}</div></div>
-      <div class="box"><div class="label">Media</div><div class="value">${fmtChartValue(chart.mean)} ${escapeHtml(chart.unit)}</div></div>
-      <div class="box"><div class="label">Desvio padrao</div><div class="value">${fmtChartValue(chart.sd)}</div></div>
-      <div class="box"><div class="label">Regra</div><div class="value">±2DP / ±3DP</div></div>
-    </div>
-    ${buildChartSvg(chart)}
-  `;
-  openPdfReport(`grafico_lj_${slug(group.name)}.pdf`, reportTitle, body);
-}
-
-function generateTablePdf(group: AnalyteGroup, chart: LeveyJenningsChart | null, title: string) {
-  const rows = (chart?.points || group.records.map((record, index) => ({
-    label: String(index + 1),
-    value: parseDecimal(record.observed_result) ?? 0,
-    runAt: record.run_at,
-    recordId: record.id,
-    customId: record.custom_id,
-    expected: record.expected_result,
-    observed: record.observed_result,
-    decision: record.decision_display || record.decision,
-  }))).map((point) => `
-    <tr>
-      <td>${escapeHtml(point.label)}</td>
-      <td>${escapeHtml(point.customId || `#${point.recordId}`)}</td>
-      <td>${escapeHtml(fmtDate(point.runAt))}</td>
-      <td>${escapeHtml(point.expected)}</td>
-      <td>${escapeHtml(point.observed)}</td>
-      <td>${escapeHtml(fmtChartValue(point.value))}</td>
-      <td>${escapeHtml(point.decision)}</td>
-    </tr>
-  `).join("");
-  const body = `
-    <div class="meta">${escapeHtml(title)} · Analito: ${escapeHtml(group.name)}</div>
-    <h2>Tabela de registos de controlo</h2>
-    <table>
-      <thead>
-        <tr><th>#</th><th>Registo</th><th>Data</th><th>Esperado</th><th>Obtido</th><th>Valor numerico</th><th>Conclusao</th></tr>
-      </thead>
-      <tbody>${rows}</tbody>
-    </table>
-  `;
-  openPdfReport(`tabela_cq_${slug(group.name)}.pdf`, `Tabela CQ - ${group.name}`, body);
+// Relatório institucional (motor de PDF do Substrato: cabeçalho, QR e código
+// de barras) com gráfico Levey-Jennings e tabela por analito.
+function openInstitutionalReport(
+  testId: string,
+  searchParams: Pick<URLSearchParams, "get">,
+  options: { fieldName?: string; sections?: "grafico" | "tabela" } = {},
+) {
+  const params = new URLSearchParams();
+  params.set("test", testId);
+  REPORT_FILTER_PARAMS.forEach((key) => {
+    const value = searchParams.get(key);
+    if (value) params.set(key, value);
+  });
+  if (options.fieldName) params.set("field_name", options.fieldName);
+  if (options.sections) params.set("sections", options.sections);
+  window.open(`/api/v1/clinical_laboratory/quality_control/report/pdf/?${params.toString()}`, "_blank");
 }
 
 export default function QualityControlTestDetailPage() {
@@ -681,7 +552,7 @@ export default function QualityControlTestDetailPage() {
                 <div className="mt-1.5 grid grid-cols-2 gap-1.5">
                   <button
                     type="button"
-                    onClick={() => chart ? generateChartPdf(group, chart, title) : undefined}
+                    onClick={() => openInstitutionalReport(testId, searchParams, { fieldName: group.name, sections: "grafico" })}
                     disabled={!chart}
                     title={chart ? "Gerar PDF do grafico Levey-Jennings" : "Sao necessarios pelo menos 3 registos numericos para o grafico"}
                     className="inline-flex h-7 items-center justify-center gap-1 rounded-md border border-fuchsia-200 bg-fuchsia-50 px-1.5 text-[9px] font-semibold text-fuchsia-800 transition hover:bg-fuchsia-100 disabled:cursor-not-allowed disabled:border-border disabled:bg-muted disabled:text-muted-foreground dark:border-fuchsia-800/40 dark:bg-fuchsia-950/25 dark:text-fuchsia-200"
@@ -691,7 +562,7 @@ export default function QualityControlTestDetailPage() {
                   </button>
                   <button
                     type="button"
-                    onClick={() => generateTablePdf(group, chart, title)}
+                    onClick={() => openInstitutionalReport(testId, searchParams, { fieldName: group.name, sections: "tabela" })}
                     disabled={group.records.length === 0}
                     title="Gerar PDF da tabela de registos do analito"
                     className="inline-flex h-7 items-center justify-center gap-1 rounded-md border border-violet-200 bg-violet-50 px-1.5 text-[9px] font-semibold text-violet-800 transition hover:bg-violet-100 disabled:cursor-not-allowed disabled:border-border disabled:bg-muted disabled:text-muted-foreground dark:border-violet-800/40 dark:bg-violet-950/25 dark:text-violet-200"
