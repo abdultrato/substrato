@@ -126,8 +126,14 @@ export default function LabCulturesPage() {
                 <p className="text-xs text-muted-foreground">Apenas itens de requisição cujo exame usa método Cultura após recepção da amostra.</p>
               </div>
             </div>
-            <button onClick={load} className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-white/40 bg-white/35 px-2.5 text-xs font-medium text-foreground shadow-sm backdrop-blur-sm transition hover:bg-white/55 dark:border-white/10 dark:bg-white/5">
-              <RefreshCw size={14} /> Atualizar
+            <button
+              onClick={load}
+              disabled={loading}
+              aria-busy={loading}
+              className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-white/40 bg-white/35 px-2.5 text-xs font-medium text-foreground shadow-sm backdrop-blur-sm transition hover:bg-white/55 disabled:cursor-not-allowed disabled:opacity-65 dark:border-white/10 dark:bg-white/5"
+            >
+              <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
+              {loading ? "Atualizando" : "Atualizar"}
             </button>
           </div>
         </section>

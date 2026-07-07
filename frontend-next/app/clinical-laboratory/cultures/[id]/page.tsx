@@ -221,7 +221,15 @@ export default function CultureDetailPage() {
             </div>
             <div className="flex shrink-0 items-center gap-1.5">
               <button onClick={() => router.push("/clinical-laboratory/cultures")} className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-white/40 bg-white/35 px-2.5 text-xs font-medium text-foreground shadow-sm backdrop-blur-sm transition hover:bg-white/55 dark:border-white/10 dark:bg-white/5"><ArrowLeft size={14} /> Voltar</button>
-              <button onClick={load} className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-white/40 bg-white/35 px-2.5 text-xs font-medium text-foreground shadow-sm backdrop-blur-sm transition hover:bg-white/55 dark:border-white/10 dark:bg-white/5"><RefreshCw size={14} /> Atualizar</button>
+              <button
+                onClick={load}
+                disabled={loading}
+                aria-busy={loading}
+                className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-white/40 bg-white/35 px-2.5 text-xs font-medium text-foreground shadow-sm backdrop-blur-sm transition hover:bg-white/55 disabled:cursor-not-allowed disabled:opacity-65 dark:border-white/10 dark:bg-white/5"
+              >
+                <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
+                {loading ? "Atualizando" : "Atualizar"}
+              </button>
             </div>
           </div>
         </section>
