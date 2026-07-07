@@ -61,6 +61,19 @@ function shortText(value: string | null | undefined, fallback = "Ação corretiv
   return text || fallback;
 }
 
+function normalizeCapaNumber(value: string) {
+  const digits = value.replace(/\D/g, "");
+  if (!digits) return "";
+  const number = Math.min(999, Math.max(1, Number(digits)));
+  return String(number);
+}
+
+function capaNumberToCustomId(value: string) {
+  const number = Number(value);
+  if (!Number.isInteger(number) || number < 1 || number > 999) return "";
+  return `QCA-${String(number).padStart(4, "0")}`;
+}
+
 function unwrapRelationRow(row: Record<string, any>) {
   if (row?.data && typeof row.data === "object" && !Array.isArray(row.data)) return row.data;
   if (row?.result && typeof row.result === "object" && !Array.isArray(row.result)) return row.result;
@@ -124,7 +137,7 @@ export default function CorrectiveActionsListPage() {
       if (debouncedSearch) query.search = debouncedSearch;
       if (filterStatus) query.status = filterStatus;
       if (filterType) query.action_type = filterType;
-      if (debouncedCustomId) query.custom_id = debouncedCustomId;
+      if (debouncedCustomId) query.custom_id = capaNumberToCustomId(debouncedCustomId);
 
       const { items, meta } = await apiFetchList<CorrectiveAction>(ENDPOINT, { page, pageSize, query });
       setRows(items);
@@ -227,7 +240,7 @@ export default function CorrectiveActionsListPage() {
 
             <div className="relative min-w-[86px] flex-[0.45_1_108px]">
               <Hash size={10} className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground" />
-              <input value={filterCustomId} onChange={(event) => setFilterCustomId(event.target.value)} placeholder="QCA-0001" className="w-full rounded-md border border-border bg-card/85 py-1 pl-6 pr-6 text-[11px] text-foreground outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20" />
+              <input value={filterCustomId} onChange={(event) => setFilterCustomId(normalizeCapaNumber(event.target.value))} inputMode="numeric" pattern="[0-9]*" min={1} max={999} placeholder="1-999" className="w-full rounded-md border border-border bg-card/85 py-1 pl-6 pr-6 text-[11px] text-foreground outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20" />
               {filterCustomId && <button type="button" onClick={() => setFilterCustomId("")} className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground transition hover:text-foreground" aria-label="Limpar código"><X size={10} /></button>}
             </div>
 
