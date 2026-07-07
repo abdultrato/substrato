@@ -1,36 +1,22 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowRight, CalendarDays, ClipboardList, Clock3, FlaskConical, Loader2, Microscope, RefreshCw, Search, User, X } from "lucide-react";
+import { CalendarDays, Loader2, Microscope, RefreshCw, Search } from "lucide-react";
 
 import AppLayout from "@/components/layout/AppLayout";
 import { apiFetch } from "@/lib/api";
 import { abbreviateMiddleNames } from "@/lib/formatName";
 import { requiredGroupsForResourceGroup } from "@/lib/resourcesAccess";
-
-type QueueItem = {
-  id: string;
-  kind: "pending" | "culture";
-  culture_id: number | null;
-  culture_custom_id: string;
-  order_item: number;
-  order_item_custom_id: string;
-  order_custom_id: string;
-  patient_name: string;
-  test_name: string;
-  test_code: string;
-  test_method: string;
-  sample: number | null;
-  sample_barcode: string;
-  sample_type: string;
-  sample_received_at: string | null;
-  status: string;
-  status_display: string;
-  incubation_started_at: string | null;
-  incubation_expected_end_at: string | null;
-};
+import {
+  STATE_STYLES,
+  fmtQueueDate,
+  groupEntryDate,
+  groupState,
+  shortOrder,
+  type GroupState,
+  type QueueItem,
+} from "@/lib/cultureQueue";
 
 type CultureGroup = {
   orderId: string;
@@ -38,117 +24,7 @@ type CultureGroup = {
   items: QueueItem[];
 };
 
-type GroupState = "pending" | "overdue" | "reincubated" | "incubating" | "finalized";
-
-const FINAL_STATUSES = new Set(["CONCLUIDA", "POSITIVA", "NEGATIVA"]);
-
-// Estado de uma cultura para efeito de cor do cartão da requisição.
-function itemState(item: QueueItem, now: number): GroupState {
-  if (!item.culture_id || item.status === "MONTADA") return "pending";
-  if (item.status === "REINCUBACAO") return "reincubated";
-  if (FINAL_STATUSES.has(item.status)) return "finalized";
-  if (item.status === "AGUARDA_AVALIACAO") return "overdue";
-  if (item.status === "INCUBACAO") {
-    if (item.incubation_expected_end_at && now > new Date(item.incubation_expected_end_at).getTime()) return "overdue";
-    return "incubating";
-  }
-  return "incubating";
-}
-
-// Cor agregada da requisição: prioriza o que exige atenção.
-function groupState(items: QueueItem[], now: number): GroupState {
-  const states = items.map((item) => itemState(item, now));
-  if (states.length > 0 && states.every((state) => state === "finalized")) return "finalized";
-  const active = states.filter((state) => state !== "finalized");
-  if (active.includes("pending")) return "pending";
-  if (active.includes("overdue")) return "overdue";
-  if (active.includes("reincubated")) return "reincubated";
-  return "incubating";
-}
-
-const STATE_STYLES: Record<GroupState, {
-  label: string;
-  card: string;
-  strip: string;
-  dot: string;
-  badgeText: string;
-  title: string;
-  subtitle: string;
-  count: string;
-}> = {
-  pending: {
-    label: "Pendente",
-    card: "border-red-300/70 bg-gradient-to-br from-red-50/85 to-rose-100/55 dark:border-red-800/50 dark:from-red-950/45 dark:to-rose-950/30",
-    strip: "bg-red-500",
-    dot: "bg-red-500",
-    badgeText: "text-red-700 dark:text-red-300",
-    title: "text-foreground",
-    subtitle: "text-muted-foreground",
-    count: "bg-red-500/15 text-red-700 dark:text-red-300",
-  },
-  overdue: {
-    label: "Atrasada",
-    card: "border-orange-300/70 bg-gradient-to-br from-orange-50/85 to-amber-100/55 dark:border-orange-800/50 dark:from-orange-950/45 dark:to-amber-950/30",
-    strip: "bg-orange-500",
-    dot: "bg-orange-500",
-    badgeText: "text-orange-700 dark:text-orange-300",
-    title: "text-foreground",
-    subtitle: "text-muted-foreground",
-    count: "bg-orange-500/15 text-orange-700 dark:text-orange-300",
-  },
-  reincubated: {
-    label: "Reincubada",
-    card: "border-yellow-300/70 bg-gradient-to-br from-yellow-50/85 to-amber-100/55 dark:border-yellow-800/50 dark:from-yellow-950/45 dark:to-amber-950/30",
-    strip: "bg-yellow-400",
-    dot: "bg-yellow-400",
-    badgeText: "text-amber-700 dark:text-amber-300",
-    title: "text-foreground",
-    subtitle: "text-muted-foreground",
-    count: "bg-yellow-400/20 text-amber-700 dark:text-amber-300",
-  },
-  incubating: {
-    label: "Incubando",
-    card: "border-emerald-300/70 bg-gradient-to-br from-emerald-50/85 to-teal-100/55 dark:border-emerald-800/50 dark:from-emerald-950/45 dark:to-teal-950/30",
-    strip: "bg-emerald-500",
-    dot: "bg-emerald-500",
-    badgeText: "text-emerald-700 dark:text-emerald-300",
-    title: "text-foreground",
-    subtitle: "text-muted-foreground",
-    count: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300",
-  },
-  finalized: {
-    label: "Finalizada",
-    card: "border-slate-700 bg-slate-900 dark:border-slate-600 dark:bg-slate-950",
-    strip: "bg-slate-500",
-    dot: "bg-slate-300",
-    badgeText: "text-slate-200",
-    title: "text-white",
-    subtitle: "text-slate-400",
-    count: "bg-white/15 text-slate-100",
-  },
-};
-
-// Rótulo curto da requisição (segmento final do código).
-function shortOrder(orderId: string) {
-  const tail = orderId.split("/").pop() || orderId;
-  return tail.replace(/^0+/, "") || tail;
-}
-
-// Data de entrada da requisição: receção mais antiga entre as amostras.
-function groupEntryDate(items: QueueItem[]): string | null {
-  let earliest: number | null = null;
-  for (const item of items) {
-    if (!item.sample_received_at) continue;
-    const time = new Date(item.sample_received_at).getTime();
-    if (!Number.isNaN(time) && (earliest === null || time < earliest)) earliest = time;
-  }
-  return earliest === null ? null : new Date(earliest).toISOString();
-}
-
-function fmtDate(value: string | null) {
-  if (!value) return "Sem data";
-  return new Intl.DateTimeFormat("pt-MZ", { dateStyle: "short", timeStyle: "short" }).format(new Date(value));
-}
+const REQUISITION_PATH = "/clinical-laboratory/cultures/requisition";
 
 export default function LabCulturesPage() {
   const router = useRouter();
@@ -156,9 +32,7 @@ export default function LabCulturesPage() {
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [startingId, setStartingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [selected, setSelected] = useState<string | null>(null);
 
   async function load(manual = false) {
     const startedAt = Date.now();
@@ -214,36 +88,10 @@ export default function LabCulturesPage() {
     return Array.from(map.values()).sort((a, b) => b.orderId.localeCompare(a.orderId));
   }, [filtered]);
 
-  const selectedGroup = useMemo(
-    () => (selected ? groups.find((group) => group.orderId === selected) ?? null : null),
-    [groups, selected],
-  );
-
   const now = Date.now();
 
-  async function startCulture(item: QueueItem) {
-    if (item.culture_id) {
-      router.push(`/clinical-laboratory/cultures/${item.culture_id}`);
-      return;
-    }
-    setStartingId(item.id);
-    try {
-      const culture = await apiFetch<{ id: number }>("/clinical_laboratory/culture/", {
-        method: "POST",
-        body: JSON.stringify({
-          order_item: item.order_item,
-          sample: item.sample,
-          culture_type: "AEROBIA",
-          specimen: item.sample_type || "",
-          status: "MONTADA",
-        }),
-      });
-      router.push(`/clinical-laboratory/cultures/${culture.id}`);
-    } catch (err: any) {
-      setError(err?.message || "Não foi possível iniciar a cultura.");
-    } finally {
-      setStartingId(null);
-    }
+  function openRequisition(orderId: string) {
+    router.push(`${REQUISITION_PATH}?order=${encodeURIComponent(orderId)}`);
   }
 
   return (
@@ -262,7 +110,7 @@ export default function LabCulturesPage() {
                   <span className="rounded-full border border-cyan-200/70 bg-cyan-50/70 px-2 py-0.5 text-[10px] font-medium text-cyan-700 backdrop-blur-sm dark:border-cyan-800/40 dark:bg-cyan-900/20 dark:text-cyan-300">Fila de culturas</span>
                 </div>
                 <h1 className="text-lg font-semibold leading-tight text-foreground">Culturas pendentes e em execução</h1>
-                <p className="text-xs text-muted-foreground">Agrupadas por requisição. Clique numa requisição para ver as culturas do paciente.</p>
+                <p className="text-xs text-muted-foreground">Agrupadas por requisição. Clique numa requisição para abrir os exames do paciente.</p>
               </div>
             </div>
             <div className="flex w-full flex-col gap-2 sm:w-auto sm:min-w-[360px] sm:flex-row sm:items-center">
@@ -304,16 +152,14 @@ export default function LabCulturesPage() {
               {groups.map((group) => {
                 const state = groupState(group.items, now);
                 const style = STATE_STYLES[state];
-                const isOpen = selected === group.orderId;
                 const entryDate = groupEntryDate(group.items);
                 return (
                   <button
                     key={group.orderId}
                     type="button"
-                    onClick={() => setSelected((current) => (current === group.orderId ? null : group.orderId))}
-                    aria-expanded={isOpen}
+                    onClick={() => openRequisition(group.orderId)}
                     title={`${group.patient || "Paciente"} — ${group.orderId}`}
-                    className={`relative flex flex-col gap-2 overflow-hidden rounded-xl border p-3.5 pl-4 text-left shadow-sm backdrop-blur-sm transition hover:brightness-[1.03] ${style.card} ${isOpen ? "ring-2 ring-sky-400/70 ring-offset-1 ring-offset-transparent" : ""}`}
+                    className={`relative flex flex-col gap-2 overflow-hidden rounded-xl border p-3.5 pl-4 text-left shadow-sm backdrop-blur-sm transition hover:brightness-[1.03] ${style.card}`}
                   >
                     <span className={`absolute inset-y-0 left-0 w-1.5 ${style.strip}`} />
                     <div className="flex items-center justify-between gap-1.5">
@@ -329,50 +175,12 @@ export default function LabCulturesPage() {
                     </div>
                     <p className={`inline-flex items-center gap-1 text-[11px] ${style.subtitle}`}>
                       <CalendarDays size={11} className="shrink-0" />
-                      Entrada {entryDate ? fmtDate(entryDate) : "—"}
+                      Entrada {entryDate ? fmtQueueDate(entryDate) : "—"}
                     </p>
                   </button>
                 );
               })}
             </div>
-
-            {selectedGroup && (
-              <div className="rounded-xl border border-white/25 bg-white/30 p-2 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]">
-                <div className="mb-1.5 flex items-center gap-2 px-1">
-                  <User size={13} className="shrink-0 text-teal-600 dark:text-teal-400" />
-                  <span className="truncate text-sm font-semibold text-foreground">{abbreviateMiddleNames(selectedGroup.patient) || "Paciente não informado"}</span>
-                  <span className="inline-flex items-center gap-1 font-mono text-[11px] text-muted-foreground"><ClipboardList size={11} /> {selectedGroup.orderId}</span>
-                  <button type="button" onClick={() => setSelected(null)} className="ml-auto inline-flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground transition hover:bg-white/40 hover:text-foreground dark:hover:bg-white/10" aria-label="Fechar"><X size={14} /></button>
-                </div>
-                <div className="space-y-1.5">
-                  {selectedGroup.items.map((item) => (
-                    <div key={item.id} className="flex flex-wrap items-center gap-2 rounded-lg border border-white/25 bg-white/30 px-2.5 py-2 backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.03]">
-                      <div className="min-w-0 flex-1">
-                        <div className="flex flex-wrap items-center gap-1.5">
-                          <FlaskConical size={13} className="shrink-0 text-teal-600 dark:text-teal-400" />
-                          <span className="truncate text-xs font-semibold text-foreground">{item.test_name}</span>
-                          <span className="shrink-0 rounded-full border border-white/40 bg-white/45 px-1.5 py-0.5 text-[9px] font-semibold text-foreground backdrop-blur-sm dark:border-white/10 dark:bg-white/10">{item.status_display}</span>
-                        </div>
-                        <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] text-muted-foreground">
-                          <span>{item.test_code || "Sem código"}</span>
-                          <span>· {item.sample_barcode || "Sem amostra"}</span>
-                          <span className="inline-flex items-center gap-1">· <Clock3 size={10} /> {item.incubation_expected_end_at ? `Leitura ${fmtDate(item.incubation_expected_end_at)}` : "Aguardando sementeira"}</span>
-                        </div>
-                      </div>
-                      {item.culture_id ? (
-                        <Link href={`/clinical-laboratory/cultures/${item.culture_id}`} className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 px-3 text-xs font-semibold text-white shadow-md shadow-violet-500/20">
-                          Abrir <ArrowRight size={13} />
-                        </Link>
-                      ) : (
-                        <button onClick={() => startCulture(item)} disabled={startingId === item.id} className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg bg-gradient-to-r from-teal-600 to-cyan-600 px-3 text-xs font-semibold text-white shadow-md shadow-teal-500/20 disabled:opacity-60">
-                          {startingId === item.id ? <Loader2 size={13} className="animate-spin" /> : <FlaskConical size={13} />} Iniciar cultura
-                        </button>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
           </>
         )}
       </div>
