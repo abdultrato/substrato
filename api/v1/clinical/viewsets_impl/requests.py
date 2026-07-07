@@ -21,6 +21,7 @@ from application.clinical.handlers import (
 from apps.clinical.models.lab_request import LabRequest
 from apps.clinical.models.lab_request_item import LabRequestItem
 from apps.clinical.models.result_item import ResultItem
+from apps.clinical_laboratory.models import LabOrder, LabOrderItem, LabSample
 from apps.notifications.use_cases import send_lab_results_notification
 from core.constants.laboratory.clinical_status import clinical_attendance_priority_case
 from domain.clinical.result_state import ResultState
@@ -121,6 +122,65 @@ class LabRequestViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin,
         except Exception as err:
             raise ValidationError(str(err)) from err
 
+    def _sync_lis_order_for_processing(self, request_record):
+        """Materializa a requisição clínica no LIS novo ao iniciar processamento."""
+        if request_record.type != LabRequest.Type.LABORATORY:
+            return None
+
+        order, _ = LabOrder.objects.get_or_create(
+            tenant=request_record.tenant,
+            diagnosis=f"LEGACY-LABREQUEST-{request_record.id}",
+            defaults={
+                "patient": request_record.patient,
+                "origin": "Requisição clínica",
+                "status": LabOrder.Status.IN_PROGRESS,
+                "payment_status": LabOrder.PaymentStatus.PAID,
+                "clinical_indication": f"Sincronizada da requisição {request_record.custom_id or request_record.id}.",
+                "requested_at": request_record.created_at,
+            },
+        )
+        order.patient = request_record.patient
+        order.status = LabOrder.Status.IN_PROGRESS
+        order.payment_status = LabOrder.PaymentStatus.PAID
+        order.save(update_fields=["patient", "status", "payment_status", "updated_at"])
+
+        sample, _ = LabSample.objects.get_or_create(
+            tenant=request_record.tenant,
+            barcode=f"LR-{request_record.id}",
+            defaults={
+                "order": order,
+                "sample_type": LabSample._meta.get_field("sample_type").default,
+                "status": LabSample.Status.RECEIVED,
+                "collected_at": request_record.collected_at,
+                "received_at": request_record.updated_at,
+                "storage_location": "Recepção de amostras",
+            },
+        )
+        sample.order = order
+        sample.status = LabSample.Status.RECEIVED
+        sample.collected_at = sample.collected_at or request_record.collected_at
+        sample.received_at = sample.received_at or request_record.updated_at
+        sample.save(update_fields=["order", "status", "collected_at", "received_at", "updated_at"])
+
+        for item in request_record.items.filter(deleted=False, exam__isnull=False).select_related("exam"):
+            order_item, _ = LabOrderItem.objects.get_or_create(
+                tenant=request_record.tenant,
+                order=order,
+                test=item.exam,
+                defaults={
+                    "sample_type": item.exam.sample_type,
+                    "price": item.exam.price,
+                    "status": LabOrderItem.Status.IN_PROGRESS,
+                    "billed": True,
+                },
+            )
+            order_item.sample_type = item.exam.sample_type
+            order_item.price = item.exam.price
+            order_item.status = LabOrderItem.Status.IN_PROGRESS
+            order_item.billed = True
+            order_item.save(update_fields=["sample_type", "price", "status", "billed", "updated_at"])
+        return order
+
     @action(detail=True, methods=["post"], url_path="cancelar", url_name="cancelar")
     def cancelar(self, request, pk=None):
         """Cancela a requisição pendente (antes de ir para colheita)."""
@@ -179,6 +239,7 @@ class LabRequestViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin,
         request_record = self.get_object()
         try:
             request_record.iniciar_processamento(user=getattr(request, "user", None))
+            self._sync_lis_order_for_processing(request_record)
         except DjangoValidationError as err:
             raise ValidationError(getattr(err, "message_dict", None) or getattr(err, "messages", None) or str(err)) from err
         request_record.refresh_from_db()

@@ -21,6 +21,7 @@ import {
   Send,
   Stethoscope,
   User,
+  PlayCircle,
 } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
@@ -30,15 +31,22 @@ import { routeParamToString } from "@/lib/routeParams"
 /* ── types ── */
 type OrderItem = {
   id: number
+  custom_id?: string
   code?: string
   test_id?: number
+  exam?: number
   test_name?: string
+  exam_name?: string
   test_code?: string
+  exam_custom_id?: string
+  exam_method?: string
   sector?: number
   sector_name?: string
   sector_code?: string
   price?: string
   status?: string
+  sample_status?: string
+  sample_status_display?: string
 }
 
 type Sector = { id: number; name: string; code: string }
@@ -58,11 +66,15 @@ type LabOrder = {
   diagnosis?: string
   status?: string
   payment_status?: string
+  type?: string
+  validated_at?: string | null
+  collected_at?: string | null
   requested_at?: string
   created_at?: string
   updated_at?: string
   sectors?: Sector[]
   requested_tests?: OrderItem[]
+  items?: OrderItem[]
 }
 
 /* ── helpers ── */
@@ -98,6 +110,10 @@ const ITEM_STATUS_META: Record<string, { dot: string }> = {
   EM_ANALISE:  { dot: "bg-sky-400" },
   CONCLUIDO:   { dot: "bg-emerald-500" },
   CANCELADO:   { dot: "bg-rose-400" },
+  recebida:    { dot: "bg-emerald-500" },
+  coletada:    { dot: "bg-sky-400" },
+  aguardando:  { dot: "bg-amber-400" },
+  rejeitada:   { dot: "bg-rose-400" },
 }
 
 function Pill({ label, cls }: { label: string; cls: string }) {
@@ -128,6 +144,7 @@ export default function LabOrderDetailPage() {
   const [error, setError] = useState<string | null>(null)
   const [feedback, setFeedback] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+  const [processingItemId, setProcessingItemId] = useState<number | "all" | null>(null)
   const [redirectingLegacy, setRedirectingLegacy] = useState(false)
 
   const load = useCallback(async () => {
@@ -136,22 +153,20 @@ export default function LabOrderDetailPage() {
     setError(null)
     setRedirectingLegacy(false)
     try {
-      const data = await apiFetch<LabOrder>(`/clinical_laboratory/order/${id}/`, { clientCache: false })
+      const data = await apiFetch<LabOrder>(`/clinical/labrequest/${id}/`, { clientCache: false })
       setRecord(data)
     } catch (e: any) {
       try {
-        const request = await apiFetch<Record<string, any>>(`/clinical/lab-requests/${id}/`, { clientCache: false })
-        if (String(request?.type || "").toUpperCase() === "LAB") {
-          setRedirectingLegacy(true)
-          router.replace(`/clinical/lab-requests/${id}`)
-          return
-        }
-      } catch {}
-      setError(e?.message || "Erro ao carregar a ordem.")
+        const data = await apiFetch<LabOrder>(`/clinical_laboratory/order/${id}/`, { clientCache: false })
+        setRecord(data)
+        return
+      } catch {
+        setError(e?.message || "Erro ao carregar a ordem.")
+      }
     } finally {
       setLoading(false)
     }
-  }, [id, router])
+  }, [id])
 
   useEffect(() => { load() }, [load])
 
@@ -178,13 +193,43 @@ export default function LabOrderDetailPage() {
     finally { setBusy(false) }
   }
 
-  const statusMeta = STATUS_META[record?.status || ""] ?? { label: record?.status || "—", cls: "bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-slate-300" }
+  function isCultureItem(item: OrderItem) {
+    return String(item.exam_method || "").toLowerCase().includes("cultura");
+  }
+
+  async function handleIniciarProcessamento(item?: OrderItem) {
+    if (!record?.id) return
+    setProcessingItemId(item?.id ?? "all")
+    setBusy(true); setError(null); setFeedback(null)
+    try {
+      await apiFetch(`/clinical/labrequest/${record.id}/iniciar-processamento/`, { method: "POST" })
+      setFeedback(item ? `Processamento iniciado para ${item.exam_name || item.test_name || "o item"}.` : "Processamento iniciado para todos os itens.")
+      if (item && isCultureItem(item)) {
+        router.push("/clinical-laboratory/cultures")
+        return
+      }
+      if (!item && (record.items || []).some(isCultureItem)) {
+        router.push("/clinical-laboratory/cultures")
+        return
+      }
+      router.push(`/clinical-laboratory/worklists/${record.id}`)
+    } catch (e: any) {
+      setError(e?.message || "Falha ao iniciar processamento.")
+    } finally {
+      setBusy(false)
+      setProcessingItemId(null)
+    }
+  }
+
+  const statusKey = String(record?.status || "").toUpperCase()
+  const statusMeta = STATUS_META[statusKey] ?? { label: record?.status || "—", cls: "bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-slate-300" }
   const priorityMeta = PRIORITY_META[record?.priority || ""] ?? null
   const paymentMeta = PAYMENT_META[record?.payment_status || ""] ?? null
-  const tests = record?.requested_tests ?? []
+  const tests = record?.requested_tests?.length ? record.requested_tests : (record?.items ?? [])
   const sectors = record?.sectors ?? []
   const canAutorizar = ["SOLICITADO", "AGUARDANDO"].includes(record?.status || "")
-  const canCancelar = !["CANCELADO", "CONCLUIDO"].includes(record?.status || "")
+  const canCancelar = !["CANCELADO", "CONCLUIDO", "cancelado"].includes(record?.status || "")
+  const canStartProcessing = !!record && String(record.status || "").toLowerCase() === "pendente" && !!record.collected_at
 
   /* group tests by sector */
   const bySector = tests.reduce<Record<string, OrderItem[]>>((acc, t) => {
@@ -347,6 +392,7 @@ export default function LabOrderDetailPage() {
                             <col className="w-[44%]" />
                             <col className="w-[22%]" />
                             <col className="w-[16%]" />
+                            <col className="w-[18%]" />
                           </colgroup>
                           <thead>
                             <tr className="border-b border-[var(--border)] bg-[var(--gray-50)]/60 dark:bg-white/[0.03]">
@@ -354,25 +400,40 @@ export default function LabOrderDetailPage() {
                               <th className="px-3 py-1.5 text-left text-[9px] font-semibold uppercase tracking-wide text-[var(--gray-500)]">Análise</th>
                               <th className="px-3 py-1.5 text-left text-[9px] font-semibold uppercase tracking-wide text-[var(--gray-500)]">Estado</th>
                               <th className="px-3 py-1.5 text-right text-[9px] font-semibold uppercase tracking-wide text-[var(--gray-500)]">Preço</th>
+                              <th className="px-3 py-1.5 text-right text-[9px] font-semibold uppercase tracking-wide text-[var(--gray-500)]">Ação</th>
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-[var(--border)]">
                             {items.map((item) => {
-                              const dot = ITEM_STATUS_META[item.status || ""]?.dot ?? "bg-slate-300"
+                              const itemStatus = item.status || item.sample_status || ""
+                              const dot = ITEM_STATUS_META[itemStatus]?.dot ?? "bg-slate-300"
+                              const itemName = item.test_name || item.exam_name || "—"
+                              const itemCode = item.test_code || item.exam_custom_id || item.code || item.custom_id
                               return (
                                 <tr key={item.id} className="hover:bg-sky-50/30 dark:hover:bg-sky-900/10 transition">
                                   <td className="truncate px-3 py-2 font-mono text-[10px] text-[var(--gray-500)]">
-                                    {item.test_code ?? item.code ?? "—"}
+                                    {itemCode ?? "—"}
                                   </td>
-                                  <td className="truncate px-3 py-2 font-medium text-[var(--text)]">{item.test_name ?? "—"}</td>
+                                  <td className="truncate px-3 py-2 font-medium text-[var(--text)]">{itemName}</td>
                                   <td className="px-3 py-2">
                                     <span className="flex items-center gap-1">
                                       <span className={`h-1.5 w-1.5 rounded-full ${dot}`} />
-                                      <span className="truncate text-[var(--gray-500)]">{item.status ?? "—"}</span>
+                                      <span className="truncate text-[var(--gray-500)]">{item.sample_status_display || item.status || item.sample_status || "—"}</span>
                                     </span>
                                   </td>
                                   <td className="px-3 py-2 text-right text-[var(--gray-500)]">
                                     {item.price ? `${Number(item.price).toFixed(2)} MT` : "—"}
+                                  </td>
+                                  <td className="px-3 py-2 text-right">
+                                    <button
+                                      type="button"
+                                      onClick={() => handleIniciarProcessamento(item)}
+                                      disabled={!canStartProcessing || busy}
+                                      className="inline-flex h-7 items-center gap-1 rounded-md border border-sky-200 bg-sky-50/80 px-2 text-[10px] font-semibold text-sky-700 transition hover:bg-sky-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-sky-700/40 dark:bg-sky-900/20 dark:text-sky-300"
+                                    >
+                                      {processingItemId === item.id ? <Loader2 size={10} className="animate-spin" /> : isCultureItem(item) ? <FlaskConical size={10} /> : <PlayCircle size={10} />}
+                                      Iniciar
+                                    </button>
                                   </td>
                                 </tr>
                               )
@@ -382,7 +443,7 @@ export default function LabOrderDetailPage() {
                           {items.some(i => i.price) && (
                             <tfoot>
                               <tr className="border-t border-[var(--border)] bg-[var(--gray-50)]/60 dark:bg-white/[0.03]">
-                                <td colSpan={3} className="px-3 py-1.5 text-right text-[9px] font-semibold uppercase tracking-wide text-[var(--gray-500)]">Subtotal</td>
+                                <td colSpan={4} className="px-3 py-1.5 text-right text-[9px] font-semibold uppercase tracking-wide text-[var(--gray-500)]">Subtotal</td>
                                 <td className="px-3 py-1.5 text-right text-[11px] font-bold text-foreground">
                                   {items.reduce((sum, i) => sum + Number(i.price || 0), 0).toFixed(2)} MT
                                 </td>
@@ -409,6 +470,13 @@ export default function LabOrderDetailPage() {
               </Link>
 
               <div className="flex items-center gap-2">
+                {canStartProcessing && (
+                  <button type="button" onClick={() => handleIniciarProcessamento()} disabled={busy}
+                    className="inline-flex h-7 items-center gap-1.5 rounded-md bg-emerald-600 px-3 text-[11px] font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-60">
+                    {processingItemId === "all" ? <Loader2 size={11} className="animate-spin" /> : <PlayCircle size={11} />}
+                    Iniciar todos
+                  </button>
+                )}
                 {canCancelar && (
                   <button type="button" onClick={handleCancelar} disabled={busy}
                     className="inline-flex h-7 items-center gap-1.5 rounded-md border border-rose-200 bg-rose-50/70 px-3 text-[11px] font-semibold text-rose-700 transition hover:bg-rose-100 disabled:opacity-60 dark:border-rose-700/40 dark:bg-rose-900/20 dark:text-rose-300">
