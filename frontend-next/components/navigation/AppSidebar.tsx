@@ -36,7 +36,7 @@ export default function AppSidebar() {
     const pathname = usePathname()
 
     return (
-        <aside className="hidden md:flex md:flex-col w-64 border-r bg-white">
+        <aside className="hidden md:flex md:flex-col w-64 border-r bg-white z-[99999] md:z-[99999]">
             <div className="h-14 flex items-center px-6 font-semibold text-gray-700 border-b">
                 CLIDIS
             </div>

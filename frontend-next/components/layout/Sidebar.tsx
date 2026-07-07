@@ -459,7 +459,7 @@ export default function Sidebar({ user, open = false, onClose, className }: Prop
     return (
         <>
             <aside
-                className={`group/sidebar hidden md:z-50 md:flex md:w-16 md:shrink-0 md:overflow-hidden md:transition-[width] md:duration-200 md:ease-out md:hover:w-[var(--sidebar-open-width)] md:focus-within:w-[var(--sidebar-open-width)] ${className || ""}`}
+                className={`group/sidebar hidden z-[99999] md:z-[99999] md:flex md:w-16 md:shrink-0 md:overflow-hidden md:transition-[width] md:duration-200 md:ease-out md:hover:w-[var(--sidebar-open-width)] md:focus-within:w-[var(--sidebar-open-width)] ${className || ""}`}
                 style={sidebarStyle}
             >
                 {renderMenu(desktopNavRef)}

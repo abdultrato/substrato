@@ -319,7 +319,7 @@ export default function ClinicalLaboratoryCulturesCreatePage() {
         )}
 
         <div className="grid gap-2">
-          <div className="space-y-2">
+          <div className="flex gap-2 overflow-x-auto pb-1">
             <GlassCard title="Pedido e amostra" icon={ClipboardList} accent="bg-gradient-to-b from-teal-500 to-cyan-600" iconTone="from-teal-600 to-cyan-600">
               <div className="grid gap-2 md:grid-cols-2">
                 <Field label="Item do pedido" required error={errors.orderItem}>
@@ -394,30 +394,30 @@ export default function ClinicalLaboratoryCulturesCreatePage() {
                 </Field>
               </div>
             </GlassCard>
-
-            <GlassCard title="Execução e notas" icon={FileText} accent="bg-gradient-to-b from-violet-500 to-fuchsia-600" iconTone="from-violet-600 to-fuchsia-600">
-              <Field label="Executado por">
-                <RelationSelect
-                  value={performedBy}
-                  label={performedByLabel}
-                  target={USER_TARGET}
-                  placeholder="Pesquisar técnico ou utilizador"
-                  onChange={(value, label) => {
-                    setPerformedBy(value);
-                    setPerformedByLabel(label);
-                  }}
-                />
-              </Field>
-              <Field label="Observações">
-                <textarea
-                  value={notes}
-                  onChange={(event) => setNotes(event.target.value)}
-                  placeholder="Condições de semeadura, meios usados, suspeita clínica, observações da primeira leitura..."
-                  className={textareaClass}
-                />
-              </Field>
-            </GlassCard>
           </div>
+
+          <GlassCard title="Execução e notas" icon={FileText} accent="bg-gradient-to-b from-violet-500 to-fuchsia-600" iconTone="from-violet-600 to-fuchsia-600">
+            <Field label="Executado por">
+              <RelationSelect
+                value={performedBy}
+                label={performedByLabel}
+                target={USER_TARGET}
+                placeholder="Pesquisar técnico ou utilizador"
+                onChange={(value, label) => {
+                  setPerformedBy(value);
+                  setPerformedByLabel(label);
+                }}
+              />
+            </Field>
+            <Field label="Observações">
+              <textarea
+                value={notes}
+                onChange={(event) => setNotes(event.target.value)}
+                placeholder="Condições de semeadura, meios usados, suspeita clínica, observações da primeira leitura..."
+                className={textareaClass}
+              />
+            </Field>
+          </GlassCard>
 
         </div>
       </form>

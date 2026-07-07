@@ -288,7 +288,7 @@ export default function AppLayout ( {
 
                 {rightAside ? (
                     <aside
-                        className="hidden h-screen flex-col overflow-y-auto border-l border-border bg-card/70 backdrop-blur supports-[backdrop-filter]:bg-card/60 md:fixed md:right-0 md:top-0 md:flex"
+                        className="hidden h-screen flex-col overflow-y-auto border-l border-border bg-card/70 backdrop-blur supports-[backdrop-filter]:bg-card/60 z-[99999] md:fixed md:right-0 md:top-0 md:flex md:z-[99999]"
                         style={{ width: rightAsideWidth }}
                     >
                         <AutoTranslateTree>{rightAside}</AutoTranslateTree>
@@ -338,7 +338,7 @@ export default function AppLayout ( {
 
             {rightAside ? (
                 <aside
-                    className="hidden h-screen flex-col overflow-y-auto border-l border-border bg-card/70 backdrop-blur supports-[backdrop-filter]:bg-card/60 md:fixed md:right-0 md:top-0 md:flex"
+                    className="hidden h-screen flex-col overflow-y-auto border-l border-border bg-card/70 backdrop-blur supports-[backdrop-filter]:bg-card/60 z-[99999] md:fixed md:right-0 md:top-0 md:flex md:z-[99999]"
                     style={{ width: rightAsideWidth }}
                 >
                     <AutoTranslateTree>{rightAside}</AutoTranslateTree>

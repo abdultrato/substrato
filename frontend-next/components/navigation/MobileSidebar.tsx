@@ -44,7 +44,7 @@ export default function MobileSidebar({ open, onClose }: Props) {
                 onClick={onClose}
             />
 
-            <aside className="relative w-64 bg-white h-full shadow-lg flex flex-col">
+            <aside className="relative w-64 bg-white h-full shadow-lg flex flex-col z-[99999]">
                 <div className="h-14 flex items-center justify-between px-4 border-b">
                     <span className="font-semibold text-gray-700">CLIDIS</span>
                     <button onClick={onClose}>
