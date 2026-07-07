@@ -48,10 +48,13 @@ export default function LabCulturesPage() {
   const [items, setItems] = useState<QueueItem[]>([]);
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [startingId, setStartingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  async function load() {
+  async function load(manual = false) {
+    const startedAt = Date.now();
+    if (manual) setRefreshing(true);
     setLoading(true);
     setError(null);
     try {
@@ -60,6 +63,11 @@ export default function LabCulturesPage() {
     } catch (err: any) {
       setError(err?.message || "Não foi possível carregar a fila de culturas.");
     } finally {
+      if (manual) {
+        const remaining = Math.max(0, 700 - (Date.now() - startedAt));
+        if (remaining > 0) await new Promise((resolve) => window.setTimeout(resolve, remaining));
+        setRefreshing(false);
+      }
       setLoading(false);
     }
   }
@@ -132,13 +140,13 @@ export default function LabCulturesPage() {
                 <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Pesquisar paciente, requisição, exame ou amostra" className="h-full min-w-0 flex-1 bg-transparent text-xs outline-none placeholder:text-muted-foreground" />
               </div>
               <button
-                onClick={load}
-                disabled={loading}
-                aria-busy={loading}
+                onClick={() => load(true)}
+                disabled={loading || refreshing}
+                aria-busy={loading || refreshing}
                 className="inline-flex h-8 shrink-0 items-center justify-center gap-1.5 rounded-lg border border-white/40 bg-white/35 px-2.5 text-xs font-medium text-foreground shadow-sm backdrop-blur-sm transition hover:bg-white/55 disabled:cursor-not-allowed disabled:opacity-65 dark:border-white/10 dark:bg-white/5"
               >
-                <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
-                {loading ? "Atualizando" : "Atualizar"}
+                <RefreshCw size={14} className={loading || refreshing ? "animate-spin" : ""} />
+                {loading || refreshing ? "Atualizando" : "Atualizar"}
               </button>
             </div>
           </div>
