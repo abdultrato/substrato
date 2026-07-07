@@ -131,7 +131,7 @@ export default function QualityControlTestDetailPage() {
   const [fields, setFields] = useState<LabTestField[]>([]);
   const [records, setRecords] = useState<QualityControl[]>([]);
   const [loading, setLoading] = useState(true);
-  const [validating, setValidating] = useState(false);
+  const [validatingKey, setValidatingKey] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -222,17 +222,17 @@ export default function QualityControlTestDetailPage() {
   const title = latest ? `${latest.test_code ? `${latest.test_code} - ` : ""}${latest.test_name || "Exame"}` : "Controlo de qualidade do exame";
   const rejected = assayRecords.filter((record) => record.decision === "REJEITADO").length;
   const approved = assayRecords.filter((record) => record.decision === "APROVADO").length;
-  const assayApproved = assayRecords.length > 0 && assayRecords.every((record) => record.approved_for_use);
-  const assayValidated = assayRecords.length > 0 && assayRecords.every((record) => record.status === "REVISTO");
 
-  async function validateAssay() {
-    if (!assayApproved || assayValidated || validating) return;
-    setValidating(true);
+  async function validateAnalyte(group: AnalyteGroup) {
+    const canValidate = group.records.length > 0 && group.records.every((record) => record.approved_for_use);
+    const alreadyValidated = group.records.length > 0 && group.records.every((record) => record.status === "REVISTO");
+    if (!canValidate || alreadyValidated || validatingKey) return;
+    setValidatingKey(group.key);
     setError(null);
     const reviewedAt = new Date().toISOString();
     try {
       const updated = await Promise.all(
-        assayRecords.map((record) =>
+        group.records.map((record) =>
           apiFetch<QualityControl>(`${ENDPOINT}${record.id}/`, {
             method: "PATCH",
             body: JSON.stringify({ status: "REVISTO", reviewed_at: reviewedAt }),
@@ -244,7 +244,7 @@ export default function QualityControlTestDetailPage() {
     } catch (err: any) {
       setError(err?.message || "Erro ao validar controlo técnico.");
     } finally {
-      setValidating(false);
+      setValidatingKey(null);
     }
   }
 
@@ -265,17 +265,6 @@ export default function QualityControlTestDetailPage() {
               </div>
             </div>
             <div className="flex shrink-0 items-center gap-2">
-              {assayApproved ? (
-                <button
-                  type="button"
-                  onClick={validateAssay}
-                  disabled={assayValidated || validating}
-                  className="inline-flex h-8 items-center gap-1 rounded-lg bg-emerald-600 px-3 text-xs font-semibold text-white shadow-sm transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {validating ? <Loader2 size={12} className="animate-spin" /> : <CheckCircle2 size={12} />}
-                  {assayValidated ? "Controlo validado" : "Validar controlo"}
-                </button>
-              ) : null}
               <Link href="/clinical-laboratory/quality-control" className="inline-flex h-8 items-center gap-1 rounded-lg border border-white/40 bg-white/40 px-3 text-xs text-foreground transition hover:bg-white/60 dark:border-white/10 dark:bg-white/[0.06] dark:hover:bg-white/[0.1]">
                 <ArrowLeft size={12} /> Voltar
               </Link>
@@ -320,6 +309,9 @@ export default function QualityControlTestDetailPage() {
           {groups.map((group, index) => {
             const latestRecord = group.latest;
             const tone = accent[index % accent.length];
+            const canValidate = group.records.length > 0 && group.records.every((record) => record.approved_for_use);
+            const validated = group.records.length > 0 && group.records.every((record) => record.status === "REVISTO");
+            const isValidating = validatingKey === group.key;
             return (
               <article key={group.key} className="relative min-h-[168px] rounded-lg border border-white/20 bg-white/45 p-2.5 pl-3.5 shadow-sm backdrop-blur-sm transition hover:-translate-y-px hover:border-white/40 hover:bg-white/60 hover:shadow-md dark:border-white/10 dark:bg-white/[0.05] dark:hover:bg-white/[0.08]">
                 <span className={`absolute left-0 top-0 h-full w-1 rounded-l-lg ${tone.bar}`} />
@@ -372,6 +364,15 @@ export default function QualityControlTestDetailPage() {
                     </p>
                   </div>
                 ) : null}
+                <button
+                  type="button"
+                  onClick={() => validateAnalyte(group)}
+                  disabled={!canValidate || validated || Boolean(validatingKey)}
+                  className="mt-2 inline-flex h-7 w-full items-center justify-center gap-1 rounded-md bg-emerald-600 px-2 text-[10px] font-semibold text-white shadow-sm transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground disabled:shadow-none"
+                >
+                  {isValidating ? <Loader2 size={11} className="animate-spin" /> : <CheckCircle2 size={11} />}
+                  {validated ? "Controlo validado" : canValidate ? "Validar controlo" : "Validação indisponível"}
+                </button>
               </article>
             );
           })}
