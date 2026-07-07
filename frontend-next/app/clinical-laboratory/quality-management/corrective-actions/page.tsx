@@ -141,10 +141,11 @@ export default function CorrectiveActionsListPage() {
     setError(null);
     try {
       const query: Record<string, string> = {};
-      if (debouncedSearch) query.search = debouncedSearch;
+      const capaSearch = debouncedCustomId ? capaNumberToCustomId(debouncedCustomId) : "";
+      const searchTerms = [debouncedSearch.trim(), capaSearch].filter(Boolean);
+      if (searchTerms.length > 0) query.search = searchTerms.join(" ");
       if (filterStatus) query.status = filterStatus;
       if (filterType) query.action_type = filterType;
-      if (debouncedCustomId) query.custom_id = capaNumberToCustomId(debouncedCustomId);
 
       const { items, meta } = await apiFetchList<CorrectiveAction>(ENDPOINT, { page, pageSize, query });
       setRows(items);
