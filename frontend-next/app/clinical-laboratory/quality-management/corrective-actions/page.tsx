@@ -147,7 +147,12 @@ export default function CorrectiveActionsListPage() {
       if (filterStatus) query.status = filterStatus;
       if (filterType) query.action_type = filterType;
 
-      const { items, meta } = await apiFetchList<CorrectiveAction>(ENDPOINT, { page, pageSize, query });
+      const { items, meta } = await apiFetchList<CorrectiveAction>(ENDPOINT, {
+        page,
+        pageSize,
+        query,
+        clientPaginate: true,
+      });
       setRows(items);
       setTotal(meta.total ?? items.length);
     } catch (err: any) {
@@ -262,7 +267,7 @@ export default function CorrectiveActionsListPage() {
               {STATUS_CHOICES.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
             </select>
 
-            <input value={pageSizeInput} onChange={(event) => setPageSizeInput(normalizePositiveNumber(event.target.value))} inputMode="numeric" pattern="[0-9]*" min={1} max={999} aria-label="Itens por página" placeholder="Itens/pág." className="min-w-[82px] flex-[0.3_1_92px] rounded-md border border-border bg-card/85 py-1 pl-2 pr-2 text-[11px] text-foreground outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20" />
+            <input type="number" value={pageSizeInput} onChange={(event) => setPageSizeInput(normalizePositiveNumber(event.target.value))} inputMode="numeric" pattern="[0-9]*" min={1} max={999} aria-label="Itens por página" placeholder="Itens/pág." className="min-w-[82px] flex-[0.3_1_92px] rounded-md border border-border bg-card/85 py-1 pl-2 pr-2 text-[11px] text-foreground outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20" />
 
             {hasFilters && (
               <button type="button" onClick={clearFilters} className="inline-flex shrink-0 items-center gap-1 rounded-md border border-border bg-card/85 px-2 py-1 text-[11px] text-muted-foreground transition hover:bg-muted hover:text-foreground">
