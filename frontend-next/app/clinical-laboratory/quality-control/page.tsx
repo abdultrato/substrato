@@ -1109,11 +1109,6 @@ export default function LaboratoryQualityControlPage() {
           ) : null}
 
           <section className="space-y-1.5">
-            <div className="rounded-xl border border-white/20 bg-white/30 p-2 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.05]">
-              <h2 className="text-sm font-bold text-foreground">Registos de controlo</h2>
-              <p className="text-[11px] text-muted-foreground">Filtrados pelos controles do cabeçalho.</p>
-            </div>
-
             <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5">
               {assayGroups.map((group, index) => {
                 const record = group.primary;
