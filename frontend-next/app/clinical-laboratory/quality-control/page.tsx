@@ -53,6 +53,17 @@ type LabTestField = {
   reference_high?: string | null;
 };
 
+type QualityDocument = {
+  id: number;
+  custom_id?: string | null;
+  code: string;
+  title: string;
+  document_type: string;
+  status: string;
+  version?: string;
+  review_date?: string | null;
+};
+
 type QualityControl = {
   id: number;
   custom_id?: string | null;
@@ -398,6 +409,7 @@ type StatCard = {
 export default function LaboratoryQualityControlPage() {
   const [tests, setTests] = useState<LabTest[]>([]);
   const [fields, setFields] = useState<LabTestField[]>([]);
+  const [sopDocuments, setSopDocuments] = useState<QualityDocument[]>([]);
   const [records, setRecords] = useState<QualityControl[]>([]);
   const [catalogRecords, setCatalogRecords] = useState<QualityControl[]>([]);
   const [total, setTotal] = useState(0);
@@ -544,6 +556,19 @@ export default function LaboratoryQualityControlPage() {
     return Array.from(values).sort((a, b) => a.localeCompare(b)).map((value) => ({ value, label: value }));
   }, [catalogRecords]);
 
+  const sopOptions = useMemo<SearchableOption[]>(
+    () =>
+      sopDocuments.map((doc) => {
+        const value = `${doc.code} · ${doc.title}${doc.version ? ` · v${doc.version}` : ""}`;
+        return {
+          value,
+          label: `${doc.code} - ${doc.title}`,
+          hint: `${doc.status}${doc.version ? ` · v${doc.version}` : ""}${doc.review_date ? ` · revisão ${doc.review_date}` : ""}`,
+        };
+      }),
+    [sopDocuments],
+  );
+
   // Contagens sobre o conjunto global (até 500 mais recentes), não só a página visível.
   const approved = catalogRecords.filter((item) => item.decision === "APROVADO").length;
   const rejected = catalogRecords.filter((item) => item.decision === "REJEITADO").length;
@@ -588,6 +613,23 @@ export default function LaboratoryQualityControlPage() {
       clientCache: true,
       clientCacheTtlMs: 30000,
     }).then(({ items }) => setTests(items)).catch(() => setTests([]));
+  }, []);
+
+  useEffect(() => {
+    apiFetchList<QualityDocument>("/clinical_laboratory/quality_document/", {
+      page: 1,
+      pageSize: 200,
+      clientCache: true,
+      clientCacheTtlMs: 30000,
+    })
+      .then(({ items }) => {
+        setSopDocuments(
+          items
+            .filter((doc) => doc.document_type === "POP" && ["APROVADO", "ATIVO"].includes(doc.status))
+            .sort((a, b) => a.code.localeCompare(b.code)),
+        );
+      })
+      .catch(() => setSopDocuments([]));
   }, []);
 
   useEffect(() => {
@@ -1081,7 +1123,16 @@ export default function LaboratoryQualityControlPage() {
                       />
                     </Field>
                     <Field label="POP/Procedimento">
-                      <input value={form.sop_reference} onChange={(event) => update("sop_reference", event.target.value)} className={inputCls} />
+                      <SearchableSelect
+                        value={form.sop_reference}
+                        onChange={(value) => update("sop_reference", value)}
+                        options={sopOptions}
+                        placeholder="Selecione um POP..."
+                        searchPlaceholder="Pesquisar POP da qualidade..."
+                        emptyMessage="Nenhum POP aprovado/ativo encontrado."
+                        allowClear
+                        allowCustom
+                      />
                     </Field>
                     <Field label="ISO/SGQ">
                       <input value={form.iso_clause} onChange={(event) => update("iso_clause", event.target.value)} className={inputCls} />
