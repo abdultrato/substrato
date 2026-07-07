@@ -795,6 +795,59 @@ export default function LaboratoryQualityControlPage() {
     }));
   }
 
+  // Último controlo do mesmo exame/material/lote/analito: fonte dos valores
+  // esperados quando o utilizador seleciona um lote já usado.
+  function latestLotReference(materialName: string, lot: string, fieldName: string | null) {
+    // catalogRecords vem ordenado por -run_at; o primeiro match é o mais recente.
+    return catalogRecords.find(
+      (record) =>
+        String(record.test) === form.test &&
+        (record.material_name || "") === materialName &&
+        (record.material_lot || "") === lot &&
+        (record.field_name || "Exame completo") === (fieldName || "Exame completo"),
+    );
+  }
+
+  function handleLotChange(value: string) {
+    setForm((prev) => ({ ...prev, material_lot: value }));
+    if (!value || !form.test) return;
+
+    if (batchMode) {
+      setAnalyteRows((prev) => {
+        const next = { ...prev };
+        fields.forEach((field) => {
+          const reference = latestLotReference(form.material_name, value, field.name);
+          if (!reference || !next[field.id]) return;
+          next[field.id] = {
+            ...next[field.id],
+            expected: reference.expected_result || next[field.id].expected,
+            min: fmtRef(reference.expected_min) || next[field.id].min,
+            max: fmtRef(reference.expected_max) || next[field.id].max,
+            tolerance: fmtRef(reference.tolerance) || next[field.id].tolerance,
+            unit: reference.unit || next[field.id].unit,
+          };
+        });
+        return next;
+      });
+      return;
+    }
+
+    const fieldName = form.test_field
+      ? fields.find((field) => String(field.id) === form.test_field)?.name || null
+      : null;
+    const reference = latestLotReference(form.material_name, value, fieldName);
+    if (!reference) return;
+    setForm((prev) => ({
+      ...prev,
+      material_lot: value,
+      expected_result: reference.expected_result || prev.expected_result,
+      expected_min: fmtRef(reference.expected_min) || prev.expected_min,
+      expected_max: fmtRef(reference.expected_max) || prev.expected_max,
+      tolerance: fmtRef(reference.tolerance) || prev.tolerance,
+      unit: reference.unit || prev.unit,
+    }));
+  }
+
   function validate() {
     const next: Record<string, string> = {};
     if (!form.test) next.test = "Selecione o exame.";
@@ -1145,7 +1198,7 @@ export default function LaboratoryQualityControlPage() {
                     <Field label="Lote">
                       <SearchableSelect
                         value={form.material_lot}
-                        onChange={(value) => update("material_lot", value)}
+                        onChange={handleLotChange}
                         options={materialLotOptions}
                         placeholder="Selecione ou digite..."
                         searchPlaceholder={form.material_name ? "Pesquisar ou digitar novo..." : "Selecione primeiro o material..."}
