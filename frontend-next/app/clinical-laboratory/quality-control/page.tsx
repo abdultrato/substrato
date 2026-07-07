@@ -141,6 +141,41 @@ function decimalOrNull(value: string) {
   return trimmed ? trimmed.replace(",", ".") : null;
 }
 
+function parseDecimal(value: string): number | null {
+  const trimmed = value.trim().replace(",", ".");
+  if (!trimmed) return null;
+  const num = Number(trimmed);
+  return Number.isFinite(num) ? num : null;
+}
+
+// Espelha LaboratoryQualityControl.evaluate() do backend para pré-visualizar a conclusão.
+function previewDecision(form: FormState): QualityControl["decision"] {
+  if (form.result_mode === "NUMERICO") {
+    const expected = parseDecimal(form.expected_result);
+    const observed = parseDecimal(form.observed_result);
+    const min = parseDecimal(form.expected_min);
+    const max = parseDecimal(form.expected_max);
+    const tolerance = parseDecimal(form.tolerance);
+    if (observed === null) return "INCOMPLETO";
+    if (min !== null && observed < min) return "REJEITADO";
+    if (max !== null && observed > max) return "REJEITADO";
+    if (tolerance !== null && expected !== null && Math.abs(observed - expected) > tolerance) return "REJEITADO";
+    if (min === null && max === null && tolerance === null && expected === null) return "REVISAO";
+    return "APROVADO";
+  }
+  if (!form.expected_result.trim() || !form.observed_result.trim()) return "INCOMPLETO";
+  return form.expected_result.trim().toLowerCase() === form.observed_result.trim().toLowerCase()
+    ? "APROVADO"
+    : "REJEITADO";
+}
+
+const decisionLabel: Record<QualityControl["decision"], string> = {
+  APROVADO: "Aprovado para uso",
+  REJEITADO: "Rejeitado",
+  REVISAO: "Requer revisão",
+  INCOMPLETO: "Incompleto",
+};
+
 function fmtDate(value?: string | null) {
   if (!value) return "—";
   const date = new Date(value);
@@ -207,17 +242,29 @@ export default function LaboratoryQualityControlPage() {
   const [catalogRecords, setCatalogRecords] = useState<QualityControl[]>([]);
   const [total, setTotal] = useState(0);
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [decision, setDecision] = useState("");
+  const [controlType, setControlType] = useState("");
+  const [page, setPage] = useState(1);
   const [form, setForm] = useState<FormState>(initialForm);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(search), 350);
+    return () => clearTimeout(timer);
+  }, [search]);
 
   const selectedTest = useMemo(
     () => tests.find((item) => String(item.id) === form.test),
     [tests, form.test],
   );
+
+  const predictedDecision = useMemo(() => previewDecision(form), [form]);
 
   const testOptions = useMemo<SearchableOption[]>(
     () =>
@@ -287,9 +334,10 @@ export default function LaboratoryQualityControlPage() {
     return Array.from(values).sort((a, b) => a.localeCompare(b)).map((value) => ({ value, label: value }));
   }, [catalogRecords]);
 
-  const approved = records.filter((item) => item.decision === "APROVADO").length;
-  const rejected = records.filter((item) => item.decision === "REJEITADO").length;
-  const review = records.filter((item) => item.decision === "REVISAO").length;
+  // Contagens sobre o conjunto global (até 500 mais recentes), não só a página visível.
+  const approved = catalogRecords.filter((item) => item.decision === "APROVADO").length;
+  const rejected = catalogRecords.filter((item) => item.decision === "REJEITADO").length;
+  const review = catalogRecords.filter((item) => item.decision === "REVISAO").length;
   const stats: StatCard[] = [
     { label: "Registos", value: total, icon: ClipboardCheck },
     { label: "Aprovados", value: approved, icon: CheckCircle2 },
@@ -297,26 +345,30 @@ export default function LaboratoryQualityControlPage() {
     { label: "Revisão", value: review, icon: AlertTriangle },
   ];
 
-  const loadRecords = useCallback(async () => {
-    setLoading(true);
+  const loadRecords = useCallback(async (pageNum = 1, append = false) => {
+    if (append) setLoadingMore(true);
+    else setLoading(true);
     setError(null);
     try {
       const query: Record<string, string> = {};
-      if (search.trim()) query.search = search.trim();
+      if (debouncedSearch.trim()) query.search = debouncedSearch.trim();
       if (decision) query.decision = decision;
+      if (controlType) query.control_type = controlType;
       const { items, meta } = await apiFetchList<QualityControl>(ENDPOINT, {
-        page: 1,
+        page: pageNum,
         pageSize: PAGE_SIZE,
         query,
       });
-      setRecords(items);
+      setRecords((prev) => (append ? [...prev, ...items] : items));
+      setPage(pageNum);
       setTotal(meta.total ?? items.length);
     } catch (err: any) {
       setError(err?.message || "Erro ao carregar controlos de qualidade.");
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
-  }, [search, decision]);
+  }, [debouncedSearch, decision, controlType]);
 
   useEffect(() => {
     apiFetchList<LabTest>("/clinical_laboratory/test/", {
@@ -399,6 +451,12 @@ export default function LaboratoryQualityControlPage() {
     if (!form.test) next.test = "Selecione o exame.";
     if (!form.expected_result.trim()) next.expected_result = "Informe o resultado esperado.";
     if (!form.observed_result.trim()) next.observed_result = "Informe o resultado obtido.";
+    if (form.result_mode === "NUMERICO") {
+      if (form.expected_result.trim() && parseDecimal(form.expected_result) === null)
+        next.expected_result = "Valor numérico inválido.";
+      if (form.observed_result.trim() && parseDecimal(form.observed_result) === null)
+        next.observed_result = "Valor numérico inválido.";
+    }
     setErrors(next);
     return Object.keys(next).length === 0;
   }
@@ -408,6 +466,7 @@ export default function LaboratoryQualityControlPage() {
     if (!validate()) return;
     setSaving(true);
     setError(null);
+    setSuccess(null);
     try {
       const payload = {
         ...form,
@@ -424,9 +483,12 @@ export default function LaboratoryQualityControlPage() {
         method: "POST",
         body: JSON.stringify(payload),
       });
-      setRecords((prev) => [saved, ...prev].slice(0, PAGE_SIZE));
+      setRecords((prev) => [saved, ...prev]);
       setCatalogRecords((prev) => [saved, ...prev].slice(0, 500));
       setTotal((value) => value + 1);
+      setSuccess(
+        `Registado ${saved.custom_id || `#${saved.id}`} — conclusão: ${saved.decision_display || decisionLabel[saved.decision] || saved.decision}.`,
+      );
       setForm((prev) => ({
         ...initialForm,
         test: prev.test,
@@ -434,6 +496,10 @@ export default function LaboratoryQualityControlPage() {
         equipment: prev.equipment,
         sop_reference: prev.sop_reference,
         iso_clause: prev.iso_clause,
+        material_name: prev.material_name,
+        material_lot: prev.material_lot,
+        manufacturer: prev.manufacturer,
+        unit: prev.unit,
       }));
     } catch (err: any) {
       setError(err?.message || "Erro ao guardar controlo de qualidade.");
@@ -490,6 +556,13 @@ export default function LaboratoryQualityControlPage() {
                 <option value="REVISAO">Revisão</option>
                 <option value="INCOMPLETO">Incompleto</option>
               </select>
+              <select value={controlType} onChange={(event) => setControlType(event.target.value)} className="h-8 rounded-lg border border-white/50 bg-white/55 pl-2.5 pr-7 text-xs text-foreground outline-none backdrop-blur-sm focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 dark:border-white/10 dark:bg-white/[0.06]">
+                <option value="">Todos os tipos</option>
+                <option value="INTERNO">Interno</option>
+                <option value="EXTERNO">Externo</option>
+                <option value="ENSAIO_PROFICIENCIA">Ensaio de proficiência</option>
+                <option value="CALIBRACAO">Calibração/verificação</option>
+              </select>
               {loading ? <Loader2 size={14} className="animate-spin text-muted-foreground" /> : null}
             </div>
           </div>
@@ -501,6 +574,15 @@ export default function LaboratoryQualityControlPage() {
           </div>
         ) : null}
 
+        {success ? (
+          <div className="flex items-center justify-between gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm text-emerald-800 dark:border-emerald-800/40 dark:bg-emerald-900/15 dark:text-emerald-300">
+            <span>{success}</span>
+            <button type="button" onClick={() => setSuccess(null)} className="shrink-0 text-emerald-700 hover:text-emerald-900 dark:text-emerald-300 dark:hover:text-emerald-100" aria-label="Fechar">
+              <XCircle size={14} />
+            </button>
+          </div>
+        ) : null}
+
         <div className="grid gap-3 xl:grid-cols-[minmax(420px,0.9fr)_minmax(0,1.1fr)]">
           <form onSubmit={submit} className="space-y-2">
             <section className="rounded-xl border border-white/20 bg-white/30 p-4 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.05]">
@@ -509,10 +591,17 @@ export default function LaboratoryQualityControlPage() {
                   <h2 className="text-sm font-bold text-foreground">Nova execução de CQ</h2>
                   <p className="text-[11px] text-muted-foreground">O backend calcula automaticamente a conclusão.</p>
                 </div>
-                <button type="submit" disabled={saving} className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-gradient-to-r from-teal-600 to-cyan-600 px-3 text-xs font-semibold text-white shadow-md shadow-teal-500/20 transition hover:from-teal-700 hover:to-cyan-700 disabled:opacity-60">
-                  {saving ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />}
-                  Registar
-                </button>
+                <div className="flex items-center gap-2">
+                  {form.observed_result.trim() || form.expected_result.trim() ? (
+                    <span className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${decisionClass[predictedDecision]}`}>
+                      Prevista: {decisionLabel[predictedDecision]}
+                    </span>
+                  ) : null}
+                  <button type="submit" disabled={saving} className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-gradient-to-r from-teal-600 to-cyan-600 px-3 text-xs font-semibold text-white shadow-md shadow-teal-500/20 transition hover:from-teal-700 hover:to-cyan-700 disabled:opacity-60">
+                    {saving ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />}
+                    Registar
+                  </button>
+                </div>
               </div>
             </section>
 
@@ -590,10 +679,11 @@ export default function LaboratoryQualityControlPage() {
                         value={form.material_name}
                         onChange={handleMaterialNameChange}
                         options={materialNameOptions}
-                        placeholder="Selecione..."
-                        searchPlaceholder="Pesquisar material..."
+                        placeholder="Selecione ou digite..."
+                        searchPlaceholder="Pesquisar ou digitar novo..."
                         emptyMessage="Nenhum material encontrado."
                         allowClear
+                        allowCustom
                       />
                     </Field>
                     <Field label="Lote">
@@ -601,11 +691,12 @@ export default function LaboratoryQualityControlPage() {
                         value={form.material_lot}
                         onChange={(value) => update("material_lot", value)}
                         options={materialLotOptions}
-                        placeholder="Selecione..."
-                        searchPlaceholder={form.material_name ? "Pesquisar lote..." : "Selecione primeiro o material..."}
+                        placeholder="Selecione ou digite..."
+                        searchPlaceholder={form.material_name ? "Pesquisar ou digitar novo..." : "Selecione primeiro o material..."}
                         emptyMessage={form.material_name ? "Nenhum lote encontrado para este material." : "Selecione primeiro o material."}
                         disabled={!form.material_name}
                         allowClear
+                        allowCustom
                       />
                     </Field>
                     <Field label="Nível">
@@ -617,6 +708,9 @@ export default function LaboratoryQualityControlPage() {
                         <option value="NEGATIVO">Negativo</option>
                         <option value="MULTINIVEL">Multinível</option>
                       </select>
+                    </Field>
+                    <Field label="Fabricante">
+                      <input value={form.manufacturer} onChange={(event) => update("manufacturer", event.target.value)} className={inputCls} />
                     </Field>
                     <Field label="Validade do material">
                       <input type="date" value={form.expiry_date} onChange={(event) => update("expiry_date", event.target.value)} className={inputCls} />
@@ -631,10 +725,11 @@ export default function LaboratoryQualityControlPage() {
                         value={form.method}
                         onChange={(value) => update("method", value)}
                         options={methodOptions}
-                        placeholder="Selecione..."
-                        searchPlaceholder="Pesquisar método..."
+                        placeholder="Selecione ou digite..."
+                        searchPlaceholder="Pesquisar ou digitar novo..."
                         emptyMessage="Nenhum método encontrado."
                         allowClear
+                        allowCustom
                       />
                     </Field>
                     <Field label="Equipamento">
@@ -642,10 +737,11 @@ export default function LaboratoryQualityControlPage() {
                         value={form.equipment}
                         onChange={(value) => update("equipment", value)}
                         options={equipmentOptions}
-                        placeholder="Selecione..."
-                        searchPlaceholder="Pesquisar equipamento..."
+                        placeholder="Selecione ou digite..."
+                        searchPlaceholder="Pesquisar ou digitar novo..."
                         emptyMessage="Nenhum equipamento encontrado."
                         allowClear
+                        allowCustom
                       />
                     </Field>
                     <Field label="POP/Procedimento">
@@ -653,6 +749,9 @@ export default function LaboratoryQualityControlPage() {
                     </Field>
                     <Field label="ISO/SGQ">
                       <input value={form.iso_clause} onChange={(event) => update("iso_clause", event.target.value)} className={inputCls} />
+                    </Field>
+                    <Field label="Incerteza de medição">
+                      <input value={form.measurement_uncertainty} onChange={(event) => update("measurement_uncertainty", event.target.value)} className={inputCls} placeholder="ex.: ±0,05" />
                     </Field>
                   </div>
                 </FormSection>
@@ -699,11 +798,11 @@ export default function LaboratoryQualityControlPage() {
                   <div className="mt-2 grid gap-2 text-[11px] sm:grid-cols-3">
                     <div className="rounded-lg bg-background/60 px-2 py-1.5">
                       <span className="block text-muted-foreground">Esperado</span>
-                      <strong className="text-foreground">{record.expected_result}</strong>
+                      <strong className="text-foreground">{record.expected_result}{record.unit ? ` ${record.unit}` : ""}</strong>
                     </div>
                     <div className="rounded-lg bg-background/60 px-2 py-1.5">
                       <span className="block text-muted-foreground">Obtido</span>
-                      <strong className="text-foreground">{record.observed_result}</strong>
+                      <strong className="text-foreground">{record.observed_result}{record.unit ? ` ${record.unit}` : ""}</strong>
                     </div>
                     <div className="rounded-lg bg-background/60 px-2 py-1.5">
                       <span className="block text-muted-foreground">Uso do teste</span>
@@ -726,6 +825,18 @@ export default function LaboratoryQualityControlPage() {
                   <FlaskConical size={28} className="mx-auto mb-2 text-muted-foreground/40" />
                   <p className="text-sm text-muted-foreground">Nenhum controlo registado.</p>
                 </div>
+              ) : null}
+
+              {!loading && records.length < total ? (
+                <button
+                  type="button"
+                  onClick={() => loadRecords(page + 1, true)}
+                  disabled={loadingMore}
+                  className="inline-flex h-9 items-center justify-center gap-1.5 rounded-xl border border-border bg-background/60 text-xs font-medium text-foreground transition hover:bg-background disabled:opacity-60"
+                >
+                  {loadingMore ? <Loader2 size={12} className="animate-spin" /> : null}
+                  Carregar mais ({records.length} de {total})
+                </button>
               ) : null}
             </div>
           </section>

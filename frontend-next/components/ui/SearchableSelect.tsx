@@ -18,6 +18,8 @@ type Props = {
   emptyMessage?: string
   disabled?: boolean
   allowClear?: boolean
+  /** Permite escolher o texto digitado como valor novo (fora das opções). */
+  allowCustom?: boolean
   id?: string
 }
 
@@ -34,6 +36,7 @@ export default function SearchableSelect({
   emptyMessage = "Nenhum resultado.",
   disabled = false,
   allowClear = false,
+  allowCustom = false,
   id,
 }: Props) {
   const [open, setOpen] = useState(false)
@@ -42,15 +45,26 @@ export default function SearchableSelect({
   const containerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
-  const selected = useMemo(() => options.find((o) => o.value === value) || null, [options, value])
+  const selected = useMemo(() => {
+    const found = options.find((o) => o.value === value)
+    if (found) return found
+    // Valor custom (fora das opções) continua visível no botão.
+    if (allowCustom && value) return { value, label: value }
+    return null
+  }, [options, value, allowCustom])
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
-    if (!q) return options
-    return options.filter(
-      (o) => o.label.toLowerCase().includes(q) || (o.hint ? o.hint.toLowerCase().includes(q) : false)
-    )
-  }, [options, query])
+    const base = !q
+      ? options
+      : options.filter(
+          (o) => o.label.toLowerCase().includes(q) || (o.hint ? o.hint.toLowerCase().includes(q) : false)
+        )
+    if (allowCustom && q && !options.some((o) => o.value.toLowerCase() === q || o.label.toLowerCase() === q)) {
+      return [...base, { value: query.trim(), label: `Usar "${query.trim()}"` }]
+    }
+    return base
+  }, [options, query, allowCustom])
 
   useEffect(() => {
     function onDocMouseDown(e: MouseEvent) {
