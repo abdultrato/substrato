@@ -7,11 +7,15 @@ import {
   ArrowLeft,
   CheckCircle2,
   ClipboardCheck,
+  FileCheck2,
   FlaskConical,
+  Microscope,
   Loader2,
+  Ruler,
   Save,
   Search,
   ShieldCheck,
+  TestTube2,
   XCircle,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -166,17 +170,22 @@ const inputCls =
 
 function FormSection({
   title,
+  icon: Icon,
+  accentClass = "bg-teal-500/80",
   children,
   className = "",
 }: {
   title: string;
+  icon: LucideIcon;
+  accentClass?: string;
   children: React.ReactNode;
   className?: string;
 }) {
   return (
     <section className={`relative overflow-hidden rounded-lg border border-white/20 bg-white/40 px-3 py-2.5 pl-4 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04] ${className}`}>
-      <span className="absolute left-0 top-0 h-full w-1 bg-teal-500/80" />
+      <span className={`absolute left-0 top-0 h-full w-1 ${accentClass}`} />
       <div className="mb-2 flex items-center gap-1.5 border-b border-border/50 pb-1.5">
+        <Icon size={13} className="text-foreground/70" />
         <span className="text-[11px] font-semibold uppercase text-muted-foreground">{title}</span>
       </div>
       {children}
@@ -418,7 +427,7 @@ export default function LaboratoryQualityControlPage() {
 
             <div className="grid gap-2">
               <div className="grid grid-cols-2 gap-2">
-                <FormSection title="Identificação do exame">
+                <FormSection title="Identificação do exame" icon={FlaskConical} accentClass="bg-sky-500/80">
                   <div className="grid gap-2 md:grid-cols-2">
                     <Field label="Exame" error={errors.test}>
                       <select value={form.test} onChange={(event) => handleTestChange(event.target.value)} className={inputCls}>
@@ -453,7 +462,7 @@ export default function LaboratoryQualityControlPage() {
                   </div>
                 </FormSection>
 
-                <FormSection title="Resultado e critérios de aceitação">
+                <FormSection title="Resultado e critérios de aceitação" icon={Ruler} accentClass="bg-emerald-500/80">
                   <div className="grid gap-2 md:grid-cols-2">
                     <Field label="Resultado esperado" error={errors.expected_result}>
                       <input value={form.expected_result} onChange={(event) => update("expected_result", event.target.value)} className={inputCls} />
@@ -478,7 +487,7 @@ export default function LaboratoryQualityControlPage() {
               </div>
 
               <div className="grid grid-cols-2 gap-2">
-                <FormSection title="Material de controlo">
+                <FormSection title="Material de controlo" icon={TestTube2} accentClass="bg-violet-500/80">
                   <div className="grid gap-2 md:grid-cols-2">
                     <Field label="Material de controlo">
                       <input value={form.material_name} onChange={(event) => update("material_name", event.target.value)} className={inputCls} />
@@ -502,7 +511,7 @@ export default function LaboratoryQualityControlPage() {
                   </div>
                 </FormSection>
 
-                <FormSection title="Método, equipamento e norma">
+                <FormSection title="Método, equipamento e norma" icon={Microscope} accentClass="bg-amber-500/80">
                   <div className="grid gap-2 md:grid-cols-2">
                     <Field label="Método">
                       <input value={form.method} onChange={(event) => update("method", event.target.value)} className={inputCls} />
@@ -520,7 +529,7 @@ export default function LaboratoryQualityControlPage() {
                 </FormSection>
               </div>
 
-              <FormSection title="Evidências e rastreabilidade">
+              <FormSection title="Evidências e rastreabilidade" icon={FileCheck2} accentClass="bg-rose-500/80">
                 <div className="grid gap-2 md:grid-cols-2">
                   <Field label="Critério de aceitação">
                     <textarea value={form.acceptance_criteria} onChange={(event) => update("acceptance_criteria", event.target.value)} rows={3} className={`${inputCls} resize-y`} />
