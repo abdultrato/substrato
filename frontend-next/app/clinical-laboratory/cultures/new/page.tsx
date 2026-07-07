@@ -13,8 +13,6 @@ import {
   Microscope,
   Save,
   Search,
-  TestTube2,
-  User,
   X,
 } from "lucide-react";
 
@@ -44,14 +42,6 @@ const STATUS_CHOICES = [
   { value: "SEM_CRESCIMENTO", label: "Sem crescimento" },
   { value: "CONCLUIDA", label: "Concluída" },
 ];
-
-const STATUS_STYLE: Record<string, string> = {
-  MONTADA: "border-sky-200 bg-sky-50 text-sky-700 dark:border-sky-700/40 dark:bg-sky-900/20 dark:text-sky-300",
-  INCUBACAO: "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-700/40 dark:bg-amber-900/20 dark:text-amber-300",
-  CRESCIMENTO: "border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-700/40 dark:bg-rose-900/20 dark:text-rose-300",
-  SEM_CRESCIMENTO: "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-700/40 dark:bg-emerald-900/20 dark:text-emerald-300",
-  CONCLUIDA: "border-slate-200 bg-slate-100 text-slate-600 dark:border-slate-700/40 dark:bg-slate-800/40 dark:text-slate-300",
-};
 
 const ORDER_ITEM_TARGET: RelationTarget = {
   endpoint: "/clinical_laboratory/order_item/",
@@ -216,13 +206,13 @@ function GlassCard({
   return (
     <section className="relative overflow-visible rounded-xl border border-white/20 bg-white/25 shadow-sm backdrop-blur-sm transition focus-within:z-50 dark:border-white/10 dark:bg-white/5">
       <span className={`absolute inset-y-0 left-0 w-1 rounded-l-xl ${accent}`} />
-      <div className="flex items-center gap-2 border-b border-white/30 px-4 py-2 pl-5 dark:border-white/10">
-        <span className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br ${iconTone} text-white shadow-md shadow-slate-900/10`}>
-          <Icon size={16} />
+      <div className="flex items-center gap-1.5 border-b border-white/30 px-3 py-1.5 pl-4 dark:border-white/10">
+        <span className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br ${iconTone} text-white shadow-md shadow-slate-900/10`}>
+          <Icon size={14} />
         </span>
         <h2 className="text-sm font-semibold text-foreground">{title}</h2>
       </div>
-      <div className="space-y-4 p-4 pl-5">{children}</div>
+      <div className="space-y-2 p-2.5 pl-4">{children}</div>
     </section>
   );
 }
@@ -241,11 +231,11 @@ function SideCard({
   children: React.ReactNode;
 }) {
   return (
-    <section className="relative overflow-hidden rounded-xl border border-white/20 bg-white/25 p-4 pl-5 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/5">
+    <section className="relative overflow-hidden rounded-xl border border-white/20 bg-white/25 p-2.5 pl-4 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/5">
       <span className={`absolute inset-y-0 left-0 w-1 ${accent}`} />
-      <div className="mb-3 flex items-center gap-2">
-        <span className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br ${iconTone} text-white shadow-md shadow-slate-900/10`}>
-          <Icon size={16} />
+      <div className="mb-2 flex items-center gap-1.5">
+        <span className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br ${iconTone} text-white shadow-md shadow-slate-900/10`}>
+          <Icon size={14} />
         </span>
         <h2 className="text-sm font-semibold text-foreground">{title}</h2>
       </div>
@@ -313,24 +303,24 @@ export default function ClinicalLaboratoryCulturesCreatePage() {
 
   return (
     <AppLayout requiredGroups={requiredGroupsForResourceGroup("clinical_laboratory")}>
-      <form onSubmit={handleSubmit} noValidate className="mx-auto w-full max-w-5xl space-y-4">
-        <div className="relative overflow-hidden rounded-xl border border-white/20 bg-white/30 p-4 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/5">
+      <form onSubmit={handleSubmit} noValidate className="mx-auto w-full max-w-5xl space-y-2">
+        <div className="relative overflow-hidden rounded-xl border border-white/20 bg-white/30 p-2.5 pl-4 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/5">
           <span className="absolute inset-y-0 left-0 w-1 rounded-l-xl bg-gradient-to-b from-teal-500 to-cyan-600" />
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-teal-600 to-cyan-600 text-white shadow-md shadow-teal-500/25">
-                <Microscope size={20} />
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-teal-600 to-cyan-600 text-white shadow-md shadow-teal-500/25">
+                <Microscope size={16} />
               </span>
               <div>
-                <h1 className="text-xl font-semibold text-foreground">Nova cultura microbiológica</h1>
-                <p className="text-sm text-muted-foreground">Registo da montagem, incubação e primeira leitura da cultura.</p>
+                <h1 className="text-lg font-semibold text-foreground">Nova cultura microbiológica</h1>
+                <p className="text-xs text-muted-foreground">Registo da montagem, incubação e primeira leitura da cultura.</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
               <button
                 type="button"
                 onClick={() => router.push(BASE_PATH)}
-                className="inline-flex h-9 items-center gap-2 rounded-lg border border-white/40 bg-white/25 px-3 text-sm font-medium text-foreground shadow-sm backdrop-blur-sm transition hover:bg-white/45 dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10"
+                className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-white/40 bg-white/25 px-2.5 text-xs font-medium text-foreground shadow-sm backdrop-blur-sm transition hover:bg-white/45 dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10"
               >
                 <ArrowLeft size={15} />
                 Voltar
@@ -338,7 +328,7 @@ export default function ClinicalLaboratoryCulturesCreatePage() {
               <button
                 type="submit"
                 disabled={saving}
-                className="inline-flex h-9 items-center gap-2 rounded-lg bg-gradient-to-r from-teal-600 to-cyan-600 px-4 text-sm font-semibold text-white shadow-md shadow-teal-500/25 transition hover:from-teal-700 hover:to-cyan-700 disabled:opacity-60"
+                className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-gradient-to-r from-teal-600 to-cyan-600 px-3 text-xs font-semibold text-white shadow-md shadow-teal-500/25 transition hover:from-teal-700 hover:to-cyan-700 disabled:opacity-60"
               >
                 {saving ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />}
                 Criar cultura
@@ -348,15 +338,15 @@ export default function ClinicalLaboratoryCulturesCreatePage() {
         </div>
 
         {saveError && (
-          <div className="rounded-xl border border-red-200/60 bg-red-50/50 px-4 py-3 text-sm text-red-800 shadow-sm backdrop-blur-sm dark:border-red-800/40 dark:bg-red-900/15 dark:text-red-300">
+          <div className="rounded-xl border border-red-200/60 bg-red-50/50 px-3 py-2 text-sm text-red-800 shadow-sm backdrop-blur-sm dark:border-red-800/40 dark:bg-red-900/15 dark:text-red-300">
             {saveError}
           </div>
         )}
 
-        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
-          <div className="space-y-4">
+        <div className="grid gap-2">
+          <div className="space-y-2">
             <GlassCard title="Pedido e amostra" icon={ClipboardList} accent="bg-gradient-to-b from-teal-500 to-cyan-600" iconTone="from-teal-600 to-cyan-600">
-              <div className="grid gap-4 md:grid-cols-2">
+              <div className="grid gap-2 md:grid-cols-2">
                 <Field label="Item do pedido" required error={errors.orderItem}>
                   <RelationSelect
                     value={orderItem}
@@ -394,7 +384,7 @@ export default function ClinicalLaboratoryCulturesCreatePage() {
             </GlassCard>
 
             <GlassCard title="Cultura e incubação" icon={Beaker} accent="bg-gradient-to-b from-amber-500 to-orange-600" iconTone="from-amber-500 to-orange-600">
-              <div className="grid gap-4 md:grid-cols-2">
+              <div className="grid gap-2 md:grid-cols-2">
                 <Field label="Tipo de cultura">
                   <select value={cultureType} onChange={(event) => setCultureType(event.target.value)} className={inputClass}>
                     {CULTURE_TYPES.map((choice) => (
@@ -410,7 +400,7 @@ export default function ClinicalLaboratoryCulturesCreatePage() {
                   </select>
                 </Field>
               </div>
-              <div className="grid gap-4 md:grid-cols-2">
+              <div className="grid gap-2 md:grid-cols-2">
                 <Field label="Incubação iniciada em">
                   <input
                     type="datetime-local"
@@ -454,42 +444,12 @@ export default function ClinicalLaboratoryCulturesCreatePage() {
             </GlassCard>
           </div>
 
-          <aside className="space-y-4">
-            <SideCard title="Resumo" icon={TestTube2} accent="bg-teal-500" iconTone="from-teal-600 to-cyan-600">
-              <dl className="space-y-3 text-sm">
-                <div>
-                  <dt className="text-xs text-muted-foreground">Tipo</dt>
-                  <dd className="font-medium text-foreground">{CULTURE_TYPES.find((choice) => choice.value === cultureType)?.label}</dd>
-                </div>
-                <div>
-                  <dt className="text-xs text-muted-foreground">Estado inicial</dt>
-                  <dd>
-                    <span className={`inline-flex rounded-full border px-2 py-0.5 text-xs font-medium ${STATUS_STYLE[status]}`}>
-                      {STATUS_CHOICES.find((choice) => choice.value === status)?.label}
-                    </span>
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-xs text-muted-foreground">Item do pedido</dt>
-                  <dd className="truncate font-medium text-foreground">{orderItemLabel || "Ainda não selecionado"}</dd>
-                </div>
-                <div>
-                  <dt className="text-xs text-muted-foreground">Amostra</dt>
-                  <dd className="truncate font-medium text-foreground">{sampleLabel || "Sem vínculo"}</dd>
-                </div>
-              </dl>
-            </SideCard>
-
+          <aside>
             <SideCard title="Acompanhamento" icon={CalendarClock} accent="bg-amber-500" iconTone="from-amber-500 to-orange-600">
-              <div className="space-y-2 text-sm text-muted-foreground">
-                <p className="rounded-lg border border-white/25 bg-white/25 px-3 py-2 backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]">Depois de criada, a cultura poderá receber isolados e antibiogramas a partir do registo detalhado.</p>
-                <p className="rounded-lg border border-white/25 bg-white/25 px-3 py-2 backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]">Use o estado “Crescimento detetado” quando houver microrganismo para identificação.</p>
+              <div className="grid gap-2 text-xs text-muted-foreground md:grid-cols-2">
+                <p className="rounded-lg border border-white/25 bg-white/25 px-2.5 py-1.5 backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]">Depois de criada, a cultura poderá receber isolados e antibiogramas a partir do registo detalhado.</p>
+                <p className="rounded-lg border border-white/25 bg-white/25 px-2.5 py-1.5 backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]">Use o estado “Crescimento detetado” quando houver microrganismo para identificação.</p>
               </div>
-            </SideCard>
-
-            <SideCard title="Responsável" icon={User} accent="bg-violet-500" iconTone="from-violet-600 to-fuchsia-600">
-              <p className="truncate text-sm font-medium text-foreground">{performedByLabel || "Não definido"}</p>
-              <p className="mt-1 text-xs text-muted-foreground">Preencha quando a montagem já tiver técnico responsável.</p>
             </SideCard>
           </aside>
         </div>
