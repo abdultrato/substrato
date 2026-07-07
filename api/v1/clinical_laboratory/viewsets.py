@@ -637,10 +637,10 @@ class MicrobiologyCultureViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
                 LabSample.Status.IN_PROCESSING,
             ])
             .distinct()
-            .order_by("-created_at")[:200]
         )
         if tenant is not None:
             pending = pending.filter(tenant=tenant)
+        pending = pending.order_by("-created_at")[:200]
 
         payload.extend(
             self._queue_item_payload(order_item=item)
