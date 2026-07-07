@@ -1,17 +1,21 @@
 "use client";
 
-import { useId, useRef, useState } from "react";
+import { useId, useMemo, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
   Beaker,
   ClipboardList,
+  Clock3,
   FileText,
+  FlaskConical,
   Loader2,
   Microscope,
+  Plus,
   Save,
   Search,
+  Trash2,
   X,
 } from "lucide-react";
 
@@ -37,10 +41,60 @@ const CULTURE_TYPES = [
 const STATUS_CHOICES = [
   { value: "MONTADA", label: "Montada" },
   { value: "INCUBACAO", label: "Em incubação" },
-  { value: "CRESCIMENTO", label: "Crescimento detetado" },
-  { value: "SEM_CRESCIMENTO", label: "Sem crescimento" },
-  { value: "CONCLUIDA", label: "Concluída" },
 ];
+
+const ATMOSPHERES = ["Aeróbia", "Anaeróbia", "Microaerofilia", "CO2 5%"];
+
+// Espécimes frequentes por tipo de recolha em microbiologia clínica.
+const SPECIMEN_SUGGESTIONS = [
+  "Urina jato médio",
+  "Sangue periférico",
+  "Escarro",
+  "Exsudato de ferida",
+  "Secreção purulenta",
+  "Líquido cefalorraquidiano (LCR)",
+  "Líquido pleural",
+  "Fezes",
+  "Zaragatoa faríngea",
+  "Zaragatoa nasal",
+  "Ponta de cateter",
+  "Secreção vaginal / endocervical",
+  "Aspirado brônquico",
+];
+
+// Meios de cultura sugeridos por tipo de cultura (semeadura inicial).
+const MEDIA_BY_TYPE: Record<string, string[]> = {
+  AEROBIA: ["Agar sangue", "Agar chocolate", "MacConkey"],
+  ANAEROBIA: ["Agar sangue anaeróbio", "Schaedler"],
+  FUNGICA: ["Sabouraud dextrose", "Agar fungico com cloranfenicol"],
+  MICOBACTERIA: ["Löwenstein-Jensen", "Middlebrook 7H10"],
+  HEMOCULTURA: ["Frasco de hemocultura (aeróbio)", "Frasco de hemocultura (anaeróbio)"],
+  UROCULTURA: ["CLED", "Agar sangue", "MacConkey"],
+  OUTRA: ["Agar sangue", "MacConkey"],
+};
+
+const DEFAULT_ATMOSPHERE_BY_TYPE: Record<string, string> = {
+  ANAEROBIA: "Anaeróbia",
+  MICOBACTERIA: "CO2 5%",
+};
+
+type Plate = {
+  id: string;
+  label: string;
+  medium: string;
+  atmosphere: string;
+  temperature_c: string;
+};
+
+function makePlate(medium = "", atmosphere = "Aeróbia"): Plate {
+  return {
+    id: (globalThis.crypto?.randomUUID?.() ?? String(Math.random())).slice(0, 12),
+    label: "",
+    medium,
+    atmosphere,
+    temperature_c: "37",
+  };
+}
 
 const ORDER_ITEM_TARGET: RelationTarget = {
   endpoint: "/clinical_laboratory/order_item/",
@@ -222,18 +276,43 @@ export default function ClinicalLaboratoryCulturesCreatePage() {
   const [specimen, setSpecimen] = useState("");
   const [status, setStatus] = useState("MONTADA");
   const [incubationStartedAt, setIncubationStartedAt] = useState("");
-  const [readAt, setReadAt] = useState("");
+  const [incubationHours, setIncubationHours] = useState("24");
   const [notes, setNotes] = useState("");
+  const [plates, setPlates] = useState<Plate[]>([makePlate()]);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  // Fim previsto da incubação, derivado do início + duração informada.
+  const expectedEnd = useMemo(() => {
+    const hours = Number(incubationHours);
+    if (!incubationStartedAt || !Number.isFinite(hours) || hours <= 0) return null;
+    const start = new Date(incubationStartedAt);
+    if (Number.isNaN(start.getTime())) return null;
+    return new Date(start.getTime() + hours * 3600000);
+  }, [incubationStartedAt, incubationHours]);
+
+  function updatePlate(index: number, patch: Partial<Plate>) {
+    setPlates((rows) => rows.map((row, i) => (i === index ? { ...row, ...patch } : row)));
+  }
+
+  // Ao trocar o tipo de cultura, pré-preenche a atmosfera e sugere os meios
+  // habituais apenas enquanto as placas ainda não foram personalizadas.
+  function applyCultureType(nextType: string) {
+    setCultureType(nextType);
+    const atmosphere = DEFAULT_ATMOSPHERE_BY_TYPE[nextType] ?? "Aeróbia";
+    setPlates((rows) => {
+      const untouched = rows.every((row) => !row.label && !row.medium);
+      if (!untouched) return rows;
+      const media = MEDIA_BY_TYPE[nextType] ?? [];
+      if (!media.length) return [makePlate("", atmosphere)];
+      return media.map((medium) => makePlate(medium, atmosphere));
+    });
+  }
+
   function validate() {
     const nextErrors: Record<string, string> = {};
     if (!orderItem) nextErrors.orderItem = "Selecione o item do pedido laboratorial.";
-    if (readAt && incubationStartedAt && new Date(readAt) < new Date(incubationStartedAt)) {
-      nextErrors.readAt = "A leitura não pode ser anterior ao início da incubação.";
-    }
     setErrors(nextErrors);
     return Object.keys(nextErrors).length === 0;
   }
@@ -254,9 +333,13 @@ export default function ClinicalLaboratoryCulturesCreatePage() {
           specimen: specimen.trim(),
           status,
           incubation_started_at: incubationStartedAt || null,
-          read_at: readAt || null,
+          incubation_expected_end_at: expectedEnd ? expectedEnd.toISOString() : null,
+          read_at: null,
           performed_by: performedBy,
           notes: notes.trim(),
+          culture_plates: plates
+            .filter((plate) => plate.label.trim() || plate.medium.trim())
+            .map(({ id: _id, ...plate }) => plate),
         }),
       });
       router.push(`${BASE_PATH}/${created.id}`);
@@ -319,7 +402,7 @@ export default function ClinicalLaboratoryCulturesCreatePage() {
         )}
 
         <div className="grid gap-2">
-          <div className="flex gap-2 overflow-x-auto pb-1">
+          <div className="grid gap-2 md:grid-cols-2">
             <GlassCard title="Pedido e amostra" icon={ClipboardList} accent="bg-gradient-to-b from-teal-500 to-cyan-600" iconTone="from-teal-600 to-cyan-600">
               <div className="grid gap-2 md:grid-cols-2">
                 <Field label="Item do pedido" required error={errors.orderItem}>
@@ -352,22 +435,28 @@ export default function ClinicalLaboratoryCulturesCreatePage() {
                 <input
                   value={specimen}
                   onChange={(event) => setSpecimen(event.target.value)}
+                  list="specimen-suggestions"
                   placeholder="Ex.: urina jato médio, sangue periférico, escarro"
                   className={inputClass}
                 />
+                <datalist id="specimen-suggestions">
+                  {SPECIMEN_SUGGESTIONS.map((item) => (
+                    <option key={item} value={item} />
+                  ))}
+                </datalist>
               </Field>
             </GlassCard>
 
             <GlassCard title="Cultura e incubação" icon={Beaker} accent="bg-gradient-to-b from-amber-500 to-orange-600" iconTone="from-amber-500 to-orange-600">
               <div className="grid gap-2 md:grid-cols-2">
                 <Field label="Tipo de cultura">
-                  <select value={cultureType} onChange={(event) => setCultureType(event.target.value)} className={inputClass}>
+                  <select value={cultureType} onChange={(event) => applyCultureType(event.target.value)} className={inputClass}>
                     {CULTURE_TYPES.map((choice) => (
                       <option key={choice.value} value={choice.value}>{choice.label}</option>
                     ))}
                   </select>
                 </Field>
-                <Field label="Estado">
+                <Field label="Estado inicial">
                   <select value={status} onChange={(event) => setStatus(event.target.value)} className={inputClass}>
                     {STATUS_CHOICES.map((choice) => (
                       <option key={choice.value} value={choice.value}>{choice.label}</option>
@@ -384,17 +473,71 @@ export default function ClinicalLaboratoryCulturesCreatePage() {
                     className={inputClass}
                   />
                 </Field>
-                <Field label="Leitura em" error={errors.readAt}>
+                <Field label="Duração da incubação (horas)">
                   <input
-                    type="datetime-local"
-                    value={readAt}
-                    onChange={(event) => setReadAt(event.target.value)}
+                    type="number"
+                    min={1}
+                    step={1}
+                    value={incubationHours}
+                    onChange={(event) => setIncubationHours(event.target.value)}
+                    placeholder="24"
                     className={inputClass}
                   />
                 </Field>
               </div>
+              <div className="flex items-center gap-1.5 rounded-lg border border-teal-200/50 bg-teal-50/40 px-2.5 py-1.5 text-xs text-teal-800 backdrop-blur-sm dark:border-teal-800/40 dark:bg-teal-900/15 dark:text-teal-200">
+                <Clock3 size={13} className="shrink-0" />
+                <span>
+                  Leitura prevista:{" "}
+                  <strong className="font-semibold">
+                    {expectedEnd
+                      ? new Intl.DateTimeFormat("pt-MZ", { dateStyle: "short", timeStyle: "short" }).format(expectedEnd)
+                      : "defina início e duração"}
+                  </strong>
+                </span>
+              </div>
             </GlassCard>
           </div>
+
+          <GlassCard title="Sementeira — placas e meios" icon={FlaskConical} accent="bg-gradient-to-b from-emerald-500 to-teal-600" iconTone="from-emerald-600 to-teal-600">
+            <div className="space-y-2">
+              <div className="hidden gap-2 px-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground md:grid md:grid-cols-[1fr_1fr_1fr_88px_32px]">
+                <span>Placa / identificação</span>
+                <span>Meio de cultura</span>
+                <span>Atmosfera</span>
+                <span>°C</span>
+                <span />
+              </div>
+              {plates.map((plate, index) => (
+                <div key={plate.id} className="grid gap-2 rounded-lg border border-white/25 bg-white/20 p-2 backdrop-blur-sm md:grid-cols-[1fr_1fr_1fr_88px_32px] dark:border-white/10 dark:bg-white/[0.04]">
+                  <input value={plate.label} onChange={(event) => updatePlate(index, { label: event.target.value })} placeholder="Ex.: Placa 1" className={inputClass} />
+                  <input value={plate.medium} onChange={(event) => updatePlate(index, { medium: event.target.value })} placeholder="Meio de cultura" className={inputClass} />
+                  <select value={plate.atmosphere} onChange={(event) => updatePlate(index, { atmosphere: event.target.value })} className={inputClass}>
+                    {ATMOSPHERES.map((option) => (
+                      <option key={option} value={option}>{option}</option>
+                    ))}
+                  </select>
+                  <input value={plate.temperature_c} onChange={(event) => updatePlate(index, { temperature_c: event.target.value })} placeholder="°C" className={inputClass} />
+                  <button
+                    type="button"
+                    onClick={() => setPlates((rows) => (rows.length > 1 ? rows.filter((_, i) => i !== index) : rows))}
+                    disabled={plates.length <= 1}
+                    aria-label="Remover placa"
+                    className="inline-flex h-9 items-center justify-center rounded-lg border border-white/30 bg-white/25 text-muted-foreground transition hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+              ))}
+            </div>
+            <button
+              type="button"
+              onClick={() => setPlates((rows) => [...rows, makePlate()])}
+              className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-white/40 bg-white/35 px-2.5 text-xs font-medium text-foreground shadow-sm backdrop-blur-sm transition hover:bg-white/55 dark:border-white/10 dark:bg-white/5"
+            >
+              <Plus size={14} /> Adicionar placa
+            </button>
+          </GlassCard>
 
           <GlassCard title="Execução e notas" icon={FileText} accent="bg-gradient-to-b from-violet-500 to-fuchsia-600" iconTone="from-violet-600 to-fuchsia-600">
             <Field label="Executado por">

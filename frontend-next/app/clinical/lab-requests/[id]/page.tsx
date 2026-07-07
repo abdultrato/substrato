@@ -395,11 +395,11 @@ export default function LabRequestDetailPage() {
                 <div className="overflow-hidden rounded-lg border border-[var(--border)]">
                   <table className="w-full table-fixed text-[11px]">
                     <colgroup>
+                      <col className="w-[14%]" />
+                      <col className="w-[30%]" />
                       <col className="w-[20%]" />
-                      <col className="w-[35%]" />
-                      <col className="w-[22%]" />
-                      <col className="w-[23%]" />
-                      <col className="w-[22%]" />
+                      <col className="w-[20%]" />
+                      <col className="w-[16%]" />
                     </colgroup>
                     <thead>
                       <tr className="border-b border-[var(--border)] bg-[var(--gray-50)]/60 dark:bg-white/[0.03]">
@@ -421,8 +421,8 @@ export default function LabRequestDetailPage() {
                             <td className="truncate px-3 py-2 font-mono text-[10px] text-[var(--gray-500)]">
                               {item.exam_custom_id ?? "—"}
                             </td>
-                            <td className="px-3 py-2 font-medium text-[var(--text)]">{name}</td>
-                            <td className="truncate px-3 py-2 text-[var(--gray-500)]">{item.exam_method ?? "—"}</td>
+                            <td className="px-3 py-2 font-medium leading-tight text-[var(--text)]">{name}</td>
+                            <td className="px-3 py-2 leading-tight text-[var(--gray-500)]" title={item.exam_method ?? undefined}>{item.exam_method ?? "—"}</td>
                             <td className="px-3 py-2">
                               <div className="flex items-center gap-1">
                                 <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${sampleMeta.dot}`} />
@@ -441,10 +441,11 @@ export default function LabRequestDetailPage() {
                                 type="button"
                                 onClick={() => handleIniciarProcessamento(item)}
                                 disabled={!canStartProcessing || busy}
-                                className="inline-flex h-7 items-center gap-1 rounded-md border border-sky-200 bg-sky-50/80 px-2.5 text-[10px] font-semibold text-sky-700 transition hover:bg-sky-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-sky-700/40 dark:bg-sky-900/20 dark:text-sky-300"
+                                title={isCultureItem(item) ? "Iniciar cultura" : "Iniciar processamento"}
+                                className="inline-flex h-7 w-full items-center justify-center gap-1 whitespace-nowrap rounded-md border border-sky-200 bg-sky-50/80 px-2 text-[10px] font-semibold text-sky-700 transition hover:bg-sky-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-sky-700/40 dark:bg-sky-900/20 dark:text-sky-300"
                               >
                                 {processingItemId === item.id ? <Loader2 size={10} className="animate-spin" /> : isCultureItem(item) ? <FlaskConical size={10} /> : <PlayCircle size={10} />}
-                                Iniciar processamento
+                                Processar
                               </button>
                             </td>
                           </tr>
