@@ -559,11 +559,10 @@ export default function LaboratoryQualityControlPage() {
   const sopOptions = useMemo<SearchableOption[]>(
     () =>
       sopDocuments.map((doc) => {
-        const value = `${doc.code} · ${doc.title}${doc.version ? ` · v${doc.version}` : ""}`;
         return {
-          value,
-          label: `${doc.code} - ${doc.title}`,
-          hint: `${doc.status}${doc.version ? ` · v${doc.version}` : ""}${doc.review_date ? ` · revisão ${doc.review_date}` : ""}`,
+          value: doc.title,
+          label: doc.title,
+          hint: `${doc.code}${doc.version ? ` · v${doc.version}` : ""}${doc.review_date ? ` · revisão ${doc.review_date}` : ""}`,
         };
       }),
     [sopDocuments],
