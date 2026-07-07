@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowRight, Clock3, FlaskConical, Loader2, Microscope, RefreshCw, Search } from "lucide-react";
+import { ArrowRight, ChevronRight, ClipboardList, Clock3, FlaskConical, Loader2, Microscope, RefreshCw, Search, User } from "lucide-react";
 
 import AppLayout from "@/components/layout/AppLayout";
 import { apiFetch } from "@/lib/api";
@@ -31,12 +31,15 @@ type QueueItem = {
   incubation_expected_end_at: string | null;
 };
 
-const cardTones = [
-  "from-teal-100/70 via-white/35 to-cyan-100/60 border-teal-200/45 shadow-teal-500/10",
-  "from-violet-100/70 via-white/35 to-fuchsia-100/60 border-violet-200/45 shadow-violet-500/10",
-  "from-amber-100/70 via-white/35 to-orange-100/60 border-amber-200/45 shadow-amber-500/10",
-  "from-sky-100/70 via-white/35 to-indigo-100/60 border-sky-200/45 shadow-sky-500/10",
-];
+type CultureGroup = {
+  orderId: string;
+  patient: string;
+  items: QueueItem[];
+};
+
+function isIncubatingItem(item: QueueItem) {
+  return item.status === "INCUBACAO" || item.status === "REINCUBACAO";
+}
 
 function fmtDate(value: string | null) {
   if (!value) return "Sem data";
@@ -51,6 +54,16 @@ export default function LabCulturesPage() {
   const [refreshing, setRefreshing] = useState(false);
   const [startingId, setStartingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+
+  function toggleGroup(orderId: string) {
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(orderId)) next.delete(orderId);
+      else next.add(orderId);
+      return next;
+    });
+  }
 
   async function load(manual = false) {
     const startedAt = Date.now();
@@ -89,6 +102,24 @@ export default function LabCulturesPage() {
       item.status_display,
     ].some((value) => String(value || "").toLowerCase().includes(term)));
   }, [items, query]);
+
+  // Agrupa as culturas pela requisição (order). Cada grupo é um paciente/pedido.
+  const groups = useMemo<CultureGroup[]>(() => {
+    const map = new Map<string, CultureGroup>();
+    for (const item of filtered) {
+      const key = item.order_custom_id || "Sem requisição";
+      let group = map.get(key);
+      if (!group) {
+        group = { orderId: key, patient: item.patient_name, items: [] };
+        map.set(key, group);
+      }
+      if (!group.patient && item.patient_name) group.patient = item.patient_name;
+      group.items.push(item);
+    }
+    return Array.from(map.values()).sort((a, b) => b.orderId.localeCompare(a.orderId));
+  }, [filtered]);
+
+  const searching = query.trim().length > 0;
 
   async function startCulture(item: QueueItem) {
     if (item.culture_id) {
@@ -131,13 +162,13 @@ export default function LabCulturesPage() {
                   <span className="rounded-full border border-cyan-200/70 bg-cyan-50/70 px-2 py-0.5 text-[10px] font-medium text-cyan-700 backdrop-blur-sm dark:border-cyan-800/40 dark:bg-cyan-900/20 dark:text-cyan-300">Fila de culturas</span>
                 </div>
                 <h1 className="text-lg font-semibold leading-tight text-foreground">Culturas pendentes e em execução</h1>
-                <p className="text-xs text-muted-foreground">Apenas itens de requisição cujo exame usa método Cultura após recepção da amostra.</p>
+                <p className="text-xs text-muted-foreground">Agrupadas por requisição. Clique numa requisição para ver as culturas do paciente.</p>
               </div>
             </div>
             <div className="flex w-full flex-col gap-2 sm:w-auto sm:min-w-[360px] sm:flex-row sm:items-center">
               <div className="flex h-8 min-w-0 flex-1 items-center gap-2 rounded-lg border border-white/40 bg-white/35 px-2.5 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/5">
                 <Search size={14} className="shrink-0 text-muted-foreground" />
-                <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Pesquisar paciente, requisição, exame ou amostra" className="h-full min-w-0 flex-1 bg-transparent text-xs outline-none placeholder:text-muted-foreground" />
+                <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Pesquisar por paciente ou requisição" className="h-full min-w-0 flex-1 bg-transparent text-xs outline-none placeholder:text-muted-foreground" />
               </div>
               <button
                 onClick={() => load(true)}
@@ -156,41 +187,77 @@ export default function LabCulturesPage() {
 
         {loading ? (
           <div className="flex min-h-48 items-center justify-center gap-2 text-sm text-muted-foreground"><Loader2 size={16} className="animate-spin" /> Carregando culturas...</div>
-        ) : filtered.length === 0 ? (
+        ) : groups.length === 0 ? (
           <div className="rounded-xl border border-dashed border-white/30 bg-white/20 p-8 text-center text-sm text-muted-foreground backdrop-blur-sm dark:border-white/10 dark:bg-white/5">Nenhuma cultura pendente para os filtros atuais.</div>
         ) : (
-          <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
-            {filtered.map((item, index) => {
-              const tone = cardTones[index % cardTones.length];
+          <div className="space-y-2">
+            {groups.map((group) => {
+              const open = searching || groups.length === 1 || expanded.has(group.orderId);
+              const total = group.items.length;
+              const porIniciar = group.items.filter((item) => !item.culture_id).length;
+              const emIncubacao = group.items.filter(isIncubatingItem).length;
               return (
-                <article key={item.id} className={`relative overflow-hidden rounded-xl border bg-gradient-to-br ${tone} p-3 pl-4 shadow-md backdrop-blur-xl dark:border-white/10 dark:from-white/[0.06] dark:via-white/[0.025] dark:to-white/[0.015]`}>
-                  <span className="absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-teal-500 via-cyan-500 to-violet-500" />
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0">
-                      <h2 className="truncate text-sm font-semibold text-foreground">{item.test_name}</h2>
-                      <p className="truncate text-xs text-muted-foreground">{item.patient_name || "Paciente não informado"}</p>
+                <div key={group.orderId} className="overflow-hidden rounded-xl border border-white/25 bg-white/25 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]">
+                  <button
+                    type="button"
+                    onClick={() => toggleGroup(group.orderId)}
+                    aria-expanded={open}
+                    className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left transition hover:bg-white/25 dark:hover:bg-white/[0.03]"
+                  >
+                    <span className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-teal-600 to-cyan-600 text-white shadow transition-transform ${open ? "rotate-90" : ""}`}>
+                      <ChevronRight size={15} />
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5">
+                        <User size={13} className="shrink-0 text-teal-600 dark:text-teal-400" />
+                        <span className="truncate text-sm font-semibold text-foreground">{group.patient || "Paciente não informado"}</span>
+                      </div>
+                      <span className="mt-0.5 inline-flex items-center gap-1 font-mono text-[11px] text-muted-foreground">
+                        <ClipboardList size={11} /> {group.orderId}
+                      </span>
                     </div>
-                    <span className="shrink-0 rounded-full border border-white/40 bg-white/35 px-2 py-0.5 text-[10px] font-semibold text-foreground backdrop-blur-sm">{item.status_display}</span>
-                  </div>
-                  <div className="mt-2 grid grid-cols-2 gap-1.5 text-xs">
-                    <span className="rounded-lg border border-white/30 bg-white/25 px-2 py-1 backdrop-blur-sm">{item.order_custom_id}</span>
-                    <span className="rounded-lg border border-white/30 bg-white/25 px-2 py-1 backdrop-blur-sm">{item.sample_barcode || "Sem amostra"}</span>
-                    <span className="rounded-lg border border-white/30 bg-white/25 px-2 py-1 backdrop-blur-sm">{item.test_code || "Sem código"}</span>
-                    <span className="rounded-lg border border-white/30 bg-white/25 px-2 py-1 backdrop-blur-sm">{fmtDate(item.sample_received_at)}</span>
-                  </div>
-                  <div className="mt-3 flex items-center justify-between gap-2">
-                    <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground"><Clock3 size={12} /> {item.incubation_expected_end_at ? `Leitura ${fmtDate(item.incubation_expected_end_at)}` : "Aguardando sementeira"}</span>
-                    {item.culture_id ? (
-                      <Link href={`/clinical-laboratory/cultures/${item.culture_id}`} className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 px-3 text-xs font-semibold text-white shadow-md shadow-violet-500/20">
-                        Abrir <ArrowRight size={13} />
-                      </Link>
-                    ) : (
-                      <button onClick={() => startCulture(item)} disabled={startingId === item.id} className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-gradient-to-r from-teal-600 to-cyan-600 px-3 text-xs font-semibold text-white shadow-md shadow-teal-500/20 disabled:opacity-60">
-                        {startingId === item.id ? <Loader2 size={13} className="animate-spin" /> : <FlaskConical size={13} />} Iniciar cultura
-                      </button>
-                    )}
-                  </div>
-                </article>
+                    <div className="flex shrink-0 flex-wrap items-center justify-end gap-1.5">
+                      {porIniciar > 0 && (
+                        <span className="rounded-full border border-teal-200/70 bg-teal-50/70 px-2 py-0.5 text-[10px] font-semibold text-teal-700 dark:border-teal-800/40 dark:bg-teal-900/20 dark:text-teal-300">{porIniciar} por iniciar</span>
+                      )}
+                      {emIncubacao > 0 && (
+                        <span className="rounded-full border border-sky-200/70 bg-sky-50/70 px-2 py-0.5 text-[10px] font-semibold text-sky-700 dark:border-sky-800/40 dark:bg-sky-900/20 dark:text-sky-300">{emIncubacao} em incubação</span>
+                      )}
+                      <span className="inline-flex items-center gap-1 rounded-full border border-white/40 bg-white/45 px-2 py-0.5 text-[10px] font-bold text-foreground backdrop-blur-sm dark:border-white/10 dark:bg-white/10">
+                        <FlaskConical size={11} /> {total}
+                      </span>
+                    </div>
+                  </button>
+                  {open && (
+                    <div className="space-y-1.5 border-t border-white/25 p-2 dark:border-white/10">
+                      {group.items.map((item) => (
+                        <div key={item.id} className="flex flex-wrap items-center gap-2 rounded-lg border border-white/25 bg-white/30 px-2.5 py-2 backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.03]">
+                          <div className="min-w-0 flex-1">
+                            <div className="flex flex-wrap items-center gap-1.5">
+                              <FlaskConical size={13} className="shrink-0 text-teal-600 dark:text-teal-400" />
+                              <span className="truncate text-xs font-semibold text-foreground">{item.test_name}</span>
+                              <span className="shrink-0 rounded-full border border-white/40 bg-white/45 px-1.5 py-0.5 text-[9px] font-semibold text-foreground backdrop-blur-sm dark:border-white/10 dark:bg-white/10">{item.status_display}</span>
+                            </div>
+                            <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] text-muted-foreground">
+                              <span>{item.test_code || "Sem código"}</span>
+                              <span>· {item.sample_barcode || "Sem amostra"}</span>
+                              <span className="inline-flex items-center gap-1">· <Clock3 size={10} /> {item.incubation_expected_end_at ? `Leitura ${fmtDate(item.incubation_expected_end_at)}` : "Aguardando sementeira"}</span>
+                            </div>
+                          </div>
+                          {item.culture_id ? (
+                            <Link href={`/clinical-laboratory/cultures/${item.culture_id}`} className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 px-3 text-xs font-semibold text-white shadow-md shadow-violet-500/20">
+                              Abrir <ArrowRight size={13} />
+                            </Link>
+                          ) : (
+                            <button onClick={() => startCulture(item)} disabled={startingId === item.id} className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg bg-gradient-to-r from-teal-600 to-cyan-600 px-3 text-xs font-semibold text-white shadow-md shadow-teal-500/20 disabled:opacity-60">
+                              {startingId === item.id ? <Loader2 size={13} className="animate-spin" /> : <FlaskConical size={13} />} Iniciar cultura
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               );
             })}
           </div>
