@@ -24,6 +24,17 @@ import { apiFetch, apiFetchList } from "@/lib/api";
 import { requiredGroupsForResourceGroup } from "@/lib/resourcesAccess";
 import { relationOptionsFromRows } from "@/lib/resources/relationOptions";
 import type { RelationTarget } from "@/lib/resources/relationOptions";
+import {
+  CULTURE_ATMOSPHERES,
+  CULTURE_CONSISTENCIES,
+  CULTURE_CONTAINERS,
+  CULTURE_MEDIA,
+  applyMediumChoice,
+  isCustomMedium,
+  makeCulturePlate,
+  mediumSelectValue,
+  type CulturePlate as Plate,
+} from "@/lib/culturePlates";
 
 const ENDPOINT = "/clinical_laboratory/culture/";
 const BASE_PATH = "/clinical-laboratory/cultures";
@@ -43,8 +54,6 @@ const STATUS_CHOICES = [
   { value: "INCUBACAO", label: "Em incubação" },
 ];
 
-const ATMOSPHERES = ["Aeróbia", "Anaeróbia", "Microaerofilia", "CO2 5%"];
-
 // Espécimes frequentes por tipo de recolha em microbiologia clínica.
 const SPECIMEN_SUGGESTIONS = [
   "Urina jato médio",
@@ -62,39 +71,21 @@ const SPECIMEN_SUGGESTIONS = [
   "Aspirado brônquico",
 ];
 
-// Meios de cultura sugeridos por tipo de cultura (semeadura inicial).
+// Meios de cultura sugeridos por tipo de cultura (semeadura inicial). Os
+// rótulos correspondem a CULTURE_MEDIA para serem reconhecidos pelo <select>.
 const MEDIA_BY_TYPE: Record<string, string[]> = {
-  AEROBIA: ["Agar sangue", "Agar chocolate", "MacConkey"],
-  ANAEROBIA: ["Agar sangue anaeróbio", "Schaedler"],
-  FUNGICA: ["Sabouraud dextrose", "Agar fungico com cloranfenicol"],
-  MICOBACTERIA: ["Löwenstein-Jensen", "Middlebrook 7H10"],
-  HEMOCULTURA: ["Frasco de hemocultura (aeróbio)", "Frasco de hemocultura (anaeróbio)"],
-  UROCULTURA: ["CLED", "Agar sangue", "MacConkey"],
-  OUTRA: ["Agar sangue", "MacConkey"],
+  AEROBIA: ["Ágar sangue", "Ágar chocolate", "Ágar MacConkey"],
+  ANAEROBIA: ["Ágar Schaedler (anaeróbios)", "Ágar sangue"],
+  FUNGICA: ["Ágar Sabouraud dextrose"],
+  MICOBACTERIA: ["Löwenstein-Jensen", "Middlebrook 7H10/7H11"],
+  UROCULTURA: ["Ágar CLED", "Ágar sangue", "Ágar MacConkey"],
+  OUTRA: ["Ágar sangue", "Ágar MacConkey"],
 };
 
 const DEFAULT_ATMOSPHERE_BY_TYPE: Record<string, string> = {
   ANAEROBIA: "Anaeróbia",
   MICOBACTERIA: "CO2 5%",
 };
-
-type Plate = {
-  id: string;
-  label: string;
-  medium: string;
-  atmosphere: string;
-  temperature_c: string;
-};
-
-function makePlate(medium = "", atmosphere = "Aeróbia"): Plate {
-  return {
-    id: (globalThis.crypto?.randomUUID?.() ?? String(Math.random())).slice(0, 12),
-    label: "",
-    medium,
-    atmosphere,
-    temperature_c: "37",
-  };
-}
 
 const ORDER_ITEM_TARGET: RelationTarget = {
   endpoint: "/clinical_laboratory/order_item/",
@@ -278,7 +269,7 @@ export default function ClinicalLaboratoryCulturesCreatePage() {
   const [incubationStartedAt, setIncubationStartedAt] = useState("");
   const [incubationHours, setIncubationHours] = useState("24");
   const [notes, setNotes] = useState("");
-  const [plates, setPlates] = useState<Plate[]>([makePlate()]);
+  const [plates, setPlates] = useState<Plate[]>([makeCulturePlate()]);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -302,12 +293,19 @@ export default function ClinicalLaboratoryCulturesCreatePage() {
     setCultureType(nextType);
     const atmosphere = DEFAULT_ATMOSPHERE_BY_TYPE[nextType] ?? "Aeróbia";
     setPlates((rows) => {
-      const untouched = rows.every((row) => !row.label && !row.medium);
+      const untouched = rows.every((row) => !row.medium);
       if (!untouched) return rows;
+      if (nextType === "HEMOCULTURA") {
+        return [makeCulturePlate({ container: "Frasco de hemocultura", consistency: "Líquido", atmosphere })];
+      }
       const media = MEDIA_BY_TYPE[nextType] ?? [];
-      if (!media.length) return [makePlate("", atmosphere)];
-      return media.map((medium) => makePlate(medium, atmosphere));
+      if (!media.length) return [makeCulturePlate({ atmosphere })];
+      return media.map((medium) => makeCulturePlate({ medium, atmosphere }));
     });
+  }
+
+  function updatePlate(index: number, patch: Partial<Plate>) {
+    setPlates((rows) => rows.map((row, i) => (i === index ? { ...row, ...patch } : row)));
   }
 
   function validate() {
@@ -337,9 +335,11 @@ export default function ClinicalLaboratoryCulturesCreatePage() {
           read_at: null,
           performed_by: performedBy,
           notes: notes.trim(),
+          // Envia as placas sem código: o código único é gerado na página de
+          // detalhe (que já tem o custom_id da cultura) antes de incubar.
           culture_plates: plates
-            .filter((plate) => plate.label.trim() || plate.medium.trim())
-            .map(({ id: _id, ...plate }) => plate),
+            .filter((plate) => plate.medium.trim() || plate.container)
+            .map(({ id: _id, ...plate }) => ({ ...plate, code: "" })),
         }),
       });
       router.push(`${BASE_PATH}/${created.id}`);
@@ -499,43 +499,68 @@ export default function ClinicalLaboratoryCulturesCreatePage() {
             </GlassCard>
           </div>
 
-          <GlassCard title="Sementeira — placas e meios" icon={FlaskConical} accent="bg-gradient-to-b from-emerald-500 to-teal-600" iconTone="from-emerald-600 to-teal-600">
+          <GlassCard title="Sementeira — placas e tubos" icon={FlaskConical} accent="bg-gradient-to-b from-emerald-500 to-teal-600" iconTone="from-emerald-600 to-teal-600">
+            <p className="text-[11px] text-muted-foreground">
+              Escolha o recipiente, o meio e a consistência de cada placa ou tubo. O código único de cada
+              recipiente é gerado automaticamente ao iniciar a incubação, para ser escrito na placa/tubo.
+            </p>
             <div className="space-y-2">
-              <div className="hidden gap-2 px-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground md:grid md:grid-cols-[1fr_1fr_1fr_88px_32px]">
-                <span>Placa / identificação</span>
-                <span>Meio de cultura</span>
-                <span>Atmosfera</span>
-                <span>°C</span>
-                <span />
-              </div>
-              {plates.map((plate, index) => (
-                <div key={plate.id} className="grid gap-2 rounded-lg border border-white/25 bg-white/20 p-2 backdrop-blur-sm md:grid-cols-[1fr_1fr_1fr_88px_32px] dark:border-white/10 dark:bg-white/[0.04]">
-                  <input value={plate.label} onChange={(event) => updatePlate(index, { label: event.target.value })} placeholder="Ex.: Placa 1" className={inputClass} />
-                  <input value={plate.medium} onChange={(event) => updatePlate(index, { medium: event.target.value })} placeholder="Meio de cultura" className={inputClass} />
-                  <select value={plate.atmosphere} onChange={(event) => updatePlate(index, { atmosphere: event.target.value })} className={inputClass}>
-                    {ATMOSPHERES.map((option) => (
-                      <option key={option} value={option}>{option}</option>
-                    ))}
-                  </select>
-                  <input value={plate.temperature_c} onChange={(event) => updatePlate(index, { temperature_c: event.target.value })} placeholder="°C" className={inputClass} />
-                  <button
-                    type="button"
-                    onClick={() => setPlates((rows) => (rows.length > 1 ? rows.filter((_, i) => i !== index) : rows))}
-                    disabled={plates.length <= 1}
-                    aria-label="Remover placa"
-                    className="inline-flex h-9 items-center justify-center rounded-lg border border-white/30 bg-white/25 text-muted-foreground transition hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-40"
-                  >
-                    <Trash2 size={14} />
-                  </button>
-                </div>
-              ))}
+              {plates.map((plate, index) => {
+                const custom = isCustomMedium(plate);
+                return (
+                  <div key={plate.id} className="space-y-2 rounded-lg border border-white/25 bg-white/20 p-2 backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-[11px] font-semibold text-muted-foreground">Recipiente {index + 1}</span>
+                      <button
+                        type="button"
+                        onClick={() => setPlates((rows) => (rows.length > 1 ? rows.filter((_, i) => i !== index) : rows))}
+                        disabled={plates.length <= 1}
+                        aria-label="Remover placa/tubo"
+                        className="inline-flex h-7 w-7 items-center justify-center rounded-lg border border-white/30 bg-white/25 text-muted-foreground transition hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-40"
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
+                    <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                      <select value={plate.container} onChange={(event) => updatePlate(index, { container: event.target.value })} className={inputClass} aria-label="Recipiente">
+                        {CULTURE_CONTAINERS.map((option) => (
+                          <option key={option} value={option}>{option}</option>
+                        ))}
+                      </select>
+                      <select value={mediumSelectValue(plate)} onChange={(event) => updatePlate(index, applyMediumChoice(plate, event.target.value))} className={inputClass} aria-label="Meio de cultura">
+                        <option value="">Meio de cultura…</option>
+                        {CULTURE_MEDIA.map((option) => (
+                          <option key={option} value={option}>{option}</option>
+                        ))}
+                      </select>
+                      {custom && (
+                        <input value={plate.medium} onChange={(event) => updatePlate(index, { medium: event.target.value })} placeholder="Especifique o meio" className={inputClass} />
+                      )}
+                      <select value={plate.consistency} onChange={(event) => updatePlate(index, { consistency: event.target.value })} className={inputClass} aria-label="Consistência do meio">
+                        {CULTURE_CONSISTENCIES.map((option) => (
+                          <option key={option} value={option}>{option}</option>
+                        ))}
+                      </select>
+                      <select value={plate.atmosphere} onChange={(event) => updatePlate(index, { atmosphere: event.target.value })} className={inputClass} aria-label="Atmosfera">
+                        {CULTURE_ATMOSPHERES.map((option) => (
+                          <option key={option} value={option}>{option}</option>
+                        ))}
+                      </select>
+                      <div className="flex items-center gap-1.5">
+                        <input value={plate.temperature_c} onChange={(event) => updatePlate(index, { temperature_c: event.target.value })} placeholder="°C" className={inputClass} />
+                        <span className="text-xs text-muted-foreground">°C</span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
             <button
               type="button"
-              onClick={() => setPlates((rows) => [...rows, makePlate()])}
+              onClick={() => setPlates((rows) => [...rows, makeCulturePlate()])}
               className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-white/40 bg-white/35 px-2.5 text-xs font-medium text-foreground shadow-sm backdrop-blur-sm transition hover:bg-white/55 dark:border-white/10 dark:bg-white/5"
             >
-              <Plus size={14} /> Adicionar placa
+              <Plus size={14} /> Adicionar placa / tubo
             </button>
           </GlassCard>
 

@@ -21,14 +21,19 @@ import {
 import AppLayout from "@/components/layout/AppLayout";
 import { apiFetch } from "@/lib/api";
 import { requiredGroupsForResourceGroup } from "@/lib/resourcesAccess";
-
-type Plate = {
-  id: string;
-  label: string;
-  medium: string;
-  atmosphere: string;
-  temperature_c: string;
-};
+import {
+  CULTURE_ATMOSPHERES,
+  CULTURE_CONSISTENCIES,
+  CULTURE_CONTAINERS,
+  CULTURE_MEDIA,
+  applyMediumChoice,
+  isCustomMedium,
+  makeCulturePlate,
+  makePlateCode,
+  mediumSelectValue,
+  normalizePlates,
+  type CulturePlate as Plate,
+} from "@/lib/culturePlates";
 
 type Observation = {
   observed_at: string;
@@ -70,9 +75,6 @@ type Culture = {
 const inputClass = "h-8 w-full rounded-lg border border-white/30 bg-white/35 px-2.5 text-xs text-foreground shadow-sm outline-none backdrop-blur-sm placeholder:text-muted-foreground focus:border-teal-400 focus:ring-2 focus:ring-teal-500/20 dark:border-white/10 dark:bg-white/[0.06]";
 const textareaClass = "min-h-20 w-full rounded-lg border border-white/30 bg-white/35 px-2.5 py-2 text-xs text-foreground shadow-sm outline-none backdrop-blur-sm placeholder:text-muted-foreground focus:border-teal-400 focus:ring-2 focus:ring-teal-500/20 dark:border-white/10 dark:bg-white/[0.06]";
 
-function newPlate(): Plate {
-  return { id: crypto.randomUUID(), label: "", medium: "", atmosphere: "Aeróbia", temperature_c: "37" };
-}
 
 function fmtDate(value?: string | null) {
   if (!value) return "Sem data";
@@ -113,7 +115,7 @@ export default function CultureDetailPage() {
   const router = useRouter();
   const id = params.id;
   const [culture, setCulture] = useState<Culture | null>(null);
-  const [plates, setPlates] = useState<Plate[]>([newPlate()]);
+  const [plates, setPlates] = useState<Plate[]>(() => normalizePlates([{}], "CUL"));
   const [hours, setHours] = useState("24");
   const [observation, setObservation] = useState("");
   const [positive, setPositive] = useState(false);
@@ -131,7 +133,7 @@ export default function CultureDetailPage() {
     try {
       const data = await apiFetch<Culture>(`/clinical_laboratory/culture/${id}/`);
       setCulture(data);
-      if (Array.isArray(data.culture_plates) && data.culture_plates.length) setPlates(data.culture_plates);
+      setPlates(normalizePlates(data.culture_plates as any[], data.custom_id));
       if (data.gram_exam) setGram({
         result: data.gram_exam.result || "",
         morphology: data.gram_exam.morphology || "",
@@ -175,7 +177,7 @@ export default function CultureDetailPage() {
         body: JSON.stringify(body),
       });
       setCulture(updated);
-      if (Array.isArray(updated.culture_plates) && updated.culture_plates.length) setPlates(updated.culture_plates);
+      setPlates(normalizePlates(updated.culture_plates as any[], updated.custom_id));
       if (Array.isArray(updated.biochemical_tests)) setBiochemical(updated.biochemical_tests);
       setObservation("");
     } catch (err: any) {
@@ -187,6 +189,17 @@ export default function CultureDetailPage() {
 
   function updatePlate(index: number, patch: Partial<Plate>) {
     setPlates((rows) => rows.map((row, i) => i === index ? { ...row, ...patch } : row));
+  }
+
+  function addPlate() {
+    setPlates((rows) => {
+      const cultureRef = culture?.custom_id || "CUL";
+      const usedSeqs = rows
+        .map((row) => Number(row.code.match(/-P(\d+)$/)?.[1]))
+        .filter((n) => Number.isFinite(n));
+      const nextSeq = (usedSeqs.length ? Math.max(...usedSeqs) : 0) + 1;
+      return [...rows, makeCulturePlate({ code: makePlateCode(cultureRef, nextSeq) })];
+    });
   }
 
   function addBiochemical() {
@@ -242,29 +255,69 @@ export default function CultureDetailPage() {
           <div className="space-y-2">
             <Card title="Sementeira" icon={FlaskConical} accent="bg-gradient-to-b from-teal-500 to-cyan-600" iconTone="from-teal-600 to-cyan-600">
               <div className="space-y-2">
-                {plates.map((plate, index) => (
-                  <div key={plate.id} className="grid gap-2 rounded-lg border border-white/25 bg-white/20 p-2 backdrop-blur-sm md:grid-cols-[1fr_1fr_1fr_100px_32px] dark:border-white/10 dark:bg-white/[0.04]">
-                    <input disabled={isIncubating} value={plate.label} onChange={(event) => updatePlate(index, { label: event.target.value })} placeholder="Placa / identificação" className={`${inputClass} disabled:cursor-not-allowed disabled:opacity-70`} />
-                    <input disabled={isIncubating} value={plate.medium} onChange={(event) => updatePlate(index, { medium: event.target.value })} placeholder="Meio de cultura" className={`${inputClass} disabled:cursor-not-allowed disabled:opacity-70`} />
-                    <select disabled={isIncubating} value={plate.atmosphere} onChange={(event) => updatePlate(index, { atmosphere: event.target.value })} className={`${inputClass} disabled:cursor-not-allowed disabled:opacity-70`}>
-                      <option>Aeróbia</option>
-                      <option>Anaeróbia</option>
-                      <option>Microaerofilia</option>
-                      <option>CO2 5%</option>
-                    </select>
-                    <input disabled={isIncubating} value={plate.temperature_c} onChange={(event) => updatePlate(index, { temperature_c: event.target.value })} placeholder="°C" className={`${inputClass} disabled:cursor-not-allowed disabled:opacity-70`} />
-                    {isIncubating ? (
-                      <span className="inline-flex h-8 items-center justify-center text-muted-foreground/60" title="Placa em incubação — não editável"><Lock size={13} /></span>
-                    ) : (
-                      <button type="button" onClick={() => setPlates((rows) => rows.filter((_, i) => i !== index))} className="inline-flex h-8 items-center justify-center rounded-lg border border-white/30 bg-white/25 text-muted-foreground hover:text-red-600"><Trash2 size={14} /></button>
-                    )}
-                  </div>
-                ))}
+                {plates.map((plate, index) => {
+                  const custom = isCustomMedium(plate);
+                  return (
+                    <div key={plate.id} className="space-y-2 rounded-lg border border-white/25 bg-white/20 p-2 backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]">
+                      <div className="flex items-center justify-between gap-2">
+                        <span
+                          className="inline-flex items-center gap-1 rounded-md border border-teal-300/50 bg-teal-50/70 px-2 py-0.5 font-mono text-[11px] font-semibold text-teal-800 dark:border-teal-700/40 dark:bg-teal-900/25 dark:text-teal-200"
+                          title="Código único da placa/tubo — escreva-o no recipiente"
+                        >
+                          <FlaskConical size={11} /> {plate.code}
+                        </span>
+                        {isIncubating ? (
+                          <span className="inline-flex h-7 items-center gap-1 text-[10px] font-medium text-muted-foreground/70" title="Em incubação — não editável"><Lock size={12} /> Em incubação</span>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => setPlates((rows) => (rows.length > 1 ? rows.filter((_, i) => i !== index) : rows))}
+                            disabled={plates.length <= 1}
+                            aria-label="Remover placa/tubo"
+                            className="inline-flex h-7 w-7 items-center justify-center rounded-lg border border-white/30 bg-white/25 text-muted-foreground transition hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-40"
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        )}
+                      </div>
+                      <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                        <select disabled={isIncubating} value={plate.container} onChange={(event) => updatePlate(index, { container: event.target.value })} className={`${inputClass} disabled:cursor-not-allowed disabled:opacity-70`} aria-label="Recipiente">
+                          {CULTURE_CONTAINERS.map((option) => (
+                            <option key={option} value={option}>{option}</option>
+                          ))}
+                        </select>
+                        <select disabled={isIncubating} value={mediumSelectValue(plate)} onChange={(event) => updatePlate(index, applyMediumChoice(plate, event.target.value))} className={`${inputClass} disabled:cursor-not-allowed disabled:opacity-70`} aria-label="Meio de cultura">
+                          <option value="">Meio de cultura…</option>
+                          {CULTURE_MEDIA.map((option) => (
+                            <option key={option} value={option}>{option}</option>
+                          ))}
+                        </select>
+                        {custom && (
+                          <input disabled={isIncubating} value={plate.medium} onChange={(event) => updatePlate(index, { medium: event.target.value })} placeholder="Especifique o meio" className={`${inputClass} disabled:cursor-not-allowed disabled:opacity-70`} />
+                        )}
+                        <select disabled={isIncubating} value={plate.consistency} onChange={(event) => updatePlate(index, { consistency: event.target.value })} className={`${inputClass} disabled:cursor-not-allowed disabled:opacity-70`} aria-label="Consistência do meio">
+                          {CULTURE_CONSISTENCIES.map((option) => (
+                            <option key={option} value={option}>{option}</option>
+                          ))}
+                        </select>
+                        <select disabled={isIncubating} value={plate.atmosphere} onChange={(event) => updatePlate(index, { atmosphere: event.target.value })} className={`${inputClass} disabled:cursor-not-allowed disabled:opacity-70`} aria-label="Atmosfera">
+                          {CULTURE_ATMOSPHERES.map((option) => (
+                            <option key={option} value={option}>{option}</option>
+                          ))}
+                        </select>
+                        <div className="flex items-center gap-1.5">
+                          <input disabled={isIncubating} value={plate.temperature_c} onChange={(event) => updatePlate(index, { temperature_c: event.target.value })} placeholder="°C" className={`${inputClass} disabled:cursor-not-allowed disabled:opacity-70`} />
+                          <span className="text-xs text-muted-foreground">°C</span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 {!isIncubating && (
                   <>
-                    <button onClick={() => setPlates((rows) => [...rows, newPlate()])} className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-white/40 bg-white/35 px-2.5 text-xs font-medium text-foreground shadow-sm backdrop-blur-sm"><Plus size={14} /> Placa</button>
+                    <button onClick={addPlate} className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-white/40 bg-white/35 px-2.5 text-xs font-medium text-foreground shadow-sm backdrop-blur-sm"><Plus size={14} /> Placa / tubo</button>
                     <input value={hours} onChange={(event) => setHours(event.target.value)} placeholder="Horas de incubação" className={`${inputClass} max-w-40`} />
                   </>
                 )}
