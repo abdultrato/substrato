@@ -298,6 +298,13 @@ const decisionDotClass: Record<QualityControl["decision"], string> = {
   INCOMPLETO: "bg-slate-400",
 };
 
+const decisionBarClass: Record<QualityControl["decision"], string> = {
+  APROVADO: "bg-emerald-500",
+  REJEITADO: "bg-red-500",
+  REVISAO: "bg-amber-500",
+  INCOMPLETO: "bg-slate-400",
+};
+
 function FormSection({
   title,
   icon: Icon,
@@ -1062,92 +1069,77 @@ export default function LaboratoryQualityControlPage() {
                 const detailHref = `/clinical-laboratory/quality-control/${record.id}`;
                 const aggregateDecision: QualityControl["decision"] =
                   group.rejected > 0 ? "REJEITADO" : group.review > 0 ? "REVISAO" : group.incomplete > 0 ? "INCOMPLETO" : "APROVADO";
+                const testTitle = `${record.test_code ? `${record.test_code} - ` : ""}${record.test_name || "Exame"}`;
+                const testInitial = (record.test_code || record.test_name || "CQ").trim().charAt(0).toUpperCase();
                 if (group.total > 1) {
                   return (
-                    <Link key={group.key} href={detailHref} className="group block rounded-xl border border-teal-200/60 bg-white/45 p-2 shadow-sm backdrop-blur-sm transition hover:-translate-y-0.5 hover:border-teal-300 hover:bg-white/65 hover:shadow-md dark:border-teal-800/30 dark:bg-white/[0.06] dark:hover:border-teal-700/60 dark:hover:bg-white/[0.09]">
-                      <article>
-                        <div className="flex flex-wrap items-center justify-between gap-2">
-                          <div className="min-w-0">
-                            <p className="text-[10px] font-mono text-muted-foreground">
-                              {record.custom_id || `#${record.id}`} · execução agrupada
-                            </p>
-                            <h3 className="truncate text-sm font-semibold text-foreground">
-                              {record.test_code ? `${record.test_code} - ` : ""}{record.test_name || "Exame"}
-                            </h3>
-                            <p className="text-[11px] text-muted-foreground">
-                              {group.total} analitos · {fmtDate(record.run_at)}
-                            </p>
-                          </div>
-                          <div className="flex shrink-0 items-center gap-1.5">
-                            <span className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${decisionClass[aggregateDecision] || decisionClass.INCOMPLETO}`}>
-                              {decisionLabel[aggregateDecision]}
-                            </span>
-                            <ChevronRight size={14} className="text-muted-foreground transition group-hover:translate-x-0.5 group-hover:text-foreground" />
+                    <Link
+                      key={group.key}
+                      href={detailHref}
+                      className="group relative flex items-start gap-1.5 rounded-lg border border-white/20 bg-white/40 p-1.5 pl-2.5 shadow-sm backdrop-blur-sm transition hover:-translate-y-px hover:border-white/40 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 dark:border-white/10 dark:bg-white/[0.04]"
+                    >
+                      <span className={`absolute left-0 top-0 h-full w-1 rounded-l-lg ${decisionBarClass[aggregateDecision]}`} />
+                      <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-[11px] font-bold text-white shadow-sm ${decisionBarClass[aggregateDecision]}`}>
+                        {testInitial}
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center justify-between gap-1.5">
+                          <span className="truncate text-xs font-semibold leading-tight text-foreground">{testTitle}</span>
+                          <span className={`shrink-0 rounded-full border px-1.5 py-0 text-[9px] font-semibold ${decisionClass[aggregateDecision] || decisionClass.INCOMPLETO}`}>
+                            {decisionLabel[aggregateDecision]}
+                          </span>
+                        </div>
+                        <div className="truncate text-[10px] leading-tight text-muted-foreground">
+                          {group.total} analitos · {fmtDate(record.run_at)}
+                        </div>
+                        <div className="mt-1 flex items-center justify-between gap-1.5">
+                          <span className="min-w-0 truncate font-mono text-[9px] text-muted-foreground">
+                            {record.custom_id || `#${record.id}`} · {group.approved}/{group.total} aprovados
+                          </span>
+                          <div className="flex shrink-0 items-center gap-1 text-[9px] text-muted-foreground">
+                            {group.maxDeviation === null ? null : <span>Desvio {fmtRef(String(group.maxDeviation))}</span>}
+                            {record.material_lot ? <span>Lote {record.material_lot}</span> : null}
+                            {group.correctiveActionRequired ? <span className="font-semibold text-red-600">CAPA</span> : null}
+                            <ChevronRight size={12} className="transition group-hover:translate-x-0.5 group-hover:text-foreground" />
                           </div>
                         </div>
-                        <div className="mt-2 grid gap-1.5 text-[11px] sm:grid-cols-3">
-                          <div className="rounded-lg bg-background/55 px-2 py-1.5">
-                            <span className="block text-muted-foreground">Analitos aprovados</span>
-                            <strong className="text-foreground">{group.approved}/{group.total}</strong>
-                          </div>
-                          <div className="rounded-lg bg-background/55 px-2 py-1.5">
-                            <span className="block text-muted-foreground">Uso do teste</span>
-                            <strong className={group.approvedForUse ? "text-emerald-600" : "text-red-600"}>
-                              {group.approvedForUse ? "Pode ser usado" : "Não usar / rever"}
-                            </strong>
-                          </div>
-                          <div className="rounded-lg bg-background/55 px-2 py-1.5">
-                            <span className="block text-muted-foreground">Maior desvio</span>
-                            <strong className="text-foreground">{group.maxDeviation === null ? "—" : fmtRef(String(group.maxDeviation))}</strong>
-                          </div>
-                        </div>
-                        <div className="mt-2 flex flex-wrap gap-1.5 text-[10px] text-muted-foreground">
-                          {record.material_lot ? <span>Lote {record.material_lot}</span> : null}
-                          {record.equipment ? <span>Equip. {record.equipment}</span> : null}
-                          {group.rejected ? <span className="font-semibold text-red-600">{group.rejected} rejeitado(s)</span> : null}
-                          {group.correctiveActionRequired ? <span className="font-semibold text-red-600">CAPA requerida</span> : null}
-                        </div>
-                      </article>
+                      </div>
                     </Link>
                   );
                 }
 
                 return (
-                  <Link key={group.key} href={detailHref} className="group block rounded-xl border border-white/20 bg-white/35 p-2 shadow-sm backdrop-blur-sm transition hover:-translate-y-0.5 hover:border-teal-200 hover:bg-white/55 hover:shadow-md dark:border-white/10 dark:bg-white/[0.05] dark:hover:bg-white/[0.08]">
-                    <article>
-                      <div className="flex flex-wrap items-start justify-between gap-2">
-                        <div className="min-w-0">
-                          <p className="text-[10px] font-mono text-muted-foreground">{record.custom_id || `#${record.id}`}</p>
-                          <h3 className="text-sm font-semibold text-foreground">{record.test_code ? `${record.test_code} - ` : ""}{record.test_name || "Exame"}</h3>
-                          <p className="text-[11px] text-muted-foreground">{record.field_name || "Exame completo"} · {fmtDate(record.run_at)}</p>
-                        </div>
-                        <span className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${decisionClass[record.decision] || decisionClass.INCOMPLETO}`}>
+                  <Link
+                    key={group.key}
+                    href={detailHref}
+                    className="group relative flex items-start gap-1.5 rounded-lg border border-white/20 bg-white/40 p-1.5 pl-2.5 shadow-sm backdrop-blur-sm transition hover:-translate-y-px hover:border-white/40 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 dark:border-white/10 dark:bg-white/[0.04]"
+                  >
+                    <span className={`absolute left-0 top-0 h-full w-1 rounded-l-lg ${decisionBarClass[record.decision] || decisionBarClass.INCOMPLETO}`} />
+                    <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-[11px] font-bold text-white shadow-sm ${decisionBarClass[record.decision] || decisionBarClass.INCOMPLETO}`}>
+                      {testInitial}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between gap-1.5">
+                        <span className="truncate text-xs font-semibold leading-tight text-foreground">{testTitle}</span>
+                        <span className={`shrink-0 rounded-full border px-1.5 py-0 text-[9px] font-semibold ${decisionClass[record.decision] || decisionClass.INCOMPLETO}`}>
                           {record.decision_display || record.decision}
                         </span>
                       </div>
-                      <div className="mt-2 grid gap-2 text-[11px] sm:grid-cols-3">
-                        <div className="rounded-lg bg-background/60 px-2 py-1.5">
-                          <span className="block text-muted-foreground">Esperado</span>
-                          <strong className="text-foreground">{record.expected_result}{record.unit ? ` ${record.unit}` : ""}</strong>
-                        </div>
-                        <div className="rounded-lg bg-background/60 px-2 py-1.5">
-                          <span className="block text-muted-foreground">Obtido</span>
-                          <strong className="text-foreground">{record.observed_result}{record.unit ? ` ${record.unit}` : ""}</strong>
-                        </div>
-                        <div className="rounded-lg bg-background/60 px-2 py-1.5">
-                          <span className="block text-muted-foreground">Uso do teste</span>
-                          <strong className={record.approved_for_use ? "text-emerald-600" : "text-red-600"}>
-                            {record.approved_for_use ? "Pode ser usado" : "Não usar / rever"}
-                          </strong>
+                      <div className="truncate text-[10px] leading-tight text-muted-foreground">
+                        {record.field_name || "Exame completo"} · {fmtDate(record.run_at)}
+                      </div>
+                      <div className="mt-1 flex items-center justify-between gap-1.5">
+                        <span className="min-w-0 truncate font-mono text-[9px] text-muted-foreground">
+                          {record.custom_id || `#${record.id}`} · E {record.expected_result}{record.unit ? ` ${record.unit}` : ""} · O {record.observed_result}{record.unit ? ` ${record.unit}` : ""}
+                        </span>
+                        <div className="flex shrink-0 items-center gap-1 text-[9px] text-muted-foreground">
+                          {record.deviation ? <span>Desvio {fmtRef(record.deviation)}</span> : null}
+                          {record.material_lot ? <span>Lote {record.material_lot}</span> : null}
+                          {record.corrective_action_required ? <span className="font-semibold text-red-600">CAPA</span> : null}
+                          <ChevronRight size={12} className="transition group-hover:translate-x-0.5 group-hover:text-foreground" />
                         </div>
                       </div>
-                      <div className="mt-2 flex flex-wrap gap-1.5 text-[10px] text-muted-foreground">
-                        {record.material_lot ? <span>Lote {record.material_lot}</span> : null}
-                        {record.equipment ? <span>Equip. {record.equipment}</span> : null}
-                        {record.deviation ? <span>Desvio {fmtRef(record.deviation)}</span> : null}
-                        {record.corrective_action_required ? <span className="font-semibold text-red-600">CAPA requerida</span> : null}
-                      </div>
-                    </article>
+                    </div>
                   </Link>
                 );
               })}
