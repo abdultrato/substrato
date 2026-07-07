@@ -281,9 +281,7 @@ function LeveyJenningsChartView({ chart }: { chart: LeveyJenningsChart }) {
 }
 
 function openPdfReport(filename: string, title: string, body: string) {
-  const win = window.open("", "_blank", "noopener,noreferrer,width=1100,height=800");
-  if (!win) return;
-  win.document.write(`<!doctype html>
+  const html = `<!doctype html>
 <html>
 <head>
   <meta charset="utf-8" />
@@ -319,7 +317,16 @@ function openPdfReport(filename: string, title: string, body: string) {
     window.onload = () => { window.focus(); window.print(); };
   </script>
 </body>
-</html>`);
+</html>`;
+  const win = window.open("", "_blank", "width=1100,height=800");
+  if (!win) {
+    const url = URL.createObjectURL(new Blob([html], { type: "text/html;charset=utf-8" }));
+    window.open(url, "_blank");
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+    return;
+  }
+  win.document.open();
+  win.document.write(html);
   win.document.close();
 }
 
