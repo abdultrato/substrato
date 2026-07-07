@@ -78,13 +78,14 @@ type QualityControl = {
   iso_clause?: string;
   decision: "APROVADO" | "REJEITADO" | "REVISAO" | "INCOMPLETO";
   decision_display?: string;
+  status?: "RASCUNHO" | "AVALIADO" | "REVISTO" | "BLOQUEADO";
   status_display?: string;
   approved_for_use: boolean;
   corrective_action_required: boolean;
   run_at?: string;
 };
 
-type QualityControlExamGroup = {
+type QualityControlAssayGroup = {
   key: string;
   records: QualityControl[];
   primary: QualityControl;
@@ -257,6 +258,40 @@ function newestRunAt(records: QualityControl[]) {
   }, undefined);
 }
 
+function runSecond(value?: string | null) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return String(value);
+  date.setMilliseconds(0);
+  return date.toISOString();
+}
+
+function assayGroupKey(record: QualityControl) {
+  return [
+    record.test,
+    runSecond(record.run_at),
+    record.material_lot || "",
+    record.material_name || "",
+    record.control_type || "",
+    record.result_mode || "",
+    record.equipment || "",
+    record.method || "",
+  ].join("|");
+}
+
+function assayHref(record: QualityControl) {
+  const params = new URLSearchParams();
+  if (record.run_at) params.set("run_second", runSecond(record.run_at));
+  if (record.material_lot) params.set("material_lot", record.material_lot);
+  if (record.material_name) params.set("material_name", record.material_name);
+  if (record.control_type) params.set("control_type", record.control_type);
+  if (record.result_mode) params.set("result_mode", record.result_mode);
+  if (record.equipment) params.set("equipment", record.equipment);
+  if (record.method) params.set("method", record.method);
+  const query = params.toString();
+  return `/clinical-laboratory/quality-control/tests/${record.test}${query ? `?${query}` : ""}`;
+}
+
 function Field({
   label,
   children,
@@ -413,17 +448,17 @@ export default function LaboratoryQualityControlPage() {
     [fields],
   );
 
-  const examGroups = useMemo<QualityControlExamGroup[]>(() => {
-    const orderedGroups: QualityControlExamGroup[] = [];
-    const groups = new Map<string, QualityControlExamGroup>();
+  const assayGroups = useMemo<QualityControlAssayGroup[]>(() => {
+    const orderedGroups: QualityControlAssayGroup[] = [];
+    const groups = new Map<string, QualityControlAssayGroup>();
 
     records.forEach((record) => {
-      const key = String(record.test);
+      const key = assayGroupKey(record);
       const deviation = numericDeviation(record.deviation);
       const existing = groups.get(key);
 
       if (!existing) {
-        const group: QualityControlExamGroup = {
+        const group: QualityControlAssayGroup = {
           key,
           records: [record],
           primary: record,
@@ -1080,14 +1115,15 @@ export default function LaboratoryQualityControlPage() {
             </div>
 
             <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5">
-              {examGroups.map((group, index) => {
+              {assayGroups.map((group, index) => {
                 const record = group.primary;
-                const detailHref = `/clinical-laboratory/quality-control/tests/${record.test}`;
+                const detailHref = assayHref(record);
                 const aggregateDecision: QualityControl["decision"] =
                   group.rejected > 0 ? "REJEITADO" : group.review > 0 ? "REVISAO" : group.incomplete > 0 ? "INCOMPLETO" : "APROVADO";
                 const testTitle = `${record.test_code ? `${record.test_code} - ` : ""}${record.test_name || "Exame"}`;
                 const testInitial = (record.test_code || record.test_name || "CQ").trim().charAt(0).toUpperCase();
                 const accent = examAccent[index % examAccent.length];
+                const validated = group.records.every((item) => item.status === "REVISTO");
 
                 return (
                   <Link
@@ -1106,24 +1142,34 @@ export default function LaboratoryQualityControlPage() {
                     </div>
                     <div className="mt-2 min-w-0">
                       <h3 className="truncate text-xs font-semibold leading-tight text-foreground">{testTitle}</h3>
-                      <p className="truncate text-[10px] leading-tight text-muted-foreground">Último CQ · {fmtDate(newestRunAt(group.records))}</p>
+                      <p className="truncate text-[10px] leading-tight text-muted-foreground">Ensaio · {fmtDate(newestRunAt(group.records))}</p>
                     </div>
-                    <div className="mt-2 grid grid-cols-3 gap-1.5">
-                      <span className="flex items-center gap-1 rounded-md bg-background/55 px-1.5 py-1 text-[10px] font-semibold text-foreground">
-                        <Beaker size={11} className="text-cyan-500" />
-                        {group.total}
+                    <div className="mt-2 grid grid-cols-2 gap-1.5">
+                      <span className="rounded-md bg-background/55 px-1.5 py-1">
+                        <span className="flex items-center gap-1 text-[8px] font-semibold uppercase text-muted-foreground">
+                          <Beaker size={10} className="text-cyan-500" /> Analitos
+                        </span>
+                        <strong className="text-[11px] leading-tight text-foreground">{group.total}</strong>
                       </span>
-                      <span className="flex items-center gap-1 rounded-md bg-background/55 px-1.5 py-1 text-[10px] font-semibold text-foreground">
-                        <CheckCircle2 size={11} className="text-emerald-500" />
-                        {group.approved}
+                      <span className="rounded-md bg-background/55 px-1.5 py-1">
+                        <span className="flex items-center gap-1 text-[8px] font-semibold uppercase text-muted-foreground">
+                          <CheckCircle2 size={10} className="text-emerald-500" /> Aprovados
+                        </span>
+                        <strong className="text-[11px] leading-tight text-foreground">{group.approved}</strong>
                       </span>
-                      <span className="flex items-center gap-1 rounded-md bg-background/55 px-1.5 py-1 text-[10px] font-semibold text-foreground">
-                        <Activity size={11} className={group.rejected ? "text-red-500" : "text-fuchsia-500"} />
-                        {group.maxDeviation === null ? "—" : fmtRef(String(group.maxDeviation))}
+                      <span className="rounded-md bg-background/55 px-1.5 py-1">
+                        <span className="flex items-center gap-1 text-[8px] font-semibold uppercase text-muted-foreground">
+                          <Activity size={10} className={group.rejected ? "text-red-500" : "text-fuchsia-500"} /> Rejeitados
+                        </span>
+                        <strong className="text-[11px] leading-tight text-foreground">{group.rejected}</strong>
+                      </span>
+                      <span className="rounded-md bg-background/55 px-1.5 py-1">
+                        <span className="block truncate text-[8px] font-semibold uppercase text-muted-foreground">Maior desvio</span>
+                        <strong className="text-[11px] leading-tight text-foreground">{group.maxDeviation === null ? "—" : fmtRef(String(group.maxDeviation))}</strong>
                       </span>
                     </div>
                     <div className="mt-2 flex items-center justify-between gap-1.5 text-[9px] text-muted-foreground">
-                      <span className="truncate">{group.records.length} registo(s){group.correctiveActionRequired ? " · CAPA" : ""}</span>
+                      <span className="truncate">{validated ? "Validado pelo técnico" : "Aguardando validação"}{group.correctiveActionRequired ? " · CAPA" : ""}</span>
                       <span className="flex shrink-0 items-center gap-1 font-semibold text-foreground">
                         <Sparkles size={10} className="text-fuchsia-500" />
                         Ver analitos

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import {
   Activity,
   ArrowLeft,
@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 
 import AppLayout from "@/components/layout/AppLayout";
-import { apiFetchList } from "@/lib/api";
+import { apiFetch, apiFetchList } from "@/lib/api";
 import { requiredGroupsForResourceGroup } from "@/lib/resourcesAccess";
 
 const ENDPOINT = "/clinical_laboratory/quality_control/";
@@ -37,14 +37,21 @@ type QualityControl = {
   test_name?: string;
   test_code?: string;
   field_name?: string;
+  control_type?: string;
+  result_mode?: string;
+  material_name?: string;
   expected_result: string;
   observed_result: string;
   deviation?: string | null;
   unit?: string;
   material_lot?: string;
   equipment?: string;
+  method?: string;
   decision: "APROVADO" | "REJEITADO" | "REVISAO" | "INCOMPLETO";
   decision_display?: string;
+  status?: "RASCUNHO" | "AVALIADO" | "REVISTO" | "BLOQUEADO";
+  status_display?: string;
+  reviewed_at?: string | null;
   approved_for_use: boolean;
   corrective_action_required: boolean;
   run_at?: string;
@@ -104,12 +111,27 @@ function latestOf(records: QualityControl[]) {
   }, undefined);
 }
 
+function runSecond(value?: string | null) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return String(value);
+  date.setMilliseconds(0);
+  return date.toISOString();
+}
+
+function matchesParam(recordValue: string | undefined, paramValue: string | null) {
+  if (!paramValue) return true;
+  return (recordValue || "") === paramValue;
+}
+
 export default function QualityControlTestDetailPage() {
   const params = useParams();
+  const searchParams = useSearchParams();
   const testId = String((params as any)?.testId || "");
   const [fields, setFields] = useState<LabTestField[]>([]);
   const [records, setRecords] = useState<QualityControl[]>([]);
   const [loading, setLoading] = useState(true);
+  const [validating, setValidating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -138,9 +160,23 @@ export default function QualityControlTestDetailPage() {
       .finally(() => setLoading(false));
   }, [testId]);
 
+  const assayRecords = useMemo(
+    () =>
+      records.filter((record) =>
+        matchesParam(runSecond(record.run_at), searchParams.get("run_second")) &&
+        matchesParam(record.material_lot, searchParams.get("material_lot")) &&
+        matchesParam(record.material_name, searchParams.get("material_name")) &&
+        matchesParam(record.control_type, searchParams.get("control_type")) &&
+        matchesParam(record.result_mode, searchParams.get("result_mode")) &&
+        matchesParam(record.equipment, searchParams.get("equipment")) &&
+        matchesParam(record.method, searchParams.get("method")),
+      ),
+    [records, searchParams],
+  );
+
   const groups = useMemo<AnalyteGroup[]>(() => {
     const byName = new Map<string, QualityControl[]>();
-    records.forEach((record) => {
+    assayRecords.forEach((record) => {
       const key = (record.field_name || "Exame completo").trim();
       byName.set(key, [...(byName.get(key) || []), record]);
     });
@@ -179,13 +215,38 @@ export default function QualityControlTestDetailPage() {
         };
       });
 
-    return [...fieldGroups, ...extraGroups].filter((group) => group.records.length > 0 || fields.length > 0);
-  }, [fields, records]);
+    return [...fieldGroups, ...extraGroups].filter((group) => group.records.length > 0);
+  }, [fields, assayRecords]);
 
-  const latest = latestOf(records);
+  const latest = latestOf(assayRecords) || latestOf(records);
   const title = latest ? `${latest.test_code ? `${latest.test_code} - ` : ""}${latest.test_name || "Exame"}` : "Controlo de qualidade do exame";
-  const rejected = records.filter((record) => record.decision === "REJEITADO").length;
-  const approved = records.filter((record) => record.decision === "APROVADO").length;
+  const rejected = assayRecords.filter((record) => record.decision === "REJEITADO").length;
+  const approved = assayRecords.filter((record) => record.decision === "APROVADO").length;
+  const assayApproved = assayRecords.length > 0 && assayRecords.every((record) => record.approved_for_use);
+  const assayValidated = assayRecords.length > 0 && assayRecords.every((record) => record.status === "REVISTO");
+
+  async function validateAssay() {
+    if (!assayApproved || assayValidated || validating) return;
+    setValidating(true);
+    setError(null);
+    const reviewedAt = new Date().toISOString();
+    try {
+      const updated = await Promise.all(
+        assayRecords.map((record) =>
+          apiFetch<QualityControl>(`${ENDPOINT}${record.id}/`, {
+            method: "PATCH",
+            body: JSON.stringify({ status: "REVISTO", reviewed_at: reviewedAt }),
+          }),
+        ),
+      );
+      const byId = new Map(updated.map((record) => [record.id, record]));
+      setRecords((prev) => prev.map((record) => byId.get(record.id) || record));
+    } catch (err: any) {
+      setError(err?.message || "Erro ao validar controlo técnico.");
+    } finally {
+      setValidating(false);
+    }
+  }
 
   return (
     <AppLayout requiredGroups={requiredGroupsForResourceGroup("clinical_laboratory")}>
@@ -200,16 +261,29 @@ export default function QualityControlTestDetailPage() {
               <div className="min-w-0">
                 <p className="text-[10px] text-muted-foreground">Controlo por analito</p>
                 <h1 className="truncate text-base font-bold text-foreground">{title}</h1>
-                <p className="text-[11px] text-muted-foreground">{records.length} registo(s) · {groups.length} analito(s)</p>
+                <p className="text-[11px] text-muted-foreground">{assayRecords.length} registo(s) do ensaio · {groups.length} analito(s)</p>
               </div>
             </div>
-            <Link href="/clinical-laboratory/quality-control" className="inline-flex h-8 items-center gap-1 rounded-lg border border-white/40 bg-white/40 px-3 text-xs text-foreground transition hover:bg-white/60 dark:border-white/10 dark:bg-white/[0.06] dark:hover:bg-white/[0.1]">
-              <ArrowLeft size={12} /> Voltar
-            </Link>
+            <div className="flex shrink-0 items-center gap-2">
+              {assayApproved ? (
+                <button
+                  type="button"
+                  onClick={validateAssay}
+                  disabled={assayValidated || validating}
+                  className="inline-flex h-8 items-center gap-1 rounded-lg bg-emerald-600 px-3 text-xs font-semibold text-white shadow-sm transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {validating ? <Loader2 size={12} className="animate-spin" /> : <CheckCircle2 size={12} />}
+                  {assayValidated ? "Controlo validado" : "Validar controlo"}
+                </button>
+              ) : null}
+              <Link href="/clinical-laboratory/quality-control" className="inline-flex h-8 items-center gap-1 rounded-lg border border-white/40 bg-white/40 px-3 text-xs text-foreground transition hover:bg-white/60 dark:border-white/10 dark:bg-white/[0.06] dark:hover:bg-white/[0.1]">
+                <ArrowLeft size={12} /> Voltar
+              </Link>
+            </div>
           </div>
           <div className="mt-3 grid gap-1.5 pl-2 sm:grid-cols-4">
             {[
-              { icon: Beaker, label: "Registos", value: records.length, color: "text-cyan-500" },
+              { icon: Beaker, label: "Registos", value: assayRecords.length, color: "text-cyan-500" },
               { icon: CheckCircle2, label: "Aprovados", value: approved, color: "text-emerald-500" },
               { icon: XCircle, label: "Rejeitados", value: rejected, color: "text-red-500" },
               { icon: Activity, label: "Último CQ", value: fmtDate(latest?.run_at), color: "text-fuchsia-500" },
