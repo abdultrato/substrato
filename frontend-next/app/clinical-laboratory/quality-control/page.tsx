@@ -148,6 +148,13 @@ function parseDecimal(value: string): number | null {
   return Number.isFinite(num) ? num : null;
 }
 
+// Valores de referência do backend vêm com 4 casas ("12.0000"); apresenta com 1.
+function fmtRef(value?: string | null): string {
+  if (!value) return "";
+  const num = parseDecimal(String(value));
+  return num === null ? String(value) : num.toFixed(1);
+}
+
 // Espelha LaboratoryQualityControl.evaluate() do backend para pré-visualizar a conclusão.
 function evaluateQc(
   mode: string,
@@ -194,8 +201,8 @@ function buildAnalyteRows(fields: LabTestField[]): Record<number, AnalyteRow> {
       {
         expected: "",
         observed: "",
-        min: field.reference_low || "",
-        max: field.reference_high || "",
+        min: fmtRef(field.reference_low),
+        max: fmtRef(field.reference_high),
         tolerance: "",
         unit: field.unit || "",
       },
@@ -478,8 +485,8 @@ export default function LaboratoryQualityControlPage() {
       test_field: "",
       method: test?.method || prev.method,
       unit: test?.unit || prev.unit,
-      expected_min: test?.reference_low || prev.expected_min,
-      expected_max: test?.reference_high || prev.expected_max,
+      expected_min: fmtRef(test?.reference_low) || prev.expected_min,
+      expected_max: fmtRef(test?.reference_high) || prev.expected_max,
     }));
   }
 
@@ -489,8 +496,8 @@ export default function LaboratoryQualityControlPage() {
       ...prev,
       test_field: value,
       unit: field?.unit || prev.unit,
-      expected_min: field?.reference_low || prev.expected_min,
-      expected_max: field?.reference_high || prev.expected_max,
+      expected_min: fmtRef(field?.reference_low) || prev.expected_min,
+      expected_max: fmtRef(field?.reference_high) || prev.expected_max,
     }));
   }
 
@@ -980,7 +987,7 @@ export default function LaboratoryQualityControlPage() {
                   <div className="mt-2 flex flex-wrap gap-1.5 text-[10px] text-muted-foreground">
                     {record.material_lot ? <span>Lote {record.material_lot}</span> : null}
                     {record.equipment ? <span>Equip. {record.equipment}</span> : null}
-                    {record.deviation ? <span>Desvio {record.deviation}</span> : null}
+                    {record.deviation ? <span>Desvio {fmtRef(record.deviation)}</span> : null}
                     {record.corrective_action_required ? <span className="font-semibold text-red-600">CAPA requerida</span> : null}
                   </div>
                 </article>
