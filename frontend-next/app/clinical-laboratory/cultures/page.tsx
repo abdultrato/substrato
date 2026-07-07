@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowRight, ClipboardList, Clock3, FlaskConical, Loader2, Microscope, RefreshCw, Search, User, X } from "lucide-react";
+import { ArrowRight, CalendarDays, ClipboardList, Clock3, FlaskConical, Loader2, Microscope, RefreshCw, Search, User, X } from "lucide-react";
 
 import AppLayout from "@/components/layout/AppLayout";
 import { apiFetch } from "@/lib/api";
@@ -132,6 +132,17 @@ const STATE_STYLES: Record<GroupState, {
 function shortOrder(orderId: string) {
   const tail = orderId.split("/").pop() || orderId;
   return tail.replace(/^0+/, "") || tail;
+}
+
+// Data de entrada da requisição: receção mais antiga entre as amostras.
+function groupEntryDate(items: QueueItem[]): string | null {
+  let earliest: number | null = null;
+  for (const item of items) {
+    if (!item.sample_received_at) continue;
+    const time = new Date(item.sample_received_at).getTime();
+    if (!Number.isNaN(time) && (earliest === null || time < earliest)) earliest = time;
+  }
+  return earliest === null ? null : new Date(earliest).toISOString();
 }
 
 function fmtDate(value: string | null) {
@@ -294,6 +305,7 @@ export default function LabCulturesPage() {
                 const state = groupState(group.items, now);
                 const style = STATE_STYLES[state];
                 const isOpen = selected === group.orderId;
+                const entryDate = groupEntryDate(group.items);
                 return (
                   <button
                     key={group.orderId}
@@ -315,6 +327,10 @@ export default function LabCulturesPage() {
                       <p className={`truncate text-base font-semibold leading-tight ${style.title}`}>{abbreviateMiddleNames(group.patient) || "Sem paciente"}</p>
                       <p className={`truncate font-mono text-xs leading-tight ${style.subtitle}`}>#{shortOrder(group.orderId)}</p>
                     </div>
+                    <p className={`inline-flex items-center gap-1 text-[11px] ${style.subtitle}`}>
+                      <CalendarDays size={11} className="shrink-0" />
+                      Entrada {entryDate ? fmtDate(entryDate) : "—"}
+                    </p>
                   </button>
                 );
               })}
