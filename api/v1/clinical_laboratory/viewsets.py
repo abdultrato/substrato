@@ -194,6 +194,8 @@ class LaboratoryQualityControlViewSet(ValidatedSearchOrderingMixin, TenantScoped
                 queryset = queryset.filter(**{field: value})
                 header_filters[label] = value
 
+        base_queryset = queryset
+
         run_from = parse_datetime(request.query_params.get("run_from") or "")
         run_to = parse_datetime(request.query_params.get("run_to") or "")
         run_second = parse_datetime(request.query_params.get("run_second") or "")
@@ -245,6 +247,38 @@ class LaboratoryQualityControlViewSet(ValidatedSearchOrderingMixin, TenantScoped
                 "deviation": record.deviation,
                 "decision_display": record.get_decision_display(),
             })
+
+        # Série mínima para gráfico/tabela: se a janela de execução deixar um
+        # analito com menos de 3 registos, completa com os controlos anteriores
+        # do mesmo analito (mantendo lote/material/equipamento filtrados).
+        MIN_SERIES = 3
+        if run_from or run_to:
+            included_ids = {r.id for r in records}
+            for name, entry in analytes_map.items():
+                missing = MIN_SERIES - len(entry["records"])
+                if missing <= 0:
+                    continue
+                earlier_qs = base_queryset.exclude(id__in=included_ids)
+                if name == "Exame completo":
+                    earlier_qs = earlier_qs.filter(test_field__isnull=True)
+                else:
+                    earlier_qs = earlier_qs.filter(test_field__name=name)
+                first_run = entry["records"][0]["run_at"]
+                if first_run:
+                    earlier_qs = earlier_qs.filter(run_at__lt=first_run)
+                earlier = list(earlier_qs.order_by("-run_at")[:missing])
+                if not earlier:
+                    continue
+                backfill = [{
+                    "custom_id": record.custom_id,
+                    "run_at": record.run_at,
+                    "expected": record.expected_result,
+                    "observed": record.observed_result,
+                    "observed_numeric": record.observed_numeric,
+                    "deviation": record.deviation,
+                    "decision_display": record.get_decision_display(),
+                } for record in reversed(earlier)]
+                entry["records"] = backfill + entry["records"]
 
         sections = request.query_params.get("sections") or "all"
         payload = {
