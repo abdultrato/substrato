@@ -274,8 +274,10 @@ const REPORT_FILTER_PARAMS = [
 ] as const;
 
 // Relatório institucional (motor de PDF do Substrato: cabeçalho, QR e código
-// de barras) com gráfico Levey-Jennings e tabela por analito.
-function openInstitutionalReport(
+// de barras) com gráfico Levey-Jennings e tabela por analito. Descarrega via
+// apiFetch para reutilizar a renovação de sessão (navegação direta dá 401
+// quando o cookie de acesso expira) e abre o blob numa nova aba.
+async function openInstitutionalReport(
   testId: string,
   searchParams: Pick<URLSearchParams, "get">,
   options: { fieldName?: string; sections?: "grafico" | "tabela" } = {},
@@ -288,7 +290,32 @@ function openInstitutionalReport(
   });
   if (options.fieldName) params.set("field_name", options.fieldName);
   if (options.sections) params.set("sections", options.sections);
-  window.open(`/api/v1/clinical_laboratory/quality_control/report/pdf/?${params.toString()}`, "_blank");
+
+  // Abre a aba de forma síncrona (dentro do gesto do utilizador) para não ser
+  // bloqueada pelo browser; o conteúdo chega depois do fetch autenticado.
+  const win = window.open("", "_blank");
+  try {
+    const blob = await apiFetch<Blob>(
+      `/clinical_laboratory/quality_control/report/pdf/?${params.toString()}`,
+      { responseType: "blob", clientCache: false },
+    );
+    const url = URL.createObjectURL(blob);
+    if (win) {
+      win.location.href = url;
+    } else {
+      // Popup bloqueado: descarrega o ficheiro diretamente.
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = `relatorio_cq_${testId}${options.fieldName ? `_${options.fieldName}` : ""}.pdf`;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+    }
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+  } catch (error) {
+    win?.close();
+    throw error;
+  }
 }
 
 export default function QualityControlTestDetailPage() {
@@ -552,7 +579,7 @@ export default function QualityControlTestDetailPage() {
                 <div className="mt-1.5 grid grid-cols-2 gap-1.5">
                   <button
                     type="button"
-                    onClick={() => openInstitutionalReport(testId, searchParams, { fieldName: group.name, sections: "grafico" })}
+                    onClick={() => { openInstitutionalReport(testId, searchParams, { fieldName: group.name, sections: "grafico" }).catch((err: any) => setError(err?.message || "Erro ao gerar PDF do gráfico.")); }}
                     disabled={!chart}
                     title={chart ? "Gerar PDF do grafico Levey-Jennings" : "Sao necessarios pelo menos 3 registos numericos para o grafico"}
                     className="inline-flex h-7 items-center justify-center gap-1 rounded-md border border-fuchsia-200 bg-fuchsia-50 px-1.5 text-[9px] font-semibold text-fuchsia-800 transition hover:bg-fuchsia-100 disabled:cursor-not-allowed disabled:border-border disabled:bg-muted disabled:text-muted-foreground dark:border-fuchsia-800/40 dark:bg-fuchsia-950/25 dark:text-fuchsia-200"
@@ -562,7 +589,7 @@ export default function QualityControlTestDetailPage() {
                   </button>
                   <button
                     type="button"
-                    onClick={() => openInstitutionalReport(testId, searchParams, { fieldName: group.name, sections: "tabela" })}
+                    onClick={() => { openInstitutionalReport(testId, searchParams, { fieldName: group.name, sections: "tabela" }).catch((err: any) => setError(err?.message || "Erro ao gerar PDF da tabela.")); }}
                     disabled={group.records.length === 0}
                     title="Gerar PDF da tabela de registos do analito"
                     className="inline-flex h-7 items-center justify-center gap-1 rounded-md border border-violet-200 bg-violet-50 px-1.5 text-[9px] font-semibold text-violet-800 transition hover:bg-violet-100 disabled:cursor-not-allowed disabled:border-border disabled:bg-muted disabled:text-muted-foreground dark:border-violet-800/40 dark:bg-violet-950/25 dark:text-violet-200"
