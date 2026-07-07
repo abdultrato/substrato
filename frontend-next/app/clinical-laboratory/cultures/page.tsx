@@ -7,6 +7,7 @@ import { ArrowRight, ClipboardList, Clock3, FlaskConical, Loader2, Microscope, R
 
 import AppLayout from "@/components/layout/AppLayout";
 import { apiFetch } from "@/lib/api";
+import { abbreviateMiddleNames } from "@/lib/formatName";
 import { requiredGroupsForResourceGroup } from "@/lib/resourcesAccess";
 
 type QueueItem = {
@@ -311,7 +312,7 @@ export default function LabCulturesPage() {
                       <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-bold ${style.count}`}>{group.items.length}</span>
                     </div>
                     <div className="min-w-0">
-                      <p className={`truncate text-base font-semibold leading-tight ${style.title}`}>{group.patient || "Sem paciente"}</p>
+                      <p className={`truncate text-base font-semibold leading-tight ${style.title}`}>{abbreviateMiddleNames(group.patient) || "Sem paciente"}</p>
                       <p className={`truncate font-mono text-xs leading-tight ${style.subtitle}`}>#{shortOrder(group.orderId)}</p>
                     </div>
                   </button>
@@ -323,7 +324,7 @@ export default function LabCulturesPage() {
               <div className="rounded-xl border border-white/25 bg-white/30 p-2 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]">
                 <div className="mb-1.5 flex items-center gap-2 px-1">
                   <User size={13} className="shrink-0 text-teal-600 dark:text-teal-400" />
-                  <span className="truncate text-sm font-semibold text-foreground">{selectedGroup.patient || "Paciente não informado"}</span>
+                  <span className="truncate text-sm font-semibold text-foreground">{abbreviateMiddleNames(selectedGroup.patient) || "Paciente não informado"}</span>
                   <span className="inline-flex items-center gap-1 font-mono text-[11px] text-muted-foreground"><ClipboardList size={11} /> {selectedGroup.orderId}</span>
                   <button type="button" onClick={() => setSelected(null)} className="ml-auto inline-flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground transition hover:bg-white/40 hover:text-foreground dark:hover:bg-white/10" aria-label="Fechar"><X size={14} /></button>
                 </div>
