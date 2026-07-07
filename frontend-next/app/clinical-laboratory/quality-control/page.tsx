@@ -12,6 +12,7 @@ import {
   FlaskConical,
   Microscope,
   Loader2,
+  Plus,
   Ruler,
   Save,
   Search,
@@ -266,10 +267,6 @@ function numericDeviation(value?: string | null) {
   return parsed === null ? null : parsed;
 }
 
-function isHemogramRecord(record: QualityControl) {
-  return /hemog|hemograma/i.test(`${record.test_code || ""} ${record.test_name || ""}`);
-}
-
 function Field({
   label,
   children,
@@ -354,6 +351,7 @@ export default function LaboratoryQualityControlPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [showQcForm, setShowQcForm] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(search), 350);
@@ -397,9 +395,10 @@ export default function LaboratoryQualityControlPage() {
     const groups = new Map<string, QualityControlGroup>();
 
     records.forEach((record) => {
-      // Hemogramas têm muitos analitos; agrupa por execução para evitar uma
-      // lista longa de linhas quase idênticas.
-      const key = isHemogramRecord(record) ? qcRunGroupKey(record) : `single-${record.id}`;
+      // Exames multi-analito criam vários registos por execução; agrupa por
+      // execução (mesmo exame, minuto, material e lote) para evitar uma lista
+      // longa de linhas quase idênticas. Registos isolados ficam sozinhos no grupo.
+      const key = qcRunGroupKey(record);
       const deviation = numericDeviation(record.deviation);
       const existing = groups.get(key);
 
@@ -750,9 +749,19 @@ export default function LaboratoryQualityControlPage() {
                   </p>
                 </div>
               </div>
-              <Link href="/clinical-laboratory" className="inline-flex h-8 items-center gap-1 rounded-lg border border-white/40 bg-white/40 px-3 text-xs text-foreground transition hover:bg-white/60 dark:border-white/10 dark:bg-white/[0.06] dark:hover:bg-white/[0.1]">
-                <ArrowLeft size={12} /> Voltar
-              </Link>
+              <div className="flex shrink-0 items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowQcForm((value) => !value)}
+                  className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-gradient-to-r from-teal-600 to-cyan-600 px-3 text-xs font-semibold text-white shadow-md shadow-teal-500/20 transition hover:from-teal-700 hover:to-cyan-700"
+                >
+                  <Plus size={12} />
+                  {showQcForm ? "Ocultar CQ" : "Fazer CQ"}
+                </button>
+                <Link href="/clinical-laboratory" className="inline-flex h-8 items-center gap-1 rounded-lg border border-white/40 bg-white/40 px-3 text-xs text-foreground transition hover:bg-white/60 dark:border-white/10 dark:bg-white/[0.06] dark:hover:bg-white/[0.1]">
+                  <ArrowLeft size={12} /> Voltar
+                </Link>
+              </div>
             </div>
 
             <div className="mt-2 grid gap-1.5 sm:grid-cols-4">
@@ -806,7 +815,8 @@ export default function LaboratoryQualityControlPage() {
           </div>
         ) : null}
 
-        <div className="grid gap-1.5 xl:grid-cols-[minmax(420px,0.9fr)_minmax(0,1.1fr)]">
+        <div className={showQcForm ? "grid gap-1.5 xl:grid-cols-[minmax(420px,0.9fr)_minmax(0,1.1fr)]" : "grid gap-1.5"}>
+          {showQcForm ? (
           <form onSubmit={submit} className="space-y-1.5">
             <section className="rounded-xl border border-white/20 bg-white/30 p-2.5 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.05]">
               <div className="flex items-center justify-between gap-3">
@@ -1038,6 +1048,7 @@ export default function LaboratoryQualityControlPage() {
               ) : null}
             </div>
           </form>
+          ) : null}
 
           <section className="space-y-1.5">
             <div className="rounded-xl border border-white/20 bg-white/30 p-2 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.05]">
