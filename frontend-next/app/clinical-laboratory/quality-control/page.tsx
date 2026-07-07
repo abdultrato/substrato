@@ -5,6 +5,7 @@ import Link from "next/link";
 import {
   AlertTriangle,
   ArrowLeft,
+  ChevronRight,
   CheckCircle2,
   ClipboardCheck,
   FileCheck2,
@@ -77,6 +78,20 @@ type QualityControl = {
   approved_for_use: boolean;
   corrective_action_required: boolean;
   run_at?: string;
+};
+
+type QualityControlGroup = {
+  key: string;
+  records: QualityControl[];
+  primary: QualityControl;
+  total: number;
+  approved: number;
+  rejected: number;
+  review: number;
+  incomplete: number;
+  approvedForUse: boolean;
+  correctiveActionRequired: boolean;
+  maxDeviation: number | null;
 };
 
 type FormState = {
@@ -224,6 +239,37 @@ function fmtDate(value?: string | null) {
   return date.toLocaleString("pt-PT", { dateStyle: "short", timeStyle: "short" });
 }
 
+function executionMinute(value?: string | null) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return String(value);
+  date.setSeconds(0, 0);
+  return date.toISOString();
+}
+
+function qcRunGroupKey(record: QualityControl) {
+  return [
+    record.test,
+    executionMinute(record.run_at),
+    record.material_lot || "",
+    record.material_name || "",
+    record.control_type || "",
+    record.result_mode || "",
+    record.equipment || "",
+    record.method || "",
+  ].join("|");
+}
+
+function numericDeviation(value?: string | null) {
+  if (!value) return null;
+  const parsed = parseDecimal(String(value));
+  return parsed === null ? null : parsed;
+}
+
+function isHemogramRecord(record: QualityControl) {
+  return /hemog|hemograma/i.test(`${record.test_code || ""} ${record.test_name || ""}`);
+}
+
 function Field({
   label,
   children,
@@ -345,6 +391,50 @@ export default function LaboratoryQualityControlPage() {
     ],
     [fields],
   );
+
+  const groupedRecords = useMemo<QualityControlGroup[]>(() => {
+    const orderedGroups: QualityControlGroup[] = [];
+    const groups = new Map<string, QualityControlGroup>();
+
+    records.forEach((record) => {
+      // Hemogramas têm muitos analitos; agrupa por execução para evitar uma
+      // lista longa de linhas quase idênticas.
+      const key = isHemogramRecord(record) ? qcRunGroupKey(record) : `single-${record.id}`;
+      const deviation = numericDeviation(record.deviation);
+      const existing = groups.get(key);
+
+      if (!existing) {
+        const group: QualityControlGroup = {
+          key,
+          records: [record],
+          primary: record,
+          total: 1,
+          approved: record.decision === "APROVADO" ? 1 : 0,
+          rejected: record.decision === "REJEITADO" ? 1 : 0,
+          review: record.decision === "REVISAO" ? 1 : 0,
+          incomplete: record.decision === "INCOMPLETO" ? 1 : 0,
+          approvedForUse: record.approved_for_use,
+          correctiveActionRequired: record.corrective_action_required,
+          maxDeviation: deviation,
+        };
+        groups.set(key, group);
+        orderedGroups.push(group);
+        return;
+      }
+
+      existing.records.push(record);
+      existing.total += 1;
+      existing.approved += record.decision === "APROVADO" ? 1 : 0;
+      existing.rejected += record.decision === "REJEITADO" ? 1 : 0;
+      existing.review += record.decision === "REVISAO" ? 1 : 0;
+      existing.incomplete += record.decision === "INCOMPLETO" ? 1 : 0;
+      existing.approvedForUse = existing.approvedForUse && record.approved_for_use;
+      existing.correctiveActionRequired = existing.correctiveActionRequired || record.corrective_action_required;
+      if (deviation !== null) existing.maxDeviation = existing.maxDeviation === null ? deviation : Math.max(existing.maxDeviation, deviation);
+    });
+
+    return orderedGroups;
+  }, [records]);
 
   const materialNameOptions = useMemo<SearchableOption[]>(() => {
     const seen = new Set<string>();
@@ -956,42 +1046,100 @@ export default function LaboratoryQualityControlPage() {
             </div>
 
             <div className="grid gap-1.5">
-              {records.map((record) => (
-                <article key={record.id} className="rounded-xl border border-white/20 bg-white/35 p-2 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.05]">
-                  <div className="flex flex-wrap items-start justify-between gap-2">
-                    <div className="min-w-0">
-                      <p className="text-[10px] font-mono text-muted-foreground">{record.custom_id || `#${record.id}`}</p>
-                      <h3 className="text-sm font-semibold text-foreground">{record.test_code ? `${record.test_code} - ` : ""}{record.test_name || "Exame"}</h3>
-                      <p className="text-[11px] text-muted-foreground">{record.field_name || "Exame completo"} · {fmtDate(record.run_at)}</p>
-                    </div>
-                    <span className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${decisionClass[record.decision] || decisionClass.INCOMPLETO}`}>
-                      {record.decision_display || record.decision}
-                    </span>
-                  </div>
-                  <div className="mt-2 grid gap-2 text-[11px] sm:grid-cols-3">
-                    <div className="rounded-lg bg-background/60 px-2 py-1.5">
-                      <span className="block text-muted-foreground">Esperado</span>
-                      <strong className="text-foreground">{record.expected_result}{record.unit ? ` ${record.unit}` : ""}</strong>
-                    </div>
-                    <div className="rounded-lg bg-background/60 px-2 py-1.5">
-                      <span className="block text-muted-foreground">Obtido</span>
-                      <strong className="text-foreground">{record.observed_result}{record.unit ? ` ${record.unit}` : ""}</strong>
-                    </div>
-                    <div className="rounded-lg bg-background/60 px-2 py-1.5">
-                      <span className="block text-muted-foreground">Uso do teste</span>
-                      <strong className={record.approved_for_use ? "text-emerald-600" : "text-red-600"}>
-                        {record.approved_for_use ? "Pode ser usado" : "Não usar / rever"}
-                      </strong>
-                    </div>
-                  </div>
-                  <div className="mt-2 flex flex-wrap gap-1.5 text-[10px] text-muted-foreground">
-                    {record.material_lot ? <span>Lote {record.material_lot}</span> : null}
-                    {record.equipment ? <span>Equip. {record.equipment}</span> : null}
-                    {record.deviation ? <span>Desvio {fmtRef(record.deviation)}</span> : null}
-                    {record.corrective_action_required ? <span className="font-semibold text-red-600">CAPA requerida</span> : null}
-                  </div>
-                </article>
-              ))}
+              {groupedRecords.map((group) => {
+                const record = group.primary;
+                const detailHref = `/clinical-laboratory/quality-control/${record.id}`;
+                const aggregateDecision: QualityControl["decision"] =
+                  group.rejected > 0 ? "REJEITADO" : group.review > 0 ? "REVISAO" : group.incomplete > 0 ? "INCOMPLETO" : "APROVADO";
+                if (group.total > 1) {
+                  return (
+                    <Link key={group.key} href={detailHref} className="group block rounded-xl border border-teal-200/60 bg-white/45 p-2 shadow-sm backdrop-blur-sm transition hover:-translate-y-0.5 hover:border-teal-300 hover:bg-white/65 hover:shadow-md dark:border-teal-800/30 dark:bg-white/[0.06] dark:hover:border-teal-700/60 dark:hover:bg-white/[0.09]">
+                      <article>
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <div className="min-w-0">
+                            <p className="text-[10px] font-mono text-muted-foreground">
+                              {record.custom_id || `#${record.id}`} · execução agrupada
+                            </p>
+                            <h3 className="truncate text-sm font-semibold text-foreground">
+                              {record.test_code ? `${record.test_code} - ` : ""}{record.test_name || "Exame"}
+                            </h3>
+                            <p className="text-[11px] text-muted-foreground">
+                              {group.total} analitos · {fmtDate(record.run_at)}
+                            </p>
+                          </div>
+                          <div className="flex shrink-0 items-center gap-1.5">
+                            <span className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${decisionClass[aggregateDecision] || decisionClass.INCOMPLETO}`}>
+                              {decisionLabel[aggregateDecision]}
+                            </span>
+                            <ChevronRight size={14} className="text-muted-foreground transition group-hover:translate-x-0.5 group-hover:text-foreground" />
+                          </div>
+                        </div>
+                        <div className="mt-2 grid gap-1.5 text-[11px] sm:grid-cols-3">
+                          <div className="rounded-lg bg-background/55 px-2 py-1.5">
+                            <span className="block text-muted-foreground">Analitos aprovados</span>
+                            <strong className="text-foreground">{group.approved}/{group.total}</strong>
+                          </div>
+                          <div className="rounded-lg bg-background/55 px-2 py-1.5">
+                            <span className="block text-muted-foreground">Uso do teste</span>
+                            <strong className={group.approvedForUse ? "text-emerald-600" : "text-red-600"}>
+                              {group.approvedForUse ? "Pode ser usado" : "Não usar / rever"}
+                            </strong>
+                          </div>
+                          <div className="rounded-lg bg-background/55 px-2 py-1.5">
+                            <span className="block text-muted-foreground">Maior desvio</span>
+                            <strong className="text-foreground">{group.maxDeviation === null ? "—" : fmtRef(String(group.maxDeviation))}</strong>
+                          </div>
+                        </div>
+                        <div className="mt-2 flex flex-wrap gap-1.5 text-[10px] text-muted-foreground">
+                          {record.material_lot ? <span>Lote {record.material_lot}</span> : null}
+                          {record.equipment ? <span>Equip. {record.equipment}</span> : null}
+                          {group.rejected ? <span className="font-semibold text-red-600">{group.rejected} rejeitado(s)</span> : null}
+                          {group.correctiveActionRequired ? <span className="font-semibold text-red-600">CAPA requerida</span> : null}
+                        </div>
+                      </article>
+                    </Link>
+                  );
+                }
+
+                return (
+                  <Link key={group.key} href={detailHref} className="group block rounded-xl border border-white/20 bg-white/35 p-2 shadow-sm backdrop-blur-sm transition hover:-translate-y-0.5 hover:border-teal-200 hover:bg-white/55 hover:shadow-md dark:border-white/10 dark:bg-white/[0.05] dark:hover:bg-white/[0.08]">
+                    <article>
+                      <div className="flex flex-wrap items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <p className="text-[10px] font-mono text-muted-foreground">{record.custom_id || `#${record.id}`}</p>
+                          <h3 className="text-sm font-semibold text-foreground">{record.test_code ? `${record.test_code} - ` : ""}{record.test_name || "Exame"}</h3>
+                          <p className="text-[11px] text-muted-foreground">{record.field_name || "Exame completo"} · {fmtDate(record.run_at)}</p>
+                        </div>
+                        <span className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${decisionClass[record.decision] || decisionClass.INCOMPLETO}`}>
+                          {record.decision_display || record.decision}
+                        </span>
+                      </div>
+                      <div className="mt-2 grid gap-2 text-[11px] sm:grid-cols-3">
+                        <div className="rounded-lg bg-background/60 px-2 py-1.5">
+                          <span className="block text-muted-foreground">Esperado</span>
+                          <strong className="text-foreground">{record.expected_result}{record.unit ? ` ${record.unit}` : ""}</strong>
+                        </div>
+                        <div className="rounded-lg bg-background/60 px-2 py-1.5">
+                          <span className="block text-muted-foreground">Obtido</span>
+                          <strong className="text-foreground">{record.observed_result}{record.unit ? ` ${record.unit}` : ""}</strong>
+                        </div>
+                        <div className="rounded-lg bg-background/60 px-2 py-1.5">
+                          <span className="block text-muted-foreground">Uso do teste</span>
+                          <strong className={record.approved_for_use ? "text-emerald-600" : "text-red-600"}>
+                            {record.approved_for_use ? "Pode ser usado" : "Não usar / rever"}
+                          </strong>
+                        </div>
+                      </div>
+                      <div className="mt-2 flex flex-wrap gap-1.5 text-[10px] text-muted-foreground">
+                        {record.material_lot ? <span>Lote {record.material_lot}</span> : null}
+                        {record.equipment ? <span>Equip. {record.equipment}</span> : null}
+                        {record.deviation ? <span>Desvio {fmtRef(record.deviation)}</span> : null}
+                        {record.corrective_action_required ? <span className="font-semibold text-red-600">CAPA requerida</span> : null}
+                      </div>
+                    </article>
+                  </Link>
+                );
+              })}
 
               {!loading && records.length === 0 ? (
                 <div className="rounded-xl border border-dashed border-border bg-muted/30 py-12 text-center">
