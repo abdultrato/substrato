@@ -220,8 +220,14 @@ def generate_lab_qc_report_pdf(payload: dict, request=None) -> tuple[bytes, str]
 
     for analyte in analytes:
         records = analyte.get("records") or []
-        numeric = [value for value in (_decimal(r.get("observed_numeric") or r.get("observed")) for r in records) if value is not None]
-        chart_values = numeric[-MAX_CHART_POINTS:]
+        # Série do gráfico: fornecida pelo chamador (mesma base do gráfico LJ da
+        # página — histórico completo do analito); fallback aos registos da tabela.
+        provided = analyte.get("chart_values")
+        if provided is not None:
+            chart_values = [value for value in (_decimal(v) for v in provided) if value is not None][-MAX_CHART_POINTS:]
+        else:
+            numeric = [value for value in (_decimal(r.get("observed_numeric") or r.get("observed")) for r in records) if value is not None]
+            chart_values = numeric[-MAX_CHART_POINTS:]
         block: list = [Paragraph(f"ANALITO: {_pdf_safe(analyte.get('name') or 'Exame completo')}", style_section), Spacer(1, 0.1 * cm)]
 
         if chart_values:

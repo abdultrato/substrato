@@ -280,6 +280,27 @@ class LaboratoryQualityControlViewSet(ValidatedSearchOrderingMixin, TenantScoped
                 } for record in reversed(earlier)]
                 entry["records"] = backfill + entry["records"]
 
+        # Série do gráfico Levey-Jennings: igual à da página ("Gerar gráfico LJ"),
+        # ou seja, TODOS os controlos do analito neste exame (sem filtros de
+        # janela/lote), últimos 12 valores numéricos por ordem de execução.
+        for name, entry in analytes_map.items():
+            chart_qs = self.get_queryset().filter(test_id=test_id)
+            if name == "Exame completo":
+                chart_qs = chart_qs.filter(test_field__isnull=True)
+            else:
+                chart_qs = chart_qs.filter(test_field__name=name)
+            chart_records = list(chart_qs.order_by("-run_at")[:200])
+            chart_records.reverse()
+            values = []
+            for record in chart_records:
+                raw = record.observed_numeric if record.observed_numeric is not None else record.observed_result
+                try:
+                    number = float(str(raw).strip().replace(",", "."))
+                except (TypeError, ValueError):
+                    continue
+                values.append(number)
+            entry["chart_values"] = values[-12:]
+
         sections = request.query_params.get("sections") or "all"
         payload = {
             "test": {"code": test.code, "name": test.name, "method": test.method},
