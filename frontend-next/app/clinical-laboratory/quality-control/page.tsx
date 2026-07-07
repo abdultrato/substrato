@@ -3,8 +3,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
+  Activity,
   AlertTriangle,
   ArrowLeft,
+  Beaker,
   ChevronRight,
   CheckCircle2,
   ClipboardCheck,
@@ -17,6 +19,7 @@ import {
   Save,
   Search,
   ShieldCheck,
+  Sparkles,
   TestTube2,
   XCircle,
 } from "lucide-react";
@@ -81,7 +84,7 @@ type QualityControl = {
   run_at?: string;
 };
 
-type QualityControlGroup = {
+type QualityControlExamGroup = {
   key: string;
   records: QualityControl[];
   primary: QualityControl;
@@ -240,31 +243,18 @@ function fmtDate(value?: string | null) {
   return date.toLocaleString("pt-PT", { dateStyle: "short", timeStyle: "short" });
 }
 
-function executionMinute(value?: string | null) {
-  if (!value) return "";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return String(value);
-  date.setSeconds(0, 0);
-  return date.toISOString();
-}
-
-function qcRunGroupKey(record: QualityControl) {
-  return [
-    record.test,
-    executionMinute(record.run_at),
-    record.material_lot || "",
-    record.material_name || "",
-    record.control_type || "",
-    record.result_mode || "",
-    record.equipment || "",
-    record.method || "",
-  ].join("|");
-}
-
 function numericDeviation(value?: string | null) {
   if (!value) return null;
   const parsed = parseDecimal(String(value));
   return parsed === null ? null : parsed;
+}
+
+function newestRunAt(records: QualityControl[]) {
+  return records.reduce<string | undefined>((latest, record) => {
+    if (!record.run_at) return latest;
+    if (!latest) return record.run_at;
+    return new Date(record.run_at).getTime() > new Date(latest).getTime() ? record.run_at : latest;
+  }, undefined);
 }
 
 function Field({
@@ -298,12 +288,38 @@ const decisionDotClass: Record<QualityControl["decision"], string> = {
   INCOMPLETO: "bg-slate-400",
 };
 
-const decisionBarClass: Record<QualityControl["decision"], string> = {
-  APROVADO: "bg-emerald-500",
-  REJEITADO: "bg-red-500",
-  REVISAO: "bg-amber-500",
-  INCOMPLETO: "bg-slate-400",
-};
+const examAccent = [
+  {
+    bar: "bg-fuchsia-500",
+    icon: "from-fuchsia-500 to-rose-500",
+    glow: "shadow-fuchsia-500/20",
+    ring: "border-fuchsia-200/60 dark:border-fuchsia-800/40",
+  },
+  {
+    bar: "bg-cyan-500",
+    icon: "from-cyan-500 to-sky-500",
+    glow: "shadow-cyan-500/20",
+    ring: "border-cyan-200/60 dark:border-cyan-800/40",
+  },
+  {
+    bar: "bg-violet-500",
+    icon: "from-violet-500 to-indigo-500",
+    glow: "shadow-violet-500/20",
+    ring: "border-violet-200/60 dark:border-violet-800/40",
+  },
+  {
+    bar: "bg-amber-500",
+    icon: "from-amber-400 to-orange-500",
+    glow: "shadow-amber-500/20",
+    ring: "border-amber-200/60 dark:border-amber-800/40",
+  },
+  {
+    bar: "bg-emerald-500",
+    icon: "from-emerald-500 to-teal-500",
+    glow: "shadow-emerald-500/20",
+    ring: "border-emerald-200/60 dark:border-emerald-800/40",
+  },
+];
 
 function FormSection({
   title,
@@ -397,20 +413,17 @@ export default function LaboratoryQualityControlPage() {
     [fields],
   );
 
-  const groupedRecords = useMemo<QualityControlGroup[]>(() => {
-    const orderedGroups: QualityControlGroup[] = [];
-    const groups = new Map<string, QualityControlGroup>();
+  const examGroups = useMemo<QualityControlExamGroup[]>(() => {
+    const orderedGroups: QualityControlExamGroup[] = [];
+    const groups = new Map<string, QualityControlExamGroup>();
 
     records.forEach((record) => {
-      // Exames multi-analito criam vários registos por execução; agrupa por
-      // execução (mesmo exame, minuto, material e lote) para evitar uma lista
-      // longa de linhas quase idênticas. Registos isolados ficam sozinhos no grupo.
-      const key = qcRunGroupKey(record);
+      const key = String(record.test);
       const deviation = numericDeviation(record.deviation);
       const existing = groups.get(key);
 
       if (!existing) {
-        const group: QualityControlGroup = {
+        const group: QualityControlExamGroup = {
           key,
           records: [record],
           primary: record,
@@ -437,6 +450,9 @@ export default function LaboratoryQualityControlPage() {
       existing.approvedForUse = existing.approvedForUse && record.approved_for_use;
       existing.correctiveActionRequired = existing.correctiveActionRequired || record.corrective_action_required;
       if (deviation !== null) existing.maxDeviation = existing.maxDeviation === null ? deviation : Math.max(existing.maxDeviation, deviation);
+      if (record.run_at && (!existing.primary.run_at || new Date(record.run_at).getTime() > new Date(existing.primary.run_at).getTime())) {
+        existing.primary = record;
+      }
     });
 
     return orderedGroups;
@@ -1063,106 +1079,80 @@ export default function LaboratoryQualityControlPage() {
               <p className="text-[11px] text-muted-foreground">Filtrados pelos controles do cabeçalho.</p>
             </div>
 
-            <div className="grid gap-1.5">
-              {groupedRecords.map((group) => {
+            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5">
+              {examGroups.map((group, index) => {
                 const record = group.primary;
-                const detailHref = `/clinical-laboratory/quality-control/${record.id}`;
+                const detailHref = `/clinical-laboratory/quality-control/tests/${record.test}`;
                 const aggregateDecision: QualityControl["decision"] =
                   group.rejected > 0 ? "REJEITADO" : group.review > 0 ? "REVISAO" : group.incomplete > 0 ? "INCOMPLETO" : "APROVADO";
                 const testTitle = `${record.test_code ? `${record.test_code} - ` : ""}${record.test_name || "Exame"}`;
                 const testInitial = (record.test_code || record.test_name || "CQ").trim().charAt(0).toUpperCase();
-                if (group.total > 1) {
-                  return (
-                    <Link
-                      key={group.key}
-                      href={detailHref}
-                      className="group relative flex items-start gap-1.5 rounded-lg border border-white/20 bg-white/40 p-1.5 pl-2.5 shadow-sm backdrop-blur-sm transition hover:-translate-y-px hover:border-white/40 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 dark:border-white/10 dark:bg-white/[0.04]"
-                    >
-                      <span className={`absolute left-0 top-0 h-full w-1 rounded-l-lg ${decisionBarClass[aggregateDecision]}`} />
-                      <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-[11px] font-bold text-white shadow-sm ${decisionBarClass[aggregateDecision]}`}>
-                        {testInitial}
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center justify-between gap-1.5">
-                          <span className="truncate text-xs font-semibold leading-tight text-foreground">{testTitle}</span>
-                          <span className={`shrink-0 rounded-full border px-1.5 py-0 text-[9px] font-semibold ${decisionClass[aggregateDecision] || decisionClass.INCOMPLETO}`}>
-                            {decisionLabel[aggregateDecision]}
-                          </span>
-                        </div>
-                        <div className="truncate text-[10px] leading-tight text-muted-foreground">
-                          {group.total} analitos · {fmtDate(record.run_at)}
-                        </div>
-                        <div className="mt-1 flex items-center justify-between gap-1.5">
-                          <span className="min-w-0 truncate font-mono text-[9px] text-muted-foreground">
-                            {record.custom_id || `#${record.id}`} · {group.approved}/{group.total} aprovados
-                          </span>
-                          <div className="flex shrink-0 items-center gap-1 text-[9px] text-muted-foreground">
-                            {group.maxDeviation === null ? null : <span>Desvio {fmtRef(String(group.maxDeviation))}</span>}
-                            {record.material_lot ? <span>Lote {record.material_lot}</span> : null}
-                            {group.correctiveActionRequired ? <span className="font-semibold text-red-600">CAPA</span> : null}
-                            <ChevronRight size={12} className="transition group-hover:translate-x-0.5 group-hover:text-foreground" />
-                          </div>
-                        </div>
-                      </div>
-                    </Link>
-                  );
-                }
+                const accent = examAccent[index % examAccent.length];
 
                 return (
                   <Link
                     key={group.key}
                     href={detailHref}
-                    className="group relative flex items-start gap-1.5 rounded-lg border border-white/20 bg-white/40 p-1.5 pl-2.5 shadow-sm backdrop-blur-sm transition hover:-translate-y-px hover:border-white/40 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 dark:border-white/10 dark:bg-white/[0.04]"
+                    className={`group relative min-h-[116px] rounded-lg border ${accent.ring} bg-white/45 p-2.5 pl-3.5 shadow-sm backdrop-blur-sm transition hover:-translate-y-px hover:bg-white/65 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 dark:bg-white/[0.05] dark:hover:bg-white/[0.08]`}
                   >
-                    <span className={`absolute left-0 top-0 h-full w-1 rounded-l-lg ${decisionBarClass[record.decision] || decisionBarClass.INCOMPLETO}`} />
-                    <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-[11px] font-bold text-white shadow-sm ${decisionBarClass[record.decision] || decisionBarClass.INCOMPLETO}`}>
-                      {testInitial}
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center justify-between gap-1.5">
-                        <span className="truncate text-xs font-semibold leading-tight text-foreground">{testTitle}</span>
-                        <span className={`shrink-0 rounded-full border px-1.5 py-0 text-[9px] font-semibold ${decisionClass[record.decision] || decisionClass.INCOMPLETO}`}>
-                          {record.decision_display || record.decision}
-                        </span>
-                      </div>
-                      <div className="truncate text-[10px] leading-tight text-muted-foreground">
-                        {record.field_name || "Exame completo"} · {fmtDate(record.run_at)}
-                      </div>
-                      <div className="mt-1 flex items-center justify-between gap-1.5">
-                        <span className="min-w-0 truncate font-mono text-[9px] text-muted-foreground">
-                          {record.custom_id || `#${record.id}`} · E {record.expected_result}{record.unit ? ` ${record.unit}` : ""} · O {record.observed_result}{record.unit ? ` ${record.unit}` : ""}
-                        </span>
-                        <div className="flex shrink-0 items-center gap-1 text-[9px] text-muted-foreground">
-                          {record.deviation ? <span>Desvio {fmtRef(record.deviation)}</span> : null}
-                          {record.material_lot ? <span>Lote {record.material_lot}</span> : null}
-                          {record.corrective_action_required ? <span className="font-semibold text-red-600">CAPA</span> : null}
-                          <ChevronRight size={12} className="transition group-hover:translate-x-0.5 group-hover:text-foreground" />
-                        </div>
-                      </div>
+                    <span className={`absolute left-0 top-0 h-full w-1 rounded-l-lg ${accent.bar}`} />
+                    <div className="flex items-start justify-between gap-2">
+                      <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-gradient-to-br ${accent.icon} text-[11px] font-bold text-white shadow-md ${accent.glow}`}>
+                        {testInitial}
+                      </span>
+                      <span className={`shrink-0 rounded-full border px-1.5 py-0 text-[9px] font-semibold ${decisionClass[aggregateDecision] || decisionClass.INCOMPLETO}`}>
+                        {decisionLabel[aggregateDecision]}
+                      </span>
+                    </div>
+                    <div className="mt-2 min-w-0">
+                      <h3 className="truncate text-xs font-semibold leading-tight text-foreground">{testTitle}</h3>
+                      <p className="truncate text-[10px] leading-tight text-muted-foreground">Último CQ · {fmtDate(newestRunAt(group.records))}</p>
+                    </div>
+                    <div className="mt-2 grid grid-cols-3 gap-1.5">
+                      <span className="flex items-center gap-1 rounded-md bg-background/55 px-1.5 py-1 text-[10px] font-semibold text-foreground">
+                        <Beaker size={11} className="text-cyan-500" />
+                        {group.total}
+                      </span>
+                      <span className="flex items-center gap-1 rounded-md bg-background/55 px-1.5 py-1 text-[10px] font-semibold text-foreground">
+                        <CheckCircle2 size={11} className="text-emerald-500" />
+                        {group.approved}
+                      </span>
+                      <span className="flex items-center gap-1 rounded-md bg-background/55 px-1.5 py-1 text-[10px] font-semibold text-foreground">
+                        <Activity size={11} className={group.rejected ? "text-red-500" : "text-fuchsia-500"} />
+                        {group.maxDeviation === null ? "—" : fmtRef(String(group.maxDeviation))}
+                      </span>
+                    </div>
+                    <div className="mt-2 flex items-center justify-between gap-1.5 text-[9px] text-muted-foreground">
+                      <span className="truncate">{group.records.length} registo(s){group.correctiveActionRequired ? " · CAPA" : ""}</span>
+                      <span className="flex shrink-0 items-center gap-1 font-semibold text-foreground">
+                        <Sparkles size={10} className="text-fuchsia-500" />
+                        Ver analitos
+                        <ChevronRight size={11} className="transition group-hover:translate-x-0.5" />
+                      </span>
                     </div>
                   </Link>
                 );
               })}
 
               {!loading && records.length === 0 ? (
-                <div className="rounded-xl border border-dashed border-border bg-muted/30 py-12 text-center">
+                <div className="col-span-full rounded-xl border border-dashed border-border bg-muted/30 py-12 text-center">
                   <FlaskConical size={28} className="mx-auto mb-2 text-muted-foreground/40" />
                   <p className="text-sm text-muted-foreground">Nenhum controlo registado.</p>
                 </div>
               ) : null}
-
-              {!loading && records.length < total ? (
-                <button
-                  type="button"
-                  onClick={() => loadRecords(page + 1, true)}
-                  disabled={loadingMore}
-                  className="inline-flex h-9 items-center justify-center gap-1.5 rounded-xl border border-border bg-background/60 text-xs font-medium text-foreground transition hover:bg-background disabled:opacity-60"
-                >
-                  {loadingMore ? <Loader2 size={12} className="animate-spin" /> : null}
-                  Carregar mais ({records.length} de {total})
-                </button>
-              ) : null}
             </div>
+
+            {!loading && records.length < total ? (
+              <button
+                type="button"
+                onClick={() => loadRecords(page + 1, true)}
+                disabled={loadingMore}
+                className="inline-flex h-9 w-full items-center justify-center gap-1.5 rounded-xl border border-border bg-background/60 text-xs font-medium text-foreground transition hover:bg-background disabled:opacity-60"
+              >
+                {loadingMore ? <Loader2 size={12} className="animate-spin" /> : null}
+                Carregar mais ({records.length} de {total})
+              </button>
+            ) : null}
           </section>
         </div>
       </div>
