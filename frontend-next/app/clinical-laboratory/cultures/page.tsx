@@ -126,22 +126,23 @@ export default function LabCulturesPage() {
                 <p className="text-xs text-muted-foreground">Apenas itens de requisição cujo exame usa método Cultura após recepção da amostra.</p>
               </div>
             </div>
-            <button
-              onClick={load}
-              disabled={loading}
-              aria-busy={loading}
-              className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-white/40 bg-white/35 px-2.5 text-xs font-medium text-foreground shadow-sm backdrop-blur-sm transition hover:bg-white/55 disabled:cursor-not-allowed disabled:opacity-65 dark:border-white/10 dark:bg-white/5"
-            >
-              <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
-              {loading ? "Atualizando" : "Atualizar"}
-            </button>
+            <div className="flex w-full flex-col gap-2 sm:w-auto sm:min-w-[360px] sm:flex-row sm:items-center">
+              <div className="flex h-8 min-w-0 flex-1 items-center gap-2 rounded-lg border border-white/40 bg-white/35 px-2.5 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/5">
+                <Search size={14} className="shrink-0 text-muted-foreground" />
+                <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Pesquisar paciente, requisição, exame ou amostra" className="h-full min-w-0 flex-1 bg-transparent text-xs outline-none placeholder:text-muted-foreground" />
+              </div>
+              <button
+                onClick={load}
+                disabled={loading}
+                aria-busy={loading}
+                className="inline-flex h-8 shrink-0 items-center justify-center gap-1.5 rounded-lg border border-white/40 bg-white/35 px-2.5 text-xs font-medium text-foreground shadow-sm backdrop-blur-sm transition hover:bg-white/55 disabled:cursor-not-allowed disabled:opacity-65 dark:border-white/10 dark:bg-white/5"
+              >
+                <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
+                {loading ? "Atualizando" : "Atualizar"}
+              </button>
+            </div>
           </div>
         </section>
-
-        <div className="flex h-9 items-center gap-2 rounded-xl border border-white/25 bg-white/25 px-3 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/5">
-          <Search size={14} className="text-muted-foreground" />
-          <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Pesquisar paciente, requisição, exame ou amostra" className="h-full flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground" />
-        </div>
 
         {error && <div className="rounded-xl border border-red-200/60 bg-red-50/50 px-3 py-2 text-sm text-red-800 backdrop-blur-sm dark:border-red-800/40 dark:bg-red-900/15 dark:text-red-300">{error}</div>}
 
