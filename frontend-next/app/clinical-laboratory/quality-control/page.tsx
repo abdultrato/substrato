@@ -709,6 +709,14 @@ export default function LaboratoryQualityControlPage() {
     setAnalyteRows((prev) => ({ ...prev, [fieldId]: { ...prev[fieldId], [key]: value } }));
   }
 
+  function resetAndCollapseForm() {
+    setForm(initialForm);
+    setFields([]);
+    setAnalyteRows({});
+    setErrors({});
+    setShowQcForm(false);
+  }
+
   function handleTestChange(value: string) {
     const test = tests.find((item) => String(item.id) === value);
     setForm((prev) => ({
@@ -816,7 +824,7 @@ export default function LaboratoryQualityControlPage() {
         const ok = saved.filter((item) => item.decision === "APROVADO").length;
         const bad = saved.filter((item) => item.decision === "REJEITADO").length;
         setSuccess(`Registados ${saved.length} controlos (${ok} aprovados, ${bad} rejeitados).`);
-        setAnalyteRows(buildAnalyteRows(fields));
+        resetAndCollapseForm();
       } catch (err: any) {
         if (saved.length > 0) {
           setRecords((prev) => [...saved.slice().reverse(), ...prev]);
@@ -854,18 +862,7 @@ export default function LaboratoryQualityControlPage() {
       setSuccess(
         `Registado ${saved.custom_id || `#${saved.id}`} — conclusão: ${saved.decision_display || decisionLabel[saved.decision] || saved.decision}.`,
       );
-      setForm((prev) => ({
-        ...initialForm,
-        test: prev.test,
-        method: prev.method,
-        equipment: prev.equipment,
-        sop_reference: prev.sop_reference,
-        iso_clause: prev.iso_clause,
-        material_name: prev.material_name,
-        material_lot: prev.material_lot,
-        manufacturer: prev.manufacturer,
-        unit: prev.unit,
-      }));
+      resetAndCollapseForm();
     } catch (err: any) {
       setError(err?.message || "Erro ao guardar controlo de qualidade.");
     } finally {
