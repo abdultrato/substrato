@@ -64,6 +64,17 @@ type QualityDocument = {
   review_date?: string | null;
 };
 
+type EquipmentCatalogItem = {
+  id: number;
+  custom_id?: string | null;
+  name: string;
+  serial_number?: string;
+  manufacturer?: string;
+  model?: string;
+  location?: string;
+  active?: boolean;
+};
+
 type QualityControl = {
   id: number;
   custom_id?: string | null;
@@ -410,6 +421,7 @@ export default function LaboratoryQualityControlPage() {
   const [tests, setTests] = useState<LabTest[]>([]);
   const [fields, setFields] = useState<LabTestField[]>([]);
   const [sopDocuments, setSopDocuments] = useState<QualityDocument[]>([]);
+  const [equipmentCatalog, setEquipmentCatalog] = useState<EquipmentCatalogItem[]>([]);
   const [records, setRecords] = useState<QualityControl[]>([]);
   const [catalogRecords, setCatalogRecords] = useState<QualityControl[]>([]);
   const [total, setTotal] = useState(0);
@@ -549,12 +561,29 @@ export default function LaboratoryQualityControlPage() {
   }, [catalogRecords, selectedTest]);
 
   const equipmentOptions = useMemo<SearchableOption[]>(() => {
-    const values = new Set<string>();
-    catalogRecords.forEach((record) => {
-      if (record.equipment?.trim()) values.add(record.equipment.trim());
+    const options = new Map<string, SearchableOption>();
+
+    equipmentCatalog.forEach((equipment) => {
+      const name = equipment.name?.trim();
+      if (!name) return;
+      const details = [equipment.manufacturer, equipment.model, equipment.serial_number ? `S/N ${equipment.serial_number}` : "", equipment.location]
+        .map((value) => value?.trim())
+        .filter(Boolean);
+      options.set(name.toLowerCase(), {
+        value: name,
+        label: name,
+        hint: details.length ? details.join(" · ") : undefined,
+      });
     });
-    return Array.from(values).sort((a, b) => a.localeCompare(b)).map((value) => ({ value, label: value }));
-  }, [catalogRecords]);
+
+    catalogRecords.forEach((record) => {
+      const name = record.equipment?.trim();
+      if (!name || options.has(name.toLowerCase())) return;
+      options.set(name.toLowerCase(), { value: name, label: name, hint: "Usado em CQ anterior" });
+    });
+
+    return Array.from(options.values()).sort((a, b) => a.label.localeCompare(b.label));
+  }, [catalogRecords, equipmentCatalog]);
 
   const sopOptions = useMemo<SearchableOption[]>(
     () =>
@@ -629,6 +658,16 @@ export default function LaboratoryQualityControlPage() {
         );
       })
       .catch(() => setSopDocuments([]));
+  }, []);
+
+  useEffect(() => {
+    apiFetchList<EquipmentCatalogItem>("/equipment/equipment/", {
+      page: 1,
+      pageSize: 300,
+      query: { active: true },
+      clientCache: true,
+      clientCacheTtlMs: 30000,
+    }).then(({ items }) => setEquipmentCatalog(items)).catch(() => setEquipmentCatalog([]));
   }, []);
 
   useEffect(() => {
