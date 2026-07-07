@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
   Beaker,
-  CalendarClock,
   ClipboardList,
   FileText,
   Loader2,
@@ -207,33 +206,6 @@ function GlassCard({
         <h2 className="text-sm font-semibold text-foreground">{title}</h2>
       </div>
       <div className="space-y-2 p-2.5 pl-4">{children}</div>
-    </section>
-  );
-}
-
-function SideCard({
-  title,
-  icon: Icon,
-  accent,
-  iconTone,
-  children,
-}: {
-  title: string;
-  icon: typeof Microscope;
-  accent: string;
-  iconTone: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <section className="relative overflow-hidden rounded-xl border border-white/20 bg-white/25 p-2.5 pl-4 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/5">
-      <span className={`absolute inset-y-0 left-0 w-1 ${accent}`} />
-      <div className="mb-2 flex items-center gap-1.5">
-        <span className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br ${iconTone} text-white shadow-md shadow-slate-900/10`}>
-          <Icon size={14} />
-        </span>
-        <h2 className="text-sm font-semibold text-foreground">{title}</h2>
-      </div>
-      {children}
     </section>
   );
 }
@@ -447,14 +419,6 @@ export default function ClinicalLaboratoryCulturesCreatePage() {
             </GlassCard>
           </div>
 
-          <aside>
-            <SideCard title="Acompanhamento" icon={CalendarClock} accent="bg-amber-500" iconTone="from-amber-500 to-orange-600">
-              <div className="grid gap-2 text-xs text-muted-foreground md:grid-cols-2">
-                <p className="rounded-lg border border-white/25 bg-white/25 px-2.5 py-1.5 backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]">Depois de criada, a cultura poderá receber isolados e antibiogramas a partir do registo detalhado.</p>
-                <p className="rounded-lg border border-white/25 bg-white/25 px-2.5 py-1.5 backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]">Use o estado “Crescimento detetado” quando houver microrganismo para identificação.</p>
-              </div>
-            </SideCard>
-          </aside>
         </div>
       </form>
     </AppLayout>
