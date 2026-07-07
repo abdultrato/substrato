@@ -9,7 +9,6 @@ import {
   CalendarClock,
   ClipboardList,
   FileText,
-  FlaskConical,
   Loader2,
   Microscope,
   Save,
@@ -70,10 +69,10 @@ const USER_TARGET: RelationTarget = {
 };
 
 const inputClass =
-  "h-9 w-full rounded-lg border border-border bg-background px-3 text-sm text-foreground outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 disabled:cursor-not-allowed disabled:opacity-60";
+  "h-9 w-full rounded-lg border border-white/30 bg-white/35 px-3 text-sm text-foreground shadow-sm outline-none backdrop-blur-sm transition placeholder:text-muted-foreground focus:border-teal-400 focus:ring-2 focus:ring-teal-500/20 disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/10 dark:bg-white/[0.06]";
 
 const textareaClass =
-  "min-h-28 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20";
+  "min-h-28 w-full rounded-lg border border-white/30 bg-white/35 px-3 py-2 text-sm text-foreground shadow-sm outline-none backdrop-blur-sm transition placeholder:text-muted-foreground focus:border-teal-400 focus:ring-2 focus:ring-teal-500/20 dark:border-white/10 dark:bg-white/[0.06]";
 
 function RelationSelect({
   value,
@@ -127,12 +126,12 @@ function RelationSelect({
   return (
     <div className="space-y-1.5">
       {value ? (
-        <div className="flex items-center justify-between gap-2 rounded-lg border border-teal-200 bg-teal-50 px-3 py-2 text-sm text-teal-800 dark:border-teal-800/40 dark:bg-teal-900/20 dark:text-teal-200">
+        <div className="flex items-center justify-between gap-2 rounded-lg border border-teal-200/60 bg-teal-50/60 px-3 py-2 text-sm text-teal-800 shadow-sm backdrop-blur-sm dark:border-teal-800/40 dark:bg-teal-900/20 dark:text-teal-200">
           <span className="truncate">{label}</span>
           <button
             type="button"
             onClick={() => onChange(null, "")}
-            className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-teal-600 transition hover:bg-teal-100 hover:text-red-600 dark:text-teal-300 dark:hover:bg-teal-900/40"
+            className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-teal-600 transition hover:bg-white/60 hover:text-red-600 dark:text-teal-300 dark:hover:bg-white/10"
             aria-label="Limpar seleção"
           >
             <X size={14} />
@@ -152,7 +151,7 @@ function RelationSelect({
           />
           {searching && <Loader2 size={14} className="absolute right-3 top-1/2 -translate-y-1/2 animate-spin text-muted-foreground" />}
           {open && (
-            <div id={listboxId} role="listbox" className="absolute left-0 right-0 z-50 mt-1 overflow-hidden rounded-lg border border-border bg-card shadow-xl">
+            <div id={listboxId} role="listbox" className="absolute left-0 right-0 z-50 mt-1 overflow-hidden rounded-lg border border-white/30 bg-white/90 shadow-xl backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/90">
               {results.length ? (
                 <ul className="max-h-56 overflow-y-auto divide-y divide-border/50">
                   {results.map((option) => (
@@ -201,24 +200,56 @@ function Field({
   );
 }
 
-function Section({
+function GlassCard({
   title,
   icon: Icon,
+  accent,
+  iconTone = "from-teal-600 to-cyan-600",
   children,
 }: {
   title: string;
   icon: typeof Microscope;
+  accent: string;
+  iconTone?: string;
   children: React.ReactNode;
 }) {
   return (
-    <section className="rounded-xl border border-border bg-card p-4 shadow-sm">
-      <div className="mb-4 flex items-center gap-2">
-        <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-teal-50 text-teal-700 dark:bg-teal-900/20 dark:text-teal-300">
+    <section className="relative overflow-visible rounded-xl border border-white/20 bg-white/25 shadow-sm backdrop-blur-sm transition focus-within:z-50 dark:border-white/10 dark:bg-white/5">
+      <span className={`absolute inset-y-0 left-0 w-1 rounded-l-xl ${accent}`} />
+      <div className="flex items-center gap-2 border-b border-white/30 px-4 py-2 pl-5 dark:border-white/10">
+        <span className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br ${iconTone} text-white shadow-md shadow-slate-900/10`}>
           <Icon size={16} />
         </span>
         <h2 className="text-sm font-semibold text-foreground">{title}</h2>
       </div>
-      <div className="space-y-4">{children}</div>
+      <div className="space-y-4 p-4 pl-5">{children}</div>
+    </section>
+  );
+}
+
+function SideCard({
+  title,
+  icon: Icon,
+  accent,
+  iconTone,
+  children,
+}: {
+  title: string;
+  icon: typeof Microscope;
+  accent: string;
+  iconTone: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="relative overflow-hidden rounded-xl border border-white/20 bg-white/25 p-4 pl-5 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/5">
+      <span className={`absolute inset-y-0 left-0 w-1 ${accent}`} />
+      <div className="mb-3 flex items-center gap-2">
+        <span className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br ${iconTone} text-white shadow-md shadow-slate-900/10`}>
+          <Icon size={16} />
+        </span>
+        <h2 className="text-sm font-semibold text-foreground">{title}</h2>
+      </div>
+      {children}
     </section>
   );
 }
@@ -283,10 +314,11 @@ export default function ClinicalLaboratoryCulturesCreatePage() {
   return (
     <AppLayout requiredGroups={requiredGroupsForResourceGroup("clinical_laboratory")}>
       <form onSubmit={handleSubmit} noValidate className="mx-auto w-full max-w-5xl space-y-4">
-        <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+        <div className="relative overflow-hidden rounded-xl border border-white/20 bg-white/30 p-4 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/5">
+          <span className="absolute inset-y-0 left-0 w-1 rounded-l-xl bg-gradient-to-b from-teal-500 to-cyan-600" />
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-3">
-              <span className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-teal-50 text-teal-700 dark:bg-teal-900/20 dark:text-teal-300">
+              <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-teal-600 to-cyan-600 text-white shadow-md shadow-teal-500/25">
                 <Microscope size={20} />
               </span>
               <div>
@@ -298,7 +330,7 @@ export default function ClinicalLaboratoryCulturesCreatePage() {
               <button
                 type="button"
                 onClick={() => router.push(BASE_PATH)}
-                className="inline-flex h-9 items-center gap-2 rounded-lg border border-border bg-background px-3 text-sm font-medium text-foreground transition hover:bg-muted"
+                className="inline-flex h-9 items-center gap-2 rounded-lg border border-white/40 bg-white/25 px-3 text-sm font-medium text-foreground shadow-sm backdrop-blur-sm transition hover:bg-white/45 dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10"
               >
                 <ArrowLeft size={15} />
                 Voltar
@@ -306,7 +338,7 @@ export default function ClinicalLaboratoryCulturesCreatePage() {
               <button
                 type="submit"
                 disabled={saving}
-                className="inline-flex h-9 items-center gap-2 rounded-lg bg-teal-600 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-teal-700 disabled:opacity-60"
+                className="inline-flex h-9 items-center gap-2 rounded-lg bg-gradient-to-r from-teal-600 to-cyan-600 px-4 text-sm font-semibold text-white shadow-md shadow-teal-500/25 transition hover:from-teal-700 hover:to-cyan-700 disabled:opacity-60"
               >
                 {saving ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />}
                 Criar cultura
@@ -316,14 +348,14 @@ export default function ClinicalLaboratoryCulturesCreatePage() {
         </div>
 
         {saveError && (
-          <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-800/40 dark:bg-red-900/15 dark:text-red-300">
+          <div className="rounded-xl border border-red-200/60 bg-red-50/50 px-4 py-3 text-sm text-red-800 shadow-sm backdrop-blur-sm dark:border-red-800/40 dark:bg-red-900/15 dark:text-red-300">
             {saveError}
           </div>
         )}
 
         <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
           <div className="space-y-4">
-            <Section title="Pedido e amostra" icon={ClipboardList}>
+            <GlassCard title="Pedido e amostra" icon={ClipboardList} accent="bg-gradient-to-b from-teal-500 to-cyan-600" iconTone="from-teal-600 to-cyan-600">
               <div className="grid gap-4 md:grid-cols-2">
                 <Field label="Item do pedido" required error={errors.orderItem}>
                   <RelationSelect
@@ -359,9 +391,9 @@ export default function ClinicalLaboratoryCulturesCreatePage() {
                   className={inputClass}
                 />
               </Field>
-            </Section>
+            </GlassCard>
 
-            <Section title="Cultura e incubação" icon={Beaker}>
+            <GlassCard title="Cultura e incubação" icon={Beaker} accent="bg-gradient-to-b from-amber-500 to-orange-600" iconTone="from-amber-500 to-orange-600">
               <div className="grid gap-4 md:grid-cols-2">
                 <Field label="Tipo de cultura">
                   <select value={cultureType} onChange={(event) => setCultureType(event.target.value)} className={inputClass}>
@@ -396,9 +428,9 @@ export default function ClinicalLaboratoryCulturesCreatePage() {
                   />
                 </Field>
               </div>
-            </Section>
+            </GlassCard>
 
-            <Section title="Execução e notas" icon={FileText}>
+            <GlassCard title="Execução e notas" icon={FileText} accent="bg-gradient-to-b from-violet-500 to-fuchsia-600" iconTone="from-violet-600 to-fuchsia-600">
               <Field label="Executado por">
                 <RelationSelect
                   value={performedBy}
@@ -419,15 +451,11 @@ export default function ClinicalLaboratoryCulturesCreatePage() {
                   className={textareaClass}
                 />
               </Field>
-            </Section>
+            </GlassCard>
           </div>
 
           <aside className="space-y-4">
-            <section className="rounded-xl border border-border bg-card p-4 shadow-sm">
-              <div className="mb-3 flex items-center gap-2">
-                <TestTube2 size={16} className="text-teal-700 dark:text-teal-300" />
-                <h2 className="text-sm font-semibold text-foreground">Resumo</h2>
-              </div>
+            <SideCard title="Resumo" icon={TestTube2} accent="bg-teal-500" iconTone="from-teal-600 to-cyan-600">
               <dl className="space-y-3 text-sm">
                 <div>
                   <dt className="text-xs text-muted-foreground">Tipo</dt>
@@ -450,27 +478,19 @@ export default function ClinicalLaboratoryCulturesCreatePage() {
                   <dd className="truncate font-medium text-foreground">{sampleLabel || "Sem vínculo"}</dd>
                 </div>
               </dl>
-            </section>
+            </SideCard>
 
-            <section className="rounded-xl border border-border bg-card p-4 shadow-sm">
-              <div className="mb-3 flex items-center gap-2">
-                <CalendarClock size={16} className="text-teal-700 dark:text-teal-300" />
-                <h2 className="text-sm font-semibold text-foreground">Acompanhamento</h2>
-              </div>
+            <SideCard title="Acompanhamento" icon={CalendarClock} accent="bg-amber-500" iconTone="from-amber-500 to-orange-600">
               <div className="space-y-2 text-sm text-muted-foreground">
-                <p className="rounded-lg bg-muted px-3 py-2">Depois de criada, a cultura poderá receber isolados e antibiogramas a partir do registo detalhado.</p>
-                <p className="rounded-lg bg-muted px-3 py-2">Use o estado “Crescimento detetado” quando houver microrganismo para identificação.</p>
+                <p className="rounded-lg border border-white/25 bg-white/25 px-3 py-2 backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]">Depois de criada, a cultura poderá receber isolados e antibiogramas a partir do registo detalhado.</p>
+                <p className="rounded-lg border border-white/25 bg-white/25 px-3 py-2 backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]">Use o estado “Crescimento detetado” quando houver microrganismo para identificação.</p>
               </div>
-            </section>
+            </SideCard>
 
-            <section className="rounded-xl border border-border bg-card p-4 shadow-sm">
-              <div className="mb-3 flex items-center gap-2">
-                <User size={16} className="text-teal-700 dark:text-teal-300" />
-                <h2 className="text-sm font-semibold text-foreground">Responsável</h2>
-              </div>
+            <SideCard title="Responsável" icon={User} accent="bg-violet-500" iconTone="from-violet-600 to-fuchsia-600">
               <p className="truncate text-sm font-medium text-foreground">{performedByLabel || "Não definido"}</p>
               <p className="mt-1 text-xs text-muted-foreground">Preencha quando a montagem já tiver técnico responsável.</p>
-            </section>
+            </SideCard>
           </aside>
         </div>
       </form>
