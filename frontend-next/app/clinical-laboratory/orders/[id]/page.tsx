@@ -273,7 +273,18 @@ export default function LabOrderDetailPage() {
               </div>
 
               {/* pills */}
-              <div className="flex flex-wrap items-center gap-1.5">
+              <div className="flex flex-wrap items-center justify-end gap-1.5">
+                {canStartProcessing && (
+                  <button
+                    type="button"
+                    onClick={() => handleIniciarProcessamento()}
+                    disabled={busy}
+                    className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-emerald-600 px-3 text-[11px] font-semibold text-white shadow-sm transition hover:bg-emerald-700 disabled:opacity-60"
+                  >
+                    {processingItemId === "all" ? <Loader2 size={12} className="animate-spin" /> : <PlayCircle size={12} />}
+                    Iniciar processamento
+                  </button>
+                )}
                 <Pill label={statusMeta.label} cls={statusMeta.cls} />
                 {priorityMeta && <Pill label={priorityMeta.label} cls={priorityMeta.cls} />}
                 {record?.origin && <Pill label={record.origin} cls="bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-slate-300" />}
@@ -389,10 +400,10 @@ export default function LabOrderDetailPage() {
                         <table className="w-full table-fixed text-[11px]">
                           <colgroup>
                             <col className="w-[18%]" />
-                            <col className="w-[44%]" />
-                            <col className="w-[22%]" />
-                            <col className="w-[16%]" />
-                            <col className="w-[18%]" />
+                            <col className="w-[34%]" />
+                            <col className="w-[20%]" />
+                            <col className="w-[14%]" />
+                            <col className="w-[32%]" />
                           </colgroup>
                           <thead>
                             <tr className="border-b border-[var(--border)] bg-[var(--gray-50)]/60 dark:bg-white/[0.03]">
@@ -429,10 +440,10 @@ export default function LabOrderDetailPage() {
                                       type="button"
                                       onClick={() => handleIniciarProcessamento(item)}
                                       disabled={!canStartProcessing || busy}
-                                      className="inline-flex h-7 items-center gap-1 rounded-md border border-sky-200 bg-sky-50/80 px-2 text-[10px] font-semibold text-sky-700 transition hover:bg-sky-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-sky-700/40 dark:bg-sky-900/20 dark:text-sky-300"
+                                      className="inline-flex h-7 items-center gap-1 rounded-md border border-sky-200 bg-sky-50/80 px-2.5 text-[10px] font-semibold text-sky-700 transition hover:bg-sky-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-sky-700/40 dark:bg-sky-900/20 dark:text-sky-300"
                                     >
                                       {processingItemId === item.id ? <Loader2 size={10} className="animate-spin" /> : isCultureItem(item) ? <FlaskConical size={10} /> : <PlayCircle size={10} />}
-                                      Iniciar
+                                      Iniciar processamento
                                     </button>
                                   </td>
                                 </tr>

@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { useCallback, useEffect, useState } from "react"
-import { useParams } from "next/navigation"
+import { useParams, useRouter } from "next/navigation"
 import {
   AlertCircle,
   ArrowLeft,
@@ -21,6 +21,7 @@ import {
   Droplets,
   ShieldAlert,
   Clock,
+  PlayCircle,
 } from "lucide-react"
 import AppLayout from "@/components/layout/AppLayout"
 import { apiFetch } from "@/lib/api"
@@ -117,12 +118,14 @@ function InfoRow({ icon, label, value }: { icon: React.ReactNode; label: string;
 
 export default function LabRequestDetailPage() {
   const params = useParams()
+  const router = useRouter()
   const id = routeParamToString((params as any)?.id)
   const [record, setRecord] = useState<LabRequest | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [feedback, setFeedback] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+  const [processingItemId, setProcessingItemId] = useState<number | "all" | null>(null)
 
   const load = useCallback(async () => {
     if (!id) return
@@ -161,10 +164,38 @@ export default function LabRequestDetailPage() {
     finally { setBusy(false) }
   }
 
+  function isCultureItem(item: RequestItem) {
+    return String(item.exam_method || "").toLowerCase().includes("cultura")
+  }
+
+  async function handleIniciarProcessamento(item?: RequestItem) {
+    if (!record?.id) return
+    setProcessingItemId(item?.id ?? "all")
+    setBusy(true); setError(null); setFeedback(null)
+    try {
+      await apiFetch(`/clinical/labrequest/${record.id}/iniciar-processamento/`, { method: "POST" })
+      if (item && isCultureItem(item)) {
+        router.push("/clinical-laboratory/cultures")
+        return
+      }
+      if (!item && items.some(isCultureItem)) {
+        router.push("/clinical-laboratory/cultures")
+        return
+      }
+      router.push(`/clinical-laboratory/worklists/${record.id}`)
+    } catch (e: any) {
+      setError(e?.message || "Falha ao iniciar processamento.")
+    } finally {
+      setBusy(false)
+      setProcessingItemId(null)
+    }
+  }
+
   const statusKey = (record?.status || "").toLowerCase()
   const statusMeta = STATUS_META[statusKey] ?? { label: record?.status || "—", cls: "bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-slate-300", accent: "bg-slate-400" }
   const items = record?.items ?? []
   const hasValidated = statusKey === "validado"
+  const canStartProcessing = !!record && statusKey === "pendente" && !!record.collected_at
 
   const samples = Array.from(new Set(
     items.flatMap(i => (i.sample_options ?? []).map(s => s.name)).filter(Boolean)
@@ -256,6 +287,13 @@ export default function LabRequestDetailPage() {
                 </Link>
                 {record?.status && (
                   <>
+                    {canStartProcessing && (
+                      <button type="button" onClick={() => handleIniciarProcessamento()} disabled={busy}
+                        className="inline-flex h-7 items-center gap-1.5 rounded-md bg-emerald-600 px-3 text-[11px] font-semibold text-white backdrop-blur-sm transition hover:bg-emerald-700 disabled:opacity-60">
+                        {processingItemId === "all" ? <Loader2 size={11} className="animate-spin" /> : <PlayCircle size={11} />}
+                        Iniciar processamento
+                      </button>
+                    )}
                     {(record.status || "").toLowerCase() === "pendente" && (
                       <button type="button" onClick={handleTransferir} disabled={busy}
                         className="inline-flex h-7 items-center gap-1.5 rounded-md border border-indigo-300/60 bg-indigo-50/80 px-3 text-[11px] font-semibold text-indigo-700 backdrop-blur-sm transition hover:bg-indigo-100 disabled:opacity-60 dark:border-indigo-700/40 dark:bg-indigo-900/30 dark:text-indigo-300">
@@ -361,6 +399,7 @@ export default function LabRequestDetailPage() {
                       <col className="w-[35%]" />
                       <col className="w-[22%]" />
                       <col className="w-[23%]" />
+                      <col className="w-[22%]" />
                     </colgroup>
                     <thead>
                       <tr className="border-b border-[var(--border)] bg-[var(--gray-50)]/60 dark:bg-white/[0.03]">
@@ -368,6 +407,7 @@ export default function LabRequestDetailPage() {
                         <th className="px-3 py-1.5 text-left text-[9px] font-semibold uppercase tracking-wide text-[var(--gray-500)]">Análise</th>
                         <th className="px-3 py-1.5 text-left text-[9px] font-semibold uppercase tracking-wide text-[var(--gray-500)]">Método</th>
                         <th className="px-3 py-1.5 text-left text-[9px] font-semibold uppercase tracking-wide text-[var(--gray-500)]">Amostra / Estado</th>
+                        <th className="px-3 py-1.5 text-right text-[9px] font-semibold uppercase tracking-wide text-[var(--gray-500)]">Ação</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-[var(--border)]">
@@ -395,6 +435,17 @@ export default function LabRequestDetailPage() {
                                   {item.rejection_reason_names.join(", ")}
                                 </p>
                               )}
+                            </td>
+                            <td className="px-3 py-2 text-right">
+                              <button
+                                type="button"
+                                onClick={() => handleIniciarProcessamento(item)}
+                                disabled={!canStartProcessing || busy}
+                                className="inline-flex h-7 items-center gap-1 rounded-md border border-sky-200 bg-sky-50/80 px-2.5 text-[10px] font-semibold text-sky-700 transition hover:bg-sky-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-sky-700/40 dark:bg-sky-900/20 dark:text-sky-300"
+                              >
+                                {processingItemId === item.id ? <Loader2 size={10} className="animate-spin" /> : isCultureItem(item) ? <FlaskConical size={10} /> : <PlayCircle size={10} />}
+                                Iniciar processamento
+                              </button>
                             </td>
                           </tr>
                         )
