@@ -39,6 +39,7 @@ from apps.clinical_laboratory.models import (
     CompetencyAssessment,
     CustomerComplaint,
     LabRiskAssessment,
+    LaboratoryQualityControl,
     ManagementReview,
     BiologicalHazard,
     TransmissionRoute,
@@ -97,6 +98,45 @@ def _related_queryset(obj, related_name, *select_related):
 
 class LabSectorSerializer(serializers.ModelSerializer):
     Meta = _meta(LabSector)
+
+
+class LaboratoryQualityControlSerializer(serializers.ModelSerializer):
+    test_name = serializers.CharField(source="test.name", read_only=True)
+    test_code = serializers.CharField(source="test.code", read_only=True)
+    field_name = serializers.CharField(source="test_field.name", read_only=True)
+    decision_display = serializers.CharField(source="get_decision_display", read_only=True)
+    status_display = serializers.CharField(source="get_status_display", read_only=True)
+    performed_by_name = serializers.SerializerMethodField()
+    reviewed_by_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = LaboratoryQualityControl
+        fields = "__all__"
+        read_only_fields = CORE_READ_ONLY_FIELDS + [
+            "test_name",
+            "test_code",
+            "field_name",
+            "decision",
+            "decision_display",
+            "status_display",
+            "approved_for_use",
+            "corrective_action_required",
+            "deviation",
+            "performed_by_name",
+            "reviewed_by_name",
+        ]
+
+    def _user_name(self, user):
+        if not user:
+            return ""
+        full = (user.get_full_name() or "").strip() if hasattr(user, "get_full_name") else ""
+        return full or getattr(user, "username", "") or ""
+
+    def get_performed_by_name(self, obj):
+        return self._user_name(obj.performed_by)
+
+    def get_reviewed_by_name(self, obj):
+        return self._user_name(obj.reviewed_by)
 
 
 class LabContainerTypeSerializer(serializers.ModelSerializer):

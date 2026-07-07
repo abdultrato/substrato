@@ -20,6 +20,173 @@ from core.models.base import NoNameCoreModel
 USER = settings.AUTH_USER_MODEL
 
 
+class LaboratoryQualityControl(NoNameCoreModel):
+    """Execução de controlo de qualidade interno/externo para um exame."""
+
+    prefix = "LQC"
+
+    class ControlType(models.TextChoices):
+        INTERNAL = "INTERNO", "Interno"
+        EXTERNAL = "EXTERNO", "Externo"
+        PROFICIENCY = "ENSAIO_PROFICIENCIA", "Ensaio de proficiência"
+        CALIBRATION = "CALIBRACAO", "Calibração/verificação"
+
+    class ResultMode(models.TextChoices):
+        NUMERIC = "NUMERICO", "Numérico"
+        QUALITATIVE = "QUALITATIVO", "Qualitativo"
+
+    class MaterialLevel(models.TextChoices):
+        LOW = "BAIXO", "Baixo"
+        NORMAL = "NORMAL", "Normal"
+        HIGH = "ALTO", "Alto"
+        POSITIVE = "POSITIVO", "Positivo"
+        NEGATIVE = "NEGATIVO", "Negativo"
+        MULTILEVEL = "MULTINIVEL", "Multinível"
+
+    class Decision(models.TextChoices):
+        APPROVED = "APROVADO", "Aprovado para uso"
+        REJECTED = "REJEITADO", "Rejeitado"
+        REVIEW = "REVISAO", "Requer revisão"
+        INCOMPLETE = "INCOMPLETO", "Incompleto"
+
+    class Status(models.TextChoices):
+        DRAFT = "RASCUNHO", "Rascunho"
+        EVALUATED = "AVALIADO", "Avaliado"
+        REVIEWED = "REVISTO", "Revisto"
+        BLOCKED = "BLOQUEADO", "Bloqueado"
+
+    test = models.ForeignKey("laboratorio.LabTest", db_column="test_id", verbose_name="Exame",
+                             on_delete=models.PROTECT, related_name="quality_controls")
+    test_field = models.ForeignKey("laboratorio.LabTestField", db_column="test_field_id",
+                                   verbose_name="Analito/campo", on_delete=models.SET_NULL,
+                                   related_name="quality_controls", null=True, blank=True)
+    result = models.ForeignKey("laboratorio.LabResult", db_column="result_id", verbose_name="Resultado associado",
+                               on_delete=models.SET_NULL, related_name="quality_controls", null=True, blank=True)
+    control_type = models.CharField("Tipo de controlo", db_column="control_type", max_length=20,
+                                    choices=ControlType.choices, default=ControlType.INTERNAL, db_index=True)
+    result_mode = models.CharField("Modo de resultado", db_column="result_mode", max_length=12,
+                                   choices=ResultMode.choices, default=ResultMode.NUMERIC)
+    material_name = models.CharField("Material de controlo", db_column="material_name", max_length=160,
+                                     blank=True, default="")
+    material_lot = models.CharField("Lote do material", db_column="material_lot", max_length=80,
+                                    blank=True, default="")
+    material_level = models.CharField("Nível do controlo", db_column="material_level", max_length=12,
+                                      choices=MaterialLevel.choices, default=MaterialLevel.NORMAL)
+    manufacturer = models.CharField("Fabricante", db_column="manufacturer", max_length=120, blank=True, default="")
+    expiry_date = models.DateField("Validade do material", db_column="expiry_date", null=True, blank=True)
+    method = models.CharField("Método", db_column="method", max_length=120, blank=True, default="")
+    equipment = models.CharField("Equipamento", db_column="equipment", max_length=120, blank=True, default="")
+    sop_reference = models.CharField("POP/Procedimento", db_column="sop_reference", max_length=120,
+                                     blank=True, default="")
+    iso_clause = models.CharField("Cláusula ISO/SGQ", db_column="iso_clause", max_length=80,
+                                  blank=True, default="ISO 9001:2015 8.5.1/9.1")
+    acceptance_criteria = models.TextField("Critério de aceitação", db_column="acceptance_criteria",
+                                           blank=True, default="")
+    expected_result = models.CharField("Resultado esperado", db_column="expected_result", max_length=255)
+    observed_result = models.CharField("Resultado obtido", db_column="observed_result", max_length=255)
+    expected_numeric = models.DecimalField("Valor esperado", db_column="expected_numeric", max_digits=18,
+                                           decimal_places=4, null=True, blank=True)
+    observed_numeric = models.DecimalField("Valor obtido", db_column="observed_numeric", max_digits=18,
+                                           decimal_places=4, null=True, blank=True)
+    expected_min = models.DecimalField("Mínimo aceitável", db_column="expected_min", max_digits=18,
+                                       decimal_places=4, null=True, blank=True)
+    expected_max = models.DecimalField("Máximo aceitável", db_column="expected_max", max_digits=18,
+                                       decimal_places=4, null=True, blank=True)
+    tolerance = models.DecimalField("Tolerância absoluta", db_column="tolerance", max_digits=18,
+                                    decimal_places=4, null=True, blank=True)
+    deviation = models.DecimalField("Desvio", db_column="deviation", max_digits=18,
+                                    decimal_places=4, null=True, blank=True)
+    unit = models.CharField("Unidade", db_column="unit", max_length=30, blank=True, default="")
+    measurement_uncertainty = models.CharField("Incerteza de medição", db_column="measurement_uncertainty",
+                                               max_length=80, blank=True, default="")
+    run_at = models.DateTimeField("Executado em", db_column="run_at", default=timezone.now, db_index=True)
+    performed_by = models.ForeignKey(USER, db_column="performed_by_id", verbose_name="Executado por",
+                                     on_delete=models.PROTECT, related_name="+", null=True, blank=True)
+    reviewed_by = models.ForeignKey(USER, db_column="reviewed_by_id", verbose_name="Revisto por",
+                                    on_delete=models.PROTECT, related_name="+", null=True, blank=True)
+    reviewed_at = models.DateTimeField("Revisto em", db_column="reviewed_at", null=True, blank=True)
+    decision = models.CharField("Conclusão automática", db_column="decision", max_length=12,
+                                choices=Decision.choices, default=Decision.INCOMPLETE, db_index=True)
+    status = models.CharField("Estado", db_column="status", max_length=10,
+                              choices=Status.choices, default=Status.DRAFT, db_index=True)
+    approved_for_use = models.BooleanField("Pode usar o teste", db_column="approved_for_use", default=False)
+    corrective_action_required = models.BooleanField("Requer ação corretiva", db_column="corrective_action_required",
+                                                    default=False)
+    root_cause = models.TextField("Causa provável", db_column="root_cause", blank=True, default="")
+    corrective_action = models.TextField("Ação corretiva/preventiva", db_column="corrective_action",
+                                         blank=True, default="")
+    traceability_notes = models.TextField("Rastreabilidade/evidências", db_column="traceability_notes",
+                                          blank=True, default="")
+    conclusion_notes = models.TextField("Notas de conclusão", db_column="conclusion_notes", blank=True, default="")
+    nonconformity = models.ForeignKey("laboratorio.Nonconformity", db_column="nonconformity_id",
+                                      verbose_name="Não conformidade", on_delete=models.SET_NULL,
+                                      related_name="quality_controls", null=True, blank=True)
+
+    class Meta:
+        db_table = "laboratorio_controle_qualidade"
+        verbose_name = "Controlo de qualidade laboratorial"
+        verbose_name_plural = "Controlos de qualidade laboratoriais"
+        ordering = ["-run_at"]
+        indexes = [
+            models.Index(fields=["tenant", "test", "decision"]),
+            models.Index(fields=["tenant", "status", "run_at"]),
+        ]
+
+    @staticmethod
+    def _decimal(value):
+        if value in (None, ""):
+            return None
+        try:
+            return Decimal(str(value).strip().replace(",", "."))
+        except Exception:
+            return None
+
+    @staticmethod
+    def _norm(value):
+        return str(value or "").strip().casefold()
+
+    def evaluate(self):
+        if self.result_mode == self.ResultMode.NUMERIC:
+            expected = self.expected_numeric if self.expected_numeric is not None else self._decimal(self.expected_result)
+            observed = self.observed_numeric if self.observed_numeric is not None else self._decimal(self.observed_result)
+            self.expected_numeric = expected
+            self.observed_numeric = observed
+            if observed is None:
+                self.decision = self.Decision.INCOMPLETE
+                self.approved_for_use = False
+                return
+            if expected is not None:
+                self.deviation = abs(observed - expected)
+            if self.expected_min is not None and observed < self.expected_min:
+                self.decision = self.Decision.REJECTED
+            elif self.expected_max is not None and observed > self.expected_max:
+                self.decision = self.Decision.REJECTED
+            elif self.tolerance is not None and expected is not None and abs(observed - expected) > self.tolerance:
+                self.decision = self.Decision.REJECTED
+            elif self.expected_min is None and self.expected_max is None and self.tolerance is None and expected is None:
+                self.decision = self.Decision.REVIEW
+            else:
+                self.decision = self.Decision.APPROVED
+        else:
+            if not self.expected_result or not self.observed_result:
+                self.decision = self.Decision.INCOMPLETE
+            elif self._norm(self.expected_result) == self._norm(self.observed_result):
+                self.decision = self.Decision.APPROVED
+            else:
+                self.decision = self.Decision.REJECTED
+
+        self.approved_for_use = self.decision == self.Decision.APPROVED
+        self.corrective_action_required = self.decision == self.Decision.REJECTED
+        self.status = self.Status.EVALUATED if self.status == self.Status.DRAFT else self.status
+
+    def save(self, *args, **kwargs):
+        self.evaluate()
+        super().save(*args, **kwargs)
+
+    def __str__(self) -> str:
+        return f"{self.test_id}: {self.get_decision_display()}"
+
+
 class QualityDocument(NoNameCoreModel):
     """Documento controlado do SGQ (manual, SOP, política, formulário, ...)."""
 

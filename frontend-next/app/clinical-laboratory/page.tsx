@@ -11,6 +11,7 @@ import {
   FileCheck2,
   FileText,
   FlaskConical,
+  Gauge,
   ListChecks,
   Microscope,
   PackageCheck,
@@ -78,6 +79,7 @@ const PHASES: PhaseConfig[] = [
     iconClass: "bg-teal-500/15 text-teal-600",
     items: [
       { href: "/clinical-laboratory/worklists",   label: "Listas de trabalho", desc: "Trabalho por sector e equipamento", icon: Beaker },
+      { href: "/clinical-laboratory/quality-control", label: "Controlo de qualidade", desc: "Resultado esperado vs obtido e validade do exame", icon: Gauge },
       { href: "/clinical-laboratory/validations", label: "Validações",          desc: "Validação técnica e clínica", icon: FileCheck2 },
     ],
   },

@@ -1358,6 +1358,7 @@ from .models_quality import (  # noqa: E402,F401
     CustomerComplaint,
     InternalAudit,
     LabRiskAssessment,
+    LaboratoryQualityControl,
     ManagementReview,
     Nonconformity,
     QualityDocument,

@@ -57,6 +57,7 @@ from apps.clinical_laboratory.models import (
     CompetencyAssessment,
     CustomerComplaint,
     LabRiskAssessment,
+    LaboratoryQualityControl,
     ManagementReview,
     BiologicalHazard,
     TransmissionRoute,
@@ -108,6 +109,7 @@ from .serializers import (
     LabResultSerializer,
     LabSampleSerializer,
     LabSectorSerializer,
+    LaboratoryQualityControlSerializer,
     LabTestFieldSerializer,
     LabTestPanelSerializer,
     LabTestSerializer,
@@ -149,6 +151,21 @@ class LabSectorViewSet(_CatalogActivationMixin, ValidatedSearchOrderingMixin, Te
     filterset_fields = ["active"]
     search_fields = ["custom_id", "code", "name"]
     ordering_fields = ["code", "name", "active", "created_at"]
+
+
+class LaboratoryQualityControlViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
+    queryset = LaboratoryQualityControl.objects.select_related(
+        "test",
+        "test_field",
+        "result",
+        "performed_by",
+        "reviewed_by",
+        "nonconformity",
+    ).all()
+    serializer_class = LaboratoryQualityControlSerializer
+    filterset_fields = ["test", "test_field", "control_type", "result_mode", "decision", "status", "approved_for_use"]
+    search_fields = ["custom_id", "test__name", "test__code", "material_name", "material_lot", "equipment"]
+    ordering_fields = ["run_at", "decision", "status", "created_at"]
 
 
 class LabTestViewSet(_CatalogActivationMixin, ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
@@ -701,6 +718,7 @@ class BiosafetyInspectionViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
 VIEWSET_MAP = {
     "container_type": LabContainerTypeViewSet,
     "sector": LabSectorViewSet,
+    "quality_control": LaboratoryQualityControlViewSet,
     "test": LabTestViewSet,
     "test_field": LabTestFieldViewSet,
     "panel": LabTestPanelViewSet,

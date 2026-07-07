@@ -23,6 +23,7 @@ from apps.clinical_laboratory.models import (
     AntibioticSusceptibility,
     LabOrder,
     LabOrderItem,
+    LaboratoryQualityControl,
     LabReport,
     LabResult,
     LabSample,
@@ -67,6 +68,41 @@ def test_lab_catalog_preserva_caixa_exata_em_exames_e_campos():
 
     assert test.name == "PCR HIV"
     assert field.name == "HBsAg"
+
+
+@pytest.mark.django_db
+def test_controle_qualidade_aprova_resultado_numerico_dentro_da_tolerancia():
+    qc = LaboratoryQualityControl(
+        test=LabTest(name="Glicose", code="GLI-QC"),
+        result_mode=LaboratoryQualityControl.ResultMode.NUMERIC,
+        expected_result="100",
+        observed_result="101",
+        tolerance=Decimal("2.0"),
+        material_name="Soro controlo",
+        material_lot="LQC-001",
+    )
+    qc.evaluate()
+
+    assert qc.decision == LaboratoryQualityControl.Decision.APPROVED
+    assert qc.approved_for_use is True
+    assert qc.corrective_action_required is False
+    assert qc.deviation == Decimal("1")
+
+
+@pytest.mark.django_db
+def test_controle_qualidade_rejeita_resultado_qualitativo_divergente():
+    qc = LaboratoryQualityControl(
+        test=LabTest(name="HIV rápido", code="HIV-QC"),
+        result_mode=LaboratoryQualityControl.ResultMode.QUALITATIVE,
+        expected_result="Negativo",
+        observed_result="Positivo",
+        material_name="Controlo negativo",
+    )
+    qc.evaluate()
+
+    assert qc.decision == LaboratoryQualityControl.Decision.REJECTED
+    assert qc.approved_for_use is False
+    assert qc.corrective_action_required is True
 
 
 @pytest.mark.django_db
