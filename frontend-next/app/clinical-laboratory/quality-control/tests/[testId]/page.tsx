@@ -321,7 +321,7 @@ export default function QualityControlTestDetailPage() {
             const latestRecord = group.latest;
             const tone = accent[index % accent.length];
             return (
-              <article key={group.key} className="relative min-h-[136px] rounded-lg border border-white/20 bg-white/45 p-2.5 pl-3.5 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.05]">
+              <article key={group.key} className="relative min-h-[168px] rounded-lg border border-white/20 bg-white/45 p-2.5 pl-3.5 shadow-sm backdrop-blur-sm transition hover:-translate-y-px hover:border-white/40 hover:bg-white/60 hover:shadow-md dark:border-white/10 dark:bg-white/[0.05] dark:hover:bg-white/[0.08]">
                 <span className={`absolute left-0 top-0 h-full w-1 rounded-l-lg ${tone.bar}`} />
                 <div className="flex items-start justify-between gap-2">
                   <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-gradient-to-br ${tone.icon} text-white shadow-md ${tone.glow}`}>
@@ -335,7 +335,7 @@ export default function QualityControlTestDetailPage() {
                 </div>
                 <div className="mt-2">
                   <h2 className="truncate text-xs font-semibold text-foreground">{group.code ? `${group.code} - ` : ""}{group.name}</h2>
-                  <p className="truncate text-[10px] text-muted-foreground">{group.records.length} registo(s) · {group.unit || latestRecord?.unit || "sem unidade"}</p>
+                  <p className="truncate text-[10px] text-muted-foreground">{group.records.length} registo(s) · unidade {group.unit || latestRecord?.unit || "não definida"}</p>
                 </div>
                 <div className="mt-2 grid grid-cols-3 gap-1.5">
                   <span className="rounded-md bg-background/55 px-1.5 py-1">
@@ -352,10 +352,24 @@ export default function QualityControlTestDetailPage() {
                   </span>
                 </div>
                 {latestRecord ? (
-                  <div className="mt-2 space-y-0.5 text-[9px] text-muted-foreground">
-                    <p className="truncate font-mono">{latestRecord.custom_id || `#${latestRecord.id}`} · {fmtDate(latestRecord.run_at)}</p>
-                    <p className="truncate">E {latestRecord.expected_result}{latestRecord.unit ? ` ${latestRecord.unit}` : ""} · O {latestRecord.observed_result}{latestRecord.unit ? ` ${latestRecord.unit}` : ""}</p>
-                    <p className="truncate">{latestRecord.material_lot ? `Lote ${latestRecord.material_lot}` : "Sem lote"}{latestRecord.corrective_action_required ? " · CAPA" : ""}</p>
+                  <div className="mt-2 rounded-md border border-white/30 bg-background/45 p-1.5 dark:border-white/10">
+                    <div className="flex items-center justify-between gap-2 text-[9px] text-muted-foreground">
+                      <span className="truncate font-mono">{latestRecord.custom_id || `#${latestRecord.id}`}</span>
+                      <span className="shrink-0">{fmtDate(latestRecord.run_at)}</span>
+                    </div>
+                    <div className="mt-1 grid grid-cols-2 gap-1.5">
+                      <span className="rounded bg-white/50 px-1.5 py-1 dark:bg-white/[0.06]">
+                        <span className="block text-[8px] font-semibold uppercase text-muted-foreground">Esperado</span>
+                        <strong className="block truncate text-[11px] leading-tight text-foreground">{latestRecord.expected_result}{latestRecord.unit ? ` ${latestRecord.unit}` : ""}</strong>
+                      </span>
+                      <span className="rounded bg-white/50 px-1.5 py-1 dark:bg-white/[0.06]">
+                        <span className="block text-[8px] font-semibold uppercase text-muted-foreground">Obtido</span>
+                        <strong className="block truncate text-[11px] leading-tight text-foreground">{latestRecord.observed_result}{latestRecord.unit ? ` ${latestRecord.unit}` : ""}</strong>
+                      </span>
+                    </div>
+                    <p className="mt-1 truncate text-[9px] text-muted-foreground">
+                      {latestRecord.material_lot ? `Lote ${latestRecord.material_lot}` : "Sem lote informado"}{latestRecord.corrective_action_required ? " · CAPA requerida" : ""}
+                    </p>
                   </div>
                 ) : null}
               </article>
