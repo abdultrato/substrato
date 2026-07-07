@@ -183,7 +183,7 @@ function FormSection({
   className?: string;
 }) {
   return (
-    <section className={`relative overflow-visible rounded-lg border border-white/20 bg-white/40 px-3 py-2.5 pl-4 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04] ${className}`}>
+    <section className={`relative z-20 overflow-visible rounded-lg border border-white/20 bg-white/40 px-3 py-2.5 pl-4 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04] ${className}`}>
       <span className={`absolute left-0 top-0 h-full w-1 ${accentClass}`} />
       <div className="mb-2 flex items-center gap-1.5 border-b border-border/50 pb-1.5">
         <Icon size={13} className="text-foreground/70" />
