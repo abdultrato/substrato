@@ -298,23 +298,32 @@ export default function ClinicalLaboratoryCulturesCreatePage() {
   return (
     <AppLayout requiredGroups={requiredGroupsForResourceGroup("clinical_laboratory")}>
       <form onSubmit={handleSubmit} noValidate className="mx-auto w-full max-w-5xl space-y-2">
-        <div className="relative overflow-hidden rounded-xl border border-white/20 bg-white/30 p-2.5 pl-4 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/5">
+        <div className="relative overflow-hidden rounded-xl border border-white/25 bg-gradient-to-br from-white/35 via-white/20 to-teal-100/25 p-2.5 pl-4 shadow-md shadow-slate-900/5 backdrop-blur-xl dark:border-white/10 dark:from-white/[0.07] dark:via-white/[0.03] dark:to-teal-950/20">
           <span className="absolute inset-y-0 left-0 w-1 rounded-l-xl bg-gradient-to-b from-teal-500 to-cyan-600" />
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div className="flex items-center gap-2">
-              <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-teal-600 to-cyan-600 text-white shadow-md shadow-teal-500/25">
-                <Microscope size={16} />
+          <div className="pointer-events-none absolute inset-y-0 right-0 w-32 bg-gradient-to-l from-teal-200/25 to-transparent dark:from-teal-900/10" />
+          <div className="relative flex flex-wrap items-center justify-between gap-2">
+            <div className="flex min-w-0 items-center gap-2.5">
+              <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-teal-600 to-cyan-600 text-white shadow-lg shadow-teal-500/25">
+                <Microscope size={18} />
               </span>
-              <div>
-                <h1 className="text-lg font-semibold text-foreground">Nova cultura microbiológica</h1>
-                <p className="text-xs text-muted-foreground">Registo da montagem, incubação e primeira leitura da cultura.</p>
+              <div className="min-w-0">
+                <div className="mb-0.5 flex flex-wrap items-center gap-1.5">
+                  <span className="inline-flex rounded-full border border-teal-200/70 bg-teal-50/70 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-teal-700 backdrop-blur-sm dark:border-teal-800/40 dark:bg-teal-900/20 dark:text-teal-300">
+                    Microbiologia
+                  </span>
+                  <span className="inline-flex rounded-full border border-cyan-200/70 bg-cyan-50/70 px-2 py-0.5 text-[10px] font-medium text-cyan-700 backdrop-blur-sm dark:border-cyan-800/40 dark:bg-cyan-900/20 dark:text-cyan-300">
+                    Cultura
+                  </span>
+                </div>
+                <h1 className="truncate text-lg font-semibold leading-tight text-foreground">Nova cultura microbiológica</h1>
+                <p className="truncate text-xs text-muted-foreground">Montagem, incubação e primeira leitura da cultura.</p>
               </div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex shrink-0 items-center gap-1.5">
               <button
                 type="button"
                 onClick={() => router.push(BASE_PATH)}
-                className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-white/40 bg-white/25 px-2.5 text-xs font-medium text-foreground shadow-sm backdrop-blur-sm transition hover:bg-white/45 dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10"
+                className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-white/40 bg-white/35 px-2.5 text-xs font-medium text-foreground shadow-sm backdrop-blur-sm transition hover:bg-white/55 dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10"
               >
                 <ArrowLeft size={15} />
                 Voltar
@@ -322,7 +331,7 @@ export default function ClinicalLaboratoryCulturesCreatePage() {
               <button
                 type="submit"
                 disabled={saving}
-                className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-gradient-to-r from-teal-600 to-cyan-600 px-3 text-xs font-semibold text-white shadow-md shadow-teal-500/25 transition hover:from-teal-700 hover:to-cyan-700 disabled:opacity-60"
+                className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-gradient-to-r from-teal-600 to-cyan-600 px-3 text-xs font-semibold text-white shadow-lg shadow-teal-500/25 transition hover:from-teal-700 hover:to-cyan-700 disabled:opacity-60"
               >
                 {saving ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />}
                 Criar cultura
