@@ -32,6 +32,8 @@ import { requiredGroupsForResourceGroup } from "@/lib/resourcesAccess";
 
 const ENDPOINT = "/clinical_laboratory/quality_control/";
 const PAGE_SIZE = 24;
+const ASSAY_GROUP_MIN_WINDOW_MS = 3000;
+const ASSAY_GROUP_MAX_GAP_MS = 5000;
 
 type LabTest = {
   id: number;
@@ -111,6 +113,9 @@ type QualityControlAssayGroup = {
   key: string;
   records: QualityControl[];
   primary: QualityControl;
+  groupKey: string;
+  runFrom?: string;
+  runTo?: string;
   total: number;
   approved: number;
   rejected: number;
@@ -288,10 +293,15 @@ function runSecond(value?: string | null) {
   return date.toISOString();
 }
 
-function assayGroupKey(record: QualityControl) {
+function runTime(value?: string | null) {
+  if (!value) return null;
+  const time = new Date(value).getTime();
+  return Number.isNaN(time) ? null : time;
+}
+
+function assayBaseKey(record: QualityControl) {
   return [
     record.test,
-    runSecond(record.run_at),
     record.material_lot || "",
     record.material_name || "",
     record.control_type || "",
@@ -301,9 +311,40 @@ function assayGroupKey(record: QualityControl) {
   ].join("|");
 }
 
-function assayHref(record: QualityControl) {
+function updateGroupWindow(group: QualityControlAssayGroup) {
+  const times = group.records.map((record) => runTime(record.run_at)).filter((value): value is number => value !== null);
+  if (!times.length) {
+    group.runFrom = undefined;
+    group.runTo = undefined;
+    return;
+  }
+  let from = Math.min(...times);
+  let to = Math.max(...times);
+  const span = to - from;
+  if (span < ASSAY_GROUP_MIN_WINDOW_MS) {
+    const padding = Math.ceil((ASSAY_GROUP_MIN_WINDOW_MS - span) / 2);
+    from -= padding;
+    to += padding;
+  }
+  group.runFrom = new Date(from).toISOString();
+  group.runTo = new Date(to).toISOString();
+}
+
+function isWithinAssayWindow(record: QualityControl, group: QualityControlAssayGroup) {
+  const recordTime = runTime(record.run_at);
+  if (recordTime === null) return !record.run_at && !group.runFrom && !group.runTo;
+  const groupTimes = group.records.map((item) => runTime(item.run_at)).filter((value): value is number => value !== null);
+  const from = groupTimes.length ? Math.min(...groupTimes) : recordTime;
+  const to = groupTimes.length ? Math.max(...groupTimes) : recordTime;
+  return recordTime >= from - ASSAY_GROUP_MAX_GAP_MS && recordTime <= to + ASSAY_GROUP_MAX_GAP_MS;
+}
+
+function assayHref(group: QualityControlAssayGroup) {
+  const record = group.primary;
   const params = new URLSearchParams();
-  if (record.run_at) params.set("run_second", runSecond(record.run_at));
+  if (group.runFrom) params.set("run_from", group.runFrom);
+  if (group.runTo) params.set("run_to", group.runTo);
+  if (!group.runFrom && record.run_at) params.set("run_second", runSecond(record.run_at));
   if (record.material_lot) params.set("material_lot", record.material_lot);
   if (record.material_name) params.set("material_name", record.material_name);
   if (record.control_type) params.set("control_type", record.control_type);
@@ -479,16 +520,17 @@ export default function LaboratoryQualityControlPage() {
 
   const assayGroups = useMemo<QualityControlAssayGroup[]>(() => {
     const orderedGroups: QualityControlAssayGroup[] = [];
-    const groups = new Map<string, QualityControlAssayGroup>();
+    const orderedRecords = [...records].sort((a, b) => (runTime(a.run_at) ?? 0) - (runTime(b.run_at) ?? 0));
 
-    records.forEach((record) => {
-      const key = assayGroupKey(record);
+    orderedRecords.forEach((record) => {
+      const baseKey = assayBaseKey(record);
       const deviation = numericDeviation(record.deviation);
-      const existing = groups.get(key);
+      const existing = orderedGroups.find((group) => group.groupKey === baseKey && isWithinAssayWindow(record, group));
 
       if (!existing) {
         const group: QualityControlAssayGroup = {
-          key,
+          key: `${baseKey}|${record.run_at || record.id}`,
+          groupKey: baseKey,
           records: [record],
           primary: record,
           total: 1,
@@ -500,12 +542,13 @@ export default function LaboratoryQualityControlPage() {
           correctiveActionRequired: record.corrective_action_required,
           maxDeviation: deviation,
         };
-        groups.set(key, group);
+        updateGroupWindow(group);
         orderedGroups.push(group);
         return;
       }
 
       existing.records.push(record);
+      updateGroupWindow(existing);
       existing.total += 1;
       existing.approved += record.decision === "APROVADO" ? 1 : 0;
       existing.rejected += record.decision === "REJEITADO" ? 1 : 0;
@@ -519,7 +562,7 @@ export default function LaboratoryQualityControlPage() {
       }
     });
 
-    return orderedGroups;
+    return orderedGroups.sort((a, b) => (runTime(newestRunAt(b.records)) ?? 0) - (runTime(newestRunAt(a.records)) ?? 0));
   }, [records]);
 
   const materialNameOptions = useMemo<SearchableOption[]>(() => {
@@ -1203,7 +1246,7 @@ export default function LaboratoryQualityControlPage() {
             <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5">
               {assayGroups.map((group, index) => {
                 const record = group.primary;
-                const detailHref = assayHref(record);
+                const detailHref = assayHref(group);
                 const aggregateDecision: QualityControl["decision"] =
                   group.rejected > 0 ? "REJEITADO" : group.review > 0 ? "REVISAO" : group.incomplete > 0 ? "INCOMPLETO" : "APROVADO";
                 const testTitle = `${record.test_code ? `${record.test_code} - ` : ""}${record.test_name || "Exame"}`;

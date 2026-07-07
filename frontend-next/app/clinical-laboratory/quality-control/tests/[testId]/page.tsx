@@ -119,9 +119,26 @@ function runSecond(value?: string | null) {
   return date.toISOString();
 }
 
+function runTime(value?: string | null) {
+  if (!value) return null;
+  const time = new Date(value).getTime();
+  return Number.isNaN(time) ? null : time;
+}
+
 function matchesParam(recordValue: string | undefined, paramValue: string | null) {
   if (!paramValue) return true;
   return (recordValue || "") === paramValue;
+}
+
+function matchesRunWindow(record: QualityControl, searchParams: Pick<URLSearchParams, "get">) {
+  const runFrom = runTime(searchParams.get("run_from"));
+  const runTo = runTime(searchParams.get("run_to"));
+  if (runFrom !== null || runTo !== null) {
+    const recordTime = runTime(record.run_at);
+    if (recordTime === null) return false;
+    return recordTime >= (runFrom ?? recordTime) && recordTime <= (runTo ?? recordTime);
+  }
+  return matchesParam(runSecond(record.run_at), searchParams.get("run_second"));
 }
 
 export default function QualityControlTestDetailPage() {
@@ -163,7 +180,7 @@ export default function QualityControlTestDetailPage() {
   const assayRecords = useMemo(
     () =>
       records.filter((record) =>
-        matchesParam(runSecond(record.run_at), searchParams.get("run_second")) &&
+        matchesRunWindow(record, searchParams) &&
         matchesParam(record.material_lot, searchParams.get("material_lot")) &&
         matchesParam(record.material_name, searchParams.get("material_name")) &&
         matchesParam(record.control_type, searchParams.get("control_type")) &&
