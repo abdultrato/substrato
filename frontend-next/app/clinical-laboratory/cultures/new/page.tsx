@@ -168,8 +168,6 @@ function RelationSelect({
 }
 
 function Field({
-  label,
-  required,
   error,
   children,
 }: {
@@ -179,14 +177,10 @@ function Field({
   children: React.ReactNode;
 }) {
   return (
-    <label className="block space-y-1.5">
-      <span className="text-xs font-medium text-muted-foreground">
-        {label}
-        {required && <span className="text-red-500"> *</span>}
-      </span>
+    <div className="space-y-1">
       {children}
       {error && <span className="text-xs text-red-600 dark:text-red-400">{error}</span>}
-    </label>
+    </div>
   );
 }
 
