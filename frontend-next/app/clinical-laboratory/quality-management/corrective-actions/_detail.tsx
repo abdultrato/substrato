@@ -10,7 +10,7 @@ import {
   FileWarning,
   Pencil,
   ShieldCheck,
-  UserRound,
+  User,
   Wrench,
 } from "lucide-react";
 
@@ -175,7 +175,7 @@ export default function CorrectiveActionDetail({ id }: { id: string }) {
             </Card>
           </div>
 
-          <Card icon={UserRound} title="Auditoria" accent="bg-slate-400">
+          <Card icon={User} title="Auditoria" accent="bg-slate-400">
             <Row label="Código" value={record.custom_id || `#${record.id}`} />
             <Row label="ID" value={`#${record.id}`} />
           </Card>
