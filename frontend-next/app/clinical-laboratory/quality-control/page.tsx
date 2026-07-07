@@ -218,7 +218,7 @@ function FormSection({
   className?: string;
 }) {
   return (
-    <section className={`relative z-20 overflow-visible rounded-lg border border-white/20 bg-white/40 px-3 py-2.5 pl-4 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04] ${className}`}>
+    <section className={`relative z-20 overflow-visible rounded-lg border border-white/20 bg-white/40 px-2.5 py-2 pl-3.5 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04] ${className}`}>
       <span className={`absolute left-0 top-0 h-full w-1 ${accentClass}`} />
       <div className="mb-2 flex items-center gap-1.5 border-b border-border/50 pb-1.5">
         <Icon size={13} className="text-foreground/70" />
@@ -510,10 +510,10 @@ export default function LaboratoryQualityControlPage() {
 
   return (
     <AppLayout requiredGroups={requiredGroupsForResourceGroup("clinical_laboratory")}>
-      <div className="space-y-3">
+      <div className="space-y-1.5">
         <section className="relative overflow-hidden rounded-xl border border-teal-200/60 bg-gradient-to-br from-teal-50/85 via-white/70 to-cyan-50/70 shadow-sm backdrop-blur-sm dark:border-teal-800/30 dark:from-teal-950/40 dark:via-slate-900/40 dark:to-cyan-950/20">
           <span className="absolute left-0 top-0 h-full w-1 bg-teal-500" />
-          <div className="px-4 py-3 pl-5">
+          <div className="px-3 py-2 pl-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="flex min-w-0 items-center gap-3">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-teal-500 to-cyan-600 text-white shadow-md shadow-teal-500/20">
@@ -532,7 +532,7 @@ export default function LaboratoryQualityControlPage() {
               </Link>
             </div>
 
-            <div className="mt-3 grid gap-2 sm:grid-cols-4">
+            <div className="mt-2 grid gap-1.5 sm:grid-cols-4">
               {stats.map(({ label, value, icon: Icon }) => (
                 <div key={label} className="rounded-lg border border-white/50 bg-white/45 px-3 py-2 backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.06]">
                   <div className="flex items-center justify-between gap-2">
@@ -544,7 +544,7 @@ export default function LaboratoryQualityControlPage() {
               ))}
             </div>
 
-            <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-white/30 pt-3 dark:border-white/10">
+            <div className="mt-2 flex flex-wrap items-center gap-2 border-t border-white/30 pt-2 dark:border-white/10">
               <div className="relative min-w-[240px] flex-1">
                 <Search size={12} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
                 <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Pesquisar exame, lote, equipamento..." className="w-full rounded-lg border border-white/50 bg-white/55 py-1.5 pl-7 pr-3 text-xs text-foreground outline-none backdrop-blur-sm focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 dark:border-white/10 dark:bg-white/[0.06]" />
@@ -583,9 +583,9 @@ export default function LaboratoryQualityControlPage() {
           </div>
         ) : null}
 
-        <div className="grid gap-3 xl:grid-cols-[minmax(420px,0.9fr)_minmax(0,1.1fr)]">
-          <form onSubmit={submit} className="space-y-2">
-            <section className="rounded-xl border border-white/20 bg-white/30 p-4 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.05]">
+        <div className="grid gap-1.5 xl:grid-cols-[minmax(420px,0.9fr)_minmax(0,1.1fr)]">
+          <form onSubmit={submit} className="space-y-1.5">
+            <section className="rounded-xl border border-white/20 bg-white/30 p-2.5 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.05]">
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <h2 className="text-sm font-bold text-foreground">Nova execução de CQ</h2>
@@ -605,8 +605,8 @@ export default function LaboratoryQualityControlPage() {
               </div>
             </section>
 
-            <div className="grid gap-2">
-              <div className="grid grid-cols-2 gap-2">
+            <div className="grid gap-1.5">
+              <div className="grid grid-cols-2 gap-1.5">
                 <FormSection title="Identificação do exame" icon={FlaskConical} accentClass="bg-sky-500/80">
                   <div className="grid gap-2 md:grid-cols-2">
                     <Field label="Exame" error={errors.test}>
@@ -671,7 +671,7 @@ export default function LaboratoryQualityControlPage() {
                 </FormSection>
               </div>
 
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 gap-1.5">
                 <FormSection title="Material de controlo" icon={TestTube2} accentClass="bg-violet-500/80">
                   <div className="grid gap-2 md:grid-cols-2">
                     <Field label="Material de controlo">
@@ -776,15 +776,15 @@ export default function LaboratoryQualityControlPage() {
             </div>
           </form>
 
-          <section className="space-y-3">
-            <div className="rounded-xl border border-white/20 bg-white/30 p-3 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.05]">
+          <section className="space-y-1.5">
+            <div className="rounded-xl border border-white/20 bg-white/30 p-2 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.05]">
               <h2 className="text-sm font-bold text-foreground">Registos de controlo</h2>
               <p className="text-[11px] text-muted-foreground">Filtrados pelos controles do cabeçalho.</p>
             </div>
 
-            <div className="grid gap-2">
+            <div className="grid gap-1.5">
               {records.map((record) => (
-                <article key={record.id} className="rounded-xl border border-white/20 bg-white/35 p-3 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.05]">
+                <article key={record.id} className="rounded-xl border border-white/20 bg-white/35 p-2 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.05]">
                   <div className="flex flex-wrap items-start justify-between gap-2">
                     <div className="min-w-0">
                       <p className="text-[10px] font-mono text-muted-foreground">{record.custom_id || `#${record.id}`}</p>
