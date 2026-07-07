@@ -264,9 +264,18 @@ export default function QualityControlTestDetailPage() {
                   <p className="truncate text-[10px] text-muted-foreground">{group.records.length} registo(s) · {group.unit || latestRecord?.unit || "sem unidade"}</p>
                 </div>
                 <div className="mt-2 grid grid-cols-3 gap-1.5">
-                  <span className="rounded-md bg-background/55 px-1.5 py-1 text-[10px] font-semibold text-foreground">OK {group.approved}</span>
-                  <span className="rounded-md bg-background/55 px-1.5 py-1 text-[10px] font-semibold text-foreground">RJ {group.rejected}</span>
-                  <span className="rounded-md bg-background/55 px-1.5 py-1 text-[10px] font-semibold text-foreground">D {group.maxDeviation === null ? "-" : fmtRef(String(group.maxDeviation))}</span>
+                  <span className="rounded-md bg-background/55 px-1.5 py-1">
+                    <span className="block truncate text-[8px] font-semibold uppercase text-muted-foreground">Aprovados</span>
+                    <strong className="block text-[11px] leading-tight text-foreground">{group.approved}</strong>
+                  </span>
+                  <span className="rounded-md bg-background/55 px-1.5 py-1">
+                    <span className="block truncate text-[8px] font-semibold uppercase text-muted-foreground">Rejeitados</span>
+                    <strong className="block text-[11px] leading-tight text-foreground">{group.rejected}</strong>
+                  </span>
+                  <span className="rounded-md bg-background/55 px-1.5 py-1">
+                    <span className="block truncate text-[8px] font-semibold uppercase text-muted-foreground">Maior desvio</span>
+                    <strong className="block text-[11px] leading-tight text-foreground">{group.maxDeviation === null ? "-" : fmtRef(String(group.maxDeviation))}</strong>
+                  </span>
                 </div>
                 {latestRecord ? (
                   <div className="mt-2 space-y-0.5 text-[9px] text-muted-foreground">
