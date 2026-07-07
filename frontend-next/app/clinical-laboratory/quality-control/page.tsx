@@ -316,6 +316,11 @@ const inputCls =
 const rowInputCls =
   "w-full rounded-md border border-border bg-background/85 px-1.5 py-1 text-[11px] text-foreground outline-none transition focus:border-teal-500 focus:ring-1 focus:ring-teal-500/20";
 
+const headerSelectCls =
+  "h-8 rounded-lg border border-white/50 bg-white/55 pl-2.5 pr-7 text-xs text-slate-900 outline-none backdrop-blur-sm focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 dark:border-white/10 dark:bg-slate-950 dark:text-slate-100";
+
+const headerOptionCls = "bg-white text-slate-900 dark:bg-slate-950 dark:text-slate-100";
+
 const decisionDotClass: Record<QualityControl["decision"], string> = {
   APROVADO: "bg-emerald-500",
   REJEITADO: "bg-red-500",
@@ -839,19 +844,19 @@ export default function LaboratoryQualityControlPage() {
                 <Search size={12} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
                 <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Pesquisar exame, lote, equipamento..." className="w-full rounded-lg border border-white/50 bg-white/55 py-1.5 pl-7 pr-3 text-xs text-foreground outline-none backdrop-blur-sm focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 dark:border-white/10 dark:bg-white/[0.06]" />
               </div>
-              <select value={decision} onChange={(event) => setDecision(event.target.value)} className="h-8 rounded-lg border border-white/50 bg-white/55 pl-2.5 pr-7 text-xs text-foreground outline-none backdrop-blur-sm focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 dark:border-white/10 dark:bg-white/[0.06]">
-                <option value="">Todas as conclusões</option>
-                <option value="APROVADO">Aprovado</option>
-                <option value="REJEITADO">Rejeitado</option>
-                <option value="REVISAO">Revisão</option>
-                <option value="INCOMPLETO">Incompleto</option>
+              <select value={decision} onChange={(event) => setDecision(event.target.value)} className={headerSelectCls}>
+                <option className={headerOptionCls} value="">Todas as conclusões</option>
+                <option className={headerOptionCls} value="APROVADO">Aprovado</option>
+                <option className={headerOptionCls} value="REJEITADO">Rejeitado</option>
+                <option className={headerOptionCls} value="REVISAO">Revisão</option>
+                <option className={headerOptionCls} value="INCOMPLETO">Incompleto</option>
               </select>
-              <select value={controlType} onChange={(event) => setControlType(event.target.value)} className="h-8 rounded-lg border border-white/50 bg-white/55 pl-2.5 pr-7 text-xs text-foreground outline-none backdrop-blur-sm focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 dark:border-white/10 dark:bg-white/[0.06]">
-                <option value="">Todos os tipos</option>
-                <option value="INTERNO">Interno</option>
-                <option value="EXTERNO">Externo</option>
-                <option value="ENSAIO_PROFICIENCIA">Ensaio de proficiência</option>
-                <option value="CALIBRACAO">Calibração/verificação</option>
+              <select value={controlType} onChange={(event) => setControlType(event.target.value)} className={headerSelectCls}>
+                <option className={headerOptionCls} value="">Todos os tipos</option>
+                <option className={headerOptionCls} value="INTERNO">Interno</option>
+                <option className={headerOptionCls} value="EXTERNO">Externo</option>
+                <option className={headerOptionCls} value="ENSAIO_PROFICIENCIA">Ensaio de proficiência</option>
+                <option className={headerOptionCls} value="CALIBRACAO">Calibração/verificação</option>
               </select>
               {loading ? <Loader2 size={14} className="animate-spin text-muted-foreground" /> : null}
             </div>
