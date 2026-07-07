@@ -61,6 +61,34 @@ function shortText(value: string | null | undefined, fallback = "Ação corretiv
   return text || fallback;
 }
 
+function unwrapRelationRow(row: Record<string, any>) {
+  if (row?.data && typeof row.data === "object" && !Array.isArray(row.data)) return row.data;
+  if (row?.result && typeof row.result === "object" && !Array.isArray(row.result)) return row.result;
+  if (Array.isArray(row?.results) && row.results[0]) return row.results[0];
+  return row;
+}
+
+function userLabel(row: Record<string, any>, fallback: string) {
+  const data = unwrapRelationRow(row);
+  const fullName = [data?.first_name, data?.last_name].filter(Boolean).join(" ").trim();
+  const pieces = [
+    data?.full_name,
+    data?.display_name,
+    data?.name,
+    data?.nome,
+    fullName,
+    data?.username,
+    data?.email,
+    data?.phone,
+  ];
+  return pieces.map((item) => String(item || "").trim()).find(Boolean) || fallback;
+}
+
+function relationLabel(row: Record<string, any>, target: typeof T_RESPONSIBLE, fallback: string) {
+  const data = unwrapRelationRow(row);
+  return pickLabel(data, target) || fallback;
+}
+
 export default function CorrectiveActionsListPage() {
   const [rows, setRows] = useState<CorrectiveAction[]>([]);
   const [total, setTotal] = useState(0);
@@ -130,7 +158,9 @@ export default function CorrectiveActionsListPage() {
       missing.map(async ({ key, endpoint, target }) => {
         try {
           const row = await apiFetch<Record<string, any>>(endpoint);
-          return [key, pickLabel(row, target)] as const;
+          const fallback = key.startsWith("responsible:") ? `Responsável #${key.split(":")[1]}` : `Não conformidade #${key.split(":")[1]}`;
+          const label = key.startsWith("responsible:") ? userLabel(row, fallback) : relationLabel(row, target, fallback);
+          return [key, label] as const;
         } catch {
           return [key, key.startsWith("responsible:") ? `Responsável #${key.split(":")[1]}` : `Não conformidade #${key.split(":")[1]}`] as const;
         }
