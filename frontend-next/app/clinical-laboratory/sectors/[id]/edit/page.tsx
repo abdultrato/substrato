@@ -1,11 +1,12 @@
 "use client";
-import { Suspense } from "react";
-import { GeneratedResourceEditPage } from "@/components/resources/GeneratedResourcePages";
+
+import { useParams } from "next/navigation";
+
+import { routeParamToString } from "@/lib/routeParams";
+import SectorForm from "../../_form";
 
 export default function Page() {
-  return (
-    <Suspense fallback={<div className="p-4 text-sm text-[var(--gray-500)]">Carregando...</div>}>
-      <GeneratedResourceEditPage endpoint="/clinical_laboratory/sector/" />
-    </Suspense>
-  );
+  const params = useParams();
+  const id = routeParamToString((params as any)?.id);
+  return <SectorForm id={id} />;
 }
