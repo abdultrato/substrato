@@ -10,11 +10,22 @@ import {
   CheckCircle2,
   ChevronRight,
   FlaskConical,
+  LineChart as LineChartIcon,
   Loader2,
   ShieldCheck,
   TestTube2,
   XCircle,
 } from "lucide-react";
+import {
+  CartesianGrid,
+  Line,
+  LineChart as RechartsLineChart,
+  ReferenceLine,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 
 import AppLayout from "@/components/layout/AppLayout";
 import { apiFetch, apiFetchList } from "@/lib/api";
@@ -69,6 +80,20 @@ type AnalyteGroup = {
   maxDeviation: number | null;
 };
 
+type LeveyJenningsPoint = {
+  label: string;
+  value: number;
+  runAt?: string;
+  recordId: number;
+};
+
+type LeveyJenningsChart = {
+  points: LeveyJenningsPoint[];
+  mean: number;
+  sd: number;
+  unit: string;
+};
+
 const decisionClass: Record<QualityControl["decision"], string> = {
   APROVADO: "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-700/40 dark:bg-emerald-900/20 dark:text-emerald-300",
   REJEITADO: "border-red-200 bg-red-50 text-red-700 dark:border-red-700/40 dark:bg-red-900/20 dark:text-red-300",
@@ -100,6 +125,10 @@ function parseDecimal(value?: string | null) {
 function fmtRef(value?: string | null) {
   const parsed = parseDecimal(value);
   return parsed === null ? "-" : parsed.toFixed(1);
+}
+
+function fmtChartValue(value: number) {
+  return Number.isInteger(value) ? String(value) : value.toFixed(2);
 }
 
 function latestOf(records: QualityControl[]) {
@@ -141,6 +170,88 @@ function matchesRunWindow(record: QualityControl, searchParams: Pick<URLSearchPa
   return matchesParam(runSecond(record.run_at), searchParams.get("run_second"));
 }
 
+function sameAnalyte(record: QualityControl, group: AnalyteGroup) {
+  return (record.field_name || "Exame completo").trim() === group.name;
+}
+
+function buildLeveyJenningsChart(group: AnalyteGroup, allRecords: QualityControl[]): LeveyJenningsChart | null {
+  const points = allRecords
+    .filter((record) => sameAnalyte(record, group))
+    .map((record) => ({
+      record,
+      value: parseDecimal(record.observed_result),
+      time: runTime(record.run_at),
+    }))
+    .filter((item): item is { record: QualityControl; value: number; time: number | null } => item.value !== null)
+    .sort((a, b) => (a.time ?? 0) - (b.time ?? 0))
+    .slice(-12)
+    .map((item, index) => ({
+      label: String(index + 1),
+      value: item.value,
+      runAt: item.record.run_at,
+      recordId: item.record.id,
+    }));
+
+  if (points.length < 3) return null;
+  const mean = points.reduce((sum, point) => sum + point.value, 0) / points.length;
+  const variance = points.reduce((sum, point) => sum + Math.pow(point.value - mean, 2), 0) / (points.length - 1);
+  const sd = Math.sqrt(variance);
+  return {
+    points,
+    mean,
+    sd,
+    unit: group.unit || group.latest?.unit || "",
+  };
+}
+
+function LeveyJenningsChartView({ chart }: { chart: LeveyJenningsChart }) {
+  const limits = chart.sd > 0
+    ? [
+        { label: "+3DP", value: chart.mean + chart.sd * 3, color: "#ef4444" },
+        { label: "+2DP", value: chart.mean + chart.sd * 2, color: "#f59e0b" },
+        { label: "+1DP", value: chart.mean + chart.sd, color: "#38bdf8" },
+        { label: "Media", value: chart.mean, color: "#10b981" },
+        { label: "-1DP", value: chart.mean - chart.sd, color: "#38bdf8" },
+        { label: "-2DP", value: chart.mean - chart.sd * 2, color: "#f59e0b" },
+        { label: "-3DP", value: chart.mean - chart.sd * 3, color: "#ef4444" },
+      ]
+    : [{ label: "Media", value: chart.mean, color: "#10b981" }];
+
+  return (
+    <div className="mt-2 rounded-md border border-cyan-200/60 bg-cyan-50/50 p-2 dark:border-cyan-800/40 dark:bg-cyan-950/20">
+      <div className="mb-1.5 flex items-center justify-between gap-2">
+        <span className="text-[9px] font-semibold uppercase text-cyan-800 dark:text-cyan-200">Levey-Jennings</span>
+        <span className="text-[9px] text-muted-foreground">
+          media {fmtChartValue(chart.mean)}{chart.unit ? ` ${chart.unit}` : ""} · DP {fmtChartValue(chart.sd)}
+        </span>
+      </div>
+      <div className="h-36 w-full">
+        <ResponsiveContainer width="100%" height="100%">
+          <RechartsLineChart data={chart.points} margin={{ top: 8, right: 8, bottom: 0, left: -24 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="rgba(148, 163, 184, 0.35)" />
+            <XAxis dataKey="label" tick={{ fontSize: 9 }} tickLine={false} axisLine={false} />
+            <YAxis tick={{ fontSize: 9 }} tickLine={false} axisLine={false} width={42} domain={["auto", "auto"]} />
+            <Tooltip
+              formatter={(value) => [`${fmtChartValue(Number(value))}${chart.unit ? ` ${chart.unit}` : ""}`, "Obtido"]}
+              labelFormatter={(label) => `Registo ${label}`}
+              contentStyle={{ borderRadius: 8, border: "1px solid rgba(148, 163, 184, 0.35)", fontSize: 11 }}
+            />
+            {limits.map((limit) => (
+              <ReferenceLine key={limit.label} y={limit.value} stroke={limit.color} strokeDasharray={limit.label === "Media" ? "0" : "4 4"} strokeOpacity={0.75} />
+            ))}
+            <Line type="monotone" dataKey="value" stroke="#0891b2" strokeWidth={2} dot={{ r: 3, fill: "#0891b2" }} activeDot={{ r: 4 }} />
+          </RechartsLineChart>
+        </ResponsiveContainer>
+      </div>
+      <div className="mt-1 grid grid-cols-3 gap-1 text-[8px] text-muted-foreground">
+        <span>n={chart.points.length}</span>
+        <span className="text-center">alerta ±2DP</span>
+        <span className="text-right">rejeicao ±3DP</span>
+      </div>
+    </div>
+  );
+}
+
 export default function QualityControlTestDetailPage() {
   const params = useParams();
   const searchParams = useSearchParams();
@@ -149,6 +260,7 @@ export default function QualityControlTestDetailPage() {
   const [records, setRecords] = useState<QualityControl[]>([]);
   const [loading, setLoading] = useState(true);
   const [validatingKey, setValidatingKey] = useState<string | null>(null);
+  const [visibleCharts, setVisibleCharts] = useState<Record<string, boolean>>({});
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -265,6 +377,10 @@ export default function QualityControlTestDetailPage() {
     }
   }
 
+  function toggleChart(groupKey: string) {
+    setVisibleCharts((prev) => ({ ...prev, [groupKey]: !prev[groupKey] }));
+  }
+
   return (
     <AppLayout requiredGroups={requiredGroupsForResourceGroup("clinical_laboratory")}>
       <div className="space-y-2">
@@ -329,6 +445,8 @@ export default function QualityControlTestDetailPage() {
             const canValidate = group.records.length > 0 && group.records.every((record) => record.approved_for_use);
             const validated = group.records.length > 0 && group.records.every((record) => record.status === "REVISTO");
             const isValidating = validatingKey === group.key;
+            const chart = buildLeveyJenningsChart(group, records);
+            const chartVisible = Boolean(visibleCharts[group.key]);
             return (
               <article key={group.key} className="relative min-h-[168px] rounded-lg border border-white/20 bg-white/45 p-2.5 pl-3.5 shadow-sm backdrop-blur-sm transition hover:-translate-y-px hover:border-white/40 hover:bg-white/60 hover:shadow-md dark:border-white/10 dark:bg-white/[0.05] dark:hover:bg-white/[0.08]">
                 <span className={`absolute left-0 top-0 h-full w-1 rounded-l-lg ${tone.bar}`} />
@@ -381,6 +499,17 @@ export default function QualityControlTestDetailPage() {
                     </p>
                   </div>
                 ) : null}
+                <button
+                  type="button"
+                  onClick={() => chart ? toggleChart(group.key) : undefined}
+                  disabled={!chart}
+                  title={chart ? "Gerar grafico Levey-Jennings" : "Sao necessarios pelo menos 3 registos numericos do mesmo analito"}
+                  className="mt-2 inline-flex h-7 w-full items-center justify-center gap-1 rounded-md border border-cyan-200 bg-cyan-50 px-2 text-[10px] font-semibold text-cyan-800 shadow-sm transition hover:bg-cyan-100 disabled:cursor-not-allowed disabled:border-border disabled:bg-muted disabled:text-muted-foreground disabled:shadow-none dark:border-cyan-800/40 dark:bg-cyan-950/25 dark:text-cyan-200 dark:hover:bg-cyan-950/40"
+                >
+                  <LineChartIcon size={11} />
+                  {chartVisible ? "Ocultar grafico LJ" : "Gerar grafico LJ"}
+                </button>
+                {chart && chartVisible ? <LeveyJenningsChartView chart={chart} /> : null}
                 <button
                   type="button"
                   onClick={() => validateAnalyte(group)}
