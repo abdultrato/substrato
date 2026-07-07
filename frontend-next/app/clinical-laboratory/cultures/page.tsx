@@ -288,7 +288,7 @@ export default function LabCulturesPage() {
               ))}
             </div>
 
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4">
               {groups.map((group) => {
                 const state = groupState(group.items, now);
                 const style = STATE_STYLES[state];
@@ -300,19 +300,19 @@ export default function LabCulturesPage() {
                     onClick={() => setSelected((current) => (current === group.orderId ? null : group.orderId))}
                     aria-expanded={isOpen}
                     title={`${group.patient || "Paciente"} — ${group.orderId}`}
-                    className={`relative flex flex-col gap-1 overflow-hidden rounded-lg border p-2 pl-2.5 text-left shadow-sm backdrop-blur-sm transition hover:brightness-[1.03] ${style.card} ${isOpen ? "ring-2 ring-sky-400/70 ring-offset-1 ring-offset-transparent" : ""}`}
+                    className={`relative flex flex-col gap-2 overflow-hidden rounded-xl border p-3.5 pl-4 text-left shadow-sm backdrop-blur-sm transition hover:brightness-[1.03] ${style.card} ${isOpen ? "ring-2 ring-sky-400/70 ring-offset-1 ring-offset-transparent" : ""}`}
                   >
-                    <span className={`absolute inset-y-0 left-0 w-1 ${style.strip}`} />
-                    <div className="flex items-center justify-between gap-1">
-                      <span className={`inline-flex min-w-0 items-center gap-1 text-[9px] font-bold uppercase tracking-wide ${style.badgeText}`}>
-                        <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${style.dot}`} />
+                    <span className={`absolute inset-y-0 left-0 w-1.5 ${style.strip}`} />
+                    <div className="flex items-center justify-between gap-1.5">
+                      <span className={`inline-flex min-w-0 items-center gap-1.5 text-[11px] font-bold uppercase tracking-wide ${style.badgeText}`}>
+                        <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${style.dot}`} />
                         <span className="truncate">{style.label}</span>
                       </span>
-                      <span className={`shrink-0 rounded-full px-1.5 text-[9px] font-bold ${style.count}`}>{group.items.length}</span>
+                      <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-bold ${style.count}`}>{group.items.length}</span>
                     </div>
                     <div className="min-w-0">
-                      <p className={`truncate text-[11px] font-semibold leading-tight ${style.title}`}>{group.patient || "Sem paciente"}</p>
-                      <p className={`truncate font-mono text-[9px] leading-tight ${style.subtitle}`}>#{shortOrder(group.orderId)}</p>
+                      <p className={`truncate text-base font-semibold leading-tight ${style.title}`}>{group.patient || "Sem paciente"}</p>
+                      <p className={`truncate font-mono text-xs leading-tight ${style.subtitle}`}>#{shortOrder(group.orderId)}</p>
                     </div>
                   </button>
                 );
