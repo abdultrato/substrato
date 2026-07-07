@@ -417,7 +417,7 @@ export default function LaboratoryQualityControlPage() {
             </section>
 
             <div className="grid gap-2">
-              <div className="grid gap-2 xl:grid-cols-2">
+              <div className="grid grid-cols-2 gap-2">
                 <FormSection title="Identificação do exame">
                   <div className="grid gap-2 md:grid-cols-2">
                     <Field label="Exame" error={errors.test}>
@@ -477,7 +477,7 @@ export default function LaboratoryQualityControlPage() {
                 </FormSection>
               </div>
 
-              <div className="grid gap-2 xl:grid-cols-2">
+              <div className="grid grid-cols-2 gap-2">
                 <FormSection title="Material de controlo">
                   <div className="grid gap-2 md:grid-cols-2">
                     <Field label="Material de controlo">
