@@ -218,35 +218,35 @@ export default function CorrectiveActionsListPage() {
             </Link>
           </div>
 
-          <div className="relative flex flex-nowrap items-center gap-2 overflow-x-auto border-t border-white/20 bg-white/20 px-4 py-3 pl-5 dark:border-white/10 dark:bg-white/[0.03]">
-            <div className="relative min-w-[240px] flex-1 shrink-0">
-              <Search size={11} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
-              <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Pesquisar plano, código..." className="w-full rounded-lg border border-border bg-card/85 py-1.5 pl-7 pr-7 text-xs text-foreground outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20" />
+          <div className="relative flex flex-nowrap items-center gap-1.5 border-t border-white/20 bg-white/20 px-3 py-2 pl-4 dark:border-white/10 dark:bg-white/[0.03]">
+            <div className="relative min-w-0 flex-[1.4_1_180px]">
+              <Search size={10} className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Pesquisar plano, código..." className="w-full rounded-md border border-border bg-card/85 py-1 pl-6 pr-6 text-[11px] text-foreground outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20" />
               {search && <button type="button" onClick={() => setSearch("")} className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground transition hover:text-foreground" aria-label="Limpar pesquisa"><X size={10} /></button>}
             </div>
 
-            <div className="relative w-36 shrink-0">
-              <Hash size={11} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
-              <input value={filterCustomId} onChange={(event) => setFilterCustomId(event.target.value)} placeholder="QCA-0001" className="w-full rounded-lg border border-border bg-card/85 py-1.5 pl-7 pr-7 text-xs text-foreground outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20" />
+            <div className="relative min-w-[86px] flex-[0.45_1_108px]">
+              <Hash size={10} className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <input value={filterCustomId} onChange={(event) => setFilterCustomId(event.target.value)} placeholder="QCA-0001" className="w-full rounded-md border border-border bg-card/85 py-1 pl-6 pr-6 text-[11px] text-foreground outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20" />
               {filterCustomId && <button type="button" onClick={() => setFilterCustomId("")} className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground transition hover:text-foreground" aria-label="Limpar código"><X size={10} /></button>}
             </div>
 
-            <select value={filterType} onChange={(event) => setFilterType(event.target.value)} className="w-36 shrink-0 rounded-lg border border-border bg-card/85 py-1.5 pl-2.5 pr-6 text-xs text-foreground outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20">
+            <select value={filterType} onChange={(event) => setFilterType(event.target.value)} className="min-w-[104px] flex-[0.5_1_118px] rounded-md border border-border bg-card/85 py-1 pl-2 pr-5 text-[11px] text-foreground outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20">
               <option value="">Todos os tipos</option>
               {ACTION_TYPES.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
             </select>
 
-            <select value={filterStatus} onChange={(event) => setFilterStatus(event.target.value)} className="w-40 shrink-0 rounded-lg border border-border bg-card/85 py-1.5 pl-2.5 pr-6 text-xs text-foreground outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20">
+            <select value={filterStatus} onChange={(event) => setFilterStatus(event.target.value)} className="min-w-[112px] flex-[0.55_1_128px] rounded-md border border-border bg-card/85 py-1 pl-2 pr-5 text-[11px] text-foreground outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20">
               <option value="">Todos os estados</option>
               {STATUS_CHOICES.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
             </select>
 
-            <select value={pageSize} onChange={(event) => setPageSize(Number(event.target.value))} className="w-32 shrink-0 rounded-lg border border-border bg-card/85 py-1.5 pl-2.5 pr-6 text-xs text-foreground outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20">
+            <select value={pageSize} onChange={(event) => setPageSize(Number(event.target.value))} className="min-w-[94px] flex-[0.35_1_104px] rounded-md border border-border bg-card/85 py-1 pl-2 pr-5 text-[11px] text-foreground outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20">
               {PAGE_SIZE_OPTS.map((size) => <option key={size} value={size}>{size} / página</option>)}
             </select>
 
             {hasFilters && (
-              <button type="button" onClick={clearFilters} className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-border bg-card/85 px-2.5 py-1.5 text-xs text-muted-foreground transition hover:bg-muted hover:text-foreground">
+              <button type="button" onClick={clearFilters} className="inline-flex shrink-0 items-center gap-1 rounded-md border border-border bg-card/85 px-2 py-1 text-[11px] text-muted-foreground transition hover:bg-muted hover:text-foreground">
                 <X size={10} /> Limpar
               </button>
             )}
