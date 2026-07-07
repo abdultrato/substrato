@@ -1147,8 +1147,12 @@ class MicrobiologyCulture(NoNameCoreModel):
     class Status(models.TextChoices):
         SETUP = "MONTADA", "Montada"
         INCUBATING = "INCUBACAO", "Em incubação"
+        READY_FOR_READING = "AGUARDA_AVALIACAO", "Aguardando avaliação"
+        REINCUBATING = "REINCUBACAO", "Reincubada"
         GROWTH = "CRESCIMENTO", "Crescimento detetado"
         NO_GROWTH = "SEM_CRESCIMENTO", "Sem crescimento"
+        POSITIVE = "POSITIVA", "Positiva"
+        NEGATIVE = "NEGATIVA", "Negativa"
         COMPLETED = "CONCLUIDA", "Concluída"
 
     order_item = models.ForeignKey(LabOrderItem, db_column="order_item_id", verbose_name="Item do pedido",
@@ -1158,14 +1162,30 @@ class MicrobiologyCulture(NoNameCoreModel):
     culture_type = models.CharField("Tipo de cultura", db_column="culture_type", max_length=14,
                                     choices=CultureType.choices, default=CultureType.AEROBIC)
     specimen = models.CharField("Espécime", db_column="specimen", max_length=120, blank=True, default="")
-    status = models.CharField("Estado", max_length=16, choices=Status.choices,
+    status = models.CharField("Estado", max_length=20, choices=Status.choices,
                               default=Status.SETUP, db_index=True)
     incubation_started_at = models.DateTimeField("Incubação iniciada em", db_column="incubation_started_at",
                                                  null=True, blank=True)
+    incubation_expected_end_at = models.DateTimeField("Fim previsto da incubação",
+                                                      db_column="incubation_expected_end_at",
+                                                      null=True, blank=True)
+    incubation_accumulated_hours = models.DecimalField("Horas acumuladas de incubação",
+                                                       db_column="incubation_accumulated_hours",
+                                                       max_digits=8, decimal_places=2,
+                                                       default=Decimal("0.00"))
     read_at = models.DateTimeField("Leitura em", db_column="read_at", null=True, blank=True)
     performed_by = models.ForeignKey(USER, db_column="performed_by_id", verbose_name="Executado por",
                                      on_delete=models.PROTECT, related_name="+", null=True, blank=True)
     notes = models.TextField("Observações", db_column="notes", blank=True, default="")
+    culture_plates = models.JSONField("Placas e meios de cultura", db_column="culture_plates",
+                                      default=list, blank=True)
+    incubation_periods = models.JSONField("Períodos de incubação", db_column="incubation_periods",
+                                          default=list, blank=True)
+    growth_observations = models.JSONField("Observações de crescimento", db_column="growth_observations",
+                                           default=list, blank=True)
+    gram_exam = models.JSONField("Exame de Gram", db_column="gram_exam", default=dict, blank=True)
+    biochemical_tests = models.JSONField("Provas bioquímicas", db_column="biochemical_tests",
+                                         default=list, blank=True)
 
     class Meta:
         db_table = "laboratorio_cultura"

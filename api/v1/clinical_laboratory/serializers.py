@@ -479,7 +479,41 @@ class CriticalResultNotificationSerializer(serializers.ModelSerializer):
 
 # --- sectores especializados ---
 class MicrobiologyCultureSerializer(serializers.ModelSerializer):
-    Meta = _meta(MicrobiologyCulture)
+    order_custom_id = serializers.CharField(source="order_item.order.custom_id", read_only=True)
+    patient_name = serializers.CharField(source="order_item.order.patient.name", read_only=True)
+    test_name = serializers.CharField(source="order_item.test.name", read_only=True)
+    test_code = serializers.CharField(source="order_item.test.code", read_only=True)
+    test_method = serializers.CharField(source="order_item.test.method", read_only=True)
+    sample_barcode = serializers.CharField(source="sample.barcode", read_only=True)
+    sample_type = serializers.CharField(source="sample.sample_type", read_only=True)
+    sample_received_at = serializers.DateTimeField(source="sample.received_at", read_only=True)
+    status_display = serializers.CharField(source="get_status_display", read_only=True)
+    culture_type_display = serializers.CharField(source="get_culture_type_display", read_only=True)
+    performed_by_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = MicrobiologyCulture
+        fields = "__all__"
+        read_only_fields = CORE_READ_ONLY_FIELDS + [
+            "order_custom_id",
+            "patient_name",
+            "test_name",
+            "test_code",
+            "test_method",
+            "sample_barcode",
+            "sample_type",
+            "sample_received_at",
+            "status_display",
+            "culture_type_display",
+            "performed_by_name",
+        ]
+
+    def get_performed_by_name(self, obj):
+        user = getattr(obj, "performed_by", None)
+        if user is None:
+            return ""
+        full = (user.get_full_name() or "").strip() if hasattr(user, "get_full_name") else ""
+        return full or getattr(user, "username", "") or ""
 
 
 class MicrobiologyIsolateSerializer(serializers.ModelSerializer):

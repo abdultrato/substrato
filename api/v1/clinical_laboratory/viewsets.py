@@ -6,6 +6,8 @@ Seguem o padrão do projeto: ValidatedSearchOrderingMixin + TenantScopedQueryset
 """
 
 from django.core.exceptions import ValidationError as DjangoValidationError
+from django.utils import timezone
+from datetime import timedelta
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError as DRFValidationError
 from rest_framework.response import Response
@@ -555,11 +557,232 @@ class CriticalResultNotificationViewSet(ValidatedSearchOrderingMixin, TenantScop
 
 
 class MicrobiologyCultureViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
-    queryset = MicrobiologyCulture.objects.select_related("order_item", "sample", "performed_by").all()
+    queryset = MicrobiologyCulture.objects.select_related(
+        "order_item",
+        "order_item__order",
+        "order_item__order__patient",
+        "order_item__test",
+        "sample",
+        "performed_by",
+    ).all()
     serializer_class = MicrobiologyCultureSerializer
     filterset_fields = ["status", "culture_type"]
     search_fields = ["custom_id", "specimen", "notes"]
     ordering_fields = ["status", "culture_type", "read_at", "created_at"]
+
+    def _culture_queue_sample(self, order_item):
+        return (
+            LabSample.objects.filter(
+                order=order_item.order,
+                status__in=[
+                    LabSample.Status.RECEIVED,
+                    LabSample.Status.ACCEPTED,
+                    LabSample.Status.IN_PROCESSING,
+                ],
+            )
+            .order_by("-received_at", "-created_at")
+            .first()
+        )
+
+    def _queue_item_payload(self, *, order_item, sample=None, culture=None):
+        order = order_item.order
+        patient = getattr(order, "patient", None)
+        test = order_item.test
+        sample = sample or getattr(culture, "sample", None) or self._culture_queue_sample(order_item)
+        return {
+            "id": f"culture-{culture.id}" if culture else f"pending-{order_item.id}",
+            "kind": "culture" if culture else "pending",
+            "culture_id": culture.id if culture else None,
+            "culture_custom_id": getattr(culture, "custom_id", "") if culture else "",
+            "order_item": order_item.id,
+            "order_item_custom_id": order_item.custom_id,
+            "order_custom_id": order.custom_id,
+            "patient_name": getattr(patient, "name", "") or "",
+            "test_name": getattr(test, "name", "") or "",
+            "test_code": getattr(test, "code", "") or "",
+            "test_method": getattr(test, "method", "") or "",
+            "sample": sample.id if sample else None,
+            "sample_barcode": getattr(sample, "barcode", "") if sample else "",
+            "sample_type": getattr(sample, "sample_type", "") if sample else getattr(order_item, "sample_type", ""),
+            "sample_received_at": getattr(sample, "received_at", None) if sample else None,
+            "status": getattr(culture, "status", "PENDENTE"),
+            "status_display": culture.get_status_display() if culture else "Pendente para cultura",
+            "incubation_started_at": getattr(culture, "incubation_started_at", None) if culture else None,
+            "incubation_expected_end_at": getattr(culture, "incubation_expected_end_at", None) if culture else None,
+        }
+
+    @action(detail=False, methods=["get"], url_path="queue", url_name="queue")
+    def queue(self, request):
+        tenant = self._get_request_tenant()
+
+        existing = list(
+            self.get_queryset()
+            .filter(order_item__test__method__icontains="Cultura")
+            .exclude(status=MicrobiologyCulture.Status.COMPLETED)
+            .order_by("-created_at")[:200]
+        )
+        existing_order_item_ids = {culture.order_item_id for culture in existing}
+        payload = [
+            self._queue_item_payload(order_item=culture.order_item, culture=culture)
+            for culture in existing
+        ]
+
+        pending = (
+            LabOrderItem.objects.select_related("order", "order__patient", "test")
+            .filter(test__method__icontains="Cultura")
+            .exclude(id__in=existing_order_item_ids)
+            .filter(order__samples__status__in=[
+                LabSample.Status.RECEIVED,
+                LabSample.Status.ACCEPTED,
+                LabSample.Status.IN_PROCESSING,
+            ])
+            .distinct()
+            .order_by("-created_at")[:200]
+        )
+        if tenant is not None:
+            pending = pending.filter(tenant=tenant)
+
+        payload.extend(
+            self._queue_item_payload(order_item=item)
+            for item in pending
+            if self._culture_queue_sample(item) is not None
+        )
+        return Response(payload)
+
+    @action(detail=True, methods=["post"], url_path="iniciar-incubacao", url_name="iniciar_incubacao")
+    def iniciar_incubacao(self, request, pk=None):
+        culture = self.get_object()
+        hours = float(request.data.get("hours") or request.data.get("duration_hours") or 24)
+        if hours <= 0:
+            raise DRFValidationError({"hours": "Informe um período de incubação maior que zero."})
+        plates = request.data.get("plates", culture.culture_plates or [])
+        if not isinstance(plates, list) or not plates:
+            raise DRFValidationError({"plates": "Informe pelo menos uma placa/meio de cultura."})
+
+        now = timezone.now()
+        expected = now + timedelta(hours=hours)
+        accumulated_start = float(culture.incubation_accumulated_hours or 0)
+        period = {
+            "started_at": now.isoformat(),
+            "expected_end_at": expected.isoformat(),
+            "duration_hours": hours,
+            "accumulated_start_hours": accumulated_start,
+            "accumulated_expected_hours": accumulated_start + hours,
+            "type": "reincubation" if culture.incubation_periods else "initial",
+        }
+        culture.culture_plates = plates
+        culture.incubation_periods = [*(culture.incubation_periods or []), period]
+        culture.incubation_started_at = culture.incubation_started_at or now
+        culture.incubation_expected_end_at = expected
+        culture.status = MicrobiologyCulture.Status.INCUBATING
+        culture.performed_by = culture.performed_by or _current_user(request)
+        culture.save(update_fields=[
+            "culture_plates",
+            "incubation_periods",
+            "incubation_started_at",
+            "incubation_expected_end_at",
+            "status",
+            "performed_by",
+            "updated_at",
+        ])
+        return Response(self.get_serializer(culture).data)
+
+    @action(detail=True, methods=["post"], url_path="registrar-observacao", url_name="registrar_observacao")
+    def registrar_observacao(self, request, pk=None):
+        culture = self.get_object()
+        observation = (request.data.get("observation") or "").strip()
+        if not observation:
+            raise DRFValidationError({"observation": "Descreva o crescimento observado na placa."})
+        positive = bool(request.data.get("positive", False))
+        now = timezone.now()
+        accumulated = float(request.data.get("accumulated_hours") or culture.incubation_accumulated_hours or 0)
+        entry = {
+            "observed_at": now.isoformat(),
+            "accumulated_hours": accumulated,
+            "observation": observation,
+            "positive": positive,
+        }
+        culture.growth_observations = [*(culture.growth_observations or []), entry]
+        culture.read_at = now
+        culture.incubation_accumulated_hours = accumulated
+        culture.status = MicrobiologyCulture.Status.POSITIVE if positive else MicrobiologyCulture.Status.NO_GROWTH
+        culture.save(update_fields=[
+            "growth_observations",
+            "read_at",
+            "incubation_accumulated_hours",
+            "status",
+            "updated_at",
+        ])
+        return Response(self.get_serializer(culture).data)
+
+    @action(detail=True, methods=["post"], url_path="reincubar", url_name="reincubar")
+    def reincubar(self, request, pk=None):
+        culture = self.get_object()
+        hours = float(request.data.get("hours") or request.data.get("duration_hours") or 24)
+        if hours <= 0:
+            raise DRFValidationError({"hours": "Informe um período de reincubação maior que zero."})
+        now = timezone.now()
+        accumulated_start = float(culture.incubation_accumulated_hours or 0)
+        expected = now + timedelta(hours=hours)
+        culture.incubation_periods = [*(culture.incubation_periods or []), {
+            "started_at": now.isoformat(),
+            "expected_end_at": expected.isoformat(),
+            "duration_hours": hours,
+            "accumulated_start_hours": accumulated_start,
+            "accumulated_expected_hours": accumulated_start + hours,
+            "type": "reincubation",
+        }]
+        culture.incubation_expected_end_at = expected
+        culture.status = MicrobiologyCulture.Status.REINCUBATING
+        culture.save(update_fields=["incubation_periods", "incubation_expected_end_at", "status", "updated_at"])
+        return Response(self.get_serializer(culture).data)
+
+    @action(detail=True, methods=["post"], url_path="finalizar", url_name="finalizar")
+    def finalizar(self, request, pk=None):
+        culture = self.get_object()
+        positive = request.data.get("positive", None)
+        if positive is not None:
+            culture.status = MicrobiologyCulture.Status.POSITIVE if bool(positive) else MicrobiologyCulture.Status.NEGATIVE
+        else:
+            culture.status = MicrobiologyCulture.Status.COMPLETED
+        culture.read_at = culture.read_at or timezone.now()
+        culture.save(update_fields=["status", "read_at", "updated_at"])
+        return Response(self.get_serializer(culture).data)
+
+    @action(detail=True, methods=["post"], url_path="salvar-gram", url_name="salvar_gram")
+    def salvar_gram(self, request, pk=None):
+        culture = self.get_object()
+        culture.gram_exam = {
+            "performed_at": timezone.now().isoformat(),
+            "result": request.data.get("result", ""),
+            "morphology": request.data.get("morphology", ""),
+            "arrangement": request.data.get("arrangement", ""),
+            "notes": request.data.get("notes", ""),
+        }
+        culture.save(update_fields=["gram_exam", "updated_at"])
+        return Response(self.get_serializer(culture).data)
+
+    @action(detail=True, methods=["post"], url_path="salvar-provas-bioquimicas", url_name="salvar_provas_bioquimicas")
+    def salvar_provas_bioquimicas(self, request, pk=None):
+        culture = self.get_object()
+        tests = request.data.get("tests", [])
+        if not isinstance(tests, list):
+            raise DRFValidationError({"tests": "Envie uma lista de provas bioquímicas."})
+        now = timezone.now()
+        normalized = []
+        for test in tests:
+            hours = float(test.get("hours") or test.get("duration_hours") or 0)
+            normalized.append({
+                "name": test.get("name", ""),
+                "started_at": test.get("started_at") or now.isoformat(),
+                "expected_end_at": test.get("expected_end_at") or ((now + timedelta(hours=hours)).isoformat() if hours else ""),
+                "duration_hours": hours,
+                "result": test.get("result", ""),
+                "status": test.get("status") or ("EM_INCUBACAO" if hours else "AGUARDA_RESULTADO"),
+            })
+        culture.biochemical_tests = normalized
+        culture.save(update_fields=["biochemical_tests", "updated_at"])
+        return Response(self.get_serializer(culture).data)
 
 
 class MicrobiologyIsolateViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
