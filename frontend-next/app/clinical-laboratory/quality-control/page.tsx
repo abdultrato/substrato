@@ -174,8 +174,11 @@ function FormSection({
   className?: string;
 }) {
   return (
-    <section className={`rounded-lg border border-border/50 bg-background/55 p-3 ${className}`}>
-      <h3 className="mb-2 text-[11px] font-semibold uppercase text-muted-foreground">{title}</h3>
+    <section className={`relative overflow-hidden rounded-lg border border-white/20 bg-white/40 px-3 py-2.5 pl-4 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04] ${className}`}>
+      <span className="absolute left-0 top-0 h-full w-1 bg-teal-500/80" />
+      <div className="mb-2 flex items-center gap-1.5 border-b border-border/50 pb-1.5">
+        <span className="text-[11px] font-semibold uppercase text-muted-foreground">{title}</span>
+      </div>
       {children}
     </section>
   );
@@ -399,133 +402,137 @@ export default function LaboratoryQualityControlPage() {
         ) : null}
 
         <div className="grid gap-3 xl:grid-cols-[minmax(420px,0.9fr)_minmax(0,1.1fr)]">
-          <form onSubmit={submit} className="space-y-3 rounded-xl border border-white/20 bg-white/30 p-4 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.05]">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <h2 className="text-sm font-bold text-foreground">Nova execução de CQ</h2>
-                <p className="text-[11px] text-muted-foreground">O backend calcula automaticamente a conclusão.</p>
+          <form onSubmit={submit} className="space-y-2">
+            <section className="rounded-xl border border-white/20 bg-white/30 p-4 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.05]">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <h2 className="text-sm font-bold text-foreground">Nova execução de CQ</h2>
+                  <p className="text-[11px] text-muted-foreground">O backend calcula automaticamente a conclusão.</p>
+                </div>
+                <button type="submit" disabled={saving} className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-gradient-to-r from-teal-600 to-cyan-600 px-3 text-xs font-semibold text-white shadow-md shadow-teal-500/20 transition hover:from-teal-700 hover:to-cyan-700 disabled:opacity-60">
+                  {saving ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />}
+                  Registar
+                </button>
               </div>
-              <button type="submit" disabled={saving} className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-gradient-to-r from-teal-600 to-cyan-600 px-3 text-xs font-semibold text-white shadow-md shadow-teal-500/20 transition hover:from-teal-700 hover:to-cyan-700 disabled:opacity-60">
-                {saving ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />}
-                Registar
-              </button>
+            </section>
+
+            <div className="grid gap-2">
+              <FormSection title="Identificação do exame">
+                <div className="grid gap-2 md:grid-cols-2">
+                  <Field label="Exame" error={errors.test}>
+                    <select value={form.test} onChange={(event) => handleTestChange(event.target.value)} className={inputCls}>
+                      <option value="">Selecione...</option>
+                      {tests.map((test) => (
+                        <option key={test.id} value={test.id}>{test.code} - {test.name}</option>
+                      ))}
+                    </select>
+                  </Field>
+                  <Field label="Analito/campo">
+                    <select value={form.test_field} onChange={(event) => handleFieldChange(event.target.value)} className={inputCls}>
+                      <option value="">Exame completo</option>
+                      {fields.map((field) => (
+                        <option key={field.id} value={field.id}>{field.code ? `${field.code} - ` : ""}{field.name}</option>
+                      ))}
+                    </select>
+                  </Field>
+                  <Field label="Tipo">
+                    <select value={form.control_type} onChange={(event) => update("control_type", event.target.value)} className={inputCls}>
+                      <option value="INTERNO">Interno</option>
+                      <option value="EXTERNO">Externo</option>
+                      <option value="ENSAIO_PROFICIENCIA">Ensaio de proficiência</option>
+                      <option value="CALIBRACAO">Calibração/verificação</option>
+                    </select>
+                  </Field>
+                  <Field label="Modo">
+                    <select value={form.result_mode} onChange={(event) => update("result_mode", event.target.value)} className={inputCls}>
+                      <option value="NUMERICO">Numérico</option>
+                      <option value="QUALITATIVO">Qualitativo</option>
+                    </select>
+                  </Field>
+                </div>
+              </FormSection>
+
+              <FormSection title="Resultado e critérios de aceitação">
+                <div className="grid gap-2 md:grid-cols-2">
+                  <Field label="Resultado esperado" error={errors.expected_result}>
+                    <input value={form.expected_result} onChange={(event) => update("expected_result", event.target.value)} className={inputCls} />
+                  </Field>
+                  <Field label="Resultado obtido" error={errors.observed_result}>
+                    <input value={form.observed_result} onChange={(event) => update("observed_result", event.target.value)} className={inputCls} />
+                  </Field>
+                  <Field label="Mínimo aceitável">
+                    <input value={form.expected_min} onChange={(event) => update("expected_min", event.target.value)} className={inputCls} />
+                  </Field>
+                  <Field label="Máximo aceitável">
+                    <input value={form.expected_max} onChange={(event) => update("expected_max", event.target.value)} className={inputCls} />
+                  </Field>
+                  <Field label="Tolerância absoluta">
+                    <input value={form.tolerance} onChange={(event) => update("tolerance", event.target.value)} className={inputCls} />
+                  </Field>
+                  <Field label="Unidade">
+                    <input value={form.unit} onChange={(event) => update("unit", event.target.value)} className={inputCls} />
+                  </Field>
+                </div>
+              </FormSection>
+
+              <FormSection title="Material de controlo">
+                <div className="grid gap-2 md:grid-cols-2">
+                  <Field label="Material de controlo">
+                    <input value={form.material_name} onChange={(event) => update("material_name", event.target.value)} className={inputCls} />
+                  </Field>
+                  <Field label="Lote">
+                    <input value={form.material_lot} onChange={(event) => update("material_lot", event.target.value)} className={inputCls} />
+                  </Field>
+                  <Field label="Nível">
+                    <select value={form.material_level} onChange={(event) => update("material_level", event.target.value)} className={inputCls}>
+                      <option value="BAIXO">Baixo</option>
+                      <option value="NORMAL">Normal</option>
+                      <option value="ALTO">Alto</option>
+                      <option value="POSITIVO">Positivo</option>
+                      <option value="NEGATIVO">Negativo</option>
+                      <option value="MULTINIVEL">Multinível</option>
+                    </select>
+                  </Field>
+                  <Field label="Validade do material">
+                    <input type="date" value={form.expiry_date} onChange={(event) => update("expiry_date", event.target.value)} className={inputCls} />
+                  </Field>
+                </div>
+              </FormSection>
+
+              <FormSection title="Método, equipamento e norma">
+                <div className="grid gap-2 md:grid-cols-2">
+                  <Field label="Método">
+                    <input value={form.method} onChange={(event) => update("method", event.target.value)} className={inputCls} />
+                  </Field>
+                  <Field label="Equipamento">
+                    <input value={form.equipment} onChange={(event) => update("equipment", event.target.value)} className={inputCls} />
+                  </Field>
+                  <Field label="POP/Procedimento">
+                    <input value={form.sop_reference} onChange={(event) => update("sop_reference", event.target.value)} className={inputCls} />
+                  </Field>
+                  <Field label="ISO/SGQ">
+                    <input value={form.iso_clause} onChange={(event) => update("iso_clause", event.target.value)} className={inputCls} />
+                  </Field>
+                </div>
+              </FormSection>
+
+              <FormSection title="Evidências e rastreabilidade">
+                <div className="grid gap-2 md:grid-cols-2">
+                  <Field label="Critério de aceitação">
+                    <textarea value={form.acceptance_criteria} onChange={(event) => update("acceptance_criteria", event.target.value)} rows={3} className={`${inputCls} resize-y`} />
+                  </Field>
+                  <Field label="Rastreabilidade/evidências">
+                    <textarea value={form.traceability_notes} onChange={(event) => update("traceability_notes", event.target.value)} rows={3} className={`${inputCls} resize-y`} />
+                  </Field>
+                </div>
+              </FormSection>
+
+              {selectedTest ? (
+                <div className="rounded-lg border border-teal-200/60 bg-teal-50/60 px-3 py-2 text-[11px] text-teal-800 dark:border-teal-800/40 dark:bg-teal-900/20 dark:text-teal-200">
+                  {selectedTest.code} - {selectedTest.name} · método {form.method || "—"} · unidade {form.unit || "—"}
+                </div>
+              ) : null}
             </div>
-
-            <FormSection title="Identificação do exame">
-              <div className="grid gap-2 md:grid-cols-2">
-                <Field label="Exame" error={errors.test}>
-                  <select value={form.test} onChange={(event) => handleTestChange(event.target.value)} className={inputCls}>
-                    <option value="">Selecione...</option>
-                    {tests.map((test) => (
-                      <option key={test.id} value={test.id}>{test.code} - {test.name}</option>
-                    ))}
-                  </select>
-                </Field>
-                <Field label="Analito/campo">
-                  <select value={form.test_field} onChange={(event) => handleFieldChange(event.target.value)} className={inputCls}>
-                    <option value="">Exame completo</option>
-                    {fields.map((field) => (
-                      <option key={field.id} value={field.id}>{field.code ? `${field.code} - ` : ""}{field.name}</option>
-                    ))}
-                  </select>
-                </Field>
-                <Field label="Tipo">
-                  <select value={form.control_type} onChange={(event) => update("control_type", event.target.value)} className={inputCls}>
-                    <option value="INTERNO">Interno</option>
-                    <option value="EXTERNO">Externo</option>
-                    <option value="ENSAIO_PROFICIENCIA">Ensaio de proficiência</option>
-                    <option value="CALIBRACAO">Calibração/verificação</option>
-                  </select>
-                </Field>
-                <Field label="Modo">
-                  <select value={form.result_mode} onChange={(event) => update("result_mode", event.target.value)} className={inputCls}>
-                    <option value="NUMERICO">Numérico</option>
-                    <option value="QUALITATIVO">Qualitativo</option>
-                  </select>
-                </Field>
-              </div>
-            </FormSection>
-
-            <FormSection title="Resultado e critérios de aceitação">
-              <div className="grid gap-2 md:grid-cols-2">
-                <Field label="Resultado esperado" error={errors.expected_result}>
-                  <input value={form.expected_result} onChange={(event) => update("expected_result", event.target.value)} className={inputCls} />
-                </Field>
-                <Field label="Resultado obtido" error={errors.observed_result}>
-                  <input value={form.observed_result} onChange={(event) => update("observed_result", event.target.value)} className={inputCls} />
-                </Field>
-                <Field label="Mínimo aceitável">
-                  <input value={form.expected_min} onChange={(event) => update("expected_min", event.target.value)} className={inputCls} />
-                </Field>
-                <Field label="Máximo aceitável">
-                  <input value={form.expected_max} onChange={(event) => update("expected_max", event.target.value)} className={inputCls} />
-                </Field>
-                <Field label="Tolerância absoluta">
-                  <input value={form.tolerance} onChange={(event) => update("tolerance", event.target.value)} className={inputCls} />
-                </Field>
-                <Field label="Unidade">
-                  <input value={form.unit} onChange={(event) => update("unit", event.target.value)} className={inputCls} />
-                </Field>
-              </div>
-            </FormSection>
-
-            <FormSection title="Material de controlo">
-              <div className="grid gap-2 md:grid-cols-2">
-                <Field label="Material de controlo">
-                  <input value={form.material_name} onChange={(event) => update("material_name", event.target.value)} className={inputCls} />
-                </Field>
-                <Field label="Lote">
-                  <input value={form.material_lot} onChange={(event) => update("material_lot", event.target.value)} className={inputCls} />
-                </Field>
-                <Field label="Nível">
-                  <select value={form.material_level} onChange={(event) => update("material_level", event.target.value)} className={inputCls}>
-                    <option value="BAIXO">Baixo</option>
-                    <option value="NORMAL">Normal</option>
-                    <option value="ALTO">Alto</option>
-                    <option value="POSITIVO">Positivo</option>
-                    <option value="NEGATIVO">Negativo</option>
-                    <option value="MULTINIVEL">Multinível</option>
-                  </select>
-                </Field>
-                <Field label="Validade do material">
-                  <input type="date" value={form.expiry_date} onChange={(event) => update("expiry_date", event.target.value)} className={inputCls} />
-                </Field>
-              </div>
-            </FormSection>
-
-            <FormSection title="Método, equipamento e norma">
-              <div className="grid gap-2 md:grid-cols-2">
-                <Field label="Método">
-                  <input value={form.method} onChange={(event) => update("method", event.target.value)} className={inputCls} />
-                </Field>
-                <Field label="Equipamento">
-                  <input value={form.equipment} onChange={(event) => update("equipment", event.target.value)} className={inputCls} />
-                </Field>
-                <Field label="POP/Procedimento">
-                  <input value={form.sop_reference} onChange={(event) => update("sop_reference", event.target.value)} className={inputCls} />
-                </Field>
-                <Field label="ISO/SGQ">
-                  <input value={form.iso_clause} onChange={(event) => update("iso_clause", event.target.value)} className={inputCls} />
-                </Field>
-              </div>
-            </FormSection>
-
-            <FormSection title="Evidências e rastreabilidade">
-              <div className="grid gap-2 md:grid-cols-2">
-                <Field label="Critério de aceitação">
-                  <textarea value={form.acceptance_criteria} onChange={(event) => update("acceptance_criteria", event.target.value)} rows={3} className={`${inputCls} resize-y`} />
-                </Field>
-                <Field label="Rastreabilidade/evidências">
-                  <textarea value={form.traceability_notes} onChange={(event) => update("traceability_notes", event.target.value)} rows={3} className={`${inputCls} resize-y`} />
-                </Field>
-              </div>
-            </FormSection>
-
-            {selectedTest ? (
-              <div className="rounded-lg border border-teal-200/60 bg-teal-50/60 px-3 py-2 text-[11px] text-teal-800 dark:border-teal-800/40 dark:bg-teal-900/20 dark:text-teal-200">
-                {selectedTest.code} - {selectedTest.name} · método {form.method || "—"} · unidade {form.unit || "—"}
-              </div>
-            ) : null}
           </form>
 
           <section className="space-y-3">
