@@ -21,6 +21,7 @@ import {
 import type { LucideIcon } from "lucide-react";
 
 import AppLayout from "@/components/layout/AppLayout";
+import SearchableSelect, { type SearchableOption } from "@/components/ui/SearchableSelect";
 import { apiFetch, apiFetchList } from "@/lib/api";
 import { requiredGroupsForResourceGroup } from "@/lib/resourcesAccess";
 
@@ -203,6 +204,7 @@ export default function LaboratoryQualityControlPage() {
   const [tests, setTests] = useState<LabTest[]>([]);
   const [fields, setFields] = useState<LabTestField[]>([]);
   const [records, setRecords] = useState<QualityControl[]>([]);
+  const [catalogRecords, setCatalogRecords] = useState<QualityControl[]>([]);
   const [total, setTotal] = useState(0);
   const [search, setSearch] = useState("");
   const [decision, setDecision] = useState("");
@@ -216,6 +218,74 @@ export default function LaboratoryQualityControlPage() {
     () => tests.find((item) => String(item.id) === form.test),
     [tests, form.test],
   );
+
+  const testOptions = useMemo<SearchableOption[]>(
+    () =>
+      tests.map((test) => ({
+        value: String(test.id),
+        label: `${test.code} - ${test.name}`,
+        hint: test.method || test.unit || undefined,
+      })),
+    [tests],
+  );
+
+  const fieldOptions = useMemo<SearchableOption[]>(
+    () => [
+      { value: "", label: "Exame completo" },
+      ...fields.map((field) => ({
+        value: String(field.id),
+        label: `${field.code ? `${field.code} - ` : ""}${field.name}`,
+        hint: field.unit || undefined,
+      })),
+    ],
+    [fields],
+  );
+
+  const materialNameOptions = useMemo<SearchableOption[]>(() => {
+    const seen = new Set<string>();
+    return catalogRecords
+      .map((record) => record.material_name?.trim())
+      .filter((value): value is string => Boolean(value))
+      .filter((value) => {
+        const key = value.toLowerCase();
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      })
+      .map((value) => ({ value, label: value }));
+  }, [catalogRecords]);
+
+  const materialLotOptions = useMemo<SearchableOption[]>(() => {
+    const seen = new Set<string>();
+    return catalogRecords
+      .filter((record) => !form.material_name || record.material_name === form.material_name)
+      .map((record) => record.material_lot?.trim())
+      .filter((value): value is string => Boolean(value))
+      .filter((value) => {
+        const key = value.toLowerCase();
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      })
+      .map((value) => ({ value, label: value }));
+  }, [catalogRecords, form.material_name]);
+
+  const methodOptions = useMemo<SearchableOption[]>(() => {
+    const values = new Set<string>();
+    if (selectedTest?.method?.trim()) values.add(selectedTest.method.trim());
+    catalogRecords.forEach((record) => {
+      if (record.method?.trim()) values.add(record.method.trim());
+    });
+    return Array.from(values).sort((a, b) => a.localeCompare(b)).map((value) => ({ value, label: value }));
+  }, [catalogRecords, selectedTest]);
+
+  const equipmentOptions = useMemo<SearchableOption[]>(() => {
+    const values = new Set<string>();
+    catalogRecords.forEach((record) => {
+      if (record.equipment?.trim()) values.add(record.equipment.trim());
+    });
+    return Array.from(values).sort((a, b) => a.localeCompare(b)).map((value) => ({ value, label: value }));
+  }, [catalogRecords]);
 
   const approved = records.filter((item) => item.decision === "APROVADO").length;
   const rejected = records.filter((item) => item.decision === "REJEITADO").length;
@@ -256,6 +326,15 @@ export default function LaboratoryQualityControlPage() {
       clientCache: true,
       clientCacheTtlMs: 30000,
     }).then(({ items }) => setTests(items)).catch(() => setTests([]));
+  }, []);
+
+  useEffect(() => {
+    apiFetchList<QualityControl>(ENDPOINT, {
+      page: 1,
+      pageSize: 500,
+      clientCache: true,
+      clientCacheTtlMs: 30000,
+    }).then(({ items }) => setCatalogRecords(items)).catch(() => setCatalogRecords([]));
   }, []);
 
   useEffect(() => {
@@ -304,6 +383,17 @@ export default function LaboratoryQualityControlPage() {
     }));
   }
 
+  function handleMaterialNameChange(value: string) {
+    setForm((prev) => ({
+      ...prev,
+      material_name: value,
+      material_lot:
+        value && prev.material_name && prev.material_name !== value
+          ? ""
+          : prev.material_lot,
+    }));
+  }
+
   function validate() {
     const next: Record<string, string> = {};
     if (!form.test) next.test = "Selecione o exame.";
@@ -335,6 +425,7 @@ export default function LaboratoryQualityControlPage() {
         body: JSON.stringify(payload),
       });
       setRecords((prev) => [saved, ...prev].slice(0, PAGE_SIZE));
+      setCatalogRecords((prev) => [saved, ...prev].slice(0, 500));
       setTotal((value) => value + 1);
       setForm((prev) => ({
         ...initialForm,
@@ -430,20 +521,25 @@ export default function LaboratoryQualityControlPage() {
                 <FormSection title="Identificação do exame" icon={FlaskConical} accentClass="bg-sky-500/80">
                   <div className="grid gap-2 md:grid-cols-2">
                     <Field label="Exame" error={errors.test}>
-                      <select value={form.test} onChange={(event) => handleTestChange(event.target.value)} className={inputCls}>
-                        <option value="">Selecione...</option>
-                        {tests.map((test) => (
-                          <option key={test.id} value={test.id}>{test.code} - {test.name}</option>
-                        ))}
-                      </select>
+                      <SearchableSelect
+                        value={form.test}
+                        onChange={handleTestChange}
+                        options={testOptions}
+                        placeholder="Selecione..."
+                        searchPlaceholder="Pesquisar exame..."
+                        emptyMessage="Nenhum exame encontrado."
+                      />
                     </Field>
                     <Field label="Analito/campo">
-                      <select value={form.test_field} onChange={(event) => handleFieldChange(event.target.value)} className={inputCls}>
-                        <option value="">Exame completo</option>
-                        {fields.map((field) => (
-                          <option key={field.id} value={field.id}>{field.code ? `${field.code} - ` : ""}{field.name}</option>
-                        ))}
-                      </select>
+                      <SearchableSelect
+                        value={form.test_field}
+                        onChange={handleFieldChange}
+                        options={fieldOptions}
+                        placeholder="Exame completo"
+                        searchPlaceholder={form.test ? "Pesquisar analito..." : "Selecione primeiro o exame..."}
+                        emptyMessage={form.test ? "Nenhum analito encontrado para este exame." : "Selecione primeiro o exame."}
+                        disabled={!form.test}
+                      />
                     </Field>
                     <Field label="Tipo">
                       <select value={form.control_type} onChange={(event) => update("control_type", event.target.value)} className={inputCls}>
@@ -490,10 +586,27 @@ export default function LaboratoryQualityControlPage() {
                 <FormSection title="Material de controlo" icon={TestTube2} accentClass="bg-violet-500/80">
                   <div className="grid gap-2 md:grid-cols-2">
                     <Field label="Material de controlo">
-                      <input value={form.material_name} onChange={(event) => update("material_name", event.target.value)} className={inputCls} />
+                      <SearchableSelect
+                        value={form.material_name}
+                        onChange={handleMaterialNameChange}
+                        options={materialNameOptions}
+                        placeholder="Selecione..."
+                        searchPlaceholder="Pesquisar material..."
+                        emptyMessage="Nenhum material encontrado."
+                        allowClear
+                      />
                     </Field>
                     <Field label="Lote">
-                      <input value={form.material_lot} onChange={(event) => update("material_lot", event.target.value)} className={inputCls} />
+                      <SearchableSelect
+                        value={form.material_lot}
+                        onChange={(value) => update("material_lot", value)}
+                        options={materialLotOptions}
+                        placeholder="Selecione..."
+                        searchPlaceholder={form.material_name ? "Pesquisar lote..." : "Selecione primeiro o material..."}
+                        emptyMessage={form.material_name ? "Nenhum lote encontrado para este material." : "Selecione primeiro o material."}
+                        disabled={!form.material_name}
+                        allowClear
+                      />
                     </Field>
                     <Field label="Nível">
                       <select value={form.material_level} onChange={(event) => update("material_level", event.target.value)} className={inputCls}>
@@ -514,10 +627,26 @@ export default function LaboratoryQualityControlPage() {
                 <FormSection title="Método, equipamento e norma" icon={Microscope} accentClass="bg-amber-500/80">
                   <div className="grid gap-2 md:grid-cols-2">
                     <Field label="Método">
-                      <input value={form.method} onChange={(event) => update("method", event.target.value)} className={inputCls} />
+                      <SearchableSelect
+                        value={form.method}
+                        onChange={(value) => update("method", value)}
+                        options={methodOptions}
+                        placeholder="Selecione..."
+                        searchPlaceholder="Pesquisar método..."
+                        emptyMessage="Nenhum método encontrado."
+                        allowClear
+                      />
                     </Field>
                     <Field label="Equipamento">
-                      <input value={form.equipment} onChange={(event) => update("equipment", event.target.value)} className={inputCls} />
+                      <SearchableSelect
+                        value={form.equipment}
+                        onChange={(value) => update("equipment", value)}
+                        options={equipmentOptions}
+                        placeholder="Selecione..."
+                        searchPlaceholder="Pesquisar equipamento..."
+                        emptyMessage="Nenhum equipamento encontrado."
+                        allowClear
+                      />
                     </Field>
                     <Field label="POP/Procedimento">
                       <input value={form.sop_reference} onChange={(event) => update("sop_reference", event.target.value)} className={inputCls} />
