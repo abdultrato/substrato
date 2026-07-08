@@ -7,7 +7,9 @@ import {
   ArrowLeft,
   ArrowRightLeft,
   BedDouble,
+  Building2,
   HeartPulse,
+  Hospital,
   Loader2,
   LogOut,
   Pencil,
@@ -48,6 +50,13 @@ type BedRow = {
   ward?: number;
 };
 
+type WardRow = {
+  id: number;
+  name?: string | null;
+  custom_id?: string | null;
+  active?: boolean | null;
+};
+
 type OpenAdmissionRow = {
   id: number;
   bed?: number | null;
@@ -70,6 +79,7 @@ export default function NursingWardAdmissionDetailPage() {
   const id = routeParamToString((params as any)?.id);
 
   const [record, setRecord] = useState<AdmissionRecord | null>(null);
+  const [wards, setWards] = useState<WardRow[]>([]);
   const [beds, setBeds] = useState<BedRow[]>([]);
   const [openAdmissions, setOpenAdmissions] = useState<OpenAdmissionRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -80,7 +90,10 @@ export default function NursingWardAdmissionDetailPage() {
   const [panel, setPanel] = useState<PanelKey>(null);
   const [condition, setCondition] = useState("");
   const [actionNotes, setActionNotes] = useState("");
+  const [transferMode, setTransferMode] = useState<"internal" | "external">("internal");
+  const [destinationWardId, setDestinationWardId] = useState("");
   const [newBedId, setNewBedId] = useState("");
+  const [externalHospital, setExternalHospital] = useState("");
   const [transferReason, setTransferReason] = useState("");
 
   const load = useCallback(async () => {
@@ -88,12 +101,14 @@ export default function NursingWardAdmissionDetailPage() {
     setLoading(true);
     setError(null);
     try {
-      const [data, bedsRes, admissionsRes] = await Promise.all([
+      const [data, wardsRes, bedsRes, admissionsRes] = await Promise.all([
         apiFetch<AdmissionRecord>(`/nursing/ward_admission/${id}/`, { clientCache: false }),
+        apiFetchList<WardRow>("/nursing/ward/", { page: 1, pageSize: 200, clientPaginate: true, clientCache: false }),
         apiFetchList<BedRow>("/nursing/ward_bed/", { page: 1, pageSize: 200, clientPaginate: true, clientCache: false }),
         apiFetchList<OpenAdmissionRow>("/nursing/ward_admission/", { page: 1, pageSize: 200, clientPaginate: true, clientCache: false }),
       ]);
       setRecord(data);
+      setWards((wardsRes.items || []).filter((ward) => ward.active ?? true));
       setBeds(bedsRes.items || []);
       setOpenAdmissions(
         (admissionsRes.items || []).filter((admission) => (admission.active ?? false) && !admission.discharged_at)
@@ -111,22 +126,50 @@ export default function NursingWardAdmissionDetailPage() {
 
   const isOpen = Boolean(record && (record.active ?? false) && !record.discharged_at);
 
+  const wardOptions = useMemo(
+    () => wards.map((ward) => ({
+      value: String(ward.id),
+      label: ward.name || `Enfermaria ${ward.id}`,
+      hint: ward.custom_id || undefined,
+    })),
+    [wards]
+  );
+
+  const destinationWard = useMemo(
+    () => wardOptions.find((option) => option.value === destinationWardId) || null,
+    [wardOptions, destinationWardId]
+  );
+
   const freeBedOptions = useMemo(() => {
     const occupied = new Set(openAdmissions.map((admission) => admission.bed).filter(Boolean));
+    const wardId = Number(destinationWardId || 0);
+    if (!wardId) return [];
     return beds
-      .filter((bed) => (bed.active ?? false) && !occupied.has(bed.id) && bed.id !== record?.bed)
+      .filter((bed) => bed.ward === wardId && (bed.active ?? false) && !occupied.has(bed.id) && bed.id !== record?.bed)
       .map((bed) => ({
         value: String(bed.id),
         label: `Cama ${bed.number || bed.id}`,
         hint: bed.ward_name || undefined,
       }));
-  }, [beds, openAdmissions, record?.bed]);
+  }, [beds, destinationWardId, openAdmissions, record?.bed]);
+
+  useEffect(() => {
+    if (!record || panel !== "transferir" || destinationWardId) return;
+    setDestinationWardId(record.ward ? String(record.ward) : "");
+  }, [destinationWardId, panel, record]);
+
+  useEffect(() => {
+    if (newBedId && !freeBedOptions.some((option) => option.value === newBedId)) setNewBedId("");
+  }, [freeBedOptions, newBedId]);
 
   function openPanel(next: PanelKey) {
     setPanel((current) => (current === next ? null : next));
     setCondition("");
     setActionNotes("");
+    setTransferMode("internal");
+    setDestinationWardId(record?.ward ? String(record.ward) : "");
     setNewBedId("");
+    setExternalHospital("");
     setTransferReason("");
     setFeedback(null);
     setError(null);
@@ -300,30 +343,137 @@ export default function NursingWardAdmissionDetailPage() {
         {panel === "transferir" && isOpen ? (
           <section className="relative overflow-hidden rounded-xl border border-white/25 bg-white/35 px-3 py-2.5 pl-4 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/5">
             <span className="absolute left-0 top-0 h-full w-1.5 rounded-r-full bg-violet-500" />
-            <h2 className="mb-2 text-xs font-semibold text-foreground">Transferir de cama</h2>
-            <div className="grid gap-2 sm:grid-cols-2">
-              <SearchableSelect
-                value={newBedId}
-                onChange={setNewBedId}
-                options={freeBedOptions}
-                placeholder="Cama de destino"
-                searchPlaceholder="Pesquisar cama..."
-                emptyMessage="Sem camas livres."
-              />
-              <input
-                value={transferReason}
-                onChange={(event) => setTransferReason(event.target.value)}
-                placeholder="Motivo (opcional)"
-                className={inputClass}
-              />
+            <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <h2 className="text-xs font-semibold text-foreground">Transferir paciente</h2>
+                <p className="text-[11px] text-muted-foreground">
+                  Escolha se a transferência é interna, com nova enfermaria e cama/leito, ou para outro hospital.
+                </p>
+              </div>
+              <div className="inline-flex rounded-lg border border-white/30 bg-white/30 p-0.5 text-[11px] shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/10">
+                <button
+                  type="button"
+                  onClick={() => setTransferMode("internal")}
+                  className={`inline-flex h-7 items-center gap-1 rounded-md px-2.5 font-semibold transition ${transferMode === "internal" ? "bg-violet-600 text-white shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
+                >
+                  <Building2 size={12} /> Dentro do hospital
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTransferMode("external")}
+                  className={`inline-flex h-7 items-center gap-1 rounded-md px-2.5 font-semibold transition ${transferMode === "external" ? "bg-violet-600 text-white shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
+                >
+                  <Hospital size={12} /> Outro hospital
+                </button>
+              </div>
+            </div>
+
+            {transferMode === "internal" ? (
+              <div className="grid gap-2 lg:grid-cols-3">
+                <div className="space-y-1">
+                  <label className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Enfermaria de destino</label>
+                  <SearchableSelect
+                    value={destinationWardId}
+                    onChange={setDestinationWardId}
+                    options={wardOptions}
+                    placeholder="Escolha a enfermaria"
+                    searchPlaceholder="Pesquisar enfermaria..."
+                    emptyMessage="Nenhuma enfermaria ativa."
+                  />
+                  <p className="text-[10px] text-muted-foreground">
+                    Pode ser a mesma enfermaria atual ou outra enfermaria do hospital.
+                  </p>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Cama/leito de destino</label>
+                  <SearchableSelect
+                    value={newBedId}
+                    onChange={setNewBedId}
+                    options={freeBedOptions}
+                    disabled={!destinationWardId}
+                    placeholder={destinationWardId ? "Escolha a cama livre" : "Escolha a enfermaria primeiro"}
+                    searchPlaceholder="Pesquisar cama..."
+                    emptyMessage="Sem camas livres nesta enfermaria."
+                  />
+                  <p className="text-[10px] text-muted-foreground">
+                    {destinationWardId
+                      ? freeBedOptions.length > 0
+                        ? `${freeBedOptions.length} cama${freeBedOptions.length === 1 ? "" : "s"} livre${freeBedOptions.length === 1 ? "" : "s"} em ${destinationWard?.label || "destino"}.`
+                        : "Não há cama livre/desocupada nesta enfermaria."
+                      : "As camas disponíveis aparecem depois da seleção da enfermaria."}
+                  </p>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Motivo</label>
+                  <input
+                    value={transferReason}
+                    onChange={(event) => setTransferReason(event.target.value)}
+                    placeholder="Motivo (opcional)"
+                    className={inputClass}
+                  />
+                </div>
+              </div>
+            ) : (
+              <div className="grid gap-2 sm:grid-cols-2">
+                <div className="space-y-1">
+                  <label className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Hospital de destino</label>
+                  <input
+                    value={externalHospital}
+                    onChange={(event) => setExternalHospital(event.target.value)}
+                    placeholder="Nome do hospital de destino"
+                    className={inputClass}
+                  />
+                  <p className="text-[10px] text-muted-foreground">
+                    Transferência externa encerra este internamento sem ocupar cama interna.
+                  </p>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Motivo</label>
+                  <input
+                    value={transferReason}
+                    onChange={(event) => setTransferReason(event.target.value)}
+                    placeholder="Motivo (opcional)"
+                    className={inputClass}
+                  />
+                </div>
+              </div>
+            )}
+
+            <div className="mt-2 grid gap-2 rounded-lg border border-violet-200/60 bg-violet-50/60 px-3 py-2 text-[11px] text-violet-900 dark:border-violet-700/30 dark:bg-violet-900/20 dark:text-violet-200 sm:grid-cols-3">
+              <div>
+                <span className="font-semibold">Origem</span>
+                <p>{record?.ward_name || "Enfermaria atual"} · Cama {record?.bed_number || "—"}</p>
+              </div>
+              <div>
+                <span className="font-semibold">Destino</span>
+                <p>
+                  {transferMode === "internal"
+                    ? destinationWard?.label || "Escolha a enfermaria"
+                    : externalHospital || "Informe o hospital"}
+                </p>
+              </div>
+              <div>
+                <span className="font-semibold">Leito</span>
+                <p>
+                  {transferMode === "internal"
+                    ? freeBedOptions.find((option) => option.value === newBedId)?.label || "Escolha a cama"
+                    : "Externo"}
+                </p>
+              </div>
             </div>
             <div className="mt-2 flex justify-end gap-2">
               <button type="button" onClick={() => setPanel(null)} className={glassBtn}>Cancelar</button>
               <button
                 type="button"
-                disabled={busy || !newBedId}
+                disabled={busy || (transferMode === "internal" ? !newBedId : !externalHospital.trim())}
                 onClick={() =>
-                  runAction("transferir", { new_bed: Number(newBedId), reason: transferReason }, "Paciente transferido.")
+                  runAction(
+                    "transferir",
+                    transferMode === "internal"
+                      ? { new_bed: Number(newBedId), reason: transferReason }
+                      : { external_hospital: externalHospital.trim(), reason: transferReason },
+                    "Paciente transferido."
+                  )
                 }
                 className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-purple-600 px-3.5 text-xs font-semibold text-white shadow-md shadow-violet-500/30 transition hover:from-violet-700 hover:to-purple-700 disabled:opacity-60"
               >

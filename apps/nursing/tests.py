@@ -1,5 +1,6 @@
 from datetime import timedelta
 from decimal import Decimal
+from uuid import uuid4
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
@@ -34,10 +35,11 @@ from apps.tenants.models.tenant import Tenant
 
 
 def _tenant():
+    suffix = uuid4().hex[:8]
     return Tenant.objects.create(
-        identifier="tn-enf",
-        name="Tenant Enf",
-        domain="tenant-enf.local",
+        identifier=f"tn-enf-{suffix}",
+        name=f"Tenant Enf {suffix}",
+        domain=f"tenant-enf-{suffix}.local",
         active=True,
     )
 
@@ -53,9 +55,10 @@ def _patient(tenant):
 
 def _professional(tenant):
     User = get_user_model()
+    suffix = uuid4().hex[:8]
     return User.objects.create_user(
-        username="prof-enf",
-        email="prof@enf.test",
+        username=f"prof-enf-{suffix}",
+        email=f"prof-{suffix}@enf.test",
         password="123456",
         name="Prof Enf",
         tenant=tenant,
@@ -64,9 +67,10 @@ def _professional(tenant):
 
 def _authenticate_admin(tenant, api_client):
     User = get_user_model()
+    suffix = uuid4().hex[:8]
     user = User.objects.create_user(
-        username="admin-enf",
-        email="admin@enf.test",
+        username=f"admin-enf-{suffix}",
+        email=f"admin-{suffix}@enf.test",
         password="123456",
         name="Admin Enf",
         tenant=tenant,
@@ -358,6 +362,36 @@ def test_ward_context_is_inherited_by_operational_nursing_models():
     assert item.value.ward == ward
     assert material.ward == ward
     assert material.value.ward == ward
+
+
+@pytest.mark.django_db
+def test_ward_admission_transfer_to_external_hospital_closes_current_admission():
+    from rest_framework.test import APIRequestFactory, force_authenticate
+    from api.v1.nursing.viewsets import WardAdmissionViewSet
+
+    tenant = _tenant()
+    patient = _patient(tenant)
+    user = _professional(tenant)
+    ward = Ward.objects.create(tenant=tenant, name="Enfermaria A")
+    bed = WardBed.objects.create(tenant=tenant, ward=ward, number="A1")
+    admission = WardAdmission.objects.create(tenant=tenant, bed=bed, patient=patient)
+
+    request = APIRequestFactory().post(
+        f"/api/v1/nursing/ward_admission/{admission.id}/transferir/",
+        {"external_hospital": "Hospital Central", "reason": "Cuidados intensivos"},
+        format="json",
+        HTTP_HOST=tenant.domain,
+    )
+    force_authenticate(request, user=user)
+    view = WardAdmissionViewSet.as_view({"post": "transferir"})
+
+    response = view(request, pk=admission.id)
+
+    admission.refresh_from_db()
+    assert response.status_code == 200
+    assert admission.active is False
+    assert admission.discharged_at is not None
+    assert "Hospital Central" in admission.notes
 
 
 @pytest.mark.django_db

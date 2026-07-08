@@ -681,6 +681,18 @@ class WardAdmissionViewSet(TenantScopedModelViewSet):
     @action(detail=True, methods=["post"], url_path="transferir", url_name="transferir")
     def transferir(self, request, pk=None):
         admission = self.get_object()
+        external_hospital = str(request.data.get("external_hospital") or "").strip()
+        if external_hospital:
+            try:
+                WardAdmissionWorkflowService.discharge_patient(
+                    admission,
+                    condition=f"Transferido para outro hospital: {external_hospital}",
+                    notes=request.data.get("reason", ""),
+                )
+            except DjangoValidationError as exc:
+                raise _ward_as_drf_error(exc)
+            return Response(self.get_serializer(admission).data)
+
         new_bed = _ward_resolve("enfermagem", "WardBed", request.data.get("new_bed"), getattr(request, "tenant", None))
         if new_bed is None:
             raise DRFValidationError({"new_bed": "Cama de destino é obrigatória."})
