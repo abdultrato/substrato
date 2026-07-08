@@ -88,6 +88,15 @@ class BaseSurgeryViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin
     search_fields = ["custom_id", "procedure", "patient__name", "surgeon__username", "surgery_size"]
     ordering_fields = ["scheduled_for", "created_at", "status", "surgery_size"]
     ordering = ["-scheduled_for", "-created_at"]
+    immutable_statuses = {
+        Surgery.Status.SURGERY_COMPLETED,
+        Surgery.Status.COMPLETED,
+        Surgery.Status.IN_RECOVERY,
+        Surgery.Status.RECOVERED,
+        Surgery.Status.REPORT_PENDING,
+        Surgery.Status.BILLING_PENDING,
+        Surgery.Status.CLOSED,
+    }
 
     def perform_create(self, serializer):
         if self.fixed_surgery_size:
@@ -96,6 +105,8 @@ class BaseSurgeryViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin
         serializer.save()
 
     def perform_update(self, serializer):
+        if serializer.instance and serializer.instance.status in self.immutable_statuses:
+            raise ValidationError("Cirurgia realizada tem processo atómico e não pode ser editada.")
         if self.fixed_surgery_size:
             serializer.save(surgery_size=self.fixed_surgery_size)
             return

@@ -394,6 +394,10 @@ type TeamMember = { tempId: string; employeeId: number | null; employeeName: str
 type Consumption = { id: number; product: number; product_name: string; quantity: string; unit_cost: string }
 const MAT_TYPE_LABEL: Record<string, string> = { CONS: "Consumível", FARM: "Farmácia", MED: "Medicamento", OUT: "Outro" }
 function fmtMT(n: number) { return n.toLocaleString("pt-PT", { minimumFractionDigits: 2 }) + " MT" }
+const DONE_STATUSES = new Set([
+  "SURGERY_COMPLETED", "CONCLUIDA", "CLOSED", "IN_RECOVERY",
+  "RECOVERED", "REPORT_PENDING", "BILLING_PENDING",
+])
 
 export default function LargeSurgeryEditPage() {
   const params = useParams()
@@ -625,6 +629,43 @@ export default function LargeSurgeryEditPage() {
   if (loading) return (
     <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.ENFERMAGEM, GROUPS.MEDICINA]}>
       <div className="flex h-40 items-center justify-center text-sm text-[var(--gray-500)]">Carregando...</div>
+    </AppLayout>
+  )
+
+  if (DONE_STATUSES.has(status)) return (
+    <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.ENFERMAGEM, GROUPS.MEDICINA]}>
+      <div className="mx-auto w-full max-w-3xl space-y-3 px-1">
+        <section className={`relative overflow-hidden ${GLASS}`}>
+          <span className="absolute left-0 top-0 h-full w-1 bg-emerald-500" />
+          <div className="flex items-center justify-between gap-3 px-4 py-3 pl-5">
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5 text-[10px] text-[var(--gray-500)]">
+                <Link href="/surgery" className="hover:text-foreground">Cirurgia</Link>
+                <span>/</span>
+                <Link href="/surgery/large-surgeries" className="hover:text-foreground">Grandes cirurgias</Link>
+                <span>/</span>
+                <Link href={`/surgery/large-surgeries/${id}`} className="hover:text-foreground">{code}</Link>
+                <span>/</span>
+                <span className="font-semibold text-foreground">Edição bloqueada</span>
+              </div>
+              <h1 className="mt-0.5 font-display text-base font-semibold text-foreground">Processo cirúrgico atómico</h1>
+            </div>
+            <Link href={`/surgery/large-surgeries/${id}`}
+              className="inline-flex h-7 items-center gap-1 rounded-md border border-border bg-card px-2.5 text-[11px] text-muted-foreground transition hover:bg-muted">
+              <ArrowLeft size={11} /> Voltar
+            </Link>
+          </div>
+        </section>
+        <div className="rounded-xl border border-emerald-300/50 bg-emerald-50/70 px-4 py-3 text-sm text-emerald-800 dark:border-emerald-700/40 dark:bg-emerald-900/20 dark:text-emerald-300">
+          <div className="flex items-start gap-2">
+            <CheckCircle2 size={16} className="mt-0.5 shrink-0" />
+            <div>
+              <p className="font-semibold">Esta cirurgia já foi marcada como realizada.</p>
+              <p className="mt-1 text-xs">A partir deste marco, o processo fica atómico e não pode mais ser editado.</p>
+            </div>
+          </div>
+        </div>
+      </div>
     </AppLayout>
   )
 

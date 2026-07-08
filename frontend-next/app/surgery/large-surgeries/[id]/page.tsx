@@ -226,10 +226,16 @@ export default function LargeSurgeryDetailPage() {
                   <CheckCircle2 size={12} /> Realizada
                 </span>
               )}
-              <Link href={`/surgery/large-surgeries/${id}/edit`}
-                className="inline-flex h-7 items-center rounded-md border border-border bg-card px-2.5 text-[11px] font-medium text-foreground transition hover:bg-muted">
-                Editar
-              </Link>
+              {!isDone ? (
+                <Link href={`/surgery/large-surgeries/${id}/edit`}
+                  className="inline-flex h-7 items-center rounded-md border border-border bg-card px-2.5 text-[11px] font-medium text-foreground transition hover:bg-muted">
+                  Editar
+                </Link>
+              ) : (
+                <span className="inline-flex h-7 items-center rounded-md border border-slate-200 bg-slate-50 px-2.5 text-[11px] font-medium text-slate-500 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-300">
+                  Processo atómico
+                </span>
+              )}
               <Link href="/surgery/large-surgeries"
                 className="inline-flex h-7 items-center gap-1 rounded-md border border-border bg-card px-2.5 text-[11px] text-muted-foreground transition hover:bg-muted">
                 <ArrowLeft size={11} /> Voltar

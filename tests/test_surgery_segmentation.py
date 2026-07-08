@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
+from uuid import uuid4
 import pytest
 
 from apps.clinical.models.patient import Patient
@@ -9,10 +10,11 @@ from apps.tenants.models.tenant import Tenant
 
 
 def _tenant() -> Tenant:
+    suffix = uuid4().hex[:8]
     return Tenant.objects.create(
-        identifier="tn-surgery-seg",
-        name="Tenant Surgery Seg",
-        domain="surgery-seg.local",
+        identifier=f"tn-surgery-seg-{suffix}",
+        name=f"Tenant Surgery Seg {suffix}",
+        domain=f"surgery-seg-{suffix}.local",
         active=True,
     )
 
@@ -28,9 +30,10 @@ def _patient(tenant: Tenant) -> Patient:
 
 def _surgeon(tenant: Tenant):
     user_model = get_user_model()
+    suffix = uuid4().hex[:8]
     return user_model.objects.create_user(
-        username="surgeon_seg",
-        email="surgeon-seg@example.com",
+        username=f"surgeon_seg_{suffix}",
+        email=f"surgeon-seg-{suffix}@example.com",
         password="testpass123",
         tenant=tenant,
     )
@@ -57,8 +60,8 @@ def test_small_and_large_surgery_proxy_managers_filter_by_size():
         surgery_size=Surgery.Size.LARGE,
     )
 
-    assert list(SmallSurgery.objects.values_list("id", flat=True)) == [small.id]
-    assert list(LargeSurgery.objects.values_list("id", flat=True)) == [large.id]
+    assert list(SmallSurgery.objects.filter(tenant=tenant).values_list("id", flat=True)) == [small.id]
+    assert list(LargeSurgery.objects.filter(tenant=tenant).values_list("id", flat=True)) == [large.id]
 
 
 @pytest.mark.django_db
@@ -127,3 +130,38 @@ def test_surgery_api_uses_english_resource_routes(api_client):
 
     assert api_client.get("/api/v1/surgery/small_surgery/").status_code == 200
     assert api_client.get("/api/v1/surgery/pequenacirurgia/").status_code == 404
+
+
+@pytest.mark.django_db
+def test_large_surgery_api_rejects_updates_after_marked_performed(api_client):
+    from rest_framework.test import APIRequestFactory, force_authenticate
+    from api.v1.surgery.viewsets import LargeSurgeryViewSet
+
+    tenant = _tenant()
+    patient = _patient(tenant)
+    user = _surgeon(tenant)
+    admin_group, _ = Group.objects.get_or_create(name="Administrador")
+    user.groups.add(admin_group)
+    surgery = Surgery.objects.create(
+        tenant=tenant,
+        patient=patient,
+        surgeon=user,
+        procedure="Grande cirurgia bloqueada",
+        surgery_size=Surgery.Size.LARGE,
+        status=Surgery.Status.SURGERY_COMPLETED,
+    )
+
+    request = APIRequestFactory().patch(
+        f"/api/v1/surgery/large_surgery/{surgery.id}/",
+        {"procedure": "Alteração indevida"},
+        format="json",
+        HTTP_HOST=tenant.domain,
+    )
+    force_authenticate(request, user=user)
+    view = LargeSurgeryViewSet.as_view({"patch": "partial_update"})
+
+    response = view(request, pk=surgery.id)
+
+    surgery.refresh_from_db()
+    assert response.status_code == 400
+    assert surgery.procedure == "Grande cirurgia bloqueada"
