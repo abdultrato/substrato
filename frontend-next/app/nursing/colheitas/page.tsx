@@ -258,7 +258,7 @@ export default function NursingCollectionsPage() {
 
   return (
     <AppLayout>
-      <div className="mx-auto w-[90vw] max-w-[90vw] space-y-3">
+      <div className="w-full space-y-3">
         <div className="relative flex flex-wrap items-center justify-between gap-3 overflow-hidden rounded-xl border border-white/20 bg-gradient-to-r from-blue-500/15 via-white/30 to-white/30 px-4 py-3 shadow-sm backdrop-blur-sm dark:border-white/10 dark:from-blue-500/10 dark:via-white/5 dark:to-white/5">
           <div className="flex min-w-0 items-center gap-3">
             <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-500/15 text-blue-600 dark:text-blue-400">

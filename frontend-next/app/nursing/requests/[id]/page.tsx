@@ -119,16 +119,26 @@ export default function NursingRequestDetailPage() {
     return items.filter((item) => item.exam_name || item.medical_exam_name)
   }, [record])
 
+  // Agrega as amostras pendentes: exames que partilham a mesma amostra somam o volume mínimo.
   const pendingSampleSummary = useMemo(() => {
-    const unique = new Map<number, SampleOption>()
+    const grouped = new Map<string, { sample: SampleOption; examCount: number; totalVolumeMl: number }>()
     for (const item of labItems) {
       if (isCollectedProgress(normalizeStatus(item.sample_status))) continue
       for (const sample of item.sample_options || []) {
-        if (!sample?.id || unique.has(sample.id)) continue
-        unique.set(sample.id, sample)
+        if (!sample) continue
+        const key = String(sample.id ?? `${sample.name || ""}|${sample.container_name || sample.bottle_type || ""}`)
+        const perExamVolume =
+          Number(sample.volume_ml && Number(sample.volume_ml) > 0 ? sample.volume_ml : sample.minimum_volume_ml || 0) || 0
+        const current = grouped.get(key)
+        if (current) {
+          current.examCount += 1
+          current.totalVolumeMl += perExamVolume
+        } else {
+          grouped.set(key, { sample, examCount: 1, totalVolumeMl: perExamVolume })
+        }
       }
     }
-    return Array.from(unique.values())
+    return Array.from(grouped.values()).sort((a, b) => b.examCount - a.examCount)
   }, [labItems])
 
   const anyCollected = useMemo(
@@ -175,7 +185,7 @@ export default function NursingRequestDetailPage() {
 
   return (
     <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.ENFERMAGEM]}>
-      <div className="mx-auto w-[90vw] max-w-[90vw] space-y-2 text-[0.9em]">
+      <div className="w-full space-y-2 text-[0.9em]">
         <div className="relative overflow-hidden rounded-xl border border-white/20 bg-gradient-to-r from-blue-500/15 via-white/30 to-white/30 px-4 py-3 shadow-sm backdrop-blur-sm dark:border-white/10 dark:from-blue-500/10 dark:via-white/5 dark:to-white/5">
           <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex min-w-0 items-center gap-3">
@@ -248,6 +258,53 @@ export default function NursingRequestDetailPage() {
               </div>
             </div>
           ) : null}
+
+          {record && pendingSampleSummary.length > 0 ? (
+            <div className="mt-2.5 border-t border-white/30 pt-2.5 dark:border-white/10">
+              <div className="mb-1.5 flex items-center gap-2">
+                <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  Amostras necessárias
+                </span>
+                <span className="rounded-full bg-sky-100 px-2 py-0.5 text-[10px] font-semibold text-sky-800">
+                  {pendingSampleSummary.length}
+                </span>
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {pendingSampleSummary.map(({ sample, examCount, totalVolumeMl }, idx) => {
+                  const container = [
+                    sample.container_name,
+                    sample.cap_color_display || sample.bottle_type_display || sample.bottle_type,
+                  ]
+                    .filter(Boolean)
+                    .join(" · ")
+                  return (
+                    <span
+                      key={sample.id ?? idx}
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-white/30 bg-white/40 px-2 py-1 text-[10px] font-medium text-foreground shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/10"
+                    >
+                      <span className="font-semibold">
+                        {(sample.name || sample.container_name || "Amostra").replace(/_/g, " ")}
+                      </span>
+                      {container ? <span className="text-muted-foreground">{container}</span> : null}
+                      <span className="rounded bg-sky-100 px-1.5 py-0.5 font-semibold text-sky-800">
+                        {examCount} {examCount === 1 ? "exame" : "exames"}
+                      </span>
+                      {totalVolumeMl > 0 ? (
+                        <span className="rounded bg-blue-100 px-1.5 py-0.5 font-semibold text-blue-800">
+                          ≥ {Number(totalVolumeMl.toFixed(1))} mL
+                        </span>
+                      ) : null}
+                      {sample.fasting_required ? (
+                        <span className="rounded bg-amber-100 px-1.5 py-0.5 font-semibold text-amber-800">
+                          jejum {sample.fasting_hours || 0}h
+                        </span>
+                      ) : null}
+                    </span>
+                  )
+                })}
+              </div>
+            </div>
+          ) : null}
         </div>
 
         {error ? (
@@ -260,30 +317,6 @@ export default function NursingRequestDetailPage() {
           <div className="text-xs text-muted-foreground">Carregando...</div>
         ) : record ? (
           <>
-            {/* Resumo de amostras por coletar */}
-            {pendingSampleSummary.length > 0 ? (
-              <section className="rounded-xl border border-white/25 bg-white/35 px-3 py-2 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/5">
-                <div className="mb-1.5 flex items-center gap-2">
-                  <span className="text-xs font-semibold text-foreground">Amostras por coletar</span>
-                  <span className="rounded-full bg-sky-100 px-2 py-0.5 text-[10px] font-semibold text-sky-800">
-                    {pendingSampleSummary.length}
-                  </span>
-                </div>
-                <div className="flex flex-wrap gap-1.5">
-                  {pendingSampleSummary.map((sample, idx) => (
-                    <span
-                      key={sample.id ?? idx}
-                      className="inline-flex items-center rounded border border-[var(--primary-300)] bg-[var(--primary-300)]/20 px-2 py-0.5 text-[10px] font-medium text-foreground"
-                    >
-                      {sample.container_name || sample.name || "Amostra"}
-                      {sample.cap_color_display ? ` · ${sample.cap_color_display}` : (sample.bottle_type_display || sample.bottle_type ? ` · ${sample.bottle_type_display || sample.bottle_type}` : "")}
-                      {sample.volume_ml && Number(sample.volume_ml) > 0 ? ` · ${sample.volume_ml} mL` : (sample.minimum_volume_ml && Number(sample.minimum_volume_ml) > 0 ? ` · ${sample.minimum_volume_ml} mL` : "")}
-                    </span>
-                  ))}
-                </div>
-              </section>
-            ) : null}
-
             {/* Lista de exames */}
             <section className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {labItems.map((item) => {
