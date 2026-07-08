@@ -27,12 +27,6 @@ type AdmissionRow = {
   discharged_at?: string | null;
 };
 
-function toIsoOrUndefined(value: string): string | undefined {
-  if (!value) return undefined;
-  const parsed = new Date(value);
-  return Number.isNaN(parsed.getTime()) ? undefined : parsed.toISOString();
-}
-
 function WardAdmissionForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -49,8 +43,6 @@ function WardAdmissionForm() {
   const [patientId, setPatientId] = useState(searchParams?.get("patient") || "");
   const [wardId, setWardId] = useState(searchParams?.get("ward") || "");
   const [bedId, setBedId] = useState("");
-  const [expectedDischarge, setExpectedDischarge] = useState("");
-  const [observationHours, setObservationHours] = useState("");
   const surgeryOriginNote = surgeryId
     ? `Origem do internamento: paciente encaminhado da cirurgia de grande porte número ${surgeryId} para admissão em enfermaria.`
     : "";
@@ -156,9 +148,6 @@ function WardAdmissionForm() {
         bed: Number(bedId),
         active: true,
       };
-      const dischargeIso = toIsoOrUndefined(expectedDischarge);
-      if (dischargeIso) payload.expected_discharge_date = dischargeIso;
-      if (observationHours) payload.estimated_observation_hours = Number(observationHours);
       if (notes.trim()) payload.notes = notes.trim();
 
       await apiFetch("/nursing/ward_admission/", { method: "POST", body: JSON.stringify(payload) });
@@ -174,15 +163,15 @@ function WardAdmissionForm() {
   const labelClass = "text-[11px] font-semibold text-muted-foreground";
 
   return (
-    <div className="mx-auto w-full max-w-4xl space-y-2 text-[0.9em]">
+    <div className="mx-auto w-full max-w-4xl space-y-1.5 text-[0.9em]">
       {/* Header */}
-      <div className="relative flex flex-wrap items-center justify-between gap-3 overflow-hidden rounded-xl border border-white/20 bg-gradient-to-r from-violet-500/15 via-white/30 to-white/30 px-4 py-3 shadow-sm backdrop-blur-sm dark:border-white/10 dark:from-violet-500/10 dark:via-white/5 dark:to-white/5">
+      <div className="relative flex flex-wrap items-center justify-between gap-2 overflow-hidden rounded-xl border border-white/20 bg-gradient-to-r from-violet-500/15 via-white/30 to-white/30 px-3 py-2 shadow-sm backdrop-blur-sm dark:border-white/10 dark:from-violet-500/10 dark:via-white/5 dark:to-white/5">
         <div className="flex min-w-0 items-center gap-3">
-          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-violet-500/15 text-violet-600 dark:text-violet-400">
-            <BedDouble size={22} strokeWidth={2} />
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-violet-500/15 text-violet-600 dark:text-violet-400">
+            <BedDouble size={19} strokeWidth={2} />
           </span>
           <div className="min-w-0">
-            <h1 className="font-display text-xl font-bold text-foreground">Admitir paciente</h1>
+            <h1 className="font-display text-lg font-bold text-foreground">Admitir paciente</h1>
             <p className="text-[11px] text-muted-foreground">Registo de internamento em enfermaria.</p>
           </div>
         </div>
@@ -207,10 +196,10 @@ function WardAdmissionForm() {
       ) : (
         <form
           onSubmit={submit}
-          className="space-y-3 rounded-xl border border-white/25 bg-white/35 px-4 py-3 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/5"
+          className="space-y-2 rounded-xl border border-white/25 bg-white/35 px-3 py-2.5 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/5"
         >
           {surgeryId ? (
-            <div className="grid gap-2 rounded-xl border border-sky-200 bg-sky-50/70 p-3 text-xs text-sky-900 dark:border-sky-700/40 dark:bg-sky-900/20 dark:text-sky-200 sm:grid-cols-3">
+            <div className="grid gap-2 rounded-xl border border-sky-200 bg-sky-50/70 p-2 text-xs text-sky-900 dark:border-sky-700/40 dark:bg-sky-900/20 dark:text-sky-200 sm:grid-cols-3">
               <div className="flex min-w-0 items-center gap-2">
                 <User size={15} className="shrink-0" />
                 <div className="min-w-0">
@@ -235,7 +224,7 @@ function WardAdmissionForm() {
             </div>
           ) : null}
 
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid gap-2 sm:grid-cols-2">
             <div className="space-y-1">
               <label className={labelClass}>Paciente *</label>
               <SearchableSelect
@@ -282,26 +271,6 @@ function WardAdmissionForm() {
                   : "As camas aparecem depois da seleção da enfermaria."}
               </p>
             </div>
-            <div className="space-y-1">
-              <label className={labelClass}>Alta prevista</label>
-              <input
-                type="datetime-local"
-                value={expectedDischarge}
-                onChange={(event) => setExpectedDischarge(event.target.value)}
-                className={inputClass}
-              />
-            </div>
-            <div className="space-y-1">
-              <label className={labelClass}>Horas de observação estimadas</label>
-              <input
-                type="number"
-                min={0}
-                value={observationHours}
-                onChange={(event) => setObservationHours(event.target.value)}
-                placeholder="Ex.: 8"
-                className={inputClass}
-              />
-            </div>
           </div>
 
           <div className="space-y-1">
@@ -309,23 +278,23 @@ function WardAdmissionForm() {
             <textarea
               value={notes}
               onChange={(event) => setNotes(event.target.value)}
-              rows={3}
+              rows={2}
               placeholder="Observações do internamento…"
               className={inputClass}
             />
           </div>
 
-          <div className="flex items-center justify-end gap-2 border-t border-border/40 pt-2.5">
+          <div className="flex items-center justify-end gap-2 border-t border-border/40 pt-2">
             <Link
               href="/nursing/ward-admissions"
-              className="inline-flex h-8 items-center rounded-lg border border-white/30 bg-white/40 px-3 text-xs font-medium text-foreground-2 shadow-sm backdrop-blur-sm transition hover:bg-white/60 hover:text-foreground dark:border-white/10 dark:bg-white/10 dark:hover:bg-white/15"
+              className="inline-flex h-7 items-center rounded-lg border border-white/30 bg-white/40 px-3 text-xs font-medium text-foreground-2 shadow-sm backdrop-blur-sm transition hover:bg-white/60 hover:text-foreground dark:border-white/10 dark:bg-white/10 dark:hover:bg-white/15"
             >
               Cancelar
             </Link>
             <button
               type="submit"
               disabled={saving}
-              className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-purple-600 px-3.5 text-xs font-semibold text-white shadow-md shadow-violet-500/30 transition hover:from-violet-700 hover:to-purple-700 disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex h-7 items-center gap-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-purple-600 px-3.5 text-xs font-semibold text-white shadow-md shadow-violet-500/30 transition hover:from-violet-700 hover:to-purple-700 disabled:cursor-not-allowed disabled:opacity-60"
             >
               <Plus size={13} />
               {saving ? "Registando…" : "Registar internamento"}
