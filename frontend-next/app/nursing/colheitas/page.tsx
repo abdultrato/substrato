@@ -312,7 +312,7 @@ export default function NursingCollectionsPage() {
               return (
                 <section
                   key={column.key}
-                  className={`flex h-[calc(100vh-215px)] min-w-0 flex-col overflow-hidden rounded-xl border border-white/20 bg-white/20 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04] ${column.top}`}
+                  className={`flex h-[calc(100vh-292px)] min-w-0 flex-col overflow-hidden rounded-xl border border-white/20 bg-white/20 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04] ${column.top}`}
                 >
                   <div className={`flex min-h-12 items-center gap-2 border-b border-border/50 px-3 py-2 ${column.band}`}>
                     <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md ${column.chip}`}>
