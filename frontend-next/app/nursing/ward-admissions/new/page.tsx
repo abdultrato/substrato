@@ -165,15 +165,42 @@ function WardAdmissionForm() {
   return (
     <div className="mx-auto w-full max-w-4xl space-y-1.5 text-[0.9em]">
       {/* Header */}
-      <div className="relative flex flex-wrap items-center justify-between gap-2 overflow-hidden rounded-xl border border-white/20 bg-gradient-to-r from-violet-500/15 via-white/30 to-white/30 px-3 py-2 shadow-sm backdrop-blur-sm dark:border-white/10 dark:from-violet-500/10 dark:via-white/5 dark:to-white/5">
-        <div className="flex min-w-0 items-center gap-3">
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-violet-500/15 text-violet-600 dark:text-violet-400">
-            <BedDouble size={19} strokeWidth={2} />
-          </span>
-          <div className="min-w-0">
-            <h1 className="font-display text-lg font-bold text-foreground">Admitir paciente</h1>
-            <p className="text-[11px] text-muted-foreground">Registo de internamento em enfermaria.</p>
+      <div className="relative flex flex-wrap items-start justify-between gap-2 overflow-hidden rounded-xl border border-white/20 bg-gradient-to-r from-violet-500/15 via-white/30 to-white/30 px-3 py-2 shadow-sm backdrop-blur-sm dark:border-white/10 dark:from-violet-500/10 dark:via-white/5 dark:to-white/5">
+        <div className="min-w-0 flex-1 space-y-2">
+          <div className="flex min-w-0 items-center gap-3">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-violet-500/15 text-violet-600 dark:text-violet-400">
+              <BedDouble size={19} strokeWidth={2} />
+            </span>
+            <div className="min-w-0">
+              <h1 className="font-display text-lg font-bold text-foreground">Admitir paciente</h1>
+              <p className="text-[11px] text-muted-foreground">Registo de internamento em enfermaria.</p>
+            </div>
           </div>
+          {surgeryId ? (
+            <div className="grid gap-2 rounded-lg border border-sky-200 bg-sky-50/70 p-2 text-xs text-sky-900 dark:border-sky-700/40 dark:bg-sky-900/20 dark:text-sky-200 sm:grid-cols-3">
+              <div className="flex min-w-0 items-center gap-2">
+                <User size={15} className="shrink-0" />
+                <div className="min-w-0">
+                  <p className="font-semibold">Paciente encaminhado</p>
+                  <p className="truncate">{selectedPatient?.label || "A carregar paciente..."}</p>
+                </div>
+              </div>
+              <div className="flex min-w-0 items-center gap-2">
+                <Building2 size={15} className="shrink-0" />
+                <div className="min-w-0">
+                  <p className="font-semibold">1. Escolha a enfermaria</p>
+                  <p className="truncate">{selectedWard?.label || "Nenhuma enfermaria selecionada"}</p>
+                </div>
+              </div>
+              <div className="flex min-w-0 items-center gap-2">
+                <BedDouble size={15} className="shrink-0" />
+                <div className="min-w-0">
+                  <p className="font-semibold">2. Escolha o leito</p>
+                  <p className="truncate">{wardId ? `${bedOptions.length} cama${bedOptions.length === 1 ? "" : "s"} livre${bedOptions.length === 1 ? "" : "s"}` : "Disponível após escolher enfermaria"}</p>
+                </div>
+              </div>
+            </div>
+          ) : null}
         </div>
         <Link
           href="/nursing/ward-admissions"
@@ -198,32 +225,6 @@ function WardAdmissionForm() {
           onSubmit={submit}
           className="space-y-2 rounded-xl border border-white/25 bg-white/35 px-3 py-2.5 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/5"
         >
-          {surgeryId ? (
-            <div className="grid gap-2 rounded-xl border border-sky-200 bg-sky-50/70 p-2 text-xs text-sky-900 dark:border-sky-700/40 dark:bg-sky-900/20 dark:text-sky-200 sm:grid-cols-3">
-              <div className="flex min-w-0 items-center gap-2">
-                <User size={15} className="shrink-0" />
-                <div className="min-w-0">
-                  <p className="font-semibold">Paciente encaminhado</p>
-                  <p className="truncate">{selectedPatient?.label || "A carregar paciente..."}</p>
-                </div>
-              </div>
-              <div className="flex min-w-0 items-center gap-2">
-                <Building2 size={15} className="shrink-0" />
-                <div className="min-w-0">
-                  <p className="font-semibold">1. Escolha a enfermaria</p>
-                  <p className="truncate">{selectedWard?.label || "Nenhuma enfermaria selecionada"}</p>
-                </div>
-              </div>
-              <div className="flex min-w-0 items-center gap-2">
-                <BedDouble size={15} className="shrink-0" />
-                <div className="min-w-0">
-                  <p className="font-semibold">2. Escolha o leito</p>
-                  <p className="truncate">{wardId ? `${bedOptions.length} cama${bedOptions.length === 1 ? "" : "s"} livre${bedOptions.length === 1 ? "" : "s"}` : "Disponível após escolher enfermaria"}</p>
-                </div>
-              </div>
-            </div>
-          ) : null}
-
           <div className="grid gap-2 sm:grid-cols-2">
             <div className="space-y-1">
               <label className={labelClass}>Paciente *</label>
