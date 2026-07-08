@@ -194,7 +194,7 @@ export default function NursingWardDetailPage() {
 
             <div className="flex flex-wrap items-center gap-2">
               <Link
-                href="/nursing/ward-admissions/new"
+                href={`/nursing/ward-admissions/new?ward=${wardId}`}
                 className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-600 px-3 text-xs font-semibold text-white shadow-md shadow-emerald-500/30 transition hover:from-emerald-700 hover:to-teal-700"
               >
                 <Plus size={13} /> Admitir paciente
