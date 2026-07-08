@@ -4,21 +4,16 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
-  ChevronLeft,
-  ChevronRight,
   Circle,
   Clock,
   Loader2,
   Plus,
   Search,
-  Menu,
-  ChevronDown,
   X,
   Zap,
   BedDouble,
   Users,
   Activity,
-  Building2,
 } from "lucide-react";
 
 import AppLayout from "@/components/layout/AppLayout";
@@ -346,67 +341,61 @@ export default function NursingWardPage() {
     <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.ENFERMAGEM]}>
       <div className="space-y-2">
         {/* Header */}
-        <div className="relative overflow-hidden rounded-xl border border-white/20 bg-white/30 px-2 py-2 shadow-sm backdrop-blur-sm dark:bg-white/5 dark:border-white/10">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div className="flex items-center gap-2">
-              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--primary-600)]/10 text-[var(--primary-700)] dark:text-[var(--primary-400)]">
-                <Building2 size={16} />
-              </span>
-              <div>
-                <h1 className="text-lg font-bold leading-tight text-foreground">
-                  Enfermarias
-                </h1>
-                <p className="text-[11px] text-muted-foreground">
-                  {loading ? "Carregando…" : formatCount(total, { one: "enfermaria cadastrada", other: "enfermarias cadastradas" })}
-                </p>
-              </div>
+        <div className="relative flex flex-wrap items-center justify-between gap-3 overflow-hidden rounded-xl border border-white/20 bg-gradient-to-r from-emerald-500/15 via-white/30 to-white/30 px-4 py-3 shadow-sm backdrop-blur-sm dark:border-white/10 dark:from-emerald-500/10 dark:via-white/5 dark:to-white/5">
+          <div className="flex min-w-0 items-center gap-3">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
+              <BedDouble size={22} strokeWidth={2} />
+            </span>
+            <div className="min-w-0">
+              <h1 className="font-display text-xl font-bold text-foreground">Enfermarias</h1>
+              <p className="text-[11px] text-muted-foreground">
+                {loading ? "Carregando…" : formatCount(total, { one: "enfermaria cadastrada", other: "enfermarias cadastradas" })}
+              </p>
             </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="relative w-44">
+              <Search size={13} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <input
+                type="text"
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder="Pesquisar…"
+                className="w-full rounded-lg border border-white/30 bg-white/40 py-1.5 pl-8 pr-3 text-xs text-foreground shadow-sm backdrop-blur-sm transition placeholder:text-muted-foreground hover:border-emerald-400/60 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/25 dark:border-white/10 dark:bg-white/10"
+              />
+            </div>
+            <select
+              value={statusFilter}
+              onChange={(event) => setStatusFilter(event.target.value)}
+              className="h-8 rounded-lg border border-white/30 bg-white/40 px-2.5 text-xs text-foreground shadow-sm backdrop-blur-sm outline-none transition hover:border-emerald-400/60 focus:border-emerald-500 dark:border-white/10 dark:bg-white/10"
+            >
+              {STATUS_OPTIONS.map((option) => (
+                <option key={option.value || "all"} value={option.value}>
+                  {t(option.labelPt, option.labelEn)}
+                </option>
+              ))}
+            </select>
+            {search || statusFilter ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setSearch("");
+                  setStatusFilter("");
+                }}
+                className="inline-flex h-8 items-center gap-1 rounded-lg border border-white/30 bg-white/40 px-2.5 text-xs font-medium text-foreground-2 shadow-sm backdrop-blur-sm transition hover:bg-white/60 hover:text-foreground dark:border-white/10 dark:bg-white/10 dark:hover:bg-white/15"
+              >
+                <X size={13} />
+                {t("Limpar", "Clear")}
+              </button>
+            ) : null}
             <Link
               href="/nursing/ward/new"
-              className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-600 px-2 text-sm font-semibold text-white shadow-md shadow-emerald-500/30 transition hover:from-emerald-700 hover:to-teal-700"
+              className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-600 px-3 text-xs font-semibold text-white shadow-md shadow-emerald-500/30 transition hover:from-emerald-700 hover:to-teal-700"
             >
               <Plus size={13} /> Nova Enfermaria
             </Link>
           </div>
-        </div>
-
-        {/* Filters */}
-        <div className="flex flex-wrap gap-1">
-          <div className="relative w-48">
-            <Search size={12} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
-            <input
-              type="text"
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder="Pesquisar…"
-              className="w-full rounded-lg border border-border bg-background/60 py-1.5 pl-7 pr-6 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:w-72 focus:ring-2 focus:ring-violet-500/40 transition-all"
-            />
-          </div>
-          <select
-            value={statusFilter}
-            onChange={(event) => setStatusFilter(event.target.value)}
-            className="h-8 rounded-lg border border-border bg-card px-2.5 text-sm text-foreground outline-none transition focus:border-emerald-500"
-          >
-            {STATUS_OPTIONS.map((option) => (
-              <option key={option.value || "all"} value={option.value}>
-                {t(option.labelPt, option.labelEn)}
-              </option>
-            ))}
-          </select>
-
-          <button
-            type="button"
-            onClick={() => {
-              setSearch("");
-              setStatusFilter("");
-            }}
-            className="h-8 items-center gap-1 rounded-md border border-white/30 bg-white/45 px-2.5 font-semibold text-sm text-[var(--gray-700)] shadow-sm backdrop-blur-sm transition-all duration-150 hover:border-[var(--primary-300)] hover:bg-white/60 hover:text-[var(--text)] dark:border-white/10 dark:bg-white/10 dark:text-[var(--gray-200)] dark:hover:bg-white/15"
-          >
-            <span className="flex items-center gap-1">
-              <X size={14} />
-              {t("Limpar filtros", "Clear filters")}
-            </span>
-          </button>
         </div>
 
         {/* Error Message */}
@@ -442,28 +431,26 @@ export default function NursingWardPage() {
                 className="group relative flex flex-col overflow-hidden rounded-xl border border-white/20 bg-white/25 shadow-sm backdrop-blur-sm transition hover:border-emerald-300/50 hover:shadow-md dark:bg-white/5 dark:border-white/10 dark:hover:border-emerald-500/30"
               >
                 {/* Status indicator on the left - thin colored bar */}
-                <span className={`absolute left-0 top-0 h-0.5 w-0 ${ward.active ? "bg-emerald-500" : "bg-red-500"}`} />
+                <span className={`absolute left-0 top-0 h-full w-1 ${ward.active ? "bg-emerald-500" : "bg-red-500"}`} />
 
-                <div className="flex-1 flex-col p-2">
+                <div className="flex min-w-0 flex-1 flex-col p-2 pl-3">
                   {/* Header with name and status */}
-                  <div className="flex items-start justify-between gap-2 mb-1">
-                    <div>
-                      <div className="text-sm font-mono text-muted-foreground truncate max-w-xs">
+                  <div className="mb-1 flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <div className="truncate font-mono text-[10px] text-muted-foreground">
                         {ward.custom_id || `ENF-${ward.id}`}
                       </div>
-                      <h3 className="text-base font-semibold leading-snug text-foreground truncate">
+                      <h3 className="truncate text-base font-semibold leading-snug text-foreground" title={ward.name || undefined}>
                         {ward.name || "Enfermaria sem nome"}
                       </h3>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <span
-                        className={`px-2 py-0.5 rounded text-xs font-medium ${ward.active
-                          ? "bg-emerald-50 text-emerald-800"
-                          : "bg-red-50 text-red-800"}`}
-                      >
-                        {ward.active ? "Ativa" : "Inativa"}
-                      </span>
-                    </div>
+                    <span
+                      className={`shrink-0 rounded px-2 py-0.5 text-xs font-medium ${ward.active
+                        ? "bg-emerald-50 text-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-300"
+                        : "bg-red-50 text-red-800 dark:bg-red-900/20 dark:text-red-300"}`}
+                    >
+                      {ward.active ? "Ativa" : "Inativa"}
+                    </span>
                   </div>
 
                   {/* Description */}
@@ -474,40 +461,38 @@ export default function NursingWardPage() {
                   )}
 
                   {/* Stats Section */}
-                  <div className="mt-2 pt-1 border-t border-border/40">
+                  <div className="mt-2 border-t border-border/40 pt-1">
                     <div className="space-y-0.5 text-sm">
                       {/* Bed Occupancy */}
-                      <div className="flex justify-between">
-                        <span className="font-medium text-[var(--gray-700)]">
+                      <div className="flex min-w-0 items-center justify-between gap-2">
+                        <span className="truncate text-xs font-medium text-foreground-2">
                           Ocupação de camas
                         </span>
-                        <span className="flex items-center gap-1">
-                          <span
-                            className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${ward.bed_summary
-                              ? occupancyBadge(
-                                  ward.bed_summary.available_beds,
-                                  ward.bed_summary.total_beds
-                                )
-                              : "border-gray-200 bg-gray-50 text-gray-700"}`}
-                          >
-                            {ward.bed_summary
-                              ? occupancyLabel(
-                                  ward.bed_summary.available_beds,
-                                  ward.bed_summary.total_beds
-                                )
-                              : "Carregando…"}
-                          </span>
+                        <span
+                          className={`shrink-0 whitespace-nowrap rounded-full border px-2 py-0.5 text-[10px] font-medium ${ward.bed_summary
+                            ? occupancyBadge(
+                                ward.bed_summary.available_beds,
+                                ward.bed_summary.total_beds
+                              )
+                            : "border-gray-200 bg-gray-50 text-gray-700"}`}
+                        >
+                          {ward.bed_summary
+                            ? occupancyLabel(
+                                ward.bed_summary.available_beds,
+                                ward.bed_summary.total_beds
+                              )
+                            : "Carregando…"}
                         </span>
                       </div>
 
                       {/* Recent Activity */}
-                      <div className="flex justify-between text-[11px] text-muted-foreground">
-                        <span>
-                          <Activity size={12} className="mr-0.5" />
-                          {ward.recent_admissions_count ?? 0} admissões recentes
+                      <div className="flex min-w-0 items-center justify-between gap-2 text-[11px] text-muted-foreground">
+                        <span className="inline-flex min-w-0 items-center gap-1">
+                          <Activity size={12} className="shrink-0" />
+                          <span className="truncate">{ward.recent_admissions_count ?? 0} admissões recentes</span>
                         </span>
-                        <span>
-                          <Clock size={12} className="mr-0.5" />
+                        <span className="inline-flex shrink-0 items-center gap-1">
+                          <Clock size={12} className="shrink-0" />
                           {formatDate(ward.updated_at)}
                         </span>
                       </div>
@@ -515,40 +500,39 @@ export default function NursingWardPage() {
                   </div>
 
                   {/* Action Buttons */}
-                  <div className="mt-2 pt-1 border-t border-border/40 flex flex-col sm:flex-row gap-0.5">
+                  <div className="mt-2 flex gap-1 border-t border-border/40 pt-1.5">
                     <span
                       onClick={(event) => {
+                        event.preventDefault();
                         event.stopPropagation();
-                        router.push(`/nursing/ward/${ward.id}/beds`);
+                        router.push("/nursing/ward-beds");
                       }}
-                      className="flex-1 flex items-center justify-center px-2 py-1 text-sm font-semibold bg-white/10 border border-white/20 rounded-md hover:bg-white/20 transition-colors dark:border-white/10 dark:hover:bg-white/30 cursor-pointer"
+                      className="flex flex-1 cursor-pointer items-center justify-center gap-1 truncate rounded-md border border-white/20 bg-white/10 px-2 py-1 text-xs font-semibold transition-colors hover:bg-white/20 dark:border-white/10 dark:hover:bg-white/30"
                     >
-                      <BedDouble size={14} className="mr-1" />
-                      Ver Camas
+                      <BedDouble size={13} className="shrink-0" />
+                      Camas
                     </span>
                     <span
                       onClick={(event) => {
+                        event.preventDefault();
                         event.stopPropagation();
-                        alert(
-                          `Funcionalidade de admissão rápida para ${ward.name} em desenvolvimento`
-                        );
+                        router.push("/nursing/ward-admissions/new");
                       }}
-                      className="flex-1 flex items-center justify-center px-2 py-1 text-sm font-semibold bg-green-500/10 border border-green-500/20 rounded-md hover:bg-green-500/20 transition-colors dark:border-green-400/30 dark:hover:bg-green-500/10 cursor-pointer"
+                      className="flex flex-1 cursor-pointer items-center justify-center gap-1 truncate rounded-md border border-green-500/20 bg-green-500/10 px-2 py-1 text-xs font-semibold transition-colors hover:bg-green-500/20 dark:border-green-400/30 dark:hover:bg-green-500/10"
                     >
-                      <Users size={14} className="mr-1" />
-                      Admitir Paciente
+                      <Users size={13} className="shrink-0" />
+                      Admitir
                     </span>
                     <span
                       onClick={(event) => {
+                        event.preventDefault();
                         event.stopPropagation();
-                        alert(
-                          `Visualização do dashboard para ${ward.name} em desenvolvimento`
-                        );
+                        router.push("/nursing/ward-dashboard");
                       }}
-                      className="flex-1 flex items-center justify-center px-2 py-1 text-sm font-semibold bg-blue-500/10 border border-blue-500/20 rounded-md hover:bg-blue-500/20 transition-colors dark:border-blue-400/30 dark:hover:bg-blue-500/10 cursor-pointer"
+                      className="flex flex-1 cursor-pointer items-center justify-center gap-1 truncate rounded-md border border-blue-500/20 bg-blue-500/10 px-2 py-1 text-xs font-semibold transition-colors hover:bg-blue-500/20 dark:border-blue-400/30 dark:hover:bg-blue-500/10"
                     >
-                      <Zap size={14} className="mr-1" />
-                      Ver Dashboard
+                      <Zap size={13} className="shrink-0" />
+                      Painel
                     </span>
                   </div>
                 </div>
@@ -558,38 +542,11 @@ export default function NursingWardPage() {
         )}
 
         {/* Pagination Info */}
-        <div className="text-xs text-[var(--gray-600)] flex justify-between items-center pt-1">
-          <span>
-            {t("Exibindo", "Showing")} {paginatedWards.length > 0 ? `${startIdx + 1}` : "0"}–{Math.min(
-              endIdx,
-              filteredAndSortedWards.length
-            )} de {total} {t("registros", "records")}
-          </span>
-          {totalPages > 1 && (
-            <div className="flex space-x-1">
-              <button
-                onClick={() => {
-                  // In a full implementation, this would change the page
-                  // For now, we're showing all filtered results
-                }}
-                disabled={page <= 1}
-                className="h-8 rounded-lg border border-white/30 bg-white/40 px-2 text-xs text-[var(--gray-500)] {page <= 1 ? 'cursor-not-allowed' : ''}"
-              >
-                <ChevronLeft size={14} />
-              </button>
-              <span>{page} / {totalPages}</span>
-              <button
-                onClick={() => {
-                  // In a full implementation, this would change the page
-                  // For now, we're showing all filtered results
-                }}
-                disabled={page >= totalPages}
-                className="h-8 rounded-lg border border-white/30 bg-white/40 px-2 text-xs text-[var(--gray-500)] {page >= totalPages ? 'cursor-not-allowed' : ''}"
-              >
-                <ChevronRight size={14} />
-              </button>
-            </div>
-          )}
+        <div className="pt-1 text-xs text-muted-foreground">
+          {t("Exibindo", "Showing")} {paginatedWards.length > 0 ? `${startIdx + 1}` : "0"}–{Math.min(
+            endIdx,
+            filteredAndSortedWards.length
+          )} de {total} {t("registros", "records")}
         </div>
       </div>
     </AppLayout>
