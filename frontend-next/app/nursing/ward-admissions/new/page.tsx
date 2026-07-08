@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
-import { ArrowLeft, BedDouble, Loader2, Plus } from "lucide-react";
+import { ArrowLeft, BedDouble, Building2, Loader2, Plus, User } from "lucide-react";
 
 import AppLayout from "@/components/layout/AppLayout";
 import SearchableSelect from "@/components/ui/SearchableSelect";
@@ -125,6 +125,14 @@ function WardAdmissionForm() {
       .filter((bed) => bed.ward === Number(wardId) && (bed.active ?? false) && !occupiedBedIds.has(bed.id))
       .map((bed) => ({ value: String(bed.id), label: `Cama ${bed.number || bed.id}` }));
   }, [beds, wardId, occupiedBedIds]);
+  const selectedPatient = useMemo(
+    () => patientOptions.find((option) => option.value === patientId) || null,
+    [patientOptions, patientId]
+  );
+  const selectedWard = useMemo(
+    () => wardOptions.find((option) => option.value === wardId) || null,
+    [wardOptions, wardId]
+  );
 
   // Cama escolhida deixa de ser válida se a enfermaria mudar.
   useEffect(() => {
@@ -212,6 +220,32 @@ function WardAdmissionForm() {
           onSubmit={submit}
           className="space-y-3 rounded-xl border border-white/25 bg-white/35 px-4 py-3 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/5"
         >
+          {surgeryId ? (
+            <div className="grid gap-2 rounded-xl border border-sky-200 bg-sky-50/70 p-3 text-xs text-sky-900 dark:border-sky-700/40 dark:bg-sky-900/20 dark:text-sky-200 sm:grid-cols-3">
+              <div className="flex min-w-0 items-center gap-2">
+                <User size={15} className="shrink-0" />
+                <div className="min-w-0">
+                  <p className="font-semibold">Paciente encaminhado</p>
+                  <p className="truncate">{selectedPatient?.label || "A carregar paciente..."}</p>
+                </div>
+              </div>
+              <div className="flex min-w-0 items-center gap-2">
+                <Building2 size={15} className="shrink-0" />
+                <div className="min-w-0">
+                  <p className="font-semibold">1. Escolha a enfermaria</p>
+                  <p className="truncate">{selectedWard?.label || "Nenhuma enfermaria selecionada"}</p>
+                </div>
+              </div>
+              <div className="flex min-w-0 items-center gap-2">
+                <BedDouble size={15} className="shrink-0" />
+                <div className="min-w-0">
+                  <p className="font-semibold">2. Escolha o leito</p>
+                  <p className="truncate">{wardId ? `${bedOptions.length} cama${bedOptions.length === 1 ? "" : "s"} livre${bedOptions.length === 1 ? "" : "s"}` : "Disponível após escolher enfermaria"}</p>
+                </div>
+              </div>
+            </div>
+          ) : null}
+
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-1">
               <label className={labelClass}>Paciente *</label>
@@ -219,10 +253,14 @@ function WardAdmissionForm() {
                 value={patientId}
                 onChange={setPatientId}
                 options={patientOptions}
+                disabled={Boolean(surgeryId)}
                 placeholder="Selecione o paciente"
                 searchPlaceholder="Pesquisar paciente..."
                 emptyMessage="Nenhum paciente."
               />
+              {surgeryId ? (
+                <p className="text-[10px] text-muted-foreground">Paciente definido pelo encaminhamento cirúrgico.</p>
+              ) : null}
             </div>
             <div className="space-y-1">
               <label className={labelClass}>Enfermaria *</label>
@@ -234,9 +272,10 @@ function WardAdmissionForm() {
                 searchPlaceholder="Pesquisar enfermaria..."
                 emptyMessage="Nenhuma enfermaria ativa."
               />
+              <p className="text-[10px] text-muted-foreground">Escolha a enfermaria onde o paciente será admitido.</p>
             </div>
             <div className="space-y-1">
-              <label className={labelClass}>Cama livre *</label>
+              <label className={labelClass}>Cama/leito livre *</label>
               <SearchableSelect
                 value={bedId}
                 onChange={setBedId}
@@ -246,6 +285,13 @@ function WardAdmissionForm() {
                 searchPlaceholder="Pesquisar cama..."
                 emptyMessage="Sem camas livres nesta enfermaria."
               />
+              <p className="text-[10px] text-muted-foreground">
+                {wardId
+                  ? bedOptions.length > 0
+                    ? "A lista mostra apenas camas ativas e desocupadas nesta enfermaria."
+                    : "Esta enfermaria não tem cama livre no momento."
+                  : "As camas aparecem depois da seleção da enfermaria."}
+              </p>
             </div>
             <div className="space-y-1">
               <label className={labelClass}>Data de admissão *</label>
