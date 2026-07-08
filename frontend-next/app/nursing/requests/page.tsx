@@ -2,10 +2,17 @@
 
 import Link from "next/link"
 import { useEffect, useMemo, useState } from "react"
-import { ChevronRight , Search } from "lucide-react"
+import {
+  CheckCircle2,
+  ChevronRight,
+  CircleDashed,
+  ClipboardList,
+  FlaskConical,
+  Hourglass,
+  Search,
+} from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
-import PageHeader from "@/components/ui/PageHeader"
 import useDebounce from "@/hooks/useDebounce"
 import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { apiFetchList } from "@/lib/api"
@@ -41,6 +48,9 @@ type BucketKey =
 type BucketDefinition = {
   key: BucketKey
   title: string
+  short: string
+  icon: any
+  chip: string
   empty: string
   tone: string
 }
@@ -49,24 +59,36 @@ const BUCKETS: BucketDefinition[] = [
   {
     key: "awaiting_reception_validation",
     title: "Aguardando validação da recepção",
+    short: "Validação recepção",
+    icon: Hourglass,
+    chip: "bg-amber-500/15 text-amber-600 dark:text-amber-400",
     empty: "Sem requisições pendentes de validação.",
     tone: "border-amber-200 bg-amber-50/60 text-amber-800",
   },
   {
     key: "awaiting_collection",
     title: "Aguardando coleta da amostra",
+    short: "Aguardando coleta",
+    icon: FlaskConical,
+    chip: "bg-sky-500/15 text-sky-600 dark:text-sky-400",
     empty: "Sem requisições a aguardar a primeira coleta.",
     tone: "border-sky-200 bg-sky-50/60 text-sky-800",
   },
   {
     key: "partial_collection",
     title: "Parcialmente coletadas",
+    short: "Parciais",
+    icon: CircleDashed,
+    chip: "bg-violet-500/15 text-violet-600 dark:text-violet-400",
     empty: "Sem requisições parcialmente coletadas.",
     tone: "border-violet-200 bg-violet-50/60 text-violet-800",
   },
   {
     key: "full_collection",
     title: "Totalmente coletadas",
+    short: "Completas",
+    icon: CheckCircle2,
+    chip: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400",
     empty: "Sem requisições totalmente coletadas.",
     tone: "border-emerald-200 bg-emerald-50/60 text-emerald-800",
   },
@@ -327,22 +349,48 @@ export default function NursingRequestsPage() {
   return (
     <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.ENFERMAGEM]}>
       <div className="space-y-3 [font-size:70%]">
-        <PageHeader
-          title="Requisições (Enfermagem)"
-          actions={
-            <div className="flex w-full items-center gap-2 md:w-auto">
-              <div className="relative w-48">
-                <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                <input
-                  value={search}
-                  onChange={(event) => setSearch(event.target.value)}
-                  placeholder="Pesquisar…"
-                  className="w-full rounded-lg border border-border bg-background/60 py-1.5 pl-7 pr-6 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:w-72 focus:ring-2 focus:ring-violet-500/40 transition-all"
-                />
-              </div>
+        <div className="relative flex flex-wrap items-center justify-between gap-3 overflow-hidden rounded-xl border border-white/20 bg-gradient-to-r from-amber-500/15 via-white/30 to-white/30 px-4 py-3 shadow-sm backdrop-blur-sm dark:border-white/10 dark:from-amber-500/10 dark:via-white/5 dark:to-white/5">
+          <div className="flex min-w-0 items-center gap-3">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400">
+              <ClipboardList size={22} strokeWidth={2} />
+            </span>
+            <div className="min-w-0">
+              <h1 className="font-display text-xl font-bold text-foreground">Requisições</h1>
+              <p className="text-[11px] text-muted-foreground">Fila de requisições por estado de validação e coleta.</p>
             </div>
-          }
-        />
+          </div>
+
+          <div className="flex flex-nowrap items-center gap-2 overflow-x-auto">
+            {BUCKETS.map((bucket) => {
+              const Icon = bucket.icon
+              return (
+                <span
+                  key={`stat-${bucket.key}`}
+                  className="flex shrink-0 items-center gap-2 rounded-lg border border-white/30 bg-white/40 px-3 py-1.5 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/10"
+                >
+                  <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md ${bucket.chip}`}>
+                    <Icon size={14} strokeWidth={2} />
+                  </span>
+                  <span className="whitespace-nowrap text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                    {bucket.short}
+                  </span>
+                  <span className="font-display text-lg font-bold leading-none text-foreground tabular-nums">
+                    {loading ? "..." : grouped[bucket.key].length}
+                  </span>
+                </span>
+              )
+            })}
+            <div className="relative w-44 shrink-0">
+              <Search size={13} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <input
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder="Pesquisar…"
+                className="w-full rounded-lg border border-white/30 bg-white/40 py-1.5 pl-8 pr-3 text-xs text-foreground shadow-sm backdrop-blur-sm transition placeholder:text-muted-foreground hover:border-amber-400/60 focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/25 dark:border-white/10 dark:bg-white/10"
+              />
+            </div>
+          </div>
+        </div>
 
         {errorMessage ? (
           <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
