@@ -47,6 +47,7 @@ class SurgeryFilter(SafeFilterSet):
             "priority",
             "classification",
             "scheduled_for",
+            "ward_referral_requested_at",
             "created_at",
         ]
 

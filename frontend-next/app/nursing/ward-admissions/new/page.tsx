@@ -51,7 +51,8 @@ function WardAdmissionForm() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const [patientId, setPatientId] = useState("");
+  const surgeryId = searchParams?.get("surgery") || "";
+  const [patientId, setPatientId] = useState(searchParams?.get("patient") || "");
   const [wardId, setWardId] = useState(searchParams?.get("ward") || "");
   const [bedId, setBedId] = useState("");
   const [admissionDate, setAdmissionDate] = useState(nowForDatetimeLocal());
@@ -59,7 +60,7 @@ function WardAdmissionForm() {
   const [observationHours, setObservationHours] = useState("");
   const [nextMedicationAt, setNextMedicationAt] = useState("");
   const [nextMedicationDescription, setNextMedicationDescription] = useState("");
-  const [notes, setNotes] = useState("");
+  const [notes, setNotes] = useState(surgeryId ? `Origem: cirurgia #${surgeryId}` : "");
 
   useEffect(() => {
     let mounted = true;

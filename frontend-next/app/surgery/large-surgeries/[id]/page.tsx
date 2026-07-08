@@ -12,6 +12,7 @@ import {
   CreditCard,
   Package,
   Scissors,
+  Send,
   Stethoscope,
   User,
   Users,
@@ -108,12 +109,14 @@ function SurfaceCard({ title, icon, accent = "bg-sky-400", children }: {
 export default function LargeSurgeryDetailPage() {
   const params = useParams()
   const id = routeParamToString((params as any)?.id)
+  const router = useRouter()
   const safeRefreshToken = useSafeDataRefreshSignal()
 
   const [data, setData] = useState<Record<string, any> | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [marking, setMarking] = useState(false)
+  const [referringWard, setReferringWard] = useState(false)
   const [consumptions, setConsumptions] = useState<{ id: number; product_name: string; quantity: string; unit_cost: string }[]>([])
 
   const load = useCallback(async () => {
@@ -149,6 +152,21 @@ export default function LargeSurgeryDetailPage() {
     } catch (e: any) { alert(e?.message || "Erro.") }
     finally { setMarking(false) }
   }, [data, id])
+
+  const referToWard = useCallback(async () => {
+    if (!data) return
+    setReferringWard(true)
+    try {
+      const updated = await apiFetch<Record<string, any>>(`/surgery/large_surgery/${id}/encaminhar-enfermaria/`, {
+        method: "POST",
+        body: JSON.stringify({}),
+        clientCache: false,
+      })
+      setData(updated)
+      router.push("/nursing/ward")
+    } catch (e: any) { alert(e?.message || "Erro ao encaminhar para a enfermaria.") }
+    finally { setReferringWard(false) }
+  }, [data, id, router])
 
   if (loading) return (
     <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.ENFERMAGEM, GROUPS.MEDICINA]}>
@@ -226,6 +244,17 @@ export default function LargeSurgeryDetailPage() {
                   <CheckCircle2 size={12} /> Realizada
                 </span>
               )}
+              {isDone && !data.ward_referral_requested_at ? (
+                <button onClick={() => void referToWard()} disabled={referringWard}
+                  className="inline-flex h-7 items-center gap-1.5 rounded-md border border-sky-300 bg-sky-50 px-3 text-[11px] font-semibold text-sky-700 transition hover:bg-sky-100 disabled:opacity-50 dark:border-sky-700/40 dark:bg-sky-900/20 dark:text-sky-300">
+                  <Send size={12} />
+                  {referringWard ? "Encaminhando..." : "Encaminhar à enfermaria"}
+                </button>
+              ) : isDone ? (
+                <span className="inline-flex h-7 items-center gap-1.5 rounded-md border border-sky-200 bg-sky-50 px-3 text-[11px] font-semibold text-sky-700 dark:border-sky-700/40 dark:bg-sky-900/20 dark:text-sky-300">
+                  <Send size={12} /> Encaminhada à enfermaria
+                </span>
+              ) : null}
               {!isDone ? (
                 <Link href={`/surgery/large-surgeries/${id}/edit`}
                   className="inline-flex h-7 items-center rounded-md border border-border bg-card px-2.5 text-[11px] font-medium text-foreground transition hover:bg-muted">

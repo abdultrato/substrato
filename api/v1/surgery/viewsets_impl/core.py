@@ -1,6 +1,7 @@
 """ViewSets da API v1 para cirurgias, bloco operatório e catálogo cirúrgico."""
 
 from django.core.exceptions import ValidationError as DjangoValidationError
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
@@ -147,6 +148,18 @@ class BaseSurgeryViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin
             },
             status=status.HTTP_200_OK,
         )
+
+    @action(detail=True, methods=["post"], url_path="encaminhar-enfermaria", url_name="encaminhar-enfermaria")
+    def encaminhar_enfermaria(self, request, pk=None):
+        surgery = self.get_object()
+        if surgery.status not in self.immutable_statuses:
+            raise ValidationError("Apenas cirurgias realizadas podem ser encaminhadas para a enfermaria.")
+
+        if not surgery.ward_referral_requested_at:
+            surgery.ward_referral_requested_at = timezone.now()
+            surgery.save(update_fields=["ward_referral_requested_at", "updated_at"])
+
+        return Response(self.get_serializer(surgery).data)
 
 
 class SurgeryViewSet(BaseSurgeryViewSet):

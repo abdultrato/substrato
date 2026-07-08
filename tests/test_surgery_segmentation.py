@@ -165,3 +165,38 @@ def test_large_surgery_api_rejects_updates_after_marked_performed(api_client):
     surgery.refresh_from_db()
     assert response.status_code == 400
     assert surgery.procedure == "Grande cirurgia bloqueada"
+
+
+@pytest.mark.django_db
+def test_large_surgery_can_be_referred_to_ward_after_marked_performed(api_client):
+    from rest_framework.test import APIRequestFactory, force_authenticate
+    from api.v1.surgery.viewsets import LargeSurgeryViewSet
+
+    tenant = _tenant()
+    patient = _patient(tenant)
+    user = _surgeon(tenant)
+    admin_group, _ = Group.objects.get_or_create(name="Administrador")
+    user.groups.add(admin_group)
+    surgery = Surgery.objects.create(
+        tenant=tenant,
+        patient=patient,
+        surgeon=user,
+        procedure="Grande cirurgia para enfermaria",
+        surgery_size=Surgery.Size.LARGE,
+        status=Surgery.Status.SURGERY_COMPLETED,
+    )
+
+    request = APIRequestFactory().post(
+        f"/api/v1/surgery/large_surgery/{surgery.id}/encaminhar-enfermaria/",
+        {},
+        format="json",
+        HTTP_HOST=tenant.domain,
+    )
+    force_authenticate(request, user=user)
+    view = LargeSurgeryViewSet.as_view({"post": "encaminhar_enfermaria"})
+
+    response = view(request, pk=surgery.id)
+
+    surgery.refresh_from_db()
+    assert response.status_code == 200
+    assert surgery.ward_referral_requested_at is not None

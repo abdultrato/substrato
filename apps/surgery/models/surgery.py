@@ -248,6 +248,13 @@ class Surgery(NoNameCoreModel):
         db_column="completed_at",
 
         verbose_name="Concluída em", null=True, blank=True)
+    ward_referral_requested_at = models.DateTimeField(
+        db_column="ward_referral_requested_at",
+        verbose_name="Encaminhada para enfermaria em",
+        null=True,
+        blank=True,
+        db_index=True,
+    )
     canceled_at = models.DateTimeField(
         db_column="canceled_at",
         verbose_name="Cancelada em", null=True, blank=True)

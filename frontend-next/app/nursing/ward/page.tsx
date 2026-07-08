@@ -14,10 +14,11 @@ import {
   BedDouble,
   Users,
   Activity,
+  ArrowRight,
 } from "lucide-react";
 
 import AppLayout from "@/components/layout/AppLayout";
-import { apiFetchList } from "@/lib/api";
+import { apiFetchAll, apiFetchList } from "@/lib/api";
 import { formatCount } from "@/lib/i18n/plural";
 import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh";
 import { GROUPS } from "@/lib/rbac";
@@ -44,6 +45,35 @@ type WardWithStats = WardRow & {
   bed_summary?: BedSummary;
   recent_admissions_count?: number;
 };
+
+type WardReferralRow = {
+  id: number;
+  custom_id?: string | null;
+  patient?: number | null;
+  patient_name?: string | null;
+  procedure?: string | null;
+  procedure_names?: string[] | null;
+  status?: string | null;
+  completed_at?: string | null;
+  ward_referral_requested_at?: string | null;
+};
+
+type AdmissionRow = {
+  id: number;
+  patient?: number | null;
+  active?: boolean | null;
+  discharged_at?: string | null;
+};
+
+const SURGERY_DONE_STATUSES = new Set([
+  "SURGERY_COMPLETED",
+  "CONCLUIDA",
+  "CLOSED",
+  "IN_RECOVERY",
+  "RECOVERED",
+  "REPORT_PENDING",
+  "BILLING_PENDING",
+]);
 
 const PAGE_SIZE = 20;
 
@@ -182,6 +212,7 @@ export default function NursingWardPage() {
 
   const [wards, setWards] = useState<WardRow[]>([]);
   const [wardsWithStats, setWardsWithStats] = useState<WardWithStats[]>([]);
+  const [wardReferrals, setWardReferrals] = useState<WardReferralRow[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -215,17 +246,50 @@ export default function NursingWardPage() {
           query.active = statusFilter === "true";
         }
 
-        const res = await apiFetchList<WardRow>("/nursing/ward/", {
-          page: 1,
-          pageSize: 100, // Reasonable limit for wards
-          query,
-          clientPaginate: true,
-          clientCache: safeRefreshToken === 0,
-        });
+        const [res, surgeryReferrals, admissions] = await Promise.all([
+          apiFetchList<WardRow>("/nursing/ward/", {
+            page: 1,
+            pageSize: 100, // Reasonable limit for wards
+            query,
+            clientPaginate: true,
+            clientCache: safeRefreshToken === 0,
+          }),
+          apiFetchAll<WardReferralRow>("/surgery/large_surgery/", {
+            pageSize: 100,
+            maxPages: 20,
+            clientCache: safeRefreshToken === 0,
+          }),
+          apiFetchAll<AdmissionRow>("/nursing/ward_admission/?active=true", {
+            pageSize: 100,
+            maxPages: 20,
+            clientCache: false,
+          }),
+        ]);
 
         const fetchedWards = res.items || [];
         setWards(fetchedWards);
         setTotal(res.meta.total ?? fetchedWards.length);
+
+        const admittedPatientIds = new Set(
+          admissions
+            .filter((admission) => (admission.active ?? false) && !admission.discharged_at && admission.patient)
+            .map((admission) => Number(admission.patient))
+        );
+        setWardReferrals(
+          surgeryReferrals
+            .filter((surgery) => {
+              const status = String(surgery.status || "");
+              return Boolean(surgery.ward_referral_requested_at)
+                && SURGERY_DONE_STATUSES.has(status)
+                && surgery.patient
+                && !admittedPatientIds.has(Number(surgery.patient));
+            })
+            .sort((a, b) => {
+              const aDate = new Date(a.ward_referral_requested_at || a.completed_at || 0).getTime();
+              const bDate = new Date(b.ward_referral_requested_at || b.completed_at || 0).getTime();
+              return bDate - aDate;
+            })
+        );
 
         if (!mounted) return;
 
@@ -325,7 +389,7 @@ export default function NursingWardPage() {
         if (nameA > nameB) return 1;
         return 0;
       });
-  }, [wardsWithStats, debouncedSearch, search, statusFilter]);
+  }, [wardsWithStats, debouncedSearch, statusFilter]);
 
   // Pagination calculation (show all on first page for simplicity with client-side filtering)
   const itemsPerPage = 20; // Match the ResourceListPage default
@@ -399,6 +463,47 @@ export default function NursingWardPage() {
         </div>
 
         {/* Error Message */}
+        {wardReferrals.length > 0 ? (
+          <section className="rounded-xl border border-sky-200/70 bg-sky-50/70 p-3 shadow-sm backdrop-blur-sm dark:border-sky-700/30 dark:bg-sky-900/15">
+            <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <h2 className="text-sm font-bold text-sky-900 dark:text-sky-200">Aguardando admissão</h2>
+                <p className="text-xs text-sky-700 dark:text-sky-300">
+                  Pacientes encaminhados pela cirurgia para seleção de enfermaria e cama.
+                </p>
+              </div>
+              <span className="rounded-full border border-sky-200 bg-white/70 px-2 py-0.5 text-[11px] font-semibold text-sky-800 dark:border-sky-700/40 dark:bg-white/10 dark:text-sky-200">
+                {wardReferrals.length} pendente{wardReferrals.length > 1 ? "s" : ""}
+              </span>
+            </div>
+            <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
+              {wardReferrals.map((surgery) => {
+                const procedure = surgery.procedure_names?.length
+                  ? surgery.procedure_names.join(", ")
+                  : surgery.procedure || "Procedimento cirúrgico";
+                return (
+                  <Link
+                    key={surgery.id}
+                    href={`/nursing/ward-admissions/new?patient=${surgery.patient}&surgery=${surgery.id}`}
+                    className="group flex min-w-0 items-center justify-between gap-3 rounded-lg border border-white/70 bg-white/65 px-3 py-2 text-left shadow-sm transition hover:border-sky-300 hover:bg-white dark:border-white/10 dark:bg-white/[0.06] dark:hover:bg-white/[0.1]"
+                  >
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold text-foreground">{surgery.patient_name || "Paciente"}</p>
+                      <p className="truncate text-xs text-muted-foreground">{procedure}</p>
+                      <p className="mt-0.5 text-[10px] text-sky-700 dark:text-sky-300">
+                        Encaminhado: {formatDate(surgery.ward_referral_requested_at)}
+                      </p>
+                    </div>
+                    <span className="inline-flex h-7 shrink-0 items-center gap-1 rounded-md bg-sky-600 px-2.5 text-[11px] font-semibold text-white transition group-hover:bg-sky-700">
+                      Admitir <ArrowRight size={12} />
+                    </span>
+                  </Link>
+                );
+              })}
+            </div>
+          </section>
+        ) : null}
+
         {error && (
           <div className="rounded-lg border border-amber-200 bg-amber-50 px-2 py-1 text-sm text-amber-800">
             {error}
