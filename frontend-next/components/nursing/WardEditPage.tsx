@@ -6,17 +6,22 @@ import { FormEvent, useEffect, useState } from "react";
 import {
   ArrowLeft,
   BedDouble,
+  Check,
   CheckCircle2,
   Loader2,
+  Pencil,
   Plus,
   Save,
+  Trash2,
+  X,
 } from "lucide-react";
 
 import AppLayout from "@/components/layout/AppLayout";
+import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/hooks/useLanguage";
 import { apiFetch, apiFetchList } from "@/lib/api";
 import { routeParamToString } from "@/lib/routeParams";
-import { GROUPS } from "@/lib/rbac";
+import { GROUPS, userHasAnyGroup } from "@/lib/rbac";
 
 type WardRecord = {
   id: number;
@@ -54,6 +59,8 @@ export default function WardEditPage() {
   const params = useParams();
   const id = routeParamToString((params as any)?.id);
   const { t } = useLanguage();
+  const { user } = useAuth();
+  const isAdmin = userHasAnyGroup(user, [GROUPS.ADMIN]);
 
   const [ward, setWard] = useState<WardRecord | null>(null);
   const [name, setName] = useState("");
@@ -67,6 +74,10 @@ export default function WardEditPage() {
   const [newBedNumber, setNewBedNumber] = useState("");
   const [addingBed, setAddingBed] = useState(false);
   const [bedError, setBedError] = useState<string | null>(null);
+  const [bedBusyId, setBedBusyId] = useState<number | null>(null);
+  const [editingBedId, setEditingBedId] = useState<number | null>(null);
+  const [editingNumber, setEditingNumber] = useState("");
+  const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
 
   const loadBeds = async (wardId: number) => {
     const res = await apiFetchList<BedRow>("/nursing/ward_bed/", {
@@ -154,6 +165,36 @@ export default function WardEditPage() {
     }
   }
 
+  async function patchBed(bed: BedRow, patch: Partial<BedRow>) {
+    if (!ward) return;
+    setBedBusyId(bed.id);
+    setBedError(null);
+    try {
+      await apiFetch(`/nursing/ward_bed/${bed.id}/`, { method: "PATCH", body: JSON.stringify(patch) });
+      await loadBeds(ward.id);
+      setEditingBedId(null);
+    } catch (e: any) {
+      setBedError(localizeError(e?.message, t("Falha ao atualizar a cama.", "Failed to update the bed.")));
+    } finally {
+      setBedBusyId(null);
+    }
+  }
+
+  async function deleteBed(bed: BedRow) {
+    if (!ward) return;
+    setBedBusyId(bed.id);
+    setBedError(null);
+    try {
+      await apiFetch(`/nursing/ward_bed/${bed.id}/`, { method: "DELETE" });
+      await loadBeds(ward.id);
+    } catch (e: any) {
+      setBedError(localizeError(e?.message, t("Falha ao apagar a cama.", "Failed to delete the bed.")));
+    } finally {
+      setBedBusyId(null);
+      setConfirmDeleteId(null);
+    }
+  }
+
   const inputClass =
     "w-full rounded-lg border border-white/30 bg-white/40 px-3 py-2 text-sm text-foreground shadow-sm backdrop-blur-sm outline-none transition placeholder:text-muted-foreground hover:border-emerald-400/60 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/25 dark:border-white/10 dark:bg-white/10";
 
@@ -199,8 +240,9 @@ export default function WardEditPage() {
           <div className="grid gap-2 lg:grid-cols-[minmax(0,1fr)_18rem]">
           <form
             onSubmit={saveWard}
-            className="space-y-3 rounded-xl border border-white/25 bg-white/35 px-4 py-3 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/5"
+            className="relative space-y-3 overflow-hidden rounded-xl border border-white/25 bg-white/35 px-4 py-3 pl-5 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/5"
           >
+            <span className="absolute left-0 top-0 h-full w-1.5 rounded-r-full bg-emerald-500" />
             <div className="grid gap-3 sm:grid-cols-2">
               <Field label={t("Nome", "Name")}>
                 <input
@@ -241,7 +283,7 @@ export default function WardEditPage() {
               />
             </Field>
 
-            <div className="flex flex-wrap items-center justify-end gap-2 border-t border-border/40 pt-2.5">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border/40 pt-2.5">
               <Link
                 href={`/nursing/ward/${id}`}
                 className="inline-flex h-8 items-center rounded-lg border border-white/30 bg-white/40 px-3 text-xs font-medium text-foreground-2 shadow-sm backdrop-blur-sm transition hover:bg-white/60 hover:text-foreground dark:border-white/10 dark:bg-white/10 dark:hover:bg-white/15"
@@ -260,7 +302,8 @@ export default function WardEditPage() {
           </form>
 
           {/* Cartão lateral: camas da enfermaria */}
-          <section className="flex flex-col rounded-xl border border-white/25 bg-white/35 px-3 py-2.5 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/5">
+          <section className="relative flex flex-col overflow-hidden rounded-xl border border-white/25 bg-white/35 px-3 py-2.5 pl-4 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/5">
+            <span className="absolute left-0 top-0 h-full w-1.5 rounded-r-full bg-teal-500" />
             <div className="mb-2 flex items-center gap-2">
               <span className="flex h-6 w-6 items-center justify-center rounded-md bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
                 <BedDouble size={13} />
@@ -303,24 +346,112 @@ export default function WardEditPage() {
               </div>
             ) : (
               <div className="min-h-0 flex-1 space-y-1 overflow-y-auto pr-0.5">
-                {beds.map((bed) => (
-                  <div
-                    key={bed.id}
-                    className="flex items-center justify-between gap-2 rounded-lg border border-white/30 bg-white/40 px-2 py-1.5 dark:border-white/10 dark:bg-white/5"
-                  >
-                    <span className="inline-flex min-w-0 items-center gap-1.5 text-xs font-medium text-foreground">
-                      <BedDouble size={12} className="shrink-0 text-emerald-600 dark:text-emerald-400" />
-                      <span className="truncate">{t("Cama", "Bed")} {bed.number || bed.id}</span>
-                    </span>
-                    <span
-                      className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-medium ${(bed.active ?? false)
-                        ? "bg-emerald-50 text-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-300"
-                        : "bg-gray-100 text-gray-600 dark:bg-white/10 dark:text-gray-400"}`}
+                {beds.map((bed) => {
+                  const bedActive = bed.active ?? false;
+                  const busy = bedBusyId === bed.id;
+                  const isEditing = editingBedId === bed.id;
+                  return (
+                    <div
+                      key={bed.id}
+                      className="relative flex items-center gap-1.5 overflow-hidden rounded-lg border border-white/30 bg-white/40 px-2 py-1.5 pl-3 dark:border-white/10 dark:bg-white/5"
                     >
-                      {(bed.active ?? false) ? t("Ativa", "Active") : t("Inativa", "Inactive")}
-                    </span>
-                  </div>
-                ))}
+                      <span
+                        className={`absolute left-0 top-0 h-full w-1 rounded-r-full ${bedActive ? "bg-emerald-500" : "bg-gray-400"}`}
+                      />
+                      {isEditing ? (
+                        <>
+                          <input
+                            value={editingNumber}
+                            autoFocus
+                            onChange={(event) => setEditingNumber(event.target.value)}
+                            onKeyDown={(event) => {
+                              if (event.key === "Enter") {
+                                event.preventDefault();
+                                if (editingNumber.trim()) patchBed(bed, { number: editingNumber.trim() });
+                              }
+                              if (event.key === "Escape") setEditingBedId(null);
+                            }}
+                            className="h-6 min-w-0 flex-1 rounded border border-emerald-400/60 bg-white/70 px-1.5 text-xs text-foreground outline-none focus:ring-1 focus:ring-emerald-500/40 dark:bg-white/10"
+                          />
+                          <button
+                            type="button"
+                            title={t("Guardar", "Save")}
+                            disabled={busy || !editingNumber.trim()}
+                            onClick={() => patchBed(bed, { number: editingNumber.trim() })}
+                            className="flex h-6 w-6 shrink-0 items-center justify-center rounded text-emerald-600 transition hover:bg-emerald-500/15 disabled:opacity-50 dark:text-emerald-400"
+                          >
+                            {busy ? <Loader2 size={12} className="animate-spin" /> : <Check size={13} />}
+                          </button>
+                          <button
+                            type="button"
+                            title={t("Cancelar", "Cancel")}
+                            onClick={() => setEditingBedId(null)}
+                            className="flex h-6 w-6 shrink-0 items-center justify-center rounded text-muted-foreground transition hover:bg-white/60 dark:hover:bg-white/15"
+                          >
+                            <X size={13} />
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <span className="inline-flex min-w-0 flex-1 items-center gap-1.5 text-xs font-medium text-foreground">
+                            <BedDouble size={12} className={`shrink-0 ${bedActive ? "text-emerald-600 dark:text-emerald-400" : "text-gray-400"}`} />
+                            <span className="truncate">{t("Cama", "Bed")} {bed.number || bed.id}</span>
+                          </span>
+                          <button
+                            type="button"
+                            disabled={!isAdmin || busy}
+                            title={isAdmin ? (bedActive ? t("Desativar", "Deactivate") : t("Ativar", "Activate")) : undefined}
+                            onClick={() => patchBed(bed, { active: !bedActive })}
+                            className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-medium transition ${bedActive
+                              ? "bg-emerald-50 text-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-300"
+                              : "bg-gray-100 text-gray-600 dark:bg-white/10 dark:text-gray-400"} ${isAdmin ? "cursor-pointer hover:ring-1 hover:ring-emerald-400/50" : "cursor-default"} disabled:opacity-60`}
+                          >
+                            {busy ? "…" : bedActive ? t("Ativa", "Active") : t("Inativa", "Inactive")}
+                          </button>
+                          {isAdmin ? (
+                            <>
+                              <button
+                                type="button"
+                                title={t("Renomear", "Rename")}
+                                disabled={busy}
+                                onClick={() => {
+                                  setEditingBedId(bed.id);
+                                  setEditingNumber(bed.number || "");
+                                  setConfirmDeleteId(null);
+                                }}
+                                className="flex h-6 w-6 shrink-0 items-center justify-center rounded text-muted-foreground transition hover:bg-white/60 hover:text-foreground dark:hover:bg-white/15"
+                              >
+                                <Pencil size={12} />
+                              </button>
+                              {confirmDeleteId === bed.id ? (
+                                <button
+                                  type="button"
+                                  title={t("Confirmar remoção", "Confirm deletion")}
+                                  disabled={busy}
+                                  onClick={() => deleteBed(bed)}
+                                  className="flex h-6 shrink-0 items-center gap-1 rounded bg-rose-600 px-1.5 text-[10px] font-semibold text-white transition hover:bg-rose-700"
+                                >
+                                  {busy ? <Loader2 size={11} className="animate-spin" /> : <Trash2 size={11} />}
+                                  {t("Confirmar", "Confirm")}
+                                </button>
+                              ) : (
+                                <button
+                                  type="button"
+                                  title={t("Apagar", "Delete")}
+                                  disabled={busy}
+                                  onClick={() => setConfirmDeleteId(bed.id)}
+                                  className="flex h-6 w-6 shrink-0 items-center justify-center rounded text-muted-foreground transition hover:bg-rose-500/15 hover:text-rose-600 dark:hover:text-rose-400"
+                                >
+                                  <Trash2 size={12} />
+                                </button>
+                              )}
+                            </>
+                          ) : null}
+                        </>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             )}
           </section>
