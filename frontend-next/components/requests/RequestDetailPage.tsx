@@ -1,12 +1,14 @@
 "use client"
 
 import Link from "next/link"
+import { useState } from "react"
 import { useParams } from "next/navigation"
 import { useQuery } from "@tanstack/react-query"
 import {
   AlertTriangle, ArrowLeft, BarChart2, CheckCircle2,
   Circle, Clock, FlaskConical, Stethoscope, TestTube2,
   User, Building2, CalendarClock, Droplets, Zap, FileText,
+  Loader2, Send,
 } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
@@ -147,8 +149,10 @@ export default function RequestDetailPage() {
   const params = useParams()
   const id = String((params as any)?.id || "")
   const safeRefreshToken = useSafeDataRefreshSignal()
+  const [forwarding, setForwarding] = useState(false)
+  const [actionNotice, setActionNotice] = useState<{ kind: "ok" | "error"; text: string } | null>(null)
 
-  const { data: r, isLoading, error } = useQuery({
+  const { data: r, isLoading, error, refetch } = useQuery({
     queryKey: ["request-detail", id, safeRefreshToken],
     queryFn: () => apiFetch<Record<string, any>>(`${ENDPOINT}${id}/`, { clientCache: safeRefreshToken === 0 }),
     enabled: !!id,
@@ -203,6 +207,7 @@ export default function RequestDetailPage() {
   const validatedBy     = val(r, "validated_by_name")
   const collectedAt     = val(r, "collected_at")
   const collectedBy     = val(r, "collected_by_name")
+  const canForward      = String(status).toLowerCase() === "pendente" && !validatedAt
 
   const tests: any[]   = Array.isArray(r?.requested_tests) ? r.requested_tests
                        : Array.isArray(r?.items)            ? r.items
@@ -220,6 +225,27 @@ export default function RequestDetailPage() {
     { label: "Coletada",  date: collectedAt, by: collectedBy || undefined, done: !!collectedAt },
     { label: "Resultados validados", date: null, done: status === "validado" },
   ]
+
+  async function forwardRequest() {
+    setForwarding(true)
+    setActionNotice(null)
+    try {
+      await apiFetch(`${ENDPOINT}${id}/validar/`, {
+        method: "POST",
+        body: JSON.stringify({}),
+        clientCache: false,
+      })
+      await refetch()
+      setActionNotice({ kind: "ok", text: t("Requisição encaminhada para colheita.", "Request forwarded for collection.") })
+    } catch (err: any) {
+      setActionNotice({
+        kind: "error",
+        text: err?.message || t("Falha ao encaminhar a requisição.", "Failed to forward request."),
+      })
+    } finally {
+      setForwarding(false)
+    }
+  }
 
   return (
     <AppLayout requiredGroups={requiredGroupsForResourceGroup("clinical")} subNav={<RequestsSubNav />}>
@@ -257,6 +283,17 @@ export default function RequestDetailPage() {
 
           {/* action buttons (header level) */}
           <div className="flex shrink-0 flex-wrap items-center gap-1">
+            {canForward ? (
+              <button
+                type="button"
+                onClick={() => void forwardRequest()}
+                disabled={forwarding}
+                className="inline-flex h-7 items-center gap-1.5 rounded-md bg-[var(--primary-600)] px-2.5 text-xs font-semibold text-white shadow-sm transition hover:bg-[var(--primary-700)] disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {forwarding ? <Loader2 size={12} className="animate-spin" /> : <Send size={12} />}
+                {forwarding ? "Encaminhando..." : "Encaminhar"}
+              </button>
+            ) : null}
             <Link
               href={`/requests/${id}/edit`}
               className="inline-flex h-7 items-center gap-1 rounded-md border border-border bg-background px-2.5 text-xs font-medium text-foreground-2 shadow-sm transition hover:bg-muted hover:text-foreground"
@@ -279,6 +316,16 @@ export default function RequestDetailPage() {
             </Link>
           </div>
         </div>
+
+        {actionNotice ? (
+          <div className={`rounded-lg border px-3 py-2 text-xs font-medium ${
+            actionNotice.kind === "ok"
+              ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+              : "border-rose-200 bg-rose-50 text-rose-800"
+          }`}>
+            {actionNotice.text}
+          </div>
+        ) : null}
 
         {/* ── Masonry details ─────────────────────────────── */}
         <div className="columns-1 gap-2 lg:columns-2 xl:columns-3 [&>*]:mb-2 [&>*]:break-inside-avoid">
