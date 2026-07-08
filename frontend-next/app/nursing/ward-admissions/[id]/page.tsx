@@ -137,6 +137,12 @@ function readableList(value: any, maxItems = 3): string {
   return `${visible.join(", ")}${suffix}`;
 }
 
+function readableItems(value: any): string[] {
+  if (Array.isArray(value)) return value.map(readableValue).filter(Boolean);
+  const single = readableValue(value);
+  return single ? [single] : [];
+}
+
 function surgeryStatusLabel(value?: string | null): string {
   const normalized = String(value || "").trim().toUpperCase();
   const labels: Record<string, string> = {
@@ -491,14 +497,19 @@ export default function NursingWardAdmissionDetailPage() {
   );
 
   const procedureRows = useMemo(
-    () =>
-      [
-        ...largeSurgeries.map((surgery) => ({
-          procedure: compactText(readableList(surgery.procedure_names, 2) || surgery.procedure || surgery.custom_id || `Cirurgia ${surgery.id}`, 90),
+    () => {
+      const surgeryRows = largeSurgeries.flatMap((surgery) => {
+        const procedures = readableItems(surgery.procedure_names);
+        const names = procedures.length ? procedures : readableItems(surgery.procedure || surgery.custom_id || `Cirurgia ${surgery.id}`);
+        return names.map((name) => ({
+          procedure: compactText(name, 90),
           status: surgeryStatusLabel(surgery.status),
           date: surgery.completed_at || surgery.ended_at || surgery.started_at || surgery.scheduled_for,
           href: `/surgery/large-surgeries/${surgery.id}`,
-        })),
+        }));
+      });
+      return [
+        ...surgeryRows,
         ...procedures.map((procedure) => ({
           procedure: compactText(
             joinReadable([procedure.name || procedure.procedure_name || procedure.description, procedure.custom_id || procedure.id]) ||
@@ -512,7 +523,8 @@ export default function NursingWardAdmissionDetailPage() {
         const aTime = new Date(a.date || 0).getTime();
         const bTime = new Date(b.date || 0).getTime();
         return bTime - aTime;
-      }),
+      });
+    },
     [largeSurgeries, procedures]
   );
 
@@ -937,7 +949,7 @@ export default function NursingWardAdmissionDetailPage() {
                 </div>
               ) : null}
 
-              <div className="grid gap-2 xl:grid-cols-3">
+              <div className="grid gap-2 xl:grid-cols-2">
                 <HistoryCard
                   icon={ClipboardList}
                   title="Procedimentos e cirurgias realizadas"
@@ -976,22 +988,24 @@ export default function NursingWardAdmissionDetailPage() {
                   />
                 </HistoryCard>
 
-                <HistoryCard icon={FileText} title="Farmácia e registos administrativos de saúde" count={pharmacySales.length + financialRecords.length} accent="bg-slate-500">
-                  <MiniTimeline
-                    items={[
-                      ...pharmacySales.map((sale) => ({
-                        title: compactText(joinValues([sale.custom_id || sale.id, "Farmácia"]) || "Dispensa de farmácia", 90),
-                        date: firstValue(sale, ["sold_at", "created_at"]),
-                        meta: joinValues([sale.status, sale.total ? `Total ${sale.total}` : ""]),
-                      })),
-                      ...financialRecords.map((item) => ({
-                        title: compactText(joinValues([item.custom_id || item.id_custom || item.id, item.origem || item.origin || item.status]) || "Registo administrativo", 90),
-                        date: firstValue(item, ["paid_at", "issued_at", "created_at"]),
-                        meta: joinValues([item.status, item.total ? `Total ${item.total}` : item.amount ? `Valor ${item.amount}` : ""]),
-                      })),
-                    ]}
-                  />
-                </HistoryCard>
+                <div className="xl:col-span-2">
+                  <HistoryCard icon={FileText} title="Farmácia e registos administrativos de saúde" count={pharmacySales.length + financialRecords.length} accent="bg-slate-500">
+                    <MiniTimeline
+                      items={[
+                        ...pharmacySales.map((sale) => ({
+                          title: compactText(joinValues([sale.custom_id || sale.id, "Farmácia"]) || "Dispensa de farmácia", 90),
+                          date: firstValue(sale, ["sold_at", "created_at"]),
+                          meta: joinValues([sale.status, sale.total ? `Total ${sale.total}` : ""]),
+                        })),
+                        ...financialRecords.map((item) => ({
+                          title: compactText(joinValues([item.custom_id || item.id_custom || item.id, item.origem || item.origin || item.status]) || "Registo administrativo", 90),
+                          date: firstValue(item, ["paid_at", "issued_at", "created_at"]),
+                          meta: joinValues([item.status, item.total ? `Total ${item.total}` : item.amount ? `Valor ${item.amount}` : ""]),
+                        })),
+                      ]}
+                    />
+                  </HistoryCard>
+                </div>
               </div>
             </section>
           </div>
