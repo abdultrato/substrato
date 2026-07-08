@@ -175,7 +175,7 @@ export default function NursingRequestDetailPage() {
 
   return (
     <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.ENFERMAGEM]}>
-      <div className="mx-auto w-full max-w-5xl space-y-2 text-[0.9em]">
+      <div className="mx-auto w-[90vw] max-w-[90vw] space-y-2 text-[0.9em]">
         <div className="relative overflow-hidden rounded-xl border border-white/20 bg-gradient-to-r from-blue-500/15 via-white/30 to-white/30 px-4 py-3 shadow-sm backdrop-blur-sm dark:border-white/10 dark:from-blue-500/10 dark:via-white/5 dark:to-white/5">
           <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex min-w-0 items-center gap-3">
@@ -285,7 +285,7 @@ export default function NursingRequestDetailPage() {
             ) : null}
 
             {/* Lista de exames */}
-            <section className="space-y-1.5">
+            <section className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {labItems.map((item) => {
                 const status = normalizeStatus(item.sample_status)
                 const isReceived = status === "recebida"
@@ -296,111 +296,92 @@ export default function NursingRequestDetailPage() {
                 return (
                   <article
                     key={item.id}
-                    className="rounded-xl border border-white/25 bg-white/35 px-3 py-2 shadow-sm backdrop-blur-sm transition hover:bg-white/45 dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/[0.08]"
+                    className="flex min-w-0 flex-col gap-1.5 rounded-xl border border-white/25 bg-white/35 px-2.5 py-2 shadow-sm backdrop-blur-sm transition hover:bg-white/45 dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/[0.08]"
                   >
-                    <div className="flex flex-col gap-2 lg:flex-row lg:items-start lg:justify-between">
-                      <div className="min-w-0 flex-1">
-                        <div className="flex flex-wrap items-center gap-1.5">
-                          <span className="text-xs font-semibold text-foreground">{title}</span>
-                          <span
-                            className={`inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-semibold ${
-                              isReceived
-                                ? "bg-emerald-100 text-emerald-800"
-                                : status === "coletada"
-                                  ? "bg-teal-100 text-teal-800"
-                                : isRejected
-                                  ? "bg-rose-100 text-rose-800"
-                                  : "bg-sky-100 text-sky-800"
-                            }`}
-                          >
-                            {getNursingSampleStatusLabel(item, record.validated_at)}
-                          </span>
-                        </div>
-
-                        <div className="mt-1.5 space-y-1">
-                          {(item.sample_options || []).map((sample, sIdx) => (
-                            <div
+                    <div className="min-w-0">
+                      <div className="truncate text-xs font-semibold text-foreground" title={title}>
+                        {title}
+                      </div>
+                      <div className="mt-1 flex flex-wrap items-center gap-1">
+                        <span
+                          className={`inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-semibold ${
+                            isReceived
+                              ? "bg-emerald-100 text-emerald-800"
+                              : status === "coletada"
+                                ? "bg-teal-100 text-teal-800"
+                              : isRejected
+                                ? "bg-rose-100 text-rose-800"
+                                : "bg-sky-100 text-sky-800"
+                          }`}
+                        >
+                          {getNursingSampleStatusLabel(item, record.validated_at)}
+                        </span>
+                        {(item.sample_options || []).map((sample, sIdx) => {
+                          const details = [
+                            sample.cap_color_display || sample.bottle_type_display || sample.bottle_type,
+                            sample.volume_ml && Number(sample.volume_ml) > 0
+                              ? `${Number(sample.volume_ml)} mL`
+                              : sample.minimum_volume_ml && Number(sample.minimum_volume_ml) > 0
+                                ? `${sample.minimum_volume_ml} mL`
+                                : null,
+                            sample.inversions ? `${sample.inversions}× inversões` : null,
+                            sample.conservation_temperature_display,
+                            sample.conservation_max_hours ? `estável ${sample.conservation_max_hours}h` : null,
+                            sample.fasting_required ? `jejum ${sample.fasting_hours || 0}h` : null,
+                            sample.additive,
+                            sample.notes,
+                          ]
+                            .filter(Boolean)
+                            .join(" · ")
+                          return (
+                            <span
                               key={`${item.id}-${sample.id ?? sIdx}`}
-                              className="rounded-lg border border-white/30 bg-white/40 px-2 py-1.5 text-[10px] text-foreground-2 dark:border-white/10 dark:bg-white/5"
+                              title={details}
+                              className="inline-flex max-w-full items-center gap-1 truncate rounded border border-white/30 bg-white/40 px-1.5 py-0.5 text-[10px] font-medium text-foreground-2 dark:border-white/10 dark:bg-white/5"
                             >
-                              <div className="flex flex-wrap items-center gap-1.5">
-                                {/* Container / tube name */}
-                                <span className="font-semibold text-foreground">
-                                  {sample.container_name || sample.name || "Amostra"}
+                              {sample.container_name || sample.name || "Amostra"}
+                              {sample.fasting_required ? (
+                                <span className="rounded bg-amber-100 px-1 font-semibold text-amber-800">
+                                  jejum {sample.fasting_hours || 0}h
                                 </span>
-                                {/* Cap color badge */}
-                                {(sample.cap_color_display || sample.bottle_type_display || sample.bottle_type) && (
-                                  <span className="rounded bg-muted px-1.5 py-0.5 font-medium text-muted-foreground">
-                                    {sample.cap_color_display || sample.bottle_type_display || sample.bottle_type}
-                                  </span>
-                                )}
-                                {/* Volume */}
-                                {(sample.volume_ml && Number(sample.volume_ml) > 0) ? (
-                                  <span>{Number(sample.volume_ml)} mL</span>
-                                ) : (sample.minimum_volume_ml && Number(sample.minimum_volume_ml) > 0) ? (
-                                  <span>{sample.minimum_volume_ml} mL</span>
-                                ) : null}
-                                {/* Inversions */}
-                                {sample.inversions ? <span>{sample.inversions}× inversões</span> : null}
-                                {/* Conservation */}
-                                {sample.conservation_temperature_display && (
-                                  <span className="text-muted-foreground">{sample.conservation_temperature_display}</span>
-                                )}
-                                {/* Stability */}
-                                {sample.conservation_max_hours ? (
-                                  <span className="text-muted-foreground">estável {sample.conservation_max_hours}h</span>
-                                ) : null}
-                                {/* Fasting (legacy) */}
-                                {sample.fasting_required ? (
-                                  <span className="rounded bg-amber-100 px-1.5 py-0.5 font-medium text-amber-800">
-                                    jejum {sample.fasting_hours || 0}h
-                                  </span>
-                                ) : null}
-                              </div>
-                              {/* Additive / notes */}
-                              {sample.additive && (
-                                <p className="mt-0.5 text-muted-foreground">{sample.additive}</p>
-                              )}
-                              {sample.notes && (
-                                <p className="mt-0.5 italic text-muted-foreground/80">{sample.notes}</p>
-                              )}
-                            </div>
-                          ))}
+                              ) : null}
+                            </span>
+                          )
+                        })}
+                      </div>
+
+                      {isRejected && ((item.rejection_reason_names || []).length > 0 || item.rejection_note) ? (
+                        <div className="mt-1 rounded-lg border border-rose-200 bg-rose-50 px-2 py-1 text-[10px] text-rose-800 dark:border-rose-800/40 dark:bg-rose-900/20 dark:text-rose-300">
+                          <span className="font-semibold">Recoleta: </span>
+                          {(item.rejection_reason_names || []).join(", ")}
+                          {item.rejection_note ? ` — ${item.rejection_note}` : ""}
                         </div>
+                      ) : null}
+                    </div>
 
-                        {isRejected && ((item.rejection_reason_names || []).length > 0 || item.rejection_note) ? (
-                          <div className="mt-1.5 rounded-lg border border-rose-200 bg-rose-50 px-2 py-1 text-[10px] text-rose-800 dark:border-rose-800/40 dark:bg-rose-900/20 dark:text-rose-300">
-                            <span className="font-semibold">Recoleta: </span>
-                            {(item.rejection_reason_names || []).join(", ")}
-                            {item.rejection_note ? ` — ${item.rejection_note}` : ""}
-                          </div>
-                        ) : null}
-                      </div>
-
-                      <div className="lg:w-44">
-                        {isCollected ? (
-                          <div
-                            className={`rounded-lg px-2 py-1.5 text-[10px] font-medium ${
-                              isReceived
-                                ? "border border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-800/40 dark:bg-emerald-900/20 dark:text-emerald-300"
-                                : "border border-teal-200 bg-teal-50 text-teal-800 dark:border-teal-800/40 dark:bg-teal-900/20 dark:text-teal-300"
-                            }`}
-                          >
-                            {isReceived
-                              ? `Recebida pelo lab em ${formatDateTime(item.sample_received_at)}`
-                              : `Coletada em ${formatDateTime(record.collected_at)}`}
-                          </div>
-                        ) : (
-                          <button
-                            type="button"
-                            onClick={() => collectItem(item)}
-                            disabled={busyItem === item.id || !record.validated_at}
-                            className="inline-flex h-8 w-full items-center justify-center gap-1.5 rounded-lg bg-gradient-to-r from-blue-600 to-sky-600 px-3 text-xs font-semibold text-white shadow-md shadow-blue-500/30 transition hover:from-blue-700 hover:to-sky-700 disabled:cursor-not-allowed disabled:opacity-60"
-                          >
-                            {busyItem === item.id ? "Registando..." : isRejected ? "Registar recoleta" : "Realizar coleta"}
-                          </button>
-                        )}
-                      </div>
+                    <div className="mt-auto">
+                      {isCollected ? (
+                        <div
+                          className={`rounded-lg px-2 py-1 text-[10px] font-medium ${
+                            isReceived
+                              ? "border border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-800/40 dark:bg-emerald-900/20 dark:text-emerald-300"
+                              : "border border-teal-200 bg-teal-50 text-teal-800 dark:border-teal-800/40 dark:bg-teal-900/20 dark:text-teal-300"
+                          }`}
+                        >
+                          {isReceived
+                            ? `Recebida pelo lab em ${formatDateTime(item.sample_received_at)}`
+                            : `Coletada em ${formatDateTime(record.collected_at)}`}
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => collectItem(item)}
+                          disabled={busyItem === item.id || !record.validated_at}
+                          className="inline-flex h-7 w-full items-center justify-center gap-1.5 rounded-lg bg-gradient-to-r from-blue-600 to-sky-600 px-2.5 text-[11px] font-semibold text-white shadow-sm shadow-blue-500/30 transition hover:from-blue-700 hover:to-sky-700 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          {busyItem === item.id ? "Registando..." : isRejected ? "Registar recoleta" : "Realizar coleta"}
+                        </button>
+                      )}
                     </div>
                   </article>
                 )
