@@ -238,6 +238,50 @@ function MiniTimeline({ items }: { items: Array<{ title: string; date?: string |
   );
 }
 
+function ProcedureListing({
+  items,
+}: {
+  items: Array<{ procedure: string; status?: string; date?: string | null; href?: string }>;
+}) {
+  if (!items.length) return <EmptyHistory />;
+  return (
+    <div className="overflow-x-auto rounded-lg border border-white/25 bg-white/20 text-xs dark:border-white/10 dark:bg-white/5">
+      <div className="grid min-w-[520px] grid-cols-[minmax(0,1.6fr)_minmax(92px,0.75fr)_minmax(98px,0.75fr)] gap-2 border-b border-white/25 bg-white/30 px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground dark:border-white/10 dark:bg-white/10">
+        <span>Procedimento</span>
+        <span>Estado</span>
+        <span>Data</span>
+      </div>
+      <div className="divide-y divide-white/20 dark:divide-white/10">
+        {items.slice(0, 8).map((item, index) => {
+          const content = (
+            <>
+              <span className="min-w-0 truncate font-semibold text-foreground">{item.procedure}</span>
+              <span className="min-w-0 truncate text-muted-foreground">{item.status || "—"}</span>
+              <span className="min-w-0 truncate text-muted-foreground">{formatDateTime(item.date)}</span>
+            </>
+          );
+          return item.href ? (
+            <Link
+              key={`${item.href}-${index}`}
+              href={item.href}
+              className="grid min-w-[520px] grid-cols-[minmax(0,1.6fr)_minmax(92px,0.75fr)_minmax(98px,0.75fr)] gap-2 px-2 py-1.5 transition hover:bg-white/40 dark:hover:bg-white/10"
+            >
+              {content}
+            </Link>
+          ) : (
+            <div
+              key={`${item.procedure}-${index}`}
+              className="grid min-w-[520px] grid-cols-[minmax(0,1.6fr)_minmax(92px,0.75fr)_minmax(98px,0.75fr)] gap-2 px-2 py-1.5"
+            >
+              {content}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 export default function NursingWardAdmissionDetailPage() {
   const params = useParams();
   const router = useRouter();
@@ -446,35 +490,30 @@ export default function NursingWardAdmissionDetailPage() {
     [clinicalHistory]
   );
 
-  const surgeryItems = useMemo(
+  const procedureRows = useMemo(
     () =>
-      largeSurgeries.map((surgery) => ({
-        title: compactText(
-          joinReadable([
-            surgery.custom_id,
-            readableList(surgery.procedure_names, 2) || surgery.procedure,
-          ]) || `Cirurgia ${surgery.id}`,
-          90
-        ),
-        date: surgery.completed_at || surgery.ended_at || surgery.started_at || surgery.scheduled_for,
-        meta: joinReadable([
-          surgeryStatusLabel(surgery.status),
-          surgery.surgeon_name || readableList(surgery.surgeon_names, 2),
-          surgery.postoperative_diagnosis,
-        ]),
-        href: `/surgery/large-surgeries/${surgery.id}`,
-      })),
-    [largeSurgeries]
-  );
-
-  const procedureItems = useMemo(
-    () =>
-      procedures.map((procedure) => ({
-        title: compactText(joinValues([procedure.custom_id || procedure.id, procedure.name || procedure.procedure_name || procedure.description]) || "Procedimento de enfermagem", 90),
-        date: firstValue(procedure, ["data_realizacao", "performed_date", "created_at"]),
-        meta: joinValues([procedure.profissional || procedure.professional_name, procedure.status, procedure.observacoes || procedure.notes]),
-      })),
-    [procedures]
+      [
+        ...largeSurgeries.map((surgery) => ({
+          procedure: compactText(readableList(surgery.procedure_names, 2) || surgery.procedure || surgery.custom_id || `Cirurgia ${surgery.id}`, 90),
+          status: surgeryStatusLabel(surgery.status),
+          date: surgery.completed_at || surgery.ended_at || surgery.started_at || surgery.scheduled_for,
+          href: `/surgery/large-surgeries/${surgery.id}`,
+        })),
+        ...procedures.map((procedure) => ({
+          procedure: compactText(
+            joinReadable([procedure.name || procedure.procedure_name || procedure.description, procedure.custom_id || procedure.id]) ||
+              "Procedimento de enfermagem",
+            90
+          ),
+          status: readableValue(procedure.status || procedure.estado || procedure.situacao),
+          date: firstValue(procedure, ["data_realizacao", "performed_date", "created_at"]),
+        })),
+      ].sort((a, b) => {
+        const aTime = new Date(a.date || 0).getTime();
+        const bTime = new Date(b.date || 0).getTime();
+        return bTime - aTime;
+      }),
+    [largeSurgeries, procedures]
   );
 
   const cardexItems = useMemo(
@@ -902,10 +941,10 @@ export default function NursingWardAdmissionDetailPage() {
                 <HistoryCard
                   icon={ClipboardList}
                   title="Procedimentos e cirurgias realizadas"
-                  count={procedureItems.length + surgeryItems.length}
+                  count={procedureRows.length}
                   accent="bg-sky-500"
                 >
-                  <MiniTimeline items={[...surgeryItems, ...procedureItems]} />
+                  <ProcedureListing items={procedureRows} />
                 </HistoryCard>
 
                 <HistoryCard icon={Pill} title="Cardex atual" count={currentCardex.length} accent="bg-amber-500">
