@@ -33,12 +33,6 @@ function toIsoOrUndefined(value: string): string | undefined {
   return Number.isNaN(parsed.getTime()) ? undefined : parsed.toISOString();
 }
 
-function nowForDatetimeLocal(): string {
-  const now = new Date();
-  now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-  return now.toISOString().slice(0, 16);
-}
-
 function WardAdmissionForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -55,7 +49,6 @@ function WardAdmissionForm() {
   const [patientId, setPatientId] = useState(searchParams?.get("patient") || "");
   const [wardId, setWardId] = useState(searchParams?.get("ward") || "");
   const [bedId, setBedId] = useState("");
-  const [admissionDate, setAdmissionDate] = useState(nowForDatetimeLocal());
   const [expectedDischarge, setExpectedDischarge] = useState("");
   const [observationHours, setObservationHours] = useState("");
   const surgeryOriginNote = surgeryId
@@ -163,8 +156,6 @@ function WardAdmissionForm() {
         bed: Number(bedId),
         active: true,
       };
-      const admissionIso = toIsoOrUndefined(admissionDate);
-      if (admissionIso) payload.admission_date = admissionIso;
       const dischargeIso = toIsoOrUndefined(expectedDischarge);
       if (dischargeIso) payload.expected_discharge_date = dischargeIso;
       if (observationHours) payload.estimated_observation_hours = Number(observationHours);
@@ -290,16 +281,6 @@ function WardAdmissionForm() {
                     : "Esta enfermaria não tem cama livre no momento."
                   : "As camas aparecem depois da seleção da enfermaria."}
               </p>
-            </div>
-            <div className="space-y-1">
-              <label className={labelClass}>Data de admissão *</label>
-              <input
-                type="datetime-local"
-                required
-                value={admissionDate}
-                onChange={(event) => setAdmissionDate(event.target.value)}
-                className={inputClass}
-              />
             </div>
             <div className="space-y-1">
               <label className={labelClass}>Alta prevista</label>

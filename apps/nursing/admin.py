@@ -325,6 +325,7 @@ class WardAdmissionAdmin(admin.ModelAdmin):
     readonly_fields = (
         "custom_id",
         "ward",
+        "admission_date",
         "created_at",
         "updated_at",
         "created_by",

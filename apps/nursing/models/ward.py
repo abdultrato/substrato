@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.utils import timezone
 
 from core.models.base import CoreModel, NoNameCoreModel
 
@@ -236,7 +235,7 @@ class WardAdmission(WardScopedModel, NoNameCoreModel):
         db_column="admission_date",
 
         verbose_name="Data de internamento",
-        default=timezone.now,
+        auto_now_add=True,
         db_index=True,
     )
 
