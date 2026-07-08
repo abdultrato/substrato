@@ -153,20 +153,20 @@ export default function NursingWardAdmissionDetailPage() {
   }, [beds, destinationWardId, openAdmissions, record?.bed]);
 
   useEffect(() => {
-    if (!record || panel !== "transferir" || destinationWardId) return;
-    setDestinationWardId(record.ward ? String(record.ward) : "");
-  }, [destinationWardId, panel, record]);
-
-  useEffect(() => {
     if (newBedId && !freeBedOptions.some((option) => option.value === newBedId)) setNewBedId("");
   }, [freeBedOptions, newBedId]);
+
+  function chooseDestinationWard(value: string) {
+    setDestinationWardId(value);
+    setNewBedId("");
+  }
 
   function openPanel(next: PanelKey) {
     setPanel((current) => (current === next ? null : next));
     setCondition("");
     setActionNotes("");
     setTransferMode("internal");
-    setDestinationWardId(record?.ward ? String(record.ward) : "");
+    setDestinationWardId("");
     setNewBedId("");
     setExternalHospital("");
     setTransferReason("");
@@ -373,7 +373,7 @@ export default function NursingWardAdmissionDetailPage() {
                   <label className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Enfermaria de destino</label>
                   <SearchableSelect
                     value={destinationWardId}
-                    onChange={setDestinationWardId}
+                    onChange={chooseDestinationWard}
                     options={wardOptions}
                     placeholder="Escolha a enfermaria"
                     searchPlaceholder="Pesquisar enfermaria..."
@@ -383,25 +383,28 @@ export default function NursingWardAdmissionDetailPage() {
                     Pode ser a mesma enfermaria atual ou outra enfermaria do hospital.
                   </p>
                 </div>
-                <div className="space-y-1">
-                  <label className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Cama/leito de destino</label>
-                  <SearchableSelect
-                    value={newBedId}
-                    onChange={setNewBedId}
-                    options={freeBedOptions}
-                    disabled={!destinationWardId}
-                    placeholder={destinationWardId ? "Escolha a cama livre" : "Escolha a enfermaria primeiro"}
-                    searchPlaceholder="Pesquisar cama..."
-                    emptyMessage="Sem camas livres nesta enfermaria."
-                  />
-                  <p className="text-[10px] text-muted-foreground">
-                    {destinationWardId
-                      ? freeBedOptions.length > 0
-                        ? `${freeBedOptions.length} cama${freeBedOptions.length === 1 ? "" : "s"} livre${freeBedOptions.length === 1 ? "" : "s"} em ${destinationWard?.label || "destino"}.`
-                        : "Não há cama livre/desocupada nesta enfermaria."
-                      : "As camas disponíveis aparecem depois da seleção da enfermaria."}
-                  </p>
-                </div>
+                {destinationWardId ? (
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Cama/leito de destino</label>
+                    <SearchableSelect
+                      value={newBedId}
+                      onChange={setNewBedId}
+                      options={freeBedOptions}
+                      placeholder="Escolha a cama livre"
+                      searchPlaceholder="Pesquisar cama..."
+                      emptyMessage="Sem camas livres nesta enfermaria."
+                    />
+                    <p className="text-[10px] text-muted-foreground">
+                      {freeBedOptions.length > 0
+                        ? `${freeBedOptions.length} cama${freeBedOptions.length === 1 ? "" : "s"} livre${freeBedOptions.length === 1 ? "" : "s"} em ${destinationWard?.label || "destino"}. Escolha uma cama para continuar.`
+                        : "Não há cama livre/desocupada nesta enfermaria."}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="rounded-lg border border-dashed border-violet-200/70 bg-white/25 px-3 py-2 text-[11px] text-muted-foreground dark:border-violet-800/40 dark:bg-white/5">
+                    Escolha primeiro a enfermaria de destino para carregar as camas livres.
+                  </div>
+                )}
                 <div className="space-y-1">
                   <label className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Motivo</label>
                   <input
