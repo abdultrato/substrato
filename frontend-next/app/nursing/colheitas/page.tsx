@@ -1,11 +1,17 @@
 "use client"
 
-import { AlertTriangle } from "lucide-react"
+import {
+  AlertTriangle,
+  CheckCircle2,
+  CircleDashed,
+  Droplets,
+  FlaskConical,
+  RotateCcw,
+} from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useCallback, useEffect, useMemo, useState } from "react"
 
 import AppLayout from "@/components/layout/AppLayout"
-import PageHeader from "@/components/ui/PageHeader"
 import useAuthGuard from "@/hooks/useAuthGuard"
 import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { apiFetch, apiFetchList } from "@/lib/api"
@@ -92,7 +98,10 @@ type ColumnKey = "por_coletar" | "parcial" | "rejeitadas" | "coletadas"
 type ColumnConfig = {
   key: ColumnKey
   title: string
+  icon: any
   header: string
+  band: string
+  chip: string
   badge: string
   top: string
   action?: string
@@ -101,32 +110,44 @@ type ColumnConfig = {
 const COLUMNS: ColumnConfig[] = [
   {
     key: "por_coletar",
-    title: "Amostras por coletar",
-    header: "text-sky-700",
+    title: "Por coletar",
+    icon: FlaskConical,
+    header: "text-sky-700 dark:text-sky-300",
+    band: "bg-sky-500/10",
+    chip: "bg-sky-500/15 text-sky-600 dark:text-sky-400",
     badge: "bg-sky-100 text-sky-800",
     top: "border-t-2 border-t-sky-400",
     action: "Fazer coleta",
   },
   {
     key: "parcial",
-    title: "Amostras parcialmente coletadas",
-    header: "text-amber-700",
+    title: "Parcialmente coletadas",
+    icon: CircleDashed,
+    header: "text-amber-700 dark:text-amber-300",
+    band: "bg-amber-500/10",
+    chip: "bg-amber-500/15 text-amber-600 dark:text-amber-400",
     badge: "bg-amber-100 text-amber-800",
     top: "border-t-2 border-t-amber-400",
     action: "Concluir coleta",
   },
   {
     key: "rejeitadas",
-    title: "Amostras rejeitadas",
-    header: "text-rose-700",
+    title: "Rejeitadas",
+    icon: RotateCcw,
+    header: "text-rose-700 dark:text-rose-300",
+    band: "bg-rose-500/10",
+    chip: "bg-rose-500/15 text-rose-600 dark:text-rose-400",
     badge: "bg-rose-100 text-rose-800",
     top: "border-t-2 border-t-rose-400",
     action: "Registar recoleta",
   },
   {
     key: "coletadas",
-    title: "Amostras coletadas",
-    header: "text-emerald-700",
+    title: "Coletadas",
+    icon: CheckCircle2,
+    header: "text-emerald-700 dark:text-emerald-300",
+    band: "bg-emerald-500/10",
+    chip: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400",
     badge: "bg-emerald-100 text-emerald-800",
     top: "border-t-2 border-t-emerald-400",
   },
@@ -237,8 +258,42 @@ export default function NursingCollectionsPage() {
 
   return (
     <AppLayout>
-      <div className="mx-auto w-[90vw] max-w-[90vw] space-y-4">
-        <PageHeader title="Coletas" />
+      <div className="mx-auto w-[90vw] max-w-[90vw] space-y-3">
+        <div className="relative flex flex-wrap items-center justify-between gap-3 overflow-hidden rounded-xl border border-white/20 bg-gradient-to-r from-blue-500/15 via-white/30 to-white/30 px-4 py-3 shadow-sm backdrop-blur-sm dark:border-white/10 dark:from-blue-500/10 dark:via-white/5 dark:to-white/5">
+          <div className="flex min-w-0 items-center gap-3">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-500/15 text-blue-600 dark:text-blue-400">
+              <Droplets size={22} strokeWidth={2} />
+            </span>
+            <div className="min-w-0">
+              <h1 className="font-display text-xl font-bold text-foreground">Coletas</h1>
+              <p className="text-[11px] text-muted-foreground">
+                Fila de coleta de amostras das requisições validadas.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex flex-nowrap items-center gap-2 overflow-x-auto">
+            {COLUMNS.map((column) => {
+              const Icon = column.icon
+              return (
+                <span
+                  key={`stat-${column.key}`}
+                  className="flex shrink-0 items-center gap-2 rounded-lg border border-white/30 bg-white/40 px-3 py-1.5 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/10"
+                >
+                  <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md ${column.chip}`}>
+                    <Icon size={14} strokeWidth={2} />
+                  </span>
+                  <span className="whitespace-nowrap text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                    {column.title}
+                  </span>
+                  <span className="font-display text-lg font-bold leading-none text-foreground tabular-nums">
+                    {loading ? "..." : buckets[column.key].length}
+                  </span>
+                </span>
+              )
+            })}
+          </div>
+        </div>
 
         {feedback ? (
           <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">{feedback}</div>
@@ -250,22 +305,26 @@ export default function NursingCollectionsPage() {
         {loading ? (
           <div className="text-sm text-[var(--gray-500)]">Carregando...</div>
         ) : (
-          <div className="grid grid-cols-1 items-start gap-2.5 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+          <div className="grid grid-cols-4 gap-1">
             {COLUMNS.map((column) => {
               const items = buckets[column.key]
+              const Icon = column.icon
               return (
                 <section
                   key={column.key}
-                  className={`flex min-w-0 flex-col overflow-hidden rounded-xl border border-white/20 bg-white/20 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04] ${column.top}`}
+                  className={`flex h-[calc(100vh-215px)] min-w-0 flex-col overflow-hidden rounded-xl border border-white/20 bg-white/20 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04] ${column.top}`}
                 >
-                  <div className="flex min-h-12 items-center justify-between gap-2 border-b border-border/50 bg-white/25 px-3 py-2 dark:bg-white/[0.03]">
-                    <h2 className={`text-sm font-bold leading-tight ${column.header}`}>{column.title}</h2>
-                    <span className={`inline-flex min-w-5 items-center justify-center rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${column.badge}`}>
+                  <div className={`flex min-h-12 items-center gap-2 border-b border-border/50 px-3 py-2 ${column.band}`}>
+                    <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md ${column.chip}`}>
+                      <Icon size={14} strokeWidth={2} />
+                    </span>
+                    <h2 className={`min-w-0 truncate text-sm font-bold leading-tight ${column.header}`}>{column.title}</h2>
+                    <span className={`ml-auto inline-flex min-w-5 shrink-0 items-center justify-center rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${column.badge}`}>
                       {items.length}
                     </span>
                   </div>
 
-                  <div className="grid max-h-[calc(100vh-210px)] auto-rows-min grid-cols-1 gap-1.5 overflow-y-auto p-1.5 pr-2">
+                  <div className="grid min-h-0 flex-1 auto-rows-min grid-cols-1 gap-1 overflow-y-auto p-1 pr-1.5">
                     {items.length === 0 ? (
                       <div className="rounded-md border border-dashed border-[var(--border)] px-3 py-4 text-center text-xs text-[var(--gray-500)]">
                         Sem requisições.
