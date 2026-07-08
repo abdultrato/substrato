@@ -75,6 +75,8 @@ export default function NursingPage() {
         <PageHeader
           title={t("Enfermagem", "Nursing")}
           subtitle={t("Execução: coletas, procedimentos e registos.", "Execution: sample collection, procedures, and records.")}
+          icon={HeartPulse}
+          iconClass="bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
           actions={
             canViewAdmin ? (
               <Link
@@ -93,16 +95,37 @@ export default function NursingPage() {
           </div>
         ) : null}
 
-        <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4">
-          <MetricCard label={t("Requisições pendentes", "Pending requests")} value={loading ? "..." : pendingRequests} accentClass="border-l-amber-500" />
-          <MetricCard label={t("Procedimentos", "Procedures")} value={loading ? "..." : procedures} accentClass="border-l-violet-500" />
-          <MetricCard label={t("Coletas", "Sample collections")} value={loading ? "..." : collections} accentClass="border-l-blue-500" />
-          <MetricCard
-            label={t("Sinais vitais", "Vital signs")}
-            value={loading ? "..." : "—"}
-            hint={t("Entrada via módulo Enfermagem", "Entries via the Nursing module")}
-            accentClass="border-l-emerald-500"
-          />
+        <div className="flex flex-nowrap gap-2 overflow-x-auto">
+          <div className="min-w-[10rem] flex-1">
+            <MetricCard
+              label={t("Requisições pendentes", "Pending requests")}
+              value={loading ? "..." : pendingRequests}
+              accentClass="border-l-amber-500"
+              href="/nursing/requests"
+              icon={ClipboardList}
+              iconClass="bg-amber-500/15 text-amber-600 dark:text-amber-400"
+            />
+          </div>
+          <div className="min-w-[10rem] flex-1">
+            <MetricCard
+              label={t("Procedimentos", "Procedures")}
+              value={loading ? "..." : procedures}
+              accentClass="border-l-violet-500"
+              href="/nursing/procedures"
+              icon={HeartPulse}
+              iconClass="bg-violet-500/15 text-violet-600 dark:text-violet-400"
+            />
+          </div>
+          <div className="min-w-[10rem] flex-1">
+            <MetricCard
+              label={t("Coletas", "Sample collections")}
+              value={loading ? "..." : collections}
+              accentClass="border-l-blue-500"
+              href="/nursing/colheitas"
+              icon={Droplets}
+              iconClass="bg-blue-500/15 text-blue-600 dark:text-blue-400"
+            />
+          </div>
         </div>
 
         <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4">
@@ -111,12 +134,6 @@ export default function NursingPage() {
             description={t("Visualize as requisições pendentes e o que precisa ser executado.", "View pending requests and what still needs execution.")}
             href="/nursing/requests"
             icon={ClipboardList}
-          />
-          <ActionTile
-            title={t("Itens de requisição", "Request items")}
-            description={t("Lista de itens vinculados às requisições (exames).", "List of items linked to requests (tests).")}
-            href="/nursing/request-items"
-            icon={Droplets}
           />
           <ActionTile
             title={t("Procedimentos", "Procedures")}
