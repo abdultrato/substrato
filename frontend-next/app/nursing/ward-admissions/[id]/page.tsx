@@ -9,7 +9,6 @@ import {
   BedDouble,
   Building2,
   HeartPulse,
-  Hospital,
   Loader2,
   LogOut,
   Pencil,
@@ -363,7 +362,7 @@ export default function NursingWardAdmissionDetailPage() {
                   onClick={() => setTransferMode("external")}
                   className={`inline-flex h-7 items-center gap-1 rounded-md px-2.5 font-semibold transition ${transferMode === "external" ? "bg-violet-600 text-white shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
                 >
-                  <Hospital size={12} /> Outro hospital
+                  <Building2 size={12} /> Outro hospital
                 </button>
               </div>
             </div>
