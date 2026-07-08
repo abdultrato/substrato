@@ -321,9 +321,6 @@ function WardAdmissionForm() {
                 className={inputClass}
               />
             </div>
-            <div className="rounded-lg border border-amber-200/70 bg-amber-50/70 px-3 py-2 text-xs text-amber-900 dark:border-amber-700/40 dark:bg-amber-900/20 dark:text-amber-200 sm:col-span-2">
-              As próximas medicações e respetivas descrições devem vir do cardex do paciente. Este formulário regista apenas a admissão, a enfermaria e o leito.
-            </div>
           </div>
 
           <div className="space-y-1">
