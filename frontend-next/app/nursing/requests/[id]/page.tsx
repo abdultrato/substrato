@@ -1,11 +1,11 @@
 "use client"
 
 import Link from "next/link"
+import { ArrowLeft, Droplets, Printer } from "lucide-react"
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { useParams } from "next/navigation"
 
 import AppLayout from "@/components/layout/AppLayout"
-import PageHeader from "@/components/ui/PageHeader"
 import { apiFetch } from "@/lib/api"
 import { getClinicalStatusLabel } from "@/lib/clinicalStatus"
 import { routeParamToString } from "@/lib/routeParams"
@@ -176,84 +176,96 @@ export default function NursingRequestDetailPage() {
   return (
     <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.ENFERMAGEM]}>
       <div className="mx-auto w-full max-w-5xl space-y-2 text-[0.9em]">
-        <PageHeader
-          title={record?.custom_id ? `Requisição ${record.custom_id}` : "Requisição de enfermagem"}
-          subtitle="Vista operacional da coleta por exame."
-          actions={
-            <div className="flex items-center gap-2">
-              {record?.validated_at && anyPending ? (
-                <button
-                  type="button"
-                  onClick={collectAll}
-                  disabled={busyAll}
-                  className="inline-flex h-8 items-center gap-1.5 rounded bg-primary px-3 text-xs font-semibold text-white shadow-sm transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {busyAll ? "Registando..." : "Realizar todas as coletas"}
-                </button>
-              ) : null}
-              {anyCollected ? (
-                <button
-                  type="button"
-                  onClick={openEtiqueta}
-                  className="inline-flex h-8 items-center gap-1.5 rounded border border-slate-300 bg-white px-2.5 text-xs font-medium text-slate-700 shadow-sm transition hover:bg-slate-50"
-                >
-                  Imprimir etiqueta
-                </button>
-              ) : null}
-              <Link
-                href="/nursing/requests"
-                className="inline-flex h-8 items-center rounded border border-slate-200 bg-white px-2.5 text-xs font-medium text-slate-700 shadow-sm transition hover:bg-slate-50"
-              >
-                Voltar
-              </Link>
+        <div className="relative overflow-hidden rounded-xl border border-white/20 bg-gradient-to-r from-blue-500/15 via-white/30 to-white/30 px-4 py-3 shadow-sm backdrop-blur-sm dark:border-white/10 dark:from-blue-500/10 dark:via-white/5 dark:to-white/5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-3">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-500/15 text-blue-600 dark:text-blue-400">
+              <Droplets size={22} strokeWidth={2} />
+            </span>
+            <div className="min-w-0">
+              <h1 className="truncate font-display text-xl font-bold text-foreground">
+                {record?.custom_id ? `Requisição ${record.custom_id}` : "Requisição de enfermagem"}
+              </h1>
+              <p className="text-[11px] text-muted-foreground">Vista operacional da coleta por exame.</p>
             </div>
-          }
-        />
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            {record?.validated_at && anyPending ? (
+              <button
+                type="button"
+                onClick={collectAll}
+                disabled={busyAll}
+                className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-gradient-to-r from-blue-600 to-sky-600 px-3.5 text-xs font-semibold text-white shadow-md shadow-blue-500/30 transition hover:from-blue-700 hover:to-sky-700 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <Droplets size={13} />
+                {busyAll ? "Registando..." : "Realizar todas as coletas"}
+              </button>
+            ) : null}
+            {anyCollected ? (
+              <button
+                type="button"
+                onClick={openEtiqueta}
+                className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-white/30 bg-white/40 px-3 text-xs font-medium text-foreground-2 shadow-sm backdrop-blur-sm transition hover:bg-white/60 hover:text-foreground dark:border-white/10 dark:bg-white/10 dark:hover:bg-white/15"
+              >
+                <Printer size={13} />
+                Imprimir etiqueta
+              </button>
+            ) : null}
+            <Link
+              href="/nursing/requests"
+              className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-white/30 bg-white/40 px-3 text-xs font-medium text-foreground-2 shadow-sm backdrop-blur-sm transition hover:bg-white/60 hover:text-foreground dark:border-white/10 dark:bg-white/10 dark:hover:bg-white/15"
+            >
+              <ArrowLeft size={13} />
+              Voltar
+            </Link>
+          </div>
+          </div>
+
+          {record ? (
+            <div className="mt-2.5 grid gap-x-4 gap-y-2 border-t border-white/30 pt-2.5 dark:border-white/10 md:grid-cols-2 xl:grid-cols-4">
+              <div className="min-w-0">
+                <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Paciente</div>
+                <div className="truncate text-xs font-semibold text-foreground">{record.patient_name || "-"}</div>
+                <div className="truncate text-[10px] text-muted-foreground">
+                  {record.patient_code || "Sem código"}
+                  {record.patient_age ? ` · ${record.patient_age}` : ""}
+                </div>
+              </div>
+              <div className="min-w-0">
+                <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Prioridade</div>
+                <div className="text-xs font-semibold text-foreground">
+                  {getClinicalStatusLabel(record.clinical_status, record.clinical_status_display) || "-"}
+                </div>
+              </div>
+              <div className="min-w-0">
+                <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Validação recepção</div>
+                <div className="text-xs font-semibold text-foreground">{formatDateTime(record.validated_at)}</div>
+              </div>
+              <div className="min-w-0">
+                <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Médico solicitante</div>
+                <div className="truncate text-xs font-semibold text-foreground">{record.requesting_physician_name || "-"}</div>
+              </div>
+            </div>
+          ) : null}
+        </div>
 
         {error ? (
-          <div className="rounded border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+          <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-800/40 dark:bg-amber-900/20 dark:text-amber-300">
             {error}
           </div>
         ) : null}
 
         {loading ? (
-          <div className="text-xs text-slate-500">Carregando...</div>
+          <div className="text-xs text-muted-foreground">Carregando...</div>
         ) : record ? (
           <>
-            {/* Info do paciente */}
-            <section className="rounded border border-slate-200 bg-white px-3 py-2 shadow-sm">
-              <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4">
-                <div>
-                  <div className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Paciente</div>
-                  <div className="text-xs font-semibold text-slate-900">{record.patient_name || "-"}</div>
-                  <div className="text-[10px] text-slate-500">
-                    {record.patient_code || "Sem código"}
-                    {record.patient_age ? ` · ${record.patient_age}` : ""}
-                  </div>
-                </div>
-                <div>
-                  <div className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Prioridade</div>
-                  <div className="text-xs font-semibold text-slate-900">
-                    {getClinicalStatusLabel(record.clinical_status, record.clinical_status_display) || "-"}
-                  </div>
-                </div>
-                <div>
-                  <div className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Validação recepção</div>
-                  <div className="text-xs font-semibold text-slate-900">{formatDateTime(record.validated_at)}</div>
-                </div>
-                <div>
-                  <div className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Médico solicitante</div>
-                  <div className="text-xs font-semibold text-slate-900">{record.requesting_physician_name || "-"}</div>
-                </div>
-              </div>
-            </section>
-
             {/* Resumo de amostras por coletar */}
             {pendingSampleSummary.length > 0 ? (
-              <section className="rounded border border-slate-200 bg-white px-3 py-2 shadow-sm">
+              <section className="rounded-xl border border-white/25 bg-white/35 px-3 py-2 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/5">
                 <div className="mb-1.5 flex items-center gap-2">
-                  <span className="text-xs font-semibold text-slate-700">Amostras por coletar</span>
-                  <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[10px] font-semibold text-slate-600">
+                  <span className="text-xs font-semibold text-foreground">Amostras por coletar</span>
+                  <span className="rounded-full bg-sky-100 px-2 py-0.5 text-[10px] font-semibold text-sky-800">
                     {pendingSampleSummary.length}
                   </span>
                 </div>
@@ -261,7 +273,7 @@ export default function NursingRequestDetailPage() {
                   {pendingSampleSummary.map((sample, idx) => (
                     <span
                       key={sample.id ?? idx}
-                      className="inline-flex items-center rounded border border-primary/20 bg-primary/5 px-2 py-0.5 text-[10px] font-medium text-slate-800"
+                      className="inline-flex items-center rounded border border-[var(--primary-300)] bg-[var(--primary-300)]/20 px-2 py-0.5 text-[10px] font-medium text-foreground"
                     >
                       {sample.container_name || sample.name || "Amostra"}
                       {sample.cap_color_display ? ` · ${sample.cap_color_display}` : (sample.bottle_type_display || sample.bottle_type ? ` · ${sample.bottle_type_display || sample.bottle_type}` : "")}
@@ -282,11 +294,14 @@ export default function NursingRequestDetailPage() {
                 const title = item.exam_name || item.medical_exam_name || "Exame"
 
                 return (
-                  <article key={item.id} className="rounded border border-slate-200 bg-white px-3 py-2 shadow-sm">
+                  <article
+                    key={item.id}
+                    className="rounded-xl border border-white/25 bg-white/35 px-3 py-2 shadow-sm backdrop-blur-sm transition hover:bg-white/45 dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/[0.08]"
+                  >
                     <div className="flex flex-col gap-2 lg:flex-row lg:items-start lg:justify-between">
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-1.5">
-                          <span className="text-xs font-semibold text-slate-900">{title}</span>
+                          <span className="text-xs font-semibold text-foreground">{title}</span>
                           <span
                             className={`inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-semibold ${
                               isReceived
@@ -306,16 +321,16 @@ export default function NursingRequestDetailPage() {
                           {(item.sample_options || []).map((sample, sIdx) => (
                             <div
                               key={`${item.id}-${sample.id ?? sIdx}`}
-                              className="rounded border border-slate-200 bg-slate-50 px-2 py-1.5 text-[10px] text-slate-700"
+                              className="rounded-lg border border-white/30 bg-white/40 px-2 py-1.5 text-[10px] text-foreground-2 dark:border-white/10 dark:bg-white/5"
                             >
                               <div className="flex flex-wrap items-center gap-1.5">
                                 {/* Container / tube name */}
-                                <span className="font-semibold text-slate-900">
+                                <span className="font-semibold text-foreground">
                                   {sample.container_name || sample.name || "Amostra"}
                                 </span>
                                 {/* Cap color badge */}
                                 {(sample.cap_color_display || sample.bottle_type_display || sample.bottle_type) && (
-                                  <span className="rounded bg-slate-200 px-1.5 py-0.5 font-medium">
+                                  <span className="rounded bg-muted px-1.5 py-0.5 font-medium text-muted-foreground">
                                     {sample.cap_color_display || sample.bottle_type_display || sample.bottle_type}
                                   </span>
                                 )}
@@ -329,11 +344,11 @@ export default function NursingRequestDetailPage() {
                                 {sample.inversions ? <span>{sample.inversions}× inversões</span> : null}
                                 {/* Conservation */}
                                 {sample.conservation_temperature_display && (
-                                  <span className="text-slate-500">{sample.conservation_temperature_display}</span>
+                                  <span className="text-muted-foreground">{sample.conservation_temperature_display}</span>
                                 )}
                                 {/* Stability */}
                                 {sample.conservation_max_hours ? (
-                                  <span className="text-slate-500">estável {sample.conservation_max_hours}h</span>
+                                  <span className="text-muted-foreground">estável {sample.conservation_max_hours}h</span>
                                 ) : null}
                                 {/* Fasting (legacy) */}
                                 {sample.fasting_required ? (
@@ -344,17 +359,17 @@ export default function NursingRequestDetailPage() {
                               </div>
                               {/* Additive / notes */}
                               {sample.additive && (
-                                <p className="mt-0.5 text-slate-500">{sample.additive}</p>
+                                <p className="mt-0.5 text-muted-foreground">{sample.additive}</p>
                               )}
                               {sample.notes && (
-                                <p className="mt-0.5 italic text-slate-400">{sample.notes}</p>
+                                <p className="mt-0.5 italic text-muted-foreground/80">{sample.notes}</p>
                               )}
                             </div>
                           ))}
                         </div>
 
                         {isRejected && ((item.rejection_reason_names || []).length > 0 || item.rejection_note) ? (
-                          <div className="mt-1.5 rounded border border-rose-200 bg-rose-50 px-2 py-1 text-[10px] text-rose-800">
+                          <div className="mt-1.5 rounded-lg border border-rose-200 bg-rose-50 px-2 py-1 text-[10px] text-rose-800 dark:border-rose-800/40 dark:bg-rose-900/20 dark:text-rose-300">
                             <span className="font-semibold">Recoleta: </span>
                             {(item.rejection_reason_names || []).join(", ")}
                             {item.rejection_note ? ` — ${item.rejection_note}` : ""}
@@ -365,10 +380,10 @@ export default function NursingRequestDetailPage() {
                       <div className="lg:w-44">
                         {isCollected ? (
                           <div
-                            className={`rounded px-2 py-1.5 text-[10px] font-medium ${
+                            className={`rounded-lg px-2 py-1.5 text-[10px] font-medium ${
                               isReceived
-                                ? "border border-emerald-200 bg-emerald-50 text-emerald-800"
-                                : "border border-teal-200 bg-teal-50 text-teal-800"
+                                ? "border border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-800/40 dark:bg-emerald-900/20 dark:text-emerald-300"
+                                : "border border-teal-200 bg-teal-50 text-teal-800 dark:border-teal-800/40 dark:bg-teal-900/20 dark:text-teal-300"
                             }`}
                           >
                             {isReceived
@@ -380,7 +395,7 @@ export default function NursingRequestDetailPage() {
                             type="button"
                             onClick={() => collectItem(item)}
                             disabled={busyItem === item.id || !record.validated_at}
-                            className="inline-flex h-8 w-full items-center justify-center rounded bg-primary px-3 text-xs font-semibold text-white shadow-sm transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+                            className="inline-flex h-8 w-full items-center justify-center gap-1.5 rounded-lg bg-gradient-to-r from-blue-600 to-sky-600 px-3 text-xs font-semibold text-white shadow-md shadow-blue-500/30 transition hover:from-blue-700 hover:to-sky-700 disabled:cursor-not-allowed disabled:opacity-60"
                           >
                             {busyItem === item.id ? "Registando..." : isRejected ? "Registar recoleta" : "Realizar coleta"}
                           </button>
@@ -393,7 +408,7 @@ export default function NursingRequestDetailPage() {
             </section>
           </>
         ) : (
-          <div className="rounded border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+          <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-800/40 dark:bg-amber-900/20 dark:text-amber-300">
             Requisição não encontrada.
           </div>
         )}
