@@ -161,6 +161,13 @@ export default function NursingWardAdmissionDetailPage() {
     setNewBedId("");
   }
 
+  function chooseTransferMode(mode: "internal" | "external") {
+    setTransferMode(mode);
+    setDestinationWardId("");
+    setNewBedId("");
+    setExternalHospital("");
+  }
+
   function openPanel(next: PanelKey) {
     setPanel((current) => (current === next ? null : next));
     setCondition("");
@@ -352,14 +359,14 @@ export default function NursingWardAdmissionDetailPage() {
               <div className="inline-flex rounded-lg border border-white/30 bg-white/30 p-0.5 text-[11px] shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/10">
                 <button
                   type="button"
-                  onClick={() => setTransferMode("internal")}
+                  onClick={() => chooseTransferMode("internal")}
                   className={`inline-flex h-7 items-center gap-1 rounded-md px-2.5 font-semibold transition ${transferMode === "internal" ? "bg-violet-600 text-white shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
                 >
                   <Building2 size={12} /> Dentro do hospital
                 </button>
                 <button
                   type="button"
-                  onClick={() => setTransferMode("external")}
+                  onClick={() => chooseTransferMode("external")}
                   className={`inline-flex h-7 items-center gap-1 rounded-md px-2.5 font-semibold transition ${transferMode === "external" ? "bg-violet-600 text-white shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
                 >
                   <Building2 size={12} /> Outro hospital
@@ -416,27 +423,40 @@ export default function NursingWardAdmissionDetailPage() {
                 </div>
               </div>
             ) : (
-              <div className="grid gap-2 sm:grid-cols-2">
-                <div className="space-y-1">
-                  <label className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Hospital de destino</label>
-                  <input
-                    value={externalHospital}
-                    onChange={(event) => setExternalHospital(event.target.value)}
-                    placeholder="Nome do hospital de destino"
-                    className={inputClass}
-                  />
-                  <p className="text-[10px] text-muted-foreground">
-                    Transferência externa encerra este internamento sem ocupar cama interna.
-                  </p>
+              <div className="rounded-lg border border-violet-200/70 bg-violet-50/45 px-3 py-2.5 shadow-sm dark:border-violet-800/40 dark:bg-violet-900/15">
+                <div className="mb-2 flex items-center gap-2">
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-violet-600 text-white">
+                    <Building2 size={14} />
+                  </span>
+                  <div>
+                    <h3 className="text-xs font-semibold text-foreground">Transferência para outro hospital</h3>
+                    <p className="text-[11px] text-muted-foreground">
+                      Informe o hospital para onde o paciente será transferido.
+                    </p>
+                  </div>
                 </div>
-                <div className="space-y-1">
-                  <label className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Motivo</label>
-                  <input
-                    value={transferReason}
-                    onChange={(event) => setTransferReason(event.target.value)}
-                    placeholder="Motivo (opcional)"
-                    className={inputClass}
-                  />
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Hospital de destino</label>
+                    <input
+                      value={externalHospital}
+                      onChange={(event) => setExternalHospital(event.target.value)}
+                      placeholder="Nome do hospital de destino"
+                      className={inputClass}
+                    />
+                    <p className="text-[10px] text-muted-foreground">
+                      Transferência externa encerra este internamento sem ocupar cama interna.
+                    </p>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Motivo</label>
+                    <input
+                      value={transferReason}
+                      onChange={(event) => setTransferReason(event.target.value)}
+                      placeholder="Motivo (opcional)"
+                      className={inputClass}
+                    />
+                  </div>
                 </div>
               </div>
             )}
