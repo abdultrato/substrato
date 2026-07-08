@@ -8,12 +8,13 @@ import {
   BedDouble,
   CheckCircle2,
   Loader2,
+  Plus,
   Save,
 } from "lucide-react";
 
 import AppLayout from "@/components/layout/AppLayout";
 import { useLanguage } from "@/hooks/useLanguage";
-import { apiFetch } from "@/lib/api";
+import { apiFetch, apiFetchList } from "@/lib/api";
 import { routeParamToString } from "@/lib/routeParams";
 import { GROUPS } from "@/lib/rbac";
 
@@ -23,6 +24,13 @@ type WardRecord = {
   name?: string | null;
   description?: string | null;
   active?: boolean | null;
+};
+
+type BedRow = {
+  id: number;
+  number?: string | null;
+  active?: boolean | null;
+  ward?: number;
 };
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
@@ -55,6 +63,21 @@ export default function WardEditPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const [beds, setBeds] = useState<BedRow[]>([]);
+  const [newBedNumber, setNewBedNumber] = useState("");
+  const [addingBed, setAddingBed] = useState(false);
+  const [bedError, setBedError] = useState<string | null>(null);
+
+  const loadBeds = async (wardId: number) => {
+    const res = await apiFetchList<BedRow>("/nursing/ward_bed/", {
+      page: 1,
+      pageSize: 200,
+      clientPaginate: true,
+      clientCache: false,
+    });
+    setBeds((res.items || []).filter((bed) => bed.ward === wardId));
+  };
+
   useEffect(() => {
     let mounted = true;
     async function load() {
@@ -68,6 +91,7 @@ export default function WardEditPage() {
         setName(data.name || "");
         setDescription(data.description || "");
         setActive(data.active ?? true);
+        loadBeds(data.id).catch(() => {});
       } catch (e: any) {
         if (mounted) setError(e?.message || t("Erro ao carregar a enfermaria.", "Failed to load the ward."));
       } finally {
@@ -106,12 +130,36 @@ export default function WardEditPage() {
     }
   }
 
+  async function addBed(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!ward) return;
+    const number = newBedNumber.trim();
+    if (!number) {
+      setBedError(t("Informe o número da cama.", "Enter the bed number."));
+      return;
+    }
+    setAddingBed(true);
+    setBedError(null);
+    try {
+      await apiFetch("/nursing/ward_bed/", {
+        method: "POST",
+        body: JSON.stringify({ ward: ward.id, number, active: true }),
+      });
+      setNewBedNumber("");
+      await loadBeds(ward.id);
+    } catch (e: any) {
+      setBedError(localizeError(e?.message, t("Falha ao adicionar a cama.", "Failed to add the bed.")));
+    } finally {
+      setAddingBed(false);
+    }
+  }
+
   const inputClass =
     "w-full rounded-lg border border-white/30 bg-white/40 px-3 py-2 text-sm text-foreground shadow-sm backdrop-blur-sm outline-none transition placeholder:text-muted-foreground hover:border-emerald-400/60 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/25 dark:border-white/10 dark:bg-white/10";
 
   return (
     <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.ENFERMAGEM]}>
-      <div className="mx-auto w-full max-w-3xl space-y-2 text-[0.9em]">
+      <div className="mx-auto w-[95%] space-y-2 text-[0.9em]">
         {/* Header */}
         <div className="relative flex flex-wrap items-center justify-between gap-3 overflow-hidden rounded-xl border border-white/20 bg-gradient-to-r from-emerald-500/15 via-white/30 to-white/30 px-4 py-3 shadow-sm backdrop-blur-sm dark:border-white/10 dark:from-emerald-500/10 dark:via-white/5 dark:to-white/5">
           <div className="flex min-w-0 items-center gap-3">
@@ -148,6 +196,7 @@ export default function WardEditPage() {
             <Loader2 size={14} className="animate-spin" /> {t("Carregando…", "Loading…")}
           </div>
         ) : ward ? (
+          <div className="grid gap-2 lg:grid-cols-[minmax(0,1fr)_18rem]">
           <form
             onSubmit={saveWard}
             className="space-y-3 rounded-xl border border-white/25 bg-white/35 px-4 py-3 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/5"
@@ -209,6 +258,73 @@ export default function WardEditPage() {
               </button>
             </div>
           </form>
+
+          {/* Cartão lateral: camas da enfermaria */}
+          <section className="flex flex-col rounded-xl border border-white/25 bg-white/35 px-3 py-2.5 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/5">
+            <div className="mb-2 flex items-center gap-2">
+              <span className="flex h-6 w-6 items-center justify-center rounded-md bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
+                <BedDouble size={13} />
+              </span>
+              <h2 className="text-xs font-semibold text-foreground">{t("Camas", "Beds")}</h2>
+              <span className="ml-auto rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-800">
+                {beds.length}
+              </span>
+            </div>
+
+            {bedError ? (
+              <div className="mb-2 rounded-lg border border-rose-200 bg-rose-50 px-2 py-1.5 text-[10px] text-rose-800 dark:border-rose-800/40 dark:bg-rose-900/20 dark:text-rose-300">
+                {bedError}
+              </div>
+            ) : null}
+
+            <form onSubmit={addBed} className="mb-2 flex gap-1.5">
+              <input
+                value={newBedNumber}
+                onChange={(event) => {
+                  setNewBedNumber(event.target.value);
+                  if (bedError) setBedError(null);
+                }}
+                placeholder={t("Nº da cama (ex.: C2)", "Bed no. (e.g.: C2)")}
+                className="min-w-0 flex-1 rounded-lg border border-white/30 bg-white/40 px-2.5 py-1.5 text-xs text-foreground shadow-sm backdrop-blur-sm outline-none transition placeholder:text-muted-foreground hover:border-emerald-400/60 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/25 dark:border-white/10 dark:bg-white/10"
+              />
+              <button
+                type="submit"
+                disabled={addingBed || !newBedNumber.trim()}
+                className="inline-flex h-8 shrink-0 items-center gap-1 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-600 px-2.5 text-xs font-semibold text-white shadow-md shadow-emerald-500/30 transition hover:from-emerald-700 hover:to-teal-700 disabled:opacity-60"
+              >
+                {addingBed ? <Loader2 size={12} className="animate-spin" /> : <Plus size={12} />}
+                {t("Adicionar", "Add")}
+              </button>
+            </form>
+
+            {beds.length === 0 ? (
+              <div className="rounded-lg border border-dashed border-border px-2 py-3 text-center text-[10px] text-muted-foreground">
+                {t("Sem camas cadastradas.", "No beds registered.")}
+              </div>
+            ) : (
+              <div className="min-h-0 flex-1 space-y-1 overflow-y-auto pr-0.5">
+                {beds.map((bed) => (
+                  <div
+                    key={bed.id}
+                    className="flex items-center justify-between gap-2 rounded-lg border border-white/30 bg-white/40 px-2 py-1.5 dark:border-white/10 dark:bg-white/5"
+                  >
+                    <span className="inline-flex min-w-0 items-center gap-1.5 text-xs font-medium text-foreground">
+                      <BedDouble size={12} className="shrink-0 text-emerald-600 dark:text-emerald-400" />
+                      <span className="truncate">{t("Cama", "Bed")} {bed.number || bed.id}</span>
+                    </span>
+                    <span
+                      className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-medium ${(bed.active ?? false)
+                        ? "bg-emerald-50 text-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-300"
+                        : "bg-gray-100 text-gray-600 dark:bg-white/10 dark:text-gray-400"}`}
+                    >
+                      {(bed.active ?? false) ? t("Ativa", "Active") : t("Inativa", "Inactive")}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+          </div>
         ) : (
           <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-800/40 dark:bg-amber-900/20 dark:text-amber-300">
             {t("Enfermaria não encontrada.", "Ward not found.")}
