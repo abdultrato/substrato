@@ -44,7 +44,7 @@ function WardAdmissionForm() {
   const [wardId, setWardId] = useState(searchParams?.get("ward") || "");
   const [bedId, setBedId] = useState("");
   const surgeryOriginNote = surgeryId
-    ? `Origem do internamento: paciente encaminhado da cirurgia de grande porte número ${surgeryId} para admissão em enfermaria.`
+    ? `Origem do internamento: paciente encaminhado da cirurgia de grande porte n.º ${surgeryId} para admissão em enfermaria.`
     : "";
   const [notes, setNotes] = useState(surgeryOriginNote);
 
