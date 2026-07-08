@@ -246,9 +246,9 @@ export default function NursingWardDetailPage() {
         {loading ? (
           <div className="text-xs text-muted-foreground">Carregando...</div>
         ) : ward ? (
-          <>
+          <div className="grid grid-cols-2 items-start gap-2">
             {/* Mapa de camas */}
-            <section className="rounded-xl border border-white/25 bg-white/35 px-3 py-2 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/5">
+            <section className="min-w-0 rounded-xl border border-white/25 bg-white/35 px-3 py-2 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/5">
               <div className="mb-1.5 flex items-center gap-2">
                 <span className="text-xs font-semibold text-foreground">Camas</span>
                 <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-800">
@@ -263,7 +263,7 @@ export default function NursingWardDetailPage() {
                   Sem camas cadastradas nesta enfermaria.
                 </div>
               ) : (
-                <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
+                <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3 xl:grid-cols-4">
                   {beds.map((bed) => {
                     const admission = admissionByBedId.get(bed.id);
                     const isInactive = !(bed.active ?? false);
@@ -298,7 +298,7 @@ export default function NursingWardDetailPage() {
             </section>
 
             {/* Internamentos ativos */}
-            <section className="rounded-xl border border-white/25 bg-white/35 px-3 py-2 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/5">
+            <section className="min-w-0 rounded-xl border border-white/25 bg-white/35 px-3 py-2 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/5">
               <div className="mb-1.5 flex items-center gap-2">
                 <span className="text-xs font-semibold text-foreground">Internamentos ativos</span>
                 <span className="rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-semibold text-violet-800">
@@ -310,7 +310,7 @@ export default function NursingWardDetailPage() {
                   Sem internamentos ativos nesta enfermaria.
                 </div>
               ) : (
-                <div className="grid grid-cols-1 gap-1.5 md:grid-cols-2 xl:grid-cols-3">
+                <div className="grid grid-cols-1 gap-1.5 xl:grid-cols-2">
                   {openAdmissions.map((admission) => (
                     <Link
                       key={admission.id}
@@ -347,7 +347,7 @@ export default function NursingWardDetailPage() {
                 </div>
               )}
             </section>
-          </>
+          </div>
         ) : (
           <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-800/40 dark:bg-amber-900/20 dark:text-amber-300">
             Enfermaria não encontrada.
