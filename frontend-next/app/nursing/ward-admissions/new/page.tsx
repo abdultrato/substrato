@@ -58,9 +58,10 @@ function WardAdmissionForm() {
   const [admissionDate, setAdmissionDate] = useState(nowForDatetimeLocal());
   const [expectedDischarge, setExpectedDischarge] = useState("");
   const [observationHours, setObservationHours] = useState("");
-  const [nextMedicationAt, setNextMedicationAt] = useState("");
-  const [nextMedicationDescription, setNextMedicationDescription] = useState("");
-  const [notes, setNotes] = useState(surgeryId ? `Origem: cirurgia #${surgeryId}` : "");
+  const surgeryOriginNote = surgeryId
+    ? `Origem do internamento: paciente encaminhado da cirurgia de grande porte número ${surgeryId} para admissão em enfermaria.`
+    : "";
+  const [notes, setNotes] = useState(surgeryOriginNote);
 
   useEffect(() => {
     let mounted = true;
@@ -167,9 +168,6 @@ function WardAdmissionForm() {
       const dischargeIso = toIsoOrUndefined(expectedDischarge);
       if (dischargeIso) payload.expected_discharge_date = dischargeIso;
       if (observationHours) payload.estimated_observation_hours = Number(observationHours);
-      const medicationIso = toIsoOrUndefined(nextMedicationAt);
-      if (medicationIso) payload.next_medication_at = medicationIso;
-      if (nextMedicationDescription.trim()) payload.next_medication_description = nextMedicationDescription.trim();
       if (notes.trim()) payload.notes = notes.trim();
 
       await apiFetch("/nursing/ward_admission/", { method: "POST", body: JSON.stringify(payload) });
@@ -323,24 +321,8 @@ function WardAdmissionForm() {
                 className={inputClass}
               />
             </div>
-            <div className="space-y-1">
-              <label className={labelClass}>Próxima medicação em</label>
-              <input
-                type="datetime-local"
-                value={nextMedicationAt}
-                onChange={(event) => setNextMedicationAt(event.target.value)}
-                className={inputClass}
-              />
-            </div>
-            <div className="space-y-1">
-              <label className={labelClass}>Descrição da medicação</label>
-              <input
-                type="text"
-                value={nextMedicationDescription}
-                onChange={(event) => setNextMedicationDescription(event.target.value)}
-                placeholder="Ex.: Metronidazol injetável 2mg/ml"
-                className={inputClass}
-              />
+            <div className="rounded-lg border border-amber-200/70 bg-amber-50/70 px-3 py-2 text-xs text-amber-900 dark:border-amber-700/40 dark:bg-amber-900/20 dark:text-amber-200 sm:col-span-2">
+              As próximas medicações e respetivas descrições devem vir do cardex do paciente. Este formulário regista apenas a admissão, a enfermaria e o leito.
             </div>
           </div>
 
