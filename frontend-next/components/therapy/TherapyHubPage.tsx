@@ -93,16 +93,14 @@ export default function TherapyHubPage({
 
         <WorkspaceHub
           title={title}
-          adminHref="/admin/terapias/"
-          secondaryCta={{ href: `${resourceBasePath}/resources`, label: t("Recursos de Terapias", "Therapy resources") }}
           metrics={[
-            { label: "Recursos", value: metricValue || resources },
-            { label: "Avaliações", value: metricValue || evaluations },
-            { label: "Planos", value: metricValue || plans },
-            { label: "Objetivos", value: metricValue || goals },
-            { label: "Sessões", value: metricValue || sessions },
-            { label: "Evoluções", value: metricValue || progressNotes },
-            { label: "Prescrições", value: metricValue || prescriptions },
+            { label: "Recursos", value: metricValue || resources, href: `${resourceBasePath}/resources` },
+            { label: "Avaliações", value: metricValue || evaluations, href: `${resourceBasePath}/evaluations` },
+            { label: "Planos", value: metricValue || plans, href: `${resourceBasePath}/treatment-plans` },
+            { label: "Objetivos", value: metricValue || goals, href: `${resourceBasePath}/goals` },
+            { label: "Sessões", value: metricValue || sessions, href: `${resourceBasePath}/sessions` },
+            { label: "Evoluções", value: metricValue || progressNotes, href: `${resourceBasePath}/progress-notes` },
+            { label: "Prescrições", value: metricValue || prescriptions, href: `${resourceBasePath}/prescription-links` },
           ]}
           actions={[
             {

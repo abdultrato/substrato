@@ -90,15 +90,13 @@ export default function SpecialtyDiagnosticsHubPage({
 
         <WorkspaceHub
           title={title}
-          adminHref="/admin/diagnosticos/"
-          secondaryCta={{ href: `${resourceBasePath}/exams`, label: t("Recursos de Diagnóstico", "Diagnostic resources") }}
           metrics={[
-            { label: "Equipamentos", value: metricValue || equipment },
-            { label: "Protocolos", value: metricValue || protocols },
-            { label: "Exames", value: metricValue || orders },
-            { label: "Medições", value: metricValue || measurements },
-            { label: "Laudos", value: metricValue || reports },
-            { label: "Integrações", value: metricValue || integrationEvents },
+            { label: "Equipamentos", value: metricValue || equipment, href: `${resourceBasePath}/equipment` },
+            { label: "Protocolos", value: metricValue || protocols, href: `${resourceBasePath}/protocols` },
+            { label: "Exames", value: metricValue || orders, href: `${resourceBasePath}/exams` },
+            { label: "Medições", value: metricValue || measurements, href: `${resourceBasePath}/measurements` },
+            { label: "Laudos", value: metricValue || reports, href: `${resourceBasePath}/reports` },
+            { label: "Integrações", value: metricValue || integrationEvents, href: `${resourceBasePath}/integrations` },
           ]}
           actions={[
             {

@@ -124,21 +124,19 @@ export default function DentalPage() {
 
         <WorkspaceHub
           title="Odontologia"
-          adminHref="/admin/odontologia/"
-          secondaryCta={{ href: "/dental/appointments", label: t("Recursos de Odontologia", "Dental resources") }}
           metrics={[
-            { label: "Procedimentos", value: metricValue || procedures },
-            { label: "Consultas", value: metricValue || appointments },
-            { label: "Atendimentos", value: metricValue || consultations },
-            { label: "Prontuários", value: metricValue || records },
-            { label: "Planos", value: metricValue || treatmentPlans },
-            { label: "Orçamentos", value: metricValue || quotations },
-            { label: "Pagamentos", value: metricValue || payments },
-            { label: "Execuções", value: metricValue || executions },
-            { label: "Planos válidos", value: metricValue || validPatientPlans },
-            { label: "Planos expirados", value: metricValue || expiredPatientPlans },
-            { label: "Ordens de prótese", value: metricValue || labOrders },
-            { label: "Itens faturáveis", value: metricValue || billingItems },
+            { label: "Procedimentos", value: metricValue || procedures, href: "/dental/procedures" },
+            { label: "Consultas", value: metricValue || appointments, href: "/dental/appointments" },
+            { label: "Atendimentos", value: metricValue || consultations, href: "/dental/consultations" },
+            { label: "Prontuários", value: metricValue || records, href: "/dental/records" },
+            { label: "Planos", value: metricValue || treatmentPlans, href: "/dental/treatment-plans" },
+            { label: "Orçamentos", value: metricValue || quotations, href: "/dental/quotations" },
+            { label: "Pagamentos", value: metricValue || payments, href: "/dental/payments" },
+            { label: "Execuções", value: metricValue || executions, href: "/dental/procedure-executions" },
+            { label: "Planos válidos", value: metricValue || validPatientPlans, href: "/dental/patient-treatment-plans/valid" },
+            { label: "Planos expirados", value: metricValue || expiredPatientPlans, href: "/dental/patient-treatment-plans/expired" },
+            { label: "Ordens de prótese", value: metricValue || labOrders, href: "/dental/prosthesis-lab-orders" },
+            { label: "Itens faturáveis", value: metricValue || billingItems, href: "/dental/billing-items" },
           ]}
           actions={[
             {

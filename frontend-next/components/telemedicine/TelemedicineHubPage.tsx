@@ -77,15 +77,13 @@ export default function TelemedicineHubPage() {
 
         <WorkspaceHub
           title="Substrato Telemedicina"
-          adminHref="/admin/telemedicina/"
-          secondaryCta={{ href: "/telemedicine/waiting-room", label: t("Recursos de Telemedicina", "Telemedicine resources") }}
           metrics={[
-            { label: "Sala virtual", value: metricValue || waitingRoom },
-            { label: "Dispositivos", value: metricValue || devices },
-            { label: "Leituras", value: metricValue || vitals },
-            { label: "Casos assíncronos", value: metricValue || asyncCases },
-            { label: "Programas", value: metricValue || programs },
-            { label: "Alertas", value: metricValue || alerts },
+            { label: "Sala virtual", value: metricValue || waitingRoom, href: "/telemedicine/waiting-room" },
+            { label: "Dispositivos", value: metricValue || devices, href: "/telemedicine/devices" },
+            { label: "Leituras", value: metricValue || vitals, href: "/telemedicine/vitals" },
+            { label: "Casos assíncronos", value: metricValue || asyncCases, href: "/telemedicine/async-cases" },
+            { label: "Programas", value: metricValue || programs, href: "/telemedicine/chronic-programs" },
+            { label: "Alertas", value: metricValue || alerts, href: "/telemedicine/alerts" },
           ]}
           actions={[
             {

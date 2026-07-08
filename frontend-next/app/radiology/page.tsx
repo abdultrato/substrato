@@ -90,16 +90,14 @@ export default function RadiologyPage() {
 
         <WorkspaceHub
           title="Substrato Radiologia"
-          adminHref="/admin/radiologia/"
-          secondaryCta={{ href: "/radiology/studies", label: t("Recursos de Radiologia", "Radiology resources") }}
           metrics={[
-            { label: "Equipamentos", value: metricValue || equipment },
-            { label: "Protocolos", value: metricValue || protocols },
-            { label: "Estudos", value: metricValue || studies },
-            { label: "Séries", value: metricValue || series },
-            { label: "Ficheiros", value: metricValue || files },
-            { label: "Laudos", value: metricValue || reports },
-            { label: "Eventos PACS", value: metricValue || pacsEvents },
+            { label: "Equipamentos", value: metricValue || equipment, href: "/radiology/equipment" },
+            { label: "Protocolos", value: metricValue || protocols, href: "/radiology/protocols" },
+            { label: "Estudos", value: metricValue || studies, href: "/radiology/studies" },
+            { label: "Séries", value: metricValue || series, href: "/radiology/series" },
+            { label: "Ficheiros", value: metricValue || files, href: "/radiology/files" },
+            { label: "Laudos", value: metricValue || reports, href: "/radiology/reports" },
+            { label: "Eventos PACS", value: metricValue || pacsEvents, href: "/radiology/pacs-events" },
           ]}
           actions={[
             {

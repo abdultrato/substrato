@@ -74,14 +74,12 @@ export default function CreditFinancingHubPage() {
 
         <WorkspaceHub
           title="Créditos e Financiamento"
-          adminHref="/admin/creditos_financiamento/"
-          secondaryCta={{ href: "/credit-financing/consortiums", label: t("Recursos de Crédito", "Credit resources") }}
           metrics={[
-            { label: "Consórcios", value: metricValue || consortiums },
-            { label: "Financiamentos", value: metricValue || procedureFinancings },
-            { label: "Parcelas", value: metricValue || installments },
-            { label: "Reembolsos", value: metricValue || reimbursements },
-            { label: "Apoios estudantis", value: metricValue || studentFunding },
+            { label: "Consórcios", value: metricValue || consortiums, href: "/credit-financing/consortiums" },
+            { label: "Financiamentos", value: metricValue || procedureFinancings, href: "/credit-financing/procedure-financing" },
+            { label: "Parcelas", value: metricValue || installments, href: "/credit-financing/installments" },
+            { label: "Reembolsos", value: metricValue || reimbursements, href: "/credit-financing/reimbursements" },
+            { label: "Apoios estudantis", value: metricValue || studentFunding, href: "/credit-financing/student-funding" },
           ]}
           actions={[
             {

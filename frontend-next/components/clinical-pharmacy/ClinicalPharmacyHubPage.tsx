@@ -77,15 +77,13 @@ export default function ClinicalPharmacyHubPage() {
 
         <WorkspaceHub
           title="Farmácia Clínica"
-          adminHref="/admin/farmacia_clinica/"
-          secondaryCta={{ href: "/clinical-pharmacy/preparations", label: t("Recursos de Farmácia Clínica", "Clinical Pharmacy resources") }}
           metrics={[
-            { label: "Preparações IV", value: metricValue || preparations },
-            { label: "Ingredientes", value: metricValue || ingredients },
-            { label: "Regras", value: metricValue || interactionRules },
-            { label: "Interações", value: metricValue || interactionChecks },
-            { label: "Controlados", value: metricValue || controlledMovements },
-            { label: "Antibióticos", value: metricValue || antibioticReviews },
+            { label: "Preparações IV", value: metricValue || preparations, href: "/clinical-pharmacy/iv-preparations" },
+            { label: "Ingredientes", value: metricValue || ingredients, href: "/clinical-pharmacy/ingredients" },
+            { label: "Regras", value: metricValue || interactionRules, href: "/clinical-pharmacy/interactions" },
+            { label: "Interações", value: metricValue || interactionChecks, href: "/clinical-pharmacy/interactions" },
+            { label: "Controlados", value: metricValue || controlledMovements, href: "/clinical-pharmacy/controlled-substances" },
+            { label: "Antibióticos", value: metricValue || antibioticReviews, href: "/clinical-pharmacy/antibiotic-stewardship" },
           ]}
           actions={[
             {

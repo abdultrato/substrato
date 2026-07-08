@@ -128,13 +128,11 @@ export default function EducationPage() {
 
         <WorkspaceHub
           title="Substrato Educação"
-          adminHref="/admin/education/"
-          secondaryCta={{ href: "/education/resources", label: t("Recursos de Educação", "Education resources") }}
           metrics={[
-            { label: "Estudantes", value: metricValue || students },
-            { label: "Professores", value: metricValue || teachers },
-            { label: "Cursos", value: metricValue || courses },
-            { label: "Matrículas", value: metricValue || enrollments },
+            { label: "Estudantes", value: metricValue || students, href: "/education/resources/student" },
+            { label: "Professores", value: metricValue || teachers, href: "/education/resources/teacher" },
+            { label: "Cursos", value: metricValue || courses, href: "/education/resources/course" },
+            { label: "Matrículas", value: metricValue || enrollments, href: "/education/resources/enrollment" },
           ]}
           actions={resourceActions}
         />

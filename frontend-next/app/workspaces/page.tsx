@@ -1,19 +1,23 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { Suspense, useCallback, useMemo } from "react"
 import Link from "next/link"
+import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import {
   Activity,
   ArrowLeft,
   BrainCircuit,
+  Cat,
   CreditCard,
   Eye,
   GraduationCap,
   HeartPulse,
+  Inbox,
   Microscope,
   PackageSearch,
   Pill,
   School,
+  Smile,
   Stethoscope,
   Syringe,
   Truck,
@@ -148,7 +152,7 @@ function WorkspaceCard({
   )
 
   const className =
-    "group relative flex min-h-[152px] overflow-hidden rounded-xl border shadow-sm shadow-black/5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/25"
+    "group relative flex w-64 shrink-0 min-h-[152px] overflow-hidden rounded-xl border shadow-sm shadow-black/5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/25"
 
   if (href) {
     return (
@@ -165,10 +169,59 @@ function WorkspaceCard({
   )
 }
 
+function EmptyState({ message }: { message: string }) {
+  return (
+    <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-border bg-muted/30 px-6 py-14 text-center">
+      <div className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
+        <Inbox size={22} strokeWidth={2} />
+      </div>
+      <p className="max-w-sm text-sm text-muted-foreground">{message}</p>
+    </div>
+  )
+}
+
+const LAYER_KEYS: WorkspaceLayerKey[] = ["health", "education", "transport-logistics"]
+
+function isWorkspaceLayerKey(value: string | null): value is WorkspaceLayerKey {
+  return value !== null && (LAYER_KEYS as string[]).includes(value)
+}
+
 export default function WorkspacesPage() {
+  return (
+    <Suspense
+      fallback={
+        <AppLayout>
+          <div className="flex min-h-40 items-center justify-center text-sm text-muted-foreground">…</div>
+        </AppLayout>
+      }
+    >
+      <WorkspacesContent />
+    </Suspense>
+  )
+}
+
+function WorkspacesContent() {
   const { t } = useLanguage()
   const { user } = useAuth()
-  const [selectedLayerKey, setSelectedLayerKey] = useState<WorkspaceLayerKey | null>(null)
+  const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
+  const areaParam = searchParams.get("area")
+  const selectedLayerKey = isWorkspaceLayerKey(areaParam) ? areaParam : null
+
+  const setSelectedLayerKey = useCallback(
+    (key: WorkspaceLayerKey | null) => {
+      const params = new URLSearchParams(searchParams.toString())
+      if (key) {
+        params.set("area", key)
+      } else {
+        params.delete("area")
+      }
+      const query = params.toString()
+      router.push(query ? `${pathname}?${query}` : pathname)
+    },
+    [pathname, router, searchParams]
+  )
 
   const canUseClinicalHealth = userHasAnyGroup(user, [
     GROUPS.ADMIN,
@@ -321,7 +374,7 @@ export default function WorkspacesPage() {
           "Dental appointments, odontogram, treatment plans and prosthesis laboratory."
         ),
         href: "/dental",
-        icon: Stethoscope,
+        icon: Smile,
         visible: showDentalArea,
         scope: "healthcare",
       },
@@ -333,7 +386,7 @@ export default function WorkspacesPage() {
           "Animals, veterinary records, vaccination, exams, admissions and prescriptions."
         ),
         href: "/veterinary",
-        icon: Stethoscope,
+        icon: Cat,
         visible: showVeterinaryArea,
         scope: "healthcare",
       },
@@ -640,7 +693,10 @@ export default function WorkspacesPage() {
           subtitle={
             selectedLayer
               ? selectedLayer.description
-              : undefined
+              : t(
+                  "Escolha uma área para ver os módulos disponíveis para o seu perfil.",
+                  "Choose an area to see the modules available for your profile."
+                )
           }
         />
 
@@ -655,24 +711,33 @@ export default function WorkspacesPage() {
               {t("Voltar às áreas principais", "Back to main areas")}
             </button>
 
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
-              {visibleDepartments.map((department) => {
-                return (
-                  <WorkspaceCard
-                    key={department.key}
-                    title={department.title}
-                    description={department.description}
-                    icon={department.icon}
-                    href={department.href}
-                    onClick={() => storeScope(department.scope)}
-                    toneKey={selectedLayer.key}
-                  />
-                )
-              })}
-            </div>
+            {visibleDepartments.length > 0 ? (
+              <div className="flex flex-nowrap gap-3 overflow-x-auto pb-2 -mx-3 px-3 sm:mx-0 sm:px-0">
+                {visibleDepartments.map((department) => {
+                  return (
+                    <WorkspaceCard
+                      key={department.key}
+                      title={department.title}
+                      description={department.description}
+                      icon={department.icon}
+                      href={department.href}
+                      onClick={() => storeScope(department.scope)}
+                      toneKey={selectedLayer.key}
+                    />
+                  )
+                })}
+              </div>
+            ) : (
+              <EmptyState
+                message={t(
+                  "Não há módulos disponíveis para o seu perfil nesta área.",
+                  "There are no modules available for your profile in this area."
+                )}
+              />
+            )}
           </div>
-        ) : (
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        ) : visibleLayers.length > 0 ? (
+          <div className="flex flex-nowrap gap-3 overflow-x-auto pb-2 -mx-3 px-3 sm:mx-0 sm:px-0">
             {visibleLayers.map((layer) => {
               return (
                 <WorkspaceCard
@@ -690,6 +755,13 @@ export default function WorkspacesPage() {
               )
             })}
           </div>
+        ) : (
+          <EmptyState
+            message={t(
+              "O seu perfil ainda não tem acesso a nenhuma área de trabalho. Contacte um administrador.",
+              "Your profile does not have access to any workspace yet. Contact an administrator."
+            )}
+          />
         )}
       </div>
     </AppLayout>

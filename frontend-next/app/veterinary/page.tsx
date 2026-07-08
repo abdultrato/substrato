@@ -82,16 +82,14 @@ export default function VeterinaryPage() {
 
         <WorkspaceHub
           title="Veterinária"
-          adminHref="/admin/veterinaria/"
-          secondaryCta={{ href: "/veterinary/animals", label: t("Recursos de Veterinária", "Veterinary resources") }}
           metrics={[
-            { label: "Animais", value: metricValue || animals },
-            { label: "Consultas", value: metricValue || appointments },
-            { label: "Prontuários", value: metricValue || records },
-            { label: "Vacinações", value: metricValue || vaccinations },
-            { label: "Requisições laboratoriais", value: metricValue || labRequests },
-            { label: "Internamentos", value: metricValue || admissions },
-            { label: "Receitas", value: metricValue || prescriptions },
+            { label: "Animais", value: metricValue || animals, href: "/veterinary/animals" },
+            { label: "Consultas", value: metricValue || appointments, href: "/veterinary/appointments" },
+            { label: "Prontuários", value: metricValue || records, href: "/veterinary/records" },
+            { label: "Vacinações", value: metricValue || vaccinations, href: "/veterinary/vaccinations" },
+            { label: "Requisições laboratoriais", value: metricValue || labRequests, href: "/veterinary/lab-requests" },
+            { label: "Internamentos", value: metricValue || admissions, href: "/veterinary/admissions" },
+            { label: "Receitas", value: metricValue || prescriptions, href: "/veterinary/prescriptions" },
           ]}
           actions={[
             {

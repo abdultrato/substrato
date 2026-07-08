@@ -86,15 +86,13 @@ export default function TransportationPage() {
 
         <WorkspaceHub
           title="Substrato Transporte"
-          adminHref="/admin/transportation/"
-          secondaryCta={{ href: "/transportation/vehicles", label: t("Recursos de Transporte", "Transportation resources") }}
           metrics={[
-            { label: "Veículos", value: metricValue || vehicles },
-            { label: "Motoristas", value: metricValue || drivers },
-            { label: "Rotas", value: metricValue || routes },
-            { label: "Viagens", value: metricValue || trips },
-            { label: "Manutenções", value: metricValue || maintenanceOrders },
-            { label: "Abastecimentos", value: metricValue || fuelLogs },
+            { label: "Veículos", value: metricValue || vehicles, href: "/transportation/vehicles" },
+            { label: "Motoristas", value: metricValue || drivers, href: "/transportation/drivers" },
+            { label: "Rotas", value: metricValue || routes, href: "/transportation/routes" },
+            { label: "Viagens", value: metricValue || trips, href: "/transportation/trips" },
+            { label: "Manutenções", value: metricValue || maintenanceOrders, href: "/transportation/maintenance-orders" },
+            { label: "Abastecimentos", value: metricValue || fuelLogs, href: "/transportation/fuel-logs" },
           ]}
           actions={[
             {

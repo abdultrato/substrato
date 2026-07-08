@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import { CalendarClock, ClipboardList, FlaskConical, Users } from "lucide-react"
+import { CalendarClock, ClipboardList, FlaskConical, Stethoscope, Users } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
 import WorkspaceHub from "@/components/workspace/WorkspaceHub"
@@ -79,13 +79,18 @@ export default function HealthcarePage() {
 
         <WorkspaceHub
           title="Portal Clínico"
-          adminHref="/admin/"
-          secondaryCta={{ href: "/patients", label: t("Abrir pacientes", "Open Patients") }}
+          subtitle={t(
+            "Pacientes, consultas, requisições e resultados do atendimento assistencial.",
+            "Patients, consultations, requests, and results for clinical care."
+          )}
+          icon={Stethoscope}
+          iconClass="bg-violet-500/15 text-violet-600 dark:text-violet-300"
+          barClass="bg-violet-500"
           metrics={[
-            { label: "Pacientes", value: metricValue || patients, icon: Users, accentClass: "border-l-sky-500", iconClass: "bg-sky-500/15 text-sky-600 dark:text-sky-300" },
-            { label: "Consultas", value: metricValue || consultations, icon: CalendarClock, accentClass: "border-l-emerald-500", iconClass: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-300" },
-            { label: "Requisições laboratoriais", value: metricValue || requests, icon: ClipboardList, accentClass: "border-l-violet-500", iconClass: "bg-violet-500/15 text-violet-600 dark:text-violet-300" },
-            { label: "Itens de resultado", value: metricValue || results, icon: FlaskConical, accentClass: "border-l-amber-500", iconClass: "bg-amber-500/15 text-amber-600 dark:text-amber-300" },
+            { label: "Pacientes", value: metricValue || patients, icon: Users, accentClass: "border-l-sky-500", iconClass: "bg-sky-500/15 text-sky-600 dark:text-sky-300", href: "/patients" },
+            { label: "Consultas", value: metricValue || consultations, icon: CalendarClock, accentClass: "border-l-emerald-500", iconClass: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-300", href: "/consultations" },
+            { label: "Requisições laboratoriais", value: metricValue || requests, icon: ClipboardList, accentClass: "border-l-violet-500", iconClass: "bg-violet-500/15 text-violet-600 dark:text-violet-300", href: "/requests" },
+            { label: "Itens de resultado", value: metricValue || results, icon: FlaskConical, accentClass: "border-l-amber-500", iconClass: "bg-amber-500/15 text-amber-600 dark:text-amber-300", href: "/clinical/result-items" },
           ]}
           actions={[
             {

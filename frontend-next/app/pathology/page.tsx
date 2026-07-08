@@ -260,11 +260,10 @@ export default function PathologyPage() {
 
         <WorkspaceHub
           title="Patologia"
-          adminHref="/admin/patologia/"
-          secondaryCta={{ href: "/resources/pathology", label: t("Recursos técnicos", "Technical resources") }}
           metrics={pathologyResources.map((resource) => ({
             label: resource.metricLabel,
             value: metricValue || metrics[resource.key],
+            href: resource.href,
           }))}
           actions={pathologyResources.map((resource) => ({
             title: resource.title,

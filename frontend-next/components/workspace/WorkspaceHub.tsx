@@ -1,11 +1,9 @@
 "use client"
 
-import Link from "next/link"
-import { ArrowRight, ShieldCheck, type LucideIcon } from "lucide-react"
+import { type LucideIcon } from "lucide-react"
 
 import ActionTile from "@/components/ui/ActionTile"
 import MetricCard from "@/components/ui/MetricCard"
-import PageHeader from "@/components/ui/PageHeader"
 import { useLanguage } from "@/hooks/useLanguage"
 
 type WorkspaceMetric = {
@@ -17,6 +15,8 @@ type WorkspaceMetric = {
   accentClass?: string
   /** Cor do chip do ícone (ex.: "bg-sky-500/15 text-sky-600 dark:text-sky-300"). */
   iconClass?: string
+  /** Quando definido, o indicador vira um link clicável para a lista correspondente. */
+  href?: string
 }
 
 type WorkspaceAction = {
@@ -33,8 +33,11 @@ type WorkspaceAction = {
 type WorkspaceHubProps = {
   title: string
   subtitle?: string
-  adminHref: string
-  secondaryCta?: { href: string; label: string }
+  icon?: LucideIcon
+  /** Cor do chip do ícone no cabeçalho (ex.: "bg-violet-500/15 text-violet-600 dark:text-violet-300"). */
+  iconClass?: string
+  /** Cor da barra superior do cartão de cabeçalho (ex.: "bg-violet-500"). */
+  barClass?: string
   metrics: WorkspaceMetric[]
   actions: WorkspaceAction[]
   noteTitle?: string
@@ -44,54 +47,52 @@ type WorkspaceHubProps = {
 export default function WorkspaceHub({
   title,
   subtitle,
-  adminHref,
-  secondaryCta,
+  icon,
+  iconClass,
+  barClass,
   metrics,
   actions,
   noteTitle,
   notes = [],
 }: WorkspaceHubProps) {
-  const { t } = useLanguage()
+  const { tr } = useLanguage()
+  const Icon = icon
 
   return (
     <div className="space-y-3">
-      <PageHeader
-        title={title}
-        subtitle={subtitle}
-        actions={
-          <div className="flex items-center gap-2">
-            {secondaryCta ? (
-              <Link
-                href={secondaryCta.href}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground-2 transition hover:bg-muted hover:text-foreground"
-              >
-                {secondaryCta.label}
-                <ArrowRight size={13} />
-              </Link>
-            ) : null}
-            <Link
-              href={adminHref}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground-2 transition hover:bg-muted hover:text-foreground"
-            >
-              <ShieldCheck size={13} />
-              {t("Admin", "Admin")}
-            </Link>
-          </div>
-        }
-      />
+      <div className="relative overflow-hidden rounded-2xl border border-white/20 bg-white/30 p-4 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/5 sm:p-5">
+        <span aria-hidden className={`absolute inset-x-0 top-0 h-1 ${barClass ?? "bg-primary"}`} />
 
-      <div className="grid grid-cols-4 gap-1.5">
-        {metrics.map((item) => (
-          <MetricCard
-            key={item.label}
-            label={item.label}
-            value={item.value}
-            hint={item.hint}
-            icon={item.icon}
-            accentClass={item.accentClass}
-            iconClass={item.iconClass}
-          />
-        ))}
+        <div className="flex min-w-0 items-center gap-3">
+          {Icon ? (
+            <span
+              className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${iconClass ?? "bg-muted text-muted-foreground"}`}
+            >
+              <Icon size={20} strokeWidth={2} />
+            </span>
+          ) : null}
+          <div className="min-w-0">
+            <h1 className="break-words font-display text-xl font-semibold text-foreground sm:text-2xl">
+              {tr(title)}
+            </h1>
+            {subtitle ? <p className="mt-0.5 text-sm text-muted-foreground">{tr(subtitle)}</p> : null}
+          </div>
+        </div>
+
+        <div className="mt-4 grid grid-cols-2 gap-1.5 sm:grid-cols-4">
+          {metrics.map((item) => (
+            <MetricCard
+              key={item.label}
+              label={item.label}
+              value={item.value}
+              hint={item.hint}
+              icon={item.icon}
+              accentClass={item.accentClass}
+              iconClass={item.iconClass}
+              href={item.href}
+            />
+          ))}
+        </div>
       </div>
 
       <div className="grid grid-cols-2 gap-1.5 xl:grid-cols-4">

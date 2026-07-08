@@ -86,15 +86,13 @@ export default function PhysiotherapyPage() {
 
         <WorkspaceHub
           title="Fisioterapia"
-          adminHref="/admin/fisioterapia/"
-          secondaryCta={{ href: "/physiotherapy/assessments", label: t("Recursos de Fisioterapia", "Physiotherapy resources") }}
           metrics={[
-            { label: "Aparelhos", value: metricValue || devices },
-            { label: "Avaliações", value: metricValue || assessments },
-            { label: "Planos", value: metricValue || plans },
-            { label: "Sessões", value: metricValue || sessions },
-            { label: "Evoluções", value: metricValue || progressNotes },
-            { label: "Usos de aparelho", value: metricValue || deviceUsages },
+            { label: "Aparelhos", value: metricValue || devices, href: "/physiotherapy/devices" },
+            { label: "Avaliações", value: metricValue || assessments, href: "/physiotherapy/assessments" },
+            { label: "Planos", value: metricValue || plans, href: "/physiotherapy/treatment-plans" },
+            { label: "Sessões", value: metricValue || sessions, href: "/physiotherapy/sessions" },
+            { label: "Evoluções", value: metricValue || progressNotes, href: "/physiotherapy/progress-notes" },
+            { label: "Usos de aparelho", value: metricValue || deviceUsages, href: "/physiotherapy/device-usages" },
           ]}
           actions={[
             {
