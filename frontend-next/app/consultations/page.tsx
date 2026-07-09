@@ -79,6 +79,9 @@ type ConsultationRow = {
   invoice_status?: string
   invoice_origin?: string
   has_pending_credit_note_request?: boolean
+  created_by?: number | null
+  created_by_name?: string
+  created_at?: string
 }
 
 type InvoiceIssueMode = "draft" | "issue" | "proforma"
@@ -666,13 +669,24 @@ export default function ConsultationsPage() {
     }
   }, [bucketOf, t])
 
-  // Filtra por nome do paciente, especialidade e estado (rótulo) da consulta.
+  // Filtra por número, paciente, médico, utilizador que marcou, data, especialidade e estado.
   const consultationsFiltradas = useMemo(() => {
     const q = busca.trim().toLowerCase()
     if (!q) return consultations
     return consultations.filter((c) => {
       const haystack = [
+        c.id,
+        c.custom_id,
         c.patient_name,
+        c.doctor_name,
+        c.created_by_name,
+        c.created_by,
+        c.scheduled_for,
+        c.scheduled_for?.slice(0, 10),
+        fmtDate(c.scheduled_for),
+        c.created_at,
+        c.created_at?.slice(0, 10),
+        fmtDate(c.created_at),
         c.specialty_name,
         c.type,
         c.status,
@@ -843,13 +857,13 @@ export default function ConsultationsPage() {
             <p className="text-[11px] text-muted-foreground">{t("Gestão do fluxo de consultas médicas", "Medical consultation flow management")}</p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            {/* Motor de busca: paciente, especialidade ou estado */}
+            {/* Motor de busca */}
             <div className="relative min-w-[180px] flex-1 sm:max-w-xs">
               <Search size={14} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
               <input
                 value={busca}
                 onChange={(e) => setBusca(e.target.value)}
-                placeholder={t("Paciente, especialidade ou estado…", "Patient, specialty or status…")}
+                placeholder={t("Nº, paciente, médico, utilizador ou data…", "No., patient, doctor, user or date…")}
                 className="w-full rounded-lg border border-white/30 bg-white/50 py-1.5 pl-8 pr-7 text-xs text-foreground shadow-sm backdrop-blur-sm transition placeholder:text-muted-foreground hover:border-violet-400 focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500/25 dark:border-white/10 dark:bg-white/10"
               />
               {busca && (

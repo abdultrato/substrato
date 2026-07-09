@@ -111,11 +111,22 @@ class HolidayViewSet(TenantScopedModelViewSet):
 
 
 class MedicalConsultationViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
-    queryset = MedicalConsultation.objects.select_related("patient", "doctor", "specialty").all()
+    queryset = MedicalConsultation.objects.select_related("patient", "doctor", "specialty", "created_by").all()
     serializer_class = MedicalConsultationSerializer
     filterset_class = MedicalConsultationFilter
     permission_classes = [IsAuthenticated]
-    search_fields = ["custom_id", "type", "patient__name", "doctor__name"]
+    search_fields = [
+        "id",
+        "custom_id",
+        "type",
+        "patient__name",
+        "doctor__name",
+        "created_by__username",
+        "created_by__first_name",
+        "created_by__last_name",
+        "scheduled_for",
+        "created_at",
+    ]
     ordering_fields = ["scheduled_for", "created_at", "type", "status", "price"]
     ordering = ["-scheduled_for", "-created_at"]
 
