@@ -178,7 +178,7 @@ export default function LabRequestDetailPage() {
         router.push("/clinical-laboratory/cultures")
         return
       }
-      if (!item && items.some(isCultureItem)) {
+      if (!item && items.length > 0 && items.every(isCultureItem)) {
         router.push("/clinical-laboratory/cultures")
         return
       }

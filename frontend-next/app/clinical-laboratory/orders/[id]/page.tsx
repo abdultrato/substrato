@@ -208,7 +208,7 @@ export default function LabOrderDetailPage() {
         router.push("/clinical-laboratory/cultures")
         return
       }
-      if (!item && (record.items || []).some(isCultureItem)) {
+      if (!item && tests.length > 0 && tests.every(isCultureItem)) {
         router.push("/clinical-laboratory/cultures")
         return
       }
