@@ -106,7 +106,7 @@ function elapsedParts(ms: number) {
 }
 
 function biochemicalDurationMinutes(test: BiochemicalTest): number {
-  return Number(test.duration_minutes ?? Math.round(Number(test.duration_hours || 0) * 60) || 0);
+  return Number(test.duration_minutes ?? Math.round(Number(test.duration_hours || 0) * 60)) || 0;
 }
 
 function Card({ title, icon: Icon, accent, iconTone, children }: {
