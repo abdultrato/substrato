@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Plus, FlaskConical, Clock, CheckCircle2, XCircle, Pencil, Loader2, Search, RotateCcw } from "lucide-react"
+import { Plus, FlaskConical, Clock, CheckCircle2, XCircle, Pencil, Loader2, Search, RotateCcw, Stethoscope } from "lucide-react"
 import ManchesterBadge from "@/components/ui/ManchesterBadge"
 import PageSizeInput from "@/components/ui/PageSizeInput"
 import { getManchesterMeta } from "@/lib/manchesterTriage"
@@ -44,12 +44,23 @@ type LabRequest = {
   medical_exams: number[]
 }
 
+type RequestTypeFilter = "LAB" | "MED"
+
 type ExamOption = {
   id: number
   custom_id: string
   name: string
   sector?: string
 }
+
+const REQUEST_TYPE_OPTIONS: Array<{
+  value: RequestTypeFilter
+  label: string
+  icon: typeof FlaskConical
+}> = [
+  { value: "MED", label: "Exames médicos", icon: Stethoscope },
+  { value: "LAB", label: "Exames laboratoriais", icon: FlaskConical },
+]
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -463,6 +474,7 @@ export default function PendingRequestsPage() {
   const [editRow, setEditRow] = useState<LabRequest | null>(null)
   const [search, setSearch] = useState("")
   const [pageSize, setPageSize] = useState(12)
+  const [requestType, setRequestType] = useState<RequestTypeFilter>("LAB")
 
   const loadAll = useCallback(async () => {
     setLoadingPending(true)
@@ -470,7 +482,7 @@ export default function PendingRequestsPage() {
     setLoadingValidated(true)
     try {
       const { items } = await apiFetchList<LabRequest>(
-        "/clinical/labrequest/",
+        `/clinical/labrequest/?type=${requestType}`,
         { page: 1, pageSize: 200, clientCache: false }
       )
       // Modelo A: "encaminhada" é marcada por validated_at (o status fica
@@ -485,7 +497,7 @@ export default function PendingRequestsPage() {
       setLoadingCanceled(false)
       setLoadingValidated(false)
     }
-  }, [])
+  }, [requestType])
 
   useEffect(() => {
     loadAll()
@@ -565,7 +577,30 @@ export default function PendingRequestsPage() {
         <section className="relative overflow-hidden rounded-xl border border-white/20 bg-white/30 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]">
           <span className="absolute left-0 top-0 h-full w-1 bg-sky-500" />
           <span className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-sky-400/40 to-transparent" />
-          <div className="flex flex-wrap items-center gap-1.5 px-3 py-2 pl-4">
+          <div className="absolute right-3 top-2 z-10 flex flex-wrap justify-end gap-2">
+            {REQUEST_TYPE_OPTIONS.map((option) => {
+              const Icon = option.icon
+              const active = requestType === option.value
+              return (
+                <button
+                  key={option.value}
+                  type="button"
+                  aria-pressed={active}
+                  onClick={() => setRequestType(option.value)}
+                  className={`inline-flex h-8 shrink-0 items-center gap-2 rounded-lg border px-3 text-[11px] font-semibold transition ${
+                    active
+                      ? "border-sky-400 bg-sky-600 text-white shadow-sm"
+                      : "border-white/30 bg-white/50 text-muted-foreground shadow-sm backdrop-blur-sm hover:border-sky-400/60 hover:text-foreground dark:border-white/10 dark:bg-white/10"
+                  }`}
+                >
+                  <Icon size={14} strokeWidth={2} />
+                  {option.label}
+                </button>
+              )
+            })}
+          </div>
+
+          <div className="flex flex-wrap items-center gap-1.5 px-3 pb-2 pl-4 pt-12">
             <div className="flex min-w-0 items-center gap-1.5">
               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500 to-blue-600 text-white shadow-md shadow-sky-500/20">
                 <FlaskConical size={17} />
