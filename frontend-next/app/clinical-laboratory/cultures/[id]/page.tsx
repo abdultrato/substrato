@@ -136,7 +136,6 @@ export default function CultureDetailPage() {
   const id = params.id;
   const [culture, setCulture] = useState<Culture | null>(null);
   const [plates, setPlates] = useState<Plate[]>(() => normalizePlates([{}], "CUL"));
-  const [hours, setHours] = useState("24");
   const [observation, setObservation] = useState("");
   const [positive, setPositive] = useState(false);
   const [reincubationHours, setReincubationHours] = useState("24");
@@ -308,6 +307,9 @@ export default function CultureDetailPage() {
               <div className="space-y-2">
                 {plates.map((plate, index) => {
                   const custom = isCustomMedium(plate);
+                  const plateEnd = plate.incubation_expected_end_at ? new Date(plate.incubation_expected_end_at).getTime() : null;
+                  const plateDue = plateEnd !== null && now >= plateEnd;
+                  const plateRemaining = plateEnd !== null ? plateEnd - now : 0;
                   return (
                     <div key={plate.id} className="space-y-2 rounded-lg border border-white/25 bg-white/20 p-2 backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]">
                       <div className="flex items-center justify-between gap-2">
@@ -318,7 +320,17 @@ export default function CultureDetailPage() {
                           <FlaskConical size={11} /> {plate.code}
                         </span>
                         {isIncubating ? (
-                          <span className="inline-flex h-7 items-center gap-1 text-[10px] font-medium text-muted-foreground/70" title="Em incubação — não editável"><Lock size={12} /> Em incubação</span>
+                          plateEnd !== null ? (
+                            <span
+                              className={`inline-flex h-7 items-center gap-1.5 rounded-md border px-2 text-[11px] font-medium shadow-sm ${plateDue ? "border-emerald-300/60 bg-emerald-50/70 text-emerald-700 dark:border-emerald-700/40 dark:bg-emerald-900/20 dark:text-emerald-300" : "border-sky-300/50 bg-sky-50/60 text-sky-700 dark:border-sky-800/40 dark:bg-sky-900/20 dark:text-sky-300"}`}
+                              title={plateDue ? "Meio pronto para leitura" : "Cronómetro individual deste meio"}
+                            >
+                              <Clock3 size={12} className={plateDue ? "" : "animate-pulse"} />
+                              {plateDue ? "Pronto para leitura" : <span className="font-mono tabular-nums">{elapsedParts(plateRemaining)}</span>}
+                            </span>
+                          ) : (
+                            <span className="inline-flex h-7 items-center gap-1 text-[10px] font-medium text-muted-foreground/70" title="Em incubação — não editável"><Lock size={12} /> Em incubação</span>
+                          )
                         ) : (
                           <button
                             type="button"
@@ -360,6 +372,10 @@ export default function CultureDetailPage() {
                           <input disabled={isIncubating} value={plate.temperature_c} onChange={(event) => updatePlate(index, { temperature_c: event.target.value })} placeholder="°C" className={`${inputClass} disabled:cursor-not-allowed disabled:opacity-70`} />
                           <span className="text-xs text-muted-foreground">°C</span>
                         </div>
+                        <div className="flex items-center gap-1.5" title="Horas de incubação deste meio (cronómetro individual)">
+                          <input disabled={isIncubating} type="number" min="0" step="0.5" value={plate.incubation_hours} onChange={(event) => updatePlate(index, { incubation_hours: event.target.value })} placeholder="Horas" className={`${inputClass} disabled:cursor-not-allowed disabled:opacity-70`} aria-label="Horas de incubação deste meio" />
+                          <span className="text-xs text-muted-foreground">h</span>
+                        </div>
                       </div>
                     </div>
                   );
@@ -369,12 +385,12 @@ export default function CultureDetailPage() {
                 {!isIncubating && (
                   <>
                     <button onClick={addPlate} className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-white/40 bg-white/35 px-2.5 text-xs font-medium text-foreground shadow-sm backdrop-blur-sm"><Plus size={14} /> Placa / tubo</button>
-                    <input value={hours} onChange={(event) => setHours(event.target.value)} placeholder="Horas de incubação" className={`${inputClass} max-w-40`} />
+                    <span className="text-[11px] text-muted-foreground">Cada meio incuba e é cronometrado individualmente pelas horas definidas acima.</span>
                   </>
                 )}
                 <button
                   disabled={saving || isIncubating}
-                  onClick={() => submitAction("iniciar-incubacao", { plates, hours: Number(hours) || 24 })}
+                  onClick={() => submitAction("iniciar-incubacao", { plates, hours: Number(plates[0]?.incubation_hours) || 24 })}
                   className={`inline-flex h-8 items-center gap-1.5 rounded-lg px-3 text-xs font-semibold text-white shadow-md disabled:opacity-100 ${
                     isIncubating
                       ? "cursor-default bg-gradient-to-r from-emerald-600 to-teal-600 shadow-emerald-500/20"

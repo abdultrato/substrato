@@ -11,6 +11,11 @@ export type CulturePlate = {
   consistency: string;   // consistência do meio: sólido, semissólido, líquido
   atmosphere: string;    // atmosfera de incubação
   temperature_c: string; // temperatura em °C
+  // Incubação individual por meio — cada placa/tubo tem o seu próprio período e
+  // cronómetro. Preenchidos pelo backend ao iniciar/reincubar.
+  incubation_hours: string;              // horas de incubação deste meio (editável antes de incubar)
+  incubation_started_at?: string | null; // início da incubação desta placa (ISO)
+  incubation_expected_end_at?: string | null; // hora prevista de leitura desta placa (ISO)
 };
 
 // Recipientes habituais em microbiologia clínica.
@@ -82,6 +87,9 @@ export function makeCulturePlate(overrides: Partial<CulturePlate> = {}): Culture
     consistency: overrides.consistency ?? (medium ? suggestedConsistency(medium) : "Sólido"),
     atmosphere: overrides.atmosphere ?? "Aeróbia",
     temperature_c: overrides.temperature_c ?? "37",
+    incubation_hours: overrides.incubation_hours ?? "24",
+    incubation_started_at: overrides.incubation_started_at ?? null,
+    incubation_expected_end_at: overrides.incubation_expected_end_at ?? null,
   };
 }
 
@@ -144,6 +152,9 @@ export function normalizePlates(raw: any[], cultureRef: string): CulturePlate[] 
       atmosphere: r?.atmosphere,
       temperature_c: r?.temperature_c != null ? String(r.temperature_c) : undefined,
       customMedium: r?.customMedium,
+      incubation_hours: r?.incubation_hours != null ? String(r.incubation_hours) : undefined,
+      incubation_started_at: r?.incubation_started_at ?? null,
+      incubation_expected_end_at: r?.incubation_expected_end_at ?? null,
       // migra o antigo "label" livre para observação do código se não houver código
       code: r?.code || "",
     });

@@ -660,14 +660,35 @@ class MicrobiologyCultureViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
             raise DRFValidationError({"plates": "Informe pelo menos uma placa/meio de cultura."})
 
         now = timezone.now()
-        expected = now + timedelta(hours=hours)
         accumulated_start = float(culture.incubation_accumulated_hours or 0)
+
+        # Incubação individual por meio: cada placa/tubo arranca o seu próprio
+        # cronómetro com as horas indicadas nela (fallback para as horas gerais).
+        plate_ends = []
+        for plate in plates:
+            if not isinstance(plate, dict):
+                continue
+            try:
+                plate_hours = float(plate.get("incubation_hours") or hours)
+            except (TypeError, ValueError):
+                plate_hours = hours
+            if plate_hours <= 0:
+                plate_hours = hours
+            plate_end = now + timedelta(hours=plate_hours)
+            plate["incubation_hours"] = plate_hours
+            plate["incubation_started_at"] = now.isoformat()
+            plate["incubation_expected_end_at"] = plate_end.isoformat()
+            plate_ends.append(plate_end)
+
+        # O relógio geral da cultura reflecte o meio que termina por último.
+        expected = max(plate_ends) if plate_ends else now + timedelta(hours=hours)
+        max_hours = (expected - now).total_seconds() / 3600
         period = {
             "started_at": now.isoformat(),
             "expected_end_at": expected.isoformat(),
-            "duration_hours": hours,
+            "duration_hours": max_hours,
             "accumulated_start_hours": accumulated_start,
-            "accumulated_expected_hours": accumulated_start + hours,
+            "accumulated_expected_hours": accumulated_start + max_hours,
             "type": "reincubation" if culture.incubation_periods else "initial",
         }
         culture.culture_plates = plates
@@ -723,18 +744,43 @@ class MicrobiologyCultureViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
             raise DRFValidationError({"hours": "Informe um período de reincubação maior que zero."})
         now = timezone.now()
         accumulated_start = float(culture.incubation_accumulated_hours or 0)
-        expected = now + timedelta(hours=hours)
+
+        # Reincubação individual: cada meio reinicia o seu cronómetro. Aceita
+        # horas por placa (mapa {plate_id/code: horas}) ou aplica as horas gerais.
+        per_plate = request.data.get("plate_hours") or {}
+        plates = culture.culture_plates or []
+        plate_ends = []
+        for plate in plates:
+            if not isinstance(plate, dict):
+                continue
+            key = plate.get("id") or plate.get("code")
+            try:
+                plate_hours = float((per_plate.get(str(key)) if isinstance(per_plate, dict) else None)
+                                    or plate.get("incubation_hours") or hours)
+            except (TypeError, ValueError):
+                plate_hours = hours
+            if plate_hours <= 0:
+                plate_hours = hours
+            plate_end = now + timedelta(hours=plate_hours)
+            plate["incubation_hours"] = plate_hours
+            plate["incubation_started_at"] = now.isoformat()
+            plate["incubation_expected_end_at"] = plate_end.isoformat()
+            plate_ends.append(plate_end)
+
+        expected = max(plate_ends) if plate_ends else now + timedelta(hours=hours)
+        max_hours = (expected - now).total_seconds() / 3600
+        culture.culture_plates = plates
         culture.incubation_periods = [*(culture.incubation_periods or []), {
             "started_at": now.isoformat(),
             "expected_end_at": expected.isoformat(),
-            "duration_hours": hours,
+            "duration_hours": max_hours,
             "accumulated_start_hours": accumulated_start,
-            "accumulated_expected_hours": accumulated_start + hours,
+            "accumulated_expected_hours": accumulated_start + max_hours,
             "type": "reincubation",
         }]
         culture.incubation_expected_end_at = expected
         culture.status = MicrobiologyCulture.Status.REINCUBATING
-        culture.save(update_fields=["incubation_periods", "incubation_expected_end_at", "status", "updated_at"])
+        culture.save(update_fields=["culture_plates", "incubation_periods", "incubation_expected_end_at", "status", "updated_at"])
         return Response(self.get_serializer(culture).data)
 
     @action(detail=True, methods=["post"], url_path="finalizar", url_name="finalizar")
