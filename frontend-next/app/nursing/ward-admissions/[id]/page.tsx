@@ -24,6 +24,7 @@ import SearchableSelect from "@/components/ui/SearchableSelect";
 import { apiFetch, apiFetchAll, apiFetchList } from "@/lib/api";
 import { routeParamToString } from "@/lib/routeParams";
 import { GROUPS } from "@/lib/rbac";
+import { buildProcedureRows } from "@/lib/nursing/wardAdmissionHistory";
 
 type AdmissionRecord = {
   id: number;
@@ -251,33 +252,33 @@ function ProcedureListing({
 }) {
   if (!items.length) return <EmptyHistory />;
   return (
-    <div className="overflow-x-auto rounded-lg border border-white/25 bg-white/20 text-xs dark:border-white/10 dark:bg-white/5">
-      <div className="grid min-w-[520px] grid-cols-[minmax(0,1.6fr)_minmax(92px,0.75fr)_minmax(98px,0.75fr)] gap-2 border-b border-white/25 bg-white/30 px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground dark:border-white/10 dark:bg-white/10">
+    <div className="rounded-lg border border-white/25 bg-white/20 text-xs dark:border-white/10 dark:bg-white/5">
+      <div className="grid grid-cols-[minmax(0,1.6fr)_minmax(74px,0.6fr)_minmax(92px,0.6fr)] gap-2 border-b border-white/25 bg-white/30 px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground dark:border-white/10 dark:bg-white/10">
         <span>Procedimento</span>
         <span>Estado</span>
         <span>Data</span>
       </div>
       <div className="divide-y divide-white/20 dark:divide-white/10">
-        {items.slice(0, 8).map((item, index) => {
+        {items.map((item, index) => {
           const content = (
             <>
-              <span className="min-w-0 truncate font-semibold text-foreground">{item.procedure}</span>
-              <span className="min-w-0 truncate text-muted-foreground">{item.status || "—"}</span>
-              <span className="min-w-0 truncate text-muted-foreground">{formatDateTime(item.date)}</span>
+              <span className="min-w-0 break-words font-semibold text-foreground">{item.procedure}</span>
+              <span className="min-w-0 break-words text-muted-foreground">{item.status || "—"}</span>
+              <span className="min-w-0 break-words text-muted-foreground">{formatDateTime(item.date)}</span>
             </>
           );
           return item.href ? (
             <Link
               key={`${item.href}-${index}`}
               href={item.href}
-              className="grid min-w-[520px] grid-cols-[minmax(0,1.6fr)_minmax(92px,0.75fr)_minmax(98px,0.75fr)] gap-2 px-2 py-1.5 transition hover:bg-white/40 dark:hover:bg-white/10"
+              className="grid grid-cols-[minmax(0,1.6fr)_minmax(74px,0.6fr)_minmax(92px,0.6fr)] gap-2 px-2 py-1.5 transition hover:bg-white/40 dark:hover:bg-white/10"
             >
               {content}
             </Link>
           ) : (
             <div
               key={`${item.procedure}-${index}`}
-              className="grid min-w-[520px] grid-cols-[minmax(0,1.6fr)_minmax(92px,0.75fr)_minmax(98px,0.75fr)] gap-2 px-2 py-1.5"
+              className="grid grid-cols-[minmax(0,1.6fr)_minmax(74px,0.6fr)_minmax(92px,0.6fr)] gap-2 px-2 py-1.5"
             >
               {content}
             </div>
@@ -487,46 +488,8 @@ export default function NursingWardAdmissionDetailPage() {
   const consultations = useMemo(() => clinicalHistory?.consultations || [], [clinicalHistory]);
   const admissions = useMemo(() => clinicalHistory?.internamentos_ward || [], [clinicalHistory]);
   const pharmacySales = useMemo(() => clinicalHistory?.vendas_farmacia || [], [clinicalHistory]);
-  const financialRecords = useMemo(
-    () => [
-      ...(clinicalHistory?.faturas || []),
-      ...(clinicalHistory?.pagamentos || []),
-      ...(clinicalHistory?.recibos || []),
-    ],
-    [clinicalHistory]
-  );
 
-  const procedureRows = useMemo(
-    () => {
-      const surgeryRows = largeSurgeries.flatMap((surgery) => {
-        const procedures = readableItems(surgery.procedure_names);
-        const names = procedures.length ? procedures : readableItems(surgery.procedure || surgery.custom_id || `Cirurgia ${surgery.id}`);
-        return names.map((name) => ({
-          procedure: compactText(name, 90),
-          status: surgeryStatusLabel(surgery.status),
-          date: surgery.completed_at || surgery.ended_at || surgery.started_at || surgery.scheduled_for,
-          href: `/surgery/large-surgeries/${surgery.id}`,
-        }));
-      });
-      return [
-        ...surgeryRows,
-        ...procedures.map((procedure) => ({
-          procedure: compactText(
-            joinReadable([procedure.name || procedure.procedure_name || procedure.description, procedure.custom_id || procedure.id]) ||
-              "Procedimento de enfermagem",
-            90
-          ),
-          status: readableValue(procedure.status || procedure.estado || procedure.situacao),
-          date: firstValue(procedure, ["data_realizacao", "performed_date", "created_at"]),
-        })),
-      ].sort((a, b) => {
-        const aTime = new Date(a.date || 0).getTime();
-        const bTime = new Date(b.date || 0).getTime();
-        return bTime - aTime;
-      });
-    },
-    [largeSurgeries, procedures]
-  );
+  const procedureRows = useMemo(() => buildProcedureRows(largeSurgeries, procedures), [largeSurgeries, procedures]);
 
   const cardexItems = useMemo(
     () =>
@@ -548,22 +511,45 @@ export default function NursingWardAdmissionDetailPage() {
     [pastCardex]
   );
 
-  const examItems = useMemo(
+  const medicalExamItems = useMemo(
     () =>
-      requisitions.map((request) => ({
-        title: compactText(
-          joinValues([
-            request.id_custom || request.custom_id || request.id,
-            Array.isArray(request.itens)
-              ? request.itens.map((item: any) => item.exame_nome || item.exame_medico_nome || item.exam_name || item.name).filter(Boolean).join(", ")
-              : "",
-          ]) || "Requisição de exames",
-          90
-        ),
-        date: firstValue(request, ["criado_em", "created_at", "requested_at"]),
-        meta: joinValues([request.tipo === "MED" ? "Exames médicos" : "Laboratório", request.estado || request.status, request.resultado || request.result]),
-        href: request.id ? `/requests/${request.id}` : undefined,
-      })),
+      requisitions
+        .filter((request) => String(request.tipo || "").toUpperCase() === "MED")
+        .map((request) => ({
+          title: compactText(
+            joinValues([
+              request.id_custom || request.custom_id || request.id,
+              Array.isArray(request.itens)
+                ? request.itens.map((item: any) => item.exame_nome || item.exame_medico_nome || item.exam_name || item.name).filter(Boolean).join(", ")
+                : "",
+            ]) || "Requisição de exames",
+            90
+          ),
+          date: firstValue(request, ["criado_em", "created_at", "requested_at"]),
+          meta: joinValues(["Exames médicos", request.estado || request.status, request.resultado || request.result]),
+          href: request.id ? `/requests/${request.id}` : undefined,
+        })),
+    [requisitions]
+  );
+
+  const labExamItems = useMemo(
+    () =>
+      requisitions
+        .filter((request) => String(request.tipo || "").toUpperCase() !== "MED")
+        .map((request) => ({
+          title: compactText(
+            joinValues([
+              request.id_custom || request.custom_id || request.id,
+              Array.isArray(request.itens)
+                ? request.itens.map((item: any) => item.exame_nome || item.exame_medico_nome || item.exam_name || item.name).filter(Boolean).join(", ")
+                : "",
+            ]) || "Requisição de exames",
+            90
+          ),
+          date: firstValue(request, ["criado_em", "created_at", "requested_at"]),
+          meta: joinValues(["Laboratório", request.estado || request.status, request.resultado || request.result]),
+          href: request.id ? `/requests/${request.id}` : undefined,
+        })),
     [requisitions]
   );
 
@@ -635,24 +621,11 @@ export default function NursingWardAdmissionDetailPage() {
           </div>
 
           {record ? (
-            <div className="mt-2.5 grid gap-x-4 gap-y-2 border-t border-white/30 pt-2.5 dark:border-white/10 sm:grid-cols-2 xl:grid-cols-4">
-              <div className="min-w-0">
+            <div className="mt-2.5 flex items-start justify-between gap-3 border-t border-white/30 pt-2.5 dark:border-white/10">
+              <div className="min-w-0" />
+              <div className="ml-auto rounded-lg border border-white/30 bg-white/35 px-2.5 py-1.5 text-right shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/10">
                 <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Admitido em</div>
                 <div className="text-xs font-semibold text-foreground">{formatDateTime(record.admission_date)}</div>
-              </div>
-              <div className="min-w-0">
-                <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Alta prevista</div>
-                <div className="text-xs font-semibold text-foreground">{formatDateTime(record.expected_discharge_date)}</div>
-              </div>
-              <div className="min-w-0">
-                <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Observação estimada</div>
-                <div className="text-xs font-semibold text-foreground">
-                  {record.estimated_observation_hours ? `${record.estimated_observation_hours}h` : "—"}
-                </div>
-              </div>
-              <div className="min-w-0">
-                <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Alta efetiva</div>
-                <div className="text-xs font-semibold text-foreground">{formatDateTime(record.discharged_at)}</div>
               </div>
             </div>
           ) : null}
@@ -929,13 +902,7 @@ export default function NursingWardAdmissionDetailPage() {
             </section>
 
             <section className="lg:col-span-2">
-              <div className="mb-1.5 flex flex-wrap items-center justify-between gap-2">
-                <div>
-                  <h2 className="text-xs font-semibold text-foreground">Informação clínica relacionada</h2>
-                  <p className="text-[11px] text-muted-foreground">
-                    Procedimentos, cirurgias, cardex, exames, resultados e demais registos de saúde deste paciente.
-                  </p>
-                </div>
+              <div className="mb-1.5 flex flex-wrap items-center justify-end gap-2">
                 {historyLoading ? (
                   <span className="inline-flex items-center gap-1 rounded bg-white/40 px-2 py-1 text-[10px] font-medium text-muted-foreground dark:bg-white/10">
                     <Loader2 size={11} className="animate-spin" /> A carregar
@@ -949,60 +916,76 @@ export default function NursingWardAdmissionDetailPage() {
                 </div>
               ) : null}
 
-              <div className="grid gap-2 xl:grid-cols-2">
-                <HistoryCard
-                  icon={ClipboardList}
-                  title="Procedimentos e cirurgias realizadas"
-                  count={procedureRows.length}
-                  accent="bg-sky-500"
-                >
-                  <ProcedureListing items={procedureRows} />
-                </HistoryCard>
+              <div className="space-y-2">
+                <div className="columns-1 gap-2 sm:columns-2">
+                  <div className="mb-2 inline-block w-full align-top break-inside-avoid">
+                    <HistoryCard
+                      icon={ClipboardList}
+                      title="Procedimentos e cirurgias realizadas"
+                      count={procedureRows.length}
+                      accent="bg-sky-500"
+                    >
+                      <ProcedureListing items={procedureRows} />
+                    </HistoryCard>
+                  </div>
 
-                <HistoryCard icon={Pill} title="Cardex atual" count={currentCardex.length} accent="bg-amber-500">
-                  <MiniTimeline items={cardexItems} />
-                </HistoryCard>
+                  <div className="mb-2 inline-block w-full align-top break-inside-avoid">
+                    <HistoryCard icon={Pill} title="Cardex atual" count={currentCardex.length} accent="bg-amber-500">
+                      <MiniTimeline items={cardexItems} />
+                    </HistoryCard>
+                  </div>
 
-                <HistoryCard icon={FileText} title="Cardex anteriores" count={pastCardex.length} accent="bg-violet-500">
-                  <MiniTimeline items={pastCardexItems} />
-                </HistoryCard>
+                  <div className="mb-2 inline-block w-full align-top break-inside-avoid">
+                    <HistoryCard icon={FileText} title="Cardex anteriores" count={pastCardex.length} accent="bg-violet-500">
+                      <MiniTimeline items={pastCardexItems} />
+                    </HistoryCard>
+                  </div>
 
-                <HistoryCard icon={FlaskConical} title="Exames médicos/laboratoriais e resultados" count={examItems.length} accent="bg-emerald-500">
-                  <MiniTimeline items={examItems} />
-                </HistoryCard>
+                  <div className="mb-2 inline-block w-full align-top break-inside-avoid">
+                    <HistoryCard icon={FlaskConical} title="Exames médicos" count={medicalExamItems.length} accent="bg-emerald-500">
+                      <MiniTimeline items={medicalExamItems} />
+                    </HistoryCard>
+                  </div>
 
-                <HistoryCard icon={HeartPulse} title="Consultas e internamentos" count={consultations.length + admissions.length} accent="bg-rose-500">
-                  <MiniTimeline
-                    items={[
-                      ...consultations.map((consultation) => ({
-                        title: compactText(joinValues([consultation.id_custom || consultation.custom_id || consultation.id, consultation.tipo || consultation.type]) || "Consulta", 90),
-                        date: firstValue(consultation, ["agendada_para", "scheduled_for", "created_at"]),
-                        meta: joinValues([consultation.medico_nome || consultation.doctor_name, consultation.estado || consultation.status]),
-                      })),
-                      ...admissions.map((admission) => ({
-                        title: compactText(joinValues([admission.custom_id || admission.id, admission.ward_name || admission.enfermaria_nome]) || "Internamento", 90),
-                        date: firstValue(admission, ["admission_date", "data_internamento", "created_at"]),
-                        meta: joinValues([admission.bed_number ? `Cama ${admission.bed_number}` : admission.cama_numero ? `Cama ${admission.cama_numero}` : "", admission.active || admission.ativo ? "Ativo" : "Encerrado"]),
-                      })),
-                    ]}
-                  />
-                </HistoryCard>
+                  <div className="mb-2 inline-block w-full align-top break-inside-avoid">
+                    <HistoryCard icon={FlaskConical} title="Exames laboratoriais" count={labExamItems.length} accent="bg-emerald-500">
+                      <MiniTimeline items={labExamItems} />
+                    </HistoryCard>
+                  </div>
 
-                <div className="xl:col-span-2">
-                  <HistoryCard icon={FileText} title="Farmácia e registos administrativos de saúde" count={pharmacySales.length + financialRecords.length} accent="bg-slate-500">
+                  <div className="mb-2 inline-block w-full align-top break-inside-avoid">
+                    <HistoryCard icon={HeartPulse} title="Consultas" count={consultations.length} accent="bg-rose-500">
+                      <MiniTimeline
+                        items={consultations.map((consultation) => ({
+                          title: compactText(joinValues([consultation.id_custom || consultation.custom_id || consultation.id, consultation.tipo || consultation.type]) || "Consulta", 90),
+                          date: firstValue(consultation, ["agendada_para", "scheduled_for", "created_at"]),
+                          meta: joinValues([consultation.medico_nome || consultation.doctor_name, consultation.estado || consultation.status]),
+                        }))}
+                      />
+                    </HistoryCard>
+                  </div>
+
+                  <div className="mb-2 inline-block w-full align-top break-inside-avoid">
+                    <HistoryCard icon={Building2} title="Internamentos" count={admissions.length} accent="bg-rose-500">
+                      <MiniTimeline
+                        items={admissions.map((admission) => ({
+                          title: compactText(joinValues([admission.custom_id || admission.id, admission.ward_name || admission.enfermaria_nome]) || "Internamento", 90),
+                          date: firstValue(admission, ["admission_date", "data_internamento", "created_at"]),
+                          meta: joinValues([admission.bed_number ? `Cama ${admission.bed_number}` : admission.cama_numero ? `Cama ${admission.cama_numero}` : "", admission.active || admission.ativo ? "Ativo" : "Encerrado"]),
+                        }))}
+                      />
+                    </HistoryCard>
+                  </div>
+                </div>
+
+                <div className="w-full break-inside-avoid">
+                  <HistoryCard icon={FileText} title="Farmácia" count={pharmacySales.length} accent="bg-slate-500">
                     <MiniTimeline
-                      items={[
-                        ...pharmacySales.map((sale) => ({
-                          title: compactText(joinValues([sale.custom_id || sale.id, "Farmácia"]) || "Dispensa de farmácia", 90),
-                          date: firstValue(sale, ["sold_at", "created_at"]),
-                          meta: joinValues([sale.status, sale.total ? `Total ${sale.total}` : ""]),
-                        })),
-                        ...financialRecords.map((item) => ({
-                          title: compactText(joinValues([item.custom_id || item.id_custom || item.id, item.origem || item.origin || item.status]) || "Registo administrativo", 90),
-                          date: firstValue(item, ["paid_at", "issued_at", "created_at"]),
-                          meta: joinValues([item.status, item.total ? `Total ${item.total}` : item.amount ? `Valor ${item.amount}` : ""]),
-                        })),
-                      ]}
+                      items={pharmacySales.map((sale) => ({
+                        title: compactText(joinValues([sale.custom_id || sale.id, "Farmácia"]) || "Dispensa de farmácia", 90),
+                        date: firstValue(sale, ["sold_at", "created_at"]),
+                        meta: joinValues([sale.status, sale.total ? `Total ${sale.total}` : ""]),
+                      }))}
                     />
                   </HistoryCard>
                 </div>
