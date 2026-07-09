@@ -400,17 +400,15 @@ export default function LabOrderDetailPage() {
                         <table className="w-full table-fixed text-[11px]">
                           <colgroup>
                             <col className="w-[18%]" />
-                            <col className="w-[34%]" />
+                            <col className="w-[42%]" />
                             <col className="w-[20%]" />
-                            <col className="w-[14%]" />
-                            <col className="w-[32%]" />
+                            <col className="w-[20%]" />
                           </colgroup>
                           <thead>
                             <tr className="border-b border-[var(--border)] bg-[var(--gray-50)]/60 dark:bg-white/[0.03]">
                               <th className="px-2 py-1 text-left text-[9px] font-semibold uppercase tracking-wide text-[var(--gray-500)]">Código</th>
                               <th className="px-2 py-1 text-left text-[9px] font-semibold uppercase tracking-wide text-[var(--gray-500)]">Análise</th>
                               <th className="px-2 py-1 text-left text-[9px] font-semibold uppercase tracking-wide text-[var(--gray-500)]">Estado</th>
-                              <th className="px-2 py-1 text-right text-[9px] font-semibold uppercase tracking-wide text-[var(--gray-500)]">Preço</th>
                               <th className="px-2 py-1 text-right text-[9px] font-semibold uppercase tracking-wide text-[var(--gray-500)]">Ação</th>
                             </tr>
                           </thead>
@@ -432,9 +430,6 @@ export default function LabOrderDetailPage() {
                                       <span className="truncate text-[var(--gray-500)]">{item.sample_status_display || item.status || item.sample_status || "—"}</span>
                                     </span>
                                   </td>
-                                  <td className="px-2 py-1 text-right text-[var(--gray-500)]">
-                                    {item.price ? `${Number(item.price).toFixed(2)} MT` : "—"}
-                                  </td>
                                   <td className="px-2 py-1 text-right">
                                     <button
                                       type="button"
@@ -450,17 +445,6 @@ export default function LabOrderDetailPage() {
                               )
                             })}
                           </tbody>
-                          {/* total */}
-                          {items.some(i => i.price) && (
-                            <tfoot>
-                              <tr className="border-t border-[var(--border)] bg-[var(--gray-50)]/60 dark:bg-white/[0.03]">
-                                <td colSpan={4} className="px-2 py-1 text-right text-[9px] font-semibold uppercase tracking-wide text-[var(--gray-500)]">Subtotal</td>
-                                <td className="px-2 py-1 text-right text-[11px] font-bold text-foreground">
-                                  {items.reduce((sum, i) => sum + Number(i.price || 0), 0).toFixed(2)} MT
-                                </td>
-                              </tr>
-                            </tfoot>
-                          )}
                         </table>
                       </div>
                     </div>
