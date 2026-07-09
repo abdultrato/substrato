@@ -60,9 +60,18 @@ type WardReferralRow = {
 
 type AdmissionRow = {
   id: number;
+  ward?: number | null;
+  bed?: number | null;
   patient?: number | null;
   active?: boolean | null;
+  admission_date?: string | null;
   discharged_at?: string | null;
+};
+
+type BedRow = {
+  id: number;
+  ward?: number | null;
+  active?: boolean | null;
 };
 
 const SURGERY_DONE_STATUSES = new Set([
@@ -130,79 +139,34 @@ function occupancyLabel(available: number, total: number): string {
   return `${occupied}/${total} ocupadas`;
 }
 
-async function fetchWardBases() {
-  try {
-    const res = await apiFetchList<WardRow>("/nursing/ward/", {
-      page: 1,
-      pageSize: 200, // Fetch all to minimize requests
-      clientPaginate: true,
-      clientCache: false,
-    });
-    return res.items || [];
-  } catch (error) {
-    console.error("Error fetching wards:", error);
-    return [];
-  }
+function isOpenAdmission(admission: AdmissionRow): boolean {
+  return (admission.active ?? false) && !admission.discharged_at;
 }
 
-async function fetchBedSummaryForWard(wardId: number): Promise<BedSummary> {
-  try {
-    // We'll fetch bed counts for a specific ward
-    const res = await apiFetchList<{
-      id: number;
-      ward_id: number;
-      active: boolean;
-    }>(`/nursing/ward_bed/`, {
-      page: 1,
-      pageSize: 200,
-      query: {
-        ward_id: wardId.toString(),
-      },
-      clientPaginate: true,
-      clientCache: false,
-    });
+function buildBedSummary(wardId: number, beds: BedRow[], admissions: AdmissionRow[]): BedSummary {
+  const wardBeds = beds.filter((bed) => bed.ward === wardId);
+  const activeWardBeds = wardBeds.filter((bed) => bed.active ?? false);
+  const activeBedIds = new Set(activeWardBeds.map((bed) => bed.id));
+  const occupiedBedIds = new Set(
+    admissions
+      .filter((admission) => admission.ward === wardId && isOpenAdmission(admission) && admission.bed)
+      .map((admission) => Number(admission.bed))
+      .filter((bedId) => activeBedIds.has(bedId))
+  );
 
-    const beds = res.items || [];
-    const total_beds = beds.length;
-    const active_beds = beds.filter(b => b.active).length;
-
-    return {
-      total_beds,
-      available_beds: active_beds, // Active beds are available for use
-      occupied_beds: total_beds - active_beds
-    };
-  } catch (error) {
-    console.error(`Error fetching bed summary for ward ${wardId}:`, error);
-    return {
-      total_beds: 0,
-      available_beds: 0,
-      occupied_beds: 0
-    };
-  }
+  return {
+    total_beds: activeWardBeds.length,
+    available_beds: Math.max(activeWardBeds.length - occupiedBedIds.size, 0),
+    occupied_beds: occupiedBedIds.size,
+  };
 }
 
-async function fetchRecentAdmissionsForWard(wardId: number): Promise<number> {
-  try {
-    // Get count of recent admissions (last 30 days) for this ward
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-
-    const res = await apiFetchList<{ id: number }>(`/nursing/ward_admission/`, {
-      page: 1,
-      pageSize: 100, // We just need a count, but limit for performance
-      query: {
-        ward__id: wardId.toString(),
-        admission_date__gte: thirtyDaysAgo.toISOString().split('T')[0],
-      },
-      clientPaginate: true,
-      clientCache: false,
-    });
-
-    return res.items?.length || 0;
-  } catch (error) {
-    console.error(`Error fetching recent admissions for ward ${wardId}:`, error);
-    return 0;
-  }
+function countRecentAdmissions(wardId: number, admissions: AdmissionRow[], since: Date): number {
+  return admissions.filter((admission) => {
+    if (admission.ward !== wardId || !admission.admission_date) return false;
+    const admittedAt = new Date(admission.admission_date);
+    return !Number.isNaN(admittedAt.getTime()) && admittedAt >= since;
+  }).length;
 }
 
 export default function NursingWardPage() {
@@ -246,7 +210,7 @@ export default function NursingWardPage() {
           query.active = statusFilter === "true";
         }
 
-        const [res, surgeryReferrals, admissions] = await Promise.all([
+        const [res, surgeryReferrals, admissions, beds] = await Promise.all([
           apiFetchList<WardRow>("/nursing/ward/", {
             page: 1,
             pageSize: 100, // Reasonable limit for wards
@@ -259,7 +223,12 @@ export default function NursingWardPage() {
             maxPages: 20,
             clientCache: safeRefreshToken === 0,
           }),
-          apiFetchAll<AdmissionRow>("/nursing/ward_admission/?active=true", {
+          apiFetchAll<AdmissionRow>("/nursing/ward_admission/", {
+            pageSize: 100,
+            maxPages: 20,
+            clientCache: false,
+          }),
+          apiFetchAll<BedRow>("/nursing/ward_bed/", {
             pageSize: 100,
             maxPages: 20,
             clientCache: false,
@@ -293,61 +262,17 @@ export default function NursingWardPage() {
 
         if (!mounted) return;
 
-        // Fetch enhanced stats for each ward
-        // We'll do this in batches to avoid overwhelming the API
-        const wardsWithStatsPromises = fetchedWards.map(async (ward) => {
-          // Fetch basic stats that we can get quickly
-          const [bedSummary, recentAdmissions] = await Promise.all([
-            fetchBedSummaryForWard(ward.id),
-            fetchRecentAdmissionsForWard(ward.id),
-          ]);
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
+        const wardsWithStats = fetchedWards.map((ward) => {
           return {
             ...ward,
-            bed_summary: bedSummary,
-            recent_admissions_count: recentAdmissions,
+            bed_summary: buildBedSummary(ward.id, beds, admissions),
+            recent_admissions_count: countRecentAdmissions(ward.id, admissions, thirtyDaysAgo),
           };
         });
-
-        const wardsWithStats = await Promise.all(
-          wardsWithStatsPromises.slice(0, 10) // Limit to first 10 for initial load to avoid too many requests
-        );
-
-        // For remaining wards, we'll load basic info first and enhance later
-        const remainingWards = fetchedWards.slice(10).map(ward => ({
-          ...ward,
-          bed_summary: undefined,
-          recent_admissions_count: 0
-        }));
-
-        setWardsWithStats([...wardsWithStats, ...remainingWards]);
-
-        // Load remaining wards' stats in background
-        if (mounted && fetchedWards.length > 10) {
-          const remainingPromises = fetchedWards.slice(10).map(async (ward) => {
-            const [bedSummary, recentAdmissions] = await Promise.all([
-              fetchBedSummaryForWard(ward.id),
-              fetchRecentAdmissionsForWard(ward.id),
-            ]);
-
-            return {
-              ...ward,
-              bed_summary: bedSummary,
-              recent_admissions_count: recentAdmissions,
-            };
-          });
-
-          const enhancedRemaining = await Promise.all(remainingPromises);
-          // Update state with enhanced data
-          setWardsWithStats(prev => {
-            const updated = [...prev];
-            // Replace the placeholder entries with enhanced ones
-            enhancedRemaining.forEach((enhanced, index) => {
-              updated[10 + index] = enhanced;
-            });
-            return updated;
-          });
-        }
+        setWardsWithStats(wardsWithStats);
       } catch (e: any) {
         setError(e?.message || "Erro ao carregar enfermarias.");
       } finally {
