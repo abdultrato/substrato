@@ -191,7 +191,7 @@ export default function LabReceptionPage() {
     setLoading(true)
     setError(null)
     try {
-      const params = new URLSearchParams({ type: "LAB", status: "pendente" })
+      const params = new URLSearchParams({ type: "LAB", fase: "rececao_amostras" })
       if (query) params.set("search", query)
       const { items } = await apiFetchList<LabRequest>(
         `/clinical/labrequest/?${params}`,

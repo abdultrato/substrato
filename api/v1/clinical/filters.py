@@ -258,7 +258,7 @@ class LabRequestFilter(SafeFilterSet):
             )
         if fase == "pedidos":
             return (
-                queryset.filter(status=ResultState.PENDING, collected_at__isnull=False)
+                queryset.filter(status=ResultState.PENDING)
                 .exclude(items__deleted=False, items__sample_status__in=[awaiting, collected, rejected])
                 .filter(items__deleted=False, items__exam__isnull=False)
                 .distinct()
