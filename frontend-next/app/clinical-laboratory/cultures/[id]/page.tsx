@@ -75,6 +75,16 @@ type Culture = {
 const inputClass = "h-8 w-full rounded-lg border border-white/30 bg-white/35 px-2.5 text-xs text-foreground shadow-sm outline-none backdrop-blur-sm placeholder:text-muted-foreground focus:border-teal-400 focus:ring-2 focus:ring-teal-500/20 dark:border-white/10 dark:bg-white/[0.06]";
 const textareaClass = "min-h-20 w-full rounded-lg border border-white/30 bg-white/35 px-2.5 py-2 text-xs text-foreground shadow-sm outline-none backdrop-blur-sm placeholder:text-muted-foreground focus:border-teal-400 focus:ring-2 focus:ring-teal-500/20 dark:border-white/10 dark:bg-white/[0.06]";
 
+function makeBiochemicalSession(): BiochemicalTest {
+  return {
+    name: "",
+    duration_hours: 24,
+    started_at: "",
+    expected_end_at: "",
+    result: "",
+    status: "AGUARDA_RESULTADO",
+  };
+}
 
 function fmtDate(value?: string | null) {
   if (!value) return "Sem data";
@@ -203,8 +213,16 @@ export default function CultureDetailPage() {
   }
 
   function addBiochemical() {
-    setBiochemical((rows) => [...rows, { name: "", duration_hours: 24, started_at: "", expected_end_at: "", result: "", status: "AGUARDA_RESULTADO" }]);
+    setBiochemical((rows) => [...rows, makeBiochemicalSession()]);
   }
+
+  const positiveWorkflowActive = positive || culture?.status === "POSITIVA" || Boolean(culture?.growth_observations?.some((obs) => obs.positive));
+
+  useEffect(() => {
+    if (positiveWorkflowActive && biochemical.length === 0) {
+      setBiochemical([makeBiochemicalSession()]);
+    }
+  }, [positiveWorkflowActive, biochemical.length]);
 
   if (loading) {
     return <AppLayout requiredGroups={requiredGroupsForResourceGroup("clinical_laboratory")}><div className="flex min-h-64 items-center justify-center gap-2 text-sm text-muted-foreground"><Loader2 size={16} className="animate-spin" /> Carregando cultura...</div></AppLayout>;
@@ -214,7 +232,7 @@ export default function CultureDetailPage() {
     return <AppLayout requiredGroups={requiredGroupsForResourceGroup("clinical_laboratory")}><div className="rounded-xl border border-red-200/60 bg-red-50/50 p-4 text-sm text-red-800">{error || "Cultura não encontrada."}</div></AppLayout>;
   }
 
-  const isPositiveFlow = culture.status === "POSITIVA" || culture.growth_observations?.some((obs) => obs.positive);
+  const isPositiveFlow = positiveWorkflowActive;
   const isIncubating = culture.status === "INCUBACAO" || culture.status === "REINCUBACAO";
 
   return (
@@ -383,18 +401,29 @@ export default function CultureDetailPage() {
                 <button onClick={() => submitAction("salvar-gram", gram)} className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 px-3 text-xs font-semibold text-white shadow-md shadow-violet-500/20"><Save size={14} /> Guardar Gram</button>
 
                 <div className="space-y-2">
+                  <div className="flex items-center justify-between gap-2 border-t border-white/25 pt-2 dark:border-white/10">
+                    <div>
+                      <h3 className="text-xs font-semibold text-foreground">Provas bioquímicas de identificação de microrganismos</h3>
+                      <p className="text-[11px] text-muted-foreground">Registe uma sessão inicial e adicione outras provas quando necessário.</p>
+                    </div>
+                    <button onClick={addBiochemical} className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border border-white/40 bg-white/35 px-2.5 text-xs font-medium text-foreground shadow-sm backdrop-blur-sm"><Plus size={14} /> Sessão</button>
+                  </div>
                   {biochemical.map((test, index) => (
-                    <div key={index} className="grid gap-2 rounded-lg border border-white/25 bg-white/20 p-2 backdrop-blur-sm md:grid-cols-[1fr_110px_1fr_1fr_32px] dark:border-white/10 dark:bg-white/[0.04]">
-                      <input value={test.name} onChange={(event) => setBiochemical((rows) => rows.map((row, i) => i === index ? { ...row, name: event.target.value } : row))} placeholder="Prova bioquímica" className={inputClass} />
-                      <input value={test.duration_hours} onChange={(event) => setBiochemical((rows) => rows.map((row, i) => i === index ? { ...row, duration_hours: Number(event.target.value) || 0 } : row))} placeholder="Horas" className={inputClass} />
-                      <input value={test.result} onChange={(event) => setBiochemical((rows) => rows.map((row, i) => i === index ? { ...row, result: event.target.value } : row))} placeholder="Resultado" className={inputClass} />
-                      <span className="flex h-8 items-center rounded-lg border border-white/25 bg-white/20 px-2 text-xs text-muted-foreground">{test.expected_end_at ? fmtDate(test.expected_end_at) : "Sem leitura"}</span>
-                      <button type="button" onClick={() => setBiochemical((rows) => rows.filter((_, i) => i !== index))} className="inline-flex h-8 items-center justify-center rounded-lg border border-white/30 bg-white/25 text-muted-foreground hover:text-red-600"><Trash2 size={14} /></button>
+                    <div key={index} className="rounded-lg border border-white/25 bg-white/20 p-2 backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]">
+                      <div className="mb-2 flex items-center justify-between gap-2">
+                        <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Sessão {index + 1}</span>
+                        <button type="button" onClick={() => setBiochemical((rows) => rows.length > 1 ? rows.filter((_, i) => i !== index) : rows)} className="inline-flex h-7 w-7 items-center justify-center rounded-lg border border-white/30 bg-white/25 text-muted-foreground hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-40" disabled={biochemical.length <= 1} aria-label="Remover sessão de prova bioquímica"><Trash2 size={13} /></button>
+                      </div>
+                      <div className="grid gap-2 md:grid-cols-[1fr_120px_1fr_1fr]">
+                        <input value={test.name} onChange={(event) => setBiochemical((rows) => rows.map((row, i) => i === index ? { ...row, name: event.target.value } : row))} placeholder="Tipo de prova" className={inputClass} />
+                        <input type="number" min="0" value={test.duration_hours} onChange={(event) => setBiochemical((rows) => rows.map((row, i) => i === index ? { ...row, duration_hours: Number(event.target.value) || 0 } : row))} placeholder="Duração (h)" className={inputClass} />
+                        <input value={test.result} onChange={(event) => setBiochemical((rows) => rows.map((row, i) => i === index ? { ...row, result: event.target.value } : row))} placeholder="Resultado" className={inputClass} />
+                        <span className="flex h-8 items-center rounded-lg border border-white/25 bg-white/20 px-2 text-xs text-muted-foreground">{test.expected_end_at ? fmtDate(test.expected_end_at) : "Leitura após guardar"}</span>
+                      </div>
                     </div>
                   ))}
                 </div>
                 <div className="flex gap-2">
-                  <button onClick={addBiochemical} className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-white/40 bg-white/35 px-2.5 text-xs font-medium text-foreground shadow-sm backdrop-blur-sm"><Plus size={14} /> Prova</button>
                   <button onClick={() => submitAction("salvar-provas-bioquimicas", { tests: biochemical })} className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 px-3 text-xs font-semibold text-white shadow-md shadow-violet-500/20"><Save size={14} /> Guardar provas</button>
                   <button onClick={() => submitAction("finalizar", { positive: true })} className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-600 px-3 text-xs font-semibold text-white shadow-md shadow-emerald-500/20"><CheckCircle2 size={14} /> Finalizar positiva</button>
                 </div>
