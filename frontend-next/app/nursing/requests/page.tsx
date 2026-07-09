@@ -362,7 +362,7 @@ export default function NursingRequestsPage() {
   return (
     <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.ENFERMAGEM]}>
       <div className="space-y-3 [font-size:70%]">
-        <div className="relative flex flex-wrap items-center justify-between gap-3 overflow-hidden rounded-xl border border-white/20 bg-gradient-to-r from-amber-500/15 via-white/30 to-white/30 px-4 py-3 shadow-sm backdrop-blur-sm dark:border-white/10 dark:from-amber-500/10 dark:via-white/5 dark:to-white/5">
+        <div className="relative flex flex-wrap items-start justify-between gap-3 overflow-hidden rounded-xl border border-white/20 bg-gradient-to-r from-amber-500/15 via-white/30 to-white/30 px-4 py-3 shadow-sm backdrop-blur-sm dark:border-white/10 dark:from-amber-500/10 dark:via-white/5 dark:to-white/5">
           <div className="flex min-w-0 items-center gap-3">
             <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400">
               <ClipboardList size={22} strokeWidth={2} />
@@ -373,30 +373,30 @@ export default function NursingRequestsPage() {
             </div>
           </div>
 
-          <div className="flex min-w-0 flex-col items-end gap-2">
-            <div className="flex flex-wrap justify-end gap-2">
-              {REQUEST_TYPE_OPTIONS.map((option) => {
-                const Icon = option.icon
-                const active = requestType === option.value
-                return (
-                  <button
-                    key={option.value}
-                    type="button"
-                    aria-pressed={active}
-                    onClick={() => setRequestType(option.value)}
-                    className={`inline-flex h-8 shrink-0 items-center gap-2 rounded-lg border px-3 text-[11px] font-semibold transition ${
-                      active
-                        ? "border-amber-400 bg-amber-500 text-white shadow-sm"
-                        : "border-white/30 bg-white/40 text-muted-foreground shadow-sm backdrop-blur-sm hover:border-amber-400/60 hover:text-foreground dark:border-white/10 dark:bg-white/10"
-                    }`}
-                  >
-                    <Icon size={14} strokeWidth={2} />
-                    {option.label}
-                  </button>
-                )
-              })}
-            </div>
+          <div className="absolute right-4 top-3 z-10 flex flex-wrap justify-end gap-2">
+            {REQUEST_TYPE_OPTIONS.map((option) => {
+              const Icon = option.icon
+              const active = requestType === option.value
+              return (
+                <button
+                  key={option.value}
+                  type="button"
+                  aria-pressed={active}
+                  onClick={() => setRequestType(option.value)}
+                  className={`inline-flex h-8 shrink-0 items-center gap-2 rounded-lg border px-3 text-[11px] font-semibold transition ${
+                    active
+                      ? "border-amber-400 bg-amber-500 text-white shadow-sm"
+                      : "border-white/30 bg-white/40 text-muted-foreground shadow-sm backdrop-blur-sm hover:border-amber-400/60 hover:text-foreground dark:border-white/10 dark:bg-white/10"
+                  }`}
+                >
+                  <Icon size={14} strokeWidth={2} />
+                  {option.label}
+                </button>
+              )
+            })}
+          </div>
 
+          <div className="flex min-w-0 flex-col items-end gap-2 pt-10">
             <div className="flex max-w-full flex-nowrap items-center gap-2 overflow-x-auto">
               {BUCKETS.map((bucket) => {
                 const Icon = bucket.icon
