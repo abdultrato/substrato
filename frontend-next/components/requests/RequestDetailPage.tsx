@@ -236,7 +236,13 @@ export default function RequestDetailPage() {
         clientCache: false,
       })
       await refetch()
-      setActionNotice({ kind: "ok", text: t("Requisição encaminhada para colheita.", "Request forwarded for collection.") })
+      setActionNotice({
+        kind: "ok",
+        text: t(
+          "Requisição encaminhada para sala de procedimentos e examinacao.",
+          "Request forwarded to the procedure and examination room."
+        ),
+      })
     } catch (err: any) {
       setActionNotice({
         kind: "error",
