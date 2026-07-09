@@ -254,6 +254,7 @@ export default function CultureDetailPage() {
                   const custom = isCustomMedium(plate);
                   const plateEnd = plate.incubation_expected_end_at ? new Date(plate.incubation_expected_end_at).getTime() : null;
                   const plateDue = plateEnd !== null && now >= plateEnd;
+                  const plateReady = plateDue || incubationReady;
                   const plateRemaining = plateEnd !== null ? plateEnd - now : 0;
                   return (
                     <div key={plate.id} className="space-y-2 rounded-lg border border-white/25 bg-white/20 p-2 backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]">
@@ -323,7 +324,7 @@ export default function CultureDetailPage() {
                         </div>
                       </div>
 
-                      {(plateDue || plate.resolved || (plate.outcome && plate.outcome !== "")) && (
+                      {(plateReady || plate.resolved || (plate.outcome && plate.outcome !== "")) && (
                         <CulturePlateOutcome plate={plate} busy={saving} callbacks={plateCallbacks(plate)} />
                       )}
                     </div>
