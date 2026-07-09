@@ -10,6 +10,7 @@ import {
   FlaskConical,
   Hourglass,
   Search,
+  Stethoscope,
 } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
@@ -38,6 +39,8 @@ type RequestRow = {
   validated_at?: string
   items?: RequestItem[]
 }
+
+type RequestTypeFilter = "LAB" | "MED"
 
 type BucketKey =
   | "awaiting_reception_validation"
@@ -92,6 +95,15 @@ const BUCKETS: BucketDefinition[] = [
     empty: "Sem requisições totalmente coletadas.",
     tone: "border-emerald-200 bg-emerald-50/60 text-emerald-800",
   },
+]
+
+const REQUEST_TYPE_OPTIONS: Array<{
+  value: RequestTypeFilter
+  label: string
+  icon: typeof FlaskConical
+}> = [
+  { value: "MED", label: "Exames médicos", icon: Stethoscope },
+  { value: "LAB", label: "Exames laboratoriais", icon: FlaskConical },
 ]
 
 function normalizeText(value: string | undefined | null): string {
@@ -290,6 +302,7 @@ export default function NursingRequestsPage() {
   const [loading, setLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [rows, setRows] = useState<RequestRow[]>([])
+  const [requestType, setRequestType] = useState<RequestTypeFilter>("LAB")
   const debouncedSearch = useDebounce(search, 250)
 
   useEffect(() => {
@@ -300,7 +313,7 @@ export default function NursingRequestsPage() {
         setLoading(true)
         setErrorMessage(null)
         const query = new URLSearchParams()
-        query.set("type", "LAB")
+        query.set("type", requestType)
         if (debouncedSearch.trim()) {
           query.set("search", debouncedSearch.trim())
         }
@@ -326,7 +339,7 @@ export default function NursingRequestsPage() {
     return () => {
       mounted = false
     }
-  }, [debouncedSearch, safeRefreshToken])
+  }, [debouncedSearch, requestType, safeRefreshToken])
 
   const grouped = useMemo(() => {
     const base: Record<BucketKey, RequestRow[]> = {
@@ -360,34 +373,59 @@ export default function NursingRequestsPage() {
             </div>
           </div>
 
-          <div className="flex flex-nowrap items-center gap-2 overflow-x-auto">
-            {BUCKETS.map((bucket) => {
-              const Icon = bucket.icon
-              return (
-                <span
-                  key={`stat-${bucket.key}`}
-                  className="flex shrink-0 items-center gap-2 rounded-lg border border-white/30 bg-white/40 px-3 py-1.5 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/10"
-                >
-                  <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md ${bucket.chip}`}>
+          <div className="flex min-w-0 flex-col items-end gap-2">
+            <div className="flex flex-wrap justify-end gap-2">
+              {REQUEST_TYPE_OPTIONS.map((option) => {
+                const Icon = option.icon
+                const active = requestType === option.value
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    aria-pressed={active}
+                    onClick={() => setRequestType(option.value)}
+                    className={`inline-flex h-8 shrink-0 items-center gap-2 rounded-lg border px-3 text-[11px] font-semibold transition ${
+                      active
+                        ? "border-amber-400 bg-amber-500 text-white shadow-sm"
+                        : "border-white/30 bg-white/40 text-muted-foreground shadow-sm backdrop-blur-sm hover:border-amber-400/60 hover:text-foreground dark:border-white/10 dark:bg-white/10"
+                    }`}
+                  >
                     <Icon size={14} strokeWidth={2} />
+                    {option.label}
+                  </button>
+                )
+              })}
+            </div>
+
+            <div className="flex max-w-full flex-nowrap items-center gap-2 overflow-x-auto">
+              {BUCKETS.map((bucket) => {
+                const Icon = bucket.icon
+                return (
+                  <span
+                    key={`stat-${bucket.key}`}
+                    className="flex shrink-0 items-center gap-2 rounded-lg border border-white/30 bg-white/40 px-3 py-1.5 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/10"
+                  >
+                    <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md ${bucket.chip}`}>
+                      <Icon size={14} strokeWidth={2} />
+                    </span>
+                    <span className="whitespace-nowrap text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                      {bucket.short}
+                    </span>
+                    <span className="font-display text-lg font-bold leading-none text-foreground tabular-nums">
+                      {loading ? "..." : grouped[bucket.key].length}
+                    </span>
                   </span>
-                  <span className="whitespace-nowrap text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                    {bucket.short}
-                  </span>
-                  <span className="font-display text-lg font-bold leading-none text-foreground tabular-nums">
-                    {loading ? "..." : grouped[bucket.key].length}
-                  </span>
-                </span>
-              )
-            })}
-            <div className="relative w-44 shrink-0">
-              <Search size={13} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
-              <input
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                placeholder="Pesquisar…"
-                className="w-full rounded-lg border border-white/30 bg-white/40 py-1.5 pl-8 pr-3 text-xs text-foreground shadow-sm backdrop-blur-sm transition placeholder:text-muted-foreground hover:border-amber-400/60 focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/25 dark:border-white/10 dark:bg-white/10"
-              />
+                )
+              })}
+              <div className="relative w-44 shrink-0">
+                <Search size={13} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                <input
+                  value={search}
+                  onChange={(event) => setSearch(event.target.value)}
+                  placeholder="Pesquisar…"
+                  className="w-full rounded-lg border border-white/30 bg-white/40 py-1.5 pl-8 pr-3 text-xs text-foreground shadow-sm backdrop-blur-sm transition placeholder:text-muted-foreground hover:border-amber-400/60 focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/25 dark:border-white/10 dark:bg-white/10"
+                />
+              </div>
             </div>
           </div>
         </div>
