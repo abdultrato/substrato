@@ -273,3 +273,8 @@ substrato_os_outbox.sqlite3
 cv-lab*.pdf
 Logistic-Certificate.pdf
 graducao.png
+
+# Backups locais da base de dados e scripts de teste avulsos
+db.sqlite3.bak-*
+*.bak-*
+ss_search_test.js
