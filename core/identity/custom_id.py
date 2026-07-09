@@ -28,9 +28,23 @@ def format_custom_id(prefix: str, period: str, sequence_number: int) -> str:
     return f"{normalized_prefix}-{period}/{sequence_number:0{CUSTOM_ID_SEQUENCE_DIGITS}d}"
 
 
+def format_annual_daily_custom_id(prefix: str, period: str, sequence_number: int) -> str:
+    normalized_prefix = normalize_custom_id_prefix(prefix)
+    return f"{normalized_prefix}/{period}{sequence_number:0{CUSTOM_ID_SEQUENCE_DIGITS}d}"
+
+
 def parse_custom_id_sequence(value: str, *, prefix: str, period: str) -> int | None:
     normalized_prefix = re.escape(normalize_custom_id_prefix(prefix))
     pattern = rf"^{normalized_prefix}-{re.escape(period)}/(\d{{{CUSTOM_ID_SEQUENCE_DIGITS}}})$"
+    match = re.match(pattern, str(value or ""))
+    if not match:
+        return None
+    return int(match.group(1))
+
+
+def parse_annual_daily_custom_id_sequence(value: str, *, prefix: str, year: str) -> int | None:
+    normalized_prefix = re.escape(normalize_custom_id_prefix(prefix))
+    pattern = rf"^{normalized_prefix}/{re.escape(year)}\d{{4}}(\d{{{CUSTOM_ID_SEQUENCE_DIGITS}}})$"
     match = re.match(pattern, str(value or ""))
     if not match:
         return None
@@ -75,11 +89,47 @@ def generate_custom_id(prefix: str, model, *, period: str | None = None) -> str:
         return format_custom_id(normalized_prefix, current_period, next_sequence)
 
 
+def generate_annual_daily_custom_id(prefix: str, model, *, period: str | None = None) -> str:
+    """
+    Generate the next annual request code using PREFIX/AAAAMMDD00000001.
+
+    The sequence is scoped by model, prefix and year. The date stays in the
+    visible code, but the numeric suffix does not reset until the year changes.
+    """
+
+    normalized_prefix = normalize_custom_id_prefix(prefix)
+    current_period = period or custom_id_period()
+    year = current_period[:4]
+    code_prefix = f"{normalized_prefix}/{year}"
+    manager = _identifier_manager(model)
+
+    with transaction.atomic():
+        existing_codes = (
+            manager.select_for_update(skip_locked=True)
+            .filter(custom_id__startswith=code_prefix)
+            .values_list("custom_id", flat=True)
+        )
+        last_sequence = 0
+        for code in existing_codes:
+            sequence = parse_annual_daily_custom_id_sequence(
+                code,
+                prefix=normalized_prefix,
+                year=year,
+            )
+            if sequence is not None:
+                last_sequence = max(last_sequence, sequence)
+
+        return format_annual_daily_custom_id(normalized_prefix, current_period, last_sequence + 1)
+
+
 __all__ = [
     "CUSTOM_ID_SEQUENCE_DIGITS",
     "custom_id_period",
     "format_custom_id",
+    "format_annual_daily_custom_id",
+    "generate_annual_daily_custom_id",
     "generate_custom_id",
     "normalize_custom_id_prefix",
+    "parse_annual_daily_custom_id_sequence",
     "parse_custom_id_sequence",
 ]

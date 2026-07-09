@@ -3,6 +3,7 @@ from __future__ import annotations
 from django.core.exceptions import ValidationError
 from django.db import models
 
+from core.identity.custom_id import generate_annual_daily_custom_id
 from core.models.base import NoNameCoreModel
 
 
@@ -63,7 +64,13 @@ class MaterialRequisition(NoNameCoreModel):
     - Pode ser arquivada quando não é possível atender no momento
     """
 
-    prefix = "REQFAR"
+    prefix = "REQ/MAT/FAR"
+
+    def generate_identifier(self):
+        if self.custom_id:
+            return
+
+        self.custom_id = generate_annual_daily_custom_id(self.prefix, self.__class__)
 
     sector = models.CharField(
         db_column="sector",
@@ -165,4 +172,3 @@ class MaterialRequisition(NoNameCoreModel):
 
         if self.status == MaterialRequisitionStatus.FULFILLED and not self.fulfilled_at:
             raise ValidationError("Requisições aviadas devem ter data de avio.")
-

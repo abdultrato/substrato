@@ -6,6 +6,7 @@ from django.core.exceptions import FieldError, ValidationError
 from django.db import IntegrityError, models, transaction
 
 from core.constants.laboratory.clinical_status import ClinicalStatus
+from core.identity.custom_id import generate_annual_daily_custom_id
 from core.models.base import NoNameCoreModel
 from domain.clinical.result_state import ResultState
 from domain.clinical.result_state_machine import ResultStateMachine
@@ -20,6 +21,8 @@ class LabRequest(NoNameCoreModel):
     """Cabeçalho de uma solicitação de exames."""
 
     prefix = "REQ"  # Prefixo para IDs amigáveis
+    laboratory_request_prefix = "REQ/LAB/EXA"
+    medical_exam_request_prefix = "REQ/MED/EXA"
 
     class Type(models.TextChoices):
         LABORATORY = "LAB", "Laboratório"
@@ -30,6 +33,17 @@ class LabRequest(NoNameCoreModel):
         LABORATORIO = "LAB"
         MEDICO = "MED"
         EXAME_MEDICO = "MED"
+
+    def generate_identifier(self):
+        if self.custom_id:
+            return
+
+        prefix = (
+            self.medical_exam_request_prefix
+            if self.type == self.Type.MEDICAL_EXAM
+            else self.laboratory_request_prefix
+        )
+        self.custom_id = generate_annual_daily_custom_id(prefix, self.__class__)
 
     class Status:
         # Compatibilidade legada de status.
