@@ -239,6 +239,12 @@ export default function CultureDetailPage() {
   const isPositiveFlow = positiveWorkflowActive;
   const isIncubating = culture.status === "INCUBACAO" || culture.status === "REINCUBACAO";
   const biochemicalSaved = JSON.stringify(biochemical) === JSON.stringify(culture.biochemical_tests || []);
+  const gramSaved = JSON.stringify(gram) === JSON.stringify({
+    result: culture.gram_exam?.result || "",
+    morphology: culture.gram_exam?.morphology || "",
+    arrangement: culture.gram_exam?.arrangement || "",
+    notes: culture.gram_exam?.notes || "",
+  });
 
   return (
     <AppLayout requiredGroups={requiredGroupsForResourceGroup("clinical_laboratory")}>
@@ -418,7 +424,11 @@ export default function CultureDetailPage() {
                   </select>
                   <input value={gram.notes} onChange={(event) => setGram((g) => ({ ...g, notes: event.target.value }))} placeholder="Notas" className={inputClass} />
                 </div>
-                <button onClick={() => submitAction("salvar-gram", gram)} className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 px-3 text-xs font-semibold text-white shadow-md shadow-violet-500/20"><Save size={14} /> Guardar Gram</button>
+                {!gramSaved ? (
+                  <button onClick={() => submitAction("salvar-gram", gram)} className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 px-3 text-xs font-semibold text-white shadow-md shadow-violet-500/20"><Save size={14} /> Guardar Gram</button>
+                ) : (
+                  <span className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50/70 px-3 text-xs font-semibold text-emerald-700 dark:border-emerald-800/40 dark:bg-emerald-900/15 dark:text-emerald-300"><CheckCircle2 size={14} /> Gram guardado</span>
+                )}
 
                 <div className="space-y-2">
                   <div className="flex items-center justify-between gap-2 border-t border-white/25 pt-2 dark:border-white/10">
