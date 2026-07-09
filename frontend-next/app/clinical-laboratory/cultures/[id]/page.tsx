@@ -190,7 +190,7 @@ export default function CultureDetailPage() {
 
   const isIncubating = culture.status === "INCUBACAO" || culture.status === "REINCUBACAO";
   const incubationRunning = isIncubating && !due;
-  const incubationReady = isIncubating && due;
+  const incubationReady = due;
   // Depois de a incubação começar, nada na sementeira pode ser modificado até
   // ao fim do período — só o estado "Montada" permite editar/iniciar.
   const setupMode = culture.status === "MONTADA";
