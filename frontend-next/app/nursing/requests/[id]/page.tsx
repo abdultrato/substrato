@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { ArrowLeft, Droplets, Printer } from "lucide-react"
+import { ArrowLeft, Droplets, FileText, Printer } from "lucide-react"
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { useParams } from "next/navigation"
 
@@ -183,6 +183,11 @@ export default function NursingRequestDetailPage() {
     window.open(`/api/v1/clinical/labrequest/${record.id}/etiqueta/`, "_blank")
   }
 
+  function openRequestPdf() {
+    if (!record?.id) return
+    window.open(`/api/v1/clinical/labrequest/${record.id}/request-pdf/`, "_blank")
+  }
+
   return (
     <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.ENFERMAGEM]}>
       <div className="w-full space-y-2 text-[0.9em]">
@@ -210,6 +215,16 @@ export default function NursingRequestDetailPage() {
               >
                 <Droplets size={13} />
                 {busyAll ? "Registando..." : "Realizar todas as coletas"}
+              </button>
+            ) : null}
+            {record ? (
+              <button
+                type="button"
+                onClick={openRequestPdf}
+                className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-white/30 bg-white/40 px-3 text-xs font-medium text-foreground-2 shadow-sm backdrop-blur-sm transition hover:bg-white/60 hover:text-foreground dark:border-white/10 dark:bg-white/10 dark:hover:bg-white/15"
+              >
+                <FileText size={13} />
+                Imprimir requisição
               </button>
             ) : null}
             {anyCollected ? (
