@@ -16,6 +16,15 @@ export type CulturePlate = {
   incubation_hours: string;              // horas de incubação deste meio (editável antes de incubar)
   incubation_started_at?: string | null; // início da incubação desta placa (ISO)
   incubation_expected_end_at?: string | null; // hora prevista de leitura desta placa (ISO)
+  // Desfecho da leitura deste meio, decidido quando a incubação termina.
+  outcome?: "" | "positive" | "negative" | "contaminated";
+  outcome_at?: string | null;
+  resolved?: boolean;                    // meio finalizado (negativa terminada, contaminado ou positiva concluída)
+  recollection_required?: boolean;       // contaminação: devolvido à enfermagem para nova colheita
+  macroscopic?: string;                  // exame macroscópico das colónias (positiva)
+  result_text?: string;                  // resultado consolidado deste meio
+  gram?: { result?: string; morphology?: string; arrangement?: string; notes?: string };
+  biochemical?: Array<{ key: string; name: string; values: Record<string, string>; notes?: string }>;
 };
 
 // Recipientes habituais em microbiologia clínica.
@@ -146,6 +155,7 @@ export function normalizePlates(raw: any[], cultureRef: string): CulturePlate[] 
   };
   return rows.map((r) => {
     const plate = makeCulturePlate({
+      id: r?.id || undefined,
       medium: r?.medium ?? "",
       container: r?.container,
       consistency: r?.consistency,
@@ -159,6 +169,17 @@ export function normalizePlates(raw: any[], cultureRef: string): CulturePlate[] 
       code: r?.code || "",
     });
     if (!plate.code) plate.code = makePlateCode(cultureRef, nextSeq());
+    // Preserva o desfecho e os dados das colónias vindos do backend — sem isto
+    // a avaliação por meio (positiva/negativa/contaminada) perder-se-ia a cada
+    // recarregamento.
+    if (r?.outcome) plate.outcome = r.outcome;
+    if (r?.outcome_at) plate.outcome_at = r.outcome_at;
+    if (r?.resolved != null) plate.resolved = !!r.resolved;
+    if (r?.recollection_required != null) plate.recollection_required = !!r.recollection_required;
+    if (r?.macroscopic != null) plate.macroscopic = String(r.macroscopic);
+    if (r?.result_text != null) plate.result_text = String(r.result_text);
+    if (r?.gram != null) plate.gram = r.gram;
+    if (Array.isArray(r?.biochemical)) plate.biochemical = r.biochemical;
     return plate;
   });
 }

@@ -5,7 +5,6 @@ import { useParams, useRouter } from "next/navigation";
 import {
   ArrowLeft,
   Beaker,
-  CheckCircle2,
   Clock3,
   FlaskConical,
   Loader2,
@@ -13,14 +12,14 @@ import {
   Microscope,
   Plus,
   RefreshCw,
-  Save,
-  TimerReset,
   Trash2,
 } from "lucide-react";
 
 import AppLayout from "@/components/layout/AppLayout";
 import { apiFetch } from "@/lib/api";
 import { requiredGroupsForResourceGroup } from "@/lib/resourcesAccess";
+import { CulturePlateOutcome } from "@/components/clinical-laboratory/CulturePlateOutcome";
+import type { BiochemEntry } from "@/lib/cultureBiochemistry";
 import {
   CULTURE_ATMOSPHERES,
   CULTURE_CONSISTENCIES,
@@ -35,23 +34,6 @@ import {
   type CulturePlate as Plate,
 } from "@/lib/culturePlates";
 
-type Observation = {
-  observed_at: string;
-  accumulated_hours: number;
-  observation: string;
-  positive: boolean;
-};
-
-type BiochemicalTest = {
-  name: string;
-  duration_hours: number;
-  duration_minutes?: number;
-  started_at: string;
-  expected_end_at: string;
-  result: string;
-  status: string;
-};
-
 type Culture = {
   id: number;
   custom_id: string;
@@ -65,32 +47,12 @@ type Culture = {
   sample_type: string;
   culture_plates: Plate[];
   incubation_periods: any[];
-  growth_observations: Observation[];
-  gram_exam: Record<string, string>;
-  biochemical_tests: BiochemicalTest[];
   incubation_accumulated_hours: string | number;
   incubation_started_at: string | null;
   incubation_expected_end_at: string | null;
 };
 
 const inputClass = "h-8 w-full rounded-lg border border-white/30 bg-white/35 px-2.5 text-xs text-foreground shadow-sm outline-none backdrop-blur-sm placeholder:text-muted-foreground focus:border-teal-400 focus:ring-2 focus:ring-teal-500/20 dark:border-white/10 dark:bg-white/[0.06]";
-const textareaClass = "min-h-20 w-full rounded-lg border border-white/30 bg-white/35 px-2.5 py-2 text-xs text-foreground shadow-sm outline-none backdrop-blur-sm placeholder:text-muted-foreground focus:border-teal-400 focus:ring-2 focus:ring-teal-500/20 dark:border-white/10 dark:bg-white/[0.06]";
-
-const GRAM_RESULT_OPTIONS = ["Gram positivos", "Gram negativos", "Gram variáveis"];
-const GRAM_MORPHOLOGY_OPTIONS = ["Cocos", "Bacilos", "Cocobacilos", "Víbrios"];
-const GRAM_ARRANGEMENT_OPTIONS = ["Em cadeia", "Em cachos", "Em corda", "Em pares"];
-
-function makeBiochemicalSession(): BiochemicalTest {
-  return {
-    name: "",
-    duration_hours: 0.5,
-    duration_minutes: 30,
-    started_at: "",
-    expected_end_at: "",
-    result: "",
-    status: "AGUARDA_RESULTADO",
-  };
-}
 
 function fmtDate(value?: string | null) {
   if (!value) return "Sem data";
@@ -103,10 +65,6 @@ function elapsedParts(ms: number) {
   const minutes = Math.floor((total % 3600) / 60);
   const seconds = total % 60;
   return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
-}
-
-function biochemicalDurationMinutes(test: BiochemicalTest): number {
-  return Number(test.duration_minutes ?? Math.round(Number(test.duration_hours || 0) * 60)) || 0;
 }
 
 function Card({ title, icon: Icon, accent, iconTone, children }: {
@@ -136,11 +94,6 @@ export default function CultureDetailPage() {
   const id = params.id;
   const [culture, setCulture] = useState<Culture | null>(null);
   const [plates, setPlates] = useState<Plate[]>(() => normalizePlates([{}], "CUL"));
-  const [observation, setObservation] = useState("");
-  const [positive, setPositive] = useState(false);
-  const [reincubationHours, setReincubationHours] = useState("24");
-  const [gram, setGram] = useState({ result: "", morphology: "", arrangement: "", notes: "" });
-  const [biochemical, setBiochemical] = useState<BiochemicalTest[]>([]);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -153,13 +106,6 @@ export default function CultureDetailPage() {
       const data = await apiFetch<Culture>(`/clinical_laboratory/culture/${id}/`);
       setCulture(data);
       setPlates(normalizePlates(data.culture_plates as any[], data.custom_id));
-      if (data.gram_exam) setGram({
-        result: data.gram_exam.result || "",
-        morphology: data.gram_exam.morphology || "",
-        arrangement: data.gram_exam.arrangement || "",
-        notes: data.gram_exam.notes || "",
-      });
-      if (Array.isArray(data.biochemical_tests)) setBiochemical(data.biochemical_tests);
     } catch (err: any) {
       setError(err?.message || "Não foi possível carregar a cultura.");
     } finally {
@@ -197,8 +143,6 @@ export default function CultureDetailPage() {
       });
       setCulture(updated);
       setPlates(normalizePlates(updated.culture_plates as any[], updated.custom_id));
-      if (Array.isArray(updated.biochemical_tests)) setBiochemical(updated.biochemical_tests);
-      setObservation("");
     } catch (err: any) {
       setError(err?.message || "Não foi possível executar a ação.");
     } finally {
@@ -208,6 +152,20 @@ export default function CultureDetailPage() {
 
   function updatePlate(index: number, patch: Partial<Plate>) {
     setPlates((rows) => rows.map((row, i) => i === index ? { ...row, ...patch } : row));
+  }
+
+  // ── Fluxo por meio (placa) quando a incubação termina ──
+  function plateCallbacks(plate: Plate) {
+    return {
+      onEvaluate: (outcome: "positive" | "negative" | "contaminated", macroscopic: string) =>
+        submitAction("avaliar-placa", { plate_id: plate.id, outcome, macroscopic }),
+      onReincubate: (h: number) => submitAction("reincubar-placa", { plate_id: plate.id, hours: h }),
+      onSaveColony: (data: { macroscopic: string; gram: Plate["gram"]; biochemical: BiochemEntry[]; resolved?: boolean }) =>
+        submitAction("salvar-placa", { plate_id: plate.id, macroscopic: data.macroscopic, gram: data.gram, biochemical: data.biochemical, resolved: data.resolved ?? false }),
+      onFinalizeNegative: () => submitAction("salvar-placa", { plate_id: plate.id, finalize_negative: true }),
+      onReopen: () => submitAction("salvar-placa", { plate_id: plate.id, resolved: false }),
+      onResetOutcome: () => submitAction("salvar-placa", { plate_id: plate.id, reset_outcome: true }),
+    };
   }
 
   function addPlate() {
@@ -221,18 +179,6 @@ export default function CultureDetailPage() {
     });
   }
 
-  function addBiochemical() {
-    setBiochemical((rows) => [...rows, makeBiochemicalSession()]);
-  }
-
-  const positiveWorkflowActive = positive || culture?.status === "POSITIVA" || Boolean(culture?.growth_observations?.some((obs) => obs.positive));
-
-  useEffect(() => {
-    if (positiveWorkflowActive && biochemical.length === 0) {
-      setBiochemical([makeBiochemicalSession()]);
-    }
-  }, [positiveWorkflowActive, biochemical.length]);
-
   if (loading) {
     return <AppLayout requiredGroups={requiredGroupsForResourceGroup("clinical_laboratory")}><div className="flex min-h-64 items-center justify-center gap-2 text-sm text-muted-foreground"><Loader2 size={16} className="animate-spin" /> Carregando cultura...</div></AppLayout>;
   }
@@ -241,15 +187,11 @@ export default function CultureDetailPage() {
     return <AppLayout requiredGroups={requiredGroupsForResourceGroup("clinical_laboratory")}><div className="rounded-xl border border-red-200/60 bg-red-50/50 p-4 text-sm text-red-800">{error || "Cultura não encontrada."}</div></AppLayout>;
   }
 
-  const isPositiveFlow = positiveWorkflowActive;
   const isIncubating = culture.status === "INCUBACAO" || culture.status === "REINCUBACAO";
-  const biochemicalSaved = JSON.stringify(biochemical) === JSON.stringify(culture.biochemical_tests || []);
-  const gramSaved = JSON.stringify(gram) === JSON.stringify({
-    result: culture.gram_exam?.result || "",
-    morphology: culture.gram_exam?.morphology || "",
-    arrangement: culture.gram_exam?.arrangement || "",
-    notes: culture.gram_exam?.notes || "",
-  });
+  // Depois de a incubação começar, nada na sementeira pode ser modificado até
+  // ao fim do período — só o estado "Montada" permite editar/iniciar.
+  const setupMode = culture.status === "MONTADA";
+  const resolvedPlates = plates.filter((p) => p.resolved);
 
   return (
     <AppLayout requiredGroups={requiredGroupsForResourceGroup("clinical_laboratory")}>
@@ -319,19 +261,7 @@ export default function CultureDetailPage() {
                         >
                           <FlaskConical size={11} /> {plate.code}
                         </span>
-                        {isIncubating ? (
-                          plateEnd !== null ? (
-                            <span
-                              className={`inline-flex h-7 items-center gap-1.5 rounded-md border px-2 text-[11px] font-medium shadow-sm ${plateDue ? "border-emerald-300/60 bg-emerald-50/70 text-emerald-700 dark:border-emerald-700/40 dark:bg-emerald-900/20 dark:text-emerald-300" : "border-sky-300/50 bg-sky-50/60 text-sky-700 dark:border-sky-800/40 dark:bg-sky-900/20 dark:text-sky-300"}`}
-                              title={plateDue ? "Meio pronto para leitura" : "Cronómetro individual deste meio"}
-                            >
-                              <Clock3 size={12} className={plateDue ? "" : "animate-pulse"} />
-                              {plateDue ? "Pronto para leitura" : <span className="font-mono tabular-nums">{elapsedParts(plateRemaining)}</span>}
-                            </span>
-                          ) : (
-                            <span className="inline-flex h-7 items-center gap-1 text-[10px] font-medium text-muted-foreground/70" title="Em incubação — não editável"><Lock size={12} /> Em incubação</span>
-                          )
-                        ) : (
+                        {setupMode ? (
                           <button
                             type="button"
                             onClick={() => setPlates((rows) => (rows.length > 1 ? rows.filter((_, i) => i !== index) : rows))}
@@ -341,175 +271,105 @@ export default function CultureDetailPage() {
                           >
                             <Trash2 size={13} />
                           </button>
+                        ) : plate.resolved ? null : plateEnd !== null ? (
+                          <span
+                            className={`inline-flex h-7 items-center gap-1.5 rounded-md border px-2 text-[11px] font-medium shadow-sm ${plateDue ? "border-emerald-300/60 bg-emerald-50/70 text-emerald-700 dark:border-emerald-700/40 dark:bg-emerald-900/20 dark:text-emerald-300" : "border-sky-300/50 bg-sky-50/60 text-sky-700 dark:border-sky-800/40 dark:bg-sky-900/20 dark:text-sky-300"}`}
+                            title={plateDue ? "Meio pronto para leitura" : "Cronómetro individual deste meio"}
+                          >
+                            <Clock3 size={12} className={plateDue ? "" : "animate-pulse"} />
+                            {plateDue ? "Pronto para leitura" : <span className="font-mono tabular-nums">{elapsedParts(plateRemaining)}</span>}
+                          </span>
+                        ) : (
+                          <span className="inline-flex h-7 items-center gap-1 text-[10px] font-medium text-muted-foreground/70" title="Em incubação — não editável"><Lock size={12} /> Em incubação</span>
                         )}
                       </div>
                       <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                        <select disabled={isIncubating} value={plate.container} onChange={(event) => updatePlate(index, { container: event.target.value })} className={`${inputClass} disabled:cursor-not-allowed disabled:opacity-70`} aria-label="Recipiente">
+                        <select disabled={!setupMode} value={plate.container} onChange={(event) => updatePlate(index, { container: event.target.value })} className={`${inputClass} disabled:cursor-not-allowed disabled:opacity-70`} aria-label="Recipiente">
                           {CULTURE_CONTAINERS.map((option) => (
                             <option key={option} value={option}>{option}</option>
                           ))}
                         </select>
-                        <select disabled={isIncubating} value={mediumSelectValue(plate)} onChange={(event) => updatePlate(index, applyMediumChoice(plate, event.target.value))} className={`${inputClass} disabled:cursor-not-allowed disabled:opacity-70`} aria-label="Meio de cultura">
+                        <select disabled={!setupMode} value={mediumSelectValue(plate)} onChange={(event) => updatePlate(index, applyMediumChoice(plate, event.target.value))} className={`${inputClass} disabled:cursor-not-allowed disabled:opacity-70`} aria-label="Meio de cultura">
                           <option value="">Meio de cultura…</option>
                           {CULTURE_MEDIA.map((option) => (
                             <option key={option} value={option}>{option}</option>
                           ))}
                         </select>
                         {custom && (
-                          <input disabled={isIncubating} value={plate.medium} onChange={(event) => updatePlate(index, { medium: event.target.value })} placeholder="Especifique o meio" className={`${inputClass} disabled:cursor-not-allowed disabled:opacity-70`} />
+                          <input disabled={!setupMode} value={plate.medium} onChange={(event) => updatePlate(index, { medium: event.target.value })} placeholder="Especifique o meio" className={`${inputClass} disabled:cursor-not-allowed disabled:opacity-70`} />
                         )}
-                        <select disabled={isIncubating} value={plate.consistency} onChange={(event) => updatePlate(index, { consistency: event.target.value })} className={`${inputClass} disabled:cursor-not-allowed disabled:opacity-70`} aria-label="Consistência do meio">
+                        <select disabled={!setupMode} value={plate.consistency} onChange={(event) => updatePlate(index, { consistency: event.target.value })} className={`${inputClass} disabled:cursor-not-allowed disabled:opacity-70`} aria-label="Consistência do meio">
                           {CULTURE_CONSISTENCIES.map((option) => (
                             <option key={option} value={option}>{option}</option>
                           ))}
                         </select>
-                        <select disabled={isIncubating} value={plate.atmosphere} onChange={(event) => updatePlate(index, { atmosphere: event.target.value })} className={`${inputClass} disabled:cursor-not-allowed disabled:opacity-70`} aria-label="Atmosfera">
+                        <select disabled={!setupMode} value={plate.atmosphere} onChange={(event) => updatePlate(index, { atmosphere: event.target.value })} className={`${inputClass} disabled:cursor-not-allowed disabled:opacity-70`} aria-label="Atmosfera">
                           {CULTURE_ATMOSPHERES.map((option) => (
                             <option key={option} value={option}>{option}</option>
                           ))}
                         </select>
                         <div className="flex items-center gap-1.5">
-                          <input disabled={isIncubating} value={plate.temperature_c} onChange={(event) => updatePlate(index, { temperature_c: event.target.value })} placeholder="°C" className={`${inputClass} disabled:cursor-not-allowed disabled:opacity-70`} />
+                          <input disabled={!setupMode} value={plate.temperature_c} onChange={(event) => updatePlate(index, { temperature_c: event.target.value })} placeholder="°C" className={`${inputClass} disabled:cursor-not-allowed disabled:opacity-70`} />
                           <span className="text-xs text-muted-foreground">°C</span>
                         </div>
                         <div className="flex items-center gap-1.5" title="Horas de incubação deste meio (cronómetro individual)">
-                          <input disabled={isIncubating} type="number" min="0" step="0.5" value={plate.incubation_hours} onChange={(event) => updatePlate(index, { incubation_hours: event.target.value })} placeholder="Horas" className={`${inputClass} disabled:cursor-not-allowed disabled:opacity-70`} aria-label="Horas de incubação deste meio" />
+                          <input disabled={!setupMode} type="number" min="0" step="0.5" value={plate.incubation_hours} onChange={(event) => updatePlate(index, { incubation_hours: event.target.value })} placeholder="Horas" className={`${inputClass} disabled:cursor-not-allowed disabled:opacity-70`} aria-label="Horas de incubação deste meio" />
                           <span className="text-xs text-muted-foreground">h</span>
                         </div>
                       </div>
+
+                      {(plateDue || plate.resolved || (plate.outcome && plate.outcome !== "")) && (
+                        <CulturePlateOutcome plate={plate} busy={saving} callbacks={plateCallbacks(plate)} />
+                      )}
                     </div>
                   );
                 })}
               </div>
-              <div className="flex flex-wrap items-center gap-2">
-                {!isIncubating && (
-                  <>
-                    <button onClick={addPlate} className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-white/40 bg-white/35 px-2.5 text-xs font-medium text-foreground shadow-sm backdrop-blur-sm"><Plus size={14} /> Placa / tubo</button>
-                    <span className="text-[11px] text-muted-foreground">Cada meio incuba e é cronometrado individualmente pelas horas definidas acima.</span>
-                  </>
-                )}
-                <button
-                  disabled={saving || isIncubating}
-                  onClick={() => submitAction("iniciar-incubacao", { plates, hours: Number(plates[0]?.incubation_hours) || 24 })}
-                  className={`inline-flex h-8 items-center gap-1.5 rounded-lg px-3 text-xs font-semibold text-white shadow-md disabled:opacity-100 ${
-                    isIncubating
-                      ? "cursor-default bg-gradient-to-r from-emerald-600 to-teal-600 shadow-emerald-500/20"
-                      : "bg-gradient-to-r from-teal-600 to-cyan-600 shadow-teal-500/20 disabled:opacity-60"
-                  }`}
-                >
-                  {saving ? (
-                    <Loader2 size={14} className="animate-spin" />
-                  ) : (
-                    <Clock3 size={14} className={isIncubating ? "animate-pulse" : ""} />
-                  )}
-                  {isIncubating ? "Em incubação" : "Iniciar incubação"}
-                </button>
-              </div>
+              {setupMode ? (
+                <div className="flex flex-wrap items-center gap-2">
+                  <button onClick={addPlate} className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-white/40 bg-white/35 px-2.5 text-xs font-medium text-foreground shadow-sm backdrop-blur-sm"><Plus size={14} /> Placa / tubo</button>
+                  <span className="text-[11px] text-muted-foreground">Cada meio incuba e é cronometrado individualmente pelas horas definidas acima.</span>
+                  <button
+                    disabled={saving}
+                    onClick={() => submitAction("iniciar-incubacao", { plates, hours: Number(plates[0]?.incubation_hours) || 24 })}
+                    className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-gradient-to-r from-teal-600 to-cyan-600 px-3 text-xs font-semibold text-white shadow-md shadow-teal-500/20 disabled:opacity-60"
+                  >
+                    {saving ? <Loader2 size={14} className="animate-spin" /> : <Clock3 size={14} />}
+                    Iniciar incubação
+                  </button>
+                </div>
+              ) : (
+                <p className="flex items-center gap-1.5 text-[11px] text-muted-foreground"><Lock size={12} /> Sementeira bloqueada durante a incubação. Cada meio abre para leitura quando o seu tempo termina.</p>
+              )}
             </Card>
 
-            {due && (
-              <Card title="Avaliação de crescimento microbiano" icon={Beaker} accent="bg-gradient-to-b from-amber-500 to-orange-600" iconTone="from-amber-500 to-orange-600">
-                <textarea value={observation} onChange={(event) => setObservation(event.target.value)} placeholder="Descreva o crescimento observado na placa, aspecto das colónias, hemólise, pigmento, odor ou ausência de crescimento." className={textareaClass} />
-                <div className="flex flex-wrap items-center gap-2">
-                  <label className="inline-flex h-8 items-center gap-2 rounded-lg border border-white/30 bg-white/25 px-2.5 text-xs text-foreground backdrop-blur-sm">
-                    <input type="checkbox" checked={positive} onChange={(event) => setPositive(event.target.checked)} className="h-3.5 w-3.5 accent-teal-600" />
-                    Cultura positiva
-                  </label>
-                  <button onClick={() => submitAction("registrar-observacao", { observation, positive, accumulated_hours: accumulatedNow })} disabled={saving} className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-gradient-to-r from-amber-500 to-orange-600 px-3 text-xs font-semibold text-white shadow-md shadow-amber-500/20 disabled:opacity-60"><Save size={14} /> Guardar observação</button>
-                  <input value={reincubationHours} onChange={(event) => setReincubationHours(event.target.value)} placeholder="Horas para reincubar" className={`${inputClass} max-w-40`} />
-                  <button onClick={() => submitAction("reincubar", { hours: Number(reincubationHours) || 24 })} disabled={saving} className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-white/40 bg-white/35 px-2.5 text-xs font-medium text-foreground shadow-sm backdrop-blur-sm"><TimerReset size={14} /> Reincubar</button>
-                  <button onClick={() => submitAction("finalizar", { positive: false })} disabled={saving} className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-600 px-3 text-xs font-semibold text-white shadow-md shadow-emerald-500/20"><CheckCircle2 size={14} /> Finalizar negativa</button>
-                </div>
-              </Card>
-            )}
-
-            {isPositiveFlow && (
-              <Card title="Gram e provas bioquímicas" icon={Microscope} accent="bg-gradient-to-b from-violet-500 to-fuchsia-600" iconTone="from-violet-600 to-fuchsia-600">
-                <div className="grid gap-2 md:grid-cols-4">
-                  <select value={gram.result} onChange={(event) => setGram((g) => ({ ...g, result: event.target.value }))} className={inputClass} aria-label="Resultado do Gram">
-                    <option value="">Resultado do Gram…</option>
-                    {GRAM_RESULT_OPTIONS.map((option) => (
-                      <option key={option} value={option}>{option}</option>
-                    ))}
-                  </select>
-                  <select value={gram.morphology} onChange={(event) => setGram((g) => ({ ...g, morphology: event.target.value }))} className={inputClass} aria-label="Morfologia">
-                    <option value="">Morfologia…</option>
-                    {GRAM_MORPHOLOGY_OPTIONS.map((option) => (
-                      <option key={option} value={option}>{option}</option>
-                    ))}
-                  </select>
-                  <select value={gram.arrangement} onChange={(event) => setGram((g) => ({ ...g, arrangement: event.target.value }))} className={inputClass} aria-label="Arranjo">
-                    <option value="">Arranjo…</option>
-                    {GRAM_ARRANGEMENT_OPTIONS.map((option) => (
-                      <option key={option} value={option}>{option}</option>
-                    ))}
-                  </select>
-                  <input value={gram.notes} onChange={(event) => setGram((g) => ({ ...g, notes: event.target.value }))} placeholder="Notas" className={inputClass} />
-                </div>
-                {!gramSaved ? (
-                  <button onClick={() => submitAction("salvar-gram", gram)} className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 px-3 text-xs font-semibold text-white shadow-md shadow-violet-500/20"><Save size={14} /> Guardar Gram</button>
-                ) : (
-                  <span className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50/70 px-3 text-xs font-semibold text-emerald-700 dark:border-emerald-800/40 dark:bg-emerald-900/15 dark:text-emerald-300"><CheckCircle2 size={14} /> Gram guardado</span>
-                )}
-
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between gap-2 border-t border-white/25 pt-2 dark:border-white/10">
-                    <div>
-                      <h3 className="text-xs font-semibold text-foreground">Provas bioquímicas de identificação de microrganismos</h3>
-                      <p className="text-[11px] text-muted-foreground">Registe uma sessão inicial e adicione outras provas quando necessário.</p>
-                    </div>
-                    <button onClick={addBiochemical} className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border border-white/40 bg-white/35 px-2.5 text-xs font-medium text-foreground shadow-sm backdrop-blur-sm"><Plus size={14} /> Prova</button>
-                  </div>
-                  {biochemical.map((test, index) => {
-                    const expectedAt = test.expected_end_at ? new Date(test.expected_end_at).getTime() : null;
-                    const ready = expectedAt !== null && now >= expectedAt;
-                    const running = expectedAt !== null && !ready;
-                    const durationMinutes = biochemicalDurationMinutes(test);
-                    return (
-                      <div key={index} className="rounded-lg border border-white/25 bg-white/20 p-2 backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]">
-                        <div className="mb-2 flex items-center justify-between gap-2">
-                          <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Prova {index + 1}</span>
-                          <button type="button" onClick={() => setBiochemical((rows) => rows.length > 1 ? rows.filter((_, i) => i !== index) : rows)} className="inline-flex h-7 w-7 items-center justify-center rounded-lg border border-white/30 bg-white/25 text-muted-foreground hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-40" disabled={biochemical.length <= 1} aria-label="Remover sessão de prova bioquímica"><Trash2 size={13} /></button>
-                        </div>
-                        <div className="grid gap-2 md:grid-cols-[1fr_130px_1fr_170px]">
-                          <input value={test.name} onChange={(event) => setBiochemical((rows) => rows.map((row, i) => i === index ? { ...row, name: event.target.value } : row))} placeholder="Tipo de prova" className={inputClass} />
-                          <input type="number" min="0" value={durationMinutes} onChange={(event) => {
-                            const minutes = Number(event.target.value) || 0;
-                            setBiochemical((rows) => rows.map((row, i) => i === index ? { ...row, duration_minutes: minutes, duration_hours: minutes / 60, expected_end_at: "", started_at: "", result: "" } : row));
-                          }} placeholder="Duração (min)" className={inputClass} />
-                          <input value={test.result} onChange={(event) => setBiochemical((rows) => rows.map((row, i) => i === index ? { ...row, result: event.target.value } : row))} placeholder={ready ? "Resultado" : "Resultado bloqueado"} className={`${inputClass} disabled:cursor-not-allowed disabled:opacity-60`} disabled={!ready} />
-                          <span className={`flex h-8 items-center rounded-lg border px-2 text-xs ${ready ? "border-emerald-200 bg-emerald-50/70 text-emerald-700" : "border-white/25 bg-white/20 text-muted-foreground"}`}>
-                            {running ? `Aguarde ${elapsedParts((expectedAt || now) - now)}` : ready ? "Pronta para resultado" : "Guardar inicia contagem"}
-                          </span>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-                <div className="flex gap-2">
-                  {!biochemicalSaved ? (
-                    <button onClick={() => submitAction("salvar-provas-bioquimicas", { tests: biochemical })} className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 px-3 text-xs font-semibold text-white shadow-md shadow-violet-500/20"><Save size={14} /> Guardar provas</button>
-                  ) : (
-                    <span className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50/70 px-3 text-xs font-semibold text-emerald-700 dark:border-emerald-800/40 dark:bg-emerald-900/15 dark:text-emerald-300"><CheckCircle2 size={14} /> Provas guardadas</span>
-                  )}
-                  <button onClick={() => submitAction("finalizar", { positive: true })} className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-600 px-3 text-xs font-semibold text-white shadow-md shadow-emerald-500/20"><CheckCircle2 size={14} /> Finalizar positiva</button>
-                </div>
-              </Card>
-            )}
           </div>
 
           <aside className="space-y-2">
-            <Card title="Observações" icon={Beaker} accent="bg-gradient-to-b from-emerald-500 to-teal-600" iconTone="from-emerald-600 to-teal-600">
+            <Card title="Resultados por meio" icon={Beaker} accent="bg-gradient-to-b from-emerald-500 to-teal-600" iconTone="from-emerald-600 to-teal-600">
               <div className="space-y-1.5">
-                {(culture.growth_observations || []).length === 0 ? <p className="text-xs text-muted-foreground">Sem observações registadas.</p> : culture.growth_observations.map((obs, index) => (
-                  <div key={index} className="rounded-lg border border-white/25 bg-white/20 px-2 py-1.5 text-xs backdrop-blur-sm">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="font-medium text-foreground">{obs.accumulated_hours?.toFixed?.(1) ?? obs.accumulated_hours}h</span>
-                      <span className={obs.positive ? "text-rose-600" : "text-emerald-600"}>{obs.positive ? "Positiva" : "Negativa/sem crescimento"}</span>
+                {resolvedPlates.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">Nenhum meio finalizado. Os resultados aparecem aqui à medida que cada incubação termina e é avaliada.</p>
+                ) : resolvedPlates.map((plate) => {
+                  const positive = plate.outcome === "positive";
+                  const contaminated = plate.outcome === "contaminated";
+                  return (
+                    <div key={plate.id} className="rounded-lg border border-white/25 bg-white/20 px-2 py-1.5 text-xs backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-mono text-[10px] font-semibold text-teal-700 dark:text-teal-300">{plate.code}</span>
+                        <span className={contaminated ? "text-rose-600 dark:text-rose-400" : positive ? "text-violet-600 dark:text-violet-400" : "text-emerald-600 dark:text-emerald-400"}>
+                          {contaminated ? "Contaminada" : positive ? "Positiva" : "Negativa"}
+                        </span>
+                      </div>
+                      <p className="mt-1 text-muted-foreground">{plate.result_text || plate.medium}</p>
+                      {positive && plate.gram?.result ? (
+                        <p className="mt-0.5 text-[11px] text-violet-600 dark:text-violet-400">
+                          {[plate.gram.result, plate.gram.morphology, plate.gram.arrangement].filter(Boolean).join(" · ")}
+                        </p>
+                      ) : null}
                     </div>
-                    <p className="mt-1 text-muted-foreground">{obs.observation}</p>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </Card>
           </aside>

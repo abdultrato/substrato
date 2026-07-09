@@ -7,7 +7,7 @@ Seguem o padrão do projeto: ValidatedSearchOrderingMixin + TenantScopedQueryset
 
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.utils import timezone
-from datetime import timedelta
+from datetime import datetime, timedelta
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError as DRFValidationError
 from rest_framework.response import Response
@@ -202,7 +202,7 @@ class LaboratoryQualityControlViewSet(ValidatedSearchOrderingMixin, TenantScoped
         run_to = parse_datetime(request.query_params.get("run_to") or "")
         run_second = parse_datetime(request.query_params.get("run_second") or "")
         if run_second and not (run_from or run_to):
-            from datetime import timedelta
+            from datetime import datetime, timedelta
 
             run_from = run_second.replace(microsecond=0)
             run_to = run_from + timedelta(seconds=1)
@@ -793,6 +793,117 @@ class MicrobiologyCultureViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
             culture.status = MicrobiologyCulture.Status.COMPLETED
         culture.read_at = culture.read_at or timezone.now()
         culture.save(update_fields=["status", "read_at", "updated_at"])
+        return Response(self.get_serializer(culture).data)
+
+    # ── Fluxo por meio individual (placa/tubo) ──────────────────────────────
+    # Cada placa resolve-se de forma independente: positiva → testes das
+    # colónias; negativa → reincubar ou terminar; contaminada → devolver à
+    # enfermagem para nova colheita.
+
+    def _find_plate(self, culture, plate_id):
+        for plate in (culture.culture_plates or []):
+            if isinstance(plate, dict) and str(plate.get("id")) == str(plate_id):
+                return plate
+        raise DRFValidationError({"plate_id": "Placa/meio não encontrado nesta cultura."})
+
+    @staticmethod
+    def _recompute_culture_status(culture):
+        plates = [p for p in (culture.culture_plates or []) if isinstance(p, dict)]
+        outcomes = [p.get("outcome") for p in plates]
+        resolved = [p.get("resolved") for p in plates]
+        if any(o == "positive" for o in outcomes):
+            culture.status = MicrobiologyCulture.Status.POSITIVE
+        elif plates and all(o in ("negative", "contaminated") and r for o, r in zip(outcomes, resolved)):
+            culture.status = MicrobiologyCulture.Status.NEGATIVE
+
+    @action(detail=True, methods=["post"], url_path="avaliar-placa", url_name="avaliar_placa")
+    def avaliar_placa(self, request, pk=None):
+        culture = self.get_object()
+        plate = self._find_plate(culture, request.data.get("plate_id"))
+        outcome = (request.data.get("outcome") or "").strip().lower()
+        if outcome not in ("positive", "negative", "contaminated"):
+            raise DRFValidationError({"outcome": "Indique um desfecho válido (positive, negative, contaminated)."})
+        now = timezone.now()
+        plate["outcome"] = outcome
+        plate["outcome_at"] = now.isoformat()
+        macroscopic = request.data.get("macroscopic")
+        if macroscopic is not None:
+            plate["macroscopic"] = str(macroscopic)
+
+        if outcome == "contaminated":
+            plate["resolved"] = True
+            plate["recollection_required"] = True
+            plate["result_text"] = f"Cultura contaminada em {plate.get('medium') or 'meio'} — nova colheita solicitada"
+            # Devolve a amostra à enfermagem: rejeita a amostra do laboratório
+            # e sinaliza que é preciso recolher de novo.
+            if culture.sample_id:
+                try:
+                    culture.sample.reject()
+                except Exception:  # noqa: BLE001 — não bloquear a avaliação clínica
+                    pass
+            note = f"[{now.date().isoformat()}] Contaminação em {plate.get('code') or plate.get('medium')}: devolvido à enfermagem para nova colheita."
+            culture.notes = (culture.notes + "\n" + note).strip() if culture.notes else note
+        else:
+            plate["resolved"] = False
+
+        culture.read_at = culture.read_at or now
+        self._recompute_culture_status(culture)
+        culture.save(update_fields=["culture_plates", "notes", "status", "read_at", "updated_at"])
+        return Response(self.get_serializer(culture).data)
+
+    @action(detail=True, methods=["post"], url_path="reincubar-placa", url_name="reincubar_placa")
+    def reincubar_placa(self, request, pk=None):
+        culture = self.get_object()
+        plate = self._find_plate(culture, request.data.get("plate_id"))
+        try:
+            hours = float(request.data.get("hours") or 24)
+        except (TypeError, ValueError):
+            hours = 24.0
+        if hours <= 0:
+            raise DRFValidationError({"hours": "Informe um período de reincubação maior que zero."})
+        now = timezone.now()
+        plate_end = now + timedelta(hours=hours)
+        plate["incubation_hours"] = hours
+        plate["incubation_started_at"] = now.isoformat()
+        plate["incubation_expected_end_at"] = plate_end.isoformat()
+        plate["outcome"] = ""
+        plate["resolved"] = False
+
+        ends = [
+            datetime.fromisoformat(p["incubation_expected_end_at"])
+            for p in culture.culture_plates
+            if isinstance(p, dict) and p.get("incubation_expected_end_at")
+        ]
+        if ends:
+            culture.incubation_expected_end_at = max(ends)
+        culture.status = MicrobiologyCulture.Status.REINCUBATING
+        culture.save(update_fields=["culture_plates", "incubation_expected_end_at", "status", "updated_at"])
+        return Response(self.get_serializer(culture).data)
+
+    @action(detail=True, methods=["post"], url_path="salvar-placa", url_name="salvar_placa")
+    def salvar_placa(self, request, pk=None):
+        culture = self.get_object()
+        plate = self._find_plate(culture, request.data.get("plate_id"))
+        if request.data.get("reset_outcome"):
+            # Reabrir a decisão do meio (volta à escolha positiva/negativa/contaminação).
+            plate["outcome"] = ""
+            plate["resolved"] = False
+            plate.pop("result_text", None)
+            culture.save(update_fields=["culture_plates", "status", "updated_at"])
+            return Response(self.get_serializer(culture).data)
+        for key in ("macroscopic", "gram", "biochemical", "result_text"):
+            if key in request.data:
+                plate[key] = request.data.get(key)
+        if request.data.get("resolved") is not None:
+            plate["resolved"] = bool(request.data.get("resolved"))
+        if request.data.get("finalize_negative"):
+            plate["outcome"] = "negative"
+            plate["resolved"] = True
+            plate["result_text"] = f"Cultura negativa em {plate.get('medium') or 'meio'}"
+        if plate.get("outcome") == "positive" and plate.get("resolved"):
+            plate["result_text"] = f"Cultura positiva em {plate.get('medium') or 'meio'}"
+        self._recompute_culture_status(culture)
+        culture.save(update_fields=["culture_plates", "status", "updated_at"])
         return Response(self.get_serializer(culture).data)
 
     @action(detail=True, methods=["post"], url_path="salvar-gram", url_name="salvar_gram")
