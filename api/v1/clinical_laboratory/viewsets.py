@@ -771,11 +771,16 @@ class MicrobiologyCultureViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
         now = timezone.now()
         normalized = []
         for test in tests:
+            minutes = float(test.get("minutes") or test.get("duration_minutes") or 0)
             hours = float(test.get("hours") or test.get("duration_hours") or 0)
+            if minutes <= 0 and hours > 0:
+                minutes = hours * 60
+            hours = minutes / 60 if minutes > 0 else 0
             normalized.append({
                 "name": test.get("name", ""),
                 "started_at": test.get("started_at") or now.isoformat(),
-                "expected_end_at": test.get("expected_end_at") or ((now + timedelta(hours=hours)).isoformat() if hours else ""),
+                "expected_end_at": test.get("expected_end_at") or ((now + timedelta(minutes=minutes)).isoformat() if minutes else ""),
+                "duration_minutes": minutes,
                 "duration_hours": hours,
                 "result": test.get("result", ""),
                 "status": test.get("status") or ("EM_INCUBACAO" if hours else "AGUARDA_RESULTADO"),

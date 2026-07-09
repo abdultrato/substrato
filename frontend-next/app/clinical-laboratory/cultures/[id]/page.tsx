@@ -45,6 +45,7 @@ type Observation = {
 type BiochemicalTest = {
   name: string;
   duration_hours: number;
+  duration_minutes?: number;
   started_at: string;
   expected_end_at: string;
   result: string;
@@ -82,7 +83,8 @@ const GRAM_ARRANGEMENT_OPTIONS = ["Em cadeia", "Em cachos", "Em corda", "Em pare
 function makeBiochemicalSession(): BiochemicalTest {
   return {
     name: "",
-    duration_hours: 24,
+    duration_hours: 0.5,
+    duration_minutes: 30,
     started_at: "",
     expected_end_at: "",
     result: "",
@@ -101,6 +103,10 @@ function elapsedParts(ms: number) {
   const minutes = Math.floor((total % 3600) / 60);
   const seconds = total % 60;
   return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+}
+
+function biochemicalDurationMinutes(test: BiochemicalTest): number {
+  return Number(test.duration_minutes ?? Math.round(Number(test.duration_hours || 0) * 60) || 0);
 }
 
 function Card({ title, icon: Icon, accent, iconTone, children }: {
@@ -438,20 +444,31 @@ export default function CultureDetailPage() {
                     </div>
                     <button onClick={addBiochemical} className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border border-white/40 bg-white/35 px-2.5 text-xs font-medium text-foreground shadow-sm backdrop-blur-sm"><Plus size={14} /> Prova</button>
                   </div>
-                  {biochemical.map((test, index) => (
-                    <div key={index} className="rounded-lg border border-white/25 bg-white/20 p-2 backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]">
-                      <div className="mb-2 flex items-center justify-between gap-2">
-                        <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Prova {index + 1}</span>
-                        <button type="button" onClick={() => setBiochemical((rows) => rows.length > 1 ? rows.filter((_, i) => i !== index) : rows)} className="inline-flex h-7 w-7 items-center justify-center rounded-lg border border-white/30 bg-white/25 text-muted-foreground hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-40" disabled={biochemical.length <= 1} aria-label="Remover sessão de prova bioquímica"><Trash2 size={13} /></button>
+                  {biochemical.map((test, index) => {
+                    const expectedAt = test.expected_end_at ? new Date(test.expected_end_at).getTime() : null;
+                    const ready = expectedAt !== null && now >= expectedAt;
+                    const running = expectedAt !== null && !ready;
+                    const durationMinutes = biochemicalDurationMinutes(test);
+                    return (
+                      <div key={index} className="rounded-lg border border-white/25 bg-white/20 p-2 backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]">
+                        <div className="mb-2 flex items-center justify-between gap-2">
+                          <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Prova {index + 1}</span>
+                          <button type="button" onClick={() => setBiochemical((rows) => rows.length > 1 ? rows.filter((_, i) => i !== index) : rows)} className="inline-flex h-7 w-7 items-center justify-center rounded-lg border border-white/30 bg-white/25 text-muted-foreground hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-40" disabled={biochemical.length <= 1} aria-label="Remover sessão de prova bioquímica"><Trash2 size={13} /></button>
+                        </div>
+                        <div className="grid gap-2 md:grid-cols-[1fr_130px_1fr_170px]">
+                          <input value={test.name} onChange={(event) => setBiochemical((rows) => rows.map((row, i) => i === index ? { ...row, name: event.target.value } : row))} placeholder="Tipo de prova" className={inputClass} />
+                          <input type="number" min="0" value={durationMinutes} onChange={(event) => {
+                            const minutes = Number(event.target.value) || 0;
+                            setBiochemical((rows) => rows.map((row, i) => i === index ? { ...row, duration_minutes: minutes, duration_hours: minutes / 60, expected_end_at: "", started_at: "", result: "" } : row));
+                          }} placeholder="Duração (min)" className={inputClass} />
+                          <input value={test.result} onChange={(event) => setBiochemical((rows) => rows.map((row, i) => i === index ? { ...row, result: event.target.value } : row))} placeholder={ready ? "Resultado" : "Resultado bloqueado"} className={`${inputClass} disabled:cursor-not-allowed disabled:opacity-60`} disabled={!ready} />
+                          <span className={`flex h-8 items-center rounded-lg border px-2 text-xs ${ready ? "border-emerald-200 bg-emerald-50/70 text-emerald-700" : "border-white/25 bg-white/20 text-muted-foreground"}`}>
+                            {running ? `Aguarde ${elapsedParts((expectedAt || now) - now)}` : ready ? "Pronta para resultado" : "Guardar inicia contagem"}
+                          </span>
+                        </div>
                       </div>
-                      <div className="grid gap-2 md:grid-cols-[1fr_120px_1fr_1fr]">
-                        <input value={test.name} onChange={(event) => setBiochemical((rows) => rows.map((row, i) => i === index ? { ...row, name: event.target.value } : row))} placeholder="Tipo de prova" className={inputClass} />
-                        <input type="number" min="0" value={test.duration_hours} onChange={(event) => setBiochemical((rows) => rows.map((row, i) => i === index ? { ...row, duration_hours: Number(event.target.value) || 0 } : row))} placeholder="Duração (h)" className={inputClass} />
-                        <input value={test.result} onChange={(event) => setBiochemical((rows) => rows.map((row, i) => i === index ? { ...row, result: event.target.value } : row))} placeholder="Resultado" className={inputClass} />
-                        <span className="flex h-8 items-center rounded-lg border border-white/25 bg-white/20 px-2 text-xs text-muted-foreground">{test.expected_end_at ? fmtDate(test.expected_end_at) : "Leitura após guardar"}</span>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
                 <div className="flex gap-2">
                   {!biochemicalSaved ? (
