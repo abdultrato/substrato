@@ -1,5 +1,7 @@
 # Substrato
 
+![Substrato — plataforma multi-tenant e multi-domínio](.github/social-preview.png)
+
 Plataforma multi-domínio e multi-tenant para saúde, educação, ERP/WMS, RH, finanças e operação, construída com Django, Django REST Framework, Celery e Next.js.
 
 [![Django](https://img.shields.io/badge/Django-4.2-092E20?logo=django)](https://www.djangoproject.com/)
@@ -21,6 +23,16 @@ O nome Substrato remete a um sistema unificado de base sustentável: uma camada 
 - Dá prioridade a rastreabilidade, permissões, auditoria e observabilidade.
 - Mantém uma visão de produção beta com critérios claros de qualidade e risco.
 - É uma base adequada para expansão sem recomeçar do zero a cada novo domínio.
+
+## Capturas de ecrã
+
+Laboratório clínico — leitura de cultura microbiológica por meio individual, com desfecho (positiva / negativa / contaminação), cronometragem própria e resultados por meio:
+
+![Cultura microbiológica — leitura por meio](docs/screenshots/cultura-microbiologia.png)
+
+Recepção e conferência de amostras no laboratório, com estado por exame e ações de receção/rejeição:
+
+![Recepção de amostras](docs/screenshots/recepcao-amostras.png)
 
 ## Arquitetura e stack
 - Backend: Django 4.2, Django REST Framework, ASGI/Uvicorn, PostgreSQL, Redis e Celery.
