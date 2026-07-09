@@ -466,53 +466,52 @@ export default function LabOrderDetailPage() {
                     </div>
                   ))}
                 </div>
+
+                <div className="mt-2 flex items-center justify-between gap-1.5 border-t border-[var(--border)] pt-2">
+                  <Link href="/clinical-laboratory/orders"
+                    className="inline-flex h-6 items-center gap-1 rounded-md border border-[var(--border)] bg-card px-2 text-[11px] text-muted-foreground transition hover:bg-muted">
+                    <ArrowLeft size={11} /> Voltar
+                  </Link>
+
+                  <div className="flex items-center gap-2">
+                    {canStartProcessing && (
+                      <button type="button" onClick={() => handleIniciarProcessamento()} disabled={busy}
+                        className="inline-flex h-6 items-center gap-1 rounded-md bg-emerald-600 px-2.5 text-[11px] font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-60">
+                        {processingItemId === "all" ? <Loader2 size={11} className="animate-spin" /> : <PlayCircle size={11} />}
+                        Iniciar todos
+                      </button>
+                    )}
+                    {canCancelar && (
+                      <button type="button" onClick={handleCancelar} disabled={busy}
+                        className="inline-flex h-6 items-center gap-1 rounded-md border border-rose-200 bg-rose-50/70 px-2.5 text-[11px] font-semibold text-rose-700 transition hover:bg-rose-100 disabled:opacity-60 dark:border-rose-700/40 dark:bg-rose-900/20 dark:text-rose-300">
+                        Cancelar ordem
+                      </button>
+                    )}
+                    {canAutorizar ? (
+                      <button type="button" onClick={handleAutorizar} disabled={busy}
+                        className="inline-flex h-6 items-center gap-1 rounded-md bg-sky-600 px-2.5 text-[11px] font-semibold text-white transition hover:bg-sky-700 disabled:opacity-60">
+                        {busy ? <Loader2 size={11} className="animate-spin" /> : <Send size={11} />}
+                        {busy ? "A processar..." : "Autorizar ordem"}
+                      </button>
+                    ) : record?.status === "CONCLUIDO" ? (
+                      <Link href="/clinical-laboratory/worklists"
+                        className="inline-flex h-6 items-center gap-1 rounded-md bg-emerald-600 px-2.5 text-[11px] font-semibold text-white transition hover:bg-emerald-700">
+                        Ver resultados <ArrowRight size={11} />
+                      </Link>
+                    ) : (
+                      <Link href="/clinical-laboratory/worklists"
+                        className="inline-flex h-6 items-center gap-1 rounded-md bg-sky-600 px-2.5 text-[11px] font-semibold text-white transition hover:bg-sky-700">
+                        Ver lista de trabalho <ArrowRight size={11} />
+                      </Link>
+                    )}
+                  </div>
+                </div>
               </section>
             ) : (
               <section className={`${GLASS} px-3 py-3 text-center text-[11px] text-[var(--gray-400)]`}>
                 Nenhuma análise registada nesta ordem.
               </section>
             )}
-
-            {/* ── actions footer ── */}
-            <section className={`${GLASS} flex items-center justify-between gap-1.5 px-3 py-2`}>
-              <Link href="/clinical-laboratory/orders"
-                className="inline-flex h-6 items-center gap-1 rounded-md border border-[var(--border)] bg-card px-2 text-[11px] text-muted-foreground transition hover:bg-muted">
-                <ArrowLeft size={11} /> Voltar
-              </Link>
-
-              <div className="flex items-center gap-2">
-                {canStartProcessing && (
-                  <button type="button" onClick={() => handleIniciarProcessamento()} disabled={busy}
-                    className="inline-flex h-6 items-center gap-1 rounded-md bg-emerald-600 px-2.5 text-[11px] font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-60">
-                    {processingItemId === "all" ? <Loader2 size={11} className="animate-spin" /> : <PlayCircle size={11} />}
-                    Iniciar todos
-                  </button>
-                )}
-                {canCancelar && (
-                  <button type="button" onClick={handleCancelar} disabled={busy}
-                    className="inline-flex h-6 items-center gap-1 rounded-md border border-rose-200 bg-rose-50/70 px-2.5 text-[11px] font-semibold text-rose-700 transition hover:bg-rose-100 disabled:opacity-60 dark:border-rose-700/40 dark:bg-rose-900/20 dark:text-rose-300">
-                    Cancelar ordem
-                  </button>
-                )}
-                {canAutorizar ? (
-                  <button type="button" onClick={handleAutorizar} disabled={busy}
-                    className="inline-flex h-6 items-center gap-1 rounded-md bg-sky-600 px-2.5 text-[11px] font-semibold text-white transition hover:bg-sky-700 disabled:opacity-60">
-                    {busy ? <Loader2 size={11} className="animate-spin" /> : <Send size={11} />}
-                    {busy ? "A processar..." : "Autorizar ordem"}
-                  </button>
-                ) : record?.status === "CONCLUIDO" ? (
-                  <Link href="/clinical-laboratory/worklists"
-                    className="inline-flex h-6 items-center gap-1 rounded-md bg-emerald-600 px-2.5 text-[11px] font-semibold text-white transition hover:bg-emerald-700">
-                    Ver resultados <ArrowRight size={11} />
-                  </Link>
-                ) : (
-                  <Link href="/clinical-laboratory/worklists"
-                    className="inline-flex h-6 items-center gap-1 rounded-md bg-sky-600 px-2.5 text-[11px] font-semibold text-white transition hover:bg-sky-700">
-                    Ver lista de trabalho <ArrowRight size={11} />
-                  </Link>
-                )}
-              </div>
-            </section>
           </>
         )}
       </div>
