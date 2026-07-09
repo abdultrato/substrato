@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import {
   ArrowLeft,
   Beaker,
+  CheckCircle2,
   Clock3,
   FlaskConical,
   Loader2,
@@ -188,6 +189,8 @@ export default function CultureDetailPage() {
   }
 
   const isIncubating = culture.status === "INCUBACAO" || culture.status === "REINCUBACAO";
+  const incubationRunning = isIncubating && !due;
+  const incubationReady = isIncubating && due;
   // Depois de a incubação começar, nada na sementeira pode ser modificado até
   // ao fim do período — só o estado "Montada" permite editar/iniciar.
   const setupMode = culture.status === "MONTADA";
@@ -213,7 +216,7 @@ export default function CultureDetailPage() {
 
             {culture.incubation_expected_end_at && (
               <div className={`flex shrink-0 items-center gap-2.5 rounded-xl border px-3 py-1.5 shadow-sm backdrop-blur-sm ${due ? "border-emerald-300/60 bg-emerald-50/60 dark:border-emerald-700/40 dark:bg-emerald-950/25" : "border-sky-300/50 bg-sky-50/55 dark:border-sky-800/40 dark:bg-sky-950/25"}`}>
-                <Clock3 size={18} className={`shrink-0 ${due ? "text-emerald-600 dark:text-emerald-400" : "text-sky-600 dark:text-sky-400"} ${isIncubating && !due ? "animate-pulse" : ""}`} />
+                <Clock3 size={18} className={`shrink-0 ${due ? "text-emerald-600 dark:text-emerald-400" : "text-sky-600 dark:text-sky-400"} ${incubationRunning ? "animate-pulse" : ""}`} />
                 <div className="leading-tight">
                   <p className="text-[9px] font-semibold uppercase tracking-wide text-muted-foreground">{due ? "Pronto para leitura" : "Tempo restante"}</p>
                   <p className="font-mono text-xl font-semibold tabular-nums text-foreground">{elapsedParts(remaining)}</p>
@@ -279,6 +282,8 @@ export default function CultureDetailPage() {
                             <Clock3 size={12} className={plateDue ? "" : "animate-pulse"} />
                             {plateDue ? "Pronto para leitura" : <span className="font-mono tabular-nums">{elapsedParts(plateRemaining)}</span>}
                           </span>
+                        ) : incubationReady ? (
+                          <span className="inline-flex h-7 items-center gap-1 text-[10px] font-medium text-emerald-700 dark:text-emerald-300" title="Tempo de incubação concluído"><CheckCircle2 size={12} /> Pronto</span>
                         ) : (
                           <span className="inline-flex h-7 items-center gap-1 text-[10px] font-medium text-muted-foreground/70" title="Em incubação — não editável"><Lock size={12} /> Em incubação</span>
                         )}
@@ -338,6 +343,8 @@ export default function CultureDetailPage() {
                     Iniciar incubação
                   </button>
                 </div>
+              ) : incubationReady ? (
+                <p className="flex items-center gap-1.5 text-[11px] text-emerald-700 dark:text-emerald-300"><CheckCircle2 size={12} /> Tempo de incubação concluído. Os meios prontos já podem ser lidos individualmente.</p>
               ) : (
                 <p className="flex items-center gap-1.5 text-[11px] text-muted-foreground"><Lock size={12} /> Sementeira bloqueada durante a incubação. Cada meio abre para leitura quando o seu tempo termina.</p>
               )}
