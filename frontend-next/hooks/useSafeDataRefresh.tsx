@@ -55,6 +55,7 @@ export function SafeDataRefreshProvider({ children }: { children: ReactNode }) {
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [lastRefreshAt, setLastRefreshAt] = useState<number | null>(null)
   const [hasUnsavedInput, setHasUnsavedInput] = useState(false)
+  const [routeRefreshVersion, setRouteRefreshVersion] = useState(0)
   const refreshingRef = useRef(false)
   const lastRefreshRef = useRef(0)
   const hasUnsavedInputRef = useRef(false)
@@ -78,6 +79,7 @@ export function SafeDataRefreshProvider({ children }: { children: ReactNode }) {
           await queryClient.refetchQueries({ type: "active" }, { cancelRefetch: false })
           if (!preserveDraft) {
             router.refresh()
+            setRouteRefreshVersion((value) => value + 1)
           }
         } else {
           void queryClient.invalidateQueries(
@@ -172,7 +174,9 @@ export function SafeDataRefreshProvider({ children }: { children: ReactNode }) {
 
   return (
     <SafeDataRefreshContext.Provider value={value}>
-      {children}
+      <div key={routeRefreshVersion} className="contents">
+        {children}
+      </div>
     </SafeDataRefreshContext.Provider>
   )
 }
