@@ -240,15 +240,15 @@ export default function LabOrderDetailPage() {
 
   return (
     <AppLayout>
-      <div className="mx-auto w-full max-w-3xl space-y-3 px-1 py-1">
+      <div className="mx-auto w-[95vw] max-w-[95vw] space-y-1 px-1 py-0.5">
 
         {/* ── hero header ── */}
         <section className="relative overflow-hidden rounded-xl border border-sky-200/50 bg-gradient-to-br from-sky-50/80 via-white/60 to-cyan-50/60 shadow-sm backdrop-blur-sm dark:border-sky-800/30 dark:from-sky-950/30 dark:via-slate-900/40 dark:to-cyan-950/20">
           <span className="absolute left-0 top-0 h-full w-1 bg-sky-400" />
-          <div className="px-4 py-4 pl-5">
+          <div className="px-3 py-2 pl-4">
 
             {/* breadcrumb */}
-            <nav className="mb-2 flex items-center gap-1 text-[10px] text-[var(--gray-500)]">
+            <nav className="mb-1 flex items-center gap-1 text-[10px] text-[var(--gray-500)]">
               <Link href="/clinical-laboratory" className="hover:text-foreground">Laboratório</Link>
               <ChevronRight size={10} />
               <Link href="/clinical-laboratory/orders" className="hover:text-foreground">Ordens</Link>
@@ -256,7 +256,7 @@ export default function LabOrderDetailPage() {
               <span className="font-semibold text-foreground">{record?.custom_id ?? id}</span>
             </nav>
 
-            <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="flex flex-wrap items-start justify-between gap-1.5">
               <div>
                 <div className="flex items-center gap-2">
                   <FlaskConical size={15} className="text-sky-500" />
@@ -293,7 +293,7 @@ export default function LabOrderDetailPage() {
 
             {/* requested_at */}
             {record?.requested_at && (
-              <p className="mt-2 flex items-center gap-1 text-[10px] text-[var(--gray-500)]">
+              <p className="mt-1 flex items-center gap-1 text-[10px] text-[var(--gray-500)]">
                 <CalendarDays size={10} />
                 Solicitada em {fmt(record.requested_at)}
                 {record.updated_at && record.updated_at !== record.created_at && (
@@ -306,12 +306,12 @@ export default function LabOrderDetailPage() {
 
         {/* ── feedback / error ── */}
         {feedback && (
-          <div className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50/70 px-4 py-2.5 text-[12px] text-emerald-800 dark:border-emerald-800/40 dark:bg-emerald-900/15 dark:text-emerald-300">
+          <div className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50/70 px-3 py-1.5 text-[12px] text-emerald-800 dark:border-emerald-800/40 dark:bg-emerald-900/15 dark:text-emerald-300">
             <CheckCircle2 size={13} /> {feedback}
           </div>
         )}
         {error && (
-          <div className="flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50/70 px-4 py-2.5 text-[12px] text-rose-800 dark:border-rose-800/40 dark:bg-rose-900/15 dark:text-rose-300">
+          <div className="flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50/70 px-3 py-1.5 text-[12px] text-rose-800 dark:border-rose-800/40 dark:bg-rose-900/15 dark:text-rose-300">
             <AlertCircle size={13} /> {error}
           </div>
         )}
@@ -331,10 +331,10 @@ export default function LabOrderDetailPage() {
         ) : (
           <>
             {/* ── two-col info grid ── */}
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="grid gap-1.5 sm:grid-cols-2">
 
               {/* patient + requester card */}
-              <section className={`${GLASS} space-y-3 px-4 py-3`}>
+              <section className={`${GLASS} space-y-1.5 px-3 py-2`}>
                 <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--gray-500)]">
                   <User size={11} /> Paciente e solicitante
                 </div>
@@ -344,7 +344,7 @@ export default function LabOrderDetailPage() {
               </section>
 
               {/* clinical info card */}
-              <section className={`${GLASS} space-y-3 px-4 py-3`}>
+              <section className={`${GLASS} space-y-1.5 px-3 py-2`}>
                 <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--gray-500)]">
                   <ClipboardList size={11} /> Informação clínica
                 </div>
@@ -364,11 +364,11 @@ export default function LabOrderDetailPage() {
 
             {/* ── sectors strip ── */}
             {sectors.length > 0 && (
-              <section className={`${GLASS} px-4 py-3`}>
-                <div className="mb-2 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--gray-500)]">
+              <section className={`${GLASS} px-3 py-2`}>
+                <div className="mb-1 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--gray-500)]">
                   <Beaker size={11} /> Sectores envolvidos
                 </div>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-1">
                   {sectors.map((s) => (
                     <span key={s.id} className="inline-flex items-center gap-1 rounded-full border border-sky-200 bg-sky-50/70 px-2.5 py-1 text-[11px] font-medium text-sky-800 dark:border-sky-700/40 dark:bg-sky-900/20 dark:text-sky-200">
                       <span className="font-mono text-[10px] opacity-70">{s.code}</span> {s.name}
@@ -380,18 +380,18 @@ export default function LabOrderDetailPage() {
 
             {/* ── tests by sector ── */}
             {tests.length > 0 ? (
-              <section className={`${GLASS} px-4 py-3`}>
-                <div className="mb-3 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--gray-500)]">
+              <section className={`${GLASS} px-3 py-2`}>
+                <div className="mb-1.5 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--gray-500)]">
                   <FlaskConical size={11} /> Análises solicitadas
                   <span className="ml-auto rounded-full bg-sky-100 px-2 py-0.5 text-[10px] font-bold text-sky-700 dark:bg-sky-900/30 dark:text-sky-300">
                     {tests.length}
                   </span>
                 </div>
 
-                <div className="space-y-3">
+                <div className="space-y-1.5">
                   {Object.entries(bySector).map(([sector, items]) => (
                     <div key={sector}>
-                      <div className="mb-1.5 flex items-center gap-1.5">
+                      <div className="mb-1 flex items-center gap-1.5">
                         <span className="h-px flex-1 bg-[var(--border)]" />
                         <span className="text-[9px] font-semibold uppercase tracking-[0.14em] text-[var(--gray-400)]">{sector}</span>
                         <span className="h-px flex-1 bg-[var(--border)]" />
@@ -407,11 +407,11 @@ export default function LabOrderDetailPage() {
                           </colgroup>
                           <thead>
                             <tr className="border-b border-[var(--border)] bg-[var(--gray-50)]/60 dark:bg-white/[0.03]">
-                              <th className="px-3 py-1.5 text-left text-[9px] font-semibold uppercase tracking-wide text-[var(--gray-500)]">Código</th>
-                              <th className="px-3 py-1.5 text-left text-[9px] font-semibold uppercase tracking-wide text-[var(--gray-500)]">Análise</th>
-                              <th className="px-3 py-1.5 text-left text-[9px] font-semibold uppercase tracking-wide text-[var(--gray-500)]">Estado</th>
-                              <th className="px-3 py-1.5 text-right text-[9px] font-semibold uppercase tracking-wide text-[var(--gray-500)]">Preço</th>
-                              <th className="px-3 py-1.5 text-right text-[9px] font-semibold uppercase tracking-wide text-[var(--gray-500)]">Ação</th>
+                              <th className="px-2 py-1 text-left text-[9px] font-semibold uppercase tracking-wide text-[var(--gray-500)]">Código</th>
+                              <th className="px-2 py-1 text-left text-[9px] font-semibold uppercase tracking-wide text-[var(--gray-500)]">Análise</th>
+                              <th className="px-2 py-1 text-left text-[9px] font-semibold uppercase tracking-wide text-[var(--gray-500)]">Estado</th>
+                              <th className="px-2 py-1 text-right text-[9px] font-semibold uppercase tracking-wide text-[var(--gray-500)]">Preço</th>
+                              <th className="px-2 py-1 text-right text-[9px] font-semibold uppercase tracking-wide text-[var(--gray-500)]">Ação</th>
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-[var(--border)]">
@@ -422,25 +422,25 @@ export default function LabOrderDetailPage() {
                               const itemCode = item.test_code || item.exam_custom_id || item.code || item.custom_id
                               return (
                                 <tr key={item.id} className="hover:bg-sky-50/30 dark:hover:bg-sky-900/10 transition">
-                                  <td className="truncate px-3 py-2 font-mono text-[10px] text-[var(--gray-500)]">
+                                  <td className="truncate px-2 py-1 font-mono text-[10px] text-[var(--gray-500)]">
                                     {itemCode ?? "—"}
                                   </td>
-                                  <td className="truncate px-3 py-2 font-medium text-[var(--text)]">{itemName}</td>
-                                  <td className="px-3 py-2">
+                                  <td className="truncate px-2 py-1 font-medium text-[var(--text)]">{itemName}</td>
+                                  <td className="px-2 py-1">
                                     <span className="flex items-center gap-1">
                                       <span className={`h-1.5 w-1.5 rounded-full ${dot}`} />
                                       <span className="truncate text-[var(--gray-500)]">{item.sample_status_display || item.status || item.sample_status || "—"}</span>
                                     </span>
                                   </td>
-                                  <td className="px-3 py-2 text-right text-[var(--gray-500)]">
+                                  <td className="px-2 py-1 text-right text-[var(--gray-500)]">
                                     {item.price ? `${Number(item.price).toFixed(2)} MT` : "—"}
                                   </td>
-                                  <td className="px-3 py-2 text-right">
+                                  <td className="px-2 py-1 text-right">
                                     <button
                                       type="button"
                                       onClick={() => handleIniciarProcessamento(item)}
                                       disabled={!canStartProcessing || busy}
-                                      className="inline-flex h-7 items-center gap-1 rounded-md border border-sky-200 bg-sky-50/80 px-2.5 text-[10px] font-semibold text-sky-700 transition hover:bg-sky-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-sky-700/40 dark:bg-sky-900/20 dark:text-sky-300"
+                                      className="inline-flex h-6 items-center gap-1 rounded-md border border-sky-200 bg-sky-50/80 px-2 text-[10px] font-semibold text-sky-700 transition hover:bg-sky-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-sky-700/40 dark:bg-sky-900/20 dark:text-sky-300"
                                     >
                                       {processingItemId === item.id ? <Loader2 size={10} className="animate-spin" /> : isCultureItem(item) ? <FlaskConical size={10} /> : <PlayCircle size={10} />}
                                       Iniciar processamento
@@ -454,8 +454,8 @@ export default function LabOrderDetailPage() {
                           {items.some(i => i.price) && (
                             <tfoot>
                               <tr className="border-t border-[var(--border)] bg-[var(--gray-50)]/60 dark:bg-white/[0.03]">
-                                <td colSpan={4} className="px-3 py-1.5 text-right text-[9px] font-semibold uppercase tracking-wide text-[var(--gray-500)]">Subtotal</td>
-                                <td className="px-3 py-1.5 text-right text-[11px] font-bold text-foreground">
+                                <td colSpan={4} className="px-2 py-1 text-right text-[9px] font-semibold uppercase tracking-wide text-[var(--gray-500)]">Subtotal</td>
+                                <td className="px-2 py-1 text-right text-[11px] font-bold text-foreground">
                                   {items.reduce((sum, i) => sum + Number(i.price || 0), 0).toFixed(2)} MT
                                 </td>
                               </tr>
@@ -468,46 +468,46 @@ export default function LabOrderDetailPage() {
                 </div>
               </section>
             ) : (
-              <section className={`${GLASS} px-4 py-4 text-center text-[11px] text-[var(--gray-400)]`}>
+              <section className={`${GLASS} px-3 py-3 text-center text-[11px] text-[var(--gray-400)]`}>
                 Nenhuma análise registada nesta ordem.
               </section>
             )}
 
             {/* ── actions footer ── */}
-            <section className={`${GLASS} flex items-center justify-between gap-2 px-4 py-3`}>
+            <section className={`${GLASS} flex items-center justify-between gap-1.5 px-3 py-2`}>
               <Link href="/clinical-laboratory/orders"
-                className="inline-flex h-7 items-center gap-1 rounded-md border border-[var(--border)] bg-card px-2.5 text-[11px] text-muted-foreground transition hover:bg-muted">
+                className="inline-flex h-6 items-center gap-1 rounded-md border border-[var(--border)] bg-card px-2 text-[11px] text-muted-foreground transition hover:bg-muted">
                 <ArrowLeft size={11} /> Voltar
               </Link>
 
               <div className="flex items-center gap-2">
                 {canStartProcessing && (
                   <button type="button" onClick={() => handleIniciarProcessamento()} disabled={busy}
-                    className="inline-flex h-7 items-center gap-1.5 rounded-md bg-emerald-600 px-3 text-[11px] font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-60">
+                    className="inline-flex h-6 items-center gap-1 rounded-md bg-emerald-600 px-2.5 text-[11px] font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-60">
                     {processingItemId === "all" ? <Loader2 size={11} className="animate-spin" /> : <PlayCircle size={11} />}
                     Iniciar todos
                   </button>
                 )}
                 {canCancelar && (
                   <button type="button" onClick={handleCancelar} disabled={busy}
-                    className="inline-flex h-7 items-center gap-1.5 rounded-md border border-rose-200 bg-rose-50/70 px-3 text-[11px] font-semibold text-rose-700 transition hover:bg-rose-100 disabled:opacity-60 dark:border-rose-700/40 dark:bg-rose-900/20 dark:text-rose-300">
+                    className="inline-flex h-6 items-center gap-1 rounded-md border border-rose-200 bg-rose-50/70 px-2.5 text-[11px] font-semibold text-rose-700 transition hover:bg-rose-100 disabled:opacity-60 dark:border-rose-700/40 dark:bg-rose-900/20 dark:text-rose-300">
                     Cancelar ordem
                   </button>
                 )}
                 {canAutorizar ? (
                   <button type="button" onClick={handleAutorizar} disabled={busy}
-                    className="inline-flex h-7 items-center gap-1.5 rounded-md bg-sky-600 px-3 text-[11px] font-semibold text-white transition hover:bg-sky-700 disabled:opacity-60">
+                    className="inline-flex h-6 items-center gap-1 rounded-md bg-sky-600 px-2.5 text-[11px] font-semibold text-white transition hover:bg-sky-700 disabled:opacity-60">
                     {busy ? <Loader2 size={11} className="animate-spin" /> : <Send size={11} />}
                     {busy ? "A processar..." : "Autorizar ordem"}
                   </button>
                 ) : record?.status === "CONCLUIDO" ? (
                   <Link href="/clinical-laboratory/worklists"
-                    className="inline-flex h-7 items-center gap-1.5 rounded-md bg-emerald-600 px-3 text-[11px] font-semibold text-white transition hover:bg-emerald-700">
+                    className="inline-flex h-6 items-center gap-1 rounded-md bg-emerald-600 px-2.5 text-[11px] font-semibold text-white transition hover:bg-emerald-700">
                     Ver resultados <ArrowRight size={11} />
                   </Link>
                 ) : (
                   <Link href="/clinical-laboratory/worklists"
-                    className="inline-flex h-7 items-center gap-1.5 rounded-md bg-sky-600 px-3 text-[11px] font-semibold text-white transition hover:bg-sky-700">
+                    className="inline-flex h-6 items-center gap-1 rounded-md bg-sky-600 px-2.5 text-[11px] font-semibold text-white transition hover:bg-sky-700">
                     Ver lista de trabalho <ArrowRight size={11} />
                   </Link>
                 )}
