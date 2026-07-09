@@ -8,7 +8,7 @@ import {
   AlertTriangle, ArrowLeft, BarChart2, CheckCircle2,
   Circle, Clock, FlaskConical, Stethoscope, TestTube2,
   User, Building2, CalendarClock, Droplets, Zap, FileText,
-  Loader2, Send,
+  Loader2, Send, Printer,
 } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
@@ -253,6 +253,11 @@ export default function RequestDetailPage() {
     }
   }
 
+  function openRequestPdf() {
+    if (!id) return
+    window.open(`/api/v1/clinical/labrequest/${id}/request-pdf/`, "_blank")
+  }
+
   return (
     <AppLayout requiredGroups={requiredGroupsForResourceGroup("clinical")} subNav={<RequestsSubNav />}>
       <div className="w-full space-y-2 px-1">
@@ -306,6 +311,14 @@ export default function RequestDetailPage() {
             >
               Editar
             </Link>
+            <button
+              type="button"
+              onClick={openRequestPdf}
+              className="inline-flex h-7 items-center gap-1.5 rounded-md border border-border bg-background px-2.5 text-xs font-medium text-foreground-2 shadow-sm transition hover:bg-muted hover:text-foreground"
+            >
+              <Printer size={11} />
+              Imprimir requisição
+            </button>
             <Link
               href={reportHref}
               className="inline-flex h-7 items-center gap-1.5 rounded-md border border-[var(--primary-200)] bg-[var(--primary-50)] px-2.5 text-xs font-semibold text-[var(--primary-700)] shadow-sm transition hover:bg-[var(--primary-100)]"
