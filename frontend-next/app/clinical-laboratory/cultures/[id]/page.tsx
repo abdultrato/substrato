@@ -238,6 +238,7 @@ export default function CultureDetailPage() {
 
   const isPositiveFlow = positiveWorkflowActive;
   const isIncubating = culture.status === "INCUBACAO" || culture.status === "REINCUBACAO";
+  const biochemicalSaved = JSON.stringify(biochemical) === JSON.stringify(culture.biochemical_tests || []);
 
   return (
     <AppLayout requiredGroups={requiredGroupsForResourceGroup("clinical_laboratory")}>
@@ -425,12 +426,12 @@ export default function CultureDetailPage() {
                       <h3 className="text-xs font-semibold text-foreground">Provas bioquímicas de identificação de microrganismos</h3>
                       <p className="text-[11px] text-muted-foreground">Registe uma sessão inicial e adicione outras provas quando necessário.</p>
                     </div>
-                    <button onClick={addBiochemical} className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border border-white/40 bg-white/35 px-2.5 text-xs font-medium text-foreground shadow-sm backdrop-blur-sm"><Plus size={14} /> Sessão</button>
+                    <button onClick={addBiochemical} className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border border-white/40 bg-white/35 px-2.5 text-xs font-medium text-foreground shadow-sm backdrop-blur-sm"><Plus size={14} /> Prova</button>
                   </div>
                   {biochemical.map((test, index) => (
                     <div key={index} className="rounded-lg border border-white/25 bg-white/20 p-2 backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]">
                       <div className="mb-2 flex items-center justify-between gap-2">
-                        <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Sessão {index + 1}</span>
+                        <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Prova {index + 1}</span>
                         <button type="button" onClick={() => setBiochemical((rows) => rows.length > 1 ? rows.filter((_, i) => i !== index) : rows)} className="inline-flex h-7 w-7 items-center justify-center rounded-lg border border-white/30 bg-white/25 text-muted-foreground hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-40" disabled={biochemical.length <= 1} aria-label="Remover sessão de prova bioquímica"><Trash2 size={13} /></button>
                       </div>
                       <div className="grid gap-2 md:grid-cols-[1fr_120px_1fr_1fr]">
@@ -443,7 +444,11 @@ export default function CultureDetailPage() {
                   ))}
                 </div>
                 <div className="flex gap-2">
-                  <button onClick={() => submitAction("salvar-provas-bioquimicas", { tests: biochemical })} className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 px-3 text-xs font-semibold text-white shadow-md shadow-violet-500/20"><Save size={14} /> Guardar provas</button>
+                  {!biochemicalSaved ? (
+                    <button onClick={() => submitAction("salvar-provas-bioquimicas", { tests: biochemical })} className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 px-3 text-xs font-semibold text-white shadow-md shadow-violet-500/20"><Save size={14} /> Guardar provas</button>
+                  ) : (
+                    <span className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50/70 px-3 text-xs font-semibold text-emerald-700 dark:border-emerald-800/40 dark:bg-emerald-900/15 dark:text-emerald-300"><CheckCircle2 size={14} /> Provas guardadas</span>
+                  )}
                   <button onClick={() => submitAction("finalizar", { positive: true })} className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-600 px-3 text-xs font-semibold text-white shadow-md shadow-emerald-500/20"><CheckCircle2 size={14} /> Finalizar positiva</button>
                 </div>
               </Card>
