@@ -223,8 +223,8 @@ export function ItemRow({
 
           {samples.length > 0 && (
             <div className="mt-0.5 flex flex-wrap gap-2">
-              {samples.map((s) => (
-                <span key={s.id} className="text-[10px] text-[var(--gray-500)]">
+              {samples.map((s, idx) => (
+                <span key={s.id ?? `${s.name ?? "amostra"}-${idx}`} className="text-[10px] text-[var(--gray-500)]">
                   {s.name}
                   {s.bottle_type_display ? ` · ${s.bottle_type_display}` : ""}
                   {s.minimum_volume_ml && Number(s.minimum_volume_ml) > 0 ? ` · ${s.minimum_volume_ml} ml` : ""}
