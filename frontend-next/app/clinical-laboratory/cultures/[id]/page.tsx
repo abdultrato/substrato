@@ -75,6 +75,10 @@ type Culture = {
 const inputClass = "h-8 w-full rounded-lg border border-white/30 bg-white/35 px-2.5 text-xs text-foreground shadow-sm outline-none backdrop-blur-sm placeholder:text-muted-foreground focus:border-teal-400 focus:ring-2 focus:ring-teal-500/20 dark:border-white/10 dark:bg-white/[0.06]";
 const textareaClass = "min-h-20 w-full rounded-lg border border-white/30 bg-white/35 px-2.5 py-2 text-xs text-foreground shadow-sm outline-none backdrop-blur-sm placeholder:text-muted-foreground focus:border-teal-400 focus:ring-2 focus:ring-teal-500/20 dark:border-white/10 dark:bg-white/[0.06]";
 
+const GRAM_RESULT_OPTIONS = ["Gram positivos", "Gram negativos", "Gram variáveis"];
+const GRAM_MORPHOLOGY_OPTIONS = ["Cocos", "Bacilos", "Cocobacilos", "Víbrios"];
+const GRAM_ARRANGEMENT_OPTIONS = ["Em cadeia", "Em cachos", "Em corda", "Em pares"];
+
 function makeBiochemicalSession(): BiochemicalTest {
   return {
     name: "",
@@ -393,9 +397,24 @@ export default function CultureDetailPage() {
             {isPositiveFlow && (
               <Card title="Gram e provas bioquímicas" icon={Microscope} accent="bg-gradient-to-b from-violet-500 to-fuchsia-600" iconTone="from-violet-600 to-fuchsia-600">
                 <div className="grid gap-2 md:grid-cols-4">
-                  <input value={gram.result} onChange={(event) => setGram((g) => ({ ...g, result: event.target.value }))} placeholder="Resultado do Gram" className={inputClass} />
-                  <input value={gram.morphology} onChange={(event) => setGram((g) => ({ ...g, morphology: event.target.value }))} placeholder="Morfologia" className={inputClass} />
-                  <input value={gram.arrangement} onChange={(event) => setGram((g) => ({ ...g, arrangement: event.target.value }))} placeholder="Arranjo" className={inputClass} />
+                  <select value={gram.result} onChange={(event) => setGram((g) => ({ ...g, result: event.target.value }))} className={inputClass} aria-label="Resultado do Gram">
+                    <option value="">Resultado do Gram…</option>
+                    {GRAM_RESULT_OPTIONS.map((option) => (
+                      <option key={option} value={option}>{option}</option>
+                    ))}
+                  </select>
+                  <select value={gram.morphology} onChange={(event) => setGram((g) => ({ ...g, morphology: event.target.value }))} className={inputClass} aria-label="Morfologia">
+                    <option value="">Morfologia…</option>
+                    {GRAM_MORPHOLOGY_OPTIONS.map((option) => (
+                      <option key={option} value={option}>{option}</option>
+                    ))}
+                  </select>
+                  <select value={gram.arrangement} onChange={(event) => setGram((g) => ({ ...g, arrangement: event.target.value }))} className={inputClass} aria-label="Arranjo">
+                    <option value="">Arranjo…</option>
+                    {GRAM_ARRANGEMENT_OPTIONS.map((option) => (
+                      <option key={option} value={option}>{option}</option>
+                    ))}
+                  </select>
                   <input value={gram.notes} onChange={(event) => setGram((g) => ({ ...g, notes: event.target.value }))} placeholder="Notas" className={inputClass} />
                 </div>
                 <button onClick={() => submitAction("salvar-gram", gram)} className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 px-3 text-xs font-semibold text-white shadow-md shadow-violet-500/20"><Save size={14} /> Guardar Gram</button>
