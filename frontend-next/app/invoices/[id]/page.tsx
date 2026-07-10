@@ -50,10 +50,45 @@ const INVOICE_STATUS: Record<string, { label: string; badge: string; accent: str
   CANC: { label: "Cancelada", badge: "border-rose-200 bg-rose-50 text-rose-700", accent: "bg-rose-500" },
 }
 
+const ORIGIN_LABELS: Record<string, string> = {
+  MIX: "Misto",
+  CLI: "Clínica",
+  CON: "Consulta",
+  FAR: "Farmácia",
+  ENF: "Enfermagem",
+  CIR: "Cirurgia",
+}
+
 function EstadoBadge({ estado }: { estado?: string }) {
   const meta = INVOICE_STATUS[String(estado || "").toUpperCase()]
   if (!meta) return <span className="text-xs text-muted-foreground">{estado || "-"}</span>
   return <span className={`inline-flex rounded-md border px-2 py-0.5 text-xs font-semibold ${meta.badge}`}>{meta.label}</span>
+}
+
+function MetaValue({ children, muted = false }: { children: React.ReactNode; muted?: boolean }) {
+  return <div className={muted ? "text-muted-foreground" : "font-medium text-foreground"}>{children}</div>
+}
+
+function PlaceholderPill({ label }: { label: string }) {
+  return (
+    <span className="inline-flex rounded-md border border-dashed border-border bg-muted/60 px-2 py-0.5 text-[11px] text-muted-foreground">
+      {label}
+    </span>
+  )
+}
+
+function renderMoneyOrPlaceholder(value: unknown, missingLabel = "Sem valor") {
+  if (value === null || value === undefined || value === "") {
+    return <PlaceholderPill label={missingLabel} />
+  }
+  return <MoneyValue value={value as number | string} />
+}
+
+function renderTextOrPlaceholder(value: unknown, missingLabel = "Não informado") {
+  if (value === null || value === undefined || value === "") {
+    return <PlaceholderPill label={missingLabel} />
+  }
+  return String(value)
 }
 
 export default function InvoiceDetailPage() {
@@ -127,6 +162,12 @@ export default function InvoiceDetailPage() {
     if (!subtotal) return "0.00"
     const percentual = (iva / subtotal) * 100
     return Number.isFinite(percentual) ? percentual.toFixed(2) : "0.00"
+  }, [fatura])
+
+  const origemLabel = useMemo(() => {
+    const origin = String(fatura?.origem || fatura?.origin || "").toUpperCase().trim()
+    if (!origin) return null
+    return ORIGIN_LABELS[origin] || origin
   }, [fatura])
 
   const downloadPdf = useCallback(async () => {
@@ -264,37 +305,47 @@ export default function InvoiceDetailPage() {
               actions={<EstadoBadge estado={fatura.estado} />}
             >
               <div className="grid gap-3 text-sm sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-                <div>
+                <div className="rounded-lg border border-border/60 bg-background/40 px-3 py-2.5">
                   <div className="text-xs font-semibold uppercase text-muted-foreground">Paciente</div>
-                  <div className="text-foreground">{fatura.paciente || "-"}</div>
+                  <MetaValue muted={!fatura.paciente}>{renderTextOrPlaceholder(fatura.paciente, "Sem paciente")}</MetaValue>
                 </div>
-                <div>
+                <div className="rounded-lg border border-border/60 bg-background/40 px-3 py-2.5">
                   <div className="text-xs font-semibold uppercase text-muted-foreground">Origem</div>
-                  <div className="text-foreground">{fatura.origem || fatura.origin || "-"}</div>
+                  <MetaValue muted={!origemLabel}>{renderTextOrPlaceholder(origemLabel, "Sem origem")}</MetaValue>
                 </div>
-                <div>
+                <div className="rounded-lg border border-border/60 bg-background/40 px-3 py-2.5">
                   <div className="text-xs font-semibold uppercase text-muted-foreground">Subtotal (sem IVA)</div>
-                  <div className="text-foreground"><MoneyValue value={fatura.subtotal} /></div>
+                  <MetaValue muted={fatura.subtotal === null || fatura.subtotal === undefined || fatura.subtotal === ""}>
+                    {renderMoneyOrPlaceholder(fatura.subtotal, "Não calculado")}
+                  </MetaValue>
                 </div>
-                <div>
+                <div className="rounded-lg border border-border/60 bg-background/40 px-3 py-2.5">
                   <div className="text-xs font-semibold uppercase text-muted-foreground">IVA (%)</div>
-                  <div className="text-foreground">{ivaPercentual}%</div>
+                  <MetaValue>{ivaPercentual}%</MetaValue>
                 </div>
-                <div>
+                <div className="rounded-lg border border-border/60 bg-background/40 px-3 py-2.5">
                   <div className="text-xs font-semibold uppercase text-muted-foreground">Valor do IVA</div>
-                  <div className="text-foreground"><MoneyValue value={fatura.iva_valor} /></div>
+                  <MetaValue muted={fatura.iva_valor === null || fatura.iva_valor === undefined || fatura.iva_valor === ""}>
+                    {renderMoneyOrPlaceholder(fatura.iva_valor, "Não calculado")}
+                  </MetaValue>
                 </div>
-                <div>
+                <div className="rounded-lg border border-border/60 bg-background/40 px-3 py-2.5">
                   <div className="text-xs font-semibold uppercase text-muted-foreground">Total a pagar</div>
-                  <div className="text-foreground"><MoneyValue value={fatura.total_a_pagar ?? fatura.total} /></div>
+                  <MetaValue muted={(fatura.total_a_pagar ?? fatura.total) === null || (fatura.total_a_pagar ?? fatura.total) === undefined || (fatura.total_a_pagar ?? fatura.total) === ""}>
+                    {renderMoneyOrPlaceholder(fatura.total_a_pagar ?? fatura.total, "Não calculado")}
+                  </MetaValue>
                 </div>
-                <div>
+                <div className="rounded-lg border border-border/60 bg-background/40 px-3 py-2.5">
                   <div className="text-xs font-semibold uppercase text-muted-foreground">Valor paciente</div>
-                  <div className="text-foreground"><MoneyValue value={fatura.valor_paciente} /></div>
+                  <MetaValue muted={fatura.valor_paciente === null || fatura.valor_paciente === undefined || fatura.valor_paciente === ""}>
+                    {renderMoneyOrPlaceholder(fatura.valor_paciente, "Não calculado")}
+                  </MetaValue>
                 </div>
-                <div>
+                <div className="rounded-lg border border-border/60 bg-background/40 px-3 py-2.5">
                   <div className="text-xs font-semibold uppercase text-muted-foreground">Valor seguro</div>
-                  <div className="text-foreground"><MoneyValue value={fatura.valor_seguro} /></div>
+                  <MetaValue muted={fatura.valor_seguro === null || fatura.valor_seguro === undefined || fatura.valor_seguro === ""}>
+                    {renderMoneyOrPlaceholder(fatura.valor_seguro, "Sem cobertura")}
+                  </MetaValue>
                 </div>
               </div>
             </Card>
@@ -323,11 +374,19 @@ export default function InvoiceDetailPage() {
                               <tr key={item.id}>
                                 <td className="px-2 py-1 font-semibold">{item.descricao || `Item ${item.id}`}</td>
                                 <td className="px-2 py-1 text-right">{item.quantidade ?? "-"}</td>
-                                <td className="px-2 py-1 text-right"><MoneyValue value={item.preco_unitario} /></td>
-                                <td className="px-2 py-1 text-right"><MoneyValue value={item.total_sem_iva} /></td>
+                                <td className="px-2 py-1 text-right">
+                                  {item.preco_unitario === null || item.preco_unitario === undefined || item.preco_unitario === "" ? <PlaceholderPill label="N/C" /> : <MoneyValue value={item.preco_unitario} />}
+                                </td>
+                                <td className="px-2 py-1 text-right">
+                                  {item.total_sem_iva === null || item.total_sem_iva === undefined || item.total_sem_iva === "" ? <PlaceholderPill label="N/C" /> : <MoneyValue value={item.total_sem_iva} />}
+                                </td>
                                 <td className="px-2 py-1 text-right">{item.iva_percentual ?? "-"}%</td>
-                                <td className="px-2 py-1 text-right"><MoneyValue value={item.iva_valor} /></td>
-                                <td className="px-2 py-1 text-right"><MoneyValue value={item.total_com_iva} /></td>
+                                <td className="px-2 py-1 text-right">
+                                  {item.iva_valor === null || item.iva_valor === undefined || item.iva_valor === "" ? <PlaceholderPill label="N/C" /> : <MoneyValue value={item.iva_valor} />}
+                                </td>
+                                <td className="px-2 py-1 text-right">
+                                  {item.total_com_iva === null || item.total_com_iva === undefined || item.total_com_iva === "" ? <PlaceholderPill label="N/C" /> : <MoneyValue value={item.total_com_iva} />}
+                                </td>
                               </tr>
                             ))}
                           </tbody>
