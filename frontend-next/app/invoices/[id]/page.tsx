@@ -31,6 +31,10 @@ type FaturaItem = {
   total_sem_iva?: string | number
   total_com_iva?: string | number
 }
+type PaymentRow = Record<string, any>
+type PatientRow = Record<string, any>
+type InsurerRow = Record<string, any>
+type CoveragePlanRow = Record<string, any>
 
 const ITEM_TYPE_ORDER = ["EXM", "EXA", "AJU", "PRC", "MAT", "FAR"] as const
 
@@ -57,6 +61,17 @@ const ORIGIN_LABELS: Record<string, string> = {
   FAR: "Farmácia",
   ENF: "Enfermagem",
   CIR: "Cirurgia",
+}
+
+const PAYMENT_METHOD_LABELS: Record<string, string> = {
+  DIN: "Dinheiro",
+  CAR: "Cartão",
+  TRF: "Transferência",
+  MOB: "Mobile Money",
+  POS: "POS",
+  SEG: "Seguro de saúde",
+  CHQ: "Cheque",
+  OUT: "Outro",
 }
 
 function EstadoBadge({ estado }: { estado?: string }) {
@@ -106,6 +121,10 @@ export default function InvoiceDetailPage() {
   const [temPagamentoPendente, setTemPagamentoPendente] = useState(false)
   const [fatura, setFatura] = useState<FaturaRow | null>(null)
   const [itens, setItens] = useState<FaturaItem[]>([])
+  const [paciente, setPaciente] = useState<PatientRow | null>(null)
+  const [pagamentosConfirmados, setPagamentosConfirmados] = useState<PaymentRow[]>([])
+  const [seguradorasPorId, setSeguradorasPorId] = useState<Record<string, InsurerRow>>({})
+  const [planosPorId, setPlanosPorId] = useState<Record<string, CoveragePlanRow>>({})
 
   const carregar = useCallback(async () => {
     if (!id) return
@@ -113,18 +132,69 @@ export default function InvoiceDetailPage() {
       setLoading(true)
       setErro(null)
 
-      const [faturaRes, itensRes, pagamentosRes] = await Promise.all([
+      const [faturaRes, itensRes, pagamentosPendentesRes, pagamentosConfirmadosRes] = await Promise.all([
         apiFetch<FaturaRow>(`/invoices/${id}/`, { clientCache: safeRefreshToken === 0 }),
         apiFetch<any>(`/billing/invoiceitem/?fatura=${id}`, { clientCache: safeRefreshToken === 0 }),
         apiFetch<any>(`/payments/payment/?fatura=${id}&status=PEN`, { clientCache: safeRefreshToken === 0 }),
+        apiFetch<any>(`/payments/payment/?fatura=${id}&status=CON`, { clientCache: safeRefreshToken === 0 }),
       ])
 
       const itensLista = itensRes?.results ?? itensRes
-      const pagamentosLista = pagamentosRes?.results ?? pagamentosRes
+      const pagamentosPendentesLista = pagamentosPendentesRes?.results ?? pagamentosPendentesRes
+      const pagamentosConfirmadosLista = pagamentosConfirmadosRes?.results ?? pagamentosConfirmadosRes
+
+      const pagamentosConfirmadosArray = Array.isArray(pagamentosConfirmadosLista) ? pagamentosConfirmadosLista : []
 
       setFatura(faturaRes)
       setItens(Array.isArray(itensLista) ? itensLista : [])
-      setTemPagamentoPendente(Array.isArray(pagamentosLista) ? pagamentosLista.length > 0 : false)
+      setTemPagamentoPendente(Array.isArray(pagamentosPendentesLista) ? pagamentosPendentesLista.length > 0 : false)
+      setPagamentosConfirmados(pagamentosConfirmadosArray)
+
+      if (faturaRes?.paciente) {
+        try {
+          const pacienteRes = await apiFetch<PatientRow>(`/clinical/patients/${faturaRes.paciente}/`, { clientCache: safeRefreshToken === 0 })
+          setPaciente(pacienteRes)
+        } catch {
+          setPaciente(null)
+        }
+      } else {
+        setPaciente(null)
+      }
+
+      const insurerIds = Array.from(new Set(
+        pagamentosConfirmadosArray
+          .map((p) => p.seguradora ?? p.insurer)
+          .filter((value) => value !== null && value !== undefined && value !== "")
+      ))
+      const planIds = Array.from(new Set(
+        pagamentosConfirmadosArray
+          .map((p) => p.plano_cobertura ?? p.coverage_plan)
+          .filter((value) => value !== null && value !== undefined && value !== "")
+      ))
+
+      const insurerEntries = await Promise.all(
+        insurerIds.map(async (insurerId) => {
+          try {
+            const insurer = await apiFetch<InsurerRow>(`/insurer/insurer/${insurerId}/`, { clientCache: safeRefreshToken === 0 })
+            return [String(insurerId), insurer] as const
+          } catch {
+            return [String(insurerId), { id: insurerId }] as const
+          }
+        })
+      )
+      const planEntries = await Promise.all(
+        planIds.map(async (planId) => {
+          try {
+            const plan = await apiFetch<CoveragePlanRow>(`/insurer/coverage_plan/${planId}/`, { clientCache: safeRefreshToken === 0 })
+            return [String(planId), plan] as const
+          } catch {
+            return [String(planId), { id: planId }] as const
+          }
+        })
+      )
+
+      setSeguradorasPorId(Object.fromEntries(insurerEntries))
+      setPlanosPorId(Object.fromEntries(planEntries))
     } catch (e: any) {
       setErro(isNotFoundLikeError(e) ? "Fatura não encontrada." : (e?.message || "Falha ao carregar a fatura."))
     } finally {
@@ -156,19 +226,60 @@ export default function InvoiceDetailPage() {
   }, [itens])
 
   const ivaPercentual = useMemo(() => {
-    if (!fatura) return "0.00"
-    const subtotal = Number(fatura.subtotal ?? 0)
-    const iva = Number(fatura.iva_valor ?? 0)
-    if (!subtotal) return "0.00"
-    const percentual = (iva / subtotal) * 100
-    return Number.isFinite(percentual) ? percentual.toFixed(2) : "0.00"
+    const percentages = Array.from(new Set(
+      itens
+        .filter((item) => item.aplica_iva !== false)
+        .map((item) => String(item.iva_percentual ?? "").trim())
+        .filter(Boolean)
+    ))
+    if (!percentages.length) return "0.00"
+    return percentages.map((value) => `${value}%`).join(", ")
+  }, [itens])
+
+  const origemExata = useMemo(() => {
+    const origin = String(fatura?.origem || fatura?.origin || "").trim()
+    return origin || null
   }, [fatura])
 
-  const origemLabel = useMemo(() => {
-    const origin = String(fatura?.origem || fatura?.origin || "").toUpperCase().trim()
-    if (!origin) return null
-    return ORIGIN_LABELS[origin] || origin
-  }, [fatura])
+  const valorPagoPaciente = useMemo(() => (
+    pagamentosConfirmados
+      .filter((p) => String(p.metodo ?? p.method ?? "").toUpperCase() !== "SEG")
+      .reduce((sum, p) => sum + Number(p.valor ?? p.value ?? 0), 0)
+  ), [pagamentosConfirmados])
+
+  const pagamentosSeguro = useMemo(() => (
+    pagamentosConfirmados.filter((p) => String(p.metodo ?? p.method ?? "").toUpperCase() === "SEG")
+  ), [pagamentosConfirmados])
+
+  const valorPagoSeguro = useMemo(() => (
+    pagamentosSeguro.reduce((sum, p) => sum + Number(p.valor ?? p.value ?? 0), 0)
+  ), [pagamentosSeguro])
+
+  const detalhesSeguro = useMemo(() => (
+    pagamentosSeguro.map((payment) => {
+      const insurerId = String(payment.seguradora ?? payment.insurer ?? "")
+      const planId = String(payment.plano_cobertura ?? payment.coverage_plan ?? "")
+      const insurer = seguradorasPorId[insurerId]
+      const plan = planosPorId[planId]
+      return {
+        id: payment.id,
+        metodo: PAYMENT_METHOD_LABELS[String(payment.metodo ?? payment.method ?? "").toUpperCase()] || payment.metodo || payment.method || "Seguro",
+        valor: payment.valor ?? payment.value,
+        seguradora: insurer?.nome || insurer?.name || insurer?.id_custom || insurer?.id || insurerId,
+        plano: plan?.nome || plan?.name || plan?.id_custom || plan?.id || planId,
+        autorizacao: payment.numero_autorizacao || payment.authorization_number || null,
+        dados: payment.dados_seguro || payment.insurance_date || null,
+      }
+    })
+  ), [pagamentosSeguro, planosPorId, seguradorasPorId])
+
+  const nomePaciente = useMemo(() => (
+    paciente?.nome || paciente?.name || fatura?.paciente_nome || fatura?.patient_name || fatura?.paciente_label || fatura?.paciente || null
+  ), [fatura, paciente])
+
+  const valorIvaItens = useMemo(() => (
+    itens.reduce((sum, item) => sum + Number(item.iva_valor ?? 0), 0)
+  ), [itens])
 
   const downloadPdf = useCallback(async () => {
     if (!id) return
@@ -307,11 +418,11 @@ export default function InvoiceDetailPage() {
               <div className="grid gap-3 text-sm sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
                 <div className="rounded-lg border border-border/60 bg-background/40 px-3 py-2.5">
                   <div className="text-xs font-semibold uppercase text-muted-foreground">Paciente</div>
-                  <MetaValue muted={!fatura.paciente}>{renderTextOrPlaceholder(fatura.paciente, "Sem paciente")}</MetaValue>
+                  <MetaValue muted={!nomePaciente}>{renderTextOrPlaceholder(nomePaciente, "Sem paciente")}</MetaValue>
                 </div>
                 <div className="rounded-lg border border-border/60 bg-background/40 px-3 py-2.5">
                   <div className="text-xs font-semibold uppercase text-muted-foreground">Origem</div>
-                  <MetaValue muted={!origemLabel}>{renderTextOrPlaceholder(origemLabel, "Sem origem")}</MetaValue>
+                  <MetaValue muted={!origemExata}>{renderTextOrPlaceholder(origemExata, "Sem origem")}</MetaValue>
                 </div>
                 <div className="rounded-lg border border-border/60 bg-background/40 px-3 py-2.5">
                   <div className="text-xs font-semibold uppercase text-muted-foreground">Subtotal (sem IVA)</div>
@@ -325,8 +436,8 @@ export default function InvoiceDetailPage() {
                 </div>
                 <div className="rounded-lg border border-border/60 bg-background/40 px-3 py-2.5">
                   <div className="text-xs font-semibold uppercase text-muted-foreground">Valor do IVA</div>
-                  <MetaValue muted={fatura.iva_valor === null || fatura.iva_valor === undefined || fatura.iva_valor === ""}>
-                    {renderMoneyOrPlaceholder(fatura.iva_valor, "Não calculado")}
+                  <MetaValue muted={Number.isNaN(valorIvaItens) || valorIvaItens === 0}>
+                    {renderMoneyOrPlaceholder(valorIvaItens, "Não calculado")}
                   </MetaValue>
                 </div>
                 <div className="rounded-lg border border-border/60 bg-background/40 px-3 py-2.5">
@@ -336,19 +447,40 @@ export default function InvoiceDetailPage() {
                   </MetaValue>
                 </div>
                 <div className="rounded-lg border border-border/60 bg-background/40 px-3 py-2.5">
-                  <div className="text-xs font-semibold uppercase text-muted-foreground">Valor paciente</div>
-                  <MetaValue muted={fatura.valor_paciente === null || fatura.valor_paciente === undefined || fatura.valor_paciente === ""}>
-                    {renderMoneyOrPlaceholder(fatura.valor_paciente, "Não calculado")}
+                  <div className="text-xs font-semibold uppercase text-muted-foreground">Valor pago pelo paciente</div>
+                  <MetaValue muted={valorPagoPaciente === 0}>
+                    {renderMoneyOrPlaceholder(valorPagoPaciente, "Sem pagamento do paciente")}
                   </MetaValue>
                 </div>
                 <div className="rounded-lg border border-border/60 bg-background/40 px-3 py-2.5">
-                  <div className="text-xs font-semibold uppercase text-muted-foreground">Valor seguro</div>
-                  <MetaValue muted={fatura.valor_seguro === null || fatura.valor_seguro === undefined || fatura.valor_seguro === ""}>
-                    {renderMoneyOrPlaceholder(fatura.valor_seguro, "Sem cobertura")}
+                  <div className="text-xs font-semibold uppercase text-muted-foreground">Valor pago pelo seguro</div>
+                  <MetaValue muted={valorPagoSeguro === 0}>
+                    {renderMoneyOrPlaceholder(valorPagoSeguro, "Sem cobertura")}
                   </MetaValue>
                 </div>
               </div>
             </Card>
+
+            {detalhesSeguro.length ? (
+              <Card glass title="Detalhes da seguradora" subtitle="Pagamentos confirmados por seguro de saúde.">
+                <div className="grid gap-3 md:grid-cols-2">
+                  {detalhesSeguro.map((detalhe) => (
+                    <div key={detalhe.id} className="rounded-lg border border-border/60 bg-background/40 px-3 py-2.5 text-sm">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="font-semibold text-foreground">{detalhe.seguradora || "Seguradora não identificada"}</div>
+                        <div className="text-sm font-semibold text-foreground"><MoneyValue value={detalhe.valor} /></div>
+                      </div>
+                      <div className="mt-2 grid gap-1 text-xs text-muted-foreground">
+                        <div>Método: {renderTextOrPlaceholder(detalhe.metodo, "Não informado")}</div>
+                        <div>Plano: {renderTextOrPlaceholder(detalhe.plano, "Sem plano")}</div>
+                        <div>Autorização: {renderTextOrPlaceholder(detalhe.autorizacao, "Sem autorização")}</div>
+                        {detalhe.dados ? <div>Dados do seguro: {renderTextOrPlaceholder(detalhe.dados)}</div> : null}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+            ) : null}
 
             <Card glass title="Itens da fatura" subtitle="Itens, IVA e totais por linha.">
               {groupedItens.length ? (
