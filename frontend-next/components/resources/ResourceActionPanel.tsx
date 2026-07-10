@@ -443,12 +443,12 @@ export default function ResourceActionPanel({
   return (
     <section className={`rounded-xl border border-white/20 bg-white/20 p-2.5 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-slate-950/35 ${isBillingInvoice ? "mx-auto" : ""}`}>
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 whitespace-nowrap">
           <div className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-white/25 bg-white/45 text-[var(--primary-700)] shadow-sm dark:border-white/10 dark:bg-white/10">
             <Wrench size={16} />
           </div>
           <div>
-            <p className="text-sm font-semibold text-[var(--text)]">
+            <p className="whitespace-nowrap text-sm font-semibold text-[var(--text)]">
               {isBillingInvoice ? t("Ações de faturamento", "Billing actions") : t("Ações do recurso", "Resource actions")}
             </p>
             <p className="text-xs text-[var(--gray-600)]">
@@ -476,11 +476,11 @@ export default function ResourceActionPanel({
               <span className="absolute left-0 top-0 h-full w-1 bg-gradient-to-b from-[var(--primary-500)] to-[var(--primary-400)]" />
               <div className="flex flex-wrap items-start justify-between gap-2">
                 <div className="min-w-0">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 whitespace-nowrap">
                     <span className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-white/25 bg-white/45 text-[var(--primary-700)] shadow-sm dark:border-white/10 dark:bg-white/10">
                       {isAiAction ? <Bot size={14} /> : action.responseMode === "json" ? <Play size={14} /> : <FileDown size={14} />}
                     </span>
-                    <p className="text-sm font-bold text-[var(--text)]">{action.label}</p>
+                    <p className="whitespace-nowrap text-sm font-bold text-[var(--text)]">{action.label}</p>
                   </div>
                   <p className="mt-1 text-xs text-[var(--gray-600)]">{action.description}</p>
                 </div>
