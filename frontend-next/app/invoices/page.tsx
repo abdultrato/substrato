@@ -525,73 +525,78 @@ export default function FaturasPage() {
                 </div>
               </Card>
             ) : (
-              <div className={`grid gap-2 ${filtroEstado ? "grid-cols-1" : "xl:grid-cols-2"}`}>
+              <div className={filtroEstado ? "grid grid-cols-1 gap-2" : "overflow-x-auto pb-1"}>
+                <div className={filtroEstado ? "contents" : "flex min-w-[820px] flex-nowrap gap-2"}>
                 {colunasVisiveis.map((column) => (
-                  <Card
-                    key={column.key}
-                    glass
-                    title={column.title}
-                    subtitle={column.subtitle}
-                    actions={
-                      <div className="flex items-center gap-2 text-right">
-                        <span className="text-[11px] text-muted-foreground">
-                          A mostrar {column.visibleRows.length} de {column.rows.length}
-                        </span>
-                        <span className={`inline-flex rounded-md border px-2 py-1 text-[10px] font-semibold ${column.countAccent}`}>
-                          {column.rows.length}
-                        </span>
-                      </div>
-                    }
-                  >
-                    {column.visibleRows.length === 0 ? (
-                      <div className="py-8 text-center text-sm text-muted-foreground">{column.empty}</div>
-                    ) : (
-                      <div className={`grid gap-1 ${filtroEstado ? "grid-cols-2 md:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-7" : "grid-cols-2 md:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6"}`}>
-                        {column.visibleRows.map((f) => {
-                          const statusCode = invoiceStatusCode(f)
-                          const accentBar =
-                            statusCode === "PAGA" ? "bg-emerald-500"
-                            : statusCode === "EMIT" ? "bg-sky-500"
-                            : statusCode === "CANC" ? "bg-rose-500"
-                            : "bg-amber-500"
-                          return (
-                            <article
-                              key={f.id}
-                              className="relative flex min-h-[84px] flex-col overflow-hidden rounded-md border border-white/15 bg-white/18 p-1.5 pl-2 shadow-sm backdrop-blur-sm transition hover:border-white/30 hover:bg-white/22 dark:border-white/10 dark:bg-white/[0.05] dark:hover:bg-white/[0.08]"
-                            >
-                              <span className={`absolute left-0 top-0 h-full w-1 ${accentBar}`} />
-                              <Link href={`/invoices/${f.id}`} className="absolute inset-0 z-10" aria-label={`Abrir detalhes da fatura ${f.id_custom || f.id}`} />
-                              <div className="relative flex items-start justify-between gap-1">
-                                <div className="min-w-0">
-                                  <div className="truncate text-[10px] font-bold leading-tight text-foreground">{f.id_custom || `Fatura ${f.id}`}</div>
-                                  <div className="mt-0.5 line-clamp-1 min-h-[0.875rem] text-[9px] leading-3 text-muted-foreground">
-                                    {f.paciente || "Paciente não identificado"}
+                  <div key={column.key} className={filtroEstado ? "" : "min-w-0 flex-1 basis-1/2"}>
+                    <Card
+                      glass
+                      title={column.title}
+                      subtitle={column.subtitle}
+                      actions={
+                        <div className="flex items-center gap-2 text-right">
+                          <span className="whitespace-nowrap text-[11px] text-muted-foreground">
+                            A mostrar {column.visibleRows.length} de {column.rows.length}
+                          </span>
+                          <span className={`inline-flex rounded-md border px-2 py-1 text-[10px] font-semibold ${column.countAccent}`}>
+                            {column.rows.length}
+                          </span>
+                        </div>
+                      }
+                    >
+                      {column.visibleRows.length === 0 ? (
+                        <div className="py-8 text-center text-sm text-muted-foreground">{column.empty}</div>
+                      ) : (
+                        <div className="max-h-[68vh] overflow-y-auto pr-1">
+                          <div className={`grid gap-1 ${filtroEstado ? "grid-cols-2 md:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-7" : "grid-cols-2 md:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6"}`}>
+                            {column.visibleRows.map((f) => {
+                              const statusCode = invoiceStatusCode(f)
+                              const accentBar =
+                                statusCode === "PAGA" ? "bg-emerald-500"
+                                : statusCode === "EMIT" ? "bg-sky-500"
+                                : statusCode === "CANC" ? "bg-rose-500"
+                                : "bg-amber-500"
+                              return (
+                                <article
+                                  key={f.id}
+                                  className="relative flex min-h-[84px] flex-col overflow-hidden rounded-md border border-white/15 bg-white/18 p-1.5 pl-2 shadow-sm backdrop-blur-sm transition hover:border-white/30 hover:bg-white/22 dark:border-white/10 dark:bg-white/[0.05] dark:hover:bg-white/[0.08]"
+                                >
+                                  <span className={`absolute left-0 top-0 h-full w-1 ${accentBar}`} />
+                                  <Link href={`/invoices/${f.id}`} className="absolute inset-0 z-10" aria-label={`Abrir detalhes da fatura ${f.id_custom || f.id}`} />
+                                  <div className="relative flex items-start justify-between gap-1">
+                                    <div className="min-w-0">
+                                      <div className="truncate text-[10px] font-bold leading-tight text-foreground">{f.id_custom || `Fatura ${f.id}`}</div>
+                                      <div className="mt-0.5 line-clamp-1 min-h-[0.875rem] text-[9px] leading-3 text-muted-foreground">
+                                        {f.paciente || "Paciente não identificado"}
+                                      </div>
+                                    </div>
+                                    <div className="pointer-events-none">
+                                      <EstadoBadge estado={statusCode} />
+                                    </div>
                                   </div>
-                                </div>
-                                <div className="pointer-events-none">
-                                  <EstadoBadge estado={statusCode} />
-                                </div>
-                              </div>
-                              <div className="relative mt-1 grid gap-0.5 text-[9px] text-muted-foreground">
-                                <div className="flex items-center gap-1">
-                                  {isProformaOrigin(f) ? (
-                                    <span className="inline-flex rounded-md border border-violet-200 bg-violet-50 px-1 py-0 text-[8px] font-semibold text-violet-700">Proforma</span>
-                                  ) : (
-                                    <span className="truncate">{invoiceOriginLabel(f)}</span>
-                                  )}
-                                </div>
-                                <span className="text-[11px] font-bold leading-none text-foreground tabular-nums">
-                                  <MoneyValue value={totalAPagar(f)} />
-                                </span>
-                              </div>
-                              <div className="relative z-20 mt-auto border-t border-white/10 pt-1">{renderAcoes(f)}</div>
-                            </article>
-                          )
-                        })}
-                      </div>
-                    )}
-                  </Card>
+                                  <div className="relative mt-1 grid gap-0.5 text-[9px] text-muted-foreground">
+                                    <div className="flex items-center gap-1">
+                                      {isProformaOrigin(f) ? (
+                                        <span className="inline-flex rounded-md border border-violet-200 bg-violet-50 px-1 py-0 text-[8px] font-semibold text-violet-700">Proforma</span>
+                                      ) : (
+                                        <span className="truncate">{invoiceOriginLabel(f)}</span>
+                                      )}
+                                    </div>
+                                    <span className="text-[11px] font-bold leading-none text-foreground tabular-nums">
+                                      <MoneyValue value={totalAPagar(f)} />
+                                    </span>
+                                  </div>
+                                  <div className="relative z-20 mt-auto border-t border-white/10 pt-1">{renderAcoes(f)}</div>
+                                </article>
+                              )
+                            })}
+                          </div>
+                        </div>
+                      )}
+                    </Card>
+                  </div>
                 ))}
+                </div>
               </div>
             )}
           </div>
