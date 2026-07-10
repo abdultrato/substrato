@@ -518,10 +518,6 @@ export default function FaturasPage() {
           <div className="text-sm text-gray-500">Carregando faturas...</div>
         ) : (
           <div className="space-y-2">
-            <div className="px-1 text-[11px] text-muted-foreground">
-              A mostrar {totalFaturasVisiveis} de {faturasFiltradas.length} fatura{faturasFiltradas.length !== 1 ? "s" : ""} no quadro
-            </div>
-
             {faturasFiltradas.length === 0 ? (
               <Card glass>
                 <div className="py-10 text-center text-sm text-muted-foreground">
@@ -537,9 +533,14 @@ export default function FaturasPage() {
                     title={column.title}
                     subtitle={column.subtitle}
                     actions={
-                      <span className={`inline-flex rounded-md border px-2 py-1 text-[10px] font-semibold ${column.countAccent}`}>
-                        {column.rows.length}
-                      </span>
+                      <div className="flex items-center gap-2 text-right">
+                        <span className="text-[11px] text-muted-foreground">
+                          A mostrar {column.visibleRows.length} de {column.rows.length}
+                        </span>
+                        <span className={`inline-flex rounded-md border px-2 py-1 text-[10px] font-semibold ${column.countAccent}`}>
+                          {column.rows.length}
+                        </span>
+                      </div>
                     }
                   >
                     {column.visibleRows.length === 0 ? (
