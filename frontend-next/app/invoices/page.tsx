@@ -4,7 +4,7 @@ import { isNotFoundLikeError } from "@/lib/errors/api-error"
 import Link from "next/link"
 import { useCallback, useEffect, useMemo, useState } from "react"
 
-import { BadgeCheck, BarChart3, Building2, FilePlus2, FileText, Plus, Receipt, Search, Wallet, X } from "lucide-react"
+import { BadgeCheck, BarChart3, Building2, FilePlus2, Plus, Receipt, Search, Wallet, X } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
 import PageSizeInput from "@/components/ui/PageSizeInput"
@@ -95,14 +95,23 @@ function InvoiceMetric({
   label,
   value,
   accent,
+  active = false,
+  onClick,
 }: {
   icon: React.ElementType
   label: string
   value: React.ReactNode
   accent: string
+  active?: boolean
+  onClick?: () => void
 }) {
+  const Component = onClick ? "button" : "section"
   return (
-    <section className={`relative overflow-hidden ${GLASS}`}>
+    <Component
+      type={onClick ? "button" : undefined}
+      onClick={onClick}
+      className={`relative overflow-hidden text-left transition ${GLASS} ${onClick ? "hover:bg-white/40 dark:hover:bg-white/[0.08]" : ""} ${active ? "ring-2 ring-sky-500/40" : ""}`}
+    >
       <span className={`absolute left-0 top-0 h-full w-1 ${accent}`} />
       <div className="flex items-center gap-2.5 px-3 py-2 pl-4">
         <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl ${accent} text-white shadow-sm`}>
@@ -113,7 +122,7 @@ function InvoiceMetric({
           <p className="font-display text-xl font-bold leading-tight text-foreground tabular-nums">{value}</p>
         </div>
       </div>
-    </section>
+    </Component>
   )
 }
 
@@ -170,6 +179,46 @@ export default function FaturasPage() {
     () => colunaFaturas.reduce((total, column) => total + column.visibleRows.length, 0),
     [colunaFaturas]
   )
+  const colunasVisiveis = useMemo(() => {
+    if (!filtroEstado) return colunaFaturas
+
+    if (filtroEstado === "PAGA") {
+      return [{
+        key: "paid-filter",
+        title: "Pagas",
+        subtitle: "Faturas pagas filtradas.",
+        empty: "Nenhuma fatura paga.",
+        accentBar: "bg-emerald-500",
+        countAccent: "text-emerald-700 bg-emerald-50 border-emerald-200",
+        rows: faturasFiltradas,
+        visibleRows: faturasFiltradas.slice(0, pageSize),
+      }]
+    }
+
+    if (filtroEstado === "EMIT") {
+      return [{
+        key: "issued-filter",
+        title: "Emitidas",
+        subtitle: "Faturas emitidas filtradas.",
+        empty: "Nenhuma fatura emitida.",
+        accentBar: "bg-sky-500",
+        countAccent: "text-sky-700 bg-sky-50 border-sky-200",
+        rows: faturasFiltradas,
+        visibleRows: faturasFiltradas.slice(0, pageSize),
+      }]
+    }
+
+    return [{
+      key: "draft-filter",
+      title: "Rascunhos",
+      subtitle: "Faturas em rascunho filtradas.",
+      empty: "Nenhum rascunho encontrado.",
+      accentBar: "bg-amber-500",
+      countAccent: "text-amber-700 bg-amber-50 border-amber-200",
+      rows: faturasFiltradas,
+      visibleRows: faturasFiltradas.slice(0, pageSize),
+    }]
+  }, [colunaFaturas, faturasFiltradas, filtroEstado, pageSize])
   const totalAPagar = useCallback(
     (f?: FaturaRow | null) => f?.total_a_pagar ?? f?.valor_a_pagar ?? f?.total,
     []
@@ -376,10 +425,38 @@ export default function FaturasPage() {
             </div>
 
             <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4">
-              <InvoiceMetric icon={FilePlus2} label="Total" value={carregando ? "…" : stats.total} accent="bg-slate-500" />
-              <InvoiceMetric icon={FilePlus2} label="Rascunhos" value={carregando ? "…" : stats.rascunhos} accent="bg-amber-500" />
-              <InvoiceMetric icon={Wallet} label="Emitidas" value={carregando ? "…" : stats.emitidas} accent="bg-sky-500" />
-              <InvoiceMetric icon={BadgeCheck} label="Pagas" value={carregando ? "…" : stats.pagas} accent="bg-emerald-500" />
+              <InvoiceMetric
+                icon={FilePlus2}
+                label="Total"
+                value={carregando ? "…" : stats.total}
+                accent="bg-slate-500"
+                active={filtroEstado === null}
+                onClick={() => setFiltroEstado(null)}
+              />
+              <InvoiceMetric
+                icon={FilePlus2}
+                label="Rascunhos"
+                value={carregando ? "…" : stats.rascunhos}
+                accent="bg-amber-500"
+                active={filtroEstado === "RASC"}
+                onClick={() => setFiltroEstado((current) => (current === "RASC" ? null : "RASC"))}
+              />
+              <InvoiceMetric
+                icon={Wallet}
+                label="Emitidas"
+                value={carregando ? "…" : stats.emitidas}
+                accent="bg-sky-500"
+                active={filtroEstado === "EMIT"}
+                onClick={() => setFiltroEstado((current) => (current === "EMIT" ? null : "EMIT"))}
+              />
+              <InvoiceMetric
+                icon={BadgeCheck}
+                label="Pagas"
+                value={carregando ? "…" : stats.pagas}
+                accent="bg-emerald-500"
+                active={filtroEstado === "PAGA"}
+                onClick={() => setFiltroEstado((current) => (current === "PAGA" ? null : "PAGA"))}
+              />
             </div>
 
             <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
@@ -460,8 +537,8 @@ export default function FaturasPage() {
                 </div>
               </Card>
             ) : (
-              <div className="grid gap-2 xl:grid-cols-2">
-                {colunaFaturas.map((column) => (
+              <div className={`grid gap-2 ${filtroEstado ? "grid-cols-1" : "xl:grid-cols-2"}`}>
+                {colunasVisiveis.map((column) => (
                   <Card
                     key={column.key}
                     glass
@@ -476,7 +553,7 @@ export default function FaturasPage() {
                     {column.visibleRows.length === 0 ? (
                       <div className="py-8 text-center text-sm text-muted-foreground">{column.empty}</div>
                     ) : (
-                      <div className="space-y-1.5">
+                      <div className={`grid gap-1.5 ${filtroEstado ? "grid-cols-2 md:grid-cols-3 xl:grid-cols-5 2xl:grid-cols-6" : "grid-cols-2 md:grid-cols-3"}`}>
                         {column.visibleRows.map((f) => {
                           const statusCode = invoiceStatusCode(f)
                           const accentBar =
@@ -487,14 +564,14 @@ export default function FaturasPage() {
                           return (
                             <article
                               key={f.id}
-                              className="relative flex min-h-[184px] flex-col overflow-hidden rounded-xl border border-white/15 bg-white/20 p-3 pl-4 shadow-sm backdrop-blur-sm transition hover:border-white/30 hover:bg-white/24 dark:border-white/10 dark:bg-white/[0.05] dark:hover:bg-white/[0.08]"
+                              className="relative flex min-h-[138px] flex-col overflow-hidden rounded-lg border border-white/15 bg-white/20 p-2.5 pl-3 shadow-sm backdrop-blur-sm transition hover:border-white/30 hover:bg-white/24 dark:border-white/10 dark:bg-white/[0.05] dark:hover:bg-white/[0.08]"
                             >
                               <span className={`absolute left-0 top-0 h-full w-1 ${accentBar}`} />
                               <Link href={`/invoices/${f.id}`} className="absolute inset-0 z-10" aria-label={`Abrir detalhes da fatura ${f.id_custom || f.id}`} />
                               <div className="relative flex items-start justify-between gap-2">
                                 <div className="min-w-0">
-                                  <div className="truncate text-sm font-bold leading-tight text-foreground">{f.id_custom || `Fatura ${f.id}`}</div>
-                                  <div className="mt-1 line-clamp-2 min-h-[2rem] text-[11px] leading-4 text-muted-foreground">
+                                  <div className="truncate text-[12px] font-bold leading-tight text-foreground">{f.id_custom || `Fatura ${f.id}`}</div>
+                                  <div className="mt-1 line-clamp-2 min-h-[1.75rem] text-[10px] leading-3.5 text-muted-foreground">
                                     {f.paciente || "Paciente não identificado"}
                                   </div>
                                 </div>
@@ -502,7 +579,7 @@ export default function FaturasPage() {
                                   <EstadoBadge estado={statusCode} />
                                 </div>
                               </div>
-                              <div className="relative mt-2 grid gap-1 text-[11px] text-muted-foreground">
+                              <div className="relative mt-1.5 grid gap-1 text-[10px] text-muted-foreground">
                                 <div className="flex items-center gap-2">
                                   {isProformaOrigin(f) ? (
                                     <span className="inline-flex rounded-md border border-violet-200 bg-violet-50 px-1.5 py-0.5 text-[10px] font-semibold text-violet-700">Proforma</span>
@@ -510,11 +587,11 @@ export default function FaturasPage() {
                                     <span className="truncate">{invoiceOriginLabel(f)}</span>
                                   )}
                                 </div>
-                                <span className="text-base font-bold leading-none text-foreground tabular-nums">
+                                <span className="text-sm font-bold leading-none text-foreground tabular-nums">
                                   <MoneyValue value={totalAPagar(f)} />
                                 </span>
                               </div>
-                              <div className="relative z-20 mt-auto border-t border-white/10 pt-2">{renderAcoes(f)}</div>
+                              <div className="relative z-20 mt-auto border-t border-white/10 pt-1.5">{renderAcoes(f)}</div>
                             </article>
                           )
                         })}
