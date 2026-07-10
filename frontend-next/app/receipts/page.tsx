@@ -8,7 +8,6 @@ import {
 } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
-import PageHeader from "@/components/ui/PageHeader"
 import useAuthGuard from "@/hooks/useAuthGuard"
 import MoneyValue from "@/components/ui/MoneyValue"
 import PdfActionLabel from "@/components/ui/PdfActionLabel"
@@ -79,16 +78,29 @@ function sumAmount(rows: ReciboRow[]): number {
   }, 0)
 }
 
+function scrollToReceiptColumn(columnId: string) {
+  if (typeof window === "undefined") return
+  const element = document.getElementById(columnId)
+  if (!element) return
+  element.scrollIntoView({ behavior: "smooth", block: "start", inline: "nearest" })
+}
+
 // ── Stat card ────────────────────────────────────────────────────────────────
 
 function StatCard({
-  label, value, icon: Icon, accent, iconBg, iconColor,
+  label, value, icon: Icon, accent, iconBg, iconColor, onClick,
 }: {
   label: string; value: React.ReactNode
   icon: typeof Receipt; accent: string; iconBg: string; iconColor: string
+  onClick?: () => void
 }) {
+  const Component = onClick ? "button" : "div"
   return (
-    <div className={`relative flex items-center gap-3 overflow-hidden rounded-lg border border-l-4 border-white/20 bg-white/30 px-3 py-2 shadow-sm backdrop-blur-sm dark:bg-white/5 dark:border-white/10 ${accent}`}>
+    <Component
+      type={onClick ? "button" : undefined}
+      onClick={onClick}
+      className={`relative flex items-center gap-3 overflow-hidden rounded-lg border border-l-4 border-white/20 bg-white/30 px-3 py-2 text-left shadow-sm backdrop-blur-sm transition hover:bg-white/40 dark:bg-white/5 dark:border-white/10 dark:hover:bg-white/[0.08] ${accent}`}
+    >
       <span className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md ${iconBg}`}>
         <Icon size={13} className={iconColor} />
       </span>
@@ -96,14 +108,14 @@ function StatCard({
         <div className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground leading-none">{label}</div>
         <div className="mt-0.5 text-lg font-bold text-foreground leading-none">{value}</div>
       </div>
-    </div>
+    </Component>
   )
 }
 
 // ── Receipt card ─────────────────────────────────────────────────────────────
 
 function ReceiptCard({ row, busy, onPdf }: {
-  row: ReciboRow; busy: boolean; onPdf: (id: number) => void
+  row: ReciboRow; busy: boolean; onPdf: (id: number) => void; accentBarClass: string
 }) {
   const code    = getCode(row)
   const patient = getPatient(row)
@@ -112,7 +124,8 @@ function ReceiptCard({ row, busy, onPdf }: {
   const date    = getDate(row)
 
   return (
-    <div className="group flex flex-col gap-1 rounded-md border border-white/25 bg-white/30 px-2 py-1.5 shadow-sm backdrop-blur-sm transition-all duration-150 hover:border-[var(--primary-300)]/60 hover:bg-white/45 dark:bg-white/5 dark:border-white/10 dark:hover:border-[var(--primary-500)]/40">
+    <div className="group relative flex flex-col gap-1 overflow-hidden rounded-md border border-white/25 bg-white/30 px-2 py-1.5 pl-3 shadow-sm backdrop-blur-sm transition-all duration-150 hover:border-[var(--primary-300)]/60 hover:bg-white/45 dark:bg-white/5 dark:border-white/10 dark:hover:border-[var(--primary-500)]/40">
+      <span className={`absolute left-0 top-0 h-full w-1 ${accentBarClass}`} />
 
       {/* Top row: code + amount */}
       <div className="flex items-center justify-between gap-1">
@@ -159,11 +172,13 @@ function ReceiptCard({ row, busy, onPdf }: {
 type ColTokens = {
   headerBgHex: string; border: string
   bg: string; text: string; countBg: string; countText: string
+  accentBar: string
 }
 
 function BoardColumn({
-  title, icon, rows, tokens, emptyText, acaoId, onPdf,
+  id, title, icon, rows, tokens, emptyText, acaoId, onPdf,
 }: {
+  id: string
   title: string; icon: React.ReactNode
   rows: ReciboRow[]; tokens: ColTokens
   emptyText: string; acaoId: number | null
@@ -178,7 +193,7 @@ function BoardColumn({
 
   // eslint-disable-next-line react/forbid-dom-props
   return (
-    <div className="flex flex-col" style={cssVars}>
+    <div id={id} className="flex scroll-mt-4 flex-col" style={cssVars}>
       <div className={`${styles.columnHeader} flex items-center gap-2 px-3 py-2 ${tokens.bg} ${tokens.text}`}>
         {icon}
         <span className="text-sm font-semibold tracking-wide">{title}</span>
@@ -205,6 +220,7 @@ function BoardColumn({
                 row={row}
                 busy={acaoId === row.id}
                 onPdf={onPdf}
+                accentBarClass={tokens.accentBar}
               />
             ))
           )}
@@ -275,66 +291,81 @@ export default function RecibosPage() {
   return (
     <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.RECEPCAO, GROUPS.CONTABILIDADE]}>
       <div className="space-y-4">
-        <PageHeader
-          title="Recibos"
-          actions={
-            <div className="flex items-center gap-2">
-              <div className="relative w-48">
-                <Search size={12} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                <input
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Pesquisar…"
-                  className="w-full rounded-lg border border-border bg-background/60 py-1.5 pl-7 pr-6 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:w-72 focus:ring-2 focus:ring-violet-500/40 transition-all"
-                />
+        <section className="relative overflow-hidden rounded-2xl border border-white/20 bg-white/30 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]">
+          <span className="absolute left-0 top-0 h-full w-1 bg-emerald-500" />
+          <div className="space-y-3 px-3 py-2 pl-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex min-w-0 items-center gap-2">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-md shadow-emerald-500/20">
+                  <Receipt size={17} />
+                </span>
+                <div>
+                  <h1 className="text-lg font-bold leading-tight text-foreground">Recibos</h1>
+                  <p className="text-[11px] text-muted-foreground">
+                    {recibos.length} recibo{recibos.length !== 1 ? "s" : ""} · comprovativos e recebimentos
+                  </p>
+                </div>
               </div>
-              {search && (
-                <button
-                  type="button"
-                  onClick={() => setSearch("")}
-                  className="inline-flex h-8 items-center gap-1 rounded-md border border-[var(--border)] bg-transparent px-2 text-xs font-semibold text-[var(--gray-700)] transition hover:border-[var(--primary-300)] hover:bg-[var(--gray-100)]"
-                >
-                  <RotateCcw size={11} />
-                </button>
-              )}
-              <span className="text-xs text-muted-foreground whitespace-nowrap">{filtered.length} / {recibos.length}</span>
+              <div className="flex items-center gap-2">
+                <div className="relative w-52 sm:w-72">
+                  <Search size={12} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                  <input
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Pesquisar…"
+                    className="w-full rounded-lg border border-border bg-background/60 py-1.5 pl-7 pr-6 text-xs text-foreground placeholder:text-muted-foreground transition focus:outline-none focus:ring-2 focus:ring-violet-500/40"
+                  />
+                </div>
+                {search && (
+                  <button
+                    type="button"
+                    onClick={() => setSearch("")}
+                    className="inline-flex h-8 items-center gap-1 rounded-md border border-[var(--border)] bg-transparent px-2 text-xs font-semibold text-[var(--gray-700)] transition hover:border-[var(--primary-300)] hover:bg-[var(--gray-100)]"
+                  >
+                    <RotateCcw size={11} />
+                  </button>
+                )}
+                <span className="whitespace-nowrap text-xs text-muted-foreground">{filtered.length} / {recibos.length}</span>
+              </div>
             </div>
-          }
-        />
+
+            <div className="grid gap-1.5 sm:grid-cols-3">
+              <StatCard
+                label="Total de recibos"
+                value={recibos.length}
+                icon={Receipt}
+                accent="border-l-[var(--primary-500)]"
+                iconBg="bg-[var(--primary-100)] dark:bg-[var(--primary-900)]/40"
+                iconColor="text-[var(--primary-600)] dark:text-[var(--primary-400)]"
+                onClick={() => scrollToReceiptColumn("recibos-hoje")}
+              />
+              <StatCard
+                label="Gerados hoje"
+                value={hoje.length}
+                icon={Calendar}
+                accent="border-l-emerald-500"
+                iconBg="bg-emerald-100 dark:bg-emerald-900/40"
+                iconColor="text-emerald-600 dark:text-emerald-400"
+                onClick={() => scrollToReceiptColumn("recibos-hoje")}
+              />
+              <StatCard
+                label="Valor total"
+                value={<MoneyValue value={totalValue} />}
+                icon={TrendingUp}
+                accent="border-l-violet-500"
+                iconBg="bg-violet-100 dark:bg-violet-900/40"
+                iconColor="text-violet-600 dark:text-violet-400"
+                onClick={() => scrollToReceiptColumn("recibos-mes")}
+              />
+            </div>
+          </div>
+        </section>
 
         {erro && (
           <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-800/40 dark:bg-amber-900/20 dark:text-amber-300">
             {erro}
           </div>
         )}
-
-        {/* Stats */}
-        <div className="grid gap-3 sm:grid-cols-3">
-          <StatCard
-            label="Total de recibos"
-            value={recibos.length}
-            icon={Receipt}
-            accent="border-l-[var(--primary-500)]"
-            iconBg="bg-[var(--primary-100)] dark:bg-[var(--primary-900)]/40"
-            iconColor="text-[var(--primary-600)] dark:text-[var(--primary-400)]"
-          />
-          <StatCard
-            label="Gerados hoje"
-            value={hoje.length}
-            icon={Calendar}
-            accent="border-l-emerald-500"
-            iconBg="bg-emerald-100 dark:bg-emerald-900/40"
-            iconColor="text-emerald-600 dark:text-emerald-400"
-          />
-          <StatCard
-            label="Valor total"
-            value={<MoneyValue value={totalValue} />}
-            icon={TrendingUp}
-            accent="border-l-violet-500"
-            iconBg="bg-violet-100 dark:bg-violet-900/40"
-            iconColor="text-violet-600 dark:text-violet-400"
-          />
-        </div>
 
         {/* Board */}
         {carregando ? (
@@ -346,6 +377,7 @@ export default function RecibosPage() {
           // eslint-disable-next-line react/forbid-dom-props
           <div className="grid grid-cols-4 gap-3" style={{ "--col-max-height": "calc(100vh - 145px)" } as React.CSSProperties}>
             <BoardColumn
+              id="recibos-hoje"
               title="Hoje"
               icon={<Receipt size={13} className="text-white/90" />}
               rows={hoje}
@@ -353,12 +385,14 @@ export default function RecibosPage() {
                 headerBgHex: "#059669", border: "#6ee7b7",
                 bg: "bg-emerald-600", text: "text-white",
                 countBg: "bg-emerald-500", countText: "text-white",
+                accentBar: "bg-emerald-500",
               }}
               emptyText="Nenhum recibo hoje"
               acaoId={acaoId}
               onPdf={onPdf}
             />
             <BoardColumn
+              id="recibos-ontem"
               title="Ontem"
               icon={<Clock size={13} className="text-white/90" />}
               rows={ontem}
@@ -366,12 +400,14 @@ export default function RecibosPage() {
                 headerBgHex: "#0284c7", border: "#7dd3fc",
                 bg: "bg-sky-600", text: "text-white",
                 countBg: "bg-sky-500", countText: "text-white",
+                accentBar: "bg-sky-500",
               }}
               emptyText="Nenhum recibo de ontem"
               acaoId={acaoId}
               onPdf={onPdf}
             />
             <BoardColumn
+              id="recibos-mes"
               title="Este mês"
               icon={<Calendar size={13} className="text-white/90" />}
               rows={mes}
@@ -379,12 +415,14 @@ export default function RecibosPage() {
                 headerBgHex: "#7c3aed", border: "#c4b5fd",
                 bg: "bg-violet-600", text: "text-white",
                 countBg: "bg-violet-500", countText: "text-white",
+                accentBar: "bg-violet-500",
               }}
               emptyText="Nenhum recibo este mês"
               acaoId={acaoId}
               onPdf={onPdf}
             />
             <BoardColumn
+              id="recibos-antigas"
               title="Antigas"
               icon={<Archive size={13} className="text-white/90" />}
               rows={antigas}
@@ -392,6 +430,7 @@ export default function RecibosPage() {
                 headerBgHex: "#475569", border: "#94a3b8",
                 bg: "bg-slate-500", text: "text-white",
                 countBg: "bg-slate-400", countText: "text-white",
+                accentBar: "bg-slate-400",
               }}
               emptyText="Nenhum recibo mais antigo"
               acaoId={acaoId}
