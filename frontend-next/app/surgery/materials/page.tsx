@@ -3,15 +3,12 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import {
-  Activity,
   Boxes,
-  CalendarClock,
-  FileText,
   Loader2,
   PackageSearch,
+  Scissors,
   Search,
   ShieldAlert,
-  Syringe,
   X,
 } from "lucide-react";
 
@@ -24,21 +21,28 @@ import { GROUPS } from "@/lib/rbac";
 const GLASS =
   "rounded-xl border border-white/20 bg-white/30 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]";
 
-type MaterialRow = Record<string, any>;
-type ConsumptionRow = Record<string, any>;
+type ProcedureMaterial = {
+  id: number;
+  name: string;
+  type?: string;
+  sale_price?: string;
+  qty?: number;
+};
+
+type ProcedureRow = Record<string, any> & {
+  id: number;
+  name?: string;
+  custom_id?: string;
+  description?: string;
+  active?: boolean;
+  default_materials_detail?: ProcedureMaterial[];
+};
 
 function fmtMoney(value: any): string {
   if (value === null || value === undefined || value === "") return "—";
   const n = Number(value);
   if (Number.isNaN(n)) return String(value);
   return n.toLocaleString("pt-PT", { style: "currency", currency: "MZN" });
-}
-
-function fmtDate(value: any): string {
-  if (!value) return "—";
-  const d = new Date(value);
-  if (Number.isNaN(d.getTime())) return String(value);
-  return d.toLocaleString("pt-PT", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
 }
 
 function firstText(...values: any[]): string {
@@ -78,64 +82,62 @@ function Metric({
   );
 }
 
-function MaterialCard({ row }: { row: MaterialRow }) {
-  const code = firstText(row.code, row.internal_code, row.custom_id, row.id ? `#${row.id}` : null);
-  const name = firstText(row.name, row.product_name, row.product_label);
-  const product = firstText(row.product_name, row.product_label, row.product);
-  const unit = firstText(row.unit, "—");
-  const type = firstText(row.material_type_display, row.material_type);
-  const price = row.sale_price ?? row.cost_price;
+function ProcedureCard({ row }: { row: ProcedureRow }) {
+  const materials = Array.isArray(row.default_materials_detail) ? row.default_materials_detail : [];
   const active = row.active !== false;
 
   return (
-    <article className={`relative overflow-hidden rounded-lg border p-3 pl-4 shadow-sm backdrop-blur-sm ${active ? "border-white/20 bg-white/24" : "border-amber-200/70 bg-amber-50/80 dark:bg-amber-950/20"}`}>
-      <span className={`absolute left-0 top-0 h-full w-1 ${active ? "bg-yellow-500" : "bg-amber-500"}`} />
+    <Link
+      href={`/surgery/surgical-procedures/${row.id}`}
+      className="group relative block overflow-hidden rounded-xl border border-white/20 bg-white/28 p-3 pl-4 shadow-sm backdrop-blur-sm transition hover:border-violet-300/50 hover:bg-white/36 hover:shadow-md dark:border-white/10 dark:bg-white/[0.05] dark:hover:bg-white/[0.08]"
+    >
+      <span className={`absolute left-0 top-0 h-full w-1 ${active ? "bg-violet-500" : "bg-slate-400"}`} />
+
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <p className="truncate text-sm font-bold text-foreground">{name}</p>
-          <p className="text-[11px] text-muted-foreground">{code}</p>
+          <p className="truncate text-sm font-bold text-foreground">{firstText(row.name, row.custom_id, row.id)}</p>
+          <p className="text-[11px] text-muted-foreground">{firstText(row.custom_id, `#${row.id}`)}</p>
         </div>
-        <span className={`shrink-0 rounded-md border px-1.5 py-0.5 text-[10px] font-semibold ${active ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-amber-200 bg-amber-50 text-amber-700"}`}>
+        <span className={`shrink-0 rounded-md border px-1.5 py-0.5 text-[10px] font-semibold ${active ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-slate-200 bg-slate-50 text-slate-600"}`}>
           {active ? "Activo" : "Inactivo"}
         </span>
       </div>
-      <div className="mt-2 grid gap-1 text-[11px] text-muted-foreground">
-        <div className="truncate">Produto: <span className="font-medium text-foreground">{product}</span></div>
-        <div>Tipo: <span className="font-medium text-foreground">{type}</span></div>
-        <div>Unidade: <span className="font-medium text-foreground">{unit}</span></div>
-        <div>Preço: <span className="font-medium text-foreground">{fmtMoney(price)}</span></div>
-      </div>
-    </article>
-  );
-}
 
-function ConsumptionCard({ row }: { row: ConsumptionRow }) {
-  const surgeryCode = firstText(row.surgery_code, row.surgery_label, row.surgery);
-  const material = firstText(row.material_name, row.product_name, row.material);
-  const patient = firstText(row.patient_name, row.surgery_patient_name);
-  const qty = firstText(row.quantity, row.quantidade);
-  const billed = firstText(row.billing_status_display, row.billing_status, "—");
-  const consumedAt = fmtDate(row.consumed_at ?? row.created_at);
+      {row.description ? (
+        <p className="mt-1 line-clamp-2 text-[11px] text-muted-foreground">{row.description}</p>
+      ) : null}
 
-  return (
-    <article className="relative overflow-hidden rounded-lg border border-white/20 bg-white/24 p-3 pl-4 shadow-sm backdrop-blur-sm">
-      <span className="absolute left-0 top-0 h-full w-1 bg-rose-500" />
-      <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0">
-          <p className="truncate text-sm font-bold text-foreground">{material}</p>
-          <p className="text-[11px] text-muted-foreground">{surgeryCode}</p>
+      <div className="mt-3 space-y-2 rounded-lg border border-white/20 bg-white/25 p-2.5 dark:bg-white/[0.04]">
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Materiais</span>
+          <span className="rounded-full bg-violet-500/10 px-2 py-0.5 text-[10px] font-semibold text-violet-700 dark:text-violet-300">
+            {materials.length}
+          </span>
         </div>
-        <span className="shrink-0 rounded-md border border-sky-200 bg-sky-50 px-1.5 py-0.5 text-[10px] font-semibold text-sky-700">
-          {qty}
-        </span>
+
+        {materials.length === 0 ? (
+          <p className="text-[11px] text-muted-foreground">Nenhum material associado. Clique para adicionar materiais e quantidades.</p>
+        ) : (
+          <div className="space-y-1.5">
+            {materials.slice(0, 5).map((material) => (
+              <div key={material.id} className="flex items-center justify-between gap-2 rounded-md border border-white/20 bg-white/30 px-2 py-1 dark:bg-white/[0.03]">
+                <div className="min-w-0">
+                  <p className="truncate text-[11px] font-medium text-foreground">{material.name}</p>
+                  <p className="text-[10px] text-muted-foreground">{firstText(material.type, "Material")}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-[11px] font-semibold text-foreground">x{material.qty || 1}</p>
+                  <p className="text-[10px] text-muted-foreground">{fmtMoney(material.sale_price)}</p>
+                </div>
+              </div>
+            ))}
+            {materials.length > 5 ? (
+              <p className="text-[10px] text-muted-foreground">+ {materials.length - 5} material(is)</p>
+            ) : null}
+          </div>
+        )}
       </div>
-      <div className="mt-2 grid gap-1 text-[11px] text-muted-foreground">
-        <div className="truncate">Cirurgia: <span className="font-medium text-foreground">{surgeryCode}</span></div>
-        <div className="truncate">Paciente: <span className="font-medium text-foreground">{patient}</span></div>
-        <div>Consumido: <span className="font-medium text-foreground">{consumedAt}</span></div>
-        <div>Faturação: <span className="font-medium text-foreground">{billed}</span></div>
-      </div>
-    </article>
+    </Link>
   );
 }
 
@@ -143,8 +145,7 @@ export default function SurgeryMaterialsListPage() {
   const safeRefreshToken = useSafeDataRefreshSignal();
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
-  const [materiais, setMateriais] = useState<MaterialRow[]>([]);
-  const [consumos, setConsumos] = useState<ConsumptionRow[]>([]);
+  const [procedures, setProcedures] = useState<ProcedureRow[]>([]);
   const [search, setSearch] = useState("");
   const [pageSize, setPageSize] = useState(12);
 
@@ -154,18 +155,13 @@ export default function SurgeryMaterialsListPage() {
       try {
         setLoading(true);
         setErro(null);
-        const [materialsRes, consumptionsRes] = await Promise.all([
-          apiFetch<any>("/surgery/materiais/?page_size=200", { clientCache: safeRefreshToken === 0 }),
-          apiFetch<any>("/surgery/consumos/?page_size=200", { clientCache: safeRefreshToken === 0 }),
-        ]);
+        const res = await apiFetch<any>("/surgery/surgical_procedure/?limit=200&ordering=name", { clientCache: safeRefreshToken === 0 });
         if (!mounted) return;
-        const materialList = materialsRes?.results ?? materialsRes;
-        const consumptionList = consumptionsRes?.results ?? consumptionsRes;
-        setMateriais(Array.isArray(materialList) ? materialList : []);
-        setConsumos(Array.isArray(consumptionList) ? consumptionList : []);
+        const items = res?.results ?? res;
+        setProcedures(Array.isArray(items) ? items : []);
       } catch (e: any) {
         if (!mounted) return;
-        setErro(e?.message || "Falha ao carregar materiais cirúrgicos.");
+        setErro(e?.message || "Falha ao carregar procedimentos cirúrgicos.");
       } finally {
         if (mounted) setLoading(false);
       }
@@ -178,78 +174,56 @@ export default function SurgeryMaterialsListPage() {
 
   const q = search.trim().toLowerCase();
 
-  const materiaisFiltrados = useMemo(() => {
-    const rows = materiais.filter((row) => row.deleted !== true);
-    if (!q) return rows;
-    return rows.filter((row) => {
+  const filtered = useMemo(() => {
+    if (!q) return procedures;
+    return procedures.filter((row) => {
+      const materials = Array.isArray(row.default_materials_detail) ? row.default_materials_detail : [];
       const haystack = [
         row.name,
-        row.code,
-        row.internal_code,
         row.custom_id,
-        row.product_name,
-        row.product_label,
-        row.material_type,
-        row.material_type_display,
-        row.unit,
+        row.description,
+        ...materials.flatMap((material) => [material.name, material.type, material.qty]),
       ]
         .map((value) => String(value ?? "").toLowerCase())
         .join(" ");
       return haystack.includes(q);
     });
-  }, [materiais, q]);
+  }, [procedures, q]);
 
-  const consumosFiltrados = useMemo(() => {
-    const rows = consumos.filter((row) => row.deleted !== true);
-    if (!q) return rows;
-    return rows.filter((row) => {
-      const haystack = [
-        row.material_name,
-        row.product_name,
-        row.surgery_code,
-        row.surgery_label,
-        row.patient_name,
-        row.surgery_patient_name,
-        row.billing_status,
-        row.billing_status_display,
-        row.batch_number,
-        row.notes,
-      ]
-        .map((value) => String(value ?? "").toLowerCase())
-        .join(" ");
-      return haystack.includes(q);
-    });
-  }, [consumos, q]);
-
-  const materiaisVisiveis = useMemo(() => materiaisFiltrados.slice(0, pageSize), [materiaisFiltrados, pageSize]);
-  const consumosVisiveis = useMemo(() => consumosFiltrados.slice(0, pageSize), [consumosFiltrados, pageSize]);
-
-  const activos = useMemo(() => materiais.filter((row) => row.deleted !== true && row.active !== false).length, [materiais]);
+  const visible = useMemo(() => filtered.slice(0, pageSize), [filtered, pageSize]);
+  const withMaterials = useMemo(
+    () => procedures.filter((row) => Array.isArray(row.default_materials_detail) && row.default_materials_detail.length > 0).length,
+    [procedures]
+  );
+  const totalMaterialsLinked = useMemo(
+    () => procedures.reduce((sum, row) => sum + (Array.isArray(row.default_materials_detail) ? row.default_materials_detail.length : 0), 0),
+    [procedures]
+  );
 
   return (
     <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.CIRURGIA, GROUPS.RECEPCAO]}>
       <div className="space-y-3">
         <section className={`relative overflow-hidden ${GLASS}`}>
-          <span className="absolute left-0 top-0 h-full w-1 bg-yellow-500" />
+          <span className="absolute left-0 top-0 h-full w-1 bg-violet-500" />
           <div className="space-y-3 px-4 py-3 pl-5">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="flex min-w-0 items-center gap-2">
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-yellow-500 to-orange-600 text-white shadow-md shadow-yellow-500/20">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-600 text-white shadow-md shadow-violet-500/20">
                   <PackageSearch size={17} />
                 </span>
                 <div>
-                  <h1 className="text-lg font-bold leading-tight text-foreground">Materiais cirúrgicos</h1>
+                  <h1 className="text-lg font-bold leading-tight text-foreground">Materiais por procedimento</h1>
                   <p className="text-[11px] text-muted-foreground">
-                    {loading ? "A carregar…" : `${materiais.length} materiais no catálogo · ${consumos.length} consumos em cirurgias`}
+                    {loading ? "A carregar…" : `${procedures.length} procedimentos cirúrgicos com materiais padrão`}
                   </p>
                 </div>
               </div>
               <div className="flex flex-wrap items-center gap-2">
-                <div className="relative min-w-[240px]">
+                <div className="relative min-w-[260px]">
                   <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
                   <input
                     type="text"
-                    placeholder="Pesquisar material, produto, cirurgia ou paciente…"
+                    placeholder="Pesquisar procedimento ou material…"
                     className="w-full rounded-lg border border-border bg-background/60 py-1.5 pl-7 pr-6 text-xs text-foreground placeholder:text-muted-foreground transition focus:outline-none focus:ring-2 focus:ring-violet-500/40"
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
@@ -265,8 +239,8 @@ export default function SurgeryMaterialsListPage() {
                     </button>
                   ) : null}
                 </div>
-                <div className="inline-flex h-9 items-center gap-1.5" title="Registos por quadro">
-                  <PageSizeInput value={pageSize} onChange={setPageSize} ariaLabel="Registos por quadro" />
+                <div className="inline-flex h-9 items-center gap-1.5" title="Procedimentos por quadro">
+                  <PageSizeInput value={pageSize} onChange={setPageSize} ariaLabel="Procedimentos por quadro" />
                   <span className="text-xs text-muted-foreground">/quadro</span>
                 </div>
               </div>
@@ -277,10 +251,10 @@ export default function SurgeryMaterialsListPage() {
             ) : null}
 
             <div className="grid grid-cols-2 gap-2 xl:grid-cols-4">
-              <Metric label="Catálogo" value={loading ? "…" : materiais.length} accent="bg-yellow-500" icon={Boxes} />
-              <Metric label="Activos" value={loading ? "…" : activos} accent="bg-emerald-500" icon={Activity} />
-              <Metric label="Consumos" value={loading ? "…" : consumos.length} accent="bg-rose-500" icon={Syringe} />
-              <Metric label="Sem catálogo" value={loading ? "…" : Math.max(consumos.length - materiais.length, 0)} hint="Consumidos sem espelho visível no catálogo" accent="bg-amber-500" icon={ShieldAlert} />
+              <Metric label="Procedimentos" value={loading ? "…" : procedures.length} accent="bg-violet-500" icon={Scissors} />
+              <Metric label="Com materiais" value={loading ? "…" : withMaterials} accent="bg-emerald-500" icon={Boxes} />
+              <Metric label="Linhas de material" value={loading ? "…" : totalMaterialsLinked} accent="bg-fuchsia-500" icon={PackageSearch} />
+              <Metric label="Sem materiais" value={loading ? "…" : procedures.length - withMaterials} hint="Clique para adicionar materiais e quantidades" accent="bg-amber-500" icon={ShieldAlert} />
             </div>
           </div>
         </section>
@@ -289,60 +263,23 @@ export default function SurgeryMaterialsListPage() {
           <div className="flex h-32 items-center justify-center text-muted-foreground">
             <Loader2 size={20} className="animate-spin" />
           </div>
+        ) : filtered.length === 0 ? (
+          <section className={`relative overflow-hidden ${GLASS}`}>
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+              <span className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-violet-500/10 text-violet-500">
+                <PackageSearch size={22} />
+              </span>
+              <p className="text-sm font-medium text-foreground">Nenhum procedimento encontrado</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {search ? "Tente ajustar a pesquisa." : "Ainda não existem procedimentos cirúrgicos registados."}
+              </p>
+            </div>
+          </section>
         ) : (
-          <div className="grid gap-3 xl:grid-cols-2">
-            <section className={`relative overflow-hidden ${GLASS}`}>
-              <span className="absolute left-0 top-0 h-full w-1 bg-yellow-500" />
-              <div className="space-y-3 px-4 py-3 pl-5">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <h2 className="text-sm font-semibold text-foreground">Catálogo de materiais</h2>
-                    <p className="text-[11px] text-muted-foreground">
-                      {materiaisVisiveis.length} de {materiaisFiltrados.length} materiais visíveis
-                    </p>
-                  </div>
-                  <Link href="/admin/surgery/surgicalmaterial/" className="text-xs font-medium text-yellow-700 hover:underline">
-                    Administração
-                  </Link>
-                </div>
-                {materiaisFiltrados.length === 0 ? (
-                  <div className="py-12 text-center text-sm text-muted-foreground">Nenhum material do catálogo encontrado.</div>
-                ) : (
-                  <div className="grid gap-2 md:grid-cols-2">
-                    {materiaisVisiveis.map((row) => (
-                      <MaterialCard key={row.id} row={row} />
-                    ))}
-                  </div>
-                )}
-              </div>
-            </section>
-
-            <section className={`relative overflow-hidden ${GLASS}`}>
-              <span className="absolute left-0 top-0 h-full w-1 bg-rose-500" />
-              <div className="space-y-3 px-4 py-3 pl-5">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <h2 className="text-sm font-semibold text-foreground">Materiais consumidos em cirurgias</h2>
-                    <p className="text-[11px] text-muted-foreground">
-                      {consumosVisiveis.length} de {consumosFiltrados.length} consumos visíveis
-                    </p>
-                  </div>
-                  <div className="inline-flex items-center gap-1 text-xs text-muted-foreground">
-                    <CalendarClock size={12} />
-                    Cirurgias e procedimentos realizados
-                  </div>
-                </div>
-                {consumosFiltrados.length === 0 ? (
-                  <div className="py-12 text-center text-sm text-muted-foreground">Nenhum consumo cirúrgico encontrado.</div>
-                ) : (
-                  <div className="grid gap-2 md:grid-cols-2">
-                    {consumosVisiveis.map((row) => (
-                      <ConsumptionCard key={row.id} row={row} />
-                    ))}
-                  </div>
-                )}
-              </div>
-            </section>
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            {visible.map((row) => (
+              <ProcedureCard key={row.id} row={row} />
+            ))}
           </div>
         )}
       </div>
