@@ -548,7 +548,7 @@ export default function FaturasPage() {
                         <div className="py-8 text-center text-sm text-muted-foreground">{column.empty}</div>
                       ) : (
                         <div className="max-h-[68vh] overflow-y-auto pr-1">
-                          <div className={`grid gap-1 ${filtroEstado ? "grid-cols-2 md:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-7" : "grid-cols-2 md:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6"}`}>
+                          <div className={`grid gap-1 ${filtroEstado ? "grid-cols-2 md:grid-cols-3 xl:grid-cols-4" : "grid-cols-2 md:grid-cols-3 xl:grid-cols-4"}`}>
                             {column.visibleRows.map((f) => {
                               const statusCode = invoiceStatusCode(f)
                               const accentBar =
