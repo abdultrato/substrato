@@ -432,11 +432,12 @@ export default function FaturasPage() {
     [carregarItens, itensFaturaId, podeAlterar]
   )
 
-  const acaoBtn = "inline-flex items-center rounded-md border px-2 py-1 text-[11px] font-medium transition disabled:opacity-50"
+  const acaoBtn =
+    "inline-flex h-8 w-full items-center justify-center rounded-md border px-2 py-1 text-[11px] font-medium transition disabled:opacity-50"
   const renderAcoes = useCallback((f: FaturaRow) => {
     const isProforma = isProformaOrigin(f)
     return (
-      <div className="flex flex-wrap gap-1.5">
+      <div className="grid grid-cols-2 gap-1">
         {f.estado === "RASC" ? (
           <Link
             href={`/invoices/draft/${f.id}`}
@@ -757,9 +758,8 @@ export default function FaturasPage() {
                 </div>
               </Card>
             ) : (
-              <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 xl:grid-cols-4">
+              <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {faturasVisiveis.map((f) => {
-                  const accent = INVOICE_STATUS[String(f.estado || "").toUpperCase()]
                   const accentBar =
                     f.estado === "PAGA" ? "bg-emerald-500"
                     : f.estado === "EMIT" ? "bg-sky-500"
@@ -768,27 +768,31 @@ export default function FaturasPage() {
                   return (
                     <article
                       key={f.id}
-                      className={`relative flex aspect-[2/1] flex-col overflow-hidden ${GLASS} p-2.5 pl-3.5`}
+                      className={`relative flex h-full min-h-[184px] flex-col overflow-hidden rounded-xl border border-white/15 bg-white/20 p-3 pl-4 shadow-sm backdrop-blur-sm transition hover:border-white/30 hover:bg-white/24 dark:border-white/10 dark:bg-white/[0.05] dark:hover:bg-white/[0.08]`}
                     >
                       <span className={`absolute left-0 top-0 h-full w-1 ${accentBar}`} />
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0">
-                          <div className="truncate text-sm font-bold text-foreground">{f.id_custom || `Fatura ${f.id}`}</div>
-                          <div className="truncate text-[11px] text-muted-foreground">{f.paciente || "—"}</div>
+                          <div className="truncate text-sm font-bold leading-tight text-foreground">{f.id_custom || `Fatura ${f.id}`}</div>
+                          <div className="mt-1 line-clamp-2 min-h-[2rem] text-[11px] leading-4 text-muted-foreground">
+                            {f.paciente || "Paciente não identificado"}
+                          </div>
                         </div>
                         <EstadoBadge estado={f.estado} />
                       </div>
-                      <div className="mt-1 flex items-center gap-2">
-                        {isProformaOrigin(f) ? (
-                          <span className="inline-flex rounded-md border border-violet-200 bg-violet-50 px-1.5 py-0.5 text-[10px] font-semibold text-violet-700">Proforma</span>
-                        ) : (
-                          <span className="text-[11px] text-muted-foreground">{invoiceOriginLabel(f)}</span>
-                        )}
-                        <span className="ml-auto text-sm font-bold text-foreground tabular-nums">
+                      <div className="mt-2 grid gap-1 text-[11px] text-muted-foreground">
+                        <div className="flex items-center gap-2">
+                          {isProformaOrigin(f) ? (
+                            <span className="inline-flex rounded-md border border-violet-200 bg-violet-50 px-1.5 py-0.5 text-[10px] font-semibold text-violet-700">Proforma</span>
+                          ) : (
+                            <span className="truncate">{invoiceOriginLabel(f)}</span>
+                          )}
+                        </div>
+                        <span className="text-base font-bold leading-none text-foreground tabular-nums">
                           <MoneyValue value={totalAPagar(f)} />
                         </span>
                       </div>
-                      <div className="mt-auto pt-2">{renderAcoes(f)}</div>
+                      <div className="mt-auto border-t border-white/10 pt-2">{renderAcoes(f)}</div>
                     </article>
                   )
                 })}
