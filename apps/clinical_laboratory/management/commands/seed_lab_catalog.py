@@ -39,7 +39,8 @@ class Command(BaseCommand):
             stats = seed_catalog(tenant)
             self.stdout.write(self.style.SUCCESS(
                 f"[{tenant.identifier}] sectores +{stats['sectors']}, "
-                f"exames +{stats['tests']}, painéis +{stats['panels']}, "
+                f"exames +{stats['tests']}, analitos +{stats.get('test_fields', 0)}, "
+                f"painéis +{stats['panels']}, "
                 f"perfis ocupacionais +{stats.get('occupational_profiles', 0)}, "
                 f"legados +{stats.get('legacy_tests', 0)} "
                 f"(ignorados {stats.get('legacy_skipped', 0)})"

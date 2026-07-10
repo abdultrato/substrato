@@ -29,7 +29,6 @@ import { useLanguage } from "@/hooks/useLanguage"
 import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { apiFetch } from "@/lib/api"
 import { isNotFoundLikeError } from "@/lib/errors/api-error"
-import { abbreviateMiddleNames } from "@/lib/formatName"
 import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
 import { requiredGroupsForResourceGroup } from "@/lib/resourcesAccess"
 import { routeParamToString } from "@/lib/routeParams"
@@ -227,7 +226,7 @@ export default function MedicalConsultationDetailPage() {
                   </span>
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
-                      <h1 className="truncate text-lg font-bold leading-tight text-foreground">{abbreviateMiddleNames(patient)}</h1>
+                      <h1 className="truncate text-lg font-bold leading-tight text-foreground">{patient}</h1>
                       <span className={`shrink-0 rounded-full border px-2 py-0.5 text-[11px] font-semibold ${meta.badge}`}>{meta.label}</span>
                       {overdue ? (
                         <span className="inline-flex items-center gap-1 rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-800 dark:border-amber-500/40 dark:bg-amber-900/30 dark:text-amber-200">
@@ -449,7 +448,7 @@ export default function MedicalConsultationDetailPage() {
             <span className="absolute left-0 top-0 h-full w-1 bg-amber-500" />
             <div className="border-b border-white/20 px-4 py-3 pl-5 dark:border-white/10">
               <h3 className="text-sm font-bold text-foreground">{t("Re-agendar consulta", "Reschedule consultation")}</h3>
-              <p className="mt-0.5 text-xs text-muted-foreground">{abbreviateMiddleNames(patient)} · {row?.custom_id || `#${row?.id}`}</p>
+              <p className="mt-0.5 text-xs text-muted-foreground">{patient} · {row?.custom_id || `#${row?.id}`}</p>
             </div>
             <div className="space-y-2 px-4 py-3 pl-5">
               <label className="block space-y-1">
