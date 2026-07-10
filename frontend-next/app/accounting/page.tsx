@@ -9,13 +9,10 @@ import AppLayout from "@/components/layout/AppLayout"
 import MetricCard from "@/components/ui/MetricCard"
 import ActionTile from "@/components/ui/ActionTile"
 import { apiFetch, extractTotalCount } from "@/lib/api"
-import { useAuth } from "@/hooks/useAuth"
 import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
-import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
+import { GROUPS } from "@/lib/rbac"
 
 export default function ContabilidadePage() {
-  const { user } = useAuth()
-  const podeVerAdmin = userHasAnyGroup(user, [GROUPS.ADMIN])
   const safeRefreshToken = useSafeDataRefreshSignal()
 
   const [loading, setLoading] = useState(true)
@@ -83,14 +80,6 @@ export default function ContabilidadePage() {
                   </p>
                 </div>
               </div>
-              {podeVerAdmin ? (
-                <Link
-                  href="/admin/accounting/"
-                  className="inline-flex h-9 items-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50"
-                >
-                  Abrir na Administração
-                </Link>
-              ) : null}
             </div>
 
             {erro ? (
@@ -199,6 +188,4 @@ export default function ContabilidadePage() {
     </AppLayout>
   )
 }
-
-
 
