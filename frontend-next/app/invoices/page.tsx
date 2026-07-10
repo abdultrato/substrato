@@ -328,7 +328,7 @@ export default function FaturasPage() {
   }, [])
 
   const acaoBtn =
-    "inline-flex h-8 w-full items-center justify-center rounded-md border px-2 py-1 text-[11px] font-medium transition disabled:opacity-50"
+    "inline-flex h-6 w-full items-center justify-center rounded-md border px-1.5 py-0.5 text-[10px] font-medium transition disabled:opacity-50"
   const renderAcoes = useCallback((f: FaturaRow) => {
     const isProforma = isProformaOrigin(f)
     return (
@@ -553,7 +553,7 @@ export default function FaturasPage() {
                     {column.visibleRows.length === 0 ? (
                       <div className="py-8 text-center text-sm text-muted-foreground">{column.empty}</div>
                     ) : (
-                      <div className={`grid gap-1.5 ${filtroEstado ? "grid-cols-2 md:grid-cols-3 xl:grid-cols-5 2xl:grid-cols-6" : "grid-cols-2 md:grid-cols-3"}`}>
+                      <div className={`grid gap-1 ${filtroEstado ? "grid-cols-2 md:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-7" : "grid-cols-2 md:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6"}`}>
                         {column.visibleRows.map((f) => {
                           const statusCode = invoiceStatusCode(f)
                           const accentBar =
@@ -564,14 +564,14 @@ export default function FaturasPage() {
                           return (
                             <article
                               key={f.id}
-                              className="relative flex min-h-[138px] flex-col overflow-hidden rounded-lg border border-white/15 bg-white/20 p-2.5 pl-3 shadow-sm backdrop-blur-sm transition hover:border-white/30 hover:bg-white/24 dark:border-white/10 dark:bg-white/[0.05] dark:hover:bg-white/[0.08]"
+                              className="relative flex min-h-[84px] flex-col overflow-hidden rounded-md border border-white/15 bg-white/18 p-1.5 pl-2 shadow-sm backdrop-blur-sm transition hover:border-white/30 hover:bg-white/22 dark:border-white/10 dark:bg-white/[0.05] dark:hover:bg-white/[0.08]"
                             >
                               <span className={`absolute left-0 top-0 h-full w-1 ${accentBar}`} />
                               <Link href={`/invoices/${f.id}`} className="absolute inset-0 z-10" aria-label={`Abrir detalhes da fatura ${f.id_custom || f.id}`} />
-                              <div className="relative flex items-start justify-between gap-2">
+                              <div className="relative flex items-start justify-between gap-1">
                                 <div className="min-w-0">
-                                  <div className="truncate text-[12px] font-bold leading-tight text-foreground">{f.id_custom || `Fatura ${f.id}`}</div>
-                                  <div className="mt-1 line-clamp-2 min-h-[1.75rem] text-[10px] leading-3.5 text-muted-foreground">
+                                  <div className="truncate text-[10px] font-bold leading-tight text-foreground">{f.id_custom || `Fatura ${f.id}`}</div>
+                                  <div className="mt-0.5 line-clamp-1 min-h-[0.875rem] text-[9px] leading-3 text-muted-foreground">
                                     {f.paciente || "Paciente não identificado"}
                                   </div>
                                 </div>
@@ -579,19 +579,19 @@ export default function FaturasPage() {
                                   <EstadoBadge estado={statusCode} />
                                 </div>
                               </div>
-                              <div className="relative mt-1.5 grid gap-1 text-[10px] text-muted-foreground">
-                                <div className="flex items-center gap-2">
+                              <div className="relative mt-1 grid gap-0.5 text-[9px] text-muted-foreground">
+                                <div className="flex items-center gap-1">
                                   {isProformaOrigin(f) ? (
-                                    <span className="inline-flex rounded-md border border-violet-200 bg-violet-50 px-1.5 py-0.5 text-[10px] font-semibold text-violet-700">Proforma</span>
+                                    <span className="inline-flex rounded-md border border-violet-200 bg-violet-50 px-1 py-0 text-[8px] font-semibold text-violet-700">Proforma</span>
                                   ) : (
                                     <span className="truncate">{invoiceOriginLabel(f)}</span>
                                   )}
                                 </div>
-                                <span className="text-sm font-bold leading-none text-foreground tabular-nums">
+                                <span className="text-[11px] font-bold leading-none text-foreground tabular-nums">
                                   <MoneyValue value={totalAPagar(f)} />
                                 </span>
                               </div>
-                              <div className="relative z-20 mt-auto border-t border-white/10 pt-1.5">{renderAcoes(f)}</div>
+                              <div className="relative z-20 mt-auto border-t border-white/10 pt-1">{renderAcoes(f)}</div>
                             </article>
                           )
                         })}
