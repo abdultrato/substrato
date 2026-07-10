@@ -435,6 +435,7 @@ export default function ResourceListPage({
   )
 
   const normalizedEndpoint = normalizeEndpointPath(endpoint)
+  const isBillingInvoice = normalizedEndpoint === "/billing/invoice/"
   const listFields = useMemo(() => buildListFields(normalizedEndpoint), [normalizedEndpoint])
   const isIdentityUserResource =
     normalizedEndpoint === "/identity/user/" || normalizedEndpoint === "/identidade/user/"
@@ -635,7 +636,6 @@ export default function ResourceListPage({
           <span className={`absolute left-0 top-0 h-full w-1 ${heroAccentClassName || "bg-sky-400"}`} />
           <div className="px-4 py-3 pl-5">
             <div className="flex flex-wrap items-center justify-between gap-3">
-              {/* Title */}
               <div className="flex items-center gap-2.5">
                 {heroIcon ? (
                   <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/50 text-[var(--primary-700)] shadow-sm backdrop-blur-sm dark:bg-white/10 dark:text-white">
@@ -643,14 +643,16 @@ export default function ResourceListPage({
                   </span>
                 ) : null}
                 <div>
-                  <h1 className="font-display text-sm font-bold text-foreground leading-tight">{resolvedResourceLabel}</h1>
-                  <p className="text-[10px] text-[var(--gray-500)]">{subtitle || resolvedGroupLabel}</p>
+                  <h1 className="font-display text-sm font-bold leading-tight text-foreground">
+                    {resolvedResourceLabel}
+                  </h1>
+                  <p className="text-[10px] text-[var(--gray-500)]">
+                    {isBillingInvoice ? t("Faturamento", "Billing") : subtitle || resolvedGroupLabel}
+                  </p>
                 </div>
               </div>
 
-              {/* Controls row */}
-              <div className="flex flex-wrap items-center gap-2">
-                {/* Back */}
+              <div className={`flex flex-wrap items-center gap-2 ${isBillingInvoice ? "w-full xl:w-auto" : ""}`}>
                 <Link
                   href={`/${normalizedEndpoint.split("/")[1] ?? ""}`}
                   className="inline-flex h-8 items-center gap-1 rounded-lg border border-white/40 bg-white/30 px-2.5 text-[11px] text-[var(--gray-700)] backdrop-blur-sm transition hover:bg-white/50 dark:border-white/10 dark:text-[var(--gray-300)] dark:hover:bg-white/10"
@@ -658,17 +660,26 @@ export default function ResourceListPage({
                   <ChevronLeft size={11} /> {t("Voltar", "Back")}
                 </Link>
 
-                {/* Search */}
-                <div className="flex items-center gap-1.5 rounded-lg border border-white/50 bg-white/50 px-2.5 py-1.5 backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.06]">
+                <div
+                  className={`flex items-center gap-2 rounded-lg border border-white/50 bg-white/50 px-3 py-1.5 backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.06] ${
+                    isBillingInvoice ? "min-w-[280px] flex-1 xl:min-w-[360px]" : ""
+                  }`}
+                >
                   <Search size={11} className="shrink-0 text-[var(--gray-400)]" />
                   <input
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     placeholder={t(
-                      `Pesquisar ${resolvedResourceLabel.toLocaleLowerCase("pt")}…`,
-                      `Search ${resolvedResourceLabel.toLowerCase()}…`
+                      isBillingInvoice
+                        ? "Pesquisar faturas por código, paciente, estado ou valor…"
+                        : `Pesquisar ${resolvedResourceLabel.toLocaleLowerCase("pt")}…`,
+                      isBillingInvoice
+                        ? "Search invoices by code, patient, status, or amount..."
+                        : `Search ${resolvedResourceLabel.toLowerCase()}…`
                     )}
-                    className="w-40 bg-transparent text-[11px] text-[var(--text)] outline-none placeholder:text-[var(--gray-400)]"
+                    className={`bg-transparent text-[11px] text-[var(--text)] outline-none placeholder:text-[var(--gray-400)] ${
+                      isBillingInvoice ? "w-full" : "w-40"
+                    }`}
                   />
                   {search && (
                     <button type="button" onClick={() => setSearch("")}
@@ -676,7 +687,6 @@ export default function ResourceListPage({
                   )}
                 </div>
 
-                {/* Status filter */}
                 {statusOptions.length > 0 && (
                   <select
                     aria-label={t("Estado", "Status")}
@@ -691,7 +701,6 @@ export default function ResourceListPage({
                   </select>
                 )}
 
-                {/* Clear */}
                 {(search || statusFilter) && (
                   <button
                     type="button"
@@ -702,7 +711,6 @@ export default function ResourceListPage({
                   </button>
                 )}
 
-                {/* Report */}
                 <Link
                   href={`/reports?endpoint=${encodeURIComponent(normalizedEndpoint)}&group=${encodeURIComponent(resolvedGroupLabel)}&resource=${encodeURIComponent(resolvedResourceLabel)}`}
                   className="inline-flex h-8 items-center gap-1 rounded-lg border border-white/40 bg-white/30 px-2.5 text-[11px] text-[var(--gray-700)] backdrop-blur-sm transition hover:bg-white/50 dark:border-white/10 dark:text-[var(--gray-300)] dark:hover:bg-white/10"
@@ -710,7 +718,6 @@ export default function ResourceListPage({
                   <BarChart2 size={11} /> {t("Relatório", "Report")}
                 </Link>
 
-                {/* Create */}
                 {createHref && (!isIdentityUserResource || canCreateIdentityUsers) && (
                   <Link
                     href={createHref}
@@ -730,12 +737,14 @@ export default function ResourceListPage({
           </div>
         )}
 
-        <ResourceActionPanel
-          endpoint={normalizedEndpoint}
-          resourceLabel={resolvedResourceLabel}
-          searchTerm={debouncedSearch}
-          statusFilter={statusFilter}
-        />
+        <div className={isBillingInvoice ? "mx-auto w-full max-w-5xl" : ""}>
+          <ResourceActionPanel
+            endpoint={normalizedEndpoint}
+            resourceLabel={resolvedResourceLabel}
+            searchTerm={debouncedSearch}
+            statusFilter={statusFilter}
+          />
+        </div>
 
         {loadingData ? (
           <div className="text-sm text-[var(--gray-500)]">{t("Carregando...", "Loading...")}</div>

@@ -330,6 +330,7 @@ export default function ResourceActionPanel({
 }) {
   const { t } = useLanguage()
   const actions = useMemo(() => getAvailableResourceActionsForEndpoint(endpoint), [endpoint])
+  const isBillingInvoice = endpoint === "/billing/invoice/"
   const [valuesByAction, setValuesByAction] = useState<Record<string, FieldValues>>({})
   const [stateByAction, setStateByAction] = useState<Record<string, ActionUiState>>({})
 
@@ -440,15 +441,19 @@ export default function ResourceActionPanel({
   }
 
   return (
-    <section className="rounded-xl border border-white/20 bg-white/20 p-2.5 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/5">
+    <section className={`rounded-xl border border-white/20 bg-white/20 p-2.5 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/5 ${isBillingInvoice ? "mx-auto" : ""}`}>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <div className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-white/25 bg-white/45 text-[var(--primary-700)] shadow-sm dark:border-white/10 dark:bg-white/10">
             <Wrench size={16} />
           </div>
           <div>
-            <p className="text-sm font-semibold text-[var(--text)]">{t("Ações do recurso", "Resource actions")}</p>
-            <p className="text-xs text-[var(--gray-600)]">{resourceLabel}</p>
+            <p className="text-sm font-semibold text-[var(--text)]">
+              {isBillingInvoice ? t("Ações de faturamento", "Billing actions") : t("Ações do recurso", "Resource actions")}
+            </p>
+            <p className="text-xs text-[var(--gray-600)]">
+              {isBillingInvoice ? t("Histórico e relatórios operacionais", "Operational history and reports") : resourceLabel}
+            </p>
           </div>
         </div>
         <span className="rounded-md border border-white/30 bg-white/45 px-2 py-1 text-xs font-medium text-[var(--gray-700)] shadow-sm dark:border-white/10 dark:bg-white/10 dark:text-[var(--gray-200)]">
@@ -456,14 +461,18 @@ export default function ResourceActionPanel({
         </span>
       </div>
 
-      <div className="mt-3 grid gap-3 xl:grid-cols-2">
+      <div className={`mt-3 grid gap-3 ${isBillingInvoice ? "mx-auto max-w-5xl xl:grid-cols-2" : "xl:grid-cols-2"}`}>
         {actions.map((action) => {
           const state = stateByAction[action.key] || {}
           const isAiAction = action.key.startsWith("ai.")
           const hasResult = state.result !== undefined
+          const isBillingHistoryAction = isBillingInvoice && action.key.startsWith("billing.invoice.history")
 
           return (
-            <div key={action.key} className="relative flex h-full flex-col overflow-hidden rounded-lg border border-white/20 bg-white/30 p-2.5 pl-3 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/10">
+            <div
+              key={action.key}
+              className={`relative flex h-full flex-col overflow-hidden rounded-lg border border-white/20 bg-white/30 p-2.5 pl-3 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/10 ${isBillingHistoryAction ? "mx-auto w-full max-w-2xl" : ""}`}
+            >
               <span className="absolute left-0 top-0 h-full w-1 bg-gradient-to-b from-[var(--primary-500)] to-[var(--primary-400)]" />
               <div className="flex flex-wrap items-start justify-between gap-2">
                 <div className="min-w-0">
@@ -488,7 +497,7 @@ export default function ResourceActionPanel({
               </div>
 
               {action.fields?.length ? (
-                <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                <div className={`mt-3 grid gap-2 ${isBillingHistoryAction ? "sm:grid-cols-2" : "sm:grid-cols-2"}`}>
                   {action.fields.map((field) => {
                     const value = getValue(action, field)
                     if (field.type === "checkbox") {
@@ -500,9 +509,8 @@ export default function ResourceActionPanel({
                       )
                     }
 
-                    // O título vive no placeholder; apenas os tipos que não
-                    // conseguem mostrar placeholder (select/data) mantêm legenda.
-                    const needsCaption = field.type === "select" || field.type === "date" || field.type === "datetime-local"
+                    const needsCaption =
+                      !isBillingHistoryAction && (field.type === "select" || field.type === "date" || field.type === "datetime-local")
 
                     return (
                       <label key={`${action.key}-${field.name}`} className="space-y-1">
