@@ -8,7 +8,6 @@ import { useLanguage } from "@/hooks/useLanguage"
 import { apiFetch } from "@/lib/api"
 import {
   getAvailableResourceActionsForEndpoint,
-  normalizeActionEndpoint,
   type ResourceActionDefinition,
   type ResourceActionField,
 } from "@/lib/resourceActions"
@@ -253,10 +252,17 @@ function renderField(
 ) {
   const baseClass =
     "w-full rounded-md border border-white/30 bg-white/55 px-2.5 py-2 text-sm text-[var(--text)] shadow-sm backdrop-blur-sm transition-colors duration-150 placeholder:text-[var(--gray-400)] hover:border-[var(--primary-400)] focus:border-[var(--primary-500)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-100)] dark:border-white/10 dark:bg-white/10"
+  // O título de cada campo vive no placeholder (ver ResourceActionPanel).
+  const placeholder = `${field.placeholder || field.label}${field.required ? " *" : ""}`
 
   if (field.type === "select") {
     return (
-      <select value={String(value ?? "")} onChange={(event) => onChange(event.target.value)} className={baseClass}>
+      <select value={String(value ?? "")} onChange={(event) => onChange(event.target.value)} aria-label={field.label} className={baseClass}>
+        {fieldIsEmpty(value) ? (
+          <option value="" disabled>
+            {placeholder}
+          </option>
+        ) : null}
         {(field.options || []).map((option) => (
           <option key={`${action.key}-${field.name}-${option.value}`} value={option.value}>
             {option.label}
@@ -271,7 +277,8 @@ function renderField(
       <textarea
         value={String(value ?? "")}
         onChange={(event) => onChange(event.target.value)}
-        placeholder={field.placeholder}
+        placeholder={placeholder}
+        aria-label={field.label}
         className={`${baseClass} min-h-[78px] resize-y`}
       />
     )
@@ -304,7 +311,9 @@ function renderField(
       max={field.max}
       step={field.step}
       onChange={(event) => onChange(field.type === "number" ? event.target.value : event.target.value)}
-      placeholder={field.placeholder}
+      placeholder={placeholder}
+      aria-label={field.label}
+      title={field.label}
       className={baseClass}
     />
   )
@@ -439,9 +448,7 @@ export default function ResourceActionPanel({
           </div>
           <div>
             <p className="text-sm font-semibold text-[var(--text)]">{t("Ações do recurso", "Resource actions")}</p>
-            <p className="text-xs text-[var(--gray-600)]">
-              {resourceLabel} · {normalizeActionEndpoint(endpoint)}
-            </p>
+            <p className="text-xs text-[var(--gray-600)]">{resourceLabel}</p>
           </div>
         </div>
         <span className="rounded-md border border-white/30 bg-white/45 px-2 py-1 text-xs font-medium text-[var(--gray-700)] shadow-sm dark:border-white/10 dark:bg-white/10 dark:text-[var(--gray-200)]">
@@ -449,33 +456,30 @@ export default function ResourceActionPanel({
         </span>
       </div>
 
-      <div className="mt-3 grid gap-3">
+      <div className="mt-3 grid gap-3 xl:grid-cols-2">
         {actions.map((action) => {
           const state = stateByAction[action.key] || {}
           const isAiAction = action.key.startsWith("ai.")
           const hasResult = state.result !== undefined
 
           return (
-            <div key={action.key} className="rounded-lg border border-white/20 bg-white/30 p-2.5 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/10">
+            <div key={action.key} className="relative flex h-full flex-col overflow-hidden rounded-lg border border-white/20 bg-white/30 p-2.5 pl-3 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/10">
+              <span className="absolute left-0 top-0 h-full w-1 bg-gradient-to-b from-[var(--primary-500)] to-[var(--primary-400)]" />
               <div className="flex flex-wrap items-start justify-between gap-2">
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-white/25 bg-white/45 text-[var(--primary-700)] shadow-sm dark:border-white/10 dark:bg-white/10">
                       {isAiAction ? <Bot size={14} /> : action.responseMode === "json" ? <Play size={14} /> : <FileDown size={14} />}
                     </span>
-                    <p className="text-sm font-semibold text-[var(--text)]">{action.label}</p>
-                    <span className="rounded-md border border-white/25 bg-white/45 px-1.5 py-0.5 text-[11px] font-semibold text-[var(--gray-600)] shadow-sm dark:border-white/10 dark:bg-white/10 dark:text-[var(--gray-300)]">
-                      {action.method}
-                    </span>
+                    <p className="text-sm font-bold text-[var(--text)]">{action.label}</p>
                   </div>
                   <p className="mt-1 text-xs text-[var(--gray-600)]">{action.description}</p>
-                  <p className="mt-1 break-all text-[11px] text-[var(--gray-500)]">{action.endpoint}</p>
                 </div>
 
                 {action.dedicatedHref ? (
                   <Link
                     href={action.dedicatedHref}
-                    className="inline-flex h-8 items-center gap-1 rounded-md border border-white/30 bg-white/45 px-2 text-xs font-semibold text-[var(--gray-700)] shadow-sm backdrop-blur-sm transition-all duration-150 hover:border-[var(--primary-300)] hover:bg-white/60 hover:text-[var(--text)] dark:border-white/10 dark:bg-white/10 dark:text-[var(--gray-200)] dark:hover:bg-white/15"
+                    className="inline-flex h-8 shrink-0 items-center gap-1 rounded-md border border-white/30 bg-white/45 px-2 text-xs font-semibold text-[var(--gray-700)] shadow-sm backdrop-blur-sm transition-all duration-150 hover:border-[var(--primary-300)] hover:bg-white/60 hover:text-[var(--text)] dark:border-white/10 dark:bg-white/10 dark:text-[var(--gray-200)] dark:hover:bg-white/15"
                   >
                     <ExternalLink size={12} />
                     {t("Fluxo dedicado", "Dedicated flow")}
@@ -484,24 +488,29 @@ export default function ResourceActionPanel({
               </div>
 
               {action.fields?.length ? (
-                <div className="mt-3 grid gap-2 md:grid-cols-2 xl:grid-cols-3">
+                <div className="mt-3 grid gap-2 sm:grid-cols-2">
                   {action.fields.map((field) => {
                     const value = getValue(action, field)
                     if (field.type === "checkbox") {
                       return (
                         <div key={`${action.key}-${field.name}`} className="space-y-1">
-                          <div className="h-5" />
                           {renderField(action, field, value, (nextValue) => updateValue(action, field, nextValue))}
                           {field.helper ? <p className="text-[11px] text-[var(--gray-500)]">{field.helper}</p> : null}
                         </div>
                       )
                     }
 
+                    // O título vive no placeholder; apenas os tipos que não
+                    // conseguem mostrar placeholder (select/data) mantêm legenda.
+                    const needsCaption = field.type === "select" || field.type === "date" || field.type === "datetime-local"
+
                     return (
                       <label key={`${action.key}-${field.name}`} className="space-y-1">
-                        <span className="text-[11px] font-semibold uppercase tracking-wide text-[var(--gray-600)]">
-                          {field.label}{field.required ? " *" : ""}
-                        </span>
+                        {needsCaption ? (
+                          <span className="text-[11px] font-semibold uppercase tracking-wide text-[var(--gray-600)]">
+                            {field.label}{field.required ? " *" : ""}
+                          </span>
+                        ) : null}
                         {renderField(action, field, value, (nextValue) => updateValue(action, field, nextValue))}
                         {field.helper ? <p className="text-[11px] text-[var(--gray-500)]">{field.helper}</p> : null}
                       </label>

@@ -229,7 +229,7 @@ export function GeneratedResourceListPage({
       createHref={canCreate ? `${basePath}/new` : undefined}
       rowHref={(row) => buildRecordDetailHref(basePath, row)}
       requiredGroups={ctx.requiredGroups}
-      clientFullTextSearch={ctx.groupKey === "accounting" || ctx.normalizedEndpoint.startsWith("/accounting/")}
+      clientFullTextSearch={ctx.groupKey === "accounting" || ctx.normalizedEndpoint.startsWith("/accounting/") || isInvoiceList}
       heroIcon={isInvoiceList ? <Receipt size={17} /> : undefined}
       heroClassName={
         isInvoiceList
