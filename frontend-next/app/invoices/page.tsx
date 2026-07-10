@@ -20,19 +20,6 @@ import PdfActionLabel from "@/components/ui/PdfActionLabel"
 import ConfirmDialog from "@/components/ui/ConfirmDialog"
 
 type FaturaRow = Record<string, any>
-type FaturaItem = {
-  id: number
-  descricao?: string
-  tipo_item?: string
-  quantidade?: string | number
-  preco_unitario?: string | number
-  aplica_iva?: boolean
-  iva_percentual?: string | number
-  iva_valor?: string | number
-  total_sem_iva?: string | number
-  total_com_iva?: string | number
-}
-
 type RequisicaoPendente = {
   id: number
   id_custom?: string
@@ -44,15 +31,14 @@ type RequisicaoPendente = {
   medico?: string | null
 }
 
-const ITEM_TYPE_ORDER = ["EXM", "EXA", "AJU", "PRC", "MAT", "FAR"] as const
-
-const ITEM_TYPE_LABELS: Record<string, string> = {
-  EXM: "Exames médicos",
-  EXA: "Exames",
-  AJU: "Consultas e ajustes",
-  PRC: "Procedimentos",
-  MAT: "Materiais",
-  FAR: "Medicação",
+type InvoiceStatusColumn = {
+  key: string
+  title: string
+  subtitle: string
+  empty: string
+  accentBar: string
+  countAccent: string
+  statuses: string[]
 }
 
 function invoiceOrigin(row?: FaturaRow | null): string {
@@ -79,6 +65,36 @@ const INVOICE_STATUS: Record<string, { label: string; badge: string }> = {
   PAGA: { label: "Paga", badge: "border-emerald-200 bg-emerald-50 text-emerald-700" },
   CANC: { label: "Cancelada", badge: "border-rose-200 bg-rose-50 text-rose-700" },
 }
+
+const STATUS_COLUMNS: InvoiceStatusColumn[] = [
+  {
+    key: "drafts",
+    title: "Rascunhos",
+    subtitle: "Faturas ainda em preparação.",
+    empty: "Nenhum rascunho encontrado.",
+    accentBar: "bg-amber-500",
+    countAccent: "text-amber-700 bg-amber-50 border-amber-200",
+    statuses: ["RASC"],
+  },
+  {
+    key: "issued",
+    title: "Faturadas",
+    subtitle: "Faturas emitidas e em cobrança.",
+    empty: "Nenhuma fatura emitida.",
+    accentBar: "bg-sky-500",
+    countAccent: "text-sky-700 bg-sky-50 border-sky-200",
+    statuses: ["EMIT"],
+  },
+  {
+    key: "closed",
+    title: "Liquidadas",
+    subtitle: "Pagas ou encerradas.",
+    empty: "Nenhuma fatura liquidada.",
+    accentBar: "bg-emerald-500",
+    countAccent: "text-emerald-700 bg-emerald-50 border-emerald-200",
+    statuses: ["PAGA", "CANC"],
+  },
+]
 
 function EstadoBadge({ estado }: { estado?: string }) {
   const m = INVOICE_STATUS[String(estado || "").toUpperCase()]
@@ -130,11 +146,6 @@ export default function FaturasPage() {
   const [carregando, setCarregando] = useState(true)
   const [acaoId, setAcaoId] = useState<number | null>(null)
   const [notificacaoId, setNotificacaoId] = useState<number | null>(null)
-  const [itens, setItens] = useState<FaturaItem[]>([])
-  const [itensFaturaId, setItensFaturaId] = useState<number | null>(null)
-  const [carregandoItens, setCarregandoItens] = useState(false)
-  const [selectedFatura, setSelectedFatura] = useState<FaturaRow | null>(null)
-  const [temPagamentoPendente, setTemPagamentoPendente] = useState(false)
   const [busca, setBusca] = useState("")
   const [filtroEstado, setFiltroEstado] = useState<string | null>(null)
   const [pageSize, setPageSize] = useState(10)
@@ -166,6 +177,14 @@ export default function FaturasPage() {
   const faturasVisiveis = useMemo(
     () => faturasFiltradas.slice(0, pageSize),
     [faturasFiltradas, pageSize]
+  )
+  const colunaFaturas = useMemo(
+    () =>
+      STATUS_COLUMNS.map((column) => ({
+        ...column,
+        rows: faturasVisiveis.filter((f) => column.statuses.includes(String(f.estado || "").toUpperCase())),
+      })),
+    [faturasVisiveis]
   )
   const totalAPagar = useCallback(
     (f?: FaturaRow | null) => f?.total_a_pagar ?? f?.valor_a_pagar ?? f?.total,
@@ -306,94 +325,6 @@ export default function FaturasPage() {
     }
   }, [])
 
-  const carregarItens = useCallback(async (faturaId: number) => {
-    setCarregandoItens(true)
-    try {
-      const res = await apiFetch<any>(`/billing/invoiceitem/?fatura=${faturaId}`, {
-        clientCache: safeRefreshToken === 0,
-      })
-      const lista = res && res.results ? res.results : res
-      setItens(Array.isArray(lista) ? lista : [])
-      setItensFaturaId(faturaId)
-    } catch (e: any) {
-      setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao carregar itens da fatura."))
-      setItens([])
-      setItensFaturaId(null)
-    } finally {
-      setCarregandoItens(false)
-    }
-  }, [safeRefreshToken])
-
-  const carregarPagamentosPendentes = useCallback(async (faturaId: number) => {
-    try {
-      const res = await apiFetch<any>(`/payments/payment/?fatura=${faturaId}&status=PEN`, {
-        clientCache: safeRefreshToken === 0,
-      })
-      const lista = res && res.results ? res.results : res
-      const pendentes = Array.isArray(lista) ? lista : []
-      setTemPagamentoPendente(pendentes.length > 0)
-    } catch {
-      setTemPagamentoPendente(false)
-    }
-  }, [safeRefreshToken])
-
-  const detalhar = useCallback(
-    (fatura: FaturaRow) => {
-      setSelectedFatura(fatura)
-      carregarItens(fatura.id)
-      carregarPagamentosPendentes(fatura.id)
-    },
-    [carregarItens, carregarPagamentosPendentes]
-  )
-
-  useEffect(() => {
-    if (!selectedFatura) return
-    const atual = faturas.find((f) => f.id === selectedFatura.id)
-    if (atual && atual !== selectedFatura) {
-      setSelectedFatura(atual)
-    }
-  }, [faturas, selectedFatura])
-
-  useEffect(() => {
-    if (!selectedFatura) {
-      setTemPagamentoPendente(false)
-    }
-  }, [selectedFatura])
-
-  useEffect(() => {
-    if (!selectedFatura?.id) return
-    carregarItens(selectedFatura.id)
-    carregarPagamentosPendentes(selectedFatura.id)
-  }, [carregarItens, carregarPagamentosPendentes, safeRefreshToken, selectedFatura?.id])
-
-  const confirmPayment = useCallback(
-    async (id: number) => {
-      if (!podeAlterar) {
-        setErro("Sem permissão para confirmar pagamentos.")
-        return
-      }
-      try {
-        setErro(null)
-        setFeedback(null)
-        setAcaoId(id)
-        const updated = await apiFetch<FaturaRow>(`/invoices/${id}/confirm-payment/`, { method: "POST" })
-        if (updated?.id) {
-          setFaturas((prev) => prev.map((f) => (f.id === updated.id ? updated : f)))
-          if (selectedFatura?.id === updated.id) setSelectedFatura(updated)
-          setTemPagamentoPendente(false)
-          setFeedback("Pagamento confirmado. Pode enviar a notificação da fatura por email e WhatsApp.")
-        }
-        await carregar()
-        await carregarPagamentosPendentes(id)
-      } catch (e: any) {
-        setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao confirmar pagamento."))
-      } finally {
-        setAcaoId(null)
-      }
-    },
-    [carregar, podeAlterar, selectedFatura, carregarPagamentosPendentes]
-  )
-
   const sendInvoiceNotification = useCallback(async (id: number) => {
     if (!id) return
     try {
@@ -412,26 +343,6 @@ export default function FaturasPage() {
     }
   }, [])
 
-  const toggleIva = useCallback(
-    async (item: FaturaItem) => {
-      if (!item?.id) return
-      if (!podeAlterar) {
-        setErro("Sem permissão para alterar IVA.")
-        return
-      }
-      try {
-        await apiFetch(`/billing/invoiceitem/${item.id}/`, {
-          method: "PATCH",
-          body: JSON.stringify({ aplica_iva: !item.aplica_iva }),
-        })
-        if (itensFaturaId) await carregarItens(itensFaturaId)
-      } catch (e: any) {
-        setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao atualizar IVA do item."))
-      }
-    },
-    [carregarItens, itensFaturaId, podeAlterar]
-  )
-
   const acaoBtn =
     "inline-flex h-8 w-full items-center justify-center rounded-md border px-2 py-1 text-[11px] font-medium transition disabled:opacity-50"
   const renderAcoes = useCallback((f: FaturaRow) => {
@@ -446,9 +357,9 @@ export default function FaturasPage() {
             {isProforma ? "Rever proforma" : podeAlterar ? "Editar" : "Ver"}
           </Link>
         ) : null}
-        <button type="button" className={`${acaoBtn} border-gray-200 text-gray-700 hover:bg-gray-50`} onClick={() => detalhar(f)}>
+        <Link href={`/invoices/${f.id}`} className={`${acaoBtn} border-gray-200 text-gray-700 hover:bg-gray-50`}>
           Detalhes
-        </button>
+        </Link>
         {podeAlterar && f.estado === "RASC" && !isProforma ? (
           <button type="button" className={`${acaoBtn} border-gray-200 text-gray-700 hover:bg-gray-50`} disabled={acaoId === f.id} onClick={() => issueInvoiceAction(f.id)}>
             Emitir
@@ -457,9 +368,9 @@ export default function FaturasPage() {
         <button type="button" className={`${acaoBtn} gap-1 border-gray-200 text-gray-700 hover:bg-gray-50`} disabled={acaoId === f.id} onClick={() => downloadPdf(f.id)}>
           <PdfActionLabel loading={acaoId === f.id} loadingLabel="PDF...">PDF</PdfActionLabel>
         </button>
-        <button type="button" className={`${acaoBtn} border-gray-200 text-gray-700 hover:bg-gray-50`} disabled={carregandoItens && itensFaturaId === f.id} onClick={() => carregarItens(f.id)}>
-          Itens/IVA
-        </button>
+        <Link href={`/invoices/${f.id}`} className={`${acaoBtn} border-gray-200 text-gray-700 hover:bg-gray-50`}>
+          Itens
+        </Link>
         {f.estado === "PAGA" ? (
           <button type="button" className={`${acaoBtn} border-sky-200 text-sky-700 hover:bg-sky-50`} disabled={notificacaoId === f.id} onClick={() => sendInvoiceNotification(f.id)}>
             {notificacaoId === f.id ? "Notificando..." : "Notificar"}
@@ -480,43 +391,7 @@ export default function FaturasPage() {
         ) : null}
       </div>
     )
-  }, [acaoId, downloadPdf, issueInvoiceAction, voidInvoiceAction, podeAlterar, carregarItens, carregandoItens, itensFaturaId, detalhar, notificacaoId, sendInvoiceNotification])
-
-  const groupedItens = useMemo(() => {
-    const normalize = (item: FaturaItem) => (item.tipo_item ?? "").toString().toUpperCase()
-    const groups: { key: string; label: string; items: FaturaItem[] }[] = []
-
-    ITEM_TYPE_ORDER.forEach((type) => {
-      const itensDoTipo = itens.filter((item) => normalize(item) === type)
-      if (itensDoTipo.length) {
-        groups.push({
-          key: type,
-          label: ITEM_TYPE_LABELS[type] || type,
-          items: itensDoTipo,
-        })
-      }
-    })
-
-    const restantes = itens.filter((item) => !ITEM_TYPE_ORDER.includes(normalize(item) as typeof ITEM_TYPE_ORDER[number]))
-    if (restantes.length) {
-      groups.push({
-        key: "OUTROS",
-        label: "Outros itens",
-        items: restantes,
-      })
-    }
-
-    return groups
-  }, [itens])
-
-  const ivaPercentual = useMemo(() => {
-    if (!selectedFatura) return "0.00"
-    const subtotal = Number(selectedFatura.subtotal ?? 0)
-    const iva = Number(selectedFatura.iva_valor ?? 0)
-    if (!subtotal) return "0.00"
-    const percentual = (iva / subtotal) * 100
-    return Number.isFinite(percentual) ? percentual.toFixed(2) : "0.00"
-  }, [selectedFatura])
+  }, [acaoId, downloadPdf, issueInvoiceAction, voidInvoiceAction, podeAlterar, notificacaoId, sendInvoiceNotification])
 
   if (loading) return null
 
@@ -748,7 +623,7 @@ export default function FaturasPage() {
             </Card>
 
             <div className="px-1 text-[11px] text-muted-foreground">
-              A mostrar {faturasVisiveis.length} de {faturasFiltradas.length} fatura{faturasFiltradas.length !== 1 ? "s" : ""}
+              A mostrar {faturasVisiveis.length} de {faturasFiltradas.length} fatura{faturasFiltradas.length !== 1 ? "s" : ""} no quadro
             </div>
 
             {faturasVisiveis.length === 0 ? (
@@ -758,168 +633,71 @@ export default function FaturasPage() {
                 </div>
               </Card>
             ) : (
-              <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {faturasVisiveis.map((f) => {
-                  const accentBar =
-                    f.estado === "PAGA" ? "bg-emerald-500"
-                    : f.estado === "EMIT" ? "bg-sky-500"
-                    : f.estado === "CANC" ? "bg-rose-500"
-                    : "bg-amber-500"
-                  return (
-                    <article
-                      key={f.id}
-                      className={`relative flex h-full min-h-[184px] flex-col overflow-hidden rounded-xl border border-white/15 bg-white/20 p-3 pl-4 shadow-sm backdrop-blur-sm transition hover:border-white/30 hover:bg-white/24 dark:border-white/10 dark:bg-white/[0.05] dark:hover:bg-white/[0.08]`}
-                    >
-                      <span className={`absolute left-0 top-0 h-full w-1 ${accentBar}`} />
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="min-w-0">
-                          <div className="truncate text-sm font-bold leading-tight text-foreground">{f.id_custom || `Fatura ${f.id}`}</div>
-                          <div className="mt-1 line-clamp-2 min-h-[2rem] text-[11px] leading-4 text-muted-foreground">
-                            {f.paciente || "Paciente não identificado"}
-                          </div>
-                        </div>
-                        <EstadoBadge estado={f.estado} />
+              <div className="grid gap-2 xl:grid-cols-3">
+                {colunaFaturas.map((column) => (
+                  <Card
+                    key={column.key}
+                    glass
+                    title={column.title}
+                    subtitle={column.subtitle}
+                    actions={
+                      <span className={`inline-flex rounded-md border px-2 py-1 text-[10px] font-semibold ${column.countAccent}`}>
+                        {column.rows.length}
+                      </span>
+                    }
+                  >
+                    {column.rows.length === 0 ? (
+                      <div className="py-8 text-center text-sm text-muted-foreground">{column.empty}</div>
+                    ) : (
+                      <div className="space-y-1.5">
+                        {column.rows.map((f) => {
+                          const accentBar =
+                            f.estado === "PAGA" ? "bg-emerald-500"
+                            : f.estado === "EMIT" ? "bg-sky-500"
+                            : f.estado === "CANC" ? "bg-rose-500"
+                            : "bg-amber-500"
+                          return (
+                            <article
+                              key={f.id}
+                              className="relative flex min-h-[184px] flex-col overflow-hidden rounded-xl border border-white/15 bg-white/20 p-3 pl-4 shadow-sm backdrop-blur-sm transition hover:border-white/30 hover:bg-white/24 dark:border-white/10 dark:bg-white/[0.05] dark:hover:bg-white/[0.08]"
+                            >
+                              <span className={`absolute left-0 top-0 h-full w-1 ${accentBar}`} />
+                              <Link href={`/invoices/${f.id}`} className="absolute inset-0 z-10" aria-label={`Abrir detalhes da fatura ${f.id_custom || f.id}`} />
+                              <div className="relative flex items-start justify-between gap-2">
+                                <div className="min-w-0">
+                                  <div className="truncate text-sm font-bold leading-tight text-foreground">{f.id_custom || `Fatura ${f.id}`}</div>
+                                  <div className="mt-1 line-clamp-2 min-h-[2rem] text-[11px] leading-4 text-muted-foreground">
+                                    {f.paciente || "Paciente não identificado"}
+                                  </div>
+                                </div>
+                                <div className="pointer-events-none">
+                                  <EstadoBadge estado={f.estado} />
+                                </div>
+                              </div>
+                              <div className="relative mt-2 grid gap-1 text-[11px] text-muted-foreground">
+                                <div className="flex items-center gap-2">
+                                  {isProformaOrigin(f) ? (
+                                    <span className="inline-flex rounded-md border border-violet-200 bg-violet-50 px-1.5 py-0.5 text-[10px] font-semibold text-violet-700">Proforma</span>
+                                  ) : (
+                                    <span className="truncate">{invoiceOriginLabel(f)}</span>
+                                  )}
+                                </div>
+                                <span className="text-base font-bold leading-none text-foreground tabular-nums">
+                                  <MoneyValue value={totalAPagar(f)} />
+                                </span>
+                              </div>
+                              <div className="relative z-20 mt-auto border-t border-white/10 pt-2">{renderAcoes(f)}</div>
+                            </article>
+                          )
+                        })}
                       </div>
-                      <div className="mt-2 grid gap-1 text-[11px] text-muted-foreground">
-                        <div className="flex items-center gap-2">
-                          {isProformaOrigin(f) ? (
-                            <span className="inline-flex rounded-md border border-violet-200 bg-violet-50 px-1.5 py-0.5 text-[10px] font-semibold text-violet-700">Proforma</span>
-                          ) : (
-                            <span className="truncate">{invoiceOriginLabel(f)}</span>
-                          )}
-                        </div>
-                        <span className="text-base font-bold leading-none text-foreground tabular-nums">
-                          <MoneyValue value={totalAPagar(f)} />
-                        </span>
-                      </div>
-                      <div className="mt-auto border-t border-white/10 pt-2">{renderAcoes(f)}</div>
-                    </article>
-                  )
-                })}
+                    )}
+                  </Card>
+                ))}
               </div>
             )}
           </div>
         )}
-
-        {selectedFatura ? (
-          <Card
-            glass
-            title={`Detalhes da fatura ${selectedFatura.id_custom || selectedFatura.id}`}
-            subtitle="Revisão e confirmação de pagamento"
-            actions={
-              <div className="flex flex-wrap gap-2">
-                {temPagamentoPendente && selectedFatura.estado !== "PAGA" && podeAlterar ? (
-                  <button
-                    className="inline-flex items-center rounded-lg border border-emerald-200 px-3 py-1 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-50 disabled:opacity-50"
-                    disabled={acaoId === selectedFatura.id}
-                    onClick={() => confirmPayment(selectedFatura.id)}
-                  >
-                    Confirmar pagamento
-                  </button>
-                ) : null}
-                {selectedFatura.estado === "PAGA" ? (
-                  <button
-                    className="inline-flex items-center rounded-lg border border-sky-200 px-3 py-1 text-xs font-semibold text-sky-700 transition hover:bg-sky-50 disabled:opacity-50"
-                    disabled={notificacaoId === selectedFatura.id}
-                    onClick={() => sendInvoiceNotification(selectedFatura.id)}
-                  >
-                    {notificacaoId === selectedFatura.id ? "Notificando..." : "Enviar notificação"}
-                  </button>
-                ) : null}
-              </div>
-            }
-          >
-            <div className="grid gap-3 text-sm sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-              <div>
-                <div className="text-xs font-semibold uppercase text-muted-foreground">Estado</div>
-                <div className="text-foreground"><EstadoBadge estado={selectedFatura.estado} /></div>
-              </div>
-              <div>
-                <div className="text-xs font-semibold uppercase text-muted-foreground">Origem</div>
-                <div className="text-foreground">{selectedFatura.origem || "-"}</div>
-              </div>
-              <div>
-                <div className="text-xs font-semibold uppercase text-muted-foreground">Subtotal (sem IVA)</div>
-                <div className="text-foreground"><MoneyValue value={selectedFatura.subtotal} /></div>
-              </div>
-              <div>
-                <div className="text-xs font-semibold uppercase text-muted-foreground">IVA (%)</div>
-                <div className="text-foreground">{ivaPercentual}%</div>
-              </div>
-              <div>
-                <div className="text-xs font-semibold uppercase text-muted-foreground">Valor do IVA</div>
-                <div className="text-foreground"><MoneyValue value={selectedFatura.iva_valor} /></div>
-              </div>
-              <div>
-                <div className="text-xs font-semibold uppercase text-muted-foreground">Total a pagar (com IVA)</div>
-                <div className="text-foreground"><MoneyValue value={totalAPagar(selectedFatura)} /></div>
-              </div>
-              <div>
-                <div className="text-xs font-semibold uppercase text-muted-foreground">Valor paciente</div>
-                <div className="text-foreground"><MoneyValue value={selectedFatura.valor_paciente} /></div>
-              </div>
-              <div>
-                <div className="text-xs font-semibold uppercase text-muted-foreground">Valor seguro</div>
-                <div className="text-foreground"><MoneyValue value={selectedFatura.valor_seguro} /></div>
-              </div>
-            </div>
-
-            <div className="mt-6">
-              <h3 className="text-xs font-semibold uppercase text-muted-foreground">Itens</h3>
-              {carregandoItens && itensFaturaId === selectedFatura.id ? (
-                <div className="py-2 text-sm text-gray-500">Carregando itens...</div>
-              ) : itensFaturaId === selectedFatura.id && groupedItens.length ? (
-                <div className="mt-2 space-y-6">
-                  {groupedItens.map((group) => (
-                    <div key={group.key} className="space-y-3">
-                      <div className="text-xs font-semibold uppercase text-muted-foreground">{group.label}</div>
-                      <div className="overflow-x-auto rounded-lg border border-border">
-                        <table className="min-w-full text-xs text-left">
-                          <thead className="bg-muted text-muted-foreground">
-                            <tr>
-                              <th className="px-2 py-1">Descrição</th>
-                              <th className="px-2 py-1 text-right">Qtd</th>
-                              <th className="px-2 py-1 text-right">Preço</th>
-                              <th className="px-2 py-1 text-right">Subtotal</th>
-                              <th className="px-2 py-1 text-right">IVA (%)</th>
-                              <th className="px-2 py-1 text-right">Valor IVA</th>
-                              <th className="px-2 py-1 text-right">Total</th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-border text-foreground">
-                            {group.items.map((item) => (
-                              <tr key={item.id}>
-                                <td className="px-2 py-1 font-semibold">{item.descricao || `Item ${item.id}`}</td>
-                                <td className="px-2 py-1 text-right">{item.quantidade ?? "-"}</td>
-                                <td className="px-2 py-1 text-right"><MoneyValue value={item.preco_unitario} /></td>
-                                <td className="px-2 py-1 text-right"><MoneyValue value={item.total_sem_iva} /></td>
-                                <td className="px-2 py-1 text-right">{item.iva_percentual ?? "-"}%</td>
-                                <td className="px-2 py-1 text-right"><MoneyValue value={item.iva_valor} /></td>
-                                <td className="px-2 py-1 text-right"><MoneyValue value={item.total_com_iva} /></td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : itensFaturaId === selectedFatura.id ? (
-                <div className="py-2 text-sm text-gray-500">Nenhum item adicionado nesta fatura.</div>
-              ) : (
-                <div className="py-2 text-sm text-gray-500">
-                  Clique em “Detalhes” para carregar os itens da fatura.
-                </div>
-              )}
-            </div>
-
-            {!temPagamentoPendente && (
-              <div className="mt-4 rounded-lg border border-dashed border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-500">
-                Nenhum pagamento pendente encontrado para esta fatura.
-              </div>
-            )}
-          </Card>
-        ) : null}
       </div>
     </AppLayout>
   )
