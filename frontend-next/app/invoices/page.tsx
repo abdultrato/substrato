@@ -137,6 +137,10 @@ function invoiceSearchHaystack(row?: FaturaRow | null): string {
   return tokens.map(normalizeText).filter(Boolean).join(" ")
 }
 
+function joinUniqueTexts(values: unknown[]): string {
+  return Array.from(new Set(values.map((value) => String(value ?? "").trim()).filter(Boolean))).join(" · ")
+}
+
 const GLASS =
   "rounded-xl border border-white/20 bg-white/30 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]"
 
@@ -325,7 +329,80 @@ export default function FaturasPage() {
       try {
         const res = await apiFetch<any>(`/invoices/?page_size=${FETCH_PAGE_SIZE}`, { clientCache: safeRefreshToken === 0 })
         const items = res && (res as any).results ? (res as any).results : res
-        setFaturas(Array.isArray(items) ? items : [])
+        const baseInvoices = Array.isArray(items) ? items : []
+        const invoiceIds = baseInvoices.map((row) => Number(row?.id)).filter((value) => Number.isFinite(value))
+        const patientIds = Array.from(new Set(
+          baseInvoices
+            .map((row) => Number(row?.patient ?? row?.paciente))
+            .filter((value) => Number.isFinite(value) && value > 0)
+        ))
+
+        const [patientEntries, paymentsRes] = await Promise.all([
+          Promise.all(
+            patientIds.map(async (patientId) => {
+              try {
+                const patient = await apiFetch<any>(`/clinical/patients/${patientId}/`, { clientCache: safeRefreshToken === 0 })
+                return [String(patientId), patient?.nome || patient?.name || patient?.full_name || `Paciente #${patientId}`] as const
+              } catch {
+                return [String(patientId), `Paciente #${patientId}`] as const
+              }
+            })
+          ),
+          apiFetch<any>(`/payments/payment/?page_size=${Math.max(FETCH_PAGE_SIZE * 4, 400)}`, { clientCache: safeRefreshToken === 0 }),
+        ])
+
+        const patientNamesById = Object.fromEntries(patientEntries)
+        const paymentsList = paymentsRes?.results ?? paymentsRes
+        const relatedPayments = (Array.isArray(paymentsList) ? paymentsList : []).filter((payment) => {
+          const invoiceId = Number(payment?.invoice ?? payment?.fatura)
+          return Number.isFinite(invoiceId) && invoiceIds.includes(invoiceId)
+        })
+
+        const insurerIds = Array.from(new Set(
+          relatedPayments
+            .map((payment) => Number(payment?.insurer ?? payment?.seguradora))
+            .filter((value) => Number.isFinite(value) && value > 0)
+        ))
+
+        const insurerEntries = await Promise.all(
+          insurerIds.map(async (insurerId) => {
+            try {
+              const insurer = await apiFetch<any>(`/insurer/insurer/${insurerId}/`, { clientCache: safeRefreshToken === 0 })
+              return [String(insurerId), insurer?.nome || insurer?.name || insurer?.id_custom || `Seguradora #${insurerId}`] as const
+            } catch {
+              return [String(insurerId), `Seguradora #${insurerId}`] as const
+            }
+          })
+        )
+        const insurerNamesById = Object.fromEntries(insurerEntries)
+
+        const enrichedInvoices = baseInvoices.map((row) => {
+          const invoiceId = Number(row?.id)
+          const patientId = String(row?.patient ?? row?.paciente ?? "")
+          const paymentsForInvoice = relatedPayments.filter((payment) => Number(payment?.invoice ?? payment?.fatura) === invoiceId)
+          const payerNames = joinUniqueTexts(
+            paymentsForInvoice.map((payment) => payment?.name ?? payment?.payer_name ?? payment?.pagante_nome)
+          )
+          const insurerNames = joinUniqueTexts(
+            paymentsForInvoice.map((payment) => {
+              const insurerId = String(payment?.insurer ?? payment?.seguradora ?? "")
+              return payment?.insurer_name ?? payment?.seguradora_nome ?? insurerNamesById[insurerId]
+            })
+          )
+
+          return {
+            ...row,
+            patient_name: row?.patient_name || row?.paciente_nome || patientNamesById[patientId] || row?.patient,
+            paciente_nome: row?.paciente_nome || row?.patient_name || patientNamesById[patientId] || row?.patient,
+            payer_name: row?.payer_name || row?.pagante_nome || payerNames,
+            pagante_nome: row?.pagante_nome || row?.payer_name || payerNames,
+            insurer_name: row?.insurer_name || row?.seguradora_nome || insurerNames,
+            seguradora_nome: row?.seguradora_nome || row?.insurer_name || insurerNames,
+            payments: row?.payments || paymentsForInvoice,
+          }
+        })
+
+        setFaturas(enrichedInvoices)
         setCarregando(false)
         return
       } catch (e: any) {
