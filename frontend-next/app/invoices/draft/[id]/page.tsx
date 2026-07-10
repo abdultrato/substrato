@@ -1292,6 +1292,56 @@ export default function FaturaRascunhoPage() {
                   ))}
                 </div>
 
+                {pagamentoMetodosSelecionados.includes("SEG") ? (
+                  <>
+                    <div className="grid gap-3 md:grid-cols-3">
+                      <div>
+                        <label className="text-xs font-semibold text-muted-foreground">Seguradora</label>
+                        <SelectInput
+                          value={pagamentoSeguradora}
+                          onChange={(e) => setPagamentoSeguradora(e.target.value)}
+                          options={seguradoras.map((s) => ({
+                            value: String(s.id),
+                            label: s.nome || s.name || s.id_custom || `Seguradora ${s.id}`,
+                          }))}
+                          placeholder={seguradoras.length ? "Selecione" : "Nenhuma seguradora cadastrada"}
+                          disabled={!seguradoras.length}
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs font-semibold text-muted-foreground">Plano de cobertura</label>
+                        <SelectInput
+                          value={pagamentoPlano}
+                          onChange={(e) => setPagamentoPlano(e.target.value)}
+                          options={planosDisponiveis.map((p) => ({
+                            value: String(p.id),
+                            label: p.nome || p.id_custom || `Plano ${p.id}`,
+                          }))}
+                          placeholder="Selecione (opcional)"
+                          disabled={!planosDisponiveis.length}
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs font-semibold text-muted-foreground">Número de autorização</label>
+                        <TextInput
+                          value={numeroAutorizacao}
+                          onChange={(e) => setNumeroAutorizacao(e.target.value)}
+                          placeholder="Autorização"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold text-muted-foreground">Dados adicionais do seguro</label>
+                      <TextAreaInput
+                        value={dadosSeguro}
+                        onChange={(e) => setDadosSeguro(e.target.value)}
+                        placeholder="Ex.: apólice, beneficiário, observações"
+                        rows={3}
+                      />
+                    </div>
+                  </>
+                ) : null}
+
                 <div className="grid gap-3 rounded-lg border border-white/20 bg-white/30 p-3 text-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.06] md:grid-cols-4">
                   <div>
                     <div className="text-xs text-muted-foreground">Total a pagar (com IVA)</div>
@@ -1333,55 +1383,6 @@ export default function FaturaRascunhoPage() {
                   <div className="text-xs text-amber-700">{mensagemValidacaoPagamento}</div>
                 ) : null}
               </div>
-              {pagamentoMetodosSelecionados.includes("SEG") ? (
-                <>
-                  <div className="mt-3 grid gap-3 md:grid-cols-3">
-                    <div>
-                      <label className="text-xs font-semibold text-muted-foreground">Seguradora</label>
-                      <SelectInput
-                        value={pagamentoSeguradora}
-                        onChange={(e) => setPagamentoSeguradora(e.target.value)}
-                        options={seguradoras.map((s) => ({
-                          value: String(s.id),
-                          label: s.nome || s.name || s.id_custom || `Seguradora ${s.id}`,
-                        }))}
-                        placeholder={seguradoras.length ? "Selecione" : "Nenhuma seguradora cadastrada"}
-                        disabled={!seguradoras.length}
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs font-semibold text-muted-foreground">Plano de cobertura</label>
-                      <SelectInput
-                        value={pagamentoPlano}
-                        onChange={(e) => setPagamentoPlano(e.target.value)}
-                        options={planosDisponiveis.map((p) => ({
-                          value: String(p.id),
-                          label: p.nome || p.id_custom || `Plano ${p.id}`,
-                        }))}
-                        placeholder="Selecione (opcional)"
-                        disabled={!planosDisponiveis.length}
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs font-semibold text-muted-foreground">Número de autorização</label>
-                      <TextInput
-                        value={numeroAutorizacao}
-                        onChange={(e) => setNumeroAutorizacao(e.target.value)}
-                        placeholder="Autorização"
-                      />
-                    </div>
-                  </div>
-                  <div className="mt-3">
-                    <label className="text-xs font-semibold text-muted-foreground">Dados adicionais do seguro</label>
-                    <TextAreaInput
-                      value={dadosSeguro}
-                      onChange={(e) => setDadosSeguro(e.target.value)}
-                      placeholder="Ex.: apólice, beneficiário, observações"
-                      rows={3}
-                    />
-                  </div>
-                </>
-              ) : null}
             </>) : null}
             </>
           )}
