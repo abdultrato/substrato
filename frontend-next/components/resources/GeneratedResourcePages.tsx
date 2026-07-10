@@ -4,7 +4,7 @@ import Link from "next/link"
 import { useMemo, useState, type ReactNode } from "react"
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation"
 import { useQuery } from "@tanstack/react-query"
-import { Activity, ArrowLeft, BookOpenCheck, Building2, ClipboardList, Droplet, FlaskConical, HeartPulse, Landmark, Package2, Pencil, Plus, Scale, Stethoscope, Trash2 } from "lucide-react"
+import { Activity, ArrowLeft, BookOpenCheck, Building2, ClipboardList, Droplet, FlaskConical, HeartPulse, Landmark, Package2, Pencil, Plus, Receipt, Scale, Stethoscope, Trash2 } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
 import AutoForm from "@/components/form/AutoForm"
@@ -196,6 +196,7 @@ export function GeneratedResourceListPage({
   const canCreate = allowCreate && hasOpenApiMethod(ctx.normalizedEndpoint, "post")
   const groupLabel = tr(ctx.groupLabel)
   const resourceLabel = tr(ctx.resourceLabel)
+  const isInvoiceList = ctx.normalizedEndpoint === "/billing/invoice/"
 
   if (!canList) {
     return (
@@ -229,8 +230,15 @@ export function GeneratedResourceListPage({
       rowHref={(row) => buildRecordDetailHref(basePath, row)}
       requiredGroups={ctx.requiredGroups}
       clientFullTextSearch={ctx.groupKey === "accounting" || ctx.normalizedEndpoint.startsWith("/accounting/")}
+      heroIcon={isInvoiceList ? <Receipt size={17} /> : undefined}
+      heroClassName={
+        isInvoiceList
+          ? "border-emerald-200/50 bg-gradient-to-br from-emerald-50/80 via-white/60 to-teal-50/60 dark:border-emerald-800/30 dark:from-emerald-950/30 dark:via-slate-900/40 dark:to-teal-950/20"
+          : undefined
+      }
+      heroAccentClassName={isInvoiceList ? "bg-emerald-500" : undefined}
       cardGridClassName={
-        ctx.groupKey === "accounting" || ctx.normalizedEndpoint.startsWith("/accounting/")
+        ctx.groupKey === "accounting" || ctx.normalizedEndpoint.startsWith("/accounting/") || isInvoiceList
           ? "grid gap-1.5 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6"
           : undefined
       }

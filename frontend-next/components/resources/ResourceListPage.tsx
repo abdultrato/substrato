@@ -365,6 +365,9 @@ export default function ResourceListPage({
   resourceLabel,
   renderCard,
   cardGridClassName,
+  heroIcon,
+  heroClassName,
+  heroAccentClassName,
   clientFullTextSearch = false,
 }: {
   title: string
@@ -380,6 +383,12 @@ export default function ResourceListPage({
   renderCard?: (row: Row, href: string | null | undefined) => ReactNode
   /** Classe do grid de cartões (permite ajustar nº de colunas / largura). */
   cardGridClassName?: string
+  /** Ícone opcional exibido como distintivo antes do título do cabeçalho. */
+  heroIcon?: ReactNode
+  /** Classe do container do cabeçalho (fundo/borda), sobrepõe o tema padrão. */
+  heroClassName?: string
+  /** Classe da barra de destaque à esquerda do cabeçalho. */
+  heroAccentClassName?: string
   /**
    * Motor de busca multi-campo no cliente: filtra TODAS as variáveis das linhas
    * carregadas (sem acento, múltiplos termos em AND). A pesquisa deixa de ir ao
@@ -622,12 +631,17 @@ export default function ResourceListPage({
     <AppLayout requiredGroups={requiredGroups}>
       <div className="mx-auto w-full max-w-6xl space-y-2.5">
         {/* Glassmorphism hero with inline search */}
-        <section className="relative overflow-hidden rounded-xl border border-sky-200/50 bg-gradient-to-br from-sky-50/80 via-white/60 to-cyan-50/60 shadow-sm backdrop-blur-sm dark:border-sky-800/30 dark:from-sky-950/30 dark:via-slate-900/40 dark:to-cyan-950/20">
-          <span className="absolute left-0 top-0 h-full w-1 bg-sky-400" />
+        <section className={`relative overflow-hidden rounded-xl border shadow-sm backdrop-blur-sm ${heroClassName || "border-sky-200/50 bg-gradient-to-br from-sky-50/80 via-white/60 to-cyan-50/60 dark:border-sky-800/30 dark:from-sky-950/30 dark:via-slate-900/40 dark:to-cyan-950/20"}`}>
+          <span className={`absolute left-0 top-0 h-full w-1 ${heroAccentClassName || "bg-sky-400"}`} />
           <div className="px-4 py-3 pl-5">
             <div className="flex flex-wrap items-center justify-between gap-3">
               {/* Title */}
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2.5">
+                {heroIcon ? (
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/50 text-[var(--primary-700)] shadow-sm backdrop-blur-sm dark:bg-white/10 dark:text-white">
+                    {heroIcon}
+                  </span>
+                ) : null}
                 <div>
                   <h1 className="font-display text-sm font-bold text-foreground leading-tight">{resolvedResourceLabel}</h1>
                   <p className="text-[10px] text-[var(--gray-500)]">{subtitle || resolvedGroupLabel}</p>
