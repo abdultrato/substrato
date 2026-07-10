@@ -84,7 +84,7 @@ function EstadoBadge({ estado }: { estado?: string }) {
   const m = INVOICE_STATUS[String(estado || "").toUpperCase()]
   if (!m) return <span className="text-xs text-muted-foreground">{estado || "-"}</span>
   return (
-    <span className={`inline-flex rounded-md border px-2 py-0.5 text-xs font-semibold ${m.badge}`}>
+    <span className={`inline-flex rounded-sm border px-1 py-0 text-[10px] font-semibold leading-4 ${m.badge}`}>
       {m.label}
     </span>
   )
@@ -563,15 +563,12 @@ export default function FaturasPage() {
                                 >
                                   <span className={`absolute left-0 top-0 h-full w-1 ${accentBar}`} />
                                   <Link href={`/invoices/${f.id}`} className="absolute inset-0 z-10" aria-label={`Abrir detalhes da fatura ${f.id_custom || f.id}`} />
-                                  <div className="relative flex items-start justify-between gap-1">
+                                  <div className="relative">
                                     <div className="min-w-0">
-                                      <div className="truncate text-[10px] font-bold leading-tight text-foreground">{f.id_custom || `Fatura ${f.id}`}</div>
+                                      <div className="break-all text-[10px] font-bold leading-tight text-foreground">{f.id_custom || `Fatura ${f.id}`}</div>
                                       <div className="mt-0.5 line-clamp-1 min-h-[0.875rem] text-[9px] leading-3 text-muted-foreground">
                                         {f.paciente || "Paciente não identificado"}
                                       </div>
-                                    </div>
-                                    <div className="pointer-events-none">
-                                      <EstadoBadge estado={statusCode} />
                                     </div>
                                   </div>
                                   <div className="relative mt-1 grid gap-0.5 text-[9px] text-muted-foreground">
@@ -582,9 +579,14 @@ export default function FaturasPage() {
                                         <span className="truncate">{invoiceOriginLabel(f)}</span>
                                       )}
                                     </div>
-                                    <span className="text-[11px] font-bold leading-none text-foreground tabular-nums">
-                                      <MoneyValue value={totalAPagar(f)} />
-                                    </span>
+                                    <div className="flex items-center justify-between gap-1">
+                                      <span className="text-[11px] font-bold leading-none text-foreground tabular-nums">
+                                        <MoneyValue value={totalAPagar(f)} />
+                                      </span>
+                                      <div className="pointer-events-none shrink-0">
+                                        <EstadoBadge estado={statusCode} />
+                                      </div>
+                                    </div>
                                   </div>
                                   <div className="relative z-20 mt-auto border-t border-white/10 pt-1">{renderAcoes(f)}</div>
                                 </article>
