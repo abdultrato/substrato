@@ -42,14 +42,17 @@ function SectionCard({ icon: Icon, title, accent = "bg-[var(--primary-600)]", ch
   icon: React.ElementType; title: string; accent?: string; children: React.ReactNode;
 }) {
   return (
-    <section className="relative overflow-hidden rounded-xl border border-white/20 bg-white/25 shadow-sm backdrop-blur-sm dark:bg-white/5 dark:border-white/10">
-      <span className={`absolute left-0 top-0 h-full w-1 ${accent}`} />
-      <div className="flex items-center gap-2 border-b border-border/50 px-4 py-1.5 pl-5">
-        <Icon size={13} className="text-[var(--primary-600)] dark:text-[var(--primary-400)]" />
-        <h2 className="text-xs font-semibold text-foreground">{title}</h2>
-      </div>
-      <div className="space-y-2.5 px-4 py-2.5 pl-5">{children}</div>
-    </section>
+    <>
+      {/* sem overflow-hidden: o dropdown do SearchableRelationSelect precisa escapar do cartao */}
+      <section className="relative rounded-xl border border-white/20 bg-white/25 shadow-sm backdrop-blur-sm dark:bg-white/5 dark:border-white/10">
+        <span className={`absolute left-0 top-0 h-full w-1 rounded-l-xl ${accent}`} />
+        <div className="flex items-center gap-2 border-b border-border/50 px-4 py-1.5 pl-5">
+          <Icon size={13} className="text-[var(--primary-600)] dark:text-[var(--primary-400)]" />
+          <h2 className="text-xs font-semibold text-foreground">{title}</h2>
+        </div>
+        <div className="space-y-2.5 px-4 py-2.5 pl-5">{children}</div>
+      </section>
+    </>
   );
 }
 
