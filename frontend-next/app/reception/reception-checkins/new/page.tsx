@@ -40,7 +40,7 @@ function SectionCard({ icon: Icon, title, children }: {
   icon: React.ElementType; title: string; children: React.ReactNode;
 }) {
   return (
-    <section className="overflow-hidden rounded-xl border border-white/20 bg-white/25 shadow-sm backdrop-blur-sm dark:bg-white/5 dark:border-white/10">
+    <section className="relative rounded-xl border border-white/20 bg-white/25 shadow-sm backdrop-blur-sm focus-within:z-30 dark:bg-white/5 dark:border-white/10">
       <div className="flex items-center gap-2 border-b border-border/50 px-4 py-2.5">
         <Icon size={13} className="text-[var(--primary-600)] dark:text-[var(--primary-400)]" />
         <h2 className="text-xs font-semibold text-foreground">{title}</h2>

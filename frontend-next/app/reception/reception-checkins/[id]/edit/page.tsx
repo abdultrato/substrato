@@ -44,7 +44,7 @@ function SectionCard({ icon: Icon, title, accent = "bg-[var(--primary-600)]", ch
   return (
     <>
       {/* sem overflow-hidden: o dropdown do SearchableRelationSelect precisa escapar do cartao */}
-      <section className="relative rounded-xl border border-white/20 bg-white/25 shadow-sm backdrop-blur-sm dark:bg-white/5 dark:border-white/10">
+      <section className="relative rounded-xl border border-white/20 bg-white/25 shadow-sm backdrop-blur-sm focus-within:z-30 dark:bg-white/5 dark:border-white/10">
         <span className={`absolute left-0 top-0 h-full w-1 rounded-l-xl ${accent}`} />
         <div className="flex items-center gap-2 border-b border-border/50 px-4 py-1.5 pl-5">
           <Icon size={13} className="text-[var(--primary-600)] dark:text-[var(--primary-400)]" />

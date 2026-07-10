@@ -36,7 +36,7 @@ function Field({ label, required, error, hint, children }: {
 
 function SectionCard({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="rounded-xl border border-white/20 bg-white/25 shadow-sm backdrop-blur-sm dark:bg-white/5 dark:border-white/10">
+    <section className="relative rounded-xl border border-white/20 bg-white/25 shadow-sm backdrop-blur-sm focus-within:z-30 dark:bg-white/5 dark:border-white/10">
       <div className="border-b border-border/60 px-4 py-2.5">
         <h2 className="text-xs font-semibold text-foreground">{title}</h2>
       </div>
