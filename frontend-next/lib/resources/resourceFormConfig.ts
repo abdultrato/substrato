@@ -5174,6 +5174,99 @@ function clinicalOccupationalProfileConfig(): ResourceFormConfig {
   }
 }
 
+function billingInvoiceConfig(): ResourceFormConfig {
+  return {
+    esconderCampos: [
+      ...NURSING_INTERNAL_FIELDS,
+      "created_by_name",
+      "created_by_department",
+      "billed_item_sectors",
+      "total_a_pagar",
+      "has_pending_credit_note_request",
+      "verification_hash",
+    ],
+    labels: {
+      origin: "Origem",
+      patient: "Paciente",
+      request: "Requisição clínica",
+      sale: "Venda (farmácia)",
+      procedure: "Procedimento",
+      procedures: "Procedimentos",
+      consultation: "Consulta",
+      consultations: "Consultas",
+      surgery: "Cirurgia",
+      source_quotation: "Cotação de origem",
+      source_proforma: "Proforma de origem",
+      fiscal_client: "Cliente fiscal",
+      fiscal_client_name: "Nome do cliente fiscal",
+      fiscal_client_nuit: "NUIT",
+      fiscal_client_address: "Endereço fiscal",
+      subtotal: "Subtotal",
+      vat_amount: "IVA",
+      total: "Total",
+      insurance_amount: "Comparticipação do seguro",
+      patient_amount: "A cargo do paciente",
+      status: "Estado",
+    },
+    placeholders: {
+      fiscal_client_name: "Nome que consta na fatura",
+      fiscal_client_nuit: "Ex.: 400123456",
+      fiscal_client_address: "Morada fiscal do cliente",
+      subtotal: "0.00",
+      vat_amount: "0.00",
+      total: "0.00",
+      insurance_amount: "0.00",
+      patient_amount: "0.00",
+    },
+    hints: {
+      origin: "Sector de origem que gerou a fatura.",
+      fiscal_client: "Cliente registado; preenche os dados fiscais automaticamente.",
+      total: "Valor final com impostos; normalmente calculado a partir das origens.",
+    },
+    etapas: [
+      {
+        titulo: "Origem da fatura",
+        descricao: "Sector de origem, paciente e documentos vinculados",
+        campos: [
+          "origin",
+          "patient",
+          "request",
+          "sale",
+          "procedure",
+          "procedures",
+          "consultation",
+          "consultations",
+          "surgery",
+          "source_quotation",
+          "source_proforma",
+        ],
+      },
+      {
+        titulo: "Cliente fiscal",
+        descricao: "Dados para emissão do documento fiscal",
+        campos: [
+          "fiscal_client",
+          "fiscal_client_name",
+          "fiscal_client_nuit",
+          "fiscal_client_address",
+        ],
+      },
+      {
+        titulo: "Valores e estado",
+        descricao: "Montantes, comparticipação e estado da fatura",
+        campos: [
+          "subtotal",
+          "vat_amount",
+          "insurance_amount",
+          "patient_amount",
+          "total",
+          "status",
+        ],
+      },
+    ],
+  }
+}
+
 export function getResourceFormConfig(
   groupKey: string,
   resourceKey: string,
@@ -5382,6 +5475,12 @@ export function getResourceFormConfig(
       ep === "/accounting/financial-reconciliations/"
     ) {
       return financialReconciliationConfig()
+    }
+  }
+
+  if (g === "billing" || g === "faturamento" || ep.startsWith("/billing/")) {
+    if (r === "fatura" || r === "invoice" || ep === "/billing/invoice/") {
+      return billingInvoiceConfig()
     }
   }
 

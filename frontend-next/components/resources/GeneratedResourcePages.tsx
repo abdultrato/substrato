@@ -287,6 +287,7 @@ export function GeneratedResourceCreatePage({
   const isNursingProcedure = presentation === "nursing-procedure"
   const isNursingMaterial = presentation === "nursing-material"
   const isBloodDonation = ctx.normalizedEndpoint === "/bloodbank/donation/"
+  const isInvoice = ctx.normalizedEndpoint === "/billing/invoice/"
 
   // Glass styles copied from procedure detail page
   const GLASS =
@@ -330,8 +331,30 @@ export function GeneratedResourceCreatePage({
     <AppLayout requiredGroups={ctx.requiredGroups}>
       <div className={`mx-auto w-full px-1 ${isNursingProcedure ? "max-w-4xl space-y-2" : isNursingMaterial ? "max-w-5xl space-y-3" : "max-w-6xl space-y-2.5"}`}>
         {/* Header */}
-        <section className={`relative overflow-hidden ${GLASS} ${isNursingProcedure || isNursingMaterial || isBloodDonation ? "min-h-[64px]" : ""}`}>
-          {isNursingProcedure ? (
+        <section className={`relative overflow-hidden ${GLASS} ${isNursingProcedure || isNursingMaterial || isBloodDonation || isInvoice ? "min-h-[64px]" : ""}`}>
+          {isInvoice ? (
+            <>
+              <span className="absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-emerald-500 to-teal-600" />
+              <div className="pointer-events-none absolute -right-10 -top-16 h-36 w-36 rounded-full bg-emerald-500/12 blur-3xl" />
+              <div className="relative flex min-h-[72px] flex-wrap items-center justify-between gap-3 px-4 py-3 pl-5">
+                <div className="flex min-w-0 items-center gap-3">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-md shadow-emerald-500/25">
+                    <Receipt size={18} />
+                  </span>
+                  <div className="min-w-0">
+                    <h1 className="truncate text-lg font-bold leading-tight text-foreground">{createActionLabel}</h1>
+                    <p className="text-[11px] text-muted-foreground">{t("Faturação clínica", "Clinical billing")}</p>
+                  </div>
+                </div>
+                <Link
+                  href={basePath}
+                  className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border border-white/25 bg-white/35 px-3 text-xs font-semibold text-foreground shadow-sm backdrop-blur-sm transition hover:bg-white/55 dark:border-white/10 dark:bg-white/[0.06] dark:hover:bg-white/[0.10]"
+                >
+                  <ArrowLeft size={13} /> {t("Voltar", "Back")}
+                </Link>
+              </div>
+            </>
+          ) : isNursingProcedure ? (
             <>
               <div className="pointer-events-none absolute -right-8 -top-16 h-36 w-36 rounded-full bg-violet-500/10 blur-2xl" />
               <div className="relative flex min-h-[64px] items-center justify-between gap-2 px-3 py-2">
@@ -481,7 +504,7 @@ export function GeneratedResourceCreatePage({
               initialValues={initialValues}
               submitLabel={createActionLabel}
               config={getResourceFormConfig(ctx.groupKey, ctx.resourceKey, ctx.normalizedEndpoint)}
-              presentation={ctx.normalizedEndpoint === "/nursing/nursing_evolution/" || ctx.normalizedEndpoint === "/nursing/nursing_prescription/" || ctx.normalizedEndpoint === "/nursing/nursing_vital_sign/" || ctx.normalizedEndpoint === "/accounting/bank_account/" || ctx.normalizedEndpoint === "/accounting/accounts/" || ctx.normalizedEndpoint === "/accounting/entry/" || ctx.normalizedEndpoint === "/accounting/movement/" || ctx.normalizedEndpoint === "/accounting/financialreconciliation/" || ctx.normalizedEndpoint === "/accounting/financial-reconciliations/" ? "nursing-system" : "default"}
+              presentation={ctx.normalizedEndpoint === "/nursing/nursing_evolution/" || ctx.normalizedEndpoint === "/nursing/nursing_prescription/" || ctx.normalizedEndpoint === "/nursing/nursing_vital_sign/" || ctx.normalizedEndpoint === "/accounting/bank_account/" || ctx.normalizedEndpoint === "/accounting/accounts/" || ctx.normalizedEndpoint === "/accounting/entry/" || ctx.normalizedEndpoint === "/accounting/movement/" || ctx.normalizedEndpoint === "/accounting/financialreconciliation/" || ctx.normalizedEndpoint === "/accounting/financial-reconciliations/" || ctx.normalizedEndpoint === "/billing/invoice/" ? "nursing-system" : "default"}
               onSuccess={(data) => {
                 const id = primaryRecordId(data)
                 if (id !== undefined && id !== null && String(id).trim()) {
@@ -1042,12 +1065,35 @@ export function GeneratedResourceEditPage({ endpoint }: { endpoint: string }) {
   const isLedgerMovement = ctx.normalizedEndpoint === "/accounting/movement/"
   const isReconciliation = ctx.normalizedEndpoint === "/accounting/financialreconciliation/" || ctx.normalizedEndpoint === "/accounting/financial-reconciliations/"
   const isBloodDonation = ctx.normalizedEndpoint === "/bloodbank/donation/"
+  const isInvoice = ctx.normalizedEndpoint === "/billing/invoice/"
   const isNursingCard = isNursingEvolution || isNursingPrescription || isNursingVitalSign || isBankAccount || isAccount || isLedgerEntry || isLedgerMovement || isReconciliation
 
   return (
     <AppLayout requiredGroups={ctx.requiredGroups}>
       <div className={`mx-auto w-full space-y-4 ${isBloodDonation ? "max-w-[min(98vw,1280px)]" : "max-w-5xl"}`}>
-        {isNursingCard ? (
+        {isInvoice ? (
+          <section className="relative overflow-hidden rounded-xl border border-emerald-200/40 bg-white/30 shadow-sm backdrop-blur-sm dark:border-emerald-900/30 dark:bg-white/[0.04]">
+            <span className="absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-emerald-500 to-teal-600" />
+            <div className="pointer-events-none absolute -right-10 -top-12 h-36 w-36 rounded-full bg-emerald-500/12 blur-3xl" />
+            <div className="relative flex flex-wrap items-center justify-between gap-3 px-4 py-3 pl-5">
+              <div className="flex min-w-0 items-center gap-3">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-md shadow-emerald-500/25">
+                  <Receipt size={18} />
+                </span>
+                <div className="min-w-0">
+                  <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{t("Editar fatura", "Edit invoice")}</p>
+                  <h2 className="truncate text-lg font-bold leading-tight text-foreground">{pickPrimaryLabel(data) || `${resourceLabel} #${id}`}</h2>
+                </div>
+              </div>
+              <Link
+                href={detailPath}
+                className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-white/25 bg-white/35 px-3 text-xs font-semibold text-foreground shadow-sm backdrop-blur-sm transition hover:bg-white/55 dark:border-white/10 dark:bg-white/[0.06] dark:hover:bg-white/[0.10]"
+              >
+                <ArrowLeft size={13} /> {t("Voltar", "Back")}
+              </Link>
+            </div>
+          </section>
+        ) : isNursingCard ? (
           <section className="relative overflow-hidden rounded-xl border border-white/20 bg-white/30 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]">
             <span className="absolute left-0 top-0 h-full w-1 bg-[var(--primary-500)]" />
             <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 pl-5">
@@ -1155,7 +1201,7 @@ export function GeneratedResourceEditPage({ endpoint }: { endpoint: string }) {
             initialValues={data || {}}
             submitLabel={t("Guardar alterações", "Save changes")}
             config={getResourceFormConfig(ctx.groupKey, ctx.resourceKey, ctx.normalizedEndpoint)}
-            presentation={isNursingCard ? "nursing-system" : "default"}
+            presentation={isNursingCard || isInvoice ? "nursing-system" : "default"}
             onSuccess={() => router.push(detailPath)}
           />
         )}
