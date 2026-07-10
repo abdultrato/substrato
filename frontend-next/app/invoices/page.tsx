@@ -59,7 +59,7 @@ const STATUS_COLUMNS: InvoiceStatusColumn[] = [
   {
     key: "pending",
     title: "Pendentes",
-    subtitle: "Rascunhos, emitidas e demais não pagas.",
+    subtitle: "",
     empty: "Nenhuma fatura pendente.",
     accentBar: "bg-amber-500",
     countAccent: "text-amber-700 bg-amber-50 border-amber-200",
@@ -68,7 +68,7 @@ const STATUS_COLUMNS: InvoiceStatusColumn[] = [
   {
     key: "paid",
     title: "Pagas",
-    subtitle: "Faturas já liquidadas.",
+    subtitle: "",
     empty: "Nenhuma fatura paga.",
     accentBar: "bg-emerald-500",
     countAccent: "text-emerald-700 bg-emerald-50 border-emerald-200",
@@ -186,7 +186,7 @@ export default function FaturasPage() {
       return [{
         key: "paid-filter",
         title: "Pagas",
-        subtitle: "Faturas pagas filtradas.",
+                        subtitle: "",
         empty: "Nenhuma fatura paga.",
         accentBar: "bg-emerald-500",
         countAccent: "text-emerald-700 bg-emerald-50 border-emerald-200",
@@ -199,7 +199,7 @@ export default function FaturasPage() {
       return [{
         key: "issued-filter",
         title: "Emitidas",
-        subtitle: "Faturas emitidas filtradas.",
+                        subtitle: "",
         empty: "Nenhuma fatura emitida.",
         accentBar: "bg-sky-500",
         countAccent: "text-sky-700 bg-sky-50 border-sky-200",
@@ -211,7 +211,7 @@ export default function FaturasPage() {
     return [{
       key: "draft-filter",
       title: "Rascunhos",
-      subtitle: "Faturas em rascunho filtradas.",
+      subtitle: "",
       empty: "Nenhum rascunho encontrado.",
       accentBar: "bg-amber-500",
       countAccent: "text-amber-700 bg-amber-50 border-amber-200",
