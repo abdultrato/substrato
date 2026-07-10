@@ -50,12 +50,12 @@
     /* Inter/Plus Jakarta auto-hospedadas via next/font (var(--font-inter)/
        var(--font-jakarta)); o stack do sistema fica só como fallback. */
     --font-sans:
-      var(--font-inter), "Inter", ui-sans-serif, system-ui, -apple-system,
+      var(--font-inter, "Inter"), ui-sans-serif, system-ui, -apple-system,
       "Segoe UI Variable", "Segoe UI", Roboto, Arial, sans-serif;
     --font-display:
-      var(--font-jakarta), "Plus Jakarta Sans", "Inter", ui-sans-serif,
-      system-ui, -apple-system, "Segoe UI Variable", "Segoe UI", Roboto, Arial,
-      sans-serif;
+      var(--font-jakarta, "Plus Jakarta Sans"), var(--font-inter, "Inter"),
+      ui-sans-serif, system-ui, -apple-system, "Segoe UI Variable", "Segoe UI",
+      Roboto, Arial, sans-serif;
     --ui-text-size: 0.9em;
     --ui-text-size-relaxed: 1em;
     --ui-title-size: 1.5em;
