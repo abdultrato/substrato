@@ -432,7 +432,7 @@ export default function InvoiceDetailPage() {
                 </div>
                 <div className="rounded-lg border border-border/60 bg-background/40 px-3 py-2.5">
                   <div className="text-xs font-semibold uppercase text-muted-foreground">IVA (%)</div>
-                  <MetaValue>{ivaPercentual}%</MetaValue>
+                  <MetaValue>{ivaPercentual}</MetaValue>
                 </div>
                 <div className="rounded-lg border border-border/60 bg-background/40 px-3 py-2.5">
                   <div className="text-xs font-semibold uppercase text-muted-foreground">Valor do IVA</div>
