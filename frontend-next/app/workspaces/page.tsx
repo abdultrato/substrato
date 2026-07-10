@@ -1,6 +1,6 @@
 "use client"
 
-import { Suspense, useCallback, useMemo } from "react"
+import { Suspense, useCallback, useMemo, useState } from "react"
 import Link from "next/link"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import {
@@ -17,6 +17,7 @@ import {
   PackageSearch,
   Pill,
   School,
+  Search,
   Smile,
   Stethoscope,
   Syringe,
@@ -26,7 +27,6 @@ import {
 } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
-import PageHeader from "@/components/ui/PageHeader"
 import { useAuth } from "@/hooks/useAuth"
 import { useLanguage } from "@/hooks/useLanguage"
 import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
@@ -43,6 +43,7 @@ type DepartmentCard = {
   icon: LucideIcon
   visible: boolean
   scope: DepartmentScope
+  category?: string
 }
 
 type WorkspaceLayer = {
@@ -152,7 +153,7 @@ function WorkspaceCard({
   )
 
   const className =
-    "group relative flex w-64 shrink-0 min-h-[152px] overflow-hidden rounded-xl border shadow-sm shadow-black/5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/25"
+    "group relative flex min-h-[152px] w-full origin-center overflow-hidden rounded-xl border shadow-sm shadow-black/5 transition-all duration-200 ease-out hover:z-10 hover:-translate-y-1 hover:scale-[1.04] hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/25"
 
   if (href) {
     return (
@@ -208,6 +209,7 @@ function WorkspacesContent() {
   const searchParams = useSearchParams()
   const areaParam = searchParams.get("area")
   const selectedLayerKey = isWorkspaceLayerKey(areaParam) ? areaParam : null
+  const [searchQuery, setSearchQuery] = useState("")
 
   const setSelectedLayerKey = useCallback(
     (key: WorkspaceLayerKey | null) => {
@@ -365,6 +367,7 @@ function WorkspacesContent() {
         icon: Stethoscope,
         visible: canUseClinicalHealth,
         scope: "healthcare",
+        category: t("Atendimento", "Front desk & care"),
       },
       {
         key: "dental",
@@ -377,6 +380,7 @@ function WorkspacesContent() {
         icon: Smile,
         visible: showDentalArea,
         scope: "healthcare",
+        category: t("Atendimento", "Front desk & care"),
       },
       {
         key: "veterinary",
@@ -389,6 +393,7 @@ function WorkspacesContent() {
         icon: Cat,
         visible: showVeterinaryArea,
         scope: "healthcare",
+        category: t("Atendimento", "Front desk & care"),
       },
       {
         key: "clinical-pharmacy",
@@ -401,6 +406,7 @@ function WorkspacesContent() {
         icon: Pill,
         visible: showClinicalPharmacyArea,
         scope: "healthcare",
+        category: t("Farmácia e Saúde Pública", "Pharmacy & public health"),
       },
       {
         key: "telemedicine",
@@ -413,6 +419,7 @@ function WorkspacesContent() {
         icon: HeartPulse,
         visible: showTelemedicineArea,
         scope: "healthcare",
+        category: t("Atendimento", "Front desk & care"),
       },
       {
         key: "public-health",
@@ -425,6 +432,7 @@ function WorkspacesContent() {
         icon: Syringe,
         visible: showPublicHealthArea,
         scope: "healthcare",
+        category: t("Farmácia e Saúde Pública", "Pharmacy & public health"),
       },
       {
         key: "physiotherapy",
@@ -437,6 +445,7 @@ function WorkspacesContent() {
         icon: Activity,
         visible: showPhysiotherapyArea,
         scope: "healthcare",
+        category: t("Especialidades", "Specialties"),
       },
       {
         key: "occupational-therapy",
@@ -449,6 +458,7 @@ function WorkspacesContent() {
         icon: HeartPulse,
         visible: showOccupationalTherapyArea,
         scope: "healthcare",
+        category: t("Especialidades", "Specialties"),
       },
       {
         key: "physical-therapy",
@@ -461,6 +471,7 @@ function WorkspacesContent() {
         icon: Activity,
         visible: showPhysicalTherapyArea,
         scope: "healthcare",
+        category: t("Especialidades", "Specialties"),
       },
       {
         key: "radiology",
@@ -473,6 +484,7 @@ function WorkspacesContent() {
         icon: Microscope,
         visible: showRadiologyArea,
         scope: "healthcare",
+        category: t("Diagnóstico", "Diagnostics"),
       },
       {
         key: "pathology",
@@ -485,6 +497,7 @@ function WorkspacesContent() {
         icon: Microscope,
         visible: showPathologyArea,
         scope: "healthcare",
+        category: t("Diagnóstico", "Diagnostics"),
       },
       {
         key: "cardiology",
@@ -497,6 +510,7 @@ function WorkspacesContent() {
         icon: HeartPulse,
         visible: showCardiologyArea,
         scope: "healthcare",
+        category: t("Especialidades", "Specialties"),
       },
       {
         key: "neurology",
@@ -509,6 +523,7 @@ function WorkspacesContent() {
         icon: BrainCircuit,
         visible: showNeurologyArea,
         scope: "healthcare",
+        category: t("Especialidades", "Specialties"),
       },
       {
         key: "ophthalmology",
@@ -521,6 +536,7 @@ function WorkspacesContent() {
         icon: Eye,
         visible: showOphthalmologyArea,
         scope: "healthcare",
+        category: t("Especialidades", "Specialties"),
       },
       {
         key: "credit-financing",
@@ -533,6 +549,7 @@ function WorkspacesContent() {
         icon: CreditCard,
         visible: showCreditFinancingArea,
         scope: "neutral",
+        category: t("Financeiro", "Financial"),
       },
     ]
 
@@ -685,59 +702,145 @@ function WorkspacesContent() {
   const selectedLayer = selectedLayerKey ? layers.find((layer) => layer.key === selectedLayerKey) || null : null
   const visibleDepartments = selectedLayer?.departments.filter((department) => department.visible) || []
 
+  const normalizedQuery = searchQuery.trim().toLowerCase()
+  const filteredDepartments = normalizedQuery
+    ? visibleDepartments.filter(
+        (department) =>
+          department.title.toLowerCase().includes(normalizedQuery) ||
+          department.description.toLowerCase().includes(normalizedQuery)
+      )
+    : visibleDepartments
+
+  const departmentGroups = useMemo(() => {
+    const groups: { category: string; departments: DepartmentCard[] }[] = []
+    for (const department of filteredDepartments) {
+      const category = department.category ?? t("Outros", "Other")
+      const existing = groups.find((group) => group.category === category)
+      if (existing) {
+        existing.departments.push(department)
+      } else {
+        groups.push({ category, departments: [department] })
+      }
+    }
+    return groups
+  }, [filteredDepartments, t])
+
+  const showSearch = visibleDepartments.length > 6
+  const headerTone = workspaceTone(selectedLayer?.key ?? "")
+  const HeaderIcon = selectedLayer ? selectedLayer.icon : Stethoscope
+  const moduleCount = selectedLayer ? visibleDepartments.length : visibleLayers.length
+  const moduleCountLabel = selectedLayer
+    ? moduleCount === 1
+      ? t("1 módulo disponível", "1 module available")
+      : t(`${moduleCount} módulos disponíveis`, `${moduleCount} modules available`)
+    : moduleCount === 1
+      ? t("1 área disponível", "1 area available")
+      : t(`${moduleCount} áreas disponíveis`, `${moduleCount} areas available`)
+
   return (
     <AppLayout>
       <div className="mx-auto w-full max-w-6xl space-y-6 px-3 sm:px-0">
-        <PageHeader
-          title={selectedLayer ? selectedLayer.title : t("Selecionar área de trabalho", "Select workspace")}
-          subtitle={
-            selectedLayer
-              ? selectedLayer.description
-              : t(
-                  "Escolha uma área para ver os módulos disponíveis para o seu perfil.",
-                  "Choose an area to see the modules available for your profile."
-                )
-          }
-        />
+        <div className={`relative overflow-hidden rounded-2xl border ${headerTone.panel}`}>
+          <span
+            aria-hidden
+            className={`pointer-events-none absolute inset-x-0 top-0 h-28 bg-gradient-to-b ${headerTone.glow}`}
+          />
+          <div className="relative flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
+            <div className="flex items-center gap-4">
+              <div className={`inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ring-1 ${headerTone.accent}`}>
+                <HeaderIcon size={22} strokeWidth={2.1} />
+              </div>
+              <div className="min-w-0">
+                <h1 className={`break-words font-display text-xl font-semibold leading-tight sm:text-2xl ${headerTone.title}`}>
+                  {selectedLayer ? selectedLayer.title : t("Selecionar área de trabalho", "Select workspace")}
+                </h1>
+                <p className={`mt-1 text-sm leading-relaxed ${headerTone.description}`}>
+                  {selectedLayer
+                    ? selectedLayer.description
+                    : t(
+                        "Escolha uma área para ver os módulos disponíveis para o seu perfil.",
+                        "Choose an area to see the modules available for your profile."
+                      )}
+                </p>
+              </div>
+            </div>
+            <span className="inline-flex w-fit shrink-0 items-center gap-1.5 self-start rounded-full border border-border/70 bg-card/80 px-3 py-1.5 text-xs font-semibold text-muted-foreground shadow-sm sm:self-auto">
+              {moduleCountLabel}
+            </span>
+          </div>
+
+          {selectedLayer ? (
+            <div className="relative flex flex-wrap items-center justify-between gap-3 border-t border-border/60 bg-card/40 px-5 py-3 sm:px-6">
+              <button
+                type="button"
+                onClick={() => setSelectedLayerKey(null)}
+                className="inline-flex items-center gap-2 rounded-md border border-border bg-card px-3 py-2 text-sm font-medium text-foreground shadow-sm transition-colors hover:border-primary/35 hover:bg-muted/50"
+              >
+                <ArrowLeft size={16} />
+                {t("Voltar às áreas principais", "Back to main areas")}
+              </button>
+
+              {showSearch ? (
+                <div className="relative w-full sm:w-72">
+                  <Search
+                    size={16}
+                    className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                  />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(event) => setSearchQuery(event.target.value)}
+                    placeholder={t("Pesquisar módulo...", "Search modules...")}
+                    className="w-full rounded-md border border-border bg-card py-2 pl-9 pr-3 text-sm text-foreground shadow-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-primary/40"
+                  />
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+        </div>
 
         {selectedLayer ? (
-          <div className="space-y-4">
-            <button
-              type="button"
-              onClick={() => setSelectedLayerKey(null)}
-              className="inline-flex items-center gap-2 rounded-md border border-border bg-card px-3 py-2 text-sm font-medium text-foreground shadow-sm transition-colors hover:border-primary/35 hover:bg-muted/50"
-            >
-              <ArrowLeft size={16} />
-              {t("Voltar às áreas principais", "Back to main areas")}
-            </button>
-
-            {visibleDepartments.length > 0 ? (
-              <div className="flex flex-nowrap gap-3 overflow-x-auto pb-2 -mx-3 px-3 sm:mx-0 sm:px-0">
-                {visibleDepartments.map((department) => {
-                  return (
-                    <WorkspaceCard
-                      key={department.key}
-                      title={department.title}
-                      description={department.description}
-                      icon={department.icon}
-                      href={department.href}
-                      onClick={() => storeScope(department.scope)}
-                      toneKey={selectedLayer.key}
-                    />
-                  )
-                })}
+          <div className="space-y-5">
+            {filteredDepartments.length > 0 ? (
+              <div className="space-y-6">
+                {departmentGroups.map((group) => (
+                  <div key={group.category} className="space-y-3">
+                    {departmentGroups.length > 1 ? (
+                      <h2 className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                        {group.category}
+                      </h2>
+                    ) : null}
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                      {group.departments.map((department) => (
+                        <WorkspaceCard
+                          key={department.key}
+                          title={department.title}
+                          description={department.description}
+                          icon={department.icon}
+                          href={department.href}
+                          onClick={() => storeScope(department.scope)}
+                          toneKey={selectedLayer.key}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                ))}
               </div>
             ) : (
               <EmptyState
-                message={t(
-                  "Não há módulos disponíveis para o seu perfil nesta área.",
-                  "There are no modules available for your profile in this area."
-                )}
+                message={
+                  normalizedQuery
+                    ? t("Nenhum módulo encontrado para essa pesquisa.", "No modules found for that search.")
+                    : t(
+                        "Não há módulos disponíveis para o seu perfil nesta área.",
+                        "There are no modules available for your profile in this area."
+                      )
+                }
               />
             )}
           </div>
         ) : visibleLayers.length > 0 ? (
-          <div className="flex flex-nowrap gap-3 overflow-x-auto pb-2 -mx-3 px-3 sm:mx-0 sm:px-0">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {visibleLayers.map((layer) => {
               return (
                 <WorkspaceCard

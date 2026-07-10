@@ -17,6 +17,8 @@ import NursingVitalSignDetails from "@/components/resources/NursingVitalSignDeta
 import NursingVitalSignListCard from "@/components/resources/NursingVitalSignListCard"
 import AccountListCard from "@/components/resources/AccountListCard"
 import AccountDetails from "@/components/resources/AccountDetails"
+import InvoiceListCard from "@/components/resources/InvoiceListCard"
+import InvoiceDetails from "@/components/resources/InvoiceDetails"
 import BankAccountListCard from "@/components/resources/BankAccountListCard"
 import BankAccountDetails from "@/components/resources/BankAccountDetails"
 import LedgerEntryListCard from "@/components/resources/LedgerEntryListCard"
@@ -247,7 +249,9 @@ export function GeneratedResourceListPage({
                     ? (row, href) => <LedgerMovementListCard row={row} href={href} />
                     : ctx.normalizedEndpoint === "/accounting/financialreconciliation/" || ctx.normalizedEndpoint === "/accounting/financial-reconciliations/"
                       ? (row, href) => <FinancialReconciliationListCard row={row} href={href} />
-                      : undefined
+                      : ctx.normalizedEndpoint === "/billing/invoice/"
+                        ? (row, href) => <InvoiceListCard row={row} href={href} />
+                        : undefined
       }
     />
   )
@@ -634,9 +638,10 @@ export function GeneratedResourceDetailPage({
   const isLedgerEntry = ctx.normalizedEndpoint === "/accounting/entry/"
   const isLedgerMovement = ctx.normalizedEndpoint === "/accounting/movement/"
   const isReconciliation = ctx.normalizedEndpoint === "/accounting/financialreconciliation/" || ctx.normalizedEndpoint === "/accounting/financial-reconciliations/"
+  const isInvoice = ctx.normalizedEndpoint === "/billing/invoice/"
   const isBloodDonation = ctx.normalizedEndpoint === "/bloodbank/donation/"
   const isNursingCard = isNursingEvolution || isNursingPrescription || isNursingVitalSign
-  const isCardDetail = isNursingCard || isAccount || isBankAccount || isLedgerEntry || isLedgerMovement || isReconciliation
+  const isCardDetail = isNursingCard || isAccount || isBankAccount || isLedgerEntry || isLedgerMovement || isReconciliation || isInvoice
 
   const detailActions = (
     <div className="flex flex-wrap items-center gap-2">
@@ -809,6 +814,8 @@ export function GeneratedResourceDetailPage({
             <LedgerMovementDetails endpoint={ctx.normalizedEndpoint} data={data} actions={nursingCardActions} />
           ) : isReconciliation ? (
             <FinancialReconciliationDetails endpoint={ctx.normalizedEndpoint} data={data} actions={nursingCardActions} />
+          ) : isInvoice ? (
+            <InvoiceDetails endpoint={ctx.normalizedEndpoint} data={data} actions={nursingCardActions} />
           ) : isBloodDonation ? (
             <section className="relative overflow-hidden rounded-xl border border-rose-200/40 bg-white/28 shadow-lg shadow-rose-950/5 backdrop-blur-2xl dark:border-rose-900/30 dark:bg-white/[0.05]">
               <span className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-rose-500 via-red-500 to-cyan-500" />
