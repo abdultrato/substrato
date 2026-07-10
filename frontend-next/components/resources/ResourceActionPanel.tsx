@@ -251,7 +251,7 @@ function renderField(
   onChange: (value: FieldValue) => void
 ) {
   const baseClass =
-    "w-full rounded-md border border-white/30 bg-white/55 px-2.5 py-2 text-sm text-[var(--text)] shadow-sm backdrop-blur-sm transition-colors duration-150 placeholder:text-[var(--gray-400)] hover:border-[var(--primary-400)] focus:border-[var(--primary-500)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-100)] dark:border-white/10 dark:bg-white/10"
+    "w-full rounded-md border border-white/30 bg-white/55 px-2.5 py-2 text-sm text-[var(--text)] shadow-sm backdrop-blur-sm transition-colors duration-150 placeholder:text-[var(--gray-400)] hover:border-[var(--primary-400)] focus:border-[var(--primary-500)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-100)] dark:border-slate-700 dark:bg-slate-900/85 dark:text-slate-100 dark:placeholder:text-slate-400 dark:hover:border-emerald-500/70 dark:focus:border-emerald-400 dark:focus:ring-emerald-500/20"
   // O título de cada campo vive no placeholder (ver ResourceActionPanel).
   const placeholder = `${field.placeholder || field.label}${field.required ? " *" : ""}`
 
@@ -286,12 +286,12 @@ function renderField(
 
   if (field.type === "checkbox") {
     return (
-      <label className="inline-flex h-9 items-center gap-2 rounded-md border border-white/30 bg-white/55 px-2.5 text-sm text-[var(--gray-700)] shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/10 dark:text-[var(--gray-200)]">
+      <label className="inline-flex h-9 items-center gap-2 rounded-md border border-white/30 bg-white/55 px-2.5 text-sm text-[var(--gray-700)] shadow-sm backdrop-blur-sm dark:border-slate-700 dark:bg-slate-900/85 dark:text-slate-100">
         <input
           type="checkbox"
           checked={Boolean(value)}
           onChange={(event) => onChange(event.target.checked)}
-          className="h-4 w-4 rounded border-[var(--border)] text-[var(--primary-600)] focus:ring-[var(--primary-200)]"
+          className="h-4 w-4 rounded border-[var(--border)] text-[var(--primary-600)] focus:ring-[var(--primary-200)] dark:border-slate-600 dark:bg-slate-950"
         />
         <span>{field.label}</span>
       </label>
@@ -441,7 +441,7 @@ export default function ResourceActionPanel({
   }
 
   return (
-    <section className={`rounded-xl border border-white/20 bg-white/20 p-2.5 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/5 ${isBillingInvoice ? "mx-auto" : ""}`}>
+    <section className={`rounded-xl border border-white/20 bg-white/20 p-2.5 shadow-sm backdrop-blur-sm dark:border-slate-800 dark:bg-slate-950/65 ${isBillingInvoice ? "mx-auto" : ""}`}>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <div className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-white/25 bg-white/45 text-[var(--primary-700)] shadow-sm dark:border-white/10 dark:bg-white/10">
@@ -456,7 +456,7 @@ export default function ResourceActionPanel({
             </p>
           </div>
         </div>
-        <span className="rounded-md border border-white/30 bg-white/45 px-2 py-1 text-xs font-medium text-[var(--gray-700)] shadow-sm dark:border-white/10 dark:bg-white/10 dark:text-[var(--gray-200)]">
+        <span className="rounded-md border border-white/30 bg-white/45 px-2 py-1 text-xs font-medium text-[var(--gray-700)] shadow-sm dark:border-slate-700 dark:bg-slate-900/80 dark:text-slate-200">
           {actions.length} {t("ação(ões)", "action(s)")}
         </span>
       </div>
@@ -471,7 +471,7 @@ export default function ResourceActionPanel({
           return (
             <div
               key={action.key}
-              className={`relative flex h-full flex-col overflow-hidden rounded-lg border border-white/20 bg-white/30 p-2.5 pl-3 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/10 ${isBillingHistoryAction ? "mx-auto w-full max-w-2xl" : ""}`}
+              className={`relative flex h-full min-w-0 flex-col overflow-hidden rounded-lg border border-white/20 bg-white/30 p-2.5 pl-3 shadow-sm backdrop-blur-sm dark:border-slate-700 dark:bg-slate-900/80 ${isBillingHistoryAction ? "w-full" : ""}`}
             >
               <span className="absolute left-0 top-0 h-full w-1 bg-gradient-to-b from-[var(--primary-500)] to-[var(--primary-400)]" />
               <div className="flex flex-wrap items-start justify-between gap-2">
@@ -488,7 +488,7 @@ export default function ResourceActionPanel({
                 {action.dedicatedHref ? (
                   <Link
                     href={action.dedicatedHref}
-                    className="inline-flex h-8 shrink-0 items-center gap-1 rounded-md border border-white/30 bg-white/45 px-2 text-xs font-semibold text-[var(--gray-700)] shadow-sm backdrop-blur-sm transition-all duration-150 hover:border-[var(--primary-300)] hover:bg-white/60 hover:text-[var(--text)] dark:border-white/10 dark:bg-white/10 dark:text-[var(--gray-200)] dark:hover:bg-white/15"
+                    className="inline-flex h-8 shrink-0 items-center gap-1 rounded-md border border-white/30 bg-white/45 px-2 text-xs font-semibold text-[var(--gray-700)] shadow-sm backdrop-blur-sm transition-all duration-150 hover:border-[var(--primary-300)] hover:bg-white/60 hover:text-[var(--text)] dark:border-slate-700 dark:bg-slate-900/75 dark:text-slate-200 dark:hover:bg-slate-800/90"
                   >
                     <ExternalLink size={12} />
                     {t("Fluxo dedicado", "Dedicated flow")}
@@ -497,14 +497,14 @@ export default function ResourceActionPanel({
               </div>
 
               {action.fields?.length ? (
-                <div className={`mt-3 grid gap-2 ${isBillingHistoryAction ? "sm:grid-cols-2" : "sm:grid-cols-2"}`}>
+                <div className="mt-3 grid gap-2 sm:grid-cols-2">
                   {action.fields.map((field) => {
                     const value = getValue(action, field)
                     if (field.type === "checkbox") {
                       return (
                         <div key={`${action.key}-${field.name}`} className="space-y-1">
                           {renderField(action, field, value, (nextValue) => updateValue(action, field, nextValue))}
-                          {field.helper ? <p className="text-[11px] text-[var(--gray-500)]">{field.helper}</p> : null}
+                          {field.helper ? <p className="text-[11px] text-[var(--gray-500)] dark:text-slate-400">{field.helper}</p> : null}
                         </div>
                       )
                     }
@@ -520,7 +520,7 @@ export default function ResourceActionPanel({
                           </span>
                         ) : null}
                         {renderField(action, field, value, (nextValue) => updateValue(action, field, nextValue))}
-                        {field.helper ? <p className="text-[11px] text-[var(--gray-500)]">{field.helper}</p> : null}
+                        {field.helper ? <p className="text-[11px] text-[var(--gray-500)] dark:text-slate-400">{field.helper}</p> : null}
                       </label>
                     )
                   })}
@@ -542,7 +542,7 @@ export default function ResourceActionPanel({
                   <button
                     type="button"
                     onClick={() => void copyResult(action)}
-                    className="inline-flex h-9 items-center gap-1 rounded-md border border-white/30 bg-white/55 px-2.5 text-xs font-semibold text-[var(--gray-700)] shadow-sm backdrop-blur-sm transition-all duration-150 hover:border-[var(--primary-300)] hover:bg-white/70 dark:border-white/10 dark:bg-white/10 dark:text-[var(--gray-200)] dark:hover:bg-white/15"
+                    className="inline-flex h-9 items-center gap-1 rounded-md border border-white/30 bg-white/55 px-2.5 text-xs font-semibold text-[var(--gray-700)] shadow-sm backdrop-blur-sm transition-all duration-150 hover:border-[var(--primary-300)] hover:bg-white/70 dark:border-slate-700 dark:bg-slate-900/75 dark:text-slate-200 dark:hover:bg-slate-800/90"
                   >
                     <Clipboard size={13} />
                     {t("Copiar resposta", "Copy response")}
@@ -550,31 +550,31 @@ export default function ResourceActionPanel({
                 ) : null}
 
                 {state.jobStatus ? (
-                  <span className="inline-flex h-8 items-center rounded-md border border-white/25 bg-white/45 px-2 text-xs font-medium text-[var(--gray-700)] shadow-sm dark:border-white/10 dark:bg-white/10 dark:text-[var(--gray-200)]">
+                  <span className="inline-flex h-8 items-center rounded-md border border-white/25 bg-white/45 px-2 text-xs font-medium text-[var(--gray-700)] shadow-sm dark:border-slate-700 dark:bg-slate-900/80 dark:text-slate-200">
                     {t("Job:", "Job:")} {state.jobStatus}
                   </span>
                 ) : null}
               </div>
 
               {state.feedback ? (
-                <div className="mt-2 inline-flex items-center gap-1 rounded-md border border-emerald-200 bg-emerald-50 px-2.5 py-1.5 text-xs text-emerald-800">
+                <div className="mt-2 inline-flex items-center gap-1 rounded-md border border-emerald-200 bg-emerald-50 px-2.5 py-1.5 text-xs text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200">
                   <CheckCircle2 size={13} />
                   {state.feedback}
                 </div>
               ) : null}
 
               {state.error ? (
-                <div className="mt-2 rounded-md border border-rose-200 bg-rose-50 px-2.5 py-1.5 text-xs text-rose-800">
+                <div className="mt-2 rounded-md border border-rose-200 bg-rose-50 px-2.5 py-1.5 text-xs text-rose-800 dark:border-rose-800 dark:bg-rose-950/45 dark:text-rose-200">
                   {state.error}
                 </div>
               ) : null}
 
               {hasResult ? (
-                <div className="mt-2 max-h-64 overflow-auto rounded-md border border-white/20 bg-white/40 text-[11px] leading-relaxed text-[var(--gray-800)] backdrop-blur-sm dark:border-white/10 dark:bg-white/10 dark:text-[var(--gray-100)]">
+                <div className="mt-2 max-h-64 overflow-auto rounded-md border border-white/20 bg-white/40 text-[11px] leading-relaxed text-[var(--gray-800)] backdrop-blur-sm dark:border-slate-700 dark:bg-slate-950/70 dark:text-slate-100">
                   {resultRows(state.result).map((row) => (
-                    <div key={row.label} className="grid grid-cols-3 gap-2 border-b border-white/20 px-2 py-1.5 last:border-b-0 dark:border-white/10">
-                      <span className="font-semibold uppercase tracking-wide text-[var(--gray-500)]">{row.label}</span>
-                      <span className="col-span-2 whitespace-pre-wrap text-[var(--gray-800)]">{row.value}</span>
+                    <div key={row.label} className="grid grid-cols-3 gap-2 border-b border-white/20 px-2 py-1.5 last:border-b-0 dark:border-slate-800">
+                      <span className="font-semibold uppercase tracking-wide text-[var(--gray-500)] dark:text-slate-400">{row.label}</span>
+                      <span className="col-span-2 whitespace-pre-wrap text-[var(--gray-800)] dark:text-slate-100">{row.value}</span>
                     </div>
                   ))}
                 </div>
