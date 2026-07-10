@@ -789,11 +789,18 @@ export default function FaturaRascunhoPage() {
       await carregarFatura()
       await carregarRecibo(faturaId)
     } catch (e: any) {
-      setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao registrar pagamento."))
+      const mensagem = e?.message || ""
+      if (/totalmente quitada/i.test(mensagem)) {
+        // Fatura já paga — não há mais o que fazer nesta página
+        router.push("/invoices")
+        return
+      }
+      setErro(isNotFoundLikeError(e) ? null : (mensagem || "Falha ao registrar pagamento."))
     } finally {
       setAcaoId(null)
     }
   }, [
+    router,
     carregarFatura,
     carregarRecibo,
     dadosSeguro,
