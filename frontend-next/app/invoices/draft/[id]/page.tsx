@@ -1343,9 +1343,10 @@ export default function FaturaRascunhoPage() {
                         onChange={(e) => setPagamentoSeguradora(e.target.value)}
                         options={seguradoras.map((s) => ({
                           value: String(s.id),
-                          label: s.nome || s.id_custom || `Seguradora ${s.id}`,
+                          label: s.nome || s.name || s.id_custom || `Seguradora ${s.id}`,
                         }))}
-                        placeholder="Selecione"
+                        placeholder={seguradoras.length ? "Selecione" : "Nenhuma seguradora cadastrada"}
+                        disabled={!seguradoras.length}
                       />
                     </div>
                     <div>
