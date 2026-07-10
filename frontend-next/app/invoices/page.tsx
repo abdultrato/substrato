@@ -4,7 +4,7 @@ import { isNotFoundLikeError } from "@/lib/errors/api-error"
 import Link from "next/link"
 import { useCallback, useEffect, useMemo, useState } from "react"
 
-import { BadgeCheck, BarChart3, Building2, FilePlus2, Plus, Receipt, Search, Wallet, X } from "lucide-react"
+import { BadgeCheck, BarChart3, Building2, FilePlus2, FileText, Plus, Receipt, Search, Wallet, X } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
 import PageSizeInput from "@/components/ui/PageSizeInput"
