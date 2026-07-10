@@ -1,6 +1,7 @@
 "use client"
 
 import { isNotFoundLikeError } from "@/lib/errors/api-error"
+import Link from "next/link"
 import { useCallback, useEffect, useMemo, useState } from "react"
 import {
   FileText, RotateCcw, Search, Receipt,
@@ -126,9 +127,14 @@ function ReceiptCard({ row, busy, onPdf, accentBarClass }: {
   return (
     <div className="group relative flex flex-col gap-1 overflow-hidden rounded-md border border-white/25 bg-white/30 px-2 py-1.5 pl-3 shadow-sm backdrop-blur-sm transition-all duration-150 hover:border-[var(--primary-300)]/60 hover:bg-white/45 dark:bg-white/5 dark:border-white/10 dark:hover:border-[var(--primary-500)]/40">
       <span className={`absolute left-0 top-0 h-full w-1 ${accentBarClass}`} />
+      <Link
+        href={`/payments/receipts/${row.id}`}
+        className="absolute inset-0 z-10"
+        aria-label={`Abrir detalhes do recibo ${code}`}
+      />
 
       {/* Top row: code + amount */}
-      <div className="flex items-center justify-between gap-1">
+      <div className="relative flex items-center justify-between gap-1">
         <span className="font-mono text-[10px] font-bold text-[var(--primary-700)] dark:text-white truncate">
           {code}
         </span>
@@ -140,13 +146,13 @@ function ReceiptCard({ row, busy, onPdf, accentBarClass }: {
       </div>
 
       {/* Patient + meta in one compact row */}
-      <div className="flex items-center gap-1 min-w-0">
+      <div className="relative flex items-center gap-1 min-w-0">
         <p className="truncate text-[10px] font-semibold text-foreground flex-1">{patient}</p>
         <span className="shrink-0 text-[9px] text-muted-foreground">{fmtDate(date)}</span>
       </div>
 
       {/* Invoice chip + PDF inline */}
-      <div className="flex items-center gap-1">
+      <div className="relative z-20 flex items-center gap-1">
         {invoice && (
           <span className="inline-flex items-center gap-0.5 rounded border border-border bg-muted/40 px-1 py-px text-[9px] font-medium text-foreground-2 truncate max-w-[60%]">
             <FileText size={7} />
