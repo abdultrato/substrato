@@ -30,6 +30,8 @@ type InvoiceStatusColumn = {
   statuses: string[]
 }
 
+type InvoiceSortMode = "recentes" | "antigas"
+
 function invoiceOrigin(row?: FaturaRow | null): string {
   return String(row?.origin ?? row?.origem ?? row?.origem_fatura ?? "").trim()
 }
@@ -43,6 +45,96 @@ function invoiceOriginLabel(row?: FaturaRow | null): string {
   const origin = invoiceOrigin(row)
   if (!origin) return "-"
   return isProformaOrigin(row) ? "Proforma" : origin
+}
+
+function normalizeText(value: unknown): string {
+  return String(value ?? "").trim().toLowerCase()
+}
+
+function invoiceTimestamp(row?: FaturaRow | null): number {
+  const raw =
+    row?.created_at ??
+    row?.criado_em ??
+    row?.issued_at ??
+    row?.emitida_em ??
+    row?.updated_at ??
+    row?.data ??
+    null
+  if (raw) {
+    const time = new Date(String(raw)).getTime()
+    if (!Number.isNaN(time)) return time
+  }
+  return Number(row?.id ?? 0)
+}
+
+function collectSearchTokens(value: unknown, bucket: string[], depth = 0) {
+  if (value === null || value === undefined || depth > 2) return
+  if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
+    const normalized = String(value).trim()
+    if (normalized) bucket.push(normalized)
+    return
+  }
+  if (Array.isArray(value)) {
+    value.forEach((entry) => collectSearchTokens(entry, bucket, depth + 1))
+    return
+  }
+  if (typeof value === "object") {
+    Object.entries(value as Record<string, unknown>).forEach(([key, entry]) => {
+      if (/(name|nome|number|numero|receipt|recibo|payer|pagante|companion|acompanh|patient|paciente|origin|origem|proven|exam|exame|procedure|proced)/i.test(key)) {
+        collectSearchTokens(entry, bucket, depth + 1)
+      }
+    })
+  }
+}
+
+function invoiceSearchHaystack(row?: FaturaRow | null): string {
+  const statusCode = invoiceStatusCode(row)
+  const estado = INVOICE_STATUS[statusCode]?.label || statusCode
+  const tokens: string[] = [
+    row?.id_custom,
+    row?.custom_id,
+    row?.invoice_code,
+    row?.receipt_number,
+    row?.numero_recibo,
+    row?.receipt?.number,
+    row?.payer_name,
+    row?.pagante_nome,
+    row?.customer_name,
+    row?.patient_name,
+    row?.paciente_nome,
+    row?.paciente_label,
+    row?.companion_name,
+    row?.acompanhante_nome,
+    row?.proveniencia,
+    row?.provenance,
+    row?.proveniencia_nome,
+    row?.origin_name,
+    row?.origem_nome,
+    row?.estado,
+    row?.status,
+    estado,
+    invoiceOriginLabel(row),
+    row?.total,
+    row?.total_a_pagar,
+    row?.valor_a_pagar,
+    row?.created_at,
+    row?.criado_em,
+    row?.issued_at,
+    row?.emitida_em,
+  ]
+
+  collectSearchTokens(row?.items, tokens)
+  collectSearchTokens(row?.itens, tokens)
+  collectSearchTokens(row?.payments, tokens)
+  collectSearchTokens(row?.pagamentos, tokens)
+  collectSearchTokens(row?.receipts, tokens)
+  collectSearchTokens(row?.recibos, tokens)
+  collectSearchTokens(row?.procedures, tokens)
+  collectSearchTokens(row?.procedure_names, tokens)
+  collectSearchTokens(row?.exams, tokens)
+  collectSearchTokens(row?.exam_names, tokens)
+
+  return tokens.map(normalizeText).filter(Boolean).join(" ")
 }
 
 const GLASS =
@@ -142,6 +234,7 @@ export default function FaturasPage() {
   const [busca, setBusca] = useState("")
   const [filtroEstado, setFiltroEstado] = useState<string | null>(null)
   const [pageSize, setPageSize] = useState(10)
+  const [ordenacao, setOrdenacao] = useState<InvoiceSortMode>("recentes")
 
   const podeAlterar = userHasAnyGroup(user, [GROUPS.ADMIN, GROUPS.RECEPCAO])
   const stats = useMemo(() => ({
@@ -151,19 +244,18 @@ export default function FaturasPage() {
     pagas: faturas.filter((f) => invoiceStatusCode(f) === "PAGA").length,
   }), [faturas])
   const faturasFiltradas = useMemo(() => {
-    let lista = faturas
+    let lista = [...faturas]
     if (filtroEstado) lista = lista.filter((f) => invoiceStatusCode(f) === filtroEstado)
     const q = busca.trim().toLowerCase()
-    if (!q) return lista
-    return lista.filter((f) => {
-      const statusCode = invoiceStatusCode(f)
-      const estado = INVOICE_STATUS[statusCode]?.label || statusCode
-      const haystack = [
-        f.id_custom, f.id, f.paciente, f.estado, f.status, estado, invoiceOriginLabel(f), f.total, f.total_a_pagar,
-      ].map((v) => String(v ?? "").toLowerCase()).join(" ")
-      return haystack.includes(q)
+    if (q) {
+      lista = lista.filter((f) => invoiceSearchHaystack(f).includes(q))
+    }
+    lista.sort((a, b) => {
+      const delta = invoiceTimestamp(b) - invoiceTimestamp(a)
+      return ordenacao === "recentes" ? delta : -delta
     })
-  }, [faturas, busca, filtroEstado])
+    return lista
+  }, [faturas, busca, filtroEstado, ordenacao])
   const colunaFaturas = useMemo(
     () =>
       STATUS_COLUMNS.map((column) => ({
@@ -462,7 +554,7 @@ export default function FaturasPage() {
                 <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
                 <input
                   type="text"
-                  placeholder="Pesquisar…"
+                  placeholder="Pesquisar paciente, pagante, acompanhante, recibo, fatura, proveniência, procedimento ou exame…"
                   className="w-full rounded-lg border border-border bg-background/60 py-1.5 pl-7 pr-6 text-xs text-foreground placeholder:text-muted-foreground transition focus:outline-none focus:ring-2 focus:ring-violet-500/40"
                   value={busca}
                   onChange={(e) => setBusca(e.target.value)}
@@ -493,6 +585,17 @@ export default function FaturasPage() {
                     </button>
                   )
                 })}
+                <div className="inline-flex h-9 items-center rounded-lg border border-border bg-background/60 px-2">
+                  <select
+                    value={ordenacao}
+                    onChange={(e) => setOrdenacao(e.target.value as InvoiceSortMode)}
+                    className="h-7 bg-transparent text-xs font-semibold text-foreground outline-none"
+                    aria-label="Ordenar faturas"
+                  >
+                    <option value="recentes">Mais novas</option>
+                    <option value="antigas">Mais antigas</option>
+                  </select>
+                </div>
                 <div className="inline-flex h-9 min-w-[104px] items-center justify-center gap-1.5 rounded-lg border border-border bg-background/60 px-2" title="Itens por coluna">
                   <PageSizeInput value={pageSize} onChange={setPageSize} ariaLabel="Itens por coluna" />
                   <span className="text-xs text-muted-foreground">/coluna</span>
