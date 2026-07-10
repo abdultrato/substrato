@@ -134,6 +134,7 @@ function InvoiceMetric({
 }
 
 export default function FaturasPage() {
+  const FETCH_PAGE_SIZE = 200
   const router = useRouter()
   const { loading } = useAuthGuard()
   const { user } = useAuth()
@@ -174,17 +175,20 @@ export default function FaturasPage() {
       return haystack.includes(q)
     })
   }, [faturas, busca, filtroEstado])
-  const faturasVisiveis = useMemo(
-    () => faturasFiltradas.slice(0, pageSize),
-    [faturasFiltradas, pageSize]
-  )
   const colunaFaturas = useMemo(
     () =>
       STATUS_COLUMNS.map((column) => ({
         ...column,
-        rows: faturasVisiveis.filter((f) => column.statuses.includes(String(f.estado || "").toUpperCase())),
+        rows: faturasFiltradas.filter((f) => column.statuses.includes(String(f.estado || "").toUpperCase())),
+        visibleRows: faturasFiltradas
+          .filter((f) => column.statuses.includes(String(f.estado || "").toUpperCase()))
+          .slice(0, pageSize),
       })),
-    [faturasVisiveis]
+    [faturasFiltradas, pageSize]
+  )
+  const totalFaturasVisiveis = useMemo(
+    () => colunaFaturas.reduce((total, column) => total + column.visibleRows.length, 0),
+    [colunaFaturas]
   )
   const totalAPagar = useCallback(
     (f?: FaturaRow | null) => f?.total_a_pagar ?? f?.valor_a_pagar ?? f?.total,
@@ -198,7 +202,7 @@ export default function FaturasPage() {
     const maxTentativas = 3
     for (let tentativa = 1; tentativa <= maxTentativas; tentativa++) {
       try {
-        const res = await apiFetch<any>(`/invoices/?page_size=${pageSize}`, { clientCache: safeRefreshToken === 0 })
+        const res = await apiFetch<any>(`/invoices/?page_size=${FETCH_PAGE_SIZE}`, { clientCache: safeRefreshToken === 0 })
         const items = res && (res as any).results ? (res as any).results : res
         setFaturas(Array.isArray(items) ? items : [])
         setCarregando(false)
@@ -214,7 +218,7 @@ export default function FaturasPage() {
         return
       }
     }
-  }, [safeRefreshToken, pageSize])
+  }, [safeRefreshToken])
 
   useEffect(() => {
     carregar()
@@ -463,13 +467,13 @@ export default function FaturasPage() {
         {/* ── Busca + filtros + relatórios ── */}
         <section className={`relative ${GLASS}`}>
           <span className="absolute left-0 top-0 h-full w-1 rounded-l-xl bg-slate-400" />
-          <div className="flex flex-wrap items-center gap-2 px-3 py-2 pl-4">
-            <div className="relative w-48">
+          <div className="flex flex-col gap-2 px-3 py-2 pl-4 lg:flex-row lg:items-center lg:justify-between">
+            <div className="relative w-full lg:max-w-md lg:flex-1">
               <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
               <input
                 type="text"
                 placeholder="Pesquisar…"
-                className="w-full rounded-lg border border-border bg-background/60 py-1.5 pl-7 pr-6 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:w-72 focus:ring-2 focus:ring-violet-500/40 transition-all"
+                className="w-full rounded-lg border border-border bg-background/60 py-1.5 pl-7 pr-6 text-xs text-foreground placeholder:text-muted-foreground transition focus:outline-none focus:ring-2 focus:ring-violet-500/40"
                 value={busca}
                 onChange={(e) => setBusca(e.target.value)}
               />
@@ -484,30 +488,32 @@ export default function FaturasPage() {
                 </button>
               )}
             </div>
-            {(["RASC", "EMIT", "PAGA"] as const).map((cod) => {
-              const { label, badge } = INVOICE_STATUS[cod]
-              const ativo = filtroEstado === cod
-              return (
-                <button
-                  key={cod}
-                  type="button"
-                  onClick={() => setFiltroEstado(ativo ? null : cod)}
-                  className={`inline-flex h-9 items-center rounded-lg border px-3 text-xs font-semibold transition ${ativo ? badge + " ring-2 ring-offset-1 ring-current/30" : "border-border bg-background/60 text-muted-foreground hover:bg-muted"}`}
-                >
-                  {label}
-                </button>
-              )
-            })}
-            <div className="inline-flex h-9 items-center gap-1.5" title="Itens por página">
-              <PageSizeInput value={pageSize} onChange={setPageSize} ariaLabel="Itens por página" />
-              <span className="text-xs text-muted-foreground">/pág</span>
+            <div className="flex flex-1 flex-wrap items-center gap-2 lg:justify-end">
+              {(["RASC", "EMIT", "PAGA"] as const).map((cod) => {
+                const { label, badge } = INVOICE_STATUS[cod]
+                const ativo = filtroEstado === cod
+                return (
+                  <button
+                    key={cod}
+                    type="button"
+                    onClick={() => setFiltroEstado(ativo ? null : cod)}
+                    className={`inline-flex h-9 min-w-[108px] items-center justify-center rounded-lg border px-3 text-xs font-semibold transition ${ativo ? badge + " ring-2 ring-offset-1 ring-current/30" : "border-border bg-background/60 text-muted-foreground hover:bg-muted"}`}
+                  >
+                    {label}
+                  </button>
+                )
+              })}
+              <div className="inline-flex h-9 min-w-[104px] items-center justify-center gap-1.5 rounded-lg border border-border bg-background/60 px-2" title="Itens por coluna">
+                <PageSizeInput value={pageSize} onChange={setPageSize} ariaLabel="Itens por coluna" />
+                <span className="text-xs text-muted-foreground">/coluna</span>
+              </div>
+              <Link
+                href="/invoices/reports"
+                className="inline-flex h-9 min-w-[120px] items-center justify-center gap-1.5 rounded-lg border border-indigo-200 bg-indigo-50 px-3 text-sm font-semibold text-indigo-700 transition hover:bg-indigo-100 dark:border-indigo-700/40 dark:bg-indigo-900/20 dark:text-indigo-300"
+              >
+                <BarChart3 size={15} /> Relatórios
+              </Link>
             </div>
-            <Link
-              href="/invoices/reports"
-              className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-indigo-200 bg-indigo-50 px-3 text-sm font-semibold text-indigo-700 transition hover:bg-indigo-100 dark:border-indigo-700/40 dark:bg-indigo-900/20 dark:text-indigo-300"
-            >
-              <BarChart3 size={15} /> Relatórios
-            </Link>
           </div>
         </section>
 
@@ -623,10 +629,10 @@ export default function FaturasPage() {
             </Card>
 
             <div className="px-1 text-[11px] text-muted-foreground">
-              A mostrar {faturasVisiveis.length} de {faturasFiltradas.length} fatura{faturasFiltradas.length !== 1 ? "s" : ""} no quadro
+              A mostrar {totalFaturasVisiveis} de {faturasFiltradas.length} fatura{faturasFiltradas.length !== 1 ? "s" : ""} no quadro
             </div>
 
-            {faturasVisiveis.length === 0 ? (
+            {faturasFiltradas.length === 0 ? (
               <Card glass>
                 <div className="py-10 text-center text-sm text-muted-foreground">
                   {busca ? "Nenhuma fatura corresponde à pesquisa." : "Nenhuma fatura encontrada."}
@@ -646,11 +652,11 @@ export default function FaturasPage() {
                       </span>
                     }
                   >
-                    {column.rows.length === 0 ? (
+                    {column.visibleRows.length === 0 ? (
                       <div className="py-8 text-center text-sm text-muted-foreground">{column.empty}</div>
                     ) : (
                       <div className="space-y-1.5">
-                        {column.rows.map((f) => {
+                        {column.visibleRows.map((f) => {
                           const accentBar =
                             f.estado === "PAGA" ? "bg-emerald-500"
                             : f.estado === "EMIT" ? "bg-sky-500"
