@@ -1185,8 +1185,8 @@ export default function FaturaRascunhoPage() {
           </div>
         </section>
 
-        {/* Registrar pagamento */}
-        <section className={`${GLASS} border-l-4 ${fatura.estado === "PAGA" ? "border-l-emerald-500" : "border-l-violet-500"}`}>
+        {/* Registrar pagamento — em EMIT ocupa a largura toda do masonry */}
+        <section className={`${GLASS} border-l-4 ${fatura.estado === "PAGA" ? "border-l-emerald-500" : "border-l-violet-500"} ${fatura.estado === "EMIT" && podePagar ? "[column-span:all] mt-3" : ""}`}>
           <div className={`px-4 py-3 ${fatura.estado === "PAGA" ? "space-y-2" : "space-y-3"}`}>
             <div>
               <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
