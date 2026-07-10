@@ -114,7 +114,7 @@ function StatCard({
 
 // ── Receipt card ─────────────────────────────────────────────────────────────
 
-function ReceiptCard({ row, busy, onPdf }: {
+function ReceiptCard({ row, busy, onPdf, accentBarClass }: {
   row: ReciboRow; busy: boolean; onPdf: (id: number) => void; accentBarClass: string
 }) {
   const code    = getCode(row)
@@ -283,6 +283,60 @@ export default function RecibosPage() {
   const ontem   = useMemo(() => filtered.filter((r) => getBucket(getDate(r)) === "ontem"),   [filtered])
   const mes     = useMemo(() => filtered.filter((r) => getBucket(getDate(r)) === "mes"),     [filtered])
   const antigas = useMemo(() => filtered.filter((r) => getBucket(getDate(r)) === "antigas"), [filtered])
+  const visibleColumns = useMemo(() => ([
+    {
+      id: "recibos-hoje",
+      title: "Hoje",
+      icon: <Receipt size={13} className="text-white/90" />,
+      rows: hoje,
+      tokens: {
+        headerBgHex: "#059669", border: "#6ee7b7",
+        bg: "bg-emerald-600", text: "text-white",
+        countBg: "bg-emerald-500", countText: "text-white",
+        accentBar: "bg-emerald-500",
+      },
+      emptyText: "Nenhum recibo hoje",
+    },
+    {
+      id: "recibos-ontem",
+      title: "Ontem",
+      icon: <Clock size={13} className="text-white/90" />,
+      rows: ontem,
+      tokens: {
+        headerBgHex: "#0284c7", border: "#7dd3fc",
+        bg: "bg-sky-600", text: "text-white",
+        countBg: "bg-sky-500", countText: "text-white",
+        accentBar: "bg-sky-500",
+      },
+      emptyText: "Nenhum recibo de ontem",
+    },
+    {
+      id: "recibos-mes",
+      title: "Este mês",
+      icon: <Calendar size={13} className="text-white/90" />,
+      rows: mes,
+      tokens: {
+        headerBgHex: "#7c3aed", border: "#c4b5fd",
+        bg: "bg-violet-600", text: "text-white",
+        countBg: "bg-violet-500", countText: "text-white",
+        accentBar: "bg-violet-500",
+      },
+      emptyText: "Nenhum recibo este mês",
+    },
+    {
+      id: "recibos-antigas",
+      title: "Antigas",
+      icon: <Archive size={13} className="text-white/90" />,
+      rows: antigas,
+      tokens: {
+        headerBgHex: "#475569", border: "#94a3b8",
+        bg: "bg-slate-500", text: "text-white",
+        countBg: "bg-slate-400", countText: "text-white",
+        accentBar: "bg-slate-400",
+      },
+      emptyText: "Nenhum recibo mais antigo",
+    },
+  ].filter((column) => column.rows.length > 0)), [antigas, hoje, mes, ontem])
 
   const totalValue = useMemo(() => sumAmount(recibos).toFixed(2), [recibos])
 
@@ -375,67 +429,20 @@ export default function RecibosPage() {
           </div>
         ) : (
           // eslint-disable-next-line react/forbid-dom-props
-          <div className="grid grid-cols-4 gap-3" style={{ "--col-max-height": "calc(100vh - 145px)" } as React.CSSProperties}>
-            <BoardColumn
-              id="recibos-hoje"
-              title="Hoje"
-              icon={<Receipt size={13} className="text-white/90" />}
-              rows={hoje}
-              tokens={{
-                headerBgHex: "#059669", border: "#6ee7b7",
-                bg: "bg-emerald-600", text: "text-white",
-                countBg: "bg-emerald-500", countText: "text-white",
-                accentBar: "bg-emerald-500",
-              }}
-              emptyText="Nenhum recibo hoje"
-              acaoId={acaoId}
-              onPdf={onPdf}
-            />
-            <BoardColumn
-              id="recibos-ontem"
-              title="Ontem"
-              icon={<Clock size={13} className="text-white/90" />}
-              rows={ontem}
-              tokens={{
-                headerBgHex: "#0284c7", border: "#7dd3fc",
-                bg: "bg-sky-600", text: "text-white",
-                countBg: "bg-sky-500", countText: "text-white",
-                accentBar: "bg-sky-500",
-              }}
-              emptyText="Nenhum recibo de ontem"
-              acaoId={acaoId}
-              onPdf={onPdf}
-            />
-            <BoardColumn
-              id="recibos-mes"
-              title="Este mês"
-              icon={<Calendar size={13} className="text-white/90" />}
-              rows={mes}
-              tokens={{
-                headerBgHex: "#7c3aed", border: "#c4b5fd",
-                bg: "bg-violet-600", text: "text-white",
-                countBg: "bg-violet-500", countText: "text-white",
-                accentBar: "bg-violet-500",
-              }}
-              emptyText="Nenhum recibo este mês"
-              acaoId={acaoId}
-              onPdf={onPdf}
-            />
-            <BoardColumn
-              id="recibos-antigas"
-              title="Antigas"
-              icon={<Archive size={13} className="text-white/90" />}
-              rows={antigas}
-              tokens={{
-                headerBgHex: "#475569", border: "#94a3b8",
-                bg: "bg-slate-500", text: "text-white",
-                countBg: "bg-slate-400", countText: "text-white",
-                accentBar: "bg-slate-400",
-              }}
-              emptyText="Nenhum recibo mais antigo"
-              acaoId={acaoId}
-              onPdf={onPdf}
-            />
+          <div className={`grid gap-3 ${visibleColumns.length >= 4 ? "grid-cols-4" : visibleColumns.length === 3 ? "grid-cols-3" : visibleColumns.length === 2 ? "grid-cols-2" : "grid-cols-1"}`} style={{ "--col-max-height": "calc(100vh - 145px)" } as React.CSSProperties}>
+            {visibleColumns.map((column) => (
+              <BoardColumn
+                key={column.id}
+                id={column.id}
+                title={column.title}
+                icon={column.icon}
+                rows={column.rows}
+                tokens={column.tokens}
+                emptyText={column.emptyText}
+                acaoId={acaoId}
+                onPdf={onPdf}
+              />
+            ))}
           </div>
         )}
       </div>
