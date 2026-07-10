@@ -4,7 +4,7 @@ import { isNotFoundLikeError } from "@/lib/errors/api-error"
 import Link from "next/link"
 import { useCallback, useEffect, useMemo, useState } from "react"
 
-import { BadgeCheck, BarChart3, Building2, FilePlus2, Plus, Receipt, Search, Wallet, X } from "lucide-react"
+import { BadgeCheck, BarChart3, FilePlus2, Plus, Receipt, Search, Wallet, X } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
 import PageSizeInput from "@/components/ui/PageSizeInput"
@@ -413,14 +413,12 @@ export default function FaturasPage() {
                     <Plus size={15} /> Criar fatura
                   </Link>
                 ) : null}
-                {podeVerAdmin ? (
-                  <Link
-                    href="/admin/billing/invoice/"
-                    className="inline-flex h-9 items-center gap-1.5 rounded-md border border-white/20 bg-white/10 px-3 text-sm font-medium text-foreground shadow-sm backdrop-blur-sm transition hover:bg-white/20"
-                  >
-                    <Building2 size={15} /> Administração
-                  </Link>
-                ) : null}
+                <Link
+                  href="/invoices/reports"
+                  className="inline-flex h-9 items-center justify-center gap-1.5 rounded-lg border border-indigo-200 bg-indigo-50 px-3 text-sm font-semibold text-indigo-700 transition hover:bg-indigo-100 dark:border-indigo-700/40 dark:bg-indigo-900/20 dark:text-indigo-300"
+                >
+                  <BarChart3 size={15} /> Relatórios
+                </Link>
               </div>
             </div>
 
@@ -459,8 +457,8 @@ export default function FaturasPage() {
               />
             </div>
 
-            <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
-              <div className="relative w-full lg:max-w-md lg:flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="relative min-w-[240px] flex-1">
                 <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
                 <input
                   type="text"
@@ -480,7 +478,7 @@ export default function FaturasPage() {
                   </button>
                 )}
               </div>
-              <div className="flex flex-1 flex-wrap items-center gap-2 lg:justify-end">
+              <div className="flex flex-wrap items-center gap-2">
                 {(["RASC", "EMIT", "PAGA"] as const).map((cod) => {
                   const { label, badge } = INVOICE_STATUS[cod]
                   const ativo = filtroEstado === cod
@@ -499,12 +497,6 @@ export default function FaturasPage() {
                   <PageSizeInput value={pageSize} onChange={setPageSize} ariaLabel="Itens por coluna" />
                   <span className="text-xs text-muted-foreground">/coluna</span>
                 </div>
-                <Link
-                  href="/invoices/reports"
-                  className="inline-flex h-9 min-w-[120px] items-center justify-center gap-1.5 rounded-lg border border-indigo-200 bg-indigo-50 px-3 text-sm font-semibold text-indigo-700 transition hover:bg-indigo-100 dark:border-indigo-700/40 dark:bg-indigo-900/20 dark:text-indigo-300"
-                >
-                  <BarChart3 size={15} /> Relatórios
-                </Link>
               </div>
             </div>
           </div>
