@@ -488,10 +488,11 @@ export default function ResourceActionPanel({
                 {action.dedicatedHref ? (
                   <Link
                     href={action.dedicatedHref}
-                    className="inline-flex h-8 shrink-0 items-center gap-1 rounded-md border border-white/30 bg-white/45 px-2 text-xs font-semibold text-[var(--gray-700)] shadow-sm backdrop-blur-sm transition-all duration-150 hover:border-[var(--primary-300)] hover:bg-white/60 hover:text-[var(--text)] dark:border-white/15 dark:bg-slate-900/40 dark:text-slate-200 dark:hover:bg-slate-900/55"
+                    aria-label={t("Abrir fluxo dedicado", "Open dedicated flow")}
+                    title={t("Abrir fluxo dedicado", "Open dedicated flow")}
+                    className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-white/30 bg-white/45 text-[var(--gray-700)] shadow-sm backdrop-blur-sm transition-all duration-150 hover:border-[var(--primary-300)] hover:bg-white/60 hover:text-[var(--text)] dark:border-white/15 dark:bg-slate-900/40 dark:text-slate-200 dark:hover:bg-slate-900/55"
                   >
                     <ExternalLink size={12} />
-                    {t("Fluxo dedicado", "Dedicated flow")}
                   </Link>
                 ) : null}
               </div>
