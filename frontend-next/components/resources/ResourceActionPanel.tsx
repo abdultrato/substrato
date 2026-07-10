@@ -461,7 +461,7 @@ export default function ResourceActionPanel({
         </span>
       </div>
 
-      <div className={`mt-3 grid gap-3 ${isBillingInvoice ? "mx-auto max-w-5xl xl:grid-cols-2" : "xl:grid-cols-2"}`}>
+      <div className={`mt-3 grid gap-3 ${isBillingInvoice ? "mx-auto max-w-5xl grid-cols-2" : "xl:grid-cols-2"}`}>
         {actions.map((action) => {
           const state = stateByAction[action.key] || {}
           const isAiAction = action.key.startsWith("ai.")
