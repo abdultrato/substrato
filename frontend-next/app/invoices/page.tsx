@@ -68,33 +68,28 @@ const INVOICE_STATUS: Record<string, { label: string; badge: string }> = {
 
 const STATUS_COLUMNS: InvoiceStatusColumn[] = [
   {
-    key: "drafts",
-    title: "Rascunhos",
-    subtitle: "Faturas ainda em preparação.",
-    empty: "Nenhum rascunho encontrado.",
+    key: "pending",
+    title: "Pendentes",
+    subtitle: "Rascunhos, emitidas e demais não pagas.",
+    empty: "Nenhuma fatura pendente.",
     accentBar: "bg-amber-500",
     countAccent: "text-amber-700 bg-amber-50 border-amber-200",
-    statuses: ["RASC"],
+    statuses: ["RASC", "EMIT", "CANC"],
   },
   {
-    key: "issued",
-    title: "Faturadas",
-    subtitle: "Faturas emitidas e em cobrança.",
-    empty: "Nenhuma fatura emitida.",
-    accentBar: "bg-sky-500",
-    countAccent: "text-sky-700 bg-sky-50 border-sky-200",
-    statuses: ["EMIT"],
-  },
-  {
-    key: "closed",
-    title: "Liquidadas",
-    subtitle: "Pagas ou encerradas.",
-    empty: "Nenhuma fatura liquidada.",
+    key: "paid",
+    title: "Pagas",
+    subtitle: "Faturas já liquidadas.",
+    empty: "Nenhuma fatura paga.",
     accentBar: "bg-emerald-500",
     countAccent: "text-emerald-700 bg-emerald-50 border-emerald-200",
-    statuses: ["PAGA", "CANC"],
+    statuses: ["PAGA"],
   },
 ]
+
+function invoiceStatusCode(row?: FaturaRow | null): string {
+  return String(row?.estado ?? row?.status ?? "").toUpperCase().trim()
+}
 
 function EstadoBadge({ estado }: { estado?: string }) {
   const m = INVOICE_STATUS[String(estado || "").toUpperCase()]
@@ -155,22 +150,23 @@ export default function FaturasPage() {
   const [acaoRequisicaoId, setAcaoRequisicaoId] = useState<number | null>(null)
 
   const podeAlterar = userHasAnyGroup(user, [GROUPS.ADMIN, GROUPS.RECEPCAO])
-  const rascunhos = useMemo(() => faturas.filter((f) => f.estado === "RASC"), [faturas])
+  const rascunhos = useMemo(() => faturas.filter((f) => invoiceStatusCode(f) === "RASC"), [faturas])
   const stats = useMemo(() => ({
     total: faturas.length,
-    rascunhos: faturas.filter((f) => f.estado === "RASC").length,
-    emitidas: faturas.filter((f) => f.estado === "EMIT").length,
-    pagas: faturas.filter((f) => f.estado === "PAGA").length,
+    rascunhos: faturas.filter((f) => invoiceStatusCode(f) === "RASC").length,
+    emitidas: faturas.filter((f) => invoiceStatusCode(f) === "EMIT").length,
+    pagas: faturas.filter((f) => invoiceStatusCode(f) === "PAGA").length,
   }), [faturas])
   const faturasFiltradas = useMemo(() => {
     let lista = faturas
-    if (filtroEstado) lista = lista.filter((f) => f.estado === filtroEstado)
+    if (filtroEstado) lista = lista.filter((f) => invoiceStatusCode(f) === filtroEstado)
     const q = busca.trim().toLowerCase()
     if (!q) return lista
     return lista.filter((f) => {
-      const estado = INVOICE_STATUS[String(f.estado || "").toUpperCase()]?.label || f.estado || ""
+      const statusCode = invoiceStatusCode(f)
+      const estado = INVOICE_STATUS[statusCode]?.label || statusCode
       const haystack = [
-        f.id_custom, f.id, f.paciente, f.estado, estado, invoiceOriginLabel(f), f.total, f.total_a_pagar,
+        f.id_custom, f.id, f.paciente, f.estado, f.status, estado, invoiceOriginLabel(f), f.total, f.total_a_pagar,
       ].map((v) => String(v ?? "").toLowerCase()).join(" ")
       return haystack.includes(q)
     })
@@ -179,9 +175,9 @@ export default function FaturasPage() {
     () =>
       STATUS_COLUMNS.map((column) => ({
         ...column,
-        rows: faturasFiltradas.filter((f) => column.statuses.includes(String(f.estado || "").toUpperCase())),
+        rows: faturasFiltradas.filter((f) => column.statuses.includes(invoiceStatusCode(f))),
         visibleRows: faturasFiltradas
-          .filter((f) => column.statuses.includes(String(f.estado || "").toUpperCase()))
+          .filter((f) => column.statuses.includes(invoiceStatusCode(f)))
           .slice(0, pageSize),
       })),
     [faturasFiltradas, pageSize]
@@ -353,7 +349,7 @@ export default function FaturasPage() {
     const isProforma = isProformaOrigin(f)
     return (
       <div className="grid grid-cols-2 gap-1">
-        {f.estado === "RASC" ? (
+        {invoiceStatusCode(f) === "RASC" ? (
           <Link
             href={`/invoices/draft/${f.id}`}
             className={`${acaoBtn} border-emerald-200 text-emerald-700 hover:bg-emerald-50`}
@@ -364,7 +360,7 @@ export default function FaturasPage() {
         <Link href={`/invoices/${f.id}`} className={`${acaoBtn} border-gray-200 text-gray-700 hover:bg-gray-50`}>
           Detalhes
         </Link>
-        {podeAlterar && f.estado === "RASC" && !isProforma ? (
+        {podeAlterar && invoiceStatusCode(f) === "RASC" && !isProforma ? (
           <button type="button" className={`${acaoBtn} border-gray-200 text-gray-700 hover:bg-gray-50`} disabled={acaoId === f.id} onClick={() => issueInvoiceAction(f.id)}>
             Emitir
           </button>
@@ -375,12 +371,12 @@ export default function FaturasPage() {
         <Link href={`/invoices/${f.id}`} className={`${acaoBtn} border-gray-200 text-gray-700 hover:bg-gray-50`}>
           Itens
         </Link>
-        {f.estado === "PAGA" ? (
+        {invoiceStatusCode(f) === "PAGA" ? (
           <button type="button" className={`${acaoBtn} border-sky-200 text-sky-700 hover:bg-sky-50`} disabled={notificacaoId === f.id} onClick={() => sendInvoiceNotification(f.id)}>
             {notificacaoId === f.id ? "Notificando..." : "Notificar"}
           </button>
         ) : null}
-        {podeAlterar && f.estado === "RASC" ? (
+        {podeAlterar && invoiceStatusCode(f) === "RASC" ? (
           <ConfirmDialog
             title="Anular fatura"
             message="Esta fatura será anulada. Confirme apenas se já revisou o rascunho."
@@ -639,7 +635,7 @@ export default function FaturasPage() {
                 </div>
               </Card>
             ) : (
-              <div className="grid gap-2 xl:grid-cols-3">
+              <div className="grid gap-2 xl:grid-cols-2">
                 {colunaFaturas.map((column) => (
                   <Card
                     key={column.key}
@@ -657,10 +653,11 @@ export default function FaturasPage() {
                     ) : (
                       <div className="space-y-1.5">
                         {column.visibleRows.map((f) => {
+                          const statusCode = invoiceStatusCode(f)
                           const accentBar =
-                            f.estado === "PAGA" ? "bg-emerald-500"
-                            : f.estado === "EMIT" ? "bg-sky-500"
-                            : f.estado === "CANC" ? "bg-rose-500"
+                            statusCode === "PAGA" ? "bg-emerald-500"
+                            : statusCode === "EMIT" ? "bg-sky-500"
+                            : statusCode === "CANC" ? "bg-rose-500"
                             : "bg-amber-500"
                           return (
                             <article
@@ -677,7 +674,7 @@ export default function FaturasPage() {
                                   </div>
                                 </div>
                                 <div className="pointer-events-none">
-                                  <EstadoBadge estado={f.estado} />
+                                  <EstadoBadge estado={statusCode} />
                                 </div>
                               </div>
                               <div className="relative mt-2 grid gap-1 text-[11px] text-muted-foreground">
