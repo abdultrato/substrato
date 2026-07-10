@@ -2,10 +2,9 @@
 
 import { isNotFoundLikeError } from "@/lib/errors/api-error"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
 import { useCallback, useEffect, useMemo, useState } from "react"
 
-import { BadgeCheck, BarChart3, Building2, FilePlus2, FileText, Plus, Receipt, Search, Wallet, X } from "lucide-react"
+import { BadgeCheck, BarChart3, Building2, FilePlus2, Plus, Receipt, Search, Wallet, X } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
 import PageSizeInput from "@/components/ui/PageSizeInput"
@@ -20,16 +19,6 @@ import PdfActionLabel from "@/components/ui/PdfActionLabel"
 import ConfirmDialog from "@/components/ui/ConfirmDialog"
 
 type FaturaRow = Record<string, any>
-type RequisicaoPendente = {
-  id: number
-  id_custom?: string
-  paciente?: string | null
-  tipo?: string
-  tipo_display?: string
-  estado?: string
-  num_exames?: number
-  medico?: string | null
-}
 
 type InvoiceStatusColumn = {
   key: string
@@ -130,7 +119,6 @@ function InvoiceMetric({
 
 export default function FaturasPage() {
   const FETCH_PAGE_SIZE = 200
-  const router = useRouter()
   const { loading } = useAuthGuard()
   const { user } = useAuth()
   const safeRefreshToken = useSafeDataRefreshSignal()
@@ -145,12 +133,8 @@ export default function FaturasPage() {
   const [busca, setBusca] = useState("")
   const [filtroEstado, setFiltroEstado] = useState<string | null>(null)
   const [pageSize, setPageSize] = useState(10)
-  const [requisicoes, setRequisicoes] = useState<RequisicaoPendente[]>([])
-  const [carregandoRequisicoes, setCarregandoRequisicoes] = useState(true)
-  const [acaoRequisicaoId, setAcaoRequisicaoId] = useState<number | null>(null)
 
   const podeAlterar = userHasAnyGroup(user, [GROUPS.ADMIN, GROUPS.RECEPCAO])
-  const rascunhos = useMemo(() => faturas.filter((f) => invoiceStatusCode(f) === "RASC"), [faturas])
   const stats = useMemo(() => ({
     total: faturas.length,
     rascunhos: faturas.filter((f) => invoiceStatusCode(f) === "RASC").length,
@@ -219,55 +203,6 @@ export default function FaturasPage() {
   useEffect(() => {
     carregar()
   }, [carregar])
-
-  const carregarRequisicoes = useCallback(async () => {
-    try {
-      setCarregandoRequisicoes(true)
-      const res = await apiFetch<any>("/invoices/pending-requisitions/", {
-        clientCache: safeRefreshToken === 0,
-      })
-      const items = res && (res as any).results ? (res as any).results : res
-      setRequisicoes(Array.isArray(items) ? items : [])
-    } catch (e: any) {
-      if (!isNotFoundLikeError(e)) {
-        setRequisicoes([])
-      }
-    } finally {
-      setCarregandoRequisicoes(false)
-    }
-  }, [safeRefreshToken])
-
-  useEffect(() => {
-    carregarRequisicoes()
-  }, [carregarRequisicoes])
-
-  const iniciarFaturacao = useCallback(
-    async (requisicaoId: number) => {
-      if (!podeAlterar) {
-        setErro("Sem permissão para iniciar faturação.")
-        return
-      }
-      try {
-        setErro(null)
-        setFeedback(null)
-        setAcaoRequisicaoId(requisicaoId)
-        const fatura = await apiFetch<any>("/invoices/start-billing/", {
-          method: "POST",
-          body: JSON.stringify({ request: requisicaoId }),
-        })
-        await carregarRequisicoes()
-        await carregar()
-        if (fatura?.id) {
-          router.push(`/invoices/draft/${fatura.id}`)
-        }
-      } catch (e: any) {
-        setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao iniciar faturação."))
-      } finally {
-        setAcaoRequisicaoId(null)
-      }
-    },
-    [carregar, carregarRequisicoes, podeAlterar, router]
-  )
 
   const issueInvoiceAction = useCallback(async (id: number) => {
     if (!podeAlterar) {
@@ -407,46 +342,96 @@ export default function FaturasPage() {
         {/* ── Hero ── */}
         <section className={`relative overflow-hidden ${GLASS}`}>
           <span className="absolute left-0 top-0 h-full w-1 bg-sky-500" />
-          <div className="flex flex-wrap items-center justify-between gap-3 px-3 py-2 pl-4">
-            <div className="flex min-w-0 items-center gap-2">
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500 to-blue-600 text-white shadow-md shadow-sky-500/20">
-                <Receipt size={17} />
-              </span>
-              <div>
-                <h1 className="text-lg font-bold leading-tight text-foreground">Faturas</h1>
-                <p className="text-[11px] text-muted-foreground">
-                  {carregando ? "A carregar…" : `${stats.total} fatura${stats.total !== 1 ? "s" : ""} · gestão e emissão`}
-                </p>
+          <div className="space-y-3 px-3 py-2 pl-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex min-w-0 items-center gap-2">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500 to-blue-600 text-white shadow-md shadow-sky-500/20">
+                  <Receipt size={17} />
+                </span>
+                <div>
+                  <h1 className="text-lg font-bold leading-tight text-foreground">Faturas</h1>
+                  <p className="text-[11px] text-muted-foreground">
+                    {carregando ? "A carregar…" : `${stats.total} fatura${stats.total !== 1 ? "s" : ""} · gestão e emissão`}
+                  </p>
+                </div>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                {podeCriar ? (
+                  <Link
+                    href="/invoices/new"
+                    className="inline-flex h-9 items-center gap-1.5 rounded-md bg-gradient-to-br from-sky-500 to-blue-600 px-4 text-sm font-semibold text-white shadow-sm shadow-sky-500/20 transition hover:opacity-90"
+                  >
+                    <Plus size={15} /> Criar fatura
+                  </Link>
+                ) : null}
+                {podeVerAdmin ? (
+                  <Link
+                    href="/admin/billing/invoice/"
+                    className="inline-flex h-9 items-center gap-1.5 rounded-md border border-white/20 bg-white/10 px-3 text-sm font-medium text-foreground shadow-sm backdrop-blur-sm transition hover:bg-white/20"
+                  >
+                    <Building2 size={15} /> Administração
+                  </Link>
+                ) : null}
               </div>
             </div>
-            <div className="flex flex-wrap items-center gap-2">
-              {podeCriar ? (
+
+            <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4">
+              <InvoiceMetric icon={FilePlus2} label="Total" value={carregando ? "…" : stats.total} accent="bg-slate-500" />
+              <InvoiceMetric icon={FilePlus2} label="Rascunhos" value={carregando ? "…" : stats.rascunhos} accent="bg-amber-500" />
+              <InvoiceMetric icon={Wallet} label="Emitidas" value={carregando ? "…" : stats.emitidas} accent="bg-sky-500" />
+              <InvoiceMetric icon={BadgeCheck} label="Pagas" value={carregando ? "…" : stats.pagas} accent="bg-emerald-500" />
+            </div>
+
+            <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+              <div className="relative w-full lg:max-w-md lg:flex-1">
+                <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                <input
+                  type="text"
+                  placeholder="Pesquisar…"
+                  className="w-full rounded-lg border border-border bg-background/60 py-1.5 pl-7 pr-6 text-xs text-foreground placeholder:text-muted-foreground transition focus:outline-none focus:ring-2 focus:ring-violet-500/40"
+                  value={busca}
+                  onChange={(e) => setBusca(e.target.value)}
+                />
+                {busca && (
+                  <button
+                    type="button"
+                    aria-label="Limpar pesquisa"
+                    onClick={() => setBusca("")}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  >
+                    <X size={14} />
+                  </button>
+                )}
+              </div>
+              <div className="flex flex-1 flex-wrap items-center gap-2 lg:justify-end">
+                {(["RASC", "EMIT", "PAGA"] as const).map((cod) => {
+                  const { label, badge } = INVOICE_STATUS[cod]
+                  const ativo = filtroEstado === cod
+                  return (
+                    <button
+                      key={cod}
+                      type="button"
+                      onClick={() => setFiltroEstado(ativo ? null : cod)}
+                      className={`inline-flex h-9 min-w-[108px] items-center justify-center rounded-lg border px-3 text-xs font-semibold transition ${ativo ? badge + " ring-2 ring-offset-1 ring-current/30" : "border-border bg-background/60 text-muted-foreground hover:bg-muted"}`}
+                    >
+                      {label}
+                    </button>
+                  )
+                })}
+                <div className="inline-flex h-9 min-w-[104px] items-center justify-center gap-1.5 rounded-lg border border-border bg-background/60 px-2" title="Itens por coluna">
+                  <PageSizeInput value={pageSize} onChange={setPageSize} ariaLabel="Itens por coluna" />
+                  <span className="text-xs text-muted-foreground">/coluna</span>
+                </div>
                 <Link
-                  href="/invoices/new"
-                  className="inline-flex h-9 items-center gap-1.5 rounded-md bg-gradient-to-br from-sky-500 to-blue-600 px-4 text-sm font-semibold text-white shadow-sm shadow-sky-500/20 transition hover:opacity-90"
+                  href="/invoices/reports"
+                  className="inline-flex h-9 min-w-[120px] items-center justify-center gap-1.5 rounded-lg border border-indigo-200 bg-indigo-50 px-3 text-sm font-semibold text-indigo-700 transition hover:bg-indigo-100 dark:border-indigo-700/40 dark:bg-indigo-900/20 dark:text-indigo-300"
                 >
-                  <Plus size={15} /> Criar fatura
+                  <BarChart3 size={15} /> Relatórios
                 </Link>
-              ) : null}
-              {podeVerAdmin ? (
-                <Link
-                  href="/admin/billing/invoice/"
-                  className="inline-flex h-9 items-center gap-1.5 rounded-md border border-white/20 bg-white/10 px-3 text-sm font-medium text-foreground shadow-sm backdrop-blur-sm transition hover:bg-white/20"
-                >
-                  <Building2 size={15} /> Administração
-                </Link>
-              ) : null}
+              </div>
             </div>
           </div>
         </section>
-
-        {/* ── Métricas ── */}
-        <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4">
-          <InvoiceMetric icon={FileText} label="Total" value={carregando ? "…" : stats.total} accent="bg-slate-500" />
-          <InvoiceMetric icon={FilePlus2} label="Rascunhos" value={carregando ? "…" : stats.rascunhos} accent="bg-amber-500" />
-          <InvoiceMetric icon={Wallet} label="Emitidas" value={carregando ? "…" : stats.emitidas} accent="bg-sky-500" />
-          <InvoiceMetric icon={BadgeCheck} label="Pagas" value={carregando ? "…" : stats.pagas} accent="bg-emerald-500" />
-        </div>
 
         {erro && (
           <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
@@ -460,170 +445,10 @@ export default function FaturasPage() {
           </div>
         )}
 
-        {/* ── Busca + filtros + relatórios ── */}
-        <section className={`relative ${GLASS}`}>
-          <span className="absolute left-0 top-0 h-full w-1 rounded-l-xl bg-slate-400" />
-          <div className="flex flex-col gap-2 px-3 py-2 pl-4 lg:flex-row lg:items-center lg:justify-between">
-            <div className="relative w-full lg:max-w-md lg:flex-1">
-              <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
-              <input
-                type="text"
-                placeholder="Pesquisar…"
-                className="w-full rounded-lg border border-border bg-background/60 py-1.5 pl-7 pr-6 text-xs text-foreground placeholder:text-muted-foreground transition focus:outline-none focus:ring-2 focus:ring-violet-500/40"
-                value={busca}
-                onChange={(e) => setBusca(e.target.value)}
-              />
-              {busca && (
-                <button
-                  type="button"
-                  aria-label="Limpar pesquisa"
-                  onClick={() => setBusca("")}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                >
-                  <X size={14} />
-                </button>
-              )}
-            </div>
-            <div className="flex flex-1 flex-wrap items-center gap-2 lg:justify-end">
-              {(["RASC", "EMIT", "PAGA"] as const).map((cod) => {
-                const { label, badge } = INVOICE_STATUS[cod]
-                const ativo = filtroEstado === cod
-                return (
-                  <button
-                    key={cod}
-                    type="button"
-                    onClick={() => setFiltroEstado(ativo ? null : cod)}
-                    className={`inline-flex h-9 min-w-[108px] items-center justify-center rounded-lg border px-3 text-xs font-semibold transition ${ativo ? badge + " ring-2 ring-offset-1 ring-current/30" : "border-border bg-background/60 text-muted-foreground hover:bg-muted"}`}
-                  >
-                    {label}
-                  </button>
-                )
-              })}
-              <div className="inline-flex h-9 min-w-[104px] items-center justify-center gap-1.5 rounded-lg border border-border bg-background/60 px-2" title="Itens por coluna">
-                <PageSizeInput value={pageSize} onChange={setPageSize} ariaLabel="Itens por coluna" />
-                <span className="text-xs text-muted-foreground">/coluna</span>
-              </div>
-              <Link
-                href="/invoices/reports"
-                className="inline-flex h-9 min-w-[120px] items-center justify-center gap-1.5 rounded-lg border border-indigo-200 bg-indigo-50 px-3 text-sm font-semibold text-indigo-700 transition hover:bg-indigo-100 dark:border-indigo-700/40 dark:bg-indigo-900/20 dark:text-indigo-300"
-              >
-                <BarChart3 size={15} /> Relatórios
-              </Link>
-            </div>
-          </div>
-        </section>
-
         {carregando ? (
           <div className="text-sm text-gray-500">Carregando faturas...</div>
         ) : (
           <div className="space-y-2">
-            <Card
-              glass
-              title="Faturas por criar"
-              actions={<span className="text-xs text-muted-foreground">Requisições por faturar e rascunhos aguardando emissão.</span>}
-            >
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="text-xs font-semibold uppercase text-muted-foreground">
-                      Requisições por faturar
-                    </div>
-                    {requisicoes.length > 0 ? (
-                      <span className="text-[11px] text-muted-foreground">
-                        A mostrar {Math.min(requisicoes.length, pageSize)} de {requisicoes.length}
-                      </span>
-                    ) : null}
-                  </div>
-                  {carregandoRequisicoes ? (
-                    <div className="text-sm text-gray-500">Carregando requisições...</div>
-                  ) : requisicoes.length === 0 ? (
-                    <div className="text-sm text-gray-500">Nenhuma requisição por faturar.</div>
-                  ) : (
-                    <div className="grid gap-1.5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                      {requisicoes.slice(0, pageSize).map((r) => (
-                        <div
-                          key={r.id}
-                          className={`group relative flex min-h-[150px] flex-col justify-between overflow-hidden ${GLASS} p-3.5 pl-4 transition hover:border-violet-300/50 hover:shadow-md`}
-                        >
-                          <span className="absolute left-0 top-0 h-full w-1 bg-violet-500" />
-                          <div>
-                            <div className="flex items-center justify-between gap-2">
-                              <div className="truncate font-display text-sm font-bold tracking-tight text-foreground">
-                                {r.id_custom || `REQ ${r.id}`}
-                              </div>
-                              <span className="inline-flex shrink-0 items-center rounded-full border border-violet-200 bg-violet-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-violet-700">
-                                {r.tipo_display || r.tipo || "Requisição"}
-                              </span>
-                            </div>
-                            <div className="mt-1.5 truncate text-sm font-medium text-foreground/80">{r.paciente || "Paciente não identificado"}</div>
-                            <div className="mt-2 flex flex-wrap items-center gap-1.5 text-[11px] text-muted-foreground">
-                              <span className="inline-flex items-center gap-1">
-                                <FileText size={12} className="text-violet-500/70" />
-                                {(r.num_exames ?? 0)} {r.num_exames === 1 ? "exame" : "exames"}
-                              </span>
-                              {r.medico ? (
-                                <span className="truncate before:mx-1 before:content-['·']">Dr(a). {r.medico}</span>
-                              ) : null}
-                            </div>
-                          </div>
-                          {podeAlterar ? (
-                            <div className="mt-3 flex justify-end border-t border-white/10 pt-2.5">
-                              <button
-                                type="button"
-                                onClick={() => iniciarFaturacao(r.id)}
-                                disabled={acaoRequisicaoId === r.id}
-                                className="inline-flex items-center gap-1.5 rounded-lg border border-violet-200 bg-violet-50/80 px-3 py-1.5 text-xs font-semibold text-violet-700 shadow-sm transition hover:bg-violet-100 hover:shadow disabled:opacity-50 dark:border-violet-700/40 dark:bg-violet-900/20 dark:text-violet-300"
-                              >
-                                <FilePlus2 size={13} />
-                                {acaoRequisicaoId === r.id ? "Iniciando…" : "Iniciar faturação"}
-                              </button>
-                            </div>
-                          ) : null}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="text-xs font-semibold uppercase text-muted-foreground">
-                      Rascunhos aguardando emissão
-                    </div>
-                    {rascunhos.length > 0 ? (
-                      <span className="text-[11px] text-muted-foreground">
-                        A mostrar {Math.min(rascunhos.length, pageSize)} de {rascunhos.length}
-                      </span>
-                    ) : null}
-                  </div>
-                  {rascunhos.length === 0 ? (
-                    <div className="text-sm text-gray-500">Nenhum rascunho encontrado.</div>
-                  ) : (
-                    <div className="space-y-2">
-                      {rascunhos.slice(0, pageSize).map((f) => (
-                        <div
-                          key={f.id}
-                          className={`relative flex flex-wrap items-center justify-between gap-2 overflow-hidden ${GLASS} px-3 py-2 pl-4 text-sm`}
-                        >
-                          <span className="absolute left-0 top-0 h-full w-1 bg-amber-500" />
-                          <div className="text-foreground">
-                            <div className="font-semibold">{f.id_custom || `Fatura ${f.id}`}</div>
-                            <div className="text-xs text-muted-foreground">Paciente: {f.paciente || "-"}</div>
-                          </div>
-                          <Link
-                            href={`/invoices/draft/${f.id}`}
-                            className="inline-flex items-center rounded-lg border border-emerald-200 px-3 py-1.5 text-xs font-medium text-emerald-700 transition hover:bg-emerald-50"
-                          >
-                            {podeAlterar ? "Editar" : "Ver"}
-                          </Link>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </Card>
-
             <div className="px-1 text-[11px] text-muted-foreground">
               A mostrar {totalFaturasVisiveis} de {faturasFiltradas.length} fatura{faturasFiltradas.length !== 1 ? "s" : ""} no quadro
             </div>
