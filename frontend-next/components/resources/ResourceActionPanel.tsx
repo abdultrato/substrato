@@ -251,7 +251,7 @@ function renderField(
   onChange: (value: FieldValue) => void
 ) {
   const baseClass =
-    "w-full rounded-md border border-white/30 bg-white/55 px-2.5 py-2 text-sm text-[var(--text)] shadow-sm backdrop-blur-sm transition-colors duration-150 placeholder:text-[var(--gray-400)] hover:border-[var(--primary-400)] focus:border-[var(--primary-500)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-100)] dark:border-slate-700 dark:bg-slate-900/85 dark:text-slate-100 dark:placeholder:text-slate-400 dark:hover:border-emerald-500/70 dark:focus:border-emerald-400 dark:focus:ring-emerald-500/20"
+    "w-full rounded-md border border-white/30 bg-white/55 px-2.5 py-2 text-sm text-[var(--text)] shadow-sm backdrop-blur-sm transition-colors duration-150 placeholder:text-[var(--gray-400)] hover:border-[var(--primary-400)] focus:border-[var(--primary-500)] focus:outline-none focus:ring-2 focus:ring-[var(--primary-100)] dark:border-white/15 dark:bg-slate-900/45 dark:text-slate-100 dark:placeholder:text-slate-400 dark:hover:border-emerald-500/60 dark:focus:border-emerald-400 dark:focus:ring-emerald-500/20"
   // O título de cada campo vive no placeholder (ver ResourceActionPanel).
   const placeholder = `${field.placeholder || field.label}${field.required ? " *" : ""}`
 
@@ -286,7 +286,7 @@ function renderField(
 
   if (field.type === "checkbox") {
     return (
-      <label className="inline-flex h-9 items-center gap-2 rounded-md border border-white/30 bg-white/55 px-2.5 text-sm text-[var(--gray-700)] shadow-sm backdrop-blur-sm dark:border-slate-700 dark:bg-slate-900/85 dark:text-slate-100">
+      <label className="inline-flex h-9 items-center gap-2 rounded-md border border-white/30 bg-white/55 px-2.5 text-sm text-[var(--gray-700)] shadow-sm backdrop-blur-sm dark:border-white/15 dark:bg-slate-900/45 dark:text-slate-100">
         <input
           type="checkbox"
           checked={Boolean(value)}
@@ -441,7 +441,7 @@ export default function ResourceActionPanel({
   }
 
   return (
-    <section className={`rounded-xl border border-white/20 bg-white/20 p-2.5 shadow-sm backdrop-blur-sm dark:border-slate-800 dark:bg-slate-950/65 ${isBillingInvoice ? "mx-auto" : ""}`}>
+    <section className={`rounded-xl border border-white/20 bg-white/20 p-2.5 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-slate-950/35 ${isBillingInvoice ? "mx-auto" : ""}`}>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <div className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-white/25 bg-white/45 text-[var(--primary-700)] shadow-sm dark:border-white/10 dark:bg-white/10">
@@ -456,7 +456,7 @@ export default function ResourceActionPanel({
             </p>
           </div>
         </div>
-        <span className="rounded-md border border-white/30 bg-white/45 px-2 py-1 text-xs font-medium text-[var(--gray-700)] shadow-sm dark:border-slate-700 dark:bg-slate-900/80 dark:text-slate-200">
+        <span className="rounded-md border border-white/30 bg-white/45 px-2 py-1 text-xs font-medium text-[var(--gray-700)] shadow-sm dark:border-white/15 dark:bg-slate-900/45 dark:text-slate-200">
           {actions.length} {t("ação(ões)", "action(s)")}
         </span>
       </div>
@@ -471,12 +471,12 @@ export default function ResourceActionPanel({
           return (
             <div
               key={action.key}
-              className={`relative flex h-full min-w-0 flex-col overflow-hidden rounded-lg border border-white/20 bg-white/30 p-2.5 pl-3 shadow-sm backdrop-blur-sm dark:border-slate-700 dark:bg-slate-900/80 ${isBillingHistoryAction ? "w-full" : ""}`}
+              className={`relative flex h-full min-w-0 flex-col overflow-hidden rounded-lg border border-white/20 bg-white/30 p-2.5 pl-3 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-slate-900/40 ${isBillingHistoryAction ? "w-full" : ""}`}
             >
               <span className="absolute left-0 top-0 h-full w-1 bg-gradient-to-b from-[var(--primary-500)] to-[var(--primary-400)]" />
               <div className="flex flex-wrap items-start justify-between gap-2">
                 <div className="min-w-0">
-                  <div className="flex flex-wrap items-center gap-2">
+                  <div className="flex items-center gap-2">
                     <span className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-white/25 bg-white/45 text-[var(--primary-700)] shadow-sm dark:border-white/10 dark:bg-white/10">
                       {isAiAction ? <Bot size={14} /> : action.responseMode === "json" ? <Play size={14} /> : <FileDown size={14} />}
                     </span>
@@ -488,7 +488,7 @@ export default function ResourceActionPanel({
                 {action.dedicatedHref ? (
                   <Link
                     href={action.dedicatedHref}
-                    className="inline-flex h-8 shrink-0 items-center gap-1 rounded-md border border-white/30 bg-white/45 px-2 text-xs font-semibold text-[var(--gray-700)] shadow-sm backdrop-blur-sm transition-all duration-150 hover:border-[var(--primary-300)] hover:bg-white/60 hover:text-[var(--text)] dark:border-slate-700 dark:bg-slate-900/75 dark:text-slate-200 dark:hover:bg-slate-800/90"
+                    className="inline-flex h-8 shrink-0 items-center gap-1 rounded-md border border-white/30 bg-white/45 px-2 text-xs font-semibold text-[var(--gray-700)] shadow-sm backdrop-blur-sm transition-all duration-150 hover:border-[var(--primary-300)] hover:bg-white/60 hover:text-[var(--text)] dark:border-white/15 dark:bg-slate-900/40 dark:text-slate-200 dark:hover:bg-slate-900/55"
                   >
                     <ExternalLink size={12} />
                     {t("Fluxo dedicado", "Dedicated flow")}
@@ -542,7 +542,7 @@ export default function ResourceActionPanel({
                   <button
                     type="button"
                     onClick={() => void copyResult(action)}
-                    className="inline-flex h-9 items-center gap-1 rounded-md border border-white/30 bg-white/55 px-2.5 text-xs font-semibold text-[var(--gray-700)] shadow-sm backdrop-blur-sm transition-all duration-150 hover:border-[var(--primary-300)] hover:bg-white/70 dark:border-slate-700 dark:bg-slate-900/75 dark:text-slate-200 dark:hover:bg-slate-800/90"
+                    className="inline-flex h-9 items-center gap-1 rounded-md border border-white/30 bg-white/55 px-2.5 text-xs font-semibold text-[var(--gray-700)] shadow-sm backdrop-blur-sm transition-all duration-150 hover:border-[var(--primary-300)] hover:bg-white/70 dark:border-white/15 dark:bg-slate-900/40 dark:text-slate-200 dark:hover:bg-slate-900/55"
                   >
                     <Clipboard size={13} />
                     {t("Copiar resposta", "Copy response")}
@@ -550,7 +550,7 @@ export default function ResourceActionPanel({
                 ) : null}
 
                 {state.jobStatus ? (
-                  <span className="inline-flex h-8 items-center rounded-md border border-white/25 bg-white/45 px-2 text-xs font-medium text-[var(--gray-700)] shadow-sm dark:border-slate-700 dark:bg-slate-900/80 dark:text-slate-200">
+                  <span className="inline-flex h-8 items-center rounded-md border border-white/25 bg-white/45 px-2 text-xs font-medium text-[var(--gray-700)] shadow-sm dark:border-white/15 dark:bg-slate-900/40 dark:text-slate-200">
                     {t("Job:", "Job:")} {state.jobStatus}
                   </span>
                 ) : null}
@@ -570,9 +570,9 @@ export default function ResourceActionPanel({
               ) : null}
 
               {hasResult ? (
-                <div className="mt-2 max-h-64 overflow-auto rounded-md border border-white/20 bg-white/40 text-[11px] leading-relaxed text-[var(--gray-800)] backdrop-blur-sm dark:border-slate-700 dark:bg-slate-950/70 dark:text-slate-100">
+                <div className="mt-2 max-h-64 overflow-auto rounded-md border border-white/20 bg-white/40 text-[11px] leading-relaxed text-[var(--gray-800)] backdrop-blur-sm dark:border-white/10 dark:bg-slate-950/40 dark:text-slate-100">
                   {resultRows(state.result).map((row) => (
-                    <div key={row.label} className="grid grid-cols-3 gap-2 border-b border-white/20 px-2 py-1.5 last:border-b-0 dark:border-slate-800">
+                    <div key={row.label} className="grid grid-cols-3 gap-2 border-b border-white/20 px-2 py-1.5 last:border-b-0 dark:border-white/10">
                       <span className="font-semibold uppercase tracking-wide text-[var(--gray-500)] dark:text-slate-400">{row.label}</span>
                       <span className="col-span-2 whitespace-pre-wrap text-[var(--gray-800)] dark:text-slate-100">{row.value}</span>
                     </div>
