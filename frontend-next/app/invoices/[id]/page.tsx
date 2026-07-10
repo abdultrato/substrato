@@ -96,7 +96,7 @@ function renderMoneyOrPlaceholder(value: unknown, missingLabel = "Sem valor") {
   if (value === null || value === undefined || value === "") {
     return <PlaceholderPill label={missingLabel} />
   }
-  return <MoneyValue value={value as number | string} />
+  return <MoneyValue value={value as number | string} currency="MZN" />
 }
 
 function renderTextOrPlaceholder(value: unknown, missingLabel = "Não informado") {
@@ -468,7 +468,7 @@ export default function InvoiceDetailPage() {
                     <div key={detalhe.id} className="rounded-lg border border-border/60 bg-background/40 px-3 py-2.5 text-sm">
                       <div className="flex items-center justify-between gap-2">
                         <div className="font-semibold text-foreground">{detalhe.seguradora || "Seguradora não identificada"}</div>
-                        <div className="text-sm font-semibold text-foreground"><MoneyValue value={detalhe.valor} /></div>
+                        <div className="text-sm font-semibold text-foreground"><MoneyValue value={detalhe.valor} currency="MZN" /></div>
                       </div>
                       <div className="mt-2 grid gap-1 text-xs text-muted-foreground">
                         <div>Método: {renderTextOrPlaceholder(detalhe.metodo, "Não informado")}</div>
@@ -507,17 +507,17 @@ export default function InvoiceDetailPage() {
                                 <td className="px-2 py-1 font-semibold">{item.descricao || `Item ${item.id}`}</td>
                                 <td className="px-2 py-1 text-right">{item.quantidade ?? "-"}</td>
                                 <td className="px-2 py-1 text-right">
-                                  {item.preco_unitario === null || item.preco_unitario === undefined || item.preco_unitario === "" ? <PlaceholderPill label="N/C" /> : <MoneyValue value={item.preco_unitario} />}
+                                  {item.preco_unitario === null || item.preco_unitario === undefined || item.preco_unitario === "" ? <PlaceholderPill label="N/C" /> : <MoneyValue value={item.preco_unitario} currency="MZN" />}
                                 </td>
                                 <td className="px-2 py-1 text-right">
-                                  {item.total_sem_iva === null || item.total_sem_iva === undefined || item.total_sem_iva === "" ? <PlaceholderPill label="N/C" /> : <MoneyValue value={item.total_sem_iva} />}
+                                  {item.total_sem_iva === null || item.total_sem_iva === undefined || item.total_sem_iva === "" ? <PlaceholderPill label="N/C" /> : <MoneyValue value={item.total_sem_iva} currency="MZN" />}
                                 </td>
                                 <td className="px-2 py-1 text-right">{item.iva_percentual ?? "-"}%</td>
                                 <td className="px-2 py-1 text-right">
-                                  {item.iva_valor === null || item.iva_valor === undefined || item.iva_valor === "" ? <PlaceholderPill label="N/C" /> : <MoneyValue value={item.iva_valor} />}
+                                  {item.iva_valor === null || item.iva_valor === undefined || item.iva_valor === "" ? <PlaceholderPill label="N/C" /> : <MoneyValue value={item.iva_valor} currency="MZN" />}
                                 </td>
                                 <td className="px-2 py-1 text-right">
-                                  {item.total_com_iva === null || item.total_com_iva === undefined || item.total_com_iva === "" ? <PlaceholderPill label="N/C" /> : <MoneyValue value={item.total_com_iva} />}
+                                  {item.total_com_iva === null || item.total_com_iva === undefined || item.total_com_iva === "" ? <PlaceholderPill label="N/C" /> : <MoneyValue value={item.total_com_iva} currency="MZN" />}
                                 </td>
                               </tr>
                             ))}
