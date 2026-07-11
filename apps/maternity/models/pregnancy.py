@@ -54,21 +54,27 @@ class Pregnancy(NoNameCoreModel):
         blank=True,
     )
 
-    nursery = models.CharField(  # Berçário/ala
-        db_column="nursery",
+    nursery = models.ForeignKey(  # Berçário/ala (enfermaria de enfermagem reaproveitada)
+        "enfermagem.Ward",
+        db_column="nursery_id",
         verbose_name="Berçário",
-        max_length=80,
+        on_delete=models.SET_NULL,
+        null=True,
         blank=True,
-        default="",
-        help_text="Identificação do berçário/ala/sala (quando aplicável).",
+        related_name="gestacoes_bercario",
+        db_index=True,
+        help_text="Enfermaria/berçário vinculado (quando aplicável).",
     )
-    maternity_bed = models.CharField(  # Leito na maternidade
-        db_column="maternity_bed",
+    maternity_bed = models.ForeignKey(  # Cama na maternidade (cama de enfermagem reaproveitada)
+        "enfermagem.WardBed",
+        db_column="maternity_bed_id",
         verbose_name="Cama na maternidade",
-        max_length=40,
+        on_delete=models.SET_NULL,
+        null=True,
         blank=True,
-        default="",
-        help_text="Número/identificação da cama (quando aplicável).",
+        related_name="gestacoes",
+        db_index=True,
+        help_text="Cama vinculada (quando aplicável).",
     )
 
     total_deliveries = models.PositiveSmallIntegerField(  # Partos totais (histórico)
@@ -134,6 +140,17 @@ class Pregnancy(NoNameCoreModel):
             and self.responsible_doctor.tenant_id != self.tenant_id
         ):
             raise ValidationError({"responsible_doctor": "Médico e gestação devem pertencer ao mesmo tenant."})
+
+        if self.nursery_id and self.tenant_id and self.nursery.tenant_id != self.tenant_id:
+            raise ValidationError({"nursery": "Berçário e gestação devem pertencer ao mesmo tenant."})
+
+        if self.maternity_bed_id and self.tenant_id and self.maternity_bed.tenant_id != self.tenant_id:
+            raise ValidationError({"maternity_bed": "Cama e gestação devem pertencer ao mesmo tenant."})
+
+        if self.maternity_bed_id and self.nursery_id and self.maternity_bed.ward_id != self.nursery_id:
+            raise ValidationError(
+                {"maternity_bed": "A cama selecionada não pertence ao berçário/enfermaria informado."}
+            )
 
         if self.normal_deliveries > self.total_deliveries:
             raise ValidationError({"normal_deliveries": "Partos normais não pode ser maior que partos totais."})

@@ -110,7 +110,7 @@ export default function SectionSubNav() {
 
     return (
         <nav className="shrink-0 border-b border-border/50 bg-primary/[0.03] backdrop-blur supports-[backdrop-filter]:bg-primary/[0.04] dark:bg-primary/[0.05]">
-            <div className="flex items-center gap-1.5 px-2 py-1 sm:px-3 md:px-4">
+            <div className="flex items-center gap-1 px-0.5 py-0.5">
                 <button
                     type="button"
                     onClick={() => scrollBy("left")}
@@ -134,10 +134,10 @@ export default function SectionSubNav() {
                             <Link
                                 key={item.href}
                                 href={item.href}
-                                className={`inline-flex h-7 shrink-0 items-center gap-1.5 rounded-full border px-2.5 text-xs font-semibold transition-all ${
+                                className={`inline-flex h-7 shrink-0 items-center gap-1.5 rounded-full border text-xs font-semibold transition-all duration-200 ease-out ${
                                     active
-                                        ? "border-primary/35 bg-gradient-to-b from-primary/15 to-primary/8 text-primary shadow-sm"
-                                        : "border-transparent text-foreground-2 hover:border-primary/20 hover:bg-primary/[0.06] hover:text-foreground"
+                                        ? "border-primary/35 bg-gradient-to-b from-primary/15 to-primary/8 px-3 text-primary shadow-sm"
+                                        : "border-transparent px-1.5 text-foreground-2 hover:border-primary/20 hover:bg-primary/[0.06] hover:text-foreground"
                                 }`}
                             >
                                 {Icon ? <Icon size={13} className={`shrink-0 ${active ? "text-primary" : "text-muted-foreground"}`} /> : null}

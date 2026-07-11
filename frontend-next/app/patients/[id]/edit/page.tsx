@@ -27,7 +27,7 @@ export default function EditPatientPage() {
       <PatientIntakeWizard
         patientId={patientId}
         onClose={() => router.push(`/patients/${patientId}`)}
-        onSuccess={(savedId) => router.push(`/patients/${savedId}`)}
+        onSuccess={(saved) => router.push(`/patients/${saved.id}`)}
       />
     </AppLayout>
   )

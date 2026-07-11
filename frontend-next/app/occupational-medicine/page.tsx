@@ -3,11 +3,9 @@
 import { isNotFoundLikeError } from "@/lib/errors/api-error"
 import Link from "next/link"
 import { useEffect, useMemo, useState } from "react"
-import { FilePlus2, HeartPulse, ScrollText, Pill, UserPlus , Search } from "lucide-react"
+import { FilePlus2, FlaskConical, HeartPulse, Pill, ScrollText, Search, Stethoscope, Users } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
-import PageHeader from "@/components/ui/PageHeader"
-import MetricCard from "@/components/ui/MetricCard"
 import ActionTile from "@/components/ui/ActionTile"
 import DataTable from "@/components/ui/DataTable"
 import Pagination from "@/components/ui/Pagination"
@@ -18,6 +16,25 @@ import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
 
 const OCCUPATIONAL_PROVENANCE = "Medicina Ocupacional"
+
+const GLASS =
+  "rounded-xl border border-white/20 bg-white/30 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]"
+
+function HeaderStat({
+  label, value, icon: Icon, chipClass,
+}: { label: string; value: React.ReactNode; icon: React.ElementType; chipClass: string }) {
+  return (
+    <div className="flex shrink-0 items-center gap-1 rounded-lg border border-white/30 bg-white/40 px-2 py-1 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/10">
+      <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md ${chipClass}`}>
+        <Icon size={11} strokeWidth={2} />
+      </span>
+      <span className="whitespace-nowrap text-[9px] font-semibold uppercase tracking-wide text-muted-foreground">
+        {label}
+      </span>
+      <span className="whitespace-nowrap text-sm font-bold leading-none text-foreground tabular-nums">{value}</span>
+    </div>
+  );
+}
 
 type PatientRow = Record<string, any>
 
@@ -137,20 +154,33 @@ export default function MedicinaOcupacionalPage() {
 
   return (
     <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.MEDICINA_OCUPACIONAL]}>
-      <div className="space-y-6">
-        <PageHeader
-          title="Medicina Ocupacional"
-          actions={
-            podeVerAdmin ? (
+      <div className="space-y-1.5">
+        <section className={`relative overflow-hidden ${GLASS}`}>
+          <div className="flex flex-wrap items-center justify-between gap-1 px-3 py-2 pl-4">
+            <div className="flex min-w-0 items-center gap-1.5">
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[var(--primary-600)]/10 text-[var(--primary-700)] dark:text-[var(--primary-400)]">
+                <Stethoscope size={14} />
+              </span>
+              <h1 className="truncate text-sm font-bold leading-tight text-foreground">Medicina Ocupacional</h1>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-1">
+              <HeaderStat label="Pacientes" value={listLoading ? "..." : totalItems} icon={Users} chipClass="bg-violet-500/15 text-violet-600 dark:text-violet-400" />
+              <HeaderStat label="Requisições" value={loading ? "..." : requisicoes} icon={FlaskConical} chipClass="bg-sky-500/15 text-sky-600 dark:text-sky-400" />
+              <HeaderStat label="Procedimentos" value="—" icon={HeartPulse} chipClass="bg-amber-500/15 text-amber-600 dark:text-amber-400" />
+              <HeaderStat label="Medicação" value="—" icon={Pill} chipClass="bg-emerald-500/15 text-emerald-600 dark:text-emerald-400" />
+            </div>
+
+            {podeVerAdmin ? (
               <Link
                 href="/admin/clinical/patient/?proveniencia__exact=Medicina+Ocupacional"
-                className="inline-flex items-center rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50"
+                className="inline-flex h-8 items-center rounded-lg border border-border bg-card px-2.5 text-xs font-medium text-foreground shadow-sm transition hover:bg-muted"
               >
                 Abrir na Administração
               </Link>
-            ) : null
-          }
-        />
+            ) : null}
+          </div>
+        </section>
 
         {erro ? (
           <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
@@ -158,41 +188,16 @@ export default function MedicinaOcupacionalPage() {
           </div>
         ) : null}
 
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <MetricCard label="Pacientes (ocupacional)" value={listLoading ? "..." : totalItems} />
-          <MetricCard label="Requisições (lab)" value={loading ? "..." : requisicoes} />
-          <MetricCard label="Procedimentos" value="—" />
-          <MetricCard label="Medicação" value="—" />
-        </div>
-
-        {/* Registo de pacientes centralizado na Recepção */}
-        <div className="flex items-center gap-3 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3">
-          <UserPlus size={18} className="shrink-0 text-blue-600" />
-          <div className="flex-1 text-sm text-blue-800">
-            O registo de novos pacientes ocupacionais é feito na{" "}
-            <Link href="/reception" className="font-semibold underline underline-offset-2 hover:text-blue-600">
-              Recepção
-            </Link>
-            {" "}— seleccione <strong>Medicina Ocupacional</strong> no fluxo de entrada de paciente.
-          </div>
-          <Link
-            href="/reception"
-            className="shrink-0 rounded-lg border border-blue-300 bg-white px-3 py-1.5 text-xs font-semibold text-blue-700 shadow-sm hover:bg-blue-50"
-          >
-            Ir para Recepção
-          </Link>
-        </div>
-
-        <section className="space-y-3 rounded-2xl border border-[var(--border)] bg-[var(--card)] p-4 shadow-sm">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <h2 className="text-sm font-semibold text-[var(--text)]">Pacientes de Medicina Ocupacional</h2>
-            <div className="relative w-48">
-              <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+        <section className={`space-y-1.5 ${GLASS} p-2.5`}>
+          <div className="flex flex-wrap items-center justify-between gap-1.5">
+            <h2 className="text-xs font-semibold text-[var(--text)]">Pacientes de Medicina Ocupacional</h2>
+            <div className="relative">
+              <Search size={11} className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground" />
               <input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Pesquisar…"
-                className="w-full rounded-lg border border-border bg-background/60 py-1.5 pl-7 pr-6 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:w-72 focus:ring-2 focus:ring-violet-500/40 transition-all"
+                className="h-8 w-36 rounded-lg border border-border bg-background/60 pl-6 pr-2 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:w-52 focus:ring-2 focus:ring-violet-500/40 transition-all"
               />
             </div>
           </div>

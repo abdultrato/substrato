@@ -18,7 +18,9 @@ def _as_drf_error(exc: DjangoValidationError) -> DRFValidationError:
 
 
 class PregnancyViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
-    queryset = Pregnancy.objects.select_related("patient", "responsible_doctor").all()
+    queryset = Pregnancy.objects.select_related(
+        "patient", "responsible_doctor", "nursery", "maternity_bed"
+    ).all()
     serializer_class = PregnancySerializer
     filterset_class = PregnancyFilter
     permission_classes = [IsAuthenticated]
@@ -28,8 +30,8 @@ class PregnancyViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, 
         "patient__document_number",
         "responsible_doctor__name",
         "responsible_doctor__document_number",
-        "nursery",
-        "maternity_bed",
+        "nursery__name",
+        "maternity_bed__number",
         "notes",
     ]
     ordering_fields = [

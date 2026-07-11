@@ -297,7 +297,7 @@ export default function Header({ user, onMenuClick, scrolledDown = false }: Prop
             </div>
 
             <div className={`overflow-hidden transition-all duration-300 ease-in-out ${scrolledDown ? "max-h-0 opacity-0 pointer-events-none" : "max-h-12 opacity-100"}`}>
-            <div className="flex h-7 items-center gap-0.5 border-t border-border/50 bg-background/35 px-1 shadow-inner">
+            <div className="flex h-7 items-center gap-0.5 border-t border-border/50 bg-background/35 px-0.5 shadow-inner">
                 <button
                     type="button"
                     onClick={() => scrollHeaderNav("left")}
@@ -329,10 +329,10 @@ export default function Header({ user, onMenuClick, scrolledDown = false }: Prop
                             <Link
                                 key={section.label}
                                 href={target.href}
-                                className={`inline-flex h-6 shrink-0 snap-start items-center rounded-md border px-2.5 text-xs font-semibold transition-colors ${
+                                className={`inline-flex h-6 shrink-0 snap-start items-center rounded-md border text-xs font-semibold transition-all duration-200 ease-out ${
                                     active
-                                        ? "border-primary/35 bg-gradient-to-b from-primary/15 to-primary/8 text-primary shadow-sm"
-                                        : "border-transparent text-foreground-2 hover:border-primary/20 hover:bg-primary/[0.05] hover:text-foreground"
+                                        ? "border-primary/35 bg-gradient-to-b from-primary/15 to-primary/8 px-3 text-primary shadow-sm"
+                                        : "border-transparent px-1.5 text-foreground-2 hover:border-primary/20 hover:bg-primary/[0.05] hover:text-foreground"
                                 }`}
                             >
                                 {t(section.label, section.labelEn)}

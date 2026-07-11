@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
 import {
     Activity,
     CheckCircle2,
@@ -194,6 +195,7 @@ const marcacoesPorSector = [
 
 export default function RecepcaoPage() {
     const { loading } = useAuthGuard()
+    const router = useRouter()
     const { user } = useAuth()
     const podeVerAdmin = userHasAnyGroup(user, [GROUPS.ADMIN])
     const safeRefreshToken = useSafeDataRefreshSignal()
@@ -496,7 +498,12 @@ export default function RecepcaoPage() {
         {showWizard && (
             <PatientIntakeWizard
                 onClose={() => setShowWizard(false)}
-                onSuccess={() => setShowWizard(false)}
+                onSuccess={(result) => {
+                    setShowWizard(false)
+                    if (result.pregnant) {
+                        router.push(`/maternity/pregnancies/new?patient=${result.id}`)
+                    }
+                }}
             />
         )}
         </>

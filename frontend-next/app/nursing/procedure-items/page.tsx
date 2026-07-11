@@ -134,44 +134,50 @@ export default function NursingProcedureItemsPage() {
 
   return (
     <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.ENFERMAGEM]}>
-      <div className="space-y-3">
-        <section className="relative overflow-hidden rounded-xl border border-white/35 bg-gradient-to-br from-white/30 via-white/12 to-sky-100/20 px-4 py-3 shadow-xl shadow-slate-900/5 backdrop-blur-2xl dark:border-white/10 dark:from-white/[0.07] dark:via-white/[0.025] dark:to-sky-950/15">
+      <div className="space-y-1.5">
+        <section className="relative overflow-hidden rounded-xl border border-white/35 bg-gradient-to-br from-white/30 via-white/12 to-sky-100/20 shadow-xl shadow-slate-900/5 backdrop-blur-2xl dark:border-white/10 dark:from-white/[0.07] dark:via-white/[0.025] dark:to-sky-950/15">
           <div className="absolute -right-8 -top-10 h-28 w-28 rounded-full bg-sky-400/20 blur-3xl" />
-          <div className="relative flex flex-wrap items-center justify-between gap-3">
-            <div className="flex min-w-0 items-center gap-3">
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-sky-600 to-indigo-600 text-white shadow-md shadow-sky-500/25">
-                <ClipboardCheck size={17} />
+          <div className="relative flex flex-wrap items-center justify-between gap-1 px-3 py-2 pl-4">
+            <div className="flex min-w-0 items-center gap-1.5">
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-sky-600 to-indigo-600 text-white shadow-sm shadow-sky-500/25">
+                <ClipboardCheck size={14} />
               </span>
               <div className="min-w-0">
-                <h1 className="text-lg font-bold leading-tight text-foreground">Itens de procedimentos</h1>
-                <p className="text-[11px] text-muted-foreground">{loading ? "A carregar…" : formatCount(total, { one: "item encontrado", other: "itens encontrados" })}</p>
+                <h1 className="truncate text-sm font-bold leading-tight text-foreground">Itens de procedimentos</h1>
+                <p className="truncate text-[10px] text-muted-foreground">{loading ? "A carregar…" : formatCount(total, { one: "item encontrado", other: "itens encontrados" })}</p>
               </div>
             </div>
-            <Link href="/nursing/procedure-items/new" className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-gradient-to-r from-sky-600 to-indigo-600 px-3 text-xs font-semibold text-white shadow-md shadow-sky-500/25 transition hover:from-sky-700 hover:to-indigo-700">
-              <Plus size={13} /> Novo item
+
+            <div className="flex flex-wrap items-center gap-1">
+              <div className="relative">
+                <Search size={11} className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                <input type="text" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Pesquisar…" className="h-8 w-36 rounded-lg border border-border bg-background/60 pl-6 pr-2 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:w-52 focus:ring-2 focus:ring-violet-500/40 transition-all" />
+              </div>
+              <select value={status} onChange={(event) => setStatus(event.target.value)} aria-label="Filtrar por execução" className="h-8 rounded-lg border border-white/40 bg-white/25 px-2 text-xs text-foreground outline-none backdrop-blur-xl focus:border-sky-500 dark:border-white/10 dark:bg-slate-900/60">
+                {STATUS_OPTIONS.map((option) => <option key={option.value || "all"} value={option.value}>{option.label}</option>)}
+              </select>
+              <select value={billing} onChange={(event) => setBilling(event.target.value)} aria-label="Filtrar por faturação" className="h-8 rounded-lg border border-white/40 bg-white/25 px-2 text-xs text-foreground outline-none backdrop-blur-xl focus:border-sky-500 dark:border-white/10 dark:bg-slate-900/60">
+                <option value="">Toda faturação</option>
+                <option value="billed">Faturados</option>
+                <option value="pending">Não faturados</option>
+              </select>
+              <label className="inline-flex h-8 items-center gap-1 rounded-lg border border-white/40 bg-white/25 px-2 text-[10px] font-medium text-muted-foreground backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/60">
+                Mostrar
+                <PageSizeInput value={pageSize} onChange={setPageSize} ariaLabel="Número de itens por página, de 1 a 999" />
+                /pág
+              </label>
+              {(search || status || billing) && (
+                <button type="button" onClick={() => { setSearch(""); setStatus(""); setBilling(""); }} className="inline-flex h-8 items-center rounded-lg border border-white/40 bg-white/25 px-2 text-xs font-medium text-foreground backdrop-blur-xl transition hover:bg-white/40 dark:border-white/10 dark:bg-slate-900/60">
+                  Limpar
+                </button>
+              )}
+            </div>
+
+            <Link href="/nursing/procedure-items/new" className="inline-flex h-8 items-center gap-1 rounded-lg bg-gradient-to-r from-sky-600 to-indigo-600 px-2.5 text-xs font-semibold text-white shadow-sm shadow-sky-500/25 transition hover:from-sky-700 hover:to-indigo-700">
+              <Plus size={12} /> Novo item
             </Link>
           </div>
         </section>
-
-        <div className="flex flex-wrap gap-2">
-          <div className="relative w-48">
-            <Search size={12} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
-            <input type="text" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Pesquisar…" className="w-full rounded-lg border border-border bg-background/60 py-1.5 pl-7 pr-6 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:w-72 focus:ring-2 focus:ring-violet-500/40 transition-all" />
-          </div>
-          <select value={status} onChange={(event) => setStatus(event.target.value)} aria-label="Filtrar por execução" className="h-8 rounded-lg border border-white/40 bg-white/25 px-2.5 text-xs text-foreground outline-none backdrop-blur-xl focus:border-sky-500 dark:border-white/10 dark:bg-slate-900/60">
-            {STATUS_OPTIONS.map((option) => <option key={option.value || "all"} value={option.value}>{option.label}</option>)}
-          </select>
-          <select value={billing} onChange={(event) => setBilling(event.target.value)} aria-label="Filtrar por faturação" className="h-8 rounded-lg border border-white/40 bg-white/25 px-2.5 text-xs text-foreground outline-none backdrop-blur-xl focus:border-sky-500 dark:border-white/10 dark:bg-slate-900/60">
-            <option value="">Toda faturação</option>
-            <option value="billed">Faturados</option>
-            <option value="pending">Não faturados</option>
-          </select>
-          <label className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-white/40 bg-white/25 px-2.5 text-[10px] font-medium text-muted-foreground backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/60">
-            Mostrar
-            <PageSizeInput value={pageSize} onChange={setPageSize} ariaLabel="Número de itens por página, de 1 a 999" />
-            por página
-          </label>
-        </div>
 
         {error ? <div className="rounded-xl border border-red-200/60 bg-red-50/50 px-4 py-3 text-sm text-red-800 backdrop-blur-xl dark:border-red-800/40 dark:bg-red-950/20 dark:text-red-300">{error}</div> : null}
 

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import {
   BedDouble,
+  Building2,
   CheckCircle2,
   Circle,
   Edit3,
@@ -15,10 +16,28 @@ import {
 } from "lucide-react";
 
 import AppLayout from "@/components/layout/AppLayout";
-import MetricCard from "@/components/ui/MetricCard";
 import { useLanguage } from "@/hooks/useLanguage";
 import { apiFetchList } from "@/lib/api";
 import { GROUPS } from "@/lib/rbac";
+
+const GLASS =
+  "rounded-xl border border-white/20 bg-white/30 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]";
+
+function HeaderStat({
+  label, value, icon: Icon, chipClass,
+}: { label: string; value: React.ReactNode; icon: React.ElementType; chipClass: string }) {
+  return (
+    <div className="flex shrink-0 items-center gap-1 rounded-lg border border-white/30 bg-white/40 px-2 py-1 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/10">
+      <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md ${chipClass}`}>
+        <Icon size={11} strokeWidth={2} />
+      </span>
+      <span className="whitespace-nowrap text-[9px] font-semibold uppercase tracking-wide text-muted-foreground">
+        {label}
+      </span>
+      <span className="whitespace-nowrap text-sm font-bold leading-none text-foreground tabular-nums">{value}</span>
+    </div>
+  );
+}
 
 type WardBedRow = {
   id: number;
@@ -126,74 +145,70 @@ export default function WardBedsCardListPage() {
 
   return (
     <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.ENFERMAGEM]}>
-      <div className="space-y-3">
-        <div className="relative overflow-hidden rounded-xl border border-white/20 bg-white/30 px-4 py-3 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/5">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[var(--primary-600)]/10 text-[var(--primary-700)] dark:text-[var(--primary-400)]">
-                <BedDouble size={18} />
+      <div className="space-y-1.5">
+        <section className={`relative overflow-hidden ${GLASS}`}>
+          <div className="flex flex-wrap items-center justify-between gap-1 px-3 py-2 pl-4">
+            <div className="flex min-w-0 items-center gap-1.5">
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[var(--primary-600)]/10 text-[var(--primary-700)] dark:text-[var(--primary-400)]">
+                <BedDouble size={14} />
               </span>
-              <div>
-                <h1 className="text-lg font-bold leading-tight text-foreground">
+              <div className="min-w-0">
+                <h1 className="truncate text-sm font-bold leading-tight text-foreground">
                   {t("Camas de enfermaria", "Ward beds")}
                 </h1>
-                <p className="text-[11px] text-muted-foreground">
-                  {loading
-                    ? t("A carregar camas...", "Loading beds...")
-                    : t(`${beds.length} cama${beds.length === 1 ? "" : "s"} registada${beds.length === 1 ? "" : "s"}`, `${beds.length} bed${beds.length === 1 ? "" : "s"} registered`)}
-                </p>
               </div>
             </div>
-            <Link
-              href="/nursing/ward-beds/new"
-              className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-indigo-600 px-3 text-sm font-semibold text-white shadow-md shadow-violet-500/30 transition hover:from-violet-700 hover:to-indigo-700"
-            >
-              <Plus size={14} />
-              {t("Nova cama", "New bed")}
-            </Link>
-          </div>
-        </div>
 
-        <div className="grid gap-2 sm:grid-cols-3">
-          <MetricCard label={t("Total", "Total")} value={loading ? "..." : beds.length} accentClass="border-l-violet-500" />
-          <MetricCard label={t("Disponíveis", "Available")} value={loading ? "..." : availableCount} accentClass="border-l-emerald-500" />
-          <MetricCard label={t("Enfermarias", "Wards")} value={loading ? "..." : wardCount} hint={t(`${blockedCount} bloqueada${blockedCount === 1 ? "" : "s"}`, `${blockedCount} blocked`)} accentClass="border-l-amber-500" />
-        </div>
+            <div className="flex flex-wrap items-center gap-1">
+              <HeaderStat label={t("Total", "Total")} value={loading ? "..." : beds.length} icon={BedDouble} chipClass="bg-violet-500/15 text-violet-600 dark:text-violet-400" />
+              <HeaderStat label={t("Disponíveis", "Available")} value={loading ? "..." : availableCount} icon={CheckCircle2} chipClass="bg-emerald-500/15 text-emerald-600 dark:text-emerald-400" />
+              <HeaderStat label={t("Bloqueadas", "Blocked")} value={loading ? "..." : blockedCount} icon={X} chipClass="bg-amber-500/15 text-amber-600 dark:text-amber-400" />
+              <HeaderStat label={t("Enfermarias", "Wards")} value={loading ? "..." : wardCount} icon={Building2} chipClass="bg-sky-500/15 text-sky-600 dark:text-sky-400" />
+            </div>
 
-        <div className="flex flex-wrap gap-2">
-          <div className="relative min-w-[220px] flex-1">
-            <Search size={13} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
-            <input
-              type="text"
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder={t("Pesquisar por cama, código ou enfermaria...", "Search by bed, code, or ward...")}
-              className="h-9 w-full rounded-lg border border-border bg-card pl-8 pr-3 text-sm text-foreground outline-none transition focus:border-violet-500 focus:ring-2 focus:ring-violet-500/25"
-            />
+            <div className="flex items-center gap-1">
+              <div className="relative">
+                <Search size={11} className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                <input
+                  type="text"
+                  value={search}
+                  onChange={(event) => setSearch(event.target.value)}
+                  placeholder={t("Pesquisar…", "Search…")}
+                  className="h-8 w-36 rounded-lg border border-border bg-card pl-6 pr-2 text-xs text-foreground outline-none transition focus:w-52 focus:border-violet-500 focus:ring-2 focus:ring-violet-500/25 focus:outline-none"
+                />
+              </div>
+              <select
+                value={statusFilter}
+                onChange={(event) => setStatusFilter(event.target.value)}
+                className="h-8 rounded-lg border border-border bg-card px-2 text-xs text-foreground outline-none transition focus:border-violet-500"
+              >
+                {STATUS_OPTIONS.map((option) => (
+                  <option key={option.value || "all"} value={option.value}>
+                    {t(option.labelPt, option.labelEn)}
+                  </option>
+                ))}
+              </select>
+              <button
+                type="button"
+                onClick={() => {
+                  setSearch("");
+                  setStatusFilter("");
+                }}
+                className="inline-flex h-8 items-center gap-1 rounded-lg border border-border bg-card px-2 text-xs font-medium text-foreground transition hover:bg-muted"
+              >
+                <X size={12} />
+                {t("Limpar", "Clear")}
+              </button>
+              <Link
+                href="/nursing/ward-beds/new"
+                className="inline-flex h-8 items-center gap-1 rounded-lg bg-gradient-to-r from-violet-600 to-indigo-600 px-2.5 text-xs font-semibold text-white shadow-sm shadow-violet-500/30 transition hover:from-violet-700 hover:to-indigo-700"
+              >
+                <Plus size={12} />
+                {t("Nova cama", "New bed")}
+              </Link>
+            </div>
           </div>
-          <select
-            value={statusFilter}
-            onChange={(event) => setStatusFilter(event.target.value)}
-            className="h-9 rounded-lg border border-border bg-card px-3 text-sm text-foreground outline-none transition focus:border-violet-500"
-          >
-            {STATUS_OPTIONS.map((option) => (
-              <option key={option.value || "all"} value={option.value}>
-                {t(option.labelPt, option.labelEn)}
-              </option>
-            ))}
-          </select>
-          <button
-            type="button"
-            onClick={() => {
-              setSearch("");
-              setStatusFilter("");
-            }}
-            className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-border bg-card px-3 text-xs font-medium text-foreground transition hover:bg-muted"
-          >
-            <X size={14} />
-            {t("Limpar", "Clear")}
-          </button>
-        </div>
+        </section>
 
         {error ? (
           <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:border-amber-800/40 dark:bg-amber-900/20 dark:text-amber-300">

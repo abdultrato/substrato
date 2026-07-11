@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, Baby, BedDouble, Calendar, ClipboardList, Heart, Loader2, Search, Stethoscope, User, X } from "lucide-react";
 
 import AppLayout from "@/components/layout/AppLayout";
@@ -13,12 +13,13 @@ const GLASS =
   "rounded-xl border border-white/20 bg-white/30 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]";
 
 // ── EntitySearch ─────────────────────────────────────────────────────────────
-type EntityOption = { id: number; name: string; label?: string };
+type EntityOption = { id: number; name?: string; label?: string; [key: string]: any };
 
 function EntitySearch({
-  label, placeholder, endpoint, value, onChange, icon: Icon, accent,
+  label, placeholder, endpoint, labelKey = "name", extraParams, value, onChange, icon: Icon, accent,
 }: {
-  label: string; placeholder: string; endpoint: string;
+  label: string; placeholder: string; endpoint: string; labelKey?: string;
+  extraParams?: Record<string, string | number>;
   value: EntityOption | null; onChange: (v: EntityOption | null) => void;
   icon: React.ElementType; accent: string;
 }) {
@@ -37,12 +38,15 @@ function EntitySearch({
     if (!query.trim()) { setOptions([]); return; }
     let cancelled = false;
     setLoading(true);
-    apiFetch<any>(`${endpoint}?search=${encodeURIComponent(query)}&page_size=10`)
+    const extra = extraParams
+      ? Object.entries(extraParams).map(([k, v]) => `&${k}=${encodeURIComponent(String(v))}`).join("")
+      : "";
+    apiFetch<any>(`${endpoint}?search=${encodeURIComponent(query)}&page_size=10${extra}`)
       .then(d => { if (!cancelled) setOptions(Array.isArray(d) ? d : (d.results ?? [])); })
       .catch(() => { if (!cancelled) setOptions([]); })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
-  }, [query, endpoint]);
+  }, [query, endpoint, extraParams]);
 
   useEffect(() => {
     if (!open) return;
@@ -67,7 +71,7 @@ function EntitySearch({
     setOpen(false);
   }
 
-  const displayName = (opt: EntityOption) => opt.label ?? opt.name ?? `#${opt.id}`;
+  const displayName = (opt: EntityOption) => opt.label ?? opt[labelKey] ?? opt.name ?? `#${opt.id}`;
 
   return (
     <div ref={wrapRef}>
@@ -97,103 +101,6 @@ function EntitySearch({
               </button>
             </li>
           ))}
-        </ul>,
-        document.body
-      )}
-    </div>
-  );
-}
-
-// ── StringSearch: busca API mas guarda string (não FK) ───────────────────────
-function StringSearch({
-  label, placeholder, endpoint, labelKey = "name", value, onChange, icon: Icon, accent,
-}: {
-  label: string; placeholder: string; endpoint: string; labelKey?: string;
-  value: string; onChange: (v: string) => void;
-  icon: React.ElementType; accent: string;
-}) {
-  const [query, setQuery] = useState(value);
-  const [options, setOptions] = useState<any[]>([]);
-  const [open, setOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [dropStyle, setDropStyle] = useState<React.CSSProperties>({});
-  const [mounted, setMounted] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
-  const wrapRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => { setMounted(true); }, []);
-
-  useEffect(() => {
-    setQuery(value);
-  }, [value]);
-
-  useEffect(() => {
-    if (!query.trim()) { setOptions([]); return; }
-    let cancelled = false;
-    setLoading(true);
-    apiFetch<any>(`${endpoint}?search=${encodeURIComponent(query)}&page_size=10`)
-      .then(d => { if (!cancelled) setOptions(Array.isArray(d) ? d : (d.results ?? [])); })
-      .catch(() => { if (!cancelled) setOptions([]); })
-      .finally(() => { if (!cancelled) setLoading(false); });
-    return () => { cancelled = true; };
-  }, [query, endpoint]);
-
-  useEffect(() => {
-    if (!open) return;
-    function outside(e: MouseEvent) {
-      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) setOpen(false);
-    }
-    document.addEventListener("mousedown", outside);
-    return () => document.removeEventListener("mousedown", outside);
-  }, [open]);
-
-  function openDrop() {
-    if (!inputRef.current) return;
-    const card = inputRef.current.closest("section");
-    const rect = (card ?? inputRef.current).getBoundingClientRect();
-    setDropStyle({ position: "fixed", top: inputRef.current.getBoundingClientRect().bottom + 4, left: rect.left, width: rect.width, zIndex: 9999 });
-    setOpen(true);
-  }
-
-  function select(opt: any) {
-    const val = String(opt[labelKey] ?? opt.name ?? opt.number ?? "");
-    onChange(val);
-    setQuery(val);
-    setOpen(false);
-  }
-
-  return (
-    <div ref={wrapRef}>
-      <label className="mb-1 block text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">{label}</label>
-      <div className="relative">
-        <Icon size={13} className={`absolute left-3 top-1/2 -translate-y-1/2 ${accent}`} />
-        <input ref={inputRef} type="text" placeholder={placeholder}
-          className="w-full rounded-lg border border-border bg-background/60 py-2 pl-8 pr-8 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-pink-500/40 transition"
-          value={query}
-          onChange={e => { setQuery(e.target.value); onChange(e.target.value); openDrop(); }}
-          onFocus={openDrop}
-        />
-        {loading && <Loader2 size={12} className="absolute right-3 top-1/2 -translate-y-1/2 animate-spin text-muted-foreground" />}
-        {!loading && query && (
-          <button type="button" onClick={() => { setQuery(""); onChange(""); setOptions([]); }}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
-            <X size={13} />
-          </button>
-        )}
-      </div>
-      {mounted && open && options.length > 0 && createPortal(
-        <ul style={dropStyle} className="rounded-lg border border-border bg-popover shadow-xl">
-          {options.map((opt, i) => {
-            const display = String(opt[labelKey] ?? opt.name ?? opt.number ?? `#${opt.id}`);
-            return (
-              <li key={opt.id ?? i}>
-                <button type="button" onMouseDown={() => select(opt)}
-                  className="w-full px-3 py-2 text-left text-sm text-foreground hover:bg-accent transition">
-                  {display}
-                </button>
-              </li>
-            );
-          })}
         </ul>,
         document.body
       )}
@@ -233,22 +140,39 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 const inputCls = "w-full rounded-lg border border-border bg-background/60 px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-pink-500/40 transition";
 
 // ── Page ──────────────────────────────────────────────────────────────────────
-export default function MaternityPregnanciesCreatePage() {
+function MaternityPregnanciesCreateForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const checkinId = searchParams?.get("checkin") || "";
+  const prefillPatientId = searchParams?.get("patient") || "";
 
   const [patient, setPatient] = useState<EntityOption | null>(null);
   const [doctor, setDoctor] = useState<EntityOption | null>(null);
+  const [prefillLoaded, setPrefillLoaded] = useState(false);
   const [lmp, setLmp] = useState("");
   const [edd, setEdd] = useState("");
-  const [nursery, setNursery] = useState("");
-  const [bed, setBed] = useState("");
+  const [nursery, setNursery] = useState<EntityOption | null>(null);
+  const [bed, setBed] = useState<EntityOption | null>(null);
   const [totalDel, setTotalDel] = useState("");
   const [normalDel, setNormalDel] = useState("");
   const [cesareans, setCesareans] = useState("");
   const [status, setStatus] = useState("ACOMP");
-  const [notes, setNotes] = useState("");
+  const [notes, setNotes] = useState(
+    checkinId ? `Origem: check-in de receção n.º ${checkinId} (registo de gestante).` : ""
+  );
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!prefillPatientId || patient || prefillLoaded) return;
+    let cancelled = false;
+    setPrefillLoaded(true);
+    apiFetch<any>(`/clinical/patient/${prefillPatientId}/`)
+      .then((d) => { if (!cancelled) setPatient({ id: d.id, name: d.name || `#${d.id}` }); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [prefillPatientId, patient, prefillLoaded]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -262,8 +186,8 @@ export default function MaternityPregnanciesCreatePage() {
       if (doctor) body.responsible_doctor = doctor.id;
       if (lmp) body.last_menstrual_period_date = lmp;
       if (edd) body.expected_delivery_date = edd;
-      if (nursery) body.nursery = nursery;
-      if (bed) body.maternity_bed = bed;
+      if (nursery) body.nursery = nursery.id;
+      if (bed) body.maternity_bed = bed.id;
       if (totalDel) body.total_deliveries = Number(totalDel);
       if (normalDel) body.normal_deliveries = Number(normalDel);
       if (cesareans) body.cesareans = Number(cesareans);
@@ -283,7 +207,7 @@ export default function MaternityPregnanciesCreatePage() {
   }
 
   return (
-    <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.MEDICINA, GROUPS.MEDICINA_OCUPACIONAL]}>
+    <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.RECEPCAO, GROUPS.MEDICINA, GROUPS.MEDICINA_OCUPACIONAL]}>
       <form onSubmit={handleSubmit} className="w-full space-y-3 px-1">
 
         {/* ── Cabeçalho ── */}
@@ -363,17 +287,18 @@ export default function MaternityPregnanciesCreatePage() {
         {/* ── Row 3: Berçário + Cama ── */}
         <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
           <SectionCard title="Berçário" icon={BedDouble} accent="bg-sky-500">
-            <StringSearch
+            <EntitySearch
               label="Berçário / Ala / Sala" placeholder="Pesquisar enfermaria…"
               endpoint="/nursing/ward/" labelKey="name"
-              value={nursery} onChange={setNursery}
+              value={nursery} onChange={(v) => { setNursery(v); setBed(null); }}
               icon={BedDouble} accent="text-sky-500"
             />
           </SectionCard>
           <SectionCard title="Cama" icon={BedDouble} accent="bg-teal-500">
-            <StringSearch
+            <EntitySearch
               label="Cama na maternidade" placeholder="Pesquisar cama…"
               endpoint="/nursing/ward_bed/" labelKey="number"
+              extraParams={nursery ? { ward: nursery.id } : undefined}
               value={bed} onChange={setBed}
               icon={BedDouble} accent="text-teal-500"
             />
@@ -402,5 +327,13 @@ export default function MaternityPregnanciesCreatePage() {
 
       </form>
     </AppLayout>
+  );
+}
+
+export default function MaternityPregnanciesCreatePage() {
+  return (
+    <Suspense fallback={<div className="p-4 text-sm text-muted-foreground">Carregando...</div>}>
+      <MaternityPregnanciesCreateForm />
+    </Suspense>
   );
 }

@@ -594,7 +594,7 @@ export default function ModuleSubNav() {
 
     return (
         <nav className="shrink-0 border-b border-border/50 bg-primary/[0.06] backdrop-blur supports-[backdrop-filter]:bg-primary/[0.07] dark:bg-primary/[0.09]">
-            <div className="flex items-center gap-1.5 px-2 py-1 sm:px-3 md:px-4">
+            <div className="flex items-center gap-1 px-0.5 py-0.5">
                 <button
                     type="button"
                     onClick={() => {
@@ -633,10 +633,10 @@ export default function ModuleSubNav() {
                             <Link
                                 key={tab.href}
                                 href={tab.href}
-                                className={`inline-flex h-7 shrink-0 items-center rounded-full border px-2.5 text-xs font-medium transition-all ${
+                                className={`inline-flex h-7 shrink-0 items-center rounded-full border text-xs font-medium transition-all duration-200 ease-out ${
                                     active
-                                        ? "border-primary/35 bg-gradient-to-b from-primary/15 to-primary/8 text-primary shadow-sm"
-                                        : "border-transparent text-foreground-2 hover:border-primary/20 hover:bg-primary/[0.06] hover:text-foreground"
+                                        ? "border-primary/35 bg-gradient-to-b from-primary/15 to-primary/8 px-3 text-primary shadow-sm"
+                                        : "border-transparent px-1.5 text-foreground-2 hover:border-primary/20 hover:bg-primary/[0.06] hover:text-foreground"
                                 }`}
                             >
                                 {t(tab.label, tab.labelEn || tab.label)}

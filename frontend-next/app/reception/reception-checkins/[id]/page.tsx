@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -17,6 +17,7 @@ import {
   User,
   UserCheck,
   X,
+  Baby,
 } from "lucide-react";
 
 import AppLayout from "@/components/layout/AppLayout";
@@ -159,7 +160,7 @@ export default function ReceptionCheckinDetailPage() {
   const [actionError, setActionError] = useState<string | null>(null);
   const [acting, setActing] = useState<string | null>(null);
 
-  async function load() {
+  const load = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -170,9 +171,9 @@ export default function ReceptionCheckinDetailPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [id]);
 
-  useEffect(() => { load(); }, [id]);
+  useEffect(() => { load().catch(() => {}); }, [load]);
 
   async function handleAction(action: "start-care" | "complete" | "cancel") {
     setActionError(null);
@@ -236,6 +237,12 @@ export default function ReceptionCheckinDetailPage() {
                   <Link href={`/reception/reception-checkins/${id}/edit`}
                     className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-border bg-card px-3 text-xs font-medium text-foreground transition hover:bg-muted">
                     <Edit size={13} /> Editar
+                  </Link>
+                )}
+                {canWrite && checkin?.patient && (
+                  <Link href={`/maternity/pregnancies/new?patient=${checkin.patient}${id ? `&checkin=${id}` : ""}`}
+                    className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-gradient-to-r from-pink-600 to-rose-500 px-3 text-xs font-semibold text-white shadow-md shadow-pink-500/30 transition hover:from-pink-700 hover:to-rose-600">
+                    <Baby size={13} /> Registar gestante
                   </Link>
                 )}
                 {canWrite && canStart && (

@@ -77,6 +77,8 @@ class PregnancySerializer(LegacyAliasSerializerMixin, serializers.ModelSerialize
     patient_name = serializers.CharField(source="patient.name", read_only=True)
     doctor_name = serializers.SerializerMethodField(method_name="get_doctor_name")
     responsible_doctor_name = serializers.SerializerMethodField(method_name="get_doctor_name")
+    nursery_name = serializers.CharField(source="nursery.name", read_only=True, default="")
+    maternity_bed_number = serializers.CharField(source="maternity_bed.number", read_only=True, default="")
 
     class Meta:
         model = Pregnancy
@@ -86,6 +88,8 @@ class PregnancySerializer(LegacyAliasSerializerMixin, serializers.ModelSerialize
             "patient_name",
             "doctor_name",
             "responsible_doctor_name",
+            "nursery_name",
+            "maternity_bed_number",
         )
 
     def get_doctor_name(self, obj: Pregnancy) -> str:

@@ -9,6 +9,8 @@ import PageSizeInput from "@/components/ui/PageSizeInput";
 import { apiFetch } from "@/lib/api";
 import { GROUPS } from "@/lib/rbac";
 
+const REQUIRED_GROUPS = [GROUPS.ADMIN, GROUPS.RECEPCAO, GROUPS.MEDICINA, GROUPS.MEDICINA_OCUPACIONAL];
+
 const GLASS =
   "rounded-xl border border-white/20 bg-white/30 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]";
 
@@ -49,8 +51,8 @@ type Pregnancy = {
   responsible_doctor_name?: string;
   status?: string;
   expected_delivery_date?: string;
-  nursery?: string;
-  maternity_bed?: string;
+  nursery_name?: string;
+  maternity_bed_number?: string;
   total_deliveries?: number;
   notes?: string;
 };
@@ -92,11 +94,11 @@ function PregnancyCard({ item }: { item: Pregnancy }) {
             <Calendar size={10} className="shrink-0" />
             <span>DPP: {fmtDate(item.expected_delivery_date)}</span>
           </div>
-          {(item.nursery || item.maternity_bed) && (
+          {(item.nursery_name || item.maternity_bed_number) && (
             <div className="flex items-center gap-1.5">
               <BedDouble size={10} className="shrink-0" />
               <span className="truncate">
-                {[item.nursery, item.maternity_bed].filter(Boolean).join(" · ")}
+                {[item.nursery_name, item.maternity_bed_number].filter(Boolean).join(" · ")}
               </span>
             </div>
           )}
@@ -144,7 +146,7 @@ export default function MaternityPregnanciesListPage() {
   const totalPages = Math.ceil(total / pageSize);
 
   return (
-    <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.MEDICINA, GROUPS.MEDICINA_OCUPACIONAL]}>
+    <AppLayout requiredGroups={REQUIRED_GROUPS}>
       <div className="w-full space-y-3 px-1">
 
         {/* ── Cabeçalho ── */}

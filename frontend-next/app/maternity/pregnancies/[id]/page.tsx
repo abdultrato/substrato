@@ -33,8 +33,10 @@ type PregnancyDetail = Record<string, any> & {
   status?: string | null;
   last_menstrual_period_date?: string | null;
   expected_delivery_date?: string | null;
-  nursery?: string | null;
-  maternity_bed?: string | null;
+  nursery?: number | null;
+  nursery_name?: string | null;
+  maternity_bed?: number | null;
+  maternity_bed_number?: string | null;
   total_deliveries?: number | null;
   normal_deliveries?: number | null;
   cesareans?: number | null;
@@ -160,7 +162,7 @@ export default function MaternityPregnanciesDetailPage() {
     load().catch(() => {});
   }, [load]);
 
-  const requiredGroups = [GROUPS.ADMIN, GROUPS.MEDICINA, GROUPS.MEDICINA_OCUPACIONAL];
+  const requiredGroups = [GROUPS.ADMIN, GROUPS.RECEPCAO, GROUPS.MEDICINA, GROUPS.MEDICINA_OCUPACIONAL];
   const status = STATUS_MAP[data?.status || ""] ?? STATUS_MAP.ACOMP;
   const title = useMemo(() => data?.custom_id || `Gestação #${id}`, [data, id]);
 
@@ -251,8 +253,8 @@ export default function MaternityPregnanciesDetailPage() {
           </SectionCard>
 
           <SectionCard title="Internamento" subtitle="Berçário e cama." icon={BedDouble} accent="bg-indigo-500">
-            <FieldRow label="Berçário / ala" value={data.nursery || "—"} />
-            <FieldRow label="Cama da maternidade" value={data.maternity_bed || "—"} />
+            <FieldRow label="Berçário / ala" value={data.nursery_name || "—"} />
+            <FieldRow label="Cama da maternidade" value={data.maternity_bed_number || "—"} />
           </SectionCard>
 
           <SectionCard title="Histórico obstétrico" subtitle="Partos anteriores." icon={Heart} accent="bg-rose-500">

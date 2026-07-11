@@ -14,12 +14,13 @@ const GLASS =
   "rounded-xl border border-white/20 bg-white/30 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]";
 
 // ── EntitySearch ─────────────────────────────────────────────────────────────
-type EntityOption = { id: number; name: string; label?: string };
+type EntityOption = { id: number; name?: string; label?: string; [key: string]: any };
 
 function EntitySearch({
-  label, placeholder, endpoint, value, onChange, icon: Icon, accent,
+  label, placeholder, endpoint, labelKey = "name", extraParams, value, onChange, icon: Icon, accent,
 }: {
-  label: string; placeholder: string; endpoint: string;
+  label: string; placeholder: string; endpoint: string; labelKey?: string;
+  extraParams?: Record<string, string | number>;
   value: EntityOption | null; onChange: (v: EntityOption | null) => void;
   icon: React.ElementType; accent: string;
 }) {
@@ -38,12 +39,15 @@ function EntitySearch({
     if (!query.trim()) { setOptions([]); return; }
     let cancelled = false;
     setLoading(true);
-    apiFetch<any>(`${endpoint}?search=${encodeURIComponent(query)}&page_size=10`)
+    const extra = extraParams
+      ? Object.entries(extraParams).map(([k, v]) => `&${k}=${encodeURIComponent(String(v))}`).join("")
+      : "";
+    apiFetch<any>(`${endpoint}?search=${encodeURIComponent(query)}&page_size=10${extra}`)
       .then(d => { if (!cancelled) setOptions(Array.isArray(d) ? d : (d.results ?? [])); })
       .catch(() => { if (!cancelled) setOptions([]); })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
-  }, [query, endpoint]);
+  }, [query, endpoint, extraParams]);
 
   useEffect(() => {
     if (!open) return;
@@ -68,7 +72,7 @@ function EntitySearch({
     setOpen(false);
   }
 
-  const displayName = (opt: EntityOption) => opt.label ?? opt.name ?? `#${opt.id}`;
+  const displayName = (opt: EntityOption) => opt.label ?? opt[labelKey] ?? opt.name ?? `#${opt.id}`;
 
   return (
     <div ref={wrapRef}>
@@ -98,103 +102,6 @@ function EntitySearch({
               </button>
             </li>
           ))}
-        </ul>,
-        document.body
-      )}
-    </div>
-  );
-}
-
-// ── StringSearch: busca API mas guarda string (não FK) ───────────────────────
-function StringSearch({
-  label, placeholder, endpoint, labelKey = "name", value, onChange, icon: Icon, accent,
-}: {
-  label: string; placeholder: string; endpoint: string; labelKey?: string;
-  value: string; onChange: (v: string) => void;
-  icon: React.ElementType; accent: string;
-}) {
-  const [query, setQuery] = useState(value);
-  const [options, setOptions] = useState<any[]>([]);
-  const [open, setOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [dropStyle, setDropStyle] = useState<React.CSSProperties>({});
-  const [mounted, setMounted] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
-  const wrapRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => { setMounted(true); }, []);
-
-  useEffect(() => {
-    setQuery(value);
-  }, [value]);
-
-  useEffect(() => {
-    if (!query.trim()) { setOptions([]); return; }
-    let cancelled = false;
-    setLoading(true);
-    apiFetch<any>(`${endpoint}?search=${encodeURIComponent(query)}&page_size=10`)
-      .then(d => { if (!cancelled) setOptions(Array.isArray(d) ? d : (d.results ?? [])); })
-      .catch(() => { if (!cancelled) setOptions([]); })
-      .finally(() => { if (!cancelled) setLoading(false); });
-    return () => { cancelled = true; };
-  }, [query, endpoint]);
-
-  useEffect(() => {
-    if (!open) return;
-    function outside(e: MouseEvent) {
-      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) setOpen(false);
-    }
-    document.addEventListener("mousedown", outside);
-    return () => document.removeEventListener("mousedown", outside);
-  }, [open]);
-
-  function openDrop() {
-    if (!inputRef.current) return;
-    const card = inputRef.current.closest("section");
-    const rect = (card ?? inputRef.current).getBoundingClientRect();
-    setDropStyle({ position: "fixed", top: inputRef.current.getBoundingClientRect().bottom + 4, left: rect.left, width: rect.width, zIndex: 9999 });
-    setOpen(true);
-  }
-
-  function select(opt: any) {
-    const val = String(opt[labelKey] ?? opt.name ?? opt.number ?? "");
-    onChange(val);
-    setQuery(val);
-    setOpen(false);
-  }
-
-  return (
-    <div ref={wrapRef}>
-      <label className="mb-1 block text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">{label}</label>
-      <div className="relative">
-        <Icon size={13} className={`absolute left-3 top-1/2 -translate-y-1/2 ${accent}`} />
-        <input ref={inputRef} type="text" placeholder={placeholder}
-          className="w-full rounded-lg border border-border bg-background/60 py-2 pl-8 pr-8 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-pink-500/40 transition"
-          value={query}
-          onChange={e => { setQuery(e.target.value); onChange(e.target.value); openDrop(); }}
-          onFocus={openDrop}
-        />
-        {loading && <Loader2 size={12} className="absolute right-3 top-1/2 -translate-y-1/2 animate-spin text-muted-foreground" />}
-        {!loading && query && (
-          <button type="button" onClick={() => { setQuery(""); onChange(""); setOptions([]); }}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
-            <X size={13} />
-          </button>
-        )}
-      </div>
-      {mounted && open && options.length > 0 && createPortal(
-        <ul style={dropStyle} className="rounded-lg border border-border bg-popover shadow-xl">
-          {options.map((opt, i) => {
-            const display = String(opt[labelKey] ?? opt.name ?? opt.number ?? `#${opt.id}`);
-            return (
-              <li key={opt.id ?? i}>
-                <button type="button" onMouseDown={() => select(opt)}
-                  className="w-full px-3 py-2 text-left text-sm text-foreground hover:bg-accent transition">
-                  {display}
-                </button>
-              </li>
-            );
-          })}
         </ul>,
         document.body
       )}
@@ -243,8 +150,8 @@ export default function MaternityPregnanciesEditPage() {
   const [doctor, setDoctor] = useState<EntityOption | null>(null);
   const [lmp, setLmp] = useState("");
   const [edd, setEdd] = useState("");
-  const [nursery, setNursery] = useState("");
-  const [bed, setBed] = useState("");
+  const [nursery, setNursery] = useState<EntityOption | null>(null);
+  const [bed, setBed] = useState<EntityOption | null>(null);
   const [totalDel, setTotalDel] = useState("");
   const [normalDel, setNormalDel] = useState("");
   const [cesareans, setCesareans] = useState("");
@@ -267,8 +174,8 @@ export default function MaternityPregnanciesEditPage() {
         if (d.responsible_doctor) setDoctor({ id: d.responsible_doctor, name: d.responsible_doctor_name || `#${d.responsible_doctor}` });
         setLmp(d.last_menstrual_period_date || "");
         setEdd(d.expected_delivery_date || "");
-        setNursery(d.nursery || "");
-        setBed(d.maternity_bed || "");
+        if (d.nursery) setNursery({ id: d.nursery, name: d.nursery_name || `#${d.nursery}` });
+        if (d.maternity_bed) setBed({ id: d.maternity_bed, number: d.maternity_bed_number || `#${d.maternity_bed}` });
         setTotalDel(d.total_deliveries != null ? String(d.total_deliveries) : "");
         setNormalDel(d.normal_deliveries != null ? String(d.normal_deliveries) : "");
         setCesareans(d.cesareans != null ? String(d.cesareans) : "");
@@ -290,8 +197,8 @@ export default function MaternityPregnanciesEditPage() {
         responsible_doctor: doctor ? doctor.id : null,
         last_menstrual_period_date: lmp || null,
         expected_delivery_date: edd || null,
-        nursery: nursery || "",
-        maternity_bed: bed || "",
+        nursery: nursery ? nursery.id : null,
+        maternity_bed: bed ? bed.id : null,
         total_deliveries: totalDel ? Number(totalDel) : null,
         normal_deliveries: normalDel ? Number(normalDel) : null,
         cesareans: cesareans ? Number(cesareans) : null,
@@ -312,7 +219,7 @@ export default function MaternityPregnanciesEditPage() {
     }
   }
 
-  const requiredGroups = [GROUPS.ADMIN, GROUPS.MEDICINA, GROUPS.MEDICINA_OCUPACIONAL];
+  const requiredGroups = [GROUPS.ADMIN, GROUPS.RECEPCAO, GROUPS.MEDICINA, GROUPS.MEDICINA_OCUPACIONAL];
 
   if (loading) {
     return (
@@ -405,17 +312,18 @@ export default function MaternityPregnanciesEditPage() {
         {/* ── Row 3: Berçário + Cama ── */}
         <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
           <SectionCard title="Berçário" icon={BedDouble} accent="bg-sky-500">
-            <StringSearch
+            <EntitySearch
               label="Berçário / Ala / Sala" placeholder="Pesquisar enfermaria…"
               endpoint="/nursing/ward/" labelKey="name"
-              value={nursery} onChange={setNursery}
+              value={nursery} onChange={(v) => { setNursery(v); setBed(null); }}
               icon={BedDouble} accent="text-sky-500"
             />
           </SectionCard>
           <SectionCard title="Cama" icon={BedDouble} accent="bg-teal-500">
-            <StringSearch
+            <EntitySearch
               label="Cama na maternidade" placeholder="Pesquisar cama…"
               endpoint="/nursing/ward_bed/" labelKey="number"
+              extraParams={nursery ? { ward: nursery.id } : undefined}
               value={bed} onChange={setBed}
               icon={BedDouble} accent="text-teal-500"
             />

@@ -112,6 +112,7 @@ type CreatedPatient = {
   id: number
   custom_id?: string | null
   name: string
+  pregnant: boolean
   donationCreated?: boolean
   donationId?: number | null
   bagIdentifier?: string | null
@@ -662,7 +663,7 @@ export function PatientIntakeWizard({
   patientId,
 }: {
   onClose: () => void
-  onSuccess?: (id: number) => void
+  onSuccess?: (result: { id: number; pregnant: boolean }) => void
   patientId?: number | null
 }) {
   const [step, setStep] = useState(0)
@@ -1018,12 +1019,13 @@ export function PatientIntakeWizard({
         id: patient.id,
         custom_id: patient.custom_id,
         name: patient.name,
+        pregnant: data.pregnant,
         donationCreated,
         donationId,
         bagIdentifier,
         warning,
       })
-      if (!warning) onSuccess?.(patient.id)
+      if (!warning) onSuccess?.({ id: patient.id, pregnant: data.pregnant })
     } catch (submitError: any) {
       setError(
         firstApiError(

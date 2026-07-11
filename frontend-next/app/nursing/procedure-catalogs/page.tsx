@@ -121,51 +121,61 @@ export default function NursingProcedureCatalogsPage() {
 
   return (
     <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.ENFERMAGEM]}>
-      <div className="space-y-3">
-        <section className="overflow-hidden rounded-xl border border-white/20 bg-white/30 px-4 py-3 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/5">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex min-w-0 items-center gap-3">
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-violet-600 to-indigo-600 text-white shadow-sm shadow-violet-500/25">
-                <BookOpen size={17} />
+      <div className="space-y-1.5">
+        <section className="overflow-hidden rounded-xl border border-white/20 bg-white/30 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]">
+          <div className="flex flex-wrap items-center justify-between gap-1 px-3 py-2 pl-4">
+            <div className="flex min-w-0 items-center gap-1.5">
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-violet-600 to-indigo-600 text-white shadow-sm shadow-violet-500/25">
+                <BookOpen size={14} />
               </span>
               <div className="min-w-0">
-                <h1 className="text-lg font-bold leading-tight text-foreground">Catálogo de procedimentos</h1>
-                <p className="text-[11px] text-muted-foreground">
+                <h1 className="truncate text-sm font-bold leading-tight text-foreground">Catálogo de procedimentos</h1>
+                <p className="truncate text-[10px] text-muted-foreground">
                   {loading ? "A carregar…" : formatCount(total, { one: "catálogo encontrado", other: "catálogos encontrados" })}
                 </p>
               </div>
             </div>
+
+            <div className="flex flex-wrap items-center gap-1">
+              <div className="relative">
+                <Search size={11} className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                <input
+                  type="text"
+                  value={search}
+                  onChange={(event) => setSearch(event.target.value)}
+                  placeholder="Pesquisar…"
+                  className="h-8 w-36 rounded-lg border border-border bg-background/60 pl-6 pr-2 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:w-52 focus:ring-2 focus:ring-violet-500/40 transition-all"
+                />
+              </div>
+              <select
+                value={status}
+                onChange={(event) => setStatus(event.target.value)}
+                aria-label="Filtrar por estado"
+                className="h-8 rounded-lg border border-border bg-card px-2 text-xs text-foreground outline-none transition focus:border-violet-500"
+              >
+                <option value="active">Ativos</option>
+                <option value="inactive">Inativos</option>
+                <option value="all">Todos</option>
+              </select>
+              {(search || status !== "active") && (
+                <button
+                  type="button"
+                  onClick={() => { setSearch(""); setStatus("active"); }}
+                  className="inline-flex h-8 items-center rounded-lg border border-border bg-card px-2 text-xs font-medium text-foreground transition hover:bg-muted"
+                >
+                  Limpar
+                </button>
+              )}
+            </div>
+
             <Link
               href="/nursing/procedure-catalogs/new"
-              className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-indigo-600 px-3 text-xs font-semibold text-white shadow-md shadow-violet-500/25 transition hover:from-violet-700 hover:to-indigo-700"
+              className="inline-flex h-8 items-center gap-1 rounded-lg bg-gradient-to-r from-violet-600 to-indigo-600 px-2.5 text-xs font-semibold text-white shadow-sm shadow-violet-500/25 transition hover:from-violet-700 hover:to-indigo-700"
             >
-              <Plus size={13} /> Novo catálogo
+              <Plus size={12} /> Novo catálogo
             </Link>
           </div>
         </section>
-
-        <div className="flex flex-wrap gap-2">
-          <div className="relative w-48">
-            <Search size={12} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
-            <input
-              type="text"
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder="Pesquisar…"
-              className="w-full rounded-lg border border-border bg-background/60 py-1.5 pl-7 pr-6 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:w-72 focus:ring-2 focus:ring-violet-500/40 transition-all"
-            />
-          </div>
-          <select
-            value={status}
-            onChange={(event) => setStatus(event.target.value)}
-            aria-label="Filtrar por estado"
-            className="h-8 rounded-lg border border-border bg-card px-2.5 text-xs text-foreground outline-none transition focus:border-violet-500"
-          >
-            <option value="active">Ativos</option>
-            <option value="inactive">Inativos</option>
-            <option value="all">Todos</option>
-          </select>
-        </div>
 
         {error ? (
           <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-800/40 dark:bg-red-950/20 dark:text-red-300">

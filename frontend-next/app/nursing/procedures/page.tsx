@@ -274,63 +274,73 @@ export default function NursingProceduresPage() {
 
   return (
     <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.ENFERMAGEM]}>
-      <div className="space-y-3">
-        <div className="relative overflow-hidden rounded-xl border border-white/20 bg-white/30 px-4 py-3 shadow-sm backdrop-blur-sm dark:bg-white/5 dark:border-white/10">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--primary-600)]/10 text-[var(--primary-700)] dark:text-[var(--primary-400)]">
-                <HeartPulse size={16} />
+      <div className="space-y-1.5">
+        <section className="relative overflow-hidden rounded-xl border border-white/20 bg-white/30 shadow-sm backdrop-blur-sm dark:bg-white/[0.04] dark:border-white/10">
+          <div className="flex flex-wrap items-center justify-between gap-1 px-3 py-2 pl-4">
+            <div className="flex min-w-0 items-center gap-1.5">
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[var(--primary-600)]/10 text-[var(--primary-700)] dark:text-[var(--primary-400)]">
+                <HeartPulse size={14} />
               </span>
-              <div>
-                <h1 className="text-lg font-bold leading-tight text-foreground">Procedimentos de enfermagem</h1>
-                <p className="text-[11px] text-muted-foreground">
+              <div className="min-w-0">
+                <h1 className="truncate text-sm font-bold leading-tight text-foreground">Procedimentos de enfermagem</h1>
+                <p className="truncate text-[10px] text-muted-foreground">
                   {loading ? "Carregando…" : formatCount(total, { one: "procedimento na listagem", other: "procedimentos na listagem" })}
                 </p>
               </div>
             </div>
+
+            <div className="flex flex-wrap items-center gap-1">
+              <div className="relative">
+                <Search size={11} className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                <input
+                  type="text"
+                  value={search}
+                  onChange={(event) => setSearch(event.target.value)}
+                  placeholder="Pesquisar…"
+                  className="h-8 w-36 rounded-lg border border-border bg-background/60 pl-6 pr-2 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:w-52 focus:ring-2 focus:ring-violet-500/40 transition-all"
+                />
+              </div>
+              <select
+                value={workflowStatus}
+                onChange={(event) => setWorkflowStatus(event.target.value)}
+                className="h-8 rounded-lg border border-border bg-card px-2 text-xs text-foreground outline-none transition focus:border-violet-500"
+              >
+                {WORKFLOW_OPTIONS.map((option) => (
+                  <option key={option.value || "all"} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+              <select
+                value={billingStatus}
+                onChange={(event) => setBillingStatus(event.target.value)}
+                className="h-8 rounded-lg border border-border bg-card px-2 text-xs text-foreground outline-none transition focus:border-violet-500"
+              >
+                {BILLING_OPTIONS.map((option) => (
+                  <option key={option.value || "all"} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+              {(search || workflowStatus || billingStatus) && (
+                <button
+                  type="button"
+                  onClick={() => { setSearch(""); setWorkflowStatus(""); setBillingStatus(""); }}
+                  className="inline-flex h-8 items-center rounded-lg border border-border bg-card px-2 text-xs font-medium text-foreground transition hover:bg-muted"
+                >
+                  Limpar
+                </button>
+              )}
+            </div>
+
             <Link
               href="/nursing/procedures/new"
-              className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-indigo-600 px-3 text-xs font-semibold text-white shadow-md shadow-violet-500/30 transition hover:from-violet-700 hover:to-indigo-700"
+              className="inline-flex h-8 items-center gap-1 rounded-lg bg-gradient-to-r from-violet-600 to-indigo-600 px-2.5 text-xs font-semibold text-white shadow-sm shadow-violet-500/30 transition hover:from-violet-700 hover:to-indigo-700"
             >
-              <Plus size={13} /> Novo procedimento
+              <Plus size={12} /> Novo procedimento
             </Link>
           </div>
-        </div>
-
-        <div className="flex flex-wrap gap-2">
-          <div className="relative w-48">
-            <Search size={12} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
-            <input
-              type="text"
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder="Pesquisar…"
-              className="w-full rounded-lg border border-border bg-background/60 py-1.5 pl-7 pr-6 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:w-72 focus:ring-2 focus:ring-violet-500/40 transition-all"
-            />
-          </div>
-          <select
-            value={workflowStatus}
-            onChange={(event) => setWorkflowStatus(event.target.value)}
-            className="h-8 rounded-lg border border-border bg-card px-2.5 text-xs text-foreground outline-none transition focus:border-violet-500"
-          >
-            {WORKFLOW_OPTIONS.map((option) => (
-              <option key={option.value || "all"} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-          <select
-            value={billingStatus}
-            onChange={(event) => setBillingStatus(event.target.value)}
-            className="h-8 rounded-lg border border-border bg-card px-2.5 text-xs text-foreground outline-none transition focus:border-violet-500"
-          >
-            {BILLING_OPTIONS.map((option) => (
-              <option key={option.value || "all"} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </div>
+        </section>
 
         {error && (
           <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-2.5 text-sm text-red-800 dark:border-red-800/40 dark:bg-red-900/15 dark:text-red-300">

@@ -111,7 +111,7 @@ export const NAV_ITEMS: NavItem[] = [
     { href: "/clinical-laboratory", label: "Laboratório", labelEn: "Laboratory", icon: FlaskConical, desc: "LIS: pedidos, coleta, resultados e laudos", descEn: "LIS: orders, collection, results and reports", groups: [GROUPS.ADMIN, GROUPS.LABORATORIO] },
     { href: "/exams", label: "Exames", labelEn: "Exams", icon: FlaskConical, desc: "Catálogo de exames", descEn: "Exams catalog", groups: [GROUPS.ADMIN] },
     { href: "/bloodbank", label: "Banco de Sangue", labelEn: "Blood bank", icon: Droplet, desc: "Estoque e transfusões", descEn: "Stock and transfusions", groups: [GROUPS.ADMIN, GROUPS.LABORATORIO] },
-    { href: "/maternity", label: "Maternidade", labelEn: "Maternity", icon: Baby, desc: "Gestação e parto", descEn: "Pregnancy and childbirth", groups: [GROUPS.ADMIN, GROUPS.MEDICINA, GROUPS.MEDICINA_OCUPACIONAL] },
+    { href: "/maternity", label: "Maternidade", labelEn: "Maternity", icon: Baby, desc: "Gestação e parto", descEn: "Pregnancy and childbirth", groups: [GROUPS.ADMIN, GROUPS.RECEPCAO, GROUPS.MEDICINA, GROUPS.MEDICINA_OCUPACIONAL] },
     { href: "/surgery", label: "Cirurgia", labelEn: "Surgery", icon: Scissors, desc: "Procedimentos cirúrgicos", descEn: "Surgical procedures", groups: [GROUPS.ADMIN, GROUPS.RECEPCAO, GROUPS.MEDICINA, GROUPS.MEDICINA_OCUPACIONAL] },
     { href: "/occupational-medicine", label: "Medicina Ocupacional", labelEn: "Occupational Medicine", icon: BriefcaseIcon, desc: "Saúde no trabalho", descEn: "Workplace health", groups: [GROUPS.ADMIN, GROUPS.MEDICINA_OCUPACIONAL] },
     { href: "/pharmacy", label: "Farmácia", labelEn: "Pharmacy", icon: Pill, desc: "Dispensação e estoque", descEn: "Dispensing and stock", groups: [GROUPS.ADMIN, GROUPS.FARMACIA] },

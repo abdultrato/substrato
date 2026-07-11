@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, ClipboardList, ExternalLink, Loader2, Save, UserPlus } from "lucide-react";
+import { ArrowLeft, Baby, ClipboardList, ExternalLink, Loader2, Save, UserPlus } from "lucide-react";
 
 import Link from "next/link";
 import AppLayout from "@/components/layout/AppLayout";
@@ -59,6 +59,7 @@ export default function NewReceptionCheckinPage() {
   const [priority, setPriority] = useState("NOR");
   const [reason, setReason] = useState("");
   const [notes, setNotes] = useState("");
+  const [isPregnant, setIsPregnant] = useState(false);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
@@ -82,11 +83,15 @@ export default function NewReceptionCheckinPage() {
         body: JSON.stringify({
           patient,
           priority,
-          reason: reason.trim() || undefined,
+          reason: (isPregnant ? reason.trim() || "Gestante" : reason.trim()) || undefined,
           notes: notes.trim() || undefined,
         }),
       });
       if (!data?.id) throw new Error("Resposta inesperada do servidor.");
+      if (isPregnant) {
+        router.push(`/maternity/pregnancies/new?patient=${patient}&checkin=${data.id}`);
+        return;
+      }
       router.push(`/reception/reception-checkins/${data.id}`);
     } catch (err: any) {
       setSaveError(err?.message || "Erro ao criar check-in.");
@@ -160,6 +165,18 @@ export default function NewReceptionCheckinPage() {
                 <option value="PREF">Preferencial</option>
                 <option value="URG">Urgente</option>
               </select>
+            </Field>
+            <Field label="Tipo de atendimento" hint={isPregnant ? "Ao registar, será redirecionado para o registo de gestação." : undefined}>
+              <label className="flex h-[42px] items-center gap-2 rounded-lg border border-border bg-background px-3.5 text-sm text-foreground">
+                <input
+                  type="checkbox"
+                  checked={isPregnant}
+                  onChange={(e) => { setIsPregnant(e.target.checked); if (e.target.checked) setPriority((p) => (p === "NOR" ? "PREF" : p)); }}
+                  className="h-4 w-4 rounded border-border text-pink-600 focus:ring-pink-500/40"
+                />
+                <Baby size={14} className="text-pink-500" />
+                Gestante
+              </label>
             </Field>
           </div>
         </SectionCard>

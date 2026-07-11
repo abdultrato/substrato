@@ -23,6 +23,7 @@ from apps.billing.models.invoice import Invoice
 from apps.billing.models.invoice_items import InvoiceItem
 from apps.clinical.models.patient import BloodType, Patient
 from apps.maternity.models.pregnancy import Pregnancy
+from apps.nursing.models.ward import Ward, WardBed
 from apps.payments.models.payment import Payment
 from apps.reception.models.reception_checkin import ReceptionCheckin
 from apps.tenants.models import Tenant
@@ -303,10 +304,28 @@ class Command(BaseCommand):
         )
         return patient, created
 
+    def _ward_and_bed(self, tenant, case: MaternityCase):
+        if not case.nursery:
+            return None, None
+        ward, _ = Ward.objects.get_or_create(
+            tenant=tenant,
+            name=case.nursery,
+            defaults={"description": f"{SEED_TAG}: berçário/enfermaria de maternidade."},
+        )
+        bed = None
+        if case.bed:
+            bed, _ = WardBed.objects.get_or_create(
+                tenant=tenant,
+                ward=ward,
+                number=case.bed,
+            )
+        return ward, bed
+
     def _pregnancy(self, tenant, patient, case: MaternityCase, index: int):
         lmp = timezone.localdate() - timedelta(weeks=case.gestational_weeks)
         expected_delivery = lmp + timedelta(days=280)
         total, normal, cesareans = case.gravida_para
+        ward, bed = self._ward_and_bed(tenant, case)
 
         notes = [
             f"{SEED_TAG}: caso {case.code}.",
@@ -324,8 +343,8 @@ class Command(BaseCommand):
             patient=patient,
             last_menstrual_period_date=lmp,
             expected_delivery_date=expected_delivery,
-            nursery=case.nursery,
-            maternity_bed=case.bed,
+            nursery=ward,
+            maternity_bed=bed,
             total_deliveries=total,
             normal_deliveries=normal,
             cesareans=cesareans,
