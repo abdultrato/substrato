@@ -718,6 +718,14 @@ export default function ResourceListPage({
                   <BarChart2 size={11} /> {t("Relatório", "Report")}
                 </Link>
 
+                {isBillingInvoice && (
+                  <ResourceActionPanel
+                    variant="header"
+                    endpoint={normalizedEndpoint}
+                    resourceLabel={resolvedResourceLabel}
+                  />
+                )}
+
                 {createHref && (!isIdentityUserResource || canCreateIdentityUsers) && (
                   <Link
                     href={createHref}
@@ -737,14 +745,14 @@ export default function ResourceListPage({
           </div>
         )}
 
-        <div className={isBillingInvoice ? "mx-auto w-full max-w-5xl" : ""}>
+        {!isBillingInvoice && (
           <ResourceActionPanel
             endpoint={normalizedEndpoint}
             resourceLabel={resolvedResourceLabel}
             searchTerm={debouncedSearch}
             statusFilter={statusFilter}
           />
-        </div>
+        )}
 
         {loadingData ? (
           <div className="text-sm text-[var(--gray-500)]">{t("Carregando...", "Loading...")}</div>

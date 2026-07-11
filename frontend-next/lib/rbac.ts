@@ -531,6 +531,21 @@ export function userGroupAbbreviation(user: SessionUser | null): string {
   return first ? groupAbbreviation(first) : ""
 }
 
+export function getAccessGrantedRoleLabel(user: SessionUser | null): string | null {
+  if (!user) return null
+
+  const groups = userGroups(user)
+  const normalizedGroupNames = groups.map((g) => normalizeGroupName(g)).filter(Boolean)
+
+  if (normalizedGroupNames.includes(normalizeGroupName(GROUPS.ADMIN))) return "administrador"
+  if (normalizedGroupNames.includes(normalizeGroupName(GROUPS.RECEPCAO))) return "recepcionista"
+  if (normalizedGroupNames.includes(normalizeGroupName(GROUPS.CONTABILIDADE))) return "contabilista"
+  if (normalizedGroupNames.includes(normalizeGroupName(GROUPS.LABORATORIO))) return "laboratorista"
+  if (normalizedGroupNames.includes(normalizeGroupName(GROUPS.ENFERMAGEM))) return "enfermeiro"
+
+  return null
+}
+
 function expandRequired(required: string[]): string[] {
   const expanded: string[] = []
   required.forEach((g) => {

@@ -83,7 +83,7 @@ export default function ContabilidadePage() {
             </div>
 
             {erro ? (
-              <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+              <div className="rounded-2xl border border-amber-300/50 bg-amber-500/15 px-4 py-3 text-sm text-amber-700 dark:text-amber-400">
                 {erro}
               </div>
             ) : null}

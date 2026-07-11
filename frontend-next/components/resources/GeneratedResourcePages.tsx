@@ -31,6 +31,7 @@ import ResourceListPage from "@/components/resources/ResourceListPage"
 import PageHeader from "@/components/ui/PageHeader"
 import ConfirmDialog from "@/components/ui/ConfirmDialog"
 import useAuthGuard from "@/hooks/useAuthGuard"
+import { useAuth } from "@/hooks/useAuth"
 import { useLanguage } from "@/hooks/useLanguage"
 import { useModulesCatalog } from "@/hooks/useModulesCatalog"
 import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
@@ -42,6 +43,7 @@ import { canonicalCollectionPath } from "@/lib/openapi/endpointResolver"
 import { hasOpenApiMethod, hasWriteContract } from "@/lib/openapi/writeContract"
 import { routeParamToString } from "@/lib/routeParams"
 import { requiredGroupsForResourceGroup } from "@/lib/resourcesAccess"
+import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
 import { createResourceActionLabel } from "@/lib/resources/createLabels"
 import { getResourceFormConfig } from "@/lib/resources/resourceFormConfig"
 import { buildRecordDetailHref, primaryRecordId } from "@/lib/resources/recordIdentity"
@@ -541,12 +543,15 @@ export function GeneratedResourceDetailPage({
   const [notificationBusy, setNotificationBusy] = useState<null | "invoice" | "results">(null)
   const [notificationError, setNotificationError] = useState<string | null>(null)
   const [notificationFeedback, setNotificationFeedback] = useState<string | null>(null)
+  const { user } = useAuth()
   const ctx = useEndpointContext(endpoint)
   const basePath = stripTrailingSlash((pathname || "").replace(/\/[^/]+\/?$/, ""))
   const detailEndpoint = detailContractEndpoint(ctx.normalizedEndpoint)
   const canReadDetail = hasOpenApiMethod(detailEndpoint, "get")
-  const canEdit = hasWriteContract(detailEndpoint, "put")
-  const canDelete = hasOpenApiMethod(detailEndpoint, "delete")
+  const isInvoiceEndpoint = ctx.normalizedEndpoint === "/billing/invoice/"
+  const canEditDeleteInvoice = !isInvoiceEndpoint || userHasAnyGroup(user, [GROUPS.CONTABILIDADE])
+  const canEdit = hasWriteContract(detailEndpoint, "put") && canEditDeleteInvoice
+  const canDelete = hasOpenApiMethod(detailEndpoint, "delete") && canEditDeleteInvoice
   const resourceLabel = tr(ctx.resourceLabel)
 
   const { data, isLoading, error, refetch } = useQuery({
@@ -952,13 +957,13 @@ function InvoiceHistoryPanel({ invoiceId }: { invoiceId: string }) {
           <p className="text-[11px] text-[var(--gray-600)]">{entries.length} {t("evento(s)", "event(s)")}</p>
         </div>
       </div>
-      <div className="mt-2 rounded-md border border-[var(--border)] bg-white p-2 shadow-sm">
+      <div className="mt-2 rounded-md border border-[var(--border)] bg-[var(--gray-50)] p-2 shadow-sm">
         <ol className="relative border-l border-[var(--border)] pl-4">
           {entries.map((entry, i) => {
             const meta = EVENT_LABELS[entry.event_type] ?? { pt: entry.event_type, en: entry.event_type, color: "bg-gray-400" }
             return (
               <li key={entry.id ?? i} className={i < entries.length - 1 ? "mb-3" : undefined}>
-                <span className={`absolute -left-[5px] mt-1 h-2.5 w-2.5 rounded-full ${meta.color} ring-2 ring-white`} />
+                <span className={`absolute -left-[5px] mt-1 h-2.5 w-2.5 rounded-full ${meta.color} ring-2 ring-[var(--gray-50)]`} />
                 <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
                   <span className="text-[11px] font-semibold text-[var(--text)]">{isPt ? meta.pt : meta.en}</span>
                   {entry.created_by_name ? (

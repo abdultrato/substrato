@@ -10,6 +10,7 @@
 // páginas de detalhe geradas (GeneratedResourceDetailPage) módulo a módulo.
 
 import { hasOpenApiMethod } from "@/lib/openapi/writeContract"
+import { GROUPS } from "@/lib/rbac"
 
 export type DetailActionFieldType =
   | "text"
@@ -65,6 +66,12 @@ export type DetailActionDefinition = {
   pendingLabelPt?: string
   /** Label shown in the pending state badge (replaces labelEn). */
   pendingLabelEn?: string
+  /**
+   * Restringe a ação aos utilizadores que pertencem a pelo menos um destes
+   * grupos (ver `lib/rbac.ts`). Se omitido, a ação fica visível para
+   * qualquer utilizador com acesso ao recurso.
+   */
+  requiredGroups?: string[]
 }
 
 export function normalizeDetailEndpoint(endpoint: string): string {
@@ -896,8 +903,8 @@ const COTACOES_DETAIL_ACTIONS: Record<string, DetailActionDefinition[]> = {
 // (send-notification já é tratado de forma dedicada em GeneratedResourceDetailPage)
 const INVOICE_ACTIONS: DetailActionDefinition[] = [
   { key: "billing.invoice.issue", action: "issue", labelPt: "Emitir fatura", labelEn: "Issue invoice", successPt: "Fatura emitida.", successEn: "Invoice issued.", tone: "primary", visibleWhen: (r) => r.status === "RASC" },
-  { key: "billing.invoice.confirm-payment", action: "confirm-payment", labelPt: "Confirmar pagamento", labelEn: "Confirm payment", successPt: "Pagamento confirmado.", successEn: "Payment confirmed.", tone: "primary", visibleWhen: (r) => r.status === "EMIT" },
-  { key: "billing.invoice.void", action: "void", labelPt: "Anular fatura", labelEn: "Void invoice", successPt: "Fatura anulada.", successEn: "Invoice voided.", tone: "danger", confirm: true, visibleWhen: (r) => r.status === "RASC" || r.status === "EMIT", fields: [reasonField] },
+  { key: "billing.invoice.confirm-payment", action: "confirm-payment", labelPt: "Confirmar pagamento", labelEn: "Confirm payment", successPt: "Pagamento confirmado.", successEn: "Payment confirmed.", tone: "primary", visibleWhen: (r) => r.status === "EMIT", requiredGroups: [GROUPS.CONTABILIDADE] },
+  { key: "billing.invoice.void", action: "void", labelPt: "Anular fatura", labelEn: "Void invoice", successPt: "Fatura anulada.", successEn: "Invoice voided.", tone: "danger", confirm: true, visibleWhen: (r) => r.status === "RASC" || r.status === "EMIT", fields: [reasonField], requiredGroups: [GROUPS.CONTABILIDADE] },
   {
     key: "billing.invoice.request_credit_note",
     action: "request-credit-note",
@@ -910,6 +917,7 @@ const INVOICE_ACTIONS: DetailActionDefinition[] = [
     pendingLabelPt: "Nota de crédito solicitada",
     pendingLabelEn: "Credit note requested",
     fields: [{ name: "reason", labelPt: "Motivo (opcional)", labelEn: "Reason (optional)", type: "textarea" }],
+    requiredGroups: [GROUPS.CONTABILIDADE],
   },
   {
     key: "billing.invoice.cancel_credit_note_request",
@@ -921,6 +929,7 @@ const INVOICE_ACTIONS: DetailActionDefinition[] = [
     tone: "danger",
     confirm: true,
     visibleWhen: (r) => r.status === "PAGA" && Boolean(r.has_pending_credit_note_request),
+    requiredGroups: [GROUPS.CONTABILIDADE],
   },
 ]
 

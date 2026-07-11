@@ -84,7 +84,7 @@ export default function CreditNoteRequestDetailPage() {
           <div className="text-sm text-[var(--gray-500)]">Carregando...</div>
         ) : erro ? (
           <div className="space-y-3">
-            <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">{erro}</div>
+            <div className="rounded-lg border border-amber-300/50 bg-amber-500/15 px-4 py-3 text-sm text-amber-700 dark:text-amber-400">{erro}</div>
             <Link href="/accounting/credit-notes" className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-white/30 bg-white/10 px-3 text-xs font-semibold text-[var(--gray-700)] backdrop-blur-sm transition hover:bg-white/40 dark:border-white/10 dark:bg-white/[0.04] dark:text-white">
               <ArrowLeft size={13} /> Voltar
             </Link>

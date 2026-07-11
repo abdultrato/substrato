@@ -39,6 +39,8 @@ export type ResourceActionField = {
 export type ResourceActionDefinition = {
   key: string
   label: string
+  /** Rótulo compacto para uso em botões de cabeçalho (ver ResourceActionPanel variant="header"). */
+  shortLabel?: string
   description: string
   parentEndpoint: string
   endpoint: string
@@ -160,6 +162,7 @@ export const RESOURCE_ACTIONS: ResourceActionDefinition[] = [
   {
     key: "billing.invoice.history",
     label: "Consultar histórico de faturação",
+    shortLabel: "Histórico",
     description: "Mostra totais, utilizadores e faturas agregadas no período selecionado.",
     parentEndpoint: "/billing/invoice/",
     endpoint: "/billing/invoice/billing-history/",
@@ -172,6 +175,7 @@ export const RESOURCE_ACTIONS: ResourceActionDefinition[] = [
   {
     key: "billing.invoice.history.pdf",
     label: "Baixar PDF do histórico de faturação",
+    shortLabel: "Baixar PDF",
     description: "Emite o relatório PDF do histórico agregado de faturas.",
     parentEndpoint: "/billing/invoice/",
     endpoint: "/billing/invoice/billing-history/pdf/",

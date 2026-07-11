@@ -3,9 +3,11 @@
 import { useMemo, useState } from "react"
 import { CheckCircle2, Info, Loader2, Workflow } from "lucide-react"
 import ConfirmDialog from "@/components/ui/ConfirmDialog"
+import { useAuth } from "@/hooks/useAuth"
 import { useLanguage } from "@/hooks/useLanguage"
 import { apiFetch } from "@/lib/api"
 import { isNotFoundLikeError } from "@/lib/errors/api-error"
+import { userHasAnyGroup } from "@/lib/rbac"
 import {
   getAvailableDetailActions,
   isDetailActionVisibleForRecord,
@@ -100,10 +102,16 @@ export default function ResourceDetailActionsPanel({
 }) {
   const { t, language } = useLanguage()
   const isPt = language !== "en"
+  const { user } = useAuth()
   const allActions = useMemo(() => getAvailableDetailActions(endpoint), [endpoint])
   const actions = useMemo(
-    () => allActions.filter((action) => labOrderActionVisible(action, endpoint, record)),
-    [allActions, endpoint, record]
+    () =>
+      allActions.filter(
+        (action) =>
+          labOrderActionVisible(action, endpoint, record) &&
+          (!action.requiredGroups?.length || userHasAnyGroup(user, action.requiredGroups))
+      ),
+    [allActions, endpoint, record, user]
   )
   const [valuesByAction, setValuesByAction] = useState<Record<string, Record<string, FieldValue>>>({})
   const [stateByAction, setStateByAction] = useState<Record<string, ActionState>>({})
@@ -207,7 +215,7 @@ export default function ResourceDetailActionsPanel({
         <div className="mt-2 rounded-md border border-rose-200 bg-rose-50 px-2 py-1 text-xs text-rose-800">{notice.text}</div>
       ) : null}
 
-      <div className="mt-2 rounded-md border border-[var(--border)] bg-white p-2 shadow-sm">
+      <div className="mt-2 rounded-md border border-white/20 bg-white/40 p-2 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.06]">
         <div className="grid gap-2">
           {actions.map((action, index) => {
             const state = stateByAction[action.key] || {}

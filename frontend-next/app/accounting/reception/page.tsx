@@ -30,19 +30,19 @@ const FETCH_PAGE_SIZE = 200
 type Row = Record<string, any>
 
 const CHECKIN_STATUS: Record<string, { label: string; dot: string; badge: string }> = {
-  AGUARD: { label: "Aguardando", dot: "bg-amber-400", badge: "border-amber-200 bg-amber-50 text-amber-700" },
-  ATEND: { label: "Em atendimento", dot: "bg-blue-400", badge: "border-blue-200 bg-blue-50 text-blue-700" },
-  REQ: { label: "Requisição criada", dot: "bg-violet-400", badge: "border-violet-200 bg-violet-50 text-violet-700" },
-  FAT: { label: "Fatura vinculada", dot: "bg-sky-400", badge: "border-sky-200 bg-sky-50 text-sky-700" },
-  CONC: { label: "Concluído", dot: "bg-emerald-400", badge: "border-emerald-200 bg-emerald-50 text-emerald-700" },
-  CANC: { label: "Cancelado", dot: "bg-rose-400", badge: "border-rose-200 bg-rose-50 text-rose-700" },
+  AGUARD: { label: "Aguardando", dot: "bg-amber-400", badge: "border-amber-300/50 bg-amber-500/15 text-amber-700 dark:text-amber-400" },
+  ATEND: { label: "Em atendimento", dot: "bg-blue-400", badge: "border-blue-300/50 bg-blue-500/15 text-blue-700 dark:text-blue-400" },
+  REQ: { label: "Requisição criada", dot: "bg-violet-400", badge: "border-violet-300/50 bg-violet-500/15 text-violet-700 dark:text-violet-400" },
+  FAT: { label: "Fatura vinculada", dot: "bg-sky-400", badge: "border-sky-300/50 bg-sky-500/15 text-sky-700 dark:text-sky-400" },
+  CONC: { label: "Concluído", dot: "bg-emerald-400", badge: "border-emerald-300/50 bg-emerald-500/15 text-emerald-700 dark:text-emerald-400" },
+  CANC: { label: "Cancelado", dot: "bg-rose-400", badge: "border-rose-300/50 bg-rose-500/15 text-rose-600 dark:text-rose-400" },
 }
 
 const INVOICE_STATUS: Record<string, string> = {
-  RASC: "border-slate-200 bg-slate-50 text-slate-600",
-  EMIT: "border-sky-200 bg-sky-50 text-sky-700",
-  PAGA: "border-emerald-200 bg-emerald-50 text-emerald-700",
-  CANC: "border-rose-200 bg-rose-50 text-rose-700",
+  RASC: "border-slate-300/50 bg-slate-500/15 text-slate-600 dark:text-slate-300",
+  EMIT: "border-sky-300/50 bg-sky-500/15 text-sky-700 dark:text-sky-400",
+  PAGA: "border-emerald-300/50 bg-emerald-500/15 text-emerald-700 dark:text-emerald-400",
+  CANC: "border-rose-300/50 bg-rose-500/15 text-rose-600 dark:text-rose-400",
 }
 
 function fmtDate(value: any): string {
@@ -145,7 +145,7 @@ function CheckinCard({ r }: { r: Row }) {
             <div className="flex items-center gap-1.5">
               <FileText size={11} className="shrink-0" />
               {unbilled ? (
-                <span className="inline-flex items-center gap-1 rounded-md border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-[9px] font-semibold text-amber-800">
+                <span className="inline-flex items-center gap-1 rounded-md border border-amber-300/50 bg-amber-500/15 px-1.5 py-0.5 text-[9px] font-semibold text-amber-700 dark:text-amber-400">
                   <AlertTriangle size={10} /> Sem fatura
                 </span>
               ) : (
@@ -304,7 +304,7 @@ export default function ContabilidadeRecepcaoAuditPage() {
             </div>
 
             {erro ? (
-              <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">{erro}</div>
+              <div className="rounded-lg border border-amber-300/50 bg-amber-500/15 px-4 py-3 text-sm text-amber-700 dark:text-amber-400">{erro}</div>
             ) : null}
 
             <div className="grid grid-cols-2 gap-2 xl:grid-cols-4">

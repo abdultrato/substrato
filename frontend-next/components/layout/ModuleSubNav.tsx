@@ -592,31 +592,23 @@ export default function ModuleSubNav() {
 
     if (!moduleNav) return null
 
-    const current = normalize(pathname)
-    const showBack = current !== normalize(moduleNav.baseHref)
-    const hasUsefulTabs = moduleNav.tabs.length > 1
-
-    if (!showBack && !hasUsefulTabs) return null
-
     return (
         <nav className="shrink-0 border-b border-border/50 bg-primary/[0.06] backdrop-blur supports-[backdrop-filter]:bg-primary/[0.07] dark:bg-primary/[0.09]">
             <div className="flex items-center gap-1.5 px-2 py-1 sm:px-3 md:px-4">
-                {showBack ? (
-                    <button
-                        type="button"
-                        onClick={() => {
-                            if (typeof window !== "undefined" && window.history.length > 1) {
-                                router.back()
-                                return
-                            }
-                            router.push(moduleNav.baseHref)
-                        }}
-                        className="inline-flex h-7 shrink-0 items-center gap-1 rounded-lg border border-border/80 bg-background/80 px-2 text-xs font-semibold text-foreground-2 shadow-sm transition-colors hover:border-primary/35 hover:bg-primary/8 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/25"
-                    >
-                        <ChevronLeft size={14} />
-                        {t("Voltar", "Back")}
-                    </button>
-                ) : null}
+                <button
+                    type="button"
+                    onClick={() => {
+                        if (typeof window !== "undefined" && window.history.length > 1) {
+                            router.back()
+                            return
+                        }
+                        router.push(moduleNav.baseHref)
+                    }}
+                    className="inline-flex h-7 shrink-0 items-center gap-1 rounded-lg border border-border/80 bg-background/80 px-2 text-xs font-semibold text-foreground-2 shadow-sm transition-colors hover:border-primary/35 hover:bg-primary/8 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/25"
+                >
+                    <ChevronLeft size={14} />
+                    {t("Voltar", "Back")}
+                </button>
 
                 <button
                     type="button"

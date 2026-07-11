@@ -710,8 +710,17 @@
     @apply animate-fade-in;
   }
 
+}
+
+@layer utilities {
   /* --------------------------------
-     Dark-mode remap for legacy Tailwind classes used in many pages
+     Dark-mode remap for legacy Tailwind classes used in many pages.
+     Must live in the utilities layer (not components) — Tailwind's own
+     plain utility classes (e.g. .bg-white, .text-gray-900) are generated
+     into the utilities layer too, and CSS cascade layers give later-declared
+     layers priority over earlier ones regardless of selector specificity.
+     A components-layer override here would silently lose to Tailwind's own
+     utilities-layer rule, leaving dark-mode text/backgrounds unchanged.
   --------------------------------- */
   .dark .bg-white {
     background-color: hsl(var(--card-hsl));
@@ -770,9 +779,7 @@
   .dark .hover\:bg-gray-200:hover {
     background-color: hsl(var(--border-hsl));
   }
-}
 
-@layer utilities {
   .tracking-tight {
     letter-spacing: 0 !important;
   }

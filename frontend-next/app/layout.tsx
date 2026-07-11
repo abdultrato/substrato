@@ -51,9 +51,9 @@ export const metadata: Metadata = {
   description:
     "Frontend da plataforma Substrato para atendimento e gestão de saúde.",
   icons: {
-    icon: "/static/img/logo.png",
-    shortcut: "/static/img/logo.png",
-    apple: "/static/img/logo.png",
+    icon: "/static/img/logo-branca.png",
+    shortcut: "/static/img/logo-branca.png",
+    apple: "/static/img/logo-branca.png",
   },
   openGraph: {
     title: "Substrato",

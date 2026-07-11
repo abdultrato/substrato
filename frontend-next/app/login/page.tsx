@@ -8,7 +8,7 @@ import { apiFetch } from "@/lib/api";
 import useAuthGuard from "@/hooks/useAuthGuard";
 import useAuth from "@/hooks/useAuth";
 import { useLanguage } from "@/hooks/useLanguage";
-import { getDefaultWorkspaceHref } from "@/lib/rbac";
+import { getAccessGrantedRoleLabel, getDefaultWorkspaceHref } from "@/lib/rbac";
 import { getLastVisitedPath, isSafeInternalPath } from "@/lib/lastVisited";
 import { LOGO_LIGHT_SRC, LOGO_DARK_SRC } from "@/lib/brand";
 
@@ -100,13 +100,14 @@ export default function LoginPage() {
     useAuthGuard({ requireAuth: false });
     const { t, isPortuguese, toggleLanguage } = useLanguage();
     const router = useRouter();
-    const { signIn } = useAuth();
+    const { signIn, user: authUser } = useAuth();
 
     const [view, setView] = useState<View>("login");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const [info, setInfo] = useState("");
     const [access, setAccess] = useState<null | "granted" | "denied">(null);
+    const [grantedRoleLabel, setGrantedRoleLabel] = useState<string | null>(null);
 
     const [user, setUser] = useState("");
     const [pass, setPass] = useState("");
@@ -128,6 +129,11 @@ export default function LoginPage() {
         setView(next);
     }
 
+    function resetAccessOverlay() {
+        setAccess(null);
+        setGrantedRoleLabel(null);
+    }
+
     async function handleLogin(e: React.FormEvent) {
         e.preventDefault();
         setError("");
@@ -136,12 +142,14 @@ export default function LoginPage() {
             const sessionUser = await login(user, pass);
             if (!sessionUser) {
                 setAccess("denied");
+                setGrantedRoleLabel(null);
                 setError(t("Falha ao obter sessão. Tente novamente.", "Failed to retrieve session."));
                 setLoading(false);
-                window.setTimeout(() => setAccess(null), 1600);
+                window.setTimeout(() => resetAccessOverlay(), 1600);
                 return;
             }
             signIn(sessionUser);
+            setGrantedRoleLabel(getAccessGrantedRoleLabel(sessionUser));
             const rawNext =
                 typeof window !== "undefined"
                     ? new URLSearchParams(window.location.search).get("next")
@@ -154,9 +162,10 @@ export default function LoginPage() {
             window.setTimeout(() => router.push(target), 1300);
         } catch (err) {
             setAccess("denied");
+            setGrantedRoleLabel(null);
             setError(err instanceof Error ? err.message : t("Utilizador ou palavra-passe inválidos.", "Invalid credentials."));
             setLoading(false);
-            window.setTimeout(() => setAccess(null), 1600);
+            window.setTimeout(() => resetAccessOverlay(), 1600);
         }
     }
 
@@ -474,6 +483,11 @@ export default function LoginPage() {
                             )}
                         </div>
                         <div className={`mx-auto mt-4 h-0.5 w-40 origin-center animate-access-line rounded-full ${access === "granted" ? "bg-violet-500/70" : "bg-rose-500/70"}`} />
+                        {access === "granted" && grantedRoleLabel && (
+                            <div className="mx-auto mt-3 text-center text-sm font-medium uppercase tracking-[0.25em] text-violet-200/90">
+                                {t("Acesso Garantido como", "Access granted as")} {t(grantedRoleLabel, grantedRoleLabel)}
+                            </div>
+                        )}
                     </div>
                 </div>
             )}

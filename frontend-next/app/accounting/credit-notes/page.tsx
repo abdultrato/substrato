@@ -34,10 +34,10 @@ type CreditNoteRow = {
 type Decision = "approve" | "reject"
 
 const STATUS_STYLES: Record<string, string> = {
-  PEND: "border-amber-200 bg-amber-50 text-amber-800",
-  APRO: "border-emerald-200 bg-emerald-50 text-emerald-800",
-  REJE: "border-red-200 bg-red-50 text-red-700",
-  CANC: "border-slate-200 bg-slate-50 text-slate-600",
+  PEND: "border-amber-300/50 bg-amber-500/15 text-amber-700 dark:text-amber-400",
+  APRO: "border-emerald-300/50 bg-emerald-500/15 text-emerald-700 dark:text-emerald-400",
+  REJE: "border-red-300/50 bg-red-500/15 text-red-600 dark:text-red-400",
+  CANC: "border-slate-300/50 bg-slate-500/15 text-slate-600 dark:text-slate-300",
 }
 
 function fmtDate(value: any): string {
@@ -244,7 +244,7 @@ export default function CreditNotesQueuePage() {
         </div>
 
         {erro ? (
-          <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          <div className="rounded-2xl border border-amber-300/50 bg-amber-500/15 px-4 py-3 text-sm text-amber-700 dark:text-amber-400">
             {erro}
           </div>
         ) : null}
@@ -321,7 +321,7 @@ export default function CreditNotesQueuePage() {
                 />
               </label>
               {decisionError ? (
-                <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+                <div className="rounded-xl border border-amber-300/50 bg-amber-500/15 px-3 py-2 text-sm text-amber-700 dark:text-amber-400">
                   {decisionError}
                 </div>
               ) : null}

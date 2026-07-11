@@ -1,8 +1,9 @@
 "use client"
 
 import Link from "next/link"
-import { useMemo, useState } from "react"
-import { Bot, CheckCircle2, Clipboard, ExternalLink, FileDown, Loader2, Play, Wrench } from "lucide-react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { createPortal } from "react-dom"
+import { Bot, CheckCircle2, ChevronDown, ChevronRight, Clipboard, ExternalLink, FileDown, Loader2, Play, Wrench, X } from "lucide-react"
 
 import { useLanguage } from "@/hooks/useLanguage"
 import { apiFetch } from "@/lib/api"
@@ -322,17 +323,60 @@ function renderField(
 export default function ResourceActionPanel({
   endpoint,
   resourceLabel,
+  variant = "panel",
 }: {
   endpoint: string
   resourceLabel: string
   searchTerm?: string
   statusFilter?: string
+  /** "header": botões compactos com popover, para embutir na barra de cabeçalho. */
+  variant?: "panel" | "header"
 }) {
   const { t } = useLanguage()
   const actions = useMemo(() => getAvailableResourceActionsForEndpoint(endpoint), [endpoint])
   const isBillingInvoice = endpoint === "/billing/invoice/"
   const [valuesByAction, setValuesByAction] = useState<Record<string, FieldValues>>({})
   const [stateByAction, setStateByAction] = useState<Record<string, ActionUiState>>({})
+  const [expandedActions, setExpandedActions] = useState<Record<string, boolean>>({})
+  const [openActionKey, setOpenActionKey] = useState<string | null>(null)
+  const [popoverPos, setPopoverPos] = useState<{ top: number; left: number } | null>(null)
+  const triggerRefs = useRef<Record<string, HTMLButtonElement | null>>({})
+  const popoverRef = useRef<HTMLDivElement | null>(null)
+  const POPOVER_WIDTH = 352
+
+  const calcPopoverPos = useCallback((key: string) => {
+    const btn = triggerRefs.current[key]
+    if (!btn) return
+    const rect = btn.getBoundingClientRect()
+    const left = Math.max(
+      8,
+      Math.min(rect.right + window.scrollX - POPOVER_WIDTH, window.scrollX + window.innerWidth - POPOVER_WIDTH - 8)
+    )
+    setPopoverPos({ top: rect.bottom + window.scrollY + 8, left })
+  }, [])
+
+  useEffect(() => {
+    if (!openActionKey) return
+    const onMove = () => calcPopoverPos(openActionKey)
+    window.addEventListener("scroll", onMove, true)
+    window.addEventListener("resize", onMove)
+    return () => {
+      window.removeEventListener("scroll", onMove, true)
+      window.removeEventListener("resize", onMove)
+    }
+  }, [openActionKey, calcPopoverPos])
+
+  useEffect(() => {
+    if (!openActionKey) return
+    function onDocMouseDown(e: MouseEvent) {
+      const target = e.target as Node
+      if (triggerRefs.current[openActionKey!]?.contains(target)) return
+      if (popoverRef.current?.contains(target)) return
+      setOpenActionKey(null)
+    }
+    document.addEventListener("mousedown", onDocMouseDown)
+    return () => document.removeEventListener("mousedown", onDocMouseDown)
+  }, [openActionKey])
 
   if (!actions.length) return null
 
@@ -440,6 +484,161 @@ export default function ResourceActionPanel({
     }
   }
 
+  function renderActionControls(action: ResourceActionDefinition, suppressCaption: boolean) {
+    const state = stateByAction[action.key] || {}
+    const hasResult = state.result !== undefined
+
+    return (
+      <>
+        {action.fields?.length ? (
+          <div className="mt-3 grid gap-2 sm:grid-cols-2">
+            {action.fields.map((field) => {
+              const value = getValue(action, field)
+              if (field.type === "checkbox") {
+                return (
+                  <div key={`${action.key}-${field.name}`} className="space-y-1">
+                    {renderField(action, field, value, (nextValue) => updateValue(action, field, nextValue))}
+                    {field.helper ? <p className="text-[11px] text-[var(--gray-500)] dark:text-slate-400">{field.helper}</p> : null}
+                  </div>
+                )
+              }
+
+              const needsCaption = !suppressCaption && (field.type === "select" || field.type === "date" || field.type === "datetime-local")
+
+              return (
+                <label key={`${action.key}-${field.name}`} className="space-y-1">
+                  {needsCaption ? (
+                    <span className="text-[11px] font-semibold uppercase tracking-wide text-[var(--gray-600)]">
+                      {field.label}{field.required ? " *" : ""}
+                    </span>
+                  ) : null}
+                  {renderField(action, field, value, (nextValue) => updateValue(action, field, nextValue))}
+                  {field.helper ? <p className="text-[11px] text-[var(--gray-500)] dark:text-slate-400">{field.helper}</p> : null}
+                </label>
+              )
+            })}
+          </div>
+        ) : null}
+
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => void runAction(action)}
+            disabled={state.loading}
+            className="inline-flex h-9 items-center justify-center gap-2 rounded-md bg-[var(--primary-600)] px-3 text-sm font-semibold text-white shadow-sm transition-all duration-150 hover:bg-[var(--primary-700)] hover:shadow-md disabled:cursor-not-allowed disabled:opacity-70"
+          >
+            {state.loading ? <Loader2 size={15} className="animate-spin" /> : action.responseMode === "json" ? <Play size={15} /> : <FileDown size={15} />}
+            {state.loading ? t("Executando...", "Running...") : action.responseMode === "json" ? t("Executar", "Run") : t("Baixar", "Download")}
+          </button>
+
+          {hasResult ? (
+            <button
+              type="button"
+              onClick={() => void copyResult(action)}
+              className="inline-flex h-9 items-center gap-1 rounded-md border border-white/30 bg-white/55 px-2.5 text-xs font-semibold text-[var(--gray-700)] shadow-sm backdrop-blur-sm transition-all duration-150 hover:border-[var(--primary-300)] hover:bg-white/70 dark:border-white/15 dark:bg-slate-900/40 dark:text-slate-200 dark:hover:bg-slate-900/55"
+            >
+              <Clipboard size={13} />
+              {t("Copiar resposta", "Copy response")}
+            </button>
+          ) : null}
+
+          {state.jobStatus ? (
+            <span className="inline-flex h-8 items-center rounded-md border border-white/25 bg-white/45 px-2 text-xs font-medium text-[var(--gray-700)] shadow-sm dark:border-white/15 dark:bg-slate-900/40 dark:text-slate-200">
+              {t("Job:", "Job:")} {state.jobStatus}
+            </span>
+          ) : null}
+        </div>
+
+        {state.feedback ? (
+          <div className="mt-2 inline-flex items-center gap-1 rounded-md border border-emerald-200 bg-emerald-50 px-2.5 py-1.5 text-xs text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200">
+            <CheckCircle2 size={13} />
+            {state.feedback}
+          </div>
+        ) : null}
+
+        {state.error ? (
+          <div className="mt-2 rounded-md border border-rose-200 bg-rose-50 px-2.5 py-1.5 text-xs text-rose-800 dark:border-rose-800 dark:bg-rose-950/45 dark:text-rose-200">
+            {state.error}
+          </div>
+        ) : null}
+
+        {hasResult ? (
+          <div className="mt-2 max-h-64 overflow-auto rounded-md border border-white/20 bg-white/40 text-[11px] leading-relaxed text-[var(--gray-800)] backdrop-blur-sm dark:border-white/10 dark:bg-slate-950/40 dark:text-slate-100">
+            {resultRows(state.result).map((row) => (
+              <div key={row.label} className="grid grid-cols-3 gap-2 border-b border-white/20 px-2 py-1.5 last:border-b-0 dark:border-white/10">
+                <span className="font-semibold uppercase tracking-wide text-[var(--gray-500)] dark:text-slate-400">{row.label}</span>
+                <span className="col-span-2 whitespace-pre-wrap text-[var(--gray-800)] dark:text-slate-100">{row.value}</span>
+              </div>
+            ))}
+          </div>
+        ) : null}
+      </>
+    )
+  }
+
+  if (variant === "header") {
+    const openAction = actions.find((a) => a.key === openActionKey) || null
+    const popover =
+      openAction && popoverPos
+        ? createPortal(
+            <div
+              ref={popoverRef}
+              style={{ position: "absolute", top: popoverPos.top, left: popoverPos.left, width: POPOVER_WIDTH, zIndex: 9999 }}
+              className="max-w-[90vw] rounded-xl border border-white/20 bg-white/95 p-3 shadow-lg backdrop-blur-sm dark:border-white/10 dark:bg-slate-900/95"
+            >
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="text-sm font-bold text-[var(--text)]">{openAction.label}</p>
+                  <p className="mt-0.5 text-xs text-[var(--gray-600)]">{openAction.description}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setOpenActionKey(null)}
+                  aria-label={t("Fechar", "Close")}
+                  className="shrink-0 rounded-md p-1 text-[var(--gray-400)] transition hover:bg-white/60 hover:text-[var(--text)] dark:hover:bg-white/10"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+              {renderActionControls(openAction, true)}
+            </div>,
+            document.body
+          )
+        : null
+
+    return (
+      <div className="flex flex-wrap items-center gap-2">
+        {actions.map((action) => {
+          const isOpen = openActionKey === action.key
+          const isAiAction = action.key.startsWith("ai.")
+
+          return (
+            <button
+              key={action.key}
+              type="button"
+              ref={(el) => {
+                triggerRefs.current[action.key] = el
+              }}
+              onClick={() => {
+                if (isOpen) {
+                  setOpenActionKey(null)
+                  return
+                }
+                calcPopoverPos(action.key)
+                setOpenActionKey(action.key)
+              }}
+              className="inline-flex h-8 items-center gap-1 rounded-lg border border-white/40 bg-white/30 px-2.5 text-[11px] text-[var(--gray-700)] backdrop-blur-sm transition hover:bg-white/50 dark:border-white/10 dark:text-[var(--gray-300)] dark:hover:bg-white/10"
+            >
+              {isAiAction ? <Bot size={11} /> : action.responseMode === "json" ? <Play size={11} /> : <FileDown size={11} />}
+              {action.shortLabel || action.label}
+            </button>
+          )
+        })}
+        {popover}
+      </div>
+    )
+  }
+
   return (
     <section className={`rounded-xl border border-white/20 bg-white/20 p-2.5 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-slate-950/35 ${isBillingInvoice ? "mx-auto" : ""}`}>
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -463,10 +662,9 @@ export default function ResourceActionPanel({
 
       <div className={`mt-3 grid gap-3 ${isBillingInvoice ? "mx-auto max-w-5xl grid-cols-2" : "xl:grid-cols-2"}`}>
         {actions.map((action) => {
-          const state = stateByAction[action.key] || {}
           const isAiAction = action.key.startsWith("ai.")
-          const hasResult = state.result !== undefined
           const isBillingHistoryAction = isBillingInvoice && action.key.startsWith("billing.invoice.history")
+          const isExpanded = !isBillingHistoryAction || Boolean(expandedActions[action.key])
 
           return (
             <div
@@ -475,15 +673,32 @@ export default function ResourceActionPanel({
             >
               <span className="absolute left-0 top-0 h-full w-1 bg-gradient-to-b from-[var(--primary-500)] to-[var(--primary-400)]" />
               <div className="flex flex-wrap items-start justify-between gap-2">
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2 whitespace-nowrap">
-                    <span className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-white/25 bg-white/45 text-[var(--primary-700)] shadow-sm dark:border-white/10 dark:bg-white/10">
-                      {isAiAction ? <Bot size={14} /> : action.responseMode === "json" ? <Play size={14} /> : <FileDown size={14} />}
-                    </span>
-                    <p className="whitespace-nowrap text-sm font-bold text-[var(--text)]">{action.label}</p>
+                {isBillingHistoryAction ? (
+                  <button
+                    type="button"
+                    onClick={() => setExpandedActions((current) => ({ ...current, [action.key]: !isExpanded }))}
+                    className="min-w-0 flex-1 text-left"
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-white/25 bg-white/45 text-[var(--primary-700)] shadow-sm dark:border-white/10 dark:bg-white/10">
+                        {isAiAction ? <Bot size={14} /> : action.responseMode === "json" ? <Play size={14} /> : <FileDown size={14} />}
+                      </span>
+                      <p className="whitespace-nowrap text-sm font-bold text-[var(--text)]">{action.label}</p>
+                      {isExpanded ? <ChevronDown size={14} className="text-[var(--gray-500)]" /> : <ChevronRight size={14} className="text-[var(--gray-500)]" />}
+                    </div>
+                    <p className="mt-1 text-xs text-[var(--gray-600)]">{action.description}</p>
+                  </button>
+                ) : (
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2 whitespace-nowrap">
+                      <span className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-white/25 bg-white/45 text-[var(--primary-700)] shadow-sm dark:border-white/10 dark:bg-white/10">
+                        {isAiAction ? <Bot size={14} /> : action.responseMode === "json" ? <Play size={14} /> : <FileDown size={14} />}
+                      </span>
+                      <p className="whitespace-nowrap text-sm font-bold text-[var(--text)]">{action.label}</p>
+                    </div>
+                    <p className="mt-1 text-xs text-[var(--gray-600)]">{action.description}</p>
                   </div>
-                  <p className="mt-1 text-xs text-[var(--gray-600)]">{action.description}</p>
-                </div>
+                )}
 
                 {action.dedicatedHref ? (
                   <Link
@@ -497,89 +712,7 @@ export default function ResourceActionPanel({
                 ) : null}
               </div>
 
-              {action.fields?.length ? (
-                <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                  {action.fields.map((field) => {
-                    const value = getValue(action, field)
-                    if (field.type === "checkbox") {
-                      return (
-                        <div key={`${action.key}-${field.name}`} className="space-y-1">
-                          {renderField(action, field, value, (nextValue) => updateValue(action, field, nextValue))}
-                          {field.helper ? <p className="text-[11px] text-[var(--gray-500)] dark:text-slate-400">{field.helper}</p> : null}
-                        </div>
-                      )
-                    }
-
-                    const needsCaption =
-                      !isBillingHistoryAction && (field.type === "select" || field.type === "date" || field.type === "datetime-local")
-
-                    return (
-                      <label key={`${action.key}-${field.name}`} className="space-y-1">
-                        {needsCaption ? (
-                          <span className="text-[11px] font-semibold uppercase tracking-wide text-[var(--gray-600)]">
-                            {field.label}{field.required ? " *" : ""}
-                          </span>
-                        ) : null}
-                        {renderField(action, field, value, (nextValue) => updateValue(action, field, nextValue))}
-                        {field.helper ? <p className="text-[11px] text-[var(--gray-500)] dark:text-slate-400">{field.helper}</p> : null}
-                      </label>
-                    )
-                  })}
-                </div>
-              ) : null}
-
-              <div className="mt-3 flex flex-wrap items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => void runAction(action)}
-                  disabled={state.loading}
-                  className="inline-flex h-9 items-center justify-center gap-2 rounded-md bg-[var(--primary-600)] px-3 text-sm font-semibold text-white shadow-sm transition-all duration-150 hover:bg-[var(--primary-700)] hover:shadow-md disabled:cursor-not-allowed disabled:opacity-70"
-                >
-                  {state.loading ? <Loader2 size={15} className="animate-spin" /> : action.responseMode === "json" ? <Play size={15} /> : <FileDown size={15} />}
-                  {state.loading ? t("Executando...", "Running...") : action.responseMode === "json" ? t("Executar", "Run") : t("Baixar", "Download")}
-                </button>
-
-                {hasResult ? (
-                  <button
-                    type="button"
-                    onClick={() => void copyResult(action)}
-                    className="inline-flex h-9 items-center gap-1 rounded-md border border-white/30 bg-white/55 px-2.5 text-xs font-semibold text-[var(--gray-700)] shadow-sm backdrop-blur-sm transition-all duration-150 hover:border-[var(--primary-300)] hover:bg-white/70 dark:border-white/15 dark:bg-slate-900/40 dark:text-slate-200 dark:hover:bg-slate-900/55"
-                  >
-                    <Clipboard size={13} />
-                    {t("Copiar resposta", "Copy response")}
-                  </button>
-                ) : null}
-
-                {state.jobStatus ? (
-                  <span className="inline-flex h-8 items-center rounded-md border border-white/25 bg-white/45 px-2 text-xs font-medium text-[var(--gray-700)] shadow-sm dark:border-white/15 dark:bg-slate-900/40 dark:text-slate-200">
-                    {t("Job:", "Job:")} {state.jobStatus}
-                  </span>
-                ) : null}
-              </div>
-
-              {state.feedback ? (
-                <div className="mt-2 inline-flex items-center gap-1 rounded-md border border-emerald-200 bg-emerald-50 px-2.5 py-1.5 text-xs text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200">
-                  <CheckCircle2 size={13} />
-                  {state.feedback}
-                </div>
-              ) : null}
-
-              {state.error ? (
-                <div className="mt-2 rounded-md border border-rose-200 bg-rose-50 px-2.5 py-1.5 text-xs text-rose-800 dark:border-rose-800 dark:bg-rose-950/45 dark:text-rose-200">
-                  {state.error}
-                </div>
-              ) : null}
-
-              {hasResult ? (
-                <div className="mt-2 max-h-64 overflow-auto rounded-md border border-white/20 bg-white/40 text-[11px] leading-relaxed text-[var(--gray-800)] backdrop-blur-sm dark:border-white/10 dark:bg-slate-950/40 dark:text-slate-100">
-                  {resultRows(state.result).map((row) => (
-                    <div key={row.label} className="grid grid-cols-3 gap-2 border-b border-white/20 px-2 py-1.5 last:border-b-0 dark:border-white/10">
-                      <span className="font-semibold uppercase tracking-wide text-[var(--gray-500)] dark:text-slate-400">{row.label}</span>
-                      <span className="col-span-2 whitespace-pre-wrap text-[var(--gray-800)] dark:text-slate-100">{row.value}</span>
-                    </div>
-                  ))}
-                </div>
-              ) : null}
+              {isExpanded ? renderActionControls(action, isBillingHistoryAction) : null}
             </div>
           )
         })}
