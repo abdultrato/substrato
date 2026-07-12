@@ -1,8 +1,8 @@
-"use client"
+"use client";
 
-import { isNotFoundLikeError } from "@/lib/errors/api-error"
-import Link from "next/link"
-import { useEffect, useState } from "react"
+import { isNotFoundLikeError } from "@/lib/errors/api-error";
+import Link from "next/link";
+import { useEffect, useState } from "react";
 import {
   FilePlus2,
   Stethoscope,
@@ -13,25 +13,25 @@ import {
   Scissors,
   ImagePlus,
   Pill,
-} from "lucide-react"
-import type { LucideIcon } from "lucide-react"
+} from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 
-import AppLayout from "@/components/layout/AppLayout"
-import MetricCard from "@/components/ui/MetricCard"
-import ActionTile from "@/components/ui/ActionTile"
-import { apiFetch, extractTotalCount } from "@/lib/api"
-import { useAuth } from "@/hooks/useAuth"
-import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
-import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
+import AppLayout from "@/components/layout/AppLayout";
+import MetricCard from "@/components/ui/MetricCard";
+import ActionTile from "@/components/ui/ActionTile";
+import { apiFetch, extractTotalCount } from "@/lib/api";
+import { useAuth } from "@/hooks/useAuth";
+import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh";
+import { GROUPS, userHasAnyGroup } from "@/lib/rbac";
 
 type MedicineActionTile = {
-  title: string
-  description: string
-  href: string
-  icon: LucideIcon
-  accentClass: string
-  fullWidth?: boolean
-}
+  title: string;
+  description: string;
+  href: string;
+  icon: LucideIcon;
+  accentClass: string;
+  fullWidth?: boolean;
+};
 
 const medicineActionTiles: MedicineActionTile[] = [
   {
@@ -92,52 +92,61 @@ const medicineActionTiles: MedicineActionTile[] = [
   },
   {
     title: "Criar requisição de materiais",
-    description: "Abrir o formulário para solicitar insumos médico-cirúrgicos à farmácia.",
+    description:
+      "Abrir o formulário para solicitar insumos médico-cirúrgicos à farmácia.",
     href: "/pharmacy/material-requests/new",
     icon: Pill,
     accentClass: "from-amber-500 via-orange-500 to-rose-400",
     fullWidth: true,
   },
-]
+];
 
 export default function MedicinaPage() {
-  const { user } = useAuth()
-  const podeVerAdmin = userHasAnyGroup(user, [GROUPS.ADMIN])
-  const safeRefreshToken = useSafeDataRefreshSignal()
+  const { user } = useAuth();
+  const podeVerAdmin = userHasAnyGroup(user, [GROUPS.ADMIN]);
+  const safeRefreshToken = useSafeDataRefreshSignal();
 
-  const [loading, setLoading] = useState(true)
-  const [erro, setErro] = useState<string | null>(null)
-  const [pacientes, setPacientes] = useState<number>(0)
-  const [requisicoes, setRequisicoes] = useState<number>(0)
+  const [loading, setLoading] = useState(true);
+  const [erro, setErro] = useState<string | null>(null);
+  const [pacientes, setPacientes] = useState<number>(0);
+  const [requisicoes, setRequisicoes] = useState<number>(0);
 
   useEffect(() => {
-    let mounted = true
+    let mounted = true;
     async function load() {
       try {
-        setLoading(true)
-        setErro(null)
+        setLoading(true);
+        setErro(null);
 
         const [pacs, reqs] = await Promise.all([
-          apiFetch<any>("/clinical/patient/", { clientCache: safeRefreshToken === 0 }),
-          apiFetch<any>("/clinical/labrequest/", { clientCache: safeRefreshToken === 0 }),
-        ])
+          apiFetch<any>("/clinical/patient/", {
+            clientCache: safeRefreshToken === 0,
+          }),
+          apiFetch<any>("/clinical/labrequest/", {
+            clientCache: safeRefreshToken === 0,
+          }),
+        ]);
 
-        if (!mounted) return
-        setPacientes(extractTotalCount(pacs))
-        setRequisicoes(extractTotalCount(reqs))
+        if (!mounted) return;
+        setPacientes(extractTotalCount(pacs));
+        setRequisicoes(extractTotalCount(reqs));
       } catch (e: any) {
-        if (!mounted) return
-        setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao carregar o workspace de medicina."))
+        if (!mounted) return;
+        setErro(
+          isNotFoundLikeError(e)
+            ? null
+            : e?.message || "Falha ao carregar o workspace de medicina.",
+        );
       } finally {
-        if (mounted) setLoading(false)
+        if (mounted) setLoading(false);
       }
     }
 
-    load()
+    load();
     return () => {
-      mounted = false
-    }
-  }, [safeRefreshToken])
+      mounted = false;
+    };
+  }, [safeRefreshToken]);
 
   return (
     <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.MEDICINA]}>
@@ -151,21 +160,16 @@ export default function MedicinaPage() {
                 <Stethoscope size={17} />
               </span>
               <div className="min-w-0">
-                <h1 className="text-lg font-bold leading-tight text-foreground">Medicina</h1>
+                <h1 className="text-lg font-bold leading-tight text-foreground">
+                  Medicina
+                </h1>
                 <p className="text-[11px] text-muted-foreground">
-                  {loading ? "A carregar…" : `${pacientes} pacientes · ${requisicoes} requisições`}
+                  {loading
+                    ? "A carregar…"
+                    : `${pacientes} pacientes · ${requisicoes} requisições`}
                 </p>
               </div>
             </div>
-
-            {podeVerAdmin ? (
-              <Link
-                href="/admin/clinical/"
-                className="ml-auto inline-flex h-9 items-center rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50"
-              >
-                Abrir na Administração
-              </Link>
-            ) : null}
           </div>
         </section>
 
@@ -180,7 +184,10 @@ export default function MedicinaPage() {
             <MetricCard label="Pacientes" value={loading ? "..." : pacientes} />
           </div>
           <div className="min-w-[160px] flex-1 basis-0">
-            <MetricCard label="Requisições" value={loading ? "..." : requisicoes} />
+            <MetricCard
+              label="Requisições"
+              value={loading ? "..." : requisicoes}
+            />
           </div>
           <div className="min-w-[160px] flex-1 basis-0">
             <MetricCard label="Anamnese" value="—" />
@@ -196,7 +203,9 @@ export default function MedicinaPage() {
               key={tile.href}
               className={`group relative overflow-hidden rounded-xl border border-slate-200/70 bg-white/70 shadow-sm backdrop-blur-sm transition hover:border-slate-300 hover:shadow-md dark:border-slate-800/80 dark:bg-slate-950/45 dark:hover:border-slate-700 ${tile.fullWidth ? "basis-full w-full" : "min-w-[220px] flex-1 basis-[220px]"}`}
             >
-              <div className={`absolute inset-y-0 left-0 w-1.5 bg-gradient-to-b ${tile.accentClass}`} />
+              <div
+                className={`absolute inset-y-0 left-0 w-1.5 bg-gradient-to-b ${tile.accentClass}`}
+              />
               <div className="pl-2">
                 <ActionTile
                   title={tile.title}
@@ -208,8 +217,7 @@ export default function MedicinaPage() {
             </div>
           ))}
         </div>
-
       </div>
     </AppLayout>
-  )
+  );
 }

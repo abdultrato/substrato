@@ -1,7 +1,7 @@
-"use client"
+"use client";
 
-import Link from "next/link"
-import { useEffect, useMemo, useState } from "react"
+import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
 import {
   ArrowLeftRight,
   CalendarDays,
@@ -14,195 +14,350 @@ import {
   Search,
   Settings,
   Shield,
-} from "lucide-react"
+} from "lucide-react";
 
-import AppLayout from "@/components/layout/AppLayout"
-import Pagination from "@/components/ui/Pagination"
-import useAuthGuard from "@/hooks/useAuthGuard"
-import useDebounce from "@/hooks/useDebounce"
-import { useAuth } from "@/hooks/useAuth"
-import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
-import { apiFetch, apiFetchAll, apiFetchList } from "@/lib/api"
-import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
+import AppLayout from "@/components/layout/AppLayout";
+import Pagination from "@/components/ui/Pagination";
+import useAuthGuard from "@/hooks/useAuthGuard";
+import useDebounce from "@/hooks/useDebounce";
+import { useAuth } from "@/hooks/useAuth";
+import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh";
+import { apiFetch, apiFetchAll, apiFetchList } from "@/lib/api";
+import { GROUPS, userHasAnyGroup } from "@/lib/rbac";
 
-type DonorRow = Record<string, unknown>
-type DonationRow = Record<string, unknown>
+type DonorRow = Record<string, unknown>;
+type DonationRow = Record<string, unknown>;
 
-const BLOOD_TYPES = ["O-", "O+", "A-", "A+", "B-", "B+", "AB-", "AB+"]
-const DEFAULT_PAGE_SIZE = 12
+const BLOOD_TYPES = ["O-", "O+", "A-", "A+", "B-", "B+", "AB-", "AB+"];
+const DEFAULT_PAGE_SIZE = 12;
 
 const TILES = [
-  { key: "storage",            label: "Armazenamentos", Icon: Package,      href: "/bloodbank/blood-storages/",             accent: "from-cyan-500 to-sky-600",      bar: "bg-cyan-500",    icon: "bg-cyan-500/15 text-cyan-600 dark:text-cyan-300"    },
-  { key: "donation",           label: "Doações",         Icon: Droplet,      href: "/bloodbank/blood-donations/",            accent: "from-rose-500 to-pink-600",     bar: "bg-rose-500",    icon: "bg-rose-500/15 text-rose-600 dark:text-rose-300"    },
-  { key: "storage_maintenance",label: "Manutenções",     Icon: Settings,     href: "/bloodbank/blood-storage-maintenances/", accent: "from-violet-500 to-purple-600", bar: "bg-violet-500",  icon: "bg-violet-500/15 text-violet-600 dark:text-violet-300" },
-  { key: "stock_movement",     label: "Movimentos",      Icon: ArrowLeftRight,href: "/bloodbank/blood-stock-movements/",     accent: "from-amber-500 to-orange-600",  bar: "bg-amber-500",   icon: "bg-amber-500/15 text-amber-600 dark:text-amber-300" },
-  { key: "transfusion",        label: "Transfusões",     Icon: HeartPulse,   href: "/bloodbank/blood-transfusions/",         accent: "from-pink-500 to-rose-600",     bar: "bg-pink-500",    icon: "bg-pink-500/15 text-pink-600 dark:text-pink-300"    },
-  { key: "unit",               label: "Unidades",        Icon: Layers,       href: "/bloodbank/blood-units/",                accent: "from-red-500 to-rose-600",      bar: "bg-red-500",     icon: "bg-red-500/15 text-red-600 dark:text-red-300"       },
-]
+  {
+    key: "storage",
+    label: "Armazenamentos",
+    Icon: Package,
+    href: "/bloodbank/blood-storages/",
+    accent: "from-cyan-500 to-sky-600",
+    bar: "bg-cyan-500",
+    icon: "bg-cyan-500/15 text-cyan-600 dark:text-cyan-300",
+  },
+  {
+    key: "donation",
+    label: "Doações",
+    Icon: Droplet,
+    href: "/bloodbank/blood-donations/",
+    accent: "from-rose-500 to-pink-600",
+    bar: "bg-rose-500",
+    icon: "bg-rose-500/15 text-rose-600 dark:text-rose-300",
+  },
+  {
+    key: "storage_maintenance",
+    label: "Manutenções",
+    Icon: Settings,
+    href: "/bloodbank/blood-storage-maintenances/",
+    accent: "from-violet-500 to-purple-600",
+    bar: "bg-violet-500",
+    icon: "bg-violet-500/15 text-violet-600 dark:text-violet-300",
+  },
+  {
+    key: "stock_movement",
+    label: "Movimentos",
+    Icon: ArrowLeftRight,
+    href: "/bloodbank/blood-stock-movements/",
+    accent: "from-amber-500 to-orange-600",
+    bar: "bg-amber-500",
+    icon: "bg-amber-500/15 text-amber-600 dark:text-amber-300",
+  },
+  {
+    key: "transfusion",
+    label: "Transfusões",
+    Icon: HeartPulse,
+    href: "/bloodbank/blood-transfusions/",
+    accent: "from-pink-500 to-rose-600",
+    bar: "bg-pink-500",
+    icon: "bg-pink-500/15 text-pink-600 dark:text-pink-300",
+  },
+  {
+    key: "unit",
+    label: "Unidades",
+    Icon: Layers,
+    href: "/bloodbank/blood-units/",
+    accent: "from-red-500 to-rose-600",
+    bar: "bg-red-500",
+    icon: "bg-red-500/15 text-red-600 dark:text-red-300",
+  },
+];
 
 const DONOR_ACCENTS = [
-  { bar: "from-rose-500 via-fuchsia-500 to-pink-500",    chip: "border-rose-200/70 bg-rose-50 text-rose-700 dark:border-rose-400/20 dark:bg-rose-900/20 dark:text-rose-300",     halo: "bg-rose-500/10"    },
-  { bar: "from-cyan-500 via-sky-500 to-blue-500",        chip: "border-cyan-200/70 bg-cyan-50 text-cyan-700 dark:border-cyan-400/20 dark:bg-cyan-900/20 dark:text-cyan-300",     halo: "bg-cyan-500/10"    },
-  { bar: "from-amber-500 via-orange-500 to-rose-500",    chip: "border-amber-200/70 bg-amber-50 text-amber-700 dark:border-amber-400/20 dark:bg-amber-900/20 dark:text-amber-300", halo: "bg-amber-500/10" },
-  { bar: "from-emerald-500 via-teal-500 to-cyan-500",    chip: "border-emerald-200/70 bg-emerald-50 text-emerald-700 dark:border-emerald-400/20 dark:bg-emerald-900/20 dark:text-emerald-300", halo: "bg-emerald-500/10" },
-  { bar: "from-violet-500 via-purple-500 to-fuchsia-500",chip: "border-violet-200/70 bg-violet-50 text-violet-700 dark:border-violet-400/20 dark:bg-violet-900/20 dark:text-violet-300", halo: "bg-violet-500/10" },
-  { bar: "from-indigo-500 via-blue-500 to-sky-500",      chip: "border-indigo-200/70 bg-indigo-50 text-indigo-700 dark:border-indigo-400/20 dark:bg-indigo-900/20 dark:text-indigo-300", halo: "bg-indigo-500/10" },
-]
+  {
+    bar: "from-rose-500 via-fuchsia-500 to-pink-500",
+    chip: "border-rose-200/70 bg-rose-50 text-rose-700 dark:border-rose-400/20 dark:bg-rose-900/20 dark:text-rose-300",
+    halo: "bg-rose-500/10",
+  },
+  {
+    bar: "from-cyan-500 via-sky-500 to-blue-500",
+    chip: "border-cyan-200/70 bg-cyan-50 text-cyan-700 dark:border-cyan-400/20 dark:bg-cyan-900/20 dark:text-cyan-300",
+    halo: "bg-cyan-500/10",
+  },
+  {
+    bar: "from-amber-500 via-orange-500 to-rose-500",
+    chip: "border-amber-200/70 bg-amber-50 text-amber-700 dark:border-amber-400/20 dark:bg-amber-900/20 dark:text-amber-300",
+    halo: "bg-amber-500/10",
+  },
+  {
+    bar: "from-emerald-500 via-teal-500 to-cyan-500",
+    chip: "border-emerald-200/70 bg-emerald-50 text-emerald-700 dark:border-emerald-400/20 dark:bg-emerald-900/20 dark:text-emerald-300",
+    halo: "bg-emerald-500/10",
+  },
+  {
+    bar: "from-violet-500 via-purple-500 to-fuchsia-500",
+    chip: "border-violet-200/70 bg-violet-50 text-violet-700 dark:border-violet-400/20 dark:bg-violet-900/20 dark:text-violet-300",
+    halo: "bg-violet-500/10",
+  },
+  {
+    bar: "from-indigo-500 via-blue-500 to-sky-500",
+    chip: "border-indigo-200/70 bg-indigo-50 text-indigo-700 dark:border-indigo-400/20 dark:bg-indigo-900/20 dark:text-indigo-300",
+    halo: "bg-indigo-500/10",
+  },
+];
 
 function bloodTypeLabel(v: unknown) {
-  const s = String(v || "").trim()
-  return !s || s === "UNK" ? "—" : s
+  const s = String(v || "").trim();
+  return !s || s === "UNK" ? "—" : s;
 }
 
 function fmtDate(v?: string | null) {
-  if (!v) return "—"
-  const d = new Date(v)
-  return isNaN(d.getTime()) ? String(v) : d.toLocaleDateString("pt-PT", { day: "2-digit", month: "short", year: "numeric" })
+  if (!v) return "—";
+  const d = new Date(v);
+  return isNaN(d.getTime())
+    ? String(v)
+    : d.toLocaleDateString("pt-PT", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      });
 }
 
 function toDateVal(v?: string | null) {
-  if (!v) return ""
-  const d = new Date(v)
-  return isNaN(d.getTime()) ? "" : d.toISOString().slice(0, 10)
+  if (!v) return "";
+  const d = new Date(v);
+  return isNaN(d.getTime()) ? "" : d.toISOString().slice(0, 10);
 }
 
 function ageLabel(v?: string | null) {
-  if (!v) return "—"
-  const b = new Date(v)
-  if (isNaN(b.getTime())) return "—"
-  const t = new Date()
-  let age = t.getFullYear() - b.getFullYear()
-  if (t.getMonth() - b.getMonth() < 0 || (t.getMonth() === b.getMonth() && t.getDate() < b.getDate())) age--
-  return `${age} anos`
+  if (!v) return "—";
+  const b = new Date(v);
+  if (isNaN(b.getTime())) return "—";
+  const t = new Date();
+  let age = t.getFullYear() - b.getFullYear();
+  if (
+    t.getMonth() - b.getMonth() < 0 ||
+    (t.getMonth() === b.getMonth() && t.getDate() < b.getDate())
+  )
+    age--;
+  return `${age} anos`;
 }
 
 function ageYears(v?: string | null) {
-  if (!v) return null
-  const b = new Date(v)
-  if (isNaN(b.getTime())) return null
-  const t = new Date()
-  let age = t.getFullYear() - b.getFullYear()
-  if (t.getMonth() - b.getMonth() < 0 || (t.getMonth() === b.getMonth() && t.getDate() < b.getDate())) age--
-  return age
+  if (!v) return null;
+  const b = new Date(v);
+  if (isNaN(b.getTime())) return null;
+  const t = new Date();
+  let age = t.getFullYear() - b.getFullYear();
+  if (
+    t.getMonth() - b.getMonth() < 0 ||
+    (t.getMonth() === b.getMonth() && t.getDate() < b.getDate())
+  )
+    age--;
+  return age;
 }
 
 export default function BloodBankPage() {
-  const { loading } = useAuthGuard()
-  const { user } = useAuth()
-  const canAdmin = userHasAnyGroup(user, [GROUPS.ADMIN])
-  const safeRefreshToken = useSafeDataRefreshSignal()
+  const { loading } = useAuthGuard();
+  const { user } = useAuth();
+  const canAdmin = userHasAnyGroup(user, [GROUPS.ADMIN]);
+  const safeRefreshToken = useSafeDataRefreshSignal();
 
-  const [search, setSearch]                       = useState("")
-  const [page, setPage]                           = useState(1)
-  const [pageSize, setPageSize]                   = useState(DEFAULT_PAGE_SIZE)
-  const [pageSizeInput, setPageSizeInput]         = useState(String(DEFAULT_PAGE_SIZE))
-  const [ageFilter, setAgeFilter]                 = useState("")
-  const [bloodTypeFilter, setBloodTypeFilter]     = useState("")
-  const [dateFilter, setDateFilter]               = useState("")
-  const [donors, setDonors]                       = useState<DonorRow[]>([])
-  const [donationMap, setDonationMap]             = useState<Record<string, DonationRow | null>>({})
-  const [listLoading, setListLoading]             = useState(true)
-  const [listError, setListError]                 = useState<string | null>(null)
-  const debouncedSearch = useDebounce(search, 250)
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
+  const [pageSizeInput, setPageSizeInput] = useState(String(DEFAULT_PAGE_SIZE));
+  const [ageFilter, setAgeFilter] = useState("");
+  const [bloodTypeFilter, setBloodTypeFilter] = useState("");
+  const [dateFilter, setDateFilter] = useState("");
+  const [donors, setDonors] = useState<DonorRow[]>([]);
+  const [donationMap, setDonationMap] = useState<
+    Record<string, DonationRow | null>
+  >({});
+  const [listLoading, setListLoading] = useState(true);
+  const [listError, setListError] = useState<string | null>(null);
+  const debouncedSearch = useDebounce(search, 250);
 
   function applyPageSize(value: string) {
-    const parsed = Math.max(1, Math.min(999, parseInt(value, 10) || DEFAULT_PAGE_SIZE))
-    setPageSize(parsed)
-    setPageSizeInput(String(parsed))
-    setPage(1)
+    const parsed = Math.max(
+      1,
+      Math.min(999, parseInt(value, 10) || DEFAULT_PAGE_SIZE),
+    );
+    setPageSize(parsed);
+    setPageSizeInput(String(parsed));
+    setPage(1);
   }
 
   useEffect(() => {
-    let mounted = true
+    let mounted = true;
     async function loadData() {
       try {
-        setListLoading(true); setListError(null)
+        setListLoading(true);
+        setListError(null);
 
         // 1. Load donations first to discover donor IDs
-        const donationItems = await apiFetchAll<DonationRow>("/bloodbank/donation/", {
-          pageSize: 200,
-          maxPages: 20,
-          clientCache: safeRefreshToken === 0,
-        })
-        if (!mounted) return
+        const donationItems = await apiFetchAll<DonationRow>(
+          "/bloodbank/donation/",
+          {
+            pageSize: 200,
+            maxPages: 20,
+            clientCache: safeRefreshToken === 0,
+          },
+        );
+        if (!mounted) return;
 
         // Build donation map keyed by donor ID (try all possible field names)
-        const map: Record<string, DonationRow | null> = {}
-        const donorIdSet = new Set<string>()
+        const map: Record<string, DonationRow | null> = {};
+        const donorIdSet = new Set<string>();
         for (const d of donationItems) {
-          const dd = d as Record<string, unknown>
+          const dd = d as Record<string, unknown>;
           const did = String(
-            dd.donor_id ?? dd.donor_pk ??
-            (dd.donor && typeof dd.donor === "object" ? (dd.donor as Record<string, unknown>).id : dd.donor) ?? ""
-          )
-          if (!did || did === "undefined" || did === "null") continue
-          donorIdSet.add(did)
-          if (!map[did]) map[did] = d
+            dd.donor_id ??
+              dd.donor_pk ??
+              (dd.donor && typeof dd.donor === "object"
+                ? (dd.donor as Record<string, unknown>).id
+                : dd.donor) ??
+              "",
+          );
+          if (!did || did === "undefined" || did === "null") continue;
+          donorIdSet.add(did);
+          if (!map[did]) map[did] = d;
         }
 
         // 2. Fetch each donor patient individually using /patients/{id}/
-        const uniqueIds = [...donorIdSet]
+        const uniqueIds = [...donorIdSet];
         const [byFlag, ...byIdResults] = await Promise.all([
           apiFetchList<DonorRow>("/clinical/patient/", {
             pageSize: 200,
             query: { is_blood_donor: true, ordering: "name" },
             clientCache: safeRefreshToken === 0,
           }),
-          ...uniqueIds.map((id) => apiFetch<DonorRow>(`/patients/${id}/`, { clientCache: safeRefreshToken === 0 }).catch(() => null)),
-        ])
-        if (!mounted) return
+          ...uniqueIds.map((id) =>
+            apiFetch<DonorRow>(`/patients/${id}/`, {
+              clientCache: safeRefreshToken === 0,
+            }).catch(() => null),
+          ),
+        ]);
+        if (!mounted) return;
 
-        const seen = new Set<string>()
-        const donorItems: DonorRow[] = []
-        for (const p of [...(byFlag.items ?? []), ...(byIdResults.filter(Boolean) as DonorRow[])]) {
-          const key = String((p as Record<string, unknown>).id)
-          const years = ageYears((p as Record<string, unknown>).birth_date as string | null)
-          if (years !== null && years > 54) continue
-          if (!seen.has(key)) { seen.add(key); donorItems.push(p) }
+        const seen = new Set<string>();
+        const donorItems: DonorRow[] = [];
+        for (const p of [
+          ...(byFlag.items ?? []),
+          ...(byIdResults.filter(Boolean) as DonorRow[]),
+        ]) {
+          const key = String((p as Record<string, unknown>).id);
+          const years = ageYears(
+            (p as Record<string, unknown>).birth_date as string | null,
+          );
+          if (years !== null && years > 54) continue;
+          if (!seen.has(key)) {
+            seen.add(key);
+            donorItems.push(p);
+          }
         }
-        donorItems.sort((a, b) => String((a as Record<string, unknown>).name ?? "").localeCompare(String((b as Record<string, unknown>).name ?? "")))
+        donorItems.sort((a, b) =>
+          String((a as Record<string, unknown>).name ?? "").localeCompare(
+            String((b as Record<string, unknown>).name ?? ""),
+          ),
+        );
 
-        setDonors(donorItems); setDonationMap(map)
+        setDonors(donorItems);
+        setDonationMap(map);
       } catch (e: unknown) {
-        if (!mounted) return
-        setListError((e as { message?: string })?.message || "Falha ao carregar doadores.")
+        if (!mounted) return;
+        setListError(
+          (e as { message?: string })?.message || "Falha ao carregar doadores.",
+        );
       } finally {
-        if (mounted) setListLoading(false)
+        if (mounted) setListLoading(false);
       }
     }
-    loadData()
-    return () => { mounted = false }
-  }, [safeRefreshToken])
+    loadData();
+    return () => {
+      mounted = false;
+    };
+  }, [safeRefreshToken]);
 
   useEffect(() => {
-    setPage(1)
-  }, [debouncedSearch, ageFilter, bloodTypeFilter, dateFilter, pageSize])
+    setPage(1);
+  }, [debouncedSearch, ageFilter, bloodTypeFilter, dateFilter, pageSize]);
 
-  const filteredDonors = useMemo(() => donors.filter((donor) => {
-    const d = donor as Record<string, unknown>
-    const latestDonation = donationMap[String(d.id)] as Record<string, unknown> | null
-    const text = [d.custom_id, d.id, d.name, d.contact, d.email, d.document_number].filter(Boolean).join(" ").toLowerCase()
-    const numericAge = parseInt(ageLabel(d.birth_date as string), 10)
-    const searchOk = !debouncedSearch.trim() || text.includes(debouncedSearch.trim().toLowerCase())
-    const ageOk = !ageFilter || (!Number.isNaN(numericAge) && numericAge === Math.max(0, parseInt(ageFilter, 10) || 0))
-    const btOk = !bloodTypeFilter || String(d.blood_type || "") === bloodTypeFilter
-    const dateOk = !dateFilter || toDateVal(String(latestDonation?.collected_at ?? latestDonation?.created_at ?? "")) === dateFilter
-    return searchOk && ageOk && btOk && dateOk
-  }), [ageFilter, bloodTypeFilter, debouncedSearch, donationMap, donors, dateFilter])
+  const filteredDonors = useMemo(
+    () =>
+      donors.filter((donor) => {
+        const d = donor as Record<string, unknown>;
+        const latestDonation = donationMap[String(d.id)] as Record<
+          string,
+          unknown
+        > | null;
+        const text = [
+          d.custom_id,
+          d.id,
+          d.name,
+          d.contact,
+          d.email,
+          d.document_number,
+        ]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
+        const numericAge = parseInt(ageLabel(d.birth_date as string), 10);
+        const searchOk =
+          !debouncedSearch.trim() ||
+          text.includes(debouncedSearch.trim().toLowerCase());
+        const ageOk =
+          !ageFilter ||
+          (!Number.isNaN(numericAge) &&
+            numericAge === Math.max(0, parseInt(ageFilter, 10) || 0));
+        const btOk =
+          !bloodTypeFilter || String(d.blood_type || "") === bloodTypeFilter;
+        const dateOk =
+          !dateFilter ||
+          toDateVal(
+            String(
+              latestDonation?.collected_at ?? latestDonation?.created_at ?? "",
+            ),
+          ) === dateFilter;
+        return searchOk && ageOk && btOk && dateOk;
+      }),
+    [
+      ageFilter,
+      bloodTypeFilter,
+      debouncedSearch,
+      donationMap,
+      donors,
+      dateFilter,
+    ],
+  );
 
-  const totalPages = Math.max(1, Math.ceil(filteredDonors.length / pageSize))
-  const currentPage = Math.min(page, totalPages)
+  const totalPages = Math.max(1, Math.ceil(filteredDonors.length / pageSize));
+  const currentPage = Math.min(page, totalPages);
   const paginatedDonors = useMemo(() => {
-    const start = (currentPage - 1) * pageSize
-    return filteredDonors.slice(start, start + pageSize)
-  }, [currentPage, filteredDonors, pageSize])
+    const start = (currentPage - 1) * pageSize;
+    return filteredDonors.slice(start, start + pageSize);
+  }, [currentPage, filteredDonors, pageSize]);
 
-  if (loading) return null
+  if (loading) return null;
 
   return (
     <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.LABORATORIO]} fullWidth>
       <div className="w-full space-y-2 px-2">
-
         {/* ── Hero ──────────────────────────────────────────────── */}
         <div className="relative overflow-hidden rounded-xl border border-white/20 bg-white/30 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/5">
           <div className="pointer-events-none absolute inset-0">
@@ -217,25 +372,29 @@ export default function BloodBankPage() {
               <Droplet size={20} className="text-white" />
             </div>
             <div className="min-w-0 flex-1">
-              <div className="text-[10px] text-muted-foreground">Hemoterapia / Gestão operacional</div>
-              <h1 className="text-base font-bold leading-tight text-foreground">Banco de Sangue</h1>
+              <div className="text-[10px] text-muted-foreground">
+                Hemoterapia / Gestão operacional
+              </div>
+              <h1 className="text-base font-bold leading-tight text-foreground">
+                Banco de Sangue
+              </h1>
             </div>
-            {canAdmin && (
-              <Link href="/admin/bloodbank/"
-                className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-border bg-card px-3 text-xs font-medium text-foreground transition hover:bg-muted">
-                <Shield size={13} /> Administração
-              </Link>
-            )}
           </div>
 
           {/* Filtros no cabeçalho */}
           <div className="border-t border-white/20 px-4 py-2 dark:border-white/10">
             <div className="flex flex-wrap gap-2">
               <div className="relative min-w-48 flex-1">
-                <Search size={11} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                <input value={search} onChange={(e) => setSearch(e.target.value)}
+                <Search
+                  size={11}
+                  className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground"
+                />
+                <input
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
                   placeholder="Pesquisar por nome, código, contacto ou documento…"
-                  className="w-full rounded-lg border border-white/30 bg-white/40 py-1.5 pl-7 pr-3 text-xs outline-none transition placeholder:text-muted-foreground focus:border-rose-400 focus:ring-2 focus:ring-rose-400/20 dark:border-white/10 dark:bg-white/5" />
+                  className="w-full rounded-lg border border-white/30 bg-white/40 py-1.5 pl-7 pr-3 text-xs outline-none transition placeholder:text-muted-foreground focus:border-rose-400 focus:ring-2 focus:ring-rose-400/20 dark:border-white/10 dark:bg-white/5"
+                />
               </div>
               <input
                 type="number"
@@ -246,8 +405,8 @@ export default function BloodBankPage() {
                 onBlur={(e) => applyPageSize(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
-                    e.preventDefault()
-                    applyPageSize(pageSizeInput)
+                    e.preventDefault();
+                    applyPageSize(pageSizeInput);
                   }
                 }}
                 placeholder="12/pág"
@@ -262,15 +421,26 @@ export default function BloodBankPage() {
                 placeholder="Idade"
                 className="w-[88px] rounded-lg border border-white/30 bg-white/40 px-2.5 py-1.5 text-xs text-foreground outline-none transition focus:border-rose-400 focus:ring-2 focus:ring-rose-400/20 dark:border-white/10 dark:bg-white/5 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
               />
-              <select value={bloodTypeFilter} onChange={(e) => setBloodTypeFilter(e.target.value)}
-                className="rounded-lg border border-border bg-card py-1.5 pl-2.5 pr-4 text-xs text-foreground outline-none transition focus:border-rose-400">
+              <select
+                value={bloodTypeFilter}
+                onChange={(e) => setBloodTypeFilter(e.target.value)}
+                className="rounded-lg border border-border bg-card py-1.5 pl-2.5 pr-4 text-xs text-foreground outline-none transition focus:border-rose-400"
+              >
                 <option value="">Todos os grupos</option>
-                {BLOOD_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
+                {BLOOD_TYPES.map((t) => (
+                  <option key={t} value={t}>
+                    {t}
+                  </option>
+                ))}
               </select>
               <label className="flex items-center gap-1.5 rounded-lg border border-border bg-card px-2.5 py-1.5 text-xs text-muted-foreground">
                 <CalendarDays size={11} />
-                <input type="date" value={dateFilter} onChange={(e) => setDateFilter(e.target.value)}
-                  className="bg-transparent text-xs text-foreground outline-none" />
+                <input
+                  type="date"
+                  value={dateFilter}
+                  onChange={(e) => setDateFilter(e.target.value)}
+                  className="bg-transparent text-xs text-foreground outline-none"
+                />
               </label>
             </div>
           </div>
@@ -279,13 +449,20 @@ export default function BloodBankPage() {
         {/* ── Tiles (uma linha, nowrap, largura pelo conteúdo) ── */}
         <div className="flex gap-2">
           {TILES.map(({ key, label, Icon, href, bar, icon }) => (
-            <Link key={key} href={href}
-              className="group relative flex h-[68px] min-w-max flex-auto items-center gap-2.5 overflow-hidden rounded-xl border border-white/20 bg-white/25 px-3 shadow-sm backdrop-blur-sm transition hover:bg-white/40 dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10">
+            <Link
+              key={key}
+              href={href}
+              className="group relative flex h-[68px] min-w-max flex-auto items-center gap-2.5 overflow-hidden rounded-xl border border-white/20 bg-white/25 px-3 shadow-sm backdrop-blur-sm transition hover:bg-white/40 dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10"
+            >
               <span className={`absolute inset-y-0 left-0 w-1 ${bar}`} />
-              <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${icon}`}>
+              <span
+                className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${icon}`}
+              >
                 <Icon size={16} />
               </span>
-              <span className="whitespace-nowrap text-xs font-semibold text-foreground">{label}</span>
+              <span className="whitespace-nowrap text-xs font-semibold text-foreground">
+                {label}
+              </span>
             </Link>
           ))}
         </div>
@@ -295,13 +472,17 @@ export default function BloodBankPage() {
           <span className="absolute inset-y-0 left-0 w-1 rounded-l-xl bg-gradient-to-b from-rose-500 to-pink-600" />
           <div className="flex items-center justify-between border-b border-border/50 px-3 py-1.5 pl-4">
             <div className="flex items-center gap-2">
-              <h2 className="text-[11px] font-semibold text-foreground">Doadores de sangue</h2>
+              <h2 className="text-[11px] font-semibold text-foreground">
+                Doadores de sangue
+              </h2>
               <span className="rounded-full border border-rose-200 bg-rose-50 px-1.5 py-0.5 text-[9px] font-bold text-rose-700 dark:border-rose-700/40 dark:bg-rose-900/20 dark:text-rose-300">
                 {filteredDonors.length}
               </span>
             </div>
-            <Link href="/bloodbank/donors/new"
-              className="inline-flex h-7 items-center gap-1 rounded-lg bg-gradient-to-r from-rose-600 to-pink-600 px-3 text-[11px] font-semibold text-white shadow-sm shadow-rose-500/20 transition hover:from-rose-700 hover:to-pink-700">
+            <Link
+              href="/bloodbank/donors/new"
+              className="inline-flex h-7 items-center gap-1 rounded-lg bg-gradient-to-r from-rose-600 to-pink-600 px-3 text-[11px] font-semibold text-white shadow-sm shadow-rose-500/20 transition hover:from-rose-700 hover:to-pink-700"
+            >
               <Plus size={11} /> Novo doador
             </Link>
           </div>
@@ -323,56 +504,91 @@ export default function BloodBankPage() {
               </div>
             ) : (
               <>
-              <div className="grid gap-1.5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {paginatedDonors.map((donorRaw, index) => {
-                  const donor = donorRaw as Record<string, unknown>
-                  const latestDonation = donationMap[String(donor.id)] as Record<string, unknown> | null
-                  const acc = DONOR_ACCENTS[((currentPage - 1) * pageSize + index) % DONOR_ACCENTS.length]
-                  return (
-                    <Link key={String(donor.id)} href={`/bloodbank/donors/${donor.id}`}
-                      className="group relative block overflow-hidden rounded-xl border border-white/20 bg-white/25 shadow-sm backdrop-blur-sm transition hover:bg-white/40 hover:shadow-md dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10">
-                      <span className={`absolute inset-y-0 left-0 w-1 bg-gradient-to-b ${acc.bar}`} />
-                      <div className={`pointer-events-none absolute -right-4 -top-4 h-16 w-16 rounded-full blur-2xl ${acc.halo}`} />
+                <div className="grid gap-1.5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                  {paginatedDonors.map((donorRaw, index) => {
+                    const donor = donorRaw as Record<string, unknown>;
+                    const latestDonation = donationMap[
+                      String(donor.id)
+                    ] as Record<string, unknown> | null;
+                    const acc =
+                      DONOR_ACCENTS[
+                        ((currentPage - 1) * pageSize + index) %
+                          DONOR_ACCENTS.length
+                      ];
+                    return (
+                      <Link
+                        key={String(donor.id)}
+                        href={`/bloodbank/donors/${donor.id}`}
+                        className="group relative block overflow-hidden rounded-xl border border-white/20 bg-white/25 shadow-sm backdrop-blur-sm transition hover:bg-white/40 hover:shadow-md dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10"
+                      >
+                        <span
+                          className={`absolute inset-y-0 left-0 w-1 bg-gradient-to-b ${acc.bar}`}
+                        />
+                        <div
+                          className={`pointer-events-none absolute -right-4 -top-4 h-16 w-16 rounded-full blur-2xl ${acc.halo}`}
+                        />
 
-                      <div className="relative space-y-1.5 px-3 py-2.5 pl-4">
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="min-w-0">
-                            <p className="font-mono text-[10px] text-muted-foreground">{String(donor.custom_id || `#${donor.id}`)}</p>
-                            <p className="truncate text-[12px] font-semibold leading-tight text-foreground">{String(donor.name || "—")}</p>
+                        <div className="relative space-y-1.5 px-3 py-2.5 pl-4">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="min-w-0">
+                              <p className="font-mono text-[10px] text-muted-foreground">
+                                {String(donor.custom_id || `#${donor.id}`)}
+                              </p>
+                              <p className="truncate text-[12px] font-semibold leading-tight text-foreground">
+                                {String(donor.name || "—")}
+                              </p>
+                            </div>
+                            <span
+                              className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-bold ${acc.chip}`}
+                            >
+                              {bloodTypeLabel(donor.blood_type)}
+                            </span>
                           </div>
-                          <span className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-bold ${acc.chip}`}>
-                            {bloodTypeLabel(donor.blood_type)}
-                          </span>
-                        </div>
 
-                        <div className="flex items-center justify-between border-t border-border/30 pt-1 text-[10px] text-muted-foreground">
-                          <span className="truncate">{String(donor.contact || donor.email || "—")}</span>
-                          <span className="ml-2 shrink-0">{ageLabel(donor.birth_date as string)}</span>
-                        </div>
+                          <div className="flex items-center justify-between border-t border-border/30 pt-1 text-[10px] text-muted-foreground">
+                            <span className="truncate">
+                              {String(donor.contact || donor.email || "—")}
+                            </span>
+                            <span className="ml-2 shrink-0">
+                              {ageLabel(donor.birth_date as string)}
+                            </span>
+                          </div>
 
-                        <div className="text-[10px] text-muted-foreground">
-                          <span className="text-foreground/60">Última doação: </span>
-                          <span className="font-medium text-foreground">
-                            {fmtDate(String(latestDonation?.collected_at ?? latestDonation?.created_at ?? ""))}
-                          </span>
+                          <div className="text-[10px] text-muted-foreground">
+                            <span className="text-foreground/60">
+                              Última doação:{" "}
+                            </span>
+                            <span className="font-medium text-foreground">
+                              {fmtDate(
+                                String(
+                                  latestDonation?.collected_at ??
+                                    latestDonation?.created_at ??
+                                    "",
+                                ),
+                              )}
+                            </span>
+                          </div>
                         </div>
-                      </div>
-                    </Link>
-                  )
-                })}
-              </div>
-              <div className="mt-2 flex flex-col gap-1.5 sm:flex-row sm:items-center sm:justify-between">
-                <div className="text-xs text-muted-foreground">
-                  Página {currentPage} de {totalPages} · {pageSize} itens por página
+                      </Link>
+                    );
+                  })}
                 </div>
-                <Pagination page={currentPage} totalPages={totalPages} onChange={setPage} />
-              </div>
+                <div className="mt-2 flex flex-col gap-1.5 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="text-xs text-muted-foreground">
+                    Página {currentPage} de {totalPages} · {pageSize} itens por
+                    página
+                  </div>
+                  <Pagination
+                    page={currentPage}
+                    totalPages={totalPages}
+                    onChange={setPage}
+                  />
+                </div>
               </>
             )}
           </div>
         </div>
-
       </div>
     </AppLayout>
-  )
+  );
 }

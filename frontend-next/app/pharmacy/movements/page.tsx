@@ -1,217 +1,266 @@
-"use client"
+"use client";
 
-import { isNotFoundLikeError } from "@/lib/errors/api-error"
-import Link from "next/link"
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { isNotFoundLikeError } from "@/lib/errors/api-error";
+import Link from "next/link";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
-import AppLayout from "@/components/layout/AppLayout"
-import DataTable from "@/components/ui/DataTable"
-import PageHeader from "@/components/ui/PageHeader"
-import Pagination from "@/components/ui/Pagination"
-import PdfActionLabel from "@/components/ui/PdfActionLabel"
-import { useAuth } from "@/hooks/useAuth"
-import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
-import { apiFetch, apiFetchList } from "@/lib/api"
-import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
+import AppLayout from "@/components/layout/AppLayout";
+import DataTable from "@/components/ui/DataTable";
+import PageHeader from "@/components/ui/PageHeader";
+import Pagination from "@/components/ui/Pagination";
+import PdfActionLabel from "@/components/ui/PdfActionLabel";
+import { useAuth } from "@/hooks/useAuth";
+import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh";
+import { apiFetch, apiFetchList } from "@/lib/api";
+import { GROUPS, userHasAnyGroup } from "@/lib/rbac";
 
-type MovimentoRow = Record<string, any>
+type MovimentoRow = Record<string, any>;
 
 function fmtDate(value: string | null | undefined): string {
-  if (!value) return "-"
-  const d = new Date(value)
-  if (Number.isNaN(d.getTime())) return String(value)
-  return d.toLocaleString()
+  if (!value) return "-";
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return String(value);
+  return d.toLocaleString();
 }
 
 export default function FarmaciaMovimentosPage() {
-  const { user } = useAuth()
-  const podeVerAdmin = userHasAnyGroup(user, [GROUPS.ADMIN])
-  const safeRefreshToken = useSafeDataRefreshSignal()
+  const { user } = useAuth();
+  const podeVerAdmin = userHasAnyGroup(user, [GROUPS.ADMIN]);
+  const safeRefreshToken = useSafeDataRefreshSignal();
 
-  const [erro, setErro] = useState<string | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [data, setData] = useState<MovimentoRow[]>([])
-  const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState(20)
-  const [totalItems, setTotalItems] = useState(0)
-  const [totalPages, setTotalPages] = useState(1)
-  const [dateFrom, setDateFrom] = useState("")
-  const [dateTo, setDateTo] = useState("")
-  const [reportType, setReportType] = useState<"ALL" | "ENT" | "SAI" | "AJU">("ALL")
-  const [reportSector, setReportSector] = useState<"ALL" | "LAB" | "ENF" | "REC" | "MED" | "MOC" | "OUT">("ALL")
-  const [reportProductId, setReportProductId] = useState<string>("")
+  const [erro, setErro] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState<MovimentoRow[]>([]);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+  const [totalItems, setTotalItems] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  const [reportType, setReportType] = useState<"ALL" | "ENT" | "SAI" | "AJU">(
+    "ALL",
+  );
+  const [reportSector, setReportSector] = useState<
+    "ALL" | "LAB" | "ENF" | "REC" | "MED" | "MOC" | "OUT"
+  >("ALL");
+  const [reportProductId, setReportProductId] = useState<string>("");
   const [reportLoading, setReportLoading] = useState<
-    null | "moves" | "stock" | "sector" | "consumption" | "top" | "least" | "sector-product"
-  >(null)
+    | null
+    | "moves"
+    | "stock"
+    | "sector"
+    | "consumption"
+    | "top"
+    | "least"
+    | "sector-product"
+  >(null);
 
   useEffect(() => {
-    let mounted = true
+    let mounted = true;
     async function load() {
       try {
-        setLoading(true)
-        setErro(null)
-        const { items, meta } = await apiFetchList<MovimentoRow>("/pharmacy/inventory_movement/", {
-          page,
-          pageSize,
-          clientPaginate: true,
-          clientCache: safeRefreshToken === 0,
-          timeoutMs: 5000,
-          retryOnTimeout: 0,
-        })
+        setLoading(true);
+        setErro(null);
+        const { items, meta } = await apiFetchList<MovimentoRow>(
+          "/pharmacy/inventory_movement/",
+          {
+            page,
+            pageSize,
+            clientPaginate: true,
+            clientCache: safeRefreshToken === 0,
+            timeoutMs: 5000,
+            retryOnTimeout: 0,
+          },
+        );
 
-        const total = meta.total ?? items.length
+        const total = meta.total ?? items.length;
         const computedTotalPages =
           meta.totalPages ??
-          (total && pageSize ? Math.max(1, Math.ceil(total / pageSize)) : 1)
+          (total && pageSize ? Math.max(1, Math.ceil(total / pageSize)) : 1);
 
-        if (!mounted) return
-        setData(items)
-        setTotalItems(total)
-        setTotalPages(computedTotalPages)
-        if (page > computedTotalPages) setPage(computedTotalPages)
+        if (!mounted) return;
+        setData(items);
+        setTotalItems(total);
+        setTotalPages(computedTotalPages);
+        if (page > computedTotalPages) setPage(computedTotalPages);
       } catch (e: any) {
-        if (!mounted) return
-        setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao carregar movimentos."))
+        if (!mounted) return;
+        setErro(
+          isNotFoundLikeError(e)
+            ? null
+            : e?.message || "Falha ao carregar movimentos.",
+        );
       } finally {
-        if (mounted) setLoading(false)
+        if (mounted) setLoading(false);
       }
     }
-    load()
+    load();
     return () => {
-      mounted = false
-    }
-  }, [page, pageSize, safeRefreshToken])
+      mounted = false;
+    };
+  }, [page, pageSize, safeRefreshToken]);
 
   const downloadPdf = useCallback(async (url: string, filename: string) => {
-    const blob = await apiFetch<Blob>(url, { responseType: "blob" })
-    const href = window.URL.createObjectURL(blob)
-    const a = document.createElement("a")
-    a.href = href
-    a.download = filename
-    a.click()
-    window.URL.revokeObjectURL(href)
-  }, [])
+    const blob = await apiFetch<Blob>(url, { responseType: "blob" });
+    const href = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = href;
+    a.download = filename;
+    a.click();
+    window.URL.revokeObjectURL(href);
+  }, []);
 
   const buildCommonParams = useCallback(() => {
-    const params = new URLSearchParams()
-    if (dateFrom) params.set("date_from", dateFrom)
-    if (dateTo) params.set("date_to", dateTo)
-    return params
-  }, [dateFrom, dateTo])
+    const params = new URLSearchParams();
+    if (dateFrom) params.set("date_from", dateFrom);
+    if (dateTo) params.set("date_to", dateTo);
+    return params;
+  }, [dateFrom, dateTo]);
 
   const generateEntryExitPdf = useCallback(async () => {
     try {
-      setReportLoading("moves")
-      const params = buildCommonParams()
-      if (reportType !== "ALL") params.set("type", reportType)
-      if (reportSector !== "ALL") params.set("sector", reportSector)
-      params.set("limit", "1000")
+      setReportLoading("moves");
+      const params = buildCommonParams();
+      if (reportType !== "ALL") params.set("type", reportType);
+      if (reportSector !== "ALL") params.set("sector", reportSector);
+      params.set("limit", "1000");
       await downloadPdf(
         `/pharmacy/inventory_movement/history/pdf/?${params.toString()}`,
-        "historico_entradas_saidas_farmacia.pdf"
-      )
+        "historico_entradas_saidas_farmacia.pdf",
+      );
     } catch (e: any) {
-      setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao gerar PDF de entradas/saídas."))
+      setErro(
+        isNotFoundLikeError(e)
+          ? null
+          : e?.message || "Falha ao gerar PDF de entradas/saídas.",
+      );
     } finally {
-      setReportLoading(null)
+      setReportLoading(null);
     }
-  }, [downloadPdf, buildCommonParams, reportSector, reportType])
+  }, [downloadPdf, buildCommonParams, reportSector, reportType]);
 
   const generateStockPdf = useCallback(async () => {
     try {
-      setReportLoading("stock")
-      const params = buildCommonParams()
-      await downloadPdf(`/pharmacy/lot/stock/pdf/?${params.toString()}`, "estoque_existente_farmacia.pdf")
+      setReportLoading("stock");
+      const params = buildCommonParams();
+      await downloadPdf(
+        `/pharmacy/lot/stock/pdf/?${params.toString()}`,
+        "estoque_existente_farmacia.pdf",
+      );
     } catch (e: any) {
-      setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao gerar PDF de estoque existente."))
+      setErro(
+        isNotFoundLikeError(e)
+          ? null
+          : e?.message || "Falha ao gerar PDF de estoque existente.",
+      );
     } finally {
-      setReportLoading(null)
+      setReportLoading(null);
     }
-  }, [downloadPdf, buildCommonParams])
+  }, [downloadPdf, buildCommonParams]);
 
   const generateSectorMovementsPdf = useCallback(async () => {
     try {
-      setReportLoading("sector")
-      const params = buildCommonParams()
-      if (reportSector !== "ALL") params.set("sector", reportSector)
+      setReportLoading("sector");
+      const params = buildCommonParams();
+      if (reportSector !== "ALL") params.set("sector", reportSector);
       await downloadPdf(
         `/pharmacy/material_requisition/movement-history/pdf/?${params.toString()}`,
-        "historico_movimentos_por_setor_farmacia.pdf"
-      )
+        "historico_movimentos_por_setor_farmacia.pdf",
+      );
     } catch (e: any) {
-      setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao gerar PDF por setor solicitante."))
+      setErro(
+        isNotFoundLikeError(e)
+          ? null
+          : e?.message || "Falha ao gerar PDF por setor solicitante.",
+      );
     } finally {
-      setReportLoading(null)
+      setReportLoading(null);
     }
-  }, [downloadPdf, buildCommonParams, reportSector])
+  }, [downloadPdf, buildCommonParams, reportSector]);
 
   const generateProductConsumptionPdf = useCallback(async () => {
     try {
-      setReportLoading("consumption")
-      const params = buildCommonParams()
-      if (reportProductId) params.set("product_id", reportProductId)
+      setReportLoading("consumption");
+      const params = buildCommonParams();
+      if (reportProductId) params.set("product_id", reportProductId);
       await downloadPdf(
         `/pharmacy/product/consumption/pdf/?${params.toString()}`,
-        "consumo_farmaceutico_produtos.pdf"
-      )
+        "consumo_farmaceutico_produtos.pdf",
+      );
     } catch (e: any) {
-      setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao gerar PDF de consumo por produto."))
+      setErro(
+        isNotFoundLikeError(e)
+          ? null
+          : e?.message || "Falha ao gerar PDF de consumo por produto.",
+      );
     } finally {
-      setReportLoading(null)
+      setReportLoading(null);
     }
-  }, [downloadPdf, buildCommonParams, reportProductId])
+  }, [downloadPdf, buildCommonParams, reportProductId]);
 
   const generateMostRequestedProductsPdf = useCallback(async () => {
     try {
-      setReportLoading("top")
-      const params = buildCommonParams()
-      params.set("limit", "30")
+      setReportLoading("top");
+      const params = buildCommonParams();
+      params.set("limit", "30");
       await downloadPdf(
         `/pharmacy/product/most-requested/pdf/?${params.toString()}`,
-        "produtos_mais_requisitados_farmacia.pdf"
-      )
+        "produtos_mais_requisitados_farmacia.pdf",
+      );
     } catch (e: any) {
-      setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao gerar PDF de produtos mais requisitados."))
+      setErro(
+        isNotFoundLikeError(e)
+          ? null
+          : e?.message || "Falha ao gerar PDF de produtos mais requisitados.",
+      );
     } finally {
-      setReportLoading(null)
+      setReportLoading(null);
     }
-  }, [downloadPdf, buildCommonParams])
+  }, [downloadPdf, buildCommonParams]);
 
   const generateLeastRequestedProductsPdf = useCallback(async () => {
     try {
-      setReportLoading("least")
-      const params = buildCommonParams()
-      params.set("limit", "30")
+      setReportLoading("least");
+      const params = buildCommonParams();
+      params.set("limit", "30");
       await downloadPdf(
         `/pharmacy/product/least-requested/pdf/?${params.toString()}`,
-        "produtos_menos_requisitados_farmacia.pdf"
-      )
+        "produtos_menos_requisitados_farmacia.pdf",
+      );
     } catch (e: any) {
-      setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao gerar PDF de produtos menos requisitados."))
+      setErro(
+        isNotFoundLikeError(e)
+          ? null
+          : e?.message || "Falha ao gerar PDF de produtos menos requisitados.",
+      );
     } finally {
-      setReportLoading(null)
+      setReportLoading(null);
     }
-  }, [downloadPdf, buildCommonParams])
+  }, [downloadPdf, buildCommonParams]);
 
   const generateProductSectorsPdf = useCallback(async () => {
     if (!reportProductId) {
-      setErro("Selecione um produto para gerar relatório por setor.")
-      return
+      setErro("Selecione um produto para gerar relatório por setor.");
+      return;
     }
     try {
-      setReportLoading("sector-product")
-      const params = buildCommonParams()
-      params.set("product_id", reportProductId)
+      setReportLoading("sector-product");
+      const params = buildCommonParams();
+      params.set("product_id", reportProductId);
       await downloadPdf(
         `/pharmacy/product/request-sectors/pdf/?${params.toString()}`,
-        "setores_requisicao_produto_farmacia.pdf"
-      )
+        "setores_requisicao_produto_farmacia.pdf",
+      );
     } catch (e: any) {
-      setErro(isNotFoundLikeError(e) ? null : (e?.message || "Falha ao gerar PDF de setores por produto."))
+      setErro(
+        isNotFoundLikeError(e)
+          ? null
+          : e?.message || "Falha ao gerar PDF de setores por produto.",
+      );
     } finally {
-      setReportLoading(null)
+      setReportLoading(null);
     }
-  }, [downloadPdf, buildCommonParams, reportProductId])
+  }, [downloadPdf, buildCommonParams, reportProductId]);
 
   const columns = useMemo(
     () => [
@@ -226,18 +275,32 @@ export default function FarmaciaMovimentosPage() {
           </Link>
         ),
       },
-      { header: "Lote", render: (m: MovimentoRow) => m.lote_numero || m.lot_number || m.lote || m.lot || "-" },
+      {
+        header: "Lote",
+        render: (m: MovimentoRow) =>
+          m.lote_numero || m.lot_number || m.lote || m.lot || "-",
+      },
       {
         header: "Produto",
-        render: (m: MovimentoRow) => m.produto_nome || m.product_name || m.produto || m.product || "-",
+        render: (m: MovimentoRow) =>
+          m.produto_nome || m.product_name || m.produto || m.product || "-",
       },
       { header: "Tipo", render: (m: MovimentoRow) => m.tipo || m.type || "-" },
-      { header: "Origem", render: (m: MovimentoRow) => m.origem ?? m.origin ?? "-" },
-      { header: "Quantidade", render: (m: MovimentoRow) => m.quantidade ?? m.quantity ?? "-" },
-      { header: "Data", render: (m: MovimentoRow) => fmtDate(m.criado_em || m.created_at) },
+      {
+        header: "Origem",
+        render: (m: MovimentoRow) => m.origem ?? m.origin ?? "-",
+      },
+      {
+        header: "Quantidade",
+        render: (m: MovimentoRow) => m.quantidade ?? m.quantity ?? "-",
+      },
+      {
+        header: "Data",
+        render: (m: MovimentoRow) => fmtDate(m.criado_em || m.created_at),
+      },
     ],
-    []
-  )
+    [],
+  );
 
   return (
     <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.FARMACIA]}>
@@ -258,14 +321,6 @@ export default function FarmaciaMovimentosPage() {
               >
                 Gerenciamento
               </Link>
-              {podeVerAdmin ? (
-                <Link
-                  href="/admin/pharmacy/inventorymovement/"
-                  className="inline-flex items-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50"
-                >
-                  Admin
-                </Link>
-              ) : null}
             </div>
           }
         />
@@ -283,8 +338,8 @@ export default function FarmaciaMovimentosPage() {
             <select
               value={pageSize}
               onChange={(e) => {
-                setPage(1)
-                setPageSize(Number(e.target.value))
+                setPage(1);
+                setPageSize(Number(e.target.value));
               }}
               className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm"
             >
@@ -354,11 +409,11 @@ export default function FarmaciaMovimentosPage() {
               <button
                 type="button"
                 onClick={() => {
-                  setDateFrom("")
-                  setDateTo("")
-                  setReportType("ALL")
-                  setReportSector("ALL")
-                  setReportProductId("")
+                  setDateFrom("");
+                  setDateTo("");
+                  setReportType("ALL");
+                  setReportSector("ALL");
+                  setReportProductId("");
                 }}
                 className="w-full rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-sm font-medium text-[var(--gray-700)] transition hover:bg-[var(--gray-100)]"
               >
@@ -386,7 +441,10 @@ export default function FarmaciaMovimentosPage() {
               disabled={reportLoading !== null}
               className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50 disabled:opacity-60"
             >
-              <PdfActionLabel loading={reportLoading === "moves"} loadingLabel="Gerando...">
+              <PdfActionLabel
+                loading={reportLoading === "moves"}
+                loadingLabel="Gerando..."
+              >
                 PDF histórico entradas/saídas
               </PdfActionLabel>
             </button>
@@ -396,7 +454,10 @@ export default function FarmaciaMovimentosPage() {
               disabled={reportLoading !== null}
               className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50 disabled:opacity-60"
             >
-              <PdfActionLabel loading={reportLoading === "stock"} loadingLabel="Gerando...">
+              <PdfActionLabel
+                loading={reportLoading === "stock"}
+                loadingLabel="Gerando..."
+              >
                 PDF estoque existente
               </PdfActionLabel>
             </button>
@@ -406,7 +467,10 @@ export default function FarmaciaMovimentosPage() {
               disabled={reportLoading !== null}
               className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50 disabled:opacity-60"
             >
-              <PdfActionLabel loading={reportLoading === "sector"} loadingLabel="Gerando...">
+              <PdfActionLabel
+                loading={reportLoading === "sector"}
+                loadingLabel="Gerando..."
+              >
                 PDF movimentos por setor solicitante
               </PdfActionLabel>
             </button>
@@ -416,7 +480,10 @@ export default function FarmaciaMovimentosPage() {
               disabled={reportLoading !== null}
               className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50 disabled:opacity-60"
             >
-              <PdfActionLabel loading={reportLoading === "consumption"} loadingLabel="Gerando...">
+              <PdfActionLabel
+                loading={reportLoading === "consumption"}
+                loadingLabel="Gerando..."
+              >
                 PDF consumo por produto
               </PdfActionLabel>
             </button>
@@ -426,7 +493,10 @@ export default function FarmaciaMovimentosPage() {
               disabled={reportLoading !== null}
               className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50 disabled:opacity-60"
             >
-              <PdfActionLabel loading={reportLoading === "top"} loadingLabel="Gerando...">
+              <PdfActionLabel
+                loading={reportLoading === "top"}
+                loadingLabel="Gerando..."
+              >
                 PDF produtos mais requisitados
               </PdfActionLabel>
             </button>
@@ -436,7 +506,10 @@ export default function FarmaciaMovimentosPage() {
               disabled={reportLoading !== null}
               className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50 disabled:opacity-60"
             >
-              <PdfActionLabel loading={reportLoading === "least"} loadingLabel="Gerando...">
+              <PdfActionLabel
+                loading={reportLoading === "least"}
+                loadingLabel="Gerando..."
+              >
                 PDF produtos menos requisitados
               </PdfActionLabel>
             </button>
@@ -446,7 +519,10 @@ export default function FarmaciaMovimentosPage() {
               disabled={reportLoading !== null}
               className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50 disabled:opacity-60"
             >
-              <PdfActionLabel loading={reportLoading === "sector-product"} loadingLabel="Gerando...">
+              <PdfActionLabel
+                loading={reportLoading === "sector-product"}
+                loadingLabel="Gerando..."
+              >
                 PDF setores por produto
               </PdfActionLabel>
             </button>
@@ -462,10 +538,14 @@ export default function FarmaciaMovimentosPage() {
               data={data}
               emptyMessage="Nenhum movimento encontrado."
             />
-            <Pagination page={page} totalPages={totalPages} onChange={setPage} />
+            <Pagination
+              page={page}
+              totalPages={totalPages}
+              onChange={setPage}
+            />
           </>
         )}
       </div>
     </AppLayout>
-  )
+  );
 }

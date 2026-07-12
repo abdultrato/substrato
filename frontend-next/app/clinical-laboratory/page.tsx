@@ -46,9 +46,24 @@ const PHASES: PhaseConfig[] = [
     accentClass: "border-l-violet-500",
     iconClass: "bg-violet-500/15 text-violet-600",
     items: [
-      { href: "/clinical-laboratory/sectors",  label: "Sectores",  desc: "Hematologia, Bioquímica, Microbiologia…", icon: Microscope },
-      { href: "/clinical-laboratory/tests",    label: "Exames",    desc: "Catálogo de exames (método, unidade, preço)", icon: TestTube },
-      { href: "/clinical-laboratory/panels",   label: "Painéis",   desc: "Hemograma, perfil lipídico, pré-operatório…", icon: ListChecks },
+      {
+        href: "/clinical-laboratory/sectors",
+        label: "Sectores",
+        desc: "Hematologia, Bioquímica, Microbiologia…",
+        icon: Microscope,
+      },
+      {
+        href: "/clinical-laboratory/tests",
+        label: "Exames",
+        desc: "Catálogo de exames (método, unidade, preço)",
+        icon: TestTube,
+      },
+      {
+        href: "/clinical-laboratory/panels",
+        label: "Painéis",
+        desc: "Hemograma, perfil lipídico, pré-operatório…",
+        icon: ListChecks,
+      },
     ],
   },
   {
@@ -57,7 +72,12 @@ const PHASES: PhaseConfig[] = [
     accentClass: "border-l-sky-500",
     iconClass: "bg-sky-500/15 text-sky-600",
     items: [
-      { href: "/clinical-laboratory/orders", label: "Pedidos", desc: "Pedidos laboratoriais e respetivos exames", icon: ClipboardList },
+      {
+        href: "/clinical-laboratory/orders",
+        label: "Pedidos",
+        desc: "Pedidos laboratoriais e respetivos exames",
+        icon: ClipboardList,
+      },
     ],
   },
   {
@@ -66,10 +86,30 @@ const PHASES: PhaseConfig[] = [
     accentClass: "border-l-cyan-500",
     iconClass: "bg-cyan-500/15 text-cyan-600",
     items: [
-      { href: "/clinical-laboratory/collections", label: "Coletas",   desc: "Coleta da amostra do paciente", icon: Syringe },
-      { href: "/clinical-laboratory/samples",     label: "Amostras",  desc: "Amostras rastreáveis (código de barras)", icon: TestTubes },
-      { href: "/clinical-laboratory/reception",   label: "Recepção",  desc: "Conferência e aceitação da amostra", icon: PackageCheck },
-      { href: "/clinical-laboratory/rejections",  label: "Rejeições", desc: "Amostras inadequadas / nova coleta", icon: XCircle },
+      {
+        href: "/clinical-laboratory/collections",
+        label: "Coletas",
+        desc: "Coleta da amostra do paciente",
+        icon: Syringe,
+      },
+      {
+        href: "/clinical-laboratory/samples",
+        label: "Amostras",
+        desc: "Amostras rastreáveis (código de barras)",
+        icon: TestTubes,
+      },
+      {
+        href: "/clinical-laboratory/reception",
+        label: "Recepção",
+        desc: "Conferência e aceitação da amostra",
+        icon: PackageCheck,
+      },
+      {
+        href: "/clinical-laboratory/rejections",
+        label: "Rejeições",
+        desc: "Amostras inadequadas / nova coleta",
+        icon: XCircle,
+      },
     ],
   },
   {
@@ -78,9 +118,24 @@ const PHASES: PhaseConfig[] = [
     accentClass: "border-l-teal-500",
     iconClass: "bg-teal-500/15 text-teal-600",
     items: [
-      { href: "/clinical-laboratory/worklists",   label: "Listas de trabalho", desc: "Trabalho por sector e equipamento", icon: Beaker },
-      { href: "/clinical-laboratory/quality-control", label: "Controlo de qualidade", desc: "Resultado esperado vs obtido e validade do exame", icon: Gauge },
-      { href: "/clinical-laboratory/validations", label: "Validações",          desc: "Validação técnica e clínica", icon: FileCheck2 },
+      {
+        href: "/clinical-laboratory/worklists",
+        label: "Listas de trabalho",
+        desc: "Trabalho por sector e equipamento",
+        icon: Beaker,
+      },
+      {
+        href: "/clinical-laboratory/quality-control",
+        label: "Controlo de qualidade",
+        desc: "Resultado esperado vs obtido e validade do exame",
+        icon: Gauge,
+      },
+      {
+        href: "/clinical-laboratory/validations",
+        label: "Validações",
+        desc: "Validação técnica e clínica",
+        icon: FileCheck2,
+      },
     ],
   },
   {
@@ -89,8 +144,18 @@ const PHASES: PhaseConfig[] = [
     accentClass: "border-l-emerald-500",
     iconClass: "bg-emerald-500/15 text-emerald-600",
     items: [
-      { href: "/clinical-laboratory/reports",         label: "Laudos",             desc: "Emissão, assinatura e entrega do laudo", icon: FileText },
-      { href: "/clinical-laboratory/critical-results", label: "Resultados críticos", desc: "Comunicação com readback", icon: AlertTriangle },
+      {
+        href: "/clinical-laboratory/reports",
+        label: "Laudos",
+        desc: "Emissão, assinatura e entrega do laudo",
+        icon: FileText,
+      },
+      {
+        href: "/clinical-laboratory/critical-results",
+        label: "Resultados críticos",
+        desc: "Comunicação com readback",
+        icon: AlertTriangle,
+      },
     ],
   },
   {
@@ -99,11 +164,36 @@ const PHASES: PhaseConfig[] = [
     accentClass: "border-l-amber-500",
     iconClass: "bg-amber-500/15 text-amber-600",
     items: [
-      { href: "/clinical-laboratory/cultures",     label: "Culturas",                   desc: "Microbiologia: hemocultura, urocultura, TB…", icon: Microscope },
-      { href: "/clinical-laboratory/isolates",     label: "Isolados",                   desc: "Microrganismos identificados", icon: Bug },
-      { href: "/clinical-laboratory/antibiograms", label: "Antibiogramas",              desc: "Sensibilidade S/I/R", icon: Pill },
-      { href: "/clinical-laboratory/molecular",    label: "Biologia Molecular / GeneXpert", desc: "PCR, carga viral, MTB/RIF", icon: Dna },
-      { href: "/clinical-laboratory/afb-smears",  label: "Baciloscopia (BAAR)",        desc: "Microscopia para TB (ZN/Auramina)", icon: TestTubes },
+      {
+        href: "/clinical-laboratory/cultures",
+        label: "Culturas",
+        desc: "Microbiologia: hemocultura, urocultura, TB…",
+        icon: Microscope,
+      },
+      {
+        href: "/clinical-laboratory/isolates",
+        label: "Isolados",
+        desc: "Microrganismos identificados",
+        icon: Bug,
+      },
+      {
+        href: "/clinical-laboratory/antibiograms",
+        label: "Antibiogramas",
+        desc: "Sensibilidade S/I/R",
+        icon: Pill,
+      },
+      {
+        href: "/clinical-laboratory/molecular",
+        label: "Biologia Molecular / GeneXpert",
+        desc: "PCR, carga viral, MTB/RIF",
+        icon: Dna,
+      },
+      {
+        href: "/clinical-laboratory/afb-smears",
+        label: "Baciloscopia (BAAR)",
+        desc: "Microscopia para TB (ZN/Auramina)",
+        icon: TestTubes,
+      },
     ],
   },
   {
@@ -112,8 +202,18 @@ const PHASES: PhaseConfig[] = [
     accentClass: "border-l-rose-500",
     iconClass: "bg-rose-500/15 text-rose-600",
     items: [
-      { href: "/clinical-laboratory/quality-management", label: "Gestão da Qualidade", desc: "Documentos, NC, CAPA, auditorias, indicadores…", icon: FileCheck2 },
-      { href: "/clinical-laboratory/biosafety",          label: "Biossegurança",        desc: "Exposições, EPIs, resíduos, descontaminação…", icon: AlertTriangle },
+      {
+        href: "/clinical-laboratory/quality-management",
+        label: "Gestão da Qualidade",
+        desc: "Documentos, NC, CAPA, auditorias, indicadores…",
+        icon: FileCheck2,
+      },
+      {
+        href: "/clinical-laboratory/biosafety",
+        label: "Biossegurança",
+        desc: "Exposições, EPIs, resíduos, descontaminação…",
+        icon: AlertTriangle,
+      },
     ],
   },
 ];
@@ -131,7 +231,13 @@ export default function ClinicalLaboratoryHubPage() {
     async function load() {
       const safe = async (ep: string) => {
         try {
-          const { meta } = await apiFetchList(ep, { page: 1, pageSize: 1, clientCache: false, timeoutMs: 4000, retryOnTimeout: 0 });
+          const { meta } = await apiFetchList(ep, {
+            page: 1,
+            pageSize: 1,
+            clientCache: false,
+            timeoutMs: 4000,
+            retryOnTimeout: 0,
+          });
           return meta.total ?? 0;
         } catch (e) {
           return isNotFoundLikeError(e) ? 0 : 0;
@@ -147,13 +253,14 @@ export default function ClinicalLaboratoryHubPage() {
       setLoading(false);
     }
     load();
-    return () => { mounted = false; };
+    return () => {
+      mounted = false;
+    };
   }, [safeRefreshToken]);
 
   return (
     <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.LABORATORIO]}>
       <div className="space-y-4">
-
         {/* ── Hero ── */}
         <div className="relative overflow-hidden rounded-2xl border border-teal-200/60 bg-gradient-to-br from-teal-50/80 via-cyan-50/70 to-sky-100/60 px-6 py-6 shadow-sm backdrop-blur-md dark:border-teal-700/30 dark:bg-gradient-to-br dark:from-teal-950/60 dark:via-cyan-950/50 dark:to-sky-950/60">
           {/* decorative circles — light */}
@@ -163,39 +270,44 @@ export default function ClinicalLaboratoryHubPage() {
           <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-4">
               <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-teal-500/15 shadow-inner backdrop-blur-sm dark:bg-teal-400/10">
-                <FlaskConical size={28} className="text-teal-700 dark:text-teal-300" strokeWidth={1.8} />
+                <FlaskConical
+                  size={28}
+                  className="text-teal-700 dark:text-teal-300"
+                  strokeWidth={1.8}
+                />
               </div>
               <div>
                 <h1 className="font-display text-2xl font-bold leading-tight text-teal-900 dark:text-teal-100">
                   Laboratório Clínico
                 </h1>
                 <p className="mt-0.5 text-sm text-teal-700/70 dark:text-teal-300/60">
-                  LIS · {PHASES.reduce((n, p) => n + p.items.length, 0)} funcionalidades
+                  LIS · {PHASES.reduce((n, p) => n + p.items.length, 0)}{" "}
+                  funcionalidades
                 </p>
               </div>
             </div>
-
-            {podeAdmin ? (
-              <Link
-                href="/admin/clinical_laboratory/"
-                className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-teal-300/50 bg-teal-100/60 px-3 py-1.5 text-xs font-medium text-teal-800 backdrop-blur-sm transition hover:bg-teal-200/60 dark:border-teal-600/40 dark:bg-teal-800/30 dark:text-teal-200 dark:hover:bg-teal-700/40"
-              >
-                <ShieldCheck size={13} />
-                Admin
-              </Link>
-            ) : null}
           </div>
 
           {/* metric strip */}
           <div className="relative mt-5 grid grid-cols-3 gap-2 sm:gap-3">
             {[
-              { label: "Exames no catálogo", value: loading ? "…" : counts.exames },
-              { label: "Pedidos",             value: loading ? "…" : counts.pedidos },
-              { label: "Amostras",            value: loading ? "…" : counts.amostras },
+              {
+                label: "Exames no catálogo",
+                value: loading ? "…" : counts.exames,
+              },
+              { label: "Pedidos", value: loading ? "…" : counts.pedidos },
+              { label: "Amostras", value: loading ? "…" : counts.amostras },
             ].map(({ label, value }) => (
-              <div key={label} className="rounded-xl border border-teal-200/50 bg-white/40 px-3 py-2 backdrop-blur-sm dark:border-teal-700/30 dark:bg-teal-900/30">
-                <div className="text-[10px] font-semibold uppercase tracking-wide text-teal-600/80 dark:text-teal-400/70">{label}</div>
-                <div className="font-display text-xl font-bold tabular-nums text-teal-900 dark:text-teal-100">{value}</div>
+              <div
+                key={label}
+                className="rounded-xl border border-teal-200/50 bg-white/40 px-3 py-2 backdrop-blur-sm dark:border-teal-700/30 dark:bg-teal-900/30"
+              >
+                <div className="text-[10px] font-semibold uppercase tracking-wide text-teal-600/80 dark:text-teal-400/70">
+                  {label}
+                </div>
+                <div className="font-display text-xl font-bold tabular-nums text-teal-900 dark:text-teal-100">
+                  {value}
+                </div>
               </div>
             ))}
           </div>
@@ -207,11 +319,15 @@ export default function ClinicalLaboratoryHubPage() {
             <section key={phase.title}>
               {/* section label */}
               <div className="mb-2 flex items-center gap-2">
-                <span className={`h-2.5 w-1 rounded-full ${phase.accentClass.replace("border-l-", "bg-")}`} />
+                <span
+                  className={`h-2.5 w-1 rounded-full ${phase.accentClass.replace("border-l-", "bg-")}`}
+                />
                 <h2 className="text-[11px] font-semibold uppercase tracking-widest text-foreground/70">
                   {phase.title}
                 </h2>
-                <span className="text-[10px] text-muted-foreground">{phase.hint}</span>
+                <span className="text-[10px] text-muted-foreground">
+                  {phase.hint}
+                </span>
               </div>
 
               <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -230,7 +346,6 @@ export default function ClinicalLaboratoryHubPage() {
             </section>
           ))}
         </div>
-
       </div>
     </AppLayout>
   );

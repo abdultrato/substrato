@@ -14,6 +14,10 @@ import {
 } from "@/lib/resourceActions"
 import { fieldLabel } from "@/lib/ui/fieldLabels"
 
+// Superfície esmeralda partilhada com a listagem/cabeçalho de faturas.
+const INVOICE_SURFACE_CLASS =
+  "border-emerald-200/40 bg-gradient-to-r from-emerald-500/15 via-white/30 to-white/30 dark:border-white/10 dark:from-emerald-500/10 dark:via-white/5 dark:to-white/5"
+
 type FieldValue = string | boolean | number
 type FieldValues = Record<string, FieldValue>
 type ExportJobPayload = {
@@ -640,7 +644,7 @@ export default function ResourceActionPanel({
   }
 
   return (
-    <section className={`rounded-xl border border-white/20 bg-white/20 p-2.5 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-slate-950/35 ${isBillingInvoice ? "mx-auto" : ""}`}>
+    <section className={`rounded-xl border p-2.5 shadow-sm backdrop-blur-sm ${isBillingInvoice ? `mx-auto ${INVOICE_SURFACE_CLASS}` : "border-white/20 bg-white/20 dark:border-white/10 dark:bg-slate-950/35"}`}>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2 whitespace-nowrap">
           <div className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-white/25 bg-white/45 text-[var(--primary-700)] shadow-sm dark:border-white/10 dark:bg-white/10">
@@ -669,7 +673,7 @@ export default function ResourceActionPanel({
           return (
             <div
               key={action.key}
-              className={`relative flex h-full min-w-0 flex-col overflow-hidden rounded-lg border border-white/20 bg-white/30 p-2.5 pl-3 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-slate-900/40 ${isBillingHistoryAction ? "w-full" : ""}`}
+              className={`relative flex h-full min-w-0 flex-col overflow-hidden rounded-lg border p-2.5 pl-3 shadow-sm backdrop-blur-sm ${isBillingHistoryAction ? `w-full ${INVOICE_SURFACE_CLASS}` : "border-white/20 bg-white/30 dark:border-white/10 dark:bg-slate-900/40"}`}
             >
               <span className="absolute left-0 top-0 h-full w-1 bg-gradient-to-b from-[var(--primary-500)] to-[var(--primary-400)]" />
               <div className="flex flex-wrap items-start justify-between gap-2">

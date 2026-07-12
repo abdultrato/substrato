@@ -55,6 +55,8 @@ export type AutoFormProps = {
   presentation?: "default" | "modern-nursing" | "nursing-system"
   compactFields?: string[]
   initialRelationLabels?: Record<string, string | null | undefined>
+  /** Sobrepõe as classes do cartão no fluxo nursing-system (ex.: superfície de fatura). */
+  surfaceClassName?: string
 }
 
 const LONG_TEXT_FIELDS = new Set([
@@ -1122,6 +1124,7 @@ export default function AutoForm({
   presentation = "default",
   compactFields = [],
   initialRelationLabels = {},
+  surfaceClassName,
 }: AutoFormProps) {
   const { tr } = useLanguage()
   const safeRefreshToken = useSafeDataRefreshSignal()
@@ -1622,7 +1625,7 @@ export default function AutoForm({
       <div className={modernNursingProcedureFlow
         ? "overflow-hidden rounded-xl border border-white/[0.24] bg-gradient-to-br from-white/[0.07] via-white/[0.025] to-sky-100/[0.035] p-3 shadow-lg shadow-slate-900/5 backdrop-blur-2xl [&_input]:!border-white/[0.28] [&_input]:!bg-white/[0.10] [&_select]:!border-white/[0.28] [&_select]:!bg-white/[0.10] [&_textarea]:!border-white/[0.28] [&_textarea]:!bg-white/[0.10] dark:border-white/[0.08] dark:from-white/[0.035] dark:via-white/[0.015] dark:to-sky-950/[0.025] dark:[&_input]:!border-white/[0.08] dark:[&_input]:!bg-white/[0.035] dark:[&_select]:!border-white/[0.08] dark:[&_select]:!bg-white/[0.035] dark:[&_textarea]:!border-white/[0.08] dark:[&_textarea]:!bg-white/[0.035]"
         : nursingSystemFlow
-          ? "rounded-xl border border-white/20 bg-white/30 p-4 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]"
+          ? (surfaceClassName || "rounded-xl border border-white/20 bg-white/30 p-4 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]")
           : "rounded-lg border border-[var(--border)] bg-[var(--card)] p-4 shadow-sm"
       }>
         {requiredFields.length ? (

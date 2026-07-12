@@ -48,6 +48,14 @@ import { createResourceActionLabel } from "@/lib/resources/createLabels"
 import { getResourceFormConfig } from "@/lib/resources/resourceFormConfig"
 import { buildRecordDetailHref, primaryRecordId } from "@/lib/resources/recordIdentity"
 
+// Superfície esmeralda partilhada entre a listagem, o cabeçalho e os
+// formulários de fatura para manter a mesma identidade visual.
+const INVOICE_SURFACE =
+  "border-emerald-200/50 bg-gradient-to-br from-emerald-50/80 via-white/60 to-teal-50/60 dark:border-emerald-800/30 dark:from-emerald-950/30 dark:via-slate-900/40 dark:to-teal-950/20"
+// Banner do cabeçalho da listagem de faturas (modelo ward-admissions).
+const INVOICE_BANNER =
+  "border-emerald-200/40 bg-gradient-to-r from-emerald-500/15 via-white/30 to-white/30 dark:border-white/10 dark:from-emerald-500/10 dark:via-white/5 dark:to-white/5"
+
 type EndpointContext = {
   endpoint: string
   normalizedEndpoint: string
@@ -232,12 +240,8 @@ export function GeneratedResourceListPage({
       rowHref={(row) => buildRecordDetailHref(basePath, row)}
       requiredGroups={ctx.requiredGroups}
       clientFullTextSearch={ctx.groupKey === "accounting" || ctx.normalizedEndpoint.startsWith("/accounting/") || isInvoiceList}
-      heroIcon={isInvoiceList ? <Receipt size={17} /> : undefined}
-      heroClassName={
-        isInvoiceList
-          ? "border-emerald-200/50 bg-gradient-to-br from-emerald-50/80 via-white/60 to-teal-50/60 dark:border-emerald-800/30 dark:from-emerald-950/30 dark:via-slate-900/40 dark:to-teal-950/20"
-          : undefined
-      }
+      heroIcon={isInvoiceList ? <Receipt size={22} strokeWidth={2} /> : undefined}
+      heroClassName={isInvoiceList ? INVOICE_BANNER : undefined}
       heroAccentClassName={isInvoiceList ? "bg-emerald-500" : undefined}
       cardGridClassName={
         ctx.groupKey === "accounting" || ctx.normalizedEndpoint.startsWith("/accounting/") || isInvoiceList
@@ -460,6 +464,8 @@ export function GeneratedResourceCreatePage({
                 ? "relative overflow-hidden rounded-xl border border-emerald-200/30 bg-white/25 shadow-lg shadow-slate-900/5 backdrop-blur-2xl dark:border-emerald-800/20 dark:bg-white/[0.04]"
               : isBloodDonation
                 ? "relative overflow-hidden rounded-xl border border-rose-200/40 bg-white/28 shadow-lg shadow-rose-950/5 backdrop-blur-2xl dark:border-rose-900/30 dark:bg-white/[0.05]"
+              : isInvoice
+                ? ""
                 : GLASS
           }
         >
@@ -469,7 +475,7 @@ export function GeneratedResourceCreatePage({
               <div className="pointer-events-none absolute right-0 top-0 h-24 w-24 rounded-full bg-emerald-400/10 blur-2xl" />
             </>
           ) : null}
-          <div className={isNursingProcedure ? "" : isNursingMaterial ? "relative px-4 py-4 sm:px-5" : isBloodDonation ? "relative px-4 py-4 sm:px-5" : "p-4"}>
+          <div className={isNursingProcedure || isInvoice ? "" : isNursingMaterial ? "relative px-4 py-4 sm:px-5" : isBloodDonation ? "relative px-4 py-4 sm:px-5" : "p-4"}>
             {isBloodDonation ? (
               <>
                 <span className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-rose-500 via-red-500 to-cyan-500" />
@@ -507,6 +513,7 @@ export function GeneratedResourceCreatePage({
               submitLabel={createActionLabel}
               config={getResourceFormConfig(ctx.groupKey, ctx.resourceKey, ctx.normalizedEndpoint)}
               presentation={ctx.normalizedEndpoint === "/nursing/nursing_evolution/" || ctx.normalizedEndpoint === "/nursing/nursing_prescription/" || ctx.normalizedEndpoint === "/nursing/nursing_vital_sign/" || ctx.normalizedEndpoint === "/accounting/bank_account/" || ctx.normalizedEndpoint === "/accounting/accounts/" || ctx.normalizedEndpoint === "/accounting/entry/" || ctx.normalizedEndpoint === "/accounting/movement/" || ctx.normalizedEndpoint === "/accounting/financialreconciliation/" || ctx.normalizedEndpoint === "/accounting/financial-reconciliations/" || ctx.normalizedEndpoint === "/billing/invoice/" ? "nursing-system" : "default"}
+              surfaceClassName={isInvoice ? `rounded-xl border p-4 shadow-sm backdrop-blur-sm ${INVOICE_SURFACE}` : undefined}
               onSuccess={(data) => {
                 const id = primaryRecordId(data)
                 if (id !== undefined && id !== null && String(id).trim()) {
@@ -1207,6 +1214,7 @@ export function GeneratedResourceEditPage({ endpoint }: { endpoint: string }) {
             submitLabel={t("Guardar alterações", "Save changes")}
             config={getResourceFormConfig(ctx.groupKey, ctx.resourceKey, ctx.normalizedEndpoint)}
             presentation={isNursingCard || isInvoice ? "nursing-system" : "default"}
+            surfaceClassName={isInvoice ? `rounded-xl border p-4 shadow-sm backdrop-blur-sm ${INVOICE_SURFACE}` : undefined}
             onSuccess={() => router.push(detailPath)}
           />
         )}

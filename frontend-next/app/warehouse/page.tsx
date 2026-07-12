@@ -1,7 +1,7 @@
-"use client"
+"use client";
 
-import Link from "next/link"
-import { useCallback, useEffect, useState } from "react"
+import Link from "next/link";
+import { useCallback, useEffect, useState } from "react";
 import {
   ArrowRight,
   Boxes,
@@ -17,33 +17,33 @@ import {
   ShieldCheck,
   ShoppingCart,
   Truck,
-} from "lucide-react"
+} from "lucide-react";
 
-import { lucideToDataUrl } from "@/lib/icon-svg"
+import { lucideToDataUrl } from "@/lib/icon-svg";
 
-import AppLayout from "@/components/layout/AppLayout"
-import ActionTile from "@/components/ui/ActionTile"
-import Card from "@/components/ui/Card"
-import MetricCard from "@/components/ui/MetricCard"
-import PageHeader from "@/components/ui/PageHeader"
-import { useAuth } from "@/hooks/useAuth"
-import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
-import { useLanguage } from "@/hooks/useLanguage"
-import { apiFetchList } from "@/lib/api"
-import { isNotFoundLikeError } from "@/lib/errors/api-error"
-import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
+import AppLayout from "@/components/layout/AppLayout";
+import ActionTile from "@/components/ui/ActionTile";
+import Card from "@/components/ui/Card";
+import MetricCard from "@/components/ui/MetricCard";
+import PageHeader from "@/components/ui/PageHeader";
+import { useAuth } from "@/hooks/useAuth";
+import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh";
+import { useLanguage } from "@/hooks/useLanguage";
+import { apiFetchList } from "@/lib/api";
+import { isNotFoundLikeError } from "@/lib/errors/api-error";
+import { GROUPS, userHasAnyGroup } from "@/lib/rbac";
 
-type WarehouseRow = Record<string, any>
+type WarehouseRow = Record<string, any>;
 
 type Counts = {
-  items: number
-  stockLevels: number
-  openSalesOrders: number
-  activeReservations: number
-  shipments: number
-  purchaseOrders: number
-  replenishmentPlans: number
-}
+  items: number;
+  stockLevels: number;
+  openSalesOrders: number;
+  activeReservations: number;
+  shipments: number;
+  purchaseOrders: number;
+  replenishmentPlans: number;
+};
 
 const EMPTY_COUNTS: Counts = {
   items: 0,
@@ -53,7 +53,7 @@ const EMPTY_COUNTS: Counts = {
   shipments: 0,
   purchaseOrders: 0,
   replenishmentPlans: 0,
-}
+};
 
 type QueueKey =
   | "purchaseOrders"
@@ -64,9 +64,9 @@ type QueueKey =
   | "pickLists"
   | "shipments"
   | "transfers"
-  | "stockLevels"
+  | "stockLevels";
 
-type Queues = Record<QueueKey, WarehouseRow[]>
+type Queues = Record<QueueKey, WarehouseRow[]>;
 
 const EMPTY_QUEUES: Queues = {
   purchaseOrders: [],
@@ -78,22 +78,25 @@ const EMPTY_QUEUES: Queues = {
   shipments: [],
   transfers: [],
   stockLevels: [],
-}
+};
 
 type QueueConfig = {
-  key: QueueKey
-  title: string
-  description: string
-  resource: string
-  href: string
-  createHref?: string
-  createLabel?: string
-  emptyMessage: string
-  titleFields: string[]
-  detailFields: string[]
-}
+  key: QueueKey;
+  title: string;
+  description: string;
+  resource: string;
+  href: string;
+  createHref?: string;
+  createLabel?: string;
+  emptyMessage: string;
+  titleFields: string[];
+  detailFields: string[];
+};
 
-async function countEndpoint(endpoint: string, query?: Record<string, string>): Promise<number> {
+async function countEndpoint(
+  endpoint: string,
+  query?: Record<string, string>,
+): Promise<number> {
   try {
     const { meta } = await apiFetchList(endpoint, {
       page: 1,
@@ -102,15 +105,19 @@ async function countEndpoint(endpoint: string, query?: Record<string, string>): 
       clientCache: false,
       timeoutMs: 4000,
       retryOnTimeout: 0,
-    })
-    return meta.total ?? 0
+    });
+    return meta.total ?? 0;
   } catch (error) {
-    if (isNotFoundLikeError(error)) return 0
-    throw error
+    if (isNotFoundLikeError(error)) return 0;
+    throw error;
   }
 }
 
-async function fetchQueue(endpoint: string, query?: Record<string, string>, pageSize = 5): Promise<WarehouseRow[]> {
+async function fetchQueue(
+  endpoint: string,
+  query?: Record<string, string>,
+  pageSize = 5,
+): Promise<WarehouseRow[]> {
   try {
     const { items } = await apiFetchList<WarehouseRow>(endpoint, {
       page: 1,
@@ -119,37 +126,39 @@ async function fetchQueue(endpoint: string, query?: Record<string, string>, page
       timeoutMs: 5000,
       retryOnTimeout: 0,
       clientCache: false,
-    })
-    return items
+    });
+    return items;
   } catch (error) {
-    if (isNotFoundLikeError(error)) return []
-    throw error
+    if (isNotFoundLikeError(error)) return [];
+    throw error;
   }
 }
 
 function firstText(row: WarehouseRow, fields: string[]): string {
   for (const field of fields) {
-    const value = row?.[field]
+    const value = row?.[field];
     if (value !== null && value !== undefined && String(value).trim()) {
-      return String(value)
+      return String(value);
     }
   }
-  return ""
+  return "";
 }
 
 function recordId(row: WarehouseRow): string {
-  return String(row?.id ?? row?.custom_id ?? "")
+  return String(row?.id ?? row?.custom_id ?? "");
 }
 
-function recordTitle(row: WarehouseRow, fields: string[], fallback: string): string {
-  return firstText(row, fields) || fallback
+function recordTitle(
+  row: WarehouseRow,
+  fields: string[],
+  fallback: string,
+): string {
+  return firstText(row, fields) || fallback;
 }
 
 function recordDetail(row: WarehouseRow, fields: string[]): string {
-  const values = fields
-    .map((field) => firstText(row, [field]))
-    .filter(Boolean)
-  return values.length ? values.join(" · ") : "-"
+  const values = fields.map((field) => firstText(row, [field])).filter(Boolean);
+  return values.length ? values.join(" · ") : "-";
 }
 
 const WAREHOUSE_RESOURCE_ROUTES: Record<string, string> = {
@@ -177,12 +186,13 @@ const WAREHOUSE_RESOURCE_ROUTES: Record<string, string> = {
   stock_level: "stock-levels",
   storage_location: "storage-locations",
   warehouse: "warehouses",
-}
+};
 
 function recordHref(resource: string, row: WarehouseRow): string {
-  const id = recordId(row)
-  const route = WAREHOUSE_RESOURCE_ROUTES[resource] || resource.replace(/_/g, "-")
-  return id ? `/warehouse/${route}/${id}` : `/warehouse/${route}`
+  const id = recordId(row);
+  const route =
+    WAREHOUSE_RESOURCE_ROUTES[resource] || resource.replace(/_/g, "-");
+  return id ? `/warehouse/${route}/${id}` : `/warehouse/${route}`;
 }
 
 function statusLabel(status: string): string {
@@ -202,47 +212,72 @@ function statusLabel(status: string): string {
     POSTED: "Lançado",
     RELEASED: "Liberada",
     SHIPPED: "Expedido",
-  }
-  return labels[status] || status || "-"
+  };
+  return labels[status] || status || "-";
 }
 
 function statusClass(status: string): string {
   if (["SHIPPED", "POSTED", "PICKED", "ORDERED", "CONSUMED"].includes(status)) {
-    return "border-emerald-200 bg-emerald-50 text-emerald-800"
+    return "border-emerald-200 bg-emerald-50 text-emerald-800";
   }
-  if (["DRAFT", "OPEN", "CONFIRMED", "GENERATED", "PICKING", "ALLOCATED", "ACTIVE"].includes(status)) {
-    return "border-sky-200 bg-sky-50 text-sky-800"
+  if (
+    [
+      "DRAFT",
+      "OPEN",
+      "CONFIRMED",
+      "GENERATED",
+      "PICKING",
+      "ALLOCATED",
+      "ACTIVE",
+    ].includes(status)
+  ) {
+    return "border-sky-200 bg-sky-50 text-sky-800";
   }
   if (["CANCELLED", "RELEASED"].includes(status)) {
-    return "border-amber-200 bg-amber-50 text-amber-800"
+    return "border-amber-200 bg-amber-50 text-amber-800";
   }
-  return "border-border bg-muted text-muted-foreground"
+  return "border-border bg-muted text-muted-foreground";
 }
 
 function quantitySummary(row: WarehouseRow): string {
-  const available = row?.available_quantity
-  const quantity = row?.quantity
-  const recommended = row?.recommended_quantity
-  const ordered = row?.ordered_quantity
-  const picked = row?.quantity_picked
-  const toPick = row?.quantity_to_pick
+  const available = row?.available_quantity;
+  const quantity = row?.quantity;
+  const recommended = row?.recommended_quantity;
+  const ordered = row?.ordered_quantity;
+  const picked = row?.quantity_picked;
+  const toPick = row?.quantity_to_pick;
 
-  if (available !== undefined && available !== null) return `Disp.: ${available}`
-  if (recommended !== undefined && recommended !== null) return `Sug.: ${recommended}`
-  if (ordered !== undefined && ordered !== null) return `Qtd.: ${ordered}`
-  if (picked !== undefined && toPick !== undefined) return `${picked}/${toPick}`
-  if (quantity !== undefined && quantity !== null) return `Qtd.: ${quantity}`
-  return ""
+  if (available !== undefined && available !== null)
+    return `Disp.: ${available}`;
+  if (recommended !== undefined && recommended !== null)
+    return `Sug.: ${recommended}`;
+  if (ordered !== undefined && ordered !== null) return `Qtd.: ${ordered}`;
+  if (picked !== undefined && toPick !== undefined)
+    return `${picked}/${toPick}`;
+  if (quantity !== undefined && quantity !== null) return `Qtd.: ${quantity}`;
+  return "";
 }
 
-function QueueCard({ config, rows, loading }: { config: QueueConfig; rows: WarehouseRow[]; loading: boolean }) {
+function QueueCard({
+  config,
+  rows,
+  loading,
+}: {
+  config: QueueConfig;
+  rows: WarehouseRow[];
+  loading: boolean;
+}) {
   return (
     <section className="rounded-lg border border-border bg-card shadow-sm">
       <div className="border-b border-border px-4 py-3">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <h3 className="text-sm font-semibold text-foreground">{config.title}</h3>
-            <p className="mt-1 text-xs leading-5 text-muted-foreground">{config.description}</p>
+            <h3 className="text-sm font-semibold text-foreground">
+              {config.title}
+            </h3>
+            <p className="mt-1 text-xs leading-5 text-muted-foreground">
+              {config.description}
+            </p>
           </div>
           <span className="inline-flex h-7 min-w-7 items-center justify-center rounded-md border border-border bg-muted px-2 text-xs font-semibold text-foreground">
             {loading ? "..." : rows.length}
@@ -253,8 +288,8 @@ function QueueCard({ config, rows, loading }: { config: QueueConfig; rows: Wareh
       <div className="space-y-2 p-3">
         {rows.length ? (
           rows.map((row) => {
-            const status = String(row?.status || "")
-            const qty = quantitySummary(row)
+            const status = String(row?.status || "");
+            const qty = quantitySummary(row);
             return (
               <Link
                 key={`${config.key}-${recordId(row) || JSON.stringify(row).slice(0, 32)}`}
@@ -269,7 +304,9 @@ function QueueCard({ config, rows, loading }: { config: QueueConfig; rows: Wareh
                     {recordDetail(row, config.detailFields)}
                   </div>
                   <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                    <span className={`inline-flex items-center rounded-md border px-1.5 py-0.5 text-[11px] font-medium ${statusClass(status)}`}>
+                    <span
+                      className={`inline-flex items-center rounded-md border px-1.5 py-0.5 text-[11px] font-medium ${statusClass(status)}`}
+                    >
                       {statusLabel(status)}
                     </span>
                     {qty ? (
@@ -279,9 +316,12 @@ function QueueCard({ config, rows, loading }: { config: QueueConfig; rows: Wareh
                     ) : null}
                   </div>
                 </div>
-                <ArrowRight size={15} className="shrink-0 text-muted-foreground transition group-hover:text-primary" />
+                <ArrowRight
+                  size={15}
+                  className="shrink-0 text-muted-foreground transition group-hover:text-primary"
+                />
               </Link>
-            )
+            );
           })
         ) : (
           <div className="flex min-h-24 items-center rounded-md border border-dashed border-border bg-muted/30 px-3 py-4 text-sm text-muted-foreground">
@@ -304,28 +344,29 @@ function QueueCard({ config, rows, loading }: { config: QueueConfig; rows: Wareh
             className="inline-flex h-8 items-center gap-1 rounded-md bg-primary px-2.5 text-xs font-semibold text-primary-foreground transition hover:bg-primary/90"
           >
             <Plus size={13} />
-            {config.createLabel || `Criar ${config.title.toLocaleLowerCase("pt")}`}
+            {config.createLabel ||
+              `Criar ${config.title.toLocaleLowerCase("pt")}`}
           </Link>
         ) : null}
       </div>
     </section>
-  )
+  );
 }
 
 export default function WarehousePage() {
-  const { t } = useLanguage()
-  const { user } = useAuth()
-  const podeVerAdmin = userHasAnyGroup(user, [GROUPS.ADMIN])
-  const safeRefreshToken = useSafeDataRefreshSignal()
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [counts, setCounts] = useState<Counts>(EMPTY_COUNTS)
-  const [queues, setQueues] = useState<Queues>(EMPTY_QUEUES)
+  const { t } = useLanguage();
+  const { user } = useAuth();
+  const podeVerAdmin = userHasAnyGroup(user, [GROUPS.ADMIN]);
+  const safeRefreshToken = useSafeDataRefreshSignal();
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [counts, setCounts] = useState<Counts>(EMPTY_COUNTS);
+  const [queues, setQueues] = useState<Queues>(EMPTY_QUEUES);
 
   const loadData = useCallback(async () => {
     try {
-      setLoading(true)
-      setError(null)
+      setLoading(true);
+      setError(null);
       const [
         items,
         stockLevels,
@@ -360,7 +401,7 @@ export default function WarehousePage() {
         fetchQueue("/warehouse/shipment/", { status: "DRAFT" }),
         fetchQueue("/warehouse/stock_transfer/", { status: "DRAFT" }),
         fetchQueue("/warehouse/stock_level/", undefined, 6),
-      ])
+      ]);
 
       setCounts({
         items,
@@ -370,7 +411,7 @@ export default function WarehousePage() {
         shipments,
         purchaseOrders,
         replenishmentPlans,
-      })
+      });
       setQueues({
         purchaseOrders: purchaseOrderRows,
         goodsReceipts: goodsReceiptRows,
@@ -381,19 +422,19 @@ export default function WarehousePage() {
         shipments: shipmentRows,
         transfers: transferRows,
         stockLevels: stockLevelRows,
-      })
+      });
     } catch (err: any) {
-      setError(err?.message || "Falha ao carregar o workspace ERP/WMS.")
+      setError(err?.message || "Falha ao carregar o workspace ERP/WMS.");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }, [])
+  }, []);
 
   useEffect(() => {
-    void loadData()
-  }, [loadData, safeRefreshToken])
+    void loadData();
+  }, [loadData, safeRefreshToken]);
 
-  const value = (number: number) => (loading ? "..." : number)
+  const value = (number: number) => (loading ? "..." : number);
   const queueConfigs: QueueConfig[] = [
     {
       key: "replenishmentPlans",
@@ -405,7 +446,11 @@ export default function WarehousePage() {
       createLabel: "Criar plano de reposição",
       emptyMessage: "Sem plano de reposição recente.",
       titleFields: ["plan_number", "name", "custom_id"],
-      detailFields: ["warehouse_label", "supplier_name", "purchase_order_number"],
+      detailFields: [
+        "warehouse_label",
+        "supplier_name",
+        "purchase_order_number",
+      ],
     },
     {
       key: "purchaseOrders",
@@ -441,7 +486,11 @@ export default function WarehousePage() {
       createLabel: "Criar pedido de venda",
       emptyMessage: "Sem pedido confirmado a reservar.",
       titleFields: ["order_number", "name", "custom_id"],
-      detailFields: ["customer_name", "customer_document", "requested_ship_date"],
+      detailFields: [
+        "customer_name",
+        "customer_document",
+        "requested_ship_date",
+      ],
     },
     {
       key: "reservations",
@@ -497,10 +546,17 @@ export default function WarehousePage() {
       titleFields: ["item_sku", "custom_id"],
       detailFields: ["location_code", "lot_number", "quantity"],
     },
-  ]
+  ];
 
   return (
-    <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.CONTABILIDADE, GROUPS.FARMACIA, GROUPS.RECURSOS_HUMANOS]}>
+    <AppLayout
+      requiredGroups={[
+        GROUPS.ADMIN,
+        GROUPS.CONTABILIDADE,
+        GROUPS.FARMACIA,
+        GROUPS.RECURSOS_HUMANOS,
+      ]}
+    >
       <div className="space-y-6">
         <PageHeader
           title={t("ERP e WMS", "ERP & WMS")}
@@ -516,23 +572,17 @@ export default function WarehousePage() {
               <button
                 type="button"
                 onClick={() => {
-                  void loadData()
+                  void loadData();
                 }}
                 disabled={loading}
                 className="inline-flex items-center gap-2 rounded-md border border-border bg-card px-3 py-1.5 text-sm font-medium text-foreground shadow-sm transition-all duration-150 hover:border-primary/40 hover:bg-muted hover:shadow-md disabled:cursor-not-allowed disabled:opacity-60"
               >
-                <RefreshCcw size={16} className={loading ? "animate-spin" : ""} />
+                <RefreshCcw
+                  size={16}
+                  className={loading ? "animate-spin" : ""}
+                />
                 {t("Atualizar", "Refresh")}
               </button>
-              {podeVerAdmin ? (
-                <Link
-                  href="/admin/warehouse/"
-                  className="inline-flex items-center gap-2 rounded-md border border-border bg-card px-3 py-1.5 text-sm font-medium text-foreground shadow-sm transition-all duration-150 hover:border-primary/40 hover:bg-muted hover:shadow-md"
-                >
-                  <ShieldCheck size={16} />
-                  {t("Administração", "Administration")}
-                </Link>
-              ) : null}
             </div>
           }
         />
@@ -544,21 +594,52 @@ export default function WarehousePage() {
         ) : null}
 
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-6">
-          <MetricCard label="Itens" value={value(counts.items)} hint="Códigos cadastrados" />
-          <MetricCard label="Saldos" value={value(counts.stockLevels)} hint="Posições com estoque" />
-          <MetricCard label="Pedidos abertos" value={value(counts.openSalesOrders)} hint="Confirmados para reserva" />
-          <MetricCard label="Reservas ativas" value={value(counts.activeReservations)} hint="Estoque comprometido" />
-          <MetricCard label="Expedições" value={value(counts.shipments)} hint="Saídas comerciais" />
-          <MetricCard label="Compras" value={value(counts.purchaseOrders)} hint="Pedidos de abastecimento" />
-          <MetricCard label="Reposição" value={value(counts.replenishmentPlans)} hint="Planos de compra automática" />
+          <MetricCard
+            label="Itens"
+            value={value(counts.items)}
+            hint="Códigos cadastrados"
+          />
+          <MetricCard
+            label="Saldos"
+            value={value(counts.stockLevels)}
+            hint="Posições com estoque"
+          />
+          <MetricCard
+            label="Pedidos abertos"
+            value={value(counts.openSalesOrders)}
+            hint="Confirmados para reserva"
+          />
+          <MetricCard
+            label="Reservas ativas"
+            value={value(counts.activeReservations)}
+            hint="Estoque comprometido"
+          />
+          <MetricCard
+            label="Expedições"
+            value={value(counts.shipments)}
+            hint="Saídas comerciais"
+          />
+          <MetricCard
+            label="Compras"
+            value={value(counts.purchaseOrders)}
+            hint="Pedidos de abastecimento"
+          />
+          <MetricCard
+            label="Reposição"
+            value={value(counts.replenishmentPlans)}
+            hint="Planos de compra automática"
+          />
         </div>
 
         <section className="space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h2 className="text-sm font-semibold text-foreground">Quadro de execução WMS</h2>
+              <h2 className="text-sm font-semibold text-foreground">
+                Quadro de execução WMS
+              </h2>
               <p className="mt-1 text-xs text-muted-foreground">
-                Filas reais do ciclo compra-estoque-venda, com acesso ao registo onde os comandos operacionais ficam disponíveis.
+                Filas reais do ciclo compra-estoque-venda, com acesso ao registo
+                onde os comandos operacionais ficam disponíveis.
               </p>
             </div>
             <div className="inline-flex items-center gap-2 rounded-md border border-border bg-card px-2.5 py-1.5 text-xs text-muted-foreground">
@@ -583,7 +664,12 @@ export default function WarehousePage() {
 
           <div className="grid gap-4 lg:grid-cols-2 2xl:grid-cols-3">
             {queueConfigs.map((config) => (
-              <QueueCard key={config.key} config={config} rows={queues[config.key]} loading={loading} />
+              <QueueCard
+                key={config.key}
+                config={config}
+                rows={queues[config.key]}
+                loading={loading}
+              />
             ))}
           </div>
         </section>
@@ -645,27 +731,46 @@ export default function WarehousePage() {
           />
         </div>
 
-        <Card title="Fluxo operacional recomendado" subtitle="Da reposição à expedição sem ajuste manual de saldo.">
+        <Card
+          title="Fluxo operacional recomendado"
+          subtitle="Da reposição à expedição sem ajuste manual de saldo."
+        >
           <div className="grid gap-3 text-sm text-foreground-2 md:grid-cols-4">
             <div className="rounded-xl border border-border bg-muted/40 p-3">
-              <div className="font-semibold text-foreground">1. Planear e abastecer</div>
-              <p className="mt-1">Gere reposição por ponto mínimo, crie o pedido de compra e lance o recebimento.</p>
+              <div className="font-semibold text-foreground">
+                1. Planear e abastecer
+              </div>
+              <p className="mt-1">
+                Gere reposição por ponto mínimo, crie o pedido de compra e lance
+                o recebimento.
+              </p>
             </div>
             <div className="rounded-xl border border-border bg-muted/40 p-3">
               <div className="font-semibold text-foreground">2. Vender</div>
-              <p className="mt-1">Confirme o pedido de venda para transformar demanda comercial em compromisso operacional.</p>
+              <p className="mt-1">
+                Confirme o pedido de venda para transformar demanda comercial em
+                compromisso operacional.
+              </p>
             </div>
             <div className="rounded-xl border border-border bg-muted/40 p-3">
-              <div className="font-semibold text-foreground">3. Reservar e separar</div>
-              <p className="mt-1">A reserva bloqueia disponibilidade; a separação orienta a equipe no armazém.</p>
+              <div className="font-semibold text-foreground">
+                3. Reservar e separar
+              </div>
+              <p className="mt-1">
+                A reserva bloqueia disponibilidade; a separação orienta a equipe
+                no armazém.
+              </p>
             </div>
             <div className="rounded-xl border border-border bg-muted/40 p-3">
               <div className="font-semibold text-foreground">4. Expedir</div>
-              <p className="mt-1">A expedição consome a reserva, cria movimento de saída e atualiza o pedido.</p>
+              <p className="mt-1">
+                A expedição consome a reserva, cria movimento de saída e
+                atualiza o pedido.
+              </p>
             </div>
           </div>
         </Card>
       </div>
     </AppLayout>
-  )
+  );
 }
