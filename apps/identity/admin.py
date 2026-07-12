@@ -8,6 +8,7 @@ from .models import User
 @admin.register(User)
 class UserModelAdmin(UserAdmin):
     _all_fields_cache = None  # Cache para evitar recomputar list_display
+    filter_horizontal = ("groups", "user_permissions")
     # Campos extras que queremos expor no admin.
     personal_extra_fields = ("phone", "photo")
     tenant_fields = ("tenant",)
@@ -54,6 +55,11 @@ class UserModelAdmin(UserAdmin):
             obj.get_full_name() or obj.username,
         )
 
+    class Media:
+        css = {
+            "all": ("identity/css/user_permissions_admin.css",),
+        }
+
     # Inclui foto/telefone no formulário de edição.
     fieldsets = (
         (
@@ -71,13 +77,14 @@ class UserModelAdmin(UserAdmin):
         (
             "Permissões",
             {
+                "classes": ("wide",),
                 "fields": (
                     "is_active",
                     "is_staff",
                     "is_superuser",
                     "groups",
                     "user_permissions",
-                )
+                ),
             },
         ),
         ("Datas importantes", {"fields": ("last_login", "date_joined")}),
@@ -102,6 +109,7 @@ class UserModelAdmin(UserAdmin):
                     "is_staff",
                     "is_superuser",
                     "groups",
+                    "user_permissions",
                 ),
             },
         ),
