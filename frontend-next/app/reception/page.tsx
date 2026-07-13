@@ -231,9 +231,18 @@ const EMPTY_WORKSPACE: ReceptionWorkspace = {
 };
 
 const FETCH_PAGE_SIZE = 200;
+const RECENT_CHECKIN_WINDOW_MS = 24 * 60 * 60 * 1000;
 const REFRESH_MS = 15_000;
 const GLASS =
   "rounded-2xl border border-white/20 bg-white/30 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.05]";
+
+function isRecentCheckin(arrivedAt?: string | null, referenceTime = Date.now()) {
+  if (!arrivedAt) return false;
+  const parsed = new Date(arrivedAt).getTime();
+  if (Number.isNaN(parsed)) return false;
+  if (parsed > referenceTime) return false;
+  return referenceTime - parsed <= RECENT_CHECKIN_WINDOW_MS;
+}
 
 const atalhos = [
   {
@@ -461,7 +470,12 @@ export default function RecepcaoPage() {
       }
 
       if (checkinsResult.status === "fulfilled") {
-        setSearchRows(normalizeSearchRows(checkinsResult.value));
+        const referenceTime = Date.now();
+        setSearchRows(
+          normalizeSearchRows(checkinsResult.value).filter((item) =>
+            isRecentCheckin(item.arrived_at, referenceTime),
+          ),
+        );
       } else if (!nextError) {
         nextError =
           checkinsResult.reason instanceof Error
