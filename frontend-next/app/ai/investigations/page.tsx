@@ -2,20 +2,28 @@
 
 import Link from "next/link"
 import { useCallback, useEffect, useMemo, useState } from "react"
-import { ArrowLeft, ExternalLink, Lightbulb, RefreshCcw, Search } from "lucide-react"
+import {
+  Archive,
+  ArrowLeft,
+  CircleDot,
+  ExternalLink,
+  Lightbulb,
+  Loader2,
+  Lock,
+  RefreshCcw,
+  Search,
+  Sparkles,
+} from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
 import { type AiInvestigation } from "@/components/ai/AiInvestigationPanel"
 import Badge from "@/components/ui/Badge"
-import Button from "@/components/ui/Button"
-import Card from "@/components/ui/Card"
-import PageHeader from "@/components/ui/PageHeader"
-import TextInput from "@/components/ui/TextInput"
+import useDebounce from "@/hooks/useDebounce"
 import { useLanguage } from "@/hooks/useLanguage"
 import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { apiFetch } from "@/lib/api"
+import { formatCount } from "@/lib/i18n/plural"
 
-const STATUS_OPTIONS = ["", "ready", "open", "blocked", "archived"]
 const INTENT_OPTIONS = [
   "",
   "data_exploration",
@@ -29,6 +37,51 @@ const INTENT_OPTIONS = [
   "task_preparation",
   "access_review",
 ]
+
+const STATUS_META: Record<
+  string,
+  {
+    pt: string
+    en: string
+    icon: typeof CircleDot
+    variant: "default" | "success" | "warning" | "info"
+    bar: string
+    chip: string
+  }
+> = {
+  ready: {
+    pt: "Prontas",
+    en: "Ready",
+    icon: Sparkles,
+    variant: "success",
+    bar: "border-l-emerald-500 dark:border-l-emerald-400",
+    chip: "border-emerald-200/50 bg-emerald-100/30 text-emerald-700 dark:border-emerald-700/30 dark:bg-emerald-900/20 dark:text-emerald-300",
+  },
+  open: {
+    pt: "Abertas",
+    en: "Open",
+    icon: CircleDot,
+    variant: "info",
+    bar: "border-l-blue-500 dark:border-l-blue-400",
+    chip: "border-blue-200/50 bg-blue-100/30 text-blue-700 dark:border-blue-700/30 dark:bg-blue-900/20 dark:text-blue-300",
+  },
+  blocked: {
+    pt: "Bloqueadas",
+    en: "Blocked",
+    icon: Lock,
+    variant: "warning",
+    bar: "border-l-amber-500 dark:border-l-amber-400",
+    chip: "border-amber-200/50 bg-amber-100/30 text-amber-700 dark:border-amber-700/30 dark:bg-amber-900/20 dark:text-amber-300",
+  },
+  archived: {
+    pt: "Arquivadas",
+    en: "Archived",
+    icon: Archive,
+    variant: "default",
+    bar: "border-l-slate-400 dark:border-l-slate-500",
+    chip: "border-slate-200/50 bg-slate-100/30 text-slate-600 dark:border-slate-600/30 dark:bg-slate-800/30 dark:text-slate-300",
+  },
+}
 
 function formatDate(value?: string) {
   if (!value) return "—"
@@ -45,19 +98,18 @@ function formatDate(value?: string) {
   }
 }
 
-function statusVariant(status?: string): "default" | "success" | "warning" | "danger" | "info" {
-  if (status === "blocked") return "warning"
-  if (status === "archived") return "default"
-  if (status === "open") return "info"
-  return "success"
-}
-
 function humanize(value?: string) {
   return String(value || "—").replace(/_/g, " ")
 }
 
+function confidenceTone(score: number) {
+  if (score >= 70) return "bg-emerald-500"
+  if (score >= 40) return "bg-amber-500"
+  return "bg-rose-500"
+}
+
 export default function AiInvestigationsPage() {
-  const { t } = useLanguage()
+  const { t, isPortuguese } = useLanguage()
   const safeRefreshToken = useSafeDataRefreshSignal()
   const [rows, setRows] = useState<AiInvestigation[]>([])
   const [loading, setLoading] = useState(true)
@@ -65,13 +117,14 @@ export default function AiInvestigationsPage() {
   const [query, setQuery] = useState("")
   const [status, setStatus] = useState("")
   const [intent, setIntent] = useState("")
+  const debouncedQuery = useDebounce(query.trim(), 300)
 
   const loadInvestigations = useCallback(async () => {
     setLoading(true)
     setError("")
     try {
       const params = new URLSearchParams()
-      if (query.trim()) params.set("q", query.trim())
+      if (debouncedQuery) params.set("q", debouncedQuery)
       if (status) params.set("status", status)
       if (intent) params.set("intent", intent)
       params.set("limit", "150")
@@ -86,7 +139,7 @@ export default function AiInvestigationsPage() {
     } finally {
       setLoading(false)
     }
-  }, [intent, query, status, t])
+  }, [debouncedQuery, intent, status, t])
 
   useEffect(() => {
     void loadInvestigations()
@@ -105,74 +158,126 @@ export default function AiInvestigationsPage() {
     )
   }, [rows])
 
+  const statPill =
+    "inline-flex h-6 items-center gap-1 whitespace-nowrap rounded-full border px-2 text-[10px] font-semibold backdrop-blur-xl"
+
   return (
     <AppLayout>
-      <div className="space-y-5">
-        <PageHeader
-          title={t("Investigações da IA", "AI Investigations")}
-          subtitle={t(
-            "Workspace persistente para rever achados, fontes, próximos passos e estado das investigações geradas pela IA.",
-            "Persistent workspace to review findings, sources, next steps and status from AI-generated investigations."
-          )}
-          actions={
-            <div className="flex flex-wrap gap-2">
+      <div className="space-y-3">
+        {/* Cabeçalho fundido: banner + pílulas + pesquisa + filtros num só bloco translúcido */}
+        <section className="relative overflow-hidden rounded-2xl border border-violet-200/25 bg-gradient-to-br from-violet-100/[0.05] via-white/[0.015] to-indigo-100/[0.03] shadow-xl shadow-slate-900/5 backdrop-blur-2xl dark:border-violet-800/20 dark:from-violet-950/[0.05] dark:via-white/[0.01] dark:to-indigo-950/[0.03]">
+          <div className="pointer-events-none absolute -right-8 -top-10 h-28 w-28 rounded-full bg-violet-400/15 blur-3xl" />
+          <div className="relative flex flex-wrap items-center gap-3 px-4 py-3">
+            <div className="flex min-w-0 items-center gap-3">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-indigo-600 text-white shadow-md shadow-violet-500/25">
+                <Lightbulb size={17} />
+              </span>
+              <div className="min-w-0">
+                <h1 className="text-lg font-bold leading-tight text-foreground">
+                  {t("Investigações da IA", "AI Investigations")}
+                </h1>
+                <p className="text-[11px] text-muted-foreground">
+                  {loading
+                    ? t("A carregar…", "Loading…")
+                    : isPortuguese
+                      ? formatCount(stats.total, { one: "investigação registada", other: "investigações registadas" })
+                      : `${stats.total} recorded investigation${stats.total === 1 ? "" : "s"}`}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span
+                className={`${statPill} border-violet-200/50 bg-violet-100/30 text-violet-700 dark:border-violet-700/30 dark:bg-violet-900/20 dark:text-violet-300`}
+              >
+                <Lightbulb size={11} /> {t("Total", "Total")} <strong className="text-[11px]">{stats.total}</strong>
+              </span>
+              <span
+                className={`${statPill} border-emerald-200/50 bg-emerald-100/30 text-emerald-700 dark:border-emerald-700/30 dark:bg-emerald-900/20 dark:text-emerald-300`}
+              >
+                <Sparkles size={11} /> {t("Activas", "Active")} <strong className="text-[11px]">{stats.active}</strong>
+              </span>
+              <span
+                className={`${statPill} border-amber-200/50 bg-amber-100/30 text-amber-700 dark:border-amber-700/30 dark:bg-amber-900/20 dark:text-amber-300`}
+              >
+                <Lock size={11} /> {t("Bloqueadas", "Blocked")} <strong className="text-[11px]">{stats.blocked}</strong>
+              </span>
+              <span
+                className={`${statPill} border-slate-200/50 bg-slate-100/30 text-slate-600 dark:border-slate-600/30 dark:bg-slate-800/30 dark:text-slate-300`}
+              >
+                <Archive size={11} /> {t("Arquivadas", "Archived")} <strong className="text-[11px]">{stats.archived}</strong>
+              </span>
+            </div>
+
+            <div className="ml-auto flex flex-wrap items-center gap-1.5">
               <Link
                 href="/ai"
-                className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-3 py-1.5 text-sm font-medium text-foreground shadow-sm transition hover:bg-muted"
+                className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-white/25 bg-white/[0.05] px-2.5 text-xs font-medium text-foreground backdrop-blur-xl transition hover:bg-white/20 dark:border-white/10 dark:bg-white/[0.03] dark:hover:bg-white/[0.08]"
               >
-                <ArrowLeft size={15} />
+                <ArrowLeft size={13} />
                 {t("Voltar à IA", "Back to AI")}
               </Link>
-              <Button type="button" variant="secondary" loading={loading} onClick={() => void loadInvestigations()}>
-                <RefreshCcw size={15} />
-                {t("Actualizar", "Refresh")}
-              </Button>
+              <button
+                type="button"
+                onClick={() => void loadInvestigations()}
+                disabled={loading}
+                aria-label={t("Actualizar", "Refresh")}
+                title={t("Actualizar", "Refresh")}
+                className="grid h-8 w-8 place-items-center rounded-lg border border-white/25 bg-white/[0.05] text-foreground backdrop-blur-xl transition hover:bg-white/20 disabled:opacity-60 dark:border-white/10 dark:bg-white/[0.03] dark:hover:bg-white/[0.08]"
+              >
+                {loading ? <Loader2 size={13} className="animate-spin" /> : <RefreshCcw size={13} />}
+              </button>
             </div>
-          }
-        />
+          </div>
 
-        <div className="grid gap-3 sm:grid-cols-4">
-          <Card>
-            <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t("Total", "Total")}</div>
-            <div className="mt-1 font-display text-3xl font-semibold text-foreground">{stats.total}</div>
-          </Card>
-          <Card>
-            <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t("Activas", "Active")}</div>
-            <div className="mt-1 font-display text-3xl font-semibold text-foreground">{stats.active}</div>
-          </Card>
-          <Card>
-            <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t("Bloqueadas", "Blocked")}</div>
-            <div className="mt-1 font-display text-3xl font-semibold text-foreground">{stats.blocked}</div>
-          </Card>
-          <Card>
-            <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t("Arquivadas", "Archived")}</div>
-            <div className="mt-1 font-display text-3xl font-semibold text-foreground">{stats.archived}</div>
-          </Card>
-        </div>
+          <div className="relative flex flex-wrap items-center gap-2 border-t border-white/15 px-4 py-2 dark:border-white/[0.06]">
+            <div className="relative w-full sm:w-64">
+              <Search
+                size={12}
+                className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground"
+              />
+              <input
+                type="text"
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder={t("Pergunta, título ou resumo…", "Question, title or summary…")}
+                className="w-full rounded-lg border border-white/25 bg-white/[0.05] py-1.5 pl-7 pr-3 text-xs text-foreground placeholder:text-muted-foreground backdrop-blur-xl transition-all focus:outline-none focus:ring-2 focus:ring-violet-500/40 sm:focus:w-80 dark:border-white/10 dark:bg-white/[0.03]"
+              />
+            </div>
 
-        <Card title={t("Filtros de investigação", "Investigation filters")}>
-          <div className="grid gap-3 lg:grid-cols-[1.5fr_0.8fr_1fr_auto]">
-            <TextInput
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder={t("Pesquisar por pergunta, título ou resumo", "Search by question, title or summary")}
-              leftIcon={<Search size={16} />}
-            />
-            <select
-              value={status}
-              onChange={(event) => setStatus(event.target.value)}
-              className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground shadow-sm outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/20"
-            >
-              {STATUS_OPTIONS.map((item) => (
-                <option key={item || "all"} value={item}>
-                  {item ? humanize(item) : t("Todos os estados", "All statuses")}
-                </option>
+            <div className="flex flex-wrap items-center gap-1">
+              <button
+                type="button"
+                onClick={() => setStatus("")}
+                className={`inline-flex h-7 items-center rounded-full border px-2.5 text-[10px] font-semibold transition ${
+                  status === ""
+                    ? "border-violet-400/60 bg-violet-500/15 text-violet-700 dark:text-violet-300"
+                    : "border-white/25 bg-white/[0.05] text-muted-foreground hover:text-foreground dark:border-white/10 dark:bg-white/[0.03]"
+                }`}
+              >
+                {t("Todos", "All")}
+              </button>
+              {Object.entries(STATUS_META).map(([value, meta]) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => setStatus(status === value ? "" : value)}
+                  className={`inline-flex h-7 items-center gap-1 rounded-full border px-2.5 text-[10px] font-semibold transition ${
+                    status === value
+                      ? meta.chip
+                      : "border-white/25 bg-white/[0.05] text-muted-foreground hover:text-foreground dark:border-white/10 dark:bg-white/[0.03]"
+                  }`}
+                >
+                  <meta.icon size={10} />
+                  {isPortuguese ? meta.pt : meta.en}
+                </button>
               ))}
-            </select>
+            </div>
+
             <select
               value={intent}
               onChange={(event) => setIntent(event.target.value)}
-              className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground shadow-sm outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/20"
+              className="h-8 rounded-lg border border-white/25 bg-white/[0.05] px-2 text-xs text-foreground backdrop-blur-xl focus:outline-none focus:ring-2 focus:ring-violet-500/40 dark:border-white/10 dark:bg-white/[0.03] [&>option]:bg-background"
             >
               {INTENT_OPTIONS.map((item) => (
                 <option key={item || "all"} value={item}>
@@ -180,65 +285,75 @@ export default function AiInvestigationsPage() {
                 </option>
               ))}
             </select>
-            <Button type="button" loading={loading} onClick={() => void loadInvestigations()}>
-              <Search size={15} />
-              {t("Pesquisar", "Search")}
-            </Button>
           </div>
-        </Card>
+        </section>
 
-        <Card title={t("Histórico estruturado", "Structured history")}>
-          {error ? (
-            <div className="rounded-2xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-100">
-              {error}
-            </div>
-          ) : null}
+        {error ? (
+          <div className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-800 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-100">
+            {error}
+          </div>
+        ) : null}
 
-          {loading ? (
-            <div className="flex items-center gap-3 rounded-2xl border border-border bg-muted/30 p-4 text-sm text-muted-foreground">
-              <span className="h-2 w-2 animate-pulse rounded-full bg-primary" />
-              {t("A carregar investigações...", "Loading investigations...")}
-            </div>
-          ) : null}
-
-          {!loading && !rows.length ? (
-            <div className="rounded-2xl border border-dashed border-border bg-muted/30 p-5 text-sm text-muted-foreground">
-              {t("Ainda não há investigações para estes filtros.", "There are no investigations for these filters yet.")}
-            </div>
-          ) : null}
-
-          <div className="grid gap-3 xl:grid-cols-2">
-            {rows.map((item) => (
-              <Link
-                key={item.id || item.custom_id}
-                href={`/ai/investigations/${item.id}`}
-                className="group rounded-2xl border border-border bg-background p-3 shadow-sm transition hover:border-primary/40 hover:bg-muted/30"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2 font-semibold text-foreground">
-                      <Lightbulb size={17} />
-                      <span className="line-clamp-1">{item.title || t("Investigação da IA", "AI investigation")}</span>
+        {loading ? (
+          <div className="flex items-center justify-center gap-2 rounded-xl border border-dashed border-border px-4 py-10 text-sm text-muted-foreground">
+            <Loader2 size={16} className="animate-spin" />
+            {t("A carregar investigações...", "Loading investigations...")}
+          </div>
+        ) : !rows.length ? (
+          <div className="rounded-xl border border-dashed border-border px-4 py-10 text-center text-sm text-muted-foreground">
+            {t("Ainda não há investigações para estes filtros.", "There are no investigations for these filters yet.")}
+          </div>
+        ) : (
+          <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
+            {rows.map((item) => {
+              const meta = STATUS_META[item.status || ""] || STATUS_META.ready
+              const score = Math.max(0, Math.min(100, item.confidence_score ?? 0))
+              return (
+                <Link
+                  key={item.id || item.custom_id}
+                  href={`/ai/investigations/${item.id}`}
+                  className={`group flex min-w-0 flex-col rounded-xl border border-l-4 border-white/20 bg-white/25 p-3 shadow-sm backdrop-blur-sm transition hover:border-[var(--primary-300)] hover:bg-white/40 dark:border-white/10 dark:bg-white/5 dark:hover:border-[var(--primary-600)] dark:hover:bg-white/[0.08] ${meta.bar}`}
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex min-w-0 items-center gap-2">
+                      <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-violet-100 text-violet-600 dark:bg-violet-900/40 dark:text-violet-400">
+                        <Lightbulb size={12} />
+                      </span>
+                      <span className="line-clamp-1 text-xs font-semibold text-foreground">
+                        {item.title || t("Investigação da IA", "AI investigation")}
+                      </span>
                     </div>
-                    <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">
-                      {item.question || item.result_summary || t("Sem pergunta registada.", "No question recorded.")}
-                    </p>
+                    <ExternalLink
+                      size={13}
+                      className="mt-0.5 shrink-0 text-muted-foreground transition group-hover:text-primary"
+                    />
                   </div>
-                  <ExternalLink size={16} className="shrink-0 text-muted-foreground transition group-hover:text-primary" />
-                </div>
-                <div className="mt-3 flex flex-wrap items-center gap-2">
-                  <Badge variant={statusVariant(item.status)}>{humanize(item.status)}</Badge>
-                  <Badge variant="info">{humanize(item.intent)}</Badge>
-                  <Badge variant="default">{item.confidence_score ?? 0}%</Badge>
-                </div>
-                <div className="mt-3 flex items-center justify-between gap-2 text-xs text-muted-foreground">
-                  <span>{item.custom_id || `#${item.id}`}</span>
-                  <span>{formatDate(item.created_at)}</span>
-                </div>
-              </Link>
-            ))}
+
+                  <p className="mt-1.5 line-clamp-2 min-h-[2rem] text-[11px] leading-snug text-muted-foreground">
+                    {item.question || item.result_summary || t("Sem pergunta registada.", "No question recorded.")}
+                  </p>
+
+                  <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                    <Badge variant={meta.variant}>{humanize(item.status)}</Badge>
+                    <Badge variant="info">{humanize(item.intent)}</Badge>
+                  </div>
+
+                  <div className="mt-2 flex items-center gap-2">
+                    <div className="h-1 flex-1 overflow-hidden rounded-full bg-muted">
+                      <div className={`h-full rounded-full ${confidenceTone(score)}`} style={{ width: `${score}%` }} />
+                    </div>
+                    <span className="shrink-0 text-[10px] font-semibold text-foreground-2">{score}%</span>
+                  </div>
+
+                  <div className="mt-2 flex items-center justify-between gap-2 text-[10px] text-muted-foreground">
+                    <span className="truncate">{item.custom_id || `#${item.id}`}</span>
+                    <span className="shrink-0">{formatDate(item.created_at)}</span>
+                  </div>
+                </Link>
+              )
+            })}
           </div>
-        </Card>
+        )}
       </div>
     </AppLayout>
   )
