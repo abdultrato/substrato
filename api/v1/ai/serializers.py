@@ -4,6 +4,7 @@ from rest_framework import serializers
 
 from apps.ai_assistant.models import AiInvestigation, AiMessage, AiOperationalTask, AiSession, AiSuggestedAction
 from apps.ai_assistant.services.clarification_learning import VALID_LEARNED_RESOLUTION_FEEDBACK_EVENTS
+from apps.ai_assistant.services.investigation import derive_investigation_confidence_for_record
 from apps.ai_assistant.services.suggestion_learning import VALID_PROACTIVE_FEEDBACK_EVENTS
 
 
@@ -63,6 +64,7 @@ class AiSessionDetailSerializer(AiSessionSerializer):
 
 class AiInvestigationSerializer(serializers.ModelSerializer):
     created_by_name = serializers.SerializerMethodField()
+    confidence_score = serializers.SerializerMethodField()
 
     class Meta:
         model = AiInvestigation
@@ -90,8 +92,13 @@ class AiInvestigationSerializer(serializers.ModelSerializer):
         user = getattr(obj, "created_by", None)
         return str(getattr(user, "username", "") or getattr(user, "email", "") or "")
 
+    def get_confidence_score(self, obj: AiInvestigation) -> int:
+        return derive_investigation_confidence_for_record(obj)
+
 
 class AiInvestigationListSerializer(serializers.ModelSerializer):
+    confidence_score = serializers.SerializerMethodField()
+
     class Meta:
         model = AiInvestigation
         fields = [
@@ -105,6 +112,9 @@ class AiInvestigationListSerializer(serializers.ModelSerializer):
             "result_summary",
             "created_at",
         ]
+
+    def get_confidence_score(self, obj: AiInvestigation) -> int:
+        return derive_investigation_confidence_for_record(obj)
 
 
 class AiInvestigationUpdateSerializer(serializers.Serializer):

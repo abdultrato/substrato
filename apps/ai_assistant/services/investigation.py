@@ -8,6 +8,70 @@ from apps.ai_assistant.models import AiInvestigation
 from .redaction import redact_text, redact_value
 
 
+def derive_investigation_confidence(
+    *,
+    status: str,
+    tool_count: int = 0,
+    blocked_count: int = 0,
+    findings: list[dict[str, Any]] | None = None,
+    sources: list[dict[str, Any]] | None = None,
+    next_steps: list[dict[str, Any]] | None = None,
+    recommended_questions: list[str] | None = None,
+    result_summary: str = "",
+) -> int:
+    if status == "blocked":
+        return 35 if blocked_count <= 0 else 30
+
+    findings = findings or []
+    sources = sources or []
+    next_steps = next_steps or []
+    recommended_questions = recommended_questions or []
+
+    score = 30
+    if tool_count >= 1:
+        score += 20
+    if tool_count >= 2:
+        score += 10
+    if tool_count >= 3:
+        score += 5
+    if findings:
+        score += 10
+    if len(findings) >= 4:
+        score += 5
+    if len(findings) >= 8:
+        score += 5
+    if sources:
+        score += 5
+    if len(sources) >= 3:
+        score += 5
+    if next_steps:
+        score += 5
+    if len(next_steps) >= 3:
+        score += 5
+    if recommended_questions:
+        score += 5
+    if result_summary.strip():
+        score += 5
+    return min(score, 100)
+
+
+def derive_investigation_confidence_for_record(investigation: AiInvestigation) -> int:
+    scope = investigation.scope or {}
+    return max(
+        int(getattr(investigation, "confidence_score", 0) or 0),
+        derive_investigation_confidence(
+            status=str(investigation.status or ""),
+            tool_count=int(scope.get("tool_count") or len(investigation.tool_names or [])),
+            blocked_count=int(scope.get("blocked_count") or 0),
+            findings=investigation.findings or [],
+            sources=investigation.sources or [],
+            next_steps=investigation.next_steps or [],
+            recommended_questions=investigation.recommended_questions or [],
+            result_summary=str(investigation.result_summary or ""),
+        ),
+    )
+
+
 @dataclass(slots=True)
 class InvestigationBuildResult:
     payload: dict[str, Any] | None
@@ -54,12 +118,22 @@ class AiInvestigationBuilder:
             findings=findings,
             language=language,
         )
+        confidence_score = derive_investigation_confidence(
+            status=status,
+            tool_count=len(tool_results),
+            blocked_count=len(blocked_tools),
+            findings=findings,
+            sources=sources,
+            next_steps=next_steps,
+            recommended_questions=recommended_questions,
+            result_summary=summary,
+        )
         payload = {
             "title": title,
             "question": redact_text(question or ""),
             "intent": intent,
             "status": status,
-            "confidence_score": self._confidence(tool_results=tool_results, blocked_tools=blocked_tools),
+            "confidence_score": confidence_score,
             "scope": {
                 "language": language,
                 "active_module": active_module or "",
@@ -108,7 +182,7 @@ class AiInvestigationBuilder:
             "title": investigation.title,
             "intent": investigation.intent,
             "status": investigation.status,
-            "confidence_score": investigation.confidence_score,
+            "confidence_score": derive_investigation_confidence_for_record(investigation),
             "question": investigation.question,
             "scope": investigation.scope or {},
             "findings": investigation.findings or [],
@@ -407,17 +481,6 @@ class AiInvestigationBuilder:
         if status == "blocked":
             return "Investigação bloqueada pela política RBAC actual."
         return f"Investigação estruturada produzida com {len(findings)} achado(s) para {intent.replace('_', ' ')}."
-
-    def _confidence(self, *, tool_results: list[dict[str, Any]], blocked_tools: list[dict[str, Any]]) -> int:
-        if blocked_tools:
-            return 30
-        if any((item.get("result") or {}).get("access_denied") for item in tool_results):
-            return 35
-        if len(tool_results) >= 2:
-            return 80
-        if tool_results:
-            return 70
-        return 45
 
     def _metric_severity(self, value: Any) -> str:
         try:

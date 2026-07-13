@@ -5366,10 +5366,20 @@ def test_ai_investigations_endpoint_is_user_scoped(api_client):
         title="Investigação de dados",
         question="Quantos pacientes existem?",
         intent="data_exploration",
+        confidence_score=80,
         findings=[{"title": "Pacientes", "detail": "0"}],
-        next_steps=[{"label": "Abrir pacientes", "href": "/patients"}],
+        next_steps=[
+            {"label": "Abrir pacientes", "href": "/patients"},
+            {"label": "Abrir recibos", "href": "/receipts"},
+            {"label": "Abrir requisições", "href": "/requests"},
+        ],
         recommended_questions=["Mostre uma listagem segura."],
-        tool_names=["explore_database"],
+        sources=[
+            {"label": "Pacientes", "href": "/patients"},
+            {"label": "Recibos", "href": "/receipts"},
+            {"label": "Requisições", "href": "/requests"},
+        ],
+        tool_names=["explore_database", "prepare_operational_report"],
         result_summary="Investigação estruturada sobre pacientes.",
     )
     hidden = AiInvestigation.objects.create(
@@ -5387,10 +5397,12 @@ def test_ai_investigations_endpoint_is_user_scoped(api_client):
     assert response.status_code == 200, _response_data(response)
     rows = _response_data(response)
     assert [row["id"] for row in rows] == [owned.id]
+    assert rows[0]["confidence_score"] == 100
 
     detail_response = api_client.get(f"/api/v1/ai/assistant/investigations/{owned.id}/", format="json")
     assert detail_response.status_code == 200, _response_data(detail_response)
     assert _response_data(detail_response)["id"] == owned.id
+    assert _response_data(detail_response)["confidence_score"] == 100
 
     hidden_response = api_client.get(f"/api/v1/ai/assistant/investigations/{hidden.id}/", format="json")
     assert hidden_response.status_code == 404
