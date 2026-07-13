@@ -72,6 +72,24 @@ def derive_investigation_confidence_for_record(investigation: AiInvestigation) -
     )
 
 
+def derive_investigation_confidence_for_payload(investigation: dict[str, Any] | None) -> int:
+    investigation = investigation or {}
+    scope = investigation.get("scope") or {}
+    return max(
+        int(investigation.get("confidence_score") or 0),
+        derive_investigation_confidence(
+            status=str(investigation.get("status") or ""),
+            tool_count=int(scope.get("tool_count") or len(investigation.get("tool_names") or [])),
+            blocked_count=int(scope.get("blocked_count") or 0),
+            findings=investigation.get("findings") or [],
+            sources=investigation.get("sources") or [],
+            next_steps=investigation.get("next_steps") or [],
+            recommended_questions=investigation.get("recommended_questions") or [],
+            result_summary=str(investigation.get("result_summary") or ""),
+        ),
+    )
+
+
 @dataclass(slots=True)
 class InvestigationBuildResult:
     payload: dict[str, Any] | None

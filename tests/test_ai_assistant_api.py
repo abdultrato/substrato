@@ -5426,6 +5426,53 @@ def test_ai_investigations_endpoint_is_user_scoped(api_client):
 
 
 @pytest.mark.django_db
+def test_ai_session_detail_recalculates_investigation_confidence_from_message_metadata(api_client):
+    tenant = _tenant(identifier="tn-ai-session-investigation-metadata", domain="tn-ai-session-investigation-metadata.local")
+    owner = _user(tenant, "owner_ai_session_investigation_metadata", GROUPS["RECEPCAO"])
+    session = AiSession.objects.create(tenant=tenant, user=owner, title="Sessão IA", language="pt")
+    AiMessage.objects.create(
+        tenant=tenant,
+        session=session,
+        user=owner,
+        role=AiMessage.Role.ASSISTANT,
+        content="Resposta estruturada",
+        content_redacted="Resposta estruturada",
+        metadata={
+            "investigation": {
+                "id": 999,
+                "custom_id": "AIINV-LEGACY",
+                "title": "Investigação de dados",
+                "status": "ready",
+                "intent": "data_exploration",
+                "confidence_score": 80,
+                "scope": {"tool_count": 2, "blocked_count": 0},
+                "findings": [{"title": "Pacientes", "detail": "0"}],
+                "next_steps": [
+                    {"label": "Abrir pacientes", "href": "/patients"},
+                    {"label": "Abrir recibos", "href": "/receipts"},
+                    {"label": "Abrir requisições", "href": "/requests"},
+                ],
+                "recommended_questions": ["Mostre uma listagem segura."],
+                "sources": [
+                    {"label": "Pacientes", "href": "/patients"},
+                    {"label": "Recibos", "href": "/receipts"},
+                    {"label": "Requisições", "href": "/requests"},
+                ],
+                "tool_names": ["explore_database", "prepare_operational_report"],
+                "result_summary": "Investigação estruturada sobre pacientes.",
+            }
+        },
+    )
+
+    _authenticate(api_client, tenant, owner)
+    response = api_client.get(f"/api/v1/ai/assistant/sessions/{session.id}/", format="json")
+
+    assert response.status_code == 200, _response_data(response)
+    payload = _response_data(response)
+    assert payload["messages"][0]["metadata"]["investigation"]["confidence_score"] == 100
+
+
+@pytest.mark.django_db
 def test_ai_investigation_followup_prepares_confirmable_actions(api_client):
     tenant = _tenant(identifier="tn-ai-investigation-followup", domain="tn-ai-investigation-followup.local")
     admin = _user(tenant, "admin_ai_investigation_followup", GROUPS["ADMIN"], is_staff=True)

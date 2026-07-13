@@ -4,7 +4,10 @@ from rest_framework import serializers
 
 from apps.ai_assistant.models import AiInvestigation, AiMessage, AiOperationalTask, AiSession, AiSuggestedAction
 from apps.ai_assistant.services.clarification_learning import VALID_LEARNED_RESOLUTION_FEEDBACK_EVENTS
-from apps.ai_assistant.services.investigation import derive_investigation_confidence_for_record
+from apps.ai_assistant.services.investigation import (
+    derive_investigation_confidence_for_payload,
+    derive_investigation_confidence_for_record,
+)
 from apps.ai_assistant.services.suggestion_learning import VALID_PROACTIVE_FEEDBACK_EVENTS
 
 
@@ -43,6 +46,8 @@ class AiSessionSerializer(serializers.ModelSerializer):
 
 
 class AiMessageSerializer(serializers.ModelSerializer):
+    metadata = serializers.SerializerMethodField()
+
     class Meta:
         model = AiMessage
         fields = [
@@ -53,6 +58,19 @@ class AiMessageSerializer(serializers.ModelSerializer):
             "metadata",
             "created_at",
         ]
+
+    def get_metadata(self, obj: AiMessage) -> dict:
+        metadata = obj.metadata if isinstance(obj.metadata, dict) else {}
+        investigation = metadata.get("investigation")
+        if not isinstance(investigation, dict):
+            return metadata
+        return {
+            **metadata,
+            "investigation": {
+                **investigation,
+                "confidence_score": derive_investigation_confidence_for_payload(investigation),
+            },
+        }
 
 
 class AiSessionDetailSerializer(AiSessionSerializer):
