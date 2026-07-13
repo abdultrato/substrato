@@ -629,77 +629,85 @@ export default function RecepcaoPage() {
                 </div>
               )}
 
-              <div className="flex flex-col gap-3 xl:flex-row xl:flex-nowrap xl:items-center xl:gap-4">
-                <div className="flex min-w-0 flex-col gap-2 xl:max-w-[30rem] xl:flex-1 xl:flex-row xl:flex-nowrap xl:items-center">
-                  <div className="flex items-center gap-2 xl:shrink-0">
-                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-[var(--primary-600)]/10 text-[var(--primary-700)] dark:text-[var(--primary-400)]">
-                      <Search size={15} />
-                    </span>
-                    <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold text-foreground-2">
-                      {search ? `${searchResults.length} resultados` : `${searchRows.length} indexados`}
-                    </span>
-                  </div>
-
-                  <div className="relative min-w-0 xl:flex-1">
-                    <Search
-                      size={13}
-                      className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-                    />
-                    <input
-                      type="text"
-                      value={searchInput}
-                      onChange={(event) => setSearchInput(event.target.value)}
-                      placeholder="Paciente, código, req., fatura..."
-                      className="h-9 w-full rounded-xl border border-border bg-background/70 py-2 pl-8 pr-9 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-violet-500/30"
-                    />
-                    {searchInput ? (
-                      <button
-                        type="button"
-                        onClick={() => setSearchInput("")}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground transition hover:text-foreground"
-                        aria-label="Limpar pesquisa"
-                      >
-                        <XCircle size={14} />
-                      </button>
-                    ) : null}
-                  </div>
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 xl:flex-nowrap [&::-webkit-scrollbar]:hidden [scrollbar-width:none]">
+                <div className="relative w-[16rem] shrink-0 md:w-[18rem] xl:w-[20rem]">
+                  <Search
+                    size={13}
+                    className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                  />
+                  <input
+                    type="text"
+                    value={searchInput}
+                    onChange={(event) => setSearchInput(event.target.value)}
+                    placeholder="Paciente, código, req., fatura..."
+                    className="h-9 w-full rounded-xl border border-border bg-background/70 py-2 pl-8 pr-9 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-violet-500/30"
+                  />
+                  {searchInput ? (
+                    <button
+                      type="button"
+                      onClick={() => setSearchInput("")}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground transition hover:text-foreground"
+                      aria-label="Limpar pesquisa"
+                    >
+                      <XCircle size={14} />
+                    </button>
+                  ) : null}
                 </div>
 
-                <div className="flex flex-wrap items-center gap-1.5 xl:flex-nowrap xl:shrink-0">
-                  <div className="flex flex-wrap items-center gap-1.5 xl:flex-nowrap">
-                    <StatPill
-                      label="Check-ins hoje"
-                      value={workspace.summary.checkins_today}
-                      icon={Users}
-                      cls="border-blue-200/50 bg-blue-100/30 text-blue-700 dark:border-blue-700/30 dark:bg-blue-900/20 dark:text-blue-300"
-                      href="/reception/reception-checkins"
-                    />
-                    <StatPill
-                      label="Na fila"
-                      value={workspace.summary.queue_size}
-                      icon={ClipboardList}
-                      cls="border-amber-200/50 bg-amber-100/30 text-amber-700 dark:border-amber-700/30 dark:bg-amber-900/20 dark:text-amber-300"
-                      href="/reception/reception-checkins?status=AGUARD"
-                    />
-                    <StatPill
-                      label="Em atendimento"
-                      value={workspace.summary.in_care}
-                      icon={Stethoscope}
-                      cls="border-violet-200/50 bg-violet-100/30 text-violet-700 dark:border-violet-700/30 dark:bg-violet-900/20 dark:text-violet-300"
-                      href="/reception/reception-checkins?status=ATEND"
-                    />
-                  </div>
-
-                  <div className="flex items-center xl:ml-auto xl:pl-1">
-                    <StatPill
-                      label="Recebido hoje"
-                      value={<MoneyValue value={workspace.summary.received_today} />}
-                      icon={Receipt}
-                      cls="border-emerald-200/50 bg-emerald-100/30 text-emerald-700 dark:border-emerald-700/30 dark:bg-emerald-900/20 dark:text-emerald-300"
-                      href="/receipts"
-                    />
-                  </div>
+                <StatPill
+                  label="Check-ins hoje"
+                  value={workspace.summary.checkins_today}
+                  icon={Users}
+                  cls="border-blue-200/50 bg-blue-100/30 text-blue-700 dark:border-blue-700/30 dark:bg-blue-900/20 dark:text-blue-300"
+                  href="/reception/reception-checkins"
+                />
+                <StatPill
+                  label="Na fila"
+                  value={workspace.summary.queue_size}
+                  icon={ClipboardList}
+                  cls="border-amber-200/50 bg-amber-100/30 text-amber-700 dark:border-amber-700/30 dark:bg-amber-900/20 dark:text-amber-300"
+                  href="/reception/reception-checkins?status=AGUARD"
+                />
+                <StatPill
+                  label="Em atendimento"
+                  value={workspace.summary.in_care}
+                  icon={Stethoscope}
+                  cls="border-violet-200/50 bg-violet-100/30 text-violet-700 dark:border-violet-700/30 dark:bg-violet-900/20 dark:text-violet-300"
+                  href="/reception/reception-checkins?status=ATEND"
+                />
+                <div className="shrink-0 xl:ml-auto">
+                  <StatPill
+                    label="Recebido hoje"
+                    value={<MoneyValue value={workspace.summary.received_today} />}
+                    icon={Receipt}
+                    cls="border-emerald-200/50 bg-emerald-100/30 text-emerald-700 dark:border-emerald-700/30 dark:bg-emerald-900/20 dark:text-emerald-300"
+                    href="/receipts"
+                  />
                 </div>
+                <HeaderMiniIndicator
+                  label="Pacientes novos"
+                  value={workspace.summary.new_patients}
+                  href="/patients"
+                  accent="text-blue-700 dark:text-blue-300"
+                />
+                <HeaderMiniIndicator
+                  label="Req. pendentes"
+                  value={workspace.summary.pending_requests}
+                  href="/requests/pendentes"
+                  accent="text-amber-700 dark:text-amber-300"
+                />
+                <HeaderMiniIndicator
+                  label="Faturas abertas"
+                  value={workspace.summary.open_invoices}
+                  href="/billing/invoices?status=EMIT"
+                  accent="text-rose-700 dark:text-rose-300"
+                />
+                <HeaderMiniIndicator
+                  label="Recibos hoje"
+                  value={workspace.summary.receipts_generated_today}
+                  href="/payments/receipts"
+                  accent="text-emerald-700 dark:text-emerald-300"
+                />
               </div>
             </div>
 
@@ -709,16 +717,50 @@ export default function RecepcaoPage() {
             />
           </section>
 
+          <section className={GLASS}>
+            <div className="grid gap-2 px-3 py-3 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+              <div className="space-y-2">
+                <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
+                  Atalhos
+                </span>
+                <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+                  {atalhos.map((atalho) => (
+                    <QuickLinkCard
+                      key={atalho.href}
+                      href={atalho.href}
+                      title={atalho.title}
+                      description={atalho.description}
+                      icon={atalho.icon}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
+                  Marcações
+                </span>
+                <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-2">
+                  {marcacoesPorSector.map((sector) => (
+                    <QuickLinkCard
+                      key={sector.href}
+                      href={sector.href}
+                      title={sector.title}
+                      description={sector.description}
+                      icon={sector.icon}
+                      iconBg={sector.iconBg}
+                      iconColor={sector.iconColor}
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
+          </section>
+
           <div className="grid gap-3 xl:grid-cols-[minmax(0,1.15fr)_380px]">
             <div className="space-y-3">
               <section className={GLASS}>
                 <div className="space-y-3 px-4 py-4">
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <span className="rounded-full bg-muted px-2.5 py-1 text-[10px] font-semibold text-foreground-2">
-                      {search ? `${searchResults.length} em check-ins` : `${searchRows.length} check-ins indexados`}
-                    </span>
-                  </div>
-
                   <div className="space-y-2">
                     {carregando ? (
                       <div className="flex items-center justify-center gap-2 rounded-xl border border-dashed border-border px-4 py-10 text-sm text-muted-foreground">
@@ -744,27 +786,17 @@ export default function RecepcaoPage() {
                 </div>
               </section>
 
-              <section className={GLASS}>
-                <div className="flex items-center gap-2 border-b border-border/60 px-4 py-3">
-                  <span className="text-sm font-bold text-foreground">Fila do dia</span>
-                  {!carregando && (
+              {workspace.queue.length > 0 ? (
+                <section className={GLASS}>
+                  <div className="flex items-center gap-2 border-b border-border/60 px-4 py-3">
+                    <span className="text-sm font-bold text-foreground">Fila do dia</span>
                     <span className="ml-auto rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold text-foreground-2">
                       {workspace.queue.length}
                     </span>
-                  )}
-                </div>
+                  </div>
 
-                <div className="max-h-[32rem] space-y-1.5 overflow-y-auto p-2">
-                  {carregando ? (
-                    <p className="px-3 py-6 text-center text-sm text-muted-foreground">
-                      Carregando fila...
-                    </p>
-                  ) : workspace.queue.length === 0 ? (
-                    <div className="rounded-xl border border-dashed border-border px-4 py-8 text-center text-sm text-muted-foreground">
-                      Nenhum check-in aberto hoje.
-                    </div>
-                  ) : (
-                    workspace.queue.map((item) => {
+                  <div className="max-h-[32rem] space-y-1.5 overflow-y-auto p-2">
+                    {workspace.queue.map((item) => {
                       const meta = getManchesterMeta(item.priority);
                       return (
                         <Link
@@ -796,10 +828,10 @@ export default function RecepcaoPage() {
                           </div>
                         </Link>
                       );
-                    })
-                  )}
-                </div>
-              </section>
+                    })}
+                  </div>
+                </section>
+              ) : null}
             </div>
 
             <div className="space-y-3">
@@ -822,101 +854,6 @@ export default function RecepcaoPage() {
                 }}
               />
 
-              <section className={GLASS}>
-                <div className="border-b border-border/60 px-4 py-3">
-                  <span className="text-sm font-bold text-foreground">Indicadores auxiliares</span>
-                </div>
-                <div className="grid grid-cols-2 gap-2 p-2">
-                  <MiniIndicatorTile
-                    label="Pacientes novos"
-                    value={workspace.summary.new_patients}
-                    href="/patients"
-                    accent="text-blue-600 dark:text-blue-400"
-                    bar="border-l-blue-500 dark:border-l-blue-400"
-                  />
-                  <MiniIndicatorTile
-                    label="Req. pendentes"
-                    value={workspace.summary.pending_requests}
-                    href="/requests/pendentes"
-                    accent="text-amber-600 dark:text-amber-400"
-                    bar="border-l-amber-500 dark:border-l-amber-400"
-                  />
-                  <MiniIndicatorTile
-                    label="Faturas abertas"
-                    value={workspace.summary.open_invoices}
-                    href="/billing/invoices?status=EMIT"
-                    accent="text-rose-600 dark:text-rose-400"
-                    bar="border-l-rose-500 dark:border-l-rose-400"
-                  />
-                  <MiniIndicatorTile
-                    label="Recibos hoje"
-                    value={workspace.summary.receipts_generated_today}
-                    href="/payments/receipts"
-                    accent="text-emerald-600 dark:text-emerald-400"
-                    bar="border-l-emerald-500 dark:border-l-emerald-400"
-                  />
-                </div>
-              </section>
-
-              <section className={GLASS}>
-                <div className="border-b border-border/60 px-4 py-3">
-                  <span className="text-sm font-bold text-foreground">Atalhos</span>
-                </div>
-                <div className="flex flex-col gap-1.5 p-2">
-                  {atalhos.map((atalho) => (
-                    <Link
-                      key={atalho.href}
-                      href={atalho.href}
-                      className="group flex items-center gap-2 rounded-xl border border-white/20 bg-white/25 px-3 py-2 shadow-sm transition hover:border-[var(--primary-300)] hover:bg-white/40 dark:bg-white/5 dark:hover:border-[var(--primary-600)] dark:hover:bg-white/[0.08]"
-                    >
-                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-muted">
-                        <atalho.icon size={14} className="text-muted-foreground" />
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-xs font-semibold text-foreground">
-                          {atalho.title}
-                        </p>
-                        <p className="truncate text-[10px] text-muted-foreground">
-                          {atalho.description}
-                        </p>
-                      </div>
-                      <ChevronRight
-                        size={12}
-                        className="shrink-0 text-muted-foreground transition group-hover:text-foreground"
-                      />
-                    </Link>
-                  ))}
-                </div>
-              </section>
-
-              <section className={GLASS}>
-                <div className="border-b border-border/60 px-4 py-3">
-                  <span className="text-sm font-bold text-foreground">Marcações</span>
-                </div>
-                <div className="flex flex-col gap-1.5 p-2">
-                  {marcacoesPorSector.map((sector) => (
-                    <Link
-                      key={sector.href}
-                      href={sector.href}
-                      className="group flex items-center gap-2 rounded-xl border border-white/20 bg-white/25 px-3 py-2 transition hover:border-[var(--primary-300)] hover:bg-white/40 dark:bg-white/5 dark:hover:border-[var(--primary-600)] dark:hover:bg-white/[0.08]"
-                    >
-                      <span
-                        className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${sector.iconBg}`}
-                      >
-                        <sector.icon size={14} className={sector.iconColor} />
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-xs font-semibold text-foreground">
-                          {sector.title}
-                        </p>
-                        <p className="truncate text-[10px] text-muted-foreground">
-                          {sector.description}
-                        </p>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              </section>
             </div>
           </div>
 
@@ -1078,146 +1015,161 @@ function ChatbotPanel({
   }, [loading, messages]);
 
   return (
-    <section className={`${GLASS} flex min-h-[34rem] flex-col overflow-hidden`}>
-      <div className="border-b border-border/60 px-4 py-3">
-        <div className="flex items-center gap-2">
-          <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-indigo-600 text-white shadow-sm">
-            <Bot size={15} />
-          </span>
-          <div>
-            <h2 className="text-sm font-bold text-foreground">Chatbot Substrato</h2>
-            <p className="text-[11px] text-muted-foreground">
-              Espaço de conversa operacional com contexto vivo da recepção.
-            </p>
-          </div>
-        </div>
+    <section className={`${GLASS} flex flex-col overflow-hidden`}>
+      <div className="flex items-center gap-2 border-b border-border/60 px-3 py-2">
+        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-violet-500 to-indigo-600 text-white shadow-sm">
+          <Bot size={12} />
+        </span>
+        <h2 className="text-xs font-bold text-foreground">Chatbot Substrato</h2>
+        <Link
+          href="/ai"
+          className="ml-auto text-[10px] font-medium text-[var(--primary-600)] hover:underline dark:text-[var(--primary-400)]"
+        >
+          IA completa
+        </Link>
       </div>
 
-      <div className="flex min-h-0 flex-1 flex-col">
-        <div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-3">
-          {messages.length === 0 ? (
-            <div className="space-y-3">
-              <div className="rounded-2xl border border-dashed border-border bg-white/20 px-4 py-4 text-sm text-muted-foreground dark:bg-white/[0.03]">
-                Pergunte pelo estado da fila, atrasos, falta de faturação ou próxima acção recomendada.
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {chatPrompts.map((prompt) => (
-                  <button
-                    key={prompt}
-                    type="button"
-                    onClick={() => onPromptClick(prompt)}
-                    className="inline-flex items-center gap-1 rounded-full border border-white/20 bg-white/35 px-3 py-1.5 text-[11px] font-medium text-foreground transition hover:bg-white/55 dark:bg-white/[0.06] dark:hover:bg-white/[0.1]"
-                  >
-                    <Sparkles size={11} className="text-violet-500" />
-                    {prompt}
-                  </button>
-                ))}
-              </div>
-            </div>
-          ) : (
-            messages.map((message) => {
-              const isUser = message.role === "user";
-              const isError = message.role === "error";
-              return (
-                <div
-                  key={message.id}
-                  className={isUser ? "ml-auto w-full max-w-[88%]" : "mr-auto w-full max-w-[92%]"}
-                >
-                  <div
-                    className={`whitespace-pre-wrap rounded-2xl px-3 py-2 text-sm leading-relaxed ${
-                      isUser
-                        ? "bg-gradient-to-br from-violet-600 to-indigo-600 text-white"
-                        : isError
-                          ? "border border-rose-200 bg-rose-50 text-rose-800 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-100"
-                          : "border border-white/20 bg-white/60 text-foreground dark:border-white/10 dark:bg-white/[0.06]"
-                    }`}
-                  >
-                    {message.content}
-                  </div>
-                </div>
-              );
-            })
-          )}
-
-          {loading ? (
-            <div className="mr-auto w-full max-w-[92%]">
-              <div className="inline-flex items-center gap-2 rounded-2xl border border-white/20 bg-white/60 px-3 py-2 text-sm text-muted-foreground dark:border-white/10 dark:bg-white/[0.06]">
-                <Loader2 size={14} className="animate-spin" />
-                A pensar...
-              </div>
-            </div>
-          ) : null}
-
-          <div ref={bottomRef} />
-        </div>
-
-        <div className="border-t border-border/60 p-3">
-          {error ? (
-            <p className="mb-2 text-[11px] text-rose-600 dark:text-rose-400">{error}</p>
-          ) : null}
-          <form onSubmit={(event) => void onSubmit(event)} className="space-y-2">
-            <textarea
-              value={composer}
-              onChange={(event) => onComposerChange(event.target.value)}
-              onKeyDown={(event) => void onComposerKeyDown(event)}
-              rows={3}
-              placeholder="Escreva uma pergunta para o chatbot Substrato..."
-              className="w-full resize-none rounded-xl border border-border bg-background/70 px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-violet-500/30"
-            />
-            <div className="flex items-center justify-between gap-2">
-              <Link
-                href="/ai"
-                className="text-[11px] font-medium text-[var(--primary-600)] hover:underline dark:text-[var(--primary-400)]"
-              >
-                Abrir IA completa
-              </Link>
+      <div className="max-h-64 space-y-1.5 overflow-y-auto p-2 [scrollbar-width:thin]">
+        {messages.length === 0 ? (
+          <div className="flex flex-wrap gap-1.5">
+            {chatPrompts.map((prompt) => (
               <button
-                type="submit"
-                disabled={loading || !composer.trim()}
-                className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 px-3 text-xs font-semibold text-white shadow-sm transition hover:from-violet-700 hover:to-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
+                key={prompt}
+                type="button"
+                onClick={() => onPromptClick(prompt)}
+                className="inline-flex items-center gap-1 rounded-full border border-white/20 bg-white/35 px-2 py-1 text-[10px] font-medium text-foreground transition hover:bg-white/55 dark:bg-white/[0.06] dark:hover:bg-white/[0.1]"
               >
-                <Send size={13} />
-                Enviar
+                <Sparkles size={10} className="text-violet-500" />
+                {prompt}
               </button>
-            </div>
-          </form>
-        </div>
+            ))}
+          </div>
+        ) : (
+          messages.map((message) => {
+            const isUser = message.role === "user";
+            const isError = message.role === "error";
+            return (
+              <div
+                key={message.id}
+                className={isUser ? "ml-auto w-fit max-w-[88%]" : "mr-auto w-fit max-w-[92%]"}
+              >
+                <div
+                  className={`whitespace-pre-wrap rounded-xl px-2.5 py-1.5 text-xs leading-relaxed ${
+                    isUser
+                      ? "bg-gradient-to-br from-violet-600 to-indigo-600 text-white"
+                      : isError
+                        ? "border border-rose-200 bg-rose-50 text-rose-800 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-100"
+                        : "border border-white/20 bg-white/60 text-foreground dark:border-white/10 dark:bg-white/[0.06]"
+                  }`}
+                >
+                  {message.content}
+                </div>
+              </div>
+            );
+          })
+        )}
+
+        {loading ? (
+          <div className="mr-auto inline-flex items-center gap-1.5 rounded-xl border border-white/20 bg-white/60 px-2.5 py-1.5 text-[10px] text-muted-foreground dark:border-white/10 dark:bg-white/[0.06]">
+            <Loader2 size={11} className="animate-spin" />
+            A pensar...
+          </div>
+        ) : null}
+
+        <div ref={bottomRef} />
+      </div>
+
+      <div className="border-t border-border/60 p-2">
+        {error ? (
+          <p className="mb-1.5 text-[10px] text-rose-600 dark:text-rose-400">{error}</p>
+        ) : null}
+        <form onSubmit={(event) => void onSubmit(event)} className="flex items-end gap-1.5">
+          <textarea
+            value={composer}
+            onChange={(event) => onComposerChange(event.target.value)}
+            onKeyDown={(event) => void onComposerKeyDown(event)}
+            rows={1}
+            placeholder="Escreva uma pergunta…"
+            className="max-h-24 min-h-[2rem] flex-1 resize-none rounded-lg border border-border bg-background/70 px-2.5 py-1.5 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-violet-500/30"
+          />
+          <button
+            type="submit"
+            disabled={loading || !composer.trim()}
+            aria-label="Enviar"
+            className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-sm transition hover:from-violet-700 hover:to-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            <Send size={13} />
+          </button>
+        </form>
       </div>
     </section>
   );
 }
 
-function MiniIndicatorTile({
+function HeaderMiniIndicator({
   label,
   value,
   href,
   accent,
-  bar,
 }: {
   label: string;
   value: number | string;
   href?: string;
   accent?: string;
-  bar?: string;
 }) {
   const inner = (
-    <div
-      className={`flex flex-col gap-0.5 rounded-xl border border-l-4 border-white/20 bg-white/25 px-3 py-2 backdrop-blur-sm dark:bg-white/5 ${bar ?? "border-l-border"}`}
-    >
-      <span className="text-[10px] font-medium leading-none text-muted-foreground">{label}</span>
-      <span className={`text-lg font-bold leading-tight ${accent ?? "text-foreground"}`}>{value}</span>
-    </div>
+    <span className="inline-flex h-9 shrink-0 items-center gap-2 rounded-xl border border-white/20 bg-white/35 px-3 text-[10px] font-medium text-muted-foreground backdrop-blur-sm dark:bg-white/[0.05]">
+      <span className="whitespace-nowrap">{label}</span>
+      <span className={`text-xs font-bold ${accent ?? "text-foreground"}`}>{value}</span>
+    </span>
   );
 
   if (href) {
     return (
-      <Link href={href} className="block transition hover:-translate-y-0.5">
+      <Link href={href} className="shrink-0 transition hover:-translate-y-0.5">
         {inner}
       </Link>
     );
   }
 
   return inner;
+}
+
+function QuickLinkCard({
+  href,
+  title,
+  description,
+  icon: Icon,
+  iconBg,
+  iconColor,
+}: {
+  href: string;
+  title: string;
+  description: string;
+  icon: typeof Users;
+  iconBg?: string;
+  iconColor?: string;
+}) {
+  return (
+    <Link
+      href={href}
+      className="group flex items-start gap-2 rounded-xl border border-white/20 bg-white/25 px-3 py-2 shadow-sm transition hover:border-[var(--primary-300)] hover:bg-white/40 dark:bg-white/5 dark:hover:border-[var(--primary-600)] dark:hover:bg-white/[0.08]"
+    >
+      <span
+        className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${iconBg ?? "bg-muted"} ${iconColor ?? "text-muted-foreground"}`}
+      >
+        <Icon size={14} />
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-xs font-semibold text-foreground">{title}</p>
+        <p className="text-[10px] leading-tight text-muted-foreground">{description}</p>
+      </div>
+      <ChevronRight
+        size={12}
+        className="mt-0.5 shrink-0 text-muted-foreground transition group-hover:text-foreground"
+      />
+    </Link>
+  );
 }
 
 function ReceptionDecidedSection({
