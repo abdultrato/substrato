@@ -91,6 +91,22 @@ class AiInvestigationSerializer(serializers.ModelSerializer):
         return str(getattr(user, "username", "") or getattr(user, "email", "") or "")
 
 
+class AiInvestigationListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AiInvestigation
+        fields = [
+            "id",
+            "custom_id",
+            "title",
+            "question",
+            "intent",
+            "status",
+            "confidence_score",
+            "result_summary",
+            "created_at",
+        ]
+
+
 class AiInvestigationUpdateSerializer(serializers.Serializer):
     status = serializers.ChoiceField(choices=AiInvestigation.Status.choices, required=True)
 

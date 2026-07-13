@@ -28,6 +28,7 @@ from .serializers import (
     AiActionConfirmSerializer,
     AiChatRequestSerializer,
     AiInvestigationFollowUpSerializer,
+    AiInvestigationListSerializer,
     AiInvestigationSerializer,
     AiInvestigationUpdateSerializer,
     AiLearnedResolutionFeedbackSerializer,
@@ -199,6 +200,21 @@ class AiAssistantInvestigationsView(APIView):
                 | Q(result_summary__icontains=query)
             )
 
+        list_fields = [
+            "id",
+            "custom_id",
+            "title",
+            "question",
+            "intent",
+            "status",
+            "confidence_score",
+            "result_summary",
+            "created_at",
+        ]
+        if tool_name:
+            list_fields.append("tool_names")
+        queryset = queryset.only(*list_fields)
+
         try:
             limit = min(max(int(request.query_params.get("limit") or 100), 1), 250)
         except (TypeError, ValueError):
@@ -208,7 +224,7 @@ class AiAssistantInvestigationsView(APIView):
         rows = list(queryset.order_by("-created_at", "-id")[:fetch_limit])
         if tool_name:
             rows = [item for item in rows if tool_name in (item.tool_names or [])][:limit]
-        return Response(AiInvestigationSerializer(rows, many=True).data)
+        return Response(AiInvestigationListSerializer(rows, many=True).data)
 
 
 class AiAssistantInvestigationDetailView(APIView):

@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { startTransition, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from "react"
 import {
   Archive,
   ArrowLeft,
@@ -108,23 +108,74 @@ function confidenceTone(score: number) {
   return "bg-rose-500"
 }
 
+function matchesSearch(item: AiInvestigation, query: string) {
+  const haystack = [
+    item.title,
+    item.question,
+    item.result_summary,
+    item.intent,
+    item.custom_id,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLocaleLowerCase()
+
+  return haystack.includes(query.toLocaleLowerCase())
+}
+
 export default function AiInvestigationsPage() {
   const { t, isPortuguese } = useLanguage()
   const safeRefreshToken = useSafeDataRefreshSignal()
   const [rows, setRows] = useState<AiInvestigation[]>([])
   const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState("")
   const [query, setQuery] = useState("")
   const [status, setStatus] = useState("")
   const [intent, setIntent] = useState("")
-  const debouncedQuery = useDebounce(query.trim(), 300)
+  const cacheRef = useRef<Map<string, AiInvestigation[]>>(new Map())
+  const abortRef = useRef<AbortController | null>(null)
+  const previousRefreshTokenRef = useRef(safeRefreshToken)
+  const deferredQuery = useDeferredValue(query.trim())
+  const debouncedQuery = useDebounce(deferredQuery, 260)
+  const requestKey = useMemo(
+    () => JSON.stringify({ q: debouncedQuery, status, intent }),
+    [debouncedQuery, intent, status]
+  )
+  const baseKey = useMemo(() => JSON.stringify({ q: "", status, intent }), [intent, status])
 
-  const loadInvestigations = useCallback(async () => {
-    setLoading(true)
+  const loadInvestigations = useCallback(async (force = false) => {
+    const queryValue = debouncedQuery
+    const cachedRows = cacheRef.current.get(requestKey)
+    if (!force && cachedRows) {
+      setError("")
+      setLoading(false)
+      setRefreshing(false)
+      startTransition(() => setRows(cachedRows))
+      return
+    }
+
+    if (!force && queryValue && queryValue.length < 2) {
+      const baseRows = cacheRef.current.get(baseKey)
+      if (baseRows) {
+        setError("")
+        setLoading(false)
+        setRefreshing(false)
+        startTransition(() => setRows(baseRows.filter((item) => matchesSearch(item, queryValue))))
+        return
+      }
+    }
+
+    abortRef.current?.abort()
+    const controller = new AbortController()
+    abortRef.current = controller
     setError("")
+    if (rows.length) setRefreshing(true)
+    else setLoading(true)
+
     try {
       const params = new URLSearchParams()
-      if (debouncedQuery) params.set("q", debouncedQuery)
+      if (queryValue) params.set("q", queryValue)
       if (status) params.set("status", status)
       if (intent) params.set("intent", intent)
       params.set("limit", "150")
@@ -132,18 +183,34 @@ export default function AiInvestigationsPage() {
       const result = await apiFetch<AiInvestigation[]>(`/ai/assistant/investigations/${suffix ? `?${suffix}` : ""}`, {
         clientCache: false,
         timeoutMs: 30_000,
+        signal: controller.signal,
       })
-      setRows(Array.isArray(result) ? result : [])
+      const nextRows = Array.isArray(result) ? result : []
+      cacheRef.current.set(requestKey, nextRows)
+      if (!queryValue) cacheRef.current.set(baseKey, nextRows)
+      startTransition(() => setRows(nextRows))
     } catch (err: any) {
+      if (err?.name === "AbortError") return
       setError(err?.message || t("Falha ao carregar investigações da IA.", "Failed to load AI investigations."))
     } finally {
       setLoading(false)
+      setRefreshing(false)
+      if (abortRef.current === controller) abortRef.current = null
     }
-  }, [debouncedQuery, intent, status, t])
+  }, [baseKey, debouncedQuery, intent, requestKey, rows.length, status, t])
 
   useEffect(() => {
-    void loadInvestigations()
+    const refreshChanged = previousRefreshTokenRef.current !== safeRefreshToken
+    if (refreshChanged) {
+      previousRefreshTokenRef.current = safeRefreshToken
+      cacheRef.current.clear()
+    }
+    void loadInvestigations(refreshChanged)
   }, [loadInvestigations, safeRefreshToken])
+
+  useEffect(() => {
+    return () => abortRef.current?.abort()
+  }, [])
 
   const stats = useMemo(() => {
     return rows.reduce(
@@ -179,6 +246,8 @@ export default function AiInvestigationsPage() {
                 <p className="text-[10px] text-muted-foreground">
                   {loading
                     ? t("A carregar…", "Loading…")
+                    : refreshing
+                      ? t("A actualizar resultados…", "Refreshing results…")
                     : isPortuguese
                       ? formatCount(stats.total, { one: "investigação registada", other: "investigações registadas" })
                       : `${stats.total} recorded investigation${stats.total === 1 ? "" : "s"}`}
@@ -219,13 +288,16 @@ export default function AiInvestigationsPage() {
               </Link>
               <button
                 type="button"
-                onClick={() => void loadInvestigations()}
-                disabled={loading}
+                onClick={() => {
+                  cacheRef.current.clear()
+                  void loadInvestigations(true)
+                }}
+                disabled={loading || refreshing}
                 aria-label={t("Actualizar", "Refresh")}
                 title={t("Actualizar", "Refresh")}
                 className="grid h-8 w-8 place-items-center rounded-lg border border-white/25 bg-white/[0.05] text-foreground backdrop-blur-xl transition hover:bg-white/20 disabled:opacity-60 dark:border-white/10 dark:bg-white/[0.03] dark:hover:bg-white/[0.08]"
               >
-                {loading ? <Loader2 size={13} className="animate-spin" /> : <RefreshCcw size={13} />}
+                {loading || refreshing ? <Loader2 size={13} className="animate-spin" /> : <RefreshCcw size={13} />}
               </button>
             </div>
           </div>
@@ -243,6 +315,9 @@ export default function AiInvestigationsPage() {
                 placeholder={t("Pergunta, título ou resumo…", "Question, title or summary…")}
                 className="w-full rounded-lg border border-white/25 bg-white/[0.05] py-1.5 pl-7 pr-3 text-xs text-foreground placeholder:text-muted-foreground backdrop-blur-xl transition-all focus:outline-none focus:ring-2 focus:ring-violet-500/40 sm:focus:w-80 dark:border-white/10 dark:bg-white/[0.03]"
               />
+              {refreshing ? (
+                <Loader2 size={11} className="absolute right-2.5 top-1/2 -translate-y-1/2 animate-spin text-muted-foreground" />
+              ) : null}
             </div>
 
             <div className="flex flex-wrap items-center gap-1">
@@ -294,7 +369,7 @@ export default function AiInvestigationsPage() {
           </div>
         ) : null}
 
-        {loading ? (
+        {loading && !rows.length ? (
           <div className="flex items-center justify-center gap-2 rounded-xl border border-dashed border-border px-4 py-8 text-xs text-muted-foreground">
             <Loader2 size={16} className="animate-spin" />
             {t("A carregar investigações...", "Loading investigations...")}
