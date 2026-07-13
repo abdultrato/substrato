@@ -288,7 +288,9 @@ export default function EquipmentsDetailPage() {
                         : row.initial_operational_status,
                 )}
               />
-              <Row label="Avaria inicial" value={str(row.initial_failure_type)} />
+              {String(row.initial_failure_type ?? "").trim() ? (
+                <Row label="Avaria inicial" value={str(row.initial_failure_type)} />
+              ) : null}
             </Section>
 
             <Section title="Estado operacional" icon={Activity} bar={meta.bar}>

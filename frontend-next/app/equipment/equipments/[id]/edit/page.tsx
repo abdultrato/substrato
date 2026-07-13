@@ -303,7 +303,16 @@ export default function EquipmentsEditPage() {
               <Field label="Estado operacional inicial">
                 <select
                   value={form.initial_operational_status}
-                  onChange={(e) => set("initial_operational_status", e.target.value)}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setForm((current) => ({
+                      ...current,
+                      initial_operational_status: value,
+                      // Avaria inicial só faz sentido quando o estado é Avariado.
+                      initial_failure_type:
+                        value === "AVARIADO" ? current.initial_failure_type : "",
+                    }));
+                  }}
                   className={`${INPUT} [&>option]:bg-background`}
                 >
                   <option value="FUNCIONANDO">A funcionar</option>
@@ -311,14 +320,16 @@ export default function EquipmentsEditPage() {
                   <option value="DESLIGADO">Desligado</option>
                 </select>
               </Field>
-              <Field label="Tipo de avaria inicial">
-                <input
-                  type="text"
-                  value={form.initial_failure_type}
-                  onChange={(e) => set("initial_failure_type", e.target.value)}
-                  className={INPUT}
-                />
-              </Field>
+              {form.initial_operational_status === "AVARIADO" ? (
+                <Field label="Tipo de avaria inicial">
+                  <input
+                    type="text"
+                    value={form.initial_failure_type}
+                    onChange={(e) => set("initial_failure_type", e.target.value)}
+                    className={INPUT}
+                  />
+                </Field>
+              ) : null}
             </FormSection>
 
             <FormSection title="Localização e responsável" icon={MapPin} bar="border-l-violet-500 dark:border-l-violet-400">
