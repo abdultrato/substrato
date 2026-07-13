@@ -732,12 +732,12 @@ export default function RecepcaoPage() {
           </section>
 
           <section className={GLASS}>
-            <div className="grid gap-2 px-3 py-3 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-              <div className="space-y-2">
+            <div className="grid gap-1 px-2 py-2 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+              <div className="space-y-1">
                 <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
                   Atalhos
                 </span>
-                <div className="flex gap-1.5 overflow-x-auto pb-1 xl:flex-nowrap [&::-webkit-scrollbar]:hidden [scrollbar-width:none]">
+                <div className="flex gap-1 overflow-x-auto xl:flex-nowrap [&::-webkit-scrollbar]:hidden [scrollbar-width:none]">
                   {atalhos.map((atalho) => (
                     <QuickLinkCard
                       key={atalho.href}
@@ -750,11 +750,11 @@ export default function RecepcaoPage() {
                 </div>
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-1">
                 <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
                   Marcações
                 </span>
-                <div className="flex gap-1.5 overflow-x-auto pb-1 xl:flex-nowrap [&::-webkit-scrollbar]:hidden [scrollbar-width:none]">
+                <div className="flex gap-1 overflow-x-auto xl:flex-nowrap [&::-webkit-scrollbar]:hidden [scrollbar-width:none]">
                   {marcacoesPorSector.map((sector) => (
                     <QuickLinkCard
                       key={sector.href}
@@ -1167,21 +1167,21 @@ function QuickLinkCard({
   return (
     <Link
       href={href}
-      className="group flex w-[10.8rem] shrink-0 items-start gap-1.5 rounded-xl border border-white/20 bg-white/25 px-2.5 py-2 shadow-sm transition hover:border-[var(--primary-300)] hover:bg-white/40 xl:w-[calc((100%_-_6rem)/5)] dark:bg-white/5 dark:hover:border-[var(--primary-600)] dark:hover:bg-white/[0.08]"
+      className="group flex w-[10.4rem] shrink-0 items-start gap-1 rounded-xl border border-white/20 bg-white/25 px-2 py-1.5 shadow-sm transition hover:border-[var(--primary-300)] hover:bg-white/40 xl:w-[calc((100%_-_4rem)/5)] dark:bg-white/5 dark:hover:border-[var(--primary-600)] dark:hover:bg-white/[0.08]"
     >
       <span
-        className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${iconBg ?? "bg-muted"} ${iconColor ?? "text-muted-foreground"}`}
+        className={`inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md ${iconBg ?? "bg-muted"} ${iconColor ?? "text-muted-foreground"}`}
       >
-        <Icon size={12} />
+        <Icon size={11} />
       </span>
       <div className="min-w-0 flex-1">
         <p className="truncate text-[11px] font-semibold leading-tight text-foreground">{title}</p>
-        <p className="line-clamp-2 text-[9px] leading-tight text-muted-foreground">
+        <p className="line-clamp-2 text-[8px] leading-tight text-muted-foreground">
           {description}
         </p>
       </div>
       <ChevronRight
-        size={10}
+        size={9}
         className="mt-0.5 shrink-0 text-muted-foreground transition group-hover:text-foreground"
       />
     </Link>
