@@ -1295,7 +1295,7 @@ export default function AiOperationalPage() {
               const isUser = message.role === "user"
               const isError = message.role === "error"
               return (
-                <div key={message.id} className={isUser ? "ml-auto w-full max-w-[85%]" : "mr-auto w-full max-w-[92%]"}>
+                <div key={message.id} className={isUser ? "ml-auto w-fit max-w-[85%]" : "mr-auto w-fit max-w-[92%]"}>
                   <div
                     className={`whitespace-pre-wrap rounded-2xl px-3 py-2 text-sm leading-relaxed ${
                       isUser
