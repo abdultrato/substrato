@@ -1,12 +1,7 @@
-"use client";
+"use client"
 
-import { Suspense } from "react";
-import { GeneratedResourceCreatePage } from "@/components/resources/GeneratedResourcePages";
+import UserProvisioningForm from "@/components/identity/UserProvisioningForm"
 
 export default function CreateUserPage() {
-  return (
-    <Suspense fallback={<div className="p-4 text-sm text-[var(--gray-500)]">Carregando...</div>}>
-      <GeneratedResourceCreatePage endpoint="/identity/users/" />
-    </Suspense>
-  );
+  return <UserProvisioningForm />
 }

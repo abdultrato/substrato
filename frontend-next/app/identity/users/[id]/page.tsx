@@ -1,12 +1,13 @@
-"use client";
+"use client"
 
-import { Suspense } from "react";
-import { GeneratedResourceDetailPage } from "@/components/resources/GeneratedResourcePages";
+import { Suspense } from "react"
+
+import { GeneratedResourceDetailPage } from "@/components/resources/GeneratedResourcePages"
 
 export default function UsersDetailPage() {
   return (
     <Suspense fallback={<div className="p-4 text-sm text-[var(--gray-500)]">Carregando...</div>}>
-      <GeneratedResourceDetailPage endpoint="/identity/users/" />
+      <GeneratedResourceDetailPage endpoint="/identity/user/" />
     </Suspense>
-  );
+  )
 }
