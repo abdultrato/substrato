@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { FormEvent, useEffect, useMemo, useRef, useState } from "react"
+import { FormEvent, useEffect, useRef, useState } from "react"
 import {
   BarChart3,
   Bot,
@@ -13,6 +13,8 @@ import {
   Lightbulb,
   Lock,
   PackageSearch,
+  History,
+  MessageSquarePlus,
   Search,
   Send,
   ShieldCheck,
@@ -22,6 +24,7 @@ import {
   ThumbsDown,
   ThumbsUp,
   TrendingUp,
+  Trash2,
   UserPlus,
 } from "lucide-react"
 
@@ -33,12 +36,12 @@ import AiInvestigationPanel, { type AiInvestigation } from "@/components/ai/AiIn
 import AiToolTrace, { type AiToolCall } from "@/components/ai/AiToolTrace"
 import Badge from "@/components/ui/Badge"
 import Button from "@/components/ui/Button"
-import Card from "@/components/ui/Card"
-import PageHeader from "@/components/ui/PageHeader"
 import TextAreaInput from "@/components/ui/TextAreaInput"
 import { useLanguage } from "@/hooks/useLanguage"
 import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { apiFetch } from "@/lib/api"
+
+const AI_CHAT_STORAGE_KEY = "substrato.ai.chat.v1"
 
 type AiChatResponse = {
   session_id: number
@@ -264,6 +267,18 @@ type AiSessionSummary = {
   message_count?: number
 }
 
+type AiSessionMessage = {
+  id: number
+  role: "user" | "assistant" | "system" | "tool"
+  content_redacted: string
+  metadata?: Record<string, any> | null
+  created_at?: string
+}
+
+type AiSessionDetail = AiSessionSummary & {
+  messages: AiSessionMessage[]
+}
+
 type ConversationMessage = {
   id: string
   messageId?: number
@@ -304,6 +319,34 @@ function formatValue(value: unknown) {
   }
   if (typeof value === "boolean") return value ? "Sim" : "Não"
   return String(value)
+}
+
+function mapSessionMessage(message: AiSessionMessage): ConversationMessage {
+  const metadata = message.metadata && typeof message.metadata === "object" ? message.metadata : {}
+  return {
+    id: `session-${message.id}`,
+    messageId: message.id,
+    role: message.role === "user" ? "user" : "assistant",
+    content: String(message.content_redacted || "").trim(),
+    sources: Array.isArray(metadata.sources) ? (metadata.sources as AiSource[]) : [],
+    toolCalls: Array.isArray(metadata.tool_calls) ? (metadata.tool_calls as AiToolCall[]) : [],
+    suggestedActions: Array.isArray(metadata.suggested_actions)
+      ? (metadata.suggested_actions as AiSuggestedAction[])
+      : [],
+    investigation:
+      metadata.investigation && typeof metadata.investigation === "object"
+        ? (metadata.investigation as AiInvestigation)
+        : null,
+    conversation:
+      metadata.conversation && typeof metadata.conversation === "object"
+        ? (metadata.conversation as AiConversationState)
+        : undefined,
+    schema: metadata.schema && typeof metadata.schema === "object" ? (metadata.schema as AiResponseSchema) : undefined,
+    proactiveGuidance:
+      metadata.proactive_guidance && typeof metadata.proactive_guidance === "object"
+        ? (metadata.proactive_guidance as AiProactiveGuidance)
+        : undefined,
+  }
 }
 
 /**
@@ -908,11 +951,19 @@ function AiContextAside({
   sessions,
   investigations,
   loading,
+  activeSessionId,
+  historyLoadingId,
+  onLoadSession,
+  onOpenHistory,
 }: {
   tools: AiToolDefinition[]
   sessions: AiSessionSummary[]
   investigations: AiInvestigation[]
   loading: boolean
+  activeSessionId: number | null
+  historyLoadingId: number | null
+  onLoadSession: (sessionId: number) => void
+  onOpenHistory: () => void
 }) {
   const { t, isPortuguese } = useLanguage()
 
@@ -987,20 +1038,43 @@ function AiContextAside({
       </div>
 
       <div className="rounded-2xl border border-border bg-background/70 p-3">
-        <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-          {t("Sessões recentes", "Recent sessions")}
+        <div className="mb-2 flex items-center justify-between gap-2">
+          <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            {t("Sessões recentes", "Recent sessions")}
+          </div>
+          <button
+            type="button"
+            onClick={onOpenHistory}
+            className="text-[11px] font-semibold text-primary transition hover:text-primary-hover"
+          >
+            {t("Histórico", "History")}
+          </button>
         </div>
         <div className="space-y-2">
           {sessions.length ? sessions.map((session) => (
-            <div key={session.id} className="rounded-xl bg-card/80 p-2">
+            <button
+              key={session.id}
+              type="button"
+              onClick={() => onLoadSession(session.id)}
+              disabled={historyLoadingId === session.id}
+              className={`w-full rounded-xl border p-2 text-left transition ${
+                activeSessionId === session.id
+                  ? "border-primary/30 bg-primary/5"
+                  : "border-border bg-card/80 hover:bg-muted"
+              }`}
+            >
               <div className="line-clamp-1 text-xs font-semibold text-foreground">
                 {session.title || t("Sessão da IA", "AI session")}
               </div>
               <div className="mt-1 flex items-center justify-between text-[11px] text-muted-foreground">
                 <span>{formatDate(session.last_message_at)}</span>
-                <span>{session.message_count ?? 0} {isPortuguese ? "msgs" : "msgs"}</span>
+                <span>
+                  {historyLoadingId === session.id
+                    ? t("A abrir…", "Opening…")
+                    : `${session.message_count ?? 0} ${isPortuguese ? "msgs" : "msgs"}`}
+                </span>
               </div>
-            </div>
+            </button>
           )) : (
             <p className="text-xs text-muted-foreground">
               {t("A primeira conversa aparecerá aqui.", "The first conversation will appear here.")}
@@ -1016,6 +1090,7 @@ export default function AiOperationalPage() {
   const { t, language } = useLanguage()
   const safeRefreshToken = useSafeDataRefreshSignal()
   const [sessionId, setSessionId] = useState<number | null>(null)
+  const [activeView, setActiveView] = useState<"chat" | "history">("chat")
   const [composer, setComposer] = useState("")
   const [messages, setMessages] = useState<ConversationMessage[]>([])
   const [loading, setLoading] = useState(false)
@@ -1024,18 +1099,73 @@ export default function AiOperationalPage() {
   const [sessions, setSessions] = useState<AiSessionSummary[]>([])
   const [investigations, setInvestigations] = useState<AiInvestigation[]>([])
   const [confirmingActionId, setConfirmingActionId] = useState<number | null>(null)
+  const [historyLoadingId, setHistoryLoadingId] = useState<number | null>(null)
+  const [clearingConversation, setClearingConversation] = useState(false)
+  const [clearingHistory, setClearingHistory] = useState(false)
+  const [historyError, setHistoryError] = useState<string | null>(null)
   const [actionResults, setActionResults] = useState<Record<number, AiSuggestedAction>>({})
   // Id da mensagem da IA acabada de chegar — só essa é revelada letra a letra.
   const [streamingId, setStreamingId] = useState<string | null>(null)
   const bottomRef = useRef<HTMLDivElement | null>(null)
   const composerRef = useRef<HTMLTextAreaElement | null>(null)
+  const chatStorageHydratedRef = useRef(false)
 
+  function resetCurrentConversation() {
+    setSessionId(null)
+    setComposer("")
+    setMessages([])
+    setStreamingId(null)
+  }
 
   useEffect(() => {
     if (typeof window === "undefined") return
-    const question = new URLSearchParams(window.location.search).get("question")
+    const params = new URLSearchParams(window.location.search)
+    const question = params.get("question")
+    const requestedView = params.get("view")
+
+    try {
+      const raw = window.sessionStorage.getItem(AI_CHAT_STORAGE_KEY)
+      if (raw) {
+        const parsed = JSON.parse(raw) as {
+          sessionId?: number | null
+          composer?: string
+          messages?: ConversationMessage[]
+          activeView?: "chat" | "history"
+        }
+        setSessionId(typeof parsed.sessionId === "number" ? parsed.sessionId : null)
+        setComposer(typeof parsed.composer === "string" ? parsed.composer : "")
+        setMessages(Array.isArray(parsed.messages) ? parsed.messages : [])
+        setActiveView(parsed.activeView === "history" ? "history" : "chat")
+      }
+    } catch {
+      window.sessionStorage.removeItem(AI_CHAT_STORAGE_KEY)
+    }
+
     if (question) setComposer(question)
+    if (requestedView === "history") setActiveView("history")
+    chatStorageHydratedRef.current = true
   }, [])
+
+  useEffect(() => {
+    if (!chatStorageHydratedRef.current || typeof window === "undefined") return
+    window.sessionStorage.setItem(
+      AI_CHAT_STORAGE_KEY,
+      JSON.stringify({
+        sessionId,
+        composer,
+        messages,
+        activeView,
+      })
+    )
+  }, [activeView, composer, messages, sessionId])
+
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    const url = new URL(window.location.href)
+    if (activeView === "history") url.searchParams.set("view", "history")
+    else url.searchParams.delete("view")
+    window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}${url.hash}`)
+  }, [activeView])
 
   useEffect(() => {
     let mounted = true
@@ -1073,6 +1203,8 @@ export default function AiOperationalPage() {
       role: "user",
       content: text,
     }
+    setActiveView("chat")
+    setHistoryError(null)
     setMessages((current) => [...current, userMessage])
     setComposer("")
     setLoading(true)
@@ -1127,6 +1259,7 @@ export default function AiOperationalPage() {
           ...current.filter((item) => item.id !== response.investigation?.id),
         ].slice(0, 20))
       }
+      const nextMessageCount = messages.filter((item) => item.role !== "error").length + 2
       setSessions((current) => {
         const withoutCurrent = current.filter((item) => item.id !== response.session_id)
         return [
@@ -1136,10 +1269,10 @@ export default function AiOperationalPage() {
             language,
             active_module: "ai",
             last_message_at: new Date().toISOString(),
-            message_count: 2,
+            message_count: nextMessageCount,
           },
           ...withoutCurrent,
-        ].slice(0, 8)
+        ].slice(0, 12)
       })
     } catch (error: any) {
       const detail = error?.message || t("Falha ao consultar a IA Operacional.", "Failed to query the Operational AI.")
@@ -1153,6 +1286,96 @@ export default function AiOperationalPage() {
       ])
     } finally {
       setLoading(false)
+    }
+  }
+
+  async function handleLoadSession(targetSessionId: number) {
+    if (loading || historyLoadingId === targetSessionId) return
+    setHistoryLoadingId(targetSessionId)
+    setHistoryError(null)
+
+    try {
+      const detail = await apiFetch<AiSessionDetail>(`/ai/assistant/sessions/${targetSessionId}/`, {
+        clientCache: false,
+      })
+      const sessionMessages = Array.isArray(detail.messages)
+        ? detail.messages.map(mapSessionMessage).filter((item) => item.content)
+        : []
+
+      setSessionId(detail.id)
+      setComposer("")
+      setMessages(sessionMessages)
+      setStreamingId(null)
+      setActiveView("chat")
+      setSessions((current) => {
+        const withoutCurrent = current.filter((item) => item.id !== detail.id)
+        return [
+          {
+            id: detail.id,
+            title: detail.title,
+            language: detail.language,
+            active_module: detail.active_module,
+            last_message_at: detail.last_message_at,
+            message_count: detail.message_count ?? sessionMessages.length,
+          },
+          ...withoutCurrent,
+        ].slice(0, 12)
+      })
+    } catch (error: any) {
+      setHistoryError(error?.message || t("Falha ao abrir o histórico.", "Failed to open the history."))
+    } finally {
+      setHistoryLoadingId(null)
+    }
+  }
+
+  async function handleClearConversation() {
+    if (!sessionId) {
+      resetCurrentConversation()
+      setHistoryError(null)
+      if (typeof window !== "undefined") window.sessionStorage.removeItem(AI_CHAT_STORAGE_KEY)
+      return
+    }
+    if (typeof window !== "undefined" && !window.confirm(t("Apagar a conversa actual?", "Delete the current conversation?"))) {
+      return
+    }
+
+    setClearingConversation(true)
+    setHistoryError(null)
+    try {
+      await apiFetch(`/ai/assistant/sessions/${sessionId}/`, {
+        method: "DELETE",
+        clientCache: false,
+      })
+      setSessions((current) => current.filter((item) => item.id !== sessionId))
+      resetCurrentConversation()
+      if (typeof window !== "undefined") window.sessionStorage.removeItem(AI_CHAT_STORAGE_KEY)
+    } catch (error: any) {
+      setHistoryError(error?.message || t("Falha ao limpar a conversa.", "Failed to clear the conversation."))
+    } finally {
+      setClearingConversation(false)
+    }
+  }
+
+  async function handleClearHistory() {
+    if (!sessions.length) return
+    if (typeof window !== "undefined" && !window.confirm(t("Apagar todo o histórico de conversas?", "Delete the full conversation history?"))) {
+      return
+    }
+
+    setClearingHistory(true)
+    setHistoryError(null)
+    try {
+      await apiFetch<{ deleted_count: number }>("/ai/assistant/sessions/", {
+        method: "DELETE",
+        clientCache: false,
+      })
+      setSessions([])
+      resetCurrentConversation()
+      if (typeof window !== "undefined") window.sessionStorage.removeItem(AI_CHAT_STORAGE_KEY)
+    } catch (error: any) {
+      setHistoryError(error?.message || t("Falha ao limpar o histórico.", "Failed to clear the history."))
+    } finally {
+      setClearingHistory(false)
     }
   }
 
@@ -1264,93 +1487,193 @@ export default function AiOperationalPage() {
     void recordSuggestionFeedback(suggestion, event, messageId)
   }
 
+  const hasActiveConversation = Boolean(sessionId || messages.length || composer.trim())
+
   return (
     <AppLayout>
       <div className="mx-auto flex h-[calc(100vh-8rem)] max-w-7xl flex-col gap-3">
-        <div className="flex items-center gap-2 rounded-2xl border border-white/20 bg-white/30 px-3 py-2 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]">
-          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-indigo-600 text-white shadow-sm">
-            <Bot size={16} />
-          </span>
-          <div className="min-w-0">
-            <h1 className="text-sm font-bold leading-tight text-foreground">{t("IA Operacional", "Operational AI")}</h1>
-            <p className="truncate text-[11px] text-muted-foreground">
-              {t("Assistente auditável, com contexto do projecto, ferramentas internas e permissões reais.", "Auditable assistant with project context, internal tools, and real permissions.")}
-            </p>
+        <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-white/20 bg-white/30 px-3 py-2 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]">
+          <div className="flex min-w-0 flex-1 items-center gap-2">
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-indigo-600 text-white shadow-sm">
+              <Bot size={16} />
+            </span>
+            <div className="min-w-0">
+              <h1 className="text-sm font-bold leading-tight text-foreground">{t("IA Operacional", "Operational AI")}</h1>
+              <p className="truncate text-[11px] text-muted-foreground">
+                {activeView === "history"
+                  ? t("Histórico das conversas auditáveis da IA.", "History of auditable AI conversations.")
+                  : t("Assistente auditável, com contexto do projecto, ferramentas internas e permissões reais.", "Auditable assistant with project context, internal tools, and real permissions.")}
+              </p>
+            </div>
+          </div>
+          <div className="ml-auto flex flex-wrap items-center gap-2">
+            {activeView === "history" ? (
+              <>
+                <Button variant="outline" size="sm" onClick={() => { resetCurrentConversation(); setActiveView("chat") }}>
+                  <MessageSquarePlus size={14} />
+                  {t("Nova conversa", "New chat")}
+                </Button>
+                <Button
+                  variant="danger"
+                  size="sm"
+                  onClick={() => void handleClearHistory()}
+                  loading={clearingHistory}
+                  disabled={!sessions.length}
+                >
+                  <Trash2 size={14} />
+                  {t("Limpar histórico", "Clear history")}
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button variant="outline" size="sm" onClick={() => setActiveView("history")}>
+                  <History size={14} />
+                  {t("Histórico", "History")}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => void handleClearConversation()}
+                  loading={clearingConversation}
+                  disabled={!hasActiveConversation}
+                >
+                  <Trash2 size={14} />
+                  {t("Limpar conversa", "Clear chat")}
+                </Button>
+              </>
+            )}
           </div>
         </div>
 
         <div className="grid min-h-0 flex-1 gap-3 xl:grid-cols-[minmax(0,1fr)_20rem]">
           <div className="flex min-h-0 flex-1 flex-col rounded-2xl border border-white/20 bg-white/30 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]">
-            <div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-3">
-            {!messages.length && !loading ? (
-              <div className="flex h-full flex-col items-center justify-center gap-1 text-center">
-                <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-violet-500/10 text-violet-600 dark:text-violet-400">
-                  <Bot size={20} />
-                </span>
-                <p className="text-sm font-medium text-foreground">{t("Escreva a sua pergunta", "Type your question")}</p>
+            <div className="border-b border-white/20 px-3 py-2 dark:border-white/10">
+              <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                {activeView === "history"
+                  ? t("Histórico de conversas", "Conversation history")
+                  : sessionId
+                    ? t("Conversa actual", "Current conversation")
+                    : t("Nova conversa", "New conversation")}
               </div>
-            ) : null}
-
-            {messages.map((message) => {
-              const isUser = message.role === "user"
-              const isError = message.role === "error"
-              return (
-                <div key={message.id} className={isUser ? "ml-auto w-fit max-w-[85%]" : "mr-auto w-fit max-w-[92%]"}>
-                  <div
-                    className={`whitespace-pre-wrap rounded-2xl px-3 py-2 text-sm leading-relaxed ${
-                      isUser
-                        ? "bg-gradient-to-br from-violet-600 to-indigo-600 text-white"
-                        : isError
-                          ? "border border-rose-200 bg-rose-50 text-rose-800 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-100"
-                          : "border border-white/20 bg-white/60 text-foreground dark:border-white/10 dark:bg-white/[0.06]"
-                    }`}
-                  >
-                    {!isUser && !isError ? (
-                      <Typewriter
-                        text={message.content}
-                        animate={message.id === streamingId}
-                        onTick={() => bottomRef.current?.scrollIntoView({ behavior: "auto", block: "end" })}
-                      />
-                    ) : (
-                      message.content
-                    )}
-                  </div>
-
+              {historyError ? (
+                <div className="mt-2 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-100">
+                  {historyError}
                 </div>
-              )
-            })}
-
-            {loading ? (
-              <div className="mr-auto flex w-fit items-center gap-1.5 rounded-2xl border border-white/20 bg-white/60 px-3 py-2 text-xs text-muted-foreground dark:border-white/10 dark:bg-white/[0.06]">
-                <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-violet-500 [animation-delay:-0.2s]" />
-                <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-violet-500 [animation-delay:-0.1s]" />
-                <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-violet-500" />
-              </div>
-            ) : null}
-            <div ref={bottomRef} />
+              ) : null}
             </div>
 
-            <form onSubmit={handleSubmit} className="border-t border-white/20 p-2 dark:border-white/10">
-              <div className="flex items-end gap-2">
-                <TextAreaInput
-                  ref={composerRef}
-                  value={composer}
-                  onChange={(event) => setComposer(event.target.value)}
-                  rows={1}
-                  placeholder={t("Escreva uma mensagem…", "Type a message…")}
-                  className="max-h-32 min-h-[2.5rem] flex-1 resize-none"
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter" && !event.shiftKey) {
-                      event.preventDefault()
-                      void handleSubmit()
-                    }
-                  }}
-                />
-                <Button type="submit" loading={loading} disabled={!composer.trim()}>
-                  <Send size={15} />
-                </Button>
+            {activeView === "history" ? (
+              <div className="min-h-0 flex-1 overflow-y-auto p-3">
+                {sessions.length ? (
+                  <div className="space-y-2">
+                    {sessions.map((session) => (
+                      <button
+                        key={session.id}
+                        type="button"
+                        onClick={() => void handleLoadSession(session.id)}
+                        disabled={historyLoadingId === session.id}
+                        className="w-full rounded-2xl border border-white/20 bg-white/50 p-3 text-left transition hover:bg-white/70 disabled:opacity-60 dark:border-white/10 dark:bg-white/[0.06] dark:hover:bg-white/[0.09]"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <div className="line-clamp-1 text-sm font-semibold text-foreground">
+                              {session.title || t("Sessão da IA", "AI session")}
+                            </div>
+                            <div className="mt-1 text-xs text-muted-foreground">
+                              {formatDate(session.last_message_at)}
+                            </div>
+                          </div>
+                          <Badge variant="info">
+                            {historyLoadingId === session.id
+                              ? t("A abrir", "Opening")
+                              : `${session.message_count ?? 0} ${t("msgs", "msgs")}`}
+                          </Badge>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex h-full flex-col items-center justify-center gap-1 text-center">
+                    <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-violet-500/10 text-violet-600 dark:text-violet-400">
+                      <History size={20} />
+                    </span>
+                    <p className="text-sm font-medium text-foreground">{t("Sem histórico guardado", "No saved history")}</p>
+                  </div>
+                )}
               </div>
-            </form>
+            ) : (
+              <>
+                <div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-3">
+                  {!messages.length && !loading ? (
+                    <div className="flex h-full flex-col items-center justify-center gap-1 text-center">
+                      <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-violet-500/10 text-violet-600 dark:text-violet-400">
+                        <Bot size={20} />
+                      </span>
+                      <p className="text-sm font-medium text-foreground">{t("Escreva a sua pergunta", "Type your question")}</p>
+                    </div>
+                  ) : null}
+
+                  {messages.map((message) => {
+                    const isUser = message.role === "user"
+                    const isError = message.role === "error"
+                    return (
+                      <div key={message.id} className={isUser ? "ml-auto w-fit max-w-[85%]" : "mr-auto w-fit max-w-[92%]"}>
+                        <div
+                          className={`whitespace-pre-wrap rounded-2xl px-3 py-2 text-sm leading-relaxed ${
+                            isUser
+                              ? "bg-gradient-to-br from-violet-600 to-indigo-600 text-white"
+                              : isError
+                                ? "border border-rose-200 bg-rose-50 text-rose-800 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-100"
+                                : "border border-white/20 bg-white/60 text-foreground dark:border-white/10 dark:bg-white/[0.06]"
+                          }`}
+                        >
+                          {!isUser && !isError ? (
+                            <Typewriter
+                              text={message.content}
+                              animate={message.id === streamingId}
+                              onTick={() => bottomRef.current?.scrollIntoView({ behavior: "auto", block: "end" })}
+                            />
+                          ) : (
+                            message.content
+                          )}
+                        </div>
+                      </div>
+                    )
+                  })}
+
+                  {loading ? (
+                    <div className="mr-auto flex w-fit items-center gap-1.5 rounded-2xl border border-white/20 bg-white/60 px-3 py-2 text-xs text-muted-foreground dark:border-white/10 dark:bg-white/[0.06]">
+                      <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-violet-500 [animation-delay:-0.2s]" />
+                      <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-violet-500 [animation-delay:-0.1s]" />
+                      <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-violet-500" />
+                    </div>
+                  ) : null}
+                  <div ref={bottomRef} />
+                </div>
+
+                <form onSubmit={handleSubmit} className="border-t border-white/20 p-2 dark:border-white/10">
+                  <div className="flex items-end gap-2">
+                    <TextAreaInput
+                      ref={composerRef}
+                      value={composer}
+                      onChange={(event) => setComposer(event.target.value)}
+                      rows={1}
+                      placeholder={t("Escreva uma mensagem…", "Type a message…")}
+                      className="max-h-32 min-h-[2.5rem] flex-1 resize-none"
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter" && !event.shiftKey) {
+                          event.preventDefault()
+                          void handleSubmit()
+                        }
+                      }}
+                    />
+                    <Button type="submit" loading={loading} disabled={!composer.trim()}>
+                      <Send size={15} />
+                    </Button>
+                  </div>
+                </form>
+              </>
+            )}
           </div>
 
           <aside className="hidden min-h-0 overflow-hidden rounded-2xl border border-white/20 bg-white/30 shadow-sm backdrop-blur-sm xl:block dark:border-white/10 dark:bg-white/[0.04]">
@@ -1359,6 +1682,10 @@ export default function AiOperationalPage() {
               sessions={sessions}
               investigations={investigations}
               loading={toolsLoading}
+              activeSessionId={sessionId}
+              historyLoadingId={historyLoadingId}
+              onLoadSession={(targetSessionId) => { void handleLoadSession(targetSessionId) }}
+              onOpenHistory={() => setActiveView("history")}
             />
           </aside>
         </div>

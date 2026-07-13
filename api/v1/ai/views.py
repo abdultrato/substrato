@@ -118,6 +118,22 @@ class AiAssistantSessionsView(APIView):
         )
         return Response(AiSessionSerializer(queryset, many=True).data)
 
+    def delete(self, request):
+        tenant = request_tenant(request)
+        if tenant is None:
+            raise ValidationError({"tenant": "Tenant não resolvido na requisição."})
+
+        deleted_count = (
+            AiSession.objects.filter(tenant=tenant, user=request.user, deleted=False)
+            .update(
+                deleted=True,
+                deleted_at=timezone.now(),
+                deleted_by_id=request.user.id,
+                updated_by_id=request.user.id,
+            )
+        )
+        return Response({"deleted_count": deleted_count}, status=status.HTTP_200_OK)
+
 
 class AiAssistantSessionDetailView(APIView):
     permission_classes = [IsAuthenticated]
@@ -133,6 +149,19 @@ class AiAssistantSessionDetailView(APIView):
         if session is None:
             raise NotFound("Sessão da IA não encontrada.")
         return Response(AiSessionDetailSerializer(session).data)
+
+    def delete(self, request, session_id: int):
+        tenant = request_tenant(request)
+        session = AiSession.objects.filter(tenant=tenant, user=request.user, id=session_id, deleted=False).first()
+        if session is None:
+            raise NotFound("Sessão da IA não encontrada.")
+
+        session.deleted = True
+        session.deleted_at = timezone.now()
+        session.deleted_by = request.user
+        session.updated_by = request.user
+        session.save(update_fields=["deleted", "deleted_at", "deleted_by", "updated_by", "updated_at"])
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class AiAssistantToolsView(APIView):
