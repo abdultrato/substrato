@@ -26,6 +26,7 @@ import {
 interface Props {
     children: ReactNode
     requiredGroups?: string[]
+    accessRestrictionMode?: "data" | "page"
     rightAside?: ReactNode
     rightAsideWidth?: string
     subNav?: ReactNode
@@ -36,6 +37,7 @@ interface Props {
 export default function AppLayout ( {
     children,
     requiredGroups,
+    accessRestrictionMode = "data",
     rightAside,
     rightAsideWidth = "20rem",
     fullWidth = false,
@@ -70,9 +72,11 @@ export default function AppLayout ( {
         !!user &&
         !!requiredGroups?.length &&
         !userHasAnyGroup(user, requiredGroups)
+    const shouldBlockPageForUnauthorized =
+        isUnauthorized && accessRestrictionMode === "page"
     const defaultWorkspaceHref = getDefaultWorkspaceHref(user)
     const isScopeRestricted = mustRedirectByScope && pathname !== scopeHome
-    const hasAccessRestriction = isScopeRestricted || isUnauthorized
+    const hasAccessRestriction = isScopeRestricted || shouldBlockPageForUnauthorized
     const restrictionRedirectTarget = isScopeRestricted ? scopeHome : defaultWorkspaceHref
 
     useEffect(() => {
@@ -255,6 +259,24 @@ export default function AppLayout ( {
 
                 <main ref={mainRef} data-no-scroll-arrows className="substrato-app-surface min-h-0 flex-1 min-w-0 overflow-x-hidden overflow-y-auto px-2 py-2 sm:px-3 md:px-4 md:py-3">
                     <div className={`page-transition ${fullWidth ? "w-full" : "mx-auto w-workspace max-w-workspace"}`}>
+                        {isUnauthorized ? (
+                            <div className="mx-auto mb-3 w-full max-w-workspace rounded-2xl border border-amber-300/60 bg-amber-50/85 px-4 py-3 text-sm text-amber-950 shadow-sm backdrop-blur-sm dark:border-amber-500/30 dark:bg-amber-950/25 dark:text-amber-100">
+                                <div className="font-semibold">
+                                    {t("Acesso limitado nesta página.", "Limited access on this page.")}
+                                </div>
+                                <p className="mt-1 text-[13px] text-amber-900/90 dark:text-amber-100/85">
+                                    {t(
+                                        "A página continua disponível, mas os dados e ações protegidos dependem do seu grupo.",
+                                        "The page remains available, but protected data and actions still depend on your group.",
+                                    )}
+                                </p>
+                                <p className="mt-2 text-xs text-amber-900/80 dark:text-amber-100/75">
+                                    {t("Requer", "Requires")}: {requiredGroups?.join(", ") || "—"}
+                                    {" · "}
+                                    {t("Seus grupos", "Your groups")}: {user?.groups?.join(", ") || "—"}
+                                </p>
+                            </div>
+                        ) : null}
                         <AutoTranslateTree>{children}</AutoTranslateTree>
                     </div>
                 </main>
