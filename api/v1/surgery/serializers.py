@@ -854,7 +854,8 @@ class OperatingRoomSerializer(LegacyAliasSerializerMixin, serializers.ModelSeria
         "localização": "location",
         "capacidade": "capacity",
         "esterilizada": "sterile",
-        "equipamentos": "equipment_notes",
+        "equipamentos": "equipment",
+        "equipment_notes": "equipment",
         "horario_funcionamento": "working_hours",
         "horário_funcionamento": "working_hours",
         "classe_limpeza": "cleaning_class",
@@ -862,10 +863,23 @@ class OperatingRoomSerializer(LegacyAliasSerializerMixin, serializers.ModelSeria
     }
     legacy_output_aliases = legacy_input_aliases
 
+    equipment_names = serializers.SerializerMethodField(method_name="get_equipment_names")
+    equipment = serializers.PrimaryKeyRelatedField(
+        many=True,
+        queryset=apps.get_model("equipamentos", "Equipment")._default_manager.all(),
+        required=False,
+    )
+
     class Meta:
         model = OperatingRoom
         fields = "__all__"
-        read_only_fields = CORE_READ_ONLY_FIELDS
+        read_only_fields = (*CORE_READ_ONLY_FIELDS, "code", "equipment_names")
+
+    def get_equipment_names(self, obj: OperatingRoom) -> list[dict]:
+        try:
+            return [{"id": e.id, "name": e.name} for e in obj.equipment.all()]
+        except Exception:
+            return []
 
 
 class SurgicalScheduleSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer):

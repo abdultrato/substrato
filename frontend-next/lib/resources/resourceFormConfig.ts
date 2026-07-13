@@ -4074,7 +4074,7 @@ const SURGERY_COMPUTED_FIELDS = [
   "material_name", "procedure_name", "responsible_surgeon_name",
   "responsible_name", "nurse_name", "primary_surgeon_name",
   "completed_by_name", "consumed_by_name", "authorization_code",
-  "patient_name_display",
+  "patient_name_display", "equipment_names",
 ]
 
 function surgeryRequestConfig(): ResourceFormConfig {
@@ -4369,7 +4369,7 @@ function surgeryScheduleConfig(): ResourceFormConfig {
 
 function surgeryOperatingRoomConfig(): ResourceFormConfig {
   return {
-    esconderCampos: [...SURGERY_INTERNAL_FIELDS, ...SURGERY_COMPUTED_FIELDS],
+    esconderCampos: [...SURGERY_INTERNAL_FIELDS, ...SURGERY_COMPUTED_FIELDS, "code", "working_hours"],
     mostrarSe: {
       blocked_reason: { campo: "status", igualA: "BLOCKED" },
     },
@@ -4381,45 +4381,39 @@ function surgeryOperatingRoomConfig(): ResourceFormConfig {
       location: "Localização",
       capacity: "Capacidade (nº de pacientes)",
       sterile: "Esterilizada",
-      equipment_notes: "Equipamentos disponíveis",
-      working_hours: "Horário de funcionamento",
+      equipment: "Equipamentos disponíveis",
       cleaning_class: "Classe de limpeza",
       blocked_reason: "Motivo de bloqueio",
       notes: "Observações",
     },
     widgets: {
-      equipment_notes: "textarea",
-      working_hours: "json",
       blocked_reason: "textarea",
       notes: "textarea",
     },
     placeholders: {
       name: "Ex.: Bloco operatório 2",
-      code: "Ex.: BO-02",
       location: "Ex.: Piso 2, ala cirúrgica",
       cleaning_class: "Ex.: Classe A",
-      equipment_notes: "Liste mesa cirúrgica, foco, ventilador, monitores, aspirador e outros equipamentos.",
-      working_hours: '{\n  "monday": "07:00-19:00",\n  "tuesday": "07:00-19:00",\n  "emergency": "24/7"\n}',
       blocked_reason: "Explique o motivo da indisponibilidade da sala.",
       notes: "Observações operacionais, fluxo, preparação ou restrições adicionais.",
     },
     hints: {
+      code: "Gerado automaticamente pelo identificador da sala.",
       capacity: "Número máximo de pacientes/uso simultâneo suportado pela sala.",
       sterile: "Marque se a sala está pronta para receber procedimento imediatamente.",
-      equipment_notes: "Descreva os equipamentos realmente disponíveis nesta sala.",
-      working_hours: "Informe um JSON simples com dias/turnos ou janelas especiais.",
+      equipment: "Selecione entre os equipamentos já cadastrados no sistema.",
       blocked_reason: "Obrigatório quando o estado for Bloqueada.",
     },
     ordenarCampos: [
-      "name", "code", "room_type", "status", "location",
+      "name", "room_type", "status", "location",
       "capacity", "sterile", "cleaning_class",
-      "equipment_notes", "working_hours", "blocked_reason", "notes",
+      "equipment", "blocked_reason", "notes",
     ],
     etapas: [
       {
         titulo: "Identificação",
-        descricao: "Nome, código e tipo de sala",
-        campos: ["name", "code", "room_type", "location"],
+        descricao: "Nome, tipo e localização da sala",
+        campos: ["name", "room_type", "location"],
       },
       {
         titulo: "Capacidade e esterilização",
@@ -4427,8 +4421,8 @@ function surgeryOperatingRoomConfig(): ResourceFormConfig {
       },
       {
         titulo: "Equipamentos",
-        descricao: "Equipamentos disponíveis e horário",
-        campos: ["equipment_notes", "working_hours"],
+        descricao: "Equipamentos disponíveis, cadastrados no sistema",
+        campos: ["equipment"],
       },
       {
         titulo: "Bloqueio e notas",

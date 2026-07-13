@@ -1,6 +1,7 @@
 "use client"
 
-import { useEffect, useId, useMemo, useState } from "react"
+import { useEffect, useId, useMemo, useRef, useState } from "react"
+import { createPortal } from "react-dom"
 import { z } from "zod"
 import { Loader2, Search, X } from "lucide-react"
 
@@ -418,9 +419,26 @@ export function SearchableMultiSelect({
   const [results, setResults] = useState<RelationOption[]>(EMPTY_RELATION_OPTIONS)
   const [searching, setSearching] = useState(false)
   const [labelById, setLabelById] = useState<Record<string, string>>({})
+  const [dropdownRect, setDropdownRect] = useState<DOMRect | null>(null)
+  const wrapperRef = useRef<HTMLDivElement>(null)
   const listboxId = useId()
   const debouncedQuery = useDebounce(query.trim(), 250)
   const disabled = !!readOnly
+
+  useEffect(() => {
+    if (!open) return
+    const updateRect = () => {
+      const rect = wrapperRef.current?.getBoundingClientRect()
+      if (rect) setDropdownRect(rect)
+    }
+    updateRect()
+    window.addEventListener("scroll", updateRect, true)
+    window.addEventListener("resize", updateRect)
+    return () => {
+      window.removeEventListener("scroll", updateRect, true)
+      window.removeEventListener("resize", updateRect)
+    }
+  }, [open])
 
   // Semeia rótulos a partir das opções iniciais (modo edição).
   useEffect(() => {
@@ -521,7 +539,7 @@ export function SearchableMultiSelect({
         </div>
       ) : null}
 
-      <div className="relative">
+      <div ref={wrapperRef} className="relative">
         <Search
           aria-hidden="true"
           className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--gray-400)]"
@@ -547,39 +565,49 @@ export function SearchableMultiSelect({
           placeholder={placeholder || "Pesquisar e adicionar..."}
           disabled={disabled}
         />
-        {open && !disabled ? (
-          <div
-            id={listboxId}
-            role="listbox"
-            className="absolute z-30 mt-1 max-h-72 w-full overflow-auto rounded-md border border-[var(--border)] bg-[var(--card)] py-1 text-sm shadow-lg"
-          >
-            {searching ? (
-              <div className="flex items-center gap-2 px-3 py-2 text-[var(--gray-600)]">
-                <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
-                A pesquisar...
-              </div>
-            ) : null}
-            {!searching &&
-              available.map((option) => (
-                <button
-                  key={`${fieldName}-opt-${option.value}`}
-                  type="button"
-                  role="option"
-                  aria-selected={false}
-                  onMouseDown={(e) => e.preventDefault()}
-                  onClick={() => addOption(option)}
-                  className="block w-full px-3 py-2 text-left text-[var(--text)] transition hover:bg-[var(--gray-100)] focus:bg-[var(--gray-100)] focus:outline-none"
-                >
-                  {option.label}
-                </button>
-              ))}
-            {showEmptyState ? (
-              <div className="px-3 py-2 text-[var(--gray-500)]">
-                {debouncedQuery ? "Nenhum registo encontrado." : "Digite para pesquisar."}
-              </div>
-            ) : null}
-          </div>
-        ) : null}
+        {open && !disabled && dropdownRect && typeof document !== "undefined"
+          ? createPortal(
+              <div
+                id={listboxId}
+                role="listbox"
+                style={{
+                  position: "fixed",
+                  top: dropdownRect.bottom + 4,
+                  left: dropdownRect.left,
+                  width: dropdownRect.width,
+                  zIndex: 9999,
+                }}
+                className="max-h-72 overflow-auto rounded-md border border-[var(--border)] bg-[var(--card)] py-1 text-sm shadow-lg"
+              >
+                {searching ? (
+                  <div className="flex items-center gap-2 px-3 py-2 text-[var(--gray-600)]">
+                    <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                    A pesquisar...
+                  </div>
+                ) : null}
+                {!searching &&
+                  available.map((option) => (
+                    <button
+                      key={`${fieldName}-opt-${option.value}`}
+                      type="button"
+                      role="option"
+                      aria-selected={false}
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => addOption(option)}
+                      className="block w-full px-3 py-2 text-left text-[var(--text)] transition hover:bg-[var(--gray-100)] focus:bg-[var(--gray-100)] focus:outline-none"
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                {showEmptyState ? (
+                  <div className="px-3 py-2 text-[var(--gray-500)]">
+                    {debouncedQuery ? "Nenhum registo encontrado." : "Digite para pesquisar."}
+                  </div>
+                ) : null}
+              </div>,
+              document.body
+            )
+          : null}
       </div>
     </div>
   )
@@ -602,7 +630,9 @@ function fieldToZod(field: FormField): z.ZodTypeAny {
       break
     case "date":
     case "datetime":
-      base = required ? z.string().trim().min(1, "Campo obrigatório") : z.string()
+      base = required
+        ? z.preprocess((v) => (v === undefined || v === null ? "" : v), z.string().trim().min(1, "Campo obrigatório"))
+        : z.string()
       break
     case "select":
       {
@@ -634,15 +664,19 @@ function fieldToZod(field: FormField): z.ZodTypeAny {
       })
       break
     case "array-string":
-      base = required ? z.array(z.string()).min(1, "Informe pelo menos um valor") : z.array(z.string())
+      base = required
+        ? z.preprocess((v) => v ?? [], z.array(z.string()).min(1, "Informe pelo menos um valor"))
+        : z.array(z.string())
       break
     case "array-relation":
       base = required
-        ? z.array(z.number()).min(1, "Selecione pelo menos um")
+        ? z.preprocess((v) => v ?? [], z.array(z.number()).min(1, "Selecione pelo menos um"))
         : z.array(z.number())
       break
     default:
-      base = required ? z.string().trim().min(1, "Campo obrigatório") : z.string()
+      base = required
+        ? z.preprocess((v) => (v === undefined || v === null ? "" : v), z.string().trim().min(1, "Campo obrigatório"))
+        : z.string()
   }
   return required ? base : base.optional().nullable()
 }

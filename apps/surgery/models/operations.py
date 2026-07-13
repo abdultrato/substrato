@@ -278,13 +278,18 @@ class OperatingRoom(CoreModel):
 
     prefix = "CCO"
 
-    code = models.CharField("Código", max_length=40, db_index=True)
+    code = models.CharField("Código", max_length=40, blank=True, default="", editable=False, db_index=True)
     room_type = models.CharField("Tipo de sala", max_length=20, choices=RoomType.choices, default=RoomType.GENERAL, db_index=True)
     status = models.CharField("Estado", max_length=20, choices=Status.choices, default=Status.AVAILABLE, db_index=True)
     location = models.CharField("Localização", max_length=120, blank=True, default="")
     capacity = models.PositiveSmallIntegerField("Capacidade", default=1, validators=[MinValueValidator(1)])
     sterile = models.BooleanField("Esterilizada", default=True, db_index=True)
-    equipment_notes = models.TextField("Equipamentos disponíveis", blank=True, default="")
+    equipment = models.ManyToManyField(
+        "equipamentos.Equipment",
+        verbose_name="Equipamentos disponíveis",
+        blank=True,
+        related_name="operating_rooms",
+    )
     working_hours = models.JSONField("Horário de funcionamento", default=dict, blank=True)
     cleaning_class = models.CharField("Classe de limpeza", max_length=80, blank=True, default="")
     blocked_reason = models.TextField("Motivo de bloqueio", blank=True, default="")
@@ -302,6 +307,12 @@ class OperatingRoom(CoreModel):
         super().clean()
         if self.status == self.Status.BLOCKED and not (self.blocked_reason or "").strip():
             raise ValidationError({"blocked_reason": "Informe o motivo de bloqueio da sala."})
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        if not self.code and self.custom_id:
+            self.__class__.all_objects.filter(pk=self.pk).update(code=self.custom_id)
+            self.code = self.custom_id
 
     def __str__(self) -> str:
         return f"{self.code} - {self.name}"

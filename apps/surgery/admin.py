@@ -114,7 +114,7 @@ class PreoperativeAssessmentAdmin(CoreAdmin):
 class OperatingRoomAdmin(CoreAdmin):
     list_display = ("code", "name", "room_type", "status", "location", "capacity", "sterile", "cleaning_class")
     list_filter = ("room_type", "status", "sterile", "deleted")
-    search_fields = ("custom_id", "code", "name", "location", "equipment_notes")
+    search_fields = ("custom_id", "code", "name", "location")
     ordering = ("name", "code")
 
 

@@ -293,7 +293,7 @@ class OperatingRoomViewSet(SurgeryOperationsViewSet):
     queryset = OperatingRoom.objects.all()
     serializer_class = OperatingRoomSerializer
     filterset_class = OperatingRoomFilter
-    search_fields = ["custom_id", "code", "name", "location", "equipment_notes", "notes"]
+    search_fields = ["custom_id", "code", "name", "location", "notes"]
     ordering = ["name", "code"]
 
 

@@ -75,11 +75,8 @@ function workingHoursSummary(value: any, t: (pt: string, en: string) => string):
 }
 
 function equipmentSummary(value: any): string {
-  const text = String(value || "").trim()
-  if (!text) return ""
-  const items = text
-    .split(/\r?\n|,|;/)
-    .map((item) => item.trim())
+  const items = (Array.isArray(value) ? value : [])
+    .map((item) => String(item?.name ?? "").trim())
     .filter(Boolean)
   if (!items.length) return ""
   return items.slice(0, 2).join(" · ") + (items.length > 2 ? ` +${items.length - 2}` : "")
@@ -93,7 +90,7 @@ function RoomCard({ row, href, t }: { row: Row; href: string; t: (pt: string, en
   const blocked = statusOf(row) === "BLOCKED"
   const live = ["IN_USE", "OCCUPIED"].includes(statusOf(row))
   const hours = workingHoursSummary(row?.working_hours, t)
-  const equipment = equipmentSummary(row?.equipment_notes)
+  const equipment = equipmentSummary(row?.equipment_names)
 
   return (
     <Link
@@ -231,8 +228,11 @@ export default function SurgeryOperatingRoomsListPage() {
       if (!q) return true
       const st = STATUSES[statusOf(r)]
       const ty = ROOM_TYPES[String(r?.room_type || "").toUpperCase()]
+      const equipmentNames = (Array.isArray(r?.equipment_names) ? r.equipment_names : [])
+        .map((item: any) => item?.name)
+        .join(" ")
       const haystack = [
-        r?.name, r?.code, r?.location, r?.notes, r?.equipment_notes, r?.cleaning_class,
+        r?.name, r?.code, r?.location, r?.notes, equipmentNames, r?.cleaning_class,
         st ? t(st.label, st.labelEn) : "", ty ? t(ty.label, ty.labelEn) : "",
       ].map((v) => String(v ?? "").toLowerCase()).join(" ")
       return haystack.includes(q)
@@ -268,9 +268,29 @@ export default function SurgeryOperatingRoomsListPage() {
               <div className="min-w-0">
                 <h1 className="text-lg font-bold leading-tight text-foreground">{t("Salas operatórias", "Operating rooms")}</h1>
                 <p className="text-[11px] text-muted-foreground">
-                  {loading ? t("A carregar…", "Loading…") : `${filtered.length} ${t("de", "of")} ${data.length}`}
+                  {loading
+                    ? t("A carregar…", "Loading…")
+                    : isRefreshing
+                      ? t("A atualizar…", "Refreshing…")
+                      : `${filtered.length} ${t("de", "of")} ${data.length}`}
                 </p>
               </div>
+            </div>
+
+            {/* Disponibilidade atual */}
+            <div className="flex shrink-0 flex-wrap items-center gap-1">
+              <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50/80 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 dark:border-emerald-700/30 dark:bg-emerald-900/15 dark:text-emerald-400">
+                {t("Disponíveis", "Available")} <span className="tabular-nums">{availabilityStats.available}</span>
+              </span>
+              <span className="inline-flex items-center gap-1 rounded-full border border-rose-200 bg-rose-50/80 px-2 py-0.5 text-[10px] font-semibold text-rose-700 dark:border-rose-700/30 dark:bg-rose-900/15 dark:text-rose-400">
+                {t("Bloqueadas", "Blocked")} <span className="tabular-nums">{availabilityStats.blocked}</span>
+              </span>
+              <span className="inline-flex items-center gap-1 rounded-full border border-sky-200 bg-sky-50/80 px-2 py-0.5 text-[10px] font-semibold text-sky-700 dark:border-sky-700/30 dark:bg-sky-900/15 dark:text-sky-400">
+                {t("Esterilizadas", "Sterile")} <span className="tabular-nums">{availabilityStats.sterile}</span>
+              </span>
+              <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50/80 px-2 py-0.5 text-[10px] font-semibold text-slate-700 dark:border-slate-700/30 dark:bg-slate-900/15 dark:text-slate-400">
+                {t("Total", "Total")} <span className="tabular-nums">{availabilityStats.total}</span>
+              </span>
             </div>
 
             {/* Motor de busca */}
@@ -346,9 +366,17 @@ export default function SurgeryOperatingRoomsListPage() {
               </button>
             ) : null}
           </div>
+
+          {/* Checklist do bloco */}
+          <div className="flex flex-wrap items-start gap-x-4 gap-y-1 border-t border-white/20 px-3 py-1.5 pl-4 text-[10px] text-muted-foreground dark:border-white/10">
+            <span className="font-semibold uppercase tracking-wide text-muted-foreground">{t("Checklist do bloco", "Room checklist")}</span>
+            <span>{t("Identificação operacional: nome, código único, tipo de sala e localização física.", "Operational identity: name, unique code, room type and physical location.")}</span>
+            <span>{t("Estado assistencial: disponibilidade, capacidade, esterilização e classe de limpeza.", "Clinical state: availability, capacity, sterilization and cleaning class.")}</span>
+            <span>{t("Prontidão técnica: equipamentos disponíveis e motivo de bloqueio quando aplicável.", "Technical readiness: available equipment and blocking reason when applicable.")}</span>
+          </div>
         </section>
 
-        <section className="grid gap-1.5 xl:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)]">
+        <section className="grid gap-1.5">
           <div className={`${GLASS} overflow-hidden`}>
             <div className="flex items-center justify-between gap-3 border-b border-white/20 px-4 py-3 dark:border-white/10">
               <div className="min-w-0">
@@ -359,7 +387,7 @@ export default function SurgeryOperatingRoomsListPage() {
                   <div className="min-w-0">
                     <h2 className="text-sm font-bold text-foreground">{t("Novo bloco operatório", "New operating room")}</h2>
                     <p className="text-[11px] text-muted-foreground">
-                      {t("Cadastre a sala com identificação, disponibilidade, esterilização, equipamentos e horário real.", "Register the room with identification, availability, sterilization, equipment and real schedule.")}
+                      {t("Cadastre a sala com identificação, disponibilidade, esterilização e equipamentos.", "Register the room with identification, availability, sterilization and equipment.")}
                     </p>
                   </div>
                 </div>
@@ -375,6 +403,7 @@ export default function SurgeryOperatingRoomsListPage() {
                 method="post"
                 submitLabel={t("Criar bloco operatório", "Create operating room")}
                 config={formConfig}
+                presentation="modern-nursing"
                 onSuccess={() => {
                   setFormSeed((value) => value + 1)
                   void refreshNow("mutation")
@@ -382,46 +411,6 @@ export default function SurgeryOperatingRoomsListPage() {
               />
             </div>
           </div>
-
-          <aside className="grid gap-1.5">
-            <div className={`${GLASS} p-4`}>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-                {t("Disponibilidade atual", "Current availability")}
-              </p>
-              <div className="mt-3 grid grid-cols-2 gap-2">
-                <div className="rounded-xl border border-emerald-200 bg-emerald-50/80 p-3 dark:border-emerald-700/30 dark:bg-emerald-900/15">
-                  <div className="text-[10px] font-semibold uppercase text-emerald-700 dark:text-emerald-400">{t("Disponíveis", "Available")}</div>
-                  <div className="mt-1 text-2xl font-bold text-emerald-900 dark:text-emerald-100">{availabilityStats.available}</div>
-                </div>
-                <div className="rounded-xl border border-rose-200 bg-rose-50/80 p-3 dark:border-rose-700/30 dark:bg-rose-900/15">
-                  <div className="text-[10px] font-semibold uppercase text-rose-700 dark:text-rose-400">{t("Bloqueadas", "Blocked")}</div>
-                  <div className="mt-1 text-2xl font-bold text-rose-900 dark:text-rose-100">{availabilityStats.blocked}</div>
-                </div>
-                <div className="rounded-xl border border-sky-200 bg-sky-50/80 p-3 dark:border-sky-700/30 dark:bg-sky-900/15">
-                  <div className="text-[10px] font-semibold uppercase text-sky-700 dark:text-sky-400">{t("Esterilizadas", "Sterile")}</div>
-                  <div className="mt-1 text-2xl font-bold text-sky-900 dark:text-sky-100">{availabilityStats.sterile}</div>
-                </div>
-                <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-3 dark:border-slate-700/30 dark:bg-slate-900/15">
-                  <div className="text-[10px] font-semibold uppercase text-slate-700 dark:text-slate-400">{t("Total", "Total")}</div>
-                  <div className="mt-1 text-2xl font-bold text-slate-900 dark:text-slate-100">{availabilityStats.total}</div>
-                </div>
-              </div>
-              {isRefreshing ? (
-                <p className="mt-3 text-[11px] text-muted-foreground">{t("A atualizar lista após alteração…", "Refreshing list after change…")}</p>
-              ) : null}
-            </div>
-
-            <div className={`${GLASS} p-4`}>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-                {t("Checklist do bloco", "Room checklist")}
-              </p>
-              <div className="mt-3 space-y-2 text-[11px] text-muted-foreground">
-                <p>{t("Identificação operacional: nome, código único, tipo de sala e localização física.", "Operational identity: name, unique code, room type and physical location.")}</p>
-                <p>{t("Estado assistencial: disponibilidade, capacidade, esterilização e classe de limpeza.", "Clinical state: availability, capacity, sterilization and cleaning class.")}</p>
-                <p>{t("Prontidão técnica: equipamentos disponíveis, horário de funcionamento e motivo de bloqueio quando aplicável.", "Technical readiness: available equipment, working hours and blocking reason when applicable.")}</p>
-              </div>
-            </div>
-          </aside>
         </section>
 
         {error ? (
