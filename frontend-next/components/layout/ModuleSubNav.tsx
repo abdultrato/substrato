@@ -594,7 +594,7 @@ export default function ModuleSubNav() {
 
     return (
         <nav className="shrink-0 border-b border-border/50 bg-primary/[0.06] backdrop-blur supports-[backdrop-filter]:bg-primary/[0.07] dark:bg-primary/[0.09]">
-            <div className="flex items-center gap-1 px-0.5 py-0.5">
+            <div className="flex items-center gap-1 px-px py-px">
                 <button
                     type="button"
                     onClick={() => {

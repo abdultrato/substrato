@@ -110,7 +110,7 @@ export default function SectionSubNav() {
 
     return (
         <nav className="shrink-0 border-b border-border/50 bg-primary/[0.03] backdrop-blur supports-[backdrop-filter]:bg-primary/[0.04] dark:bg-primary/[0.05]">
-            <div className="flex items-center gap-1 px-0.5 py-0.5">
+            <div className="flex items-center gap-1 px-px py-px">
                 <button
                     type="button"
                     onClick={() => scrollBy("left")}

@@ -244,7 +244,7 @@ export default function AppLayout ( {
                     <Header user={user} onMenuClick={handleMenuClick} scrolledDown={!subNavVisible} />
 
                     <div
-                        className={`overflow-hidden transition-all duration-300 ease-in-out ${
+                        className={`-mt-px overflow-hidden transition-all duration-300 ease-in-out ${
                             subNavVisible ? "max-h-32 opacity-100" : "max-h-0 opacity-0 pointer-events-none"
                         }`}
                     >
