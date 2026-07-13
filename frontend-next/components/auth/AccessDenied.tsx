@@ -82,16 +82,20 @@ const WORKSPACE_FALLBACK = { icon: LayoutDashboard, tone: "bg-slate-500/15 text-
 export default function AccessDenied({
   requiredGroups,
   user,
+  fallbackHref = "/",
   title = "Acesso restrito",
   subtitle = "A sua conta não tem permissão para abrir esta página.",
 }: {
   requiredGroups?: string[]
   user: SessionUser | null
+  fallbackHref?: string
   title?: string
   subtitle?: string
 }) {
   const { signOut } = useAuth()
   const workspaces = getAccessibleWorkspaces(user).filter((w) => w.key !== "dashboard")
+  const primaryHref = fallbackHref || "/"
+  const primaryLabel = primaryHref === "/" ? "Ir para o painel" : "Ir para área permitida"
 
   return (
     <div className="mx-auto max-w-3xl space-y-2">
@@ -168,10 +172,10 @@ export default function AccessDenied({
       {/* ── Ações ── */}
       <div className="flex items-center justify-between gap-2 px-1 pt-0.5">
         <Link
-          href="/"
+          href={primaryHref}
           className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-white/20 bg-white/40 px-3 text-sm font-medium text-foreground shadow-sm backdrop-blur-sm transition hover:bg-white/60 dark:border-white/10 dark:bg-white/[0.06] dark:hover:bg-white/[0.1]"
         >
-          <LayoutDashboard size={15} /> Ir para o painel
+          <LayoutDashboard size={15} /> {primaryLabel}
         </Link>
 
         <button

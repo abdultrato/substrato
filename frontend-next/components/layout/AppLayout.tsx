@@ -20,12 +20,7 @@ import {
     workspaceHomeForScope,
 } from "@/lib/workspaceScope"
 import {
-    INTERNAL_NAVIGATION_INTENT_KEY,
-    createInternalNavigationIntent,
-    getPathFromSameOriginHref,
     normalizeNavigationPath,
-    serializeInternalNavigationIntent,
-    shouldShowRestrictionNotice,
 } from "@/lib/accessRedirect"
 
 interface Props {
@@ -81,86 +76,15 @@ export default function AppLayout ( {
     const restrictionRedirectTarget = isScopeRestricted ? scopeHome : defaultWorkspaceHref
 
     useEffect(() => {
-        if (typeof window === "undefined") return
-
-        function persistNavigationIntent(targetPath: string) {
-            const intent = createInternalNavigationIntent(targetPath)
-            window.sessionStorage.setItem(
-                INTERNAL_NAVIGATION_INTENT_KEY,
-                serializeInternalNavigationIntent(intent),
-            )
-        }
-
-        function handleAnchorClick(event: MouseEvent) {
-            if (event.defaultPrevented || event.button !== 0) return
-            if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return
-
-            const originTarget = event.target
-            if (!(originTarget instanceof Element)) return
-
-            const anchor = originTarget.closest("a[href]")
-            if (!anchor) return
-
-            const targetAttr = anchor.getAttribute("target")
-            if (targetAttr && targetAttr !== "_self") return
-            if (anchor.hasAttribute("download")) return
-
-            const href = anchor.getAttribute("href")
-            if (!href || href.startsWith("#")) return
-
-            const nextPath = getPathFromSameOriginHref(href, window.location.origin)
-            if (!nextPath) return
-            persistNavigationIntent(nextPath)
-        }
-
-        const originalPushState = window.history.pushState
-        const originalReplaceState = window.history.replaceState
-
-        function wrapHistoryMethod(
-            method: typeof window.history.pushState,
-        ): typeof window.history.pushState {
-            return function wrappedHistoryMethod(data, unused, url) {
-                if (url) {
-                    const nextPath = getPathFromSameOriginHref(
-                        typeof url === "string" ? url : url.toString(),
-                        window.location.origin,
-                    )
-                    if (nextPath) persistNavigationIntent(nextPath)
-                }
-                return method.call(this, data, unused, url)
-            }
-        }
-
-        window.history.pushState = wrapHistoryMethod(originalPushState)
-        window.history.replaceState = wrapHistoryMethod(originalReplaceState)
-        document.addEventListener("click", handleAnchorClick, true)
-
-        return () => {
-            window.history.pushState = originalPushState
-            window.history.replaceState = originalReplaceState
-            document.removeEventListener("click", handleAnchorClick, true)
-        }
-    }, [])
-
-    useEffect(() => {
         if (!hasAccessRestriction) {
             setAccessResolutionReady(true)
             setShowRestrictionNotice(false)
             return
         }
 
-        if (typeof window === "undefined") return
-
         setAccessResolutionReady(false)
-        const rawIntent = window.sessionStorage.getItem(INTERNAL_NAVIGATION_INTENT_KEY)
-        const manualPathAttempt = shouldShowRestrictionNotice({
-            currentPath,
-            intentRaw: rawIntent,
-        })
-
         const normalizedTarget = normalizeNavigationPath(restrictionRedirectTarget)
-        if (!manualPathAttempt && currentPath !== normalizedTarget) {
-            window.sessionStorage.removeItem(INTERNAL_NAVIGATION_INTENT_KEY)
+        if (currentPath !== normalizedTarget) {
             setShowRestrictionNotice(false)
             router.replace(restrictionRedirectTarget)
             setAccessResolutionReady(true)
@@ -263,6 +187,7 @@ export default function AppLayout ( {
                                 <AccessDenied
                                     requiredGroups={isUnauthorized ? requiredGroups : undefined}
                                     user={user}
+                                    fallbackHref={restrictionRedirectTarget}
                                     title={
                                         isUnauthorized
                                             ? t("Acesso restrito", "Access restricted")
