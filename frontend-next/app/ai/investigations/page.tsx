@@ -163,20 +163,20 @@ export default function AiInvestigationsPage() {
 
   return (
     <AppLayout>
-      <div className="space-y-3">
+      <div className="space-y-1.5">
         {/* Cabeçalho fundido: banner + pílulas + pesquisa + filtros num só bloco translúcido */}
         <section className="relative overflow-hidden rounded-2xl border border-violet-200/25 bg-gradient-to-br from-violet-100/[0.05] via-white/[0.015] to-indigo-100/[0.03] shadow-xl shadow-slate-900/5 backdrop-blur-2xl dark:border-violet-800/20 dark:from-violet-950/[0.05] dark:via-white/[0.01] dark:to-indigo-950/[0.03]">
           <div className="pointer-events-none absolute -right-8 -top-10 h-28 w-28 rounded-full bg-violet-400/15 blur-3xl" />
-          <div className="relative flex flex-wrap items-center gap-3 px-4 py-3">
+          <div className="relative flex flex-wrap items-center gap-2.5 px-3 py-2">
             <div className="flex min-w-0 items-center gap-3">
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-indigo-600 text-white shadow-md shadow-violet-500/25">
-                <Lightbulb size={17} />
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-violet-500 to-indigo-600 text-white shadow-md shadow-violet-500/25">
+                <Lightbulb size={15} />
               </span>
               <div className="min-w-0">
-                <h1 className="text-lg font-bold leading-tight text-foreground">
+                <h1 className="text-base font-bold leading-tight text-foreground">
                   {t("Investigações da IA", "AI Investigations")}
                 </h1>
-                <p className="text-[11px] text-muted-foreground">
+                <p className="text-[10px] text-muted-foreground">
                   {loading
                     ? t("A carregar…", "Loading…")
                     : isPortuguese
@@ -230,7 +230,7 @@ export default function AiInvestigationsPage() {
             </div>
           </div>
 
-          <div className="relative flex flex-wrap items-center gap-2 border-t border-white/15 px-4 py-2 dark:border-white/[0.06]">
+          <div className="relative flex flex-wrap items-center gap-1.5 border-t border-white/15 px-3 py-1.5 dark:border-white/[0.06]">
             <div className="relative w-full sm:w-64">
               <Search
                 size={12}
@@ -295,16 +295,16 @@ export default function AiInvestigationsPage() {
         ) : null}
 
         {loading ? (
-          <div className="flex items-center justify-center gap-2 rounded-xl border border-dashed border-border px-4 py-10 text-sm text-muted-foreground">
+          <div className="flex items-center justify-center gap-2 rounded-xl border border-dashed border-border px-4 py-8 text-xs text-muted-foreground">
             <Loader2 size={16} className="animate-spin" />
             {t("A carregar investigações...", "Loading investigations...")}
           </div>
         ) : !rows.length ? (
-          <div className="rounded-xl border border-dashed border-border px-4 py-10 text-center text-sm text-muted-foreground">
+          <div className="rounded-xl border border-dashed border-border px-4 py-8 text-center text-xs text-muted-foreground">
             {t("Ainda não há investigações para estes filtros.", "There are no investigations for these filters yet.")}
           </div>
         ) : (
-          <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
+          <div className="grid gap-1.5 md:grid-cols-2 xl:grid-cols-3">
             {rows.map((item) => {
               const meta = STATUS_META[item.status || ""] || STATUS_META.ready
               const score = Math.max(0, Math.min(100, item.confidence_score ?? 0))
@@ -312,7 +312,7 @@ export default function AiInvestigationsPage() {
                 <Link
                   key={item.id || item.custom_id}
                   href={`/ai/investigations/${item.id}`}
-                  className={`group flex min-w-0 flex-col rounded-xl border border-l-4 border-white/20 bg-white/25 p-3 shadow-sm backdrop-blur-sm transition hover:border-[var(--primary-300)] hover:bg-white/40 dark:border-white/10 dark:bg-white/5 dark:hover:border-[var(--primary-600)] dark:hover:bg-white/[0.08] ${meta.bar}`}
+                  className={`group flex min-w-0 flex-col rounded-xl border border-l-4 border-white/20 bg-white/25 p-2 shadow-sm backdrop-blur-sm transition hover:border-[var(--primary-300)] hover:bg-white/40 dark:border-white/10 dark:bg-white/5 dark:hover:border-[var(--primary-600)] dark:hover:bg-white/[0.08] ${meta.bar}`}
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex min-w-0 items-center gap-2">
@@ -329,23 +329,23 @@ export default function AiInvestigationsPage() {
                     />
                   </div>
 
-                  <p className="mt-1.5 line-clamp-2 min-h-[2rem] text-[11px] leading-snug text-muted-foreground">
+                  <p className="mt-1 line-clamp-2 min-h-[1.9rem] text-[11px] leading-snug text-muted-foreground">
                     {item.question || item.result_summary || t("Sem pergunta registada.", "No question recorded.")}
                   </p>
 
-                  <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                  <div className="mt-1.5 flex flex-wrap items-center gap-1">
                     <Badge variant={meta.variant}>{humanize(item.status)}</Badge>
                     <Badge variant="info">{humanize(item.intent)}</Badge>
                   </div>
 
-                  <div className="mt-2 flex items-center gap-2">
+                  <div className="mt-1.5 flex items-center gap-2">
                     <div className="h-1 flex-1 overflow-hidden rounded-full bg-muted">
                       <div className={`h-full rounded-full ${confidenceTone(score)}`} style={{ width: `${score}%` }} />
                     </div>
                     <span className="shrink-0 text-[10px] font-semibold text-foreground-2">{score}%</span>
                   </div>
 
-                  <div className="mt-2 flex items-center justify-between gap-2 text-[10px] text-muted-foreground">
+                  <div className="mt-1.5 flex items-center justify-between gap-2 text-[10px] text-muted-foreground">
                     <span className="truncate">{item.custom_id || `#${item.id}`}</span>
                     <span className="shrink-0">{formatDate(item.created_at)}</span>
                   </div>
