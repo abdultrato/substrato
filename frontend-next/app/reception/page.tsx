@@ -737,7 +737,7 @@ export default function RecepcaoPage() {
                 <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
                   Atalhos
                 </span>
-                <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+                <div className="flex gap-1.5 overflow-x-auto pb-1 xl:flex-nowrap [&::-webkit-scrollbar]:hidden [scrollbar-width:none]">
                   {atalhos.map((atalho) => (
                     <QuickLinkCard
                       key={atalho.href}
@@ -754,7 +754,7 @@ export default function RecepcaoPage() {
                 <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
                   Marcações
                 </span>
-                <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-2">
+                <div className="flex gap-1.5 overflow-x-auto pb-1 xl:flex-nowrap [&::-webkit-scrollbar]:hidden [scrollbar-width:none]">
                   {marcacoesPorSector.map((sector) => (
                     <QuickLinkCard
                       key={sector.href}
@@ -1167,19 +1167,21 @@ function QuickLinkCard({
   return (
     <Link
       href={href}
-      className="group flex items-start gap-2 rounded-xl border border-white/20 bg-white/25 px-3 py-2 shadow-sm transition hover:border-[var(--primary-300)] hover:bg-white/40 dark:bg-white/5 dark:hover:border-[var(--primary-600)] dark:hover:bg-white/[0.08]"
+      className="group flex w-[10.8rem] shrink-0 items-start gap-1.5 rounded-xl border border-white/20 bg-white/25 px-2.5 py-2 shadow-sm transition hover:border-[var(--primary-300)] hover:bg-white/40 xl:w-[calc((100%_-_6rem)/5)] dark:bg-white/5 dark:hover:border-[var(--primary-600)] dark:hover:bg-white/[0.08]"
     >
       <span
-        className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${iconBg ?? "bg-muted"} ${iconColor ?? "text-muted-foreground"}`}
+        className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${iconBg ?? "bg-muted"} ${iconColor ?? "text-muted-foreground"}`}
       >
-        <Icon size={14} />
+        <Icon size={12} />
       </span>
       <div className="min-w-0 flex-1">
-        <p className="truncate text-xs font-semibold text-foreground">{title}</p>
-        <p className="text-[10px] leading-tight text-muted-foreground">{description}</p>
+        <p className="truncate text-[11px] font-semibold leading-tight text-foreground">{title}</p>
+        <p className="line-clamp-2 text-[9px] leading-tight text-muted-foreground">
+          {description}
+        </p>
       </div>
       <ChevronRight
-        size={12}
+        size={10}
         className="mt-0.5 shrink-0 text-muted-foreground transition group-hover:text-foreground"
       />
     </Link>
