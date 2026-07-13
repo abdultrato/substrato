@@ -951,8 +951,10 @@ const TOKEN_REPLACEMENTS_EN_TO_PT: Array<[RegExp, string]> = [
   [/\bcreate\b/gu, "criar"],
   [/\bUpdate\b/gu, "Actualizar"],
   [/\bupdate\b/gu, "actualizar"],
-  [/\bData\b/gu, "Dados"],
-  [/\bdata\b/gu, "dados"],
+  // "Data"/"data" só é o inglês *data* quando NÃO é seguida de preposição
+  // portuguesa (Data de aquisição, Data da consulta, Data limite…).
+  [/\bData\b(?!\s+(?:d[aeo]s?|limite|prevista|efectiva|efetiva)\b)/gu, "Dados"],
+  [/\bdata\b(?!\s+(?:d[aeo]s?|limite|prevista|efectiva|efetiva)\b)/gu, "dados"],
   [/\bSelected\b/gu, "Seleccionado"],
   [/\bselected\b/gu, "seleccionado"],
   [/\bSector\b/gu, "Sector"],

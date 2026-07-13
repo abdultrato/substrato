@@ -21,6 +21,7 @@ class Maintenance(TenantPropagationMixin, NoNameCoreModel):
         DAILY = "DIARIA", "Diária"
         WEEKLY = "SEMANAL", "Semanal"
         MONTHLY = "MENSAL", "Mensal"
+        QUARTERLY = "TRIMESTRAL", "Trimestral"
         SEMIANNUAL = "SEMESTRAL", "Semestral"
         YEARLY = "ANUAL", "Anual"
 

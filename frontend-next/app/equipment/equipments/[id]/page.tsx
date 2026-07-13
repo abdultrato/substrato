@@ -6,6 +6,7 @@ import { useCallback, useEffect, useState } from "react";
 import {
   Activity,
   ArrowLeft,
+  CalendarClock,
   History,
   Loader2,
   MapPin,
@@ -20,7 +21,7 @@ import {
 
 import AppLayout from "@/components/layout/AppLayout";
 import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh";
-import { apiFetch } from "@/lib/api";
+import { apiFetch, apiFetchList } from "@/lib/api";
 import { routeParamToString } from "@/lib/routeParams";
 import {
   equipmentStatusMeta,
@@ -53,6 +54,48 @@ function fmtDate(value: any, withTime = false): string {
 function str(value: any): string {
   if (value === null || value === undefined || String(value).trim() === "") return "—";
   return String(value);
+}
+
+const RECURRENCE_META: Record<string, { label: string; chip: string }> = {
+  DIARIA: {
+    label: "Diária",
+    chip: "border-sky-200/50 bg-sky-100/30 text-sky-700 dark:border-sky-700/30 dark:bg-sky-900/20 dark:text-sky-300",
+  },
+  SEMANAL: {
+    label: "Semanal",
+    chip: "border-blue-200/50 bg-blue-100/30 text-blue-700 dark:border-blue-700/30 dark:bg-blue-900/20 dark:text-blue-300",
+  },
+  MENSAL: {
+    label: "Mensal",
+    chip: "border-indigo-200/50 bg-indigo-100/30 text-indigo-700 dark:border-indigo-700/30 dark:bg-indigo-900/20 dark:text-indigo-300",
+  },
+  TRIMESTRAL: {
+    label: "Trimestral",
+    chip: "border-violet-200/50 bg-violet-100/30 text-violet-700 dark:border-violet-700/30 dark:bg-violet-900/20 dark:text-violet-300",
+  },
+  SEMESTRAL: {
+    label: "Semestral",
+    chip: "border-purple-200/50 bg-purple-100/30 text-purple-700 dark:border-purple-700/30 dark:bg-purple-900/20 dark:text-purple-300",
+  },
+  ANUAL: {
+    label: "Anual",
+    chip: "border-fuchsia-200/50 bg-fuchsia-100/30 text-fuchsia-700 dark:border-fuchsia-700/30 dark:bg-fuchsia-900/20 dark:text-fuchsia-300",
+  },
+};
+
+function isOverdue(m: Record<string, any>): boolean {
+  if (m.performed_date) return false;
+  const scheduled = new Date(String(m.scheduled_date));
+  if (Number.isNaN(scheduled.getTime())) return false;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return scheduled < today;
+}
+
+function maintenanceBar(m: Record<string, any>): string {
+  if (m.performed_date) return "border-l-emerald-500 dark:border-l-emerald-400";
+  if (isOverdue(m)) return "border-l-rose-500 dark:border-l-rose-400";
+  return "border-l-blue-500 dark:border-l-blue-400";
 }
 
 /** Cartão de secção com título característico. */
@@ -96,6 +139,8 @@ export default function EquipmentsDetailPage() {
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
   const [toggling, setToggling] = useState(false);
+  const [maintenances, setMaintenances] = useState<Record<string, any>[]>([]);
+  const [maintLoading, setMaintLoading] = useState(true);
 
   const load = useCallback(async () => {
     if (!id) return;
@@ -117,6 +162,34 @@ export default function EquipmentsDetailPage() {
   useEffect(() => {
     void load();
   }, [load, safeRefreshToken]);
+
+  useEffect(() => {
+    if (!id) return;
+    let mounted = true;
+    async function loadMaintenances() {
+      setMaintLoading(true);
+      try {
+        const { items } = await apiFetchList<Record<string, any>>(
+          "/maintenance/maintenance/",
+          {
+            page: 1,
+            pageSize: 200,
+            query: { equipment: id, ordering: "-scheduled_date" },
+            clientCache: false,
+          },
+        );
+        if (mounted) setMaintenances(items);
+      } catch {
+        if (mounted) setMaintenances([]);
+      } finally {
+        if (mounted) setMaintLoading(false);
+      }
+    }
+    void loadMaintenances();
+    return () => {
+      mounted = false;
+    };
+  }, [id, safeRefreshToken]);
 
   async function toggleActive() {
     if (!id || !row || toggling) return;
@@ -321,6 +394,117 @@ export default function EquipmentsDetailPage() {
               <Row label="Actualizado em" value={fmtDate(row.updated_at, true)} />
               <Row label="Versão" value={str(row.version)} />
             </Section>
+
+            {/* Estado de manutenção: recorrências herdadas + manutenções por avaria */}
+            <div className="md:col-span-2 xl:col-span-3">
+              <section className={`${GLASS} border-l-4 border-l-amber-500 dark:border-l-amber-400`}>
+                <div className="flex flex-wrap items-center gap-2 border-b border-border/60 px-3 py-2">
+                  <CalendarClock size={13} className="text-muted-foreground" />
+                  <span className="text-xs font-semibold text-foreground">Manutenções</span>
+                  {maintLoading ? (
+                    <Loader2 size={11} className="animate-spin text-muted-foreground" />
+                  ) : (
+                    <>
+                      <span className="inline-flex items-center rounded-full border border-blue-200/50 bg-blue-100/30 px-1.5 py-0.5 text-[9px] font-semibold text-blue-700 dark:border-blue-700/30 dark:bg-blue-900/20 dark:text-blue-300">
+                        Programadas {maintenances.filter((m) => !m.performed_date && !isOverdue(m)).length}
+                      </span>
+                      <span className="inline-flex items-center rounded-full border border-rose-200/50 bg-rose-100/30 px-1.5 py-0.5 text-[9px] font-semibold text-rose-700 dark:border-rose-700/30 dark:bg-rose-900/20 dark:text-rose-300">
+                        Atrasadas {maintenances.filter((m) => isOverdue(m)).length}
+                      </span>
+                      <span className="inline-flex items-center rounded-full border border-emerald-200/50 bg-emerald-100/30 px-1.5 py-0.5 text-[9px] font-semibold text-emerald-700 dark:border-emerald-700/30 dark:bg-emerald-900/20 dark:text-emerald-300">
+                        Executadas {maintenances.filter((m) => Boolean(m.performed_date)).length}
+                      </span>
+                      <span className="ml-auto rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold text-foreground-2">
+                        {maintenances.length}
+                      </span>
+                    </>
+                  )}
+                </div>
+
+                {!maintLoading && maintenances.length > 0 ? (
+                  <div className="flex flex-wrap items-center gap-1 border-b border-border/40 px-3 py-1.5">
+                    {Object.entries(RECURRENCE_META).map(([code, meta]) => {
+                      const count = maintenances.filter(
+                        (m) => String(m.type ?? "").toUpperCase() === code,
+                      ).length;
+                      return (
+                        <span
+                          key={code}
+                          className={`inline-flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-[9px] font-semibold ${count ? meta.chip : "border-white/20 bg-white/[0.03] text-muted-foreground/60 dark:border-white/10"}`}
+                        >
+                          {meta.label} {count}
+                        </span>
+                      );
+                    })}
+                    <span
+                      className={`inline-flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-[9px] font-semibold ${
+                        maintenances.some((m) => m.incident || m.maintenance_type === "CORRECTIVA")
+                          ? "border-amber-200/50 bg-amber-100/30 text-amber-700 dark:border-amber-700/30 dark:bg-amber-900/20 dark:text-amber-300"
+                          : "border-white/20 bg-white/[0.03] text-muted-foreground/60 dark:border-white/10"
+                      }`}
+                    >
+                      Por avaria {maintenances.filter((m) => m.incident || m.maintenance_type === "CORRECTIVA").length}
+                    </span>
+                  </div>
+                ) : null}
+
+                <div className="max-h-72 space-y-1 overflow-y-auto p-2 [scrollbar-width:thin]">
+                  {maintLoading ? (
+                    <p className="px-1 py-2 text-[11px] text-muted-foreground">A carregar manutenções...</p>
+                  ) : maintenances.length === 0 ? (
+                    <p className="px-1 py-2 text-[11px] text-muted-foreground">
+                      Sem manutenções registadas para este equipamento.
+                    </p>
+                  ) : (
+                    maintenances.map((m) => {
+                      const recurrence = RECURRENCE_META[String(m.type ?? "").toUpperCase()];
+                      const corrective = Boolean(m.incident) || m.maintenance_type === "CORRECTIVA";
+                      return (
+                        <Link
+                          key={m.id}
+                          href={`/maintenance/maintenances/${m.id}`}
+                          className={`flex flex-wrap items-center gap-x-2 gap-y-1 rounded-lg border border-l-4 border-white/20 bg-white/20 px-2 py-1.5 transition hover:bg-white/40 dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10 ${maintenanceBar(m)}`}
+                        >
+                          <span className="text-[10px] font-semibold text-foreground">
+                            {m.custom_id || `#${m.id}`}
+                          </span>
+                          {recurrence ? (
+                            <span className={`inline-flex items-center rounded-full border px-1.5 py-0.5 text-[9px] font-semibold ${recurrence.chip}`}>
+                              {recurrence.label}
+                            </span>
+                          ) : null}
+                          <span
+                            className={`inline-flex items-center rounded-full border px-1.5 py-0.5 text-[9px] font-semibold ${
+                              corrective
+                                ? "border-amber-200/50 bg-amber-100/30 text-amber-700 dark:border-amber-700/30 dark:bg-amber-900/20 dark:text-amber-300"
+                                : "border-teal-200/50 bg-teal-100/30 text-teal-700 dark:border-teal-700/30 dark:bg-teal-900/20 dark:text-teal-300"
+                            }`}
+                          >
+                            {m.maintenance_type_display || (corrective ? "Correctiva" : "Preventiva")}
+                          </span>
+                          {m.incident_code ? (
+                            <span className="inline-flex items-center rounded-full border border-rose-200/50 bg-rose-100/30 px-1.5 py-0.5 text-[9px] font-semibold text-rose-700 dark:border-rose-700/30 dark:bg-rose-900/20 dark:text-rose-300">
+                              Avaria {m.incident_code}
+                            </span>
+                          ) : null}
+                          <span className="ml-auto flex flex-wrap items-center gap-x-2 text-[10px] text-muted-foreground">
+                            <span>Prevista: {fmtDate(m.scheduled_date)}</span>
+                            <span className={m.performed_date ? "text-emerald-600 dark:text-emerald-400" : isOverdue(m) ? "font-semibold text-rose-600 dark:text-rose-400" : ""}>
+                              {m.performed_date
+                                ? `Executada: ${fmtDate(m.performed_date)}`
+                                : isOverdue(m)
+                                  ? "Atrasada"
+                                  : "Programada"}
+                            </span>
+                            {m.technician ? <span>{m.technician}</span> : null}
+                          </span>
+                        </Link>
+                      );
+                    })
+                  )}
+                </div>
+              </section>
+            </div>
           </div>
         ) : null}
       </div>
