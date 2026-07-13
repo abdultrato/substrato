@@ -5382,7 +5382,7 @@ def test_ai_investigations_endpoint_is_user_scoped(api_client):
     )
 
     _authenticate(api_client, tenant, owner)
-    response = api_client.get("/api/v1/ai/assistant/investigations/", format="json")
+    response = api_client.get("/api/v1/ai/assistant/investigations/?limit=150", format="json")
 
     assert response.status_code == 200, _response_data(response)
     rows = _response_data(response)

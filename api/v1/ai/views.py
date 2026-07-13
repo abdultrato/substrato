@@ -53,13 +53,20 @@ def map_policy_error(exc: AiPolicyError) -> PermissionDenied:
     return PermissionDenied({"policy_key": exc.policy_key, "detail": exc.reason, "blocked": exc.blocked})
 
 
-def ai_investigation_queryset(request):
+def ai_investigation_queryset(request, *, with_created_by: bool = False, with_session: bool = False):
     tenant = request_tenant(request)
     if tenant is None:
         raise ValidationError({"tenant": "Tenant não resolvido na requisição."})
 
     policy = AiPolicyGuard()
-    queryset = AiInvestigation.objects.filter(tenant=tenant, deleted=False).select_related("created_by", "session")
+    queryset = AiInvestigation.objects.filter(tenant=tenant, deleted=False)
+    select_related_fields: list[str] = []
+    if with_created_by:
+        select_related_fields.append("created_by")
+    if with_session:
+        select_related_fields.append("session")
+    if select_related_fields:
+        queryset = queryset.select_related(*select_related_fields)
     if not policy.is_admin_like(request.user):
         queryset = queryset.filter(created_by=request.user)
     return queryset
@@ -231,7 +238,7 @@ class AiAssistantInvestigationDetailView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, investigation_id: int):
-        investigation = ai_investigation_queryset(request).filter(id=investigation_id).first()
+        investigation = ai_investigation_queryset(request, with_created_by=True).filter(id=investigation_id).first()
         if investigation is None:
             raise NotFound("Investigação da IA não encontrada.")
         return Response(AiInvestigationSerializer(investigation).data)
@@ -253,7 +260,7 @@ class AiAssistantInvestigationFollowUpView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, investigation_id: int):
-        investigation = ai_investigation_queryset(request).filter(id=investigation_id).first()
+        investigation = ai_investigation_queryset(request, with_session=True).filter(id=investigation_id).first()
         if investigation is None:
             raise NotFound("Investigação da IA não encontrada.")
 
