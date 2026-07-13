@@ -629,45 +629,49 @@ export default function RecepcaoPage() {
                 </div>
               )}
 
-              <div className="grid gap-3 xl:grid-cols-[minmax(0,1.2fr)_minmax(20rem,0.95fr)] xl:items-end">
-                <div className="min-w-0 space-y-2.5">
-                  <div className="flex flex-wrap items-start justify-between gap-2">
-                    <div className="flex min-w-0 items-center gap-2">
-                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-[var(--primary-600)]/10 text-[var(--primary-700)] dark:text-[var(--primary-400)]">
-                        <Search size={15} />
-                      </span>
-                      <div className="min-w-0">
-                        <h2 className="truncate text-sm font-bold text-foreground">
-                          Motor de busca operacional
-                        </h2>
-                        <p className="text-[11px] text-muted-foreground">
-                          Pesquisa paciente, código, estado, prioridade, atendente, requisição, fatura e qualquer outro campo consumido pela recepção.
-                        </p>
-                      </div>
-                    </div>
-
-                    <span className="rounded-full bg-muted px-2.5 py-1 text-[10px] font-semibold text-foreground-2">
-                      {search ? `${searchResults.length} resultado(s)` : `${searchRows.length} registos indexados`}
+              <div className="flex flex-col gap-3 xl:flex-row xl:flex-nowrap xl:items-center xl:gap-4">
+                <div className="flex min-w-0 flex-col gap-2 xl:max-w-[30rem] xl:flex-1 xl:flex-row xl:flex-nowrap xl:items-center">
+                  <div className="flex items-center gap-2 xl:shrink-0">
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-[var(--primary-600)]/10 text-[var(--primary-700)] dark:text-[var(--primary-400)]">
+                      <Search size={15} />
                     </span>
+                    <div className="flex min-w-0 items-center gap-2">
+                      <h2 className="truncate text-sm font-bold text-foreground">
+                        Busca operacional
+                      </h2>
+                      <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold text-foreground-2">
+                        {search ? `${searchResults.length} resultados` : `${searchRows.length} indexados`}
+                      </span>
+                    </div>
                   </div>
 
-                  <div className="relative">
+                  <div className="relative min-w-0 xl:flex-1">
                     <Search
-                      size={14}
+                      size={13}
                       className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
                     />
                     <input
                       type="text"
                       value={searchInput}
                       onChange={(event) => setSearchInput(event.target.value)}
-                      placeholder="Pesquisar qualquer dado da recepção..."
-                      className="w-full rounded-xl border border-border bg-background/70 py-2.5 pl-9 pr-4 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-violet-500/30"
+                      placeholder="Paciente, código, req., fatura..."
+                      className="h-9 w-full rounded-xl border border-border bg-background/70 py-2 pl-8 pr-9 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-violet-500/30"
                     />
+                    {searchInput ? (
+                      <button
+                        type="button"
+                        onClick={() => setSearchInput("")}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground transition hover:text-foreground"
+                        aria-label="Limpar pesquisa"
+                      >
+                        <XCircle size={14} />
+                      </button>
+                    ) : null}
                   </div>
                 </div>
 
-                <div className="flex flex-wrap items-center justify-between gap-2 xl:gap-3">
-                  <div className="flex flex-wrap items-center gap-1.5">
+                <div className="flex flex-wrap items-center gap-1.5 xl:flex-nowrap xl:shrink-0">
+                  <div className="flex flex-wrap items-center gap-1.5 xl:flex-nowrap">
                     <StatPill
                       label="Check-ins hoje"
                       value={workspace.summary.checkins_today}
@@ -691,7 +695,7 @@ export default function RecepcaoPage() {
                     />
                   </div>
 
-                  <div className="flex items-center xl:justify-end">
+                  <div className="flex items-center xl:ml-auto xl:pl-1">
                     <StatPill
                       label="Recebido hoje"
                       value={<MoneyValue value={workspace.summary.received_today} />}
