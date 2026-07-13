@@ -767,9 +767,6 @@ export default function RecepcaoPage() {
           <section className={GLASS}>
             <div className="grid gap-1 px-2 py-2 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
               <div className="space-y-1">
-                <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
-                  Atalhos
-                </span>
                 <div className="flex flex-wrap gap-1.5">
                   {atalhos.map((atalho) => (
                     <QuickLinkCard
