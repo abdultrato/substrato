@@ -24,6 +24,7 @@ type GroupDef = {
   icon: typeof Users;
   iconBg: string;
   iconColor: string;
+  bar: string;
   href: (row: Row) => string;
   primary: (row: Row) => string;
   secondary: (row: Row) => string;
@@ -59,6 +60,7 @@ const GROUPS_DEF: GroupDef[] = [
     icon: Users,
     iconBg: "bg-blue-100 dark:bg-blue-900/40",
     iconColor: "text-blue-600 dark:text-blue-400",
+    bar: "border-l-blue-500 dark:border-l-blue-400",
     href: (r) => `/patients/${r.id}`,
     primary: (r) => str(r.name, r.nome, `#${r.id}`),
     secondary: (r) =>
@@ -74,6 +76,7 @@ const GROUPS_DEF: GroupDef[] = [
     icon: FileText,
     iconBg: "bg-amber-100 dark:bg-amber-900/40",
     iconColor: "text-amber-600 dark:text-amber-400",
+    bar: "border-l-amber-500 dark:border-l-amber-400",
     href: (r) => `/requests/${r.id}`,
     primary: (r) => str(r.custom_id, r.id_custom, `#${r.id}`),
     secondary: (r) =>
@@ -89,6 +92,7 @@ const GROUPS_DEF: GroupDef[] = [
     icon: CreditCard,
     iconBg: "bg-red-100 dark:bg-red-900/40",
     iconColor: "text-red-600 dark:text-red-400",
+    bar: "border-l-red-500 dark:border-l-red-400",
     href: (r) => `/invoices/${r.id}`,
     primary: (r) => str(r.custom_id, r.id_custom, `#${r.id}`),
     secondary: (r) =>
@@ -108,6 +112,7 @@ const GROUPS_DEF: GroupDef[] = [
     icon: Receipt,
     iconBg: "bg-emerald-100 dark:bg-emerald-900/40",
     iconColor: "text-emerald-600 dark:text-emerald-400",
+    bar: "border-l-emerald-500 dark:border-l-emerald-400",
     href: (r) => `/payments/receipts/${r.id}`,
     primary: (r) => str(r.number, r.numero, r.custom_id, `#${r.id}`),
     secondary: (r) =>
@@ -127,6 +132,7 @@ const GROUPS_DEF: GroupDef[] = [
     icon: CalendarClock,
     iconBg: "bg-cyan-100 dark:bg-cyan-900/40",
     iconColor: "text-cyan-600 dark:text-cyan-400",
+    bar: "border-l-cyan-500 dark:border-l-cyan-400",
     href: (r) => `/consultations/medical-consultations/${r.id}`,
     primary: (r) =>
       str(r.patient_name, r.patient?.name, r.custom_id, `#${r.id}`),
@@ -218,7 +224,7 @@ export default function ReceptionSearch({ query }: { query: string }) {
           {groups.map(({ def, rows, total }) => (
             <div
               key={def.key}
-              className="rounded-xl border border-white/20 bg-white/20 dark:border-white/10 dark:bg-white/5"
+              className={`rounded-xl border border-l-4 border-white/20 bg-white/20 dark:border-white/10 dark:bg-white/5 ${def.bar}`}
             >
               <div className="flex items-center gap-2 border-b border-border/50 px-2.5 py-1.5">
                 <span

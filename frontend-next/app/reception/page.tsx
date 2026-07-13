@@ -761,7 +761,7 @@ export default function RecepcaoPage() {
             />
           </section>
 
-          <section className={GLASS}>
+          <section className={`${GLASS} border-l-4 border-l-violet-500 dark:border-l-violet-400`}>
             <div className="grid gap-1 px-2 py-2 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
               <div className="space-y-1">
                 <div className="flex flex-wrap gap-1.5">
@@ -832,7 +832,7 @@ export default function RecepcaoPage() {
               ) : null}
 
               {workspace.queue.length > 0 ? (
-                <section className={GLASS}>
+                <section className={`${GLASS} border-l-4 border-l-amber-500 dark:border-l-amber-400`}>
                   <div className="flex items-center gap-2 border-b border-border/60 px-4 py-3">
                     <span className="text-sm font-bold text-foreground">Fila do dia</span>
                     <span className="ml-auto rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold text-foreground-2">
@@ -1060,7 +1060,7 @@ function ChatbotPanel({
   }, [loading, messages]);
 
   return (
-    <section className={`${GLASS} flex flex-col overflow-hidden`}>
+    <section className={`${GLASS} flex flex-col overflow-hidden border-l-4 border-l-indigo-500 dark:border-l-indigo-400`}>
       <div className="flex items-center gap-2 border-b border-border/60 px-3 py-2">
         <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-violet-500 to-indigo-600 text-white shadow-sm">
           <Bot size={12} />
@@ -1258,7 +1258,7 @@ function ReceptionDecidedSection({
       : "bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300";
 
   return (
-    <section className={GLASS}>
+    <section className={`${GLASS} border-l-4 ${accentBorder}`}>
       <div className="flex items-center gap-2 border-b border-border/60 px-3 py-2">
         <div className="inline-flex h-6 w-6 items-center justify-center rounded bg-muted">{icon}</div>
         <p className="text-xs font-semibold text-foreground">{title}</p>
