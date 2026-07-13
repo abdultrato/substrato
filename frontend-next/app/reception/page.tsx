@@ -626,7 +626,7 @@ export default function RecepcaoPage() {
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0">
                   <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-[var(--primary-500)] dark:text-[var(--primary-400)]">
-                    Recepção · cockpit diário
+                    Saudação
                   </p>
                   <h1 className="mt-1 text-xl font-bold leading-tight text-foreground sm:text-2xl">
                     {greetingName}
