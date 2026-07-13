@@ -629,62 +629,20 @@ export default function RecepcaoPage() {
                 </div>
               )}
 
-              <div className="flex flex-wrap items-center gap-1.5">
-                <StatPill
-                  label="Check-ins hoje"
-                  value={workspace.summary.checkins_today}
-                  icon={Users}
-                  cls="border-blue-200/50 bg-blue-100/30 text-blue-700 dark:border-blue-700/30 dark:bg-blue-900/20 dark:text-blue-300"
-                  href="/reception/reception-checkins"
-                />
-                <StatPill
-                  label="Na fila"
-                  value={workspace.summary.queue_size}
-                  icon={ClipboardList}
-                  cls="border-amber-200/50 bg-amber-100/30 text-amber-700 dark:border-amber-700/30 dark:bg-amber-900/20 dark:text-amber-300"
-                  href="/reception/reception-checkins?status=AGUARD"
-                />
-                <StatPill
-                  label="Em atendimento"
-                  value={workspace.summary.in_care}
-                  icon={Stethoscope}
-                  cls="border-violet-200/50 bg-violet-100/30 text-violet-700 dark:border-violet-700/30 dark:bg-violet-900/20 dark:text-violet-300"
-                  href="/reception/reception-checkins?status=ATEND"
-                />
-                <StatPill
-                  label="Recebido hoje"
-                  value={<MoneyValue value={workspace.summary.received_today} />}
-                  icon={Receipt}
-                  cls="border-emerald-200/50 bg-emerald-100/30 text-emerald-700 dark:border-emerald-700/30 dark:bg-emerald-900/20 dark:text-emerald-300"
-                  href="/receipts"
-                />
-              </div>
-            </div>
-
-            <div
-              aria-hidden
-              className="pointer-events-none absolute -right-16 -top-16 h-44 w-44 rounded-full bg-[var(--primary-200)]/40 blur-3xl dark:bg-[var(--primary-700)]/20"
-            />
-          </section>
-
-          <div className="grid gap-3 xl:grid-cols-[minmax(0,1.15fr)_380px]">
-            <div className="space-y-3">
-              <section className={GLASS}>
-                <div className="space-y-3 px-4 py-4">
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-[var(--primary-600)]/10 text-[var(--primary-700)] dark:text-[var(--primary-400)]">
-                          <Search size={15} />
-                        </span>
-                        <div>
-                          <h2 className="text-sm font-bold text-foreground">
-                            Motor de busca operacional
-                          </h2>
-                          <p className="text-[11px] text-muted-foreground">
-                            Pesquisa paciente, código, estado, prioridade, atendente, requisição, fatura e qualquer outro campo consumido pela recepção.
-                          </p>
-                        </div>
+              <div className="grid gap-3 xl:grid-cols-[minmax(0,1.2fr)_minmax(20rem,0.95fr)] xl:items-end">
+                <div className="min-w-0 space-y-2.5">
+                  <div className="flex flex-wrap items-start justify-between gap-2">
+                    <div className="flex min-w-0 items-center gap-2">
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-[var(--primary-600)]/10 text-[var(--primary-700)] dark:text-[var(--primary-400)]">
+                        <Search size={15} />
+                      </span>
+                      <div className="min-w-0">
+                        <h2 className="truncate text-sm font-bold text-foreground">
+                          Motor de busca operacional
+                        </h2>
+                        <p className="text-[11px] text-muted-foreground">
+                          Pesquisa paciente, código, estado, prioridade, atendente, requisição, fatura e qualquer outro campo consumido pela recepção.
+                        </p>
                       </div>
                     </div>
 
@@ -705,6 +663,70 @@ export default function RecepcaoPage() {
                       placeholder="Pesquisar qualquer dado da recepção..."
                       className="w-full rounded-xl border border-border bg-background/70 py-2.5 pl-9 pr-4 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-violet-500/30"
                     />
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap items-center justify-between gap-2 xl:gap-3">
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <StatPill
+                      label="Check-ins hoje"
+                      value={workspace.summary.checkins_today}
+                      icon={Users}
+                      cls="border-blue-200/50 bg-blue-100/30 text-blue-700 dark:border-blue-700/30 dark:bg-blue-900/20 dark:text-blue-300"
+                      href="/reception/reception-checkins"
+                    />
+                    <StatPill
+                      label="Na fila"
+                      value={workspace.summary.queue_size}
+                      icon={ClipboardList}
+                      cls="border-amber-200/50 bg-amber-100/30 text-amber-700 dark:border-amber-700/30 dark:bg-amber-900/20 dark:text-amber-300"
+                      href="/reception/reception-checkins?status=AGUARD"
+                    />
+                    <StatPill
+                      label="Em atendimento"
+                      value={workspace.summary.in_care}
+                      icon={Stethoscope}
+                      cls="border-violet-200/50 bg-violet-100/30 text-violet-700 dark:border-violet-700/30 dark:bg-violet-900/20 dark:text-violet-300"
+                      href="/reception/reception-checkins?status=ATEND"
+                    />
+                  </div>
+
+                  <div className="flex items-center xl:justify-end">
+                    <StatPill
+                      label="Recebido hoje"
+                      value={<MoneyValue value={workspace.summary.received_today} />}
+                      icon={Receipt}
+                      cls="border-emerald-200/50 bg-emerald-100/30 text-emerald-700 dark:border-emerald-700/30 dark:bg-emerald-900/20 dark:text-emerald-300"
+                      href="/receipts"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div
+              aria-hidden
+              className="pointer-events-none absolute -right-16 -top-16 h-44 w-44 rounded-full bg-[var(--primary-200)]/40 blur-3xl dark:bg-[var(--primary-700)]/20"
+            />
+          </section>
+
+          <div className="grid gap-3 xl:grid-cols-[minmax(0,1.15fr)_380px]">
+            <div className="space-y-3">
+              <section className={GLASS}>
+                <div className="space-y-3 px-4 py-4">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <h2 className="text-sm font-bold text-foreground">Resultados da busca operacional</h2>
+                      <p className="text-[11px] text-muted-foreground">
+                        {search
+                          ? "Check-ins e fontes complementares agrupados a partir da pesquisa actual."
+                          : "Os últimos registos indexados aparecem abaixo enquanto não houver termo de pesquisa."}
+                      </p>
+                    </div>
+
+                    <span className="rounded-full bg-muted px-2.5 py-1 text-[10px] font-semibold text-foreground-2">
+                      {search ? `${searchResults.length} em check-ins` : `${searchRows.length} check-ins indexados`}
+                    </span>
                   </div>
 
                   <div className="space-y-2">
