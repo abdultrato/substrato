@@ -3,6 +3,9 @@
 import Link from "next/link"
 import { ExternalLink } from "lucide-react"
 
+import { useLanguage } from "@/hooks/useLanguage"
+import { translateAiSourceTypeLabel } from "@/lib/aiPresentation"
+
 export type AiSource = {
   type?: string
   label?: string
@@ -10,12 +13,13 @@ export type AiSource = {
 }
 
 export default function AiEvidencePanel({ sources }: { sources: AiSource[] }) {
+  const { language } = useLanguage()
   if (!sources.length) return null
 
   return (
     <div className="mt-3 flex flex-wrap gap-2">
       {sources.map((source) => {
-        const label = source.label || source.type || "source"
+        const label = source.label || translateAiSourceTypeLabel(source.type, language) || "Fonte"
         if (!source.href) {
           return (
             <span

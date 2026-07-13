@@ -22,6 +22,7 @@ import useDebounce from "@/hooks/useDebounce"
 import { useLanguage } from "@/hooks/useLanguage"
 import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { apiFetch } from "@/lib/api"
+import { translateAiIntentLabel } from "@/lib/aiPresentation"
 import { formatCount } from "@/lib/i18n/plural"
 
 const INTENT_OPTIONS = [
@@ -98,10 +99,6 @@ function formatDate(value?: string) {
   }
 }
 
-function humanize(value?: string) {
-  return String(value || "—").replace(/_/g, " ")
-}
-
 function confidenceTone(score: number) {
   if (score >= 70) return "bg-emerald-500"
   if (score >= 40) return "bg-amber-500"
@@ -124,7 +121,7 @@ function matchesSearch(item: AiInvestigation, query: string) {
 }
 
 export default function AiInvestigationsPage() {
-  const { t, isPortuguese } = useLanguage()
+  const { t, isPortuguese, language } = useLanguage()
   const safeRefreshToken = useSafeDataRefreshSignal()
   const [rows, setRows] = useState<AiInvestigation[]>([])
   const [loading, setLoading] = useState(true)
@@ -356,7 +353,7 @@ export default function AiInvestigationsPage() {
             >
               {INTENT_OPTIONS.map((item) => (
                 <option key={item || "all"} value={item}>
-                  {item ? humanize(item) : t("Todas as intenções", "All intents")}
+                  {item ? translateAiIntentLabel(item, language) : t("Todas as intenções", "All intents")}
                 </option>
               ))}
             </select>
@@ -409,8 +406,8 @@ export default function AiInvestigationsPage() {
                   </p>
 
                   <div className="mt-1.5 flex flex-wrap items-center gap-1">
-                    <Badge variant={meta.variant}>{humanize(item.status)}</Badge>
-                    <Badge variant="info">{humanize(item.intent)}</Badge>
+                    <Badge variant={meta.variant}>{isPortuguese ? meta.pt : meta.en}</Badge>
+                    <Badge variant="info">{translateAiIntentLabel(item.intent, language)}</Badge>
                   </div>
 
                   <div className="mt-1.5 flex items-center gap-2">

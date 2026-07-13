@@ -5,6 +5,7 @@ import { ArrowRight, Lightbulb, Router, ShieldAlert } from "lucide-react"
 
 import Badge from "@/components/ui/Badge"
 import { useLanguage } from "@/hooks/useLanguage"
+import { translateAiSeverityLabel, translateAiStatusLabel } from "@/lib/aiPresentation"
 
 export type AiInvestigationFinding = {
   severity?: "info" | "warning" | "critical" | string
@@ -52,7 +53,7 @@ function severityVariant(severity?: string) {
 }
 
 export default function AiInvestigationPanel({ investigation, onAsk }: Props) {
-  const { t } = useLanguage()
+  const { t, language } = useLanguage()
   if (!investigation) return null
 
   const findings = investigation.findings || []
@@ -70,7 +71,7 @@ export default function AiInvestigationPanel({ investigation, onAsk }: Props) {
         </div>
         <div className="flex items-center gap-2">
           <Badge variant={investigation.status === "blocked" ? "warning" : "success"}>
-            {investigation.status || "ready"}
+            {translateAiStatusLabel(investigation.status || "ready", language)}
           </Badge>
           <span className="text-xs text-emerald-800/80 dark:text-emerald-100/70">
             {investigation.confidence_score ?? 0}% {t("confiança", "confidence")}
@@ -88,7 +89,7 @@ export default function AiInvestigationPanel({ investigation, onAsk }: Props) {
               <div key={`${finding.title}-${index}`} className="rounded-xl bg-white/70 p-2 text-xs shadow-sm dark:bg-black/15">
                 <div className="flex items-center justify-between gap-2">
                   <span className="font-semibold">{finding.title || t("Achado", "Finding")}</span>
-                  <Badge variant={severityVariant(finding.severity)}>{finding.severity || "info"}</Badge>
+                  <Badge variant={severityVariant(finding.severity)}>{translateAiSeverityLabel(finding.severity || "info", language)}</Badge>
                 </div>
                 <p className="mt-1 text-emerald-900/80 dark:text-emerald-50/75">{finding.detail || "—"}</p>
                 {finding.source ? (

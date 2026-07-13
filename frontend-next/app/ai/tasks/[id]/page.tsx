@@ -14,6 +14,12 @@ import PageHeader from "@/components/ui/PageHeader"
 import { useLanguage } from "@/hooks/useLanguage"
 import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { apiFetch } from "@/lib/api"
+import {
+  humanizeAiToken,
+  translateAiPriorityLabel,
+  translateAiSourceTypeLabel,
+  translateAiStatusLabel,
+} from "@/lib/aiPresentation"
 import { GROUPS } from "@/lib/rbac"
 import { routeParamToString } from "@/lib/routeParams"
 
@@ -48,10 +54,6 @@ function formatDate(value?: string | null) {
   }
 }
 
-function humanize(value?: string | null) {
-  return String(value || "—").replace(/_/g, " ")
-}
-
 function statusVariant(status?: string): "default" | "success" | "warning" | "danger" | "info" {
   if (status === "done") return "success"
   if (status === "cancelled") return "default"
@@ -69,7 +71,7 @@ function priorityVariant(priority?: string): "default" | "success" | "warning" |
 export default function AiTaskDetailPage() {
   const params = useParams()
   const id = routeParamToString((params as any)?.id)
-  const { t } = useLanguage()
+  const { t, language } = useLanguage()
   const safeRefreshToken = useSafeDataRefreshSignal()
   const [task, setTask] = useState<AiOperationalTask | null>(null)
   const [loading, setLoading] = useState(true)
@@ -175,10 +177,10 @@ export default function AiTaskDetailPage() {
               <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
-                    <Badge variant={statusVariant(task.status)}>{humanize(task.status || "open")}</Badge>
-                    <Badge variant={priorityVariant(task.priority)}>{humanize(task.priority || "normal")}</Badge>
+                    <Badge variant={statusVariant(task.status)}>{translateAiStatusLabel(task.status || "open", language)}</Badge>
+                    <Badge variant={priorityVariant(task.priority)}>{translateAiPriorityLabel(task.priority || "normal", language)}</Badge>
                     <Badge variant="info">{task.assigned_group || t("Equipa", "Team")}</Badge>
-                    {task.module_key ? <Badge variant="default">{task.module_key}</Badge> : null}
+                    {task.module_key ? <Badge variant="default">{humanizeAiToken(task.module_key)}</Badge> : null}
                   </div>
                   <h2 className="mt-4 flex items-center gap-2 font-display text-2xl font-semibold tracking-tight">
                     <ClipboardCheck size={24} />
@@ -195,7 +197,7 @@ export default function AiTaskDetailPage() {
                   </div>
                   <div className="rounded-2xl border border-white/10 bg-white/10 p-3">
                     <div className="text-xs font-semibold uppercase tracking-wide text-white/55">{t("Origem", "Source")}</div>
-                    <div className="mt-1 font-semibold">{humanize(task.source_type)}</div>
+                    <div className="mt-1 font-semibold">{translateAiSourceTypeLabel(task.source_type, language)}</div>
                   </div>
                   <div className="rounded-2xl border border-white/10 bg-white/10 p-3">
                     <div className="text-xs font-semibold uppercase tracking-wide text-white/55">{t("Criada por", "Created by")}</div>
@@ -268,7 +270,7 @@ export default function AiTaskDetailPage() {
                       disabled={task.priority === item}
                       onClick={() => void updateTask({ priority: item })}
                     >
-                      {humanize(item)}
+                      {translateAiPriorityLabel(item, language)}
                     </Button>
                   ))}
                 </div>
@@ -302,12 +304,12 @@ export default function AiTaskDetailPage() {
                   <div key={`${item.at}-${index}`} className="rounded-2xl border border-border bg-background p-3 text-sm shadow-sm">
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <div className="font-semibold text-foreground">
-                        {humanize(item.from_status)} → {humanize(item.to_status)}
+                        {translateAiStatusLabel(item.from_status, language)} → {translateAiStatusLabel(item.to_status, language)}
                       </div>
                       <div className="text-xs text-muted-foreground">{formatDate(item.at)}</div>
                     </div>
                     <div className="mt-1 text-xs text-muted-foreground">
-                      {humanize(item.from_priority)} → {humanize(item.to_priority)} · {item.by_username || `#${item.by_user_id || "—"}`}
+                      {translateAiPriorityLabel(item.from_priority, language)} → {translateAiPriorityLabel(item.to_priority, language)} · {item.by_username || `#${item.by_user_id || "—"}`}
                     </div>
                   </div>
                 )) : (

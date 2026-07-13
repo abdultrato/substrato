@@ -28,6 +28,16 @@ import Badge from "@/components/ui/Badge"
 import { useLanguage } from "@/hooks/useLanguage"
 import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { apiFetch } from "@/lib/api"
+import {
+  humanizeAiToken,
+  translateAiIntentLabel,
+  translateAiPriorityLabel,
+  translateAiScopeKeyLabel,
+  translateAiSeverityLabel,
+  translateAiSourceTypeLabel,
+  translateAiStepKindLabel,
+  translateAiToolName,
+} from "@/lib/aiPresentation"
 import { routeParamToString } from "@/lib/routeParams"
 
 const GLASS =
@@ -82,10 +92,6 @@ function formatDate(value?: string) {
   }
 }
 
-function humanize(value?: string) {
-  return String(value || "—").replace(/_/g, " ")
-}
-
 function formatScopeValue(value: unknown) {
   if (value === null || value === undefined || value === "") return "—"
   if (Array.isArray(value)) {
@@ -97,7 +103,7 @@ function formatScopeValue(value: unknown) {
   if (typeof value === "object") {
     const entries = Object.entries(value as Record<string, unknown>)
       .slice(0, 3)
-      .map(([key, item]) => `${humanize(key)}: ${typeof item === "string" || typeof item === "number" ? String(item) : "..."}`)
+      .map(([key, item]) => `${humanizeAiToken(key)}: ${typeof item === "string" || typeof item === "number" ? String(item) : "..."}`)
     return entries.length ? entries.join(" · ") : "Objecto"
   }
   return String(value)
@@ -117,8 +123,8 @@ function compactDate(value?: string) {
   }
 }
 
-function describeSource(source: { type?: string; label?: string; href?: string }) {
-  const base = source.label || humanize(source.type) || "Fonte"
+function describeSource(source: { type?: string; label?: string; href?: string }, language: "pt" | "en") {
+  const base = source.label || translateAiSourceTypeLabel(source.type, language) || "Fonte"
   if (!source.href) return base
   try {
     const parsed = new URL(source.href, "http://localhost")
@@ -173,16 +179,16 @@ function Section({
   )
 }
 
-function InvestigationFindingCard({ finding }: { finding: AiInvestigationFinding }) {
+function InvestigationFindingCard({ finding, language }: { finding: AiInvestigationFinding; language: "pt" | "en" }) {
   const meta = severityMeta(finding.severity)
   return (
     <div className={`rounded-lg border border-l-4 border-white/20 bg-white/20 p-2 dark:border-white/10 dark:bg-white/5 ${meta.bar}`}>
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <div className="text-xs font-semibold text-foreground">{finding.title || "Finding"}</div>
+          <div className="text-xs font-semibold text-foreground">{finding.title || "Achado"}</div>
           <p className="mt-0.5 text-[11px] leading-snug text-muted-foreground">{finding.detail || "—"}</p>
         </div>
-        <Badge variant={meta.variant}>{finding.severity || "info"}</Badge>
+        <Badge variant={meta.variant}>{translateAiSeverityLabel(finding.severity, language)}</Badge>
       </div>
       {finding.source ? (
         <div className="mt-1 text-[10px] font-medium text-muted-foreground">{finding.source}</div>
@@ -191,13 +197,13 @@ function InvestigationFindingCard({ finding }: { finding: AiInvestigationFinding
   )
 }
 
-function InvestigationStepCard({ step }: { step: AiInvestigationStep }) {
+function InvestigationStepCard({ step, language }: { step: AiInvestigationStep; language: "pt" | "en" }) {
   const content = (
     <div className="flex items-center justify-between gap-2 rounded-lg border border-l-4 border-white/20 border-l-cyan-500 bg-white/20 px-2 py-1.5 transition hover:bg-white/40 dark:border-white/10 dark:border-l-cyan-400 dark:bg-white/5 dark:hover:bg-white/10">
       <div className="min-w-0">
-        <div className="truncate text-xs font-semibold text-foreground">{step.label || "Follow up"}</div>
+        <div className="truncate text-xs font-semibold text-foreground">{step.label || "Seguimento"}</div>
         <div className="mt-0.5 text-[10px] text-muted-foreground">
-          {humanize(step.kind)} · {humanize(step.priority)}
+          {translateAiStepKindLabel(step.kind, language)} · {translateAiPriorityLabel(step.priority, language)}
         </div>
       </div>
       {step.href ? <ExternalLink size={13} className="shrink-0 text-muted-foreground" /> : null}
@@ -379,7 +385,7 @@ export default function AiInvestigationDetailPage() {
                 </span>
                 <span className="inline-flex h-6 items-center gap-1 whitespace-nowrap rounded-full border border-violet-200/50 bg-violet-100/30 px-2 text-[10px] font-semibold text-violet-700 backdrop-blur-xl dark:border-violet-700/30 dark:bg-violet-900/20 dark:text-violet-300">
                   <TerminalSquare size={11} />
-                  {humanize(investigation.intent)}
+                  {translateAiIntentLabel(investigation.intent, language)}
                 </span>
                 <span className="inline-flex h-6 items-center gap-1.5 whitespace-nowrap rounded-full border border-white/25 bg-white/[0.05] px-2 text-[10px] font-semibold text-foreground backdrop-blur-xl dark:border-white/10 dark:bg-white/[0.03]">
                   <span className="h-1 w-10 overflow-hidden rounded-full bg-muted">
@@ -568,7 +574,7 @@ export default function AiInvestigationDetailPage() {
                   {findings.length ? (
                     <div className="space-y-1.5">
                       {findings.map((finding, index) => (
-                        <InvestigationFindingCard key={`${finding.title}-${index}`} finding={finding} />
+                        <InvestigationFindingCard key={`${finding.title}-${index}`} finding={finding} language={language} />
                       ))}
                     </div>
                   ) : (
@@ -587,16 +593,16 @@ export default function AiInvestigationDetailPage() {
                             <div className="flex items-start justify-between gap-2">
                               <div className="min-w-0">
                                 <div className="line-clamp-1 text-[11px] font-semibold text-foreground">
-                                  {source.label || source.type || "Source"}
+                                  {source.label || translateAiSourceTypeLabel(source.type, language) || "Fonte"}
                                 </div>
                                 <div className="mt-0.5 text-[10px] text-muted-foreground">
-                                  {humanize(source.type)}
+                                  {translateAiSourceTypeLabel(source.type, language)}
                                 </div>
                               </div>
                               {source.href ? <ExternalLink size={12} className="mt-0.5 shrink-0 text-muted-foreground" /> : null}
                             </div>
                             <div className="mt-1.5 line-clamp-2 text-[10px] leading-snug text-muted-foreground">
-                              {describeSource(source)}
+                              {describeSource(source, language)}
                             </div>
                           </div>
                         )
@@ -620,7 +626,7 @@ export default function AiInvestigationDetailPage() {
                   {nextSteps.length ? (
                     <div className="space-y-1.5">
                       {nextSteps.map((step, index) => (
-                        <InvestigationStepCard key={`${step.label}-${index}`} step={step} />
+                        <InvestigationStepCard key={`${step.label}-${index}`} step={step} language={language} />
                       ))}
                     </div>
                   ) : (
@@ -634,7 +640,7 @@ export default function AiInvestigationDetailPage() {
                   {toolNames.length ? (
                     <div className="flex flex-wrap gap-1">
                       {toolNames.map((tool) => (
-                        <Badge key={tool} variant="info">{humanize(tool)}</Badge>
+                        <Badge key={tool} variant="info">{translateAiToolName(tool, language)}</Badge>
                       ))}
                     </div>
                   ) : (
@@ -648,7 +654,7 @@ export default function AiInvestigationDetailPage() {
                       {scopeRows.map((row) => (
                         <div key={row.key} className="rounded-lg bg-muted/40 px-2 py-1.5">
                           <div className="text-[10px] font-semibold uppercase tracking-wide text-foreground">
-                            {humanize(row.key)}
+                            {translateAiScopeKeyLabel(row.key, language)}
                           </div>
                           <div className="mt-0.5 text-[11px] leading-snug text-muted-foreground">
                             {row.value}

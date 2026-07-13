@@ -5,6 +5,7 @@ import { ClipboardCheck } from "lucide-react"
 
 import Badge from "@/components/ui/Badge"
 import { useLanguage } from "@/hooks/useLanguage"
+import { humanizeAiToken, translateAiPriorityLabel, translateAiStatusLabel } from "@/lib/aiPresentation"
 
 export type AiOperationalTask = {
   id: number
@@ -25,7 +26,7 @@ export type AiOperationalTask = {
 }
 
 export default function AiTaskPanel({ task, href }: { task?: AiOperationalTask | null; href?: string }) {
-  const { t } = useLanguage()
+  const { t, language } = useLanguage()
   if (!task) return null
 
   return (
@@ -37,12 +38,12 @@ export default function AiTaskPanel({ task, href }: { task?: AiOperationalTask |
             {task.title}
           </div>
           <div className="mt-2 flex flex-wrap gap-2 text-xs">
-            <Badge variant="success">{task.status || "open"}</Badge>
+            <Badge variant="success">{translateAiStatusLabel(task.status || "open", language)}</Badge>
             <Badge variant="info">{task.assigned_group || t("Equipa", "Team")}</Badge>
             <Badge variant={task.priority === "critical" ? "danger" : task.priority === "high" ? "warning" : "info"}>
-              {task.priority || "normal"}
+              {translateAiPriorityLabel(task.priority || "normal", language)}
             </Badge>
-            {task.module_key ? <Badge variant="default">{task.module_key}</Badge> : null}
+            {task.module_key ? <Badge variant="default">{humanizeAiToken(task.module_key)}</Badge> : null}
           </div>
         </div>
         {href ? (

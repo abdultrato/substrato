@@ -2,6 +2,7 @@
 
 import Badge from "@/components/ui/Badge"
 import { useLanguage } from "@/hooks/useLanguage"
+import { translateAiStatusLabel, translateAiToolName } from "@/lib/aiPresentation"
 
 export type AiToolCall = {
   id?: number
@@ -11,12 +12,8 @@ export type AiToolCall = {
   mode?: string
 }
 
-function formatToolName(value: string) {
-  return value.replace(/_/g, " ")
-}
-
 export default function AiToolTrace({ calls }: { calls: AiToolCall[] }) {
-  const { t } = useLanguage()
+  const { t, language } = useLanguage()
   if (!calls.length) return null
 
   return (
@@ -30,9 +27,9 @@ export default function AiToolTrace({ calls }: { calls: AiToolCall[] }) {
             key={`${call.tool_name}-${call.id}`}
             className="inline-flex items-center gap-1 rounded-full border border-border bg-background px-2 py-1 text-xs"
           >
-            {formatToolName(call.tool_name)}
+            {translateAiToolName(call.tool_name, language)}
             <Badge variant={call.status === "success" ? "success" : call.status === "blocked" ? "warning" : "danger"}>
-              {call.status}
+              {translateAiStatusLabel(call.status, language)}
             </Badge>
             {call.duration_ms !== null && call.duration_ms !== undefined ? (
               <span className="text-muted-foreground">{call.duration_ms}ms</span>

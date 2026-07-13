@@ -40,6 +40,7 @@ import TextAreaInput from "@/components/ui/TextAreaInput"
 import { useLanguage } from "@/hooks/useLanguage"
 import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { apiFetch } from "@/lib/api"
+import { translateAiIntentLabel, translateAiToolName } from "@/lib/aiPresentation"
 
 const AI_CHAT_STORAGE_KEY = "substrato.ai.chat.v1"
 
@@ -294,8 +295,8 @@ type ConversationMessage = {
   learnedResolutionFeedback?: "accepted" | "wrong" | "corrected" | "dismissed"
 }
 
-function formatToolName(value: string) {
-  return value.replace(/_/g, " ")
+function formatToolName(value: string, language: "pt" | "en" = "pt") {
+  return translateAiToolName(value, language)
 }
 
 function formatDate(value?: string) {
@@ -406,7 +407,7 @@ function AiStructuredResultPanel({ schema, onAsk }: { schema?: AiResponseSchema;
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
                   <BarChart3 size={15} />
-                  <span className="line-clamp-1">{card.title || card.tool_name}</span>
+                  <span className="line-clamp-1">{card.title || formatToolName(card.tool_name || "", language)}</span>
                 </div>
                 {typeof card.duration_ms === "number" ? (
                   <Badge variant="info">{card.duration_ms} ms</Badge>
@@ -938,7 +939,7 @@ function AiUnderstandingTracePanel({ trace }: { trace?: AiUnderstandingTrace }) 
       ) : null}
       {tools.length ? (
         <div className="mt-2 text-[11px] text-violet-900/75 dark:text-violet-100/70">
-          {t("Ferramentas", "Tools")}: {tools.map((tool) => formatToolName(tool.name || "")).filter(Boolean).join(", ")}
+          {t("Ferramentas", "Tools")}: {tools.map((tool) => formatToolName(tool.name || "", language)).filter(Boolean).join(", ")}
         </div>
       ) : null}
     </div>
@@ -964,7 +965,7 @@ function AiContextAside({
   onLoadSession: (sessionId: number) => void
   onOpenHistory: () => void
 }) {
-  const { t, isPortuguese } = useLanguage()
+  const { t, isPortuguese, language } = useLanguage()
 
   return (
     <div className="flex h-full flex-col gap-4 p-4">
@@ -992,7 +993,7 @@ function AiContextAside({
           {tools.length ? tools.map((tool) => (
             <div key={tool.name} className="rounded-xl border border-border bg-card/80 p-2">
               <div className="flex items-center justify-between gap-2">
-                <span className="truncate text-xs font-semibold text-foreground">{formatToolName(tool.name)}</span>
+                <span className="truncate text-xs font-semibold text-foreground">{formatToolName(tool.name, language)}</span>
                 <Badge variant={tool.available ? "success" : "warning"}>
                   {tool.available ? t("Disponível", "Available") : t("Sem acesso", "No access")}
                 </Badge>
@@ -1022,7 +1023,7 @@ function AiContextAside({
                 {investigation.title || t("Investigação da IA", "AI investigation")}
               </div>
               <div className="mt-1 flex items-center justify-between gap-2 text-[11px] text-muted-foreground">
-                <span className="truncate">{investigation.intent || "—"}</span>
+                <span className="truncate">{translateAiIntentLabel(investigation.intent, language)}</span>
                 <Badge variant={investigation.status === "blocked" ? "warning" : "success"}>
                   {investigation.confidence_score ?? 0}%
                 </Badge>
