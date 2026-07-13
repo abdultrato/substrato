@@ -363,14 +363,13 @@ function Typewriter({ text, animate, onTick }: { text: string; animate: boolean;
     }
     let i = 0
     setShown("")
-    // Ritmo natural: avança alguns caracteres por tick para textos longos.
-    const step = text.length > 400 ? 4 : text.length > 120 ? 2 : 1
+    // Iteração estritamente letra a letra, ao estilo de streaming de IA.
     const id = window.setInterval(() => {
-      i = Math.min(text.length, i + step)
+      i = Math.min(text.length, i + 1)
       setShown(text.slice(0, i))
       onTick?.()
       if (i >= text.length) window.clearInterval(id)
-    }, 18)
+    }, 12)
     return () => window.clearInterval(id)
     // Anima uma vez por texto/mensagem.
     // eslint-disable-next-line react-hooks/exhaustive-deps

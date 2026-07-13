@@ -442,6 +442,7 @@ export default function RecepcaoPage() {
   const [chatComposer, setChatComposer] = useState("");
   const [chatMessages, setChatMessages] = useState<ReceptionChatMessage[]>([]);
   const [chatLoading, setChatLoading] = useState(false);
+  const [chatStreamingId, setChatStreamingId] = useState<string | null>(null);
   const [chatError, setChatError] = useState<string | null>(null);
 
   const requestRef = useRef(0);
@@ -613,6 +614,7 @@ export default function RecepcaoPage() {
         });
 
         setChatSessionId(response.session_id);
+        setChatStreamingId(`assistant-${response.message_id}`);
         setChatMessages((current) => [
           ...current,
           {
@@ -638,6 +640,7 @@ export default function RecepcaoPage() {
 
   const clearChatConversation = useCallback(() => {
     setChatSessionId(null);
+    setChatStreamingId(null);
     setChatComposer("");
     setChatMessages([]);
     setChatError(null);
@@ -930,6 +933,7 @@ export default function RecepcaoPage() {
             <div className="space-y-1">
               <ChatbotPanel
                 messages={chatMessages}
+                streamingId={chatStreamingId}
                 composer={chatComposer}
                 loading={chatLoading}
                 error={chatError}
@@ -1083,8 +1087,52 @@ function SearchResultCard({ item }: { item: ReceptionSearchRow }) {
   );
 }
 
+/**
+ * Revela o texto letra a letra (streaming visual de IA). Anima só a mensagem
+ * nova; mensagens restauradas aparecem completas de imediato.
+ */
+function Typewriter({
+  text,
+  animate,
+  onTick,
+}: {
+  text: string;
+  animate: boolean;
+  onTick?: () => void;
+}) {
+  const [shown, setShown] = useState(animate ? "" : text);
+  useEffect(() => {
+    if (!animate) {
+      setShown(text);
+      return;
+    }
+    let i = 0;
+    setShown("");
+    const id = window.setInterval(() => {
+      i = Math.min(text.length, i + 1);
+      setShown(text.slice(0, i));
+      onTick?.();
+      if (i >= text.length) window.clearInterval(id);
+    }, 12);
+    return () => window.clearInterval(id);
+    // Anima uma vez por texto/mensagem.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [text, animate]);
+
+  const typing = animate && shown.length < text.length;
+  return (
+    <>
+      {shown}
+      {typing ? (
+        <span className="ml-0.5 inline-block h-3 w-[2px] translate-y-0.5 animate-pulse bg-current align-baseline" />
+      ) : null}
+    </>
+  );
+}
+
 function ChatbotPanel({
   messages,
+  streamingId,
   composer,
   loading,
   error,
@@ -1095,6 +1143,7 @@ function ChatbotPanel({
   onComposerKeyDown,
 }: {
   messages: ReceptionChatMessage[];
+  streamingId: string | null;
   composer: string;
   loading: boolean;
   error: string | null;
@@ -1168,7 +1217,20 @@ function ChatbotPanel({
                         : "border border-white/20 bg-white/60 text-foreground dark:border-white/10 dark:bg-white/[0.06]"
                   }`}
                 >
-                  {message.content}
+                  {!isUser && !isError ? (
+                    <Typewriter
+                      text={message.content}
+                      animate={message.id === streamingId}
+                      onTick={() =>
+                        bottomRef.current?.scrollIntoView({
+                          behavior: "auto",
+                          block: "end",
+                        })
+                      }
+                    />
+                  ) : (
+                    message.content
+                  )}
                 </div>
               </div>
             );
