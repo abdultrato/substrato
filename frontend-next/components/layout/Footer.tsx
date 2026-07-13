@@ -11,6 +11,10 @@ function currentYear(): number {
 export default function Footer() {
   const { t } = useLanguage()
   const year = currentYear()
+  const environmentLabel =
+    process.env.NODE_ENV === "production"
+      ? t("Versão beta", "Beta version")
+      : t("Em desenvolvimento", "In development")
 
   return (
     <footer
@@ -31,7 +35,7 @@ export default function Footer() {
 
         <div className="ml-1 flex shrink-0 items-center gap-1 sm:gap-2">
           <span className="hidden rounded-full border border-border bg-background px-2 py-0.5 font-semibold text-foreground-2 sm:inline-flex">
-            {t("Em desenvolvimento", "In development")}
+            {environmentLabel}
           </span>
         </div>
       </div>

@@ -3,6 +3,31 @@
 from django.db import migrations, models
 
 
+LEGACY_EQUIPMENT_HEADING = "Equipamentos disponíveis (legado):"
+
+
+def preserve_legacy_equipment_notes(apps, schema_editor):
+    operating_room = apps.get_model("cirurgia", "OperatingRoom")
+    rooms = operating_room.objects.exclude(equipment_notes="").iterator()
+    for room in rooms:
+        legacy_notes = (room.equipment_notes or "").strip()
+        if not legacy_notes:
+            continue
+        notes = (room.notes or "").strip()
+        room.notes = f"{notes}\n\n{LEGACY_EQUIPMENT_HEADING}\n{legacy_notes}".strip()
+        room.save(update_fields=["notes"])
+
+
+def restore_legacy_equipment_notes(apps, schema_editor):
+    operating_room = apps.get_model("cirurgia", "OperatingRoom")
+    rooms = operating_room.objects.filter(notes__contains=LEGACY_EQUIPMENT_HEADING).iterator()
+    for room in rooms:
+        notes, _, legacy_notes = (room.notes or "").partition(LEGACY_EQUIPMENT_HEADING)
+        room.notes = notes.strip()
+        room.equipment_notes = legacy_notes.strip()
+        room.save(update_fields=["notes", "equipment_notes"])
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -11,10 +36,6 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RemoveField(
-            model_name="operatingroom",
-            name="equipment_notes",
-        ),
         migrations.AddField(
             model_name="operatingroom",
             name="equipment",
@@ -24,5 +45,13 @@ class Migration(migrations.Migration):
                 to="equipamentos.equipment",
                 verbose_name="Equipamentos disponíveis",
             ),
+        ),
+        migrations.RunPython(
+            preserve_legacy_equipment_notes,
+            restore_legacy_equipment_notes,
+        ),
+        migrations.RemoveField(
+            model_name="operatingroom",
+            name="equipment_notes",
         ),
     ]

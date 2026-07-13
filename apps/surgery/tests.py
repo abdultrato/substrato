@@ -2,13 +2,14 @@ from __future__ import annotations
 
 from datetime import timedelta
 from decimal import Decimal
+from types import SimpleNamespace
 from uuid import uuid4
 
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 import pytest
 
-from api.v1.surgery.serializers import PreoperativeAssessmentSerializer
+from api.v1.surgery.serializers import OperatingRoomSerializer, PreoperativeAssessmentSerializer
 from api.v1.surgery.filters import SurgicalProcedureFilter
 from api.v1.surgery.serializers import SmallSurgerySerializer
 from apps.billing.models.invoice import Invoice
@@ -17,6 +18,7 @@ from apps.clinical.models.medical_exam import MedicalExam
 from apps.clinical.models.patient import Patient
 from apps.clinical_laboratory.models import LabSector, LabTest
 from apps.human_resources.models import Employee
+from apps.equipment.models import Equipment
 from apps.surgery.models import (
     OperatingRoom,
     PreoperativeAssessment,
@@ -163,6 +165,31 @@ def test_schedule_blocks_overlapping_room_for_elective_surgery():
             scheduled_end=start + timedelta(hours=3),
             priority=SurgicalSchedule.Priority.ELECTIVE,
         )
+
+
+@pytest.mark.django_db
+def test_operating_room_generates_code_from_custom_id():
+    room = OperatingRoom.objects.create(tenant=_tenant(), name="Bloco automático")
+
+    assert room.custom_id
+    assert room.code == room.custom_id
+
+
+@pytest.mark.django_db
+def test_operating_room_rejects_equipment_from_another_tenant():
+    tenant = _tenant()
+    foreign_equipment = Equipment.objects.create(
+        tenant=_tenant(),
+        name="Monitor externo",
+        serial_number=f"SER-{uuid4().hex[:8]}",
+    )
+    serializer = OperatingRoomSerializer(
+        data={"name": "Bloco A", "equipment": [foreign_equipment.pk]},
+        context={"request": SimpleNamespace(tenant=tenant)},
+    )
+
+    assert not serializer.is_valid()
+    assert "equipment" in serializer.errors
 
 
 @pytest.mark.django_db

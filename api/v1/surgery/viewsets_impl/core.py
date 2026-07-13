@@ -290,7 +290,7 @@ class SurgeryOperationsViewSet(ValidatedSearchOrderingMixin, TenantScopedQueryse
 
 
 class OperatingRoomViewSet(SurgeryOperationsViewSet):
-    queryset = OperatingRoom.objects.all()
+    queryset = OperatingRoom.objects.prefetch_related("equipment").all()
     serializer_class = OperatingRoomSerializer
     filterset_class = OperatingRoomFilter
     search_fields = ["custom_id", "code", "name", "location", "notes"]

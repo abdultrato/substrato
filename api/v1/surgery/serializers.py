@@ -876,10 +876,14 @@ class OperatingRoomSerializer(LegacyAliasSerializerMixin, serializers.ModelSeria
         read_only_fields = (*CORE_READ_ONLY_FIELDS, "code", "equipment_names")
 
     def get_equipment_names(self, obj: OperatingRoom) -> list[dict]:
-        try:
-            return [{"id": e.id, "name": e.name} for e in obj.equipment.all()]
-        except Exception:
-            return []
+        return [{"id": equipment.id, "name": equipment.name} for equipment in obj.equipment.all()]
+
+    def validate_equipment(self, equipment):
+        request = self.context.get("request")
+        tenant = getattr(request, "tenant", None) or getattr(self.instance, "tenant", None)
+        if tenant is not None and any(item.tenant_id != tenant.id for item in equipment):
+            raise serializers.ValidationError("Selecione apenas equipamentos deste tenant.")
+        return equipment
 
 
 class SurgicalScheduleSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer):

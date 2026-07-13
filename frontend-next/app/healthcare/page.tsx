@@ -78,7 +78,7 @@ export default function HealthcarePage() {
         ) : null}
 
         <WorkspaceHub
-          title="Portal Clínico"
+          title="Área Clínica"
           subtitle={t(
             "Pacientes, consultas, requisições e resultados do atendimento assistencial.",
             "Patients, consultations, requests, and results for clinical care."
