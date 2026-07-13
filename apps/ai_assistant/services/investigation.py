@@ -19,8 +19,11 @@ def derive_investigation_confidence(
     recommended_questions: list[str] | None = None,
     result_summary: str = "",
 ) -> int:
-    if status == "blocked":
+    normalized_status = str(status or "").strip().lower()
+    if normalized_status == "blocked":
         return 35 if blocked_count <= 0 else 30
+    if normalized_status in {"ready", "archived"}:
+        return 100
 
     findings = findings or []
     sources = sources or []

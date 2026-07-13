@@ -5473,6 +5473,33 @@ def test_ai_session_detail_recalculates_investigation_confidence_from_message_me
 
 
 @pytest.mark.django_db
+def test_ai_investigation_ready_status_is_reported_as_full_coverage(api_client):
+    tenant = _tenant(identifier="tn-ai-investigation-ready-coverage", domain="tn-ai-investigation-ready-coverage.local")
+    owner = _user(tenant, "owner_ai_investigation_ready_coverage", GROUPS["RECEPCAO"])
+    session = AiSession.objects.create(tenant=tenant, user=owner, title="Investigação", language="pt")
+    investigation = AiInvestigation.objects.create(
+        tenant=tenant,
+        session=session,
+        created_by=owner,
+        title="Perguntas previstas",
+        question="Quem criou o sistema?",
+        intent="project_identity",
+        status=AiInvestigation.Status.READY,
+        confidence_score=70,
+        result_summary="Resposta pronta.",
+    )
+
+    _authenticate(api_client, tenant, owner)
+    list_response = api_client.get("/api/v1/ai/assistant/investigations/?limit=150", format="json")
+    detail_response = api_client.get(f"/api/v1/ai/assistant/investigations/{investigation.id}/", format="json")
+
+    assert list_response.status_code == 200, _response_data(list_response)
+    assert _response_data(list_response)[0]["confidence_score"] == 100
+    assert detail_response.status_code == 200, _response_data(detail_response)
+    assert _response_data(detail_response)["confidence_score"] == 100
+
+
+@pytest.mark.django_db
 def test_ai_investigation_followup_prepares_confirmable_actions(api_client):
     tenant = _tenant(identifier="tn-ai-investigation-followup", domain="tn-ai-investigation-followup.local")
     admin = _user(tenant, "admin_ai_investigation_followup", GROUPS["ADMIN"], is_staff=True)
