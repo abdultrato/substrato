@@ -2,7 +2,7 @@
 
 import { isNotFoundLikeError } from "@/lib/errors/api-error";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Activity,
   ArrowRight,
@@ -12,12 +12,12 @@ import {
   CreditCard,
   FileText,
   HeartPulse,
-  Layers,
   Microscope,
   PackageCheck,
   PackageSearch,
   Plus,
   Scissors,
+  Search,
   Settings,
   ShieldCheck,
   Stethoscope,
@@ -26,8 +26,10 @@ import {
 
 import AppLayout from "@/components/layout/AppLayout";
 import { apiFetch, extractTotalCount } from "@/lib/api";
+import useDebounce from "@/hooks/useDebounce";
 import { useAuth } from "@/hooks/useAuth";
 import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh";
+import { formatCount } from "@/lib/i18n/plural";
 import { GROUPS, userHasAnyGroup } from "@/lib/rbac";
 
 const TODAY = new Date().toISOString().slice(0, 10);
@@ -61,7 +63,7 @@ const MODULES: ModuleEntry[] = [
       "Indicações cirúrgicas com diagnóstico, prioridade e especialidade.",
     href: "/surgery/requests",
     icon: ClipboardList,
-    bar: "bg-red-500",
+    bar: "border-l-red-500",
     iconBg: "bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-300",
     countKey: "requests",
   },
@@ -72,7 +74,7 @@ const MODULES: ModuleEntry[] = [
       "Aptidão clínica e anestésica, ASA, exames obrigatórios e consentimento.",
     href: "/surgery/preoperative-assessments",
     icon: Stethoscope,
-    bar: "bg-amber-500",
+    bar: "border-l-amber-500",
     iconBg:
       "bg-amber-50 text-amber-600 dark:bg-amber-900/20 dark:text-amber-300",
     countKey: "preoperativeAssessments",
@@ -84,7 +86,7 @@ const MODULES: ModuleEntry[] = [
       "Orçamento, pagamento inicial, seguro, sala, equipa e consentimento.",
     href: "/surgery/authorizations",
     icon: ShieldCheck,
-    bar: "bg-orange-500",
+    bar: "border-l-orange-500",
     iconBg:
       "bg-orange-50 text-orange-600 dark:bg-orange-900/20 dark:text-orange-300",
     countKey: "authorizations",
@@ -95,7 +97,7 @@ const MODULES: ModuleEntry[] = [
     description: "Listar, criar e gerir pequenas cirurgias.",
     href: "/surgery/small-surgeries",
     icon: Scissors,
-    bar: "bg-blue-500",
+    bar: "border-l-blue-500",
     iconBg: "bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-300",
     countKey: "smallSurgeries",
   },
@@ -105,7 +107,7 @@ const MODULES: ModuleEntry[] = [
     description: "Listar, criar e gerir grandes cirurgias.",
     href: "/surgery/large-surgeries",
     icon: Scissors,
-    bar: "bg-violet-500",
+    bar: "border-l-violet-500",
     iconBg:
       "bg-violet-50 text-violet-600 dark:bg-violet-900/20 dark:text-violet-300",
     countKey: "largeSurgeries",
@@ -116,7 +118,7 @@ const MODULES: ModuleEntry[] = [
     description: "Vista consolidada com filtros por estado, tipo e data.",
     href: "/surgery/surgeries",
     icon: ClipboardList,
-    bar: "bg-zinc-400",
+    bar: "border-l-zinc-400",
     iconBg: "bg-zinc-50 text-zinc-600 dark:bg-zinc-800/40 dark:text-zinc-300",
   },
   {
@@ -125,7 +127,7 @@ const MODULES: ModuleEntry[] = [
     description: "Marcação por sala, prioridade, estado e horário previsto.",
     href: "/surgery/schedules",
     icon: CalendarDays,
-    bar: "bg-cyan-500",
+    bar: "border-l-cyan-500",
     iconBg: "bg-cyan-50 text-cyan-600 dark:bg-cyan-900/20 dark:text-cyan-300",
     countKey: "schedules",
   },
@@ -135,7 +137,7 @@ const MODULES: ModuleEntry[] = [
     description: "Salas, esterilização, disponibilidade e equipamentos.",
     href: "/surgery/operating-rooms",
     icon: Scissors,
-    bar: "bg-emerald-500",
+    bar: "border-l-emerald-500",
     iconBg:
       "bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-300",
     countKey: "operatingRooms",
@@ -147,7 +149,7 @@ const MODULES: ModuleEntry[] = [
       "Cirurgião, anestesista, instrumentista, circulante e assistentes.",
     href: "/surgery/teams",
     icon: Users,
-    bar: "bg-teal-500",
+    bar: "border-l-teal-500",
     iconBg: "bg-teal-50 text-teal-600 dark:bg-teal-900/20 dark:text-teal-300",
   },
   {
@@ -156,7 +158,7 @@ const MODULES: ModuleEntry[] = [
     description: "Gerir catálogo de procedimentos cirúrgicos.",
     href: "/surgery/surgical-procedures",
     icon: Settings,
-    bar: "bg-slate-500",
+    bar: "border-l-slate-500",
     iconBg:
       "bg-slate-50 text-slate-600 dark:bg-slate-800/40 dark:text-slate-300",
     countKey: "procedures",
@@ -168,7 +170,7 @@ const MODULES: ModuleEntry[] = [
       "Procedimentos efetivos por cirurgia, lateralidade, ordem e cirurgião.",
     href: "/surgery/procedure-items",
     icon: ClipboardCheck,
-    bar: "bg-sky-500",
+    bar: "border-l-sky-500",
     iconBg: "bg-sky-50 text-sky-600 dark:bg-sky-900/20 dark:text-sky-300",
   },
   {
@@ -177,7 +179,7 @@ const MODULES: ModuleEntry[] = [
     description: "Tipo, ASA, fármacos, fluidos, via aérea e complicações.",
     href: "/surgery/anesthesia",
     icon: HeartPulse,
-    bar: "bg-rose-500",
+    bar: "border-l-rose-500",
     iconBg: "bg-rose-50 text-rose-600 dark:bg-rose-900/20 dark:text-rose-300",
   },
   {
@@ -186,7 +188,7 @@ const MODULES: ModuleEntry[] = [
     description: "Sign-in, time-out, sign-out e confirmação de segurança.",
     href: "/surgery/safety-checklists",
     icon: ClipboardCheck,
-    bar: "bg-green-500",
+    bar: "border-l-green-500",
     iconBg:
       "bg-green-50 text-green-600 dark:bg-green-900/20 dark:text-green-300",
   },
@@ -196,7 +198,7 @@ const MODULES: ModuleEntry[] = [
     description: "Catálogo de materiais cirúrgicos, implantes e consumíveis.",
     href: "/surgery/materials",
     icon: PackageSearch,
-    bar: "bg-yellow-500",
+    bar: "border-l-yellow-500",
     iconBg:
       "bg-yellow-50 text-yellow-600 dark:bg-yellow-900/20 dark:text-yellow-300",
   },
@@ -206,7 +208,7 @@ const MODULES: ModuleEntry[] = [
     description: "Materiais e produtos consumidos por cirurgia.",
     href: "/surgery/consumptions",
     icon: PackageCheck,
-    bar: "bg-lime-500",
+    bar: "border-l-lime-500",
     iconBg: "bg-lime-50 text-lime-600 dark:bg-lime-900/20 dark:text-lime-300",
   },
   {
@@ -216,7 +218,7 @@ const MODULES: ModuleEntry[] = [
       "Itens faturáveis por sala, equipa, procedimento, anestesia e consumos.",
     href: "/surgery/billing",
     icon: CreditCard,
-    bar: "bg-teal-500",
+    bar: "border-l-teal-500",
     iconBg: "bg-teal-50 text-teal-700 dark:bg-teal-900/20 dark:text-teal-300",
     countKey: "billingItems",
   },
@@ -226,7 +228,7 @@ const MODULES: ModuleEntry[] = [
     description: "Amostras coletadas e ligação ao pedido de patologia.",
     href: "/surgery/specimens",
     icon: Microscope,
-    bar: "bg-pink-500",
+    bar: "border-l-pink-500",
     iconBg: "bg-pink-50 text-pink-600 dark:bg-pink-900/20 dark:text-pink-300",
     countKey: "specimens",
   },
@@ -236,7 +238,7 @@ const MODULES: ModuleEntry[] = [
     description: "Sala de recuperação, dor, Aldrete, sinais vitais e alta.",
     href: "/surgery/recovery",
     icon: HeartPulse,
-    bar: "bg-fuchsia-500",
+    bar: "border-l-fuchsia-500",
     iconBg:
       "bg-fuchsia-50 text-fuchsia-600 dark:bg-fuchsia-900/20 dark:text-fuchsia-300",
   },
@@ -246,7 +248,7 @@ const MODULES: ModuleEntry[] = [
     description: "Achados, técnica, complicações e amostras para patologia.",
     href: "/surgery/operative-reports",
     icon: FileText,
-    bar: "bg-purple-500",
+    bar: "border-l-purple-500",
     iconBg:
       "bg-purple-50 text-purple-600 dark:bg-purple-900/20 dark:text-purple-300",
     countKey: "operativeReports",
@@ -258,7 +260,7 @@ const MODULES: ModuleEntry[] = [
       "Consentimentos, orçamentos, autorizações, relatórios e anexos.",
     href: "/surgery/documents",
     icon: FileText,
-    bar: "bg-stone-500",
+    bar: "border-l-stone-500",
     iconBg:
       "bg-stone-50 text-stone-600 dark:bg-stone-800/40 dark:text-stone-300",
   },
@@ -269,7 +271,7 @@ const MODULES: ModuleEntry[] = [
       "Rastreabilidade de estados, sala, equipa, materiais e faturação.",
     href: "/surgery/audit-events",
     icon: Activity,
-    bar: "bg-neutral-500",
+    bar: "border-l-neutral-500",
     iconBg:
       "bg-neutral-50 text-neutral-600 dark:bg-neutral-800/40 dark:text-neutral-300",
   },
@@ -292,42 +294,67 @@ function ModuleCard({
 
   return (
     <Link href={mod.href} className="group block">
-      <div className="relative flex h-full flex-col overflow-hidden rounded-xl border border-white/30 bg-white/30 shadow-sm backdrop-blur-sm transition-all hover:border-white/50 hover:bg-white/45 hover:shadow-md dark:border-white/10 dark:bg-white/[0.04] dark:hover:border-white/20 dark:hover:bg-white/[0.07]">
-        {/* coloured left bar */}
-        <span
-          className={`absolute left-0 top-0 h-full w-1 ${mod.bar} opacity-70 transition-opacity group-hover:opacity-100`}
-        />
-
-        <div className="flex flex-1 flex-col gap-2 px-3 py-2.5 pl-4">
-          {/* top: icon + count */}
-          <div className="flex items-start justify-between gap-2">
-            <span
-              className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${mod.iconBg}`}
-            >
-              <Icon size={14} strokeWidth={2} />
+      <div
+        className={`flex h-full flex-col gap-1.5 rounded-xl border border-l-4 border-white/20 bg-white/25 p-2 shadow-sm backdrop-blur-sm transition hover:border-[var(--primary-300)] hover:bg-white/40 dark:border-white/10 dark:bg-white/5 dark:hover:border-[var(--primary-600)] dark:hover:bg-white/[0.08] ${mod.bar}`}
+      >
+        {/* top: icon + count */}
+        <div className="flex items-start justify-between gap-2">
+          <span
+            className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md ${mod.iconBg}`}
+          >
+            <Icon size={12} strokeWidth={2} />
+          </span>
+          {hasCount && (
+            <span className="font-display text-lg font-bold tabular-nums leading-none text-foreground">
+              {loading ? (
+                <span className="inline-block h-4 w-5 animate-pulse rounded bg-foreground/10" />
+              ) : (
+                count
+              )}
             </span>
-            {hasCount && (
-              <span className="font-display text-xl font-bold tabular-nums leading-none text-foreground">
-                {loading ? (
-                  <span className="inline-block h-5 w-6 animate-pulse rounded bg-foreground/10" />
-                ) : (
-                  count
-                )}
-              </span>
-            )}
-          </div>
+          )}
+        </div>
 
-          {/* label + description */}
-          <div className="min-w-0 flex-1">
-            <p className="text-[12px] font-semibold leading-snug text-foreground">
-              {mod.label}
-            </p>
-            <p className="mt-0.5 text-[10px] leading-snug text-muted-foreground">
-              {mod.description}
-            </p>
-          </div>
+        {/* label + description */}
+        <div className="min-w-0 flex-1">
+          <p className="text-[11px] font-semibold leading-snug text-foreground">
+            {mod.label}
+          </p>
+          <p className="mt-0.5 text-[10px] leading-snug text-muted-foreground">
+            {mod.description}
+          </p>
         </div>
       </div>
+    </Link>
+  );
+}
+
+function StatPill({
+  label,
+  value,
+  loading,
+  icon: Icon,
+  cls,
+  href,
+}: {
+  label: string;
+  value: number;
+  loading: boolean;
+  icon: React.ElementType;
+  cls: string;
+  href: string;
+}) {
+  return (
+    <Link href={href}>
+      <span
+        className={`inline-flex h-6 items-center gap-1 whitespace-nowrap rounded-full border px-2 text-[10px] font-semibold backdrop-blur-xl transition hover:brightness-110 ${cls}`}
+      >
+        <Icon size={11} />
+        {label}
+        <strong className="text-[11px] tabular-nums">
+          {loading ? "…" : value}
+        </strong>
+      </span>
     </Link>
   );
 }
@@ -340,6 +367,18 @@ export default function SurgeryPage() {
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [counts, setCounts] = useState<Counts>({});
+  const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounce(search.trim().toLowerCase(), 200);
+
+  const visibleModules = useMemo(() => {
+    if (!debouncedSearch) return MODULES;
+    return MODULES.filter((mod) =>
+      `${mod.label} ${mod.description}`.toLowerCase().includes(debouncedSearch),
+    );
+  }, [debouncedSearch]);
+
+  const totalSurgeries =
+    (counts.smallSurgeries ?? 0) + (counts.largeSurgeries ?? 0);
 
   useEffect(() => {
     let mounted = true;
@@ -432,76 +471,119 @@ export default function SurgeryPage() {
         GROUPS.MEDICINA_OCUPACIONAL,
       ]}
     >
-      <div className="space-y-3">
-        {/* ── HERO HEADER ─────────────────────────────────────────── */}
-        <header className="relative overflow-hidden rounded-2xl border border-white/30 bg-gradient-to-br from-slate-50/80 via-white/60 to-slate-100/50 shadow-sm backdrop-blur-md dark:border-white/10 dark:from-slate-900/60 dark:via-slate-800/40 dark:to-slate-900/60">
-          <span
-            className="pointer-events-none absolute -right-6 -top-6 select-none text-[120px] leading-none opacity-[0.04] dark:opacity-[0.06]"
-            aria-hidden
-          >
-            ✂
-          </span>
-
-          <div className="relative px-5 pt-4 pb-4">
-            {/* breadcrumb */}
-            <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
-              <Layers size={9} className="shrink-0" />
-              <span>Módulos clínicos</span>
-              <span>/</span>
-              <span className="font-semibold text-foreground">Cirurgia</span>
-            </div>
-
-            {/* title row */}
-            <div className="mt-1.5 flex items-start justify-between gap-4">
-              <div>
-                <div className="flex items-center gap-2.5">
-                  <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-800/10 dark:bg-white/10">
-                    <Scissors
-                      size={18}
-                      className="text-slate-700 dark:text-slate-200"
-                      strokeWidth={1.8}
-                    />
-                  </span>
-                  <h1 className="font-display text-2xl font-bold tracking-tight text-foreground">
-                    Cirurgia
-                  </h1>
-                </div>
-                <p className="mt-1 max-w-xl text-[11px] text-muted-foreground">
-                  Pedido → avaliação → autorização → agenda → sala → equipa →
-                  checklist → anestesia → recuperação → relatório → faturação
+      <div className="space-y-1.5">
+        {/* Cabeçalho fundido: banner + pílulas + pesquisa + acções num só bloco translúcido */}
+        <section className="relative overflow-hidden rounded-2xl border border-rose-200/25 bg-gradient-to-br from-rose-100/[0.05] via-white/[0.015] to-red-100/[0.03] shadow-xl shadow-slate-900/5 backdrop-blur-2xl dark:border-rose-800/20 dark:from-rose-950/[0.05] dark:via-white/[0.01] dark:to-red-950/[0.03]">
+          <div className="pointer-events-none absolute -right-8 -top-10 h-28 w-28 rounded-full bg-rose-400/15 blur-3xl" />
+          <div className="relative flex flex-wrap items-center gap-2.5 px-3 py-2">
+            <div className="flex min-w-0 items-center gap-3">
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-rose-500 to-red-600 text-white shadow-md shadow-rose-500/25">
+                <Scissors size={15} />
+              </span>
+              <div className="min-w-0">
+                <h1 className="text-base font-bold leading-tight text-foreground">
+                  Cirurgia
+                </h1>
+                <p className="text-[10px] text-muted-foreground">
+                  {loading
+                    ? "A carregar…"
+                    : formatCount(totalSurgeries, {
+                        one: "cirurgia registada",
+                        other: "cirurgias registadas",
+                      })}
+                  <span className="capitalize"> · {todayLabel()}</span>
                 </p>
               </div>
+            </div>
 
-              <div className="flex shrink-0 flex-col items-end gap-2">
-                <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                  <CalendarDays size={12} className="shrink-0" />
-                  <span className="capitalize">{todayLabel()}</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <Link
-                    href="/surgery/schedules"
-                    className="inline-flex h-7 items-center gap-1.5 rounded-lg border border-border bg-card/70 px-2.5 text-[11px] text-muted-foreground transition hover:bg-muted hover:text-foreground"
-                  >
-                    <CalendarDays size={11} /> Agenda
-                  </Link>
-                  <Link
-                    href={`/surgery/surgeries/?scheduled_date=${TODAY}`}
-                    className="inline-flex h-7 items-center gap-1.5 rounded-lg border border-slate-300 bg-white/70 px-2.5 text-[11px] text-slate-600 shadow-sm transition hover:bg-white/90 dark:border-white/10 dark:bg-white/[0.06] dark:text-slate-300"
-                  >
-                    Hoje <ArrowRight size={11} />
-                  </Link>
-                  <Link
-                    href="/surgery/large-surgeries/new"
-                    className="inline-flex h-7 items-center gap-1.5 rounded-lg bg-slate-800 px-3 text-[11px] font-semibold text-white transition hover:bg-slate-700 dark:bg-white/15 dark:hover:bg-white/20"
-                  >
-                    <Plus size={11} /> Nova cirurgia
-                  </Link>
-                </div>
-              </div>
+            <div className="flex flex-wrap items-center gap-1.5">
+              <StatPill
+                label="Pedidos"
+                value={counts.requests ?? 0}
+                loading={loading}
+                icon={ClipboardList}
+                cls="border-red-200/50 bg-red-100/30 text-red-700 dark:border-red-700/30 dark:bg-red-900/20 dark:text-red-300"
+                href="/surgery/requests"
+              />
+              <StatPill
+                label="Pré-op"
+                value={counts.preoperativeAssessments ?? 0}
+                loading={loading}
+                icon={Stethoscope}
+                cls="border-amber-200/50 bg-amber-100/30 text-amber-700 dark:border-amber-700/30 dark:bg-amber-900/20 dark:text-amber-300"
+                href="/surgery/preoperative-assessments"
+              />
+              <StatPill
+                label="Pequenas"
+                value={counts.smallSurgeries ?? 0}
+                loading={loading}
+                icon={Scissors}
+                cls="border-blue-200/50 bg-blue-100/30 text-blue-700 dark:border-blue-700/30 dark:bg-blue-900/20 dark:text-blue-300"
+                href="/surgery/small-surgeries"
+              />
+              <StatPill
+                label="Grandes"
+                value={counts.largeSurgeries ?? 0}
+                loading={loading}
+                icon={Scissors}
+                cls="border-violet-200/50 bg-violet-100/30 text-violet-700 dark:border-violet-700/30 dark:bg-violet-900/20 dark:text-violet-300"
+                href="/surgery/large-surgeries"
+              />
+              <StatPill
+                label="Agenda"
+                value={counts.schedules ?? 0}
+                loading={loading}
+                icon={CalendarDays}
+                cls="border-cyan-200/50 bg-cyan-100/30 text-cyan-700 dark:border-cyan-700/30 dark:bg-cyan-900/20 dark:text-cyan-300"
+                href="/surgery/schedules"
+              />
+              <StatPill
+                label="Salas"
+                value={counts.operatingRooms ?? 0}
+                loading={loading}
+                icon={Settings}
+                cls="border-emerald-200/50 bg-emerald-100/30 text-emerald-700 dark:border-emerald-700/30 dark:bg-emerald-900/20 dark:text-emerald-300"
+                href="/surgery/operating-rooms"
+              />
+            </div>
+
+            <div className="ml-auto flex flex-wrap items-center gap-1.5">
+              <Link
+                href={`/surgery/surgeries/?scheduled_date=${TODAY}`}
+                className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-white/25 bg-white/[0.05] px-2.5 text-xs font-medium text-foreground backdrop-blur-xl transition hover:bg-white/20 dark:border-white/10 dark:bg-white/[0.03] dark:hover:bg-white/[0.08]"
+              >
+                Hoje <ArrowRight size={12} />
+              </Link>
+              <Link
+                href="/surgery/large-surgeries/new"
+                className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-gradient-to-r from-rose-600 to-red-600 px-2.5 text-xs font-semibold text-white shadow-sm transition hover:from-rose-700 hover:to-red-700"
+              >
+                <Plus size={12} /> Nova cirurgia
+              </Link>
             </div>
           </div>
-        </header>
-        {/* ── /HERO HEADER ────────────────────────────────────────── */}
+
+          <div className="relative flex flex-wrap items-center gap-1.5 border-t border-white/15 px-3 py-1.5 dark:border-white/[0.06]">
+            <div className="relative w-full sm:w-64">
+              <Search
+                size={12}
+                className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground"
+              />
+              <input
+                type="text"
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder="Filtrar módulos cirúrgicos…"
+                className="w-full rounded-lg border border-white/25 bg-white/[0.05] py-1.5 pl-7 pr-3 text-xs text-foreground placeholder:text-muted-foreground backdrop-blur-xl transition-all focus:outline-none focus:ring-2 focus:ring-rose-500/40 sm:focus:w-80 dark:border-white/10 dark:bg-white/[0.03]"
+              />
+            </div>
+            {debouncedSearch ? (
+              <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold text-foreground-2">
+                {visibleModules.length}/{MODULES.length}
+              </span>
+            ) : null}
+          </div>
+        </section>
 
         {errorMessage && (
           <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-800/40 dark:bg-amber-900/20 dark:text-amber-300">
@@ -509,17 +591,22 @@ export default function SurgeryPage() {
           </div>
         )}
 
-        {/* ── UNIFIED MODULE GRID ──────────────────────────────────── */}
-        <div className="grid grid-cols-4 gap-2 xl:grid-cols-5">
-          {MODULES.map((mod) => (
-            <ModuleCard
-              key={mod.key}
-              mod={mod}
-              counts={counts}
-              loading={loading}
-            />
-          ))}
-        </div>
+        {visibleModules.length === 0 ? (
+          <div className="rounded-xl border border-dashed border-border px-4 py-8 text-center text-xs text-muted-foreground">
+            Nenhum módulo corresponde à pesquisa.
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+            {visibleModules.map((mod) => (
+              <ModuleCard
+                key={mod.key}
+                mod={mod}
+                counts={counts}
+                loading={loading}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </AppLayout>
   );
