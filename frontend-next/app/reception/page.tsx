@@ -625,9 +625,6 @@ export default function RecepcaoPage() {
             <div className="space-y-2 px-4 py-4 sm:px-5">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-[var(--primary-500)] dark:text-[var(--primary-400)]">
-                    Saudação
-                  </p>
                   <h1 className="mt-1 text-xl font-bold leading-tight text-foreground sm:text-2xl">
                     {greetingName}
                   </h1>
