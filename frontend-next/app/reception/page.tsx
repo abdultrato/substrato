@@ -29,6 +29,7 @@ import {
   Stethoscope,
   UserPlus,
   Users,
+  X,
   XCircle,
 } from "lucide-react";
 
@@ -233,6 +234,7 @@ const EMPTY_WORKSPACE: ReceptionWorkspace = {
 const FETCH_PAGE_SIZE = 200;
 const RECENT_CHECKIN_WINDOW_MS = 24 * 60 * 60 * 1000;
 const REFRESH_MS = 15_000;
+const RECEPTION_CHAT_STORAGE_KEY = "substrato.reception.chat.v1";
 const GLASS =
   "rounded-2xl border border-white/20 bg-white/30 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.05]";
 
@@ -443,6 +445,42 @@ export default function RecepcaoPage() {
   const [chatError, setChatError] = useState<string | null>(null);
 
   const requestRef = useRef(0);
+  const chatStorageHydratedRef = useRef(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const raw = window.sessionStorage.getItem(RECEPTION_CHAT_STORAGE_KEY);
+      if (!raw) {
+        chatStorageHydratedRef.current = true;
+        return;
+      }
+      const parsed = JSON.parse(raw) as {
+        sessionId?: number | null;
+        composer?: string;
+        messages?: ReceptionChatMessage[];
+      };
+      setChatSessionId(typeof parsed.sessionId === "number" ? parsed.sessionId : null);
+      setChatComposer(typeof parsed.composer === "string" ? parsed.composer : "");
+      setChatMessages(Array.isArray(parsed.messages) ? parsed.messages : []);
+    } catch {
+      window.sessionStorage.removeItem(RECEPTION_CHAT_STORAGE_KEY);
+    } finally {
+      chatStorageHydratedRef.current = true;
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!chatStorageHydratedRef.current || typeof window === "undefined") return;
+    window.sessionStorage.setItem(
+      RECEPTION_CHAT_STORAGE_KEY,
+      JSON.stringify({
+        sessionId: chatSessionId,
+        composer: chatComposer,
+        messages: chatMessages,
+      }),
+    );
+  }, [chatComposer, chatMessages, chatSessionId]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => setSearch(searchInput.trim()), 220);
@@ -597,6 +635,16 @@ export default function RecepcaoPage() {
     },
     [chatLoading, chatSessionId, search, workspace.queue, workspace.summary],
   );
+
+  const clearChatConversation = useCallback(() => {
+    setChatSessionId(null);
+    setChatComposer("");
+    setChatMessages([]);
+    setChatError(null);
+    if (typeof window !== "undefined") {
+      window.sessionStorage.removeItem(RECEPTION_CHAT_STORAGE_KEY);
+    }
+  }, []);
 
   if (loading) return null;
 
@@ -885,6 +933,7 @@ export default function RecepcaoPage() {
                 composer={chatComposer}
                 loading={chatLoading}
                 error={chatError}
+                onClear={clearChatConversation}
                 onComposerChange={setChatComposer}
                 onPromptClick={(prompt) => void sendChatMessage(prompt)}
                 onSubmit={async (event) => {
@@ -1039,6 +1088,7 @@ function ChatbotPanel({
   composer,
   loading,
   error,
+  onClear,
   onComposerChange,
   onPromptClick,
   onSubmit,
@@ -1048,6 +1098,7 @@ function ChatbotPanel({
   composer: string;
   loading: boolean;
   error: string | null;
+  onClear: () => void;
   onComposerChange: (value: string) => void;
   onPromptClick: (prompt: string) => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => Promise<void>;
@@ -1066,6 +1117,16 @@ function ChatbotPanel({
           <Bot size={12} />
         </span>
         <h2 className="text-xs font-bold text-foreground">Chatbot Substrato</h2>
+        {messages.length > 0 || composer.trim() ? (
+          <button
+            type="button"
+            onClick={onClear}
+            className="inline-flex h-6 items-center gap-1 rounded-md border border-border/70 bg-background/70 px-2 text-[10px] font-medium text-muted-foreground transition hover:text-foreground"
+          >
+            <X size={11} />
+            Limpar
+          </button>
+        ) : null}
         <Link
           href="/ai"
           className="ml-auto text-[10px] font-medium text-[var(--primary-600)] hover:underline dark:text-[var(--primary-400)]"
