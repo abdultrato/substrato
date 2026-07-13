@@ -348,7 +348,7 @@ export default function AiInvestigationDetailPage() {
 
   return (
     <AppLayout>
-      <div className="space-y-1.5">
+      <div className="mx-auto w-full max-w-[1480px] space-y-1.5">
         {/* Cabeçalho fundido: identidade + pílulas + acções num só bloco translúcido */}
         <section className="relative overflow-hidden rounded-2xl border border-violet-200/25 bg-gradient-to-br from-violet-100/[0.05] via-white/[0.015] to-indigo-100/[0.03] shadow-xl shadow-slate-900/5 backdrop-blur-2xl dark:border-violet-800/20 dark:from-violet-950/[0.05] dark:via-white/[0.01] dark:to-indigo-950/[0.03]">
           <div className="pointer-events-none absolute -right-8 -top-10 h-28 w-28 rounded-full bg-violet-400/15 blur-3xl" />
@@ -506,7 +506,7 @@ export default function AiInvestigationDetailPage() {
         {investigation ? (
           <>
             <section className={`${GLASS} border-l-4 ${statusMeta.bar} p-3`}>
-              <div className="grid gap-2 xl:grid-cols-[1.25fr_0.75fr]">
+              <div className="grid gap-2 xl:grid-cols-[minmax(0,1.15fr)_minmax(22rem,0.85fr)]">
                 <div>
                   <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
                     {t("Pergunta operacional", "Operational question")}
@@ -562,7 +562,7 @@ export default function AiInvestigationDetailPage() {
               </section>
             ) : null}
 
-            <div className="grid gap-1.5 xl:grid-cols-[minmax(0,1.2fr)_22rem]">
+            <div className="grid gap-1.5 xl:grid-cols-[minmax(0,1.18fr)_minmax(28rem,0.98fr)] 2xl:grid-cols-[minmax(0,1.1fr)_minmax(32rem,1fr)]">
               <div className="space-y-1.5">
                 <Section title={t("Achados", "Findings")} icon={Lightbulb} bar="border-l-violet-500 dark:border-l-violet-400" count={findings.length}>
                   {findings.length ? (
