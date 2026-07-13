@@ -583,6 +583,7 @@ export default function RecepcaoPage() {
   const searchResults = normalizedSearch
     ? searchRows.filter((item) => buildSearchBlob(item).includes(normalizedSearch))
     : searchRows.slice(0, 8);
+  const showSearchSection = carregando || Boolean(normalizedSearch) || searchResults.length > 0;
 
   return (
     <>
@@ -643,8 +644,8 @@ export default function RecepcaoPage() {
                 </div>
               )}
 
-              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 xl:flex-nowrap [&::-webkit-scrollbar]:hidden [scrollbar-width:none]">
-                <div className="relative w-[16rem] shrink-0 md:w-[18rem] xl:w-[20rem]">
+              <div className="flex flex-wrap items-center gap-1.5">
+                <div className="relative w-full sm:w-[16rem] md:w-[18rem] xl:w-[20rem]">
                   <Search
                     size={13}
                     className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
@@ -737,7 +738,7 @@ export default function RecepcaoPage() {
                 <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
                   Atalhos
                 </span>
-                <div className="flex gap-1 overflow-x-auto xl:flex-nowrap [&::-webkit-scrollbar]:hidden [scrollbar-width:none]">
+                <div className="flex flex-wrap gap-1.5">
                   {atalhos.map((atalho) => (
                     <QuickLinkCard
                       key={atalho.href}
@@ -745,6 +746,9 @@ export default function RecepcaoPage() {
                       title={atalho.title}
                       description={atalho.description}
                       icon={atalho.icon}
+                      iconBg={atalho.iconBg}
+                      iconColor={atalho.iconColor}
+                      bar={atalho.bar}
                     />
                   ))}
                 </div>
@@ -773,32 +777,32 @@ export default function RecepcaoPage() {
 
           <div className="grid gap-3 xl:grid-cols-[minmax(0,1.15fr)_380px]">
             <div className="space-y-3">
-              <section className={GLASS}>
-                <div className="space-y-3 px-4 py-4">
-                  <div className="space-y-2">
-                    {carregando ? (
-                      <div className="flex items-center justify-center gap-2 rounded-xl border border-dashed border-border px-4 py-10 text-sm text-muted-foreground">
-                        <Loader2 size={16} className="animate-spin" />
-                        A indexar os dados da recepção...
-                      </div>
-                    ) : searchResults.length === 0 ? (
-                      <div className="rounded-xl border border-dashed border-border px-4 py-8 text-center text-sm text-muted-foreground">
-                        {search
-                          ? "Nenhum registo corresponde à pesquisa introduzida."
-                          : "Escreva um termo para procurar no universo operacional da recepção."}
-                      </div>
-                    ) : (
-                      <div className="grid gap-2">
-                        {searchResults.slice(0, 12).map((item) => (
-                          <SearchResultCard key={item.id} item={item} />
-                        ))}
-                      </div>
-                    )}
+              {showSearchSection ? (
+                <section className={GLASS}>
+                  <div className="space-y-3 px-4 py-4">
+                    <div className="space-y-2">
+                      {carregando ? (
+                        <div className="flex items-center justify-center gap-2 rounded-xl border border-dashed border-border px-4 py-10 text-sm text-muted-foreground">
+                          <Loader2 size={16} className="animate-spin" />
+                          A indexar os dados da recepção...
+                        </div>
+                      ) : searchResults.length === 0 ? (
+                        <div className="rounded-xl border border-dashed border-border px-4 py-8 text-center text-sm text-muted-foreground">
+                          Nenhum registo corresponde à pesquisa introduzida.
+                        </div>
+                      ) : (
+                        <div className="grid gap-2">
+                          {searchResults.slice(0, 12).map((item) => (
+                            <SearchResultCard key={item.id} item={item} />
+                          ))}
+                        </div>
+                      )}
 
-                    <ReceptionSearch query={search} />
+                      <ReceptionSearch query={search} />
+                    </div>
                   </div>
-                </div>
-              </section>
+                </section>
+              ) : null}
 
               {workspace.queue.length > 0 ? (
                 <section className={GLASS}>
