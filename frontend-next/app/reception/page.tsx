@@ -635,14 +635,9 @@ export default function RecepcaoPage() {
                     <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-[var(--primary-600)]/10 text-[var(--primary-700)] dark:text-[var(--primary-400)]">
                       <Search size={15} />
                     </span>
-                    <div className="flex min-w-0 items-center gap-2">
-                      <h2 className="truncate text-sm font-bold text-foreground">
-                        Busca operacional
-                      </h2>
-                      <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold text-foreground-2">
-                        {search ? `${searchResults.length} resultados` : `${searchRows.length} indexados`}
-                      </span>
-                    </div>
+                    <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold text-foreground-2">
+                      {search ? `${searchResults.length} resultados` : `${searchRows.length} indexados`}
+                    </span>
                   </div>
 
                   <div className="relative min-w-0 xl:flex-1">
@@ -719,15 +714,6 @@ export default function RecepcaoPage() {
               <section className={GLASS}>
                 <div className="space-y-3 px-4 py-4">
                   <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div>
-                      <h2 className="text-sm font-bold text-foreground">Resultados da busca operacional</h2>
-                      <p className="text-[11px] text-muted-foreground">
-                        {search
-                          ? "Check-ins e fontes complementares agrupados a partir da pesquisa actual."
-                          : "Os últimos registos indexados aparecem abaixo enquanto não houver termo de pesquisa."}
-                      </p>
-                    </div>
-
                     <span className="rounded-full bg-muted px-2.5 py-1 text-[10px] font-semibold text-foreground-2">
                       {search ? `${searchResults.length} em check-ins` : `${searchRows.length} check-ins indexados`}
                     </span>
