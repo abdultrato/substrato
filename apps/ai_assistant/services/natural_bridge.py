@@ -245,15 +245,15 @@ def _lead(*, language: str, modules: list[dict[str, Any]], resources: list[dict[
         if resource_text and module_text:
             return f"I linked your question to {resource_text} in {module_text} and will answer as a summary, without exposing tables or individual records."
         if module_text:
-            return f"I used your module context in {module_text} and kept the answer conversational, without opening raw database data."
-        return "I used the internal tools with tenant and RBAC scope, then turned the result into a conversational summary."
+            return ""
+        return ""
 
     if resource_text and module_text:
         return f"Analisei {resource_text} em {module_text} e vou responder de forma operacional, sem expor dados individuais."
     if module_text:
-        return f"Usei o contexto de {module_text} e mantive a resposta em linguagem operacional."
+        return ""
     if database_scope:
-        return "Usei as ferramentas internas e transformei o resultado num resumo operacional."
+        return ""
     return ""
 
 
