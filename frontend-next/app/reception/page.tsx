@@ -41,6 +41,7 @@ import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh";
 import { apiFetch } from "@/lib/api";
 import { GROUPS } from "@/lib/rbac";
 import { PatientIntakeWizard } from "@/components/reception/PatientIntakeWizard";
+import ReceptionSearch from "@/components/reception/ReceptionSearch";
 
 interface ReceptionWorkspaceSummary {
   checkins_today: number;
@@ -628,41 +629,33 @@ export default function RecepcaoPage() {
                 </div>
               )}
 
-              <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4">
-                <HeroMetricCard
-                  title="Check-ins hoje"
+              <div className="flex flex-wrap items-center gap-1.5">
+                <StatPill
+                  label="Check-ins hoje"
                   value={workspace.summary.checkins_today}
                   icon={Users}
-                  accent="bg-blue-500"
-                  iconBg="bg-blue-100 dark:bg-blue-900/40"
-                  iconColor="text-blue-600 dark:text-blue-400"
+                  cls="border-blue-200/50 bg-blue-100/30 text-blue-700 dark:border-blue-700/30 dark:bg-blue-900/20 dark:text-blue-300"
                   href="/reception/reception-checkins"
                 />
-                <HeroMetricCard
-                  title="Na fila"
+                <StatPill
+                  label="Na fila"
                   value={workspace.summary.queue_size}
                   icon={ClipboardList}
-                  accent="bg-amber-500"
-                  iconBg="bg-amber-100 dark:bg-amber-900/40"
-                  iconColor="text-amber-600 dark:text-amber-400"
+                  cls="border-amber-200/50 bg-amber-100/30 text-amber-700 dark:border-amber-700/30 dark:bg-amber-900/20 dark:text-amber-300"
                   href="/reception/reception-checkins?status=AGUARD"
                 />
-                <HeroMetricCard
-                  title="Em atendimento"
+                <StatPill
+                  label="Em atendimento"
                   value={workspace.summary.in_care}
                   icon={Stethoscope}
-                  accent="bg-violet-500"
-                  iconBg="bg-violet-100 dark:bg-violet-900/40"
-                  iconColor="text-violet-600 dark:text-violet-400"
+                  cls="border-violet-200/50 bg-violet-100/30 text-violet-700 dark:border-violet-700/30 dark:bg-violet-900/20 dark:text-violet-300"
                   href="/reception/reception-checkins?status=ATEND"
                 />
-                <HeroMetricCard
-                  title="Recebido hoje"
+                <StatPill
+                  label="Recebido hoje"
                   value={<MoneyValue value={workspace.summary.received_today} />}
                   icon={Receipt}
-                  accent="bg-emerald-500"
-                  iconBg="bg-emerald-100 dark:bg-emerald-900/40"
-                  iconColor="text-emerald-600 dark:text-emerald-400"
+                  cls="border-emerald-200/50 bg-emerald-100/30 text-emerald-700 dark:border-emerald-700/30 dark:bg-emerald-900/20 dark:text-emerald-300"
                   href="/receipts"
                 />
               </div>
@@ -733,6 +726,8 @@ export default function RecepcaoPage() {
                         ))}
                       </div>
                     )}
+
+                    <ReceptionSearch query={search} />
                   </div>
                 </div>
               </section>
@@ -946,46 +941,31 @@ export default function RecepcaoPage() {
   );
 }
 
-function HeroMetricCard({
-  title,
+function StatPill({
+  label,
   value,
   icon: Icon,
-  accent,
-  iconBg,
-  iconColor,
+  cls,
   href,
 }: {
-  title: string;
+  label: string;
   value: React.ReactNode;
   icon: typeof Users;
-  accent: string;
-  iconBg: string;
-  iconColor: string;
+  cls: string;
   href?: string;
 }) {
-  const content = (
-    <div className="relative overflow-hidden rounded-xl border border-white/20 bg-white/45 px-3 py-3 pl-4 shadow-sm transition hover:bg-white/60 dark:bg-white/[0.07] dark:hover:bg-white/[0.1]">
-      <span className={`absolute left-0 top-0 h-full w-1 ${accent}`} />
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-            {title}
-          </p>
-          <div className="mt-1 text-2xl font-bold leading-none text-foreground">
-            {value}
-          </div>
-        </div>
-        <span
-          className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${iconBg}`}
-        >
-          <Icon size={15} className={iconColor} />
-        </span>
-      </div>
-    </div>
+  const inner = (
+    <span
+      className={`inline-flex h-6 items-center gap-1 whitespace-nowrap rounded-full border px-2 text-[10px] font-semibold backdrop-blur-xl transition hover:brightness-110 ${cls}`}
+    >
+      <Icon size={11} />
+      {label}
+      <span className="text-[11px] font-bold">{value}</span>
+    </span>
   );
 
-  if (href) return <Link href={href}>{content}</Link>;
-  return content;
+  if (href) return <Link href={href}>{inner}</Link>;
+  return inner;
 }
 
 function SearchResultCard({ item }: { item: ReceptionSearchRow }) {
