@@ -512,23 +512,30 @@ class LocalLlmGateway:
             count = item.get("filtered_count", 0)
             total = item.get("total_count", count)
             if language == "en":
-                line = f"- {label}: {count} matching record(s), {total} total in your scope."
+                if count == 0 and total == 0:
+                    line = f"- {label}: no results found."
+                elif count == total:
+                    line = f"- {label}: {self._count_text(count, language='en')}."
+                else:
+                    line = f"- {label}: {self._count_text(count, language='en')} out of {self._count_text(total, language='en')} in scope."
             else:
-                line = f"- {label}: {count} registo(s) encontrados, {total} no total do seu escopo."
+                if count == 0 and total == 0:
+                    line = f"- {label}: sem resultados."
+                elif count == total:
+                    line = f"- {label}: {self._count_text(count, language='pt')}."
+                else:
+                    line = f"- {label}: {self._count_text(count, language='pt')} dentro de {self._count_text(total, language='pt')} nesta área."
             filters = item.get("applied_filters") or []
             if filters:
-                filter_labels = []
-                for applied_filter in filters[:3]:
-                    field = applied_filter.get("field") or applied_filter.get("kind") or "filter"
-                    value = applied_filter.get("value") or applied_filter.get("values") or applied_filter.get("label") or ""
-                    filter_labels.append(f"{field}={value}" if value else str(field))
-                line += (" Filters: " if language == "en" else " Filtros: ") + ", ".join(filter_labels)
+                filter_text = self._humanize_filters(filters=filters[:3], language=language)
+                if filter_text:
+                    line += (" Applied filter: " if language == "en" else " Recorte: ") + filter_text + "."
             lines.append(line)
 
         if language == "en":
             return "\n\n".join(
                 [
-                    "I queried only the database resources allowed by your RBAC profile.",
+                    "I checked only the areas allowed by your access profile.",
                     "\n".join(lines) if lines else "No matching records were found.",
                     "Internal evidence used: API resource catalog, tenant scope and RBAC.",
                     "Limitation: I returned a narrative summary with counts and filters, not tables, row samples or direct record links.",
@@ -537,8 +544,8 @@ class LocalLlmGateway:
             )
         return "\n\n".join(
             [
-                "Consultei apenas os recursos da base de dados permitidos pelo seu perfil RBAC.",
-                "\n".join(lines) if lines else "Nenhum registo correspondente foi encontrado.",
+                "Consultei apenas as áreas permitidas pelo seu perfil.",
+                "\n".join(lines) if lines else "Não encontrei resultados para esse pedido.",
                 "Evidência interna usada: catálogo de recursos da API, tenant e RBAC.",
                 "Limitação: devolvi um resumo narrativo com contagens e filtros, não tabelas, amostras de linhas nem ligações directas para registos.",
                 "Próximo passo sugerido: indique período, estado ou prioridade se quiser uma investigação mais estreita.",
@@ -666,14 +673,14 @@ class LocalLlmGateway:
                     if part
                 )
 
-            direct = f"Analisei {label} no seu escopo autorizado e encontrei {total_count} registo(s) correspondente(s)."
+            direct = f"Analisei {label} e encontrei {self._count_text(total_count, language='pt')}."
             if start_date and end_date:
                 if date_filter_applied:
-                    direct += f" O filtro temporal usou {date_field or 'o campo temporal disponível'} entre {start_date} e {end_date}."
+                    direct += f" {self._humanize_date_range(start_date=start_date, end_date=end_date, field=date_field, language='pt')}"
                 else:
-                    direct += " Não apliquei o intervalo pedido porque este recurso não tem campo temporal compatível."
+                    direct += " Não consegui aplicar o período pedido porque esta área não tem uma data compatível para esse recorte."
             if search_query:
-                direct += f" Filtro textual: '{search_query}'."
+                direct += f" Pesquisa textual: '{search_query}'."
 
             group_text = self._sql_group_lines(groups=groups, language="pt")
             numeric_text = self._sql_numeric_lines(numeric_summaries=numeric_summaries, language="pt")
@@ -865,10 +872,82 @@ class LocalLlmGateway:
             value = "—" if value in ("", None) else value
             count = int(row.get("count") or 0)
             if language == "en":
-                lines.append(f"- {value}: {count} record(s)")
+                lines.append(f"- {value}: {self._count_text(count, language='en')}")
             else:
-                lines.append(f"- {value}: {count} registo(s)")
+                lines.append(f"- {value}: {self._count_text(count, language='pt')}")
         return "\n".join([title, *lines])
+
+    def _count_text(self, count: Any, *, language: str) -> str:
+        try:
+            number = int(count or 0)
+        except (TypeError, ValueError):
+            number = 0
+        if language == "en":
+            return f"{number} result" if number == 1 else f"{number} results"
+        return f"{number} resultado" if number == 1 else f"{number} resultados"
+
+    def _humanize_filters(self, *, filters: list[dict[str, Any]], language: str) -> str:
+        parts: list[str] = []
+        for applied_filter in filters:
+            field = str(applied_filter.get("field") or applied_filter.get("kind") or "").strip()
+            value = applied_filter.get("value")
+            if value in (None, "", []):
+                value = applied_filter.get("values") or applied_filter.get("label") or ""
+            value_text = ", ".join(str(item) for item in value) if isinstance(value, list) else str(value or "").strip()
+            normalized_field = field.lower()
+            normalized_value = value_text.lower()
+
+            if normalized_value == "today":
+                if normalized_field in {"created_at", "updated_at", "date", "data"}:
+                    parts.append("today only" if language == "en" else "apenas hoje")
+                    continue
+                if normalized_field in {"scheduled_start", "scheduled_at"}:
+                    parts.append("scheduled for today" if language == "en" else "agendado para hoje")
+                    continue
+
+            field_label = self._humanize_field_name(field=field, language=language)
+            if not value_text:
+                if field_label:
+                    parts.append(field_label)
+                continue
+            parts.append(f"{field_label}: {value_text}" if field_label else value_text)
+        return ", ".join(parts)
+
+    def _humanize_field_name(self, *, field: str, language: str) -> str:
+        normalized = str(field or "").strip().lower()
+        mapping_pt = {
+            "created_at": "data",
+            "updated_at": "actualização",
+            "scheduled_start": "agendamento",
+            "scheduled_at": "agendamento",
+            "status": "estado",
+            "priority": "prioridade",
+            "date": "data",
+        }
+        mapping_en = {
+            "created_at": "date",
+            "updated_at": "updated",
+            "scheduled_start": "schedule",
+            "scheduled_at": "schedule",
+            "status": "status",
+            "priority": "priority",
+            "date": "date",
+        }
+        mapping = mapping_en if language == "en" else mapping_pt
+        if normalized in mapping:
+            return mapping[normalized]
+        readable = normalized.replace("_", " ").strip()
+        return readable or ("filter" if language == "en" else "filtro")
+
+    def _humanize_date_range(self, *, start_date: str, end_date: str, field: str, language: str) -> str:
+        field_label = self._humanize_field_name(field=field, language=language)
+        if start_date == end_date:
+            if language == "en":
+                return f"I considered {field_label} on {start_date}."
+            return f"Considerei {field_label} em {start_date}."
+        if language == "en":
+            return f"I considered {field_label} between {start_date} and {end_date}."
+        return f"Considerei {field_label} entre {start_date} e {end_date}."
 
     def _format_number(self, value: Any) -> str:
         if value in (None, ""):
@@ -972,9 +1051,9 @@ class LocalLlmGateway:
                 for resource in summary.get("resource_results", [])[:4]:
                     label = resource.get("label_en") if language == "en" else resource.get("label_pt")
                     if language == "en":
-                        lines.append(f"- {label}: {resource.get('filtered_count', 0)} record(s).")
+                        lines.append(f"- {label}: {self._count_text(resource.get('filtered_count', 0), language='en')}.")
                     else:
-                        lines.append(f"- {label}: {resource.get('filtered_count', 0)} registo(s).")
+                        lines.append(f"- {label}: {self._count_text(resource.get('filtered_count', 0), language='pt')}.")
 
             if summary.get("catalog"):
                 lines.append(

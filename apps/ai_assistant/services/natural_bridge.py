@@ -249,11 +249,11 @@ def _lead(*, language: str, modules: list[dict[str, Any]], resources: list[dict[
         return "I used the internal tools with tenant and RBAC scope, then turned the result into a conversational summary."
 
     if resource_text and module_text:
-        return f"Liguei a sua pergunta a {resource_text} no módulo {module_text} e vou responder em resumo, sem expor tabelas nem registos individuais."
+        return f"Analisei {resource_text} em {module_text} e vou responder de forma operacional, sem expor dados individuais."
     if module_text:
-        return f"Usei o contexto do módulo {module_text} e mantive a resposta conversacional, sem abrir dados brutos do banco."
+        return f"Usei o contexto de {module_text} e mantive a resposta em linguagem operacional."
     if database_scope:
-        return "Usei as ferramentas internas com tenant e RBAC, transformando o resultado em resumo conversacional."
+        return "Usei as ferramentas internas e transformei o resultado num resumo operacional."
     return ""
 
 
@@ -283,12 +283,17 @@ def _narrative_items(
                 if language == "en":
                     items.append(f"{label}: {count} matching item(s) in your authorized scope.")
                 else:
-                    items.append(f"{label}: {count} item(ns) no seu escopo autorizado.")
+                    if count == 0:
+                        items.append(f"{label}: sem resultados no momento.")
+                    elif count == 1:
+                        items.append(f"{label}: 1 resultado no momento.")
+                    else:
+                        items.append(f"{label}: {count} resultados no momento.")
             else:
                 if language == "en":
                     items.append(f"{label}: I can summarize this area without listing individual records.")
                 else:
-                    items.append(f"{label}: consigo resumir esta área sem listar registos individuais.")
+                    items.append(f"{label}: consigo resumir esta área sem listar dados individuais.")
     elif modules:
         module_names = _join_labels([str(item.get("label") or item.get("module") or "") for item in modules[:3]], language=language)
         if module_names:
