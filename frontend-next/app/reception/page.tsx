@@ -250,42 +250,63 @@ const atalhos = [
     description: "Encaminhar o paciente directo para a jornada laboratorial.",
     href: "/requests/new",
     icon: FilePlus2,
+    iconBg: "bg-blue-100 dark:bg-blue-900/40",
+    iconColor: "text-blue-600 dark:text-blue-400",
+    bar: "border-l-blue-500 dark:border-l-blue-400",
   },
   {
     title: "Requisição externa",
     description: "Criar requisição para empresa solicitante ou terceirizada.",
     href: "/requests/external/new",
     icon: FileText,
+    iconBg: "bg-indigo-100 dark:bg-indigo-900/40",
+    iconColor: "text-indigo-600 dark:text-indigo-400",
+    bar: "border-l-indigo-500 dark:border-l-indigo-400",
   },
   {
     title: "Faturas",
     description: "Abrir o backoffice de faturamento para emissão e revisão.",
     href: "/invoices",
     icon: CreditCard,
+    iconBg: "bg-rose-100 dark:bg-rose-900/40",
+    iconColor: "text-rose-600 dark:text-rose-400",
+    bar: "border-l-rose-500 dark:border-l-rose-400",
   },
   {
     title: "Recibos",
     description: "Consultar recibos já gerados no módulo de pagamentos.",
     href: "/receipts",
     icon: Receipt,
+    iconBg: "bg-emerald-100 dark:bg-emerald-900/40",
+    iconColor: "text-emerald-600 dark:text-emerald-400",
+    bar: "border-l-emerald-500 dark:border-l-emerald-400",
   },
   {
     title: "Agendar consulta",
     description: "Marcar consulta médica e emitir fatura quando necessário.",
     href: "/consultations",
     icon: CalendarClock,
+    iconBg: "bg-cyan-100 dark:bg-cyan-900/40",
+    iconColor: "text-cyan-600 dark:text-cyan-400",
+    bar: "border-l-cyan-500 dark:border-l-cyan-400",
   },
   {
     title: "Criar requisição de materiais",
     description: "Abrir o formulário para solicitar consumíveis ao stock.",
     href: "/pharmacy/material-requests/new",
     icon: PackageSearch,
+    iconBg: "bg-orange-100 dark:bg-orange-900/40",
+    iconColor: "text-orange-600 dark:text-orange-400",
+    bar: "border-l-orange-500 dark:border-l-orange-400",
   },
   {
     title: "Marcar procedimento",
     description: "Registar procedimento de enfermagem com materiais e execução.",
     href: "/nursing/procedures/new",
     icon: ClipboardList,
+    iconBg: "bg-teal-100 dark:bg-teal-900/40",
+    iconColor: "text-teal-600 dark:text-teal-400",
+    bar: "border-l-teal-500 dark:border-l-teal-400",
   },
 ];
 
@@ -298,6 +319,7 @@ const marcacoesPorSector = [
     icon: Stethoscope,
     iconBg: "bg-blue-100 dark:bg-blue-900/40",
     iconColor: "text-blue-600 dark:text-blue-400",
+    bar: "border-l-blue-500 dark:border-l-blue-400",
   },
   {
     title: "Consultas cirúrgicas",
@@ -306,6 +328,7 @@ const marcacoesPorSector = [
     icon: Activity,
     iconBg: "bg-violet-100 dark:bg-violet-900/40",
     iconColor: "text-violet-600 dark:text-violet-400",
+    bar: "border-l-violet-500 dark:border-l-violet-400",
   },
   {
     title: "Odontologia",
@@ -314,6 +337,7 @@ const marcacoesPorSector = [
     icon: CalendarClock,
     iconBg: "bg-cyan-100 dark:bg-cyan-900/40",
     iconColor: "text-cyan-600 dark:text-cyan-400",
+    bar: "border-l-cyan-500 dark:border-l-cyan-400",
   },
   {
     title: "Medicina veterinária",
@@ -322,6 +346,7 @@ const marcacoesPorSector = [
     icon: HeartPulse,
     iconBg: "bg-pink-100 dark:bg-pink-900/40",
     iconColor: "text-pink-600 dark:text-pink-400",
+    bar: "border-l-pink-500 dark:border-l-pink-400",
   },
   {
     title: "Fisioterapia e reabilitação",
@@ -330,6 +355,7 @@ const marcacoesPorSector = [
     icon: Activity,
     iconBg: "bg-amber-100 dark:bg-amber-900/40",
     iconColor: "text-amber-600 dark:text-amber-400",
+    bar: "border-l-amber-500 dark:border-l-amber-400",
   },
 ];
 
@@ -339,36 +365,42 @@ const chatPrompts = [
   "Quais check-ins ainda não têm fatura ligada?",
 ];
 
-const STATUS_META: Record<string, { label: string; cls: string; dot: string }> = {
+const STATUS_META: Record<string, { label: string; cls: string; dot: string; bar: string }> = {
   AGUARD: {
     label: "Aguardando",
     cls: "border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-700/40 dark:bg-amber-900/20 dark:text-amber-400",
     dot: "bg-amber-400",
+    bar: "border-l-amber-500 dark:border-l-amber-400",
   },
   ATEND: {
     label: "Em atendimento",
     cls: "border-blue-300 bg-blue-50 text-blue-700 dark:border-blue-700/40 dark:bg-blue-900/20 dark:text-blue-400",
     dot: "bg-blue-500",
+    bar: "border-l-blue-500 dark:border-l-blue-400",
   },
   REQ: {
     label: "Requisição criada",
     cls: "border-violet-300 bg-violet-50 text-violet-700 dark:border-violet-700/40 dark:bg-violet-900/20 dark:text-violet-400",
     dot: "bg-violet-500",
+    bar: "border-l-violet-500 dark:border-l-violet-400",
   },
   FAT: {
     label: "Fatura vinculada",
     cls: "border-indigo-300 bg-indigo-50 text-indigo-700 dark:border-indigo-700/40 dark:bg-indigo-900/20 dark:text-indigo-400",
     dot: "bg-indigo-500",
+    bar: "border-l-indigo-500 dark:border-l-indigo-400",
   },
   CONC: {
     label: "Concluído",
     cls: "border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-700/40 dark:bg-emerald-900/20 dark:text-emerald-400",
     dot: "bg-emerald-500",
+    bar: "border-l-emerald-500 dark:border-l-emerald-400",
   },
   CANC: {
     label: "Cancelado",
     cls: "border-rose-300 bg-rose-50 text-rose-700 dark:border-rose-700/40 dark:bg-rose-900/20 dark:text-rose-400",
     dot: "bg-rose-400",
+    bar: "border-l-rose-500 dark:border-l-rose-400",
   },
 };
 
@@ -588,9 +620,9 @@ export default function RecepcaoPage() {
   return (
     <>
       <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.RECEPCAO]}>
-        <div className="space-y-3">
+        <div className="space-y-1">
           <section className={`relative overflow-hidden ${GLASS}`}>
-            <div className="space-y-4 px-4 py-4 sm:px-5">
+            <div className="space-y-2 px-4 py-4 sm:px-5">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0">
                   <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-[var(--primary-500)] dark:text-[var(--primary-400)]">
@@ -758,7 +790,7 @@ export default function RecepcaoPage() {
                 <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
                   Marcações
                 </span>
-                <div className="flex gap-1 overflow-x-auto xl:flex-nowrap [&::-webkit-scrollbar]:hidden [scrollbar-width:none]">
+                <div className="flex flex-wrap gap-1.5">
                   {marcacoesPorSector.map((sector) => (
                     <QuickLinkCard
                       key={sector.href}
@@ -768,6 +800,7 @@ export default function RecepcaoPage() {
                       icon={sector.icon}
                       iconBg={sector.iconBg}
                       iconColor={sector.iconColor}
+                      bar={sector.bar}
                     />
                   ))}
                 </div>
@@ -775,11 +808,11 @@ export default function RecepcaoPage() {
             </div>
           </section>
 
-          <div className="grid gap-3 xl:grid-cols-[minmax(0,1.15fr)_380px]">
-            <div className="space-y-3">
+          <div className="grid gap-1 xl:grid-cols-[minmax(0,1.15fr)_380px]">
+            <div className="space-y-1">
               {showSearchSection ? (
                 <section className={GLASS}>
-                  <div className="space-y-3 px-4 py-4">
+                  <div className="space-y-2 px-4 py-4">
                     <div className="space-y-2">
                       {carregando ? (
                         <div className="flex items-center justify-center gap-2 rounded-xl border border-dashed border-border px-4 py-10 text-sm text-muted-foreground">
@@ -852,7 +885,7 @@ export default function RecepcaoPage() {
               ) : null}
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-1">
               <ChatbotPanel
                 messages={chatMessages}
                 composer={chatComposer}
@@ -876,7 +909,7 @@ export default function RecepcaoPage() {
           </div>
 
           {(loadingNotes || approvedNotes.length > 0 || rejectedNotes.length > 0) && (
-            <div className="grid gap-3 lg:grid-cols-2">
+            <div className="grid gap-1 lg:grid-cols-2">
               <ReceptionDecidedSection
                 title="Notas de crédito aprovadas"
                 icon={<CheckCircle2 size={13} className="text-emerald-600" />}
@@ -942,7 +975,7 @@ function SearchResultCard({ item }: { item: ReceptionSearchRow }) {
   return (
     <Link
       href={`/reception/reception-checkins/${item.id}`}
-      className="block rounded-xl border border-white/20 bg-white/25 px-3 py-3 shadow-sm transition hover:border-[var(--primary-300)] hover:bg-white/45 dark:bg-white/5 dark:hover:border-[var(--primary-600)] dark:hover:bg-white/[0.08]"
+      className={`block rounded-xl border border-l-4 border-white/20 bg-white/25 px-3 py-3 shadow-sm transition hover:border-[var(--primary-300)] hover:bg-white/45 dark:bg-white/5 dark:hover:border-[var(--primary-600)] dark:hover:bg-white/[0.08] ${statusMeta?.bar ?? "border-l-border"}`}
     >
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div className="min-w-0">
@@ -1160,6 +1193,7 @@ function QuickLinkCard({
   icon: Icon,
   iconBg,
   iconColor,
+  bar,
 }: {
   href: string;
   title: string;
@@ -1167,11 +1201,12 @@ function QuickLinkCard({
   icon: typeof Users;
   iconBg?: string;
   iconColor?: string;
+  bar?: string;
 }) {
   return (
     <Link
       href={href}
-      className="group flex w-[10.4rem] shrink-0 items-start gap-1 rounded-xl border border-white/20 bg-white/25 px-2 py-1.5 shadow-sm transition hover:border-[var(--primary-300)] hover:bg-white/40 xl:w-[calc((100%_-_4rem)/5)] dark:bg-white/5 dark:hover:border-[var(--primary-600)] dark:hover:bg-white/[0.08]"
+      className={`group flex min-w-[9.5rem] flex-1 basis-[10rem] items-start gap-1 rounded-xl border border-l-4 border-white/20 bg-white/25 px-2 py-1.5 shadow-sm transition hover:border-[var(--primary-300)] hover:bg-white/40 dark:bg-white/5 dark:hover:border-[var(--primary-600)] dark:hover:bg-white/[0.08] ${bar ?? "border-l-border"}`}
     >
       <span
         className={`inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md ${iconBg ?? "bg-muted"} ${iconColor ?? "text-muted-foreground"}`}
