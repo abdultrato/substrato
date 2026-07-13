@@ -1491,69 +1491,62 @@ export default function AiOperationalPage() {
 
   return (
     <AppLayout>
-      <div className="mx-auto flex h-[calc(100vh-8rem)] max-w-7xl flex-col gap-3">
-        <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-white/20 bg-white/30 px-3 py-2 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]">
-          <div className="flex min-w-0 flex-1 items-center gap-2">
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-indigo-600 text-white shadow-sm">
-              <Bot size={16} />
-            </span>
-            <div className="min-w-0">
-              <h1 className="text-sm font-bold leading-tight text-foreground">{t("IA Operacional", "Operational AI")}</h1>
-              <p className="truncate text-[11px] text-muted-foreground">
-                {activeView === "history"
-                  ? t("Histórico das conversas auditáveis da IA.", "History of auditable AI conversations.")
-                  : t("Assistente auditável, com contexto do projecto, ferramentas internas e permissões reais.", "Auditable assistant with project context, internal tools, and real permissions.")}
-              </p>
-            </div>
-          </div>
-          <div className="ml-auto flex flex-wrap items-center gap-2">
-            {activeView === "history" ? (
-              <>
-                <Button variant="outline" size="sm" onClick={() => { resetCurrentConversation(); setActiveView("chat") }}>
-                  <MessageSquarePlus size={14} />
-                  {t("Nova conversa", "New chat")}
-                </Button>
-                <Button
-                  variant="danger"
-                  size="sm"
-                  onClick={() => void handleClearHistory()}
-                  loading={clearingHistory}
-                  disabled={!sessions.length}
-                >
-                  <Trash2 size={14} />
-                  {t("Limpar histórico", "Clear history")}
-                </Button>
-              </>
-            ) : (
-              <>
-                <Button variant="outline" size="sm" onClick={() => setActiveView("history")}>
-                  <History size={14} />
-                  {t("Histórico", "History")}
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => void handleClearConversation()}
-                  loading={clearingConversation}
-                  disabled={!hasActiveConversation}
-                >
-                  <Trash2 size={14} />
-                  {t("Limpar conversa", "Clear chat")}
-                </Button>
-              </>
-            )}
-          </div>
-        </div>
-
-        <div className="grid min-h-0 flex-1 gap-3 xl:grid-cols-[minmax(0,1fr)_20rem]">
+      <div className="mx-auto flex h-[calc(100vh-8rem)] max-w-7xl flex-col gap-1.5">
+        <div className="grid min-h-0 flex-1 gap-1.5 xl:grid-cols-[minmax(0,1fr)_20rem]">
           <div className="flex min-h-0 flex-1 flex-col rounded-2xl border border-white/20 bg-white/30 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]">
+            {/* Cabeçalho fundido no cartão da conversa: título + estado + acções */}
             <div className="border-b border-white/20 px-3 py-2 dark:border-white/10">
-              <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                {activeView === "history"
-                  ? t("Histórico de conversas", "Conversation history")
-                  : sessionId
-                    ? t("Conversa actual", "Current conversation")
-                    : t("Nova conversa", "New conversation")}
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-violet-500 to-indigo-600 text-white shadow-sm">
+                  <Bot size={15} />
+                </span>
+                <div className="min-w-0">
+                  <h1 className="text-sm font-bold leading-tight text-foreground">{t("IA Operacional", "Operational AI")}</h1>
+                  <p className="truncate text-[10px] text-muted-foreground">
+                    {activeView === "history"
+                      ? t("Histórico de conversas", "Conversation history")
+                      : sessionId
+                        ? t("Conversa actual", "Current conversation")
+                        : t("Nova conversa", "New conversation")}
+                  </p>
+                </div>
+                <div className="ml-auto flex flex-wrap items-center gap-1.5">
+                  {activeView === "history" ? (
+                    <>
+                      <Button variant="outline" size="sm" onClick={() => { resetCurrentConversation(); setActiveView("chat") }}>
+                        <MessageSquarePlus size={14} />
+                        {t("Nova conversa", "New chat")}
+                      </Button>
+                      <Button
+                        variant="danger"
+                        size="sm"
+                        onClick={() => void handleClearHistory()}
+                        loading={clearingHistory}
+                        disabled={!sessions.length}
+                      >
+                        <Trash2 size={14} />
+                        {t("Limpar histórico", "Clear history")}
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <Button variant="outline" size="sm" onClick={() => setActiveView("history")}>
+                        <History size={14} />
+                        {t("Histórico", "History")}
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => void handleClearConversation()}
+                        loading={clearingConversation}
+                        disabled={!hasActiveConversation}
+                      >
+                        <Trash2 size={14} />
+                        {t("Limpar conversa", "Clear chat")}
+                      </Button>
+                    </>
+                  )}
+                </div>
               </div>
               {historyError ? (
                 <div className="mt-2 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-100">
