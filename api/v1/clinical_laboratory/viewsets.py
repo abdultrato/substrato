@@ -710,6 +710,59 @@ class MicrobiologyCultureViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
         ])
         return Response(self.get_serializer(culture).data)
 
+    @action(detail=True, methods=["post"], url_path="adicionar-meios", url_name="adicionar_meios")
+    def adicionar_meios(self, request, pk=None):
+        """Acrescenta novos meios/placas a uma cultura já em incubação, cada um
+        com o seu próprio cronómetro a arrancar agora."""
+        culture = self.get_object()
+        allowed = {
+            MicrobiologyCulture.Status.INCUBATING,
+            MicrobiologyCulture.Status.REINCUBATING,
+        }
+        if culture.status not in allowed:
+            raise DRFValidationError(
+                {"status": "Só é possível adicionar meios enquanto a cultura está em incubação."}
+            )
+        new_plates = request.data.get("plates", [])
+        if not isinstance(new_plates, list) or not new_plates:
+            raise DRFValidationError({"plates": "Informe pelo menos uma placa/meio de cultura."})
+
+        default_hours = float(request.data.get("hours") or 24)
+        now = timezone.now()
+        plates = list(culture.culture_plates or [])
+        plate_ends = []
+        for plate in new_plates:
+            if not isinstance(plate, dict):
+                continue
+            try:
+                plate_hours = float(plate.get("incubation_hours") or default_hours)
+            except (TypeError, ValueError):
+                plate_hours = default_hours
+            if plate_hours <= 0:
+                plate_hours = default_hours
+            plate_end = now + timedelta(hours=plate_hours)
+            plate["incubation_hours"] = plate_hours
+            plate["incubation_started_at"] = now.isoformat()
+            plate["incubation_expected_end_at"] = plate_end.isoformat()
+            plate_ends.append(plate_end)
+            plates.append(plate)
+
+        if not plate_ends:
+            raise DRFValidationError({"plates": "Nenhum meio válido para adicionar."})
+
+        culture.culture_plates = plates
+        latest = max(plate_ends)
+        if culture.incubation_expected_end_at is None or latest > culture.incubation_expected_end_at:
+            culture.incubation_expected_end_at = latest
+        culture.incubation_started_at = culture.incubation_started_at or now
+        culture.save(update_fields=[
+            "culture_plates",
+            "incubation_expected_end_at",
+            "incubation_started_at",
+            "updated_at",
+        ])
+        return Response(self.get_serializer(culture).data)
+
     @action(detail=True, methods=["post"], url_path="registrar-observacao", url_name="registrar_observacao")
     def registrar_observacao(self, request, pk=None):
         culture = self.get_object()

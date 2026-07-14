@@ -95,6 +95,7 @@ export default function CultureDetailPage() {
   const id = params.id;
   const [culture, setCulture] = useState<Culture | null>(null);
   const [plates, setPlates] = useState<Plate[]>(() => normalizePlates([{}], "CUL"));
+  const [draftPlates, setDraftPlates] = useState<Plate[]>([]);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -169,15 +170,54 @@ export default function CultureDetailPage() {
     };
   }
 
+  function nextPlateSeq(existing: Plate[]) {
+    const usedSeqs = existing
+      .map((row) => Number(row.code.match(/-P(\d+)$/)?.[1]))
+      .filter((n) => Number.isFinite(n));
+    return (usedSeqs.length ? Math.max(...usedSeqs) : 0) + 1;
+  }
+
   function addPlate() {
     setPlates((rows) => {
       const cultureRef = culture?.custom_id || "CUL";
-      const usedSeqs = rows
-        .map((row) => Number(row.code.match(/-P(\d+)$/)?.[1]))
-        .filter((n) => Number.isFinite(n));
-      const nextSeq = (usedSeqs.length ? Math.max(...usedSeqs) : 0) + 1;
-      return [...rows, makeCulturePlate({ code: makePlateCode(cultureRef, nextSeq) })];
+      return [...rows, makeCulturePlate({ code: makePlateCode(cultureRef, nextPlateSeq(rows)) })];
     });
+  }
+
+  // ── Adicionar novos meios durante a incubação (rascunho editável) ──
+  function addDraftPlate() {
+    setDraftPlates((rows) => {
+      const cultureRef = culture?.custom_id || "CUL";
+      const seq = nextPlateSeq([...plates, ...rows]);
+      return [...rows, makeCulturePlate({ code: makePlateCode(cultureRef, seq) })];
+    });
+  }
+
+  function updateDraftPlate(index: number, patch: Partial<Plate>) {
+    setDraftPlates((rows) => rows.map((row, i) => (i === index ? { ...row, ...patch } : row)));
+  }
+
+  function removeDraftPlate(index: number) {
+    setDraftPlates((rows) => rows.filter((_, i) => i !== index));
+  }
+
+  async function submitNewMedia() {
+    if (!draftPlates.length) return;
+    setSaving(true);
+    setError(null);
+    try {
+      const updated = await apiFetch<Culture>(`/clinical_laboratory/culture/${id}/adicionar-meios/`, {
+        method: "POST",
+        body: JSON.stringify({ plates: draftPlates }),
+      });
+      setCulture(updated);
+      setPlates(normalizePlates(updated.culture_plates as any[], updated.custom_id));
+      setDraftPlates([]);
+    } catch (err: any) {
+      setError(err?.message || "Não foi possível adicionar os meios.");
+    } finally {
+      setSaving(false);
+    }
   }
 
   if (loading) {
@@ -344,10 +384,67 @@ export default function CultureDetailPage() {
                     Iniciar incubação
                   </button>
                 </div>
-              ) : incubationReady ? (
-                <p className="flex items-center gap-1.5 text-[11px] text-emerald-700 dark:text-emerald-300"><CheckCircle2 size={12} /> Tempo de incubação concluído. Os meios prontos já podem ser lidos individualmente.</p>
               ) : (
-                <p className="flex items-center gap-1.5 text-[11px] text-muted-foreground"><Lock size={12} /> Sementeira bloqueada durante a incubação. Cada meio abre para leitura quando o seu tempo termina.</p>
+                <div className="space-y-2">
+                  {incubationReady ? (
+                    <p className="flex items-center gap-1.5 text-[11px] text-emerald-700 dark:text-emerald-300"><CheckCircle2 size={12} /> Tempo de incubação concluído. Os meios prontos já podem ser lidos individualmente.</p>
+                  ) : (
+                    <p className="flex items-center gap-1.5 text-[11px] text-muted-foreground"><Lock size={12} /> Sementeira bloqueada durante a incubação. Cada meio abre para leitura quando o seu tempo termina.</p>
+                  )}
+
+                  {isIncubating && (
+                    <div className="space-y-2 border-t border-white/25 pt-2 dark:border-white/10">
+                      {draftPlates.map((plate, index) => {
+                        const custom = isCustomMedium(plate);
+                        return (
+                          <div key={plate.id} className="space-y-2 rounded-lg border border-teal-300/40 bg-teal-50/25 p-2 backdrop-blur-sm dark:border-teal-700/30 dark:bg-teal-950/15">
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="inline-flex items-center gap-1 rounded-md border border-teal-300/50 bg-teal-50/70 px-2 py-0.5 font-mono text-[11px] font-semibold text-teal-800 dark:border-teal-700/40 dark:bg-teal-900/25 dark:text-teal-200"><FlaskConical size={11} /> {plate.code}</span>
+                              <button type="button" onClick={() => removeDraftPlate(index)} aria-label="Remover meio" className="inline-flex h-7 w-7 items-center justify-center rounded-lg border border-white/30 bg-white/25 text-muted-foreground transition hover:text-red-600 dark:border-white/10 dark:bg-white/5"><Trash2 size={13} /></button>
+                            </div>
+                            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                              <select value={plate.container} onChange={(event) => updateDraftPlate(index, { container: event.target.value })} className={inputClass} aria-label="Recipiente">
+                                {CULTURE_CONTAINERS.map((option) => (<option key={option} value={option}>{option}</option>))}
+                              </select>
+                              <select value={mediumSelectValue(plate)} onChange={(event) => updateDraftPlate(index, applyMediumChoice(plate, event.target.value))} className={inputClass} aria-label="Meio de cultura">
+                                <option value="">Meio de cultura…</option>
+                                {CULTURE_MEDIA.map((option) => (<option key={option} value={option}>{option}</option>))}
+                              </select>
+                              {custom && (
+                                <input value={plate.medium} onChange={(event) => updateDraftPlate(index, { medium: event.target.value })} placeholder="Especifique o meio" className={inputClass} />
+                              )}
+                              <select value={plate.consistency} onChange={(event) => updateDraftPlate(index, { consistency: event.target.value })} className={inputClass} aria-label="Consistência do meio">
+                                {CULTURE_CONSISTENCIES.map((option) => (<option key={option} value={option}>{option}</option>))}
+                              </select>
+                              <select value={plate.atmosphere} onChange={(event) => updateDraftPlate(index, { atmosphere: event.target.value })} className={inputClass} aria-label="Atmosfera">
+                                {CULTURE_ATMOSPHERES.map((option) => (<option key={option} value={option}>{option}</option>))}
+                              </select>
+                              <div className="flex items-center gap-1.5">
+                                <input value={plate.temperature_c} onChange={(event) => updateDraftPlate(index, { temperature_c: event.target.value })} placeholder="°C" className={inputClass} />
+                                <span className="text-xs text-muted-foreground">°C</span>
+                              </div>
+                              <div className="flex items-center gap-1.5" title="Horas de incubação deste meio">
+                                <input type="number" min="0" step="0.5" value={plate.incubation_hours} onChange={(event) => updateDraftPlate(index, { incubation_hours: event.target.value })} placeholder="Horas" className={inputClass} aria-label="Horas de incubação deste meio" />
+                                <span className="text-xs text-muted-foreground">h</span>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+
+                      <div className="flex flex-wrap items-center gap-2">
+                        <button type="button" onClick={addDraftPlate} className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-white/40 bg-white/35 px-2.5 text-xs font-medium text-foreground shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/5"><Plus size={14} /> Adicionar meio</button>
+                        {draftPlates.length > 0 && (
+                          <button type="button" disabled={saving} onClick={submitNewMedia} className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-gradient-to-r from-teal-600 to-cyan-600 px-3 text-xs font-semibold text-white shadow-md shadow-teal-500/20 disabled:opacity-60">
+                            {saving ? <Loader2 size={14} className="animate-spin" /> : <Clock3 size={14} />}
+                            Incubar {draftPlates.length} novo(s) meio(s)
+                          </button>
+                        )}
+                        <span className="text-[11px] text-muted-foreground">Os novos meios arrancam o seu próprio cronómetro ao adicionar.</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
               )}
             </Card>
 
