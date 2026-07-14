@@ -22,6 +22,7 @@ import {
   pickEquipmentIcon,
   type EquipmentRow,
 } from "@/components/equipment/equipmentMeta";
+import EquipmentMaintenanceSection from "@/components/equipment/EquipmentMaintenanceSection";
 
 const GLASS =
   "rounded-xl border border-white/20 bg-white/25 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/5";
@@ -364,6 +365,11 @@ export default function EquipmentsEditPage() {
                 </span>
               </label>
             </FormSection>
+
+            {/* Estado de manutenção do aparelho (leitura, herdado das manutenções) */}
+            <div className="col-span-2">
+              <EquipmentMaintenanceSection equipmentId={id} editable />
+            </div>
           </div>
         ) : null}
       </form>
