@@ -119,6 +119,11 @@ export default function AfbSmearCreateForm() {
     };
   }, [initialCandidateId]);
 
+  // Sem candidato: a seleção vive na lista de pendentes (evita duplicar a fila).
+  useEffect(() => {
+    if (!initialCandidateId) router.replace(LIST_HREF);
+  }, [initialCandidateId, router]);
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!selected || selected.kind !== "pending") {
@@ -149,9 +154,19 @@ export default function AfbSmearCreateForm() {
     }
   }
 
+  if (!singleMode) {
+    return (
+      <AppLayout requiredGroups={requiredGroupsForResourceGroup("clinical_laboratory")}>
+        <div className="flex min-h-64 items-center justify-center gap-2 text-sm text-muted-foreground">
+          <Loader2 size={16} className="animate-spin" /> A abrir a fila de pendentes...
+        </div>
+      </AppLayout>
+    );
+  }
+
   return (
-    <AppLayout fullWidth requiredGroups={requiredGroupsForResourceGroup("clinical_laboratory")}>
-      <form onSubmit={handleSubmit} noValidate className="mx-auto w-full max-w-[97vw] space-y-1.5 overflow-x-hidden px-1 sm:px-0">
+    <AppLayout requiredGroups={requiredGroupsForResourceGroup("clinical_laboratory")}>
+      <form onSubmit={handleSubmit} noValidate className="mx-auto w-full max-w-3xl space-y-1.5 overflow-x-hidden px-1 sm:px-0">
         <section className={`relative overflow-hidden px-3 py-2.5 ${GLASS}`}>
           <span className="absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-sky-500 via-cyan-500 to-emerald-500" />
           <div className="relative flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">

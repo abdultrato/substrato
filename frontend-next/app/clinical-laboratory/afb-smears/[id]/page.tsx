@@ -9,8 +9,8 @@ import AppLayout from "@/components/layout/AppLayout";
 import { apiFetch } from "@/lib/api";
 import { requiredGroupsForResourceGroup } from "@/lib/resourcesAccess";
 
-const PENDING_HREF = "/clinical-laboratory/afb-smears/new";
 const LIST_HREF = "/clinical-laboratory/afb-smears";
+const PENDING_HREF = LIST_HREF;
 
 type AfbSmear = {
   id: number;
