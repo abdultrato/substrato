@@ -388,15 +388,15 @@ export default function ClinicalLaboratoryHubPage() {
   }, [safeRefreshToken]);
 
   const metrics = [
-    { label: "Sectores", value: loading ? "…" : counts.setores },
-    { label: "Exames no catálogo", value: loading ? "…" : counts.exames },
-    { label: "Pedidos", value: loading ? "…" : counts.pedidos },
-    { label: "Coletas", value: loading ? "…" : counts.coletas },
-    { label: "Amostras", value: loading ? "…" : counts.amostras },
-    { label: "Recepções", value: loading ? "…" : counts.recepcoes },
-    { label: "Laudos", value: loading ? "…" : counts.laudos },
-    { label: "Críticos", value: loading ? "…" : counts.criticos },
-    { label: "Culturas", value: loading ? "…" : counts.culturas },
+    { label: "Sectores", value: loading ? "…" : counts.setores, href: "/clinical-laboratory/sectors" },
+    { label: "Exames", value: loading ? "…" : counts.exames, href: "/clinical-laboratory/tests" },
+    { label: "Pedidos", value: loading ? "…" : counts.pedidos, href: "/clinical-laboratory/orders" },
+    { label: "Coletas", value: loading ? "…" : counts.coletas, href: "/clinical-laboratory/collections" },
+    { label: "Amostras", value: loading ? "…" : counts.amostras, href: "/clinical-laboratory/samples" },
+    { label: "Recepções", value: loading ? "…" : counts.recepcoes, href: "/clinical-laboratory/reception" },
+    { label: "Laudos", value: loading ? "…" : counts.laudos, href: "/clinical-laboratory/reports" },
+    { label: "Críticos", value: loading ? "…" : counts.criticos, href: "/clinical-laboratory/critical-results" },
+    { label: "Culturas", value: loading ? "…" : counts.culturas, href: "/clinical-laboratory/cultures" },
   ];
 
   return (
@@ -428,20 +428,21 @@ export default function ClinicalLaboratoryHubPage() {
             </span>
           </div>
 
-          {/* Métricas */}
-          <div className="relative grid grid-cols-[repeat(auto-fit,minmax(min(100%,4.75rem),1fr))] gap-0.5 border-t border-border/60 bg-card/40 px-1 py-1">
-            {metrics.map(({ label, value }) => (
-              <div
+          {/* Métricas — pílulas clicáveis para a respetiva lista */}
+          <div className="relative flex flex-wrap gap-0.5 border-t border-border/60 bg-card/40 px-1 py-0.5">
+            {metrics.map(({ label, value, href }) => (
+              <Link
                 key={label}
-                className="flex min-w-0 items-center justify-between gap-1 rounded border border-teal-200/45 bg-white/35 px-1 py-0.5 backdrop-blur-sm dark:border-teal-700/25 dark:bg-teal-900/15"
+                href={href}
+                className="group inline-flex items-center gap-1 rounded border border-teal-200/45 bg-white/35 px-1 py-px shadow-sm backdrop-blur-sm transition-colors hover:border-teal-300 hover:bg-white/60 dark:border-teal-700/25 dark:bg-teal-900/15 dark:hover:bg-teal-900/30"
               >
-                <div className="min-w-0 truncate text-[8px] font-semibold uppercase tracking-tight text-teal-700/80 dark:text-teal-300/70">
+                <span className="text-[8px] font-semibold uppercase tracking-tight text-teal-700/80 dark:text-teal-300/70">
                   {label}
-                </div>
-                <div className="shrink-0 font-display text-[12px] font-bold leading-none tabular-nums text-teal-950 dark:text-teal-50">
+                </span>
+                <span className="font-display text-[10px] font-bold leading-none tabular-nums text-teal-950 dark:text-teal-50">
                   {value}
-                </div>
-              </div>
+                </span>
+              </Link>
             ))}
           </div>
 
