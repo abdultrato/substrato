@@ -1306,8 +1306,7 @@ export function PatientIntakeWizard({
             <div className="flex items-start gap-2 rounded-lg border border-rose-200 bg-rose-50/80 px-3 py-2.5 text-xs text-rose-700 backdrop-blur-sm">
               <Droplets size={14} className="mt-0.5 shrink-0" />
               <span>
-                Será adicionado o passo <strong>Doação de sangue</strong> para registar a colheita, sinais
-                vitais e triagem.
+                Será adicionado o passo <strong>Doação de sangue</strong> para registar a triagem.
               </span>
             </div>
           ) : null}
