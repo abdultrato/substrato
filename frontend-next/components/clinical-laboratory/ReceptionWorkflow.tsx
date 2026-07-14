@@ -16,6 +16,8 @@ export type SampleOption = {
 export type RequestItem = {
   id: number
   exam_name?: string
+  exam_custom_id?: string
+  exam_method?: string
   medical_exam_name?: string
   sample_status?: string
   sample_status_display?: string

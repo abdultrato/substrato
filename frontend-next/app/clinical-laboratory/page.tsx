@@ -293,7 +293,7 @@ const PHASES: PhaseConfig[] = [
         icon: Dna,
       },
       {
-        href: "/clinical-laboratory/molecular",
+        href: "/clinical-laboratory/molecular/hiv-viral-load",
         label: "Biologia Molecular: Carga Viral de HIV",
         desc: "Quantificação molecular da carga viral HIV",
         icon: Dna,

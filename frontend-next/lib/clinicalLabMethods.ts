@@ -53,7 +53,7 @@ export const LAB_METHOD_OPTIONS: [string, string][] = [
   ['Microscopico', 'Microscópico'],
   ['MetodoManual', 'Método manual'],
   ['NAAT', 'NAAT'],
-  ['PCR', 'PCR'],
+  ['PCR', 'PCR - Reação da Polimerase em Cadeia'],
   ['PCRAleloEspecifico', 'PCR alelo-específico'],
   ['PCRTempoReal', 'PCR em tempo real'],
   ['PCRMultiplex', 'PCR multiplex'],

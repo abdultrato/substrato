@@ -107,7 +107,7 @@ class LabMethod(models.TextChoices):
     MICROSCOPICO = 'Microscopico', 'Microscópico'
     METODOMANUAL = 'MetodoManual', 'Método manual'
     NAAT = 'NAAT', 'NAAT'
-    PCR = 'PCR', 'PCR'
+    PCR = 'PCR', 'PCR - Reação da Polimerase em Cadeia'
     PCRALELOESPECIFICO = 'PCRAleloEspecifico', 'PCR alelo-específico'
     PCRTEMPOREAL = 'PCRTempoReal', 'PCR em tempo real'
     PCRMULTIPLEX = 'PCRMultiplex', 'PCR multiplex'

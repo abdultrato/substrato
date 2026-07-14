@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { usePathname } from "next/navigation";
 import { Dna, Loader2, RefreshCw, Search } from "lucide-react";
 
 import AppLayout from "@/components/layout/AppLayout";
@@ -92,7 +93,36 @@ function candidateHref(item: MolecularQueueItem) {
   return `/clinical-laboratory/molecular/new?${params.toString()}`;
 }
 
-export default function LabMolecularPage() {
+type MolecularPageConfig = {
+  assayFilter: string;
+  title: string;
+  subtitle: string;
+  badge: string;
+  pendingLabel: string;
+  emptyPendingLabel: string;
+};
+
+const DEFAULT_CONFIG: MolecularPageConfig = {
+  assayFilter: "GENEXPERT_MTB_RIF",
+  title: "Fila molecular / GeneXpert",
+  subtitle: "Exames GeneXpert são herdados do pedido e da amostra; esta página não cria resultados livres.",
+  badge: "GeneXpert",
+  pendingLabel: "candidato(s) GeneXpert",
+  emptyPendingLabel: "Nenhum exame GeneXpert pendente com amostra recebida/aceite/em processamento.",
+};
+
+const HIV_VIRAL_LOAD_CONFIG: MolecularPageConfig = {
+  assayFilter: "CV_HIV",
+  title: "Biologia Molecular: Carga Viral de HIV",
+  subtitle: "Exames de carga viral HIV são herdados do pedido e da amostra; o método esperado é PCR - Reação da Polimerase em Cadeia.",
+  badge: "Carga Viral HIV",
+  pendingLabel: "candidato(s) Carga Viral de HIV",
+  emptyPendingLabel: "Nenhum exame de Carga Viral de HIV pendente com amostra recebida/aceite/em processamento.",
+};
+
+function MolecularQueuePage() {
+  const pathname = usePathname() || "";
+  const config = pathname.includes("/hiv-viral-load") ? HIV_VIRAL_LOAD_CONFIG : DEFAULT_CONFIG;
   const [queue, setQueue] = useState<MolecularQueueItem[]>([]);
   const [results, setResults] = useState<MolecularResult[]>([]);
   const [query, setQuery] = useState("");
@@ -115,8 +145,8 @@ export default function LabMolecularPage() {
           clientCache: false,
         }),
       ]);
-      setQueue(queueRows);
-      setResults(listRows.items);
+      setQueue(queueRows.filter((item) => item.assay === config.assayFilter));
+      setResults(listRows.items.filter((item) => item.assay === config.assayFilter));
     } catch (err: any) {
       setError(err?.message || "Não foi possível carregar a fila molecular.");
     } finally {
@@ -181,12 +211,12 @@ export default function LabMolecularPage() {
                     Biologia molecular
                   </span>
                   <span className="rounded-full border border-cyan-200/30 bg-cyan-50/[0.02] px-1.5 py-0.5 text-[10px] font-medium text-cyan-700 backdrop-blur-[1px] dark:border-cyan-800/20 dark:bg-cyan-900/[0.02] dark:text-cyan-300">
-                    Consumo por tipo de exame
+                    {config.badge}
                   </span>
                 </div>
-                <h1 className="text-lg font-semibold leading-tight text-foreground">Fila molecular / GeneXpert</h1>
+                <h1 className="text-lg font-semibold leading-tight text-foreground">{config.title}</h1>
                 <p className="text-xs text-muted-foreground">
-                  Exames moleculares são herdados do pedido e da amostra; esta página não cria resultados livres.
+                  {config.subtitle}
                 </p>
               </div>
             </div>
@@ -224,7 +254,7 @@ export default function LabMolecularPage() {
               <div className="mb-1.5 flex items-center justify-between gap-1.5">
                 <div>
                   <h2 className="text-sm font-semibold text-foreground">Exames pendentes</h2>
-                  <p className="text-xs text-muted-foreground">{filteredPending.length} candidato(s) molecular/GeneXpert</p>
+                  <p className="text-xs text-muted-foreground">{filteredPending.length} {config.pendingLabel}</p>
                 </div>
               </div>
 
@@ -260,7 +290,7 @@ export default function LabMolecularPage() {
                 </div>
               ) : (
                 <div className="rounded-lg border border-white/[0.10] bg-white/[0.02] px-2 py-4 text-center text-sm text-muted-foreground backdrop-blur-[1px] dark:border-white/[0.06] dark:bg-white/[0.02]">
-                  Nenhum exame molecular pendente com amostra recebida/aceite/em processamento.
+                  {config.emptyPendingLabel}
                 </div>
               )}
             </section>
@@ -305,4 +335,8 @@ export default function LabMolecularPage() {
       </div>
     </AppLayout>
   );
+}
+
+export default function LabMolecularPage() {
+  return <MolecularQueuePage />;
 }

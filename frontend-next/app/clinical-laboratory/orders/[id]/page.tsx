@@ -26,6 +26,7 @@ import {
 
 import AppLayout from "@/components/layout/AppLayout"
 import { apiFetch } from "@/lib/api"
+import { clinicalLabExamRoute, clinicalLabItemsRoute, isSpecialClinicalLabExam } from "@/lib/clinicalLabExamRouting"
 import { routeParamToString } from "@/lib/routeParams"
 
 /* ── types ── */
@@ -193,10 +194,6 @@ export default function LabOrderDetailPage() {
     finally { setBusy(false) }
   }
 
-  function isCultureItem(item: OrderItem) {
-    return String(item.exam_method || "").toLowerCase().includes("cultura");
-  }
-
   async function handleIniciarProcessamento(item?: OrderItem) {
     if (!record?.id) return
     setProcessingItemId(item?.id ?? "all")
@@ -204,12 +201,22 @@ export default function LabOrderDetailPage() {
     try {
       await apiFetch(`/clinical/labrequest/${record.id}/iniciar-processamento/`, { method: "POST" })
       setFeedback(item ? `Processamento iniciado para ${item.exam_name || item.test_name || "o item"}.` : "Processamento iniciado para todos os itens.")
-      if (item && isCultureItem(item)) {
-        router.push("/clinical-laboratory/cultures")
-        return
+      if (item) {
+        const route = clinicalLabExamRoute(item)
+        if (route) {
+          router.push(route)
+          return
+        }
       }
-      if (!item && tests.length > 0 && tests.every(isCultureItem)) {
-        router.push("/clinical-laboratory/cultures")
+      if (!item && tests.length > 0) {
+        const route = clinicalLabItemsRoute(tests, "")
+        if (route) {
+          router.push(route)
+          return
+        }
+      }
+      if (!item && tests.length > 0 && tests.every(isSpecialClinicalLabExam)) {
+        router.push(clinicalLabItemsRoute(tests, `/clinical-laboratory/worklists/${record.id}`))
         return
       }
       router.push(`/clinical-laboratory/worklists/${record.id}`)
@@ -437,7 +444,7 @@ export default function LabOrderDetailPage() {
                                       disabled={!canStartProcessing || busy}
                                       className="inline-flex h-6 items-center gap-1 rounded-md border border-sky-200 bg-sky-50/80 px-2 text-[10px] font-semibold text-sky-700 transition hover:bg-sky-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-sky-700/40 dark:bg-sky-900/20 dark:text-sky-300"
                                     >
-                                      {processingItemId === item.id ? <Loader2 size={10} className="animate-spin" /> : isCultureItem(item) ? <FlaskConical size={10} /> : <PlayCircle size={10} />}
+                                      {processingItemId === item.id ? <Loader2 size={10} className="animate-spin" /> : isSpecialClinicalLabExam(item) ? <FlaskConical size={10} /> : <PlayCircle size={10} />}
                                       Iniciar processamento
                                     </button>
                                   </td>

@@ -112,6 +112,7 @@ function MolecularCreateForm() {
   const sample = searchParams.get("sample") ? Number(searchParams.get("sample")) : null;
   const assay = searchParams.get("assay") || "PCR";
   const isGeneXpert = assay === "GENEXPERT_MTB_RIF";
+  const listHref = assay === "CV_HIV" ? "/clinical-laboratory/molecular/hiv-viral-load" : LIST_HREF;
 
   const [queue, setQueue] = useState<MolecularQueueItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -225,7 +226,7 @@ function MolecularCreateForm() {
 
             <div className="grid w-full grid-cols-2 gap-1 md:flex md:w-auto md:shrink-0 md:items-center">
               <Link
-                href={LIST_HREF}
+                href={listHref}
                 className="inline-flex h-7 min-w-0 items-center justify-center gap-1.5 rounded-lg border border-white/[0.10] bg-white/[0.02] px-2.5 text-sm font-medium text-foreground shadow-sm backdrop-blur-[1px] transition hover:bg-white/[0.03] dark:border-white/[0.06] dark:bg-white/[0.02] dark:hover:bg-white/[0.03]"
               >
                 <ArrowLeft size={16} />

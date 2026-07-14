@@ -235,7 +235,7 @@ TESTS: tuple[tuple, ...] = (
     # ── Biologia Molecular ───────────────────────────────────────────────
     ("GENEXP", "GeneXpert MTB/RIF", "MOL", ST.SPUTUM, "ESCARRO", LM.GENEXPERT,
      "", "MTB não detetado", None, None, None, None, 4, False, False, "1200.00"),
-    ("CVHIV", "Carga viral HIV", "MOL", ST.PLASMA, "EDTA-MOL", LM.PCRQUANTITATIVO,
+    ("CVHIV", "Carga viral HIV", "MOL", ST.PLASMA, "EDTA-MOL", LM.PCR,
      "cópias/mL", "< 50 (indetetável)", None, Decimal("50"), None, None, 72, False, True, "1500.00"),
     ("COVPCR", "PCR SARS-CoV-2 (COVID-19)", "MOL", ST.SWAB, "SWAB-PCR", LM.RTPCRQUALITATIVO,
      "", "Não detetado", None, None, None, None, 24, False, False, "1500.00"),

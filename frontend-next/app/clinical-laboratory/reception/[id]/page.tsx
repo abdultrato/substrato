@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { useCallback, useEffect, useState } from "react"
-import { useParams } from "next/navigation"
+import { useParams, useRouter } from "next/navigation"
 import {
   AlertTriangle,
   ArrowLeft,
@@ -17,6 +17,7 @@ import {
 import AppLayout from "@/components/layout/AppLayout"
 import { apiFetch, apiFetchList } from "@/lib/api"
 import { getClinicalStatusLabel } from "@/lib/clinicalStatus"
+import { clinicalLabItemsRoute } from "@/lib/clinicalLabExamRouting"
 import { routeParamToString } from "@/lib/routeParams"
 import {
   countsByStatus,
@@ -31,6 +32,7 @@ import {
 
 export default function LabReceptionDetailPage() {
   const params = useParams()
+  const router = useRouter()
   const id = routeParamToString((params as any)?.id)
   const [record, setRecord] = useState<LabRequest | null>(null)
   const [reasons, setReasons] = useState<RejectionReason[]>([])
@@ -39,6 +41,7 @@ export default function LabReceptionDetailPage() {
   const [feedback, setFeedback] = useState<string | null>(null)
   const [busyItem, setBusyItem] = useState<number | null>(null)
   const [busyAll, setBusyAll] = useState(false)
+  const [sendingToLab, setSendingToLab] = useState(false)
 
   const load = useCallback(async () => {
     if (!id) return
@@ -108,6 +111,22 @@ export default function LabReceptionDetailPage() {
       setError(e?.message || "Falha ao rejeitar amostra.")
     } finally {
       setBusyItem(null)
+    }
+  }
+
+  async function handleSendToLab() {
+    if (!record?.id) return
+    setSendingToLab(true)
+    setError(null)
+    setFeedback(null)
+    try {
+      await apiFetch(`/clinical/labrequest/${record.id}/iniciar-processamento/`, { method: "POST" })
+      const destination = clinicalLabItemsRoute(labItemsOf(record), `/clinical-laboratory/worklists/${record.id}`)
+      router.push(destination)
+    } catch (e: any) {
+      setError(e?.message || "Falha ao enviar para processamento laboratorial.")
+    } finally {
+      setSendingToLab(false)
     }
   }
 
@@ -256,14 +275,16 @@ export default function LabReceptionDetailPage() {
               <div className="mt-3 flex items-center justify-between gap-2 border-t border-emerald-200/60 pt-2.5 dark:border-emerald-800/20">
                 <span className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-700 dark:text-emerald-400">
                   <CheckCircle2 size={13} />
-                  Todas as amostras aceites — disponível em Pedidos
+                  Todas as amostras aceites — pronto para o laboratório
                 </span>
-                <Link
-                  href="/clinical-laboratory/orders"
+                <button
+                  type="button"
+                  onClick={handleSendToLab}
+                  disabled={sendingToLab}
                   className="inline-flex h-7 items-center rounded-lg bg-gradient-to-r from-emerald-600 to-teal-600 px-3 text-[11px] font-semibold text-white shadow-md shadow-emerald-500/30 transition hover:from-emerald-700 hover:to-teal-700"
                 >
-                  Ver em Pedidos →
-                </Link>
+                  {sendingToLab ? "A encaminhar..." : "Enviar para laboratório →"}
+                </button>
               </div>
             )}
 
