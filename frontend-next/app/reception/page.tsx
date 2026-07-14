@@ -670,8 +670,8 @@ export default function RecepcaoPage() {
 
   return (
     <>
-      <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.RECEPCAO]}>
-        <div className="grid gap-1 xl:grid-cols-[minmax(0,1fr)_360px] xl:items-start">
+      <AppLayout fullWidth requiredGroups={[GROUPS.ADMIN, GROUPS.RECEPCAO]}>
+        <div className="grid gap-1 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
           <div className="min-w-0 space-y-1">
           <section className={`relative overflow-hidden ${GLASS}`}>
             <div className="space-y-2 px-4 py-4 sm:px-5">
@@ -954,7 +954,7 @@ export default function RecepcaoPage() {
           )}
           </div>
 
-          <aside className="xl:sticky xl:top-2 xl:self-start">
+          <aside className="lg:sticky lg:top-2 lg:self-start">
             <ChatbotPanel
               messages={chatMessages}
               streamingId={chatStreamingId}
@@ -1185,7 +1185,7 @@ function ChatbotPanel({
         </Link>
       </div>
 
-      <div className="max-h-64 space-y-1.5 overflow-y-auto p-2 [scrollbar-width:thin] xl:max-h-[calc(100vh-16rem)]">
+      <div className="max-h-64 space-y-1.5 overflow-y-auto p-2 [scrollbar-width:thin] lg:max-h-[calc(100vh-16rem)]">
         {messages.length === 0 ? (
           <div className="flex flex-wrap gap-1.5">
             {chatPrompts.map((prompt) => (
