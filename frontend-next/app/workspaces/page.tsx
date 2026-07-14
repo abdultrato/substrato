@@ -131,15 +131,15 @@ function CompactWorkspaceItem({
         <Icon size={12} strokeWidth={2.1} />
       </span>
       <span className="min-w-0">
-        <span className={`block truncate text-[11px] font-semibold leading-tight sm:text-[12px] ${tone.title}`}>{title}</span>
-        <span className={`mt-0.5 hidden truncate text-[10px] leading-tight sm:block ${tone.description}`}>
+        <span className={`block break-words text-[11px] font-semibold leading-tight sm:text-[12px] ${tone.title}`}>{title}</span>
+        <span className={`mt-0.5 block break-words text-[10px] leading-tight ${tone.description}`}>
           {description}
         </span>
       </span>
     </>
   )
 
-  const className = `group relative flex min-w-0 items-center gap-1 overflow-hidden rounded-md border px-1.5 py-1 text-left shadow-sm transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/25 sm:gap-1.5 sm:px-2 ${tone.panel}`
+  const className = `group relative flex min-w-0 items-center gap-1 rounded-md border px-2 py-1 text-left shadow-sm transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/25 sm:gap-1.5 sm:px-2.5 ${tone.panel}`
 
   if (href) {
     return (
@@ -750,8 +750,8 @@ function WorkspacesContent() {
       : t(`${moduleCount} áreas disponíveis`, `${moduleCount} areas available`)
 
   return (
-    <AppLayout>
-      <div className="mx-auto w-[97vw] max-w-[97vw] space-y-1 px-0">
+    <AppLayout fullWidth>
+      <div className="mx-auto box-border w-full max-w-full space-y-1 px-1">
         <div className={`relative overflow-hidden rounded-xl border ${headerTone.panel}`}>
           <span
             aria-hidden
@@ -766,7 +766,7 @@ function WorkspacesContent() {
                 <h1 className={`break-words font-display text-base font-semibold leading-tight sm:text-lg ${headerTone.title}`}>
                   {selectedLayer ? selectedLayer.title : t("Selecionar área de trabalho", "Select workspace")}
                 </h1>
-                <p className={`mt-0.5 line-clamp-1 text-[11px] leading-snug sm:text-xs ${headerTone.description}`}>
+                <p className={`mt-0.5 text-[11px] leading-snug sm:text-xs ${headerTone.description}`}>
                   {selectedLayer
                     ? selectedLayer.description
                     : t(
@@ -782,7 +782,7 @@ function WorkspacesContent() {
           </div>
 
           {!selectedLayer && visibleLayers.length > 0 ? (
-            <div className="relative grid grid-cols-[repeat(auto-fit,minmax(7rem,1fr))] gap-1 border-t border-border/60 bg-card/40 px-1.5 py-1.5">
+            <div className="relative grid grid-cols-[repeat(auto-fit,minmax(min(100%,10rem),1fr))] gap-1 border-t border-border/60 bg-card/40 px-2 py-1.5">
               {visibleLayers.map((layer) => (
                 <CompactWorkspaceItem
                   key={layer.key}
@@ -802,7 +802,7 @@ function WorkspacesContent() {
           ) : null}
 
           {selectedLayer ? (
-            <div className="relative flex flex-wrap items-center justify-between gap-1 border-t border-border/60 bg-card/40 px-1.5 py-1.5">
+            <div className="relative flex flex-wrap items-center justify-between gap-1 border-t border-border/60 bg-card/40 px-2 py-1.5">
               <button
                 type="button"
                 onClick={() => setSelectedLayerKey(null)}
@@ -831,7 +831,7 @@ function WorkspacesContent() {
           ) : null}
 
           {selectedLayer ? (
-            <div className="relative space-y-1 border-t border-border/60 bg-card/40 px-1.5 py-1.5">
+            <div className="relative space-y-1 border-t border-border/60 bg-card/40 px-2 py-1.5">
               {filteredDepartments.length > 0 ? (
                 departmentGroups.map((group) => (
                   <div key={group.category} className="space-y-0.5">
@@ -840,7 +840,7 @@ function WorkspacesContent() {
                         {group.category}
                       </h2>
                     ) : null}
-                    <div className="grid grid-cols-[repeat(auto-fit,minmax(7rem,1fr))] gap-1">
+                    <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,10rem),1fr))] gap-1">
                       {group.departments.map((department) => (
                         <CompactWorkspaceItem
                           key={department.key}
