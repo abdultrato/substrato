@@ -23,6 +23,7 @@ import {
   Syringe,
   Truck,
   Users,
+  Wrench,
   type LucideIcon,
 } from "lucide-react"
 
@@ -33,7 +34,7 @@ import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
 import { writeStoredWorkspaceScope } from "@/lib/workspaceScope"
 
 type WorkspaceLayerKey = "health" | "education" | "transport-logistics"
-type DepartmentScope = "healthcare" | "education" | "neutral"
+type DepartmentScope = "healthcare" | "education" | "transport-logistics" | "neutral"
 
 type DepartmentCard = {
   key: string
@@ -56,7 +57,7 @@ type WorkspaceLayer = {
 }
 
 function storeScope(scope: DepartmentScope) {
-  if (scope === "healthcare" || scope === "education") {
+  if (scope === "healthcare" || scope === "education" || scope === "transport-logistics") {
     writeStoredWorkspaceScope(scope)
   }
 }
@@ -106,14 +107,14 @@ function workspaceTone(key: string) {
   }
 }
 
-function WorkspaceCard({
+/** Cartão compacto de área/módulo para viver dentro do cabeçalho fundido. */
+function CompactWorkspaceItem({
   title,
   description,
   icon: Icon,
   href,
   onClick,
   toneKey,
-  selected = false,
 }: {
   title: string
   description: string
@@ -121,39 +122,24 @@ function WorkspaceCard({
   href?: string
   onClick?: () => void
   toneKey: string
-  selected?: boolean
 }) {
   const tone = workspaceTone(toneKey)
   const content = (
     <>
-      <span
-        aria-hidden
-        className={`pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b ${tone.glow} opacity-100`}
-      />
-      <span aria-hidden className={`pointer-events-none absolute inset-x-0 top-0 h-1 ${tone.bar}`} />
-      <div className={`relative flex h-full flex-col justify-between gap-4 rounded-[inherit] p-4 sm:p-5 ${tone.panel}`}>
-        <div className="flex items-start justify-between gap-3">
-          <div className={`inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ring-1 ${tone.accent}`}>
-            <Icon size={20} strokeWidth={2.1} />
-          </div>
-          {selected ? (
-            <span className="inline-flex items-center rounded-full border border-border/70 bg-card/80 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground shadow-sm">
-              ativo
-            </span>
-          ) : null}
-        </div>
-        <div className="space-y-1.5">
-          <h3 className={`font-display text-base font-semibold leading-tight sm:text-[1.05rem] ${tone.title}`}>
-            {title}
-          </h3>
-          <p className={`text-xs leading-relaxed sm:text-sm ${tone.description}`}>{description}</p>
-        </div>
-      </div>
+      <span aria-hidden className={`absolute inset-y-0 left-0 w-1 ${tone.bar}`} />
+      <span className={`ml-1 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ring-1 ${tone.accent}`}>
+        <Icon size={15} strokeWidth={2.1} />
+      </span>
+      <span className="min-w-0">
+        <span className={`block text-sm font-semibold leading-tight ${tone.title}`}>{title}</span>
+        <span className={`mt-0.5 line-clamp-2 block text-[11px] leading-snug ${tone.description}`}>
+          {description}
+        </span>
+      </span>
     </>
   )
 
-  const className =
-    "group relative flex min-h-[152px] w-full origin-center overflow-hidden rounded-xl border shadow-sm shadow-black/5 transition-all duration-200 ease-out hover:z-10 hover:-translate-y-1 hover:scale-[1.04] hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/25"
+  const className = `group relative flex min-w-[15rem] flex-1 items-start gap-2.5 overflow-hidden rounded-xl border p-2.5 text-left shadow-sm transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/25 ${tone.panel}`
 
   if (href) {
     return (
@@ -164,7 +150,7 @@ function WorkspaceCard({
   }
 
   return (
-    <button type="button" onClick={onClick} className={`${className} text-left`}>
+    <button type="button" onClick={onClick} className={className}>
       {content}
     </button>
   )
@@ -343,6 +329,7 @@ function WorkspacesContent() {
     GROUPS.CONTABILIDADE,
     GROUPS.RECURSOS_HUMANOS,
   ])
+  const showEquipmentArea = userHasAnyGroup(user, [GROUPS.ADMIN, GROUPS.MANUTENCAO])
   const showCreditFinancingArea = userHasAnyGroup(user, [
     GROUPS.ADMIN,
     GROUPS.RECEPCAO,
@@ -622,7 +609,7 @@ function WorkspacesContent() {
         href: "/transportation",
         icon: Truck,
         visible: showTransportationArea,
-        scope: "neutral",
+        scope: "transport-logistics",
       },
       {
         key: "warehouse",
@@ -634,7 +621,31 @@ function WorkspacesContent() {
         href: "/warehouse",
         icon: PackageSearch,
         visible: showErpWmsArea,
-        scope: "neutral",
+        scope: "transport-logistics",
+      },
+      {
+        key: "material-requests",
+        title: "Requisições de Materiais",
+        description: t(
+          "Solicitação, avio e acompanhamento de materiais entre áreas operacionais.",
+          "Request, dispatch and tracking of materials between operational areas."
+        ),
+        href: "/pharmacy/material-requests",
+        icon: PackageSearch,
+        visible: showTransportationArea || showErpWmsArea,
+        scope: "transport-logistics",
+      },
+      {
+        key: "equipment",
+        title: "Equipamentos",
+        description: t(
+          "Ativos, equipamentos, estado operacional e ligação com manutenção.",
+          "Assets, equipment, operational status and maintenance linkage."
+        ),
+        href: "/equipment/equipments",
+        icon: Wrench,
+        visible: showEquipmentArea,
+        scope: "transport-logistics",
       },
     ]
 
@@ -681,6 +692,7 @@ function WorkspacesContent() {
     showDentalArea,
     showDirectoriaArea,
     showErpWmsArea,
+    showEquipmentArea,
     showNeurologyArea,
     showOccupationalTherapyArea,
     showOphthalmologyArea,
@@ -769,6 +781,26 @@ function WorkspacesContent() {
             </span>
           </div>
 
+          {!selectedLayer && visibleLayers.length > 0 ? (
+            <div className="relative flex flex-wrap items-stretch gap-2 border-t border-border/60 bg-card/40 px-5 py-3 sm:px-6">
+              {visibleLayers.map((layer) => (
+                <CompactWorkspaceItem
+                  key={layer.key}
+                  title={layer.title}
+                  description={layer.description}
+                  icon={layer.icon}
+                  toneKey={layer.key}
+                  onClick={() => {
+                    if (layer.key === "health") writeStoredWorkspaceScope("healthcare")
+                    if (layer.key === "education") writeStoredWorkspaceScope("education")
+                    if (layer.key === "transport-logistics") writeStoredWorkspaceScope("transport-logistics")
+                    setSelectedLayerKey(layer.key)
+                  }}
+                />
+              ))}
+            </div>
+          ) : null}
+
           {selectedLayer ? (
             <div className="relative flex flex-wrap items-center justify-between gap-3 border-t border-border/60 bg-card/40 px-5 py-3 sm:px-6">
               <button
@@ -797,22 +829,20 @@ function WorkspacesContent() {
               ) : null}
             </div>
           ) : null}
-        </div>
 
-        {selectedLayer ? (
-          <div className="space-y-5">
-            {filteredDepartments.length > 0 ? (
-              <div className="space-y-6">
-                {departmentGroups.map((group) => (
-                  <div key={group.category} className="space-y-3">
+          {selectedLayer ? (
+            <div className="relative space-y-3 border-t border-border/60 bg-card/40 px-5 py-3 sm:px-6">
+              {filteredDepartments.length > 0 ? (
+                departmentGroups.map((group) => (
+                  <div key={group.category} className="space-y-1.5">
                     {departmentGroups.length > 1 ? (
-                      <h2 className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                      <h2 className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
                         {group.category}
                       </h2>
                     ) : null}
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                    <div className="flex flex-wrap items-stretch gap-2">
                       {group.departments.map((department) => (
-                        <WorkspaceCard
+                        <CompactWorkspaceItem
                           key={department.key}
                           title={department.title}
                           description={department.description}
@@ -824,48 +854,31 @@ function WorkspacesContent() {
                       ))}
                     </div>
                   </div>
-                ))}
-              </div>
-            ) : (
-              <EmptyState
-                message={
-                  normalizedQuery
-                    ? t("Nenhum módulo encontrado para essa pesquisa.", "No modules found for that search.")
-                    : t(
-                        "Não há módulos disponíveis para o seu perfil nesta área.",
-                        "There are no modules available for your profile in this area."
-                      )
-                }
-              />
-            )}
-          </div>
-        ) : visibleLayers.length > 0 ? (
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {visibleLayers.map((layer) => {
-              return (
-                <WorkspaceCard
-                  key={layer.key}
-                  title={layer.title}
-                  description={layer.description}
-                  icon={layer.icon}
-                  toneKey={layer.key}
-                  onClick={() => {
-                    if (layer.key === "health") writeStoredWorkspaceScope("healthcare")
-                    if (layer.key === "education") writeStoredWorkspaceScope("education")
-                    setSelectedLayerKey(layer.key)
-                  }}
+                ))
+              ) : (
+                <EmptyState
+                  message={
+                    normalizedQuery
+                      ? t("Nenhum módulo encontrado para essa pesquisa.", "No modules found for that search.")
+                      : t(
+                          "Não há módulos disponíveis para o seu perfil nesta área.",
+                          "There are no modules available for your profile in this area."
+                        )
+                  }
                 />
-              )
-            })}
-          </div>
-        ) : (
+              )}
+            </div>
+          ) : null}
+        </div>
+
+        {!selectedLayer && visibleLayers.length === 0 ? (
           <EmptyState
             message={t(
               "O seu perfil ainda não tem acesso a nenhuma área de trabalho. Contacte um administrador.",
               "Your profile does not have access to any workspace yet. Contact an administrator."
             )}
           />
-        )}
+        ) : null}
       </div>
     </AppLayout>
   )

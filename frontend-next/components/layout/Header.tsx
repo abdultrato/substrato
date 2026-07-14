@@ -13,6 +13,7 @@ import { userHasAnyGroup } from "@/lib/rbac"
 import { AlignJustify, ChevronDown, ChevronLeft, ChevronRight, LogOut, Moon, RefreshCw, Settings, Sun, User, X } from "lucide-react"
 import { NAV_ITEMS, NAV_SECTIONS, type NavItem } from "@/components/layout/Sidebar"
 import { abortActiveRequests, subscribeRequestActivity } from "@/lib/requestActivity"
+import { pathMatchesWorkspaceScope } from "@/lib/workspaceScope"
 
 interface Props {
     user: SessionUser | null
@@ -49,11 +50,7 @@ export default function Header({ user, onMenuClick, scrolledDown = false }: Prop
     }, [user])
 
     const itemMatchesWorkspaceScope = useCallback((item: NavItem) => {
-        if (activeScope === "neutral") return true
-        if (item.href === "/workspaces") return true
-        const isEducationItem =
-            item.href === "/education" || item.href.startsWith("/education/")
-        return activeScope === "education" ? isEducationItem : !isEducationItem
+        return pathMatchesWorkspaceScope(item.href, activeScope)
     }, [activeScope])
 
     const visibleItems = useMemo(

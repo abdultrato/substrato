@@ -46,6 +46,7 @@ import {
 } from "lucide-react"
 import useTheme from "@/hooks/useTheme"
 import NavScrollArrows from "@/components/layout/NavScrollArrows"
+import { pathMatchesWorkspaceScope } from "@/lib/workspaceScope"
 
 interface Props {
     user: SessionUser | null
@@ -210,11 +211,7 @@ export default function Sidebar({ user, open = false, onClose, className }: Prop
     }, [user])
 
     const itemMatchesWorkspaceScope = useCallback((item: NavItem) => {
-        if (activeScope === "neutral") return true
-        if (item.href === "/workspaces") return true
-        const isEducationItem =
-            item.href === "/education" || item.href.startsWith("/education/")
-        return activeScope === "education" ? isEducationItem : !isEducationItem
+        return pathMatchesWorkspaceScope(item.href, activeScope)
     }, [activeScope])
 
     const visibleItems = useMemo(
@@ -250,7 +247,9 @@ export default function Sidebar({ user, open = false, onClose, className }: Prop
             ? t("Plataforma académica", "Academic platform")
             : activeScope === "healthcare"
                 ? t("Plataforma clínica", "Clinical platform")
-                : t("Plataforma operacional", "Operational platform")
+                : activeScope === "transport-logistics"
+                    ? t("Plataforma logística", "Logistics platform")
+                    : t("Plataforma operacional", "Operational platform")
 
     const expandedSidebarWidth = useMemo(() => {
         const longestLabel = visibleItems.reduce((longest, item) => {

@@ -10,6 +10,7 @@ import { useLanguage } from "@/hooks/useLanguage"
 import { useWorkspaceScope } from "@/hooks/useWorkspaceScope"
 import { userHasAnyGroup } from "@/lib/rbac"
 import { NAV_ITEMS, NAV_SECTIONS, type NavItem } from "@/components/layout/Sidebar"
+import { pathMatchesWorkspaceScope } from "@/lib/workspaceScope"
 
 function normalize(pathname: string | null | undefined): string {
     const value = (pathname || "").trim()
@@ -46,10 +47,7 @@ export default function SectionSubNav() {
 
     const matchesScope = useCallback(
         (item: NavItem) => {
-            if (activeScope === "neutral") return true
-            if (item.href === "/workspaces") return true
-            const isEducation = item.href === "/education" || item.href.startsWith("/education/")
-            return activeScope === "education" ? isEducation : !isEducation
+            return pathMatchesWorkspaceScope(item.href, activeScope)
         },
         [activeScope],
     )

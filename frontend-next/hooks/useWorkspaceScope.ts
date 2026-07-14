@@ -7,6 +7,7 @@ import {
   isOperationalScope,
   readStoredWorkspaceScope,
   resolveWorkspaceScope,
+  WORKSPACE_SCOPE_CHANGED_EVENT,
   type WorkspaceScope,
   writeStoredWorkspaceScope,
 } from "@/lib/workspaceScope"
@@ -17,6 +18,15 @@ export function useWorkspaceScope(): WorkspaceScope {
 
   useEffect(() => {
     setStoredScope(readStoredWorkspaceScope())
+    function onScopeChanged() {
+      setStoredScope(readStoredWorkspaceScope())
+    }
+    window.addEventListener(WORKSPACE_SCOPE_CHANGED_EVENT, onScopeChanged)
+    window.addEventListener("storage", onScopeChanged)
+    return () => {
+      window.removeEventListener(WORKSPACE_SCOPE_CHANGED_EVENT, onScopeChanged)
+      window.removeEventListener("storage", onScopeChanged)
+    }
   }, [])
 
   const activeScope = useMemo(
