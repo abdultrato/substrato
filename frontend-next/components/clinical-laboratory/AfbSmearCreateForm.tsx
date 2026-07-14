@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, CheckCircle2, Loader2, Save, TestTubes } from "lucide-react";
 
 import AppLayout from "@/components/layout/AppLayout";
@@ -67,6 +67,8 @@ function candidateTitle(candidate: AfbCandidate) {
 
 export default function AfbSmearCreateForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const initialCandidateId = searchParams.get("candidate") || "";
   const [queue, setQueue] = useState<AfbCandidate[]>([]);
   const [selectedId, setSelectedId] = useState("");
   const [loading, setLoading] = useState(true);
@@ -95,7 +97,13 @@ export default function AfbSmearCreateForm() {
         const rows = await apiFetch<AfbCandidate[]>(QUEUE_ENDPOINT, { clientCache: false });
         if (!mounted) return;
         setQueue(rows);
-        setSelectedId((current) => current || rows.find((row) => row.kind === "pending")?.id || "");
+        setSelectedId((current) => {
+          if (current) return current;
+          if (initialCandidateId && rows.some((row) => row.id === initialCandidateId && row.kind === "pending")) {
+            return initialCandidateId;
+          }
+          return rows.find((row) => row.kind === "pending")?.id || "";
+        });
       } catch (err: any) {
         if (mounted) setError(err?.message || "Não foi possível carregar candidatos BAAR.");
       } finally {
@@ -107,7 +115,7 @@ export default function AfbSmearCreateForm() {
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [initialCandidateId]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
