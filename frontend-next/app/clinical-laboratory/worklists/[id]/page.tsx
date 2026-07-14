@@ -59,6 +59,8 @@ type SpecializedItem = {
   sector: string
   sector_label: string
   href: string
+  status?: string
+  record_id?: number | null
 }
 
 type RequestResults = {
@@ -677,17 +679,26 @@ export default function WorklistDetailPage() {
                 </p>
                 <div className="grid gap-1.5 sm:grid-cols-2 lg:grid-cols-3">
                   {data.specialized_items.map((sp) => (
-                    <Link
+                    <div
                       key={sp.exam_id}
-                      href={sp.href}
-                      className="group flex items-center justify-between gap-2 rounded-md border border-teal-200/60 bg-white/60 px-2.5 py-2 text-left shadow-sm transition hover:border-teal-300 hover:bg-white dark:border-teal-800/40 dark:bg-white/[0.04] dark:hover:bg-white/[0.08]"
+                      className="flex flex-col gap-1.5 rounded-md border border-teal-200/60 bg-white/60 px-2.5 py-2 shadow-sm dark:border-teal-800/40 dark:bg-white/[0.04]"
                     >
-                      <span className="min-w-0">
+                      <div className="min-w-0">
                         <span className="block truncate text-xs font-semibold text-[var(--text)]">{sp.exam_name}</span>
                         <span className="block truncate text-[10px] text-[var(--gray-500)]">{sp.sector_label}</span>
-                      </span>
-                      <span aria-hidden className="shrink-0 text-sm font-semibold text-teal-600 dark:text-teal-400">↗</span>
-                    </Link>
+                      </div>
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="inline-flex items-center rounded-full border border-teal-200/70 bg-teal-50/70 px-2 py-0.5 text-[10px] font-medium text-teal-700 dark:border-teal-700/40 dark:bg-teal-900/25 dark:text-teal-300">
+                          {sp.status || "Não iniciado"}
+                        </span>
+                        <Link
+                          href={sp.href}
+                          className="inline-flex shrink-0 items-center gap-1 rounded-md bg-gradient-to-r from-teal-600 to-cyan-600 px-2.5 py-1 text-[11px] font-semibold text-white shadow-sm transition hover:from-teal-700 hover:to-cyan-700"
+                        >
+                          Iniciar <span aria-hidden>↗</span>
+                        </Link>
+                      </div>
+                    </div>
                   ))}
                 </div>
               </div>

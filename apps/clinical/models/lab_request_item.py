@@ -51,6 +51,20 @@ class LabRequestItem(TenantPropagationMixin, ScopedPositionMixin, NoNameCoreMode
         verbose_name="Exame médico",
     )
 
+    # Ponte para o LIS (clinical_laboratory): exames de método especializado
+    # (cultura, baciloscopia, GeneXpert, PCR) preenchem-se no seu sector
+    # dedicado; este elo guarda o item de pedido do sector para deep-link e
+    # leitura de estado.
+    sector_order_item = models.ForeignKey(
+        "laboratorio.LabOrderItem",
+        db_column="sector_order_item_id",
+        on_delete=models.SET_NULL,
+        related_name="+",
+        null=True,
+        blank=True,
+        verbose_name="Item do sector (LIS)",
+    )
+
     class SampleStatus(models.TextChoices):
         AWAITING = "aguardando", "Aguardando receção"
         COLLECTED = "coletada", "Amostra coletada"
