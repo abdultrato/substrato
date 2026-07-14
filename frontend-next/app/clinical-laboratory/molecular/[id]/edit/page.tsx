@@ -83,6 +83,20 @@ function toDateTimeLocal(value?: string | null) {
   return new Date(date.getTime() - offset).toISOString().slice(0, 16);
 }
 
+function printResult(title: string) {
+  const previousTitle = document.title;
+  document.title = title;
+  const restoreTitle = () => {
+    document.title = previousTitle;
+  };
+  window.addEventListener("afterprint", restoreTitle, { once: true });
+  window.focus();
+  window.requestAnimationFrame(() => {
+    window.print();
+    window.setTimeout(restoreTitle, 1000);
+  });
+}
+
 function FieldCard({ label, children, className = "" }: { label: string; children: ReactNode; className?: string }) {
   return (
     <label className={`space-y-1 rounded-lg border border-white/[0.10] bg-white/[0.02] p-1.5 backdrop-blur-[1px] dark:border-white/[0.06] dark:bg-white/[0.02] ${className}`}>
@@ -244,7 +258,7 @@ export default function ClinicalLaboratoryMolecularEditPage() {
               </Link>
               <button
                 type="button"
-                onClick={() => window.print()}
+                onClick={() => printResult(`${record.custom_id} - ${assayLabel}`)}
                 className="inline-flex h-7 min-w-0 items-center justify-center gap-1.5 rounded-lg border border-cyan-300/35 bg-cyan-50/[0.08] px-2.5 text-sm font-semibold text-cyan-800 shadow-sm backdrop-blur-[1px] transition hover:bg-cyan-50/[0.14] dark:border-cyan-800/30 dark:bg-cyan-900/[0.08] dark:text-cyan-200 dark:hover:bg-cyan-900/[0.14]"
               >
                 <Printer size={15} />
