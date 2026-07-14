@@ -671,7 +671,8 @@ export default function RecepcaoPage() {
   return (
     <>
       <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.RECEPCAO]}>
-        <div className="space-y-1">
+        <div className="grid gap-1 xl:grid-cols-[minmax(0,1fr)_360px] xl:items-start">
+          <div className="min-w-0 space-y-1">
           <section className={`relative overflow-hidden ${GLASS}`}>
             <div className="space-y-2 px-4 py-4 sm:px-5">
               <div className="flex flex-wrap items-start justify-between gap-3">
@@ -853,7 +854,7 @@ export default function RecepcaoPage() {
             </div>
           </section>
 
-          <div className="grid gap-1 xl:grid-cols-[minmax(0,1.15fr)_380px]">
+          <div className="space-y-1">
             <div className="space-y-1">
               {showSearchSection ? (
                 <section className={GLASS}>
@@ -929,30 +930,6 @@ export default function RecepcaoPage() {
                 </section>
               ) : null}
             </div>
-
-            <div className="space-y-1">
-              <ChatbotPanel
-                messages={chatMessages}
-                streamingId={chatStreamingId}
-                composer={chatComposer}
-                loading={chatLoading}
-                error={chatError}
-                onClear={clearChatConversation}
-                onComposerChange={setChatComposer}
-                onPromptClick={(prompt) => void sendChatMessage(prompt)}
-                onSubmit={async (event) => {
-                  event.preventDefault();
-                  await sendChatMessage(chatComposer);
-                }}
-                onComposerKeyDown={async (event) => {
-                  if (event.key === "Enter" && !event.shiftKey) {
-                    event.preventDefault();
-                    await sendChatMessage(chatComposer);
-                  }
-                }}
-              />
-
-            </div>
           </div>
 
           {(loadingNotes || approvedNotes.length > 0 || rejectedNotes.length > 0) && (
@@ -975,6 +952,30 @@ export default function RecepcaoPage() {
               />
             </div>
           )}
+          </div>
+
+          <aside className="xl:sticky xl:top-2 xl:self-start">
+            <ChatbotPanel
+              messages={chatMessages}
+              streamingId={chatStreamingId}
+              composer={chatComposer}
+              loading={chatLoading}
+              error={chatError}
+              onClear={clearChatConversation}
+              onComposerChange={setChatComposer}
+              onPromptClick={(prompt) => void sendChatMessage(prompt)}
+              onSubmit={async (event) => {
+                event.preventDefault();
+                await sendChatMessage(chatComposer);
+              }}
+              onComposerKeyDown={async (event) => {
+                if (event.key === "Enter" && !event.shiftKey) {
+                  event.preventDefault();
+                  await sendChatMessage(chatComposer);
+                }
+              }}
+            />
+          </aside>
         </div>
       </AppLayout>
 
@@ -1184,7 +1185,7 @@ function ChatbotPanel({
         </Link>
       </div>
 
-      <div className="max-h-64 space-y-1.5 overflow-y-auto p-2 [scrollbar-width:thin]">
+      <div className="max-h-64 space-y-1.5 overflow-y-auto p-2 [scrollbar-width:thin] xl:max-h-[calc(100vh-16rem)]">
         {messages.length === 0 ? (
           <div className="flex flex-wrap gap-1.5">
             {chatPrompts.map((prompt) => (
