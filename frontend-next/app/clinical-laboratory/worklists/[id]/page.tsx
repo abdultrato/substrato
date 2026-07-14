@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react"
 import { useParams } from "next/navigation"
 import Link from "next/link"
+import { AlertTriangle, ArrowLeft, FlaskConical, Printer } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
 import { apiFetch } from "@/lib/api"
@@ -530,79 +531,103 @@ export default function WorklistDetailPage() {
 
   return (
     <AppLayout>
-      <div className="mx-auto w-full max-w-5xl space-y-4 px-4 py-3">
+      <div className="mx-auto w-full max-w-5xl space-y-2 px-2 py-2 sm:px-4">
 
-        {/* Breadcrumb + acções */}
-        <div className="flex items-center justify-between gap-4">
-          <nav className="flex items-center gap-1.5 text-xs text-[var(--gray-500)]">
-            <Link
-              href="/clinical-laboratory/worklists"
-              className="hover:text-[var(--primary-600)] hover:underline"
-            >
-              Lista de Trabalho
-            </Link>
-            <span>›</span>
-            <span className="font-medium text-[var(--text)]">
-              {req?.custom_id ?? `#${requestId}`}
-            </span>
-          </nav>
-        </div>
-
-        {/* Cartão do paciente */}
+        {/* Cabeçalho fundido do paciente/requisição */}
         {req && (
-          <div className="overflow-hidden border border-[var(--border)] bg-[var(--card)] shadow-sm">
-            <div className="flex items-start justify-between gap-4 px-5 py-4">
-              <div className="min-w-0">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-xs font-medium text-[var(--gray-500)]">
-                    {req.custom_id}
-                  </span>
+          <div className="relative overflow-hidden rounded-xl border border-teal-200/70 bg-gradient-to-br from-teal-50/80 via-card to-card shadow-sm dark:border-teal-800/40 dark:from-teal-950/25 dark:via-card dark:to-card">
+            <span aria-hidden className="absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-teal-500 to-cyan-600" />
+
+            {/* Linha 1 */}
+            <div className="flex flex-wrap items-start justify-between gap-2 px-3 py-2.5 pl-4">
+              <div className="flex min-w-0 items-start gap-2.5">
+                <span className="mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-teal-600 to-cyan-600 text-white shadow-sm">
+                  <FlaskConical size={18} />
+                </span>
+                <div className="min-w-0">
+                  <nav className="flex flex-wrap items-center gap-1.5 text-[11px] text-[var(--gray-500)]">
+                    <Link href="/clinical-laboratory/worklists" className="hover:text-teal-600 hover:underline dark:hover:text-teal-400">
+                      Listas de Trabalho
+                    </Link>
+                    <span>›</span>
+                    <span className="font-medium text-[var(--text)]">{req.custom_id}</span>
+                  </nav>
+                  <h1 className="truncate text-base font-bold leading-tight text-[var(--text)] sm:text-lg">
+                    {req.patient_name}
+                  </h1>
+                  <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
+                    {(req.patient_age || req.patient_gender) && (
+                      <span className="text-xs text-[var(--gray-500)]">
+                        {[req.patient_age, req.patient_gender].filter(Boolean).join(" · ")}
+                      </span>
+                    )}
+                    {req.has_critical_result && (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-bold text-red-700 dark:bg-red-900/30 dark:text-red-300">
+                        <AlertTriangle size={10} /> CRÍTICO
+                      </span>
+                    )}
+                    {statusLabel && (
+                      <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
+                        {statusLabel}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex shrink-0 items-center gap-2.5">
+                {summary && (
+                  <div className="text-right">
+                    <p className="text-xl font-bold leading-none text-[var(--text)]">{pct}%</p>
+                    <p className="text-[10px] text-[var(--gray-400)]">
+                      {summary.validated + summary.disregarded}/{summary.total} concluídos
+                    </p>
+                  </div>
+                )}
+                <div className="flex items-center gap-1.5">
+                  <Link
+                    href="/clinical-laboratory/worklists"
+                    aria-label="Voltar"
+                    className="inline-flex h-8 items-center gap-1 rounded-lg border border-[var(--border)] bg-[var(--card)] px-2 text-xs font-medium text-[var(--gray-700)] shadow-sm transition hover:bg-[var(--gray-100)] dark:text-[var(--gray-300)]"
+                  >
+                    <ArrowLeft size={14} />
+                  </Link>
                   <button
                     type="button"
                     onClick={() => window.open(`/api/v1/clinical/labrequest/${requestId}/request-pdf/`, "_blank")}
-                    className="flex items-center gap-1 rounded border border-[var(--border)] bg-[var(--card)] px-2 py-0.5 text-[10px] font-medium text-[var(--gray-600)] hover:bg-[var(--gray-100)] dark:text-[var(--gray-400)]"
+                    className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-[var(--border)] bg-[var(--card)] px-2.5 text-xs font-medium text-[var(--gray-700)] shadow-sm transition hover:bg-[var(--gray-100)] dark:text-[var(--gray-300)]"
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-2.5 w-2.5" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M5 4v3H4a2 2 0 00-2 2v5a2 2 0 002 2h1v2a1 1 0 001 1h8a1 1 0 001-1v-2h1a2 2 0 002-2V9a2 2 0 00-2-2h-1V4a1 1 0 00-1-1H6a1 1 0 00-1 1zm2 0h6v3H7V4zm-1 9v-1h8v1H6zm0 2v-1h8v1H6z" clipRule="evenodd" />
-                    </svg>
-                    Imprimir requisição
+                    <Printer size={14} /> Imprimir
                   </button>
-                  {req.has_critical_result && (
-                    <span className="rounded bg-red-100 px-2 py-0.5 text-[10px] font-bold text-red-700 dark:bg-red-900/30 dark:text-red-400">
-                      CRÍTICO
-                    </span>
-                  )}
-                  {statusLabel && (
-                    <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
-                      {statusLabel}
-                    </span>
-                  )}
-                </div>
-                <div className="mt-1 flex flex-wrap items-baseline gap-2">
-                  <h1 className="text-lg font-bold text-[var(--text)]">
-                    {req.patient_name}
-                  </h1>
-                  {(req.patient_age || req.patient_gender) && (
-                    <span className="text-sm text-[var(--gray-500)]">
-                      {[req.patient_age, req.patient_gender].filter(Boolean).join(" · ")}
-                    </span>
-                  )}
                 </div>
               </div>
-              {summary && (
-                <div className="shrink-0 text-right">
-                  <p className="text-2xl font-bold text-[var(--text)]">{pct}%</p>
-                  <p className="text-xs text-[var(--gray-400)]">
-                    {summary.validated + summary.disregarded}/{summary.total} concluídos
-                  </p>
-                </div>
-              )}
             </div>
+
+            {/* Linha 2: métricas */}
+            {summary && (
+              <div className="flex flex-wrap gap-1 border-t border-teal-200/40 bg-card/40 px-3 py-1.5 pl-4 dark:border-teal-800/30">
+                {[
+                  { label: "Total", value: summary.total, cls: "border-slate-200/60 bg-slate-100/50 text-slate-700 dark:border-slate-600/40 dark:bg-slate-800/30 dark:text-slate-300" },
+                  { label: "Pendentes", value: summary.pending, cls: "border-amber-200/60 bg-amber-100/50 text-amber-700 dark:border-amber-700/40 dark:bg-amber-900/25 dark:text-amber-300" },
+                  { label: "Em análise", value: summary.in_analysis, cls: "border-sky-200/60 bg-sky-100/50 text-sky-700 dark:border-sky-700/40 dark:bg-sky-900/25 dark:text-sky-300" },
+                  { label: "Aguarda validação", value: summary.awaiting_validation, cls: "border-violet-200/60 bg-violet-100/50 text-violet-700 dark:border-violet-700/40 dark:bg-violet-900/25 dark:text-violet-300" },
+                  { label: "Validados", value: summary.validated, cls: "border-emerald-200/60 bg-emerald-100/50 text-emerald-700 dark:border-emerald-700/40 dark:bg-emerald-900/25 dark:text-emerald-300" },
+                  { label: "Desconsiderados", value: summary.disregarded, cls: "border-rose-200/60 bg-rose-100/50 text-rose-700 dark:border-rose-700/40 dark:bg-rose-900/25 dark:text-rose-300", hideIfZero: true },
+                ]
+                  .filter((m) => !(m.hideIfZero && !m.value))
+                  .map((m) => (
+                    <span key={m.label} className={`inline-flex h-6 items-center gap-1 rounded-full border px-2 text-[10px] font-medium ${m.cls}`}>
+                      {m.label}
+                      <span className="font-bold tabular-nums">{m.value}</span>
+                    </span>
+                  ))}
+              </div>
+            )}
 
             {/* Barra de progresso */}
             {summary && summary.total > 0 && (
-              <div className="h-1 w-full bg-[var(--gray-200)] dark:bg-[var(--gray-700)]">
-                <div ref={progressBarRef} className="h-full bg-emerald-500 transition-all duration-500" />
+              <div className="h-1 w-full bg-teal-100/60 dark:bg-teal-900/30">
+                <div ref={progressBarRef} className="h-full bg-gradient-to-r from-teal-500 to-emerald-500 transition-all duration-500" />
               </div>
             )}
           </div>
@@ -622,6 +647,42 @@ export default function WorklistDetailPage() {
 
         {!initialLoading && data && (
           <>
+            {/* Exames de sector especializado — preenchem-se na sua área dedicada */}
+            {data.specialized_items && data.specialized_items.length > 0 && (
+              <div className="rounded-lg border border-teal-200/70 bg-teal-50/50 p-2.5 dark:border-teal-800/40 dark:bg-teal-950/20">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-teal-700 dark:text-teal-300">
+                  Exames de sector especializado
+                </p>
+                <p className="mb-2 mt-0.5 text-[11px] text-[var(--gray-500)]">
+                  Cultura, baciloscopia, GeneXpert e PCR não se preenchem aqui — abra a área dedicada para registar o resultado.
+                </p>
+                <div className="grid gap-1.5 sm:grid-cols-2 lg:grid-cols-3">
+                  {data.specialized_items.map((sp) => (
+                    <div
+                      key={sp.exam_id}
+                      className="flex flex-col gap-1.5 rounded-md border border-teal-200/60 bg-white/60 px-2.5 py-2 shadow-sm dark:border-teal-800/40 dark:bg-white/[0.04]"
+                    >
+                      <div className="min-w-0">
+                        <span className="block truncate text-xs font-semibold text-[var(--text)]">{sp.exam_name}</span>
+                        <span className="block truncate text-[10px] text-[var(--gray-500)]">{sp.sector_label}</span>
+                      </div>
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="inline-flex items-center rounded-full border border-teal-200/70 bg-teal-50/70 px-2 py-0.5 text-[10px] font-medium text-teal-700 dark:border-teal-700/40 dark:bg-teal-900/25 dark:text-teal-300">
+                          {sp.status || "Não iniciado"}
+                        </span>
+                        <Link
+                          href={sp.href}
+                          className="inline-flex shrink-0 items-center gap-1 rounded-md bg-gradient-to-r from-teal-600 to-cyan-600 px-2.5 py-1 text-[11px] font-semibold text-white shadow-sm transition hover:from-teal-700 hover:to-cyan-700"
+                        >
+                          Iniciar <span aria-hidden>↗</span>
+                        </Link>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Cabeçalho da lista: select-all + Validar todos */}
             <div className="flex items-center justify-between">
               <label className="flex cursor-pointer items-center gap-1.5 text-[11px] text-[var(--gray-500)]">
@@ -667,42 +728,6 @@ export default function WorklistDetailPage() {
                 )}
               </div>
             </div>
-
-            {/* Exames de sector especializado — preenchem-se na sua área dedicada */}
-            {data.specialized_items && data.specialized_items.length > 0 && (
-              <div className="mb-3 rounded-lg border border-teal-200/70 bg-teal-50/50 p-2.5 dark:border-teal-800/40 dark:bg-teal-950/20">
-                <p className="text-[11px] font-semibold uppercase tracking-wide text-teal-700 dark:text-teal-300">
-                  Exames de sector especializado
-                </p>
-                <p className="mb-2 mt-0.5 text-[11px] text-[var(--gray-500)]">
-                  Cultura, baciloscopia, GeneXpert e PCR não se preenchem aqui — abra a área dedicada para registar o resultado.
-                </p>
-                <div className="grid gap-1.5 sm:grid-cols-2 lg:grid-cols-3">
-                  {data.specialized_items.map((sp) => (
-                    <div
-                      key={sp.exam_id}
-                      className="flex flex-col gap-1.5 rounded-md border border-teal-200/60 bg-white/60 px-2.5 py-2 shadow-sm dark:border-teal-800/40 dark:bg-white/[0.04]"
-                    >
-                      <div className="min-w-0">
-                        <span className="block truncate text-xs font-semibold text-[var(--text)]">{sp.exam_name}</span>
-                        <span className="block truncate text-[10px] text-[var(--gray-500)]">{sp.sector_label}</span>
-                      </div>
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="inline-flex items-center rounded-full border border-teal-200/70 bg-teal-50/70 px-2 py-0.5 text-[10px] font-medium text-teal-700 dark:border-teal-700/40 dark:bg-teal-900/25 dark:text-teal-300">
-                          {sp.status || "Não iniciado"}
-                        </span>
-                        <Link
-                          href={sp.href}
-                          className="inline-flex shrink-0 items-center gap-1 rounded-md bg-gradient-to-r from-teal-600 to-cyan-600 px-2.5 py-1 text-[11px] font-semibold text-white shadow-sm transition hover:from-teal-700 hover:to-cyan-700"
-                        >
-                          Iniciar <span aria-hidden>↗</span>
-                        </Link>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
 
             {/* Tabela de campos de resultado */}
             <div className="overflow-x-auto border border-[var(--border)]">
