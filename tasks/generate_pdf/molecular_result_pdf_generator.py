@@ -126,7 +126,7 @@ def generate_molecular_result_pdf(result: MolecularResult, request=None) -> tupl
         Spacer(1, A5Margins.SECTION_SPACING),
         HRFlowable(width="100%", thickness=0.5, color=header_config["sector_color"]),
         Spacer(1, A5Margins.SECTION_SPACING),
-        Paragraph("RESULTADO", section_style_improved(color=header_config["sector_color"])),
+        Paragraph(escape(_exam_name(result).upper()), section_style_improved(color=header_config["sector_color"])),
         Spacer(1, A5Margins.ROW_SPACING),
     ]
 
