@@ -1149,8 +1149,8 @@ export function PatientIntakeWizard({
 
   return (
     <ModalShell title={isEditMode ? "Editar paciente" : "Registar paciente"} onClose={onClose}>
-      <div className="grid min-h-0 flex-1 grid-cols-1 md:grid-cols-[230px_minmax(0,1fr)]">
-        <aside className="border-b border-white/20 bg-white/18 p-2 backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.03] md:border-b-0 md:border-r">
+      <div className="flex min-h-0 flex-1 flex-col md:flex-row">
+        <aside className="shrink-0 border-b border-white/20 bg-white/18 p-2 backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.03] md:w-[210px] md:border-b-0 md:border-r">
           <div className="flex gap-1.5 overflow-x-auto md:flex-col md:overflow-visible">
             {steps.map((definition, index) => {
               const Icon = definition.icon
@@ -1186,17 +1186,17 @@ export function PatientIntakeWizard({
           </div>
         </aside>
 
-        <div className="flex min-h-0 flex-col">
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col">
           <div className="min-h-0 flex-1 overflow-y-auto p-2 sm:p-3">{renderStep(currentStep.key)}</div>
 
           {error ? (
-            <div className="mx-2 mb-2 flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50/80 px-3 py-2 text-xs text-amber-800 backdrop-blur-sm sm:mx-3">
+            <div className="mx-2 mb-2 flex shrink-0 items-start gap-2 rounded-lg border border-amber-200 bg-amber-50/80 px-3 py-2 text-xs text-amber-800 backdrop-blur-sm sm:mx-3">
               <AlertTriangle size={14} className="mt-0.5 shrink-0" />
               <span>{error}</span>
             </div>
           ) : null}
 
-          <div className="flex items-center justify-between gap-2 border-t border-white/20 px-3 py-2 dark:border-white/10">
+          <div className="flex shrink-0 items-center justify-between gap-2 border-t border-white/20 px-3 py-2 dark:border-white/10">
             <button
               type="button"
               onClick={() => {
