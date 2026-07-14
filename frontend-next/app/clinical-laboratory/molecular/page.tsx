@@ -219,87 +219,91 @@ export default function LabMolecularPage() {
           </div>
         ) : null}
 
-        <section className="rounded-xl border border-white/[0.10] bg-white/[0.02] p-2 shadow-none backdrop-blur-[1px] dark:border-white/[0.06] dark:bg-white/[0.02]">
-          <div className="mb-1.5 flex items-center justify-between gap-1.5">
-            <div>
-              <h2 className="text-sm font-semibold text-foreground">Exames pendentes</h2>
-              <p className="text-xs text-muted-foreground">{filteredPending.length} candidato(s) molecular/GeneXpert</p>
-            </div>
+        <div className="overflow-x-auto pb-0.5">
+          <div className="grid min-w-[760px] grid-cols-2 gap-1">
+            <section className="rounded-xl border border-white/[0.10] bg-white/[0.02] p-2 shadow-none backdrop-blur-[1px] dark:border-white/[0.06] dark:bg-white/[0.02]">
+              <div className="mb-1.5 flex items-center justify-between gap-1.5">
+                <div>
+                  <h2 className="text-sm font-semibold text-foreground">Exames pendentes</h2>
+                  <p className="text-xs text-muted-foreground">{filteredPending.length} candidato(s) molecular/GeneXpert</p>
+                </div>
+              </div>
+
+              {loading ? (
+                <div className="flex items-center justify-center gap-2 py-10 text-sm text-muted-foreground">
+                  <Loader2 size={16} className="animate-spin" />
+                  A carregar fila molecular...
+                </div>
+              ) : filteredPending.length ? (
+                <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,260px),1fr))] gap-1">
+                  {filteredPending.map((item) => (
+                    <Link
+                      key={item.id}
+                      href={candidateHref(item)}
+                      className="group relative overflow-hidden rounded-xl border border-white/[0.10] bg-white/[0.02] p-2 pl-3 shadow-none backdrop-blur-[1px] transition hover:border-indigo-300/60 hover:bg-white/[0.03] dark:border-white/[0.06] dark:bg-white/[0.02] dark:hover:border-indigo-500/40"
+                    >
+                      <span className="absolute inset-y-0 left-0 w-0.5 bg-gradient-to-b from-amber-500 to-orange-500" />
+                      <div className="mb-1.5 flex items-start justify-between gap-1.5">
+                        <CardTitle code={item.order_custom_id || item.order_item_custom_id} name={item.test_name || item.test_code || "Exame molecular"} />
+                        <StatusPill tone="amber">Pendente</StatusPill>
+                      </div>
+                      <div className="flex flex-wrap gap-1">
+                        <Pill tone="indigo">{ASSAY_LABELS[item.assay] ?? item.assay}</Pill>
+                        <Pill tone="gray">{item.test_method || "Método molecular"}</Pill>
+                        <Pill tone="blue">{item.sample_barcode || item.sample_type || "Amostra herdada"}</Pill>
+                      </div>
+                      <CardFooter
+                        left={<>{item.patient_name || "Paciente não identificado"}</>}
+                        right={`Recebida ${formatCandidateDate(item.sample_received_at)}`}
+                      />
+                    </Link>
+                  ))}
+                </div>
+              ) : (
+                <div className="rounded-lg border border-white/[0.10] bg-white/[0.02] px-2 py-4 text-center text-sm text-muted-foreground backdrop-blur-[1px] dark:border-white/[0.06] dark:bg-white/[0.02]">
+                  Nenhum exame molecular pendente com amostra recebida/aceite/em processamento.
+                </div>
+              )}
+            </section>
+
+            <section className="rounded-xl border border-white/[0.10] bg-white/[0.02] p-2 shadow-none backdrop-blur-[1px] dark:border-white/[0.06] dark:bg-white/[0.02]">
+              <div className="mb-1.5">
+                <h2 className="text-sm font-semibold text-foreground">Resultados registados</h2>
+                <p className="text-xs text-muted-foreground">{filteredResults.length} resultado(s) recentes</p>
+              </div>
+
+              {loading ? null : filteredResults.length ? (
+                <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,260px),1fr))] gap-1">
+                  {filteredResults.map((m) => (
+                    <Link
+                      key={m.id}
+                      href={`/clinical-laboratory/molecular/${m.id}`}
+                      className="group relative flex flex-col overflow-hidden rounded-xl border border-white/[0.10] bg-white/[0.02] p-2 pl-3 shadow-none backdrop-blur-[1px] transition hover:border-indigo-300/50 hover:bg-white/[0.03] dark:border-white/[0.06] dark:bg-white/[0.02] dark:hover:border-indigo-500/30"
+                    >
+                      <span className="absolute inset-y-0 left-0 w-0.5 bg-gradient-to-b from-indigo-500 to-cyan-500" />
+                      <div className="mb-1.5 flex items-start justify-between gap-1.5">
+                        <CardTitle code={m.custom_id} name={ASSAY_LABELS[m.assay] ?? m.assay} />
+                        <StatusPill tone={DETECTION_TONE[m.detection] ?? "gray"}>{DETECTION_LABELS[m.detection] ?? m.detection}</StatusPill>
+                      </div>
+                      <div className="flex flex-wrap gap-1">
+                        {m.rif_resistance && m.rif_resistance !== "NA" ? (
+                          <Pill tone={m.rif_resistance === "RESISTENTE" ? "red" : "violet"}>{RIF_LABELS[m.rif_resistance] ?? m.rif_resistance}</Pill>
+                        ) : null}
+                        {m.instrument ? <Pill tone="gray">{m.instrument}</Pill> : null}
+                        {m.sample_barcode ? <Pill tone="blue">{m.sample_barcode}</Pill> : null}
+                      </div>
+                      <CardFooter left={<>{m.patient_name || m.order_custom_id || "—"}</>} right={m.performed_at ? `Realizado ${fmtDate(m.performed_at)}` : "—"} />
+                    </Link>
+                  ))}
+                </div>
+              ) : (
+                <div className="rounded-lg border border-white/[0.10] bg-white/[0.02] px-2 py-4 text-center text-sm text-muted-foreground backdrop-blur-[1px] dark:border-white/[0.06] dark:bg-white/[0.02]">
+                  Nenhum resultado molecular encontrado.
+                </div>
+              )}
+            </section>
           </div>
-
-          {loading ? (
-            <div className="flex items-center justify-center gap-2 py-10 text-sm text-muted-foreground">
-              <Loader2 size={16} className="animate-spin" />
-              A carregar fila molecular...
-            </div>
-          ) : filteredPending.length ? (
-            <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,260px),1fr))] gap-1">
-              {filteredPending.map((item) => (
-                <Link
-                  key={item.id}
-                  href={candidateHref(item)}
-                  className="group relative overflow-hidden rounded-xl border border-white/[0.10] bg-white/[0.02] p-2 pl-3 shadow-none backdrop-blur-[1px] transition hover:border-indigo-300/60 hover:bg-white/[0.03] dark:border-white/[0.06] dark:bg-white/[0.02] dark:hover:border-indigo-500/40"
-                >
-                  <span className="absolute inset-y-0 left-0 w-0.5 bg-gradient-to-b from-amber-500 to-orange-500" />
-                  <div className="mb-1.5 flex items-start justify-between gap-1.5">
-                    <CardTitle code={item.order_custom_id || item.order_item_custom_id} name={item.test_name || item.test_code || "Exame molecular"} />
-                    <StatusPill tone="amber">Pendente</StatusPill>
-                  </div>
-                  <div className="flex flex-wrap gap-1">
-                    <Pill tone="indigo">{ASSAY_LABELS[item.assay] ?? item.assay}</Pill>
-                    <Pill tone="gray">{item.test_method || "Método molecular"}</Pill>
-                    <Pill tone="blue">{item.sample_barcode || item.sample_type || "Amostra herdada"}</Pill>
-                  </div>
-                  <CardFooter
-                    left={<>{item.patient_name || "Paciente não identificado"}</>}
-                    right={`Recebida ${formatCandidateDate(item.sample_received_at)}`}
-                  />
-                </Link>
-              ))}
-            </div>
-          ) : (
-            <div className="rounded-lg border border-white/[0.10] bg-white/[0.02] px-2 py-4 text-center text-sm text-muted-foreground backdrop-blur-[1px] dark:border-white/[0.06] dark:bg-white/[0.02]">
-              Nenhum exame molecular pendente com amostra recebida/aceite/em processamento.
-            </div>
-          )}
-        </section>
-
-        <section className="rounded-xl border border-white/[0.10] bg-white/[0.02] p-2 shadow-none backdrop-blur-[1px] dark:border-white/[0.06] dark:bg-white/[0.02]">
-          <div className="mb-1.5">
-            <h2 className="text-sm font-semibold text-foreground">Resultados registados</h2>
-            <p className="text-xs text-muted-foreground">{filteredResults.length} resultado(s) recentes</p>
-          </div>
-
-          {loading ? null : filteredResults.length ? (
-            <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,260px),1fr))] gap-1">
-              {filteredResults.map((m) => (
-                <Link
-                  key={m.id}
-                  href={`/clinical-laboratory/molecular/${m.id}`}
-                  className="group relative flex flex-col overflow-hidden rounded-xl border border-white/[0.10] bg-white/[0.02] p-2 pl-3 shadow-none backdrop-blur-[1px] transition hover:border-indigo-300/50 hover:bg-white/[0.03] dark:border-white/[0.06] dark:bg-white/[0.02] dark:hover:border-indigo-500/30"
-                >
-                  <span className="absolute inset-y-0 left-0 w-0.5 bg-gradient-to-b from-indigo-500 to-cyan-500" />
-                  <div className="mb-1.5 flex items-start justify-between gap-1.5">
-                    <CardTitle code={m.custom_id} name={ASSAY_LABELS[m.assay] ?? m.assay} />
-                    <StatusPill tone={DETECTION_TONE[m.detection] ?? "gray"}>{DETECTION_LABELS[m.detection] ?? m.detection}</StatusPill>
-                  </div>
-                  <div className="flex flex-wrap gap-1">
-                    {m.rif_resistance && m.rif_resistance !== "NA" ? (
-                      <Pill tone={m.rif_resistance === "RESISTENTE" ? "red" : "violet"}>{RIF_LABELS[m.rif_resistance] ?? m.rif_resistance}</Pill>
-                    ) : null}
-                    {m.instrument ? <Pill tone="gray">{m.instrument}</Pill> : null}
-                    {m.sample_barcode ? <Pill tone="blue">{m.sample_barcode}</Pill> : null}
-                  </div>
-                  <CardFooter left={<>{m.patient_name || m.order_custom_id || "—"}</>} right={m.performed_at ? `Realizado ${fmtDate(m.performed_at)}` : "—"} />
-                </Link>
-              ))}
-            </div>
-          ) : (
-            <div className="rounded-lg border border-white/[0.10] bg-white/[0.02] px-2 py-4 text-center text-sm text-muted-foreground backdrop-blur-[1px] dark:border-white/[0.06] dark:bg-white/[0.02]">
-              Nenhum resultado molecular encontrado.
-            </div>
-          )}
-        </section>
+        </div>
       </div>
     </AppLayout>
   );
