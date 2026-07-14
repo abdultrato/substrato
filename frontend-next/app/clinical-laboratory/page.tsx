@@ -327,8 +327,6 @@ const PHASES: PhaseConfig[] = [
   },
 ];
 
-const FEATURE_COUNT = PHASES.reduce((n, p) => n + p.items.length, 0);
-
 export default function ClinicalLaboratoryHubPage() {
   const safeRefreshToken = useSafeDataRefreshSignal();
 
@@ -429,9 +427,6 @@ export default function ClinicalLaboratoryHubPage() {
                 </p>
               </div>
             </div>
-            <span className="inline-flex w-fit shrink-0 items-center gap-1 self-start rounded-full border border-border/70 bg-card/80 px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground shadow-sm sm:self-auto">
-              {FEATURE_COUNT} funcionalidades
-            </span>
           </div>
 
           {/* Métricas — pílulas clicáveis para a respetiva lista */}
