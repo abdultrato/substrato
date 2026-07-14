@@ -171,7 +171,7 @@ export default function LabAfbSmearsPage() {
           </div>
         ) : null}
 
-        <div className="grid gap-3 xl:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)] xl:items-start">
+        <div className="grid grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)] items-start gap-3">
         <section className="rounded-xl border border-white/25 bg-white/25 p-3 shadow-sm backdrop-blur-xl dark:border-white/10 dark:bg-white/[0.04]">
           <div className="mb-2 flex items-center justify-between gap-2">
             <div>
