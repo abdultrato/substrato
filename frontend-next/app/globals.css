@@ -902,3 +902,12 @@ nav[data-no-scroll-arrows]::-webkit-scrollbar-thumb:hover {
   .animate-access-pop,
   .animate-access-line { animation: none; }
 }
+
+/* Native <select> option popups: fundo/texto do tema para contraste legível
+   (evita opções sem contraste em modo escuro, já que os selects usam fundo
+   translúcido/glass que o popup nativo herdaria). */
+select option,
+select optgroup {
+  background-color: var(--card);
+  color: var(--text);
+}
