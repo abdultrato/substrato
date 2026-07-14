@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Dna, Loader2, Save } from "lucide-react";
+import { ArrowLeft, Dna, Loader2, Printer, Save } from "lucide-react";
 
 import AppLayout from "@/components/layout/AppLayout";
 import { apiFetch } from "@/lib/api";
@@ -234,7 +234,7 @@ export default function ClinicalLaboratoryMolecularEditPage() {
               </div>
             </div>
 
-            <div className="grid w-full grid-cols-2 gap-1 md:flex md:w-auto md:shrink-0 md:items-center">
+            <div className="grid w-full grid-cols-3 gap-1 md:flex md:w-auto md:shrink-0 md:items-center">
               <Link
                 href={`${LIST_HREF}/${record.id}`}
                 className="inline-flex h-7 min-w-0 items-center justify-center gap-1.5 rounded-lg border border-white/[0.10] bg-white/[0.02] px-2.5 text-sm font-medium text-foreground shadow-sm backdrop-blur-[1px] transition hover:bg-white/[0.03] dark:border-white/[0.06] dark:bg-white/[0.02] dark:hover:bg-white/[0.03]"
@@ -242,6 +242,14 @@ export default function ClinicalLaboratoryMolecularEditPage() {
                 <ArrowLeft size={16} />
                 Voltar
               </Link>
+              <button
+                type="button"
+                onClick={() => window.print()}
+                className="inline-flex h-7 min-w-0 items-center justify-center gap-1.5 rounded-lg border border-white/[0.10] bg-white/[0.02] px-2.5 text-sm font-medium text-foreground shadow-sm backdrop-blur-[1px] transition hover:bg-white/[0.03] dark:border-white/[0.06] dark:bg-white/[0.02] dark:hover:bg-white/[0.03]"
+              >
+                <Printer size={15} />
+                Imprimir
+              </button>
               <button
                 type="submit"
                 disabled={saving}
