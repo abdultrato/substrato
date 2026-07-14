@@ -294,6 +294,69 @@ const DOCUMENT_OPTIONS = [
   { value: "OUT", label: "Outro" },
 ]
 
+// Códigos ISO 3166-1 alpha-2 (compatíveis com CountryField do backend).
+const COUNTRY_OPTIONS: { value: string; label: string }[] = [
+  { value: "MZ", label: "Moçambique" },
+  { value: "AO", label: "Angola" },
+  { value: "BR", label: "Brasil" },
+  { value: "PT", label: "Portugal" },
+  { value: "CV", label: "Cabo Verde" },
+  { value: "GW", label: "Guiné-Bissau" },
+  { value: "GQ", label: "Guiné Equatorial" },
+  { value: "ST", label: "São Tomé e Príncipe" },
+  { value: "TL", label: "Timor-Leste" },
+  { value: "ZA", label: "África do Sul" },
+  { value: "ZW", label: "Zimbábue" },
+  { value: "ZM", label: "Zâmbia" },
+  { value: "MW", label: "Malávi" },
+  { value: "TZ", label: "Tanzânia" },
+  { value: "SZ", label: "Essuatíni" },
+  { value: "LS", label: "Lesoto" },
+  { value: "BW", label: "Botswana" },
+  { value: "NA", label: "Namíbia" },
+  { value: "KE", label: "Quénia" },
+  { value: "UG", label: "Uganda" },
+  { value: "RW", label: "Ruanda" },
+  { value: "CD", label: "RD Congo" },
+  { value: "CG", label: "Congo" },
+  { value: "MG", label: "Madagáscar" },
+  { value: "MU", label: "Maurícia" },
+  { value: "SC", label: "Seicheles" },
+  { value: "KM", label: "Comores" },
+  { value: "ET", label: "Etiópia" },
+  { value: "SO", label: "Somália" },
+  { value: "SD", label: "Sudão" },
+  { value: "EG", label: "Egito" },
+  { value: "NG", label: "Nigéria" },
+  { value: "GH", label: "Gana" },
+  { value: "CI", label: "Costa do Marfim" },
+  { value: "SN", label: "Senegal" },
+  { value: "ML", label: "Mali" },
+  { value: "MA", label: "Marrocos" },
+  { value: "DZ", label: "Argélia" },
+  { value: "TN", label: "Tunísia" },
+  { value: "GB", label: "Reino Unido" },
+  { value: "US", label: "Estados Unidos" },
+  { value: "FR", label: "França" },
+  { value: "DE", label: "Alemanha" },
+  { value: "ES", label: "Espanha" },
+  { value: "IT", label: "Itália" },
+  { value: "NL", label: "Países Baixos" },
+  { value: "BE", label: "Bélgica" },
+  { value: "CH", label: "Suíça" },
+  { value: "CN", label: "China" },
+  { value: "IN", label: "Índia" },
+  { value: "JP", label: "Japão" },
+  { value: "RU", label: "Rússia" },
+  { value: "CA", label: "Canadá" },
+  { value: "AU", label: "Austrália" },
+  { value: "AE", label: "Emirados Árabes Unidos" },
+  { value: "SA", label: "Arábia Saudita" },
+  { value: "TR", label: "Turquia" },
+  { value: "PK", label: "Paquistão" },
+  { value: "BD", label: "Bangladesh" },
+]
+
 const TEST_RESULT_OPTIONS: Array<{ value: TestResult; label: string }> = [
   { value: "PEN", label: "Pendente" },
   { value: "NEG", label: "Negativo" },
@@ -1504,13 +1567,6 @@ export function PatientIntakeWizard({
                 className={inputCls}
               />
             </Field>
-            <Field label="Número">
-              <input
-                value={data.address_number}
-                onChange={(event) => update({ address_number: event.target.value })}
-                className={inputCls}
-              />
-            </Field>
             <Field label="Bairro">
               <input
                 value={data.address_neighborhood}
@@ -1540,22 +1596,22 @@ export function PatientIntakeWizard({
               />
             </Field>
             <Field label="País">
-              <input
+              <select
                 value={data.address_country}
-                onChange={(event) => update({ address_country: event.target.value.toUpperCase() })}
-                maxLength={2}
+                onChange={(event) => update({ address_country: event.target.value })}
                 className={inputCls}
-              />
+              >
+                {data.address_country &&
+                !COUNTRY_OPTIONS.some((option) => option.value === data.address_country) ? (
+                  <option value={data.address_country}>{data.address_country}</option>
+                ) : null}
+                {COUNTRY_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
             </Field>
-            <div className="sm:col-span-2">
-              <Field label="Complemento">
-                <input
-                  value={data.address_complement}
-                  onChange={(event) => update({ address_complement: event.target.value })}
-                  className={inputCls}
-                />
-              </Field>
-            </div>
             <div className="sm:col-span-2 lg:col-span-3">
               <Field label="Morada em texto livre">
                 <input
