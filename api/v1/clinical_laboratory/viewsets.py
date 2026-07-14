@@ -710,6 +710,17 @@ class MicrobiologyCultureViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
         ])
         return Response(self.get_serializer(culture).data)
 
+    @action(detail=True, methods=["get"], url_path="pdf", url_name="pdf")
+    def pdf(self, request, pk=None):
+        from django.http import HttpResponse
+        from tasks.generate_pdf.culture_result_pdf_generator import generate_culture_result_pdf
+
+        culture = self.get_object()
+        pdf_bytes, filename = generate_culture_result_pdf(culture, request=request)
+        response = HttpResponse(pdf_bytes, content_type="application/pdf")
+        response["Content-Disposition"] = f'inline; filename="{filename}"'
+        return response
+
     @action(detail=True, methods=["post"], url_path="adicionar-meios", url_name="adicionar_meios")
     def adicionar_meios(self, request, pk=None):
         """Acrescenta novos meios/placas a uma cultura já em incubação, cada um

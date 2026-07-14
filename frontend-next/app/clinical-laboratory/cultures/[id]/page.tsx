@@ -12,6 +12,7 @@ import {
   Lock,
   Microscope,
   Plus,
+  Printer,
   RefreshCw,
   Trash2,
 } from "lucide-react";
@@ -271,6 +272,7 @@ export default function CultureDetailPage() {
 
             <div className="flex shrink-0 items-center gap-1.5">
               <button onClick={() => router.push("/clinical-laboratory/cultures")} className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-white/40 bg-white/35 px-2.5 text-xs font-medium text-foreground shadow-sm backdrop-blur-sm transition hover:bg-white/55 dark:border-white/10 dark:bg-white/5"><ArrowLeft size={14} /> Voltar</button>
+              <button onClick={() => window.open(`/api/v1/clinical_laboratory/culture/${id}/pdf/`, "_blank")} className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 px-2.5 text-xs font-semibold text-white shadow-md shadow-violet-500/20 transition hover:from-violet-700 hover:to-fuchsia-700"><Printer size={14} /> Imprimir resultado</button>
               <button
                 onClick={load}
                 disabled={loading}
