@@ -84,20 +84,6 @@ function display(value: unknown, fallback = "—") {
   return String(value);
 }
 
-function printResult(title: string) {
-  const previousTitle = document.title;
-  document.title = title;
-  const restoreTitle = () => {
-    document.title = previousTitle;
-  };
-  window.addEventListener("afterprint", restoreTitle, { once: true });
-  window.focus();
-  window.requestAnimationFrame(() => {
-    window.print();
-    window.setTimeout(restoreTitle, 1000);
-  });
-}
-
 function Card({
   title,
   icon: Icon,
@@ -137,6 +123,7 @@ export default function ClinicalLaboratoryMolecularDetailPage() {
   const id = params.id;
   const [record, setRecord] = useState<MolecularResult | null>(null);
   const [loading, setLoading] = useState(true);
+  const [printing, setPrinting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -187,6 +174,30 @@ export default function ClinicalLaboratoryMolecularDetailPage() {
   const detectionStyle = DETECTION_STYLE[record.detection] ?? DETECTION_STYLE.INVALIDO;
   const quantitative = record.quantitative_value ? `${record.quantitative_value}${record.unit ? ` ${record.unit}` : ""}` : "—";
 
+  async function openResultPdf() {
+    setPrinting(true);
+    setError(null);
+    try {
+      const blob = await apiFetch<Blob>(`${ENDPOINT}${record.id}/pdf/`, {
+        responseType: "blob",
+        clientCache: false,
+      });
+      const url = URL.createObjectURL(blob);
+      const opened = window.open(url, "_blank", "noopener,noreferrer");
+      if (!opened) {
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `${record.custom_id || "resultado-molecular"}.pdf`;
+        link.click();
+      }
+      window.setTimeout(() => URL.revokeObjectURL(url), 30000);
+    } catch (err: any) {
+      setError(err?.message || "Não foi possível abrir o PDF do resultado.");
+    } finally {
+      setPrinting(false);
+    }
+  }
+
   return (
     <AppLayout fullWidth requiredGroups={requiredGroupsForResourceGroup("clinical_laboratory")}>
       <div className="mx-auto w-full max-w-[97vw] space-y-1 overflow-x-hidden px-0.5">
@@ -223,10 +234,11 @@ export default function ClinicalLaboratoryMolecularDetailPage() {
               </Link>
               <button
                 type="button"
-                onClick={() => printResult(`${record.custom_id} - ${assayLabel}`)}
+                onClick={openResultPdf}
+                disabled={printing}
                 className="inline-flex h-7 min-w-0 items-center justify-center gap-1.5 rounded-lg border border-cyan-300/35 bg-cyan-50/[0.08] px-2.5 text-sm font-semibold text-cyan-800 shadow-sm backdrop-blur-[1px] transition hover:bg-cyan-50/[0.14] dark:border-cyan-800/30 dark:bg-cyan-900/[0.08] dark:text-cyan-200 dark:hover:bg-cyan-900/[0.14]"
               >
-                <Printer size={15} />
+                {printing ? <Loader2 size={15} className="animate-spin" /> : <Printer size={15} />}
                 Imprimir resultado
               </button>
               <Link
@@ -239,6 +251,12 @@ export default function ClinicalLaboratoryMolecularDetailPage() {
             </div>
           </div>
         </section>
+
+        {error ? (
+          <div className="rounded-lg border border-red-200/35 bg-red-50/[0.08] px-2 py-1.5 text-sm text-red-800 shadow-sm backdrop-blur-[1px] dark:border-red-800/25 dark:bg-red-900/[0.04] dark:text-red-300">
+            {error}
+          </div>
+        ) : null}
 
         <div className="space-y-1 overflow-x-auto pb-0.5">
           <div className="grid min-w-[720px] grid-cols-2 gap-1">

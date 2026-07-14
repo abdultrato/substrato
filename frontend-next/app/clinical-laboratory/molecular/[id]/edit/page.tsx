@@ -83,20 +83,6 @@ function toDateTimeLocal(value?: string | null) {
   return new Date(date.getTime() - offset).toISOString().slice(0, 16);
 }
 
-function printResult(title: string) {
-  const previousTitle = document.title;
-  document.title = title;
-  const restoreTitle = () => {
-    document.title = previousTitle;
-  };
-  window.addEventListener("afterprint", restoreTitle, { once: true });
-  window.focus();
-  window.requestAnimationFrame(() => {
-    window.print();
-    window.setTimeout(restoreTitle, 1000);
-  });
-}
-
 function FieldCard({ label, children, className = "" }: { label: string; children: ReactNode; className?: string }) {
   return (
     <label className={`space-y-1 rounded-lg border border-white/[0.10] bg-white/[0.02] p-1.5 backdrop-blur-[1px] dark:border-white/[0.06] dark:bg-white/[0.02] ${className}`}>
@@ -122,6 +108,7 @@ export default function ClinicalLaboratoryMolecularEditPage() {
   const [record, setRecord] = useState<MolecularResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [printing, setPrinting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [detection, setDetection] = useState("NAO_DETETADO");
   const [rifResistance, setRifResistance] = useState("NA");
@@ -203,6 +190,32 @@ export default function ClinicalLaboratoryMolecularEditPage() {
     }
   }
 
+  async function openResultPdf() {
+    if (!record) return;
+
+    setPrinting(true);
+    setError(null);
+    try {
+      const blob = await apiFetch<Blob>(`${ENDPOINT}${record.id}/pdf/`, {
+        responseType: "blob",
+        clientCache: false,
+      });
+      const url = URL.createObjectURL(blob);
+      const opened = window.open(url, "_blank", "noopener,noreferrer");
+      if (!opened) {
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `${record.custom_id || "resultado-molecular"}.pdf`;
+        link.click();
+      }
+      window.setTimeout(() => URL.revokeObjectURL(url), 30000);
+    } catch (err: any) {
+      setError(err?.message || "Não foi possível abrir o PDF do resultado.");
+    } finally {
+      setPrinting(false);
+    }
+  }
+
   if (loading) {
     return (
       <AppLayout fullWidth requiredGroups={requiredGroupsForResourceGroup("clinical_laboratory")}>
@@ -258,10 +271,11 @@ export default function ClinicalLaboratoryMolecularEditPage() {
               </Link>
               <button
                 type="button"
-                onClick={() => printResult(`${record.custom_id} - ${assayLabel}`)}
+                onClick={openResultPdf}
+                disabled={printing}
                 className="inline-flex h-7 min-w-0 items-center justify-center gap-1.5 rounded-lg border border-cyan-300/35 bg-cyan-50/[0.08] px-2.5 text-sm font-semibold text-cyan-800 shadow-sm backdrop-blur-[1px] transition hover:bg-cyan-50/[0.14] dark:border-cyan-800/30 dark:bg-cyan-900/[0.08] dark:text-cyan-200 dark:hover:bg-cyan-900/[0.14]"
               >
-                <Printer size={15} />
+                {printing ? <Loader2 size={15} className="animate-spin" /> : <Printer size={15} />}
                 Imprimir resultado
               </button>
               <button

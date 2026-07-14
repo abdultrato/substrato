@@ -1108,6 +1108,17 @@ class MolecularResultViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetM
             update_fields.append("updated_at")
             instance.save(update_fields=update_fields)
 
+    @action(detail=True, methods=["get"], url_path="pdf", url_name="pdf")
+    def pdf(self, request, pk=None):
+        from django.http import HttpResponse
+        from tasks.generate_pdf.molecular_result_pdf_generator import generate_molecular_result_pdf
+
+        result = self.get_object()
+        pdf_bytes, filename = generate_molecular_result_pdf(result, request=request)
+        response = HttpResponse(pdf_bytes, content_type="application/pdf")
+        response["Content-Disposition"] = f'inline; filename="{filename}"'
+        return response
+
 
 class AcidFastSmearViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
     queryset = AcidFastSmear.objects.select_related(
