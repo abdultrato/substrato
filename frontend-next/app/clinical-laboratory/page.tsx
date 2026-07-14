@@ -293,6 +293,12 @@ const PHASES: PhaseConfig[] = [
         icon: Dna,
       },
       {
+        href: "/clinical-laboratory/molecular",
+        label: "Biologia Molecular: Carga Viral de HIV",
+        desc: "Quantificação molecular da carga viral HIV",
+        icon: Dna,
+      },
+      {
         href: "/clinical-laboratory/afb-smears",
         label: "Baciloscopia (BAAR)",
         desc: "Microscopia para TB (ZN/Auramina)",
