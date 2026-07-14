@@ -525,11 +525,71 @@ class AntibioticSusceptibilitySerializer(serializers.ModelSerializer):
 
 
 class MolecularResultSerializer(serializers.ModelSerializer):
-    Meta = _meta(MolecularResult)
+    order_custom_id = serializers.CharField(source="order_item.order.custom_id", read_only=True)
+    patient_name = serializers.CharField(source="order_item.order.patient.name", read_only=True)
+    test_name = serializers.CharField(source="order_item.test.name", read_only=True)
+    test_code = serializers.CharField(source="order_item.test.code", read_only=True)
+    test_method = serializers.CharField(source="order_item.test.method", read_only=True)
+    sample_barcode = serializers.CharField(source="sample.barcode", read_only=True)
+    sample_type = serializers.CharField(source="sample.sample_type", read_only=True)
+    sample_received_at = serializers.DateTimeField(source="sample.received_at", read_only=True)
+    performed_by_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = MolecularResult
+        fields = "__all__"
+        read_only_fields = CORE_READ_ONLY_FIELDS + [
+            "order_custom_id",
+            "patient_name",
+            "test_name",
+            "test_code",
+            "test_method",
+            "sample_barcode",
+            "sample_type",
+            "sample_received_at",
+            "performed_by_name",
+        ]
+
+    def get_performed_by_name(self, obj):
+        user = getattr(obj, "performed_by", None)
+        if not user:
+            return ""
+        full_name = user.get_full_name() if hasattr(user, "get_full_name") else ""
+        return full_name or getattr(user, "username", "") or str(user)
 
 
 class AcidFastSmearSerializer(serializers.ModelSerializer):
-    Meta = _meta(AcidFastSmear)
+    order_custom_id = serializers.CharField(source="order_item.order.custom_id", read_only=True)
+    patient_name = serializers.CharField(source="order_item.order.patient.name", read_only=True)
+    test_name = serializers.CharField(source="order_item.test.name", read_only=True)
+    test_code = serializers.CharField(source="order_item.test.code", read_only=True)
+    test_method = serializers.CharField(source="order_item.test.method", read_only=True)
+    sample_barcode = serializers.CharField(source="sample.barcode", read_only=True)
+    sample_type = serializers.CharField(source="sample.sample_type", read_only=True)
+    sample_received_at = serializers.DateTimeField(source="sample.received_at", read_only=True)
+    performed_by_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = AcidFastSmear
+        fields = "__all__"
+        read_only_fields = CORE_READ_ONLY_FIELDS + [
+            "order_custom_id",
+            "patient_name",
+            "test_name",
+            "test_code",
+            "test_method",
+            "sample_barcode",
+            "sample_type",
+            "sample_received_at",
+            "performed_by_name",
+        ]
+
+    def get_performed_by_name(self, obj):
+        user = getattr(obj, "performed_by", None)
+        if user is None:
+            return ""
+        full = (user.get_full_name() or "").strip() if hasattr(user, "get_full_name") else ""
+        return full or getattr(user, "username", "") or str(user)
 
 
 # --- Gestão da Qualidade ---

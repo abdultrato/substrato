@@ -6,6 +6,7 @@ Seguem o padrão do projeto: ValidatedSearchOrderingMixin + TenantScopedQueryset
 """
 
 from django.core.exceptions import ValidationError as DjangoValidationError
+from django.db.models import Q
 from django.utils import timezone
 from datetime import datetime, timedelta
 from rest_framework.decorators import action
@@ -38,6 +39,7 @@ from apps.clinical_laboratory.models import (
     LabResult,
     LabSample,
     LabSector,
+    LabMethod,
     LabTest,
     LabTestField,
     LabTestPanel,
@@ -963,19 +965,256 @@ class AntibioticSusceptibilityViewSet(ValidatedSearchOrderingMixin, TenantScoped
 
 
 class MolecularResultViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
-    queryset = MolecularResult.objects.select_related("order_item", "sample", "performed_by").all()
+    queryset = MolecularResult.objects.select_related(
+        "order_item",
+        "order_item__order",
+        "order_item__order__patient",
+        "order_item__test",
+        "sample",
+        "performed_by",
+    ).all()
     serializer_class = MolecularResultSerializer
     filterset_fields = ["assay", "detection", "rif_resistance"]
     search_fields = ["custom_id", "instrument", "notes"]
     ordering_fields = ["assay", "detection", "performed_at", "created_at"]
+    candidate_methods = [
+        LabMethod.GENEXPERT,
+        LabMethod.PCRTEMPOREAL,
+        LabMethod.PCR,
+        LabMethod.NAAT,
+        LabMethod.RTQPCR,
+        LabMethod.RTPCRMULTIPLEX,
+        LabMethod.PCRMULTIPLEX,
+        LabMethod.PCRQUALITATIVO,
+        LabMethod.PCRQUANTITATIVO,
+    ]
+
+    def _candidate_test_filter(self, prefix="test"):
+        return (
+            Q(**{f"{prefix}__method__in": self.candidate_methods})
+            | Q(**{f"{prefix}__code__icontains": "GENEXP"})
+            | Q(**{f"{prefix}__name__icontains": "GeneXpert"})
+            | Q(**{f"{prefix}__name__icontains": "Xpert"})
+        )
+
+    def _molecular_queue_sample(self, order_item):
+        return (
+            LabSample.objects.filter(
+                order=order_item.order,
+                status__in=[
+                    LabSample.Status.RECEIVED,
+                    LabSample.Status.ACCEPTED,
+                    LabSample.Status.IN_PROCESSING,
+                ],
+            )
+            .order_by("-received_at", "-created_at")
+            .first()
+        )
+
+    def _assay_for_test(self, test):
+        code = (getattr(test, "code", "") or "").upper()
+        name = (getattr(test, "name", "") or "").upper()
+        if "GENEXP" in code or "GENEXPERT" in name or "XPERT" in name:
+            return MolecularResult.Assay.GENEXPERT_MTB_RIF
+        if "TB" in code or "TUBERC" in name:
+            return MolecularResult.Assay.TB_PCR
+        if "HIV" in code or "HIV" in name:
+            return MolecularResult.Assay.HIV_VIRAL_LOAD
+        if "HEPAT" in code or "HEPAT" in name or "HBV" in code or "HCV" in code:
+            return MolecularResult.Assay.HEPATITIS_VIRAL_LOAD
+        if "HPV" in code or "HPV" in name:
+            return MolecularResult.Assay.HPV_DNA
+        if "COVID" in code or "COVID" in name or "SARS" in code or "SARS" in name:
+            return MolecularResult.Assay.COVID_PCR
+        return MolecularResult.Assay.PCR_GENERIC
+
+    def _queue_item_payload(self, *, order_item, sample=None, result=None):
+        order = order_item.order
+        patient = getattr(order, "patient", None)
+        test = order_item.test
+        sample = sample or getattr(result, "sample", None) or self._molecular_queue_sample(order_item)
+        return {
+            "id": f"molecular-{result.id}" if result else f"pending-{order_item.id}",
+            "kind": "molecular_result" if result else "pending",
+            "molecular_result_id": result.id if result else None,
+            "molecular_result_custom_id": getattr(result, "custom_id", "") if result else "",
+            "order_item": order_item.id,
+            "order_item_custom_id": order_item.custom_id,
+            "order_custom_id": order.custom_id,
+            "patient_name": getattr(patient, "name", "") or "",
+            "test_name": getattr(test, "name", "") or "",
+            "test_code": getattr(test, "code", "") or "",
+            "test_method": getattr(test, "method", "") or "",
+            "sample": sample.id if sample else None,
+            "sample_barcode": getattr(sample, "barcode", "") if sample else "",
+            "sample_type": getattr(sample, "sample_type", "") if sample else getattr(order_item, "sample_type", ""),
+            "sample_received_at": getattr(sample, "received_at", None) if sample else None,
+            "assay": getattr(result, "assay", "") if result else self._assay_for_test(test),
+            "detection": getattr(result, "detection", "PENDENTE") if result else "PENDENTE",
+            "rif_resistance": getattr(result, "rif_resistance", "") if result else "",
+            "performed_at": getattr(result, "performed_at", None) if result else None,
+        }
+
+    @action(detail=False, methods=["get"], url_path="queue", url_name="queue")
+    def queue(self, request):
+        tenant = self._get_request_tenant()
+        candidate_filter = self._candidate_test_filter("order_item__test")
+
+        existing = list(
+            self.get_queryset()
+            .filter(candidate_filter)
+            .order_by("-created_at")[:200]
+        )
+        existing_order_item_ids = {result.order_item_id for result in existing}
+        payload = [
+            self._queue_item_payload(order_item=result.order_item, result=result)
+            for result in existing
+        ]
+
+        pending = (
+            LabOrderItem.objects.select_related("order", "order__patient", "test")
+            .filter(self._candidate_test_filter())
+            .exclude(id__in=existing_order_item_ids)
+            .filter(order__samples__status__in=[
+                LabSample.Status.RECEIVED,
+                LabSample.Status.ACCEPTED,
+                LabSample.Status.IN_PROCESSING,
+            ])
+            .distinct()
+        )
+        if tenant is not None:
+            pending = pending.filter(tenant=tenant)
+        pending = pending.order_by("-created_at")[:200]
+
+        payload.extend(
+            self._queue_item_payload(order_item=item)
+            for item in pending
+            if self._molecular_queue_sample(item) is not None
+        )
+        return Response(payload)
+
+    def perform_create(self, serializer):
+        instance = serializer.save()
+        update_fields = []
+        if instance.performed_by_id is None:
+            instance.performed_by = _current_user(self.request)
+            update_fields.append("performed_by")
+        if instance.performed_at is None:
+            instance.performed_at = timezone.now()
+            update_fields.append("performed_at")
+        if update_fields:
+            update_fields.append("updated_at")
+            instance.save(update_fields=update_fields)
 
 
 class AcidFastSmearViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
-    queryset = AcidFastSmear.objects.select_related("order_item", "sample", "performed_by").all()
+    queryset = AcidFastSmear.objects.select_related(
+        "order_item",
+        "order_item__order",
+        "order_item__order__patient",
+        "order_item__test",
+        "sample",
+        "performed_by",
+    ).all()
     serializer_class = AcidFastSmearSerializer
     filterset_fields = ["stain", "grade"]
     search_fields = ["custom_id", "afb_count", "notes"]
     ordering_fields = ["grade", "stain", "performed_at", "created_at"]
+    candidate_methods = [LabMethod.BAAR]
+
+    def _candidate_test_filter(self, prefix="test"):
+        return Q(**{f"{prefix}__method__in": self.candidate_methods})
+
+    def _afb_queue_sample(self, order_item):
+        return (
+            LabSample.objects.filter(
+                order=order_item.order,
+                status__in=[
+                    LabSample.Status.RECEIVED,
+                    LabSample.Status.ACCEPTED,
+                    LabSample.Status.IN_PROCESSING,
+                ],
+            )
+            .order_by("-received_at", "-created_at")
+            .first()
+        )
+
+    def _queue_item_payload(self, *, order_item, sample=None, smear=None):
+        order = order_item.order
+        patient = getattr(order, "patient", None)
+        test = order_item.test
+        sample = sample or getattr(smear, "sample", None) or self._afb_queue_sample(order_item)
+        return {
+            "id": f"afb-{smear.id}" if smear else f"pending-{order_item.id}",
+            "kind": "afb_smear" if smear else "pending",
+            "afb_smear_id": smear.id if smear else None,
+            "afb_smear_custom_id": getattr(smear, "custom_id", "") if smear else "",
+            "order_item": order_item.id,
+            "order_item_custom_id": order_item.custom_id,
+            "order_custom_id": order.custom_id,
+            "patient_name": getattr(patient, "name", "") or "",
+            "test_name": getattr(test, "name", "") or "",
+            "test_code": getattr(test, "code", "") or "",
+            "test_method": getattr(test, "method", "") or "",
+            "sample": sample.id if sample else None,
+            "sample_barcode": getattr(sample, "barcode", "") if sample else "",
+            "sample_type": getattr(sample, "sample_type", "") if sample else getattr(order_item, "sample_type", ""),
+            "sample_received_at": getattr(sample, "received_at", None) if sample else None,
+            "grade": getattr(smear, "grade", "PENDENTE") if smear else "PENDENTE",
+            "stain": getattr(smear, "stain", "") if smear else "",
+            "performed_at": getattr(smear, "performed_at", None) if smear else None,
+        }
+
+    @action(detail=False, methods=["get"], url_path="queue", url_name="queue")
+    def queue(self, request):
+        tenant = self._get_request_tenant()
+        candidate_filter = self._candidate_test_filter("order_item__test")
+
+        existing = list(
+            self.get_queryset()
+            .filter(candidate_filter)
+            .order_by("-created_at")[:200]
+        )
+        existing_order_item_ids = {smear.order_item_id for smear in existing}
+        payload = [
+            self._queue_item_payload(order_item=smear.order_item, smear=smear)
+            for smear in existing
+        ]
+
+        pending = (
+            LabOrderItem.objects.select_related("order", "order__patient", "test")
+            .filter(self._candidate_test_filter())
+            .exclude(id__in=existing_order_item_ids)
+            .filter(order__samples__status__in=[
+                LabSample.Status.RECEIVED,
+                LabSample.Status.ACCEPTED,
+                LabSample.Status.IN_PROCESSING,
+            ])
+            .distinct()
+        )
+        if tenant is not None:
+            pending = pending.filter(tenant=tenant)
+        pending = pending.order_by("-created_at")[:200]
+
+        payload.extend(
+            self._queue_item_payload(order_item=item)
+            for item in pending
+            if self._afb_queue_sample(item) is not None
+        )
+        return Response(payload)
+
+    def perform_create(self, serializer):
+        instance = serializer.save()
+        update_fields = []
+        if instance.performed_by_id is None:
+            instance.performed_by = _current_user(self.request)
+            update_fields.append("performed_by")
+        if instance.performed_at is None:
+            instance.performed_at = timezone.now()
+            update_fields.append("performed_at")
+        if update_fields:
+            update_fields.append("updated_at")
+            instance.save(update_fields=update_fields)
 
 
 # --- Gestão da Qualidade ---

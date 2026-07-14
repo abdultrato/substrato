@@ -32,6 +32,8 @@ class Method(models.TextChoices):
     MICROSCOPICO = "Microscopico", "Microscópico"
     COLORACAO_GRAM = "ColoracaoGram", "Coloração de Gram"
     COLORACAO_ZIEHL = "ColoracaoZiehl", "Ziehl-Neelsen"
+    BAAR = "BAAR", "BAAR (baciloscopia)"
+    GENEXPERT = "GeneXpert", "GeneXpert"
     ISOLAMENTO_MICROBIANO = "IsolamentoMicrobiano", "Isolamento Microbiano"
     CULTURA_QUANTITATIVA = "CulturaQuantitativa", "Cultura Quantitativa"
     CULTURA_SELETIVA = "CulturaSeletiva", "Cultura Seletiva"
