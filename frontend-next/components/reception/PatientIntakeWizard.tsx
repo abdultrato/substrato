@@ -1,6 +1,7 @@
 "use client"
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { createPortal } from "react-dom"
 import Link from "next/link"
 import {
   AlertTriangle,
@@ -555,12 +556,35 @@ function LookupSearch({
   const [results, setResults] = useState<LookupItem[]>([])
   const [loading, setLoading] = useState(false)
   const [open, setOpen] = useState(false)
+  const [mounted, setMounted] = useState(false)
+  const [anchor, setAnchor] = useState<{ top: number; left: number; width: number } | null>(null)
+  const wrapRef = useRef<HTMLDivElement>(null)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const requestSeqRef = useRef(0)
+
+  useEffect(() => setMounted(true), [])
 
   useEffect(() => {
     setQuery(value.name)
   }, [value.name])
+
+  const syncAnchor = useCallback(() => {
+    const el = wrapRef.current
+    if (!el) return
+    const r = el.getBoundingClientRect()
+    setAnchor({ top: r.bottom + 4, left: r.left, width: r.width })
+  }, [])
+
+  useEffect(() => {
+    if (!open) return
+    syncAnchor()
+    window.addEventListener("scroll", syncAnchor, true)
+    window.addEventListener("resize", syncAnchor)
+    return () => {
+      window.removeEventListener("scroll", syncAnchor, true)
+      window.removeEventListener("resize", syncAnchor)
+    }
+  }, [open, syncAnchor])
 
   useEffect(() => {
     return () => {
@@ -611,8 +635,12 @@ function LookupSearch({
     setResults([item])
   }
 
+  const dropdownStyle = anchor
+    ? { position: "fixed" as const, top: anchor.top, left: anchor.left, width: anchor.width, zIndex: 100001 }
+    : undefined
+
   return (
-    <div className="relative">
+    <div ref={wrapRef} className="relative">
       <input
         value={query}
         onChange={(event) => search(event.target.value)}
@@ -626,29 +654,41 @@ function LookupSearch({
         }}
       />
       {loading ? <span className="absolute right-3 top-2.5 text-xs text-[var(--gray-500)]">...</span> : null}
-      {open && results.length > 0 ? (
-        <ul className="absolute z-50 mt-1 max-h-56 w-full overflow-y-auto rounded-lg border border-[var(--border)] bg-[var(--card)] py-1 shadow-lg">
-          {results.map((item) => (
-            <li
-              key={item.id}
-              onMouseDown={() => pick(item)}
-              className="cursor-pointer px-3 py-2 text-sm text-[var(--text)] hover:bg-[var(--gray-100)]"
+      {mounted && open && anchor && results.length > 0
+        ? createPortal(
+            <ul
+              style={dropdownStyle}
+              className="max-h-56 overflow-y-auto rounded-lg border border-[var(--border)] bg-[var(--card)] py-1 shadow-lg"
             >
-              <span className="block font-medium">{lookupItemLabel(item)}</span>
-              {item.custom_id || item.document_number || item.nuit ? (
-                <span className="text-xs text-[var(--gray-500)]">
-                  {[item.custom_id, item.nuit, item.document_number].filter(Boolean).join(" · ")}
-                </span>
-              ) : null}
-            </li>
-          ))}
-        </ul>
-      ) : null}
-      {open && !loading && query.trim() && results.length === 0 ? (
-        <div className="absolute z-50 mt-1 w-full rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-xs text-[var(--gray-500)] shadow-lg">
-          Nenhum registo encontrado.
-        </div>
-      ) : null}
+              {results.map((item) => (
+                <li
+                  key={item.id}
+                  onMouseDown={() => pick(item)}
+                  className="cursor-pointer px-3 py-2 text-sm text-[var(--text)] hover:bg-[var(--gray-100)]"
+                >
+                  <span className="block font-medium">{lookupItemLabel(item)}</span>
+                  {item.custom_id || item.document_number || item.nuit ? (
+                    <span className="text-xs text-[var(--gray-500)]">
+                      {[item.custom_id, item.nuit, item.document_number].filter(Boolean).join(" · ")}
+                    </span>
+                  ) : null}
+                </li>
+              ))}
+            </ul>,
+            document.body
+          )
+        : null}
+      {mounted && open && anchor && !loading && query.trim() && results.length === 0
+        ? createPortal(
+            <div
+              style={dropdownStyle}
+              className="rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-xs text-[var(--gray-500)] shadow-lg"
+            >
+              Nenhum registo encontrado.
+            </div>,
+            document.body
+          )
+        : null}
     </div>
   )
 }
