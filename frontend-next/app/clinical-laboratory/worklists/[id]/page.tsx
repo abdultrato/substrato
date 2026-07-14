@@ -52,10 +52,20 @@ type RequestInfo = {
   has_critical_result?: boolean
 }
 
+type SpecializedItem = {
+  exam_id: number
+  exam_name: string
+  method: string
+  sector: string
+  sector_label: string
+  href: string
+}
+
 type RequestResults = {
   request: RequestInfo
   summary: Summary
   items: ResultItem[]
+  specialized_items?: SpecializedItem[]
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -655,6 +665,33 @@ export default function WorklistDetailPage() {
                 )}
               </div>
             </div>
+
+            {/* Exames de sector especializado — preenchem-se na sua área dedicada */}
+            {data.specialized_items && data.specialized_items.length > 0 && (
+              <div className="mb-3 rounded-lg border border-teal-200/70 bg-teal-50/50 p-2.5 dark:border-teal-800/40 dark:bg-teal-950/20">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-teal-700 dark:text-teal-300">
+                  Exames de sector especializado
+                </p>
+                <p className="mb-2 mt-0.5 text-[11px] text-[var(--gray-500)]">
+                  Cultura, baciloscopia, GeneXpert e PCR não se preenchem aqui — abra a área dedicada para registar o resultado.
+                </p>
+                <div className="grid gap-1.5 sm:grid-cols-2 lg:grid-cols-3">
+                  {data.specialized_items.map((sp) => (
+                    <Link
+                      key={sp.exam_id}
+                      href={sp.href}
+                      className="group flex items-center justify-between gap-2 rounded-md border border-teal-200/60 bg-white/60 px-2.5 py-2 text-left shadow-sm transition hover:border-teal-300 hover:bg-white dark:border-teal-800/40 dark:bg-white/[0.04] dark:hover:bg-white/[0.08]"
+                    >
+                      <span className="min-w-0">
+                        <span className="block truncate text-xs font-semibold text-[var(--text)]">{sp.exam_name}</span>
+                        <span className="block truncate text-[10px] text-[var(--gray-500)]">{sp.sector_label}</span>
+                      </span>
+                      <span aria-hidden className="shrink-0 text-sm font-semibold text-teal-600 dark:text-teal-400">↗</span>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Tabela de campos de resultado */}
             <div className="overflow-x-auto border border-[var(--border)]">

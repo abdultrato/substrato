@@ -90,9 +90,17 @@ class Result(NoNameCoreModel):
             .order_by("position", "id")
         )
 
+        from apps.clinical.lab_specialized import specialized_sector_for_method
+
         for item in request_items:
             # Itens de exame médico (imagiologia) não geram ResultItem.
             if not item.exam_id:
+                continue
+
+            # Exames de método especializado (cultura, baciloscopia, GeneXpert,
+            # PCR) têm a sua própria área de preenchimento — não geram campos
+            # genéricos de resultado.
+            if specialized_sector_for_method(getattr(item.exam, "method", None)):
                 continue
 
             fields_mgr = getattr(item.exam, "fields", None) or getattr(item.exam, "campos", None)

@@ -460,6 +460,11 @@ class LabRequestViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin,
 
     def _result_items_response(self, request_record, workflow: dict | None = None):
         from apps.clinical.models.result import Result
+        from apps.clinical.lab_specialized import (
+            SPECIALIZED_METHODS,
+            SPECIALIZED_SECTOR_META,
+            specialized_sector_for_method,
+        )
 
         result, created = Result.objects.get_or_create(
             request=request_record,
@@ -478,6 +483,10 @@ class LabRequestViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin,
             "result",
             "result__request",
             "result__request__patient",
+        ).exclude(
+            # Exames de método especializado (cultura, baciloscopia, GeneXpert,
+            # PCR) não se preenchem aqui — têm a sua própria área dedicada.
+            exam_field__test__method__in=SPECIALIZED_METHODS,
         ).order_by(
             "position",
             "exam_field__sequence",
@@ -522,10 +531,33 @@ class LabRequestViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin,
             "has_critical_result": request_record.has_critical_result,
         }
 
+        # Exames de método especializado presentes na requisição — encaminham
+        # para a sua área dedicada em vez de campos genéricos.
+        specialized_items = []
+        seen_exams: set[int] = set()
+        for item in request_record.items.select_related("exam").order_by("position", "id"):
+            exam = getattr(item, "exam", None)
+            if exam is None or exam.id in seen_exams:
+                continue
+            sector = specialized_sector_for_method(getattr(exam, "method", None))
+            if not sector:
+                continue
+            seen_exams.add(exam.id)
+            meta = SPECIALIZED_SECTOR_META.get(sector, {})
+            specialized_items.append({
+                "exam_id": exam.id,
+                "exam_name": exam.name,
+                "method": exam.method,
+                "sector": sector,
+                "sector_label": meta.get("label", ""),
+                "href": meta.get("href", ""),
+            })
+
         payload = {
             "request": request_payload,
             "summary": summary,
             "items": items,
+            "specialized_items": specialized_items,
         }
         if workflow is not None:
             payload["workflow"] = workflow
