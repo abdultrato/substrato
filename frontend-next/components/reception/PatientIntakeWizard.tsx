@@ -480,7 +480,7 @@ function ToggleRow({
     tone === "rose" ? "text-rose-500" : tone === "amber" ? "text-amber-500" : "text-[var(--primary-700)]"
 
   return (
-    <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-white/20 bg-white/30 px-3 py-2.5 shadow-sm backdrop-blur-sm transition hover:border-[var(--primary-300)] hover:bg-white/45 dark:border-white/10 dark:bg-white/[0.05] dark:hover:bg-white/[0.09]">
+    <label className="flex cursor-pointer items-start gap-2 rounded-xl border border-white/20 bg-white/30 px-3 py-2.5 shadow-sm backdrop-blur-sm transition hover:border-[var(--primary-300)] hover:bg-white/45 dark:border-white/10 dark:bg-white/[0.05] dark:hover:bg-white/[0.09]">
       <input
         type="checkbox"
         checked={checked}
@@ -516,7 +516,7 @@ function PurposeCard({
       type="button"
       onClick={onSelect}
       aria-pressed={active}
-      className={`flex items-start gap-3 rounded-lg border px-3 py-3 text-left transition ${
+      className={`flex items-start gap-2 rounded-lg border px-3 py-3 text-left transition ${
         active
           ? "border-[var(--primary-500)] bg-[var(--primary-600)] text-white shadow-sm"
           : "border-white/20 bg-white/30 text-[var(--gray-700)] shadow-sm backdrop-blur-sm hover:border-[var(--primary-300)] hover:bg-white/45 dark:border-white/10 dark:bg-white/[0.05] dark:text-[var(--gray-200)] dark:hover:bg-white/[0.09]"
@@ -1054,7 +1054,7 @@ export function PatientIntakeWizard({
     return (
       <ModalShell title="Paciente registado" onClose={onClose}>
         <div className="space-y-4 p-5">
-          <div className="flex items-center gap-3 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-900">
+          <div className="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-900">
             <CheckCircle2 size={20} className="shrink-0 text-emerald-600" />
             <div>
               <p className="text-sm font-semibold">{created.name}</p>
@@ -1150,8 +1150,8 @@ export function PatientIntakeWizard({
   return (
     <ModalShell title={isEditMode ? "Editar paciente" : "Registar paciente"} onClose={onClose}>
       <div className="grid min-h-0 flex-1 grid-cols-1 md:grid-cols-[230px_minmax(0,1fr)]">
-        <aside className="border-b border-white/20 bg-white/18 p-3 backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.03] md:border-b-0 md:border-r">
-          <div className="flex gap-2 overflow-x-auto md:flex-col md:overflow-visible">
+        <aside className="border-b border-white/20 bg-white/18 p-2 backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.03] md:border-b-0 md:border-r">
+          <div className="flex gap-1.5 overflow-x-auto md:flex-col md:overflow-visible">
             {steps.map((definition, index) => {
               const Icon = definition.icon
               const active = index === step
@@ -1187,16 +1187,16 @@ export function PatientIntakeWizard({
         </aside>
 
         <div className="flex min-h-0 flex-col">
-          <div className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-5">{renderStep(currentStep.key)}</div>
+          <div className="min-h-0 flex-1 overflow-y-auto p-2 sm:p-3">{renderStep(currentStep.key)}</div>
 
           {error ? (
-            <div className="mx-4 mb-3 flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50/80 px-3 py-2 text-xs text-amber-800 backdrop-blur-sm sm:mx-5">
+            <div className="mx-2 mb-2 flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50/80 px-3 py-2 text-xs text-amber-800 backdrop-blur-sm sm:mx-3">
               <AlertTriangle size={14} className="mt-0.5 shrink-0" />
               <span>{error}</span>
             </div>
           ) : null}
 
-          <div className="flex items-center justify-between gap-3 border-t border-white/20 px-4 py-3 dark:border-white/10 sm:px-5">
+          <div className="flex items-center justify-between gap-2 border-t border-white/20 px-3 py-2 dark:border-white/10">
             <button
               type="button"
               onClick={() => {
@@ -1237,9 +1237,9 @@ export function PatientIntakeWizard({
   function renderStep(key: StepKey) {
     if (key === "origin") {
       return (
-        <div className="space-y-5">
+        <div className="space-y-3">
           <SectionTitle icon={ClipboardList} title="Propósito da visita" />
-          <div className="grid gap-3 sm:grid-cols-3">
+          <div className="grid gap-2 sm:grid-cols-3">
             {PURPOSE_OPTIONS.map((option) => (
               <PurposeCard
                 key={option.value}
@@ -1272,7 +1272,7 @@ export function PatientIntakeWizard({
               ) : null}
 
               {isClinical ? (
-                <div className="grid gap-3 sm:grid-cols-2">
+                <div className="grid gap-2 sm:grid-cols-2">
                   <Field label="Tipo de proveniência">
                     <select
                       value={data.provenance}
@@ -1317,9 +1317,9 @@ export function PatientIntakeWizard({
 
     if (key === "identity") {
       return (
-        <div className="space-y-5">
+        <div className="space-y-3">
           <SectionTitle icon={Badge} title="Identificação do paciente" />
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
             <div className="sm:col-span-2 lg:col-span-3">
               <Field label="Nome completo" required>
                 <input
@@ -1426,9 +1426,9 @@ export function PatientIntakeWizard({
 
     if (key === "contact") {
       return (
-        <div className="space-y-5">
+        <div className="space-y-3">
           <SectionTitle icon={Phone} title="Contacto e morada" />
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid gap-2 sm:grid-cols-2">
             <Field
               label="Telefone"
               error={phoneFeedback(data.contact).error}
@@ -1453,7 +1453,7 @@ export function PatientIntakeWizard({
             </Field>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
             <Field label="Rua">
               <input
                 value={data.address_street}
@@ -1533,10 +1533,10 @@ export function PatientIntakeWizard({
       const showReplacementInapt = data.is_blood_donor
       const showInaptFields = showReplacementInapt && data.is_replacement_donor_inapt
       return (
-        <div className="space-y-5">
+        <div className="space-y-3">
           <SectionTitle icon={ShieldCheck} title="Informações clínicas e acompanhante" />
           {showPregnant || showReplacementInapt ? (
-            <div className="grid gap-3 md:grid-cols-2">
+            <div className="grid gap-2 md:grid-cols-2">
               {showPregnant ? (
                 <ToggleRow
                   checked={data.pregnant}
@@ -1566,7 +1566,7 @@ export function PatientIntakeWizard({
           ) : null}
 
           {data.pregnant || showInaptFields ? (
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="grid gap-2 sm:grid-cols-2">
               {data.pregnant ? (
                 <Field label="Idade gestacional (semanas)" required>
                   <input
@@ -1606,7 +1606,7 @@ export function PatientIntakeWizard({
           {!isDonor ? (
             <div className="space-y-3">
               <SectionTitle icon={Users} title="Acompanhante" />
-              <div className="grid gap-3 sm:grid-cols-2">
+              <div className="grid gap-2 sm:grid-cols-2">
                 <Field label="Nome do acompanhante">
                   <input
                     value={data.companion_name}
@@ -1648,9 +1648,9 @@ export function PatientIntakeWizard({
 
     if (key === "donation") {
       return (
-        <div className="space-y-5">
+        <div className="space-y-3">
           <SectionTitle icon={Droplets} title="Doação de sangue" />
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
             <Field label="Tipo de doador">
               <select
                 value={data.donor_role}
@@ -1743,7 +1743,7 @@ export function PatientIntakeWizard({
 
           <div className="space-y-3">
             <SectionTitle icon={CalendarClock} title="Triagem e sinais" />
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
               <Field label="Peso (kg)">
                 <input
                   type="number"
@@ -1815,7 +1815,7 @@ export function PatientIntakeWizard({
 
           <div className="space-y-3">
             <SectionTitle icon={ShieldCheck} title="Resultados laboratoriais" />
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
               <TestSelect label="HIV" value={data.hiv_test} onChange={(value) => update({ hiv_test: value })} />
               <TestSelect
                 label="Sífilis/RPR"
@@ -1838,7 +1838,7 @@ export function PatientIntakeWizard({
                 onChange={(value) => update({ malaria_test: value })}
               />
             </div>
-            <div className="grid gap-3 sm:grid-cols-3">
+            <div className="grid gap-2 sm:grid-cols-3">
               <Field label="Observações dos exames">
                 <textarea
                   value={data.test_notes}
@@ -1870,7 +1870,7 @@ export function PatientIntakeWizard({
     }
 
     return (
-      <div className="space-y-5">
+      <div className="space-y-3">
         <SectionTitle icon={CheckCircle2} title="Confirmação" />
         <SummaryGroup title="Paciente">
           <SummaryRow label="Nome" value={data.name || "-"} />
@@ -1963,10 +1963,10 @@ function TestSelect({
 
 function ModalShell({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
   return (
-    <div className="fixed inset-0 z-[9999] flex items-start justify-center overflow-hidden p-3 pt-10 sm:p-6 sm:pt-12">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center overflow-hidden p-2 sm:p-3">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative flex max-h-[calc(100vh-4rem)] w-full max-w-5xl flex-col overflow-hidden rounded-2xl border border-white/20 bg-white/35 shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-white/[0.06] supports-[backdrop-filter]:bg-white/30 dark:supports-[backdrop-filter]:bg-white/[0.05]">
-        <div className="flex shrink-0 items-center justify-between border-b border-white/20 px-4 py-3 dark:border-white/10">
+      <div className="relative flex max-h-[calc(100vh-1rem)] w-full max-w-5xl flex-col overflow-hidden rounded-2xl border border-white/20 bg-white/35 shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-white/[0.06] supports-[backdrop-filter]:bg-white/30 dark:supports-[backdrop-filter]:bg-white/[0.05]">
+        <div className="flex shrink-0 items-center justify-between border-b border-white/20 px-3 py-2 dark:border-white/10">
           <div>
             <h2 className="text-sm font-semibold text-[var(--text)]">{title}</h2>
           </div>
