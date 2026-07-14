@@ -127,19 +127,19 @@ function CompactWorkspaceItem({
   const content = (
     <>
       <span aria-hidden className={`absolute inset-y-0 left-0 w-1 ${tone.bar}`} />
-      <span className={`ml-1 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ring-1 ${tone.accent}`}>
-        <Icon size={15} strokeWidth={2.1} />
+      <span className={`inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-md ring-1 sm:h-6 sm:w-6 ${tone.accent}`}>
+        <Icon size={12} strokeWidth={2.1} />
       </span>
       <span className="min-w-0">
-        <span className={`block text-sm font-semibold leading-tight ${tone.title}`}>{title}</span>
-        <span className={`mt-0.5 line-clamp-2 block text-[11px] leading-snug ${tone.description}`}>
+        <span className={`block truncate text-[11px] font-semibold leading-tight sm:text-[12px] ${tone.title}`}>{title}</span>
+        <span className={`mt-0.5 hidden truncate text-[10px] leading-tight sm:block ${tone.description}`}>
           {description}
         </span>
       </span>
     </>
   )
 
-  const className = `group relative flex min-w-[15rem] flex-1 items-start gap-2.5 overflow-hidden rounded-xl border p-2.5 text-left shadow-sm transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/25 ${tone.panel}`
+  const className = `group relative flex min-w-0 items-center gap-1 overflow-hidden rounded-md border px-1.5 py-1 text-left shadow-sm transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/25 sm:gap-1.5 sm:px-2 ${tone.panel}`
 
   if (href) {
     return (
@@ -751,22 +751,22 @@ function WorkspacesContent() {
 
   return (
     <AppLayout>
-      <div className="mx-auto w-full max-w-6xl space-y-6 px-3 sm:px-0">
-        <div className={`relative overflow-hidden rounded-2xl border ${headerTone.panel}`}>
+      <div className="mx-auto w-[97vw] max-w-[97vw] space-y-1 px-0">
+        <div className={`relative overflow-hidden rounded-xl border ${headerTone.panel}`}>
           <span
             aria-hidden
-            className={`pointer-events-none absolute inset-x-0 top-0 h-28 bg-gradient-to-b ${headerTone.glow}`}
+            className={`pointer-events-none absolute inset-x-0 top-0 h-20 bg-gradient-to-b ${headerTone.glow}`}
           />
-          <div className="relative flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
-            <div className="flex items-center gap-4">
-              <div className={`inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ring-1 ${headerTone.accent}`}>
-                <HeaderIcon size={22} strokeWidth={2.1} />
+          <div className="relative flex flex-col gap-1 p-2 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-1.5">
+              <div className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ring-1 sm:h-8 sm:w-8 ${headerTone.accent}`}>
+                <HeaderIcon size={16} strokeWidth={2.1} />
               </div>
               <div className="min-w-0">
-                <h1 className={`break-words font-display text-xl font-semibold leading-tight sm:text-2xl ${headerTone.title}`}>
+                <h1 className={`break-words font-display text-base font-semibold leading-tight sm:text-lg ${headerTone.title}`}>
                   {selectedLayer ? selectedLayer.title : t("Selecionar área de trabalho", "Select workspace")}
                 </h1>
-                <p className={`mt-1 text-sm leading-relaxed ${headerTone.description}`}>
+                <p className={`mt-0.5 line-clamp-1 text-[11px] leading-snug sm:text-xs ${headerTone.description}`}>
                   {selectedLayer
                     ? selectedLayer.description
                     : t(
@@ -776,13 +776,13 @@ function WorkspacesContent() {
                 </p>
               </div>
             </div>
-            <span className="inline-flex w-fit shrink-0 items-center gap-1.5 self-start rounded-full border border-border/70 bg-card/80 px-3 py-1.5 text-xs font-semibold text-muted-foreground shadow-sm sm:self-auto">
+            <span className="inline-flex w-fit shrink-0 items-center gap-1 self-start rounded-full border border-border/70 bg-card/80 px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground shadow-sm sm:self-auto">
               {moduleCountLabel}
             </span>
           </div>
 
           {!selectedLayer && visibleLayers.length > 0 ? (
-            <div className="relative flex flex-wrap items-stretch gap-2 border-t border-border/60 bg-card/40 px-5 py-3 sm:px-6">
+            <div className="relative grid grid-cols-[repeat(auto-fit,minmax(7rem,1fr))] gap-1 border-t border-border/60 bg-card/40 px-1.5 py-1.5">
               {visibleLayers.map((layer) => (
                 <CompactWorkspaceItem
                   key={layer.key}
@@ -802,28 +802,28 @@ function WorkspacesContent() {
           ) : null}
 
           {selectedLayer ? (
-            <div className="relative flex flex-wrap items-center justify-between gap-3 border-t border-border/60 bg-card/40 px-5 py-3 sm:px-6">
+            <div className="relative flex flex-wrap items-center justify-between gap-1 border-t border-border/60 bg-card/40 px-1.5 py-1.5">
               <button
                 type="button"
                 onClick={() => setSelectedLayerKey(null)}
-                className="inline-flex items-center gap-2 rounded-md border border-border bg-card px-3 py-2 text-sm font-medium text-foreground shadow-sm transition-colors hover:border-primary/35 hover:bg-muted/50"
+                className="inline-flex items-center gap-1 rounded-md border border-border bg-card px-1.5 py-1 text-[11px] font-medium text-foreground shadow-sm transition-colors hover:border-primary/35 hover:bg-muted/50"
               >
-                <ArrowLeft size={16} />
+                <ArrowLeft size={14} />
                 {t("Voltar às áreas principais", "Back to main areas")}
               </button>
 
               {showSearch ? (
-                <div className="relative w-full sm:w-72">
+                <div className="relative w-full sm:w-52">
                   <Search
-                    size={16}
-                    className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                    size={14}
+                    className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground"
                   />
                   <input
                     type="text"
                     value={searchQuery}
                     onChange={(event) => setSearchQuery(event.target.value)}
                     placeholder={t("Pesquisar módulo...", "Search modules...")}
-                    className="w-full rounded-md border border-border bg-card py-2 pl-9 pr-3 text-sm text-foreground shadow-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-primary/40"
+                    className="h-7 w-full rounded-md border border-border bg-card pl-8 pr-2 text-xs text-foreground shadow-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-primary/40"
                   />
                 </div>
               ) : null}
@@ -831,16 +831,16 @@ function WorkspacesContent() {
           ) : null}
 
           {selectedLayer ? (
-            <div className="relative space-y-3 border-t border-border/60 bg-card/40 px-5 py-3 sm:px-6">
+            <div className="relative space-y-1 border-t border-border/60 bg-card/40 px-1.5 py-1.5">
               {filteredDepartments.length > 0 ? (
                 departmentGroups.map((group) => (
-                  <div key={group.category} className="space-y-1.5">
+                  <div key={group.category} className="space-y-0.5">
                     {departmentGroups.length > 1 ? (
-                      <h2 className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                      <h2 className="hidden text-[9px] font-semibold uppercase tracking-[0.12em] text-muted-foreground sm:block">
                         {group.category}
                       </h2>
                     ) : null}
-                    <div className="flex flex-wrap items-stretch gap-2">
+                    <div className="grid grid-cols-[repeat(auto-fit,minmax(7rem,1fr))] gap-1">
                       {group.departments.map((department) => (
                         <CompactWorkspaceItem
                           key={department.key}
