@@ -58,11 +58,11 @@ const RIF_OPTIONS = [
 ];
 
 const GLASS =
-  "rounded-xl border border-white/[0.16] bg-white/[0.045] shadow-[0_10px_34px_rgba(15,23,42,0.04)] backdrop-blur-2xl dark:border-white/[0.08] dark:bg-white/[0.018]";
+  "rounded-xl border border-white/[0.10] bg-white/[0.02] shadow-none backdrop-blur-[1px] dark:border-white/[0.06] dark:bg-white/[0.02]";
 const INPUT =
-  "h-9 w-full rounded-lg border border-white/[0.16] bg-white/[0.035] px-2.5 text-sm text-foreground shadow-sm outline-none backdrop-blur-xl transition placeholder:text-muted-foreground focus:border-indigo-400 focus:bg-white/[0.075] focus:ring-2 focus:ring-indigo-500/20 dark:border-white/[0.08] dark:bg-white/[0.018] dark:focus:bg-white/[0.035]";
+  "h-7 w-full rounded-lg border border-white/[0.10] bg-white/[0.02] px-2 text-sm text-foreground shadow-sm outline-none backdrop-blur-[1px] transition placeholder:text-muted-foreground focus:border-indigo-400 focus:bg-white/[0.03] focus:ring-2 focus:ring-indigo-500/20 dark:border-white/[0.06] dark:bg-white/[0.02] dark:focus:bg-white/[0.03]";
 const TEXTAREA =
-  "min-h-[92px] w-full rounded-lg border border-white/[0.16] bg-white/[0.035] px-2.5 py-2 text-sm text-foreground shadow-sm outline-none backdrop-blur-xl transition placeholder:text-muted-foreground focus:border-indigo-400 focus:bg-white/[0.075] focus:ring-2 focus:ring-indigo-500/20 dark:border-white/[0.08] dark:bg-white/[0.018] dark:focus:bg-white/[0.035]";
+  "min-h-[84px] w-full rounded-lg border border-white/[0.10] bg-white/[0.02] px-2 py-1.5 text-sm text-foreground shadow-sm outline-none backdrop-blur-[1px] transition placeholder:text-muted-foreground focus:border-indigo-400 focus:bg-white/[0.03] focus:ring-2 focus:ring-indigo-500/20 dark:border-white/[0.06] dark:bg-white/[0.02] dark:focus:bg-white/[0.03]";
 
 function formatDateTime(value?: string | null) {
   if (!value) return "—";
@@ -81,7 +81,7 @@ function FieldCard({
   className?: string;
 }) {
   return (
-    <label className={`space-y-1.5 rounded-lg border border-white/[0.12] bg-white/[0.035] p-2.5 backdrop-blur-xl dark:border-white/[0.07] dark:bg-white/[0.014] ${className}`}>
+    <label className={`space-y-1 rounded-lg border border-white/[0.10] bg-white/[0.02] p-1.5 backdrop-blur-[1px] dark:border-white/[0.06] dark:bg-white/[0.02] ${className}`}>
       <span className="text-xs font-medium text-muted-foreground">{label}</span>
       {children}
     </label>
@@ -90,7 +90,7 @@ function FieldCard({
 
 function InfoTile({ label, value }: { label: string; value: string }) {
   return (
-    <div className="min-w-0 rounded-lg border border-white/[0.12] bg-white/[0.035] p-2.5 backdrop-blur-xl dark:border-white/[0.07] dark:bg-white/[0.014]">
+    <div className="min-w-0 rounded-lg border border-white/[0.10] bg-white/[0.02] p-1.5 backdrop-blur-[1px] dark:border-white/[0.06] dark:bg-white/[0.02]">
       <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">{label}</p>
       <p className="truncate text-sm font-semibold text-foreground">{value || "—"}</p>
     </div>
@@ -199,20 +199,20 @@ function MolecularCreateForm() {
 
   return (
     <AppLayout fullWidth requiredGroups={requiredGroupsForResourceGroup("clinical_laboratory")}>
-      <form onSubmit={handleSubmit} noValidate className="mx-auto w-full max-w-[97vw] space-y-2 overflow-x-hidden px-1 sm:px-0">
-        <section className={`relative overflow-hidden px-3 py-2.5 ${GLASS}`}>
-          <span className="absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-indigo-500 via-cyan-500 to-sky-500" />
-          <div className="relative flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-            <div className="flex min-w-0 items-start gap-2.5 md:items-center">
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-600 to-cyan-600 text-white shadow-sm shadow-indigo-500/25">
+      <form onSubmit={handleSubmit} noValidate className="mx-auto w-full max-w-[97vw] space-y-1 overflow-x-hidden px-0.5">
+        <section className={`relative overflow-hidden px-2 py-1.5 ${GLASS}`}>
+          <span className="absolute inset-y-0 left-0 w-0.5 bg-gradient-to-b from-indigo-500 via-cyan-500 to-sky-500" />
+          <div className="relative flex flex-col gap-1.5 md:flex-row md:items-center md:justify-between">
+            <div className="flex min-w-0 items-start gap-1.5 md:items-center">
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-600 to-cyan-600 text-white shadow-sm shadow-indigo-500/15">
                 <Dna size={18} />
               </span>
               <div className="min-w-0">
-                <div className="mb-0.5 flex flex-wrap gap-1.5">
-                  <span className="rounded-full border border-indigo-200/45 bg-indigo-50/[0.18] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-indigo-700 backdrop-blur-xl dark:border-indigo-800/30 dark:bg-indigo-900/[0.10] dark:text-indigo-300">
+                <div className="mb-0.5 flex flex-wrap gap-1">
+                  <span className="rounded-full border border-indigo-200/30 bg-indigo-50/[0.02] px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-indigo-700 backdrop-blur-[1px] dark:border-indigo-800/20 dark:bg-indigo-900/[0.02] dark:text-indigo-300">
                     Molecular
                   </span>
-                  <span className="rounded-full border border-cyan-200/45 bg-cyan-50/[0.18] px-2 py-0.5 text-[10px] font-medium text-cyan-700 backdrop-blur-xl dark:border-cyan-800/30 dark:bg-cyan-900/[0.10] dark:text-cyan-300">
+                  <span className="rounded-full border border-cyan-200/30 bg-cyan-50/[0.02] px-1.5 py-0.5 text-[10px] font-medium text-cyan-700 backdrop-blur-[1px] dark:border-cyan-800/20 dark:bg-cyan-900/[0.02] dark:text-cyan-300">
                     {ASSAY_LABELS[assay] ?? assay}
                   </span>
                 </div>
@@ -223,10 +223,10 @@ function MolecularCreateForm() {
               </div>
             </div>
 
-            <div className="grid w-full grid-cols-2 gap-1.5 md:flex md:w-auto md:shrink-0 md:items-center">
+            <div className="grid w-full grid-cols-2 gap-1 md:flex md:w-auto md:shrink-0 md:items-center">
               <Link
                 href={LIST_HREF}
-                className="inline-flex h-8 min-w-0 items-center justify-center gap-2 rounded-lg border border-white/[0.14] bg-white/[0.035] px-3 text-sm font-medium text-foreground shadow-sm backdrop-blur-xl transition hover:bg-white/[0.075] dark:border-white/[0.08] dark:bg-white/[0.018] dark:hover:bg-white/[0.035]"
+                className="inline-flex h-7 min-w-0 items-center justify-center gap-1.5 rounded-lg border border-white/[0.10] bg-white/[0.02] px-2.5 text-sm font-medium text-foreground shadow-sm backdrop-blur-[1px] transition hover:bg-white/[0.03] dark:border-white/[0.06] dark:bg-white/[0.02] dark:hover:bg-white/[0.03]"
               >
                 <ArrowLeft size={16} />
                 Voltar
@@ -234,7 +234,7 @@ function MolecularCreateForm() {
               <button
                 type="submit"
                 disabled={saving || !orderItem}
-                className="inline-flex h-8 min-w-0 items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-indigo-600 to-cyan-600 px-3 text-sm font-semibold text-white shadow-sm transition hover:from-indigo-700 hover:to-cyan-700 disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex h-7 min-w-0 items-center justify-center gap-1.5 rounded-lg bg-gradient-to-r from-indigo-600 to-cyan-600 px-2.5 text-sm font-semibold text-white shadow-sm transition hover:from-indigo-700 hover:to-cyan-700 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {saving ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />}
                 Guardar
@@ -244,14 +244,15 @@ function MolecularCreateForm() {
         </section>
 
         {error ? (
-          <div className="rounded-lg border border-red-200/45 bg-red-50/[0.18] px-3 py-2 text-sm text-red-800 shadow-sm backdrop-blur-xl dark:border-red-800/35 dark:bg-red-900/[0.10] dark:text-red-300">
+          <div className="rounded-lg border border-red-200/35 bg-red-50/[0.08] px-2 py-1.5 text-sm text-red-800 shadow-sm backdrop-blur-[1px] dark:border-red-800/25 dark:bg-red-900/[0.04] dark:text-red-300">
             {error}
           </div>
         ) : null}
 
-        <div className="grid min-w-0 grid-cols-1 gap-2 xl:grid-cols-[minmax(280px,0.9fr)_minmax(360px,1.2fr)]">
-          <section className={`min-w-0 p-3 ${GLASS}`}>
-            <div className="mb-2 border-b border-white/[0.14] pb-2 dark:border-white/[0.08]">
+        <div className="grid grid-cols-2 gap-1">
+          <section className={`relative min-w-0 overflow-hidden p-2 pl-3 ${GLASS}`}>
+            <span className="absolute inset-y-0 left-0 w-0.5 bg-gradient-to-b from-sky-500 to-cyan-500" />
+            <div className="mb-1.5 border-b border-white/[0.08] pb-1.5 dark:border-white/[0.05]">
               <h2 className="text-sm font-semibold text-foreground">Rastreabilidade herdada</h2>
               <p className="text-xs text-muted-foreground">
                 Estes dados vêm da fila molecular e não são selecionados manualmente neste formulário.
@@ -259,12 +260,12 @@ function MolecularCreateForm() {
             </div>
 
             {loading ? (
-              <div className="flex h-28 items-center justify-center text-sm text-muted-foreground">
+              <div className="flex h-24 items-center justify-center text-sm text-muted-foreground">
                 <Loader2 size={18} className="mr-2 animate-spin" />
                 A carregar contexto...
               </div>
             ) : (
-              <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,170px),1fr))] gap-2">
+              <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,150px),1fr))] gap-1">
                 <InfoTile label="Paciente" value={candidate?.patient_name || "Paciente não identificado"} />
                 <InfoTile label="Pedido" value={candidate?.order_custom_id || `Item ${orderItem || "-"}`} />
                 <InfoTile label="Exame" value={candidate?.test_name || ASSAY_LABELS[assay] || assay} />
@@ -275,18 +276,19 @@ function MolecularCreateForm() {
             )}
           </section>
 
-          <section className={`min-w-0 p-3 ${GLASS}`}>
-            <div className="mb-2 flex flex-col gap-1 border-b border-white/[0.14] pb-2 dark:border-white/[0.08] sm:flex-row sm:items-center sm:justify-between">
+          <section className={`relative min-w-0 overflow-hidden p-2 pl-3 ${GLASS}`}>
+            <span className="absolute inset-y-0 left-0 w-0.5 bg-gradient-to-b from-indigo-500 to-cyan-500" />
+            <div className="mb-1.5 flex flex-col gap-1 border-b border-white/[0.08] pb-1.5 dark:border-white/[0.05] sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <h2 className="text-sm font-semibold text-foreground">Resultado técnico</h2>
                 <p className="text-xs text-muted-foreground">Registe deteção, resistência e dados instrumentais.</p>
               </div>
-              <span className="rounded-full border border-indigo-200/45 bg-indigo-50/[0.18] px-2.5 py-1 text-xs font-medium text-indigo-700 backdrop-blur-xl dark:border-indigo-800/30 dark:bg-indigo-900/[0.10] dark:text-indigo-300">
+              <span className="rounded-full border border-indigo-200/30 bg-indigo-50/[0.02] px-1.5 py-0.5 text-xs font-medium text-indigo-700 backdrop-blur-[1px] dark:border-indigo-800/20 dark:bg-indigo-900/[0.02] dark:text-indigo-300">
                 {ASSAY_LABELS[assay] ?? assay}
               </span>
             </div>
 
-            <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,210px),1fr))] gap-2">
+            <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,160px),1fr))] gap-1">
               <FieldCard label="Deteção">
                 <select value={detection} onChange={(event) => setDetection(event.target.value)} className={INPUT}>
                   {DETECTION_OPTIONS.map((option) => (
