@@ -149,26 +149,26 @@ export default function AfbSmearCreateForm() {
 
   return (
     <AppLayout fullWidth requiredGroups={requiredGroupsForResourceGroup("clinical_laboratory")}>
-      <form onSubmit={handleSubmit} noValidate className="mx-auto w-[97vw] max-w-none space-y-1.5 overflow-x-hidden">
+      <form onSubmit={handleSubmit} noValidate className="mx-auto w-full max-w-[97vw] space-y-1.5 overflow-x-hidden px-1 sm:px-0">
         <section className={`relative overflow-hidden px-3 py-2.5 ${GLASS}`}>
           <span className="absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-sky-500 via-cyan-500 to-emerald-500" />
-          <div className="relative flex flex-wrap items-center justify-between gap-2">
-            <div className="flex min-w-0 items-center gap-2.5">
+          <div className="relative flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex min-w-0 items-start gap-2.5 sm:items-center">
               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-sky-500 to-cyan-600 text-white shadow-sm shadow-sky-500/20">
                 <TestTubes size={18} />
               </span>
               <div className="min-w-0">
                 <h1 className="text-base font-bold text-foreground sm:text-lg">Nova baciloscopia (BAAR)</h1>
-                <p className="truncate text-xs text-muted-foreground">
+                <p className="text-xs text-muted-foreground sm:truncate">
                   Selecione um exame com método BAAR; pedido e amostra são herdados automaticamente.
                 </p>
               </div>
             </div>
 
-            <div className="flex shrink-0 items-center gap-1.5">
+            <div className="grid w-full grid-cols-2 gap-1.5 sm:flex sm:w-auto sm:shrink-0 sm:items-center">
               <Link
                 href={LIST_HREF}
-                className="inline-flex h-8 items-center gap-2 rounded-lg border border-white/20 bg-white/[0.10] px-3 text-sm font-medium text-foreground shadow-sm backdrop-blur-md transition hover:bg-white/[0.18] dark:border-white/10 dark:bg-white/[0.04] dark:hover:bg-white/[0.08]"
+                className="inline-flex h-8 min-w-0 items-center justify-center gap-2 rounded-lg border border-white/20 bg-white/[0.10] px-3 text-sm font-medium text-foreground shadow-sm backdrop-blur-md transition hover:bg-white/[0.18] dark:border-white/10 dark:bg-white/[0.04] dark:hover:bg-white/[0.08]"
               >
                 <ArrowLeft size={16} />
                 Voltar
@@ -176,7 +176,7 @@ export default function AfbSmearCreateForm() {
               <button
                 type="submit"
                 disabled={saving || !selected || selected.kind !== "pending"}
-                className="inline-flex h-8 items-center gap-2 rounded-lg bg-gradient-to-r from-sky-600 to-cyan-600 px-3 text-sm font-semibold text-white shadow-sm transition hover:from-sky-700 hover:to-cyan-700 disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex h-8 min-w-0 items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-sky-600 to-cyan-600 px-3 text-sm font-semibold text-white shadow-sm transition hover:from-sky-700 hover:to-cyan-700 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {saving ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />}
                 Guardar
@@ -191,8 +191,8 @@ export default function AfbSmearCreateForm() {
           </div>
         ) : null}
 
-        <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,360px),1fr))] gap-1.5">
-          <section className={`p-2 ${GLASS}`}>
+        <div className="grid min-w-0 grid-cols-1 gap-1.5 xl:grid-cols-[minmax(280px,0.9fr)_minmax(360px,1.2fr)]">
+          <section className={`min-w-0 p-2 ${GLASS}`}>
             <div className="mb-1.5 flex items-center justify-between gap-2 border-b border-white/[0.14] pb-1.5 dark:border-white/[0.08]">
               <h2 className="text-sm font-semibold text-foreground">Candidatos BAAR</h2>
               <span className="rounded-md border border-sky-200/40 bg-sky-100/20 px-2 py-0.5 text-[10px] font-semibold text-sky-700 dark:border-sky-700/30 dark:bg-sky-950/20 dark:text-sky-300">
@@ -206,7 +206,7 @@ export default function AfbSmearCreateForm() {
                 A carregar candidatos...
               </div>
             ) : pendingCandidates.length ? (
-              <div className="grid max-h-[62vh] gap-1.5 overflow-y-auto pr-1">
+              <div className="grid max-h-[48vh] gap-1.5 overflow-y-auto pr-1 xl:max-h-[62vh]">
                 {pendingCandidates.map((candidate) => {
                   const active = candidate.id === selectedId;
                   return (
@@ -251,10 +251,10 @@ export default function AfbSmearCreateForm() {
             ) : null}
           </section>
 
-          <section className={`p-2 ${GLASS}`}>
-            <div className="mb-1.5 flex items-center justify-between gap-2 border-b border-white/[0.14] pb-1.5 dark:border-white/[0.08]">
+          <section className={`min-w-0 p-2 ${GLASS}`}>
+            <div className="mb-1.5 flex flex-col gap-1 border-b border-white/[0.14] pb-1.5 dark:border-white/[0.08] sm:flex-row sm:items-center sm:justify-between sm:gap-2">
               <h2 className="text-sm font-semibold text-foreground">Leitura BAAR</h2>
-              <span className="text-xs text-muted-foreground">
+              <span className="min-w-0 text-xs text-muted-foreground sm:truncate">
                 {selected ? `${selected.order_custom_id || "Pedido"} · ${selected.sample_barcode || selected.sample_type || "amostra"}` : "selecione candidato"}
               </span>
             </div>
