@@ -311,11 +311,15 @@ const STEP_DEFINITIONS: Array<{ key: StepKey; label: string; icon: typeof Clipbo
   { key: "confirm", label: "Confirmação", icon: CheckCircle2 },
 ]
 
+const optionCls = "[&_option]:bg-[var(--card)] [&_option]:text-[var(--text)]"
+
 const inputCls =
-  "w-full rounded-xl border border-white/25 bg-white/45 px-3 py-2 text-sm text-[var(--text)] shadow-sm backdrop-blur-sm outline-none transition placeholder:text-[var(--gray-400)] hover:border-[var(--primary-300)] hover:bg-white/60 focus:border-[var(--primary-500)] focus:bg-white/70 focus:ring-2 focus:ring-[var(--primary-200)] dark:border-white/10 dark:bg-white/[0.06] dark:hover:bg-white/[0.10] dark:focus:bg-white/[0.12] disabled:bg-white/20 disabled:text-[var(--gray-500)] dark:disabled:bg-white/[0.03]"
+  "w-full rounded-xl border border-white/25 bg-white/45 px-3 py-2 text-sm text-[var(--text)] shadow-sm backdrop-blur-sm outline-none transition placeholder:text-[var(--gray-400)] hover:border-[var(--primary-300)] hover:bg-white/60 focus:border-[var(--primary-500)] focus:bg-white/70 focus:ring-2 focus:ring-[var(--primary-200)] dark:border-white/10 dark:bg-white/[0.06] dark:hover:bg-white/[0.10] dark:focus:bg-white/[0.12] disabled:bg-white/20 disabled:text-[var(--gray-500)] dark:disabled:bg-white/[0.03] " +
+  optionCls
 
 const compactInputCls =
-  "w-full rounded-lg border border-white/25 bg-white/42 px-2.5 py-1.5 text-xs text-[var(--text)] shadow-sm backdrop-blur-sm outline-none transition placeholder:text-[var(--gray-400)] hover:border-[var(--primary-300)] hover:bg-white/58 focus:border-[var(--primary-500)] focus:bg-white/68 focus:ring-2 focus:ring-[var(--primary-200)] dark:border-white/10 dark:bg-white/[0.06] dark:hover:bg-white/[0.10] dark:focus:bg-white/[0.12] disabled:bg-white/20 disabled:text-[var(--gray-500)] dark:disabled:bg-white/[0.03]"
+  "w-full rounded-lg border border-white/25 bg-white/42 px-2.5 py-1.5 text-xs text-[var(--text)] shadow-sm backdrop-blur-sm outline-none transition placeholder:text-[var(--gray-400)] hover:border-[var(--primary-300)] hover:bg-white/58 focus:border-[var(--primary-500)] focus:bg-white/68 focus:ring-2 focus:ring-[var(--primary-200)] dark:border-white/10 dark:bg-white/[0.06] dark:hover:bg-white/[0.10] dark:focus:bg-white/[0.12] disabled:bg-white/20 disabled:text-[var(--gray-500)] dark:disabled:bg-white/[0.03] " +
+  optionCls
 
 function phoneDigits(value: string) {
   return value.replace(/\D/g, "")
