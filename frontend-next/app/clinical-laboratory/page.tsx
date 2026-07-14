@@ -16,35 +16,144 @@ import {
   Microscope,
   PackageCheck,
   Pill,
-  ShieldCheck,
   Syringe,
   TestTube,
   TestTubes,
   XCircle,
+  type LucideIcon,
 } from "lucide-react";
 import AppLayout from "@/components/layout/AppLayout";
-import ActionTile from "@/components/ui/ActionTile";
-import MetricCard from "@/components/ui/MetricCard";
 import { apiFetchList } from "@/lib/api";
 import { isNotFoundLikeError } from "@/lib/errors/api-error";
-import { GROUPS, userHasAnyGroup } from "@/lib/rbac";
-import { useAuth } from "@/hooks/useAuth";
+import { GROUPS } from "@/lib/rbac";
 import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh";
+
+type PhaseTone = {
+  panel: string;
+  accent: string;
+  bar: string;
+  dot: string;
+  title: string;
+  description: string;
+};
+
+type PhaseColor = "violet" | "sky" | "cyan" | "teal" | "emerald" | "amber" | "rose";
+
+const PHASE_TONES: Record<PhaseColor, PhaseTone> = {
+  violet: {
+    panel:
+      "border-violet-200/70 bg-gradient-to-br from-violet-50/80 via-card to-card hover:border-violet-300 dark:border-violet-900/40 dark:from-violet-950/20 dark:via-card dark:to-card",
+    accent: "bg-violet-500/10 text-violet-700 ring-violet-500/15 dark:bg-violet-500/15 dark:text-violet-300",
+    bar: "bg-violet-500",
+    dot: "bg-violet-500",
+    title: "text-violet-950 dark:text-violet-50",
+    description: "text-violet-900/70 dark:text-violet-200/70",
+  },
+  sky: {
+    panel:
+      "border-sky-200/70 bg-gradient-to-br from-sky-50/80 via-card to-card hover:border-sky-300 dark:border-sky-900/40 dark:from-sky-950/20 dark:via-card dark:to-card",
+    accent: "bg-sky-500/10 text-sky-700 ring-sky-500/15 dark:bg-sky-500/15 dark:text-sky-300",
+    bar: "bg-sky-500",
+    dot: "bg-sky-500",
+    title: "text-sky-950 dark:text-sky-50",
+    description: "text-sky-900/70 dark:text-sky-200/70",
+  },
+  cyan: {
+    panel:
+      "border-cyan-200/70 bg-gradient-to-br from-cyan-50/80 via-card to-card hover:border-cyan-300 dark:border-cyan-900/40 dark:from-cyan-950/20 dark:via-card dark:to-card",
+    accent: "bg-cyan-500/10 text-cyan-700 ring-cyan-500/15 dark:bg-cyan-500/15 dark:text-cyan-300",
+    bar: "bg-cyan-500",
+    dot: "bg-cyan-500",
+    title: "text-cyan-950 dark:text-cyan-50",
+    description: "text-cyan-900/70 dark:text-cyan-200/70",
+  },
+  teal: {
+    panel:
+      "border-teal-200/70 bg-gradient-to-br from-teal-50/80 via-card to-card hover:border-teal-300 dark:border-teal-900/40 dark:from-teal-950/20 dark:via-card dark:to-card",
+    accent: "bg-teal-500/10 text-teal-700 ring-teal-500/15 dark:bg-teal-500/15 dark:text-teal-300",
+    bar: "bg-teal-500",
+    dot: "bg-teal-500",
+    title: "text-teal-950 dark:text-teal-50",
+    description: "text-teal-900/70 dark:text-teal-200/70",
+  },
+  emerald: {
+    panel:
+      "border-emerald-200/70 bg-gradient-to-br from-emerald-50/80 via-card to-card hover:border-emerald-300 dark:border-emerald-900/40 dark:from-emerald-950/20 dark:via-card dark:to-card",
+    accent: "bg-emerald-500/10 text-emerald-700 ring-emerald-500/15 dark:bg-emerald-500/15 dark:text-emerald-300",
+    bar: "bg-emerald-500",
+    dot: "bg-emerald-500",
+    title: "text-emerald-950 dark:text-emerald-50",
+    description: "text-emerald-900/70 dark:text-emerald-200/70",
+  },
+  amber: {
+    panel:
+      "border-amber-200/70 bg-gradient-to-br from-amber-50/80 via-card to-card hover:border-amber-300 dark:border-amber-900/40 dark:from-amber-950/20 dark:via-card dark:to-card",
+    accent: "bg-amber-500/10 text-amber-700 ring-amber-500/15 dark:bg-amber-500/15 dark:text-amber-300",
+    bar: "bg-amber-500",
+    dot: "bg-amber-500",
+    title: "text-amber-950 dark:text-amber-50",
+    description: "text-amber-900/70 dark:text-amber-200/70",
+  },
+  rose: {
+    panel:
+      "border-rose-200/70 bg-gradient-to-br from-rose-50/80 via-card to-card hover:border-rose-300 dark:border-rose-900/40 dark:from-rose-950/20 dark:via-card dark:to-card",
+    accent: "bg-rose-500/10 text-rose-700 ring-rose-500/15 dark:bg-rose-500/15 dark:text-rose-300",
+    bar: "bg-rose-500",
+    dot: "bg-rose-500",
+    title: "text-rose-950 dark:text-rose-50",
+    description: "text-rose-900/70 dark:text-rose-200/70",
+  },
+};
 
 type PhaseConfig = {
   title: string;
   hint: string;
-  accentClass: string;
-  iconClass: string;
-  items: { href: string; label: string; desc: string; icon: any }[];
+  color: PhaseColor;
+  items: { href: string; label: string; desc: string; icon: LucideIcon }[];
 };
+
+/** Tile compacto no modelo do workspace: barra lateral colorida + ícone em anel + painel tonal. */
+function CompactLabTile({
+  href,
+  title,
+  description,
+  icon: Icon,
+  tone,
+}: {
+  href: string;
+  title: string;
+  description: string;
+  icon: LucideIcon;
+  tone: PhaseTone;
+}) {
+  return (
+    <Link
+      href={href}
+      className={`group relative flex min-w-0 items-center gap-1 rounded-md border px-2 py-1 text-left shadow-sm transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/25 sm:gap-1.5 sm:px-2.5 ${tone.panel}`}
+    >
+      <span aria-hidden className={`absolute inset-y-0 left-0 w-1 ${tone.bar}`} />
+      <span
+        className={`inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-md ring-1 sm:h-6 sm:w-6 ${tone.accent}`}
+      >
+        <Icon size={12} strokeWidth={2.1} />
+      </span>
+      <span className="min-w-0">
+        <span className={`block break-words text-[11px] font-semibold leading-tight sm:text-[12px] ${tone.title}`}>
+          {title}
+        </span>
+        <span className={`mt-0.5 block break-words text-[10px] leading-tight ${tone.description}`}>
+          {description}
+        </span>
+      </span>
+    </Link>
+  );
+}
 
 const PHASES: PhaseConfig[] = [
   {
     title: "Catálogo",
     hint: "Configuração técnica e financeira",
-    accentClass: "border-l-violet-500",
-    iconClass: "bg-violet-500/15 text-violet-600",
+    color: "violet",
     items: [
       {
         href: "/clinical-laboratory/sectors",
@@ -69,8 +178,7 @@ const PHASES: PhaseConfig[] = [
   {
     title: "Pedido",
     hint: "Solicitação e autorização",
-    accentClass: "border-l-sky-500",
-    iconClass: "bg-sky-500/15 text-sky-600",
+    color: "sky",
     items: [
       {
         href: "/clinical-laboratory/orders",
@@ -83,8 +191,7 @@ const PHASES: PhaseConfig[] = [
   {
     title: "Pré-analítico",
     hint: "Coleta, identificação, recepção e triagem",
-    accentClass: "border-l-cyan-500",
-    iconClass: "bg-cyan-500/15 text-cyan-600",
+    color: "cyan",
     items: [
       {
         href: "/clinical-laboratory/collections",
@@ -115,8 +222,7 @@ const PHASES: PhaseConfig[] = [
   {
     title: "Analítico",
     hint: "Processamento, resultado e validação",
-    accentClass: "border-l-teal-500",
-    iconClass: "bg-teal-500/15 text-teal-600",
+    color: "teal",
     items: [
       {
         href: "/clinical-laboratory/worklists",
@@ -141,8 +247,7 @@ const PHASES: PhaseConfig[] = [
   {
     title: "Pós-analítico",
     hint: "Laudo e comunicação de resultados críticos",
-    accentClass: "border-l-emerald-500",
-    iconClass: "bg-emerald-500/15 text-emerald-600",
+    color: "emerald",
     items: [
       {
         href: "/clinical-laboratory/reports",
@@ -161,8 +266,7 @@ const PHASES: PhaseConfig[] = [
   {
     title: "Sectores especializados",
     hint: "Microbiologia, biologia molecular e baciloscopia (TB)",
-    accentClass: "border-l-amber-500",
-    iconClass: "bg-amber-500/15 text-amber-600",
+    color: "amber",
     items: [
       {
         href: "/clinical-laboratory/cultures",
@@ -199,8 +303,7 @@ const PHASES: PhaseConfig[] = [
   {
     title: "Gestão & Segurança",
     hint: "Sistema de qualidade (SGQ) e biossegurança",
-    accentClass: "border-l-rose-500",
-    iconClass: "bg-rose-500/15 text-rose-600",
+    color: "rose",
     items: [
       {
         href: "/clinical-laboratory/quality-management",
@@ -218,13 +321,23 @@ const PHASES: PhaseConfig[] = [
   },
 ];
 
+const FEATURE_COUNT = PHASES.reduce((n, p) => n + p.items.length, 0);
+
 export default function ClinicalLaboratoryHubPage() {
-  const { user } = useAuth();
-  const podeAdmin = userHasAnyGroup(user, [GROUPS.ADMIN]);
   const safeRefreshToken = useSafeDataRefreshSignal();
 
   const [loading, setLoading] = useState(true);
-  const [counts, setCounts] = useState({ exames: 0, pedidos: 0, amostras: 0 });
+  const [counts, setCounts] = useState({
+    setores: 0,
+    exames: 0,
+    pedidos: 0,
+    coletas: 0,
+    amostras: 0,
+    recepcoes: 0,
+    laudos: 0,
+    criticos: 0,
+    culturas: 0,
+  });
 
   useEffect(() => {
     let mounted = true;
@@ -243,13 +356,29 @@ export default function ClinicalLaboratoryHubPage() {
           return isNotFoundLikeError(e) ? 0 : 0;
         }
       };
-      const [exames, pedidos, amostras] = await Promise.all([
+      const [
+        setores,
+        exames,
+        pedidos,
+        coletas,
+        amostras,
+        recepcoes,
+        laudos,
+        criticos,
+        culturas,
+      ] = await Promise.all([
+        safe("/clinical_laboratory/labsector/"),
         safe("/clinical_laboratory/labtest/"),
         safe("/clinical_laboratory/labrequest/"),
+        safe("/clinical_laboratory/samplecollection/"),
         safe("/clinical_laboratory/labsample/"),
+        safe("/clinical_laboratory/samplereception/"),
+        safe("/clinical_laboratory/labreport/"),
+        safe("/clinical_laboratory/criticalresultnotification/"),
+        safe("/clinical_laboratory/microbiologyculture/"),
       ]);
       if (!mounted) return;
-      setCounts({ exames, pedidos, amostras });
+      setCounts({ setores, exames, pedidos, coletas, amostras, recepcoes, laudos, criticos, culturas });
       setLoading(false);
     }
     load();
@@ -258,93 +387,93 @@ export default function ClinicalLaboratoryHubPage() {
     };
   }, [safeRefreshToken]);
 
-  return (
-    <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.LABORATORIO]}>
-      <div className="space-y-4">
-        {/* ── Hero ── */}
-        <div className="relative overflow-hidden rounded-2xl border border-teal-200/60 bg-gradient-to-br from-teal-50/80 via-cyan-50/70 to-sky-100/60 px-6 py-6 shadow-sm backdrop-blur-md dark:border-teal-700/30 dark:bg-gradient-to-br dark:from-teal-950/60 dark:via-cyan-950/50 dark:to-sky-950/60">
-          {/* decorative circles — light */}
-          <span className="pointer-events-none absolute -right-10 -top-10 h-52 w-52 rounded-full bg-teal-300/20 dark:bg-teal-400/10" />
-          <span className="pointer-events-none absolute -bottom-8 right-24 h-36 w-36 rounded-full bg-cyan-300/20 dark:bg-cyan-400/10" />
+  const metrics = [
+    { label: "Sectores", value: loading ? "…" : counts.setores },
+    { label: "Exames no catálogo", value: loading ? "…" : counts.exames },
+    { label: "Pedidos", value: loading ? "…" : counts.pedidos },
+    { label: "Coletas", value: loading ? "…" : counts.coletas },
+    { label: "Amostras", value: loading ? "…" : counts.amostras },
+    { label: "Recepções", value: loading ? "…" : counts.recepcoes },
+    { label: "Laudos", value: loading ? "…" : counts.laudos },
+    { label: "Críticos", value: loading ? "…" : counts.criticos },
+    { label: "Culturas", value: loading ? "…" : counts.culturas },
+  ];
 
-          <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-center gap-4">
-              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-teal-500/15 shadow-inner backdrop-blur-sm dark:bg-teal-400/10">
-                <FlaskConical
-                  size={28}
-                  className="text-teal-700 dark:text-teal-300"
-                  strokeWidth={1.8}
-                />
+  return (
+    <AppLayout fullWidth requiredGroups={[GROUPS.ADMIN, GROUPS.LABORATORIO]}>
+      <div className="mx-auto box-border w-full max-w-full space-y-1 px-1">
+        <div className="relative overflow-hidden rounded-xl border border-teal-200/80 bg-gradient-to-br from-teal-50/90 via-card to-card dark:border-teal-900/40 dark:from-teal-950/25 dark:via-card dark:to-card">
+          <span
+            aria-hidden
+            className="pointer-events-none absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-teal-500/12 via-teal-500/0 to-transparent"
+          />
+
+          {/* Cabeçalho */}
+          <div className="relative flex flex-col gap-1 p-2 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-1.5">
+              <div className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-teal-500/10 text-teal-700 ring-1 ring-teal-500/15 dark:bg-teal-500/15 dark:text-teal-300 sm:h-8 sm:w-8">
+                <FlaskConical size={16} strokeWidth={2.1} />
               </div>
-              <div>
-                <h1 className="font-display text-2xl font-bold leading-tight text-teal-900 dark:text-teal-100">
+              <div className="min-w-0">
+                <h1 className="break-words font-display text-base font-semibold leading-tight text-teal-950 dark:text-teal-50 sm:text-lg">
                   Laboratório Clínico
                 </h1>
-                <p className="mt-0.5 text-sm text-teal-700/70 dark:text-teal-300/60">
-                  LIS · {PHASES.reduce((n, p) => n + p.items.length, 0)}{" "}
-                  funcionalidades
+                <p className="mt-0.5 text-[11px] leading-snug text-teal-900/70 dark:text-teal-200/70 sm:text-xs">
+                  Fluxo pré-analítico, analítico e pós-analítico (LIS).
                 </p>
               </div>
             </div>
+            <span className="inline-flex w-fit shrink-0 items-center gap-1 self-start rounded-full border border-border/70 bg-card/80 px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground shadow-sm sm:self-auto">
+              {FEATURE_COUNT} funcionalidades
+            </span>
           </div>
 
-          {/* metric strip */}
-          <div className="relative mt-5 grid grid-cols-3 gap-2 sm:gap-3">
-            {[
-              {
-                label: "Exames no catálogo",
-                value: loading ? "…" : counts.exames,
-              },
-              { label: "Pedidos", value: loading ? "…" : counts.pedidos },
-              { label: "Amostras", value: loading ? "…" : counts.amostras },
-            ].map(({ label, value }) => (
+          {/* Métricas */}
+          <div className="relative grid grid-cols-[repeat(auto-fit,minmax(min(100%,8rem),1fr))] gap-1 border-t border-border/60 bg-card/40 px-2 py-1.5">
+            {metrics.map(({ label, value }) => (
               <div
                 key={label}
-                className="rounded-xl border border-teal-200/50 bg-white/40 px-3 py-2 backdrop-blur-sm dark:border-teal-700/30 dark:bg-teal-900/30"
+                className="rounded-md border border-teal-200/50 bg-white/40 px-2 py-1 backdrop-blur-sm dark:border-teal-700/30 dark:bg-teal-900/20"
               >
-                <div className="text-[10px] font-semibold uppercase tracking-wide text-teal-600/80 dark:text-teal-400/70">
+                <div className="text-[9px] font-semibold uppercase tracking-wide text-teal-700/80 dark:text-teal-300/70">
                   {label}
                 </div>
-                <div className="font-display text-xl font-bold tabular-nums text-teal-900 dark:text-teal-100">
+                <div className="font-display text-base font-bold tabular-nums text-teal-950 dark:text-teal-50">
                   {value}
                 </div>
               </div>
             ))}
           </div>
-        </div>
 
-        {/* ── Phases ── */}
-        <div className="space-y-4">
-          {PHASES.map((phase) => (
-            <section key={phase.title}>
-              {/* section label */}
-              <div className="mb-2 flex items-center gap-2">
-                <span
-                  className={`h-2.5 w-1 rounded-full ${phase.accentClass.replace("border-l-", "bg-")}`}
-                />
-                <h2 className="text-[11px] font-semibold uppercase tracking-widest text-foreground/70">
-                  {phase.title}
-                </h2>
-                <span className="text-[10px] text-muted-foreground">
-                  {phase.hint}
-                </span>
-              </div>
-
-              <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {phase.items.map((item) => (
-                  <ActionTile
-                    key={item.href}
-                    href={item.href}
-                    title={item.label}
-                    description={item.desc}
-                    icon={item.icon}
-                    accentClass={phase.accentClass}
-                    iconClass={phase.iconClass}
-                  />
-                ))}
-              </div>
-            </section>
-          ))}
+          {/* Fases */}
+          <div className="relative space-y-1 border-t border-border/60 bg-card/40 px-2 py-1.5">
+            {PHASES.map((phase) => {
+              const tone = PHASE_TONES[phase.color];
+              return (
+                <div key={phase.title} className="space-y-0.5">
+                  <div className="flex flex-wrap items-center gap-1">
+                    <span className={`h-2 w-1 rounded-full ${tone.dot}`} />
+                    <h2 className="text-[10px] font-semibold uppercase tracking-[0.12em] text-foreground/70">
+                      {phase.title}
+                    </h2>
+                    <span className="text-[9px] text-muted-foreground">{phase.hint}</span>
+                  </div>
+                  <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,10rem),1fr))] gap-1">
+                    {phase.items.map((item) => (
+                      <CompactLabTile
+                        key={item.href}
+                        href={item.href}
+                        title={item.label}
+                        description={item.desc}
+                        icon={item.icon}
+                        tone={tone}
+                      />
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
     </AppLayout>
