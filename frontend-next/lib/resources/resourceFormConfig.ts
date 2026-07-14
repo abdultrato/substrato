@@ -28,6 +28,7 @@ export type ResourceFormConfig = {
   hints?: Record<string, string>
   widgets?: Record<string, "textarea" | "json">
   etapas?: AutoFormStep[]
+  etapasEmCartoes?: boolean
   lembrarCampos?: string[]
 }
 
@@ -215,6 +216,7 @@ function clinicalLaboratoryAfbSmearConfig(): ResourceFormConfig {
         campos: ["notes"],
       },
     ],
+    etapasEmCartoes: true,
     lembrarCampos: ["performed_by", "stain"],
   }
 }

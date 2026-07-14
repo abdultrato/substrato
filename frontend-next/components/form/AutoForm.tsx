@@ -1188,6 +1188,7 @@ export default function AutoForm({
   const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
   const etapas = config?.etapas || null
+  const renderAllStepCards = Boolean(config?.etapasEmCartoes && etapas?.length)
   const [etapaAtual, setEtapaAtual] = useState(0)
   const draftKey = useMemo(() => normalizeDraftKey(effectiveMethod, endpoint), [effectiveMethod, endpoint])
 
@@ -1464,11 +1465,12 @@ export default function AutoForm({
     setErrors(errs)
     setMessage(fallbackMessage)
     const firstField = Object.keys(errs)[0]
-    if (firstField && etapas?.length) setEtapaAtual(firstStepIndexForField(firstField))
+    if (firstField && etapas?.length && !renderAllStepCards) setEtapaAtual(firstStepIndexForField(firstField))
     focusField(firstField)
   }
 
   function stepFieldNames(): string[] | null {
+    if (renderAllStepCards) return null
     if (!etapas?.length) return null
     const etapa = etapas[Math.max(0, Math.min(etapas.length - 1, etapaAtual))]
     return etapa?.campos || []
@@ -1490,7 +1492,7 @@ export default function AutoForm({
     if (!formSpec || !schema) return
 
     // Navegação por etapas: valida apenas a etapa atual e avança.
-    if (etapas?.length && etapaAtual < etapas.length - 1) {
+    if (!renderAllStepCards && etapas?.length && etapaAtual < etapas.length - 1) {
       const names = stepFieldNames() || []
       const stepSchema = buildStepSchema(names)
       if (!stepSchema) return
@@ -1584,7 +1586,7 @@ export default function AutoForm({
         if (hasFieldErrors) {
           setHasAttemptedSubmit(true)
           setErrors(normalized.fieldErrors)
-          if (normalized.firstField && etapas?.length) {
+          if (normalized.firstField && etapas?.length && !renderAllStepCards) {
             setEtapaAtual(firstStepIndexForField(normalized.firstField))
           }
           focusField(normalized.firstField)
@@ -1637,17 +1639,97 @@ export default function AutoForm({
   const missingRequiredFields = requiredFields.filter(
     (field) => conditionVisible(field.name, values, config) && !hasRequiredValue(values[field.name])
   )
+  const unassignedVisibleFields = renderAllStepCards
+    ? visibleFields.filter(
+        (field) => !configuredStepNames.has(field.name) && conditionVisible(field.name, values, config)
+      )
+    : []
+  const stepCards = renderAllStepCards
+    ? (etapas || [])
+        .map((etapa, index) => {
+          const etapaFields = etapa.campos
+            .map((name) => visibleByName.get(name))
+            .filter(Boolean)
+            .filter((field) => conditionVisible(field.name, values, config)) as FormField[]
+          const extraFields =
+            index === (etapas?.length || 0) - 1
+              ? unassignedVisibleFields.filter(
+                  (field) => !etapaFields.some((current) => current.name === field.name)
+                )
+              : []
+          return {
+            etapa,
+            fields: [...etapaFields, ...extraFields],
+          }
+        })
+        .filter((card) => card.fields.length)
+    : []
   const submitDisabled = submitting
 
+  function renderFieldControl(field: FormField, extraClassName = "") {
+    const label = config?.labels?.[field.name] || field.label
+    const hint = config?.hints?.[field.name]
+    const placeholder = placeholderForField(field, label, config?.placeholders?.[field.name])
+    const widget = config?.widgets?.[field.name] || (LONG_TEXT_FIELDS.has(field.name) ? "textarea" : undefined)
+    const isReadOnly = somenteLeitura.has(field.name) || conditionReadOnly(field.name, values, config)
+    const fieldClassName = renderAllStepCards
+      ? "space-y-0.5 rounded-lg border border-white/[0.18] bg-white/[0.12] p-1.5 text-sm text-[var(--gray-700)] shadow-sm backdrop-blur-md dark:border-white/[0.08] dark:bg-white/[0.02]"
+      : modernNursingProcedureFlow
+        ? "space-y-0.5 rounded-lg p-1.5 transition duration-150 focus-within:bg-white/[0.14] focus-within:ring-2 focus-within:ring-sky-400/40 dark:focus-within:bg-white/[0.05] text-sm text-[var(--gray-700)]"
+        : "space-y-1 text-sm text-[var(--gray-700)]"
+    const compactClassName = compactFieldNames.size
+      ? compactFieldNames.has(field.name)
+        ? "col-span-1 min-w-0"
+        : "col-span-2"
+      : ""
+
+    return (
+      <label
+        key={field.name}
+        data-form-field={field.name}
+        className={`${compactClassName} ${fieldClassName} ${extraClassName}`.trim()}
+      >
+        <div className="flex items-center justify-between gap-2">
+          <span className="font-medium text-[var(--gray-700)]">
+            {label}
+            {field.required ? " *" : ""}
+          </span>
+          {errors[field.name] ? (
+            <span className="text-xs text-red-600">{errors[field.name]}</span>
+          ) : null}
+        </div>
+        {renderInput(
+          field,
+          values[field.name],
+          (v) => setValues((prev) => ({ ...prev, [field.name]: v })),
+          errors[field.name],
+          {
+            placeholder,
+            widget,
+            readOnly: isReadOnly,
+            translate: tr,
+            relationOptions: relationOptions[field.name],
+            relationLoading: loadingRelationFields.has(field.name),
+            relationTarget: relationTargetsByField[field.name],
+            safeRefreshToken,
+          }
+        )}
+        {hint ? (
+          <div className="text-xs text-[var(--gray-500)]">{hint}</div>
+        ) : null}
+      </label>
+    )
+  }
+
   return (
-    <div className={`mx-auto w-full max-w-3xl ${modernNursingProcedureFlow ? "space-y-2" : "space-y-3"}`}>
+    <div className={`mx-auto w-full ${renderAllStepCards ? "max-w-none space-y-1.5" : `max-w-3xl ${modernNursingProcedureFlow ? "space-y-2" : "space-y-3"}`}`}>
       {message && (
         <div className="rounded-lg border border-[var(--border)] bg-[var(--gray-100)] px-3 py-1.5 text-sm text-[var(--text)]">
           {message}
         </div>
       )}
 
-      {etapas?.length && !nursingSystemFlow ? (
+      {etapas?.length && !nursingSystemFlow && !renderAllStepCards ? (
         <Etapas
           etapas={etapas.map((e) => ({ titulo: e.titulo, descricao: e.descricao }))}
           etapaAtual={etapaAtual}
@@ -1658,6 +1740,8 @@ export default function AutoForm({
 
       <div className={modernNursingProcedureFlow
         ? "overflow-hidden rounded-xl border border-white/[0.24] bg-gradient-to-br from-white/[0.07] via-white/[0.025] to-sky-100/[0.035] p-3 shadow-lg shadow-slate-900/5 backdrop-blur-2xl [&_input]:!border-white/[0.28] [&_input]:!bg-white/[0.10] [&_select]:!border-white/[0.28] [&_select]:!bg-white/[0.10] [&_textarea]:!border-white/[0.28] [&_textarea]:!bg-white/[0.10] dark:border-white/[0.08] dark:from-white/[0.035] dark:via-white/[0.015] dark:to-sky-950/[0.025] dark:[&_input]:!border-white/[0.08] dark:[&_input]:!bg-white/[0.035] dark:[&_select]:!border-white/[0.08] dark:[&_select]:!bg-white/[0.035] dark:[&_textarea]:!border-white/[0.08] dark:[&_textarea]:!bg-white/[0.035]"
+        : renderAllStepCards
+          ? "overflow-hidden rounded-xl border border-white/[0.18] bg-white/[0.10] p-2 shadow-sm backdrop-blur-xl dark:border-white/[0.08] dark:bg-white/[0.02]"
         : nursingSystemFlow
           ? (surfaceClassName || "rounded-xl border border-white/20 bg-white/30 p-4 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]")
           : "rounded-lg border border-[var(--border)] bg-[var(--card)] p-4 shadow-sm"
@@ -1665,6 +1749,8 @@ export default function AutoForm({
         {requiredFields.length ? (
           <div className={modernNursingProcedureFlow
             ? "mb-2 flex flex-wrap items-center justify-between gap-1.5 rounded-lg border border-violet-200/70 bg-violet-50/60 px-2.5 py-1.5 text-xs text-violet-800 dark:border-violet-700/30 dark:bg-violet-900/15 dark:text-violet-300"
+            : renderAllStepCards
+              ? "mb-2 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-white/[0.18] bg-white/[0.10] px-2.5 py-1.5 text-xs text-[var(--gray-700)] backdrop-blur-md dark:border-white/[0.08] dark:bg-white/[0.02]"
             : "mb-3 flex flex-wrap items-center justify-between gap-2 rounded-md border border-[var(--border)] bg-[var(--gray-50)] px-3 py-2 text-xs text-[var(--gray-700)]"
           }>
             <span className="font-semibold">
@@ -1678,7 +1764,7 @@ export default function AutoForm({
           </div>
         ) : null}
 
-        {etapas?.length ? (
+        {etapas?.length && !renderAllStepCards ? (
           <div className={modernNursingProcedureFlow ? "mb-3 border-b border-border/50 pb-2" : "mb-3 text-sm font-semibold text-[var(--text)]"}>
             {modernNursingProcedureFlow ? (
               <>
@@ -1694,51 +1780,33 @@ export default function AutoForm({
           </div>
         ) : null}
 
-        <div className={`grid ${compactFieldNames.size ? "grid-cols-2 md:grid-cols-4" : "md:grid-cols-2"} ${modernNursingProcedureFlow ? "gap-2" : "gap-3"}`}>
-          {fieldsToRender.map((field) => {
-            const label = config?.labels?.[field.name] || field.label
-            const hint = config?.hints?.[field.name]
-            const placeholder = placeholderForField(field, label, config?.placeholders?.[field.name])
-            const widget = config?.widgets?.[field.name] || (LONG_TEXT_FIELDS.has(field.name) ? "textarea" : undefined)
-            const isReadOnly = somenteLeitura.has(field.name) || conditionReadOnly(field.name, values, config)
-            return (
-              <label
-                key={field.name}
-                data-form-field={field.name}
-                className={`${compactFieldNames.size ? (compactFieldNames.has(field.name) ? "col-span-1 min-w-0" : "col-span-2") : ""} ${modernNursingProcedureFlow ? "space-y-0.5 rounded-lg p-1.5 transition duration-150 focus-within:bg-white/[0.14] focus-within:ring-2 focus-within:ring-sky-400/40 dark:focus-within:bg-white/[0.05]" : "space-y-1"} text-sm text-[var(--gray-700)]`}
+        {renderAllStepCards ? (
+          <div className="grid gap-1.5 lg:grid-cols-3">
+            {stepCards.map(({ etapa, fields }, index) => (
+              <section
+                key={`${etapa.titulo}-${index}`}
+                className="rounded-xl border border-white/[0.18] bg-white/[0.12] p-2.5 shadow-sm backdrop-blur-xl dark:border-white/[0.08] dark:bg-white/[0.02]"
               >
-                <div className="flex items-center justify-between">
-                  <span className="font-medium text-[var(--gray-700)]">
-                    {label}
-                    {field.required ? " *" : ""}
-                  </span>
-                  {errors[field.name] && (
-                    <span className="text-xs text-red-600">{errors[field.name]}</span>
-                  )}
+                <div className="mb-2 border-b border-white/[0.18] pb-1.5 dark:border-white/[0.08]">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-sky-700 dark:text-sky-300">
+                    Etapa {index + 1}
+                  </p>
+                  <h3 className="text-sm font-semibold text-foreground">{etapa.titulo}</h3>
+                  {etapa.descricao ? (
+                    <p className="mt-0.5 text-[11px] leading-5 text-muted-foreground">{etapa.descricao}</p>
+                  ) : null}
                 </div>
-                {renderInput(
-                  field,
-                  values[field.name],
-                  (v) => setValues((prev) => ({ ...prev, [field.name]: v })),
-                  errors[field.name],
-                  {
-                    placeholder,
-                    widget,
-                    readOnly: isReadOnly,
-                    translate: tr,
-                    relationOptions: relationOptions[field.name],
-                    relationLoading: loadingRelationFields.has(field.name),
-                    relationTarget: relationTargetsByField[field.name],
-                    safeRefreshToken,
-                  }
-                )}
-                {hint ? (
-                  <div className="text-xs text-[var(--gray-500)]">{hint}</div>
-                ) : null}
-              </label>
-            )
-          })}
-        </div>
+                <div className="grid gap-1.5">
+                  {fields.map((field) => renderFieldControl(field))}
+                </div>
+              </section>
+            ))}
+          </div>
+        ) : (
+          <div className={`grid ${compactFieldNames.size ? "grid-cols-2 md:grid-cols-4" : "md:grid-cols-2"} ${modernNursingProcedureFlow ? "gap-2" : "gap-3"}`}>
+            {fieldsToRender.map((field) => renderFieldControl(field))}
+          </div>
+        )}
         {modernNursingProcedureFlow && etapas?.length ? (
           <div className="mt-3 flex flex-nowrap items-center justify-between gap-2 border-t border-white/30 pt-3 dark:border-white/10">
             <button
@@ -1805,7 +1873,16 @@ export default function AutoForm({
         ) : null}
       </div>
       {!modernNursingProcedureFlow && !nursingSystemFlow ? <div>
-        {etapas?.length ? (
+        {renderAllStepCards ? (
+          <button
+            type="button"
+            onClick={handleSubmit}
+            disabled={submitDisabled}
+            className="inline-flex h-10 w-full items-center justify-center rounded-lg bg-[var(--primary-600)] px-3 text-sm font-semibold leading-tight text-white shadow-sm transition-all duration-150 hover:bg-[var(--primary-700)] hover:shadow-md disabled:opacity-60"
+          >
+            {submitting ? "Salvando..." : submitLabel}
+          </button>
+        ) : etapas?.length ? (
           <div className="flex flex-wrap items-center justify-between gap-2">
             <button
               type="button"
