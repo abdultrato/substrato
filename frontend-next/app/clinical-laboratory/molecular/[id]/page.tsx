@@ -215,8 +215,8 @@ export default function ClinicalLaboratoryMolecularDetailPage() {
           </div>
         </section>
 
-        <div className="space-y-2">
-          <div className="grid min-w-0 grid-cols-1 gap-2 lg:grid-cols-2">
+        <div className="space-y-2 overflow-x-auto pb-1">
+          <div className="grid min-w-[760px] grid-cols-2 gap-2">
             <Card title="Rastreabilidade" icon={Microscope}>
               <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,170px),1fr))] gap-2">
                 <InfoTile label="Paciente" value={display(record.patient_name, "Paciente não identificado")} />
@@ -241,7 +241,7 @@ export default function ClinicalLaboratoryMolecularDetailPage() {
             </Card>
           </div>
 
-          <div className="grid min-w-0 grid-cols-1 gap-2 lg:grid-cols-2">
+          <div className="grid min-w-[760px] grid-cols-2 gap-2">
             <Card title="Instrumentação e quantificação" icon={FlaskConical}>
               <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,170px),1fr))] gap-2">
                 <InfoTile label="Valor quantitativo" value={quantitative} />
