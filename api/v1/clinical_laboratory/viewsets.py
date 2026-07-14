@@ -1269,6 +1269,17 @@ class AcidFastSmearViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMix
         )
         return Response(payload)
 
+    @action(detail=True, methods=["get"], url_path="pdf", url_name="pdf")
+    def pdf(self, request, pk=None):
+        from django.http import HttpResponse
+        from tasks.generate_pdf.afb_smear_pdf_generator import generate_afb_smear_pdf
+
+        smear = self.get_object()
+        pdf_bytes, filename = generate_afb_smear_pdf(smear, request=request)
+        response = HttpResponse(pdf_bytes, content_type="application/pdf")
+        response["Content-Disposition"] = f'inline; filename="{filename}"'
+        return response
+
     def perform_create(self, serializer):
         tenant = self._get_request_tenant()
         save_kwargs = {"tenant": tenant} if tenant is not None else {}

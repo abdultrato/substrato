@@ -55,54 +55,6 @@ function fmtDate(value?: string | null) {
   return new Intl.DateTimeFormat("pt-MZ", { dateStyle: "short", timeStyle: "short" }).format(date);
 }
 
-function esc(value: unknown) {
-  return String(value ?? "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
-}
-
-function printSmear(smear: AfbSmear) {
-  const win = window.open("", "_blank", "width=820,height=920");
-  if (!win) return;
-  const row = (label: string, value: unknown) =>
-    `<tr><td class="l">${esc(label)}</td><td class="v">${esc(value) || "—"}</td></tr>`;
-  win.document.write(`<!doctype html><html lang="pt"><head><meta charset="utf-8" />
-    <title>${esc(smear.custom_id)} — Baciloscopia</title>
-    <style>
-      *{box-sizing:border-box} body{font-family:system-ui,-apple-system,Segoe UI,Arial,sans-serif;color:#111;margin:36px;font-size:13px}
-      .hd{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #0d9488;padding-bottom:10px}
-      h1{font-size:18px;margin:0 0 2px} .sub{color:#555;font-size:12px;margin:0}
-      .grade{display:inline-block;border:1.5px solid #0d9488;color:#0f766e;border-radius:999px;padding:3px 12px;font-weight:700;white-space:nowrap}
-      table{border-collapse:collapse;width:100%;margin-top:14px}
-      td{border-bottom:1px solid #eee;padding:7px 4px;vertical-align:top}
-      td.l{color:#666;width:38%;font-size:12px} td.v{font-weight:600}
-      .notes{margin-top:14px;padding:10px;border:1px solid #eee;border-radius:6px;white-space:pre-wrap}
-      .foot{margin-top:28px;color:#999;font-size:11px;border-top:1px solid #eee;padding-top:8px}
-    </style></head><body>
-    <div class="hd">
-      <div><h1>Baciloscopia (BAAR)</h1><p class="sub">${esc(smear.custom_id)} · ${esc(smear.order_custom_id)}</p></div>
-      <div class="grade">${esc(GRADE_LABELS[smear.grade] ?? smear.grade)}</div>
-    </div>
-    <table>
-      ${row("Paciente", smear.patient_name)}
-      ${row("Exame", smear.test_name)}
-      ${row("Coloração", STAIN_LABELS[smear.stain] ?? smear.stain)}
-      ${row("Graduação", GRADE_LABELS[smear.grade] ?? smear.grade)}
-      ${row("Contagem BAAR", smear.afb_count)}
-      ${row("Nº da lâmina", smear.serial_number)}
-      ${row("Amostra", smear.sample_barcode || smear.sample_type)}
-      ${row("Recebida", fmtDate(smear.sample_received_at))}
-      ${row("Executado por", smear.performed_by_name)}
-      ${row("Realizada", fmtDate(smear.performed_at))}
-    </table>
-    ${smear.notes ? `<div class="notes"><b>Observações:</b> ${esc(smear.notes)}</div>` : ""}
-    <p class="foot">Impresso em ${esc(new Date().toLocaleString("pt-MZ"))}</p>
-  </body></html>`);
-  win.document.close();
-  win.focus();
-  win.setTimeout(() => win.print(), 250);
-}
 
 function Field({ label, value }: { label: string; value: React.ReactNode }) {
   return (
@@ -182,8 +134,8 @@ export default function AfbSmearDetailPage() {
                   <Link href={`${LIST_HREF}/${smear.id}/edit`} className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-[var(--border)] bg-[var(--card)] px-2.5 text-xs font-medium text-[var(--text)] shadow-sm transition hover:bg-[var(--gray-100)]">
                     <Pencil size={14} /> Editar
                   </Link>
-                  <button type="button" onClick={() => printSmear(smear)} className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-gradient-to-r from-teal-600 to-cyan-600 px-3 text-xs font-semibold text-white shadow-sm transition hover:from-teal-700 hover:to-cyan-700">
-                    <Printer size={14} /> Imprimir
+                  <button type="button" onClick={() => window.open(`/api/v1/clinical_laboratory/afb_smear/${smear.id}/pdf/`, "_blank")} className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-gradient-to-r from-teal-600 to-cyan-600 px-3 text-xs font-semibold text-white shadow-sm transition hover:from-teal-700 hover:to-cyan-700">
+                    <Printer size={14} /> Imprimir resultado
                   </button>
                 </div>
               </div>
