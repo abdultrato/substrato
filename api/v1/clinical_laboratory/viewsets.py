@@ -1094,7 +1094,9 @@ class MolecularResultViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetM
         return Response(payload)
 
     def perform_create(self, serializer):
-        instance = serializer.save()
+        tenant = self._get_request_tenant()
+        save_kwargs = {"tenant": tenant} if tenant is not None else {}
+        instance = serializer.save(**save_kwargs)
         update_fields = []
         if instance.performed_by_id is None:
             instance.performed_by = _current_user(self.request)
@@ -1204,7 +1206,9 @@ class AcidFastSmearViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMix
         return Response(payload)
 
     def perform_create(self, serializer):
-        instance = serializer.save()
+        tenant = self._get_request_tenant()
+        save_kwargs = {"tenant": tenant} if tenant is not None else {}
+        instance = serializer.save(**save_kwargs)
         update_fields = []
         if instance.performed_by_id is None:
             instance.performed_by = _current_user(self.request)
