@@ -219,8 +219,7 @@ export default function LabMolecularPage() {
           </div>
         ) : null}
 
-        <div className="overflow-x-auto pb-0.5">
-          <div className="grid min-w-[760px] grid-cols-2 gap-1">
+        <div className="grid grid-cols-2 gap-1">
             <section className="rounded-xl border border-white/[0.10] bg-white/[0.02] p-2 shadow-none backdrop-blur-[1px] dark:border-white/[0.06] dark:bg-white/[0.02]">
               <div className="mb-1.5 flex items-center justify-between gap-1.5">
                 <div>
@@ -303,7 +302,6 @@ export default function LabMolecularPage() {
               )}
             </section>
           </div>
-        </div>
       </div>
     </AppLayout>
   );
