@@ -1673,7 +1673,7 @@ export default function AutoForm({
     const widget = config?.widgets?.[field.name] || (LONG_TEXT_FIELDS.has(field.name) ? "textarea" : undefined)
     const isReadOnly = somenteLeitura.has(field.name) || conditionReadOnly(field.name, values, config)
     const fieldClassName = renderAllStepCards
-      ? "space-y-0.5 rounded-lg border border-white/[0.18] bg-white/[0.12] p-1.5 text-sm text-[var(--gray-700)] shadow-sm backdrop-blur-md dark:border-white/[0.08] dark:bg-white/[0.02]"
+      ? "space-y-0.5 rounded-md border border-white/[0.14] bg-white/[0.06] p-1.5 text-sm text-[var(--gray-700)] shadow-sm backdrop-blur-md dark:border-white/[0.08] dark:bg-white/[0.018] [&_input]:!min-h-9 [&_input]:!bg-white/[0.08] [&_input]:!px-2 [&_select]:!min-h-9 [&_select]:!bg-white/[0.08] [&_select]:!px-2 [&_textarea]:!min-h-[76px] [&_textarea]:!bg-white/[0.08] [&_textarea]:!px-2 dark:[&_input]:!bg-white/[0.03] dark:[&_select]:!bg-white/[0.03] dark:[&_textarea]:!bg-white/[0.03]"
       : modernNursingProcedureFlow
         ? "space-y-0.5 rounded-lg p-1.5 transition duration-150 focus-within:bg-white/[0.14] focus-within:ring-2 focus-within:ring-sky-400/40 dark:focus-within:bg-white/[0.05] text-sm text-[var(--gray-700)]"
         : "space-y-1 text-sm text-[var(--gray-700)]"
@@ -1714,7 +1714,7 @@ export default function AutoForm({
             safeRefreshToken,
           }
         )}
-        {hint ? (
+        {hint && !renderAllStepCards ? (
           <div className="text-xs text-[var(--gray-500)]">{hint}</div>
         ) : null}
       </label>
@@ -1741,12 +1741,12 @@ export default function AutoForm({
       <div className={modernNursingProcedureFlow
         ? "overflow-hidden rounded-xl border border-white/[0.24] bg-gradient-to-br from-white/[0.07] via-white/[0.025] to-sky-100/[0.035] p-3 shadow-lg shadow-slate-900/5 backdrop-blur-2xl [&_input]:!border-white/[0.28] [&_input]:!bg-white/[0.10] [&_select]:!border-white/[0.28] [&_select]:!bg-white/[0.10] [&_textarea]:!border-white/[0.28] [&_textarea]:!bg-white/[0.10] dark:border-white/[0.08] dark:from-white/[0.035] dark:via-white/[0.015] dark:to-sky-950/[0.025] dark:[&_input]:!border-white/[0.08] dark:[&_input]:!bg-white/[0.035] dark:[&_select]:!border-white/[0.08] dark:[&_select]:!bg-white/[0.035] dark:[&_textarea]:!border-white/[0.08] dark:[&_textarea]:!bg-white/[0.035]"
         : renderAllStepCards
-          ? "overflow-hidden rounded-xl border border-white/[0.18] bg-white/[0.10] p-2 shadow-sm backdrop-blur-xl dark:border-white/[0.08] dark:bg-white/[0.02]"
+          ? "overflow-hidden rounded-lg border border-white/[0.12] bg-transparent p-0 shadow-none"
         : nursingSystemFlow
           ? (surfaceClassName || "rounded-xl border border-white/20 bg-white/30 p-4 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]")
           : "rounded-lg border border-[var(--border)] bg-[var(--card)] p-4 shadow-sm"
       }>
-        {requiredFields.length ? (
+        {requiredFields.length && !renderAllStepCards ? (
           <div className={modernNursingProcedureFlow
             ? "mb-2 flex flex-wrap items-center justify-between gap-1.5 rounded-lg border border-violet-200/70 bg-violet-50/60 px-2.5 py-1.5 text-xs text-violet-800 dark:border-violet-700/30 dark:bg-violet-900/15 dark:text-violet-300"
             : renderAllStepCards
@@ -1785,16 +1785,13 @@ export default function AutoForm({
             {stepCards.map(({ etapa, fields }, index) => (
               <section
                 key={`${etapa.titulo}-${index}`}
-                className="rounded-xl border border-white/[0.18] bg-white/[0.12] p-2.5 shadow-sm backdrop-blur-xl dark:border-white/[0.08] dark:bg-white/[0.02]"
+                className="rounded-lg border border-white/[0.14] bg-white/[0.07] p-2 shadow-sm backdrop-blur-xl dark:border-white/[0.08] dark:bg-white/[0.018]"
               >
-                <div className="mb-2 border-b border-white/[0.18] pb-1.5 dark:border-white/[0.08]">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-sky-700 dark:text-sky-300">
-                    Etapa {index + 1}
-                  </p>
+                <div className="mb-1.5 flex items-center gap-2 border-b border-white/[0.14] pb-1.5 dark:border-white/[0.08]">
+                  <span className="flex h-5 min-w-5 items-center justify-center rounded-md bg-sky-500/15 text-[10px] font-semibold text-sky-700 dark:text-sky-300">
+                    {index + 1}
+                  </span>
                   <h3 className="text-sm font-semibold text-foreground">{etapa.titulo}</h3>
-                  {etapa.descricao ? (
-                    <p className="mt-0.5 text-[11px] leading-5 text-muted-foreground">{etapa.descricao}</p>
-                  ) : null}
                 </div>
                 <div className="grid gap-1.5">
                   {fields.map((field) => renderFieldControl(field))}

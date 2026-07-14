@@ -183,18 +183,12 @@ function clinicalLaboratoryAfbSmearConfig(): ResourceFormConfig {
       notes: "Observações",
     },
     placeholders: {
+      order_item: "Pesquisar item do pedido",
+      sample: "Pesquisar amostra",
+      performed_by: "Pesquisar técnico",
       afb_count: "Ex.: 0 BAAR/100 campos ou 3 BAAR/campo",
-      serial_number: "Ex.: 12",
-      notes: "Registe observações microscópicas, qualidade da amostra ou notas operacionais.",
-    },
-    hints: {
-      order_item: "Selecione o item da requisição laboratorial que originou esta baciloscopia.",
-      sample: "Opcional: associe a amostra específica usada na leitura.",
-      performed_by: "Opcional: técnico ou profissional responsável pela execução.",
-      stain: "Escolha a técnica de coloração aplicada à lâmina.",
-      grade: "Informe a graduação observada na microscopia.",
-      afb_count: "Use um registo curto e padronizado para facilitar a triagem posterior.",
-      performed_at: "Registe quando a leitura foi concluída para manter a rastreabilidade.",
+      serial_number: "Nº da lâmina",
+      notes: "Observações microscópicas, qualidade da amostra ou repetição.",
     },
     widgets: {
       notes: "textarea",
@@ -202,17 +196,14 @@ function clinicalLaboratoryAfbSmearConfig(): ResourceFormConfig {
     etapas: [
       {
         titulo: "Rastreabilidade",
-        descricao: "Vincule a leitura ao pedido, à amostra e ao profissional responsável.",
         campos: ["order_item", "sample", "performed_by"],
       },
       {
         titulo: "Microscopia",
-        descricao: "Preencha a técnica usada e o resultado observado na lâmina.",
         campos: ["stain", "grade", "afb_count", "serial_number", "performed_at"],
       },
       {
         titulo: "Fecho",
-        descricao: "Registe observações complementares antes de guardar.",
         campos: ["notes"],
       },
     ],
