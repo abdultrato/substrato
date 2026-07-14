@@ -1171,18 +1171,12 @@ function ChatbotPanel({
           <button
             type="button"
             onClick={onClear}
-            className="inline-flex h-6 items-center gap-1 rounded-md border border-border/70 bg-background/70 px-2 text-[10px] font-medium text-muted-foreground transition hover:text-foreground"
+            className="ml-auto inline-flex h-6 items-center gap-1 rounded-md border border-border/70 bg-background/70 px-2 text-[10px] font-medium text-muted-foreground transition hover:text-foreground"
           >
             <X size={11} />
             Limpar
           </button>
         ) : null}
-        <Link
-          href="/ai"
-          className="ml-auto text-[10px] font-medium text-[var(--primary-600)] hover:underline dark:text-[var(--primary-400)]"
-        >
-          IA completa
-        </Link>
       </div>
 
       <div className="max-h-64 space-y-1.5 overflow-y-auto p-2 [scrollbar-width:thin] lg:max-h-[calc(100vh-16rem)]">
