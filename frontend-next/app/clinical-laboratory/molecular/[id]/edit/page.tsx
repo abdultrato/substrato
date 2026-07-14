@@ -234,7 +234,7 @@ export default function ClinicalLaboratoryMolecularEditPage() {
               </div>
             </div>
 
-            <div className="grid w-full grid-cols-3 gap-1 md:flex md:w-auto md:shrink-0 md:items-center">
+            <div className="grid w-full grid-cols-1 gap-1 sm:grid-cols-3 md:flex md:w-auto md:shrink-0 md:items-center">
               <Link
                 href={`${LIST_HREF}/${record.id}`}
                 className="inline-flex h-7 min-w-0 items-center justify-center gap-1.5 rounded-lg border border-white/[0.10] bg-white/[0.02] px-2.5 text-sm font-medium text-foreground shadow-sm backdrop-blur-[1px] transition hover:bg-white/[0.03] dark:border-white/[0.06] dark:bg-white/[0.02] dark:hover:bg-white/[0.03]"
@@ -245,10 +245,10 @@ export default function ClinicalLaboratoryMolecularEditPage() {
               <button
                 type="button"
                 onClick={() => window.print()}
-                className="inline-flex h-7 min-w-0 items-center justify-center gap-1.5 rounded-lg border border-white/[0.10] bg-white/[0.02] px-2.5 text-sm font-medium text-foreground shadow-sm backdrop-blur-[1px] transition hover:bg-white/[0.03] dark:border-white/[0.06] dark:bg-white/[0.02] dark:hover:bg-white/[0.03]"
+                className="inline-flex h-7 min-w-0 items-center justify-center gap-1.5 rounded-lg border border-cyan-300/35 bg-cyan-50/[0.08] px-2.5 text-sm font-semibold text-cyan-800 shadow-sm backdrop-blur-[1px] transition hover:bg-cyan-50/[0.14] dark:border-cyan-800/30 dark:bg-cyan-900/[0.08] dark:text-cyan-200 dark:hover:bg-cyan-900/[0.14]"
               >
                 <Printer size={15} />
-                Imprimir
+                Imprimir resultado
               </button>
               <button
                 type="submit"
