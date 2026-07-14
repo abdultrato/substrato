@@ -194,7 +194,7 @@ def generate_culture_result_pdf(culture: MicrobiologyCulture, request=None) -> t
     elements.extend(
         [
             Spacer(1, A5Margins.SECTION_SPACING),
-            Paragraph("RESULTADO POR MEIO", section_style_improved(color=header_config["sector_color"])),
+            Paragraph("RESULTADO POR MEIO DE CULTURA", section_style_improved(color=header_config["sector_color"])),
             Spacer(1, A5Margins.ROW_SPACING),
         ]
     )
