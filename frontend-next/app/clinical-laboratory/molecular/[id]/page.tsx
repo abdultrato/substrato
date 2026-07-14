@@ -215,44 +215,48 @@ export default function ClinicalLaboratoryMolecularDetailPage() {
           </div>
         </section>
 
-        <div className="grid min-w-0 grid-cols-1 gap-2 xl:grid-cols-[minmax(280px,0.9fr)_minmax(360px,1.2fr)]">
-          <Card title="Rastreabilidade" icon={Microscope}>
-            <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,170px),1fr))] gap-2">
-              <InfoTile label="Paciente" value={display(record.patient_name, "Paciente não identificado")} />
-              <InfoTile label="Pedido" value={display(record.order_custom_id)} />
-              <InfoTile label="Exame" value={display(record.test_name || record.test_code, assayLabel)} />
-              <InfoTile label="Método" value={display(record.test_method, "Molecular")} />
-              <InfoTile label="Amostra" value={display(record.sample_barcode || record.sample_type)} />
-              <InfoTile label="Recebida" value={formatDateTime(record.sample_received_at)} />
-            </div>
-          </Card>
-
-          <Card title="Resultado" icon={Activity}>
-            <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,180px),1fr))] gap-2">
-              <div className={`rounded-lg border p-3 backdrop-blur-xl ${detectionStyle}`}>
-                <p className="text-[11px] font-medium uppercase tracking-wide opacity-75">Deteção</p>
-                <p className="text-lg font-bold">{detectionLabel}</p>
+        <div className="space-y-2">
+          <div className="grid min-w-0 grid-cols-1 gap-2 lg:grid-cols-2">
+            <Card title="Rastreabilidade" icon={Microscope}>
+              <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,170px),1fr))] gap-2">
+                <InfoTile label="Paciente" value={display(record.patient_name, "Paciente não identificado")} />
+                <InfoTile label="Pedido" value={display(record.order_custom_id)} />
+                <InfoTile label="Exame" value={display(record.test_name || record.test_code, assayLabel)} />
+                <InfoTile label="Método" value={display(record.test_method, "Molecular")} />
+                <InfoTile label="Amostra" value={display(record.sample_barcode || record.sample_type)} />
+                <InfoTile label="Recebida" value={formatDateTime(record.sample_received_at)} />
               </div>
-              <InfoTile label="Ensaio" value={assayLabel} />
-              <InfoTile label="Rifampicina" value={RIF_LABELS[record.rif_resistance] ?? display(record.rif_resistance)} />
-              <InfoTile label="Executado em" value={formatDateTime(record.performed_at)} />
-            </div>
-          </Card>
+            </Card>
 
-          <Card title="Instrumentação e quantificação" icon={FlaskConical}>
-            <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,170px),1fr))] gap-2">
-              <InfoTile label="Valor quantitativo" value={quantitative} />
-              <InfoTile label="Ct" value={display(record.ct_value)} />
-              <InfoTile label="Instrumento" value={display(record.instrument)} />
-              <InfoTile label="Executado por" value={display(record.performed_by_name)} />
-            </div>
-          </Card>
+            <Card title="Resultado" icon={Activity}>
+              <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,180px),1fr))] gap-2">
+                <div className={`rounded-lg border p-3 backdrop-blur-xl ${detectionStyle}`}>
+                  <p className="text-[11px] font-medium uppercase tracking-wide opacity-75">Deteção</p>
+                  <p className="text-lg font-bold">{detectionLabel}</p>
+                </div>
+                <InfoTile label="Ensaio" value={assayLabel} />
+                <InfoTile label="Rifampicina" value={RIF_LABELS[record.rif_resistance] ?? display(record.rif_resistance)} />
+                <InfoTile label="Executado em" value={formatDateTime(record.performed_at)} />
+              </div>
+            </Card>
+          </div>
 
-          <Card title="Interpretação" icon={ShieldAlert}>
-            <div className="min-h-[104px] rounded-lg border border-white/[0.12] bg-white/[0.035] p-3 text-sm leading-relaxed text-foreground backdrop-blur-xl dark:border-white/[0.07] dark:bg-white/[0.014]">
-              {record.notes ? <p className="whitespace-pre-wrap">{record.notes}</p> : <p className="text-muted-foreground">Sem interpretação ou observações registadas.</p>}
-            </div>
-          </Card>
+          <div className="grid min-w-0 grid-cols-1 gap-2 lg:grid-cols-2">
+            <Card title="Instrumentação e quantificação" icon={FlaskConical}>
+              <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,170px),1fr))] gap-2">
+                <InfoTile label="Valor quantitativo" value={quantitative} />
+                <InfoTile label="Ct" value={display(record.ct_value)} />
+                <InfoTile label="Instrumento" value={display(record.instrument)} />
+                <InfoTile label="Executado por" value={display(record.performed_by_name)} />
+              </div>
+            </Card>
+
+            <Card title="Interpretação" icon={ShieldAlert}>
+              <div className="min-h-[104px] rounded-lg border border-white/[0.12] bg-white/[0.035] p-3 text-sm leading-relaxed text-foreground backdrop-blur-xl dark:border-white/[0.07] dark:bg-white/[0.014]">
+                {record.notes ? <p className="whitespace-pre-wrap">{record.notes}</p> : <p className="text-muted-foreground">Sem interpretação ou observações registadas.</p>}
+              </div>
+            </Card>
+          </div>
         </div>
       </div>
     </AppLayout>
