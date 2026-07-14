@@ -86,6 +86,8 @@ export default function AfbSmearCreateForm() {
   );
   const pendingCandidates = queue.filter((candidate) => candidate.kind === "pending");
   const existingCandidates = queue.filter((candidate) => candidate.kind === "afb_smear");
+  // Modo "um paciente": aberto a partir de "Registar leitura" com ?candidate=.
+  const singleMode = Boolean(initialCandidateId);
 
   useEffect(() => {
     let mounted = true;
@@ -99,9 +101,9 @@ export default function AfbSmearCreateForm() {
         setQueue(rows);
         setSelectedId((current) => {
           if (current) return current;
-          if (initialCandidateId && rows.some((row) => row.id === initialCandidateId && row.kind === "pending")) {
-            return initialCandidateId;
-          }
+          // Vindo de "Registar leitura" (com ?candidate=): fixa nesse candidato
+          // (mesmo que não seja encontrado, para mostrar aviso dedicado).
+          if (initialCandidateId) return initialCandidateId;
           return rows.find((row) => row.kind === "pending")?.id || "";
         });
       } catch (err: any) {
@@ -191,7 +193,8 @@ export default function AfbSmearCreateForm() {
           </div>
         ) : null}
 
-        <div className="grid min-w-0 grid-cols-1 gap-1.5 xl:grid-cols-[minmax(280px,0.9fr)_minmax(360px,1.2fr)]">
+        <div className={`grid min-w-0 grid-cols-1 gap-1.5 ${singleMode ? "" : "xl:grid-cols-[minmax(280px,0.9fr)_minmax(360px,1.2fr)]"}`}>
+          {!singleMode && (
           <section className={`min-w-0 p-2 ${GLASS}`}>
             <div className="mb-1.5 flex items-center justify-between gap-2 border-b border-white/[0.14] pb-1.5 dark:border-white/[0.08]">
               <h2 className="text-sm font-semibold text-foreground">Candidatos BAAR</h2>
@@ -250,8 +253,29 @@ export default function AfbSmearCreateForm() {
               </div>
             ) : null}
           </section>
+          )}
 
+          {singleMode && !loading && !selected ? (
+            <section className={`min-w-0 p-3 ${GLASS}`}>
+              <p className="text-sm text-foreground">Este exame já não está pendente ou não foi encontrado na fila BAAR.</p>
+              <p className="mt-1 text-xs text-muted-foreground">Pode já ter sido registado ou a amostra ainda não foi recebida.</p>
+              <Link
+                href={LIST_HREF}
+                className="mt-2 inline-flex h-8 items-center gap-2 rounded-lg border border-white/20 bg-white/[0.10] px-3 text-sm font-medium text-foreground shadow-sm backdrop-blur-md transition hover:bg-white/[0.18] dark:border-white/10 dark:bg-white/[0.04]"
+              >
+                <ArrowLeft size={16} /> Voltar às pendentes
+              </Link>
+            </section>
+          ) : null}
+
+          {(!singleMode || selected) && (
           <section className={`min-w-0 p-2 ${GLASS}`}>
+            {singleMode && selected ? (
+              <div className="mb-1.5 flex flex-wrap items-center gap-2 rounded-md border border-sky-200/40 bg-sky-100/20 px-2.5 py-1.5 dark:border-sky-700/30 dark:bg-sky-950/20">
+                <span className="text-sm font-semibold text-foreground">{selected.patient_name || "Paciente não identificado"}</span>
+                <span className="text-xs text-muted-foreground">{selected.order_custom_id || "Pedido"} · {selected.test_name || "Baciloscopia (BAAR)"}</span>
+              </div>
+            ) : null}
             <div className="mb-1.5 flex flex-col gap-1 border-b border-white/[0.14] pb-1.5 dark:border-white/[0.08] sm:flex-row sm:items-center sm:justify-between sm:gap-2">
               <h2 className="text-sm font-semibold text-foreground">Leitura BAAR</h2>
               <span className="min-w-0 text-xs text-muted-foreground sm:truncate">
@@ -317,6 +341,7 @@ export default function AfbSmearCreateForm() {
               <span className="truncate">Recebida: {formatDateTime(selected?.sample_received_at) || "-"}</span>
             </div>
           </section>
+          )}
         </div>
       </form>
     </AppLayout>
