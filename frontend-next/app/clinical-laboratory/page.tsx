@@ -429,16 +429,16 @@ export default function ClinicalLaboratoryHubPage() {
           </div>
 
           {/* Métricas */}
-          <div className="relative grid grid-cols-[repeat(auto-fit,minmax(min(100%,8rem),1fr))] gap-1 border-t border-border/60 bg-card/40 px-2 py-1.5">
+          <div className="relative grid grid-cols-[repeat(auto-fit,minmax(min(100%,4.75rem),1fr))] gap-0.5 border-t border-border/60 bg-card/40 px-1 py-1">
             {metrics.map(({ label, value }) => (
               <div
                 key={label}
-                className="rounded-md border border-teal-200/50 bg-white/40 px-2 py-1 backdrop-blur-sm dark:border-teal-700/30 dark:bg-teal-900/20"
+                className="flex min-w-0 items-center justify-between gap-1 rounded border border-teal-200/45 bg-white/35 px-1 py-0.5 backdrop-blur-sm dark:border-teal-700/25 dark:bg-teal-900/15"
               >
-                <div className="text-[9px] font-semibold uppercase tracking-wide text-teal-700/80 dark:text-teal-300/70">
+                <div className="min-w-0 truncate text-[8px] font-semibold uppercase tracking-tight text-teal-700/80 dark:text-teal-300/70">
                   {label}
                 </div>
-                <div className="font-display text-base font-bold tabular-nums text-teal-950 dark:text-teal-50">
+                <div className="shrink-0 font-display text-[12px] font-bold leading-none tabular-nums text-teal-950 dark:text-teal-50">
                   {value}
                 </div>
               </div>
