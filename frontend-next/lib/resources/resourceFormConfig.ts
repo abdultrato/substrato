@@ -157,6 +157,68 @@ function normalizeEndpoint(endpoint: string): string {
   return withSlash.replace(/\/+$/, "") + "/"
 }
 
+function clinicalLaboratoryAfbSmearConfig(): ResourceFormConfig {
+  return {
+    ordenarCampos: [
+      "order_item",
+      "sample",
+      "performed_by",
+      "stain",
+      "grade",
+      "afb_count",
+      "serial_number",
+      "performed_at",
+      "notes",
+    ],
+    labels: {
+      order_item: "Item do pedido",
+      sample: "Amostra",
+      performed_by: "Executado por",
+      stain: "Coloração",
+      grade: "Graduação",
+      afb_count: "Contagem BAAR",
+      serial_number: "Número da lâmina",
+      performed_at: "Data e hora da leitura",
+      notes: "Observações",
+    },
+    placeholders: {
+      afb_count: "Ex.: 0 BAAR/100 campos ou 3 BAAR/campo",
+      serial_number: "Ex.: 12",
+      notes: "Registe observações microscópicas, qualidade da amostra ou notas operacionais.",
+    },
+    hints: {
+      order_item: "Selecione o item da requisição laboratorial que originou esta baciloscopia.",
+      sample: "Opcional: associe a amostra específica usada na leitura.",
+      performed_by: "Opcional: técnico ou profissional responsável pela execução.",
+      stain: "Escolha a técnica de coloração aplicada à lâmina.",
+      grade: "Informe a graduação observada na microscopia.",
+      afb_count: "Use um registo curto e padronizado para facilitar a triagem posterior.",
+      performed_at: "Registe quando a leitura foi concluída para manter a rastreabilidade.",
+    },
+    widgets: {
+      notes: "textarea",
+    },
+    etapas: [
+      {
+        titulo: "Rastreabilidade",
+        descricao: "Vincule a leitura ao pedido, à amostra e ao profissional responsável.",
+        campos: ["order_item", "sample", "performed_by"],
+      },
+      {
+        titulo: "Microscopia",
+        descricao: "Preencha a técnica usada e o resultado observado na lâmina.",
+        campos: ["stain", "grade", "afb_count", "serial_number", "performed_at"],
+      },
+      {
+        titulo: "Fecho",
+        descricao: "Registe observações complementares antes de guardar.",
+        campos: ["notes"],
+      },
+    ],
+    lembrarCampos: ["performed_by", "stain"],
+  }
+}
+
 const EDUCATION_COMMON_LABELS: Record<string, string> = {
   tenant: "Instituição",
   user: "Utilizador",
@@ -5511,6 +5573,13 @@ export function getResourceFormConfig(
     }
     if (r === "procedure_material_value" || ep === "/nursing/procedure_material_value/") {
       return nursingNonFinancialConfig("unit_cost", "custo_unitario", "custo_unitário", "valor_unitario", "valor_unitário")
+    }
+    return null
+  }
+
+  if (g === "clinical_laboratory" || ep.startsWith("/clinical_laboratory/")) {
+    if (r === "afb_smear" || ep === "/clinical_laboratory/afb_smear/") {
+      return clinicalLaboratoryAfbSmearConfig()
     }
     return null
   }

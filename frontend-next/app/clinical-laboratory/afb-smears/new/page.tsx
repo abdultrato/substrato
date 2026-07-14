@@ -1,12 +1,5 @@
-"use client";
-
-import { Suspense } from "react";
-import { GeneratedResourceCreatePage } from "@/components/resources/GeneratedResourcePages";
+import AfbSmearCreateForm from "@/components/clinical-laboratory/AfbSmearCreateForm";
 
 export default function ClinicalLaboratoryAfbSmearsCreatePage() {
-  return (
-    <Suspense fallback={<div className="p-4 text-sm text-[var(--gray-500)]">Carregando...</div>}>
-      <GeneratedResourceCreatePage endpoint="/clinical_laboratory/afb_smear/" />
-    </Suspense>
-  );
+  return <AfbSmearCreateForm />;
 }
