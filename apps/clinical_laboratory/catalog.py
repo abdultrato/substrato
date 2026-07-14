@@ -227,13 +227,13 @@ TESTS: tuple[tuple, ...] = (
      "", "Sem crescimento", None, None, None, None, 72, False, False, "700.00"),
 
     # ── Baciloscopia / Micobacteriologia ─────────────────────────────────
-    ("BAAR", "Baciloscopia (pesquisa de BAAR)", "BAC", ST.SPUTUM, "ESCARRO", LM.COLORACAOZIEHL,
+    ("BAAR", "Baciloscopia (pesquisa de BAAR)", "BAC", ST.SPUTUM, "ESCARRO", LM.BAAR,
      "", "Negativo", None, None, None, None, 24, False, False, "150.00"),
     ("CULTB", "Cultura de micobactérias (TB)", "BAC", ST.SPUTUM, "ESCARRO-INO", LM.CULTURA,
      "", "Sem crescimento", None, None, None, None, 720, False, False, "800.00"),
 
     # ── Biologia Molecular ───────────────────────────────────────────────
-    ("GENEXP", "GeneXpert MTB/RIF", "MOL", ST.SPUTUM, "ESCARRO", LM.PCRTEMPOREAL,
+    ("GENEXP", "GeneXpert MTB/RIF", "MOL", ST.SPUTUM, "ESCARRO", LM.GENEXPERT,
      "", "MTB não detetado", None, None, None, None, 4, False, False, "1200.00"),
     ("CVHIV", "Carga viral HIV", "MOL", ST.PLASMA, "EDTA-MOL", LM.PCRQUANTITATIVO,
      "cópias/mL", "< 50 (indetetável)", None, Decimal("50"), None, None, 72, False, True, "1500.00"),
