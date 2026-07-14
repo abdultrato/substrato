@@ -171,6 +171,7 @@ export default function LabAfbSmearsPage() {
           </div>
         ) : null}
 
+        <div className="grid gap-3 xl:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)] xl:items-start">
         <section className="rounded-xl border border-white/25 bg-white/25 p-3 shadow-sm backdrop-blur-xl dark:border-white/10 dark:bg-white/[0.04]">
           <div className="mb-2 flex items-center justify-between gap-2">
             <div>
@@ -185,7 +186,7 @@ export default function LabAfbSmearsPage() {
               A carregar fila BAAR...
             </div>
           ) : pendingItems.length ? (
-            <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,280px),1fr))] gap-2">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
               {pendingItems.map((item) => (
                 <Link
                   key={item.id}
@@ -219,7 +220,7 @@ export default function LabAfbSmearsPage() {
           </div>
 
           {loading ? null : registeredItems.length ? (
-            <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,280px),1fr))] gap-2">
+            <div className="grid grid-cols-1 gap-2">
               {registeredItems.map((item) => (
                 <Link
                   key={item.id}
@@ -245,6 +246,7 @@ export default function LabAfbSmearsPage() {
             </div>
           )}
         </section>
+        </div>
       </div>
     </AppLayout>
   );
