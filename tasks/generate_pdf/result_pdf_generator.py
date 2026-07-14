@@ -193,6 +193,10 @@ def generate_results_pdf(request, apenas_validados=True) -> tuple[bytes, str]:
     # TABELAS
     # =====================================
 
+    from apps.clinical.lab_specialized import collect_request_specialized_results
+
+    especializados = collect_request_specialized_results(request)
+
     if exams_agrupados:
         for exam_name, resultados in exams_agrupados.items():
             exam = getattr(resultados[0].exam_field, "test", None) or getattr(resultados[0].exam_field, "exam", None)
@@ -268,13 +272,40 @@ def generate_results_pdf(request, apenas_validados=True) -> tuple[bytes, str]:
             elements.append(table)
             elements.append(Spacer(1, A5Margins.SECTION_SPACING))
 
-    else:
+    elif not especializados:
         elements.append(
             cell_paragraph(
-                "Nenhum result disponível para esta requisição.",
+                "Nenhum resultado disponível para esta requisição.",
                 True,
             )
         )
+
+    # Resultados de sector especializado (cultura/baciloscopia/molecular),
+    # registados/validados, entram no mesmo laudo da requisição.
+    for esp in especializados:
+        titulo = esp["exam_name"] + (f" — {esp['method']}" if esp["method"] else "")
+        elements.append(Spacer(1, A5Margins.ROW_SPACING))
+        elements.append(
+            Paragraph(titulo, section_style_improved(color=header_config["sector_color"]))
+        )
+        elements.append(Spacer(1, A5Margins.ROW_SPACING))
+        esp_table = Table(
+            [[cell_paragraph("Resultado", True)], [cell_paragraph(esp["text"])]],
+            colWidths=[usable_width],
+        )
+        esp_table.setStyle(
+            TableStyle(
+                [
+                    ("FONTNAME", (0, 0), (-1, 0), FONT_IMPROVED_BOLD),
+                    ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                    ("LEFTPADDING", (0, 0), (-1, -1), 2),
+                    ("RIGHTPADDING", (0, 0), (-1, -1), 2),
+                    ("LINEBELOW", (0, 0), (-1, 0), 0.5, header_config["sector_color"]),
+                ]
+            )
+        )
+        elements.append(esp_table)
+        elements.append(Spacer(1, A5Margins.SECTION_SPACING))
 
     append_fim(elements)
 

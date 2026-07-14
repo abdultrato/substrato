@@ -324,8 +324,11 @@ class LabRequestViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin,
         if request_record.type != request_record.Type.LABORATORY:
             raise PermissionDenied("Esta requisição não possui PDF de resultados laboratoriais.")
 
+        from apps.clinical.lab_specialized import request_has_specialized_results
+
         result = getattr(request_record, "result", None)
-        if not result or not result.items.filter(status=ResultState.VALIDATED).exists():
+        has_generic = bool(result and result.items.filter(status=ResultState.VALIDATED).exists())
+        if not has_generic and not request_has_specialized_results(request_record):
             return self._results_pdf_not_ready_response(request_record)
 
         queued = queue_export_if_requested(

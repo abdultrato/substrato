@@ -130,3 +130,136 @@ def resolve_sector_link(request_item, *, persist: bool = True) -> dict | None:
         state["status"] = "Aguarda processamento no sector"
 
     return state
+
+
+# --- Inclusão no laudo comum (registado = validado) -------------------------
+
+# Estados de cultura considerados finalizados (validados) para o laudo.
+_CULTURE_FINAL_STATES = frozenset(
+    {"CRESCIMENTO", "SEM_CRESCIMENTO", "POSITIVA", "NEGATIVA", "CONCLUIDA"}
+)
+
+
+def _specialized_record(order_item, sector):
+    if sector == "culture":
+        return order_item.cultures.order_by("-created_at").first()
+    if sector == "afb":
+        return order_item.afb_smears.order_by("-created_at").first()
+    return order_item.molecular_results.order_by("-created_at").first()
+
+
+def _specialized_ready(sector, record) -> bool:
+    """Registado = validado: BAAR/molecular quando executados; cultura quando finalizada."""
+    if record is None:
+        return False
+    if sector == "culture":
+        return getattr(record, "status", None) in _CULTURE_FINAL_STATES
+    return getattr(record, "performed_at", None) is not None
+
+
+def _afb_result_text(record) -> str:
+    parts = [record.get_grade_display()]
+    if (record.afb_count or "").strip():
+        parts.append(record.afb_count.strip())
+    return " · ".join(parts)
+
+
+def _fmt_quant(value) -> str:
+    if value is None:
+        return ""
+    try:
+        return str(int(value)) if value == value.to_integral_value() else str(value.normalize())
+    except (AttributeError, ValueError):
+        return str(value)
+
+
+def _molecular_result_text(record) -> str:
+    assay = record.assay
+    detection = record.detection
+    if assay in ("CV_HIV", "CV_HEPATITE"):
+        if detection == "DETETADO":
+            q = _fmt_quant(record.quantitative_value)
+            unit = record.unit or "cópias/mL"
+            return f"Detetado — {q} {unit}" if q else "Detetado"
+        if detection == "NAO_DETETADO":
+            return "Indetetável"
+        return record.get_detection_display()
+    if assay == "GENEXPERT_MTB_RIF":
+        if detection == "DETETADO":
+            return f"MTB detetado · {record.get_rif_resistance_display()}"
+        if detection == "NAO_DETETADO":
+            return "MTB não detetado"
+        return record.get_detection_display()
+    parts = [record.get_detection_display()]
+    q = _fmt_quant(record.quantitative_value)
+    if q:
+        parts.append(f"{q} {record.unit or ''}".strip())
+    return " · ".join(parts)
+
+
+def _culture_result_text(record) -> str:
+    lines = [record.get_status_display()]
+    outcomes = {"positive": "Positiva", "negative": "Negativa", "contaminated": "Contaminada"}
+    for plate in record.culture_plates or []:
+        if not isinstance(plate, dict):
+            continue
+        label = outcomes.get(plate.get("outcome"))
+        if not label:
+            continue
+        medium = plate.get("medium") or plate.get("code") or "Meio"
+        result_text = (plate.get("result_text") or "").strip()
+        extra = f" — {result_text}" if result_text and result_text != medium else ""
+        lines.append(f"{medium}: {label}{extra}")
+    return "; ".join(lines)
+
+
+def _specialized_result_text(sector, record) -> str:
+    if sector == "afb":
+        return _afb_result_text(record)
+    if sector == "molecular":
+        return _molecular_result_text(record)
+    return _culture_result_text(record)
+
+
+def collect_request_specialized_results(request) -> list[dict]:
+    """Resultados especializados prontos (validados) ligados a uma requisição,
+    para incluir no laudo comum. Cada item: exam_name, method, sector, text."""
+    from apps.clinical_laboratory.models import LabOrderItem
+
+    out: list[dict] = []
+    seen: set[tuple] = set()
+    patient_id = getattr(request, "patient_id", None)
+    for item in request.items.select_related("exam", "sector_order_item").order_by("position", "id"):
+        exam = getattr(item, "exam", None)
+        sector = specialized_sector_for_method(getattr(exam, "method", None))
+        if not sector or exam is None:
+            continue
+        order_item = getattr(item, "sector_order_item", None)
+        if order_item is None and patient_id:
+            order_item = (
+                LabOrderItem.objects.filter(test=exam, order__patient_id=patient_id)
+                .order_by("-created_at")
+                .first()
+            )
+        if order_item is None:
+            continue
+        record = _specialized_record(order_item, sector)
+        if not _specialized_ready(sector, record):
+            continue
+        key = (sector, record.id)
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append(
+            {
+                "sector": sector,
+                "exam_name": exam.name,
+                "method": exam.method or "",
+                "text": _specialized_result_text(sector, record),
+            }
+        )
+    return out
+
+
+def request_has_specialized_results(request) -> bool:
+    return bool(collect_request_specialized_results(request))
