@@ -519,7 +519,7 @@ function PurposeCard({
       className={`flex items-start gap-2 rounded-lg border px-3 py-3 text-left transition ${
         active
           ? "border-[var(--primary-500)] bg-[var(--primary-600)] text-white shadow-sm"
-          : "border-white/20 bg-white/30 text-[var(--gray-700)] shadow-sm backdrop-blur-sm hover:border-[var(--primary-300)] hover:bg-white/45 dark:border-white/10 dark:bg-white/[0.05] dark:text-[var(--gray-200)] dark:hover:bg-white/[0.09]"
+          : "border-white/20 bg-white/30 text-[var(--gray-700)] shadow-sm backdrop-blur-sm hover:border-[var(--primary-300)] hover:bg-white/45 dark:border-white/10 dark:bg-white/[0.05] dark:text-foreground dark:hover:bg-white/[0.09]"
       }`}
     >
       <span
@@ -1167,7 +1167,7 @@ export function PatientIntakeWizard({
                       ? "border-[var(--primary-500)] bg-[var(--primary-600)] text-white"
                       : complete
                         ? "border-emerald-200 bg-emerald-50/80 text-emerald-800 shadow-sm dark:border-emerald-700/30 dark:bg-emerald-900/20 dark:text-emerald-300"
-                        : "border-white/20 bg-white/30 text-[var(--gray-700)] shadow-sm backdrop-blur-sm disabled:opacity-60 dark:border-white/10 dark:bg-white/[0.05] dark:text-[var(--gray-200)]"
+                        : "border-white/20 bg-white/30 text-[var(--gray-700)] shadow-sm backdrop-blur-sm disabled:opacity-60 dark:border-white/10 dark:bg-white/[0.05] dark:text-foreground"
                   }`}
                 >
                   <span
@@ -1204,7 +1204,7 @@ export function PatientIntakeWizard({
                 setStep((current) => Math.max(0, current - 1))
               }}
               disabled={step === 0}
-              className="inline-flex h-9 items-center rounded-lg border border-white/20 bg-white/30 px-3 text-xs font-semibold text-[var(--gray-700)] shadow-sm backdrop-blur-sm transition hover:bg-white/45 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/10 dark:bg-white/[0.05] dark:text-[var(--gray-200)] dark:hover:bg-white/[0.09]"
+              className="inline-flex h-9 items-center rounded-lg border border-white/20 bg-white/30 px-3 text-xs font-semibold text-[var(--gray-700)] shadow-sm backdrop-blur-sm transition hover:bg-white/45 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/10 dark:bg-white/[0.05] dark:text-foreground dark:hover:bg-white/[0.09]"
             >
               Anterior
             </button>
