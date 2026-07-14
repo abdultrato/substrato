@@ -50,6 +50,14 @@ const DETECTION_OPTIONS = [
   { value: "INVALIDO", label: "Inválido" },
 ];
 
+// Carga viral: "Não detetado" lê-se como carga viral indetetável.
+const DETECTION_OPTIONS_VIRAL_LOAD = [
+  { value: "NAO_DETETADO", label: "Indetetável" },
+  { value: "DETETADO", label: "Detetado (quantificável)" },
+  { value: "INDETERMINADO", label: "Indeterminado" },
+  { value: "INVALIDO", label: "Inválido" },
+];
+
 const RIF_OPTIONS = [
   { value: "NA", label: "N/A" },
   { value: "SENSIVEL", label: "Sensível à rifampicina" },
@@ -112,6 +120,8 @@ function MolecularCreateForm() {
   const sample = searchParams.get("sample") ? Number(searchParams.get("sample")) : null;
   const assay = searchParams.get("assay") || "PCR";
   const isGeneXpert = assay === "GENEXPERT_MTB_RIF";
+  const isViralLoad = assay === "CV_HIV" || assay === "CV_HEPATITE";
+  const detectionOptions = isViralLoad ? DETECTION_OPTIONS_VIRAL_LOAD : DETECTION_OPTIONS;
   const listHref = assay === "CV_HIV" ? "/clinical-laboratory/molecular/hiv-viral-load" : LIST_HREF;
 
   const [queue, setQueue] = useState<MolecularQueueItem[]>([]);
@@ -121,7 +131,7 @@ function MolecularCreateForm() {
   const [detection, setDetection] = useState("NAO_DETETADO");
   const [rifResistance, setRifResistance] = useState(isGeneXpert ? "SENSIVEL" : "NA");
   const [quantitativeValue, setQuantitativeValue] = useState("");
-  const [unit, setUnit] = useState("");
+  const [unit, setUnit] = useState(isViralLoad ? "cópias/mL" : "");
   const [ctValue, setCtValue] = useState("");
   const [instrument, setInstrument] = useState("");
   const [performedAt, setPerformedAt] = useState("");
@@ -158,6 +168,11 @@ function MolecularCreateForm() {
       setRifResistance("NA");
     }
   }, [detection, isGeneXpert, rifResistance]);
+
+  // Carga viral indetetável não tem valor quantificável.
+  useEffect(() => {
+    if (isViralLoad && detection !== "DETETADO") setQuantitativeValue("");
+  }, [isViralLoad, detection]);
 
   const candidate = useMemo(
     () => queue.find((item) => item.kind === "pending" && item.order_item === orderItem && (sample ? item.sample === sample : true)) || null,
@@ -282,7 +297,11 @@ function MolecularCreateForm() {
             <div className="mb-1.5 flex flex-col gap-1 border-b border-white/[0.08] pb-1.5 dark:border-white/[0.05] sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <h2 className="text-sm font-semibold text-foreground">Resultado técnico</h2>
-                <p className="text-xs text-muted-foreground">Registe deteção, resistência e dados instrumentais.</p>
+                <p className="text-xs text-muted-foreground">
+                  {isViralLoad
+                    ? "Registe a deteção e a carga viral (cópias/mL)."
+                    : "Registe deteção, resistência e dados instrumentais."}
+                </p>
               </div>
               <span className="rounded-full border border-indigo-200/30 bg-indigo-50/[0.02] px-1.5 py-0.5 text-xs font-medium text-indigo-700 backdrop-blur-[1px] dark:border-indigo-800/20 dark:bg-indigo-900/[0.02] dark:text-indigo-300">
                 {ASSAY_LABELS[assay] ?? assay}
@@ -292,31 +311,34 @@ function MolecularCreateForm() {
             <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,160px),1fr))] gap-1">
               <FieldCard label="Deteção">
                 <select value={detection} onChange={(event) => setDetection(event.target.value)} className={INPUT}>
-                  {DETECTION_OPTIONS.map((option) => (
+                  {detectionOptions.map((option) => (
                     <option key={option.value} value={option.value}>{option.label}</option>
                   ))}
                 </select>
               </FieldCard>
 
-              <FieldCard label="Resistência à rifampicina">
-                <select
-                  value={isGeneXpert ? rifResistance : "NA"}
-                  onChange={(event) => setRifResistance(event.target.value)}
-                  disabled={!isGeneXpert || detection !== "DETETADO"}
-                  className={INPUT}
-                >
-                  {RIF_OPTIONS.map((option) => (
-                    <option key={option.value} value={option.value}>{option.label}</option>
-                  ))}
-                </select>
-              </FieldCard>
+              {isGeneXpert ? (
+                <FieldCard label="Resistência à rifampicina">
+                  <select
+                    value={rifResistance}
+                    onChange={(event) => setRifResistance(event.target.value)}
+                    disabled={detection !== "DETETADO"}
+                    className={INPUT}
+                  >
+                    {RIF_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value}>{option.label}</option>
+                    ))}
+                  </select>
+                </FieldCard>
+              ) : null}
 
-              <FieldCard label="Valor quantitativo">
+              <FieldCard label={isViralLoad ? "Carga viral" : "Valor quantitativo"}>
                 <input
                   value={quantitativeValue}
                   onChange={(event) => setQuantitativeValue(event.target.value)}
                   inputMode="decimal"
-                  placeholder="Ex.: 125000"
+                  disabled={isViralLoad && detection !== "DETETADO"}
+                  placeholder={isViralLoad ? (detection === "DETETADO" ? "Ex.: 650" : "Indetetável") : "Ex.: 125000"}
                   className={INPUT}
                 />
               </FieldCard>
@@ -344,7 +366,7 @@ function MolecularCreateForm() {
                 <input
                   value={instrument}
                   onChange={(event) => setInstrument(event.target.value)}
-                  placeholder="Ex.: GeneXpert IV"
+                  placeholder={isViralLoad ? "Ex.: Abbott m2000 / GeneXpert HIV-VL" : "Ex.: GeneXpert IV"}
                   className={INPUT}
                 />
               </FieldCard>
