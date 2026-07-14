@@ -468,7 +468,7 @@ export default function ClinicalLaboratoryHubPage() {
                   <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,10rem),1fr))] gap-1">
                     {phase.items.map((item) => (
                       <CompactLabTile
-                        key={item.href}
+                        key={`${item.href}:${item.label}`}
                         href={item.href}
                         title={item.label}
                         description={item.desc}
