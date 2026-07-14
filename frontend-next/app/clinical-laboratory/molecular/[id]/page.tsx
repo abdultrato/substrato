@@ -63,14 +63,14 @@ const RIF_LABELS: Record<string, string> = {
 };
 
 const DETECTION_STYLE: Record<string, string> = {
-  DETETADO: "border-red-300/50 bg-red-50/[0.22] text-red-700 dark:border-red-800/35 dark:bg-red-900/[0.12] dark:text-red-300",
-  NAO_DETETADO: "border-emerald-300/50 bg-emerald-50/[0.22] text-emerald-700 dark:border-emerald-800/35 dark:bg-emerald-900/[0.12] dark:text-emerald-300",
-  INDETERMINADO: "border-amber-300/50 bg-amber-50/[0.22] text-amber-700 dark:border-amber-800/35 dark:bg-amber-900/[0.12] dark:text-amber-300",
-  INVALIDO: "border-slate-300/50 bg-slate-50/[0.22] text-slate-700 dark:border-slate-700/35 dark:bg-slate-900/[0.16] dark:text-slate-300",
+  DETETADO: "border-red-300/35 bg-red-50/[0.10] text-red-700 dark:border-red-800/25 dark:bg-red-900/[0.06] dark:text-red-300",
+  NAO_DETETADO: "border-emerald-300/35 bg-emerald-50/[0.10] text-emerald-700 dark:border-emerald-800/25 dark:bg-emerald-900/[0.06] dark:text-emerald-300",
+  INDETERMINADO: "border-amber-300/35 bg-amber-50/[0.10] text-amber-700 dark:border-amber-800/25 dark:bg-amber-900/[0.06] dark:text-amber-300",
+  INVALIDO: "border-slate-300/35 bg-slate-50/[0.10] text-slate-700 dark:border-slate-700/25 dark:bg-slate-900/[0.08] dark:text-slate-300",
 };
 
 const GLASS =
-  "rounded-xl border border-white/[0.16] bg-white/[0.045] shadow-[0_10px_34px_rgba(15,23,42,0.04)] backdrop-blur-2xl dark:border-white/[0.08] dark:bg-white/[0.018]";
+  "rounded-xl border border-white/[0.10] bg-white/[0.018] shadow-[0_10px_34px_rgba(15,23,42,0.025)] backdrop-blur-2xl dark:border-white/[0.06] dark:bg-white/[0.010]";
 
 function formatDateTime(value?: string | null) {
   if (!value) return "—";
@@ -108,7 +108,7 @@ function Card({
 
 function InfoTile({ label, value }: { label: string; value: string }) {
   return (
-    <div className="min-w-0 rounded-lg border border-white/[0.12] bg-white/[0.035] p-2.5 backdrop-blur-xl dark:border-white/[0.07] dark:bg-white/[0.014]">
+    <div className="min-w-0 rounded-lg border border-white/[0.08] bg-white/[0.015] p-2.5 backdrop-blur-2xl dark:border-white/[0.05] dark:bg-white/[0.008]">
       <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">{label}</p>
       <p className="truncate text-sm font-semibold text-foreground">{value}</p>
     </div>
@@ -182,10 +182,10 @@ export default function ClinicalLaboratoryMolecularDetailPage() {
               </span>
               <div className="min-w-0">
                 <div className="mb-0.5 flex flex-wrap gap-1.5">
-                  <span className="rounded-full border border-indigo-200/45 bg-indigo-50/[0.18] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-indigo-700 backdrop-blur-xl dark:border-indigo-800/30 dark:bg-indigo-900/[0.10] dark:text-indigo-300">
+                  <span className="rounded-full border border-indigo-200/30 bg-indigo-50/[0.08] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-indigo-700 backdrop-blur-2xl dark:border-indigo-800/20 dark:bg-indigo-900/[0.05] dark:text-indigo-300">
                     Molecular
                   </span>
-                  <span className="rounded-full border border-cyan-200/45 bg-cyan-50/[0.18] px-2 py-0.5 text-[10px] font-medium text-cyan-700 backdrop-blur-xl dark:border-cyan-800/30 dark:bg-cyan-900/[0.10] dark:text-cyan-300">
+                  <span className="rounded-full border border-cyan-200/30 bg-cyan-50/[0.08] px-2 py-0.5 text-[10px] font-medium text-cyan-700 backdrop-blur-2xl dark:border-cyan-800/20 dark:bg-cyan-900/[0.05] dark:text-cyan-300">
                     {record.custom_id}
                   </span>
                 </div>
@@ -199,7 +199,7 @@ export default function ClinicalLaboratoryMolecularDetailPage() {
             <div className="grid w-full grid-cols-2 gap-1.5 md:flex md:w-auto md:shrink-0 md:items-center">
               <Link
                 href={LIST_HREF}
-                className="inline-flex h-8 min-w-0 items-center justify-center gap-2 rounded-lg border border-white/[0.14] bg-white/[0.035] px-3 text-sm font-medium text-foreground shadow-sm backdrop-blur-xl transition hover:bg-white/[0.075] dark:border-white/[0.08] dark:bg-white/[0.018] dark:hover:bg-white/[0.035]"
+                className="inline-flex h-8 min-w-0 items-center justify-center gap-2 rounded-lg border border-white/[0.10] bg-white/[0.015] px-3 text-sm font-medium text-foreground shadow-sm backdrop-blur-2xl transition hover:bg-white/[0.05] dark:border-white/[0.06] dark:bg-white/[0.008] dark:hover:bg-white/[0.02]"
               >
                 <ArrowLeft size={16} />
                 Voltar
@@ -252,7 +252,7 @@ export default function ClinicalLaboratoryMolecularDetailPage() {
             </Card>
 
             <Card title="Interpretação" icon={ShieldAlert}>
-              <div className="min-h-[104px] rounded-lg border border-white/[0.12] bg-white/[0.035] p-3 text-sm leading-relaxed text-foreground backdrop-blur-xl dark:border-white/[0.07] dark:bg-white/[0.014]">
+              <div className="min-h-[104px] rounded-lg border border-white/[0.08] bg-white/[0.015] p-3 text-sm leading-relaxed text-foreground backdrop-blur-2xl dark:border-white/[0.05] dark:bg-white/[0.008]">
                 {record.notes ? <p className="whitespace-pre-wrap">{record.notes}</p> : <p className="text-muted-foreground">Sem interpretação ou observações registadas.</p>}
               </div>
             </Card>
