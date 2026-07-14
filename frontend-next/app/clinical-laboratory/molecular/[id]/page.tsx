@@ -63,14 +63,14 @@ const RIF_LABELS: Record<string, string> = {
 };
 
 const DETECTION_STYLE: Record<string, string> = {
-  DETETADO: "border-red-300/28 bg-red-50/[0.055] text-red-700 dark:border-red-800/20 dark:bg-red-900/[0.035] dark:text-red-300",
-  NAO_DETETADO: "border-emerald-300/28 bg-emerald-50/[0.055] text-emerald-700 dark:border-emerald-800/20 dark:bg-emerald-900/[0.035] dark:text-emerald-300",
-  INDETERMINADO: "border-amber-300/28 bg-amber-50/[0.055] text-amber-700 dark:border-amber-800/20 dark:bg-amber-900/[0.035] dark:text-amber-300",
-  INVALIDO: "border-slate-300/28 bg-slate-50/[0.055] text-slate-700 dark:border-slate-700/20 dark:bg-slate-900/[0.045] dark:text-slate-300",
+  DETETADO: "border-red-300/20 bg-red-50/[0.025] text-red-700 dark:border-red-800/14 dark:bg-red-900/[0.018] dark:text-red-300",
+  NAO_DETETADO: "border-emerald-300/20 bg-emerald-50/[0.025] text-emerald-700 dark:border-emerald-800/14 dark:bg-emerald-900/[0.018] dark:text-emerald-300",
+  INDETERMINADO: "border-amber-300/20 bg-amber-50/[0.025] text-amber-700 dark:border-amber-800/14 dark:bg-amber-900/[0.018] dark:text-amber-300",
+  INVALIDO: "border-slate-300/20 bg-slate-50/[0.025] text-slate-700 dark:border-slate-700/14 dark:bg-slate-900/[0.02] dark:text-slate-300",
 };
 
 const GLASS =
-  "rounded-xl border border-white/[0.075] bg-white/[0.008] shadow-[0_10px_34px_rgba(15,23,42,0.018)] backdrop-blur-2xl dark:border-white/[0.045] dark:bg-white/[0.006]";
+  "rounded-xl border border-white/[0.05] bg-white/[0.003] shadow-[0_6px_20px_rgba(15,23,42,0.012)] backdrop-blur-2xl dark:border-white/[0.03] dark:bg-white/[0.002]";
 
 function formatDateTime(value?: string | null) {
   if (!value) return "—";
@@ -96,10 +96,10 @@ function Card({
   children: ReactNode;
 }) {
   return (
-    <section className={`relative min-w-0 overflow-hidden p-3 pl-4 ${GLASS}`}>
-      <span className={`absolute inset-y-0 left-0 w-1 ${accent}`} />
-      <div className="mb-2 flex items-center gap-2 border-b border-white/[0.08] pb-2 dark:border-white/[0.045]">
-        <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-600 to-cyan-600 text-white shadow-sm shadow-indigo-500/20">
+    <section className={`relative min-w-0 overflow-hidden p-2 pl-3 ${GLASS}`}>
+      <span className={`absolute inset-y-0 left-0 w-0.5 ${accent}`} />
+      <div className="mb-1.5 flex items-center gap-1.5 border-b border-white/[0.05] pb-1.5 dark:border-white/[0.03]">
+        <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-600 to-cyan-600 text-white shadow-sm shadow-indigo-500/15">
           <Icon size={15} />
         </span>
         <h2 className="text-sm font-semibold text-foreground">{title}</h2>
@@ -111,7 +111,7 @@ function Card({
 
 function InfoTile({ label, value }: { label: string; value: string }) {
   return (
-    <div className="min-w-0 rounded-lg border border-white/[0.06] bg-white/[0.006] p-2.5 backdrop-blur-2xl dark:border-white/[0.035] dark:bg-white/[0.004]">
+    <div className="min-w-0 rounded-lg border border-white/[0.04] bg-white/[0.002] p-1.5 backdrop-blur-2xl dark:border-white/[0.025] dark:bg-white/[0.001]">
       <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">{label}</p>
       <p className="truncate text-sm font-semibold text-foreground">{value}</p>
     </div>
@@ -175,20 +175,20 @@ export default function ClinicalLaboratoryMolecularDetailPage() {
 
   return (
     <AppLayout fullWidth requiredGroups={requiredGroupsForResourceGroup("clinical_laboratory")}>
-      <div className="mx-auto w-full max-w-[97vw] space-y-2 overflow-x-hidden px-1 sm:px-0">
-        <section className={`relative overflow-hidden px-3 py-2.5 ${GLASS}`}>
-          <span className="absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-indigo-500 via-cyan-500 to-sky-500" />
-          <div className="relative flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-            <div className="flex min-w-0 items-start gap-2.5 md:items-center">
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-600 to-cyan-600 text-white shadow-sm shadow-indigo-500/25">
+      <div className="mx-auto w-full max-w-[97vw] space-y-1 overflow-x-hidden px-0.5">
+        <section className={`relative overflow-hidden px-2 py-1.5 ${GLASS}`}>
+          <span className="absolute inset-y-0 left-0 w-0.5 bg-gradient-to-b from-indigo-500 via-cyan-500 to-sky-500" />
+          <div className="relative flex flex-col gap-1.5 md:flex-row md:items-center md:justify-between">
+            <div className="flex min-w-0 items-start gap-1.5 md:items-center">
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-600 to-cyan-600 text-white shadow-sm shadow-indigo-500/15">
                 <Dna size={18} />
               </span>
               <div className="min-w-0">
-                <div className="mb-0.5 flex flex-wrap gap-1.5">
-                  <span className="rounded-full border border-indigo-200/30 bg-indigo-50/[0.08] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-indigo-700 backdrop-blur-2xl dark:border-indigo-800/20 dark:bg-indigo-900/[0.05] dark:text-indigo-300">
+                <div className="mb-0.5 flex flex-wrap gap-1">
+                  <span className="rounded-full border border-indigo-200/20 bg-indigo-50/[0.025] px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-indigo-700 backdrop-blur-2xl dark:border-indigo-800/14 dark:bg-indigo-900/[0.018] dark:text-indigo-300">
                     Molecular
                   </span>
-                  <span className="rounded-full border border-cyan-200/30 bg-cyan-50/[0.08] px-2 py-0.5 text-[10px] font-medium text-cyan-700 backdrop-blur-2xl dark:border-cyan-800/20 dark:bg-cyan-900/[0.05] dark:text-cyan-300">
+                  <span className="rounded-full border border-cyan-200/20 bg-cyan-50/[0.025] px-1.5 py-0.5 text-[10px] font-medium text-cyan-700 backdrop-blur-2xl dark:border-cyan-800/14 dark:bg-cyan-900/[0.018] dark:text-cyan-300">
                     {record.custom_id}
                   </span>
                 </div>
@@ -199,17 +199,17 @@ export default function ClinicalLaboratoryMolecularDetailPage() {
               </div>
             </div>
 
-            <div className="grid w-full grid-cols-2 gap-1.5 md:flex md:w-auto md:shrink-0 md:items-center">
+            <div className="grid w-full grid-cols-2 gap-1 md:flex md:w-auto md:shrink-0 md:items-center">
               <Link
                 href={LIST_HREF}
-                className="inline-flex h-8 min-w-0 items-center justify-center gap-2 rounded-lg border border-white/[0.10] bg-white/[0.015] px-3 text-sm font-medium text-foreground shadow-sm backdrop-blur-2xl transition hover:bg-white/[0.05] dark:border-white/[0.06] dark:bg-white/[0.008] dark:hover:bg-white/[0.02]"
+                className="inline-flex h-7 min-w-0 items-center justify-center gap-1.5 rounded-lg border border-white/[0.06] bg-white/[0.003] px-2.5 text-sm font-medium text-foreground shadow-sm backdrop-blur-2xl transition hover:bg-white/[0.025] dark:border-white/[0.03] dark:bg-white/[0.002] dark:hover:bg-white/[0.012]"
               >
                 <ArrowLeft size={16} />
                 Voltar
               </Link>
               <Link
                 href={`${LIST_HREF}/${record.id}/edit`}
-                className="inline-flex h-8 min-w-0 items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-indigo-600 to-cyan-600 px-3 text-sm font-semibold text-white shadow-sm transition hover:from-indigo-700 hover:to-cyan-700"
+                className="inline-flex h-7 min-w-0 items-center justify-center gap-1.5 rounded-lg bg-gradient-to-r from-indigo-600 to-cyan-600 px-2.5 text-sm font-semibold text-white shadow-sm transition hover:from-indigo-700 hover:to-cyan-700"
               >
                 <Edit3 size={15} />
                 Editar
@@ -218,10 +218,10 @@ export default function ClinicalLaboratoryMolecularDetailPage() {
           </div>
         </section>
 
-        <div className="space-y-2 overflow-x-auto pb-1">
-          <div className="grid min-w-[760px] grid-cols-2 gap-2">
+        <div className="space-y-1 overflow-x-auto pb-0.5">
+          <div className="grid min-w-[720px] grid-cols-2 gap-1">
             <Card title="Rastreabilidade" icon={Microscope} accent="bg-gradient-to-b from-sky-500 to-cyan-500">
-              <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,170px),1fr))] gap-2">
+              <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,150px),1fr))] gap-1">
                 <InfoTile label="Paciente" value={display(record.patient_name, "Paciente não identificado")} />
                 <InfoTile label="Pedido" value={display(record.order_custom_id)} />
                 <InfoTile label="Exame" value={display(record.test_name || record.test_code, assayLabel)} />
@@ -232,8 +232,8 @@ export default function ClinicalLaboratoryMolecularDetailPage() {
             </Card>
 
             <Card title="Resultado" icon={Activity} accent="bg-gradient-to-b from-emerald-500 to-teal-500">
-              <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,180px),1fr))] gap-2">
-                <div className={`rounded-lg border p-3 backdrop-blur-xl ${detectionStyle}`}>
+              <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,160px),1fr))] gap-1">
+                <div className={`rounded-lg border p-2 backdrop-blur-xl ${detectionStyle}`}>
                   <p className="text-[11px] font-medium uppercase tracking-wide opacity-75">Deteção</p>
                   <p className="text-lg font-bold">{detectionLabel}</p>
                 </div>
@@ -244,9 +244,9 @@ export default function ClinicalLaboratoryMolecularDetailPage() {
             </Card>
           </div>
 
-          <div className="grid min-w-[760px] grid-cols-2 gap-2">
+          <div className="grid min-w-[720px] grid-cols-2 gap-1">
             <Card title="Instrumentação e quantificação" icon={FlaskConical} accent="bg-gradient-to-b from-indigo-500 to-blue-500">
-              <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,170px),1fr))] gap-2">
+              <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,150px),1fr))] gap-1">
                 <InfoTile label="Valor quantitativo" value={quantitative} />
                 <InfoTile label="Ct" value={display(record.ct_value)} />
                 <InfoTile label="Instrumento" value={display(record.instrument)} />
@@ -255,7 +255,7 @@ export default function ClinicalLaboratoryMolecularDetailPage() {
             </Card>
 
             <Card title="Interpretação" icon={ShieldAlert} accent="bg-gradient-to-b from-amber-500 to-orange-500">
-              <div className="min-h-[104px] rounded-lg border border-white/[0.06] bg-white/[0.006] p-3 text-sm leading-relaxed text-foreground backdrop-blur-2xl dark:border-white/[0.035] dark:bg-white/[0.004]">
+              <div className="min-h-[84px] rounded-lg border border-white/[0.04] bg-white/[0.002] p-2 text-sm leading-relaxed text-foreground backdrop-blur-2xl dark:border-white/[0.025] dark:bg-white/[0.001]">
                 {record.notes ? <p className="whitespace-pre-wrap">{record.notes}</p> : <p className="text-muted-foreground">Sem interpretação ou observações registadas.</p>}
               </div>
             </Card>
