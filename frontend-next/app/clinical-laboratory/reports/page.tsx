@@ -160,8 +160,11 @@ function countActive(f: SearchFilters, keys: (keyof SearchFilters)[]): number {
   return keys.filter((k) => f[k].trim()).length
 }
 
-function SearchPanel({
-  filters, onChange, onSearch, onClear, total, loading,
+const STAT_PILL =
+  "inline-flex h-6 items-center gap-1 whitespace-nowrap rounded-full border border-transparent px-2 text-[10px] font-semibold backdrop-blur-sm"
+
+function ReportsHeader({
+  filters, onChange, onSearch, onClear, total, loading, buckets,
 }: {
   filters: SearchFilters
   onChange: (f: SearchFilters) => void
@@ -169,6 +172,7 @@ function SearchPanel({
   onClear: () => void
   total: number
   loading: boolean
+  buckets: Record<ColumnKey, LabRequest[]>
 }) {
   const [expanded, setExpanded] = useState(false)
 
@@ -183,8 +187,43 @@ function SearchPanel({
   const anyActive = !isFiltersEmpty(filters)
 
   return (
-    <div className="relative overflow-hidden rounded-xl border border-sky-200/40 bg-white/20 px-4 py-3 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]">
-      <div className="flex flex-wrap items-end gap-2">
+    <section className="relative overflow-hidden rounded-xl border border-sky-200/50 bg-gradient-to-br from-sky-50/80 via-white/60 to-cyan-50/60 shadow-sm backdrop-blur-sm dark:border-sky-800/30 dark:from-sky-950/30 dark:via-slate-900/40 dark:to-cyan-950/20">
+      <span className="absolute left-0 top-0 h-full w-1 bg-sky-400" />
+
+      {/* ── Linha 1: banner + pílulas por período + voltar ── */}
+      <div className="relative flex flex-wrap items-center gap-x-3 gap-y-2 px-3 py-2 pl-4">
+        <div className="flex min-w-0 items-center gap-2.5">
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-sky-500 to-cyan-600 text-white shadow-md shadow-sky-500/25">
+            <FileText size={15} />
+          </span>
+          <div className="min-w-0">
+            <h1 className="font-display text-sm font-bold leading-tight text-foreground">Laudos</h1>
+            <p className="text-[10px] text-muted-foreground">
+              {loading
+                ? <><Loader2 size={9} className="inline animate-spin mr-1" />A carregar…</>
+                : total > 0
+                  ? formatCount(total, { one: "laudo", other: "laudos" })
+                  : "Sem laudos"}
+            </p>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-1.5">
+          {COLUMNS.map((col) => (
+            <span key={col.key} className={`${STAT_PILL} ${col.badge}`}>
+              {col.title} <strong className="text-[11px]">{buckets[col.key].length}</strong>
+            </span>
+          ))}
+        </div>
+
+        <Link href="/clinical-laboratory"
+          className="ml-auto inline-flex h-8 items-center gap-1 rounded-lg border border-white/40 bg-white/30 px-2.5 text-[11px] text-[var(--gray-700)] backdrop-blur-sm transition hover:bg-white/50 dark:border-white/10 dark:text-[var(--gray-300)] dark:hover:bg-white/10">
+          <ChevronLeft size={11} /> Voltar
+        </Link>
+      </div>
+
+      {/* ── Linha 2: pesquisa rápida + filtros avançados ── */}
+      <div className="relative flex flex-wrap items-end gap-2 border-t border-white/20 px-3 py-2 pl-4 dark:border-white/10">
         <div className="min-w-[180px] flex-1">
           <label className={LABEL_CLS}>Pesquisa livre</label>
           <div className="relative">
@@ -230,7 +269,7 @@ function SearchPanel({
       </div>
 
       {expanded && (
-        <div className="mt-3 border-t border-white/20 pt-3 dark:border-white/10">
+        <div className="relative border-t border-white/20 px-3 py-2 pl-4 dark:border-white/10">
           <div className="grid grid-cols-2 gap-x-2 gap-y-2 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6">
             <div>
               <label className={LABEL_CLS}>Nº documento</label>
@@ -289,7 +328,7 @@ function SearchPanel({
           </div>
         </div>
       )}
-    </div>
+    </section>
   )
 }
 
@@ -417,42 +456,17 @@ export default function LabReportsPage() {
 
   return (
     <AppLayout fullWidth>
-      <div className="w-full min-w-0 max-w-none space-y-3 px-1 py-1">
+      <div className="w-full min-w-0 max-w-none space-y-2 px-1 py-1">
 
-        {/* ── Hero ── */}
-        <section className="relative overflow-hidden rounded-xl border border-sky-200/50 bg-gradient-to-br from-sky-50/80 via-white/60 to-cyan-50/60 shadow-sm backdrop-blur-sm dark:border-sky-800/30 dark:from-sky-950/30 dark:via-slate-900/40 dark:to-cyan-950/20">
-          <span className="absolute left-0 top-0 h-full w-1 bg-sky-400" />
-          <div className="px-4 py-3 pl-5">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div className="flex items-center gap-2">
-                <FileText size={15} className="text-sky-500" />
-                <div>
-                  <h1 className="font-display text-sm font-bold text-foreground leading-tight">Laudos</h1>
-                  <p className="text-[10px] text-[var(--gray-500)]">
-                    {loading
-                      ? <><Loader2 size={9} className="inline animate-spin mr-1" />A carregar...</>
-                      : total > 0
-                        ? formatCount(total, { one: "laudo", other: "laudos" })
-                        : "Sem laudos"}
-                  </p>
-                </div>
-              </div>
-              <Link href="/clinical-laboratory"
-                className="inline-flex h-8 items-center gap-1 rounded-lg border border-white/40 bg-white/30 px-2.5 text-[11px] text-[var(--gray-700)] backdrop-blur-sm transition hover:bg-white/50 dark:border-white/10 dark:text-[var(--gray-300)] dark:hover:bg-white/10">
-                <ChevronLeft size={11} /> Voltar
-              </Link>
-            </div>
-          </div>
-        </section>
-
-        {/* ── Search panel ── */}
-        <SearchPanel
+        {/* ── Cabeçalho fundido: banner + pílulas por período + pesquisa + filtros ── */}
+        <ReportsHeader
           filters={filters}
           onChange={setFilters}
           onSearch={() => load(filters)}
           onClear={handleClear}
           total={total}
           loading={loading}
+          buckets={buckets}
         />
 
         {/* ── Error ── */}
@@ -468,7 +482,7 @@ export default function LabReportsPage() {
             <Loader2 size={16} className="animate-spin" /> A carregar laudos...
           </div>
         ) : (
-          <div className={`grid w-full min-w-0 grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-4 transition-opacity ${loading ? "opacity-60" : ""}`} style={{ height: "calc(100vh - 220px)" }}>
+          <div className={`grid w-full min-w-0 grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-4 transition-opacity ${loading ? "opacity-60" : ""}`} style={{ height: "calc(100vh - 185px)" }}>
             {COLUMNS.map((col) => {
               const items = buckets[col.key]
               return (
