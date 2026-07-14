@@ -6,6 +6,7 @@ from xml.sax.saxutils import escape
 
 from django.conf import settings
 from django.utils import timezone
+from django.utils.dateparse import parse_datetime
 from reportlab.lib.pagesizes import A5
 from reportlab.platypus import (
     BaseDocTemplate,
@@ -65,6 +66,29 @@ def _exam_name(culture: MicrobiologyCulture) -> str:
     return getattr(test, "name", None) or "Cultura microbiológica"
 
 
+def _fmt_iso(value) -> str:
+    if not value:
+        return "—"
+    dt = parse_datetime(value) if isinstance(value, str) else value
+    if not dt:
+        return "—"
+    try:
+        dt = timezone.localtime(dt)
+    except Exception:
+        pass
+    return dt.strftime("%d/%m/%Y %H:%M")
+
+
+def _fmt_hours(value) -> str | None:
+    if value in (None, ""):
+        return None
+    try:
+        h = float(value)
+    except (TypeError, ValueError):
+        return None
+    return f"{int(h)}h" if h == int(h) else f"{h}h"
+
+
 def _plate_label(plate: dict) -> str:
     code = plate.get("code") or "Meio"
     medium = plate.get("medium") or ""
@@ -85,7 +109,19 @@ def _plate_result(plate: dict) -> str:
         if gram_txt:
             parts.append(gram_txt)
         return "<br/>".join(escape(p) for p in parts)
-    return "Em incubação"
+
+    # Em incubação: mostra o cronómetro individual deste meio (exatidão por placa).
+    parts = ["Em incubação"]
+    detail = []
+    hours = _fmt_hours(plate.get("incubation_hours"))
+    if hours:
+        detail.append(f"Incubação {hours}")
+    end = plate.get("incubation_expected_end_at")
+    if end:
+        detail.append(f"Leitura {_fmt_iso(end)}")
+    if detail:
+        parts.append(" · ".join(detail))
+    return "<br/>".join(escape(p) for p in parts)
 
 
 def generate_culture_result_pdf(culture: MicrobiologyCulture, request=None) -> tuple[bytes, str]:
