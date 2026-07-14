@@ -58,11 +58,11 @@ const RIF_OPTIONS = [
 ];
 
 const GLASS =
-  "rounded-xl border border-white/25 bg-white/[0.14] shadow-sm backdrop-blur-xl dark:border-white/10 dark:bg-white/[0.035]";
+  "rounded-xl border border-white/[0.16] bg-white/[0.045] shadow-[0_10px_34px_rgba(15,23,42,0.04)] backdrop-blur-2xl dark:border-white/[0.08] dark:bg-white/[0.018]";
 const INPUT =
-  "h-9 w-full rounded-lg border border-white/[0.22] bg-white/[0.10] px-2.5 text-sm text-foreground shadow-sm outline-none backdrop-blur-md transition placeholder:text-muted-foreground focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/20 dark:border-white/[0.10] dark:bg-white/[0.04]";
+  "h-9 w-full rounded-lg border border-white/[0.16] bg-white/[0.035] px-2.5 text-sm text-foreground shadow-sm outline-none backdrop-blur-xl transition placeholder:text-muted-foreground focus:border-indigo-400 focus:bg-white/[0.075] focus:ring-2 focus:ring-indigo-500/20 dark:border-white/[0.08] dark:bg-white/[0.018] dark:focus:bg-white/[0.035]";
 const TEXTAREA =
-  "min-h-[92px] w-full rounded-lg border border-white/[0.22] bg-white/[0.10] px-2.5 py-2 text-sm text-foreground shadow-sm outline-none backdrop-blur-md transition placeholder:text-muted-foreground focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/20 dark:border-white/[0.10] dark:bg-white/[0.04]";
+  "min-h-[92px] w-full rounded-lg border border-white/[0.16] bg-white/[0.035] px-2.5 py-2 text-sm text-foreground shadow-sm outline-none backdrop-blur-xl transition placeholder:text-muted-foreground focus:border-indigo-400 focus:bg-white/[0.075] focus:ring-2 focus:ring-indigo-500/20 dark:border-white/[0.08] dark:bg-white/[0.018] dark:focus:bg-white/[0.035]";
 
 function formatDateTime(value?: string | null) {
   if (!value) return "—";
@@ -81,7 +81,7 @@ function FieldCard({
   className?: string;
 }) {
   return (
-    <label className={`space-y-1.5 rounded-lg border border-white/[0.16] bg-white/[0.08] p-2.5 backdrop-blur-md dark:border-white/[0.08] dark:bg-white/[0.025] ${className}`}>
+    <label className={`space-y-1.5 rounded-lg border border-white/[0.12] bg-white/[0.035] p-2.5 backdrop-blur-xl dark:border-white/[0.07] dark:bg-white/[0.014] ${className}`}>
       <span className="text-xs font-medium text-muted-foreground">{label}</span>
       {children}
     </label>
@@ -90,7 +90,7 @@ function FieldCard({
 
 function InfoTile({ label, value }: { label: string; value: string }) {
   return (
-    <div className="min-w-0 rounded-lg border border-white/[0.16] bg-white/[0.08] p-2.5 backdrop-blur-md dark:border-white/[0.08] dark:bg-white/[0.025]">
+    <div className="min-w-0 rounded-lg border border-white/[0.12] bg-white/[0.035] p-2.5 backdrop-blur-xl dark:border-white/[0.07] dark:bg-white/[0.014]">
       <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">{label}</p>
       <p className="truncate text-sm font-semibold text-foreground">{value || "—"}</p>
     </div>
@@ -209,10 +209,10 @@ function MolecularCreateForm() {
               </span>
               <div className="min-w-0">
                 <div className="mb-0.5 flex flex-wrap gap-1.5">
-                  <span className="rounded-full border border-indigo-200/70 bg-indigo-50/50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-indigo-700 backdrop-blur-sm dark:border-indigo-800/40 dark:bg-indigo-900/20 dark:text-indigo-300">
+                  <span className="rounded-full border border-indigo-200/45 bg-indigo-50/[0.18] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-indigo-700 backdrop-blur-xl dark:border-indigo-800/30 dark:bg-indigo-900/[0.10] dark:text-indigo-300">
                     Molecular
                   </span>
-                  <span className="rounded-full border border-cyan-200/70 bg-cyan-50/50 px-2 py-0.5 text-[10px] font-medium text-cyan-700 backdrop-blur-sm dark:border-cyan-800/40 dark:bg-cyan-900/20 dark:text-cyan-300">
+                  <span className="rounded-full border border-cyan-200/45 bg-cyan-50/[0.18] px-2 py-0.5 text-[10px] font-medium text-cyan-700 backdrop-blur-xl dark:border-cyan-800/30 dark:bg-cyan-900/[0.10] dark:text-cyan-300">
                     {ASSAY_LABELS[assay] ?? assay}
                   </span>
                 </div>
@@ -226,7 +226,7 @@ function MolecularCreateForm() {
             <div className="grid w-full grid-cols-2 gap-1.5 md:flex md:w-auto md:shrink-0 md:items-center">
               <Link
                 href={LIST_HREF}
-                className="inline-flex h-8 min-w-0 items-center justify-center gap-2 rounded-lg border border-white/20 bg-white/[0.10] px-3 text-sm font-medium text-foreground shadow-sm backdrop-blur-md transition hover:bg-white/[0.18] dark:border-white/10 dark:bg-white/[0.04] dark:hover:bg-white/[0.08]"
+                className="inline-flex h-8 min-w-0 items-center justify-center gap-2 rounded-lg border border-white/[0.14] bg-white/[0.035] px-3 text-sm font-medium text-foreground shadow-sm backdrop-blur-xl transition hover:bg-white/[0.075] dark:border-white/[0.08] dark:bg-white/[0.018] dark:hover:bg-white/[0.035]"
               >
                 <ArrowLeft size={16} />
                 Voltar
@@ -244,7 +244,7 @@ function MolecularCreateForm() {
         </section>
 
         {error ? (
-          <div className="rounded-lg border border-red-200/60 bg-red-50/50 px-3 py-2 text-sm text-red-800 shadow-sm backdrop-blur-sm dark:border-red-800/40 dark:bg-red-900/15 dark:text-red-300">
+          <div className="rounded-lg border border-red-200/45 bg-red-50/[0.18] px-3 py-2 text-sm text-red-800 shadow-sm backdrop-blur-xl dark:border-red-800/35 dark:bg-red-900/[0.10] dark:text-red-300">
             {error}
           </div>
         ) : null}
@@ -281,7 +281,7 @@ function MolecularCreateForm() {
                 <h2 className="text-sm font-semibold text-foreground">Resultado técnico</h2>
                 <p className="text-xs text-muted-foreground">Registe deteção, resistência e dados instrumentais.</p>
               </div>
-              <span className="rounded-full border border-indigo-200/60 bg-indigo-50/40 px-2.5 py-1 text-xs font-medium text-indigo-700 backdrop-blur-sm dark:border-indigo-800/40 dark:bg-indigo-900/20 dark:text-indigo-300">
+              <span className="rounded-full border border-indigo-200/45 bg-indigo-50/[0.18] px-2.5 py-1 text-xs font-medium text-indigo-700 backdrop-blur-xl dark:border-indigo-800/30 dark:bg-indigo-900/[0.10] dark:text-indigo-300">
                 {ASSAY_LABELS[assay] ?? assay}
               </span>
             </div>
