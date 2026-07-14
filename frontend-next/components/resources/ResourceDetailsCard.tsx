@@ -328,6 +328,7 @@ export default function ResourceDetailsCard({
         title: "Complementares",
         description: "Campos adicionais do registo da doação.",
         accent: "from-slate-500 via-slate-400 to-slate-300",
+        fields: [],
         items: remainingItems,
       })
     }

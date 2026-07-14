@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import {
   Activity,
@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 
 import AppLayout from "@/components/layout/AppLayout";
+import useDebounce from "@/hooks/useDebounce";
 import { apiFetchList } from "@/lib/api";
 import useAuthGuard from "@/hooks/useAuthGuard";
 import { GROUPS } from "@/lib/rbac";
@@ -105,8 +106,7 @@ export default function ExposureIncidentListPage() {
   const [search,       setSearch]       = useState("");
   const [filterType,   setFilterType]   = useState("");
   const [filterStatus, setFilterStatus] = useState("");
-
-  const debRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const debouncedSearch = useDebounce(search, 300);
 
   const load = useCallback(async (p: number, q: string, type: string, status: string) => {
     setLoading(true);
@@ -125,13 +125,11 @@ export default function ExposureIncidentListPage() {
     finally { setLoading(false); }
   }, []);
 
-  useEffect(() => { load(page, search, filterType, filterStatus); }, [page, filterType, filterStatus, load]);
+  useEffect(() => { load(page, debouncedSearch, filterType, filterStatus); }, [page, debouncedSearch, filterType, filterStatus, load]);
 
   function handleSearch(v: string) {
     setSearch(v);
     setPage(1);
-    if (debRef.current) clearTimeout(debRef.current);
-    debRef.current = setTimeout(() => load(1, v, filterType, filterStatus), 300);
   }
 
   function handleFilter(type: string, status: string) {

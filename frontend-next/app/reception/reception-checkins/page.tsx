@@ -172,7 +172,7 @@ export default function ReceptionCheckinsPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, debouncedSearch, statusFilter, priorityFilter, safeRefreshToken]);
+  }, [page, debouncedSearch, statusFilter, priorityFilter]);
 
   useEffect(() => { load(); }, [load]);
 

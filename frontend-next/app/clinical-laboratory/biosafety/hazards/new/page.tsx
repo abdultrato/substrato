@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useId, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   AlertTriangle,
@@ -475,9 +476,9 @@ export default function NewHazardPage() {
             <p className="text-[10px] text-muted-foreground">
               Os EPIs são herdados do catálogo de equipamentos de proteção individual do laboratório.
               Se não encontrar o item, cadastre-o primeiro em{" "}
-              <a href="/clinical-laboratory/biosafety/ppe" className="text-violet-600 hover:underline dark:text-violet-400">
+              <Link href="/clinical-laboratory/biosafety/ppe" className="text-violet-600 hover:underline dark:text-violet-400">
                 Biossegurança → EPI
-              </a>.
+              </Link>.
             </p>
           </Card>
 

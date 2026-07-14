@@ -4,7 +4,7 @@ import type { ReactNode } from "react"
 import { useEffect, useMemo, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { ArrowLeft, BriefcaseBusiness, Loader2, ShieldCheck, UserRound } from "lucide-react"
+import { ArrowLeft, Briefcase, Loader2, ShieldCheck, User } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
 import PageHeader from "@/components/ui/PageHeader"
@@ -680,7 +680,7 @@ export default function UserProvisioningForm({ userId }: UserProvisioningFormPro
           <aside className="space-y-4 rounded-xl border border-white/20 bg-white/25 p-4 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]">
             <div>
               <div className="mb-2 flex items-center gap-2">
-                <UserRound size={15} className="text-[var(--primary-600)]" />
+                <User size={15} className="text-[var(--primary-600)]" />
                 <h2 className="text-sm font-semibold text-foreground">Herança de RH</h2>
               </div>
               {employeeSnapshot ? (
@@ -704,7 +704,7 @@ export default function UserProvisioningForm({ userId }: UserProvisioningFormPro
 
             <div>
               <div className="mb-2 flex items-center gap-2">
-                <BriefcaseBusiness size={15} className="text-[var(--primary-600)]" />
+                <Briefcase size={15} className="text-[var(--primary-600)]" />
                 <h2 className="text-sm font-semibold text-foreground">Acesso principal</h2>
               </div>
               {selectedGroupLabels.length ? (

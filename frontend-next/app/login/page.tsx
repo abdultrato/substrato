@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff, Globe, Loader2 } from "lucide-react";
 import { login } from "@/lib/auth";
@@ -300,17 +301,23 @@ export default function LoginPage() {
 
                     {/* Logo + Heading */}
                     <div className="mb-6">
-                        <img
+                        <Image
                             src={LOGO_LIGHT_SRC}
                             alt="Substrato"
+                            width={126}
+                            height={28}
                             className="mb-4 h-7 w-auto dark:hidden"
                             draggable={false}
+                            unoptimized
                         />
-                        <img
+                        <Image
                             src={LOGO_DARK_SRC}
                             alt="Substrato"
+                            width={126}
+                            height={28}
                             className="mb-4 hidden h-7 w-auto dark:block"
                             draggable={false}
+                            unoptimized
                         />
                         {view === "login" ? (
                             <h1 className="text-xl font-semibold tracking-tight text-foreground">

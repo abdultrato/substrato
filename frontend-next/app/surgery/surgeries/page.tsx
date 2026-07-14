@@ -18,6 +18,7 @@ import {
   User,
 } from "lucide-react"
 import AppLayout from "@/components/layout/AppLayout"
+import useDebounce from "@/hooks/useDebounce"
 import { apiFetch } from "@/lib/api"
 import { GROUPS } from "@/lib/rbac"
 
@@ -215,6 +216,7 @@ function SurgeriesListInner() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [search, setSearch] = useState("")
+  const debouncedSearch = useDebounce(search, 300)
   const [statusFilter, setStatusFilter] = useState<string | null>(searchParams.get("status"))
   const [sizeFilter, setSizeFilter] = useState<string | null>(null)
   const [dateFilter, setDateFilter] = useState(searchParams.get("scheduled_date") || "")
@@ -251,12 +253,9 @@ function SurgeriesListInner() {
     finally { setLoading(false) }
   }, [])
 
-  useEffect(() => { load("", statusFilter, sizeFilter, dateFilter) }, [])
-
   useEffect(() => {
-    const t = setTimeout(() => load(search, statusFilter, sizeFilter, dateFilter), 300)
-    return () => clearTimeout(t)
-  }, [search, statusFilter, sizeFilter, dateFilter, load])
+    load(debouncedSearch, statusFilter, sizeFilter, dateFilter)
+  }, [debouncedSearch, statusFilter, sizeFilter, dateFilter, load])
 
   const activeFilters = [statusFilter, sizeFilter, dateFilter].filter(Boolean).length
 

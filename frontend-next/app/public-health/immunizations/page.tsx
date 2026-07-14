@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import {
   Activity,
@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 
 import AppLayout from "@/components/layout/AppLayout";
+import useDebounce from "@/hooks/useDebounce";
 import { apiFetchList } from "@/lib/api";
 import useAuthGuard from "@/hooks/useAuthGuard";
 import { GROUPS } from "@/lib/rbac";
@@ -127,8 +128,7 @@ export default function ImmunizationsPage() {
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
   const [filterSource, setFilterSource] = useState("");
-
-  const debRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const debouncedSearch = useDebounce(search, 300);
 
   const load = useCallback(async (p: number, q: string, st: string, src: string) => {
     setLoading(true);
@@ -151,25 +151,21 @@ export default function ImmunizationsPage() {
     }
   }, []);
 
-  useEffect(() => { load(page, search, filterStatus, filterSource); }, [page, load, filterStatus, filterSource]);
+  useEffect(() => { load(page, debouncedSearch, filterStatus, filterSource); }, [page, debouncedSearch, load, filterStatus, filterSource]);
 
   function handleSearch(v: string) {
     setSearch(v);
     setPage(1);
-    if (debRef.current) clearTimeout(debRef.current);
-    debRef.current = setTimeout(() => load(1, v, filterStatus, filterSource), 300);
   }
 
   function handleStatusFilter(v: string) {
     setFilterStatus(v);
     setPage(1);
-    load(1, search, v, filterSource);
   }
 
   function handleSourceFilter(v: string) {
     setFilterSource(v);
     setPage(1);
-    load(1, search, filterStatus, v);
   }
 
   const totalPages = Math.ceil(total / PAGE_SIZE);

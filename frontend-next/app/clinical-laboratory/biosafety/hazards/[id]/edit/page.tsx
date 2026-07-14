@@ -525,9 +525,9 @@ export default function EditHazardPage() {
             </Field>
             <p className="text-[10px] text-muted-foreground">
               Se não encontrar o item, cadastre-o primeiro em{" "}
-              <a href="/clinical-laboratory/biosafety/ppe" className="text-violet-600 hover:underline dark:text-violet-400">
+              <Link href="/clinical-laboratory/biosafety/ppe" className="text-violet-600 hover:underline dark:text-violet-400">
                 Biossegurança → EPI
-              </a>.
+              </Link>.
             </p>
           </Card>
 

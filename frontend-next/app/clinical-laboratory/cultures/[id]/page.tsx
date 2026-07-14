@@ -324,7 +324,7 @@ export default function CultureDetailPage() {
                         </div>
                       </div>
 
-                      {(plateReady || plate.resolved || (plate.outcome && plate.outcome !== "")) && (
+                      {(plateReady || plate.resolved || plate.outcome) && (
                         <CulturePlateOutcome plate={plate} busy={saving} callbacks={plateCallbacks(plate)} />
                       )}
                     </div>

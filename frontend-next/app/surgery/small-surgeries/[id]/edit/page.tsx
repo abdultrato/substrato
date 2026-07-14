@@ -607,14 +607,6 @@ export default function SmallSurgeryEditPage() {
       }
 
       // Load materials via procedure_names_detail or surgery materials endpoint
-      const matDetail = d.surgery_materials_detail || d.default_materials_detail || []
-      if (matDetail.length) {
-        setMaterials(matDetail.map((m: any) => ({
-          id: m.id, name: m.name, type: m.type || "OUT",
-          sale_price: m.sale_price || "0.00", qty: m.qty ?? m.quantity ?? 1,
-        })))
-      }
-
       // Sync default materials from procedures then fetch consumptions
       await apiFetch<any>(`/surgery/small_surgery/${id}/sync-consumptions/`, { method: "POST" }).catch(() => {})
       const consData = await apiFetch<any>(`/surgery/consumos/?surgery=${id}&limit=100`)

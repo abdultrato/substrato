@@ -304,10 +304,6 @@ export default function ClinicalLaboratoryCulturesCreatePage() {
     });
   }
 
-  function updatePlate(index: number, patch: Partial<Plate>) {
-    setPlates((rows) => rows.map((row, i) => (i === index ? { ...row, ...patch } : row)));
-  }
-
   function validate() {
     const nextErrors: Record<string, string> = {};
     if (!orderItem) nextErrors.orderItem = "Selecione o item do pedido laboratorial.";

@@ -314,7 +314,7 @@ export default function NewWastePage() {
                 <ArrowLeft size={13} /> Voltar
               </button>
               <button type="submit" disabled={saving}
-                className={`inline-flex h-8 items-center gap-1.5 rounded-lg bg-gradient-to-r px-4 text-xs font-semibold text-white shadow-md transition disabled:opacity-50 ${activeType.btn} ${activeType.glow}`}>
+                className={`inline-flex h-8 items-center gap-1.5 rounded-lg bg-gradient-to-r px-4 text-xs font-semibold text-white shadow-md transition disabled:opacity-50 ${activeType.grad} ${activeType.glow}`}>
                 {saving ? <Loader2 size={13} className="animate-spin" /> : <Save size={13} />}
                 Registar resíduo
               </button>

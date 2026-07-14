@@ -19,8 +19,6 @@ import { routeParamToString } from "@/lib/routeParams"
 import { useAuth } from "@/hooks/useAuth"
 import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Row = Record<string, any>
 
 // ─── Tipos de item de fatura (espelham InvoiceItem.TipoItem no backend) ───────

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import {
   Activity,
@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 
 import AppLayout from "@/components/layout/AppLayout";
+import useDebounce from "@/hooks/useDebounce";
 import { apiFetchList } from "@/lib/api";
 import useAuthGuard from "@/hooks/useAuthGuard";
 import { GROUPS } from "@/lib/rbac";
@@ -99,7 +100,7 @@ export default function NotificationsListPage() {
   const [search, setSearch]               = useState("");
   const [filterStatus, setFilterStatus]   = useState("");
   const [filterEvent, setFilterEvent]     = useState("");
-  const debRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const debouncedSearch = useDebounce(search, 300);
 
   const load = useCallback(async (p: number, q: string, st: string, ev: string) => {
     setLoading(true);
@@ -119,15 +120,13 @@ export default function NotificationsListPage() {
     } finally { setLoading(false); }
   }, []);
 
-  useEffect(() => { load(page, search, filterStatus, filterEvent); }, [page, load, filterStatus, filterEvent]);
+  useEffect(() => { load(page, debouncedSearch, filterStatus, filterEvent); }, [page, debouncedSearch, load, filterStatus, filterEvent]);
 
   function handleSearch(v: string) {
     setSearch(v); setPage(1);
-    if (debRef.current) clearTimeout(debRef.current);
-    debRef.current = setTimeout(() => load(1, v, filterStatus, filterEvent), 300);
   }
-  function handleStatus(v: string) { setFilterStatus(v); setPage(1); load(1, search, v, filterEvent); }
-  function handleEvent(v: string)  { setFilterEvent(v);  setPage(1); load(1, search, filterStatus, v); }
+  function handleStatus(v: string) { setFilterStatus(v); setPage(1); }
+  function handleEvent(v: string)  { setFilterEvent(v);  setPage(1); }
 
   const totalPages = Math.ceil(total / PAGE_SIZE);
 

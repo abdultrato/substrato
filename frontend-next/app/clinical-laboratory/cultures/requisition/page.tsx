@@ -66,7 +66,7 @@ function RequisitionCultures() {
     load();
   }, [load]);
 
-  const rows = items ?? [];
+  const rows = useMemo(() => items ?? [], [items]);
   const now = Date.now();
   const patient = rows.find((item) => item.patient_name)?.patient_name || "";
   const entryDate = groupEntryDate(rows);
