@@ -167,20 +167,20 @@ export default function LabMolecularPage() {
 
   return (
     <AppLayout requiredGroups={requiredGroupsForResourceGroup("clinical_laboratory")}>
-      <div className="mx-auto w-full max-w-7xl space-y-3">
-        <section className="relative overflow-hidden rounded-xl border border-white/25 bg-gradient-to-br from-white/35 via-indigo-50/35 to-cyan-100/25 p-3 pl-4 shadow-md shadow-slate-900/5 backdrop-blur-xl dark:border-white/10 dark:from-white/[0.07] dark:via-indigo-950/20 dark:to-cyan-950/20">
-          <span className="absolute inset-y-0 left-0 w-1 rounded-l-xl bg-gradient-to-b from-indigo-500 to-cyan-600" />
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div className="flex items-center gap-2.5">
-              <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-600 to-cyan-600 text-white shadow-lg shadow-indigo-500/25">
+      <div className="mx-auto w-full max-w-[97vw] space-y-1">
+        <section className="relative overflow-hidden rounded-xl border border-white/[0.10] bg-white/[0.02] p-2 pl-3 shadow-none backdrop-blur-[1px] dark:border-white/[0.06] dark:bg-white/[0.02]">
+          <span className="absolute inset-y-0 left-0 w-0.5 rounded-l-xl bg-gradient-to-b from-indigo-500 to-cyan-600" />
+          <div className="flex flex-wrap items-center justify-between gap-1.5">
+            <div className="flex items-center gap-1.5">
+              <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-600 to-cyan-600 text-white shadow-sm shadow-indigo-500/15">
                 <Dna size={18} />
               </span>
               <div>
-                <div className="mb-0.5 flex gap-1.5">
-                  <span className="rounded-full border border-indigo-200/70 bg-indigo-50/70 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-indigo-700 backdrop-blur-sm dark:border-indigo-800/40 dark:bg-indigo-900/20 dark:text-indigo-300">
+                <div className="mb-0.5 flex gap-1">
+                  <span className="rounded-full border border-indigo-200/30 bg-indigo-50/[0.02] px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-indigo-700 backdrop-blur-[1px] dark:border-indigo-800/20 dark:bg-indigo-900/[0.02] dark:text-indigo-300">
                     Biologia molecular
                   </span>
-                  <span className="rounded-full border border-cyan-200/70 bg-cyan-50/70 px-2 py-0.5 text-[10px] font-medium text-cyan-700 backdrop-blur-sm dark:border-cyan-800/40 dark:bg-cyan-900/20 dark:text-cyan-300">
+                  <span className="rounded-full border border-cyan-200/30 bg-cyan-50/[0.02] px-1.5 py-0.5 text-[10px] font-medium text-cyan-700 backdrop-blur-[1px] dark:border-cyan-800/20 dark:bg-cyan-900/[0.02] dark:text-cyan-300">
                     Consumo por tipo de exame
                   </span>
                 </div>
@@ -190,8 +190,8 @@ export default function LabMolecularPage() {
                 </p>
               </div>
             </div>
-            <div className="flex w-full flex-col gap-2 sm:w-auto sm:min-w-[360px] sm:flex-row sm:items-center">
-              <div className="flex h-8 min-w-0 flex-1 items-center gap-2 rounded-lg border border-white/40 bg-white/35 px-2.5 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/5">
+            <div className="flex w-full flex-col gap-1 sm:w-auto sm:min-w-[360px] sm:flex-row sm:items-center">
+              <div className="flex h-7 min-w-0 flex-1 items-center gap-1.5 rounded-lg border border-white/[0.10] bg-white/[0.02] px-2 shadow-sm backdrop-blur-[1px] dark:border-white/[0.06] dark:bg-white/[0.02]">
                 <Search size={14} className="shrink-0 text-muted-foreground" />
                 <input
                   value={query}
@@ -204,7 +204,7 @@ export default function LabMolecularPage() {
                 type="button"
                 onClick={() => load(true)}
                 disabled={refreshing}
-                className="inline-flex h-8 items-center justify-center gap-1.5 rounded-lg border border-white/40 bg-white/35 px-3 text-xs font-medium text-foreground shadow-sm backdrop-blur-sm transition hover:bg-white/50 disabled:opacity-60 dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10"
+                className="inline-flex h-7 items-center justify-center gap-1.5 rounded-lg border border-white/[0.10] bg-white/[0.02] px-2.5 text-xs font-medium text-foreground shadow-sm backdrop-blur-[1px] transition hover:bg-white/[0.03] disabled:opacity-60 dark:border-white/[0.06] dark:bg-white/[0.02] dark:hover:bg-white/[0.03]"
               >
                 <RefreshCw size={13} className={refreshing ? "animate-spin" : ""} />
                 Actualizar
@@ -219,8 +219,8 @@ export default function LabMolecularPage() {
           </div>
         ) : null}
 
-        <section className="rounded-xl border border-white/25 bg-white/25 p-3 shadow-sm backdrop-blur-xl dark:border-white/10 dark:bg-white/[0.04]">
-          <div className="mb-2 flex items-center justify-between gap-2">
+        <section className="rounded-xl border border-white/[0.10] bg-white/[0.02] p-2 shadow-none backdrop-blur-[1px] dark:border-white/[0.06] dark:bg-white/[0.02]">
+          <div className="mb-1.5 flex items-center justify-between gap-1.5">
             <div>
               <h2 className="text-sm font-semibold text-foreground">Exames pendentes</h2>
               <p className="text-xs text-muted-foreground">{filteredPending.length} candidato(s) molecular/GeneXpert</p>
@@ -233,18 +233,19 @@ export default function LabMolecularPage() {
               A carregar fila molecular...
             </div>
           ) : filteredPending.length ? (
-            <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,280px),1fr))] gap-2">
+            <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,260px),1fr))] gap-1">
               {filteredPending.map((item) => (
                 <Link
                   key={item.id}
                   href={candidateHref(item)}
-                  className="group rounded-xl border border-white/25 bg-white/30 p-3 shadow-sm backdrop-blur-sm transition hover:border-indigo-300/60 hover:bg-white/45 dark:border-white/10 dark:bg-white/[0.05] dark:hover:border-indigo-500/40"
+                  className="group relative overflow-hidden rounded-xl border border-white/[0.10] bg-white/[0.02] p-2 pl-3 shadow-none backdrop-blur-[1px] transition hover:border-indigo-300/60 hover:bg-white/[0.03] dark:border-white/[0.06] dark:bg-white/[0.02] dark:hover:border-indigo-500/40"
                 >
-                  <div className="mb-2 flex items-start justify-between gap-2">
+                  <span className="absolute inset-y-0 left-0 w-0.5 bg-gradient-to-b from-amber-500 to-orange-500" />
+                  <div className="mb-1.5 flex items-start justify-between gap-1.5">
                     <CardTitle code={item.order_custom_id || item.order_item_custom_id} name={item.test_name || item.test_code || "Exame molecular"} />
                     <StatusPill tone="amber">Pendente</StatusPill>
                   </div>
-                  <div className="flex flex-wrap gap-1.5">
+                  <div className="flex flex-wrap gap-1">
                     <Pill tone="indigo">{ASSAY_LABELS[item.assay] ?? item.assay}</Pill>
                     <Pill tone="gray">{item.test_method || "Método molecular"}</Pill>
                     <Pill tone="blue">{item.sample_barcode || item.sample_type || "Amostra herdada"}</Pill>
@@ -257,31 +258,32 @@ export default function LabMolecularPage() {
               ))}
             </div>
           ) : (
-            <div className="rounded-lg border border-white/25 bg-white/20 px-3 py-6 text-center text-sm text-muted-foreground dark:border-white/10 dark:bg-white/[0.03]">
+            <div className="rounded-lg border border-white/[0.10] bg-white/[0.02] px-2 py-4 text-center text-sm text-muted-foreground backdrop-blur-[1px] dark:border-white/[0.06] dark:bg-white/[0.02]">
               Nenhum exame molecular pendente com amostra recebida/aceite/em processamento.
             </div>
           )}
         </section>
 
-        <section className="rounded-xl border border-white/25 bg-white/20 p-3 shadow-sm backdrop-blur-xl dark:border-white/10 dark:bg-white/[0.035]">
-          <div className="mb-2">
+        <section className="rounded-xl border border-white/[0.10] bg-white/[0.02] p-2 shadow-none backdrop-blur-[1px] dark:border-white/[0.06] dark:bg-white/[0.02]">
+          <div className="mb-1.5">
             <h2 className="text-sm font-semibold text-foreground">Resultados registados</h2>
             <p className="text-xs text-muted-foreground">{filteredResults.length} resultado(s) recentes</p>
           </div>
 
           {loading ? null : filteredResults.length ? (
-            <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,280px),1fr))] gap-2">
+            <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,260px),1fr))] gap-1">
               {filteredResults.map((m) => (
                 <Link
                   key={m.id}
                   href={`/clinical-laboratory/molecular/${m.id}`}
-                  className="group relative flex flex-col overflow-hidden rounded-xl border border-white/20 bg-white/25 p-3 shadow-sm backdrop-blur-sm transition hover:border-indigo-300/50 hover:shadow-md dark:border-white/10 dark:bg-white/5 dark:hover:border-indigo-500/30"
+                  className="group relative flex flex-col overflow-hidden rounded-xl border border-white/[0.10] bg-white/[0.02] p-2 pl-3 shadow-none backdrop-blur-[1px] transition hover:border-indigo-300/50 hover:bg-white/[0.03] dark:border-white/[0.06] dark:bg-white/[0.02] dark:hover:border-indigo-500/30"
                 >
-                  <div className="mb-2 flex items-start justify-between gap-2">
+                  <span className="absolute inset-y-0 left-0 w-0.5 bg-gradient-to-b from-indigo-500 to-cyan-500" />
+                  <div className="mb-1.5 flex items-start justify-between gap-1.5">
                     <CardTitle code={m.custom_id} name={ASSAY_LABELS[m.assay] ?? m.assay} />
                     <StatusPill tone={DETECTION_TONE[m.detection] ?? "gray"}>{DETECTION_LABELS[m.detection] ?? m.detection}</StatusPill>
                   </div>
-                  <div className="flex flex-wrap gap-1.5">
+                  <div className="flex flex-wrap gap-1">
                     {m.rif_resistance && m.rif_resistance !== "NA" ? (
                       <Pill tone={m.rif_resistance === "RESISTENTE" ? "red" : "violet"}>{RIF_LABELS[m.rif_resistance] ?? m.rif_resistance}</Pill>
                     ) : null}
@@ -293,7 +295,7 @@ export default function LabMolecularPage() {
               ))}
             </div>
           ) : (
-            <div className="rounded-lg border border-white/25 bg-white/15 px-3 py-6 text-center text-sm text-muted-foreground dark:border-white/10 dark:bg-white/[0.025]">
+            <div className="rounded-lg border border-white/[0.10] bg-white/[0.02] px-2 py-4 text-center text-sm text-muted-foreground backdrop-blur-[1px] dark:border-white/[0.06] dark:bg-white/[0.02]">
               Nenhum resultado molecular encontrado.
             </div>
           )}
