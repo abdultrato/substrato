@@ -1963,7 +1963,7 @@ function TestSelect({
 
 function ModalShell({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center overflow-hidden p-2 sm:p-3">
+    <div className="fixed inset-0 z-[100000] flex items-center justify-center overflow-hidden p-2 sm:p-3">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
       <div className="relative flex max-h-[calc(100vh-1rem)] w-full max-w-5xl flex-col overflow-hidden rounded-2xl border border-white/20 bg-white/35 shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-white/[0.06] supports-[backdrop-filter]:bg-white/30 dark:supports-[backdrop-filter]:bg-white/[0.05]">
         <div className="flex shrink-0 items-center justify-between border-b border-white/20 px-3 py-2 dark:border-white/10">
