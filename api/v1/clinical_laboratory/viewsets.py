@@ -721,6 +721,25 @@ class MicrobiologyCultureViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
         response["Content-Disposition"] = f'inline; filename="{filename}"'
         return response
 
+    @action(detail=False, methods=["get"], url_path="pdf-por-requisicao", url_name="pdf-por-requisicao")
+    def pdf_por_requisicao(self, request):
+        """Laudo único com o resultado de todas as culturas de uma requisição."""
+        from django.http import HttpResponse
+        from tasks.generate_pdf.culture_result_pdf_generator import generate_cultures_by_order_pdf
+
+        order_code = request.query_params.get("order")
+        if not order_code:
+            raise DRFValidationError({"order": "Informe a requisição (order)."})
+        cultures = list(
+            self.get_queryset().filter(order_item__order__custom_id=order_code).order_by("id")
+        )
+        if not cultures:
+            raise DRFValidationError({"order": "Nenhuma cultura encontrada para esta requisição."})
+        pdf_bytes, filename = generate_cultures_by_order_pdf(cultures, request=request)
+        response = HttpResponse(pdf_bytes, content_type="application/pdf")
+        response["Content-Disposition"] = f'inline; filename="{filename}"'
+        return response
+
     @action(detail=True, methods=["post"], url_path="adicionar-meios", url_name="adicionar_meios")
     def adicionar_meios(self, request, pk=None):
         """Acrescenta novos meios/placas a uma cultura já em incubação, cada um

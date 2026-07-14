@@ -12,6 +12,7 @@ import {
   FlaskConical,
   Loader2,
   Microscope,
+  Printer,
   RefreshCw,
   User,
 } from "lucide-react";
@@ -143,6 +144,14 @@ function RequisitionCultures() {
               <Link href={LIST_PATH} className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-white/40 bg-white/35 px-2.5 text-xs font-medium text-foreground shadow-sm backdrop-blur-sm transition hover:bg-white/55 dark:border-white/10 dark:bg-white/5">
                 <ArrowLeft size={14} /> Voltar
               </Link>
+              {rows.some((item) => item.culture_id) && order ? (
+                <button
+                  onClick={() => window.open(`/api/v1/clinical_laboratory/culture/pdf-por-requisicao/?order=${encodeURIComponent(order)}`, "_blank")}
+                  className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 px-2.5 text-xs font-semibold text-white shadow-md shadow-violet-500/20 transition hover:from-violet-700 hover:to-fuchsia-700"
+                >
+                  <Printer size={14} /> Imprimir resultados
+                </button>
+              ) : null}
               <button
                 onClick={() => load(true)}
                 disabled={loading || refreshing}
