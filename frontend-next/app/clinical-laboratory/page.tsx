@@ -350,14 +350,14 @@ export default function ClinicalLaboratoryHubPage() {
     async function load() {
       const safe = async (ep: string) => {
         try {
-          const { meta } = await apiFetchList(ep, {
+          const { items, meta } = await apiFetchList(ep, {
             page: 1,
             pageSize: 1,
             clientCache: false,
             timeoutMs: 4000,
             retryOnTimeout: 0,
           });
-          return meta.total ?? 0;
+          return meta.total ?? items.length ?? 0;
         } catch (e) {
           return isNotFoundLikeError(e) ? 0 : 0;
         }
@@ -373,15 +373,15 @@ export default function ClinicalLaboratoryHubPage() {
         criticos,
         culturas,
       ] = await Promise.all([
-        safe("/clinical_laboratory/labsector/"),
-        safe("/clinical_laboratory/labtest/"),
-        safe("/clinical_laboratory/labrequest/"),
-        safe("/clinical_laboratory/samplecollection/"),
-        safe("/clinical_laboratory/labsample/"),
-        safe("/clinical_laboratory/samplereception/"),
-        safe("/clinical_laboratory/labreport/"),
-        safe("/clinical_laboratory/criticalresultnotification/"),
-        safe("/clinical_laboratory/microbiologyculture/"),
+        safe("/clinical_laboratory/sector/"),
+        safe("/clinical_laboratory/test/"),
+        safe("/clinical/labrequest/?fase=pedidos"),
+        safe("/clinical_laboratory/collection/"),
+        safe("/clinical_laboratory/sample/"),
+        safe("/clinical/labrequest/?type=LAB&fase=rececao_amostras"),
+        safe("/clinical/labrequest/?fase=laudos&ordering=-updated_at"),
+        safe("/clinical_laboratory/critical_notification/"),
+        safe("/clinical_laboratory/culture/"),
       ]);
       if (!mounted) return;
       setCounts({ setores, exames, pedidos, coletas, amostras, recepcoes, laudos, criticos, culturas });
