@@ -1,13 +1,15 @@
 "use client";
 
+import type { FormEvent } from "react";
 import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Bug, Loader2, Save } from "lucide-react";
+import { ArrowLeft, Bug, FlaskConical, Loader2, Save, Search } from "lucide-react";
 
 import AppLayout from "@/components/layout/AppLayout";
 import { apiFetch } from "@/lib/api";
 import { requiredGroupsForResourceGroup } from "@/lib/resourcesAccess";
-import { MICROORGANISM_CATALOG } from "@/lib/microorganisms";
+import { MICROORGANISM_OPTIONS } from "@/lib/microorganisms";
 
 type Isolate = {
   id: number;
@@ -17,9 +19,27 @@ type Isolate = {
   quantity: string;
   is_significant: boolean;
   notes: string;
+  culture_id: number | null;
+  culture_custom_id: string;
+  culture_type_display: string;
+  culture_status_display: string;
+  specimen: string;
+  order_custom_id: string;
+  patient_name: string;
+  test_name: string;
 };
 
-const GRAM_OPTIONS = ["Gram negativos", "Gram positivos", "Gram variáveis", "Não aplicável"];
+const GRAM_OPTIONS = [
+  "Gram negativos Bacilos",
+  "Gram negativos Cocos",
+  "Gram positivos Cocos",
+  "Gram positivos Bacilos",
+  "Gram negativos",
+  "Gram positivos",
+  "Gram variáveis",
+  "Leveduras",
+  "Não aplicável",
+];
 const INPUT_CLS = "h-9 w-full rounded-lg border border-white/40 bg-white/40 px-2.5 text-sm text-foreground outline-none focus:border-fuchsia-400 dark:border-white/10 dark:bg-white/5";
 const LABEL_CLS = "mb-1 block text-[11px] font-semibold uppercase tracking-wide text-muted-foreground";
 
@@ -43,7 +63,7 @@ export default function IsolateEditPage() {
     setLoading(true);
     setError(null);
     try {
-      const data = await apiFetch<Isolate>(`/clinical_laboratory/isolate/${id}/`, { clientCache: false });
+      const data = await apiFetch<Isolate>(`/clinical_laboratory/isolate/${id}/detalhe/`, { clientCache: false });
       setIsolate(data);
       setOrganism(data.organism_name || "");
       setGram(data.gram_stain || "");
@@ -59,7 +79,8 @@ export default function IsolateEditPage() {
 
   useEffect(() => { load(); }, [load]);
 
-  async function save() {
+  async function save(event?: FormEvent<HTMLFormElement>) {
+    event?.preventDefault();
     if (!organism.trim() || !id) return;
     setSaving(true);
     setError(null);
@@ -93,12 +114,14 @@ export default function IsolateEditPage() {
               </span>
               <div className="min-w-0">
                 <h1 className="text-lg font-semibold leading-tight text-foreground">Editar isolado</h1>
-                <p className="truncate font-mono text-[11px] text-muted-foreground">{isolate?.custom_id || "…"}</p>
+                <p className="truncate text-xs text-muted-foreground">
+                  {isolate ? [isolate.patient_name, isolate.order_custom_id].filter(Boolean).join(" · ") || isolate.custom_id : "A carregar…"}
+                </p>
               </div>
             </div>
-            <button onClick={() => router.back()} className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-white/40 bg-white/35 px-2.5 text-xs font-medium text-foreground shadow-sm backdrop-blur-sm transition hover:bg-white/55 dark:border-white/10 dark:bg-white/5">
+            <Link href={`/clinical-laboratory/isolates/${id}`} className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-white/40 bg-white/35 px-2.5 text-xs font-medium text-foreground shadow-sm backdrop-blur-sm transition hover:bg-white/55 dark:border-white/10 dark:bg-white/5">
               <ArrowLeft size={14} /> Voltar
-            </button>
+            </Link>
           </div>
         </section>
 
@@ -106,27 +129,37 @@ export default function IsolateEditPage() {
 
         {loading ? (
           <div className="flex min-h-48 items-center justify-center gap-2 text-sm text-muted-foreground"><Loader2 size={16} className="animate-spin" /> Carregando...</div>
-        ) : (
-          <section className="relative overflow-hidden rounded-xl border border-white/40 bg-white/30 p-4 pl-5 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]">
+        ) : isolate ? (
+          <>
+          <section className="relative overflow-hidden rounded-xl border border-white/40 bg-white/30 p-3 pl-4 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]">
+            <span className="absolute inset-y-0 left-0 w-1 bg-teal-400" />
+            <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs sm:grid-cols-4">
+              <Field label="Paciente" value={isolate.patient_name || "—"} />
+              <Field label="Requisição" value={isolate.order_custom_id || "—"} mono />
+              <Field label="Exame" value={isolate.test_name || "—"} />
+              <Field label="Espécime" value={isolate.specimen || "—"} />
+              <Field label="Tipo de cultura" value={isolate.culture_type_display || "—"} />
+              <Field label="Estado da cultura" value={isolate.culture_status_display || "—"} />
+              <Field label="Cultura" value={isolate.culture_custom_id || "—"} mono />
+              <Field label="Isolado" value={isolate.custom_id || "—"} mono />
+            </div>
+            {isolate.culture_id && (
+              <Link href={`/clinical-laboratory/cultures/${isolate.culture_id}`} className="mt-2 inline-flex items-center gap-1 text-[11px] font-medium text-teal-700 underline decoration-dotted hover:no-underline dark:text-teal-300">
+                <FlaskConical size={12} /> Abrir cultura de origem
+              </Link>
+            )}
+          </section>
+
+          <form onSubmit={save} className="relative overflow-visible rounded-xl border border-white/40 bg-white/30 p-4 pl-5 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]">
             <span className="absolute inset-y-0 left-0 w-1 bg-fuchsia-400" />
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div className="sm:col-span-2">
                 <label className={LABEL_CLS}>Microrganismo</label>
-                <input value={organism} onChange={(e) => setOrganism(e.target.value)} list="edit-organisms" placeholder="ex: Escherichia coli" className={INPUT_CLS} />
-                <datalist id="edit-organisms">
-                  {MICROORGANISM_CATALOG.map((group) => (
-                    <optgroup key={group.label} label={group.label}>
-                      {group.organisms.map((name) => <option key={name} value={name} />)}
-                    </optgroup>
-                  ))}
-                </datalist>
+                <SuggestInput value={organism} onChange={setOrganism} suggestions={MICROORGANISM_OPTIONS} placeholder="ex: Escherichia coli" />
               </div>
               <div>
                 <label className={LABEL_CLS}>Coloração de Gram</label>
-                <input value={gram} onChange={(e) => setGram(e.target.value)} list="edit-gram" placeholder="ex: Gram negativos Bacilos" className={INPUT_CLS} />
-                <datalist id="edit-gram">
-                  {GRAM_OPTIONS.map((g) => <option key={g} value={g} />)}
-                </datalist>
+                <SuggestInput value={gram} onChange={setGram} suggestions={GRAM_OPTIONS} placeholder="ex: Gram negativos Bacilos" />
               </div>
               <div>
                 <label className={LABEL_CLS}>Quantidade / contagem</label>
@@ -143,16 +176,70 @@ export default function IsolateEditPage() {
             </div>
 
             <div className="mt-4 flex items-center gap-2">
-              <button onClick={save} disabled={saving || !organism.trim()} className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-fuchsia-600 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-fuchsia-700 disabled:opacity-60">
+              <button type="submit" disabled={saving || !organism.trim()} className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-fuchsia-600 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-fuchsia-700 disabled:opacity-60">
                 {saving ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />} Guardar
               </button>
-              <button onClick={() => router.back()} className="inline-flex h-9 items-center rounded-lg border border-white/40 bg-white/35 px-4 text-sm font-medium text-foreground shadow-sm backdrop-blur-sm transition hover:bg-white/55 dark:border-white/10 dark:bg-white/5">
+              <Link href={`/clinical-laboratory/isolates/${id}`} className="inline-flex h-9 items-center rounded-lg border border-white/40 bg-white/35 px-4 text-sm font-medium text-foreground shadow-sm backdrop-blur-sm transition hover:bg-white/55 dark:border-white/10 dark:bg-white/5">
                 Cancelar
-              </button>
+              </Link>
             </div>
-          </section>
-        )}
+          </form>
+          </>
+        ) : null}
       </div>
     </AppLayout>
+  );
+}
+
+function SuggestInput({ value, onChange, suggestions, placeholder }: {
+  value: string;
+  onChange: (value: string) => void;
+  suggestions: string[];
+  placeholder: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const query = value.trim().toLowerCase();
+  const filtered = suggestions
+    .filter((option) => (!query || option.toLowerCase().includes(query)) && option !== value)
+    .slice(0, 12);
+
+  return (
+    <div className="relative z-20 focus-within:z-50">
+      <Search size={13} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+      <input
+        value={value}
+        onChange={(event) => { onChange(event.target.value); setOpen(true); }}
+        onFocus={() => setOpen(true)}
+        onBlur={() => setTimeout(() => setOpen(false), 120)}
+        placeholder={placeholder}
+        className={`${INPUT_CLS} pl-8`}
+      />
+      {open && filtered.length > 0 && (
+        <div className="absolute left-0 right-0 top-full z-50 mt-1 overflow-hidden rounded-lg border border-white/50 bg-white shadow-xl shadow-slate-900/15 dark:border-white/10 dark:bg-slate-950">
+          <ul className="max-h-52 overflow-y-auto py-1">
+            {filtered.map((option) => (
+              <li key={option}>
+                <button
+                  type="button"
+                  onMouseDown={() => { onChange(option); setOpen(false); }}
+                  className="flex w-full items-center px-3 py-1.5 text-left text-xs text-foreground transition hover:bg-fuchsia-50 dark:hover:bg-white/10"
+                >
+                  {option}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Field({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
+  return (
+    <div className="min-w-0">
+      <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{label}</p>
+      <p className={`truncate text-foreground ${mono ? "font-mono text-[11px]" : ""}`}>{value}</p>
+    </div>
   );
 }

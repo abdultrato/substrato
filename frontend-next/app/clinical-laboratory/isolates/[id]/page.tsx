@@ -3,12 +3,12 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Bug, FlaskConical, Loader2, Pencil, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, Bug, FlaskConical, Loader2, Pencil, Plus, Search, Trash2 } from "lucide-react";
 
 import AppLayout from "@/components/layout/AppLayout";
 import { apiFetch } from "@/lib/api";
 import { requiredGroupsForResourceGroup } from "@/lib/resourcesAccess";
-import { ANTIBIOTIC_CATALOG } from "@/lib/antibiotics";
+import { ANTIBIOTIC_OPTIONS } from "@/lib/antibiotics";
 
 type Susceptibility = {
   id: number;
@@ -223,14 +223,13 @@ export default function IsolateDetailPage() {
               <div className="grid grid-cols-1 gap-2 border-t border-white/40 p-2.5 pl-4 sm:grid-cols-[2fr_1.4fr_1fr_1fr_1.2fr_auto] sm:items-end dark:border-white/10">
                 <div>
                   <label className={LABEL_CLS}>Antibiótico</label>
-                  <input value={antibiotic} onChange={(e) => setAntibiotic(e.target.value)} onKeyDown={(e) => e.key === "Enter" && addAntibiogram()} list="isolate-antibiotics" placeholder="Pesquisar antibiótico…" className={INPUT_CLS} />
-                  <datalist id="isolate-antibiotics">
-                    {ANTIBIOTIC_CATALOG.map((group) => (
-                      <optgroup key={group.label} label={group.label}>
-                        {group.antibiotics.map((name) => <option key={name} value={name} />)}
-                      </optgroup>
-                    ))}
-                  </datalist>
+                  <SuggestInput
+                    value={antibiotic}
+                    onChange={setAntibiotic}
+                    onEnter={addAntibiogram}
+                    suggestions={ANTIBIOTIC_OPTIONS}
+                    placeholder="Pesquisar antibiótico…"
+                  />
                 </div>
                 <div>
                   <label className={LABEL_CLS}>Método</label>
@@ -273,6 +272,57 @@ function Field({ label, value, mono }: { label: string; value: string; mono?: bo
     <div className="min-w-0">
       <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{label}</p>
       <p className={`truncate text-foreground ${mono ? "font-mono text-[11px]" : ""}`}>{value}</p>
+    </div>
+  );
+}
+
+function SuggestInput({ value, onChange, onEnter, suggestions, placeholder }: {
+  value: string;
+  onChange: (value: string) => void;
+  onEnter?: () => void;
+  suggestions: string[];
+  placeholder: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const query = value.trim().toLowerCase();
+  const filtered = suggestions
+    .filter((option) => (!query || option.toLowerCase().includes(query)) && option !== value)
+    .slice(0, 12);
+
+  return (
+    <div className="relative z-20 focus-within:z-50">
+      <Search size={12} className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground" />
+      <input
+        value={value}
+        onChange={(event) => { onChange(event.target.value); setOpen(true); }}
+        onFocus={() => setOpen(true)}
+        onBlur={() => setTimeout(() => setOpen(false), 120)}
+        onKeyDown={(event) => {
+          if (event.key === "Enter") {
+            event.preventDefault();
+            onEnter?.();
+          }
+        }}
+        placeholder={placeholder}
+        className={`${INPUT_CLS} pl-7`}
+      />
+      {open && filtered.length > 0 && (
+        <div className="absolute left-0 right-0 top-full z-50 mt-1 overflow-hidden rounded-lg border border-white/50 bg-white shadow-xl shadow-slate-900/15 dark:border-white/10 dark:bg-slate-950">
+          <ul className="max-h-52 overflow-y-auto py-1">
+            {filtered.map((option) => (
+              <li key={option}>
+                <button
+                  type="button"
+                  onMouseDown={() => { onChange(option); setOpen(false); }}
+                  className="flex w-full items-center px-3 py-1.5 text-left text-xs text-foreground transition hover:bg-fuchsia-50 dark:hover:bg-white/10"
+                >
+                  {option}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   );
 }
