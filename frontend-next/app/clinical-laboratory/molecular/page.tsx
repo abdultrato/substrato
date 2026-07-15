@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { usePathname } from "next/navigation";
-import { Dna, Loader2, RefreshCw, Search } from "lucide-react";
+import { ArrowLeft, Dna, Loader2, RefreshCw, Search } from "lucide-react";
 
 import AppLayout from "@/components/layout/AppLayout";
 import { CardFooter, CardTitle, Pill, StatusPill, fmtDate } from "@/components/clinical-laboratory/ResourceCardList";
@@ -221,7 +221,14 @@ function MolecularQueuePage() {
                 </p>
               </div>
             </div>
-            <div className="flex w-full flex-col gap-1 sm:w-auto sm:min-w-[360px] sm:flex-row sm:items-center">
+            <div className="flex w-full flex-col gap-1 sm:w-auto sm:min-w-[420px] sm:flex-row sm:items-center">
+              <Link
+                href="/clinical-laboratory"
+                className="inline-flex h-7 shrink-0 items-center justify-center gap-1.5 rounded-lg border border-white/[0.10] bg-white/[0.02] px-2.5 text-xs font-medium text-foreground shadow-sm backdrop-blur-[1px] transition hover:bg-white/[0.03] dark:border-white/[0.06] dark:bg-white/[0.02] dark:hover:bg-white/[0.03]"
+              >
+                <ArrowLeft size={13} />
+                Voltar
+              </Link>
               <div className="flex h-7 min-w-0 flex-1 items-center gap-1.5 rounded-lg border border-white/[0.10] bg-white/[0.02] px-2 shadow-sm backdrop-blur-[1px] dark:border-white/[0.06] dark:bg-white/[0.02]">
                 <Search size={14} className="shrink-0 text-muted-foreground" />
                 <input
