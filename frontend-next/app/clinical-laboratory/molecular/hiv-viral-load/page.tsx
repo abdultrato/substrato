@@ -1,7 +1,7 @@
 "use client";
 
-import LabMolecularPage from "../page";
+import { MolecularQueuePage } from "../page";
 
 export default function HivViralLoadMolecularPage() {
-  return <LabMolecularPage />;
+  return <MolecularQueuePage />;
 }

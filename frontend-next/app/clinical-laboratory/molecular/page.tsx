@@ -121,7 +121,7 @@ const HIV_VIRAL_LOAD_CONFIG: MolecularPageConfig = {
   emptyPendingLabel: "Nenhum exame de Carga Viral de HIV pendente com amostra recebida/aceite/em processamento.",
 };
 
-function MolecularQueuePage() {
+export function MolecularQueuePage() {
   const pathname = usePathname() || "";
   const config = pathname.includes("/hiv-viral-load") ? HIV_VIRAL_LOAD_CONFIG : DEFAULT_CONFIG;
   const [queue, setQueue] = useState<MolecularQueueItem[]>([]);
@@ -223,7 +223,7 @@ function MolecularQueuePage() {
             </div>
             <div className="flex w-full flex-col gap-1 sm:w-auto sm:min-w-[420px] sm:flex-row sm:items-center">
               <Link
-                href="/clinical-laboratory"
+                href="/clinical-laboratory/molecular"
                 className="inline-flex h-7 shrink-0 items-center justify-center gap-1.5 rounded-lg border border-white/[0.10] bg-white/[0.02] px-2.5 text-xs font-medium text-foreground shadow-sm backdrop-blur-[1px] transition hover:bg-white/[0.03] dark:border-white/[0.06] dark:bg-white/[0.02] dark:hover:bg-white/[0.03]"
               >
                 <ArrowLeft size={13} />
@@ -345,6 +345,78 @@ function MolecularQueuePage() {
   );
 }
 
-export default function LabMolecularPage() {
-  return <MolecularQueuePage />;
+export default function LabMolecularSelectorPage() {
+  const options = [
+    {
+      href: "/clinical-laboratory/molecular/genexpert",
+      title: "GeneXpert MTB/RIF",
+      badge: "MTB/RIF",
+      description: "Deteção molecular de MTB e resistência à rifampicina.",
+      tone: "from-indigo-500 to-cyan-600",
+    },
+    {
+      href: "/clinical-laboratory/molecular/hiv-viral-load",
+      title: "Carga Viral HIV",
+      badge: "CV HIV",
+      description: "Quantificação molecular da carga viral HIV por PCR.",
+      tone: "from-fuchsia-500 to-rose-600",
+    },
+  ];
+
+  return (
+    <AppLayout requiredGroups={requiredGroupsForResourceGroup("clinical_laboratory")}>
+      <div className="mx-auto w-full max-w-5xl space-y-2">
+        <section className="relative overflow-hidden rounded-xl border border-white/[0.10] bg-white/[0.02] p-3 pl-4 shadow-none backdrop-blur-[1px] dark:border-white/[0.06] dark:bg-white/[0.02]">
+          <span className="absolute inset-y-0 left-0 w-0.5 rounded-l-xl bg-gradient-to-b from-indigo-500 to-cyan-600" />
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <span className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-600 to-cyan-600 text-white shadow-sm shadow-indigo-500/15">
+                <Dna size={19} />
+              </span>
+              <div>
+                <div className="mb-0.5 flex gap-1">
+                  <span className="rounded-full border border-indigo-200/30 bg-indigo-50/[0.02] px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-indigo-700 backdrop-blur-[1px] dark:border-indigo-800/20 dark:bg-indigo-900/[0.02] dark:text-indigo-300">
+                    Biologia molecular
+                  </span>
+                </div>
+                <h1 className="text-lg font-semibold leading-tight text-foreground">Escolher área molecular</h1>
+                <p className="text-xs text-muted-foreground">Selecione a fila operacional conforme o tipo de ensaio.</p>
+              </div>
+            </div>
+            <Link
+              href="/clinical-laboratory"
+              className="inline-flex h-7 shrink-0 items-center justify-center gap-1.5 rounded-lg border border-white/[0.10] bg-white/[0.02] px-2.5 text-xs font-medium text-foreground shadow-sm backdrop-blur-[1px] transition hover:bg-white/[0.03] dark:border-white/[0.06] dark:bg-white/[0.02] dark:hover:bg-white/[0.03]"
+            >
+              <ArrowLeft size={13} />
+              Voltar
+            </Link>
+          </div>
+        </section>
+
+        <div className="grid gap-2 md:grid-cols-2">
+          {options.map((option) => (
+            <Link
+              key={option.href}
+              href={option.href}
+              className="group relative min-h-[130px] overflow-hidden rounded-xl border border-white/[0.10] bg-white/[0.02] p-4 pl-5 shadow-none backdrop-blur-[1px] transition hover:border-indigo-300/50 hover:bg-white/[0.03] dark:border-white/[0.06] dark:bg-white/[0.02] dark:hover:border-indigo-500/30"
+            >
+              <span className={`absolute inset-y-0 left-0 w-1 bg-gradient-to-b ${option.tone}`} />
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <span className="mb-2 inline-flex rounded-full border border-white/[0.10] bg-white/[0.02] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                    {option.badge}
+                  </span>
+                  <h2 className="text-base font-semibold text-foreground">{option.title}</h2>
+                  <p className="mt-1 text-sm text-muted-foreground">{option.description}</p>
+                </div>
+                <span className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br ${option.tone} text-white shadow-sm transition group-hover:scale-105`}>
+                  <Dna size={18} />
+                </span>
+              </div>
+            </Link>
+          ))}
+        </div>
+      </div>
+    </AppLayout>
+  );
 }

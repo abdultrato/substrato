@@ -1,5 +1,5 @@
-import LabMolecularPage from "../page";
+import { MolecularQueuePage } from "../page";
 
 export default function GeneXpertMolecularPage() {
-  return <LabMolecularPage />;
+  return <MolecularQueuePage />;
 }
