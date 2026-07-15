@@ -25,6 +25,7 @@ import {
   type BiochemEntry,
 } from "@/lib/cultureBiochemistry";
 import type { CulturePlate as Plate } from "@/lib/culturePlates";
+import { MICROORGANISM_CATALOG } from "@/lib/microorganisms";
 
 const GRAM_RESULT_OPTIONS = ["Gram positivos", "Gram negativos", "Gram variáveis"];
 const GRAM_MORPHOLOGY_OPTIONS = ["Cocos", "Bacilos", "Cocobacilos", "Víbrios", "Leveduras"];
@@ -36,7 +37,7 @@ const textareaClass = "min-h-16 w-full rounded-lg border border-white/30 bg-whit
 export type PlateOutcomeCallbacks = {
   onEvaluate: (outcome: "positive" | "negative" | "contaminated", macroscopic: string) => void;
   onReincubate: (hours: number) => void;
-  onSaveColony: (data: { macroscopic: string; gram: Plate["gram"]; biochemical: BiochemEntry[]; resolved?: boolean }) => void;
+  onSaveColony: (data: { macroscopic: string; gram: Plate["gram"]; biochemical: BiochemEntry[]; resolved?: boolean; organism_name?: string }) => void;
   onFinalizeNegative: () => void;
   onReopen: () => void;       // reabre para edição mantendo o desfecho (positiva concluída → editar testes)
   onResetOutcome: () => void; // limpa o desfecho e volta à escolha positiva/negativa/contaminação
@@ -61,6 +62,7 @@ export function CulturePlateOutcome({
   });
   const [biochemical, setBiochemical] = useState<BiochemEntry[]>(plate.biochemical || []);
   const [addKey, setAddKey] = useState("");
+  const [organism, setOrganism] = useState((plate as any).organism_name || "");
 
   const outcome = plate.outcome || "";
   const mediumLabel = plate.medium || "meio";
@@ -214,11 +216,32 @@ export function CulturePlateOutcome({
         })}
       </div>
 
+      <div className="rounded-lg border border-fuchsia-300/40 bg-fuchsia-50/40 p-2.5 backdrop-blur-sm dark:border-fuchsia-800/30 dark:bg-fuchsia-900/10">
+        <label className="mb-1 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wide text-fuchsia-700 dark:text-fuchsia-300">
+          <FlaskConical size={12} /> Microrganismo isolado
+        </label>
+        <input
+          value={organism}
+          onChange={(e) => setOrganism(e.target.value)}
+          list={`organisms-${plate.id}`}
+          placeholder="Filtrar/selecionar microrganismo (ex: Escherichia coli)"
+          className={inputClass}
+        />
+        <datalist id={`organisms-${plate.id}`}>
+          {MICROORGANISM_CATALOG.map((group) => (
+            <optgroup key={group.label} label={group.label}>
+              {group.organisms.map((name) => <option key={name} value={name} />)}
+            </optgroup>
+          ))}
+        </datalist>
+        <p className="mt-1 text-[10px] text-muted-foreground">O microrganismo selecionado gera um isolado para antibiograma/TSA e aparece na página de isolados.</p>
+      </div>
+
       <div className="flex flex-wrap gap-1.5">
-        <button type="button" disabled={busy} onClick={() => callbacks.onSaveColony({ macroscopic, gram, biochemical })} className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-white/40 bg-white/35 px-3 text-xs font-medium text-foreground shadow-sm backdrop-blur-sm disabled:opacity-60">
+        <button type="button" disabled={busy} onClick={() => callbacks.onSaveColony({ macroscopic, gram, biochemical, organism_name: organism })} className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-white/40 bg-white/35 px-3 text-xs font-medium text-foreground shadow-sm backdrop-blur-sm disabled:opacity-60">
           <Save size={14} /> Guardar testes
         </button>
-        <button type="button" disabled={busy} onClick={() => callbacks.onSaveColony({ macroscopic, gram, biochemical, resolved: true })} className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 px-3 text-xs font-semibold text-white shadow-md shadow-violet-500/20 disabled:opacity-60">
+        <button type="button" disabled={busy || !organism.trim()} title={!organism.trim() ? "Selecione o microrganismo isolado para concluir." : undefined} onClick={() => callbacks.onSaveColony({ macroscopic, gram, biochemical, resolved: true, organism_name: organism })} className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 px-3 text-xs font-semibold text-white shadow-md shadow-violet-500/20 disabled:opacity-60">
           <CheckCircle2 size={14} /> Concluir positiva em {mediumLabel}
         </button>
         <button type="button" disabled={busy} onClick={callbacks.onResetOutcome} className="inline-flex h-8 items-center gap-1 rounded-lg px-2 text-[11px] text-muted-foreground hover:text-foreground disabled:opacity-60">

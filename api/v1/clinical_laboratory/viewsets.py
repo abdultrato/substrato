@@ -1055,6 +1055,8 @@ class MicrobiologyCultureViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
         for key in ("macroscopic", "gram", "biochemical", "result_text"):
             if key in request.data:
                 plate[key] = request.data.get(key)
+        if "organism_name" in request.data:
+            plate["organism_name"] = (request.data.get("organism_name") or "").strip()
         if request.data.get("resolved") is not None:
             plate["resolved"] = bool(request.data.get("resolved"))
         if request.data.get("finalize_negative"):
@@ -1062,10 +1064,54 @@ class MicrobiologyCultureViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
             plate["resolved"] = True
             plate["result_text"] = f"Cultura negativa em {plate.get('medium') or 'meio'}"
         if plate.get("outcome") == "positive" and plate.get("resolved"):
-            plate["result_text"] = f"Cultura positiva em {plate.get('medium') or 'meio'}"
+            organism = (plate.get("organism_name") or "").strip()
+            medium = plate.get("medium") or "meio"
+            plate["result_text"] = (
+                f"Cultura positiva em {medium}: {organism}" if organism else f"Cultura positiva em {medium}"
+            )
+            # Ao concluir positiva com microrganismo selecionado, gera o isolado
+            # que alimenta a página de isolados e o antibiograma/TSA.
+            if organism:
+                self._ensure_plate_isolate(culture, plate, organism)
         self._recompute_culture_status(culture)
         culture.save(update_fields=["culture_plates", "status", "updated_at"])
         return Response(self.get_serializer(culture).data)
+
+    @staticmethod
+    def _plate_gram_stain(plate):
+        gram = plate.get("gram") or {}
+        if not isinstance(gram, dict):
+            return ""
+        parts = [gram.get("result"), gram.get("morphology")]
+        return " ".join(p for p in parts if p).strip()
+
+    def _ensure_plate_isolate(self, culture, plate, organism):
+        """Cria (uma vez por placa) o isolado do microrganismo concluído positivo."""
+        existing_id = plate.get("isolate_id")
+        gram_stain = self._plate_gram_stain(plate)
+        if existing_id:
+            isolate = MicrobiologyIsolate.objects.filter(pk=existing_id, culture=culture).first()
+            if isolate is not None:
+                # Mantém o nome/gram sincronizados se o utilizador ajustar a leitura.
+                changed = False
+                if isolate.organism_name != organism:
+                    isolate.organism_name = organism
+                    changed = True
+                if gram_stain and isolate.gram_stain != gram_stain:
+                    isolate.gram_stain = gram_stain
+                    changed = True
+                if changed:
+                    isolate.save(update_fields=["organism_name", "gram_stain", "updated_at"])
+                return isolate
+        isolate = MicrobiologyIsolate.objects.create(
+            tenant=culture.tenant,
+            culture=culture,
+            organism_name=organism,
+            gram_stain=gram_stain,
+            is_significant=True,
+        )
+        plate["isolate_id"] = isolate.id
+        return isolate
 
     @action(detail=True, methods=["post"], url_path="salvar-gram", url_name="salvar_gram")
     def salvar_gram(self, request, pk=None):

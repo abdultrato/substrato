@@ -163,8 +163,8 @@ export default function CultureDetailPage() {
       onEvaluate: (outcome: "positive" | "negative" | "contaminated", macroscopic: string) =>
         submitAction("avaliar-placa", { plate_id: plate.id, outcome, macroscopic }),
       onReincubate: (h: number) => submitAction("reincubar-placa", { plate_id: plate.id, hours: h }),
-      onSaveColony: (data: { macroscopic: string; gram: Plate["gram"]; biochemical: BiochemEntry[]; resolved?: boolean }) =>
-        submitAction("salvar-placa", { plate_id: plate.id, macroscopic: data.macroscopic, gram: data.gram, biochemical: data.biochemical, resolved: data.resolved ?? false }),
+      onSaveColony: (data: { macroscopic: string; gram: Plate["gram"]; biochemical: BiochemEntry[]; resolved?: boolean; organism_name?: string }) =>
+        submitAction("salvar-placa", { plate_id: plate.id, macroscopic: data.macroscopic, gram: data.gram, biochemical: data.biochemical, resolved: data.resolved ?? false, organism_name: data.organism_name ?? "" }),
       onFinalizeNegative: () => submitAction("salvar-placa", { plate_id: plate.id, finalize_negative: true }),
       onReopen: () => submitAction("salvar-placa", { plate_id: plate.id, resolved: false }),
       onResetOutcome: () => submitAction("salvar-placa", { plate_id: plate.id, reset_outcome: true }),
