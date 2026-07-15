@@ -30,6 +30,12 @@
 - `/reception/`
   - Acesso: `Administrador`, `Recepcionista` e `Contabilidade`.
 
+- `/consultations/`
+  - Acesso: `Administrador`, `Recepcionista` e `Médico`.
+
+- `/requests/new/`
+  - Criacao de requisicoes de exames medicos e laboratoriais: `Administrador`, `Recepcionista` e `Médico`.
+
 - `/radiology/`
   - Acesso: `Administrador` e `Radiologia`.
   - O titulo principal deve ser `Radiologia`.

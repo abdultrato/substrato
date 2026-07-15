@@ -104,7 +104,7 @@ export function requiredGroupsForResourceGroup(groupKey: string): string[] {
     case "surgery":
       return [GROUPS.ADMIN, GROUPS.RECEPCAO, GROUPS.MEDICINA, GROUPS.MEDICINA_OCUPACIONAL]
     case "consultations":
-      return [GROUPS.ADMIN, GROUPS.RECEPCAO, GROUPS.MEDICINA, GROUPS.MEDICINA_OCUPACIONAL]
+      return [GROUPS.ADMIN, GROUPS.RECEPCAO, GROUPS.MEDICINA]
     case "entities":
       return [GROUPS.ADMIN, GROUPS.RECEPCAO, GROUPS.MEDICINA_OCUPACIONAL]
     case "identity":

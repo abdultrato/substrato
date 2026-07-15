@@ -33,7 +33,7 @@ const T_MED_EXAMS: RelationTarget = { endpoint: "/clinical/medicalexam/", labelF
 const T_PROFILE: RelationTarget = { endpoint: "/clinical/occupational_profile/", labelFields: ["name", "profession", "custom_id"] };
 const T_COMPANY: RelationTarget = { endpoint: "/external_entities/empresa/", labelFields: ["name", "nuit", "custom_id"] };
 
-const CREATE_GROUPS = [GROUPS.ADMIN, GROUPS.RECEPCAO, GROUPS.MEDICINA, GROUPS.MEDICINA_OCUPACIONAL];
+const CREATE_GROUPS = [GROUPS.ADMIN, GROUPS.RECEPCAO, GROUPS.MEDICINA];
 
 type RequestType = "LAB" | "MED";
 

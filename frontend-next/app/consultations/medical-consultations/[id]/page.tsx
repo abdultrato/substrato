@@ -57,7 +57,6 @@ export default function MedicalConsultationDetailPage() {
     GROUPS.ADMIN,
     GROUPS.RECEPCAO,
     GROUPS.MEDICINA,
-    GROUPS.MEDICINA_OCUPACIONAL,
   ])
 
   const [row, setRow] = useState<Row | null>(null)

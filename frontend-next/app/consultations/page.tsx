@@ -193,12 +193,10 @@ export default function ConsultationsPage() {
     GROUPS.ADMIN,
     GROUPS.RECEPCAO,
     GROUPS.MEDICINA,
-    GROUPS.MEDICINA_OCUPACIONAL,
   ])
   const canInvoice = userHasAnyGroup(user, [
     GROUPS.ADMIN,
     GROUPS.RECEPCAO,
-    GROUPS.CONTABILIDADE,
   ])
 
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
@@ -844,8 +842,6 @@ export default function ConsultationsPage() {
         GROUPS.ADMIN,
         GROUPS.RECEPCAO,
         GROUPS.MEDICINA,
-        GROUPS.MEDICINA_OCUPACIONAL,
-        GROUPS.CONTABILIDADE,
       ]}
     >
       <div className="space-y-1.5">
@@ -1004,8 +1000,8 @@ export default function ConsultationsPage() {
           <SectionCard icon={Building2} title={t("Modo leitura", "Read-only mode")}>
             <p className="text-sm text-muted-foreground">
               {t(
-                "Contabilidade pode visualizar, mas não pode criar ou editar consultas.",
-                "Accounting can view, but cannot create or edit consultations."
+                "O seu perfil pode visualizar, mas não pode criar ou editar consultas.",
+                "Your profile can view, but cannot create or edit consultations."
               )}
             </p>
           </SectionCard>
