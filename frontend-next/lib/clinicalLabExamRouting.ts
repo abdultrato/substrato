@@ -46,7 +46,7 @@ export function clinicalLabExamRoute(item: RoutableLabItem): string | null {
   }
 
   if (values.some((value) => value.includes("genexpert") || value.includes("genexp") || value.includes("xpert"))) {
-    return "/clinical-laboratory/molecular";
+    return "/clinical-laboratory/molecular/genexpert";
   }
 
   if (

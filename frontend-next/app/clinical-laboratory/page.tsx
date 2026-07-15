@@ -287,9 +287,9 @@ const PHASES: PhaseConfig[] = [
         icon: Pill,
       },
       {
-        href: "/clinical-laboratory/molecular",
-        label: "Biologia Molecular / GeneXpert",
-        desc: "PCR, carga viral, MTB/RIF",
+        href: "/clinical-laboratory/molecular/genexpert",
+        label: "GeneXpert MTB/RIF",
+        desc: "Deteção MTB e resistência à rifampicina",
         icon: Dna,
       },
       {

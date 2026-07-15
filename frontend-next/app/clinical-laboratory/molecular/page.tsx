@@ -8,6 +8,7 @@ import { Dna, Loader2, RefreshCw, Search } from "lucide-react";
 import AppLayout from "@/components/layout/AppLayout";
 import { CardFooter, CardTitle, Pill, StatusPill, fmtDate } from "@/components/clinical-laboratory/ResourceCardList";
 import { apiFetch, apiFetchList } from "@/lib/api";
+import { GENEEXPERT_ASSAY, HIV_VIRAL_LOAD_ASSAY, molecularDetailPath } from "@/lib/molecularRoutes";
 import { requiredGroupsForResourceGroup } from "@/lib/resourcesAccess";
 
 type MolecularResult = {
@@ -83,7 +84,7 @@ function formatCandidateDate(value?: string | null) {
 
 function candidateHref(item: MolecularQueueItem) {
   if (item.kind === "molecular_result" && item.molecular_result_id) {
-    return `/clinical-laboratory/molecular/${item.molecular_result_id}`;
+    return molecularDetailPath(item.molecular_result_id, item.assay);
   }
   const params = new URLSearchParams({
     order_item: String(item.order_item),
@@ -103,7 +104,7 @@ type MolecularPageConfig = {
 };
 
 const DEFAULT_CONFIG: MolecularPageConfig = {
-  assayFilter: "GENEXPERT_MTB_RIF",
+  assayFilter: GENEEXPERT_ASSAY,
   title: "Fila molecular / GeneXpert",
   subtitle: "Exames GeneXpert são herdados do pedido e da amostra; esta página não cria resultados livres.",
   badge: "GeneXpert",
@@ -112,7 +113,7 @@ const DEFAULT_CONFIG: MolecularPageConfig = {
 };
 
 const HIV_VIRAL_LOAD_CONFIG: MolecularPageConfig = {
-  assayFilter: "CV_HIV",
+  assayFilter: HIV_VIRAL_LOAD_ASSAY,
   title: "Biologia Molecular: Carga Viral de HIV",
   subtitle: "Exames de carga viral HIV são herdados do pedido e da amostra; o método esperado é PCR - Reação da Polimerase em Cadeia.",
   badge: "Carga Viral HIV",
@@ -306,7 +307,7 @@ function MolecularQueuePage() {
                   {filteredResults.map((m) => (
                     <Link
                       key={m.id}
-                      href={`/clinical-laboratory/molecular/${m.id}`}
+                      href={molecularDetailPath(m.id, m.assay)}
                       className="group relative flex flex-col overflow-hidden rounded-xl border border-white/[0.10] bg-white/[0.02] p-2 pl-3 shadow-none backdrop-blur-[1px] transition hover:border-indigo-300/50 hover:bg-white/[0.03] dark:border-white/[0.06] dark:bg-white/[0.02] dark:hover:border-indigo-500/30"
                     >
                       <span className="absolute inset-y-0 left-0 w-0.5 bg-gradient-to-b from-indigo-500 to-cyan-500" />

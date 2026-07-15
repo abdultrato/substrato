@@ -2,15 +2,15 @@
 
 import Link from "next/link";
 import { useEffect, useState, type ReactNode } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { Activity, ArrowLeft, Dna, Edit3, FlaskConical, Loader2, Microscope, Printer, ShieldAlert } from "lucide-react";
 
 import AppLayout from "@/components/layout/AppLayout";
 import { apiFetch } from "@/lib/api";
+import { GENEEXPERT_ASSAY, molecularDetailPath, molecularEditPath, molecularListPath } from "@/lib/molecularRoutes";
 import { requiredGroupsForResourceGroup } from "@/lib/resourcesAccess";
 
 const ENDPOINT = "/clinical_laboratory/molecular_result/";
-const LIST_HREF = "/clinical-laboratory/molecular";
 
 type MolecularResult = {
   id: number;
@@ -118,9 +118,16 @@ function InfoTile({ label, value }: { label: string; value: string }) {
   );
 }
 
-export default function ClinicalLaboratoryMolecularDetailPage() {
+export function MolecularDetailPage({
+  expectedAssay,
+  legacyRedirect = false,
+}: {
+  expectedAssay?: string;
+  legacyRedirect?: boolean;
+}) {
   const params = useParams<{ id: string }>();
   const id = params.id;
+  const router = useRouter();
   const [record, setRecord] = useState<MolecularResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [printing, setPrinting] = useState(false);
@@ -148,6 +155,14 @@ export default function ClinicalLaboratoryMolecularDetailPage() {
     };
   }, [id]);
 
+  useEffect(() => {
+    if (!record) return;
+    const canonical = molecularDetailPath(record.id, record.assay);
+    if (legacyRedirect || (expectedAssay && record.assay !== expectedAssay)) {
+      router.replace(canonical);
+    }
+  }, [expectedAssay, legacyRedirect, record, router]);
+
   if (loading) {
     return (
       <AppLayout fullWidth requiredGroups={requiredGroupsForResourceGroup("clinical_laboratory")}>
@@ -173,6 +188,8 @@ export default function ClinicalLaboratoryMolecularDetailPage() {
   const detectionLabel = DETECTION_LABELS[record.detection] ?? record.detection;
   const detectionStyle = DETECTION_STYLE[record.detection] ?? DETECTION_STYLE.INVALIDO;
   const quantitative = record.quantitative_value ? `${record.quantitative_value}${record.unit ? ` ${record.unit}` : ""}` : "—";
+  const isGeneXpert = record.assay === GENEEXPERT_ASSAY;
+  const listHref = molecularListPath(record.assay);
 
   async function openResultPdf() {
     setPrinting(true);
@@ -211,7 +228,7 @@ export default function ClinicalLaboratoryMolecularDetailPage() {
               <div className="min-w-0">
                 <div className="mb-0.5 flex flex-wrap gap-1">
                   <span className="rounded-full border border-indigo-200/30 bg-indigo-50/[0.02] px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-indigo-700 backdrop-blur-[1px] dark:border-indigo-800/20 dark:bg-indigo-900/[0.02] dark:text-indigo-300">
-                    Molecular
+                    {isGeneXpert ? "GeneXpert" : "Biologia molecular"}
                   </span>
                   <span className="rounded-full border border-cyan-200/30 bg-cyan-50/[0.02] px-1.5 py-0.5 text-[10px] font-medium text-cyan-700 backdrop-blur-[1px] dark:border-cyan-800/20 dark:bg-cyan-900/[0.02] dark:text-cyan-300">
                     {record.custom_id}
@@ -226,7 +243,7 @@ export default function ClinicalLaboratoryMolecularDetailPage() {
 
             <div className="grid w-full grid-cols-1 gap-1 sm:grid-cols-3 md:flex md:w-auto md:shrink-0 md:items-center">
               <Link
-                href={LIST_HREF}
+                href={listHref}
                 className="inline-flex h-7 min-w-0 items-center justify-center gap-1.5 rounded-lg border border-white/[0.10] bg-white/[0.02] px-2.5 text-sm font-medium text-foreground shadow-sm backdrop-blur-[1px] transition hover:bg-white/[0.03] dark:border-white/[0.06] dark:bg-white/[0.02] dark:hover:bg-white/[0.03]"
               >
                 <ArrowLeft size={16} />
@@ -242,7 +259,7 @@ export default function ClinicalLaboratoryMolecularDetailPage() {
                 Imprimir resultado
               </button>
               <Link
-                href={`${LIST_HREF}/${record.id}/edit`}
+                href={molecularEditPath(record.id, record.assay)}
                 className="inline-flex h-7 min-w-0 items-center justify-center gap-1.5 rounded-lg bg-gradient-to-r from-indigo-600 to-cyan-600 px-2.5 text-sm font-semibold text-white shadow-sm transition hover:from-indigo-700 hover:to-cyan-700"
               >
                 <Edit3 size={15} />
@@ -278,7 +295,9 @@ export default function ClinicalLaboratoryMolecularDetailPage() {
                   <p className="text-lg font-bold">{detectionLabel}</p>
                 </div>
                 <InfoTile label="Ensaio" value={assayLabel} />
-                <InfoTile label="Rifampicina" value={RIF_LABELS[record.rif_resistance] ?? display(record.rif_resistance)} />
+                {isGeneXpert ? (
+                  <InfoTile label="Rifampicina" value={RIF_LABELS[record.rif_resistance] ?? display(record.rif_resistance)} />
+                ) : null}
                 <InfoTile label="Executado em" value={formatDateTime(record.performed_at)} />
               </div>
             </Card>
@@ -304,4 +323,8 @@ export default function ClinicalLaboratoryMolecularDetailPage() {
       </div>
     </AppLayout>
   );
+}
+
+export default function ClinicalLaboratoryMolecularLegacyDetailPage() {
+  return <MolecularDetailPage legacyRedirect />;
 }

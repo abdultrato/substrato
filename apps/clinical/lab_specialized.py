@@ -50,6 +50,15 @@ def specialized_sector_for_method(method: str | None) -> str | None:
     return SPECIALIZED_METHOD_SECTORS.get((method or "").strip())
 
 
+def _molecular_frontend_base(record) -> str:
+    assay = getattr(record, "assay", "")
+    if assay == "CV_HIV":
+        return "/clinical-laboratory/molecular/hiv-viral-load"
+    if assay == "GENEXPERT_MTB_RIF":
+        return "/clinical-laboratory/molecular/genexpert"
+    return "/clinical-laboratory/molecular"
+
+
 def _record_status_label(sector: str, record) -> str:
     fn = getattr(record, "get_status_display", None)
     if callable(fn):
@@ -120,7 +129,7 @@ def resolve_sector_link(request_item, *, persist: bool = True) -> dict | None:
         base = "/clinical-laboratory/afb-smears"
     else:
         record = order_item.molecular_results.order_by("-created_at").first()
-        base = "/clinical-laboratory/molecular"
+        base = _molecular_frontend_base(record) if record is not None else "/clinical-laboratory/molecular"
 
     if record is not None:
         state["record_id"] = record.id

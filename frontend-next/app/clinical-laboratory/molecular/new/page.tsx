@@ -7,11 +7,11 @@ import { ArrowLeft, Dna, Loader2, Save } from "lucide-react";
 
 import AppLayout from "@/components/layout/AppLayout";
 import { apiFetch } from "@/lib/api";
+import { molecularDetailPath, molecularListPath } from "@/lib/molecularRoutes";
 import { requiredGroupsForResourceGroup } from "@/lib/resourcesAccess";
 
 const ENDPOINT = "/clinical_laboratory/molecular_result/";
 const QUEUE_ENDPOINT = "/clinical_laboratory/molecular_result/queue/";
-const LIST_HREF = "/clinical-laboratory/molecular";
 
 type MolecularQueueItem = {
   id: string;
@@ -122,7 +122,7 @@ function MolecularCreateForm() {
   const isGeneXpert = assay === "GENEXPERT_MTB_RIF";
   const isViralLoad = assay === "CV_HIV" || assay === "CV_HEPATITE";
   const detectionOptions = isViralLoad ? DETECTION_OPTIONS_VIRAL_LOAD : DETECTION_OPTIONS;
-  const listHref = assay === "CV_HIV" ? "/clinical-laboratory/molecular/hiv-viral-load" : LIST_HREF;
+  const listHref = molecularListPath(assay);
 
   const [queue, setQueue] = useState<MolecularQueueItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -205,7 +205,7 @@ function MolecularCreateForm() {
           notes: notes.trim(),
         }),
       });
-      router.push(`${LIST_HREF}/${created.id}`);
+      router.push(molecularDetailPath(created.id, assay));
     } catch (err: any) {
       setError(err?.message || "Não foi possível guardar o resultado molecular.");
     } finally {

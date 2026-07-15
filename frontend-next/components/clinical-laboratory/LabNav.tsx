@@ -24,7 +24,7 @@ const TABS: Tab[] = [
   { href: "/clinical-laboratory/cultures", label: "Culturas" },
   { href: "/clinical-laboratory/isolates", label: "Isolados" },
   { href: "/clinical-laboratory/antibiograms", label: "Antibiogramas" },
-  { href: "/clinical-laboratory/molecular", label: "Molecular/GeneXpert" },
+  { href: "/clinical-laboratory/molecular/genexpert", label: "GeneXpert" },
   { href: "/clinical-laboratory/molecular/hiv-viral-load", label: "Carga Viral HIV" },
   { href: "/clinical-laboratory/afb-smears", label: "Baciloscopia" },
   { href: "/clinical-laboratory/quality-management", label: "Qualidade" },

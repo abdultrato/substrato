@@ -7,10 +7,10 @@ import { ArrowLeft, Dna, Loader2, Printer, Save } from "lucide-react";
 
 import AppLayout from "@/components/layout/AppLayout";
 import { apiFetch } from "@/lib/api";
+import { molecularDetailPath } from "@/lib/molecularRoutes";
 import { requiredGroupsForResourceGroup } from "@/lib/resourcesAccess";
 
 const ENDPOINT = "/clinical_laboratory/molecular_result/";
-const LIST_HREF = "/clinical-laboratory/molecular";
 
 type MolecularResult = {
   id: number;
@@ -195,7 +195,7 @@ export default function ClinicalLaboratoryMolecularEditPage() {
           notes: notes.trim(),
         }),
       });
-      router.push(`${LIST_HREF}/${saved.id}`);
+      router.push(molecularDetailPath(saved.id, saved.assay));
     } catch (err: any) {
       setError(err?.message || "Não foi possível guardar as alterações do resultado molecular.");
     } finally {
@@ -276,7 +276,7 @@ export default function ClinicalLaboratoryMolecularEditPage() {
 
             <div className="grid w-full grid-cols-1 gap-1 sm:grid-cols-3 md:flex md:w-auto md:shrink-0 md:items-center">
               <Link
-                href={`${LIST_HREF}/${record.id}`}
+                href={molecularDetailPath(record.id, record.assay)}
                 className="inline-flex h-7 min-w-0 items-center justify-center gap-1.5 rounded-lg border border-white/[0.10] bg-white/[0.02] px-2.5 text-sm font-medium text-foreground shadow-sm backdrop-blur-[1px] transition hover:bg-white/[0.03] dark:border-white/[0.06] dark:bg-white/[0.02] dark:hover:bg-white/[0.03]"
               >
                 <ArrowLeft size={16} />
