@@ -245,40 +245,40 @@ export default function LabReportDetailPage() {
             Sem resultados para esta requisição.
           </div>
         ) : (
-          <div className="grid w-full min-w-0 gap-2 lg:grid-cols-2">
+          <div className="grid w-full min-w-0 items-start gap-1.5 md:grid-cols-2 xl:grid-cols-3">
             {exams.map((exam) => (
               <section key={exam.name}
                 className="relative overflow-hidden rounded-xl border border-white/50 bg-white/30 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]">
                 <span className="absolute left-0 top-0 h-full w-1 bg-sky-400" />
 
-                <div className="flex items-center gap-2 px-3 py-2 pl-4">
-                  <FlaskConical size={12} className="shrink-0 text-sky-600 dark:text-sky-400" />
-                  <h2 className="truncate text-[12px] font-bold text-foreground">{exam.name}</h2>
-                  <span className="ml-auto shrink-0 text-[10px] text-[var(--gray-500)]">
+                <div className="flex items-center gap-1.5 px-2 py-1.5 pl-3">
+                  <FlaskConical size={11} className="shrink-0 text-sky-600 dark:text-sky-400" />
+                  <h2 className="truncate text-[11px] font-bold text-foreground">{exam.name}</h2>
+                  <span className="ml-auto shrink-0 text-[9px] text-[var(--gray-500)]">
                     {exam.items.length} {exam.items.length === 1 ? "parâmetro" : "parâmetros"}
                   </span>
                 </div>
 
-                <table className="w-full border-t border-white/40 text-[11px] dark:border-white/10">
+                <table className="w-full border-t border-white/40 text-[10px] dark:border-white/10">
                   <thead>
-                    <tr className="text-left text-[9px] font-semibold uppercase tracking-wide text-[var(--gray-500)]">
-                      <th className="px-3 py-1.5 pl-4">Parâmetro</th>
-                      <th className="px-2 py-1.5 text-right">Resultado</th>
-                      <th className="px-2 py-1.5">Referência</th>
-                      <th className="px-3 py-1.5 text-right">Estado</th>
+                    <tr className="text-left text-[8px] font-semibold uppercase tracking-wide text-[var(--gray-500)]">
+                      <th className="px-2 py-1 pl-3">Parâmetro</th>
+                      <th className="px-1.5 py-1 text-right">Resultado</th>
+                      <th className="px-1.5 py-1">Referência</th>
+                      <th className="px-2 py-1 text-right">Estado</th>
                     </tr>
                   </thead>
                   <tbody>
                     {exam.items.map((item) => (
                       <tr key={item.id}
                         className={`border-t border-white/30 dark:border-white/5 ${item.critical_alert ? "bg-rose-50/50 dark:bg-rose-900/10" : ""}`}>
-                        <td className="px-3 py-1.5 pl-4 font-medium text-foreground">{item.exam_field_name}</td>
-                        <td className="whitespace-nowrap px-2 py-1.5 text-right">
+                        <td className="px-2 py-1 pl-3 font-medium text-foreground">{item.exam_field_name}</td>
+                        <td className="whitespace-nowrap px-1.5 py-1 text-right">
                           <span className={`font-semibold ${flagCls(item.clinical_status, item.critical_alert)}`}>
                             {formatValue(item)}
                           </span>
                           {item.exam_field_unit && (
-                            <span className="ml-1 text-[9px] text-[var(--gray-500)]">{item.exam_field_unit}</span>
+                            <span className="ml-1 text-[8px] text-[var(--gray-500)]">{item.exam_field_unit}</span>
                           )}
                           {item.clinical_status && item.clinical_status !== "N" && (
                             <span className={`ml-1 font-bold ${flagCls(item.clinical_status, item.critical_alert)}`}>
@@ -286,9 +286,9 @@ export default function LabReportDetailPage() {
                             </span>
                           )}
                         </td>
-                        <td className="px-2 py-1.5 text-[10px] text-[var(--gray-500)]">{item.exam_field_reference || "—"}</td>
-                        <td className="px-3 py-1.5 text-right">
-                          <span className={`inline-flex items-center rounded-full px-1.5 py-0.5 text-[9px] font-semibold ${statusBadgeCls(item.status)}`}>
+                        <td className="px-1.5 py-1 text-[9px] text-[var(--gray-500)]">{item.exam_field_reference || "—"}</td>
+                        <td className="px-2 py-1 text-right">
+                          <span className={`inline-flex items-center rounded-full px-1.5 py-0.5 text-[8px] font-semibold ${statusBadgeCls(item.status)}`}>
                             {item.status || "—"}
                           </span>
                         </td>
@@ -304,22 +304,22 @@ export default function LabReportDetailPage() {
                 className="relative overflow-hidden rounded-xl border border-white/50 bg-white/30 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]">
                 <span className="absolute left-0 top-0 h-full w-1 bg-violet-400" />
 
-                <div className="flex items-center gap-2 px-3 py-2 pl-4">
-                  <Microscope size={12} className="shrink-0 text-violet-600 dark:text-violet-400" />
-                  <h2 className="truncate text-[12px] font-bold text-foreground">{item.exam_name}</h2>
+                <div className="flex items-center gap-1.5 px-2 py-1.5 pl-3">
+                  <Microscope size={11} className="shrink-0 text-violet-600 dark:text-violet-400" />
+                  <h2 className="truncate text-[11px] font-bold text-foreground">{item.exam_name}</h2>
                   {item.method && (
-                    <span className="shrink-0 rounded-full bg-violet-100 px-1.5 py-0.5 text-[9px] font-semibold text-violet-800 dark:bg-violet-900/40 dark:text-violet-200">
+                    <span className="shrink-0 rounded-full bg-violet-100 px-1.5 py-0.5 text-[8px] font-semibold text-violet-800 dark:bg-violet-900/40 dark:text-violet-200">
                       {item.method}
                     </span>
                   )}
                 </div>
 
-                <div className="flex flex-wrap items-center gap-2 border-t border-white/40 px-3 py-2 pl-4 dark:border-white/10">
+                <div className="flex flex-wrap items-center gap-2 border-t border-white/40 px-2 py-1.5 pl-3 dark:border-white/10">
                   <div className="min-w-0 flex-1">
                     {item.sector_label && (
-                      <p className="text-[10px] text-[var(--gray-500)]">{item.sector_label}</p>
+                      <p className="text-[9px] text-[var(--gray-500)]">{item.sector_label}</p>
                     )}
-                    <p className="text-[12px] font-semibold text-foreground">{item.status || "—"}</p>
+                    <p className="text-[11px] font-semibold text-foreground">{item.status || "—"}</p>
                   </div>
                   {item.href && (
                     <Link href={item.href}
