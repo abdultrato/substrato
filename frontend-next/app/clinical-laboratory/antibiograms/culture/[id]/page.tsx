@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, FlaskConical, Loader2, Pill, Plus, Trash2 } from "lucide-react";
 
@@ -60,12 +61,6 @@ export default function AntibiogramWorkspacePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Formulário de novo isolado (subcultura).
-  const [orgName, setOrgName] = useState("");
-  const [gram, setGram] = useState("");
-  const [quantity, setQuantity] = useState("");
-  const [savingIsolate, setSavingIsolate] = useState(false);
-
   const load = useCallback(async () => {
     if (!id) return;
     setLoading(true);
@@ -81,30 +76,6 @@ export default function AntibiogramWorkspacePage() {
   }, [id]);
 
   useEffect(() => { load(); }, [load]);
-
-  async function addIsolate() {
-    if (!orgName.trim() || !id) return;
-    setSavingIsolate(true);
-    setError(null);
-    try {
-      await apiFetch("/clinical_laboratory/isolate/", {
-        method: "POST",
-        body: JSON.stringify({
-          culture: Number(id),
-          organism_name: orgName.trim(),
-          gram_stain: gram.trim(),
-          quantity: quantity.trim(),
-          is_significant: true,
-        }),
-      });
-      setOrgName(""); setGram(""); setQuantity("");
-      await load();
-    } catch (err: any) {
-      setError(err?.message || "Falha ao registar o isolado.");
-    } finally {
-      setSavingIsolate(false);
-    }
-  }
 
   async function deleteIsolate(isolateId: number) {
     setError(null);
@@ -156,37 +127,13 @@ export default function AntibiogramWorkspacePage() {
           <div className="flex min-h-48 items-center justify-center gap-2 text-sm text-muted-foreground"><Loader2 size={16} className="animate-spin" /> Carregando...</div>
         ) : (
           <>
-            {/* ── Subcultura: novo isolado ── */}
-            <section className="relative overflow-hidden rounded-xl border border-white/40 bg-white/30 p-3 pl-4 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]">
-              <span className="absolute inset-y-0 left-0 w-1 bg-violet-400" />
-              <h2 className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-foreground"><FlaskConical size={14} className="text-violet-600 dark:text-violet-400" /> Subcultura — registar microrganismo isolado</h2>
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-[2fr_1fr_1fr_auto] sm:items-end">
-                <div>
-                  <label className={LABEL_CLS}>Microrganismo</label>
-                  <input value={orgName} onChange={(e) => setOrgName(e.target.value)} onKeyDown={(e) => e.key === "Enter" && addIsolate()} placeholder="ex: Escherichia coli" className={INPUT_CLS} />
-                </div>
-                <div>
-                  <label className={LABEL_CLS}>Gram</label>
-                  <input value={gram} onChange={(e) => setGram(e.target.value)} placeholder="ex: Gram-negativo" className={INPUT_CLS} />
-                </div>
-                <div>
-                  <label className={LABEL_CLS}>Quantidade</label>
-                  <input value={quantity} onChange={(e) => setQuantity(e.target.value)} placeholder="ex: >10⁵ UFC/mL" className={INPUT_CLS} />
-                </div>
-                <button
-                  onClick={addIsolate}
-                  disabled={savingIsolate || !orgName.trim()}
-                  className="inline-flex h-8 items-center justify-center gap-1.5 rounded-lg bg-violet-600 px-3 text-xs font-semibold text-white shadow-sm transition hover:bg-violet-700 disabled:opacity-60"
-                >
-                  {savingIsolate ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />} Isolar
-                </button>
-              </div>
-            </section>
-
             {/* ── Isolados e antibiogramas ── */}
             {(data?.isolates.length ?? 0) === 0 ? (
               <div className="rounded-xl border border-dashed border-white/30 bg-white/20 p-6 text-center text-sm text-muted-foreground backdrop-blur-sm dark:border-white/10 dark:bg-white/5">
-                Sem isolados. Registe o microrganismo isolado da subcultura para iniciar o antibiograma.
+                Sem isolados. O microrganismo é registado ao concluir a placa positiva na{" "}
+                {data?.culture_id ? (
+                  <Link href={`/clinical-laboratory/cultures/${data.culture_id}`} className="font-medium text-violet-700 underline decoration-dotted hover:no-underline dark:text-violet-300">cultura de origem</Link>
+                ) : "cultura de origem"}.
               </div>
             ) : (
               <div className="space-y-2.5">
