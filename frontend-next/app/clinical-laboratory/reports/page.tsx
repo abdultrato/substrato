@@ -244,7 +244,7 @@ function ReportsHeader({
           type="button"
           onClick={() => setExpanded((v) => !v)}
           aria-expanded={expanded}
-          className="inline-flex h-7 items-center gap-1.5 rounded-lg border border-white/30 bg-white/25 px-2.5 text-[11px] font-medium text-[var(--gray-700)] backdrop-blur-sm hover:bg-white/40 dark:border-white/10 dark:bg-white/5 dark:text-[var(--gray-300)]"
+          className="inline-flex h-7 items-center gap-1.5 rounded-lg border border-white/30 bg-white/25 px-2.5 text-[11px] font-medium text-[var(--gray-700)] backdrop-blur-sm hover:bg-white/40 dark:border-white/10 dark:bg-white/5 dark:text-[#ffffff]"
         >
           <SlidersHorizontal size={11} />
           Filtros avançados
@@ -393,7 +393,7 @@ function ReportCard({
           className={`inline-flex h-6 items-center gap-1 rounded-lg border px-2 text-[9px] font-medium shadow-sm transition disabled:opacity-60 ${
             notified
               ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800/40 dark:bg-emerald-900/20 dark:text-emerald-300"
-              : "border-white/40 bg-white/30 text-[var(--gray-700)] hover:bg-white/50 dark:border-white/10 dark:bg-white/[0.06] dark:text-[var(--gray-300)]"
+              : "border-white/40 bg-white/30 text-[var(--gray-700)] hover:bg-white/50 dark:border-white/10 dark:bg-white/[0.06] dark:text-[#ffffff]"
           }`}>
           {busy ? <><Loader2 size={9} className="animate-spin" /> A notificar…</> : notified ? "✓ Notificado" : "Notificar"}
         </button>
