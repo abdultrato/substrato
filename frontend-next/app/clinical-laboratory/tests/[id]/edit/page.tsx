@@ -26,11 +26,11 @@ const SAMPLE_OPTIONS = [
 function SectionCard({ icon: Icon, title, children }: { icon: React.ElementType; title: string; children: React.ReactNode }) {
   return (
     <section className="overflow-hidden rounded-xl border border-white/20 bg-white/25 shadow-sm backdrop-blur-sm dark:bg-white/5 dark:border-white/10">
-      <div className="flex items-center gap-2 border-b border-border/50 px-4 py-2.5">
+      <div className="flex items-center gap-2 border-b border-border/50 px-3 py-2">
         <Icon size={13} className="text-[var(--primary-600)] dark:text-[var(--primary-400)]" />
         <h2 className="text-xs font-semibold text-foreground">{title}</h2>
       </div>
-      <div className="space-y-4 p-4">{children}</div>
+      <div className="space-y-2 p-3">{children}</div>
     </section>
   );
 }
@@ -145,10 +145,10 @@ export default function LabTestEditPage() {
 
   return (
     <AppLayout requiredGroups={requiredGroupsForResourceGroup("clinical_laboratory")}>
-      <form onSubmit={handleSubmit} noValidate className="mx-auto w-full max-w-2xl space-y-3">
+      <form onSubmit={handleSubmit} noValidate className="mx-auto w-full max-w-2xl space-y-1.5">
 
         {/* Header */}
-        <div className="relative overflow-hidden rounded-xl border border-white/20 bg-white/30 px-4 py-3 shadow-sm backdrop-blur-sm dark:bg-white/5 dark:border-white/10">
+        <div className="relative overflow-hidden rounded-xl border border-white/20 bg-white/30 px-3 py-2 shadow-sm backdrop-blur-sm dark:bg-white/5 dark:border-white/10">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-3">
               <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--primary-600)]/10 text-[var(--primary-700)] dark:text-[var(--primary-400)]">
@@ -191,7 +191,7 @@ export default function LabTestEditPage() {
           <>
             {/* Identificação */}
             <SectionCard icon={FlaskConical} title="Identificação">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-2">
                 <Field label="Nome" required error={errors.name}>
                   <input type="text" value={name} onChange={(e) => setName(e.target.value)} className={inputCls} />
                 </Field>
@@ -199,7 +199,7 @@ export default function LabTestEditPage() {
                   <input type="text" value={code} onChange={(e) => setCode(e.target.value)} className={inputCls} />
                 </Field>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-2">
                 <Field label="Sector" required error={errors.sector}>
                   <select value={sector} onChange={(e) => setSector(e.target.value)} className={inputCls}>
                     <option value="">— Selecionar —</option>
@@ -231,7 +231,7 @@ export default function LabTestEditPage() {
                   {LAB_METHOD_OPTIONS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
                 </select>
               </Field>
-              <div className="flex gap-6">
+              <div className="flex gap-4">
                 <label className="flex cursor-pointer items-center gap-2 text-xs text-foreground">
                   <input type="checkbox" checked={requiresFasting} onChange={(e) => setRequiresFasting(e.target.checked)} className={checkboxCls} />
                   Exige jejum
@@ -245,7 +245,7 @@ export default function LabTestEditPage() {
 
             {/* Preço e prazo */}
             <SectionCard icon={FlaskConical} title="Preço e prazo">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-2">
                 <Field label="Preço (MZN)">
                   <input type="number" step="0.01" min="0" value={price} onChange={(e) => setPrice(e.target.value)} className={inputCls} />
                 </Field>
