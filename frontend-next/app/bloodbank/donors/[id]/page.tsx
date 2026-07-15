@@ -155,7 +155,7 @@ export default function BloodDonorDetailsPage() {
   const eligibilityBlock = parseEligibilityBlock(donor, latestDonation)
 
   return (
-    <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.LABORATORIO, GROUPS.RECEPCAO, GROUPS.MEDICINA]}>
+    <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.LABORATORIO]}>
       <div className="mx-auto w-[90%] space-y-2 pb-4">
 
         {loading && (

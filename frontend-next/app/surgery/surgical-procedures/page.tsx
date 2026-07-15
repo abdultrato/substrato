@@ -54,7 +54,7 @@ export default function SurgicalProceduresPage() {
   const totalValue = items.reduce((s, p) => s + parseFloat(p.base_price || "0"), 0)
 
   return (
-    <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.ENFERMAGEM, GROUPS.MEDICINA]}>
+    <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.MEDICINA, GROUPS.ENFERMAGEM]}>
       <div className="mx-auto w-full max-w-5xl space-y-3 px-1">
 
         {/* header */}

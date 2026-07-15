@@ -809,7 +809,7 @@ export default function NewPreoperativeAssessmentPage() {
   }
 
   return (
-    <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.ENFERMAGEM, GROUPS.MEDICINA]}>
+    <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.MEDICINA, GROUPS.ENFERMAGEM]}>
       <div className="mx-auto w-full max-w-2xl space-y-2 px-1 py-1">
         <section className={`relative overflow-hidden ${GLASS}`}>
           <span className="absolute left-0 top-0 h-full w-1 bg-amber-400" />

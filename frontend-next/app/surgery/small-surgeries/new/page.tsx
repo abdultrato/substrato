@@ -522,7 +522,7 @@ export default function SmallSurgeryNewPage() {
   const totalPrice = procedures.reduce((sum, p) => sum + (p.base_price ? parseFloat(p.base_price) : 0), 0)
 
   return (
-    <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.ENFERMAGEM, GROUPS.MEDICINA]}>
+    <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.MEDICINA, GROUPS.ENFERMAGEM]}>
       <div className="mx-auto w-full max-w-2xl space-y-2 px-1 py-1">
 
         {/* header */}

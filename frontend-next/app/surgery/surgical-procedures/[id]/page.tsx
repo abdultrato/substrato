@@ -236,13 +236,13 @@ export default function SurgicalProcedureDetailPage() {
   const grandTotal = procTotal + matTotal
 
   if (loading) return (
-    <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.ENFERMAGEM, GROUPS.MEDICINA]}>
+    <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.MEDICINA, GROUPS.ENFERMAGEM]}>
       <div className="flex h-40 items-center justify-center text-sm text-[var(--gray-500)]">Carregando...</div>
     </AppLayout>
   )
 
   return (
-    <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.ENFERMAGEM, GROUPS.MEDICINA]}>
+    <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.MEDICINA, GROUPS.ENFERMAGEM]}>
       <div className="mx-auto w-full max-w-2xl space-y-2 px-1">
 
         {/* header */}

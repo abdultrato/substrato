@@ -211,7 +211,7 @@ export default function PreoperativeAssessmentsPage() {
   const pending = items.filter(a => a.fit_for_surgery === null).length
 
   return (
-    <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.ENFERMAGEM, GROUPS.MEDICINA]}>
+    <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.MEDICINA, GROUPS.ENFERMAGEM]}>
       <div className="mx-auto w-full max-w-7xl space-y-2 px-1 py-1">
 
         {/* ── HERO HEADER ─────────────────────────────────────────── */}

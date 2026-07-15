@@ -96,12 +96,7 @@ export default function SurgicalProceduresPage() {
 
   return (
     <AppLayout
-      requiredGroups={[
-        GROUPS.ADMIN,
-        GROUPS.RECEPCAO,
-        GROUPS.MEDICINA,
-        GROUPS.MEDICINA_OCUPACIONAL,
-      ]}
+      requiredGroups={[GROUPS.ADMIN, GROUPS.MEDICINA, GROUPS.ENFERMAGEM]}
     >
       <div className="space-y-6">
         <PageHeader

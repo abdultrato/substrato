@@ -464,12 +464,7 @@ export default function SurgeryPage() {
 
   return (
     <AppLayout
-      requiredGroups={[
-        GROUPS.ADMIN,
-        GROUPS.RECEPCAO,
-        GROUPS.MEDICINA,
-        GROUPS.MEDICINA_OCUPACIONAL,
-      ]}
+      requiredGroups={[GROUPS.ADMIN, GROUPS.MEDICINA, GROUPS.ENFERMAGEM]}
     >
       <div className="space-y-1.5">
         {/* Cabeçalho fundido: banner + pílulas + pesquisa + acções num só bloco translúcido */}

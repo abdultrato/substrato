@@ -203,7 +203,7 @@ export default function SmallSurgeriesListPage() {
   const toggleStatus = (s: string) => setStatusFilter(prev => prev === s ? null : s);
 
   return (
-    <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.ENFERMAGEM, GROUPS.MEDICINA]}>
+    <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.MEDICINA, GROUPS.ENFERMAGEM]}>
       <div className="mx-auto w-full max-w-5xl space-y-2 px-1 py-1">
 
         {/* header */}

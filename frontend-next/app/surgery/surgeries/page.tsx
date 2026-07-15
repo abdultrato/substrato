@@ -260,7 +260,7 @@ function SurgeriesListInner() {
   const activeFilters = [statusFilter, sizeFilter, dateFilter].filter(Boolean).length
 
   return (
-    <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.ENFERMAGEM, GROUPS.MEDICINA]}>
+    <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.MEDICINA, GROUPS.ENFERMAGEM]}>
       <div className="mx-auto w-full max-w-5xl space-y-2 px-1 py-1">
 
         {/* header */}

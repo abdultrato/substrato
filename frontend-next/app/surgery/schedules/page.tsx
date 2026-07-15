@@ -238,7 +238,7 @@ export default function SurgerySchedulesPage() {
   const done = surgeries.filter(s => ["SURGERY_COMPLETED", "CONCLUIDA", "CLOSED"].includes(s.status))
 
   return (
-    <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.ENFERMAGEM, GROUPS.MEDICINA]}>
+    <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.MEDICINA, GROUPS.ENFERMAGEM]}>
       <div className="mx-auto w-full max-w-6xl space-y-3 px-1">
 
         {/* header */}

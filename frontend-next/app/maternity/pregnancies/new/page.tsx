@@ -207,7 +207,7 @@ function MaternityPregnanciesCreateForm() {
   }
 
   return (
-    <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.RECEPCAO, GROUPS.MEDICINA, GROUPS.MEDICINA_OCUPACIONAL]}>
+    <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.MEDICINA, GROUPS.ENFERMAGEM]}>
       <form onSubmit={handleSubmit} className="w-full space-y-3 px-1">
 
         {/* ── Cabeçalho ── */}

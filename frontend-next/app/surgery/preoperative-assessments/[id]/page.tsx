@@ -155,7 +155,7 @@ export default function PreoperativeAssessmentDetailPage() {
   }, [id])
 
   if (loading) return (
-    <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.ENFERMAGEM, GROUPS.MEDICINA]}>
+    <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.MEDICINA, GROUPS.ENFERMAGEM]}>
       <div className="flex h-64 items-center justify-center gap-2 text-sm text-[var(--gray-500)]">
         <Loader2 size={16} className="animate-spin" /> A carregar avaliação...
       </div>
@@ -163,7 +163,7 @@ export default function PreoperativeAssessmentDetailPage() {
   )
 
   if (error || !data) return (
-    <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.ENFERMAGEM, GROUPS.MEDICINA]}>
+    <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.MEDICINA, GROUPS.ENFERMAGEM]}>
       <div className="mx-auto max-w-3xl px-2 py-4">
         <div className="rounded-xl border border-rose-300/50 bg-rose-50/60 px-4 py-3 text-sm text-rose-700">
           {error || "Avaliação não encontrada."}
@@ -202,7 +202,7 @@ export default function PreoperativeAssessmentDetailPage() {
   }
 
   return (
-    <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.ENFERMAGEM, GROUPS.MEDICINA]}>
+    <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.MEDICINA, GROUPS.ENFERMAGEM]}>
       <div className="mx-auto w-full max-w-3xl space-y-2 px-1 py-1">
 
         {/* ── HERO HEADER ── */}

@@ -169,13 +169,13 @@ export default function LargeSurgeryDetailPage() {
   }, [data, id, router])
 
   if (loading) return (
-    <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.ENFERMAGEM, GROUPS.MEDICINA]}>
+    <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.MEDICINA, GROUPS.ENFERMAGEM]}>
       <div className="flex h-40 items-center justify-center text-sm text-[var(--gray-500)]">Carregando...</div>
     </AppLayout>
   )
 
   if (!data) return (
-    <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.ENFERMAGEM, GROUPS.MEDICINA]}>
+    <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.MEDICINA, GROUPS.ENFERMAGEM]}>
       <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">{error || "Não encontrado."}</div>
     </AppLayout>
   )
@@ -191,7 +191,7 @@ export default function LargeSurgeryDetailPage() {
   const priceWithVat = estimatedPrice > 0 ? estimatedPrice * (1 + vatPct / 100) : 0
 
   return (
-    <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.ENFERMAGEM, GROUPS.MEDICINA]}>
+    <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.MEDICINA, GROUPS.ENFERMAGEM]}>
       <div className="mx-auto w-full max-w-5xl space-y-1.5 px-1">
 
         {/* header */}

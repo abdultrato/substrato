@@ -767,7 +767,7 @@ export default function EditPreoperativeAssessmentPage() {
   }
 
   if (loadingData) return (
-    <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.ENFERMAGEM, GROUPS.MEDICINA]}>
+    <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.MEDICINA, GROUPS.ENFERMAGEM]}>
       <div className="flex h-64 items-center justify-center gap-2 text-sm text-[var(--gray-500)]">
         <Loader2 size={16} className="animate-spin" /> A carregar dados...
       </div>
@@ -775,7 +775,7 @@ export default function EditPreoperativeAssessmentPage() {
   )
 
   return (
-    <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.ENFERMAGEM, GROUPS.MEDICINA]}>
+    <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.MEDICINA, GROUPS.ENFERMAGEM]}>
       <div className="mx-auto w-full max-w-2xl space-y-2 px-1 py-1">
 
         {/* ── HERO ── */}

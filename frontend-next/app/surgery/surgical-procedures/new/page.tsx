@@ -165,7 +165,7 @@ export default function NewSurgicalProcedurePage() {
   }
 
   return (
-    <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.ENFERMAGEM, GROUPS.MEDICINA]}>
+    <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.MEDICINA, GROUPS.ENFERMAGEM]}>
       <div className="mx-auto w-full max-w-2xl space-y-1 px-1">
 
         {/* header */}
