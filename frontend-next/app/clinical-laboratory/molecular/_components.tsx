@@ -257,9 +257,9 @@ export function MolecularQueuePage() {
           </div>
         ) : null}
 
-        <div className="grid grid-cols-2 gap-1">
-            <section className="rounded-xl border border-white/[0.10] bg-white/[0.02] p-2 shadow-none backdrop-blur-[1px] dark:border-white/[0.06] dark:bg-white/[0.02]">
-              <div className="mb-1.5 flex items-center justify-between gap-1.5">
+        <div className="grid h-[calc(100vh-13.5rem)] min-h-[24rem] grid-cols-[minmax(22rem,1fr)_minmax(22rem,1fr)] gap-1 overflow-x-auto pb-1">
+            <section className="flex min-h-0 min-w-0 flex-col rounded-xl border border-white/[0.10] bg-white/[0.02] p-2 shadow-none backdrop-blur-[1px] dark:border-white/[0.06] dark:bg-white/[0.02]">
+              <div className="mb-1.5 flex shrink-0 items-center justify-between gap-1.5">
                 <div>
                   <h2 className="text-sm font-semibold text-foreground">Exames pendentes</h2>
                   <p className="text-xs text-muted-foreground">{filteredPending.length} {config.pendingLabel}</p>
@@ -267,12 +267,12 @@ export function MolecularQueuePage() {
               </div>
 
               {loading ? (
-                <div className="flex items-center justify-center gap-2 py-10 text-sm text-muted-foreground">
+                <div className="flex min-h-0 flex-1 items-center justify-center gap-2 py-10 text-sm text-muted-foreground">
                   <Loader2 size={16} className="animate-spin" />
                   A carregar fila molecular...
                 </div>
               ) : filteredPending.length ? (
-                <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,260px),1fr))] gap-1">
+                <div className="grid min-h-0 flex-1 grid-cols-[repeat(auto-fit,minmax(min(100%,260px),1fr))] content-start gap-1 overflow-y-auto pr-1">
                   {filteredPending.map((item) => (
                     <Link
                       key={item.id}
@@ -310,14 +310,14 @@ export function MolecularQueuePage() {
               )}
             </section>
 
-            <section className="rounded-xl border border-white/[0.10] bg-white/[0.02] p-2 shadow-none backdrop-blur-[1px] dark:border-white/[0.06] dark:bg-white/[0.02]">
-              <div className="mb-1.5">
+            <section className="flex min-h-0 min-w-0 flex-col rounded-xl border border-white/[0.10] bg-white/[0.02] p-2 shadow-none backdrop-blur-[1px] dark:border-white/[0.06] dark:bg-white/[0.02]">
+              <div className="mb-1.5 shrink-0">
                 <h2 className="text-sm font-semibold text-foreground">Resultados registados</h2>
                 <p className="text-xs text-muted-foreground">{filteredResults.length} resultado(s) recentes</p>
               </div>
 
               {loading ? null : filteredResults.length ? (
-                <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,260px),1fr))] gap-1">
+                <div className="grid min-h-0 flex-1 grid-cols-[repeat(auto-fit,minmax(min(100%,260px),1fr))] content-start gap-1 overflow-y-auto pr-1">
                   {filteredResults.map((m) => (
                     <Link
                       key={m.id}
