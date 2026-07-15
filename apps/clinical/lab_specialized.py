@@ -92,6 +92,7 @@ def resolve_sector_link(request_item, *, persist: bool = True) -> dict | None:
         "href": meta.get("href", ""),  # por defeito: queue do sector
         "status": "Não iniciado",
         "record_id": None,
+        "result_text": "",
     }
 
     order_item = getattr(request_item, "sector_order_item", None)
@@ -125,6 +126,10 @@ def resolve_sector_link(request_item, *, persist: bool = True) -> dict | None:
         state["record_id"] = record.id
         state["href"] = f"{base}/{record.id}"
         state["status"] = _record_status_label(sector, record)
+        # Quando o resultado especializado está finalizado (validado), inclui o
+        # texto completo — incl. isolados e antibiograma/TSA — no laudo comum.
+        if _specialized_ready(sector, record):
+            state["result_text"] = _specialized_result_text(sector, record)
     else:
         # O pedido existe no LIS mas ainda não há registo (amostra por receber).
         state["status"] = "Aguarda processamento no sector"
@@ -197,6 +202,26 @@ def _molecular_result_text(record) -> str:
     return " · ".join(parts)
 
 
+_SUSCEPTIBILITY_LETTER = {"SENSIVEL": "S", "INTERMEDIO": "I", "RESISTENTE": "R"}
+
+
+def _isolate_antibiogram_text(record) -> list[str]:
+    """Linhas de isolado + antibiograma/TSA de uma cultura, para o laudo comum."""
+    lines: list[str] = []
+    for isolate in record.isolates.all():
+        header = f"Isolado: {isolate.organism_name}"
+        if (isolate.gram_stain or "").strip():
+            header += f" ({isolate.gram_stain.strip()})"
+        lines.append(header)
+        antibiograms = [
+            f"{s.antibiotic} {_SUSCEPTIBILITY_LETTER.get(s.result, s.result)}"
+            for s in isolate.susceptibilities.all()
+        ]
+        if antibiograms:
+            lines.append("TSA: " + ", ".join(antibiograms))
+    return lines
+
+
 def _culture_result_text(record) -> str:
     lines = [record.get_status_display()]
     outcomes = {"positive": "Positiva", "negative": "Negativa", "contaminated": "Contaminada"}
@@ -210,6 +235,8 @@ def _culture_result_text(record) -> str:
         result_text = (plate.get("result_text") or "").strip()
         extra = f" — {result_text}" if result_text and result_text != medium else ""
         lines.append(f"{medium}: {label}{extra}")
+    # Isolados e antibiograma/TSA concluídos entram no mesmo resultado.
+    lines.extend(_isolate_antibiogram_text(record))
     return "; ".join(lines)
 
 

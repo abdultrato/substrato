@@ -554,6 +554,7 @@ class LabRequestViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin,
                 "href": link["href"],
                 "status": link["status"],
                 "record_id": link["record_id"],
+                "result_text": link.get("result_text", ""),
             })
 
         payload = {

@@ -55,6 +55,7 @@ type SpecializedItem = {
   href?: string
   status?: string
   record_id?: number
+  result_text?: string
 }
 
 type Payload = {
@@ -314,12 +315,27 @@ export default function LabReportDetailPage() {
                   )}
                 </div>
 
-                <div className="flex flex-wrap items-center gap-2 border-t border-white/40 px-2 py-1.5 pl-3 dark:border-white/10">
+                <div className="flex flex-wrap items-start gap-2 border-t border-white/40 px-2 py-1.5 pl-3 dark:border-white/10">
                   <div className="min-w-0 flex-1">
                     {item.sector_label && (
                       <p className="text-[9px] text-[var(--gray-500)]">{item.sector_label}</p>
                     )}
                     <p className="text-[11px] font-semibold text-foreground">{item.status || "—"}</p>
+                    {item.result_text && (
+                      <ul className="mt-1 space-y-0.5">
+                        {item.result_text.split(";").map((line, i) => {
+                          const t = line.trim()
+                          if (!t) return null
+                          const isTsa = t.startsWith("TSA:")
+                          const isIsolate = t.startsWith("Isolado:")
+                          return (
+                            <li key={i} className={`text-[10px] ${isIsolate ? "font-semibold italic text-foreground" : isTsa ? "text-fuchsia-700 dark:text-fuchsia-300" : "text-[var(--gray-600)] dark:text-[var(--gray-400)]"}`}>
+                              {t}
+                            </li>
+                          )
+                        })}
+                      </ul>
+                    )}
                   </div>
                   {item.href && (
                     <Link href={item.href}
