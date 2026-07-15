@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { ChevronDown, ChevronLeft, FileText, Loader2, Search, SlidersHorizontal } from "lucide-react"
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 
 import AppLayout from "@/components/layout/AppLayout"
 import { apiFetch, apiFetchList } from "@/lib/api"
@@ -78,74 +78,6 @@ function buildParams(f: SearchFilters): URLSearchParams {
   return p
 }
 
-// ─── Board columns ───────────────────────────────────────────────────────────
-
-type ColumnKey = "today" | "yesterday" | "month" | "older"
-
-type ColumnConfig = {
-  key: ColumnKey
-  title: string
-  headerCls: string
-  badge: string
-  colBg: string
-  leftBar: string
-}
-
-const COLUMNS: ColumnConfig[] = [
-  {
-    key: "today",
-    title: "Hoje",
-    headerCls: "text-sky-700 dark:text-sky-300",
-    badge: "bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-200",
-    colBg: "from-sky-50/60 via-white/50 to-cyan-50/40 border-sky-200/50 dark:from-sky-950/30 dark:via-slate-900/30 dark:to-cyan-950/20 dark:border-sky-800/30",
-    leftBar: "bg-sky-400",
-  },
-  {
-    key: "yesterday",
-    title: "Ontem",
-    headerCls: "text-indigo-700 dark:text-indigo-300",
-    badge: "bg-indigo-100 text-indigo-800 dark:bg-indigo-900/40 dark:text-indigo-200",
-    colBg: "from-indigo-50/60 via-white/50 to-violet-50/40 border-indigo-200/50 dark:from-indigo-950/30 dark:via-slate-900/30 dark:to-violet-950/20 dark:border-indigo-800/30",
-    leftBar: "bg-indigo-400",
-  },
-  {
-    key: "month",
-    title: "Este mês",
-    headerCls: "text-amber-700 dark:text-amber-300",
-    badge: "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200",
-    colBg: "from-amber-50/60 via-white/50 to-yellow-50/40 border-amber-200/50 dark:from-amber-950/30 dark:via-slate-900/30 dark:to-yellow-950/20 dark:border-amber-800/30",
-    leftBar: "bg-amber-400",
-  },
-  {
-    key: "older",
-    title: "Mais antigos",
-    headerCls: "text-slate-600 dark:text-slate-400",
-    badge: "bg-slate-100 text-slate-700 dark:bg-slate-800/60 dark:text-slate-300",
-    colBg: "from-slate-50/60 via-white/50 to-gray-50/40 border-slate-200/50 dark:from-slate-900/30 dark:via-slate-900/30 dark:to-gray-950/20 dark:border-slate-700/30",
-    leftBar: "bg-slate-400",
-  },
-]
-
-function laudoDate(row: LabRequest): string | undefined {
-  return row.updated_at || row.validated_at
-}
-
-function makeBucketer() {
-  const now = new Date()
-  const startToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime()
-  const startYesterday = startToday - 24 * 60 * 60 * 1000
-  const startMonth = new Date(now.getFullYear(), now.getMonth(), 1).getTime()
-  return (row: LabRequest): ColumnKey => {
-    const value = laudoDate(row)
-    const t = value ? new Date(value).getTime() : NaN
-    if (Number.isNaN(t)) return "older"
-    if (t >= startToday) return "today"
-    if (t >= startYesterday) return "yesterday"
-    if (t >= startMonth) return "month"
-    return "older"
-  }
-}
-
 // ─── Search panel ────────────────────────────────────────────────────────────
 
 const INPUT_CLS =
@@ -161,11 +93,8 @@ function countActive(f: SearchFilters, keys: (keyof SearchFilters)[]): number {
   return keys.filter((k) => f[k].trim()).length
 }
 
-const STAT_PILL =
-  "inline-flex h-6 items-center gap-1 whitespace-nowrap rounded-full border border-transparent px-2 text-[10px] font-semibold backdrop-blur-sm"
-
 function ReportsHeader({
-  filters, onChange, onSearch, onClear, total, loading, buckets,
+  filters, onChange, onSearch, onClear, total, loading,
 }: {
   filters: SearchFilters
   onChange: (f: SearchFilters) => void
@@ -173,7 +102,6 @@ function ReportsHeader({
   onClear: () => void
   total: number
   loading: boolean
-  buckets: Record<ColumnKey, LabRequest[]>
 }) {
   const [expanded, setExpanded] = useState(false)
 
@@ -207,14 +135,6 @@ function ReportsHeader({
                   : "Sem laudos"}
             </p>
           </div>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-1.5">
-          {COLUMNS.map((col) => (
-            <span key={col.key} className={`${STAT_PILL} ${col.badge}`}>
-              {col.title} <strong className="text-[11px]">{buckets[col.key].length}</strong>
-            </span>
-          ))}
         </div>
 
         <Link href="/clinical-laboratory"
@@ -443,13 +363,6 @@ export default function LabReportsPage() {
 
   useEffect(() => { load(debouncedFilters) }, [load, debouncedFilters, safeRefreshToken])
 
-  const buckets = useMemo(() => {
-    const bucketer = makeBucketer()
-    const grouped: Record<ColumnKey, LabRequest[]> = { today: [], yesterday: [], month: [], older: [] }
-    for (const row of rows) grouped[bucketer(row)].push(row)
-    return grouped
-  }, [rows])
-
   async function handleNotify(row: LabRequest) {
     setBusyId(row.id)
     setError(null)
@@ -477,7 +390,7 @@ export default function LabReportsPage() {
     <AppLayout fullWidth>
       <div className="w-full min-w-0 max-w-none space-y-2 px-1 py-1">
 
-        {/* ── Cabeçalho fundido: banner + pílulas por período + pesquisa + filtros ── */}
+        {/* ── Cabeçalho fundido: banner + pesquisa + filtros ── */}
         <ReportsHeader
           filters={filters}
           onChange={setFilters}
@@ -485,7 +398,6 @@ export default function LabReportsPage() {
           onClear={handleClear}
           total={total}
           loading={loading}
-          buckets={buckets}
         />
 
         {/* ── Error ── */}
