@@ -8,25 +8,22 @@ import {
   Briefcase,
   Building2,
   CalendarDays,
-  ClipboardList,
   FilePlus2,
   HeartPulse,
   Pill,
   Search,
   ScrollText,
-  UserPlus,
-  Users,
 } from "lucide-react";
 
 import AppLayout from "@/components/layout/AppLayout";
 import Pagination from "@/components/ui/Pagination";
 import useDebounce from "@/hooks/useDebounce";
-import { apiFetch, apiFetchList, extractTotalCount } from "@/lib/api";
+import { apiFetchList } from "@/lib/api";
 import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh";
 import { GROUPS } from "@/lib/rbac";
 
 const OCCUPATIONAL_PROVENANCE = "Medicina Ocupacional";
-const VIEW_GROUPS = [GROUPS.ADMIN, GROUPS.MEDICINA_OCUPACIONAL];
+const VIEW_GROUPS = [GROUPS.ADMIN, GROUPS.RECEPCAO, GROUPS.CONTABILIDADE];
 
 type PatientRow = Record<string, any>;
 
@@ -72,7 +69,7 @@ function OccupationalPatientCard({ patient, accent }: { patient: PatientRow; acc
   return (
     <Link
       href={href}
-      className="group relative block overflow-hidden rounded-lg border border-border/70 bg-card/90 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/25"
+      className="group relative block overflow-hidden rounded-lg border border-white/40 bg-white/20 shadow-sm backdrop-blur-sm transition hover:-translate-y-0.5 hover:border-primary/30 hover:bg-white/30 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/25 dark:border-white/10 dark:bg-white/[0.04] dark:hover:bg-white/[0.08]"
     >
       <span className={`absolute inset-y-0 left-0 w-1 ${accent}`} />
       <div className="flex min-w-0 items-center gap-2 px-3 py-2 pl-4">
@@ -131,11 +128,16 @@ export default function MedicinaOcupacionalPage() {
       try {
         setLoading(true);
         setErro(null);
-        const reqs = await apiFetch<any>("/clinical/labrequest/", {
+        // Conta o número de requisições (não de exames) com proveniência de
+        // Medicina Ocupacional — meta.total vem do total de labrequests.
+        const reqs = await apiFetchList("/clinical/labrequest/", {
+          page: 1,
+          pageSize: 1,
+          query: { proveniencia: OCCUPATIONAL_PROVENANCE },
           clientCache: safeRefreshToken === 0,
         });
         if (!mounted) return;
-        setRequisicoes(extractTotalCount(reqs));
+        setRequisicoes(reqs.meta.total ?? reqs.items.length ?? 0);
       } catch (e: any) {
         if (!mounted) return;
         setErro(
@@ -203,7 +205,7 @@ export default function MedicinaOcupacionalPage() {
   return (
     <AppLayout requiredGroups={VIEW_GROUPS}>
       <div className="mx-auto w-full max-w-[96rem] space-y-3 px-1 pb-4">
-        <section className="rounded-xl border border-teal-200/70 bg-card shadow-sm dark:border-teal-900/40">
+        <section className="rounded-xl border border-teal-200/50 bg-white/20 shadow-sm backdrop-blur-sm dark:border-teal-900/40 dark:bg-white/[0.04]">
           <div className="grid gap-2 px-3 py-2 lg:grid-cols-[minmax(16rem,1fr)_minmax(18rem,0.8fr)_auto] lg:items-center">
             <div className="min-w-0">
               <div className="flex items-center gap-2">
@@ -241,21 +243,34 @@ export default function MedicinaOcupacionalPage() {
                 tone="border-teal-200 bg-teal-50/70 dark:border-teal-800/40 dark:bg-teal-950/20"
               />
               <MetricPill
-                label="Req. lab"
+                label="Requisições"
                 value={loading ? "..." : requisicoes}
                 tone="border-sky-200 bg-sky-50/70 dark:border-sky-800/40 dark:bg-sky-950/20"
               />
               <MetricPill
-                label="Proced."
+                label="Procedimentos"
                 value="—"
                 tone="border-violet-200 bg-violet-50/70 dark:border-violet-800/40 dark:bg-violet-950/20"
               />
               <MetricPill
-                label="Farmacia"
+                label="Farmácia"
                 value="—"
                 tone="border-amber-200 bg-amber-50/70 dark:border-amber-800/40 dark:bg-amber-950/20"
               />
             </div>
+          </div>
+
+          <div className="flex flex-wrap items-center justify-between gap-2 border-t border-teal-200/60 px-3 py-2 dark:border-teal-900/40">
+            <p className="min-w-0 text-[11px] text-muted-foreground">
+              <span className="font-semibold text-foreground">Registo centralizado</span>
+              {" — "}Novos pacientes ocupacionais entram pela Recepção com proveniência de Medicina Ocupacional.
+            </p>
+            <Link
+              href="/reception"
+              className="inline-flex h-7 shrink-0 items-center gap-1 rounded-lg border border-teal-300 bg-white px-2.5 text-xs font-semibold text-teal-700 shadow-sm hover:bg-teal-50 dark:border-teal-800 dark:bg-teal-950/60 dark:text-teal-200"
+            >
+              Ir para Recepção <ArrowRight size={13} />
+            </Link>
           </div>
         </section>
 
@@ -265,8 +280,31 @@ export default function MedicinaOcupacionalPage() {
           </div>
         ) : null}
 
-        <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_18rem]">
-          <section className="rounded-xl border border-border/70 bg-card p-3 shadow-sm">
+        {/* Ações rápidas — logo após o cabeçalho */}
+        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+          {[
+            { title: "Criar requisição laboratorial", href: "/requests/new", icon: FilePlus2, accent: "bg-violet-500" },
+            { title: "Prontuário e cardex", href: "/medical-records", icon: ScrollText, accent: "bg-sky-500" },
+            { title: "Procedimentos", href: "/nursing/procedures", icon: HeartPulse, accent: "bg-emerald-500" },
+            { title: "Materiais e farmácia", href: "/pharmacy/material-requests", icon: Pill, accent: "bg-amber-500" },
+          ].map((action) => {
+            const Icon = action.icon;
+            return (
+              <Link
+                key={action.href}
+                href={action.href}
+                className="relative flex items-center gap-2 overflow-hidden rounded-lg border border-white/40 bg-white/20 px-3 py-2 pl-4 text-sm font-semibold text-foreground shadow-sm backdrop-blur-sm transition hover:border-primary/30 hover:bg-white/30 dark:border-white/10 dark:bg-white/[0.04] dark:hover:bg-white/[0.08]"
+              >
+                <span className={`absolute inset-y-0 left-0 w-1 ${action.accent}`} />
+                <Icon size={15} className="text-muted-foreground" />
+                <span className="min-w-0 flex-1 truncate">{action.title}</span>
+                <ArrowRight size={14} className="text-muted-foreground" />
+              </Link>
+            );
+          })}
+        </div>
+
+        <section className="rounded-xl border border-white/40 bg-white/20 p-3 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]">
             <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
               <div>
                 <h2 className="text-sm font-semibold text-foreground">Pacientes ocupacionais</h2>
@@ -312,70 +350,6 @@ export default function MedicinaOcupacionalPage() {
               <Pagination page={page} totalPages={totalPages} onChange={setPage} />
             </div>
           </section>
-
-          <aside className="space-y-2">
-            <div className="rounded-xl border border-blue-200 bg-blue-50/80 p-3 text-blue-900 shadow-sm dark:border-blue-900/40 dark:bg-blue-950/20 dark:text-blue-100">
-              <div className="flex items-start gap-2">
-                <UserPlus size={17} className="mt-0.5 shrink-0 text-blue-600 dark:text-blue-300" />
-                <div className="min-w-0">
-                  <h3 className="text-sm font-semibold">Registo centralizado</h3>
-                  <p className="mt-1 text-xs leading-relaxed">
-                    Novos pacientes ocupacionais entram pela Recepcao com proveniencia de Medicina Ocupacional.
-                  </p>
-                  <Link
-                    href="/reception"
-                    className="mt-2 inline-flex h-7 items-center rounded-lg border border-blue-300 bg-white px-2.5 text-xs font-semibold text-blue-700 shadow-sm hover:bg-blue-50 dark:border-blue-800 dark:bg-blue-950/60 dark:text-blue-200"
-                  >
-                    Ir para Recepcao
-                  </Link>
-                </div>
-              </div>
-            </div>
-
-            <div className="grid gap-2">
-              {[
-                {
-                  title: "Criar requisicao laboratorial",
-                  href: "/requests/new",
-                  icon: FilePlus2,
-                  accent: "bg-violet-500",
-                },
-                {
-                  title: "Prontuario e cardex",
-                  href: "/medical-records",
-                  icon: ScrollText,
-                  accent: "bg-sky-500",
-                },
-                {
-                  title: "Procedimentos",
-                  href: "/nursing/procedures",
-                  icon: HeartPulse,
-                  accent: "bg-emerald-500",
-                },
-                {
-                  title: "Materiais e farmacia",
-                  href: "/pharmacy/material-requests",
-                  icon: Pill,
-                  accent: "bg-amber-500",
-                },
-              ].map((action) => {
-                const Icon = action.icon;
-                return (
-                  <Link
-                    key={action.href}
-                    href={action.href}
-                    className="relative flex items-center gap-2 overflow-hidden rounded-lg border border-border/70 bg-card px-3 py-2 pl-4 text-sm font-semibold text-foreground shadow-sm transition hover:border-primary/30 hover:bg-muted/40"
-                  >
-                    <span className={`absolute inset-y-0 left-0 w-1 ${action.accent}`} />
-                    <Icon size={15} className="text-muted-foreground" />
-                    <span className="min-w-0 flex-1 truncate">{action.title}</span>
-                    <ArrowRight size={14} className="text-muted-foreground" />
-                  </Link>
-                );
-              })}
-            </div>
-          </aside>
-        </div>
       </div>
     </AppLayout>
   );

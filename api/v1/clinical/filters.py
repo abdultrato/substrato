@@ -215,6 +215,9 @@ class LabRequestFilter(SafeFilterSet):
     patient_document = django_filters.CharFilter(field_name="patient__document_number", lookup_expr="icontains")
     patient_birth_date = django_filters.DateFilter(field_name="patient__birth_date")
     patient_gender = django_filters.CharFilter(method="filter_patient_gender")
+    # Proveniência do paciente (ex.: "Medicina Ocupacional") — para contar
+    # requisições por origem sem depender do lado exame.
+    proveniencia = django_filters.CharFilter(field_name="patient__provenance", lookup_expr="iexact")
     # Médico solicitante e exame (nome do exame laboratorial OU médico).
     physician = django_filters.CharFilter(field_name="requesting_physician__name", lookup_expr="icontains")
     exam = django_filters.CharFilter(method="filter_exam")
