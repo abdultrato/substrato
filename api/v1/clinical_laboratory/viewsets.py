@@ -618,6 +618,48 @@ def build_antibiogram_culture_payload(culture):
     }
 
 
+def build_isolate_detail_payload(isolate):
+    """Isolado com contexto da cultura/paciente e antibiogramas (TSA)."""
+    culture = isolate.culture
+    order_item = getattr(culture, "order_item", None)
+    order = getattr(order_item, "order", None)
+    patient = getattr(order, "patient", None)
+    test = getattr(order_item, "test", None)
+
+    susceptibilities = [
+        {
+            "id": s.id,
+            "custom_id": s.custom_id,
+            "antibiotic": s.antibiotic,
+            "method": s.method,
+            "result": s.result,
+            "zone_mm": s.zone_mm,
+            "mic_value": s.mic_value,
+        }
+        for s in isolate.susceptibilities.all()
+    ]
+
+    return {
+        "id": isolate.id,
+        "custom_id": isolate.custom_id,
+        "organism_name": isolate.organism_name,
+        "gram_stain": isolate.gram_stain,
+        "quantity": isolate.quantity,
+        "is_significant": isolate.is_significant,
+        "notes": isolate.notes,
+        "culture_id": getattr(culture, "id", None),
+        "culture_custom_id": getattr(culture, "custom_id", ""),
+        "culture_type_display": culture.get_culture_type_display() if culture else "",
+        "culture_status_display": culture.get_status_display() if culture else "",
+        "specimen": getattr(culture, "specimen", ""),
+        "order_custom_id": getattr(order, "custom_id", ""),
+        "patient_name": getattr(patient, "name", "") or "",
+        "test_name": getattr(test, "name", "") or "",
+        "susceptibilities": susceptibilities,
+        "antibiogram_count": len(susceptibilities),
+    }
+
+
 class MicrobiologyCultureViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
     queryset = MicrobiologyCulture.objects.select_related(
         "order_item",
@@ -1155,11 +1197,23 @@ class MicrobiologyCultureViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
 
 
 class MicrobiologyIsolateViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
-    queryset = MicrobiologyIsolate.objects.select_related("culture").all()
+    queryset = MicrobiologyIsolate.objects.select_related(
+        "culture",
+        "culture__order_item",
+        "culture__order_item__order",
+        "culture__order_item__order__patient",
+        "culture__order_item__test",
+    ).all()
     serializer_class = MicrobiologyIsolateSerializer
     filterset_fields = ["culture", "is_significant"]
     search_fields = ["custom_id", "organism_name", "gram_stain", "notes"]
     ordering_fields = ["organism_name", "is_significant", "created_at"]
+
+    @action(detail=True, methods=["get"], url_path="detalhe", url_name="detalhe")
+    def detalhe(self, request, pk=None):
+        """Isolado com contexto da cultura/paciente e antibiogramas (TSA)."""
+        isolate = self.get_queryset().prefetch_related("susceptibilities").get(pk=self.get_object().pk)
+        return Response(build_isolate_detail_payload(isolate))
 
 
 class AntibioticSusceptibilityViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):

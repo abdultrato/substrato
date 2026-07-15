@@ -7,6 +7,7 @@ import { ArrowLeft, FlaskConical, Loader2, Pill, Plus, Trash2 } from "lucide-rea
 import AppLayout from "@/components/layout/AppLayout";
 import { apiFetch } from "@/lib/api";
 import { requiredGroupsForResourceGroup } from "@/lib/resourcesAccess";
+import { ANTIBIOTIC_CATALOG } from "@/lib/antibiotics";
 
 type Susceptibility = {
   id: number;
@@ -306,7 +307,14 @@ function IsolateCard({
       <div className="grid grid-cols-1 gap-2 border-t border-white/40 p-2.5 pl-4 sm:grid-cols-[2fr_1.4fr_1fr_1fr_1.2fr_auto] sm:items-end dark:border-white/10">
         <div>
           <label className={LABEL_CLS}>Antibiótico</label>
-          <input value={antibiotic} onChange={(e) => setAntibiotic(e.target.value)} onKeyDown={(e) => e.key === "Enter" && addAntibiogram()} placeholder="ex: Ampicilina" className={INPUT_CLS} />
+          <input value={antibiotic} onChange={(e) => setAntibiotic(e.target.value)} onKeyDown={(e) => e.key === "Enter" && addAntibiogram()} list={`antibiotics-${isolate.id}`} placeholder="Pesquisar antibiótico…" className={INPUT_CLS} />
+          <datalist id={`antibiotics-${isolate.id}`}>
+            {ANTIBIOTIC_CATALOG.map((group) => (
+              <optgroup key={group.label} label={group.label}>
+                {group.antibiotics.map((name) => <option key={name} value={name} />)}
+              </optgroup>
+            ))}
+          </datalist>
         </div>
         <div>
           <label className={LABEL_CLS}>Método</label>
