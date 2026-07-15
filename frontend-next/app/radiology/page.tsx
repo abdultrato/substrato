@@ -13,10 +13,6 @@ import { GROUPS } from "@/lib/rbac"
 
 const REQUIRED_GROUPS = [
   GROUPS.ADMIN,
-  GROUPS.RECEPCAO,
-  GROUPS.LABORATORIO,
-  GROUPS.MEDICINA,
-  GROUPS.MEDICINA_OCUPACIONAL,
   GROUPS.RADIOLOGIA,
 ]
 
@@ -89,7 +85,7 @@ export default function RadiologyPage() {
         ) : null}
 
         <WorkspaceHub
-          title="Substrato Radiologia"
+          title="Radiologia"
           metrics={[
             { label: "Equipamentos", value: metricValue || equipment, href: "/radiology/equipment" },
             { label: "Protocolos", value: metricValue || protocols, href: "/radiology/protocols" },

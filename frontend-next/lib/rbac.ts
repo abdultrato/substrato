@@ -208,7 +208,7 @@ export const WORKSPACES: WorkspaceDef[] = [
     label: "Recepção",
     href: "/reception",
     description: "Triagem, atendimento, requisições e fluxos financeiros.",
-    anyOfGroups: [GROUPS.ADMIN, GROUPS.RECEPCAO],
+    anyOfGroups: [GROUPS.ADMIN, GROUPS.RECEPCAO, GROUPS.CONTABILIDADE],
   },
   {
     key: "laboratory",
@@ -354,7 +354,7 @@ export const WORKSPACES: WorkspaceDef[] = [
     label: "Radiologia e Imagiologia",
     href: "/radiology",
     description: "Estudos de imagem, laudos, ficheiros DICOM e integração PACS.",
-    anyOfGroups: [GROUPS.ADMIN, GROUPS.RECEPCAO, GROUPS.LABORATORIO, GROUPS.MEDICINA, GROUPS.MEDICINA_OCUPACIONAL, GROUPS.RADIOLOGIA],
+    anyOfGroups: [GROUPS.ADMIN, GROUPS.RADIOLOGIA],
   },
   {
     key: "cardiology",
@@ -417,7 +417,7 @@ export const WORKSPACES: WorkspaceDef[] = [
     label: "Medicina Ocupacional",
     href: "/occupational-medicine",
     description: "Registos ocupacionais e fluxos de requisição.",
-    anyOfGroups: [GROUPS.ADMIN, GROUPS.MEDICINA_OCUPACIONAL],
+    anyOfGroups: [GROUPS.ADMIN, GROUPS.RECEPCAO, GROUPS.CONTABILIDADE],
   },
   {
     key: "accounting",

@@ -53,7 +53,7 @@ export function requiredGroupsForResourceGroup(groupKey: string): string[] {
     case "pathology":
       return [GROUPS.ADMIN, GROUPS.RECEPCAO, GROUPS.LABORATORIO, GROUPS.MEDICINA, GROUPS.MEDICINA_OCUPACIONAL]
     case "radiology":
-      return [GROUPS.ADMIN, GROUPS.RECEPCAO, GROUPS.LABORATORIO, GROUPS.MEDICINA, GROUPS.MEDICINA_OCUPACIONAL, GROUPS.RADIOLOGIA]
+      return [GROUPS.ADMIN, GROUPS.RADIOLOGIA]
     case "specialty_diagnostics":
       return [
         GROUPS.ADMIN,
@@ -77,7 +77,7 @@ export function requiredGroupsForResourceGroup(groupKey: string): string[] {
     case "transportation":
       return [GROUPS.ADMIN, GROUPS.LOGISTICA, GROUPS.MANUTENCAO, GROUPS.CONTABILIDADE, GROUPS.RECURSOS_HUMANOS]
     case "reception":
-      return [GROUPS.ADMIN, GROUPS.RECEPCAO]
+      return [GROUPS.ADMIN, GROUPS.RECEPCAO, GROUPS.CONTABILIDADE]
     case "billing":
       return [GROUPS.ADMIN, GROUPS.RECEPCAO, GROUPS.CONTABILIDADE]
     case "nursing":

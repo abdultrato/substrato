@@ -24,7 +24,7 @@ import { isNotFoundLikeError } from "@/lib/errors/api-error";
 import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh";
 import { GROUPS } from "@/lib/rbac";
 
-const VIEW_GROUPS = [GROUPS.ADMIN, GROUPS.MEDICINA_OCUPACIONAL];
+const VIEW_GROUPS = [GROUPS.ADMIN, GROUPS.RECEPCAO, GROUPS.CONTABILIDADE];
 
 type PatientDetail = Record<string, any>;
 

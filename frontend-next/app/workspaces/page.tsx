@@ -288,10 +288,6 @@ function WorkspacesContent() {
   ])
   const showRadiologyArea = userHasAnyGroup(user, [
     GROUPS.ADMIN,
-    GROUPS.RECEPCAO,
-    GROUPS.LABORATORIO,
-    GROUPS.MEDICINA,
-    GROUPS.MEDICINA_OCUPACIONAL,
     GROUPS.RADIOLOGIA,
   ])
   const showPathologyArea = userHasAnyGroup(user, [

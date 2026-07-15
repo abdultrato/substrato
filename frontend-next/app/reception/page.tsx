@@ -670,7 +670,7 @@ export default function RecepcaoPage() {
 
   return (
     <>
-      <AppLayout fullWidth requiredGroups={[GROUPS.ADMIN, GROUPS.RECEPCAO]}>
+      <AppLayout fullWidth requiredGroups={[GROUPS.ADMIN, GROUPS.RECEPCAO, GROUPS.CONTABILIDADE]}>
         <div className="grid gap-1 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
           <div className="min-w-0 space-y-1">
           <section className={`relative overflow-hidden ${GLASS}`}>

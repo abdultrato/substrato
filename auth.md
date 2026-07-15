@@ -23,6 +23,17 @@
   - Acesso: apenas `Administrador`.
   - Inclui as paginas de criacao e edicao de campos de exame.
 
+- `/occupational-medicine/`
+  - Acesso: `Administrador`, `Recepcionista` e `Contabilidade`.
+  - Inclui a listagem e os detalhes de pacientes ocupacionais.
+
+- `/reception/`
+  - Acesso: `Administrador`, `Recepcionista` e `Contabilidade`.
+
+- `/radiology/`
+  - Acesso: `Administrador` e `Radiologia`.
+  - O titulo principal deve ser `Radiologia`.
+
 ## Comportamento de interface
 
 - A mensagem de acesso limitado nao deve listar grupos requeridos nem grupos do utilizador.

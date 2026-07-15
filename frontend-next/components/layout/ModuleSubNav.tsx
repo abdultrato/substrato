@@ -38,7 +38,7 @@ const MODULE_NAVS: ModuleNavConfig[] = [
         baseHref: "/healthcare",
         tabs: [
             { href: "/healthcare", label: "Painel", labelEn: "Overview" },
-            { href: "/reception", label: "Recepção", labelEn: "Reception" },
+            { href: "/reception", label: "Recepção", labelEn: "Reception", groups: [GROUPS.ADMIN, GROUPS.RECEPCAO, GROUPS.CONTABILIDADE] },
             { href: "/patients", label: "Pacientes", labelEn: "Patients" },
             { href: "/consultations", label: "Consultas", labelEn: "Consultations" },
             { href: "/requests", label: "Requisições", labelEn: "Requests" },
@@ -55,7 +55,7 @@ const MODULE_NAVS: ModuleNavConfig[] = [
             { href: "/pharmacy", label: "Farmácia", labelEn: "Pharmacy" },
             { href: "/telemedicine", label: "Telemedicina", labelEn: "Telemedicine" },
             { href: "/public-health", label: "Saúde Pública", labelEn: "Public health" },
-            { href: "/radiology", label: "Radiologia", labelEn: "Radiology" },
+            { href: "/radiology", label: "Radiologia", labelEn: "Radiology", groups: [GROUPS.ADMIN, GROUPS.RADIOLOGIA] },
             { href: "/pathology", label: "Patologia", labelEn: "Pathology" },
         ],
     },
