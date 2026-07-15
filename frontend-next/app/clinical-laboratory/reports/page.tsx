@@ -334,6 +334,20 @@ function ReportsHeader({
 
 // ─── Report Card ─────────────────────────────────────────────────────────────
 
+const NAME_PARTICLES = new Set(["de", "da", "do", "das", "dos", "e"])
+
+/** Mais de 3 nomes: mantém primeiro e último, abrevia os do meio (partículas omitidas). */
+function shortPatientName(name?: string): string {
+  if (!name) return "—"
+  const parts = name.trim().split(/\s+/)
+  if (parts.length <= 3) return name.trim()
+  const middle = parts
+    .slice(1, -1)
+    .filter((p) => !NAME_PARTICLES.has(p.toLowerCase()))
+    .map((p) => `${p[0]}.`)
+  return [parts[0], ...middle, parts[parts.length - 1]].join(" ")
+}
+
 function ReportCard({
   row, onNotify, busy, notified,
 }: {
@@ -350,10 +364,10 @@ function ReportCard({
   }
 
   return (
-    <div className="group relative overflow-hidden rounded-xl border border-white/50 bg-white/30 px-3 py-2 pl-4 shadow-sm backdrop-blur-sm transition hover:border-white/70 hover:bg-white/50 hover:shadow-md dark:border-white/10 dark:bg-white/[0.04] dark:hover:border-white/20 dark:hover:bg-white/[0.08]">
+    <div className="group relative overflow-hidden rounded-xl border border-white/50 bg-white/30 px-2 py-1.5 pl-3 shadow-sm backdrop-blur-sm transition hover:border-white/70 hover:bg-white/50 hover:shadow-md dark:border-white/10 dark:bg-white/[0.04] dark:hover:border-white/20 dark:hover:bg-white/[0.08]">
       <span className="absolute left-0 top-0 h-full w-1 bg-sky-400" />
 
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex items-center justify-between gap-1.5">
         <Link href={`/requests/${row.id}`}
           className="font-mono text-[10px] font-bold text-sky-700 hover:underline dark:text-sky-300 truncate">
           {row.custom_id ?? `#${row.id}`}
@@ -365,18 +379,18 @@ function ReportCard({
         )}
       </div>
 
-      <p className="mt-0.5 truncate text-[12px] font-semibold text-foreground leading-snug">
-        {row.patient_name || "—"}
+      <p className="mt-0.5 truncate text-[12px] font-semibold text-foreground leading-snug" title={row.patient_name || undefined}>
+        {shortPatientName(row.patient_name)}
         {meta && <span className="ml-1.5 text-[10px] font-normal text-[var(--gray-500)]">{meta}</span>}
       </p>
 
-      <div className="mt-1.5 flex items-center gap-1.5">
+      <div className="mt-1 flex items-center gap-1.5">
         <button type="button" onClick={openPdf}
-          className="inline-flex h-6 items-center gap-1 rounded-lg bg-sky-600 px-2.5 text-[9px] font-semibold text-white shadow-sm transition hover:bg-sky-700">
+          className="inline-flex h-6 items-center gap-1 rounded-lg bg-sky-600 px-2 text-[9px] font-semibold text-white shadow-sm transition hover:bg-sky-700">
           Imprimir PDF
         </button>
         <button type="button" onClick={() => onNotify(row)} disabled={busy}
-          className={`inline-flex h-6 items-center gap-1 rounded-lg border px-2.5 text-[9px] font-medium shadow-sm transition disabled:opacity-60 ${
+          className={`inline-flex h-6 items-center gap-1 rounded-lg border px-2 text-[9px] font-medium shadow-sm transition disabled:opacity-60 ${
             notified
               ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800/40 dark:bg-emerald-900/20 dark:text-emerald-300"
               : "border-white/40 bg-white/30 text-[var(--gray-700)] hover:bg-white/50 dark:border-white/10 dark:bg-white/[0.06] dark:text-[var(--gray-300)]"
@@ -482,7 +496,7 @@ export default function LabReportsPage() {
             Sem laudos.
           </div>
         ) : (
-          <div className={`grid w-full min-w-0 grid-cols-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 transition-opacity ${loading ? "opacity-60" : ""}`}>
+          <div className={`grid w-full min-w-0 gap-1.5 [grid-template-columns:repeat(auto-fill,minmax(200px,1fr))] transition-opacity ${loading ? "opacity-60" : ""}`}>
             {rows.map((row) => (
               <ReportCard
                 key={row.id}
