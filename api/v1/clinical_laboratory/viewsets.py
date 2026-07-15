@@ -558,6 +558,66 @@ class CriticalResultNotificationViewSet(ValidatedSearchOrderingMixin, TenantScop
     ordering_fields = ["notified_at", "readback_confirmed", "method", "created_at"]
 
 
+def build_antibiogram_culture_payload(culture):
+    """Payload de uma cultura positiva com os seus isolados e antibiogramas.
+
+    Partilhado pela fila de antibiogramas e pela área de trabalho de uma cultura.
+    """
+    order_item = culture.order_item
+    order = getattr(order_item, "order", None)
+    patient = getattr(order, "patient", None)
+    test = getattr(order_item, "test", None)
+
+    isolates = []
+    antibiogram_count = 0
+    for isolate in culture.isolates.all():
+        susceptibilities = [
+            {
+                "id": s.id,
+                "custom_id": s.custom_id,
+                "antibiotic": s.antibiotic,
+                "method": s.method,
+                "result": s.result,
+                "zone_mm": s.zone_mm,
+                "mic_value": s.mic_value,
+            }
+            for s in isolate.susceptibilities.all()
+        ]
+        antibiogram_count += len(susceptibilities)
+        isolates.append(
+            {
+                "id": isolate.id,
+                "custom_id": isolate.custom_id,
+                "organism_name": isolate.organism_name,
+                "gram_stain": isolate.gram_stain,
+                "quantity": isolate.quantity,
+                "is_significant": isolate.is_significant,
+                "susceptibilities": susceptibilities,
+            }
+        )
+
+    return {
+        "culture_id": culture.id,
+        "culture_custom_id": culture.custom_id,
+        "culture_type": culture.culture_type,
+        "culture_type_display": culture.get_culture_type_display(),
+        "status": culture.status,
+        "status_display": culture.get_status_display(),
+        "specimen": culture.specimen,
+        "read_at": culture.read_at,
+        "order_item": getattr(order_item, "id", None),
+        "order_item_custom_id": getattr(order_item, "custom_id", ""),
+        "order_custom_id": getattr(order, "custom_id", ""),
+        "patient_name": getattr(patient, "name", "") or "",
+        "test_name": getattr(test, "name", "") or "",
+        "test_code": getattr(test, "code", "") or "",
+        "sample_barcode": getattr(culture.sample, "barcode", "") if culture.sample_id else "",
+        "isolates": isolates,
+        "isolate_count": len(isolates),
+        "antibiogram_count": antibiogram_count,
+    }
+
+
 class MicrobiologyCultureViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
     queryset = MicrobiologyCulture.objects.select_related(
         "order_item",
@@ -868,6 +928,22 @@ class MicrobiologyCultureViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
         culture.save(update_fields=["culture_plates", "incubation_periods", "incubation_expected_end_at", "status", "updated_at"])
         return Response(self.get_serializer(culture).data)
 
+    @action(detail=True, methods=["get"], url_path="antibiograma", url_name="antibiograma")
+    def antibiograma(self, request, pk=None):
+        """Isolados e antibiogramas desta cultura (área de trabalho de subcultura)."""
+        culture = (
+            MicrobiologyCulture.objects.select_related(
+                "order_item",
+                "order_item__order",
+                "order_item__order__patient",
+                "order_item__test",
+                "sample",
+            )
+            .prefetch_related("isolates__susceptibilities")
+            .get(pk=self.get_object().pk)
+        )
+        return Response(build_antibiogram_culture_payload(culture))
+
     @action(detail=True, methods=["post"], url_path="finalizar", url_name="finalizar")
     def finalizar(self, request, pk=None):
         culture = self.get_object()
@@ -1035,6 +1111,7 @@ class MicrobiologyCultureViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
 class MicrobiologyIsolateViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
     queryset = MicrobiologyIsolate.objects.select_related("culture").all()
     serializer_class = MicrobiologyIsolateSerializer
+    filterset_fields = ["culture", "is_significant"]
     search_fields = ["custom_id", "organism_name", "gram_stain", "notes"]
     ordering_fields = ["organism_name", "is_significant", "created_at"]
 
@@ -1045,6 +1122,36 @@ class AntibioticSusceptibilityViewSet(ValidatedSearchOrderingMixin, TenantScoped
     filterset_fields = ["result", "method", "isolate"]
     search_fields = ["custom_id", "antibiotic", "mic_value"]
     ordering_fields = ["antibiotic", "result", "method", "created_at"]
+
+    # Estados de cultura que exigem subcultura/antibiograma (crescimento confirmado).
+    POSITIVE_CULTURE_STATUSES = [
+        MicrobiologyCulture.Status.GROWTH,
+        MicrobiologyCulture.Status.POSITIVE,
+    ]
+
+    @action(detail=False, methods=["get"], url_path="queue", url_name="queue")
+    def queue(self, request):
+        """Culturas positivas/com crescimento pendentes de subcultura e antibiograma."""
+        tenant = self._get_request_tenant()
+
+        cultures = (
+            MicrobiologyCulture.objects.select_related(
+                "order_item",
+                "order_item__order",
+                "order_item__order__patient",
+                "order_item__test",
+                "sample",
+            )
+            .filter(status__in=self.POSITIVE_CULTURE_STATUSES)
+            .prefetch_related("isolates__susceptibilities")
+            .order_by("-read_at", "-created_at")
+        )
+        if tenant is not None:
+            cultures = cultures.filter(tenant=tenant)
+        cultures = cultures[:200]
+
+        payload = [build_antibiogram_culture_payload(culture) for culture in cultures]
+        return Response(payload)
 
 
 class MolecularResultViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, ModelViewSet):
