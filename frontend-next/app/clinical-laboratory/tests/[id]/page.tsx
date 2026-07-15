@@ -6,6 +6,7 @@ import { useParams } from "next/navigation";
 import {
   AlertTriangle,
   ArrowDown,
+  ArrowLeft,
   ArrowUp,
   Check,
   CheckCircle2,
@@ -460,6 +461,10 @@ export default function LabTestDetailPage() {
               </div>
             </div>
             <div className="flex items-center gap-2">
+              <Link href="/clinical-laboratory/tests"
+                className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-border bg-card px-3 text-xs font-medium text-foreground transition hover:bg-muted">
+                <ArrowLeft size={13} /> Voltar
+              </Link>
               <button type="button" onClick={toggleActive} disabled={toggling}
                 className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-border bg-card px-3 text-xs font-medium text-foreground transition hover:bg-muted disabled:opacity-50">
                 {toggling ? <Loader2 size={13} className="animate-spin" /> : test.active ? <ToggleLeft size={13} /> : <ToggleRight size={13} className="text-emerald-500" />}
