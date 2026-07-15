@@ -350,10 +350,10 @@ function ReportCard({
   }
 
   return (
-    <div className="group relative flex flex-col overflow-hidden rounded-xl border border-white/50 bg-white/30 shadow-sm backdrop-blur-sm transition hover:border-white/70 hover:bg-white/50 hover:shadow-md dark:border-white/10 dark:bg-white/[0.04] dark:hover:border-white/20 dark:hover:bg-white/[0.08]">
+    <div className="group relative overflow-hidden rounded-xl border border-white/50 bg-white/30 px-3 py-2 pl-4 shadow-sm backdrop-blur-sm transition hover:border-white/70 hover:bg-white/50 hover:shadow-md dark:border-white/10 dark:bg-white/[0.04] dark:hover:border-white/20 dark:hover:bg-white/[0.08]">
+      <span className="absolute left-0 top-0 h-full w-1 bg-sky-400" />
 
-      {/* código + prioridade */}
-      <div className="flex items-center justify-between gap-2 px-3 pt-2.5 pb-1.5">
+      <div className="flex items-center justify-between gap-2">
         <Link href={`/requests/${row.id}`}
           className="font-mono text-[10px] font-bold text-sky-700 hover:underline dark:text-sky-300 truncate">
           {row.custom_id ?? `#${row.id}`}
@@ -365,16 +365,12 @@ function ReportCard({
         )}
       </div>
 
-      {/* paciente */}
-      <div className="border-t border-white/40 px-3 py-2 dark:border-white/10">
-        <p className="truncate text-[12px] font-semibold text-foreground leading-snug">
-          {row.patient_name || "—"}
-        </p>
-        {meta && <p className="mt-0.5 text-[10px] text-[var(--gray-500)]">{meta}</p>}
-      </div>
+      <p className="mt-0.5 truncate text-[12px] font-semibold text-foreground leading-snug">
+        {row.patient_name || "—"}
+        {meta && <span className="ml-1.5 text-[10px] font-normal text-[var(--gray-500)]">{meta}</span>}
+      </p>
 
-      {/* acções */}
-      <div className="flex items-center gap-1.5 border-t border-white/40 px-3 py-2 dark:border-white/10">
+      <div className="mt-1.5 flex items-center gap-1.5">
         <button type="button" onClick={openPdf}
           className="inline-flex h-6 items-center gap-1 rounded-lg bg-sky-600 px-2.5 text-[9px] font-semibold text-white shadow-sm transition hover:bg-sky-700">
           Imprimir PDF
@@ -476,49 +472,26 @@ export default function LabReportsPage() {
           </div>
         )}
 
-        {/* ── Kanban board ── */}
+        {/* ── Cartões de laudos ── */}
         {loading && rows.length === 0 ? (
           <div className="flex items-center justify-center gap-2 py-16 text-[12px] text-[var(--gray-400)]">
             <Loader2 size={16} className="animate-spin" /> A carregar laudos...
           </div>
+        ) : rows.length === 0 ? (
+          <div className="rounded-xl border border-dashed border-white/60 px-3 py-10 text-center text-[11px] text-[var(--gray-400)] dark:border-white/10">
+            Sem laudos.
+          </div>
         ) : (
-          <div className={`grid w-full min-w-0 grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-4 transition-opacity ${loading ? "opacity-60" : ""}`} style={{ height: "calc(100vh - 185px)" }}>
-            {COLUMNS.map((col) => {
-              const items = buckets[col.key]
-              return (
-                <section key={col.key}
-                  className={`relative flex min-h-0 flex-col overflow-hidden rounded-xl border bg-gradient-to-br shadow-sm backdrop-blur-sm ${col.colBg}`}>
-                  <span className={`absolute left-0 top-0 h-full w-1 ${col.leftBar}`} />
-
-                  <div className="flex shrink-0 items-center justify-between gap-2 px-3 pb-2.5 pl-4 pt-3">
-                    <h2 className={`text-[10px] font-bold uppercase tracking-widest ${col.headerCls}`}>
-                      {col.title}
-                    </h2>
-                    <span className={`inline-flex min-w-5 items-center justify-center rounded-full px-1.5 py-0.5 text-[9px] font-bold ${col.badge}`}>
-                      {items.length}
-                    </span>
-                  </div>
-
-                  <div className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto px-3 pb-3 pl-4 [scrollbar-width:thin]">
-                    {items.length === 0 ? (
-                      <div className="rounded-xl border border-dashed border-white/60 px-3 py-6 text-center text-[10px] text-[var(--gray-400)] dark:border-white/10">
-                        Sem laudos.
-                      </div>
-                    ) : (
-                      items.map((row) => (
-                        <ReportCard
-                          key={row.id}
-                          row={row}
-                          onNotify={handleNotify}
-                          busy={busyId === row.id}
-                          notified={notifiedId === row.id}
-                        />
-                      ))
-                    )}
-                  </div>
-                </section>
-              )
-            })}
+          <div className={`grid w-full min-w-0 grid-cols-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 transition-opacity ${loading ? "opacity-60" : ""}`}>
+            {rows.map((row) => (
+              <ReportCard
+                key={row.id}
+                row={row}
+                onNotify={handleNotify}
+                busy={busyId === row.id}
+                notified={notifiedId === row.id}
+              />
+            ))}
           </div>
         )}
       </div>
