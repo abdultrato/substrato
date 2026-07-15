@@ -136,28 +136,24 @@ export default function ProntuarioPage() {
 
   return (
     <AppLayout
-      requiredGroups={[
-        GROUPS.ADMIN,
-        GROUPS.MEDICINA,
-        GROUPS.MEDICINA_OCUPACIONAL,
-      ]}
+      requiredGroups={[GROUPS.ADMIN, GROUPS.MEDICINA, GROUPS.ENFERMAGEM]}
     >
-      <div className="space-y-6">
-        <div className="relative overflow-hidden rounded-2xl border border-slate-200/70 bg-white/75 p-5 shadow-sm backdrop-blur-sm dark:border-slate-800/80 dark:bg-slate-950/45">
-          <div className="absolute inset-y-0 left-0 w-1.5 bg-gradient-to-b from-sky-500 via-cyan-500 to-teal-400" />
-          <div className="flex flex-wrap items-start justify-between gap-3 pl-2">
-            <div className="min-w-0 space-y-1">
-              <h1 className="text-lg font-bold text-foreground">Prontuário</h1>
-              <p className="text-sm text-muted-foreground">
+      <div className="space-y-2">
+        <div className="relative overflow-hidden rounded-xl border border-slate-200/70 bg-white/75 p-2.5 shadow-sm backdrop-blur-sm dark:border-slate-800/80 dark:bg-slate-950/45">
+          <div className="absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-sky-500 via-cyan-500 to-teal-400" />
+          <div className="flex flex-wrap items-center justify-between gap-2 pl-2">
+            <div className="min-w-0">
+              <h1 className="text-base font-bold leading-tight text-foreground">Prontuário</h1>
+              <p className="text-xs text-muted-foreground">
                 Cardex e prescrição estruturada.
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
               <Link
                 href="/medicine"
-                className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-100 dark:hover:bg-slate-900"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-800 shadow-sm transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-100 dark:hover:bg-slate-900"
               >
-                <ArrowLeft size={15} />
+                <ArrowLeft size={14} />
                 Voltar
               </Link>
             </div>
@@ -165,12 +161,12 @@ export default function ProntuarioPage() {
         </div>
 
         {erro ? (
-          <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
             {erro}
           </div>
         ) : null}
 
-        <div className="flex flex-wrap gap-4">
+        <div className="flex flex-wrap gap-2">
           {recordMetricCards.map((card) => (
             <div
               key={card.label}
