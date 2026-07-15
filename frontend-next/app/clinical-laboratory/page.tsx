@@ -348,12 +348,15 @@ export default function ClinicalLaboratoryHubPage() {
     async function load() {
       const safe = async (ep: string) => {
         try {
+          // Vários endpoints do LIS não paginam (devolvem a coleção inteira),
+          // pelo que o total real vem de items.length. Como corre no runserver
+          // (série), 9 pedidos em paralelo podem ser lentos — timeout folgado.
           const { items, meta } = await apiFetchList(ep, {
             page: 1,
             pageSize: 1,
             clientCache: false,
-            timeoutMs: 4000,
-            retryOnTimeout: 0,
+            timeoutMs: 20000,
+            retryOnTimeout: 1,
           });
           return meta.total ?? items.length ?? 0;
         } catch (e) {
