@@ -6,7 +6,7 @@ import { ArrowLeft, FlaskConical, Loader2, Save } from "lucide-react";
 
 import AppLayout from "@/components/layout/AppLayout";
 import { apiFetch, apiFetchList } from "@/lib/api";
-import { requiredGroupsForResourceGroup } from "@/lib/resourcesAccess";
+import { GROUPS } from "@/lib/rbac";
 import { LAB_METHOD_OPTIONS } from "@/lib/clinicalLabMethods";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -144,7 +144,7 @@ export default function LabTestEditPage() {
   }
 
   return (
-    <AppLayout requiredGroups={requiredGroupsForResourceGroup("clinical_laboratory")}>
+    <AppLayout accessRestrictionMode="page" requiredGroups={[GROUPS.ADMIN]}>
       <form onSubmit={handleSubmit} noValidate className="mx-auto w-full max-w-2xl space-y-1.5">
 
         {/* Header */}

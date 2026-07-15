@@ -264,17 +264,6 @@ export default function AppLayout ( {
                                 <div className="font-semibold">
                                     {t("Acesso limitado nesta página.", "Limited access on this page.")}
                                 </div>
-                                <p className="mt-1 text-[13px] text-amber-900/90 dark:text-amber-100/85">
-                                    {t(
-                                        "A página continua disponível, mas os dados e ações protegidos dependem do seu grupo.",
-                                        "The page remains available, but protected data and actions still depend on your group.",
-                                    )}
-                                </p>
-                                <p className="mt-2 text-xs text-amber-900/80 dark:text-amber-100/75">
-                                    {t("Requer", "Requires")}: {requiredGroups?.join(", ") || "—"}
-                                    {" · "}
-                                    {t("Seus grupos", "Your groups")}: {user?.groups?.join(", ") || "—"}
-                                </p>
                             </div>
                         ) : null}
                         <AutoTranslateTree>{children}</AutoTranslateTree>

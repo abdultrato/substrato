@@ -404,7 +404,11 @@ export default function ClinicalLaboratoryHubPage() {
   ];
 
   return (
-    <AppLayout fullWidth requiredGroups={[GROUPS.ADMIN, GROUPS.LABORATORIO]}>
+    <AppLayout
+      fullWidth
+      accessRestrictionMode="page"
+      requiredGroups={[GROUPS.ADMIN, GROUPS.LABORATORIO]}
+    >
       <div className="mx-auto box-border w-full max-w-full space-y-1 px-1">
         <div className="relative overflow-hidden rounded-xl border border-teal-200/80 bg-gradient-to-br from-teal-50/90 via-card to-card dark:border-teal-900/40 dark:from-teal-950/25 dark:via-card dark:to-card">
           <span

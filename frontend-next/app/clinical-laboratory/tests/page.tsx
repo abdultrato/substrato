@@ -16,7 +16,7 @@ import AppLayout from "@/components/layout/AppLayout";
 import { apiFetchList } from "@/lib/api";
 import { formatCount } from "@/lib/i18n/plural";
 import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh";
-import { requiredGroupsForResourceGroup } from "@/lib/resourcesAccess";
+import { GROUPS } from "@/lib/rbac";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -105,7 +105,7 @@ export default function LabTestsPage() {
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   return (
-    <AppLayout requiredGroups={requiredGroupsForResourceGroup("clinical_laboratory")}>
+    <AppLayout accessRestrictionMode="page" requiredGroups={[GROUPS.ADMIN]}>
       <div className="space-y-3">
 
         {/* Hero */}

@@ -6,7 +6,7 @@ import { ArrowLeft, FlaskConical, Loader2, Plus, Save, Trash2 } from "lucide-rea
 
 import AppLayout from "@/components/layout/AppLayout";
 import { apiFetch, apiFetchList } from "@/lib/api";
-import { requiredGroupsForResourceGroup } from "@/lib/resourcesAccess";
+import { GROUPS } from "@/lib/rbac";
 import { LAB_METHOD_OPTIONS } from "@/lib/clinicalLabMethods";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -324,7 +324,7 @@ function NewLabTestForm() {
   }
 
   return (
-    <AppLayout requiredGroups={requiredGroupsForResourceGroup("clinical_laboratory")}>
+    <AppLayout accessRestrictionMode="page" requiredGroups={[GROUPS.ADMIN]}>
       <form onSubmit={handleSubmit} noValidate className="mx-auto w-full max-w-2xl space-y-3">
 
         {/* Header */}

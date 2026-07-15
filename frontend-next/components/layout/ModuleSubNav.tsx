@@ -5,11 +5,14 @@ import { usePathname, useRouter } from "next/navigation"
 import { useCallback, useEffect, useRef, useState } from "react"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { useLanguage } from "@/hooks/useLanguage"
+import { useAuth } from "@/hooks/useAuth"
+import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
 
 type NavTab = {
     href: string
     label: string
     labelEn?: string
+    groups?: string[]
 }
 
 type ModuleNavConfig = {
@@ -42,7 +45,12 @@ const MODULE_NAVS: ModuleNavConfig[] = [
             { href: "/medical-records", label: "Prontuário", labelEn: "Medical records" },
             { href: "/medicine", label: "Medicina", labelEn: "Medicine" },
             { href: "/nursing", label: "Enfermagem", labelEn: "Nursing" },
-            { href: "/clinical-laboratory", label: "Laboratório", labelEn: "Laboratory" },
+            {
+                href: "/clinical-laboratory",
+                label: "Laboratório",
+                labelEn: "Laboratory",
+                groups: [GROUPS.ADMIN, GROUPS.LABORATORIO],
+            },
             { href: "/bloodbank", label: "Banco de Sangue", labelEn: "Blood bank" },
             { href: "/pharmacy", label: "Farmácia", labelEn: "Pharmacy" },
             { href: "/telemedicine", label: "Telemedicina", labelEn: "Telemedicine" },
@@ -554,10 +562,15 @@ export default function ModuleSubNav() {
     const pathname = usePathname() || "/"
     const router = useRouter()
     const { t } = useLanguage()
+    const { user } = useAuth()
     const moduleNav = resolveModule(pathname)
     const [canScrollLeft, setCanScrollLeft] = useState(false)
     const [canScrollRight, setCanScrollRight] = useState(false)
     const navScrollerRef = useRef<HTMLDivElement>(null)
+    const visibleTabs = moduleNav?.tabs.filter((tab) => {
+        if (!tab.groups?.length) return true
+        return userHasAnyGroup(user, tab.groups)
+    }) || []
 
     const updateNavScrollState = useCallback(() => {
         const scroller = navScrollerRef.current
@@ -591,7 +604,7 @@ export default function ModuleSubNav() {
         }
     }, [moduleNav, updateNavScrollState])
 
-    if (!moduleNav) return null
+    if (!moduleNav || !visibleTabs.length) return null
 
     return (
         <nav className="shrink-0 border-b border-border/50 bg-primary/[0.06] backdrop-blur supports-[backdrop-filter]:bg-primary/[0.07] dark:bg-primary/[0.09]">
@@ -628,7 +641,7 @@ export default function ModuleSubNav() {
                     ref={navScrollerRef}
                     className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
                 >
-                    {moduleNav.tabs.map((tab) => {
+                    {visibleTabs.map((tab) => {
                         const active = isActive(pathname, tab.href)
                         return (
                             <Link

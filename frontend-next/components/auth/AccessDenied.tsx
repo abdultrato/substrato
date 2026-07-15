@@ -80,7 +80,6 @@ const WORKSPACE_STYLE: Record<string, { icon: LucideIcon; tone: string; bar: str
 const WORKSPACE_FALLBACK = { icon: LayoutDashboard, tone: "bg-slate-500/15 text-slate-600 dark:text-slate-300", bar: "bg-slate-400" }
 
 export default function AccessDenied({
-  requiredGroups,
   user,
   fallbackHref = "/",
   title = "Acesso restrito",
@@ -113,29 +112,6 @@ export default function AccessDenied({
           </div>
         </div>
       </section>
-
-      {/* ── Requer / Seus grupos ── */}
-      <div className="grid gap-1.5 sm:grid-cols-2">
-        <section className={`relative overflow-hidden ${GLASS}`}>
-          <span className="absolute left-0 top-0 h-full w-1 bg-rose-500" />
-          <div className="px-3 py-2 pl-4">
-            <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">Requer</div>
-            <div className="mt-1 text-sm font-medium text-foreground">
-              {requiredGroups?.length ? requiredGroups.join(", ") : "—"}
-            </div>
-          </div>
-        </section>
-
-        <section className={`relative overflow-hidden ${GLASS}`}>
-          <span className="absolute left-0 top-0 h-full w-1 bg-sky-500" />
-          <div className="px-3 py-2 pl-4">
-            <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">Seus grupos</div>
-            <div className="mt-1 text-sm font-medium text-foreground">
-              {user?.groups?.length ? user.groups.join(", ") : "—"}
-            </div>
-          </div>
-        </section>
-      </div>
 
       {/* ── Áreas disponíveis ── */}
       {workspaces.length ? (

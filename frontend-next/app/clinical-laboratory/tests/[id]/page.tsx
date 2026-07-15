@@ -24,7 +24,7 @@ import {
 
 import AppLayout from "@/components/layout/AppLayout";
 import { apiFetch, apiFetchList } from "@/lib/api";
-import { requiredGroupsForResourceGroup } from "@/lib/resourcesAccess";
+import { GROUPS } from "@/lib/rbac";
 import { LAB_METHOD_OPTIONS } from "@/lib/clinicalLabMethods";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -422,7 +422,7 @@ export default function LabTestDetailPage() {
   }
 
   if (loading) return (
-    <AppLayout requiredGroups={requiredGroupsForResourceGroup("clinical_laboratory")}>
+    <AppLayout accessRestrictionMode="page" requiredGroups={[GROUPS.ADMIN]}>
       <div className="flex items-center justify-center gap-2 py-20 text-sm text-muted-foreground">
         <Loader2 size={16} className="animate-spin" /> Carregando…
       </div>
@@ -430,7 +430,7 @@ export default function LabTestDetailPage() {
   );
 
   if (error || !test) return (
-    <AppLayout requiredGroups={requiredGroupsForResourceGroup("clinical_laboratory")}>
+    <AppLayout accessRestrictionMode="page" requiredGroups={[GROUPS.ADMIN]}>
       <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-8 text-center text-sm text-red-800">
         {error || "Exame não encontrado."}
       </div>
@@ -438,7 +438,7 @@ export default function LabTestDetailPage() {
   );
 
   return (
-    <AppLayout requiredGroups={requiredGroupsForResourceGroup("clinical_laboratory")}>
+    <AppLayout accessRestrictionMode="page" requiredGroups={[GROUPS.ADMIN]}>
       <div className="space-y-1.5">
 
         {/* Header */}

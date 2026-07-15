@@ -6,7 +6,7 @@ import { ArrowLeft, FlaskConical, Loader2, Save } from "lucide-react";
 
 import AppLayout from "@/components/layout/AppLayout";
 import { apiFetch } from "@/lib/api";
-import { requiredGroupsForResourceGroup } from "@/lib/resourcesAccess";
+import { GROUPS } from "@/lib/rbac";
 
 const UNIT_OPTIONS = [
   "", "g/dl", "g/L", "mg/dl", "mg/L", "mg/24h", "µg/dL", "µg/L", "µg/mL",
@@ -114,7 +114,7 @@ function NewTestFieldForm() {
   }
 
   return (
-    <AppLayout requiredGroups={requiredGroupsForResourceGroup("clinical_laboratory")}>
+    <AppLayout accessRestrictionMode="page" requiredGroups={[GROUPS.ADMIN]}>
       <form onSubmit={handleSubmit} noValidate className="mx-auto w-full max-w-xl space-y-3">
 
         {/* Header */}
