@@ -11,6 +11,11 @@ from django.db import transaction
 from apps.tenants.models.tenant import Tenant
 from security.permissions.rbac import GROUPS as RBAC_GROUPS
 
+GROUP_KEY_ALIASES = {
+    "TEACHER": "PROFESSOR",
+    "STUDENT_EN": "ESTUDANTE",
+}
+
 
 def _normalize(value: str) -> str:
     value = (value or "").strip().lower()
@@ -42,10 +47,17 @@ def _resolve_group_name(group_input: str) -> str:
 
     # Accept keys (ADMIN, RECEPCAO...) or the final human name ("Recepcionista").
     key = raw.upper()
+    key = GROUP_KEY_ALIASES.get(key, key)
     if key in RBAC_GROUPS:
         return RBAC_GROUPS[key]
 
-    by_norm_name = {_normalize(v): v for v in RBAC_GROUPS.values()}
+    by_norm_name = {
+        _normalize(name): name
+        for group_key, name in RBAC_GROUPS.items()
+        if group_key not in GROUP_KEY_ALIASES
+    }
+    by_norm_name[_normalize(RBAC_GROUPS["TEACHER"])] = RBAC_GROUPS["PROFESSOR"]
+    by_norm_name[_normalize(RBAC_GROUPS["STUDENT_EN"])] = RBAC_GROUPS["ESTUDANTE"]
     normalized = _normalize(raw)
     if normalized in by_norm_name:
         return by_norm_name[normalized]
@@ -97,6 +109,8 @@ class Command(BaseCommand):
         if options.get("list_groups"):
             self.stdout.write("Grupos RBAC disponíveis:")
             for key, name in RBAC_GROUPS.items():
+                if key in GROUP_KEY_ALIASES:
+                    continue
                 self.stdout.write(f"- {key}: {name}")
             return
 
@@ -201,7 +215,11 @@ class Command(BaseCommand):
 
         if options.get("exclusive"):
             # Remove other RBAC groups to avoid mixed roles.
-            rbac_group_names = list(RBAC_GROUPS.values())
+            rbac_group_names = [
+                name
+                for key, name in RBAC_GROUPS.items()
+                if key not in GROUP_KEY_ALIASES
+            ]
             other_groups = Group.objects.filter(name__in=rbac_group_names).exclude(name=group.name)
             if other_groups.exists():
                 user.groups.remove(*list(other_groups))

@@ -6,27 +6,49 @@ from django.contrib.auth.models import Group, Permission
 from django.core.management.base import BaseCommand
 from django.db import transaction
 
-CANONICAL_GROUPS: list[str] = [
-    # Admin
-    "Administrador",
-    # Operacao
-    "Recepcionista",
-    "Técnico de Laboratório",
-    "Enfermeiro",
-    "Médico",
-    "Técnico de Farmácia",
-    "Medicina Ocupacional",
-    "Contabilidade",
-    # Educacao
-    "Professor",
-    "Diretor da Escola",
-    "Diretor Adjunto Pedagógico",
-    "Encarregado de Educação",
-    "Estudante",
-]
+from security.permissions.rbac import GROUPS as RBAC_GROUPS
+
+CANONICAL_GROUP_KEYS: tuple[str, ...] = (
+    "ADMIN",
+    "RECEPCAO",
+    "LABORATORIO",
+    "ENFERMAGEM",
+    "MEDICINA",
+    "MEDICINA_OCUPACIONAL",
+    "FARMACIA",
+    "FARMACIA_CLINICA",
+    "CONTABILIDADE",
+    "RECURSOS_HUMANOS",
+    "PROFESSOR",
+    "DIRETOR_ESCOLA",
+    "DIRETOR_ADJUNTO_PEDAGOGICO",
+    "ENCARREGADO_EDUCACAO",
+    "ESTUDANTE",
+    "ODONTOLOGIA",
+    "VETERINARIA",
+    "FISIOTERAPIA",
+    "RADIOLOGIA",
+    "CARDIOLOGIA",
+    "NEUROLOGIA",
+    "OFTALMOLOGIA",
+    "TERAPIA_OCUPACIONAL",
+    "FONOAUDIOLOGIA",
+    "TELEMEDICINA",
+    "SAUDE_PUBLICA",
+    "CREDITO_FINANCIAMENTO",
+    "LOGISTICA",
+    "MANUTENCAO",
+)
+
+CANONICAL_GROUPS: list[str] = [RBAC_GROUPS[key] for key in CANONICAL_GROUP_KEYS]
 
 ALIASES: dict[str, list[str]] = {
     # Canonical -> aliases seen historically (sem/partial acentos).
+    "Recepcionista": [
+        "reception",
+        "Recepção",
+        "Recepcao",
+    ],
     "Técnico de Laboratório": [
         "Tecnico de Laboratorio",
         "Tecnico de Laboratório",
@@ -39,6 +61,14 @@ ALIASES: dict[str, list[str]] = {
     ],
     "Médico": [
         "Medico",
+    ],
+    "Farmácia Clínica": [
+        "Farmacia Clinica",
+    ],
+    "Gestor de RH": [
+        "RH",
+        "Recursos Humanos",
+        "Human Resources",
     ],
     "Diretor da Escola": [
         "Director da Escola",
@@ -53,6 +83,31 @@ ALIASES: dict[str, list[str]] = {
     ],
     "Encarregado de Educação": [
         "Encarregado de Educacao",
+    ],
+    "Estudante": [
+        "Student",
+    ],
+    "Professor": [
+        "Teacher",
+    ],
+    "Créditos e Financiamento": [
+        "Creditos e Financiamento",
+        "Crédito e Financiamento",
+        "Credito e Financiamento",
+    ],
+    "Gestor de Logística": [
+        "Gestor de Logistica",
+        "Logística",
+        "Logistica",
+    ],
+    "Saúde Pública": [
+        "Saude Publica",
+    ],
+    "Medicina Veterinária": [
+        "Medicina Veterinaria",
+    ],
+    "Terapia Ocupacional": [
+        "Occupational Therapy",
     ],
 }
 
