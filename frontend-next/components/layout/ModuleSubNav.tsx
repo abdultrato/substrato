@@ -43,7 +43,7 @@ const MODULE_NAVS: ModuleNavConfig[] = [
             { href: "/consultations", label: "Consultas", labelEn: "Consultations", groups: [GROUPS.ADMIN, GROUPS.RECEPCAO, GROUPS.MEDICINA] },
             { href: "/requests", label: "Requisições", labelEn: "Requests", groups: [GROUPS.ADMIN, GROUPS.RECEPCAO, GROUPS.MEDICINA] },
             { href: "/medical-records", label: "Prontuário", labelEn: "Medical records" },
-            { href: "/medicine", label: "Medicina", labelEn: "Medicine" },
+            { href: "/medicine", label: "Medicina", labelEn: "Medicine", groups: [GROUPS.ADMIN, GROUPS.MEDICINA] },
             { href: "/nursing", label: "Enfermagem", labelEn: "Nursing" },
             {
                 href: "/clinical-laboratory",

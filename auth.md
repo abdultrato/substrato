@@ -33,6 +33,9 @@
 - `/consultations/`
   - Acesso: `Administrador`, `Recepcionista` e `Médico`.
 
+- `/medicine/`
+  - Acesso: `Administrador` e `Médico`.
+
 - `/requests/new/`
   - Criacao de requisicoes de exames medicos e laboratoriais: `Administrador`, `Recepcionista` e `Médico`.
 
