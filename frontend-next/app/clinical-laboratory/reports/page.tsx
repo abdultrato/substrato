@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { ChevronDown, ChevronLeft, FileText, Loader2, Search, SlidersHorizontal } from "lucide-react"
 import { useCallback, useEffect, useMemo, useState } from "react"
 
@@ -356,19 +357,27 @@ function ReportCard({
   busy: boolean
   notified: boolean
 }) {
+  const router = useRouter()
   const priority = getClinicalStatusLabel(row.clinical_status, row.clinical_status_display)
   const meta = [row.patient_age, genderLabel(row.patient_gender)].filter(Boolean).join(" · ")
 
-  function openPdf() {
+  function openPdf(e: React.MouseEvent) {
+    e.stopPropagation()
     window.open(`/api/v1/clinical/labrequest/${row.id}/results-pdf/`, "_blank")
+  }
+  function handleNotify(e: React.MouseEvent) {
+    e.stopPropagation()
+    onNotify(row)
   }
 
   return (
-    <div className="group relative overflow-hidden rounded-xl border border-white/50 bg-white/30 px-2 py-1.5 pl-3 shadow-sm backdrop-blur-sm transition hover:border-white/70 hover:bg-white/50 hover:shadow-md dark:border-white/10 dark:bg-white/[0.04] dark:hover:border-white/20 dark:hover:bg-white/[0.08]">
+    <div
+      onClick={() => router.push(`/clinical-laboratory/reports/request/${row.id}`)}
+      className="group relative cursor-pointer overflow-hidden rounded-xl border border-white/50 bg-white/30 px-2 py-1.5 pl-3 shadow-sm backdrop-blur-sm transition hover:border-white/70 hover:bg-white/50 hover:shadow-md dark:border-white/10 dark:bg-white/[0.04] dark:hover:border-white/20 dark:hover:bg-white/[0.08]">
       <span className="absolute left-0 top-0 h-full w-1 bg-sky-400" />
 
       <div className="flex items-center justify-between gap-1.5">
-        <Link href={`/requests/${row.id}`}
+        <Link href={`/clinical-laboratory/reports/request/${row.id}`} onClick={(e) => e.stopPropagation()}
           className="font-mono text-[10px] font-bold text-sky-700 hover:underline dark:text-sky-300 truncate">
           {row.custom_id ?? `#${row.id}`}
         </Link>
@@ -389,7 +398,7 @@ function ReportCard({
           className="inline-flex h-6 items-center gap-1 rounded-lg bg-sky-600 px-2 text-[9px] font-semibold text-white shadow-sm transition hover:bg-sky-700">
           Imprimir PDF
         </button>
-        <button type="button" onClick={() => onNotify(row)} disabled={busy}
+        <button type="button" onClick={handleNotify} disabled={busy}
           className={`inline-flex h-6 items-center gap-1 rounded-lg border px-2 text-[9px] font-medium shadow-sm transition disabled:opacity-60 ${
             notified
               ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800/40 dark:bg-emerald-900/20 dark:text-emerald-300"
