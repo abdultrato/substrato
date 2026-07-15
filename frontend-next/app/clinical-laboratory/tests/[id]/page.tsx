@@ -438,7 +438,7 @@ export default function LabTestDetailPage() {
 
   return (
     <AppLayout requiredGroups={requiredGroupsForResourceGroup("clinical_laboratory")}>
-      <div className="space-y-3">
+      <div className="space-y-1.5">
 
         {/* Header */}
         <div className="relative overflow-hidden rounded-xl border border-white/20 bg-white/30 px-4 py-3 shadow-sm backdrop-blur-sm dark:bg-white/5 dark:border-white/10">
@@ -473,7 +473,7 @@ export default function LabTestDetailPage() {
           </div>
         </div>
 
-        <div className="grid gap-3 lg:grid-cols-2">
+        <div className="grid grid-cols-2 items-start gap-1.5">
           <SectionCard icon={FlaskConical} title="Identificação">
             <div className="divide-y divide-border/30">
               <InfoRow label="Sector" value={test.sector_name || "—"} />
