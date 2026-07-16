@@ -8,7 +8,7 @@ import {
   AlertTriangle, ArrowLeft, BarChart2, CheckCircle2,
   Circle, Clock, FlaskConical, Stethoscope, TestTube2,
   User, Building2, CalendarClock, Droplets, Zap, FileText,
-  Loader2, Send, Printer,
+  Loader2, Send, Printer, Bell,
 } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
@@ -150,6 +150,7 @@ export default function RequestDetailPage() {
   const id = String((params as any)?.id || "")
   const safeRefreshToken = useSafeDataRefreshSignal()
   const [forwarding, setForwarding] = useState(false)
+  const [notifying, setNotifying] = useState(false)
   const [actionNotice, setActionNotice] = useState<{ kind: "ok" | "error"; text: string } | null>(null)
 
   const { data: r, isLoading, error, refetch } = useQuery({
@@ -208,11 +209,18 @@ export default function RequestDetailPage() {
   const collectedAt     = val(r, "collected_at")
   const collectedBy     = val(r, "collected_by_name")
   const canForward      = String(status).toLowerCase() === "pendente" && !validatedAt
+  const reqTypeLabel    = reqType === "LAB" ? "Requisição Laboratorial"
+                        : reqType === "MED" ? "Requisição de Exame Médico"
+                        : reqType
 
   const tests: any[]   = Array.isArray(r?.requested_tests) ? r.requested_tests
                        : Array.isArray(r?.items)            ? r.items
                        : Array.isArray(r?.itens)            ? r.itens
                        : []
+  // Amostras já recebidas pelo laboratório: a edição fica bloqueada (regra
+  // reforçada no backend; alterações passam por nota de crédito).
+  const requestItems: any[] = Array.isArray(r?.items) ? r.items : Array.isArray(r?.itens) ? r.itens : []
+  const samplesReceived = requestItems.some((item) => String(item?.sample_status || "") === "recebida")
   const samples: any[] = Array.isArray(r?.sample_details)  ? r.sample_details
                        : Array.isArray(r?.sample_options)   ? r.sample_options
                        : []
@@ -253,6 +261,29 @@ export default function RequestDetailPage() {
     }
   }
 
+  async function notifyPatient() {
+    setNotifying(true)
+    setActionNotice(null)
+    try {
+      await apiFetch(`${ENDPOINT}${id}/send-results-notification/`, {
+        method: "POST",
+        body: JSON.stringify({}),
+        clientCache: false,
+      })
+      setActionNotice({
+        kind: "ok",
+        text: t("Notificação enviada ao paciente.", "Notification sent to the patient."),
+      })
+    } catch (err: any) {
+      setActionNotice({
+        kind: "error",
+        text: err?.message || t("Falha ao notificar o paciente.", "Failed to notify the patient."),
+      })
+    } finally {
+      setNotifying(false)
+    }
+  }
+
   function openRequestPdf() {
     if (!id) return
     window.open(`/api/v1/clinical/labrequest/${id}/request-pdf/`, "_blank")
@@ -286,7 +317,7 @@ export default function RequestDetailPage() {
               </span>
               <ManchesterBadge status={clinicalStatus} display={clinicalDisplay} className="px-2.5 py-0.5 text-[11px]" />
               {hasCritical   ? <span className="inline-flex items-center gap-1 rounded-full border border-red-400 bg-red-50 px-2.5 py-0.5 text-[11px] font-bold text-red-700"><AlertTriangle size={9} />Resultado crítico</span> : null}
-              {reqType       ? <span className="rounded-full border border-[var(--primary-200)] bg-[var(--primary-50)] px-2.5 py-0.5 text-[11px] font-semibold text-[var(--primary-700)]">{reqType}</span> : null}
+              {reqTypeLabel  ? <span className="rounded-full border border-[var(--primary-200)] bg-[var(--primary-50)] px-2.5 py-0.5 text-[11px] font-semibold text-[var(--primary-700)]">{reqTypeLabel}</span> : null}
               {isOccupational? <span className="rounded-full border border-violet-200 bg-violet-50 px-2.5 py-0.5 text-[11px] font-semibold text-violet-700">Ocupacional</span> : null}
               {requiresFasting?<span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-0.5 text-[11px] font-semibold text-amber-700"><Zap size={9} />Jejum{Number(fastingHours) > 0 ? ` ${fastingHours}h` : ""}</span> : null}
             </div>
@@ -305,12 +336,25 @@ export default function RequestDetailPage() {
                 {forwarding ? "Encaminhando..." : "Encaminhar"}
               </button>
             ) : null}
-            <Link
-              href={`/requests/${id}/edit`}
-              className="inline-flex h-7 items-center gap-1 rounded-md border border-border bg-background px-2.5 text-xs font-medium text-foreground-2 shadow-sm transition hover:bg-muted hover:text-foreground"
-            >
-              Editar
-            </Link>
+            {reqType === "LAB" ? (
+              <button
+                type="button"
+                onClick={() => void notifyPatient()}
+                disabled={notifying}
+                className="inline-flex h-7 items-center gap-1.5 rounded-md border border-emerald-300 bg-emerald-50 px-2.5 text-xs font-semibold text-emerald-700 shadow-sm transition hover:bg-emerald-100 disabled:opacity-60 dark:border-emerald-700/40 dark:bg-emerald-900/20 dark:text-emerald-300 dark:hover:bg-emerald-900/35"
+              >
+                {notifying ? <Loader2 size={11} className="animate-spin" /> : <Bell size={11} />}
+                {notifying ? "A notificar..." : "Notificar paciente"}
+              </button>
+            ) : null}
+            {!samplesReceived ? (
+              <Link
+                href={`/requests/${id}/edit`}
+                className="inline-flex h-7 items-center gap-1 rounded-md border border-border bg-background px-2.5 text-xs font-medium text-foreground-2 shadow-sm transition hover:bg-muted hover:text-foreground"
+              >
+                Editar
+              </Link>
+            ) : null}
             <button
               type="button"
               onClick={openRequestPdf}
