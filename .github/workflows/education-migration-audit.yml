@@ -140,7 +140,7 @@ jobs:
 
       - name: Notify scheduled failure via issue
         if: ${{ failure() && github.event_name == 'schedule' }}
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const owner = context.repo.owner;
@@ -191,7 +191,7 @@ jobs:
 
       - name: Resolve scheduled failure issue on success
         if: ${{ success() && github.event_name == 'schedule' }}
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const owner = context.repo.owner;
