@@ -253,14 +253,14 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Build backend image (no push)
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: ./Dockerfile
           push: false
 
       - name: Build frontend image (no push)
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: ./Dockerfile.frontend
