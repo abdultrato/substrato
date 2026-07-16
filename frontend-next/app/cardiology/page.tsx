@@ -4,7 +4,7 @@ export default function CardiologyPage() {
   return (
     <SpecialtyDiagnosticsHubPage
       specialty="CARDIOLOGY"
-      title="Substrato Cardiologia"
+      title="Cardiologia"
       resourceBasePath="/cardiology"
       requiredGroups={SPECIALTY_DIAGNOSTICS_GROUPS}
     />

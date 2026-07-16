@@ -4,7 +4,7 @@ export default function NeurologyPage() {
   return (
     <SpecialtyDiagnosticsHubPage
       specialty="NEUROLOGY"
-      title="Substrato Neurologia"
+      title="Neurologia"
       resourceBasePath="/neurology"
       requiredGroups={SPECIALTY_DIAGNOSTICS_GROUPS}
     />

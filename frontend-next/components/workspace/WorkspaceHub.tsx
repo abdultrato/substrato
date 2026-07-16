@@ -1,6 +1,7 @@
 "use client"
 
-import { type LucideIcon } from "lucide-react"
+import Link from "next/link"
+import { ArrowLeft, type LucideIcon } from "lucide-react"
 
 import ActionTile from "@/components/ui/ActionTile"
 import MetricCard from "@/components/ui/MetricCard"
@@ -44,6 +45,9 @@ type WorkspaceHubProps = {
   notes?: string[]
   /** Versão compacta: cabeçalho e subcartões mais pequenos, menos espaçamento. */
   dense?: boolean
+  /** Quando definido, mostra o botão de voltar no início do cabeçalho. */
+  backHref?: string
+  backLabel?: string
 }
 
 export default function WorkspaceHub({
@@ -57,6 +61,8 @@ export default function WorkspaceHub({
   noteTitle,
   notes = [],
   dense,
+  backHref,
+  backLabel,
 }: WorkspaceHubProps) {
   const { tr } = useLanguage()
   const Icon = icon
@@ -66,23 +72,34 @@ export default function WorkspaceHub({
       <div className={`relative overflow-hidden rounded-2xl border border-white/20 bg-white/30 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/5 ${dense ? "p-2.5" : "p-4 sm:p-5"}`}>
         <span aria-hidden className={`absolute inset-x-0 top-0 h-1 ${barClass ?? "bg-primary"}`} />
 
-        <div className={`flex min-w-0 items-center ${dense ? "gap-2" : "gap-3"}`}>
-          {Icon ? (
-            <span
-              className={`flex ${dense ? "h-8 w-8" : "h-10 w-10"} shrink-0 items-center justify-center rounded-xl ${iconClass ?? "bg-muted text-muted-foreground"}`}
-            >
-              <Icon size={dense ? 16 : 20} strokeWidth={2} />
-            </span>
-          ) : null}
-          <div className="min-w-0">
-            <h1 className={`break-words font-display font-semibold text-foreground ${dense ? "text-base sm:text-lg" : "text-xl sm:text-2xl"}`}>
-              {tr(title)}
-            </h1>
-            {subtitle ? <p className={`text-muted-foreground ${dense ? "text-xs" : "mt-0.5 text-sm"}`}>{tr(subtitle)}</p> : null}
+        <div className="flex min-w-0 items-start justify-between gap-2">
+          <div className={`flex min-w-0 items-center ${dense ? "gap-2" : "gap-3"}`}>
+            {Icon ? (
+              <span
+                className={`flex ${dense ? "h-8 w-8" : "h-10 w-10"} shrink-0 items-center justify-center rounded-xl ${iconClass ?? "bg-muted text-muted-foreground"}`}
+              >
+                <Icon size={dense ? 16 : 20} strokeWidth={2} />
+              </span>
+            ) : null}
+            <div className="min-w-0">
+              <h1 className={`break-words font-display font-semibold text-foreground ${dense ? "text-base sm:text-lg" : "text-xl sm:text-2xl"}`}>
+                {tr(title)}
+              </h1>
+              {subtitle ? <p className={`text-muted-foreground ${dense ? "text-xs" : "mt-0.5 text-sm"}`}>{tr(subtitle)}</p> : null}
+            </div>
           </div>
+          {backHref ? (
+            <Link
+              href={backHref}
+              className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border border-border bg-background/80 px-3 text-xs font-semibold text-foreground-2 shadow-sm transition hover:bg-muted hover:text-foreground"
+            >
+              <ArrowLeft size={13} />
+              {tr(backLabel ?? "Voltar")}
+            </Link>
+          ) : null}
         </div>
 
-        <div className={`grid grid-cols-2 gap-1.5 sm:grid-cols-4 ${dense ? "mt-2" : "mt-4"}`}>
+        <div className={`grid gap-1.5 ${dense ? "mt-2 grid-cols-3 lg:grid-cols-6" : "mt-4 grid-cols-2 sm:grid-cols-4"}`}>
           {metrics.map((item) => (
             <MetricCard
               key={item.label}

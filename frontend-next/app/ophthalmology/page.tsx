@@ -4,7 +4,7 @@ export default function OphthalmologyPage() {
   return (
     <SpecialtyDiagnosticsHubPage
       specialty="OPHTHALMOLOGY"
-      title="Substrato Oftalmologia"
+      title="Oftalmologia"
       resourceBasePath="/ophthalmology"
       requiredGroups={SPECIALTY_DIAGNOSTICS_GROUPS}
     />
