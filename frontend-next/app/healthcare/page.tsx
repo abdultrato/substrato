@@ -21,7 +21,6 @@ export default function HealthcarePage() {
   const [patients, setPatients] = useState(0)
   const [consultations, setConsultations] = useState(0)
   const [requests, setRequests] = useState(0)
-  const [results, setResults] = useState(0)
 
   useEffect(() => {
     let mounted = true
@@ -31,18 +30,16 @@ export default function HealthcarePage() {
         setLoading(true)
         setError(null)
 
-        const [patientsRes, consultationsRes, requestsRes, resultsRes] = await Promise.all([
+        const [patientsRes, consultationsRes, requestsRes] = await Promise.all([
           apiFetch<any>("/clinical/patient/", { clientCache: safeRefreshToken === 0 }),
           apiFetch<any>("/consultations/consultation/", { clientCache: safeRefreshToken === 0 }),
           apiFetch<any>("/clinical/labrequest/", { clientCache: safeRefreshToken === 0 }),
-          apiFetch<any>("/clinical/resultitem/", { clientCache: safeRefreshToken === 0 }),
         ])
 
         if (!mounted) return
         setPatients(extractTotalCount(patientsRes))
         setConsultations(extractTotalCount(consultationsRes))
         setRequests(extractTotalCount(requestsRes))
-        setResults(extractTotalCount(resultsRes))
       } catch (e: any) {
         if (!mounted) return
         setError(
@@ -131,7 +128,6 @@ export default function HealthcarePage() {
             { label: "Pacientes", value: metricValue || patients, icon: Users, accentClass: "border-l-sky-500", iconClass: "bg-sky-500/15 text-sky-600 dark:text-sky-300", href: "/patients" },
             { label: "Consultas", value: metricValue || consultations, icon: CalendarClock, accentClass: "border-l-emerald-500", iconClass: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-300", href: "/consultations" },
             { label: "Requisições laboratoriais", value: metricValue || requests, icon: ClipboardList, accentClass: "border-l-violet-500", iconClass: "bg-violet-500/15 text-violet-600 dark:text-violet-300", href: "/requests" },
-            { label: "Itens de resultado", value: metricValue || results, icon: FlaskConical, accentClass: "border-l-amber-500", iconClass: "bg-amber-500/15 text-amber-600 dark:text-amber-300", href: "/clinical/result-items" },
           ]}
           actions={actions}
         />
