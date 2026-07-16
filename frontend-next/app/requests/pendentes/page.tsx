@@ -338,7 +338,7 @@ function RequestCard({
           router.push(`/requests/${row.id}`)
         }
       }}
-      className={`group relative flex cursor-pointer flex-col gap-1.5 rounded-xl border border-[var(--border)] border-l-4 bg-[var(--card)] px-2.5 py-2 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${urgencyAccent(row.clinical_status)}`}
+      className={`group relative flex cursor-pointer flex-col gap-1.5 rounded-xl border border-white/20 border-l-4 bg-white/30 px-2.5 py-2 shadow-sm backdrop-blur-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-white/45 hover:shadow-md dark:border-white/10 dark:bg-white/[0.05] dark:hover:bg-white/[0.09] ${urgencyAccent(row.clinical_status)}`}
     >
 
       {/* Header */}
@@ -349,7 +349,7 @@ function RequestCard({
           {row.patient_age ? <p className="text-[10px] text-[var(--gray-500)]">{row.patient_age}</p> : null}
         </div>
         <div className="flex shrink-0 flex-col items-end gap-0.5">
-          <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${row.type === "LAB" ? "bg-sky-100 text-sky-700" : "bg-violet-100 text-violet-700"}`}>
+          <span className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${row.type === "LAB" ? "border-sky-200/50 bg-sky-100/40 text-sky-700 dark:border-sky-700/30 dark:bg-sky-900/25 dark:text-sky-300" : "border-violet-200/50 bg-violet-100/40 text-violet-700 dark:border-violet-700/30 dark:bg-violet-900/25 dark:text-violet-300"}`}>
             {row.type === "LAB" ? "LAB" : "MED"}
           </span>
           {priorityBadge(row.clinical_status, row.clinical_status_display)}
@@ -360,13 +360,13 @@ function RequestCard({
       {exams.length > 0 ? (
         <div className="relative flex flex-wrap gap-0.5">
           {exams.slice(0, 3).map((name, i) => (
-            <span key={i} className="inline-flex items-center gap-0.5 rounded-full border border-[var(--primary-200)] bg-[var(--primary-50)] px-1.5 py-0.5 text-[10px] font-medium text-[var(--primary-700)]">
+            <span key={i} className="inline-flex items-center gap-0.5 rounded-full border border-violet-200/50 bg-violet-100/30 px-1.5 py-0.5 text-[10px] font-medium text-violet-700 dark:border-violet-700/30 dark:bg-violet-900/20 dark:text-violet-300">
               <FlaskConical size={8} />
               {name}
             </span>
           ))}
           {exams.length > 3 ? (
-            <span className="rounded-full border border-[var(--border)] bg-[var(--gray-100)] px-1.5 py-0.5 text-[10px] text-[var(--gray-500)]">
+            <span className="rounded-full border border-white/25 bg-white/30 px-1.5 py-0.5 text-[10px] text-muted-foreground backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.06]">
               +{exams.length - 3}
             </span>
           ) : null}
@@ -386,7 +386,7 @@ function RequestCard({
               type="button"
               onClick={(e) => { e.stopPropagation(); onCancel?.(row) }}
               disabled={busy}
-              className="inline-flex h-6 items-center gap-1 rounded-full border border-red-200 bg-white px-2 text-[10px] font-medium text-red-600 transition hover:bg-red-50 disabled:opacity-50"
+              className="inline-flex h-6 items-center gap-1 rounded-full border border-red-200/60 bg-white/40 px-2 text-[10px] font-medium text-red-600 backdrop-blur-sm transition hover:bg-red-100/50 disabled:opacity-50 dark:border-red-700/40 dark:bg-white/[0.06] dark:text-red-300 dark:hover:bg-red-900/20"
             >
               <XCircle size={10} />
               Cancelar
@@ -395,7 +395,7 @@ function RequestCard({
               type="button"
               onClick={(e) => { e.stopPropagation(); onEdit?.(row) }}
               disabled={busy}
-              className="inline-flex h-6 items-center gap-1 rounded-full border border-[var(--border)] bg-white px-2 text-[10px] font-medium text-[var(--gray-700)] transition hover:bg-[var(--gray-100)] disabled:opacity-50"
+              className="inline-flex h-6 items-center gap-1 rounded-full border border-white/30 bg-white/40 px-2 text-[10px] font-medium text-foreground backdrop-blur-sm transition hover:bg-white/60 disabled:opacity-50 dark:border-white/10 dark:bg-white/[0.06] dark:hover:bg-white/[0.12]"
             >
               <Pencil size={10} />
               Editar
@@ -666,7 +666,7 @@ export default function PendingRequestsPage() {
             count={filterRows(pending).length}
             loading={loadingPending}
             empty="Sem requisições pendentes."
-            accent={{ header: "border-amber-200 bg-amber-50 text-amber-800", badge: "bg-amber-100 text-amber-700" }}
+            accent={{ header: "border-amber-200/50 bg-amber-100/30 text-amber-800 backdrop-blur-sm dark:border-amber-700/30 dark:bg-amber-900/20 dark:text-amber-300", badge: "bg-amber-500/15 text-amber-700 dark:text-amber-300" }}
           >
             {visibleRows(pending).map((row) => (
               <RequestCard
@@ -686,7 +686,7 @@ export default function PendingRequestsPage() {
             count={filterRows(canceled).length}
             loading={loadingCanceled}
             empty="Sem requisições canceladas."
-            accent={{ header: "border-red-200 bg-red-50 text-red-800", badge: "bg-red-100 text-red-700" }}
+            accent={{ header: "border-red-200/50 bg-red-100/30 text-red-800 backdrop-blur-sm dark:border-red-700/30 dark:bg-red-900/20 dark:text-red-300", badge: "bg-red-500/15 text-red-700 dark:text-red-300" }}
           >
             {visibleRows(canceled).map((row) => (
               <RequestCard key={row.id} row={row} busyId={null} />
@@ -699,7 +699,7 @@ export default function PendingRequestsPage() {
             count={filterRows(validated).length}
             loading={loadingValidated}
             empty="Nenhuma requisição encaminhada."
-            accent={{ header: "border-emerald-200 bg-emerald-50 text-emerald-800", badge: "bg-emerald-100 text-emerald-700" }}
+            accent={{ header: "border-emerald-200/50 bg-emerald-100/30 text-emerald-800 backdrop-blur-sm dark:border-emerald-700/30 dark:bg-emerald-900/20 dark:text-emerald-300", badge: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300" }}
           >
             {visibleRows(validated).map((row) => (
               <RequestCard key={row.id} row={row} busyId={null} />
