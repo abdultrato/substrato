@@ -241,11 +241,7 @@ function WorkspacesContent() {
   ])
   const showClinicalPharmacyArea = userHasAnyGroup(user, [
     GROUPS.ADMIN,
-    GROUPS.RECEPCAO,
-    GROUPS.MEDICINA,
-    GROUPS.MEDICINA_OCUPACIONAL,
     GROUPS.FARMACIA,
-    GROUPS.FARMACIA_CLINICA,
   ])
   const showTelemedicineArea = userHasAnyGroup(user, [
     GROUPS.ADMIN,

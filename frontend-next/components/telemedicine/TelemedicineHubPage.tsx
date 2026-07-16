@@ -68,15 +68,16 @@ export default function TelemedicineHubPage() {
 
   return (
     <AppLayout requiredGroups={TELEMEDICINE_GROUPS}>
-      <div className="space-y-6">
+      <div className="space-y-2">
         {error ? (
-          <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
             {error}
           </div>
         ) : null}
 
         <WorkspaceHub
-          title="Substrato Telemedicina"
+          dense
+          title="Telemedicina"
           metrics={[
             { label: "Sala virtual", value: metricValue || waitingRoom, href: "/telemedicine/waiting-room" },
             { label: "Dispositivos", value: metricValue || devices, href: "/telemedicine/devices" },
@@ -131,9 +132,7 @@ export default function TelemedicineHubPage() {
 
 export const TELEMEDICINE_GROUPS = [
   GROUPS.ADMIN,
-  GROUPS.RECEPCAO,
   GROUPS.MEDICINA,
-  GROUPS.MEDICINA_OCUPACIONAL,
+  GROUPS.RECEPCAO,
   GROUPS.ENFERMAGEM,
-  GROUPS.TELEMEDICINA,
 ]

@@ -15,6 +15,8 @@ Obrigado por considerar contribuir com o Substrato.
 
 ## Política do repositório
 - O desenvolvimento atual segue a branch main diretamente.
+- Commits e pushes só devem ser feitos quando houver pedido explícito do responsável do repositório.
+- Ao terminar uma tarefa sem esse pedido explícito, deixe as alterações no working tree e reporte os ficheiros alterados.
 - Evite alterações não relacionadas no mesmo commit.
 - Se a mudança afetar risco operacional, documente mitigação, rollback e impacto.
 

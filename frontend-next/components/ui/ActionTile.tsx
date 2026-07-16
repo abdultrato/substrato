@@ -8,6 +8,7 @@ export default function ActionTile({
   icon,
   accentClass,
   iconClass,
+  dense,
 }: {
   title: string
   description?: string
@@ -17,6 +18,8 @@ export default function ActionTile({
   accentClass?: string
   /** Classe de cor do chip do ícone (ex.: "bg-sky-500/15 text-sky-600"). */
   iconClass?: string
+  /** Versão compacta (menor padding; oculta a descrição). */
+  dense?: boolean
 }) {
   const { tr } = useLanguage()
   const Icon = icon as any
@@ -24,7 +27,7 @@ export default function ActionTile({
   return (
     <Link
       href={href}
-      className={`group flex items-center gap-2.5 rounded-xl border-t border-r border-b border-white/20 bg-white/25 px-3 py-2 shadow-sm backdrop-blur-sm transition-all hover:border-t-[var(--primary-300)] hover:border-r-[var(--primary-300)] hover:border-b-[var(--primary-300)] hover:bg-white/45 hover:shadow-md dark:border-t-white/10 dark:border-r-white/10 dark:border-b-white/10 dark:bg-white/5 dark:hover:border-t-[var(--primary-600)] dark:hover:border-r-[var(--primary-600)] dark:hover:border-b-[var(--primary-600)] dark:hover:bg-white/10 ${accentClass ? `border-l-4 ${accentClass}` : "border-l border-l-white/20 dark:border-l-white/10"}`}
+      className={`group flex items-center gap-2.5 rounded-xl border-t border-r border-b border-white/20 bg-white/25 ${dense ? "px-2.5 py-1.5" : "px-3 py-2"} shadow-sm backdrop-blur-sm transition-all hover:border-t-[var(--primary-300)] hover:border-r-[var(--primary-300)] hover:border-b-[var(--primary-300)] hover:bg-white/45 hover:shadow-md dark:border-t-white/10 dark:border-r-white/10 dark:border-b-white/10 dark:bg-white/5 dark:hover:border-t-[var(--primary-600)] dark:hover:border-r-[var(--primary-600)] dark:hover:border-b-[var(--primary-600)] dark:hover:bg-white/10 ${accentClass ? `border-l-4 ${accentClass}` : "border-l border-l-white/20 dark:border-l-white/10"}`}
     >
       <span
         aria-hidden
@@ -37,7 +40,7 @@ export default function ActionTile({
         <div className="text-xs font-semibold text-foreground transition-colors group-hover:text-[var(--primary-700)] dark:group-hover:text-[var(--primary-400)]">
           {tr(title)}
         </div>
-        {description ? (
+        {description && !dense ? (
           <div className="mt-0.5 truncate text-[10px] leading-tight text-muted-foreground">
             {tr(description)}
           </div>

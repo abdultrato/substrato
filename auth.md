@@ -36,6 +36,9 @@
 - `/medicine/`
   - Acesso: `Administrador` e `Médico`.
 
+- `/clinical-pharmacy/`
+  - Acesso: `Administrador` e `Técnico de Farmácia`.
+
 - `/requests/new/`
   - Criacao de requisicoes de exames medicos e laboratoriais: `Administrador`, `Recepcionista` e `Médico`.
 

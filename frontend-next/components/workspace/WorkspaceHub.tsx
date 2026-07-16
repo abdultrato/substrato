@@ -42,6 +42,8 @@ type WorkspaceHubProps = {
   actions: WorkspaceAction[]
   noteTitle?: string
   notes?: string[]
+  /** Versão compacta: cabeçalho e subcartões mais pequenos, menos espaçamento. */
+  dense?: boolean
 }
 
 export default function WorkspaceHub({
@@ -54,32 +56,33 @@ export default function WorkspaceHub({
   actions,
   noteTitle,
   notes = [],
+  dense,
 }: WorkspaceHubProps) {
   const { tr } = useLanguage()
   const Icon = icon
 
   return (
-    <div className="space-y-3">
-      <div className="relative overflow-hidden rounded-2xl border border-white/20 bg-white/30 p-4 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/5 sm:p-5">
+    <div className={dense ? "space-y-2" : "space-y-3"}>
+      <div className={`relative overflow-hidden rounded-2xl border border-white/20 bg-white/30 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/5 ${dense ? "p-2.5" : "p-4 sm:p-5"}`}>
         <span aria-hidden className={`absolute inset-x-0 top-0 h-1 ${barClass ?? "bg-primary"}`} />
 
-        <div className="flex min-w-0 items-center gap-3">
+        <div className={`flex min-w-0 items-center ${dense ? "gap-2" : "gap-3"}`}>
           {Icon ? (
             <span
-              className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${iconClass ?? "bg-muted text-muted-foreground"}`}
+              className={`flex ${dense ? "h-8 w-8" : "h-10 w-10"} shrink-0 items-center justify-center rounded-xl ${iconClass ?? "bg-muted text-muted-foreground"}`}
             >
-              <Icon size={20} strokeWidth={2} />
+              <Icon size={dense ? 16 : 20} strokeWidth={2} />
             </span>
           ) : null}
           <div className="min-w-0">
-            <h1 className="break-words font-display text-xl font-semibold text-foreground sm:text-2xl">
+            <h1 className={`break-words font-display font-semibold text-foreground ${dense ? "text-base sm:text-lg" : "text-xl sm:text-2xl"}`}>
               {tr(title)}
             </h1>
-            {subtitle ? <p className="mt-0.5 text-sm text-muted-foreground">{tr(subtitle)}</p> : null}
+            {subtitle ? <p className={`text-muted-foreground ${dense ? "text-xs" : "mt-0.5 text-sm"}`}>{tr(subtitle)}</p> : null}
           </div>
         </div>
 
-        <div className="mt-4 grid grid-cols-2 gap-1.5 sm:grid-cols-4">
+        <div className={`grid grid-cols-2 gap-1.5 sm:grid-cols-4 ${dense ? "mt-2" : "mt-4"}`}>
           {metrics.map((item) => (
             <MetricCard
               key={item.label}
@@ -90,6 +93,7 @@ export default function WorkspaceHub({
               accentClass={item.accentClass}
               iconClass={item.iconClass}
               href={item.href}
+              dense={dense}
             />
           ))}
         </div>
@@ -105,6 +109,7 @@ export default function WorkspaceHub({
             icon={item.icon}
             accentClass={item.accentClass}
             iconClass={item.iconClass}
+            dense={dense}
           />
         ))}
       </div>

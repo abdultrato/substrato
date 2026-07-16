@@ -13,7 +13,7 @@ export function requiredGroupsForResourceGroup(groupKey: string): string[] {
         GROUPS.MEDICINA_OCUPACIONAL,
       ]
     case "clinical_pharmacy":
-      return [GROUPS.ADMIN, GROUPS.RECEPCAO, GROUPS.MEDICINA, GROUPS.MEDICINA_OCUPACIONAL, GROUPS.FARMACIA, GROUPS.FARMACIA_CLINICA]
+      return [GROUPS.ADMIN, GROUPS.FARMACIA]
     case "credit_financing":
       return [
         GROUPS.ADMIN,

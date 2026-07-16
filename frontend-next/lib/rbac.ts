@@ -281,7 +281,7 @@ export const WORKSPACES: WorkspaceDef[] = [
     label: "Farmácia Clínica",
     href: "/clinical-pharmacy",
     description: "Preparações IV, quimioterapia, TPN, controlados, interações e stewardship antibiótico.",
-    anyOfGroups: [GROUPS.ADMIN, GROUPS.RECEPCAO, GROUPS.MEDICINA, GROUPS.MEDICINA_OCUPACIONAL, GROUPS.FARMACIA, GROUPS.FARMACIA_CLINICA],
+    anyOfGroups: [GROUPS.ADMIN, GROUPS.FARMACIA],
   },
   {
     key: "credit-financing",
