@@ -780,7 +780,13 @@ export default function RecepcaoPage() {
                     href="/receipts"
                   />
                 </div>
-                <div className="grid w-full grid-cols-3 gap-1.5">
+                <div className="grid w-full grid-cols-4 gap-1.5">
+                  <HeaderMiniIndicator
+                    label="Aguardando atendimento"
+                    value={workspace.summary.queue_size}
+                    href="/reception/reception-checkins?status=AGUARD"
+                    accent="text-blue-700 dark:text-blue-300"
+                  />
                   <HeaderMiniIndicator
                     label="Requisições pendentes"
                     value={workspace.summary.pending_requests}
