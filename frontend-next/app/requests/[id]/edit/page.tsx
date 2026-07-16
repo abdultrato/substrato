@@ -311,9 +311,8 @@ export default function EditRequestPage() {
           </div>
         ) : null}
 
-        {/* items-start: cada cartão fica com a altura do próprio conteúdo,
-            sem esticar para igualar o vizinho da mesma linha. */}
-        <div className="grid items-start gap-2 lg:grid-cols-2">
+        {/* Primeiro e último cartão a toda a largura; os do meio a 2 por linha. */}
+        <div className="space-y-2">
 
           {/* Paciente e médico */}
           <SectionCard icon={User} title="Paciente e médico" accent="bg-sky-500">
@@ -341,6 +340,7 @@ export default function EditRequestPage() {
             </Field>
           </SectionCard>
 
+          <div className="grid items-start gap-2 lg:grid-cols-2">
           {/* Exames */}
           <SectionCard icon={FlaskConical} title="Exames solicitados" accent="bg-violet-500" compact>
             <Field
@@ -396,6 +396,7 @@ export default function EditRequestPage() {
               </Field>
             ) : null}
           </SectionCard>
+          </div>
 
           {/* Registo */}
           <SectionCard icon={Building2} title="Registo" accent="bg-amber-500">
