@@ -780,30 +780,26 @@ export default function RecepcaoPage() {
                     href="/receipts"
                   />
                 </div>
-                <HeaderMiniIndicator
-                  label="Pacientes novos"
-                  value={workspace.summary.new_patients}
-                  href="/patients"
-                  accent="text-blue-700 dark:text-blue-300"
-                />
-                <HeaderMiniIndicator
-                  label="Req. pendentes"
-                  value={workspace.summary.pending_requests}
-                  href="/requests/pendentes"
-                  accent="text-amber-700 dark:text-amber-300"
-                />
-                <HeaderMiniIndicator
-                  label="Faturas abertas"
-                  value={workspace.summary.open_invoices}
-                  href="/billing/invoices?status=EMIT"
-                  accent="text-rose-700 dark:text-rose-300"
-                />
-                <HeaderMiniIndicator
-                  label="Recibos hoje"
-                  value={workspace.summary.receipts_generated_today}
-                  href="/payments/receipts"
-                  accent="text-emerald-700 dark:text-emerald-300"
-                />
+                <div className="grid w-full grid-cols-3 gap-1.5">
+                  <HeaderMiniIndicator
+                    label="Requisições pendentes"
+                    value={workspace.summary.pending_requests}
+                    href="/requests/pendentes"
+                    accent="text-amber-700 dark:text-amber-300"
+                  />
+                  <HeaderMiniIndicator
+                    label="Faturas abertas"
+                    value={workspace.summary.open_invoices}
+                    href="/billing/invoices?status=EMIT"
+                    accent="text-rose-700 dark:text-rose-300"
+                  />
+                  <HeaderMiniIndicator
+                    label="Recibos hoje"
+                    value={workspace.summary.receipts_generated_today}
+                    href="/payments/receipts"
+                    accent="text-emerald-700 dark:text-emerald-300"
+                  />
+                </div>
               </div>
             </div>
 
@@ -1281,15 +1277,15 @@ function HeaderMiniIndicator({
   accent?: string;
 }) {
   const inner = (
-    <span className="inline-flex h-9 shrink-0 items-center gap-2 rounded-xl border border-white/20 bg-white/35 px-3 text-[10px] font-medium text-muted-foreground backdrop-blur-sm dark:bg-white/[0.05]">
-      <span className="whitespace-nowrap">{label}</span>
-      <span className={`text-xs font-bold ${accent ?? "text-foreground"}`}>{value}</span>
+    <span className="flex h-9 w-full min-w-0 items-center justify-between gap-2 rounded-xl border border-white/20 bg-white/35 px-3 text-[10px] font-medium text-muted-foreground backdrop-blur-sm dark:bg-white/[0.05]">
+      <span className="truncate">{label}</span>
+      <span className={`shrink-0 text-xs font-bold ${accent ?? "text-foreground"}`}>{value}</span>
     </span>
   );
 
   if (href) {
     return (
-      <Link href={href} className="shrink-0 transition hover:-translate-y-0.5">
+      <Link href={href} className="block min-w-0 transition hover:-translate-y-0.5">
         {inner}
       </Link>
     );
