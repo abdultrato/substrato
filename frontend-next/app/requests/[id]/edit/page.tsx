@@ -74,23 +74,25 @@ function SectionCard({
   icon: Icon,
   title,
   accent = "bg-[var(--primary-600)]",
+  compact = false,
   children,
 }: {
   icon: React.ElementType;
   title: string;
   accent?: string;
+  compact?: boolean;
   children: React.ReactNode;
 }) {
   return (
     <section className="relative z-0 rounded-lg border border-white/20 bg-white/25 shadow-sm backdrop-blur-sm focus-within:z-50 dark:bg-white/5 dark:border-white/10">
       <span className={`absolute left-0 top-0 h-full w-1 ${accent}`} />
-      <div className="flex items-center gap-1.5 border-b border-border/60 px-3 py-2 pl-4">
-        <span className="flex h-6 w-6 items-center justify-center rounded-md bg-[var(--primary-600)]/10 text-[var(--primary-700)] dark:text-[var(--primary-400)]">
-          <Icon size={13} />
+      <div className={`flex items-center gap-1.5 border-b border-border/60 pl-4 ${compact ? "px-2.5 py-1.5" : "px-3 py-2"}`}>
+        <span className={`flex items-center justify-center rounded-md bg-[var(--primary-600)]/10 text-[var(--primary-700)] dark:text-[var(--primary-400)] ${compact ? "h-5 w-5" : "h-6 w-6"}`}>
+          <Icon size={compact ? 11 : 13} />
         </span>
         <h2 className="text-xs font-semibold text-foreground">{title}</h2>
       </div>
-      <div className="space-y-3 p-3">{children}</div>
+      <div className={compact ? "space-y-1.5 p-2.5" : "space-y-3 p-3"}>{children}</div>
     </section>
   );
 }
@@ -100,22 +102,24 @@ function Field({
   hint,
   error,
   required,
+  compact = false,
   children,
 }: {
   label: string;
   hint?: string;
   error?: string;
   required?: boolean;
+  compact?: boolean;
   children: React.ReactNode;
 }) {
   return (
-    <div className="space-y-1">
-      <label className="text-xs font-semibold text-foreground">
+    <div className={compact ? "space-y-0.5" : "space-y-1"}>
+      <label className={`${compact ? "text-[11px]" : "text-xs"} font-semibold text-foreground`}>
         {label}
         {required && <span className="ml-0.5 text-red-500">*</span>}
       </label>
       {children}
-      {hint && !error && <p className="text-[11px] text-muted-foreground">{hint}</p>}
+      {hint && !error && !compact && <p className="text-[11px] text-muted-foreground">{hint}</p>}
       {error && <p className="text-[11px] font-medium text-red-600 dark:text-red-400">{error}</p>}
     </div>
   );
@@ -307,7 +311,9 @@ export default function EditRequestPage() {
           </div>
         ) : null}
 
-        <div className="grid gap-2 lg:grid-cols-2">
+        {/* items-start: cada cartão fica com a altura do próprio conteúdo,
+            sem esticar para igualar o vizinho da mesma linha. */}
+        <div className="grid items-start gap-2 lg:grid-cols-2">
 
           {/* Paciente e médico */}
           <SectionCard icon={User} title="Paciente e médico" accent="bg-sky-500">
@@ -336,12 +342,13 @@ export default function EditRequestPage() {
           </SectionCard>
 
           {/* Exames */}
-          <SectionCard icon={FlaskConical} title="Exames solicitados" accent="bg-violet-500">
+          <SectionCard icon={FlaskConical} title="Exames solicitados" accent="bg-violet-500" compact>
             <Field
               label="Exames"
               required
               hint="Pesquise e clique para adicionar cada exame necessário."
               error={errors.exams}
+              compact
             >
               <SearchableMultiSelect
                 fieldName="exams"
@@ -356,9 +363,9 @@ export default function EditRequestPage() {
           </SectionCard>
 
           {/* Medicina Ocupacional */}
-          <SectionCard icon={Stethoscope} title="Medicina ocupacional" accent="bg-emerald-500">
-            <Field label="Tipo de requisição">
-              <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-border bg-background px-3 py-2 transition hover:border-violet-400">
+          <SectionCard icon={Stethoscope} title="Medicina ocupacional" accent="bg-emerald-500" compact>
+            <Field label="Tipo de requisição" compact>
+              <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-border bg-background px-2.5 py-1.5 transition hover:border-violet-400">
                 <input
                   type="checkbox"
                   checked={isOccupational}
@@ -368,13 +375,14 @@ export default function EditRequestPage() {
                   }}
                   className="h-4 w-4 rounded border-border accent-violet-600"
                 />
-                <span className="text-sm font-medium text-foreground">Requisição de exames ocupacionais</span>
+                <span className="text-xs font-medium text-foreground">Requisição de exames ocupacionais</span>
               </label>
             </Field>
             {isOccupational ? (
               <Field
                 label="Perfil profissional"
                 hint="Os exames da bandeja do perfil somam-se aos exames selecionados."
+                compact
               >
                 <SearchableRelationSelect
                   fieldName="occupational_profile"
