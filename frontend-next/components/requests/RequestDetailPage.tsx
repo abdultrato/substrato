@@ -294,23 +294,74 @@ export default function RequestDetailPage() {
       <div className="w-full space-y-2 px-1">
 
         {/* ── HERO ────────────────────────────────────────── */}
-        <div className={`flex flex-col gap-1.5 rounded-lg ${GLASS} px-3 py-2.5 md:flex-row md:items-start md:justify-between`}>
+        <div className={`flex flex-col gap-1.5 rounded-lg ${GLASS} px-3 py-2.5`}>
           <div className="flex min-w-0 flex-col gap-1">
-            {/* breadcrumb */}
-            <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
+            {/* breadcrumb + acções na mesma fila */}
+            <div className="flex flex-wrap items-center gap-1 text-[11px] text-muted-foreground">
               <Link href="/requests" className="hover:text-foreground transition-colors">Requisições</Link>
               <span>/</span>
               <span className="font-semibold text-foreground">{code}</span>
+
+              <div className="ml-auto flex shrink-0 flex-wrap items-center gap-1">
+                {canForward ? (
+                  <button
+                    type="button"
+                    onClick={() => void forwardRequest()}
+                    disabled={forwarding}
+                    className="inline-flex h-7 items-center gap-1.5 rounded-md bg-[var(--primary-600)] px-2.5 text-xs font-semibold text-white shadow-sm transition hover:bg-[var(--primary-700)] disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {forwarding ? <Loader2 size={12} className="animate-spin" /> : <Send size={12} />}
+                    {forwarding ? "Encaminhando..." : "Encaminhar"}
+                  </button>
+                ) : null}
+                {reqType === "LAB" ? (
+                  <button
+                    type="button"
+                    onClick={() => void notifyPatient()}
+                    disabled={notifying}
+                    className="inline-flex h-7 items-center gap-1.5 rounded-md border border-emerald-300 bg-emerald-50 px-2.5 text-xs font-semibold text-emerald-700 shadow-sm transition hover:bg-emerald-100 disabled:opacity-60 dark:border-emerald-700/40 dark:bg-emerald-900/20 dark:text-emerald-300 dark:hover:bg-emerald-900/35"
+                  >
+                    {notifying ? <Loader2 size={11} className="animate-spin" /> : <Bell size={11} />}
+                    {notifying ? "A notificar..." : "Notificar paciente"}
+                  </button>
+                ) : null}
+                {!samplesReceived ? (
+                  <Link
+                    href={`/requests/${id}/edit`}
+                    className="inline-flex h-7 items-center gap-1 rounded-md border border-border bg-background px-2.5 text-xs font-medium text-foreground-2 shadow-sm transition hover:bg-muted hover:text-foreground"
+                  >
+                    Editar
+                  </Link>
+                ) : null}
+                <button
+                  type="button"
+                  onClick={openRequestPdf}
+                  className="inline-flex h-7 items-center gap-1.5 rounded-md border border-border bg-background px-2.5 text-xs font-medium text-foreground-2 shadow-sm transition hover:bg-muted hover:text-foreground"
+                >
+                  <Printer size={11} />
+                  Imprimir requisição
+                </button>
+                <Link
+                  href={reportHref}
+                  className="inline-flex h-7 items-center gap-1.5 rounded-md border border-[var(--primary-200)] bg-[var(--primary-50)] px-2.5 text-xs font-semibold text-[var(--primary-700)] shadow-sm transition hover:bg-[var(--primary-100)]"
+                >
+                  <BarChart2 size={11} />
+                  Relatório
+                </Link>
+                <Link
+                  href="/requests"
+                  className="inline-flex h-7 items-center gap-1 rounded-md border border-border bg-background px-2 text-xs text-muted-foreground shadow-sm transition hover:bg-muted hover:text-foreground"
+                >
+                  <ArrowLeft size={12} />
+                  Voltar
+                </Link>
+              </div>
             </div>
 
-            {/* title row */}
+            {/* title row: nome + badges inline a toda a largura */}
             <div className="flex flex-wrap items-center gap-1.5">
               <h1 className="text-base font-bold text-foreground">{patientName}</h1>
               {patientCode ? <span className="text-xs text-muted-foreground">{patientCode}</span> : null}
-            </div>
-
-            {/* badge row */}
-            <div className="flex flex-wrap items-center gap-1">
               <span className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[11px] font-semibold ${sm.color}`}>
                 <span className={`h-1.5 w-1.5 rounded-full ${sm.dot}`} />
                 {sm.label}
@@ -321,62 +372,6 @@ export default function RequestDetailPage() {
               {isOccupational? <span className="rounded-full border border-violet-200 bg-violet-50 px-2.5 py-0.5 text-[11px] font-semibold text-violet-700">Ocupacional</span> : null}
               {requiresFasting?<span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-0.5 text-[11px] font-semibold text-amber-700"><Zap size={9} />Jejum{Number(fastingHours) > 0 ? ` ${fastingHours}h` : ""}</span> : null}
             </div>
-          </div>
-
-          {/* action buttons (header level) */}
-          <div className="flex shrink-0 flex-wrap items-center gap-1">
-            {canForward ? (
-              <button
-                type="button"
-                onClick={() => void forwardRequest()}
-                disabled={forwarding}
-                className="inline-flex h-7 items-center gap-1.5 rounded-md bg-[var(--primary-600)] px-2.5 text-xs font-semibold text-white shadow-sm transition hover:bg-[var(--primary-700)] disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {forwarding ? <Loader2 size={12} className="animate-spin" /> : <Send size={12} />}
-                {forwarding ? "Encaminhando..." : "Encaminhar"}
-              </button>
-            ) : null}
-            {reqType === "LAB" ? (
-              <button
-                type="button"
-                onClick={() => void notifyPatient()}
-                disabled={notifying}
-                className="inline-flex h-7 items-center gap-1.5 rounded-md border border-emerald-300 bg-emerald-50 px-2.5 text-xs font-semibold text-emerald-700 shadow-sm transition hover:bg-emerald-100 disabled:opacity-60 dark:border-emerald-700/40 dark:bg-emerald-900/20 dark:text-emerald-300 dark:hover:bg-emerald-900/35"
-              >
-                {notifying ? <Loader2 size={11} className="animate-spin" /> : <Bell size={11} />}
-                {notifying ? "A notificar..." : "Notificar paciente"}
-              </button>
-            ) : null}
-            {!samplesReceived ? (
-              <Link
-                href={`/requests/${id}/edit`}
-                className="inline-flex h-7 items-center gap-1 rounded-md border border-border bg-background px-2.5 text-xs font-medium text-foreground-2 shadow-sm transition hover:bg-muted hover:text-foreground"
-              >
-                Editar
-              </Link>
-            ) : null}
-            <button
-              type="button"
-              onClick={openRequestPdf}
-              className="inline-flex h-7 items-center gap-1.5 rounded-md border border-border bg-background px-2.5 text-xs font-medium text-foreground-2 shadow-sm transition hover:bg-muted hover:text-foreground"
-            >
-              <Printer size={11} />
-              Imprimir requisição
-            </button>
-            <Link
-              href={reportHref}
-              className="inline-flex h-7 items-center gap-1.5 rounded-md border border-[var(--primary-200)] bg-[var(--primary-50)] px-2.5 text-xs font-semibold text-[var(--primary-700)] shadow-sm transition hover:bg-[var(--primary-100)]"
-            >
-              <BarChart2 size={11} />
-              Relatório
-            </Link>
-            <Link
-              href="/requests"
-              className="inline-flex h-7 items-center gap-1 rounded-md border border-border bg-background px-2 text-xs text-muted-foreground shadow-sm transition hover:bg-muted hover:text-foreground"
-            >
-              <ArrowLeft size={12} />
-              Voltar
-            </Link>
           </div>
         </div>
 
