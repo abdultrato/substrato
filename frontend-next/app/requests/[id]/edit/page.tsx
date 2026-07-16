@@ -84,15 +84,15 @@ function SectionCard({
   children: React.ReactNode;
 }) {
   return (
-    <section className="relative z-0 rounded-lg border border-white/20 bg-white/25 shadow-sm backdrop-blur-sm focus-within:z-50 dark:bg-white/5 dark:border-white/10">
+    <section className={`relative z-0 rounded-lg border border-white/20 bg-white/25 shadow-sm backdrop-blur-sm focus-within:z-50 dark:bg-white/5 dark:border-white/10 ${compact ? "min-w-0" : ""}`}>
       <span className={`absolute left-0 top-0 h-full w-1 ${accent}`} />
       <div className={`flex items-center gap-1.5 border-b border-border/60 pl-4 ${compact ? "px-2.5 py-1.5" : "px-3 py-2"}`}>
         <span className={`flex items-center justify-center rounded-md bg-[var(--primary-600)]/10 text-[var(--primary-700)] dark:text-[var(--primary-400)] ${compact ? "h-5 w-5" : "h-6 w-6"}`}>
           <Icon size={compact ? 11 : 13} />
         </span>
-        <h2 className="text-xs font-semibold text-foreground">{title}</h2>
+        <h2 className={`text-xs font-semibold text-foreground ${compact ? "truncate whitespace-nowrap" : ""}`}>{title}</h2>
       </div>
-      <div className={compact ? "space-y-1.5 p-2.5" : "space-y-3 p-3"}>{children}</div>
+      <div className={compact ? "min-w-0 space-y-1.5 p-2.5" : "space-y-3 p-3"}>{children}</div>
     </section>
   );
 }
@@ -311,12 +311,12 @@ export default function EditRequestPage() {
           </div>
         ) : null}
 
-        {/* Primeiro e último cartão a toda a largura; os do meio a 2 por linha. */}
-        <div className="space-y-2">
+        {/* Cabeçalho acima permanece isolado; cartões do formulário em 2 colunas. */}
+        <div className="grid min-w-0 grid-cols-2 items-start gap-2">
 
           {/* Paciente e médico */}
-          <SectionCard icon={User} title="Paciente e médico" accent="bg-sky-500">
-            <Field label="Paciente" required error={errors.patient}>
+          <SectionCard icon={User} title="Paciente e médico" accent="bg-sky-500" compact>
+            <Field label="Paciente" required error={errors.patient} compact>
               <SearchableRelationSelect
                 fieldName="patient"
                 value={patient}
@@ -327,7 +327,7 @@ export default function EditRequestPage() {
                 safeRefreshToken={safeRefreshToken}
               />
             </Field>
-            <Field label="Médico solicitante">
+            <Field label="Médico solicitante" compact>
               <SearchableRelationSelect
                 fieldName="requesting_physician"
                 value={physician}
@@ -340,7 +340,6 @@ export default function EditRequestPage() {
             </Field>
           </SectionCard>
 
-          <div className="grid items-start gap-2 lg:grid-cols-2">
           {/* Exames */}
           <SectionCard icon={FlaskConical} title="Exames solicitados" accent="bg-violet-500" compact>
             <Field
@@ -375,7 +374,7 @@ export default function EditRequestPage() {
                   }}
                   className="h-4 w-4 rounded border-border accent-violet-600"
                 />
-                <span className="text-xs font-medium text-foreground">Requisição de exames ocupacionais</span>
+                <span className="min-w-0 truncate whitespace-nowrap text-xs font-medium text-foreground">Requisição de exames ocupacionais</span>
               </label>
             </Field>
             {isOccupational ? (
@@ -396,10 +395,10 @@ export default function EditRequestPage() {
               </Field>
             ) : null}
           </SectionCard>
-          </div>
+        </div>
 
-          {/* Registo */}
-          <SectionCard icon={Building2} title="Registo" accent="bg-amber-500">
+        {/* Registo (último cartão, largura total como o cabeçalho) */}
+        <SectionCard icon={Building2} title="Registo" accent="bg-amber-500">
             <Field label="Empresa solicitante">
               <SearchableRelationSelect
                 fieldName="requesting_company"
@@ -430,8 +429,6 @@ export default function EditRequestPage() {
               </select>
             </Field>
           </SectionCard>
-
-        </div>
       </form>
     </AppLayout>
   );
