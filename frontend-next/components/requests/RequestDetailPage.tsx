@@ -347,7 +347,7 @@ export default function RequestDetailPage() {
         ) : null}
 
         {/* ── Masonry details ─────────────────────────────── */}
-        <div className="columns-1 gap-2 lg:columns-2 xl:columns-3 [&>*]:mb-2 [&>*]:break-inside-avoid">
+        <div className="columns-1 gap-2 md:columns-2 [&>*]:mb-2 [&>*]:break-inside-avoid">
           <SectionCard icon={<User size={13} />} title="Paciente" accent="bg-sky-500">
             <Row label="Nome"   value={patientNameFull} />
             <Row label="Código" value={patientCode} />
