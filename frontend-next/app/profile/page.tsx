@@ -4,6 +4,7 @@ import Link from "next/link"
 import { isNotFoundLikeError } from "@/lib/errors/api-error"
 import {
     AlertCircle,
+    ArrowLeft,
     AtSign,
     BadgeCheck,
     Camera,
@@ -135,7 +136,15 @@ export default function PerfilPage () {
                 <section className="relative overflow-hidden rounded-2xl border border-violet-200/25 bg-gradient-to-br from-violet-100/[0.05] via-white/[0.015] to-indigo-100/[0.03] shadow-xl shadow-slate-900/5 backdrop-blur-2xl dark:border-violet-800/20 dark:from-violet-950/[0.05] dark:via-white/[0.01] dark:to-indigo-950/[0.03]">
                     <div className="pointer-events-none absolute -right-8 -top-10 h-28 w-28 rounded-full bg-violet-400/15 blur-3xl" />
                     <div className="relative flex flex-wrap items-center gap-2.5 px-3 py-2">
-                        <div className="flex min-w-0 items-center gap-3">
+                        <div className="flex min-w-0 items-center gap-2.5">
+                            <Link
+                                href="/"
+                                aria-label="Voltar ao início"
+                                title="Voltar ao início"
+                                className="grid h-8 w-8 shrink-0 place-items-center rounded-lg border border-white/25 bg-white/[0.05] text-foreground backdrop-blur-xl transition hover:bg-white/20 dark:border-white/10 dark:bg-white/[0.03] dark:hover:bg-white/[0.08]"
+                            >
+                                <ArrowLeft size={13} />
+                            </Link>
                             <div className="relative h-9 w-9 shrink-0 overflow-hidden rounded-lg shadow-md shadow-violet-500/25">
                                 {fotoUrl ? (
                                     // eslint-disable-next-line @next/next/no-img-element
