@@ -65,7 +65,7 @@ pytest==8.3.4
 pytest-django==4.8.0
 PyYAML==6.0.3
 qrcode==8.2
-redis==7.2.1
+redis==8.0.1
 requests==2.32.4
 referencing==0.37.0
 reportlab==4.4.7
