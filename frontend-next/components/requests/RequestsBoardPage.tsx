@@ -428,6 +428,8 @@ export default function RequestsBoardPage() {
 
   const reportHref = `/reports?endpoint=${encodeURIComponent(normalizedEndpoint)}&group=${encodeURIComponent("Área Clínica")}&resource=${encodeURIComponent("Requisição")}`
   const visibleCount = columns.reduce((acc, col) => acc + columnRows(col).length, 0)
+  // Colunas sem requisições ficam ocultas para o quadro só mostrar etapas com conteúdo.
+  const visibleColumns = columns.filter((col) => columnRows(col).length > 0)
 
   if (loading) return null
 
@@ -480,15 +482,16 @@ export default function RequestsBoardPage() {
           </div>
 
           <div className="flex flex-wrap items-center gap-1 border-t border-white/20 px-3 py-1.5 pl-4 dark:border-white/10">
-            <span className="mr-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{t("Estado", "Status")}</span>
             {[
-              { active: !showCancelled, label: t("Pipeline activo", "Active pipeline"), count: stats.total - stats.cancelled, cls: "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-700/30 dark:bg-emerald-900/20 dark:text-emerald-300" },
-              { active: showCancelled, label: t("Canceladas visíveis", "Cancelled visible"), count: stats.cancelled, cls: "border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-700/30 dark:bg-rose-900/20 dark:text-rose-300" },
-              { active: false, label: t("Críticas", "Critical"), count: stats.critical, cls: "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-700/30 dark:bg-amber-900/20 dark:text-amber-300" },
+              { label: t("Total", "Total"), count: stats.total, cls: "border-sky-200/50 bg-sky-100/30 text-sky-700 dark:border-sky-700/30 dark:bg-sky-900/20 dark:text-sky-300" },
+              { label: t("Pendentes", "Pending"), count: stats.pending, cls: "border-amber-200/50 bg-amber-100/30 text-amber-700 dark:border-amber-700/30 dark:bg-amber-900/20 dark:text-amber-300" },
+              { label: t("Em análise", "Analysing"), count: stats.analysing, cls: "border-blue-200/50 bg-blue-100/30 text-blue-700 dark:border-blue-700/30 dark:bg-blue-900/20 dark:text-blue-300" },
+              { label: t("Validadas", "Validated"), count: stats.validated, cls: "border-emerald-200/50 bg-emerald-100/30 text-emerald-700 dark:border-emerald-700/30 dark:bg-emerald-900/20 dark:text-emerald-300" },
+              { label: t("Críticas", "Critical"), count: stats.critical, cls: "border-rose-200/50 bg-rose-100/30 text-rose-700 dark:border-rose-700/30 dark:bg-rose-900/20 dark:text-rose-300" },
             ].map((item) => (
-              <span key={item.label} className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold ${item.cls} ${item.active ? "ring-2 ring-current/15" : ""}`}>
+              <span key={item.label} className={`inline-flex h-6 items-center gap-1 whitespace-nowrap rounded-full border px-2 text-[10px] font-semibold backdrop-blur-xl ${item.cls}`}>
                 {item.label}
-                <span className="rounded-full bg-black/5 px-1 tabular-nums dark:bg-white/10">{item.count}</span>
+                <strong className="text-[11px] tabular-nums">{item.count}</strong>
               </span>
             ))}
             <button
@@ -502,6 +505,7 @@ export default function RequestsBoardPage() {
             >
               <XCircle size={11} />
               {showCancelled ? t("Ocultar canceladas", "Hide cancelled") : t("Mostrar canceladas", "Show cancelled")}
+              <span className="rounded-full bg-black/5 px-1 tabular-nums dark:bg-white/10">{stats.cancelled}</span>
             </button>
             {(search || showCancelled) ? (
               <button
@@ -518,27 +522,6 @@ export default function RequestsBoardPage() {
           </div>
         </section>
 
-        <section className="grid grid-cols-5 gap-0.5">
-          {[
-            { label: t("Total", "Total"), count: stats.total, bar: "bg-sky-500" },
-            { label: t("Pendentes", "Pending"), count: stats.pending, bar: "bg-amber-500" },
-            { label: t("Em análise", "Analysing"), count: stats.analysing, bar: "bg-blue-500" },
-            { label: t("Validadas", "Validated"), count: stats.validated, bar: "bg-emerald-500" },
-            { label: t("Críticas", "Critical"), count: stats.critical, bar: "bg-rose-500" },
-          ].map((item) => (
-            <div
-              key={item.label}
-              className="relative min-w-0 overflow-hidden rounded-lg border border-white/20 bg-white/30 px-2 py-1.5 text-left shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]"
-            >
-              <span className={`absolute left-0 top-0 h-full w-1 ${item.bar}`} />
-              <div className="pl-1.5">
-                <div className="truncate text-[9px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">{item.label}</div>
-                <div className="mt-0.5 truncate text-lg font-bold leading-none text-foreground">{item.count}</div>
-              </div>
-            </div>
-          ))}
-        </section>
-
         {error && (
           <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
             {error}
@@ -550,10 +533,20 @@ export default function RequestsBoardPage() {
           <div className="rounded-xl border border-white/20 bg-white/30 px-4 py-8 text-sm text-muted-foreground shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]">
             {t("Carregando...", "Loading...")}
           </div>
+        ) : visibleColumns.length === 0 ? (
+          <div className="rounded-xl border border-dashed border-border px-4 py-8 text-center text-xs text-muted-foreground">
+            {t("Sem requisições para mostrar com os filtros actuais.", "No requests to show with the current filters.")}
+          </div>
         ) : (
           <div className="overflow-x-auto [scrollbar-width:thin]">
-            <div className={`grid min-w-[920px] gap-1 ${columns.length >= 5 ? "grid-cols-5" : "grid-cols-4"}`}>
-              {columns.map((col) => (
+            <div
+              className="grid gap-1"
+              style={{
+                gridTemplateColumns: `repeat(${visibleColumns.length}, minmax(0, 1fr))`,
+                minWidth: `${visibleColumns.length * 230}px`,
+              }}
+            >
+              {visibleColumns.map((col) => (
                 <BoardColumn
                   key={col.key}
                   title={col.title}
