@@ -4,6 +4,7 @@ from functools import lru_cache
 import unicodedata
 
 from django.core.exceptions import ValidationError
+from django.db import transaction
 from django.utils.translation import override
 from django_countries import countries
 from rest_framework import serializers
@@ -1240,7 +1241,27 @@ class LabRequestSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializ
 
         exams = validated_date.pop("exams", None)
         medical_exams = validated_date.pop("medical_exams", None)
+        changing_items = exams is not None or medical_exams is not None
 
+        if changing_items:
+            # Verificação e alteração na mesma transacção, com a requisição e os
+            # itens trancados: sem corrida com a receção de amostras pelo
+            # laboratório. Depois de amostras recebidas, a composição só muda
+            # via pedido de nota de crédito à Contabilidade (um por item).
+            with transaction.atomic():
+                locked = LabRequest.objects.select_for_update().get(pk=instance.pk)
+                list(locked.items.select_for_update().values_list("id", flat=True))
+                try:
+                    locked.garantir_editavel_pela_recepcao()
+                except ValidationError as err:
+                    raise serializers.ValidationError(
+                        {"items": getattr(err, "messages", None) or [str(err)]}
+                    ) from err
+                return self._apply_update(instance, validated_date, exams, medical_exams)
+
+        return self._apply_update(instance, validated_date, exams, medical_exams)
+
+    def _apply_update(self, instance, validated_date, exams, medical_exams):
         instance = super().update(instance, validated_date)
 
         if instance.type == LabRequest.Type.LABORATORY:

@@ -494,6 +494,103 @@ class LabRequest(NoNameCoreModel):
 
         return not items.exclude(sample_status=LabRequestItem.SampleStatus.RECEIVED).exists()
 
+    def tem_amostras_recebidas_pelo_laboratorio(self) -> bool:
+        """True quando o laboratório já recebeu (conferiu) alguma amostra."""
+        from .lab_request_item import LabRequestItem
+
+        return self.items.filter(
+            deleted=False, sample_status=LabRequestItem.SampleStatus.RECEIVED
+        ).exists()
+
+    def garantir_editavel_pela_recepcao(self):
+        """Bloqueia alterações de composição após o laboratório receber amostras.
+
+        A partir da receção de amostras, qualquer correcção passa pela
+        solicitação de uma nota de crédito à Contabilidade para cada item da
+        requisição (acção `solicitar-nota-credito`)."""
+        if self.tem_amostras_recebidas_pelo_laboratorio():
+            raise ValidationError(
+                "Requisição com amostras já recebidas pelo laboratório não pode ser "
+                "editada pela recepção. Solicite uma nota de crédito à Contabilidade "
+                "para cada item da requisição."
+            )
+
+    def solicitar_notas_credito(self, user=None, reason: str = ""):
+        """Abre um pedido de nota de crédito à Contabilidade por cada item activo.
+
+        Caminho obrigatório para corrigir/estornar uma requisição cujas amostras
+        já foram recebidas pelo laboratório. Os pedidos ficam pendentes até
+        decisão da Contabilidade (que é quem aprova ou rejeita)."""
+        from decimal import Decimal
+
+        from apps.billing.models.credit_note_request import CreditNoteRequest
+
+        with transaction.atomic():
+            locked = type(self).objects.select_for_update().get(pk=self.pk)
+            invoice = None
+            if getattr(locked, "invoice", None):
+                invoice = locked.invoice
+            if invoice is None:
+                raise ValidationError(
+                    "A requisição não tem fatura associada; não é possível solicitar nota de crédito."
+                )
+            if invoice.credit_note_requests.filter(
+                deleted=False, status=CreditNoteRequest.Status.PENDING
+            ).exists():
+                raise ValidationError(
+                    "Já existe pedido de nota de crédito pendente para a fatura desta requisição."
+                )
+
+            items = list(locked.items.filter(deleted=False).select_related("exam", "medical_exam"))
+            if not items:
+                raise ValidationError("A requisição não tem itens para creditar.")
+
+            amounts = [locked._credit_amount_for_item(invoice, item) for item in items]
+            # Item sem correspondência na fatura: reparte o total pro-rata para o
+            # pedido não ficar a zero (o modelo substituiria 0 pelo total da fatura).
+            pro_rata = ((invoice.total or Decimal("0.00")) / len(items)).quantize(Decimal("0.01"))
+            created = []
+            for item, amount in zip(items, amounts):
+                exam = item.exam if item.exam_id else item.medical_exam
+                exam_name = getattr(exam, "name", "") or getattr(exam, "code", "") or f"item {item.pk}"
+                motivo = f"Requisição {locked.custom_id or locked.pk} — {exam_name}."
+                if reason:
+                    motivo = f"{motivo} Motivo: {reason}"
+                created.append(
+                    CreditNoteRequest.objects.create(
+                        tenant=invoice.tenant,
+                        invoice=invoice,
+                        patient=locked.patient,
+                        amount=amount or pro_rata,
+                        reason=motivo,
+                        created_by=user if getattr(user, "pk", None) else None,
+                    )
+                )
+            return created
+
+    def _credit_amount_for_item(self, invoice, item):
+        """Valor a creditar por item: procura o item de fatura correspondente."""
+        from decimal import Decimal
+
+        candidates = invoice.items.filter(deleted=False)
+        inv_item = None
+        if item.medical_exam_id:
+            inv_item = candidates.filter(medical_exam_id=item.medical_exam_id).first()
+        elif item.exam_id:
+            name = getattr(item.exam, "name", "") or ""
+            if name:
+                inv_item = (
+                    candidates.filter(exam__name__iexact=name).first()
+                    or candidates.filter(description__iexact=name).first()
+                )
+        if inv_item is not None:
+            try:
+                return inv_item.total_com_iva
+            except Exception:
+                return inv_item.total
+        exam = item.exam if item.exam_id else item.medical_exam
+        return getattr(exam, "price", None) or Decimal("0.00")
+
     def repetir_colheita(self, user=None):
         """Enfermagem repete a colheita dos itens com amostra rejeitada."""
         from django.utils import timezone

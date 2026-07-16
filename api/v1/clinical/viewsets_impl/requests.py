@@ -233,6 +233,36 @@ class LabRequestViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin,
         request_record.refresh_from_db()
         return Response(LabRequestSerializer(request_record, context={"request": request}).data)
 
+    @action(detail=True, methods=["post"], url_path="solicitar-nota-credito", url_name="solicitar-nota-credito")
+    def solicitar_nota_credito(self, request, pk=None):
+        """Pede à Contabilidade uma nota de crédito por cada item da requisição.
+
+        Caminho obrigatório para corrigir/estornar uma requisição cujas amostras
+        já foram recebidas pelo laboratório (a edição directa fica bloqueada)."""
+        request_record = self.get_object()
+        reason = str(request.data.get("reason") or request.data.get("motivo") or "").strip()
+        try:
+            created = request_record.solicitar_notas_credito(
+                user=getattr(request, "user", None), reason=reason
+            )
+        except DjangoValidationError as err:
+            raise ValidationError(getattr(err, "message_dict", None) or getattr(err, "messages", None) or str(err)) from err
+        return Response(
+            {
+                "detail": f"{len(created)} pedido(s) de nota de crédito submetido(s) à Contabilidade.",
+                "credit_note_requests": [
+                    {
+                        "id": item.pk,
+                        "custom_id": item.custom_id,
+                        "amount": str(item.amount),
+                        "status": item.status,
+                    }
+                    for item in created
+                ],
+            },
+            status=status.HTTP_201_CREATED,
+        )
+
     @action(detail=True, methods=["post"], url_path="iniciar-processamento", url_name="iniciar-processamento")
     def iniciar_processamento(self, request, pk=None):
         """Laboratório inicia o processamento da requisição colhida."""
