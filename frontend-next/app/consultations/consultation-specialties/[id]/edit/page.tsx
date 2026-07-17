@@ -32,6 +32,7 @@ type SpecialtyFormState = {
   description: string
   base_price: string
   vat_percentage: string
+  sector: string
   active: boolean
 }
 
@@ -44,6 +45,27 @@ const TONES = [
   { grad: "from-violet-500 to-purple-600", bar: "bg-violet-500", panel: "from-violet-500/12 via-purple-500/10 to-fuchsia-500/8" },
   { grad: "from-amber-500 to-orange-600", bar: "bg-amber-500", panel: "from-amber-500/12 via-orange-500/10 to-yellow-500/8" },
   { grad: "from-rose-500 to-pink-600", bar: "bg-rose-500", panel: "from-rose-500/12 via-pink-500/10 to-fuchsia-500/8" },
+]
+
+const SECTOR_OPTIONS = [
+  { value: "GENERAL_MEDICINE", label: "Clínica Geral" },
+  { value: "CARDIOLOGY", label: "Cardiologia" },
+  { value: "DERMATOLOGY", label: "Dermatologia" },
+  { value: "ENDOCRINOLOGY", label: "Endocrinologia" },
+  { value: "ANESTHESIOLOGY", label: "Anestesiologia" },
+  { value: "PATHOLOGY", label: "Patologia" },
+  { value: "NEUROLOGY", label: "Neurologia" },
+  { value: "NUTRITION", label: "Nutrição" },
+  { value: "OPHTHALMOLOGY", label: "Oftalmologia" },
+  { value: "DENTISTRY", label: "Odontologia" },
+  { value: "PHYSIOTHERAPY", label: "Fisioterapia" },
+  { value: "OCCUPATIONAL_THERAPY", label: "Terapia Ocupacional" },
+  { value: "GYNECOLOGY", label: "Ginecologia" },
+  { value: "OBSTETRICS", label: "Obstetrícia" },
+  { value: "NEPHROLOGY", label: "Nefrologia" },
+  { value: "HEMATOLOGY", label: "Hematologia" },
+  { value: "GASTROENTEROLOGY", label: "Gastroenterologia" },
+  { value: "OTHER", label: "Outro" },
 ]
 
 function toneFor(id: any) {
@@ -80,6 +102,7 @@ export default function ConsultationSpecialtiesEditPage() {
         description: String(response?.description || ""),
         base_price: response?.base_price !== null && response?.base_price !== undefined ? String(response.base_price) : "",
         vat_percentage: response?.vat_percentage !== null && response?.vat_percentage !== undefined ? String(response.vat_percentage) : "",
+        sector: String(response?.sector || "GENERAL_MEDICINE"),
         active: response?.active !== false,
       })
     } catch (e: any) {
@@ -134,6 +157,7 @@ export default function ConsultationSpecialtiesEditPage() {
         body: JSON.stringify({
           name,
           description: form.description.trim(),
+          sector: form.sector,
           base_price: form.base_price.trim() || undefined,
           vat_percentage: form.vat_percentage.trim() || undefined,
           active: form.active,
@@ -151,7 +175,7 @@ export default function ConsultationSpecialtiesEditPage() {
 
   return (
     <AppLayout fullWidth requiredGroups={requiredGroupsForResourceGroup("consultations")}>
-      <div className="space-y-1.5">
+      <div className="space-y-1">
         {loading ? (
           <div className={`${GLASS} flex items-center gap-2 px-4 py-6 text-sm text-muted-foreground`}>
             <Loader2 size={16} className="animate-spin" /> {t("A carregar…", "Loading…")}
@@ -163,9 +187,9 @@ export default function ConsultationSpecialtiesEditPage() {
             <section className={`relative overflow-hidden ${GLASS} bg-gradient-to-br ${tone.panel}`}>
               <span className={`absolute left-0 top-0 h-full w-1 ${tone.bar}`} />
               <div className="pointer-events-none absolute -right-10 -top-10 h-36 w-36 rounded-full bg-white/20 blur-3xl" />
-              <div className="relative flex flex-wrap items-center justify-between gap-2 px-3 py-2.5 pl-4">
+              <div className="relative flex flex-wrap items-center justify-between gap-2 px-3 py-1.5 pl-4">
                 <div className="flex min-w-0 items-center gap-2.5">
-                  <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${tone.grad} text-base font-bold text-white shadow-md`}>
+                  <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${tone.grad} text-base font-bold text-white shadow-md`}>
                     {initial}
                   </span>
                   <div className="min-w-0">
@@ -180,9 +204,42 @@ export default function ConsultationSpecialtiesEditPage() {
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg border border-white/20 bg-white/40 px-2.5 py-1 text-[11px] text-foreground shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]">
+                    <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
+                      <Coins size={12} className="text-emerald-600 dark:text-emerald-300" />
+                      {t("Base", "Base")}: <strong>{form.base_price.trim() ? <MoneyValue value={form.base_price} /> : "—"}</strong>
+                    </span>
+                    <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
+                      <BadgePercent size={12} className="text-cyan-600 dark:text-cyan-300" />
+                      {t("IVA", "VAT")}: <strong>{form.vat_percentage.trim() || "0"}%</strong>
+                    </span>
+                    <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
+                      <Clipboard size={12} className="text-violet-600 dark:text-violet-300" />
+                      {t("Final", "Final")}: <strong>{pricePreview !== null ? <MoneyValue value={pricePreview} /> : "—"}</strong>
+                    </span>
+                  </div>
+                  <label className="inline-flex h-8 cursor-pointer items-center gap-2 rounded-lg border border-white/20 bg-white/40 px-2.5 text-xs font-semibold text-foreground shadow-sm backdrop-blur-sm transition hover:border-emerald-300 hover:bg-white/60 dark:border-white/10 dark:bg-white/[0.04] dark:hover:bg-white/[0.08]">
+                    <CheckCircle2 size={14} className={form.active ? "text-emerald-500" : "text-slate-400"} />
+                    <span className="whitespace-nowrap">{form.active ? t("Ativa", "Active") : t("Inativa", "Inactive")}</span>
+                    <input
+                      type="checkbox"
+                      checked={form.active}
+                      onChange={(e) => setForm((prev) => prev ? { ...prev, active: e.target.checked } : prev)}
+                      className="h-4 w-4 accent-emerald-600"
+                    />
+                  </label>
+                  <button
+                    type="submit"
+                    form="consultation-specialty-edit-form"
+                    disabled={saving}
+                    className="inline-flex h-8 items-center justify-center gap-1.5 rounded-lg bg-gradient-to-r from-violet-600 via-fuchsia-600 to-cyan-600 px-3 text-xs font-semibold text-white shadow-md shadow-violet-500/25 transition hover:brightness-110 disabled:opacity-60"
+                  >
+                    {saving ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />}
+                    {saving ? t("A guardar...", "Saving...") : t("Guardar", "Save")}
+                  </button>
                   <Link
                     href={`/consultations/consultation-specialties/${id}`}
-                    className="group inline-flex items-center gap-2 rounded-lg border border-white/20 bg-white/40 py-1.5 pl-1.5 pr-3 text-xs font-semibold text-foreground shadow-sm backdrop-blur-sm transition hover:border-white/40 hover:bg-white/60 dark:border-white/10 dark:bg-white/[0.04] dark:hover:bg-white/[0.08]"
+                    className="group inline-flex items-center gap-2 rounded-lg border border-white/20 bg-white/40 py-1 pl-1.5 pr-3 text-xs font-semibold text-foreground shadow-sm backdrop-blur-sm transition hover:border-white/40 hover:bg-white/60 dark:border-white/10 dark:bg-white/[0.04] dark:hover:bg-white/[0.08]"
                   >
                     <span className="flex h-6 w-6 items-center justify-center rounded-md bg-sky-500/10 text-sky-600 transition group-hover:-translate-x-0.5 dark:text-sky-400">
                       <ArrowLeft size={14} />
@@ -193,10 +250,10 @@ export default function ConsultationSpecialtiesEditPage() {
               </div>
             </section>
 
-            <div className="grid gap-1.5 xl:grid-cols-[minmax(0,1.08fr)_minmax(280px,0.92fr)]">
+            <div className="grid gap-1 xl:grid-cols-[minmax(0,1fr)_minmax(34rem,0.95fr)]">
               <section className={`${GLASS} overflow-hidden`}>
-                <div className="flex items-center gap-2 border-b border-white/20 px-3 py-2.5 pl-4 dark:border-white/10">
-                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-violet-500 to-fuchsia-600 text-white shadow-sm">
+                <div className="flex items-center gap-2 border-b border-white/20 px-3 py-1.5 pl-4 dark:border-white/10">
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-violet-500 to-fuchsia-600 text-white shadow-sm">
                     <Pencil size={15} />
                   </span>
                   <div>
@@ -205,38 +262,38 @@ export default function ConsultationSpecialtiesEditPage() {
                   </div>
                 </div>
 
-                <div className="p-3">
+                <div className="p-2">
                   {formError ? (
                     <div className="mb-2 rounded-lg border border-red-200 bg-red-50 px-2.5 py-1.5 text-xs text-red-800 dark:border-red-800/40 dark:bg-red-900/15 dark:text-red-300">
                       {formError}
                     </div>
                   ) : null}
 
-                  <form onSubmit={handleSubmit} className="space-y-2.5">
-                    <div className="grid gap-2 sm:grid-cols-2">
-                      <label className="space-y-1">
-                        <span className="text-[11px] font-semibold text-muted-foreground">{t("Nome", "Name")}</span>
+                  <form id="consultation-specialty-edit-form" onSubmit={handleSubmit} className="space-y-1">
+                    <div className="grid min-w-0 gap-1 2xl:grid-cols-2">
+                      <label className="grid min-w-0 grid-cols-[5.5rem_minmax(0,1fr)] items-center gap-2">
+                        <span className="whitespace-nowrap text-[11px] font-semibold text-muted-foreground">{t("Nome", "Name")}</span>
                         <input
                           value={form.name}
                           onChange={(e) => setForm((prev) => prev ? { ...prev, name: e.target.value } : prev)}
-                          className="w-full rounded-lg border border-white/30 bg-white/55 px-2.5 py-2 text-sm text-foreground shadow-sm backdrop-blur-sm outline-none transition hover:border-violet-400 focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 dark:border-white/10 dark:bg-white/10"
+                          className="min-w-0 w-full rounded-lg border border-white/30 bg-white/55 px-2.5 py-1 text-sm text-foreground shadow-sm backdrop-blur-sm outline-none transition hover:border-violet-400 focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 dark:border-white/10 dark:bg-white/10"
                         />
                       </label>
 
-                      <label className="space-y-1">
-                        <span className="text-[11px] font-semibold text-muted-foreground">{t("Preço base", "Base price")}</span>
+                      <label className="grid min-w-0 grid-cols-[5.5rem_minmax(0,1fr)] items-center gap-2">
+                        <span className="whitespace-nowrap text-[11px] font-semibold text-muted-foreground">{t("Preço base", "Base price")}</span>
                         <input
                           type="number"
                           min="0"
                           step="0.01"
                           value={form.base_price}
                           onChange={(e) => setForm((prev) => prev ? { ...prev, base_price: e.target.value } : prev)}
-                          className="w-full rounded-lg border border-white/30 bg-white/55 px-2.5 py-2 text-sm text-foreground shadow-sm backdrop-blur-sm outline-none transition hover:border-emerald-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 dark:border-white/10 dark:bg-white/10"
+                          className="min-w-0 w-full rounded-lg border border-white/30 bg-white/55 px-2.5 py-1 text-sm text-foreground shadow-sm backdrop-blur-sm outline-none transition hover:border-emerald-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 dark:border-white/10 dark:bg-white/10"
                         />
                       </label>
 
-                      <label className="space-y-1">
-                        <span className="text-[11px] font-semibold text-muted-foreground">{t("IVA (%)", "VAT (%)")}</span>
+                      <label className="grid min-w-0 grid-cols-[5.5rem_minmax(0,1fr)] items-center gap-2">
+                        <span className="whitespace-nowrap text-[11px] font-semibold text-muted-foreground">{t("IVA (%)", "VAT (%)")}</span>
                         <input
                           type="number"
                           min="0"
@@ -244,83 +301,55 @@ export default function ConsultationSpecialtiesEditPage() {
                           step="0.01"
                           value={form.vat_percentage}
                           onChange={(e) => setForm((prev) => prev ? { ...prev, vat_percentage: e.target.value } : prev)}
-                          className="w-full rounded-lg border border-white/30 bg-white/55 px-2.5 py-2 text-sm text-foreground shadow-sm backdrop-blur-sm outline-none transition hover:border-cyan-400 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 dark:border-white/10 dark:bg-white/10"
+                          className="min-w-0 w-full rounded-lg border border-white/30 bg-white/55 px-2.5 py-1 text-sm text-foreground shadow-sm backdrop-blur-sm outline-none transition hover:border-cyan-400 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 dark:border-white/10 dark:bg-white/10"
                         />
                       </label>
 
-                      <div className="space-y-1">
-                        <span className="text-[11px] font-semibold text-muted-foreground">{t("Estado", "Status")}</span>
-                        <label className="flex min-h-[40px] cursor-pointer items-center justify-between rounded-lg border border-white/30 bg-white/55 px-2.5 py-1.5 text-sm text-foreground shadow-sm backdrop-blur-sm transition hover:border-violet-400 dark:border-white/10 dark:bg-white/10">
-                          <span className="inline-flex items-center gap-2">
-                            <CheckCircle2 size={15} className={form.active ? "text-emerald-500" : "text-slate-400"} />
-                            {form.active ? t("Ativa", "Active") : t("Inativa", "Inactive")}
-                          </span>
-                          <input
-                            type="checkbox"
-                            checked={form.active}
-                            onChange={(e) => setForm((prev) => prev ? { ...prev, active: e.target.checked } : prev)}
-                            className="h-4 w-4 accent-emerald-600"
-                          />
-                        </label>
-                      </div>
+                      <label className="grid min-w-0 grid-cols-[5.5rem_minmax(0,1fr)] items-center gap-2">
+                        <span className="whitespace-nowrap text-[11px] font-semibold text-muted-foreground">{t("Sector", "Sector")}</span>
+                        <select
+                          value={form.sector}
+                          onChange={(e) => setForm((prev) => prev ? { ...prev, sector: e.target.value } : prev)}
+                          className="min-w-0 w-full rounded-lg border border-white/30 bg-white/55 px-2.5 py-1 text-sm text-foreground shadow-sm backdrop-blur-sm outline-none transition hover:border-sky-400 focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 dark:border-white/10 dark:bg-white/10"
+                        >
+                          {SECTOR_OPTIONS.map((option) => (
+                            <option key={option.value} value={option.value}>{option.label}</option>
+                          ))}
+                        </select>
+                      </label>
                     </div>
 
-                    <label className="block space-y-1">
-                      <span className="text-[11px] font-semibold text-muted-foreground">{t("Descrição", "Description")}</span>
+                    <label className="grid min-w-0 grid-cols-[5.5rem_minmax(0,1fr)] items-start gap-2">
+                      <span className="pt-1 whitespace-nowrap text-[11px] font-semibold text-muted-foreground">{t("Descrição", "Description")}</span>
                       <textarea
-                        rows={4}
+                        rows={2}
                         value={form.description}
                         onChange={(e) => setForm((prev) => prev ? { ...prev, description: e.target.value } : prev)}
-                        className="w-full rounded-lg border border-white/30 bg-white/55 px-2.5 py-2 text-sm text-foreground shadow-sm backdrop-blur-sm outline-none transition hover:border-fuchsia-400 focus:border-fuchsia-500 focus:ring-2 focus:ring-fuchsia-500/20 dark:border-white/10 dark:bg-white/10"
+                        className="min-w-0 w-full rounded-lg border border-white/30 bg-white/55 px-2.5 py-1 text-sm text-foreground shadow-sm backdrop-blur-sm outline-none transition hover:border-fuchsia-400 focus:border-fuchsia-500 focus:ring-2 focus:ring-fuchsia-500/20 dark:border-white/10 dark:bg-white/10"
                       />
                     </label>
 
-                    <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-white/20 bg-white/35 px-2.5 py-2 dark:border-white/10 dark:bg-white/[0.03]">
-                      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-foreground">
-                        <span className="inline-flex items-center gap-1.5">
-                          <Coins size={12} className="text-emerald-600 dark:text-emerald-300" />
-                          {t("Base", "Base")}: <strong>{form.base_price.trim() ? <MoneyValue value={form.base_price} /> : "—"}</strong>
-                        </span>
-                        <span className="inline-flex items-center gap-1.5">
-                          <BadgePercent size={12} className="text-cyan-600 dark:text-cyan-300" />
-                          {t("IVA", "VAT")}: <strong>{form.vat_percentage.trim() || "0"}%</strong>
-                        </span>
-                        <span className="inline-flex items-center gap-1.5">
-                          <Clipboard size={12} className="text-violet-600 dark:text-violet-300" />
-                          {t("Final", "Final")}: <strong>{pricePreview !== null ? <MoneyValue value={pricePreview} /> : "—"}</strong>
-                        </span>
-                      </div>
-
-                      <button
-                        type="submit"
-                        disabled={saving}
-                        className="inline-flex h-9 items-center justify-center gap-1.5 rounded-lg bg-gradient-to-r from-violet-600 via-fuchsia-600 to-cyan-600 px-3 text-xs font-semibold text-white shadow-md shadow-violet-500/25 transition hover:brightness-110 disabled:opacity-60"
-                      >
-                        {saving ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />}
-                        {saving ? t("A guardar...", "Saving...") : t("Guardar alterações", "Save changes")}
-                      </button>
-                    </div>
                   </form>
                 </div>
               </section>
 
-              <aside className="grid gap-1.5">
+              <aside className="grid min-w-0 grid-cols-2 gap-1">
                 <section className={`relative overflow-hidden ${GLASS}`}>
                   <span className={`absolute left-0 top-0 h-full w-1 ${tone.bar}`} />
-                  <div className="px-3 py-2.5 pl-4">
-                    <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                  <div className="px-3 py-1.5 pl-4">
+                    <div className="flex items-center gap-1.5 whitespace-nowrap text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
                       <Stethoscope size={12} /> {t("Resumo do registo", "Record summary")}
                     </div>
-                    <div className="mt-2.5 grid gap-1.5">
-                      <div className="rounded-lg border border-white/20 bg-white/40 px-2.5 py-1.5 dark:border-white/10 dark:bg-white/[0.03]">
+                    <div className="mt-1.5 grid gap-1">
+                      <div className="rounded-lg border border-white/20 bg-white/40 px-2.5 py-1 dark:border-white/10 dark:bg-white/[0.03]">
                         <div className="text-[10px] font-semibold uppercase text-muted-foreground">{t("Código", "Code")}</div>
                         <div className="mt-0.5 font-mono text-sm text-foreground">{specialty?.custom_id || `#${id}`}</div>
                       </div>
-                      <div className="rounded-lg border border-white/20 bg-white/40 px-2.5 py-1.5 dark:border-white/10 dark:bg-white/[0.03]">
+                      <div className="rounded-lg border border-white/20 bg-white/40 px-2.5 py-1 dark:border-white/10 dark:bg-white/[0.03]">
                         <div className="text-[10px] font-semibold uppercase text-muted-foreground">{t("Criada em", "Created at")}</div>
                         <div className="mt-0.5 text-sm text-foreground">{specialty?.created_at ? new Date(specialty.created_at).toLocaleString() : "—"}</div>
                       </div>
-                      <div className="rounded-lg border border-white/20 bg-white/40 px-2.5 py-1.5 dark:border-white/10 dark:bg-white/[0.03]">
+                      <div className="rounded-lg border border-white/20 bg-white/40 px-2.5 py-1 dark:border-white/10 dark:bg-white/[0.03]">
                         <div className="text-[10px] font-semibold uppercase text-muted-foreground">{t("Atualizada em", "Updated at")}</div>
                         <div className="mt-0.5 text-sm text-foreground">{specialty?.updated_at ? new Date(specialty.updated_at).toLocaleString() : "—"}</div>
                       </div>
@@ -330,16 +359,16 @@ export default function ConsultationSpecialtiesEditPage() {
 
                 <section className={`relative overflow-hidden ${GLASS}`}>
                   <span className="absolute left-0 top-0 h-full w-1 bg-cyan-500" />
-                  <div className="px-3 py-2.5 pl-4">
-                    <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                  <div className="px-3 py-1.5 pl-4">
+                    <div className="flex items-center gap-1.5 whitespace-nowrap text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
                       <Coins size={12} /> {t("Impacto financeiro", "Financial impact")}
                     </div>
-                    <div className="mt-2.5 space-y-1.5">
-                      <div className="rounded-lg border border-emerald-200 bg-emerald-50/80 px-2.5 py-1.5 dark:border-emerald-700/30 dark:bg-emerald-900/15">
+                    <div className="mt-1.5 space-y-1">
+                      <div className="rounded-lg border border-emerald-200 bg-emerald-50/80 px-2.5 py-1 dark:border-emerald-700/30 dark:bg-emerald-900/15">
                         <div className="text-[10px] font-semibold uppercase text-emerald-700 dark:text-emerald-300">{t("Preço final", "Final price")}</div>
                         <div className="mt-1 text-lg font-bold text-emerald-900 dark:text-emerald-100">{pricePreview !== null ? <MoneyValue value={pricePreview} /> : "—"}</div>
                       </div>
-                      <div className="rounded-lg border border-cyan-200 bg-cyan-50/80 px-2.5 py-1.5 dark:border-cyan-700/30 dark:bg-cyan-900/15">
+                      <div className="rounded-lg border border-cyan-200 bg-cyan-50/80 px-2.5 py-1 dark:border-cyan-700/30 dark:bg-cyan-900/15">
                         <div className="text-[10px] font-semibold uppercase text-cyan-700 dark:text-cyan-300">{t("IVA actual", "Current VAT")}</div>
                         <div className="mt-1 text-lg font-bold text-cyan-900 dark:text-cyan-100">{form.vat_percentage.trim() || "0"}%</div>
                       </div>

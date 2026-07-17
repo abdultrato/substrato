@@ -43,7 +43,7 @@ from apps.clinical.models.patient import Patient
 from apps.clinical.models.result import Result
 from apps.clinical.models.result_item import ResultItem
 from apps.clinical.models.sample import Sample
-from apps.consultations.models.consultation_specialty import ConsultationSpecialty
+from apps.consultations.models.consultation_specialty import ConsultationSpecialty, infer_consultation_sector
 from apps.consultations.models.holiday import Holiday
 from apps.consultations.models.medical_consultation import MedicalConsultation
 from apps.equipment.models.equipment import Equipment
@@ -1234,9 +1234,13 @@ class Command(BaseCommand):
                     "description": f"Especialidade {name}",
                     "base_price": Decimal("600.00") + Decimal(idx * 15),
                     "vat_percentage": Decimal("16.00"),
+                    "sector": infer_consultation_sector(name),
                     "active": True,
                 },
             )
+            if spec.sector == "OTHER":
+                spec.sector = infer_consultation_sector(name)
+                spec.save(update_fields=["sector", "updated_at"])
             if spec not in specs:
                 specs.append(spec)
 

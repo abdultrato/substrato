@@ -5,11 +5,15 @@ import { useParams, useRouter } from "next/navigation";
 import {
   ArrowLeft,
   Building2,
+  CalendarClock,
+  Check,
+  Clock3,
   FlaskConical,
   Loader2,
   Save,
   Stethoscope,
   User,
+  X,
 } from "lucide-react";
 
 import AppLayout from "@/components/layout/AppLayout";
@@ -23,14 +27,6 @@ import type { RelationTarget, RelationOption } from "@/lib/resources/relationOpt
 
 // ── Relation targets ──────────────────────────────────────────────────────────
 
-const T_PATIENT: RelationTarget = {
-  endpoint: "/clinical/patient/",
-  labelFields: ["name", "document_number", "custom_id"],
-};
-const T_PHYSICIAN: RelationTarget = {
-  endpoint: "/consultations/doctors/",
-  labelFields: ["name", "profession_name", "custom_id"],
-};
 const T_EXAMS: RelationTarget = {
   endpoint: "/clinical_laboratory/test/",
   labelFields: ["name", "code", "custom_id"],
@@ -54,18 +50,33 @@ const EDIT_GROUPS = [
 type LabRequestDetail = {
   id: number;
   custom_id?: string | null;
+  status?: string | null;
   patient: number;
   patient_name?: string;
+  patient_code?: string | null;
   requesting_physician?: number | null;
   requesting_physician_name?: string | null;
+  requesting_physician_profession_name?: string | null;
   exams?: number[];
-  items?: Array<{ id?: number; exam?: number | null; exam_name?: string }>;
+  items?: Array<{
+    id?: number;
+    exam?: number | null;
+    exam_name?: string;
+    sample_status?: string | null;
+    sample_received_at?: string | null;
+  }>;
   is_occupational?: boolean;
   occupational_profile?: number | null;
   occupational_profile_name?: string | null;
   requesting_company?: number | null;
   requesting_company_name?: string | null;
   clinical_status?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+  validated_at?: string | null;
+  validated_by_name?: string | null;
+  collected_at?: string | null;
+  collected_by_name?: string | null;
 };
 
 // ── Design components ─────────────────────────────────────────────────────────
@@ -125,6 +136,65 @@ function Field({
   );
 }
 
+function formatDateTime(value?: string | null): string {
+  if (!value) return "Pendente";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return new Intl.DateTimeFormat("pt-PT", {
+    dateStyle: "short",
+    timeStyle: "short",
+  }).format(date);
+}
+
+function isRequestEditable(record: LabRequestDetail): boolean {
+  const status = String(record.status || "").toLowerCase();
+  const hasLockedSample = (record.items ?? []).some((item) => {
+    const sampleStatus = String(item.sample_status || "").toLowerCase();
+    return Boolean(item.sample_received_at) || ["coletada", "colhida", "recebida"].includes(sampleStatus);
+  });
+
+  return status === "pendente" && !record.validated_at && !record.collected_at && !hasLockedSample;
+}
+
+function TimelineStep({
+  label,
+  value,
+  by,
+  state,
+}: {
+  label: string;
+  value?: string | null;
+  by?: string | null;
+  state: "done" | "current" | "pending";
+}) {
+  const done = Boolean(value);
+  const stateStyle = state === "done"
+    ? "bg-emerald-600 text-white shadow-emerald-500/20"
+    : state === "current"
+      ? "bg-amber-500 text-white shadow-amber-500/25"
+      : "bg-muted text-muted-foreground";
+  const iconStyle = state === "done"
+    ? "bg-white/20 text-white"
+    : state === "current"
+      ? "bg-white/20 text-white"
+      : "bg-background/80 text-red-500";
+  const Icon = state === "done" ? Check : state === "current" ? Clock3 : X;
+  return (
+    <div className={`flex min-w-0 items-center gap-1.5 px-4 py-2 shadow-sm [clip-path:polygon(0_0,calc(100%-14px)_0,100%_50%,calc(100%-14px)_100%,0_100%,14px_50%)] ${stateStyle}`}>
+      <span className={`ml-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full ${iconStyle}`}>
+        <Icon size={14} strokeWidth={2.5} />
+      </span>
+      <div className="min-w-0 whitespace-nowrap">
+        <p className="truncate text-xs font-semibold">{label}</p>
+        <p className="truncate text-[11px] opacity-90">
+          {state === "current" && !done ? "Em andamento" : formatDateTime(value)}
+        </p>
+        {by ? <p className="truncate text-[11px] opacity-80">por {by}</p> : null}
+      </div>
+    </div>
+  );
+}
+
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function EditRequestPage() {
@@ -141,11 +211,10 @@ export default function EditRequestPage() {
   const [saveError, setSaveError] = useState<string | null>(null);
 
   // form state
-  const [patient, setPatient] = useState<number | null>(null);
-  const [patientOpts, setPatientOpts] = useState<RelationOption[]>([]);
-
-  const [physician, setPhysician] = useState<number | null>(null);
-  const [physicianOpts, setPhysicianOpts] = useState<RelationOption[]>([]);
+  const [patientName, setPatientName] = useState("Paciente não informado");
+  const [patientCode, setPatientCode] = useState("");
+  const [physicianName, setPhysicianName] = useState("Médico não informado");
+  const [physicianContext, setPhysicianContext] = useState("");
 
   const [exams, setExams] = useState<number[]>([]);
   const [examOpts, setExamOpts] = useState<RelationOption[]>([]);
@@ -158,6 +227,14 @@ export default function EditRequestPage() {
   const [companyOpts, setCompanyOpts] = useState<RelationOption[]>([]);
 
   const [clinicalStatus, setClinicalStatus] = useState("");
+  const [timeline, setTimeline] = useState({
+    createdAt: null as string | null,
+    updatedAt: null as string | null,
+    validatedAt: null as string | null,
+    validatedBy: null as string | null,
+    collectedAt: null as string | null,
+    collectedBy: null as string | null,
+  });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -171,14 +248,15 @@ export default function EditRequestPage() {
       });
 
       setCustomId(d.custom_id ?? String(d.id));
+      if (!isRequestEditable(d)) {
+        setLoadError("Esta requisição não pode ser editada depois de validada, colhida ou recebida pelo laboratório.");
+        return;
+      }
 
-      setPatient(d.patient ?? null);
-      if (d.patient && d.patient_name)
-        setPatientOpts([{ value: String(d.patient), label: d.patient_name }]);
-
-      setPhysician(d.requesting_physician ?? null);
-      if (d.requesting_physician && d.requesting_physician_name)
-        setPhysicianOpts([{ value: String(d.requesting_physician), label: d.requesting_physician_name }]);
+      setPatientName(d.patient_name || "Paciente não informado");
+      setPatientCode(d.patient_code || "");
+      setPhysicianName(d.requesting_physician_name || "Médico não informado");
+      setPhysicianContext(d.requesting_physician_profession_name || "");
 
       const examIds = d.exams ?? [];
       setExams(examIds);
@@ -197,6 +275,14 @@ export default function EditRequestPage() {
         setCompanyOpts([{ value: String(d.requesting_company), label: d.requesting_company_name }]);
 
       setClinicalStatus(d.clinical_status ?? "");
+      setTimeline({
+        createdAt: d.created_at ?? null,
+        updatedAt: d.updated_at ?? null,
+        validatedAt: d.validated_at ?? null,
+        validatedBy: d.validated_by_name ?? null,
+        collectedAt: d.collected_at ?? null,
+        collectedBy: d.collected_by_name ?? null,
+      });
     } catch (err: any) {
       setLoadError(isNotFoundLikeError(err) ? "Requisição não encontrada." : err?.message || "Erro ao carregar.");
     } finally {
@@ -208,7 +294,6 @@ export default function EditRequestPage() {
 
   function validate(): boolean {
     const e: Record<string, string> = {};
-    if (!patient) e.patient = "Selecione um paciente.";
     if (exams.length === 0) e.exams = "Adicione pelo menos um exame.";
     setErrors(e);
     return Object.keys(e).length === 0;
@@ -223,8 +308,6 @@ export default function EditRequestPage() {
       await apiFetch(`/clinical/labrequest/${idStr}/`, {
         method: "PATCH",
         body: JSON.stringify({
-          patient,
-          requesting_physician: physician ?? null,
           exams,
           is_occupational: isOccupational,
           occupational_profile: isOccupational ? profile : null,
@@ -279,6 +362,14 @@ export default function EditRequestPage() {
     );
   }
 
+  const chronologySteps = [
+    { label: "Criada", value: timeline.createdAt, by: null },
+    { label: "Validada", value: timeline.validatedAt, by: timeline.validatedBy },
+    { label: "Colheita", value: timeline.collectedAt, by: timeline.collectedBy },
+    { label: "Actualizada", value: timeline.updatedAt, by: null },
+  ];
+  const currentStepIndex = chronologySteps.findIndex((step) => !step.value);
+
   return (
     <AppLayout requiredGroups={EDIT_GROUPS}>
       <form onSubmit={handleSubmit} noValidate className="space-y-2">
@@ -286,10 +377,22 @@ export default function EditRequestPage() {
         {/* Header */}
         <div className="relative overflow-hidden rounded-lg border border-white/20 bg-white/30 px-3 py-2.5 shadow-sm backdrop-blur-sm dark:bg-white/5 dark:border-white/10">
           <span className="absolute left-0 top-0 h-full w-1 bg-violet-500" />
-          <div className="flex flex-wrap items-center justify-between gap-2 pl-1">
-            <div>
+          <div className="flex flex-wrap items-start justify-between gap-2 pl-1">
+            <div className="min-w-0 space-y-1">
               <h1 className="text-lg font-bold leading-tight text-foreground">Editar requisição</h1>
               <p className="text-[11px] text-muted-foreground">{customId}</p>
+              <div className="flex max-w-full flex-nowrap items-center gap-1.5 overflow-x-auto whitespace-nowrap pt-0.5">
+                <span className="inline-flex h-7 items-center gap-1.5 rounded-md border border-border bg-background/80 px-2.5 text-xs font-semibold text-foreground">
+                  <User size={13} />
+                  {patientName}
+                  {patientCode ? <span className="text-muted-foreground">({patientCode})</span> : null}
+                </span>
+                <span className="inline-flex h-7 items-center gap-1.5 rounded-md border border-border bg-background/80 px-2.5 text-xs font-semibold text-foreground">
+                  <Stethoscope size={13} />
+                  {physicianName}
+                  {physicianContext ? <span className="text-muted-foreground">- {physicianContext}</span> : null}
+                </span>
+              </div>
             </div>
             <div className="flex items-center gap-1.5">
               {backButton}
@@ -311,95 +414,69 @@ export default function EditRequestPage() {
           </div>
         ) : null}
 
-        {/* Cabeçalho acima permanece isolado; cartões do formulário em 2 colunas. */}
-        <div className="grid min-w-0 grid-cols-2 items-start gap-2">
+        {/* Cabeçalho acima permanece isolado; cartões do formulário em masonry. */}
+        <div className="min-w-0 columns-1 gap-2 md:columns-2 [&>*]:mb-2 [&>*]:break-inside-avoid">
+          <div>
+            <SectionCard icon={Stethoscope} title="Medicina ocupacional" accent="bg-emerald-500" compact>
+              <Field label="Tipo de requisição" compact>
+                <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-border bg-background px-2.5 py-1.5 transition hover:border-violet-400">
+                  <input
+                    type="checkbox"
+                    checked={isOccupational}
+                    onChange={(e) => {
+                      setIsOccupational(e.target.checked);
+                      if (!e.target.checked) setProfile(null);
+                    }}
+                    className="h-4 w-4 rounded border-border accent-violet-600"
+                  />
+                  <span className="min-w-0 truncate whitespace-nowrap text-xs font-medium text-foreground">Requisição de exames ocupacionais</span>
+                </label>
+              </Field>
+              {isOccupational ? (
+                <Field
+                  label="Perfil profissional"
+                  hint="Os exames da bandeja do perfil somam-se aos exames selecionados."
+                  compact
+                >
+                  <SearchableRelationSelect
+                    fieldName="occupational_profile"
+                    value={profile}
+                    onChange={setProfile}
+                    target={T_PROFILE}
+                    initialOptions={profileOpts}
+                    placeholder="Pesquisar perfil profissional..."
+                    safeRefreshToken={safeRefreshToken}
+                  />
+                </Field>
+              ) : null}
+            </SectionCard>
+          </div>
 
-          {/* Paciente e médico */}
-          <SectionCard icon={User} title="Paciente e médico" accent="bg-sky-500" compact>
-            <Field label="Paciente" required error={errors.patient} compact>
-              <SearchableRelationSelect
-                fieldName="patient"
-                value={patient}
-                onChange={(v) => { setPatient(v); if (v) setErrors((p) => ({ ...p, patient: "" })); }}
-                target={T_PATIENT}
-                initialOptions={patientOpts}
-                placeholder="Pesquisar pelo nome ou documento..."
-                safeRefreshToken={safeRefreshToken}
-              />
-            </Field>
-            <Field label="Médico solicitante" compact>
-              <SearchableRelationSelect
-                fieldName="requesting_physician"
-                value={physician}
-                onChange={setPhysician}
-                target={T_PHYSICIAN}
-                initialOptions={physicianOpts}
-                placeholder="Pesquisar médico..."
-                safeRefreshToken={safeRefreshToken}
-              />
-            </Field>
-          </SectionCard>
-
-          {/* Exames */}
-          <SectionCard icon={FlaskConical} title="Exames solicitados" accent="bg-violet-500" compact>
-            <Field
-              label="Exames"
-              required
-              hint="Pesquise e clique para adicionar cada exame necessário."
-              error={errors.exams}
-              compact
-            >
-              <SearchableMultiSelect
-                fieldName="exams"
-                value={exams}
-                onChange={(v) => { setExams(v); if (v.length > 0) setErrors((p) => ({ ...p, exams: "" })); }}
-                target={T_EXAMS}
-                initialOptions={examOpts}
-                placeholder="Pesquisar exames..."
-                safeRefreshToken={safeRefreshToken}
-              />
-            </Field>
-          </SectionCard>
-
-          {/* Medicina Ocupacional */}
-          <SectionCard icon={Stethoscope} title="Medicina ocupacional" accent="bg-emerald-500" compact>
-            <Field label="Tipo de requisição" compact>
-              <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-border bg-background px-2.5 py-1.5 transition hover:border-violet-400">
-                <input
-                  type="checkbox"
-                  checked={isOccupational}
-                  onChange={(e) => {
-                    setIsOccupational(e.target.checked);
-                    if (!e.target.checked) setProfile(null);
-                  }}
-                  className="h-4 w-4 rounded border-border accent-violet-600"
-                />
-                <span className="min-w-0 truncate whitespace-nowrap text-xs font-medium text-foreground">Requisição de exames ocupacionais</span>
-              </label>
-            </Field>
-            {isOccupational ? (
+          <div>
+            <SectionCard icon={FlaskConical} title="Exames solicitados" accent="bg-violet-500" compact>
               <Field
-                label="Perfil profissional"
-                hint="Os exames da bandeja do perfil somam-se aos exames selecionados."
+                label="Exames"
+                required
+                hint="Pesquise e clique para adicionar cada exame necessário."
+                error={errors.exams}
                 compact
               >
-                <SearchableRelationSelect
-                  fieldName="occupational_profile"
-                  value={profile}
-                  onChange={setProfile}
-                  target={T_PROFILE}
-                  initialOptions={profileOpts}
-                  placeholder="Pesquisar perfil profissional..."
+                <SearchableMultiSelect
+                  fieldName="exams"
+                  value={exams}
+                  onChange={(v) => { setExams(v); if (v.length > 0) setErrors((p) => ({ ...p, exams: "" })); }}
+                  target={T_EXAMS}
+                  initialOptions={examOpts}
+                  placeholder="Pesquisar exames..."
                   safeRefreshToken={safeRefreshToken}
                 />
               </Field>
-            ) : null}
-          </SectionCard>
-        </div>
+            </SectionCard>
+          </div>
 
-        {/* Registo (último cartão, largura total como o cabeçalho) */}
-        <SectionCard icon={Building2} title="Registo" accent="bg-amber-500">
-            <Field label="Empresa solicitante">
+          <div>
+            <SectionCard icon={Building2} title="Registo" accent="bg-amber-500" compact>
+            <Field label="Empresa solicitante" compact>
               <SearchableRelationSelect
                 fieldName="requesting_company"
                 value={company}
@@ -410,7 +487,7 @@ export default function EditRequestPage() {
                 safeRefreshToken={safeRefreshToken}
               />
             </Field>
-            <Field label="Estado clínico">
+            <Field label="Estado de prioridade" compact>
               <select
                 value={clinicalStatus}
                 onChange={(e) => setClinicalStatus(e.target.value)}
@@ -429,6 +506,23 @@ export default function EditRequestPage() {
               </select>
             </Field>
           </SectionCard>
+          </div>
+        </div>
+
+        {/* Cronologia (último cartão da página) */}
+        <SectionCard icon={CalendarClock} title="Cronologia" accent="bg-slate-500">
+          <div className="grid grid-cols-4 gap-1.5">
+            {chronologySteps.map((step, index) => (
+              <TimelineStep
+                key={step.label}
+                label={step.label}
+                value={step.value}
+                by={step.by}
+                state={step.value ? "done" : index === currentStepIndex ? "current" : "pending"}
+              />
+            ))}
+          </div>
+        </SectionCard>
       </form>
     </AppLayout>
   );

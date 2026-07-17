@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { useEffect, useMemo, useState, type FormEvent } from "react"
 import {
+  ArrowLeft,
   BadgePercent,
   CheckCircle2,
   Clipboard,
@@ -38,6 +39,32 @@ const ACTIVE_BADGE =
 const INACTIVE_BADGE =
   "border-slate-200 bg-slate-50 text-slate-600 dark:border-slate-600/30 dark:bg-slate-900/20 dark:text-slate-300"
 
+const SECTOR_OPTIONS = [
+  { value: "GENERAL_MEDICINE", label: "Clínica Geral" },
+  { value: "CARDIOLOGY", label: "Cardiologia" },
+  { value: "DERMATOLOGY", label: "Dermatologia" },
+  { value: "ENDOCRINOLOGY", label: "Endocrinologia" },
+  { value: "ANESTHESIOLOGY", label: "Anestesiologia" },
+  { value: "PATHOLOGY", label: "Patologia" },
+  { value: "NEUROLOGY", label: "Neurologia" },
+  { value: "NUTRITION", label: "Nutrição" },
+  { value: "OPHTHALMOLOGY", label: "Oftalmologia" },
+  { value: "DENTISTRY", label: "Odontologia" },
+  { value: "PHYSIOTHERAPY", label: "Fisioterapia" },
+  { value: "OCCUPATIONAL_THERAPY", label: "Terapia Ocupacional" },
+  { value: "GYNECOLOGY", label: "Ginecologia" },
+  { value: "OBSTETRICS", label: "Obstetrícia" },
+  { value: "NEPHROLOGY", label: "Nefrologia" },
+  { value: "HEMATOLOGY", label: "Hematologia" },
+  { value: "GASTROENTEROLOGY", label: "Gastroenterologia" },
+  { value: "OTHER", label: "Outro" },
+]
+
+function sectorLabel(value: any): string {
+  const raw = String(value || "")
+  return String(SECTOR_OPTIONS.find((option) => option.value === raw)?.label || raw || "Outro")
+}
+
 function specialtyTone(id: any) {
   const tones = [
     { grad: "from-sky-500 to-blue-600", bar: "bg-sky-500" },
@@ -66,6 +93,7 @@ function SpecialtyCard({ row, href, t }: { row: Row; href: string; t: (pt: strin
   const initial = name.charAt(0).toUpperCase() || "?"
   const active = isActive(row)
   const vat = parsePercent(row?.vat_percentage)
+  const sector = row?.sector_display || sectorLabel(row?.sector)
 
   return (
     <Link
@@ -90,6 +118,10 @@ function SpecialtyCard({ row, href, t }: { row: Row; href: string; t: (pt: strin
       </div>
 
       <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-muted-foreground">
+        <span className="inline-flex items-center gap-1 rounded-full border border-sky-200 bg-sky-50 px-2 py-0.5 font-semibold text-sky-700 dark:border-sky-700/30 dark:bg-sky-900/20 dark:text-sky-300">
+          <Tag size={11} />
+          {sector}
+        </span>
         <span className="inline-flex items-center gap-1">
           <Coins size={11} />
           <MoneyValue value={row?.base_price} />
@@ -114,6 +146,7 @@ type SpecialtyFormState = {
   description: string
   base_price: string
   vat_percentage: string
+  sector: string
   active: boolean
 }
 
@@ -122,6 +155,7 @@ const INITIAL_FORM: SpecialtyFormState = {
   description: "",
   base_price: "",
   vat_percentage: "16",
+  sector: "GENERAL_MEDICINE",
   active: true,
 }
 
@@ -180,7 +214,7 @@ export default function ConsultationsConsultationSpecialtiesPage() {
       if (statusFilter === "active" && !isActive(row)) return false
       if (statusFilter === "inactive" && isActive(row)) return false
       if (!query) return true
-      const haystack = [row?.name, row?.description, row?.custom_id, row?.base_price, row?.vat_percentage]
+      const haystack = [row?.name, row?.description, row?.custom_id, row?.sector, row?.sector_display, row?.base_price, row?.vat_percentage]
         .map((value) => String(value ?? "").toLowerCase())
         .join(" ")
       return haystack.includes(query)
@@ -231,6 +265,7 @@ export default function ConsultationsConsultationSpecialtiesPage() {
         body: JSON.stringify({
           name,
           description: form.description.trim(),
+          sector: form.sector,
           base_price: basePrice || undefined,
           vat_percentage: vat || undefined,
           active: form.active,
@@ -255,6 +290,16 @@ export default function ConsultationsConsultationSpecialtiesPage() {
           <span className="absolute left-0 top-0 h-full w-1 bg-sky-500" />
           <span className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-sky-400/40 to-transparent" />
           <div className="flex flex-wrap items-center gap-2 px-3 py-2 pl-4">
+            <Link
+              href="/consultations"
+              className="group inline-flex h-9 shrink-0 items-center gap-2 rounded-lg border border-white/20 bg-white/40 py-1 pl-1.5 pr-3 text-xs font-semibold text-foreground shadow-sm backdrop-blur-sm transition hover:border-white/40 hover:bg-white/60 dark:border-white/10 dark:bg-white/[0.04] dark:hover:bg-white/[0.08]"
+            >
+              <span className="flex h-6 w-6 items-center justify-center rounded-md bg-sky-500/10 text-sky-600 transition group-hover:-translate-x-0.5 dark:text-sky-400">
+                <ArrowLeft size={14} />
+              </span>
+              {t("Voltar", "Back")}
+            </Link>
+
             <div className="flex min-w-0 items-center gap-2">
               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500 to-blue-600 text-white shadow-md shadow-sky-500/20">
                 <Stethoscope size={17} />
@@ -267,13 +312,32 @@ export default function ConsultationsConsultationSpecialtiesPage() {
               </div>
             </div>
 
+            <div className="grid shrink-0 grid-cols-3 overflow-hidden rounded-lg border border-white/25 bg-white/40 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.05]">
+              {[
+                { key: "all", label: t("Total", "Total"), count: stats.total, bar: "bg-sky-500", active: statusFilter === null },
+                { key: "active", label: t("Ativas", "Active"), count: stats.active, bar: "bg-emerald-500", active: statusFilter === "active" },
+                { key: "inactive", label: t("Inativas", "Inactive"), count: stats.inactive, bar: "bg-amber-500", active: statusFilter === "inactive" },
+              ].map((item) => (
+                <button
+                  key={item.key}
+                  type="button"
+                  onClick={() => setStatusFilter(item.key === "all" ? null : (item.key as "active" | "inactive"))}
+                  className={`relative min-w-[5rem] px-3 py-1.5 text-left transition hover:bg-white/35 dark:hover:bg-white/[0.06] ${item.active ? "bg-white/45 dark:bg-white/[0.08]" : ""}`}
+                >
+                  <span className={`absolute left-0 top-0 h-full w-0.5 ${item.bar}`} />
+                  <span className="block pl-1 text-[9px] font-semibold uppercase tracking-wide text-muted-foreground">{item.label}</span>
+                  <span className="block pl-1 text-base font-bold leading-tight text-foreground tabular-nums">{item.count}</span>
+                </button>
+              ))}
+            </div>
+
             <button
               type="button"
               onClick={() => {
                 setFormError(null)
                 setFormOpen(true)
               }}
-              className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-600 px-4 py-2 text-xs font-semibold text-white shadow-md shadow-emerald-500/25 transition hover:from-emerald-700 hover:to-teal-700"
+              className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-600 px-4 text-xs font-semibold text-white shadow-md shadow-emerald-500/25 transition hover:from-emerald-700 hover:to-teal-700"
             >
               <Plus size={14} />
               {t("Nova especialidade", "New specialty")}
@@ -338,30 +402,6 @@ export default function ConsultationsConsultationSpecialtiesPage() {
               </button>
             ) : null}
           </div>
-        </section>
-
-        <section className="grid gap-1.5 md:grid-cols-3">
-          {[
-            { key: "all", label: t("Total", "Total"), count: stats.total, bar: "bg-sky-500", active: statusFilter === null },
-            { key: "active", label: t("Ativas", "Active"), count: stats.active, bar: "bg-emerald-500", active: statusFilter === "active" },
-            { key: "inactive", label: t("Inativas", "Inactive"), count: stats.inactive, bar: "bg-amber-500", active: statusFilter === "inactive" },
-          ].map((item) => (
-            <button
-              key={item.key}
-              type="button"
-              onClick={() => {
-                setStatusFilter(item.key === "all" ? null : (item.key as "active" | "inactive"))
-                document.getElementById("specialties-grid")?.scrollIntoView({ behavior: "smooth", block: "start" })
-              }}
-              className={`relative overflow-hidden rounded-xl border bg-white/30 px-4 py-3 text-left shadow-sm backdrop-blur-sm transition hover:-translate-y-px hover:border-white/40 hover:shadow-md dark:bg-white/[0.04] ${item.active ? "border-white/50 ring-2 ring-white/20 dark:border-white/20" : "border-white/20 dark:border-white/10"}`}
-            >
-              <span className={`absolute left-0 top-0 h-full w-1 ${item.bar}`} />
-              <div className="pl-2">
-                <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">{item.label}</div>
-                <div className="mt-1 text-2xl font-bold text-foreground">{item.count}</div>
-              </div>
-            </button>
-          ))}
         </section>
 
         {error ? (
@@ -455,6 +495,18 @@ export default function ConsultationsConsultationSpecialtiesPage() {
                       placeholder="0.00"
                       className="w-full rounded-lg border border-white/30 bg-white/55 px-2.5 py-1.5 text-xs text-foreground shadow-sm outline-none transition placeholder:text-muted-foreground hover:border-emerald-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 dark:border-white/10 dark:bg-white/10"
                     />
+                  </label>
+                  <label className="space-y-1">
+                    <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{t("Sector", "Sector")}</span>
+                    <select
+                      value={form.sector}
+                      onChange={(e) => setForm((prev) => ({ ...prev, sector: e.target.value }))}
+                      className="w-full rounded-lg border border-white/30 bg-white/55 px-2.5 py-1.5 text-xs text-foreground shadow-sm outline-none transition hover:border-sky-400 focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 dark:border-white/10 dark:bg-white/10"
+                    >
+                      {SECTOR_OPTIONS.map((option) => (
+                        <option key={option.value} value={option.value}>{option.label}</option>
+                      ))}
+                    </select>
                   </label>
                   <label className="space-y-1">
                     <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{t("IVA (%)", "VAT (%)")}</span>

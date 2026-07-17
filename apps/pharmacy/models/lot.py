@@ -18,6 +18,15 @@ from core.models.base import CoreModel  # Modelo base
 class Lot(CoreModel):
     """Representa um lote físico de um produto."""
 
+    class LotStatus(models.TextChoices):
+        AVAILABLE = "AVAILABLE", "Disponível"
+        QUARANTINE = "QUARANTINE", "Quarentena"
+        DAMAGED = "DAMAGED", "Danificado"
+        CONTAMINATED = "CONTAMINATED", "Contaminado"
+        RECALLED = "RECALLED", "Recolhido"
+        EXPIRED = "EXPIRED", "Vencido"
+        DEPLETED = "DEPLETED", "Esgotado"
+
     prefix = "LOTE"  # Prefixo usado para IDs amigáveis
 
     product = models.ForeignKey(
@@ -59,6 +68,25 @@ class Lot(CoreModel):
         help_text="Preço de venda para itens deste lote.",  # Ajuda
     )
 
+    status = models.CharField(
+        db_column="status",
+        verbose_name="Estado do lote",
+        max_length=16,
+        choices=LotStatus.choices,
+        default=LotStatus.AVAILABLE,
+        db_index=True,
+        help_text="Estado operacional/qualitativo do lote.",
+    )
+
+    status_reason = models.CharField(
+        db_column="status_reason",
+        verbose_name="Motivo do estado",
+        max_length=255,
+        blank=True,
+        default="",
+        help_text="Justificação para quarentena, dano, contaminação, recolha ou outra alteração.",
+    )
+
     class Meta:
         db_table = "farmacia_lote"  # Nome da tabela
         verbose_name = "Lote"  # Nome legível
@@ -76,6 +104,7 @@ class Lot(CoreModel):
         indexes = [
             models.Index(fields=["product", "expiration_date"]),  # Índice composto
             models.Index(fields=["expiration_date"]),  # Índice por validade
+            models.Index(fields=["status", "expiration_date"]),  # Estado operacional
         ]
 
     # =====================================================
@@ -119,6 +148,23 @@ class Lot(CoreModel):
         """Indica se o lote está vencido comparando com a data atual."""
 
         return self.expiration_date < timezone.localdate()
+
+    @property
+    def is_available_for_use(self):
+        """Indica se o lote pode ser dispensado/consumido."""
+
+        return self.status == self.LotStatus.AVAILABLE and not self.is_expired
+
+    def mark_status(self, status, reason=""):
+        """Atualiza o estado operacional/qualitativo do lote."""
+
+        if status == self.LotStatus.AVAILABLE and self.is_expired:
+            raise ValidationError("Lote vencido não pode ser liberado.")
+
+        self.status = status
+        self.status_reason = reason or ""
+        self.save(update_fields=["status", "status_reason", "updated_at"])
+        return self
 
     # =====================================================
     # SALDO
@@ -205,6 +251,7 @@ class Lot(CoreModel):
             cls.objects.filter(
                 product=product,  # Apenas lotes do produto
                 expiration_date__gte=hoje,  # Não vencidos
+                status=cls.LotStatus.AVAILABLE,  # Apenas lotes liberados
             )
             .annotate(
                 movimentos_total=movimentos_total,

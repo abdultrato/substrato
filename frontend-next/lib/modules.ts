@@ -25,6 +25,7 @@ const GROUP_LABEL_PT_BY_KEY: Record<string, string> = {
   clinical_laboratory: "Laboratório Clínico",
   clinical_pharmacy: "Farmácia Clínica e Terapia IV",
   consultations: "Consultas",
+  cotacoes: "Fluxo Comercial",
   credit_financing: "Créditos e Financiamento",
   dashboard: "Painel",
   dental: "Odontologia",
@@ -388,6 +389,18 @@ const MODULES_BASE: ModuleGroup[] = [
     ],
   },
   {
+    key: "cotacoes",
+    label: "Fluxo Comercial",
+    resources: [
+      { key: "quotation", label: "Cotações", endpoint: "/cotacoes/quotation/", adminListHref: "/admin/cotacoes/quotation/" },
+      { key: "quotationitem", label: "Itens de Cotação", endpoint: "/cotacoes/quotationitem/", adminListHref: "/admin/cotacoes/quotationitem/" },
+      { key: "quotationhistory", label: "Histórico de Cotações", endpoint: "/cotacoes/quotationhistory/" },
+      { key: "proforma", label: "Proformas", endpoint: "/cotacoes/proforma/", adminListHref: "/admin/cotacoes/proformainvoice/" },
+      { key: "proformaitem", label: "Itens de Proforma", endpoint: "/cotacoes/proformaitem/" },
+      { key: "proformahistory", label: "Histórico de Proformas", endpoint: "/cotacoes/proformahistory/" },
+    ],
+  },
+  {
     key: "payments",
     label: "Pagamentos",
     resources: [
@@ -715,6 +728,10 @@ const ADMIN_LIST_BY_ENDPOINT: Record<string, string> = {
   "/externall_entities/company/": "/admin/externall-entities/company/",
   // Billing
   "/billing/invoice/": "/admin/billing/invoice/",
+  // Commercial flow
+  "/cotacoes/quotation/": "/admin/cotacoes/quotation/",
+  "/cotacoes/quotationitem/": "/admin/cotacoes/quotationitem/",
+  "/cotacoes/proforma/": "/admin/cotacoes/proformainvoice/",
   // Pharmacy
   "/pharmacy/product/": "/admin/pharmacy/product/",
   "/pharmacy/lot/": "/admin/pharmacy/lot/",
@@ -1041,6 +1058,12 @@ const GROUP_KEY_ALIASES: Record<string, string> = {
   entidades: "entities",
   billing: "billing",
   faturamento: "billing",
+  cotacoes: "cotacoes",
+  cotações: "cotacoes",
+  orcamentos: "cotacoes",
+  orçamentos: "cotacoes",
+  proformas: "cotacoes",
+  comercial: "cotacoes",
   payments: "payments",
   pagamentos: "payments",
   pharmacy: "pharmacy",

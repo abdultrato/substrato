@@ -7,6 +7,9 @@ export type MedicalConsultation = {
     type?: string;
     readonly patient_name?: string;
     readonly doctor_name?: string;
+    readonly specialty_name?: string;
+    readonly specialty_sector?: string;
+    readonly specialty_sector_display?: string;
     readonly invoice_id?: string;
     readonly invoice_code?: string;
     readonly invoice_status?: string;

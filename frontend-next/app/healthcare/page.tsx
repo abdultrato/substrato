@@ -108,9 +108,9 @@ export default function HealthcarePage() {
       GROUPS.MEDICINA_OCUPACIONAL,
       GROUPS.LABORATORIO,
     ]}>
-      <div className="space-y-6">
+      <div className="space-y-2">
         {error ? (
-          <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs text-amber-800">
             {error}
           </div>
         ) : null}
@@ -121,6 +121,8 @@ export default function HealthcarePage() {
             "Pacientes, consultas, requisições e resultados do atendimento assistencial.",
             "Patients, consultations, requests, and results for clinical care."
           )}
+          dense
+          actionsNowrap
           icon={Stethoscope}
           iconClass="bg-violet-500/15 text-violet-600 dark:text-violet-300"
           barClass="bg-violet-500"

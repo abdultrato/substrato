@@ -453,6 +453,14 @@ export default function RequestsBoardPage() {
             </div>
 
             <Link
+              href="/healthcare"
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-white/30 bg-white/50 px-3 py-2 text-xs font-semibold text-foreground shadow-sm backdrop-blur-sm transition hover:border-sky-400 hover:bg-white/70 dark:border-white/10 dark:bg-white/10 dark:hover:bg-white/15"
+            >
+              <ChevronLeft size={14} />
+              {t("Voltar", "Back")}
+            </Link>
+
+            <Link
               href={reportHref}
               className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-gradient-to-r from-sky-600 to-blue-600 px-4 py-2 text-xs font-semibold text-white shadow-md shadow-sky-500/25 transition hover:brightness-110"
             >

@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { useEffect, useMemo, useState } from "react"
-import { Building2, Calendar, Loader2, PackageCheck, Plus, Search, User, X } from "lucide-react"
+import { ArrowLeft, Building2, Calendar, Loader2, PackageCheck, Search, X } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
 import useAuthGuard from "@/hooks/useAuthGuard"
@@ -12,8 +12,6 @@ import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh"
 import { ApiListMeta, apiFetchList } from "@/lib/api"
 import {
   MATERIAL_REQUISITION_PAGE_GROUPS,
-  canCreateMaterialRequisition,
-  isMaterialRequisitionPharmacyUser,
   materialRequisitionSectorLabel,
 } from "@/lib/material-requisition-rbac"
 
@@ -62,8 +60,8 @@ function formatDt(v?: string) {
 function EmptyState({ search, tabLabel }: { search?: string; tabLabel?: string }) {
   return (
     <section className={`relative overflow-hidden ${GLASS}`}>
-      <div className="flex flex-col items-center justify-center py-16 text-center">
-        <span className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-violet-500/10 text-violet-500">
+      <div className="flex min-h-[120px] flex-col items-center justify-center px-4 py-6 text-center">
+        <span className="mb-2 flex h-10 w-10 items-center justify-center rounded-lg bg-violet-500/10 text-violet-500">
           <PackageCheck size={22} />
         </span>
         <p className="text-sm font-medium text-foreground">
@@ -79,42 +77,35 @@ function EmptyState({ search, tabLabel }: { search?: string; tabLabel?: string }
 
 function ReqCard({ r }: { r: MaterialRequisition }) {
   const st = STATUS[r.status ?? ""] ?? STATUS.PEN
-  const source = r.source_label || (r.source === "WHS" ? "Armazém central" : "Farmácia")
   return (
     <Link href={`/pharmacy/material-requests/${r.id}`}
       className={`group relative block ${GLASS} transition hover:border-violet-500/30 hover:shadow-md`}>
-      <span className={`absolute left-0 top-0 h-full w-1 rounded-l-xl ${st.dot}`} />
-      <div className="px-4 py-3 pl-5">
-        <div className="mb-2 flex flex-wrap items-start justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-violet-500/10 text-violet-500">
-              <PackageCheck size={13} />
+      <span className={`absolute left-0 top-0 h-full w-0.5 rounded-l-xl ${st.dot}`} />
+      <div className="px-2 py-1 pl-3">
+        <div className="flex items-start justify-between gap-1">
+          <div className="flex min-w-0 items-center gap-1">
+            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded bg-violet-500/10 text-violet-500">
+              <PackageCheck size={11} />
             </span>
-            <div>
-              <p className="text-xs font-bold text-foreground group-hover:text-violet-500 transition truncate max-w-[120px]">
+            <div className="min-w-0">
+              <p className="max-w-[115px] truncate text-[11px] font-bold text-foreground transition group-hover:text-violet-500">
                 {r.custom_id || `REQ-${r.id}`}
               </p>
-              <p className="text-[10px] text-muted-foreground">ID {r.id}</p>
             </div>
           </div>
-          <span className={`rounded-full border px-2 py-0.5 text-[9px] font-semibold ${st.badge}`}>
+          <span className={`shrink-0 rounded-full border px-1.5 py-0 text-[8px] font-semibold ${st.badge}`}>
             {st.label}
           </span>
         </div>
-        <div className="space-y-0.5 text-[11px] text-muted-foreground">
-          <div className="flex items-center gap-1.5">
-            <User size={10} className="shrink-0" />
-            <span className="truncate">{r.created_by_name || "—"}</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <Building2 size={10} className="shrink-0" />
+        <div className="mt-0.5 grid gap-0.5 text-[10px] text-muted-foreground">
+          <div className="flex items-center gap-1">
+            <Building2 size={9} className="shrink-0" />
             <span className="truncate">{r.sector_label || materialRequisitionSectorLabel(r.sector)}</span>
           </div>
-          <div className="flex items-center gap-1.5">
-            <Calendar size={10} className="shrink-0" />
-            <span>{formatDt(r.created_at)}</span>
+          <div className="flex items-center gap-1">
+            <Calendar size={9} className="shrink-0" />
+            <span className="truncate">{formatDt(r.created_at)}</span>
           </div>
-          <div className="text-[10px] text-muted-foreground/70">{source}</div>
         </div>
       </div>
     </Link>
@@ -123,11 +114,8 @@ function ReqCard({ r }: { r: MaterialRequisition }) {
 
 export default function RequisicoesMateriaisPage() {
   useAuthGuard()
-  const { user } = useAuth()
   const safeRefreshToken = useSafeDataRefreshSignal()
 
-  const isPharmacy = isMaterialRequisitionPharmacyUser(user)
-  const canCreate = canCreateMaterialRequisition(user)
   const requiredGroups = useMemo(() => [...MATERIAL_REQUISITION_PAGE_GROUPS], [])
 
   const [loading, setLoading] = useState(true)
@@ -135,6 +123,7 @@ export default function RequisicoesMateriaisPage() {
   const [allItems, setAllItems] = useState<MaterialRequisition[]>([])
   const [activeTab, setActiveTab] = useState<TabKey>("PEN")
   const [search, setSearch] = useState("")
+  const [limit, setLimit] = useState(20)
   const debouncedSearch = useDebounce(search, 300)
 
   useEffect(() => {
@@ -171,31 +160,81 @@ export default function RequisicoesMateriaisPage() {
     return allItems.filter(r => tab.statuses.includes(r.status ?? ""))
   }, [allItems, activeTab])
 
+  const visibleTabItems = tabItems.slice(0, limit)
+
   return (
     <AppLayout requiredGroups={requiredGroups}>
-      <div className="w-full space-y-3 px-1">
+      <div className="w-full space-y-1.5 px-0.5">
 
         {/* ── Cabeçalho ── */}
         <section className={`relative overflow-hidden ${GLASS}`}>
           <span className="absolute left-0 top-0 h-full w-1 bg-violet-500" />
-          <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 pl-5">
-            <div className="flex min-w-0 items-center gap-2">
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-violet-600 to-purple-600 text-white shadow-md shadow-violet-500/20">
+          <div className="space-y-1.5 px-2.5 py-1.5 pl-4">
+            <div className="flex flex-wrap items-center justify-between gap-1.5">
+              <div className="flex min-w-0 items-center gap-1.5">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-gradient-to-br from-violet-600 to-purple-600 text-white shadow-sm shadow-violet-500/20">
                 <PackageCheck size={17} />
-              </span>
-              <div>
-                <h1 className="text-lg font-bold leading-tight text-foreground">Requisições de materiais</h1>
-                <p className="text-[11px] text-muted-foreground">
-                  {loading ? "A carregar…" : `${allItems.length} ${allItems.length !== 1 ? "requisições" : "requisição"} no total`}
-                </p>
+                </span>
+                <div>
+                  <h1 className="text-base font-bold leading-tight text-foreground">Requisições de materiais</h1>
+                  <p className="text-[11px] text-muted-foreground">
+                    {loading ? "A carregar…" : `${Math.min(limit, tabItems.length)} de ${tabItems.length} · ${allItems.length} no total`}
+                  </p>
+                </div>
+              </div>
+              <div className="flex flex-wrap items-center gap-1">
+                <Link href="/pharmacy" className="inline-flex h-7 items-center gap-1 rounded-md border border-border/70 bg-background/60 px-2 text-xs font-semibold text-muted-foreground transition hover:text-foreground">
+                  <ArrowLeft size={13} />
+                  Voltar
+                </Link>
+                <label className="inline-flex h-7 items-center gap-1 rounded-md border border-border/70 bg-background/60 px-1.5 text-[11px] font-semibold text-muted-foreground">
+                  <span>Mostrar</span>
+                  <input
+                    type="number"
+                    min={1}
+                    max={999}
+                    value={limit}
+                    onChange={(event) => setLimit(Math.min(999, Math.max(1, Number(event.target.value || 1))))}
+                    className="h-5 w-12 rounded border border-border bg-background px-1 text-center text-xs font-bold text-foreground outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-500/20"
+                    aria-label="Número de requisições"
+                  />
+                </label>
               </div>
             </div>
-            {canCreate && (
-              <Link href="/pharmacy/material-requests/new"
-                className="inline-flex h-9 items-center gap-1.5 rounded-md bg-gradient-to-br from-violet-600 to-purple-600 px-4 text-sm font-semibold text-white shadow-sm shadow-violet-500/20 transition hover:opacity-90">
-                <Plus size={15} /> Nova requisição
-              </Link>
-            )}
+
+            <div className="flex flex-wrap items-center gap-1">
+              <div className="relative min-w-[180px] flex-1 sm:max-w-xs">
+                <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                <input type="text" placeholder="Pesquisar…"
+                  className="h-7 w-full rounded-md border border-border bg-background/60 pl-7 pr-6 text-xs text-foreground placeholder:text-muted-foreground outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-500/30"
+                  value={search} onChange={e => setSearch(e.target.value)} />
+                {search && (
+                  <button type="button" onClick={() => setSearch("")}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                    <X size={11} />
+                  </button>
+                )}
+              </div>
+
+              {TABS.map(tab => {
+                const count = tab.key === "ALL" ? allItems.length : (counts[tab.key] ?? 0)
+                const active = activeTab === tab.key
+                return (
+                  <button key={tab.key} type="button" onClick={() => setActiveTab(tab.key)}
+                    className={`inline-flex h-7 items-center gap-1 rounded-md border px-2 text-[11px] font-semibold transition ${
+                      active
+                        ? "border-violet-500/40 bg-violet-500/15 text-violet-700 shadow-sm dark:text-violet-300"
+                        : "border-white/20 bg-white/10 text-muted-foreground hover:bg-white/20 hover:text-foreground"
+                    }`}>
+                    <span className={`h-1.5 w-1.5 rounded-full ${tab.dot}`} />
+                    {tab.label}
+                    <span className={`rounded-full px-1 text-[10px] font-bold ${
+                      active ? "bg-violet-500/20 text-violet-700 dark:text-violet-200" : "bg-white/10 text-muted-foreground"
+                    }`}>{count}</span>
+                  </button>
+                )
+              })}
+            </div>
           </div>
         </section>
 
@@ -205,62 +244,26 @@ export default function RequisicoesMateriaisPage() {
           </div>
         )}
 
-        {/* ── Pesquisa ── */}
-        <div className="relative w-48">
-          <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
-          <input type="text" placeholder="Pesquisar…"
-            className="w-full rounded-lg border border-border bg-background/60 py-1.5 pl-7 pr-6 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:w-72 focus:ring-2 focus:ring-violet-500/40 transition-all"
-            value={search} onChange={e => setSearch(e.target.value)} />
-          {search && (
-            <button type="button" onClick={() => setSearch("")}
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
-              <X size={11} />
-            </button>
-          )}
-        </div>
-
-        {/* ── Tabs de segregação ── */}
-        <div className="flex flex-wrap gap-2">
-          {TABS.map(tab => {
-            const count = tab.key === "ALL" ? allItems.length : (counts[tab.key] ?? 0)
-            const active = activeTab === tab.key
-            return (
-              <button key={tab.key} type="button" onClick={() => setActiveTab(tab.key)}
-                className={`inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-semibold transition ${
-                  active
-                    ? "border-violet-500/40 bg-violet-500/15 text-violet-700 shadow-sm dark:text-violet-300"
-                    : "border-white/20 bg-white/10 text-muted-foreground hover:bg-white/20 hover:text-foreground"
-                }`}>
-                <span className={`h-2 w-2 rounded-full ${tab.dot}`} />
-                {tab.label}
-                <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
-                  active ? "bg-violet-500/20 text-violet-700 dark:text-violet-200" : "bg-white/10 text-muted-foreground"
-                }`}>{count}</span>
-              </button>
-            )
-          })}
-        </div>
-
         {/* ── Cards ── */}
         {loading ? (
-          <div className="flex h-32 items-center justify-center text-muted-foreground">
+          <div className="flex h-28 items-center justify-center text-muted-foreground">
             <Loader2 size={20} className="animate-spin" />
           </div>
         ) : activeTab === "ALL" ? (
           /* Vista "Todas" — secções separadas por estado */
-          <div className="space-y-4">
+          <div className="space-y-2">
             {TABS.filter(t => t.key !== "ALL").map(tab => {
-              const group = allItems.filter(r => tab.statuses.includes(r.status ?? ""))
+              const group = allItems.filter(r => tab.statuses.includes(r.status ?? "")).slice(0, limit)
               if (!group.length) return null
               return (
                 <div key={tab.key}>
-                  <div className="mb-2 flex items-center gap-2">
-                    <span className={`h-2.5 w-2.5 rounded-full ${tab.dot}`} />
+                  <div className="mb-1.5 flex items-center gap-1.5">
+                    <span className={`h-2 w-2 rounded-full ${tab.dot}`} />
                     <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
                       {tab.label} — {group.length}
                     </p>
                   </div>
-                  <div className="grid grid-cols-2 gap-2 xl:grid-cols-4">
+                  <div className="grid grid-cols-2 gap-1 md:grid-cols-4 xl:grid-cols-6">
                     {group.map(r => <ReqCard key={r.id} r={r} />)}
                   </div>
                 </div>
@@ -273,8 +276,8 @@ export default function RequisicoesMateriaisPage() {
         ) : tabItems.length === 0 ? (
           <EmptyState search={search} tabLabel={TABS.find(t => t.key === activeTab)?.label} />
         ) : (
-          <div className="grid grid-cols-2 gap-2 xl:grid-cols-4">
-            {tabItems.map(r => <ReqCard key={r.id} r={r} />)}
+          <div className="grid grid-cols-2 gap-1 md:grid-cols-4 xl:grid-cols-6">
+            {visibleTabItems.map(r => <ReqCard key={r.id} r={r} />)}
           </div>
         )}
 

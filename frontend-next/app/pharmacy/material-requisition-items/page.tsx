@@ -2,14 +2,14 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { Box, Calendar, CheckCircle2, ClipboardList, Loader2, Package, Plus, Search, X } from "lucide-react";
+import { ArrowLeft, Box, CheckCircle2, ClipboardList, Loader2, Package, Search, X } from "lucide-react";
 
 import AppLayout from "@/components/layout/AppLayout";
 import { apiFetch } from "@/lib/api";
 import { GROUPS } from "@/lib/rbac";
 
 const GLASS =
-  "rounded-xl border border-white/20 bg-white/30 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]";
+  "rounded-lg border border-white/20 bg-white/35 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]";
 
 type ReqItem = {
   id: number;
@@ -61,38 +61,33 @@ function ItemCard({ item, col }: { item: ReqItem; col: ColKey }) {
   return (
     <Link href={`/pharmacy/material-requisition-items/${item.id}`}
       className={`group relative block ${GLASS} transition hover:border-violet-500/30 hover:shadow-md`}>
-      <span className={`absolute left-0 top-0 h-full w-1 rounded-l-xl ${COLS.find(c=>c.key===col)!.dot}`} />
-      <div className="px-3 py-2.5 pl-4">
-        <div className="mb-1.5 flex items-start justify-between gap-2">
-          <div className="flex min-w-0 items-center gap-1.5">
-            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-violet-500/10 text-violet-500">
-              <Package size={11} />
+      <span className={`absolute left-0 top-0 h-full w-0.5 rounded-l-xl ${COLS.find(c=>c.key===col)!.dot}`} />
+      <div className="px-2 py-1 pl-3">
+        <div className="flex items-start justify-between gap-1">
+          <div className="flex min-w-0 items-center gap-1">
+            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded bg-violet-500/10 text-violet-500">
+              <Package size={10} />
             </span>
-            <p className="truncate text-xs font-bold text-foreground group-hover:text-violet-500 transition">
+            <p className="max-w-[115px] truncate text-[11px] font-bold text-foreground group-hover:text-violet-500 transition">
               {name}
             </p>
           </div>
-          <span className={`shrink-0 rounded-full border px-1.5 py-0.5 text-[9px] font-semibold ${BADGE[col]}`}>
-            {COLS.find(c => c.key === col)!.label}
+          <span className={`shrink-0 rounded-full border px-1.5 py-0 text-[8px] font-semibold ${BADGE[col]}`}>
+            {col === "fulfilled" ? "Aviada" : col === "partial" ? "Parcial" : col === "archived" ? "Arquivada" : "Pendente"}
           </span>
         </div>
-        <div className="space-y-0.5 text-[10px] text-muted-foreground">
-          <p className="text-[9px] text-muted-foreground/70">{item.custom_id || `MREI-${item.id}`}</p>
+        <div className="mt-0.5 grid gap-0.5 text-[10px] text-muted-foreground">
           {item.lot_number && (
             <div className="flex items-center gap-1">
               <ClipboardList size={9} className="shrink-0" />
-              <span>{item.lot_number}</span>
-              {item.lot_expiration_date && <span className="text-muted-foreground/60">· {item.lot_expiration_date}</span>}
+              <span className="truncate">{item.lot_number}</span>
             </div>
           )}
-          <div className="flex items-center gap-2 pt-0.5 flex-wrap">
+          <div className="flex items-center gap-1.5 flex-wrap">
             <span className="flex items-center gap-0.5"><Box size={8} />Req:<strong className="text-foreground ml-0.5">{req}</strong></span>
             <span>Disp:<strong className="text-foreground ml-0.5">{avail ?? "—"}</strong></span>
             <span className="flex items-center gap-0.5"><CheckCircle2 size={8} /><strong className="text-foreground">{sup}</strong></span>
           </div>
-          {item.requisition && (
-            <p className="text-[9px] text-muted-foreground/60">Req. #{item.requisition}</p>
-          )}
         </div>
       </div>
     </Link>
@@ -104,6 +99,7 @@ export default function PharmacyMaterialRequisitionItemsPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [colFilter, setColFilter] = useState<ColKey | "">("");
+  const [limit, setLimit] = useState(60);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -136,91 +132,112 @@ export default function PharmacyMaterialRequisitionItemsPage() {
   for (const item of filtered) grouped[classify(item)].push(item);
 
   const total = allItems.length;
+  const visibleGrouped: Record<ColKey, ReqItem[]> = {
+    pending: grouped.pending.slice(0, limit),
+    partial: grouped.partial.slice(0, limit),
+    fulfilled: grouped.fulfilled.slice(0, limit),
+    archived: grouped.archived.slice(0, limit),
+  };
+  const visibleColumns = COLS.filter((col) => (!colFilter || col.key === colFilter) && visibleGrouped[col.key].length > 0);
 
   return (
     <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.FARMACIA, GROUPS.MEDICINA, GROUPS.ENFERMAGEM]}>
-      <div className="w-full space-y-3 px-1">
+      <div className="w-full space-y-1.5 px-0.5">
 
         {/* ── Cabeçalho ── */}
         <section className={`relative overflow-hidden ${GLASS}`}>
           <span className="absolute left-0 top-0 h-full w-1 bg-violet-500" />
-          <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 pl-5">
-            <div className="flex min-w-0 items-center gap-2">
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-violet-600 to-purple-600 text-white shadow-md shadow-violet-500/20">
+          <div className="space-y-1.5 px-2.5 py-1.5 pl-4">
+            <div className="flex flex-wrap items-center justify-between gap-1.5">
+              <div className="flex min-w-0 items-center gap-1.5">
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-gradient-to-br from-violet-600 to-purple-600 text-white shadow-sm shadow-violet-500/20">
                 <Package size={17} />
               </span>
               <div>
-                <h1 className="text-lg font-bold leading-tight text-foreground">Itens de requisição</h1>
+                <h1 className="text-base font-bold leading-tight text-foreground">Itens de requisição</h1>
                 <p className="text-[11px] text-muted-foreground">
-                  {loading ? "A carregar…" : `${total} ${total !== 1 ? "itens" : "item"}`}
+                  {loading ? "A carregar…" : `${Math.min(limit, filtered.length)} de ${filtered.length} · ${total} no total`}
                 </p>
               </div>
+              </div>
+              <div className="flex flex-wrap items-center gap-1">
+                <Link href="/pharmacy/material-requisitions"
+                  className="inline-flex h-7 items-center gap-1 rounded-md border border-border/70 bg-background/60 px-2 text-xs font-semibold text-muted-foreground transition hover:text-foreground">
+                  <ArrowLeft size={13} /> Voltar
+                </Link>
+                <label className="inline-flex h-7 items-center gap-1 rounded-md border border-border/70 bg-background/60 px-1.5 text-[11px] font-semibold text-muted-foreground">
+                  <span>Mostrar</span>
+                  <input
+                    type="number"
+                    min={1}
+                    max={999}
+                    value={limit}
+                    onChange={(event) => setLimit(Math.min(999, Math.max(1, Number(event.target.value || 1))))}
+                    className="h-5 w-12 rounded border border-border bg-background px-1 text-center text-xs font-bold text-foreground outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-500/20"
+                    aria-label="Número de itens"
+                  />
+                </label>
+              </div>
             </div>
-            <Link href="/pharmacy/material-requisition-items/new"
-              className="inline-flex h-9 items-center gap-1.5 rounded-md bg-gradient-to-br from-violet-600 to-purple-600 px-4 text-sm font-semibold text-white shadow-sm shadow-violet-500/20 transition hover:opacity-90">
-              <Plus size={15} /> Novo item
-            </Link>
-          </div>
-        </section>
 
-        {/* ── Filtros inline ── */}
-        <section className={`relative ${GLASS}`}>
-          <span className="absolute left-0 top-0 h-full w-1 rounded-l-xl bg-slate-400" />
-          <div className="flex flex-wrap items-center gap-2 px-4 py-2.5 pl-5">
-            <div className="relative min-w-[180px] flex-1">
-              <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <div className="flex flex-wrap items-center gap-1">
+              <div className="relative min-w-[180px] flex-1 sm:max-w-xs">
+              <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
               <input type="text" placeholder="Produto, lote, código…"
-                className="w-full rounded-lg border border-border bg-background/60 py-1.5 pl-8 pr-8 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-violet-500/40 transition"
+                className="h-7 w-full rounded-md border border-border bg-background/60 pl-8 pr-7 text-xs text-foreground placeholder:text-muted-foreground outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-500/30"
                 value={search} onChange={e => setSearch(e.target.value)} />
               {search && (
                 <button type="button" onClick={() => setSearch("")}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
-                  <X size={13} />
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                  <X size={12} />
                 </button>
               )}
-            </div>
-            <select className="rounded-lg border border-border bg-background/60 px-3 py-1.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-violet-500/40 transition"
+              </div>
+            <select className="h-7 rounded-md border border-border bg-background/60 px-2 text-xs font-semibold text-foreground outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-500/30"
               value={colFilter} onChange={e => setColFilter(e.target.value as ColKey | "")}>
               <option value="">Todos os estados</option>
               {COLS.map(c => <option key={c.key} value={c.key}>{c.label}</option>)}
             </select>
             {(search || colFilter) && (
               <button type="button" onClick={() => { setSearch(""); setColFilter(""); }}
-                className="inline-flex h-8 items-center gap-1 rounded-md border border-white/20 bg-white/10 px-3 text-xs text-muted-foreground backdrop-blur-sm transition hover:bg-white/20 hover:text-foreground">
+                className="inline-flex h-7 items-center gap-1 rounded-md border border-white/20 bg-white/10 px-2 text-xs text-muted-foreground backdrop-blur-sm transition hover:bg-white/20 hover:text-foreground">
                 <X size={11} /> Limpar
               </button>
             )}
+            </div>
           </div>
         </section>
 
         {/* ── Kanban ── */}
         {loading ? (
-          <div className="flex h-32 items-center justify-center text-muted-foreground">
+          <div className="flex h-24 items-center justify-center text-muted-foreground">
             <Loader2 size={20} className="animate-spin" />
           </div>
+        ) : visibleColumns.length === 0 ? (
+          <div className={`${GLASS} flex min-h-[120px] items-center justify-center text-sm text-muted-foreground`}>
+            Nenhum item de requisição encontrado.
+          </div>
         ) : (
-          <div className="grid grid-cols-2 gap-2 xl:grid-cols-4">
-            {COLS.filter(col => !colFilter || col.key === colFilter).map(col => (
-              <div key={col.key} className={`flex flex-col gap-2 ${colFilter ? "col-span-2 xl:col-span-4" : ""}`}>
+          <div className="grid grid-cols-1 gap-1.5 md:grid-cols-2 xl:grid-cols-4">
+            {visibleColumns.map(col => (
+              <div key={col.key} className={`flex flex-col gap-1 ${colFilter ? "md:col-span-2 xl:col-span-4" : ""}`}>
                 {/* Cabeçalho coluna */}
-                <div className={`flex items-center justify-between rounded-lg border px-3 py-1.5 ${col.header}`}>
+                <div className={`flex h-7 items-center justify-between rounded-md border px-2 ${col.header}`}>
                   <div className="flex items-center gap-1.5">
                     <span className={`h-2 w-2 rounded-full ${col.dot}`} />
                     <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-foreground/70">{col.label}</span>
                   </div>
-                  <span className="text-[10px] font-bold text-foreground/60">{grouped[col.key].length}</span>
+                  <span className="text-[10px] font-bold text-foreground/60">{visibleGrouped[col.key].length}</span>
                 </div>
                 {/* Cards */}
-                {grouped[col.key].length === 0 ? (
-                  <div className="flex items-center justify-center rounded-xl border border-dashed border-white/10 py-8 text-[10px] text-muted-foreground/50">
-                    {col.empty}
-                  </div>
-                ) : colFilter ? (
-                  <div className="grid grid-cols-2 gap-2 xl:grid-cols-4">
-                    {grouped[col.key].map(item => <ItemCard key={item.id} item={item} col={col.key} />)}
+                {colFilter ? (
+                  <div className="grid grid-cols-2 gap-1 md:grid-cols-4 xl:grid-cols-6">
+                    {visibleGrouped[col.key].map(item => <ItemCard key={item.id} item={item} col={col.key} />)}
                   </div>
                 ) : (
-                  grouped[col.key].map(item => <ItemCard key={item.id} item={item} col={col.key} />)
+                  <div className="grid grid-cols-2 gap-1">
+                    {visibleGrouped[col.key].map(item => <ItemCard key={item.id} item={item} col={col.key} />)}
+                  </div>
                 )}
               </div>
             ))}

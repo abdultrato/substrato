@@ -1,4 +1,5 @@
 from api.core.filters import SafeFilterSet
+import django_filters
 from apps.consultations.models.consultation_specialty import ConsultationSpecialty
 from apps.consultations.models.holiday import Holiday
 from apps.consultations.models.medical_consultation import MedicalConsultation
@@ -6,11 +7,17 @@ from apps.human_resources.models.employee import Employee
 
 
 class MedicalConsultationFilter(SafeFilterSet):
+    specialty_sector = django_filters.CharFilter(field_name="specialty__sector")
+    sector = django_filters.CharFilter(field_name="specialty__sector")
+
     class Meta:
         model = MedicalConsultation
         fields = [
             "patient",
             "doctor",
+            "specialty",
+            "specialty_sector",
+            "sector",
             "type",
             "consultation_type",
             "status",
@@ -30,7 +37,7 @@ class DoctorFilter(SafeFilterSet):
 class ConsultationSpecialtyFilter(SafeFilterSet):
     class Meta:
         model = ConsultationSpecialty
-        fields = ["name", "active", "base_price"]
+        fields = ["name", "active", "sector", "base_price"]
 
 
 class HolidayFilter(SafeFilterSet):

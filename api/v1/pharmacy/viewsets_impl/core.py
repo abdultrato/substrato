@@ -13,6 +13,7 @@ from rest_framework.viewsets import ModelViewSet
 
 from api.utils.async_exports import queue_export_if_requested
 from api.v1.viewset_mixins import TenantScopedQuerysetMixin, ValidatedSearchOrderingMixin
+from apps.billing.models.invoice import Invoice
 from apps.pharmacy.models.inventory_movement import InventoryMovement
 from apps.pharmacy.models.lot import Lot
 from apps.pharmacy.models.material_requisition import (
@@ -774,6 +775,108 @@ class SaleViewSet(ValidatedSearchOrderingMixin, TenantScopedQuerysetMixin, Model
         "version",
     ]
     ordering = ["-created_at"]
+
+    @staticmethod
+    def _invoice_payload(invoice: Invoice) -> dict:
+        return {
+            "id": invoice.id,
+            "custom_id": invoice.custom_id,
+            "status": invoice.status,
+            "origin": invoice.origin,
+            "total": str(invoice.total or "0.00"),
+            "patient_amount": str(invoice.patient_amount or "0.00"),
+        }
+
+    @staticmethod
+    def _receipt_payload(receipt) -> dict:
+        return {
+            "id": receipt.id,
+            "number": receipt.number,
+            "value": str(receipt.value or "0.00"),
+            "invoice": receipt.invoice_id,
+            "payment": receipt.payment_id,
+            "created_at": receipt.created_at,
+        }
+
+    def _sale_invoice(self, sale: Sale) -> Invoice | None:
+        return Invoice.objects.filter(sale=sale, deleted=False).order_by("-created_at", "-id").first()
+
+    @action(detail=True, methods=["post"], url_path="generate-invoice", url_name="generate-invoice")
+    def generate_invoice(self, request, pk=None):
+        sale = self.get_object()
+        if not sale.itens.filter(deleted=False).exists():
+            raise ValidationError({"items": "A venda precisa ter pelo menos um item para gerar fatura."})
+
+        invoice = self._sale_invoice(sale)
+        if invoice is not None:
+            if invoice.status == Invoice.Status.CANCELED:
+                raise ValidationError({"invoice": "A fatura desta venda foi cancelada. Regularize a fatura antes de gerar PDF."})
+            if invoice.status == Invoice.Status.DRAFT:
+                try:
+                    with transaction.atomic():
+                        invoice.sync_items_from_origin()
+                        invoice.issue()
+                        invoice.refresh_from_db()
+                except Exception as exc:
+                    raise ValidationError(str(exc)) from exc
+            return Response(self._invoice_payload(invoice))
+
+        tenant = sale.tenant or getattr(request, "tenant", None)
+        try:
+            with transaction.atomic():
+                invoice = Invoice(
+                    tenant=tenant,
+                    origin=Invoice.Origin.PHARMACY,
+                    sale=sale,
+                    patient=sale.patient,
+                    status=Invoice.Status.DRAFT,
+                )
+                invoice.full_clean()
+                invoice.save()
+                invoice.sync_items_from_origin()
+                invoice.issue()
+                invoice.refresh_from_db()
+        except Exception as exc:
+            raise ValidationError(str(exc)) from exc
+
+        return Response(self._invoice_payload(invoice), status=201)
+
+    @action(detail=True, methods=["get"], url_path="billing-status", url_name="billing-status")
+    def billing_status(self, request, pk=None):
+        sale = self.get_object()
+        invoice = self._sale_invoice(sale)
+        receipt = None
+        if invoice is not None:
+            receipt = invoice.recibos.order_by("-created_at", "-id").first()
+
+        return Response(
+            {
+                "invoice": self._invoice_payload(invoice) if invoice is not None else None,
+                "receipt": self._receipt_payload(receipt) if receipt is not None else None,
+                "paid": bool(invoice and invoice.status == Invoice.Status.PAID),
+            }
+        )
+
+    @action(detail=True, methods=["post"], url_path="generate-receipt", url_name="generate-receipt")
+    def generate_receipt(self, request, pk=None):
+        sale = self.get_object()
+        invoice = self._sale_invoice(sale)
+        if invoice is None:
+            raise ValidationError({"invoice": "Gere a fatura da venda antes de gerar recibo."})
+
+        receipt = invoice.recibos.order_by("-created_at", "-id").first()
+        if receipt is not None:
+            return Response(self._receipt_payload(receipt))
+
+        payment = invoice.pagamentos.filter(status="CON", deleted=False).order_by("-paid_at", "-created_at", "-id").first()
+        if payment is not None:
+            invoice.update_payment_status(payment=payment)
+            invoice.refresh_from_db()
+            receipt = invoice.recibos.order_by("-created_at", "-id").first()
+            if receipt is not None:
+                return Response(self._receipt_payload(receipt))
+
+        raise ValidationError({"receipt": "Recibo só pode ser gerado depois de pagamento confirmado da fatura."})
 
 
 VIEWSET_MAP = {

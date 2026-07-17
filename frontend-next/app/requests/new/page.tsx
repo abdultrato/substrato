@@ -365,7 +365,7 @@ export default function NewRequestPage() {
                 <SearchableRelationSelect fieldName="requesting_company" value={company}
                   onChange={setCompany} target={T_COMPANY} placeholder="Pesquisar empresa…" safeRefreshToken={safeRefreshToken} />
               </Field>
-              <Field label="Estado clínico">
+              <Field label="Estado de prioridade">
                 <select value={clinicalStatus} onChange={(e) => setClinicalStatus(e.target.value)} className={selectCls}>
                   <option value="">— Sem prioridade —</option>
                   <option value="NAO_URGENTE">Não urgente</option>

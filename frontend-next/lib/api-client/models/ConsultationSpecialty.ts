@@ -12,6 +12,8 @@ export type ConsultationSpecialty = {
     readonly version?: number;
     name: string;
     description?: string;
+    sector?: 'GENERAL_MEDICINE' | 'CARDIOLOGY' | 'DERMATOLOGY' | 'ENDOCRINOLOGY' | 'ANESTHESIOLOGY' | 'PATHOLOGY' | 'NEUROLOGY' | 'NUTRITION' | 'OPHTHALMOLOGY' | 'DENTISTRY' | 'PHYSIOTHERAPY' | 'OCCUPATIONAL_THERAPY' | 'GYNECOLOGY' | 'OBSTETRICS' | 'NEPHROLOGY' | 'HEMATOLOGY' | 'GASTROENTEROLOGY' | 'OTHER';
+    readonly sector_display?: string;
     base_price?: string;
     /**
      * Taxa de IVA aplicada ao serviço de consultation (0 a 100).

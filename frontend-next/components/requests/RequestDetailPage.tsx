@@ -53,6 +53,19 @@ function val(r: any, ...keys: string[]): any {
   return null
 }
 
+function isRequestEditable(record: any): boolean {
+  const status = String(val(record, "status", "estado") || "").toLowerCase()
+  const validatedAt = val(record, "validated_at")
+  const collectedAt = val(record, "collected_at")
+  const items = Array.isArray(record?.items) ? record.items : Array.isArray(record?.itens) ? record.itens : []
+  const hasLockedSample = items.some((item: any) => {
+    const sampleStatus = String(item?.sample_status || "").toLowerCase()
+    return Boolean(item?.sample_received_at) || ["coletada", "colhida", "recebida"].includes(sampleStatus)
+  })
+
+  return status === "pendente" && !validatedAt && !collectedAt && !hasLockedSample
+}
+
 /* ── sub-components ─────────────────────────────────────── */
 
 const GLASS =
@@ -191,12 +204,13 @@ export default function RequestDetailPage() {
   const physicianRoleRaw = val(r, "requesting_physician_role_name")
   const physicianDocument = val(r, "requesting_physician_document_number")
   const analystRaw      = val(r, "analyst_name")
-  const physician       = physicianRaw ? abbreviateMiddleNames(String(physicianRaw)) : physicianRaw
+  const physician       = physicianRaw ? String(physicianRaw) : physicianRaw
   const physicianProfession = physicianProfessionRaw ? String(physicianProfessionRaw) : physicianProfessionRaw
   const physicianRole   = physicianRoleRaw ? String(physicianRoleRaw) : physicianRoleRaw
   const analystName     = analystRaw ? abbreviateMiddleNames(String(analystRaw)) : analystRaw
   const reqType         = val(r, "type", "tipo")
   const status          = val(r, "status", "estado") || ""
+  const requestStatus   = String(status).toLowerCase()
   const clinicalStatus  = val(r, "clinical_status", "status_clinico") || ""
   const clinicalDisplay = val(r, "clinical_status_display", "prioridade_display") || ""
   const hasCritical     = r?.has_critical_result || r?.possui_resultado_critico
@@ -204,11 +218,14 @@ export default function RequestDetailPage() {
   const requiresFasting = r?.requires_fasting || r?.requer_jejum
   const fastingHours    = r?.fasting_hours || r?.horas_jejum
   const createdAt       = val(r, "created_at", "criado_em")
+  const updatedAt       = val(r, "updated_at", "atualizado_em")
   const validatedAt     = val(r, "validated_at")
   const validatedBy     = val(r, "validated_by_name")
   const collectedAt     = val(r, "collected_at")
   const collectedBy     = val(r, "collected_by_name")
-  const canForward      = String(status).toLowerCase() === "pendente" && !validatedAt
+  const canceledAt      = val(r, "canceled_at", "cancelado_em", "cancelada_em") || (String(status).toLowerCase() === "cancelado" ? updatedAt : null)
+  const canForward      = requestStatus === "pendente" && !validatedAt
+  const canNotifyPatient = reqType === "LAB" && requestStatus === "validado"
   const reqTypeLabel    = reqType === "LAB" ? "Requisição Laboratorial"
                         : reqType === "MED" ? "Requisição de Exame Médico"
                         : reqType
@@ -217,10 +234,8 @@ export default function RequestDetailPage() {
                        : Array.isArray(r?.items)            ? r.items
                        : Array.isArray(r?.itens)            ? r.itens
                        : []
-  // Amostras já recebidas pelo laboratório: a edição fica bloqueada (regra
-  // reforçada no backend; alterações passam por nota de crédito).
-  const requestItems: any[] = Array.isArray(r?.items) ? r.items : Array.isArray(r?.itens) ? r.itens : []
-  const samplesReceived = requestItems.some((item) => String(item?.sample_status || "") === "recebida")
+  // Depois da validação/colheita/receção, alterações passam por nota de crédito.
+  const canEdit = isRequestEditable(r)
   const samples: any[] = Array.isArray(r?.sample_details)  ? r.sample_details
                        : Array.isArray(r?.sample_options)   ? r.sample_options
                        : []
@@ -231,7 +246,7 @@ export default function RequestDetailPage() {
     { label: "Criada",    date: createdAt,   done: !!createdAt },
     { label: "Validada",  date: validatedAt, by: validatedBy || undefined, done: !!validatedAt },
     { label: "Coletada",  date: collectedAt, by: collectedBy || undefined, done: !!collectedAt },
-    { label: "Resultados validados", date: null, done: status === "validado" },
+    { label: "Resultados validados", date: null, done: requestStatus === "validado" },
   ]
 
   async function forwardRequest() {
@@ -314,7 +329,7 @@ export default function RequestDetailPage() {
                     {forwarding ? "Encaminhando..." : "Encaminhar"}
                   </button>
                 ) : null}
-                {reqType === "LAB" ? (
+                {canNotifyPatient ? (
                   <button
                     type="button"
                     onClick={() => void notifyPatient()}
@@ -325,7 +340,7 @@ export default function RequestDetailPage() {
                     {notifying ? "A notificar..." : "Notificar paciente"}
                   </button>
                 ) : null}
-                {!samplesReceived ? (
+                {canEdit ? (
                   <Link
                     href={`/requests/${id}/edit`}
                     className="inline-flex h-7 items-center gap-1 rounded-md border border-border bg-background px-2.5 text-xs font-medium text-foreground-2 shadow-sm transition hover:bg-muted hover:text-foreground"
@@ -358,19 +373,45 @@ export default function RequestDetailPage() {
               </div>
             </div>
 
-            {/* title row: nome + badges inline a toda a largura */}
-            <div className="flex flex-wrap items-center gap-1.5">
-              <h1 className="text-base font-bold text-foreground">{patientName}</h1>
-              {patientCode ? <span className="text-xs text-muted-foreground">{patientCode}</span> : null}
-              <span className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[11px] font-semibold ${sm.color}`}>
+            <div className="flex min-w-0 items-center gap-1.5">
+              <h1 className="truncate text-base font-bold text-foreground">{patientName}</h1>
+              {patientCode ? <span className="shrink-0 whitespace-nowrap text-xs text-muted-foreground">{patientCode}</span> : null}
+            </div>
+
+            {/* linha de contexto: atributos críticos sempre na mesma linha */}
+            <div className="flex max-w-full flex-nowrap items-center gap-1.5 overflow-x-auto whitespace-nowrap pb-0.5">
+              {reqTypeLabel ? (
+                <span className="shrink-0 whitespace-nowrap rounded-full border border-[var(--primary-200)] bg-[var(--primary-50)] px-2.5 py-0.5 text-[11px] font-semibold text-[var(--primary-700)]">
+                  {reqTypeLabel}
+                </span>
+              ) : null}
+              <span className="shrink-0 whitespace-nowrap rounded-full border border-border bg-background px-2.5 py-0.5 text-[11px] font-semibold text-foreground">
+                {code}
+              </span>
+              <span className={`inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full border px-2.5 py-0.5 text-[11px] font-semibold ${sm.color}`}>
                 <span className={`h-1.5 w-1.5 rounded-full ${sm.dot}`} />
                 {sm.label}
               </span>
-              <ManchesterBadge status={clinicalStatus} display={clinicalDisplay} className="px-2.5 py-0.5 text-[11px]" />
-              {hasCritical   ? <span className="inline-flex items-center gap-1 rounded-full border border-red-400 bg-red-50 px-2.5 py-0.5 text-[11px] font-bold text-red-700"><AlertTriangle size={9} />Resultado crítico</span> : null}
-              {reqTypeLabel  ? <span className="rounded-full border border-[var(--primary-200)] bg-[var(--primary-50)] px-2.5 py-0.5 text-[11px] font-semibold text-[var(--primary-700)]">{reqTypeLabel}</span> : null}
-              {isOccupational? <span className="rounded-full border border-violet-200 bg-violet-50 px-2.5 py-0.5 text-[11px] font-semibold text-violet-700">Ocupacional</span> : null}
-              {requiresFasting?<span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-0.5 text-[11px] font-semibold text-amber-700"><Zap size={9} />Jejum{Number(fastingHours) > 0 ? ` ${fastingHours}h` : ""}</span> : null}
+              <span className="inline-flex shrink-0 whitespace-nowrap">
+                <ManchesterBadge status={clinicalStatus} display={clinicalDisplay} className="px-2.5 py-0.5 text-[11px]" />
+              </span>
+              {hasCritical ? (
+                <span className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full border border-red-400 bg-red-50 px-2.5 py-0.5 text-[11px] font-bold text-red-700">
+                  <AlertTriangle size={9} />
+                  Resultado crítico
+                </span>
+              ) : null}
+              {isOccupational ? (
+                <span className="shrink-0 whitespace-nowrap rounded-full border border-violet-200 bg-violet-50 px-2.5 py-0.5 text-[11px] font-semibold text-violet-700">
+                  Ocupacional
+                </span>
+              ) : null}
+              {requiresFasting ? (
+                <span className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full border border-amber-200 bg-amber-50 px-2.5 py-0.5 text-[11px] font-semibold text-amber-700">
+                  <Zap size={9} />
+                  Jejum{Number(fastingHours) > 0 ? ` ${fastingHours}h` : ""}
+                </span>
+              ) : null}
             </div>
           </div>
         </div>
@@ -407,10 +448,10 @@ export default function RequestDetailPage() {
           <SectionCard icon={<CalendarClock size={13} />} title="Datas" accent="bg-teal-500">
             <Row label="Criada em"   value={fmtDate(createdAt)} />
             <Row label="Validada em" value={fmtDate(validatedAt)} />
-            <Row label="Coletada em" value={fmtDate(collectedAt)} />
+            <Row label={canceledAt ? "Cancelada em" : "Coletada em"} value={fmtDate(canceledAt || collectedAt)} />
           </SectionCard>
 
-          <SectionCard icon={<Clock size={13} />} title="Estado clínico" accent="bg-rose-500">
+          <SectionCard icon={<Clock size={13} />} title="Estado de prioridade" accent="bg-rose-500">
             <ManchesterBadge status={clinicalStatus} display={clinicalDisplay} className="px-3 py-2 text-xs rounded-lg" />
             {hasCritical ? (
               <div className="flex items-start gap-1.5 rounded-lg border border-red-200 bg-red-50/70 px-3 py-2 text-[11px] text-red-800 backdrop-blur-sm">

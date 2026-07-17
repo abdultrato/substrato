@@ -407,7 +407,7 @@ export default function PublicHealthHubPage() {
 
   return (
     <AppLayout requiredGroups={PUBLIC_HEALTH_GROUPS}>
-      <div className="mx-auto w-[90%] space-y-2">
+      <div className="mx-auto w-full max-w-[97vw] space-y-2">
         {/* ── Hero ──────────────────────────────────────────────── */}
         <div className="relative overflow-hidden rounded-xl border border-white/20 bg-white/30 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/5">
           <div className="pointer-events-none absolute inset-0">
@@ -444,6 +444,34 @@ export default function PublicHealthHubPage() {
             </div>
           </div>
 
+          <div className="relative border-t border-white/20 px-3 py-1.5 dark:border-white/10">
+            <div className="grid grid-cols-8 gap-1 whitespace-nowrap">
+              {METRIC_DEFS.map((def) => {
+                const val = loading ? null : def.getValue(summary);
+                const isAlert =
+                  !loading && def.alertIf && val !== null && def.alertIf(val);
+                return (
+                  <div
+                    key={def.label}
+                    className={`relative inline-flex h-7 min-w-0 items-center justify-center gap-1 overflow-hidden rounded-md border border-white/20 bg-white/25 px-1.5 pl-2.5 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/5 ${isAlert ? "ring-1 ring-red-400/40" : ""}`}
+                  >
+                    <span className={`absolute inset-y-0 left-0 w-0.5 ${def.bar}`} />
+                    <span className={`text-sm font-bold tabular-nums leading-none ${def.chip}`}>
+                      {loading ? (
+                        <span className="inline-block h-3 w-6 animate-pulse rounded bg-current/20" />
+                      ) : (
+                        val
+                      )}
+                    </span>
+                    <span className="truncate text-[10px] font-semibold text-muted-foreground">
+                      {def.label}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
           {/* Search inside hero */}
           <div className="relative border-t border-white/20 px-4 py-2 dark:border-white/10">
             <Search
@@ -466,45 +494,7 @@ export default function PublicHealthHubPage() {
           </div>
         )}
 
-        {/* ── Metrics ───────────────────────────────────────────── */}
-        <div className="grid grid-cols-4 gap-1.5 xl:grid-cols-8">
-          {METRIC_DEFS.map((def) => {
-            const val = loading ? null : def.getValue(summary);
-            const isAlert =
-              !loading && def.alertIf && val !== null && def.alertIf(val);
-            return (
-              <div
-                key={def.label}
-                className={`relative overflow-hidden rounded-xl border border-white/20 bg-white/25 px-2.5 py-2 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/5 ${isAlert ? "ring-1 ring-red-400/40" : ""}`}
-              >
-                <span
-                  className={`absolute inset-y-0 left-0 w-1 rounded-l-xl ${def.bar}`}
-                />
-                <div className="pl-1">
-                  <div
-                    className={`text-base font-bold tabular-nums leading-none ${def.chip}`}
-                  >
-                    {loading ? (
-                      <span className="inline-block h-4 w-8 animate-pulse rounded bg-current/20" />
-                    ) : (
-                      val
-                    )}
-                  </div>
-                  <div className="mt-0.5 text-[9px] leading-tight text-muted-foreground">
-                    {def.label}
-                  </div>
-                  {isAlert && (
-                    <div className="mt-0.5 text-[9px] font-semibold text-red-600 dark:text-red-400">
-                      ⚠ atenção
-                    </div>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* ── Module cards ──────────────────────────────────────── */}
+	        {/* ── Module cards ──────────────────────────────────────── */}
         {filteredModules.length === 0 ? (
           <div className="rounded-xl border border-dashed border-border py-12 text-center text-sm text-muted-foreground">
             Nenhum módulo encontrado para &ldquo;{search}&rdquo;.

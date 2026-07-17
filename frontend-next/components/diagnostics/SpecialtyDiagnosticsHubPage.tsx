@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import { Activity, Brain, ClipboardList, Eye, FileText, HeartPulse, TerminalSquare, Wrench } from "lucide-react"
+import { Activity, Brain, CalendarClock, ClipboardList, Eye, FileText, HeartPulse, TerminalSquare, Wrench } from "lucide-react"
 
 import AppLayout from "@/components/layout/AppLayout"
 import WorkspaceHub from "@/components/workspace/WorkspaceHub"
@@ -52,6 +52,7 @@ export default function SpecialtyDiagnosticsHubPage({
   const [measurements, setMeasurements] = useState(0)
   const [reports, setReports] = useState(0)
   const [integrationEvents, setIntegrationEvents] = useState(0)
+  const [consultations, setConsultations] = useState(0)
 
   useEffect(() => {
     let mounted = true
@@ -61,13 +62,14 @@ export default function SpecialtyDiagnosticsHubPage({
         setLoading(true)
         setError(null)
         const qs = `?specialty=${specialty}`
-        const [equipmentRes, protocolRes, orderRes, measurementRes, reportRes, integrationRes] = await Promise.all([
+        const [equipmentRes, protocolRes, orderRes, measurementRes, reportRes, integrationRes, consultationRes] = await Promise.all([
           apiFetch<any>(`/specialty_diagnostics/equipment/${qs}`, { clientCache: safeRefreshToken === 0 }),
           apiFetch<any>(`/specialty_diagnostics/protocol/${qs}`, { clientCache: safeRefreshToken === 0 }),
           apiFetch<any>(`/specialty_diagnostics/order/${qs}`, { clientCache: safeRefreshToken === 0 }),
           apiFetch<any>(`/specialty_diagnostics/measurement/${qs}`, { clientCache: safeRefreshToken === 0 }),
           apiFetch<any>(`/specialty_diagnostics/report/${qs}`, { clientCache: safeRefreshToken === 0 }),
           apiFetch<any>(`/specialty_diagnostics/integration_event/${qs}`, { clientCache: safeRefreshToken === 0 }),
+          apiFetch<any>(`/consultations/consultation/?sector=${specialty}`, { clientCache: safeRefreshToken === 0 }),
         ])
 
         if (!mounted) return
@@ -77,6 +79,7 @@ export default function SpecialtyDiagnosticsHubPage({
         setMeasurements(extractTotalCount(measurementRes))
         setReports(extractTotalCount(reportRes))
         setIntegrationEvents(extractTotalCount(integrationRes))
+        setConsultations(extractTotalCount(consultationRes))
       } catch (e: any) {
         if (!mounted) return
         setError(
@@ -116,6 +119,7 @@ export default function SpecialtyDiagnosticsHubPage({
           barClass={headerMeta.barClass}
           metrics={[
             { label: "Equipamentos", value: metricValue || equipment, href: `${resourceBasePath}/equipment`, icon: Wrench, accentClass: "border-l-slate-500", iconClass: "bg-slate-500/15 text-slate-600 dark:text-slate-300" },
+            { label: "Consultas", value: metricValue || consultations, href: `/consultations?sector=${specialty}`, icon: CalendarClock, accentClass: "border-l-cyan-500", iconClass: "bg-cyan-500/15 text-cyan-600 dark:text-cyan-300" },
             { label: "Protocolos", value: metricValue || protocols, href: `${resourceBasePath}/protocols`, icon: ClipboardList, accentClass: "border-l-violet-500", iconClass: "bg-violet-500/15 text-violet-600 dark:text-violet-300" },
             { label: "Exames", value: metricValue || orders, href: `${resourceBasePath}/exams`, icon: HeartPulse, accentClass: "border-l-rose-500", iconClass: "bg-rose-500/15 text-rose-600 dark:text-rose-300" },
             { label: "Medições", value: metricValue || measurements, href: `${resourceBasePath}/measurements`, icon: Activity, accentClass: "border-l-blue-500", iconClass: "bg-blue-500/15 text-blue-600 dark:text-blue-300" },
@@ -123,6 +127,12 @@ export default function SpecialtyDiagnosticsHubPage({
             { label: "Integrações", value: metricValue || integrationEvents, href: `${resourceBasePath}/integrations`, icon: TerminalSquare, accentClass: "border-l-amber-500", iconClass: "bg-amber-500/15 text-amber-600 dark:text-amber-300" },
           ]}
           actions={[
+            {
+              title: "Consultas",
+              description: t("Consultas marcadas para este sector clínico.", "Consultations scheduled for this clinical sector."),
+              href: `/consultations?sector=${specialty}`,
+              icon: CalendarClock,
+            },
             {
               title: "Exames",
               description: t("Pedido, agenda, execução, estado e vínculo clínico.", "Order, schedule, execution, status and clinical link."),

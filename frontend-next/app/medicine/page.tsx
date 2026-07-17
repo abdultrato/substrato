@@ -1,9 +1,9 @@
 "use client";
 
 import { isNotFoundLikeError } from "@/lib/errors/api-error";
-import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
+  CalendarClock,
   FilePlus2,
   Stethoscope,
   Users,
@@ -17,12 +17,10 @@ import {
 import type { LucideIcon } from "lucide-react";
 
 import AppLayout from "@/components/layout/AppLayout";
-import MetricCard from "@/components/ui/MetricCard";
-import ActionTile from "@/components/ui/ActionTile";
+import WorkspaceHub from "@/components/workspace/WorkspaceHub";
 import { apiFetch, extractTotalCount } from "@/lib/api";
-import { useAuth } from "@/hooks/useAuth";
 import { useSafeDataRefreshSignal } from "@/hooks/useSafeDataRefresh";
-import { GROUPS, userHasAnyGroup } from "@/lib/rbac";
+import { GROUPS } from "@/lib/rbac";
 
 type MedicineActionTile = {
   title: string;
@@ -102,14 +100,13 @@ const medicineActionTiles: MedicineActionTile[] = [
 ];
 
 export default function MedicinaPage() {
-  const { user } = useAuth();
-  const podeVerAdmin = userHasAnyGroup(user, [GROUPS.ADMIN]);
   const safeRefreshToken = useSafeDataRefreshSignal();
 
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
   const [pacientes, setPacientes] = useState<number>(0);
   const [requisicoes, setRequisicoes] = useState<number>(0);
+  const [consultas, setConsultas] = useState<number>(0);
 
   useEffect(() => {
     let mounted = true;
@@ -118,11 +115,14 @@ export default function MedicinaPage() {
         setLoading(true);
         setErro(null);
 
-        const [pacs, reqs] = await Promise.all([
+        const [pacs, reqs, cons] = await Promise.all([
           apiFetch<any>("/clinical/patient/", {
             clientCache: safeRefreshToken === 0,
           }),
           apiFetch<any>("/clinical/labrequest/", {
+            clientCache: safeRefreshToken === 0,
+          }),
+          apiFetch<any>("/consultations/consultation/?sector=GENERAL_MEDICINE", {
             clientCache: safeRefreshToken === 0,
           }),
         ]);
@@ -130,6 +130,7 @@ export default function MedicinaPage() {
         if (!mounted) return;
         setPacientes(extractTotalCount(pacs));
         setRequisicoes(extractTotalCount(reqs));
+        setConsultas(extractTotalCount(cons));
       } catch (e: any) {
         if (!mounted) return;
         setErro(
@@ -148,75 +149,46 @@ export default function MedicinaPage() {
     };
   }, [safeRefreshToken]);
 
+  const metricValue = useMemo(() => (loading ? "..." : null), [loading]);
+
   return (
     <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.MEDICINA]}>
-      <div className="space-y-3">
-        <section className="relative overflow-hidden rounded-xl border border-white/20 bg-white/30 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]">
-          <span className="absolute left-0 top-0 h-full w-1 bg-sky-500" />
-          <span className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-sky-400/40 to-transparent" />
-          <div className="flex flex-wrap items-center gap-2 px-3 py-2 pl-4">
-            <div className="flex min-w-0 items-center gap-2">
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500 to-cyan-600 text-white shadow-md shadow-sky-500/20">
-                <Stethoscope size={17} />
-              </span>
-              <div className="min-w-0">
-                <h1 className="text-lg font-bold leading-tight text-foreground">
-                  Medicina
-                </h1>
-                <p className="text-[11px] text-muted-foreground">
-                  {loading
-                    ? "A carregar…"
-                    : `${pacientes} pacientes · ${requisicoes} requisições`}
-                </p>
-              </div>
-            </div>
-          </div>
-        </section>
-
+      <div className="space-y-2">
         {erro ? (
           <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
             {erro}
           </div>
         ) : null}
 
-        <div className="flex flex-nowrap gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          <div className="min-w-[160px] flex-1 basis-0">
-            <MetricCard label="Pacientes" value={loading ? "..." : pacientes} />
-          </div>
-          <div className="min-w-[160px] flex-1 basis-0">
-            <MetricCard
-              label="Requisições"
-              value={loading ? "..." : requisicoes}
-            />
-          </div>
-          <div className="min-w-[160px] flex-1 basis-0">
-            <MetricCard label="Anamnese" value="—" />
-          </div>
-          <div className="min-w-[160px] flex-1 basis-0">
-            <MetricCard label="Diagnósticos" value="—" />
-          </div>
-        </div>
-
-        <div className="flex flex-wrap gap-2">
-          {medicineActionTiles.map((tile) => (
-            <div
-              key={tile.href}
-              className={`group relative overflow-hidden rounded-xl border border-slate-200/70 bg-white/70 shadow-sm backdrop-blur-sm transition hover:border-slate-300 hover:shadow-md dark:border-slate-800/80 dark:bg-slate-950/45 dark:hover:border-slate-700 ${tile.fullWidth ? "basis-full w-full" : "min-w-[220px] flex-1 basis-[220px]"}`}
-            >
-              <div
-                className={`absolute inset-y-0 left-0 w-1.5 bg-gradient-to-b ${tile.accentClass}`}
-              />
-              <div className="pl-2">
-                <ActionTile
-                  title={tile.title}
-                  description={tile.description}
-                  href={tile.href}
-                  icon={tile.icon}
-                />
-              </div>
-            </div>
-          ))}
-        </div>
+        <WorkspaceHub
+          title="Medicina"
+          dense
+          backHref="/healthcare"
+          icon={Stethoscope}
+          iconClass="bg-sky-500/15 text-sky-600 dark:text-sky-300"
+          barClass="bg-sky-500"
+          metrics={[
+            { label: "Consultas", value: metricValue || consultas, href: "/consultations?sector=GENERAL_MEDICINE", icon: CalendarClock, accentClass: "border-l-cyan-500", iconClass: "bg-cyan-500/15 text-cyan-600 dark:text-cyan-300" },
+            { label: "Pacientes", value: metricValue || pacientes, href: "/patients", icon: Users, accentClass: "border-l-sky-500", iconClass: "bg-sky-500/15 text-sky-600 dark:text-sky-300" },
+            { label: "Requisições", value: metricValue || requisicoes, href: "/requests", icon: FilePlus2, accentClass: "border-l-emerald-500", iconClass: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-300" },
+            { label: "Anamnese", value: "—", href: "/medical-records", icon: ScrollText, accentClass: "border-l-violet-500", iconClass: "bg-violet-500/15 text-violet-600 dark:text-violet-300" },
+            { label: "Diagnósticos", value: "—", href: "/medical-records", icon: HeartPulse, accentClass: "border-l-rose-500", iconClass: "bg-rose-500/15 text-rose-600 dark:text-rose-300" },
+          ]}
+          actions={[
+            {
+              title: "Consultas",
+              description: "Consultas de Clínica Geral marcadas para Medicina.",
+              href: "/consultations?sector=GENERAL_MEDICINE",
+              icon: CalendarClock,
+            },
+            ...medicineActionTiles.map((tile) => ({
+              title: tile.title,
+              description: tile.description,
+              href: tile.href,
+              icon: tile.icon,
+            })),
+          ]}
+        />
       </div>
     </AppLayout>
   );

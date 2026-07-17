@@ -5188,7 +5188,7 @@ function clinicalLabRequestConfig(): ResourceFormConfig {
       exams: "Exames solicitados",
       is_occupational: "Requisição de exames ocupacionais",
       occupational_profile: "Perfil profissional (bandeja de exames)",
-      clinical_status: "Estado clínico",
+      clinical_status: "Estado de prioridade",
       requesting_company: "Empresa solicitante",
     },
     placeholders: {

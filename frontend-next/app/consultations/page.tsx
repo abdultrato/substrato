@@ -2,6 +2,8 @@
 
 import { isNotFoundLikeError } from "@/lib/errors/api-error"
 import { useCallback, useEffect, useMemo, useState } from "react"
+import Link from "next/link"
+import { useSearchParams } from "next/navigation"
 
 import AppLayout from "@/components/layout/AppLayout"
 import MoneyValue from "@/components/ui/MoneyValue"
@@ -16,6 +18,7 @@ import { apiFetch } from "@/lib/api"
 import { abbreviateMiddleNames } from "@/lib/formatName"
 import { GROUPS, userHasAnyGroup } from "@/lib/rbac"
 import {
+  ArrowLeft,
   Building2,
   CalendarCheck2,
   CalendarClock,
@@ -30,6 +33,7 @@ import {
   Search,
   Stethoscope,
   User,
+  UserPlus,
   X,
 } from "lucide-react"
 
@@ -38,6 +42,8 @@ type Doctor = { id: number; name?: string; profession_name?: string; role_name?:
 type Specialty = {
   id: number
   name?: string
+  sector?: string
+  sector_display?: string
   base_price?: string | number
   active?: boolean
 }
@@ -66,6 +72,8 @@ type ConsultationRow = {
   doctor_name?: string
   specialty?: number | null
   specialty_name?: string
+  specialty_sector?: string
+  specialty_sector_display?: string
   type?: string
   status?: string
   price?: string | number
@@ -155,7 +163,7 @@ function SectionCard({
   children: React.ReactNode
 }) {
   return (
-    <section className="rounded-xl border border-white/20 bg-white/25 shadow-sm backdrop-blur-sm dark:bg-white/5 dark:border-white/10">
+    <section className="relative z-0 rounded-xl border border-white/20 bg-white/25 shadow-sm backdrop-blur-sm focus-within:z-[200] dark:bg-white/5 dark:border-white/10">
       <div className="flex items-center gap-2 border-b border-border/60 px-3 py-2">
         <span className="flex h-6 w-6 items-center justify-center rounded-md bg-[var(--primary-600)]/10 text-[var(--primary-700)] dark:text-[var(--primary-400)]">
           <Icon size={13} />
@@ -188,6 +196,22 @@ export default function ConsultationsPage() {
   const { user } = useAuth()
   const { t } = useLanguage()
   const safeRefreshToken = useSafeDataRefreshSignal()
+  const searchParams = useSearchParams()
+  const sectorFilter = searchParams.get("sector") || ""
+  const backHref = useMemo(() => {
+    switch (sectorFilter) {
+      case "PHYSIOTHERAPY":
+        return "/physiotherapy"
+      case "CARDIOLOGY":
+        return "/cardiology"
+      case "NEUROLOGY":
+        return "/neurology"
+      case "OPHTHALMOLOGY":
+        return "/ophthalmology"
+      default:
+        return "/consultations"
+    }
+  }, [sectorFilter])
 
   const canWrite = userHasAnyGroup(user, [
     GROUPS.ADMIN,
@@ -250,8 +274,11 @@ export default function ConsultationsPage() {
   }, [t])
 
   const loadData = useCallback(async () => {
+    const consultationEndpoint = sectorFilter
+      ? `/consultations/consultation/?sector=${encodeURIComponent(sectorFilter)}`
+      : "/consultations/"
     const [consultationsResponse, patientsResponse, doctorsResponse, specialtiesResponse] = await Promise.all([
-      apiFetch<any>("/consultations/", { clientCache: safeRefreshToken === 0 }),
+      apiFetch<any>(consultationEndpoint, { clientCache: safeRefreshToken === 0 }),
       apiFetch<any>("/clinical/patients/", { clientCache: safeRefreshToken === 0 }),
       apiFetch<any>("/consultations/doctors/", { clientCache: safeRefreshToken === 0 }),
       apiFetch<any>("/consultations/specialty/", { clientCache: safeRefreshToken === 0 }),
@@ -265,7 +292,7 @@ export default function ConsultationsPage() {
     const specialtyItems = Array.isArray(list(specialtiesResponse)) ? (list(specialtiesResponse) as Specialty[]) : []
     setSpecialties(specialtyItems)
     setSpecialtyId((prev) => prev || (specialtyItems[0]?.id ? String(specialtyItems[0].id) : ""))
-  }, [safeRefreshToken])
+  }, [safeRefreshToken, sectorFilter])
 
   useEffect(() => {
     let mounted = true
@@ -613,7 +640,11 @@ export default function ConsultationsPage() {
     () =>
       specialties
         .filter((x) => x.active !== false)
-        .map((esp) => ({ value: String(esp.id), label: esp.name || `${t("Especialidade", "Specialty")} ${esp.id}` })),
+        .map((esp) => ({
+          value: String(esp.id),
+          label: esp.name || `${t("Especialidade", "Specialty")} ${esp.id}`,
+          hint: esp.sector_display || esp.sector || undefined,
+        })),
     [specialties, t]
   )
 
@@ -710,6 +741,12 @@ export default function ConsultationsPage() {
     () => consultationsFiltradas.filter((c) => bucketOf(c) === "completed"),
     [consultationsFiltradas, bucketOf]
   )
+  const consultationColumns = useMemo(() => [
+    { key: "marked", title: t("Marcadas", "Walk-in"), rows: markedConsultations, icon: CalendarCheck2 },
+    { key: "scheduled", title: t("Agendadas", "Scheduled"), rows: scheduledConsultations, icon: CalendarClock },
+    { key: "rescheduled", title: t("Re-agendadas", "Rescheduled"), rows: rescheduledConsultations, icon: CalendarX2 },
+    { key: "completed", title: t("Realizadas", "Completed"), rows: completedConsultations, icon: CheckCircle2 },
+  ].filter((column) => column.rows.length > 0), [completedConsultations, markedConsultations, rescheduledConsultations, scheduledConsultations, t])
 
   const accentOf = useCallback((r: ConsultationRow): string => {
     switch (bucketOf(r)) {
@@ -738,10 +775,9 @@ export default function ConsultationsPage() {
     const overdue = isOverdue(r)
 
     return (
-      <button
+      <Link
         key={r.id}
-        type="button"
-        onClick={() => setDetailRow(r)}
+        href={`/consultations/medical-consultations/${r.id}`}
         className="group relative flex w-full items-start gap-1.5 rounded-lg border border-white/20 bg-white/40 p-1.5 pl-2.5 text-left shadow-sm backdrop-blur-sm transition hover:-translate-y-px hover:border-white/40 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 dark:border-white/10 dark:bg-white/[0.04]"
       >
         <span className={`absolute left-0 top-0 h-full w-1 rounded-l-lg ${accent}`} />
@@ -774,7 +810,7 @@ export default function ConsultationsPage() {
             </span>
           </div>
         </div>
-      </button>
+      </Link>
     )
   }, [accentOf, isOverdue, statusBadge, t])
 
@@ -848,9 +884,20 @@ export default function ConsultationsPage() {
 
         {/* Header */}
         <div className="relative flex flex-wrap items-center justify-between gap-2 overflow-hidden rounded-xl border border-white/20 bg-white/30 px-4 py-2.5 shadow-sm backdrop-blur-sm dark:bg-white/5 dark:border-white/10">
-          <div className="min-w-0">
-            <h1 className="text-lg font-bold text-foreground">{t("Consultas", "Consultations")}</h1>
-            <p className="text-[11px] text-muted-foreground">{t("Gestão do fluxo de consultas médicas", "Medical consultation flow management")}</p>
+          <div className="flex min-w-0 items-center gap-2">
+            <Link
+              href={backHref}
+              className="group inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border border-white/20 bg-white/40 pl-1.5 pr-3 text-xs font-semibold text-foreground shadow-sm backdrop-blur-sm transition hover:border-white/40 hover:bg-white/60 dark:border-white/10 dark:bg-white/[0.04] dark:hover:bg-white/[0.08]"
+            >
+              <span className="flex h-5 w-5 items-center justify-center rounded-md bg-sky-500/10 text-sky-600 transition group-hover:-translate-x-0.5 dark:text-sky-400">
+                <ArrowLeft size={13} />
+              </span>
+              {t("Voltar", "Back")}
+            </Link>
+            <div className="min-w-0">
+              <h1 className="text-lg font-bold text-foreground">{t("Consultas", "Consultations")}</h1>
+              <p className="text-[11px] text-muted-foreground">{t("Gestão do fluxo de consultas médicas", "Medical consultation flow management")}</p>
+            </div>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             {/* Motor de busca */}
@@ -912,14 +959,25 @@ export default function ConsultationsPage() {
               <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
                 <div className="space-y-1">
                   <label className="text-[11px] font-semibold text-muted-foreground">{t("Paciente", "Patient")}</label>
-                  <SearchableSelect
-                    value={patientId}
-                    onChange={setPatientId}
-                    options={patientOptions}
-                    placeholder={t("Pesquisar...", "Search...")}
-                    searchPlaceholder={t("Pesquisar paciente...", "Search patient...")}
-                    emptyMessage={t("Nenhum paciente.", "No patient.")}
-                  />
+                  <div className="flex flex-nowrap items-start gap-1.5">
+                    <div className="min-w-0 flex-1">
+                      <SearchableSelect
+                        value={patientId}
+                        onChange={setPatientId}
+                        options={patientOptions}
+                        placeholder={t("Pesquisar...", "Search...")}
+                        searchPlaceholder={t("Pesquisar paciente...", "Search patient...")}
+                        emptyMessage={t("Nenhum paciente.", "No patient.")}
+                      />
+                    </div>
+                    <Link
+                      href="/patients/new"
+                      className="inline-flex h-10 shrink-0 items-center gap-1 rounded-lg border border-violet-300/60 bg-violet-500/10 px-2.5 text-xs font-semibold whitespace-nowrap text-violet-700 transition hover:bg-violet-500/15 dark:border-violet-700/50 dark:text-violet-200"
+                    >
+                      <UserPlus size={13} />
+                      {t("Criar paciente", "Create patient")}
+                    </Link>
+                  </div>
                 </div>
                 <div className="space-y-1">
                   <label className="text-[11px] font-semibold text-muted-foreground">{t("Médico", "Doctor")}</label>
@@ -1008,12 +1066,19 @@ export default function ConsultationsPage() {
         ) : null}
 
         {/* Columns */}
-        <div className="grid gap-1.5 md:grid-cols-2 lg:grid-cols-4">
-          {renderConsultationColumn(t("Marcadas", "Walk-in"), markedConsultations, CalendarCheck2)}
-          {renderConsultationColumn(t("Agendadas", "Scheduled"), scheduledConsultations, CalendarClock)}
-          {renderConsultationColumn(t("Re-agendadas", "Rescheduled"), rescheduledConsultations, CalendarX2)}
-          {renderConsultationColumn(t("Realizadas", "Completed"), completedConsultations, CheckCircle2)}
-        </div>
+        {consultationColumns.length ? (
+          <div className="grid gap-1.5 md:grid-cols-2 lg:grid-cols-4">
+            {consultationColumns.map((column) => (
+              <div key={column.key}>
+                {renderConsultationColumn(column.title, column.rows, column.icon)}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="rounded-xl border border-dashed border-white/25 bg-white/20 px-4 py-10 text-center text-sm text-muted-foreground dark:border-white/10 dark:bg-white/[0.03]">
+            {t("Nenhuma consulta encontrada para os filtros aplicados.", "No consultations found for the applied filters.")}
+          </div>
+        )}
       </div>
 
       {/* Detail modal — info completa + todas as ações */}
@@ -1124,7 +1189,7 @@ export default function ConsultationsPage() {
                       <FileText size={13} /> {r.invoice_id ? t("Rever rascunho", "Review draft") : t("Rascunho", "Draft")}
                     </button>
                     <button type="button" onClick={() => { openInvoiceReview(r, "issue"); setDetailRow(null) }} disabled={loadingReview} className={`${btn} bg-emerald-600 text-white hover:bg-emerald-700`}>
-                      <Receipt size={13} /> {t("Emitir fatura", "Issue invoice")}
+                      <Receipt size={13} /> {t("Faturar", "Invoice")}
                     </button>
                   </>
                 ) : null}

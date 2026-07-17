@@ -10,6 +10,7 @@ from django.utils.dateparse import parse_date, parse_datetime
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied, ValidationError
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
@@ -74,6 +75,12 @@ class TenantScopedModelViewSet(ValidatedSearchOrderingMixin, TenantScopedQueryse
     permission_classes = [IsAuthenticated]
 
 
+class ConsultationPagination(PageNumberPagination):
+    page_size = 20
+    page_size_query_param = "page_size"
+    max_page_size = 999
+
+
 class ConsultationSpecialtyViewSet(TenantScopedModelViewSet):
     queryset = ConsultationSpecialty.objects.all()
     serializer_class = ConsultationSpecialtySerializer
@@ -115,6 +122,7 @@ class MedicalConsultationViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
     serializer_class = MedicalConsultationSerializer
     filterset_class = MedicalConsultationFilter
     permission_classes = [IsAuthenticated]
+    pagination_class = ConsultationPagination
     search_fields = [
         "id",
         "custom_id",
@@ -129,6 +137,21 @@ class MedicalConsultationViewSet(ValidatedSearchOrderingMixin, TenantScopedQuery
     ]
     ordering_fields = ["scheduled_for", "created_at", "type", "status", "price"]
     ordering = ["-scheduled_for", "-created_at"]
+
+    def _ensure_consultation_editable(self, consultation: MedicalConsultation) -> None:
+        if consultation.status in {
+            MedicalConsultation.Status.COMPLETED,
+            MedicalConsultation.Status.CANCELED,
+        }:
+            raise ValidationError("Consulta finalizada não pode ser editada.")
+
+        invoice = self._existing_invoice_for_consultation(consultation)
+        if invoice and invoice.status in {Invoice.Status.ISSUED, Invoice.Status.PAID}:
+            raise ValidationError("Consulta faturada ou paga não pode ser editada.")
+
+    def perform_update(self, serializer):
+        self._ensure_consultation_editable(serializer.instance)
+        serializer.save()
 
     @staticmethod
     def _money(value) -> str:

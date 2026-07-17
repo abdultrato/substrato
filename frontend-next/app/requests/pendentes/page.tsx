@@ -561,15 +561,63 @@ export default function PendingRequestsPage() {
     )
   }
 
-  function visibleRows(rows: LabRequest[]): LabRequest[] {
-    return filterRows(rows).slice(0, pageSize)
-  }
-
   function handleSaved(updated: LabRequest) {
     setPending((prev) => prev.map((r) => (r.id === updated.id ? updated : r)))
     setEditRow(null)
     setFeedback(`${updated.custom_id} atualizada.`)
   }
+
+  const pendingRows = filterRows(pending)
+  const canceledRows = filterRows(canceled)
+  const validatedRows = filterRows(validated)
+  const totalVisibleRows = pendingRows.length + canceledRows.length + validatedRows.length
+  const columns = [
+    {
+      key: "pending",
+      title: "Pendentes",
+      rows: pendingRows,
+      loading: loadingPending,
+      empty: "Sem requisições pendentes.",
+      accent: {
+        header: "border-amber-200/50 bg-amber-100/30 text-amber-800 backdrop-blur-sm dark:border-amber-700/30 dark:bg-amber-900/20 dark:text-amber-300",
+        badge: "bg-amber-500/15 text-amber-700 dark:text-amber-300",
+      },
+      render: (row: LabRequest) => (
+        <RequestCard
+          key={row.id}
+          row={row}
+          onValidate={handleValidate}
+          onCancel={handleCancel}
+          onEdit={setEditRow}
+          busyId={busyId}
+        />
+      ),
+    },
+    {
+      key: "canceled",
+      title: "Canceladas",
+      rows: canceledRows,
+      loading: loadingCanceled,
+      empty: "Sem requisições canceladas.",
+      accent: {
+        header: "border-red-200/50 bg-red-100/30 text-red-800 backdrop-blur-sm dark:border-red-700/30 dark:bg-red-900/20 dark:text-red-300",
+        badge: "bg-red-500/15 text-red-700 dark:text-red-300",
+      },
+      render: (row: LabRequest) => <RequestCard key={row.id} row={row} busyId={null} />,
+    },
+    {
+      key: "validated",
+      title: "Encaminhadas à Enfermagem",
+      rows: validatedRows,
+      loading: loadingValidated,
+      empty: "Nenhuma requisição encaminhada.",
+      accent: {
+        header: "border-emerald-200/50 bg-emerald-100/30 text-emerald-800 backdrop-blur-sm dark:border-emerald-700/30 dark:bg-emerald-900/20 dark:text-emerald-300",
+        badge: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300",
+      },
+      render: (row: LabRequest) => <RequestCard key={row.id} row={row} busyId={null} />,
+    },
+  ].filter((column) => column.loading || column.rows.length > 0)
 
   return (
     <AppLayout>
@@ -608,7 +656,7 @@ export default function PendingRequestsPage() {
               <div className="min-w-0">
                 <h1 className="text-lg font-bold leading-tight text-foreground">Fila de requisições</h1>
                 <p className="text-[11px] text-muted-foreground">
-                  {filterRows(pending).length + filterRows(canceled).length + filterRows(validated).length} itens visíveis
+                  {totalVisibleRows} itens visíveis
                 </p>
               </div>
             </div>
@@ -659,53 +707,26 @@ export default function PendingRequestsPage() {
           </div>
         ) : null}
 
-        <div className="grid min-h-0 grid-cols-1 gap-2 md:grid-cols-3">
-          {/* Coluna 1 — Pendentes */}
-          <Column
-            title="Pendentes"
-            count={filterRows(pending).length}
-            loading={loadingPending}
-            empty="Sem requisições pendentes."
-            accent={{ header: "border-amber-200/50 bg-amber-100/30 text-amber-800 backdrop-blur-sm dark:border-amber-700/30 dark:bg-amber-900/20 dark:text-amber-300", badge: "bg-amber-500/15 text-amber-700 dark:text-amber-300" }}
-          >
-            {visibleRows(pending).map((row) => (
-              <RequestCard
-                key={row.id}
-                row={row}
-                onValidate={handleValidate}
-                onCancel={handleCancel}
-                onEdit={setEditRow}
-                busyId={busyId}
-              />
+        {columns.length > 0 ? (
+          <div className="grid min-h-0 grid-cols-1 gap-2 md:grid-cols-[repeat(auto-fit,minmax(18rem,1fr))]">
+            {columns.map((column) => (
+              <Column
+                key={column.key}
+                title={column.title}
+                count={column.rows.length}
+                loading={column.loading}
+                empty={column.empty}
+                accent={column.accent}
+              >
+                {column.rows.slice(0, pageSize).map((row) => column.render(row))}
+              </Column>
             ))}
-          </Column>
-
-          {/* Coluna 2 — Canceladas */}
-          <Column
-            title="Canceladas"
-            count={filterRows(canceled).length}
-            loading={loadingCanceled}
-            empty="Sem requisições canceladas."
-            accent={{ header: "border-red-200/50 bg-red-100/30 text-red-800 backdrop-blur-sm dark:border-red-700/30 dark:bg-red-900/20 dark:text-red-300", badge: "bg-red-500/15 text-red-700 dark:text-red-300" }}
-          >
-            {visibleRows(canceled).map((row) => (
-              <RequestCard key={row.id} row={row} busyId={null} />
-            ))}
-          </Column>
-
-          {/* Coluna 3 — Validadas */}
-          <Column
-            title="Encaminhadas à Enfermagem"
-            count={filterRows(validated).length}
-            loading={loadingValidated}
-            empty="Nenhuma requisição encaminhada."
-            accent={{ header: "border-emerald-200/50 bg-emerald-100/30 text-emerald-800 backdrop-blur-sm dark:border-emerald-700/30 dark:bg-emerald-900/20 dark:text-emerald-300", badge: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300" }}
-          >
-            {visibleRows(validated).map((row) => (
-              <RequestCard key={row.id} row={row} busyId={null} />
-            ))}
-          </Column>
-        </div>
+          </div>
+        ) : (
+          <div className="rounded-xl border border-dashed border-border bg-card/40 px-4 py-8 text-center text-sm text-muted-foreground">
+            Nenhuma requisição encontrada para os filtros actuais.
+          </div>
+        )}
       </div>
 
       {editRow ? (

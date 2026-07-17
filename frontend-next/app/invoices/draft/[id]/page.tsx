@@ -2,7 +2,7 @@
 
 import { isNotFoundLikeError } from "@/lib/errors/api-error"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
-import { useParams, useRouter } from "next/navigation"
+import { useParams, useRouter, useSearchParams } from "next/navigation"
 
 import { BadgeCheck, FileText, Receipt, Search, Wallet } from "lucide-react"
 import AppLayout from "@/components/layout/AppLayout"
@@ -140,12 +140,13 @@ function isProformaOrigin(row?: Row | null): boolean {
 export default function FaturaRascunhoPage() {
   const params = useParams()
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { user } = useAuth()
   const safeRefreshToken = useSafeDataRefreshSignal()
   const idRaw = routeParamToString((params as any)?.id)
   const faturaId = Number(idRaw)
   const podeEditar = userHasAnyGroup(user, [GROUPS.ADMIN, GROUPS.RECEPCAO])
-  const podePagar = userHasAnyGroup(user, [GROUPS.ADMIN, GROUPS.RECEPCAO, GROUPS.CONTABILIDADE])
+  const podePagarFluxoGeral = userHasAnyGroup(user, [GROUPS.ADMIN, GROUPS.RECEPCAO, GROUPS.CONTABILIDADE])
 
   const [loading, setLoading] = useState(true)
   const [erro, setErro] = useState<string | null>(null)
@@ -157,6 +158,7 @@ export default function FaturaRascunhoPage() {
   const [notificacaoEnviando, setNotificacaoEnviando] = useState(false)
   const [addingItemKey, setAddingItemKey] = useState<string | null>(null)
   const addingItemRef = useRef(false)
+  const paymentSectionRef = useRef<HTMLElement | null>(null)
 
   const [requisicoes, setRequisicoes] = useState<Row[]>([])
   const [requisicaoItens, setRequisicaoItens] = useState<Record<number, Row[]>>({})
@@ -194,6 +196,7 @@ export default function FaturaRascunhoPage() {
   const [pagamentoPlano, setPagamentoPlano] = useState("")
   const [numeroAutorizacao, setNumeroAutorizacao] = useState("")
   const [dadosSeguro, setDadosSeguro] = useState("")
+  const focusPayment = searchParams.get("pay") === "1" || searchParams.get("payment") === "1"
   const pagamentoNomePadrao = useMemo(() => {
     if (!fatura) return "Pagamento"
     const codigo = fatura.id_custom || fatura.id
@@ -210,6 +213,9 @@ export default function FaturaRascunhoPage() {
   }, [])
 
   const faturaProforma = isProformaOrigin(fatura)
+  const faturaOrigemFarmacia = invoiceOrigin(fatura).toUpperCase() === "FAR"
+  const podePagarFluxoFarmacia = userHasAnyGroup(user, [GROUPS.ADMIN, GROUPS.FARMACIA]) && faturaOrigemFarmacia
+  const podePagar = podePagarFluxoGeral || podePagarFluxoFarmacia
   const faturaRascunho = fatura?.estado === "RASC"
   const addItemButtonDisabled = !faturaRascunho || faturaProforma || !podeEditar || addingItemKey !== null
   const addItemButtonLabel = useCallback(
@@ -547,6 +553,14 @@ export default function FaturaRascunhoPage() {
   useEffect(() => {
     carregarFatura()
   }, [carregarFatura])
+
+  useEffect(() => {
+    if (!focusPayment || loading || !fatura || fatura.estado !== "EMIT" || !podePagar) return
+    const timer = window.setTimeout(() => {
+      paymentSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
+    }, 150)
+    return () => window.clearTimeout(timer)
+  }, [focusPayment, fatura, loading, podePagar])
 
   const definirAcompanhanteComoCliente = useCallback(async () => {
     if (!faturaId || !faturaRascunho || !paciente) return
@@ -993,7 +1007,7 @@ export default function FaturaRascunhoPage() {
 
   if (loading) {
     return (
-      <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.RECEPCAO, GROUPS.CONTABILIDADE]}>
+      <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.RECEPCAO, GROUPS.CONTABILIDADE, GROUPS.FARMACIA]}>
         <div className="text-sm text-muted-foreground">Carregando...</div>
       </AppLayout>
     )
@@ -1001,7 +1015,7 @@ export default function FaturaRascunhoPage() {
 
   if (!fatura) {
     return (
-      <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.RECEPCAO, GROUPS.CONTABILIDADE]}>
+      <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.RECEPCAO, GROUPS.CONTABILIDADE, GROUPS.FARMACIA]}>
         <div className="text-sm text-muted-foreground">Fatura não encontrada.</div>
       </AppLayout>
     )
@@ -1010,7 +1024,7 @@ export default function FaturaRascunhoPage() {
   const estadoInfo = INVOICE_STATUS[String(fatura.estado || "").toUpperCase()] ?? INVOICE_STATUS.RASC
 
   return (
-    <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.RECEPCAO, GROUPS.CONTABILIDADE]}>
+    <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.RECEPCAO, GROUPS.CONTABILIDADE, GROUPS.FARMACIA]}>
       <div className="space-y-2">
 
         {/* ── Hero ── */}
@@ -1191,7 +1205,10 @@ export default function FaturaRascunhoPage() {
         </section>
 
         {/* Registrar pagamento — em EMIT ocupa a largura toda do masonry */}
-        <section className={`${GLASS} border-l-4 ${fatura.estado === "PAGA" ? "border-l-emerald-500" : "border-l-violet-500"} ${fatura.estado === "EMIT" && podePagar ? "[column-span:all] mt-3" : ""}`}>
+        <section
+          ref={paymentSectionRef}
+          className={`${GLASS} border-l-4 ${fatura.estado === "PAGA" ? "border-l-emerald-500" : "border-l-violet-500"} ${fatura.estado === "EMIT" && podePagar ? "[column-span:all] mt-3" : ""} ${focusPayment && fatura.estado === "EMIT" && podePagar ? "ring-2 ring-violet-400/50" : ""}`}
+        >
           <div className={`px-4 py-3 ${fatura.estado === "PAGA" ? "space-y-2" : "space-y-3"}`}>
             <div>
               <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">

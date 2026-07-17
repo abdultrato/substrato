@@ -52,11 +52,10 @@ export const metadata: Metadata = {
     "Frontend da plataforma Substrato para atendimento e gestão de saúde.",
   icons: {
     icon: [
-      { url: "/static/img/logo-branca.png?v=6", type: "image/png" },
-      { url: "/icon.png?v=6", type: "image/png" },
+      { url: "/favicon.png?v=9", type: "image/png" },
     ],
-    shortcut: [{ url: "/favicon.ico?v=6", type: "image/x-icon" }],
-    apple: [{ url: "/static/img/logo-branca.png?v=6", type: "image/png" }],
+    shortcut: [{ url: "/favicon.ico?v=9", type: "image/x-icon" }],
+    apple: [{ url: "/favicon.png?v=9", type: "image/png" }],
   },
   openGraph: {
     title: "Substrato",
@@ -108,9 +107,9 @@ export default function RootLayout({
       className={`${inter.variable} ${plusJakarta.variable} ${bebasNeue.variable}`}
     >
       <head suppressHydrationWarning>
-        <link rel="icon" href="/static/img/logo-branca.png?v=6" type="image/png" />
-        <link rel="shortcut icon" href="/favicon.ico?v=6" type="image/x-icon" />
-        <link rel="apple-touch-icon" href="/static/img/logo-branca.png?v=6" />
+        <link rel="icon" href="/favicon.png?v=9" type="image/png" />
+        <link rel="shortcut icon" href="/favicon.ico?v=9" type="image/x-icon" />
+        <link rel="apple-touch-icon" href="/favicon.png?v=9" />
         <script
           suppressHydrationWarning
           dangerouslySetInnerHTML={{ __html: themeInitScript }}

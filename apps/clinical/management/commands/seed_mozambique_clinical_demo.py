@@ -26,6 +26,7 @@ from apps.clinical.models import (
 )
 from apps.clinical.models.patient import BloodType
 from apps.consultations.models import ConsultationSpecialty, MedicalConsultation
+from apps.consultations.models.consultation_specialty import infer_consultation_sector
 from apps.human_resources.models.employee import Employee
 from apps.human_resources.models.job_title import JobTitle
 from apps.human_resources.models.profession import Profession
@@ -639,9 +640,13 @@ class Command(BaseCommand):
                     description=description,
                     base_price=Decimal(price),
                     vat_percentage=Decimal("16.00"),
+                    sector=infer_consultation_sector(name),
                     active=True,
                 )
                 specialty.save()
+            elif specialty.sector == "OTHER":
+                specialty.sector = infer_consultation_sector(name)
+                specialty.save(update_fields=["sector", "updated_at"])
             specialties.append(specialty)
         return specialties
 

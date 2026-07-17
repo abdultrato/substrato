@@ -1,12 +1,20 @@
 "use client";
 
-import { Suspense } from "react";
-import { GeneratedResourceEditPage } from "@/components/resources/GeneratedResourcePages";
+import { useParams, useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 export default function PharmacyInventoryMovementsEditPage() {
+  const params = useParams();
+  const router = useRouter();
+  const id = String((params as any)?.id || "");
+
+  useEffect(() => {
+    router.replace(`/pharmacy/inventory-movements/${id}`);
+  }, [id, router]);
+
   return (
-    <Suspense fallback={<div className="p-4 text-sm text-[var(--gray-500)]">Carregando...</div>}>
-      <GeneratedResourceEditPage endpoint="/pharmacy/inventory_movement/" />
-    </Suspense>
+    <div className="p-4 text-sm text-muted-foreground">
+      Edição de movimento de stock bloqueada. A redireccionar...
+    </div>
   );
 }

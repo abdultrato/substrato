@@ -91,7 +91,7 @@ export default function SearchableSelect({
   }
 
   return (
-    <div ref={containerRef} className="relative">
+    <div ref={containerRef} className={`relative ${open ? "z-[300]" : "z-0"}`}>
       <button
         type="button"
         id={id}
@@ -121,7 +121,7 @@ export default function SearchableSelect({
       </button>
 
       {open ? (
-        <div className="absolute z-[80] mt-1 w-full overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg">
+        <div className="absolute z-[1000] mt-1 w-full overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg">
           <div className="border-b border-slate-100 p-2">
             <input
               ref={inputRef}

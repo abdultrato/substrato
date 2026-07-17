@@ -80,6 +80,8 @@ export function requiredGroupsForResourceGroup(groupKey: string): string[] {
       return [GROUPS.ADMIN, GROUPS.RECEPCAO, GROUPS.CONTABILIDADE]
     case "billing":
       return [GROUPS.ADMIN, GROUPS.RECEPCAO, GROUPS.CONTABILIDADE]
+    case "cotacoes":
+      return [GROUPS.ADMIN, GROUPS.RECEPCAO, GROUPS.CONTABILIDADE, GROUPS.FARMACIA]
     case "nursing":
       return [GROUPS.ADMIN, GROUPS.ENFERMAGEM]
     case "equipment":

@@ -24,6 +24,12 @@ CORE_READ_ONLY_FIELDS = (
 CONSULTATION_SPECIALTY_ALIASES = {
     "descricao": "description",
     "descrição": "description",
+    "sector": "sector",
+    "setor": "sector",
+    "sector_clinico": "sector",
+    "sector_clínico": "sector",
+    "setor_clinico": "sector",
+    "setor_clínico": "sector",
     "preco": "base_price",
     "preço": "base_price",
     "preco_base": "base_price",
@@ -73,6 +79,8 @@ class MedicalConsultationSerializer(serializers.ModelSerializer):
     doctor_name = serializers.SerializerMethodField(method_name="get_doctor_name")
     created_by_name = serializers.SerializerMethodField(method_name="get_created_by_name")
     specialty_name = serializers.CharField(source="specialty.name", read_only=True)
+    specialty_sector = serializers.CharField(source="specialty.sector", read_only=True)
+    specialty_sector_display = serializers.CharField(source="specialty.get_sector_display", read_only=True)
     invoice_id = serializers.SerializerMethodField(method_name="get_invoice_id")
     invoice_code = serializers.SerializerMethodField(method_name="get_invoice_code")
     invoice_status = serializers.SerializerMethodField(method_name="get_invoice_status")
@@ -89,6 +97,8 @@ class MedicalConsultationSerializer(serializers.ModelSerializer):
             "doctor_name",
             "created_by_name",
             "specialty_name",
+            "specialty_sector",
+            "specialty_sector_display",
             "invoice_id",
             "invoice_code",
             "invoice_status",
@@ -164,12 +174,13 @@ class MedicalConsultationSerializer(serializers.ModelSerializer):
 
 
 class ConsultationSpecialtySerializer(serializers.ModelSerializer):
+    sector_display = serializers.CharField(source="get_sector_display", read_only=True)
     legacy_input_aliases = CONSULTATION_SPECIALTY_ALIASES
 
     class Meta:
         model = ConsultationSpecialty
         fields = "__all__"
-        read_only_fields = CORE_READ_ONLY_FIELDS
+        read_only_fields = (*CORE_READ_ONLY_FIELDS, "sector_display")
 
 
 class HolidaySerializer(serializers.ModelSerializer):

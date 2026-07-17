@@ -5,7 +5,7 @@
   "private": true,
   "scripts": {
     "dev:clean-cache": "node -e \"require('fs').rmSync('.next-dev', { recursive: true, force: true })\"",
-    "dev": "next dev -p 5000 -H 0.0.0.0",
+    "dev": "NODE_OPTIONS=--max-old-space-size=4096 next dev -p 5000 -H 0.0.0.0",
     "build": "NODE_OPTIONS=--max-old-space-size=4096 next build",
     "build:admin-css": "tailwindcss -c tailwind.admin.config.js -i styles/admin-tailwind.input.css -o ../apps/clinical/static/admin/css/substrato-admin-tailwind.css --minify",
     "start": "HOSTNAME=${HOSTNAME:-0.0.0.0} PORT=${PORT:-5000} node .next/standalone/server.js",

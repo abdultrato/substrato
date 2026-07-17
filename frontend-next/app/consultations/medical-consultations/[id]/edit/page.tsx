@@ -24,6 +24,16 @@ type Row = Record<string, any>
 const GLASS =
   "rounded-xl border border-white/20 bg-white/30 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]"
 
+function normalizeState(value: any): string {
+  return String(value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toUpperCase()
+}
+
+const FINAL_CONSULTATION_STATES = new Set(["CONCLUIDA", "COMPLETED", "REALIZADA", "CANCELADA", "CANCELED", "CANCELLED", "PAGA", "PAID"])
+const BLOCKING_INVOICE_STATES = new Set(["EMIT", "EMITIDA", "ISSUED", "PAGA", "PAID"])
+
 function toLocalInput(value: any): string {
   if (!value) return ""
   const d = new Date(value)
@@ -170,6 +180,13 @@ export default function MedicalConsultationEditPage() {
     setScheduledFor(now.toISOString().slice(0, 16))
   }, [])
 
+  const status = normalizeState(row?.status)
+  const invoiceStatus = normalizeState(row?.invoice_status)
+  const canEditConsultation =
+    canWrite &&
+    !FINAL_CONSULTATION_STATES.has(status) &&
+    !BLOCKING_INVOICE_STATES.has(invoiceStatus)
+
   if (authLoading) return null
 
   return (
@@ -206,9 +223,11 @@ export default function MedicalConsultationEditPage() {
               </div>
             </section>
 
-            {!canWrite ? (
+            {!canEditConsultation ? (
               <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-                {t("Sem permissão para editar consultas.", "No permission to edit consultations.")}
+                {!canWrite
+                  ? t("Sem permissão para editar consultas.", "No permission to edit consultations.")
+                  : t("Esta consulta já está finalizada ou faturada e não pode ser editada.", "This consultation is finalized or invoiced and cannot be edited.")}
               </div>
             ) : (
               <form onSubmit={onSubmit} className={`${GLASS} space-y-3 p-4`}>

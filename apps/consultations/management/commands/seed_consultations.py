@@ -33,6 +33,7 @@ from django.utils import timezone
 
 from apps.clinical.models.patient import Patient
 from apps.consultations.models import ConsultationSpecialty, MedicalConsultation
+from apps.consultations.models.consultation_specialty import infer_consultation_sector
 from apps.human_resources.models.employee import Employee
 from apps.tenants.models import Tenant
 
@@ -178,10 +179,14 @@ class Command(BaseCommand):
                     name=name,
                     description=f"Consulta de {name}.",
                     base_price=Decimal(base_price),
+                    sector=infer_consultation_sector(name),
                     active=True,
                 )
                 obj.save()
                 created += 1
+            elif obj.sector == "OTHER":
+                obj.sector = infer_consultation_sector(name)
+                obj.save(update_fields=["sector", "updated_at"])
             result.append(obj)
         self.stdout.write(f"Especialidades: {len(result)} no total ({created} criadas agora).")
         return result

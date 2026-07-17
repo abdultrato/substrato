@@ -122,6 +122,9 @@ class InventoryMovement(CoreModel):
         if self.type == MovementType.SAIDA and self.lot.is_expired:
             raise ValidationError("Não é permitido movimentar lot vencido.")
 
+        if self.type == MovementType.SAIDA and not self.lot.is_available_for_use:
+            raise ValidationError("Não é permitido movimentar lote indisponível.")
+
         # valida tenant
         if self.tenant_id and self.lot.tenant_id != self.tenant_id:
             raise ValidationError("Inquilino do movimento difere do lot.")

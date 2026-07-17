@@ -9,6 +9,7 @@ import {
   CalendarPlus,
   CalendarX2,
   CheckCircle2,
+  Circle,
   FileText,
   Info,
   Loader2,
@@ -38,11 +39,50 @@ type Row = Record<string, any>
 const GLASS =
   "rounded-xl border border-white/20 bg-white/30 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]"
 
+function normalizeState(value: any): string {
+  return String(value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toUpperCase()
+}
+
+const FINAL_CONSULTATION_STATES = new Set(["CONCLUIDA", "COMPLETED", "REALIZADA", "CANCELADA", "CANCELED", "CANCELLED", "PAGA", "PAID"])
+const BLOCKING_INVOICE_STATES = new Set(["EMIT", "EMITIDA", "ISSUED", "PAGA", "PAID"])
+
 function fmtDateTime(value: any): string {
   if (!value) return "—"
   const d = new Date(value)
   if (Number.isNaN(d.getTime())) return String(value)
   return d.toLocaleString()
+}
+
+type TimelineStep = { label: string; date: any; done: boolean; note?: string }
+
+function Timeline({ steps }: { steps: TimelineStep[] }) {
+  return (
+    <ol className="flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-0">
+      {steps.map((step, i) => (
+        <li key={i} className="relative flex flex-1 items-start gap-2.5 sm:flex-col sm:items-center sm:gap-2 sm:text-center">
+          <span className="relative z-10 mt-0.5 shrink-0">
+            {step.done
+              ? <CheckCircle2 size={16} className="text-emerald-500" />
+              : <Circle size={16} className="text-[var(--gray-300)]" />}
+          </span>
+          {i < steps.length - 1 && (
+            <>
+              <span className="absolute left-[7px] top-6 h-full w-px bg-border sm:hidden" />
+              <span className={`absolute left-1/2 top-2 hidden h-px w-full sm:block ${step.done ? "bg-emerald-400/60" : "bg-border"}`} />
+            </>
+          )}
+          <div className="min-w-0">
+            <p className={`text-xs font-semibold ${step.done ? "text-foreground" : "text-muted-foreground"}`}>{step.label}</p>
+            {step.date ? <p className="text-[10px] text-muted-foreground">{fmtDateTime(step.date)}</p> : null}
+            {step.note ? <p className="text-[10px] text-muted-foreground">{step.note}</p> : null}
+          </div>
+        </li>
+      ))}
+    </ol>
+  )
 }
 
 export default function MedicalConsultationDetailPage() {
@@ -109,7 +149,7 @@ export default function MedicalConsultationDetailPage() {
     setBusy(true)
     setActionError(null)
     try {
-      await apiFetch(`/consultations/${id}/cancel/`, { method: "POST", body: JSON.stringify({}) })
+      await apiFetch(`/consultations/consultation/${id}/cancel/`, { method: "POST", body: JSON.stringify({}) })
       await load()
     } catch (e: any) {
       const msg = e?.message || t("Falha ao cancelar consulta.", "Failed to cancel consultation.")
@@ -130,7 +170,7 @@ export default function MedicalConsultationDetailPage() {
     setBusy(true)
     setCreditNoteError(null)
     try {
-      await apiFetch(`/consultations/${id}/request-credit-note/`, {
+      await apiFetch(`/consultations/consultation/${id}/request-credit-note/`, {
         method: "POST",
         body: JSON.stringify({ reason: creditNoteReason.trim() }),
       })
@@ -162,7 +202,7 @@ export default function MedicalConsultationDetailPage() {
     setBusy(true)
     setActionError(null)
     try {
-      await apiFetch(`/consultations/${id}/reschedule/`, { method: "POST", body: JSON.stringify({ scheduled_for: value }) })
+      await apiFetch(`/consultations/consultation/${id}/reschedule/`, { method: "POST", body: JSON.stringify({ scheduled_for: value }) })
       setRescheduleOpen(false)
       await load()
     } catch (e: any) {
@@ -172,8 +212,13 @@ export default function MedicalConsultationDetailPage() {
     }
   }, [id, canWrite, newScheduledFor, load, t])
 
-  const status = String(row?.status || "").toUpperCase()
-  const isOpen = status !== "CONCLUIDA" && status !== "CANCELADA" && status !== "PAGA"
+  const status = normalizeState(row?.status)
+  const invoiceStatus = normalizeState(row?.invoice_status)
+  const isOpen = !FINAL_CONSULTATION_STATES.has(status)
+  const canEditConsultation =
+    canWrite &&
+    !FINAL_CONSULTATION_STATES.has(status) &&
+    !BLOCKING_INVOICE_STATES.has(invoiceStatus)
   const overdue = useMemo(() => {
     if (!isOpen || !row?.scheduled_for) return false
     const ts = new Date(row.scheduled_for).getTime()
@@ -202,6 +247,22 @@ export default function MedicalConsultationDetailPage() {
     if (value === "FERIADO_MANUAL") return t("Feriado", "Holiday")
     return t("Normal", "Normal")
   }, [t])
+
+  const timelineSteps: TimelineStep[] = row ? [
+    { label: t("Criada", "Created"), date: row.created_at, done: Boolean(row.created_at) },
+    { label: t("Agendada", "Scheduled"), date: row.scheduled_for, done: Boolean(row.scheduled_for) },
+    {
+      label: t("Re-agendada", "Rescheduled"),
+      date: row.updated_at,
+      done: Number(row.reschedule_count || 0) > 0,
+      note: Number(row.reschedule_count || 0) > 0 ? `${row.reschedule_count}x` : undefined,
+    },
+    {
+      label: status === "CANCELADA" ? t("Cancelada", "Cancelled") : t("Concluída", "Completed"),
+      date: status === "CANCELADA" ? row.canceled_at : row.completed_at,
+      done: status === "CANCELADA" || Boolean(row.completed_at),
+    },
+  ] : []
 
   if (authLoading) return null
 
@@ -246,7 +307,7 @@ export default function MedicalConsultationDetailPage() {
 
               {/* Rodapé do cartão — ações à esquerda, voltar no canto inf. direito */}
               <div className="flex flex-wrap items-center gap-1.5 border-t border-white/20 px-4 py-2 pl-5 dark:border-white/10">
-                {canWrite && isOpen ? (
+                {canEditConsultation ? (
                   <>
                     <Link
                       href={`/consultations/medical-consultations/${id}/edit`}
@@ -254,6 +315,10 @@ export default function MedicalConsultationDetailPage() {
                     >
                       <Pencil size={13} /> {t("Editar", "Edit")}
                     </Link>
+                  </>
+                ) : null}
+                {canWrite && isOpen ? (
+                  <>
                     <button
                       type="button"
                       onClick={openReschedule}
@@ -284,7 +349,7 @@ export default function MedicalConsultationDetailPage() {
 
                 {/* Voltar — quadrante inferior direito do cartão de nome */}
                 <Link
-                  href="/consultations/medical-consultations"
+                  href="/consultations"
                   className="group ml-auto inline-flex items-center gap-2 rounded-lg border border-white/20 bg-white/40 py-1.5 pl-1.5 pr-3 text-xs font-semibold text-foreground shadow-sm backdrop-blur-sm transition hover:border-white/40 hover:bg-white/60 dark:border-white/10 dark:bg-white/[0.04] dark:hover:bg-white/[0.08]"
                 >
                   <span className="flex h-6 w-6 items-center justify-center rounded-md bg-indigo-500/10 text-indigo-600 transition group-hover:-translate-x-0.5 dark:text-indigo-400">
@@ -296,7 +361,7 @@ export default function MedicalConsultationDetailPage() {
             </section>
 
             {/* Info grid */}
-            <div className="grid gap-1.5 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-1.5 md:grid-cols-2">
               {[
                 { icon: Stethoscope, label: t("Especialidade", "Specialty"), value: row.specialty_name || row.type || "—" },
                 { icon: User, label: t("Médico", "Doctor"), value: row.doctor_name || t("Sem médico atribuído", "No doctor assigned") },
@@ -315,8 +380,8 @@ export default function MedicalConsultationDetailPage() {
               ))}
             </div>
 
-            {/* Fatura + Cronologia */}
-            <div className="grid gap-1.5 lg:grid-cols-2">
+            {/* Cartões operacionais */}
+            <div className="grid gap-1.5 md:grid-cols-2">
               {/* Fatura */}
               <section
                 ref={billingRef}
@@ -400,41 +465,27 @@ export default function MedicalConsultationDetailPage() {
                 </div>
               </section>
 
-              {/* Cronologia */}
-              <section className={`relative overflow-hidden ${GLASS}`}>
-                <span className="absolute left-0 top-0 h-full w-1 bg-sky-500" />
-                <div className="space-y-1.5 px-3 py-2.5 pl-4">
-                  <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    <CalendarClock size={13} /> {t("Cronologia", "Timeline")}
+              {row.description ? (
+                <section className={`relative overflow-hidden ${GLASS}`}>
+                  <span className="absolute left-0 top-0 h-full w-1 bg-slate-400" />
+                  <div className="px-3 py-2.5 pl-4">
+                    <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t("Descrição", "Description")}</div>
+                    <p className="whitespace-pre-wrap text-sm text-foreground">{row.description}</p>
                   </div>
-                  {[
-                    { icon: CalendarPlus, label: t("Criada", "Created"), value: row.created_at, show: true },
-                    { icon: RotateCcw, label: `${t("Remarcações", "Reschedules")}`, value: row.reschedule_count || 0, show: true, plain: true },
-                    { icon: CheckCircle2, label: t("Concluída", "Completed"), value: row.completed_at, show: Boolean(row.completed_at) },
-                    { icon: XCircle, label: t("Cancelada", "Cancelled"), value: row.canceled_at, show: Boolean(row.canceled_at) },
-                  ].filter((e) => e.show).map((e, i) => (
-                    <div key={i} className="flex items-center gap-2 text-xs">
-                      <e.icon size={13} className="shrink-0 text-muted-foreground/70" />
-                      <span className="text-muted-foreground">{e.label}</span>
-                      <span className="ml-auto font-medium text-foreground tabular-nums">
-                        {e.plain ? String(e.value) : fmtDateTime(e.value)}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </section>
+                </section>
+              ) : null}
             </div>
 
-            {/* Descrição */}
-            {row.description ? (
-              <section className={`relative overflow-hidden ${GLASS}`}>
-                <span className="absolute left-0 top-0 h-full w-1 bg-slate-400" />
-                <div className="px-3 py-2.5 pl-4">
-                  <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t("Descrição", "Description")}</div>
-                  <p className="whitespace-pre-wrap text-sm text-foreground">{row.description}</p>
+            {/* Cronologia */}
+            <section className={`relative overflow-hidden ${GLASS}`}>
+              <span className="absolute left-0 top-0 h-full w-1 bg-sky-500" />
+              <div className="space-y-1.5 px-3 py-2.5 pl-4">
+                <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  <CalendarClock size={13} /> {t("Cronologia", "Timeline")}
                 </div>
-              </section>
-            ) : null}
+                <Timeline steps={timelineSteps} />
+              </div>
+            </section>
           </>
         ) : null}
       </div>

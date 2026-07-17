@@ -92,6 +92,11 @@ LOT_ALIASES = {
     "saldo": "saldo",
     "stock": "saldo",
     "estoque": "saldo",
+    "estado": "status",
+    "status": "status",
+    "motivo_estado": "status_reason",
+    "motivo_do_estado": "status_reason",
+    "status_reason": "status_reason",
 }
 
 INVENTORY_MOVEMENT_ALIASES = {
@@ -258,6 +263,7 @@ class LotSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer):
         model = Lot
         fields = "__all__"
         read_only_fields = (*CORE_READ_ONLY_FIELDS, "saldo", "product_name")
+        validators = []
         extra_kwargs = {
             "name": {"required": False, "allow_blank": True},
         }
@@ -294,6 +300,9 @@ class SaleSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer):
         model = Sale
         fields = "__all__"
         read_only_fields = CORE_READ_ONLY_FIELDS
+        extra_kwargs = {
+            "number": {"required": False, "allow_blank": True},
+        }
 
 
 class MaterialRequisitionItemWriteSerializer(LegacyAliasSerializerMixin, serializers.ModelSerializer):

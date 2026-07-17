@@ -2,11 +2,21 @@
 
 import { isNotFoundLikeError } from "@/lib/errors/api-error";
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import {
+  ArrowLeft,
+  BarChart3,
+  Boxes,
+  Download,
+  FileText,
+  Loader2,
+  Package,
+  Repeat,
+  TrendingDown,
+  TrendingUp,
+} from "lucide-react";
 
 import AppLayout from "@/components/layout/AppLayout";
-import DataTable from "@/components/ui/DataTable";
-import PageHeader from "@/components/ui/PageHeader";
 import Pagination from "@/components/ui/Pagination";
 import PdfActionLabel from "@/components/ui/PdfActionLabel";
 import { useAuth } from "@/hooks/useAuth";
@@ -16,11 +26,138 @@ import { GROUPS, userHasAnyGroup } from "@/lib/rbac";
 
 type MovimentoRow = Record<string, any>;
 
+const GLASS =
+  "rounded-lg border border-white/20 bg-white/35 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.04]";
+
+const CONTROL =
+  "h-8 rounded-md border border-border bg-background/70 px-2 text-xs font-semibold text-foreground outline-none transition focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/20";
+
 function fmtDate(value: string | null | undefined): string {
   if (!value) return "-";
   const d = new Date(value);
   if (Number.isNaN(d.getTime())) return String(value);
   return d.toLocaleString();
+}
+
+function movementCode(m: MovimentoRow): string {
+  return m.id_custom || m.custom_id || m.codigo || m.id || "-";
+}
+
+function lotLabel(m: MovimentoRow): string {
+  if (typeof m.lot === "object" && m.lot) return m.lot.lot_number || m.lot.custom_id || `Lote ${m.lot.id}`;
+  return m.lote_numero || m.lot_number || m.lote || m.lot || "-";
+}
+
+function productLabel(m: MovimentoRow): string {
+  if (typeof m.product === "object" && m.product) return m.product.name || m.product.custom_id || `Produto ${m.product.id}`;
+  return m.produto_nome || m.product_name || m.produto || m.product || "-";
+}
+
+function movementType(m: MovimentoRow): "ENT" | "SAI" | "AJU" | string {
+  return m.tipo || m.type || "";
+}
+
+function movementTypeInfo(type: string) {
+  if (type === "ENT") {
+    return {
+      label: "Entrada",
+      Icon: TrendingUp,
+      accent: "bg-emerald-500",
+      badge: "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800/50 dark:bg-emerald-950/30 dark:text-emerald-300",
+    };
+  }
+  if (type === "SAI") {
+    return {
+      label: "Saída",
+      Icon: TrendingDown,
+      accent: "bg-rose-500",
+      badge: "border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-800/50 dark:bg-rose-950/30 dark:text-rose-300",
+    };
+  }
+  return {
+    label: type === "AJU" ? "Ajuste" : type || "Movimento",
+    Icon: Repeat,
+    accent: "bg-violet-500",
+    badge: "border-violet-200 bg-violet-50 text-violet-700 dark:border-violet-800/50 dark:bg-violet-950/30 dark:text-violet-300",
+  };
+}
+
+function originLabel(origin?: string): string {
+  if (origin === "VEND") return "Venda";
+  if (origin === "PROC") return "Procedimento";
+  if (origin === "AJUS") return "Ajuste";
+  if (origin === "REQ") return "Requisição";
+  return origin || "Origem não informada";
+}
+
+function MetricCard({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value: React.ReactNode }) {
+  return (
+    <div className="rounded-lg border border-border/60 bg-background/45 px-3 py-1.5">
+      <div className="mb-1 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
+        <Icon size={11} />
+        {label}
+      </div>
+      <div className="truncate text-sm font-bold text-foreground">{value ?? "—"}</div>
+    </div>
+  );
+}
+
+function MovementCard({ movement }: { movement: MovimentoRow }) {
+  const type = movementType(movement);
+  const info = movementTypeInfo(type);
+  const Icon = info.Icon;
+  const quantity = Number(movement.quantidade ?? movement.quantity ?? 0);
+  const signed = type === "SAI" ? -quantity : quantity;
+
+  return (
+    <Link
+      href={`/pharmacy/inventory-movements/${movement.id}`}
+      className={`${GLASS} group relative block overflow-hidden transition hover:shadow-md`}
+    >
+      <span className={`absolute inset-y-0 left-0 w-1 ${info.accent}`} />
+      <div className="space-y-2 px-3 py-2 pl-4">
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex min-w-0 items-center gap-2">
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-cyan-500/12 text-cyan-600 dark:text-cyan-300">
+              <Icon size={15} />
+            </span>
+            <div className="min-w-0">
+              <p className="truncate text-sm font-bold text-foreground group-hover:text-cyan-600 dark:group-hover:text-cyan-300">
+                {movement.name || movement.nome || movementCode(movement)}
+              </p>
+              <p className="truncate text-[10px] text-muted-foreground">{productLabel(movement)}</p>
+            </div>
+          </div>
+          <span className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-semibold ${info.badge}`}>
+            {info.label}
+          </span>
+        </div>
+
+        <div className="grid grid-cols-3 gap-1.5 text-[11px]">
+          <div className="rounded-md border border-border/60 bg-background/45 px-2 py-1">
+            <p className="text-[9px] font-bold uppercase tracking-[0.1em] text-muted-foreground">Qtd.</p>
+            <p className={`text-xs font-bold ${type === "SAI" ? "text-rose-600 dark:text-rose-300" : "text-emerald-600 dark:text-emerald-300"}`}>
+              {signed > 0 ? "+" : ""}
+              {signed}
+            </p>
+          </div>
+          <div className="rounded-md border border-border/60 bg-background/45 px-2 py-1">
+            <p className="text-[9px] font-bold uppercase tracking-[0.1em] text-muted-foreground">Origem</p>
+            <p className="truncate text-xs font-semibold text-foreground">{originLabel(movement.origem ?? movement.origin)}</p>
+          </div>
+          <div className="rounded-md border border-border/60 bg-background/45 px-2 py-1">
+            <p className="text-[9px] font-bold uppercase tracking-[0.1em] text-muted-foreground">Data</p>
+            <p className="truncate text-xs font-semibold text-foreground">{fmtDate(movement.criado_em || movement.created_at)}</p>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between gap-2 border-t border-border/50 pt-2 text-[10px] text-muted-foreground">
+          <span className="truncate">{lotLabel(movement)}</span>
+          <span className="shrink-0">{movementCode(movement)}</span>
+        </div>
+      </div>
+    </Link>
+  );
 }
 
 export default function FarmaciaMovimentosPage() {
@@ -44,6 +181,7 @@ export default function FarmaciaMovimentosPage() {
     "ALL" | "LAB" | "ENF" | "REC" | "MED" | "MOC" | "OUT"
   >("ALL");
   const [reportProductId, setReportProductId] = useState<string>("");
+  const [showReports, setShowReports] = useState(false);
   const [reportLoading, setReportLoading] = useState<
     | null
     | "moves"
@@ -61,17 +199,15 @@ export default function FarmaciaMovimentosPage() {
       try {
         setLoading(true);
         setErro(null);
-        const { items, meta } = await apiFetchList<MovimentoRow>(
-          "/pharmacy/inventory_movement/",
-          {
-            page,
-            pageSize,
-            clientPaginate: true,
-            clientCache: safeRefreshToken === 0,
-            timeoutMs: 5000,
-            retryOnTimeout: 0,
-          },
-        );
+        const { items, meta } = await apiFetchList<MovimentoRow>("/pharmacy/inventory_movement/", {
+          page,
+          pageSize,
+          query: reportType !== "ALL" ? { type: reportType } : undefined,
+          clientPaginate: true,
+          clientCache: safeRefreshToken === 0,
+          timeoutMs: 5000,
+          retryOnTimeout: 0,
+        });
 
         const total = meta.total ?? items.length;
         const computedTotalPages =
@@ -98,7 +234,7 @@ export default function FarmaciaMovimentosPage() {
     return () => {
       mounted = false;
     };
-  }, [page, pageSize, safeRefreshToken]);
+  }, [page, pageSize, reportType, safeRefreshToken]);
 
   const downloadPdf = useCallback(async (url: string, filename: string) => {
     const blob = await apiFetch<Blob>(url, { responseType: "blob" });
@@ -262,141 +398,101 @@ export default function FarmaciaMovimentosPage() {
     }
   }, [downloadPdf, buildCommonParams, reportProductId]);
 
-  const columns = useMemo(
-    () => [
-      {
-        header: "Código",
-        render: (m: MovimentoRow) => (
-          <Link
-            href={`/pharmacy/inventory-movements/${m.id}`}
-            className="font-medium text-[var(--text)] no-underline decoration-[var(--border)] underline-offset-2 hover:underline hover:decoration-[var(--gray-300)]"
-          >
-            {m.id_custom || m.id || "-"}
-          </Link>
-        ),
-      },
-      {
-        header: "Lote",
-        render: (m: MovimentoRow) =>
-          m.lote_numero || m.lot_number || m.lote || m.lot || "-",
-      },
-      {
-        header: "Produto",
-        render: (m: MovimentoRow) =>
-          m.produto_nome || m.product_name || m.produto || m.product || "-",
-      },
-      { header: "Tipo", render: (m: MovimentoRow) => m.tipo || m.type || "-" },
-      {
-        header: "Origem",
-        render: (m: MovimentoRow) => m.origem ?? m.origin ?? "-",
-      },
-      {
-        header: "Quantidade",
-        render: (m: MovimentoRow) => m.quantidade ?? m.quantity ?? "-",
-      },
-      {
-        header: "Data",
-        render: (m: MovimentoRow) => fmtDate(m.criado_em || m.created_at),
-      },
-    ],
-    [],
-  );
+  const currentEntries = data.filter((row) => movementType(row) === "ENT").reduce((total, row) => total + Number(row.quantidade ?? row.quantity ?? 0), 0);
+  const currentExits = data.filter((row) => movementType(row) === "SAI").reduce((total, row) => total + Number(row.quantidade ?? row.quantity ?? 0), 0);
+  const currentAdjustments = data.filter((row) => movementType(row) === "AJU").reduce((total, row) => total + Number(row.quantidade ?? row.quantity ?? 0), 0);
 
   return (
     <AppLayout requiredGroups={[GROUPS.ADMIN, GROUPS.FARMACIA]}>
-      <div className="space-y-6">
-        <PageHeader
-          title="Movimentos de estoque"
-          actions={
-            <div className="flex flex-wrap items-center gap-2">
-              <Link
-                href="/pharmacy/inventory-movements/new"
-                className="inline-flex items-center rounded-xl bg-[var(--primary-600)] px-3 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[var(--primary-700)]"
-              >
-                Criar movimento de estoque
-              </Link>
-              <Link
-                href="/pharmacy/inventory-movements"
-                className="inline-flex items-center rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-sm font-medium text-[var(--gray-700)] shadow-sm transition hover:bg-[var(--gray-100)]"
-              >
-                Gerenciamento
-              </Link>
-            </div>
-          }
-        />
+      <div className="w-full space-y-2 px-1">
+        <section className={`${GLASS} relative overflow-hidden`}>
+          <span className="absolute inset-y-0 left-0 w-1 bg-violet-500" />
+          <div className="space-y-2 px-3 py-2 pl-4">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="flex min-w-0 items-center gap-2">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-violet-500/12 text-violet-600 dark:text-violet-300">
+                  <Repeat size={18} />
+                </span>
+                <div className="min-w-0">
+                  <h1 className="truncate text-base font-bold leading-tight text-foreground">Movimentos de stock</h1>
+                  <p className="text-[11px] text-muted-foreground">
+                    {loading ? "A carregar..." : `${data.length} de ${totalItems} movimentos`}
+                  </p>
+                </div>
+              </div>
 
-        {erro ? (
-          <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-            {erro}
-          </div>
-        ) : null}
-
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="text-sm text-slate-600">Total: {totalItems}</div>
-          <label className="flex items-center gap-2 text-sm text-slate-700">
-            <span>Por página</span>
-            <select
-              value={pageSize}
-              onChange={(e) => {
-                setPage(1);
-                setPageSize(Number(e.target.value));
-              }}
-              className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm"
-            >
-              <option value={20}>20</option>
-            </select>
-          </label>
-        </div>
-
-        <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-4 shadow-sm">
-          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-6">
-            <div>
-              <label className="mb-1 block text-xs font-semibold uppercase text-[var(--gray-600)]">
-                De
-              </label>
-              <input
-                type="date"
-                value={dateFrom}
-                onChange={(e) => setDateFrom(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800"
-              />
+              <div className="flex flex-wrap items-center gap-1.5">
+                <Link
+                  href="/pharmacy"
+                  className="inline-flex h-8 items-center gap-1 rounded-md border border-border/70 bg-background/60 px-2.5 text-xs font-semibold text-muted-foreground transition hover:text-foreground"
+                >
+                  <ArrowLeft size={13} />
+                  Voltar
+                </Link>
+                {podeVerAdmin ? (
+                  <Link
+                    href="/pharmacy/inventory-movements"
+                    className="inline-flex h-8 items-center rounded-md border border-border/70 bg-background/60 px-2.5 text-xs font-semibold text-muted-foreground transition hover:text-foreground"
+                  >
+                    Gestão
+                  </Link>
+                ) : null}
+                <button
+                  type="button"
+                  onClick={() => setShowReports((current) => !current)}
+                  className={`inline-flex h-8 items-center gap-1 rounded-md border px-2.5 text-xs font-semibold transition ${
+                    showReports
+                      ? "border-cyan-400/50 bg-cyan-500/15 text-cyan-700 dark:text-cyan-200"
+                      : "border-border/70 bg-background/60 text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <FileText size={13} />
+                  Relatórios
+                </button>
+                <label className="inline-flex h-8 items-center gap-1 rounded-md border border-border/70 bg-background/60 px-2 text-[11px] font-semibold text-muted-foreground">
+                  <span>Mostrar</span>
+                  <input
+                    type="number"
+                    min={1}
+                    max={999}
+                    value={pageSize}
+                    onChange={(event) => {
+                      setPage(1);
+                      setPageSize(Math.min(999, Math.max(1, Number(event.target.value || 1))));
+                    }}
+                    className="h-6 w-14 rounded border border-border bg-background px-1 text-center text-xs font-bold text-foreground outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/20"
+                    aria-label="Número de movimentos"
+                  />
+                </label>
+              </div>
             </div>
-            <div>
-              <label className="mb-1 block text-xs font-semibold uppercase text-[var(--gray-600)]">
-                Até
-              </label>
-              <input
-                type="date"
-                value={dateTo}
-                onChange={(e) => setDateTo(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800"
-              />
+
+            <div className="grid grid-cols-2 gap-1.5 md:grid-cols-4">
+              <MetricCard icon={BarChart3} label="Total" value={totalItems} />
+              <MetricCard icon={TrendingUp} label="Entradas" value={currentEntries} />
+              <MetricCard icon={TrendingDown} label="Saídas" value={currentExits} />
+              <MetricCard icon={Repeat} label="Ajustes" value={currentAdjustments} />
             </div>
-            <div>
-              <label className="mb-1 block text-xs font-semibold uppercase text-[var(--gray-600)]">
-                Tipo movimento
-              </label>
+
+            <div className="flex flex-wrap items-center gap-1.5">
+              <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className={CONTROL} aria-label="Data inicial" />
+              <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className={CONTROL} aria-label="Data final" />
               <select
                 value={reportType}
-                onChange={(e) => setReportType(e.target.value as any)}
-                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800"
+                onChange={(e) => {
+                  setPage(1);
+                  setReportType(e.target.value as any);
+                }}
+                className={CONTROL}
+                aria-label="Tipo de movimento"
               >
                 <option value="ALL">Todos</option>
                 <option value="ENT">Entradas</option>
                 <option value="SAI">Saídas</option>
                 <option value="AJU">Ajustes</option>
               </select>
-            </div>
-            <div>
-              <label className="mb-1 block text-xs font-semibold uppercase text-[var(--gray-600)]">
-                Setor solicitante
-              </label>
-              <select
-                value={reportSector}
-                onChange={(e) => setReportSector(e.target.value as any)}
-                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800"
-              >
-                <option value="ALL">Todos</option>
+              <select value={reportSector} onChange={(e) => setReportSector(e.target.value as any)} className={CONTROL} aria-label="Setor solicitante">
+                <option value="ALL">Todos setores</option>
                 <option value="LAB">Laboratório</option>
                 <option value="ENF">Enfermagem</option>
                 <option value="REC">Recepção</option>
@@ -404,8 +500,13 @@ export default function FarmaciaMovimentosPage() {
                 <option value="MOC">Medicina Ocupacional</option>
                 <option value="OUT">Outros setores</option>
               </select>
-            </div>
-            <div className="flex items-end">
+              <input
+                type="number"
+                value={reportProductId}
+                onChange={(e) => setReportProductId(e.target.value)}
+                placeholder="Produto ID"
+                className={`${CONTROL} w-28`}
+              />
               <button
                 type="button"
                 onClick={() => {
@@ -414,33 +515,44 @@ export default function FarmaciaMovimentosPage() {
                   setReportType("ALL");
                   setReportSector("ALL");
                   setReportProductId("");
+                  setPage(1);
                 }}
-                className="w-full rounded-xl border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-sm font-medium text-[var(--gray-700)] transition hover:bg-[var(--gray-100)]"
+                className="inline-flex h-8 items-center rounded-md border border-border/70 bg-background/60 px-2.5 text-xs font-semibold text-muted-foreground transition hover:text-foreground"
               >
-                Limpar filtros
+                Limpar
               </button>
             </div>
-            <div>
-              <label className="mb-1 block text-xs font-semibold uppercase text-[var(--gray-600)]">
-                Produto (ID opcional)
-              </label>
-              <input
-                type="number"
-                value={reportProductId}
-                onChange={(e) => setReportProductId(e.target.value)}
-                placeholder="Ex.: 12"
-                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800"
-              />
-            </div>
           </div>
+        </section>
 
-          <div className="mt-3 flex flex-wrap gap-2">
+        {erro ? (
+          <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+            {erro}
+          </div>
+        ) : null}
+
+        {showReports ? (
+        <section className={`${GLASS} relative overflow-hidden`}>
+          <span className="absolute inset-y-0 left-0 w-1 bg-cyan-500" />
+          <div className="space-y-2 px-3 py-2 pl-4">
+            <div className="flex items-center gap-2">
+              <span className="flex h-7 w-7 items-center justify-center rounded-md bg-cyan-500/10 text-cyan-600 dark:text-cyan-300">
+                <FileText size={14} />
+              </span>
+              <div>
+                <h2 className="text-sm font-bold text-foreground">Relatórios</h2>
+                <p className="text-[11px] text-muted-foreground">PDFs com os filtros do cabeçalho.</p>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap gap-1.5">
             <button
               type="button"
               onClick={generateEntryExitPdf}
               disabled={reportLoading !== null}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50 disabled:opacity-60"
+              className="inline-flex h-8 items-center gap-1.5 rounded-md border border-border/70 bg-background/60 px-2.5 text-xs font-semibold text-muted-foreground transition hover:text-foreground disabled:opacity-60"
             >
+              <Download size={12} />
               <PdfActionLabel
                 loading={reportLoading === "moves"}
                 loadingLabel="Gerando..."
@@ -452,8 +564,9 @@ export default function FarmaciaMovimentosPage() {
               type="button"
               onClick={generateStockPdf}
               disabled={reportLoading !== null}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50 disabled:opacity-60"
+              className="inline-flex h-8 items-center gap-1.5 rounded-md border border-border/70 bg-background/60 px-2.5 text-xs font-semibold text-muted-foreground transition hover:text-foreground disabled:opacity-60"
             >
+              <Download size={12} />
               <PdfActionLabel
                 loading={reportLoading === "stock"}
                 loadingLabel="Gerando..."
@@ -465,8 +578,9 @@ export default function FarmaciaMovimentosPage() {
               type="button"
               onClick={generateSectorMovementsPdf}
               disabled={reportLoading !== null}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50 disabled:opacity-60"
+              className="inline-flex h-8 items-center gap-1.5 rounded-md border border-border/70 bg-background/60 px-2.5 text-xs font-semibold text-muted-foreground transition hover:text-foreground disabled:opacity-60"
             >
+              <Download size={12} />
               <PdfActionLabel
                 loading={reportLoading === "sector"}
                 loadingLabel="Gerando..."
@@ -478,8 +592,9 @@ export default function FarmaciaMovimentosPage() {
               type="button"
               onClick={generateProductConsumptionPdf}
               disabled={reportLoading !== null}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50 disabled:opacity-60"
+              className="inline-flex h-8 items-center gap-1.5 rounded-md border border-border/70 bg-background/60 px-2.5 text-xs font-semibold text-muted-foreground transition hover:text-foreground disabled:opacity-60"
             >
+              <Download size={12} />
               <PdfActionLabel
                 loading={reportLoading === "consumption"}
                 loadingLabel="Gerando..."
@@ -491,8 +606,9 @@ export default function FarmaciaMovimentosPage() {
               type="button"
               onClick={generateMostRequestedProductsPdf}
               disabled={reportLoading !== null}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50 disabled:opacity-60"
+              className="inline-flex h-8 items-center gap-1.5 rounded-md border border-border/70 bg-background/60 px-2.5 text-xs font-semibold text-muted-foreground transition hover:text-foreground disabled:opacity-60"
             >
+              <Download size={12} />
               <PdfActionLabel
                 loading={reportLoading === "top"}
                 loadingLabel="Gerando..."
@@ -504,8 +620,9 @@ export default function FarmaciaMovimentosPage() {
               type="button"
               onClick={generateLeastRequestedProductsPdf}
               disabled={reportLoading !== null}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50 disabled:opacity-60"
+              className="inline-flex h-8 items-center gap-1.5 rounded-md border border-border/70 bg-background/60 px-2.5 text-xs font-semibold text-muted-foreground transition hover:text-foreground disabled:opacity-60"
             >
+              <Download size={12} />
               <PdfActionLabel
                 loading={reportLoading === "least"}
                 loadingLabel="Gerando..."
@@ -517,8 +634,9 @@ export default function FarmaciaMovimentosPage() {
               type="button"
               onClick={generateProductSectorsPdf}
               disabled={reportLoading !== null}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-800 shadow-sm transition hover:bg-slate-50 disabled:opacity-60"
+              className="inline-flex h-8 items-center gap-1.5 rounded-md border border-border/70 bg-background/60 px-2.5 text-xs font-semibold text-muted-foreground transition hover:text-foreground disabled:opacity-60"
             >
+              <Download size={12} />
               <PdfActionLabel
                 loading={reportLoading === "sector-product"}
                 loadingLabel="Gerando..."
@@ -526,18 +644,26 @@ export default function FarmaciaMovimentosPage() {
                 PDF setores por produto
               </PdfActionLabel>
             </button>
+            </div>
           </div>
-        </div>
+        </section>
+        ) : null}
 
         {loading ? (
-          <div className="text-sm text-gray-500">Carregando...</div>
+          <div className={`${GLASS} flex h-40 items-center justify-center text-muted-foreground`}>
+            <Loader2 size={20} className="animate-spin" />
+          </div>
+        ) : data.length === 0 ? (
+          <section className={`${GLASS} flex min-h-[180px] items-center justify-center text-sm text-muted-foreground`}>
+            Nenhum movimento encontrado.
+          </section>
         ) : (
           <>
-            <DataTable<MovimentoRow>
-              columns={columns as any}
-              data={data}
-              emptyMessage="Nenhum movimento encontrado."
-            />
+            <div className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-4">
+              {data.map((movement) => (
+                <MovementCard key={movement.id} movement={movement} />
+              ))}
+            </div>
             <Pagination
               page={page}
               totalPages={totalPages}
